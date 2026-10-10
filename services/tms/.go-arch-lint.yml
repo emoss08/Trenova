@@ -1,0 +1,3529 @@
+# Architecture rules for services/tms (docs/engineering/module-architecture.md).
+# Components follow internal/modules/<module>/{domain,ports,app,adapters,jobs}; a module
+# may use only the domain, ports and contract packages of strictly lower modules.
+# Each exception below carries a TODO(build-arch) reason and the count must not grow.
+version: 3
+workdir: .
+allow:
+  depOnAnyVendor: true
+excludeFiles:
+  - "^.*_test\\.go$"
+components:
+  kernel-domain:
+    in:
+      - internal/modules/kernel/domain
+      - internal/modules/kernel/domain/**
+  kernel-ports:
+    in:
+      - internal/modules/kernel/ports/**
+  kernel-app:
+    in:
+      - internal/modules/kernel/app/**
+  kernel-adapters:
+    in:
+      - internal/modules/kernel/adapters/**
+  kernel-jobs:
+    in:
+      - internal/modules/kernel/jobs
+      - internal/modules/kernel/jobs/**
+  kernel-contracts:
+    in:
+      - internal/modules/kernel/jobs/*/*contract
+  kernel-module:
+    in:
+      - internal/modules/kernel
+  kernel-test:
+    in:
+      - internal/modules/kernel/kerneltest
+  identity-domain:
+    in:
+      - internal/modules/identity/domain
+      - internal/modules/identity/domain/**
+  identity-ports:
+    in:
+      - internal/modules/identity/ports/**
+  identity-app:
+    in:
+      - internal/modules/identity/app/**
+  identity-adapters:
+    in:
+      - internal/modules/identity/adapters/**
+  identity-jobs:
+    in:
+      - internal/modules/identity/jobs
+      - internal/modules/identity/jobs/**
+  identity-contracts:
+    in:
+      - internal/modules/identity/jobs/*/*contract
+  identity-module:
+    in:
+      - internal/modules/identity
+  identity-test:
+    in:
+      - internal/modules/identity/identitytest
+  workspace-domain:
+    in:
+      - internal/modules/workspace/domain
+      - internal/modules/workspace/domain/**
+  workspace-ports:
+    in:
+      - internal/modules/workspace/ports/**
+  workspace-app:
+    in:
+      - internal/modules/workspace/app/**
+  workspace-adapters:
+    in:
+      - internal/modules/workspace/adapters/**
+  workspace-jobs:
+    in:
+      - internal/modules/workspace/jobs
+      - internal/modules/workspace/jobs/**
+  workspace-contracts:
+    in:
+      - internal/modules/workspace/jobs/*/*contract
+  workspace-module:
+    in:
+      - internal/modules/workspace
+  workspace-test:
+    in:
+      - internal/modules/workspace/workspacetest
+  reference-domain:
+    in:
+      - internal/modules/reference/domain
+      - internal/modules/reference/domain/**
+  reference-ports:
+    in:
+      - internal/modules/reference/ports/**
+  reference-app:
+    in:
+      - internal/modules/reference/app/**
+  reference-adapters:
+    in:
+      - internal/modules/reference/adapters/**
+  reference-jobs:
+    in:
+      - internal/modules/reference/jobs
+      - internal/modules/reference/jobs/**
+  reference-contracts:
+    in:
+      - internal/modules/reference/jobs/*/*contract
+  reference-module:
+    in:
+      - internal/modules/reference
+  reference-test:
+    in:
+      - internal/modules/reference/referencetest
+  places-domain:
+    in:
+      - internal/modules/places/domain
+      - internal/modules/places/domain/**
+  places-ports:
+    in:
+      - internal/modules/places/ports/**
+  places-app:
+    in:
+      - internal/modules/places/app/**
+  places-adapters:
+    in:
+      - internal/modules/places/adapters/**
+  places-jobs:
+    in:
+      - internal/modules/places/jobs
+      - internal/modules/places/jobs/**
+  places-contracts:
+    in:
+      - internal/modules/places/jobs/*/*contract
+  places-module:
+    in:
+      - internal/modules/places
+  places-test:
+    in:
+      - internal/modules/places/placestest
+  equipment-domain:
+    in:
+      - internal/modules/equipment/domain
+      - internal/modules/equipment/domain/**
+  equipment-ports:
+    in:
+      - internal/modules/equipment/ports/**
+  equipment-app:
+    in:
+      - internal/modules/equipment/app/**
+  equipment-adapters:
+    in:
+      - internal/modules/equipment/adapters/**
+  equipment-jobs:
+    in:
+      - internal/modules/equipment/jobs
+      - internal/modules/equipment/jobs/**
+  equipment-contracts:
+    in:
+      - internal/modules/equipment/jobs/*/*contract
+  equipment-module:
+    in:
+      - internal/modules/equipment
+  equipment-test:
+    in:
+      - internal/modules/equipment/equipmenttest
+  parties-domain:
+    in:
+      - internal/modules/parties/domain
+      - internal/modules/parties/domain/**
+  parties-ports:
+    in:
+      - internal/modules/parties/ports/**
+  parties-app:
+    in:
+      - internal/modules/parties/app/**
+  parties-adapters:
+    in:
+      - internal/modules/parties/adapters/**
+  parties-jobs:
+    in:
+      - internal/modules/parties/jobs
+      - internal/modules/parties/jobs/**
+  parties-contracts:
+    in:
+      - internal/modules/parties/jobs/*/*contract
+  parties-module:
+    in:
+      - internal/modules/parties
+  parties-test:
+    in:
+      - internal/modules/parties/partiestest
+  workforce-domain:
+    in:
+      - internal/modules/workforce/domain
+      - internal/modules/workforce/domain/**
+  workforce-ports:
+    in:
+      - internal/modules/workforce/ports/**
+  workforce-app:
+    in:
+      - internal/modules/workforce/app/**
+  workforce-adapters:
+    in:
+      - internal/modules/workforce/adapters/**
+  workforce-jobs:
+    in:
+      - internal/modules/workforce/jobs
+      - internal/modules/workforce/jobs/**
+  workforce-contracts:
+    in:
+      - internal/modules/workforce/jobs/*/*contract
+  workforce-module:
+    in:
+      - internal/modules/workforce
+  workforce-test:
+    in:
+      - internal/modules/workforce/workforcetest
+  documents-domain:
+    in:
+      - internal/modules/documents/domain
+      - internal/modules/documents/domain/**
+  documents-ports:
+    in:
+      - internal/modules/documents/ports/**
+  documents-app:
+    in:
+      - internal/modules/documents/app/**
+  documents-adapters:
+    in:
+      - internal/modules/documents/adapters/**
+  documents-jobs:
+    in:
+      - internal/modules/documents/jobs
+      - internal/modules/documents/jobs/**
+  documents-contracts:
+    in:
+      - internal/modules/documents/jobs/*/*contract
+  documents-module:
+    in:
+      - internal/modules/documents
+  documents-test:
+    in:
+      - internal/modules/documents/documentstest
+  rating-domain:
+    in:
+      - internal/modules/rating/domain
+      - internal/modules/rating/domain/**
+  rating-ports:
+    in:
+      - internal/modules/rating/ports/**
+  rating-app:
+    in:
+      - internal/modules/rating/app/**
+  rating-adapters:
+    in:
+      - internal/modules/rating/adapters/**
+  rating-jobs:
+    in:
+      - internal/modules/rating/jobs
+      - internal/modules/rating/jobs/**
+  rating-contracts:
+    in:
+      - internal/modules/rating/jobs/*/*contract
+  rating-module:
+    in:
+      - internal/modules/rating
+  rating-test:
+    in:
+      - internal/modules/rating/ratingtest
+  operations-domain:
+    in:
+      - internal/modules/operations/domain
+      - internal/modules/operations/domain/**
+  operations-ports:
+    in:
+      - internal/modules/operations/ports/**
+  operations-app:
+    in:
+      - internal/modules/operations/app/**
+  operations-adapters:
+    in:
+      - internal/modules/operations/adapters/**
+  operations-jobs:
+    in:
+      - internal/modules/operations/jobs
+      - internal/modules/operations/jobs/**
+  operations-contracts:
+    in:
+      - internal/modules/operations/jobs/*/*contract
+  operations-module:
+    in:
+      - internal/modules/operations
+  operations-test:
+    in:
+      - internal/modules/operations/operationstest
+  edi-domain:
+    in:
+      - internal/modules/edi/domain
+      - internal/modules/edi/domain/**
+  edi-ports:
+    in:
+      - internal/modules/edi/ports/**
+  edi-app:
+    in:
+      - internal/modules/edi/app/**
+  edi-adapters:
+    in:
+      - internal/modules/edi/adapters/**
+  edi-jobs:
+    in:
+      - internal/modules/edi/jobs
+      - internal/modules/edi/jobs/**
+  edi-contracts:
+    in:
+      - internal/modules/edi/jobs/*/*contract
+  edi-module:
+    in:
+      - internal/modules/edi
+  edi-test:
+    in:
+      - internal/modules/edi/editest
+  accounting-domain:
+    in:
+      - internal/modules/accounting/domain
+      - internal/modules/accounting/domain/**
+  accounting-ports:
+    in:
+      - internal/modules/accounting/ports/**
+  accounting-app:
+    in:
+      - internal/modules/accounting/app/**
+  accounting-adapters:
+    in:
+      - internal/modules/accounting/adapters/**
+  accounting-jobs:
+    in:
+      - internal/modules/accounting/jobs
+      - internal/modules/accounting/jobs/**
+  accounting-contracts:
+    in:
+      - internal/modules/accounting/jobs/*/*contract
+  accounting-module:
+    in:
+      - internal/modules/accounting
+  accounting-test:
+    in:
+      - internal/modules/accounting/accountingtest
+  billing-domain:
+    in:
+      - internal/modules/billing/domain
+      - internal/modules/billing/domain/**
+  billing-ports:
+    in:
+      - internal/modules/billing/ports/**
+  billing-app:
+    in:
+      - internal/modules/billing/app/**
+  billing-adapters:
+    in:
+      - internal/modules/billing/adapters/**
+  billing-jobs:
+    in:
+      - internal/modules/billing/jobs
+      - internal/modules/billing/jobs/**
+  billing-contracts:
+    in:
+      - internal/modules/billing/jobs/*/*contract
+  billing-module:
+    in:
+      - internal/modules/billing
+  billing-test:
+    in:
+      - internal/modules/billing/billingtest
+  settlement-domain:
+    in:
+      - internal/modules/settlement/domain
+      - internal/modules/settlement/domain/**
+  settlement-ports:
+    in:
+      - internal/modules/settlement/ports/**
+  settlement-app:
+    in:
+      - internal/modules/settlement/app/**
+  settlement-adapters:
+    in:
+      - internal/modules/settlement/adapters/**
+  settlement-jobs:
+    in:
+      - internal/modules/settlement/jobs
+      - internal/modules/settlement/jobs/**
+  settlement-contracts:
+    in:
+      - internal/modules/settlement/jobs/*/*contract
+  settlement-module:
+    in:
+      - internal/modules/settlement
+  settlement-test:
+    in:
+      - internal/modules/settlement/settlementtest
+  agent-domain:
+    in:
+      - internal/modules/agent/domain
+      - internal/modules/agent/domain/**
+  agent-ports:
+    in:
+      - internal/modules/agent/ports/**
+  agent-app:
+    in:
+      - internal/modules/agent/app/**
+  agent-adapters:
+    in:
+      - internal/modules/agent/adapters/**
+  agent-jobs:
+    in:
+      - internal/modules/agent/jobs
+      - internal/modules/agent/jobs/**
+  agent-contracts:
+    in:
+      - internal/modules/agent/jobs/*/*contract
+  agent-module:
+    in:
+      - internal/modules/agent
+  agent-test:
+    in:
+      - internal/modules/agent/agenttest
+  api:
+    in:
+      - internal/api/**
+  bootstrap:
+    in:
+      - internal/bootstrap/**
+  cmd:
+    in:
+      - cmd/**
+  testutil:
+    in:
+      - internal/testutil/**
+  infrastructure:
+    in:
+      - internal/infrastructure/**
+  legacy-core:
+    in:
+      - internal/core/**
+  legacy-contracts:
+    in:
+      - internal/core/temporaljobs/*/*contract
+  deskbench:
+    in:
+      - internal/deskbench/**
+  scripts:
+    in:
+      - scripts/**
+  pkg:
+    in:
+      - pkg/**
+deps:
+  kernel-domain:
+    mayDependOn:
+      - kernel-domain
+      - pkg
+  kernel-ports:
+    mayDependOn:
+      - kernel-domain
+      - kernel-ports
+      - pkg
+  kernel-app:
+    mayDependOn:
+      - kernel-domain
+      - kernel-ports
+      - kernel-app
+      - kernel-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  kernel-adapters:
+    mayDependOn:
+      - kernel-domain
+      - kernel-ports
+      - kernel-adapters
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  kernel-jobs:
+    mayDependOn:
+      - kernel-domain
+      - kernel-ports
+      - kernel-app
+      - kernel-adapters
+      - kernel-jobs
+      - kernel-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+      - legacy-core
+  kernel-contracts:
+    mayDependOn:
+      - kernel-domain
+      - kernel-ports
+      - kernel-app
+      - kernel-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  kernel-module:
+    mayDependOn:
+      - kernel-domain
+      - kernel-ports
+      - kernel-app
+      - kernel-adapters
+      - kernel-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  kernel-test:
+    anyProjectDeps: true
+  identity-domain:
+    mayDependOn:
+      - identity-domain
+      - kernel-domain
+      - pkg
+  identity-ports:
+    mayDependOn:
+      - identity-domain
+      - identity-ports
+      - kernel-domain
+      - kernel-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  identity-app:
+    mayDependOn:
+      - identity-domain
+      - identity-ports
+      - identity-app
+      - identity-contracts
+      - kernel-domain
+      - kernel-ports
+      - kernel-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  identity-adapters:
+    mayDependOn:
+      - identity-domain
+      - identity-ports
+      - identity-adapters
+      - kernel-domain
+      - kernel-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  identity-jobs:
+    mayDependOn:
+      - identity-domain
+      - identity-ports
+      - identity-app
+      - identity-adapters
+      - identity-jobs
+      - identity-contracts
+      - kernel-domain
+      - kernel-ports
+      - kernel-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+      - legacy-core
+  identity-contracts:
+    mayDependOn:
+      - identity-domain
+      - identity-ports
+      - identity-app
+      - identity-contracts
+      - kernel-domain
+      - kernel-ports
+      - kernel-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  identity-module:
+    mayDependOn:
+      - identity-domain
+      - identity-ports
+      - identity-app
+      - identity-adapters
+      - identity-contracts
+      - kernel-domain
+      - kernel-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  identity-test:
+    anyProjectDeps: true
+  workspace-domain:
+    mayDependOn:
+      - workspace-domain
+      - kernel-domain
+      - identity-domain
+      - pkg
+  workspace-ports:
+    mayDependOn:
+      - workspace-domain
+      - workspace-ports
+      - kernel-domain
+      - identity-domain
+      - kernel-ports
+      - identity-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  workspace-app:
+    mayDependOn:
+      - workspace-domain
+      - workspace-ports
+      - workspace-app
+      - workspace-contracts
+      - kernel-domain
+      - identity-domain
+      - kernel-ports
+      - identity-ports
+      - kernel-contracts
+      - identity-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  workspace-adapters:
+    mayDependOn:
+      - workspace-domain
+      - workspace-ports
+      - workspace-adapters
+      - kernel-domain
+      - identity-domain
+      - kernel-ports
+      - identity-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  workspace-jobs:
+    mayDependOn:
+      - workspace-domain
+      - workspace-ports
+      - workspace-app
+      - workspace-adapters
+      - workspace-jobs
+      - workspace-contracts
+      - kernel-domain
+      - identity-domain
+      - kernel-ports
+      - identity-ports
+      - kernel-contracts
+      - identity-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+      - legacy-core
+  workspace-contracts:
+    mayDependOn:
+      - workspace-domain
+      - workspace-ports
+      - workspace-app
+      - workspace-contracts
+      - kernel-domain
+      - identity-domain
+      - kernel-ports
+      - identity-ports
+      - kernel-contracts
+      - identity-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  workspace-module:
+    mayDependOn:
+      - workspace-domain
+      - workspace-ports
+      - workspace-app
+      - workspace-adapters
+      - workspace-contracts
+      - kernel-domain
+      - identity-domain
+      - kernel-ports
+      - identity-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  workspace-test:
+    anyProjectDeps: true
+  reference-domain:
+    mayDependOn:
+      - reference-domain
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - pkg
+  reference-ports:
+    mayDependOn:
+      - reference-domain
+      - reference-ports
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  reference-app:
+    mayDependOn:
+      - reference-domain
+      - reference-ports
+      - reference-app
+      - reference-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  reference-adapters:
+    mayDependOn:
+      - reference-domain
+      - reference-ports
+      - reference-adapters
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  reference-jobs:
+    mayDependOn:
+      - reference-domain
+      - reference-ports
+      - reference-app
+      - reference-adapters
+      - reference-jobs
+      - reference-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+      - legacy-core
+  reference-contracts:
+    mayDependOn:
+      - reference-domain
+      - reference-ports
+      - reference-app
+      - reference-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  reference-module:
+    mayDependOn:
+      - reference-domain
+      - reference-ports
+      - reference-app
+      - reference-adapters
+      - reference-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  reference-test:
+    anyProjectDeps: true
+  places-domain:
+    mayDependOn:
+      - places-domain
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - pkg
+  places-ports:
+    mayDependOn:
+      - places-domain
+      - places-ports
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  places-app:
+    mayDependOn:
+      - places-domain
+      - places-ports
+      - places-app
+      - places-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  places-adapters:
+    mayDependOn:
+      - places-domain
+      - places-ports
+      - places-adapters
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  places-jobs:
+    mayDependOn:
+      - places-domain
+      - places-ports
+      - places-app
+      - places-adapters
+      - places-jobs
+      - places-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+      - legacy-core
+  places-contracts:
+    mayDependOn:
+      - places-domain
+      - places-ports
+      - places-app
+      - places-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  places-module:
+    mayDependOn:
+      - places-domain
+      - places-ports
+      - places-app
+      - places-adapters
+      - places-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  places-test:
+    anyProjectDeps: true
+  equipment-domain:
+    mayDependOn:
+      - equipment-domain
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - pkg
+  equipment-ports:
+    mayDependOn:
+      - equipment-domain
+      - equipment-ports
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  equipment-app:
+    mayDependOn:
+      - equipment-domain
+      - equipment-ports
+      - equipment-app
+      - equipment-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  equipment-adapters:
+    mayDependOn:
+      - equipment-domain
+      - equipment-ports
+      - equipment-adapters
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  equipment-jobs:
+    mayDependOn:
+      - equipment-domain
+      - equipment-ports
+      - equipment-app
+      - equipment-adapters
+      - equipment-jobs
+      - equipment-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+      - legacy-core
+  equipment-contracts:
+    mayDependOn:
+      - equipment-domain
+      - equipment-ports
+      - equipment-app
+      - equipment-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  equipment-module:
+    mayDependOn:
+      - equipment-domain
+      - equipment-ports
+      - equipment-app
+      - equipment-adapters
+      - equipment-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  equipment-test:
+    anyProjectDeps: true
+  parties-domain:
+    mayDependOn:
+      - parties-domain
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - pkg
+  parties-ports:
+    mayDependOn:
+      - parties-domain
+      - parties-ports
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  parties-app:
+    mayDependOn:
+      - parties-domain
+      - parties-ports
+      - parties-app
+      - parties-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  parties-adapters:
+    mayDependOn:
+      - parties-domain
+      - parties-ports
+      - parties-adapters
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  parties-jobs:
+    mayDependOn:
+      - parties-domain
+      - parties-ports
+      - parties-app
+      - parties-adapters
+      - parties-jobs
+      - parties-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+      - legacy-core
+  parties-contracts:
+    mayDependOn:
+      - parties-domain
+      - parties-ports
+      - parties-app
+      - parties-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  parties-module:
+    mayDependOn:
+      - parties-domain
+      - parties-ports
+      - parties-app
+      - parties-adapters
+      - parties-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  parties-test:
+    anyProjectDeps: true
+  workforce-domain:
+    mayDependOn:
+      - workforce-domain
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - pkg
+  workforce-ports:
+    mayDependOn:
+      - workforce-domain
+      - workforce-ports
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  workforce-app:
+    mayDependOn:
+      - workforce-domain
+      - workforce-ports
+      - workforce-app
+      - workforce-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  workforce-adapters:
+    mayDependOn:
+      - workforce-domain
+      - workforce-ports
+      - workforce-adapters
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  workforce-jobs:
+    mayDependOn:
+      - workforce-domain
+      - workforce-ports
+      - workforce-app
+      - workforce-adapters
+      - workforce-jobs
+      - workforce-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+      - legacy-core
+  workforce-contracts:
+    mayDependOn:
+      - workforce-domain
+      - workforce-ports
+      - workforce-app
+      - workforce-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  workforce-module:
+    mayDependOn:
+      - workforce-domain
+      - workforce-ports
+      - workforce-app
+      - workforce-adapters
+      - workforce-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  workforce-test:
+    anyProjectDeps: true
+  documents-domain:
+    mayDependOn:
+      - documents-domain
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - pkg
+  documents-ports:
+    mayDependOn:
+      - documents-domain
+      - documents-ports
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  documents-app:
+    mayDependOn:
+      - documents-domain
+      - documents-ports
+      - documents-app
+      - documents-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  documents-adapters:
+    mayDependOn:
+      - documents-domain
+      - documents-ports
+      - documents-adapters
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  documents-jobs:
+    mayDependOn:
+      - documents-domain
+      - documents-ports
+      - documents-app
+      - documents-adapters
+      - documents-jobs
+      - documents-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+      - legacy-core
+  documents-contracts:
+    mayDependOn:
+      - documents-domain
+      - documents-ports
+      - documents-app
+      - documents-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  documents-module:
+    mayDependOn:
+      - documents-domain
+      - documents-ports
+      - documents-app
+      - documents-adapters
+      - documents-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  documents-test:
+    anyProjectDeps: true
+  rating-domain:
+    mayDependOn:
+      - rating-domain
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - pkg
+  rating-ports:
+    mayDependOn:
+      - rating-domain
+      - rating-ports
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  rating-app:
+    mayDependOn:
+      - rating-domain
+      - rating-ports
+      - rating-app
+      - rating-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  rating-adapters:
+    mayDependOn:
+      - rating-domain
+      - rating-ports
+      - rating-adapters
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  rating-jobs:
+    mayDependOn:
+      - rating-domain
+      - rating-ports
+      - rating-app
+      - rating-adapters
+      - rating-jobs
+      - rating-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+      - legacy-core
+  rating-contracts:
+    mayDependOn:
+      - rating-domain
+      - rating-ports
+      - rating-app
+      - rating-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  rating-module:
+    mayDependOn:
+      - rating-domain
+      - rating-ports
+      - rating-app
+      - rating-adapters
+      - rating-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  rating-test:
+    anyProjectDeps: true
+  operations-domain:
+    mayDependOn:
+      - operations-domain
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - pkg
+  operations-ports:
+    mayDependOn:
+      - operations-domain
+      - operations-ports
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  operations-app:
+    mayDependOn:
+      - operations-domain
+      - operations-ports
+      - operations-app
+      - operations-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - rating-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  operations-adapters:
+    mayDependOn:
+      - operations-domain
+      - operations-ports
+      - operations-adapters
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  operations-jobs:
+    mayDependOn:
+      - operations-domain
+      - operations-ports
+      - operations-app
+      - operations-adapters
+      - operations-jobs
+      - operations-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - rating-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+      - legacy-core
+  operations-contracts:
+    mayDependOn:
+      - operations-domain
+      - operations-ports
+      - operations-app
+      - operations-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - rating-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  operations-module:
+    mayDependOn:
+      - operations-domain
+      - operations-ports
+      - operations-app
+      - operations-adapters
+      - operations-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  operations-test:
+    anyProjectDeps: true
+  edi-domain:
+    mayDependOn:
+      - edi-domain
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - pkg
+  edi-ports:
+    mayDependOn:
+      - edi-domain
+      - edi-ports
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  edi-app:
+    mayDependOn:
+      - edi-domain
+      - edi-ports
+      - edi-app
+      - edi-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - rating-contracts
+      - operations-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  edi-adapters:
+    mayDependOn:
+      - edi-domain
+      - edi-ports
+      - edi-adapters
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  edi-jobs:
+    mayDependOn:
+      - edi-domain
+      - edi-ports
+      - edi-app
+      - edi-adapters
+      - edi-jobs
+      - edi-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - rating-contracts
+      - operations-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+      - legacy-core
+  edi-contracts:
+    mayDependOn:
+      - edi-domain
+      - edi-ports
+      - edi-app
+      - edi-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - rating-contracts
+      - operations-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  edi-module:
+    mayDependOn:
+      - edi-domain
+      - edi-ports
+      - edi-app
+      - edi-adapters
+      - edi-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  edi-test:
+    anyProjectDeps: true
+  accounting-domain:
+    mayDependOn:
+      - accounting-domain
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - pkg
+  accounting-ports:
+    mayDependOn:
+      - accounting-domain
+      - accounting-ports
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  accounting-app:
+    mayDependOn:
+      - accounting-domain
+      - accounting-ports
+      - accounting-app
+      - accounting-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - rating-contracts
+      - operations-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  accounting-adapters:
+    mayDependOn:
+      - accounting-domain
+      - accounting-ports
+      - accounting-adapters
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  accounting-jobs:
+    mayDependOn:
+      - accounting-domain
+      - accounting-ports
+      - accounting-app
+      - accounting-adapters
+      - accounting-jobs
+      - accounting-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - rating-contracts
+      - operations-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+      - legacy-core
+  accounting-contracts:
+    mayDependOn:
+      - accounting-domain
+      - accounting-ports
+      - accounting-app
+      - accounting-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - rating-contracts
+      - operations-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  accounting-module:
+    mayDependOn:
+      - accounting-domain
+      - accounting-ports
+      - accounting-app
+      - accounting-adapters
+      - accounting-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  accounting-test:
+    anyProjectDeps: true
+  billing-domain:
+    mayDependOn:
+      - billing-domain
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - pkg
+  billing-ports:
+    mayDependOn:
+      - billing-domain
+      - billing-ports
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - edi-ports
+      - accounting-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  billing-app:
+    mayDependOn:
+      - billing-domain
+      - billing-ports
+      - billing-app
+      - billing-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - edi-ports
+      - accounting-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - rating-contracts
+      - operations-contracts
+      - edi-contracts
+      - accounting-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  billing-adapters:
+    mayDependOn:
+      - billing-domain
+      - billing-ports
+      - billing-adapters
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - edi-ports
+      - accounting-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  billing-jobs:
+    mayDependOn:
+      - billing-domain
+      - billing-ports
+      - billing-app
+      - billing-adapters
+      - billing-jobs
+      - billing-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - edi-ports
+      - accounting-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - rating-contracts
+      - operations-contracts
+      - edi-contracts
+      - accounting-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+      - legacy-core
+  billing-contracts:
+    mayDependOn:
+      - billing-domain
+      - billing-ports
+      - billing-app
+      - billing-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - edi-ports
+      - accounting-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - rating-contracts
+      - operations-contracts
+      - edi-contracts
+      - accounting-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  billing-module:
+    mayDependOn:
+      - billing-domain
+      - billing-ports
+      - billing-app
+      - billing-adapters
+      - billing-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - edi-ports
+      - accounting-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  billing-test:
+    anyProjectDeps: true
+  settlement-domain:
+    mayDependOn:
+      - settlement-domain
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - pkg
+  settlement-ports:
+    mayDependOn:
+      - settlement-domain
+      - settlement-ports
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - edi-ports
+      - accounting-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  settlement-app:
+    mayDependOn:
+      - settlement-domain
+      - settlement-ports
+      - settlement-app
+      - settlement-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - edi-ports
+      - accounting-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - rating-contracts
+      - operations-contracts
+      - edi-contracts
+      - accounting-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  settlement-adapters:
+    mayDependOn:
+      - settlement-domain
+      - settlement-ports
+      - settlement-adapters
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - edi-ports
+      - accounting-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  settlement-jobs:
+    mayDependOn:
+      - settlement-domain
+      - settlement-ports
+      - settlement-app
+      - settlement-adapters
+      - settlement-jobs
+      - settlement-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - edi-ports
+      - accounting-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - rating-contracts
+      - operations-contracts
+      - edi-contracts
+      - accounting-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+      - legacy-core
+  settlement-contracts:
+    mayDependOn:
+      - settlement-domain
+      - settlement-ports
+      - settlement-app
+      - settlement-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - edi-ports
+      - accounting-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - rating-contracts
+      - operations-contracts
+      - edi-contracts
+      - accounting-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  settlement-module:
+    mayDependOn:
+      - settlement-domain
+      - settlement-ports
+      - settlement-app
+      - settlement-adapters
+      - settlement-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - edi-ports
+      - accounting-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  settlement-test:
+    anyProjectDeps: true
+  agent-domain:
+    mayDependOn:
+      - agent-domain
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - billing-domain
+      - settlement-domain
+      - pkg
+  agent-ports:
+    mayDependOn:
+      - agent-domain
+      - agent-ports
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - billing-domain
+      - settlement-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - edi-ports
+      - accounting-ports
+      - billing-ports
+      - settlement-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  agent-app:
+    mayDependOn:
+      - agent-domain
+      - agent-ports
+      - agent-app
+      - agent-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - billing-domain
+      - settlement-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - edi-ports
+      - accounting-ports
+      - billing-ports
+      - settlement-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - rating-contracts
+      - operations-contracts
+      - edi-contracts
+      - accounting-contracts
+      - billing-contracts
+      - settlement-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  agent-adapters:
+    mayDependOn:
+      - agent-domain
+      - agent-ports
+      - agent-adapters
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - billing-domain
+      - settlement-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - edi-ports
+      - accounting-ports
+      - billing-ports
+      - settlement-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  agent-jobs:
+    mayDependOn:
+      - agent-domain
+      - agent-ports
+      - agent-app
+      - agent-adapters
+      - agent-jobs
+      - agent-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - billing-domain
+      - settlement-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - edi-ports
+      - accounting-ports
+      - billing-ports
+      - settlement-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - rating-contracts
+      - operations-contracts
+      - edi-contracts
+      - accounting-contracts
+      - billing-contracts
+      - settlement-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+      - legacy-core
+  agent-contracts:
+    mayDependOn:
+      - agent-domain
+      - agent-ports
+      - agent-app
+      - agent-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - billing-domain
+      - settlement-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - edi-ports
+      - accounting-ports
+      - billing-ports
+      - settlement-ports
+      - kernel-contracts
+      - identity-contracts
+      - workspace-contracts
+      - reference-contracts
+      - places-contracts
+      - equipment-contracts
+      - parties-contracts
+      - workforce-contracts
+      - documents-contracts
+      - rating-contracts
+      - operations-contracts
+      - edi-contracts
+      - accounting-contracts
+      - billing-contracts
+      - settlement-contracts
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  agent-module:
+    mayDependOn:
+      - agent-domain
+      - agent-ports
+      - agent-app
+      - agent-adapters
+      - agent-contracts
+      - kernel-domain
+      - identity-domain
+      - workspace-domain
+      - reference-domain
+      - places-domain
+      - equipment-domain
+      - parties-domain
+      - workforce-domain
+      - documents-domain
+      - rating-domain
+      - operations-domain
+      - edi-domain
+      - accounting-domain
+      - billing-domain
+      - settlement-domain
+      - kernel-ports
+      - identity-ports
+      - workspace-ports
+      - reference-ports
+      - places-ports
+      - equipment-ports
+      - parties-ports
+      - workforce-ports
+      - documents-ports
+      - rating-ports
+      - operations-ports
+      - edi-ports
+      - accounting-ports
+      - billing-ports
+      - settlement-ports
+      - pkg
+      - infrastructure
+      - legacy-contracts
+  agent-test:
+    anyProjectDeps: true
+  api:
+    mayDependOn:
+      - kernel-domain
+      - kernel-ports
+      - kernel-app
+      - kernel-contracts
+      - identity-domain
+      - identity-ports
+      - identity-app
+      - identity-contracts
+      - workspace-domain
+      - workspace-ports
+      - workspace-app
+      - workspace-contracts
+      - reference-domain
+      - reference-ports
+      - reference-app
+      - reference-contracts
+      - places-domain
+      - places-ports
+      - places-app
+      - places-contracts
+      - equipment-domain
+      - equipment-ports
+      - equipment-app
+      - equipment-contracts
+      - parties-domain
+      - parties-ports
+      - parties-app
+      - parties-contracts
+      - workforce-domain
+      - workforce-ports
+      - workforce-app
+      - workforce-contracts
+      - documents-domain
+      - documents-ports
+      - documents-app
+      - documents-contracts
+      - rating-domain
+      - rating-ports
+      - rating-app
+      - rating-contracts
+      - operations-domain
+      - operations-ports
+      - operations-app
+      - operations-contracts
+      - edi-domain
+      - edi-ports
+      - edi-app
+      - edi-contracts
+      - accounting-domain
+      - accounting-ports
+      - accounting-app
+      - accounting-contracts
+      - billing-domain
+      - billing-ports
+      - billing-app
+      - billing-contracts
+      - settlement-domain
+      - settlement-ports
+      - settlement-app
+      - settlement-contracts
+      - agent-domain
+      - agent-ports
+      - agent-app
+      - agent-contracts
+      - api
+      - pkg
+      - infrastructure
+      - legacy-core
+      - legacy-contracts
+  bootstrap:
+    anyProjectDeps: true
+  cmd:
+    anyProjectDeps: true
+  testutil:
+    anyProjectDeps: true
+  infrastructure:
+    mayDependOn:
+      - kernel-domain
+      - kernel-ports
+      - kernel-contracts
+      - identity-domain
+      - identity-ports
+      - identity-contracts
+      - workspace-domain
+      - workspace-ports
+      - workspace-contracts
+      - reference-domain
+      - reference-ports
+      - reference-contracts
+      - places-domain
+      - places-ports
+      - places-contracts
+      - equipment-domain
+      - equipment-ports
+      - equipment-contracts
+      - parties-domain
+      - parties-ports
+      - parties-contracts
+      - workforce-domain
+      - workforce-ports
+      - workforce-contracts
+      - documents-domain
+      - documents-ports
+      - documents-contracts
+      - rating-domain
+      - rating-ports
+      - rating-contracts
+      - operations-domain
+      - operations-ports
+      - operations-contracts
+      - edi-domain
+      - edi-ports
+      - edi-contracts
+      - accounting-domain
+      - accounting-ports
+      - accounting-contracts
+      - billing-domain
+      - billing-ports
+      - billing-contracts
+      - settlement-domain
+      - settlement-ports
+      - settlement-contracts
+      - agent-domain
+      - agent-ports
+      - agent-contracts
+      - infrastructure
+      - pkg
+      - legacy-contracts
+  legacy-core:
+    anyProjectDeps: true
+  legacy-contracts:
+    mayDependOn:
+      - kernel-domain
+      - kernel-ports
+      - kernel-app
+      - kernel-adapters
+      - kernel-jobs
+      - kernel-contracts
+      - kernel-module
+      - kernel-test
+      - identity-domain
+      - identity-ports
+      - identity-app
+      - identity-adapters
+      - identity-jobs
+      - identity-contracts
+      - identity-module
+      - identity-test
+      - workspace-domain
+      - workspace-ports
+      - workspace-app
+      - workspace-adapters
+      - workspace-jobs
+      - workspace-contracts
+      - workspace-module
+      - workspace-test
+      - reference-domain
+      - reference-ports
+      - reference-app
+      - reference-adapters
+      - reference-jobs
+      - reference-contracts
+      - reference-module
+      - reference-test
+      - places-domain
+      - places-ports
+      - places-app
+      - places-adapters
+      - places-jobs
+      - places-contracts
+      - places-module
+      - places-test
+      - equipment-domain
+      - equipment-ports
+      - equipment-app
+      - equipment-adapters
+      - equipment-jobs
+      - equipment-contracts
+      - equipment-module
+      - equipment-test
+      - parties-domain
+      - parties-ports
+      - parties-app
+      - parties-adapters
+      - parties-jobs
+      - parties-contracts
+      - parties-module
+      - parties-test
+      - workforce-domain
+      - workforce-ports
+      - workforce-app
+      - workforce-adapters
+      - workforce-jobs
+      - workforce-contracts
+      - workforce-module
+      - workforce-test
+      - documents-domain
+      - documents-ports
+      - documents-app
+      - documents-adapters
+      - documents-jobs
+      - documents-contracts
+      - documents-module
+      - documents-test
+      - rating-domain
+      - rating-ports
+      - rating-app
+      - rating-adapters
+      - rating-jobs
+      - rating-contracts
+      - rating-module
+      - rating-test
+      - operations-domain
+      - operations-ports
+      - operations-app
+      - operations-adapters
+      - operations-jobs
+      - operations-contracts
+      - operations-module
+      - operations-test
+      - edi-domain
+      - edi-ports
+      - edi-app
+      - edi-adapters
+      - edi-jobs
+      - edi-contracts
+      - edi-module
+      - edi-test
+      - accounting-domain
+      - accounting-ports
+      - accounting-app
+      - accounting-adapters
+      - accounting-jobs
+      - accounting-contracts
+      - accounting-module
+      - accounting-test
+      - billing-domain
+      - billing-ports
+      - billing-app
+      - billing-adapters
+      - billing-jobs
+      - billing-contracts
+      - billing-module
+      - billing-test
+      - settlement-domain
+      - settlement-ports
+      - settlement-app
+      - settlement-adapters
+      - settlement-jobs
+      - settlement-contracts
+      - settlement-module
+      - settlement-test
+      - agent-domain
+      - agent-ports
+      - agent-app
+      - agent-adapters
+      - agent-jobs
+      - agent-contracts
+      - agent-module
+      - agent-test
+      - infrastructure
+      - legacy-core
+      - legacy-contracts
+      - pkg
+  deskbench:
+    anyProjectDeps: true
+  scripts:
+    anyProjectDeps: true
+  pkg:
+    mayDependOn:
+      - pkg

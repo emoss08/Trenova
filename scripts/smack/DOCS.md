@@ -6,7 +6,7 @@ Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md-->
 
 SMACK is a Bash load-testing utility for Trenova API endpoints. It now authenticates with an API key instead of session cookies.
 
-The built-in scenario list is intentionally limited to routes that align with the runtime API-key policy in `services/tms/internal/core/services/apikeyservice/policy.go`.
+The built-in scenario list is intentionally limited to routes that align with the runtime API-key policy in `services/tms/internal/modules/identity/app/apikeyservice/policy.go`.
 
 ## Authentication
 
