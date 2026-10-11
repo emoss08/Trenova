@@ -375,15 +375,34 @@ less than the CPU count. It refuses to probe a file with uncommitted changes and
 `git checkout`, `git restore` or `git stash`; an interrupted run restores the probed file from
 its backup on exit.
 
+## Agent tools
+
+The action tools live in one package per family under
+`internal/modules/agent/app/agenttools/<family>tools` (`invoicetools`, `workforcetools`,
+`masterdatatools`, ...), named with a `tools` suffix so they never collide with the domain
+package of the same name. Code that several families use is in `agenttools/common`; test
+helpers that several families' tests share are in `agenttools/agenttoolstest`, a test-only
+package. `agenttoolservice` keeps the public API: `Module`, `ToolProviders()` and the registry,
+which collects every tool from the `agent_tools` fx value group. `ToolProviders()` lists the
+providers in their original order, because the order of the group is the order of the
+catalog the model is shown.
+
+A family package may import `common` and other families as long as the graph stays acyclic;
+nothing imports `agenttoolservice` except its callers outside the tools. A test file lives in
+the package it tests unless a package it imports depends on that package, in which case it
+lives in `agenttoolservice`. Fields that had to be exported across packages carry
+`json:"-"`, so the split changed no tool's name, schema, policy, descriptor or preview.
+
+To add a tool: put it in its family package, export its provider, and add the provider to
+the family's place in `ToolProviders()` (or the family's own provider list, such as
+`operationsToolProviders()`).
+
 ## Measured results
 
 <!-- numbers filled in after the final benchmark -->
 
 ## Not done yet
 
-- `agenttoolservice` (`internal/modules/agent/app/agenttoolservice`) was not split into
-  families. It needs a redesign of the shared tool base and test helpers first: a mechanical
-  split put half its declarations in a shared toolkit and left a nine-family import cycle.
 - 98 packages remain in the `unassigned` list of `module-map.yml` (70 services, 15
   repositories, 13 jobs packages), each with the reason it could not be placed. They still live
   in `internal/core/services`, `internal/infrastructure/postgres/repositories` and

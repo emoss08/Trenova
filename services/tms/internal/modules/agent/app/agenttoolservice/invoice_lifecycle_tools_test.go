@@ -5,14 +5,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,7 +26,7 @@ import (
 )
 
 type fakeInvoiceLifecycle struct {
-	guard *writeGuard
+	guard *agenttoolstest.WriteGuard
 
 	draftPlan  *invoiceports.InvoiceDraftUpdatePreview
 	updated    *invoiceports.UpdateInvoiceDraftRequest
@@ -48,7 +52,7 @@ func (f *fakeInvoiceLifecycle) UpdateDraft(
 	req *invoiceports.UpdateInvoiceDraftRequest,
 	_ *permissionports.RequestActor,
 ) (*invoice.Invoice, error) {
-	if err := f.guard.write(); err != nil {
+	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.updated = req
@@ -68,7 +72,7 @@ func (f *fakeInvoiceLifecycle) GeneratePDF(
 	req *invoiceports.InvoicePreviewRequest,
 	_ *permissionports.RequestActor,
 ) (*invoiceports.GenerateInvoicePDFResult, error) {
-	if err := f.guard.write(); err != nil {
+	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.generated = req
@@ -113,7 +117,7 @@ func (f *fakeInvoiceLifecycle) CreateInvoicesFromOrder(
 	req *invoiceports.CreateInvoiceFromOrderRequest,
 	_ *permissionports.RequestActor,
 ) (*invoiceports.CreateInvoicesResult, error) {
-	if err := f.guard.write(); err != nil {
+	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.fromOrder = req
@@ -126,7 +130,7 @@ func (f *fakeInvoiceLifecycle) CreateInvoicesFromShipments(
 	req *invoiceports.CreateInvoiceFromShipmentsRequest,
 	_ *permissionports.RequestActor,
 ) (*invoiceports.CreateInvoicesResult, error) {
-	if err := f.guard.write(); err != nil {
+	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.fromShips = req
@@ -139,7 +143,7 @@ func (f *fakeInvoiceLifecycle) CreateMemo(
 	req *invoiceports.CreateMemoRequest,
 	_ *permissionports.RequestActor,
 ) (*invoice.Invoice, error) {
-	if err := f.guard.write(); err != nil {
+	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.memo = req
@@ -162,7 +166,7 @@ func (f *fakeInvoiceLifecycle) VoidInvoice(
 	req *invoiceports.VoidInvoiceRequest,
 	_ *permissionports.RequestActor,
 ) (*invoiceports.VoidInvoiceResult, error) {
-	if err := f.guard.write(); err != nil {
+	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.voided = req
@@ -183,7 +187,7 @@ func (f *fakeInvoiceLifecycle) SendEDI(
 	req *invoiceports.SendInvoiceEDIRequest,
 	_ *permissionports.RequestActor,
 ) (*invoiceports.InvoiceEDISendResult, error) {
-	if err := f.guard.write(); err != nil {
+	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.ediSent = req
@@ -200,7 +204,7 @@ func (f *fakeInvoiceLifecycle) PreviewSendEDI(
 }
 
 func lifecycleDraft(number string) *invoice.Invoice {
-	inv := receivableInvoice(number, 165000, 0)
+	inv := agenttoolstest.ReceivableInvoice(number, 165000, 0)
 	inv.Status = invoice.StatusDraft
 	inv.BillToName = "Acme Foods"
 	inv.SubtotalAmount = decimal.RequireFromString("1500.00")
@@ -208,13 +212,6 @@ func lifecycleDraft(number string) *invoice.Invoice {
 	inv.TotalAmount = decimal.RequireFromString("1650.00")
 
 	return inv
-}
-
-func approved(params agentports.ToolExecuteParams) agentports.ToolExecuteParams {
-	params.ProposalID = pulid.MustNew("ap_")
-	params.IdempotencyKey = params.ProposalID.String()
-
-	return params
 }
 
 func TestUpdateInvoiceDraft_PreviewsTheChangeAndProposesNewRecipients(t *testing.T) {
@@ -225,34 +222,34 @@ func TestUpdateInvoiceDraft_PreviewsTheChangeAndProposesNewRecipients(t *testing
 	after.Memo = "Detention approved by the shipper"
 	after.EmailToSnapshot = []string{"ap@acme.test"}
 	docID := pulid.MustNew("doc_")
-	fake := &fakeInvoiceLifecycle{guard: &writeGuard{}, draftPlan: &invoiceports.InvoiceDraftUpdatePreview{
+	fake := &fakeInvoiceLifecycle{guard: &agenttoolstest.WriteGuard{}, draftPlan: &invoiceports.InvoiceDraftUpdatePreview{
 		Before:           before,
 		After:            &after,
 		AttachmentsAfter: []pulid.ID{docID},
 	}}
-	tool := newUpdateInvoiceDraftTool(fake)
-	params := executeParams(map[string]any{
-		paramInvoiceID:          before.ID.String(),
+	tool := invoicetools.NewUpdateInvoiceDraftTool(fake)
+	params := agenttoolstest.ExecuteParams(map[string]any{
+		common.ParamInvoiceID:   before.ID.String(),
 		"memo":                  "Detention approved by the shipper",
 		"emailTo":               []any{"ap@acme.test"},
 		"emailCc":               []any{},
 		"attachmentDocumentIds": []any{docID.String()},
 	})
 
-	preview := previewWithoutWrites(t, fake.guard, func() (*agent.ToolPreview, error) {
+	preview := agenttoolstest.PreviewWithoutWrites(t, fake.guard, func() (*agent.ToolPreview, error) {
 		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would update draft Invoice INV-5001")
 	assert.Contains(t, preview.Summary, "1 attachment")
-	change := previewChange(t, preview, 0)
+	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, permission.ResourceInvoice, change.Resource)
 	assert.Equal(t, before.ID, change.EntityID)
-	assert.Equal(t, "Detention approved by the shipper", fieldByPath(t, change, "memo").After)
+	assert.Equal(t, "Detention approved by the shipper", agenttoolstest.FieldByPath(t, change, "memo").After)
 
 	policy := tool.Policy()
 	require.NotNil(t, policy.Condition)
 	assert.Equal(t, agent.TierPropose, policy.Condition.Limit(t.Context(), params))
-	quiet := executeParams(map[string]any{paramInvoiceID: before.ID.String(), "memo": "x"})
+	quiet := agenttoolstest.ExecuteParams(map[string]any{common.ParamInvoiceID: before.ID.String(), "memo": "x"})
 	assert.Equal(t, agent.TierActWithApproval, policy.Condition.Limit(t.Context(), quiet))
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -272,15 +269,15 @@ func TestUpdateInvoiceDraft_PreviewsTheChangeAndProposesNewRecipients(t *testing
 func TestUpdateInvoiceDraft_RefusesACallThatChangesNothing(t *testing.T) {
 	t.Parallel()
 
-	tool := newUpdateInvoiceDraftTool(&fakeInvoiceLifecycle{})
-	err := tool.(agentports.ToolValidator).Validate(t.Context(), executeParams(map[string]any{
-		paramInvoiceID: pulid.MustNew("inv_").String(),
+	tool := invoicetools.NewUpdateInvoiceDraftTool(&fakeInvoiceLifecycle{})
+	err := tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+		common.ParamInvoiceID: pulid.MustNew("inv_").String(),
 	}))
-	require.ErrorIs(t, err, errNothingToUpdate)
+	require.ErrorIs(t, err, invoicetools.ErrNothingToUpdate)
 
-	err = tool.(agentports.ToolValidator).Validate(t.Context(), executeParams(map[string]any{
-		paramInvoiceID: pulid.MustNew("inv_").String(),
-		"emailTo":      []any{"not an address"},
+	err = tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+		common.ParamInvoiceID: pulid.MustNew("inv_").String(),
+		"emailTo":             []any{"not an address"},
 	}))
 	require.Error(t, err)
 }
@@ -290,13 +287,13 @@ func TestGenerateInvoicePDF_RendersButRefusesWhenItWouldEmailTheCustomer(t *test
 
 	inv := lifecycleDraft("INV-5002")
 	fake := &fakeInvoiceLifecycle{
-		guard:   &writeGuard{},
+		guard:   &agenttoolstest.WriteGuard{},
 		pdfPlan: &invoiceports.InvoicePDFGenerationPlan{Invoice: inv},
 	}
-	tool := newGenerateInvoicePDFTool(fake)
-	params := executeParams(map[string]any{paramInvoiceID: inv.ID.String()})
+	tool := invoicetools.NewGenerateInvoicePDFTool(fake)
+	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamInvoiceID: inv.ID.String()})
 
-	preview := previewWithoutWrites(t, fake.guard, func() (*agent.ToolPreview, error) {
+	preview := agenttoolstest.PreviewWithoutWrites(t, fake.guard, func() (*agent.ToolPreview, error) {
 		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would render the PDF of Invoice INV-5002")
@@ -308,11 +305,11 @@ func TestGenerateInvoicePDF_RendersButRefusesWhenItWouldEmailTheCustomer(t *test
 	fake.pdfPlan.AutoSends = true
 	fake.generated = nil
 	err := tool.(agentports.ToolValidator).Validate(t.Context(), params)
-	require.ErrorIs(t, err, errPDFWouldSend)
+	require.ErrorIs(t, err, invoicetools.ErrPDFWouldSend)
 	preview, err = tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	requireWarning(t, preview, agent.PreviewWarningWouldFail)
-	require.ErrorIs(t, tool.Execute(t.Context(), params), errPDFWouldSend)
+	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), invoicetools.ErrPDFWouldSend)
 	assert.Nil(t, fake.generated)
 }
 
@@ -323,49 +320,49 @@ func TestCreateInvoice_PreviewsEachDraftAndOnlyAPersonCreatesThem(t *testing.T) 
 	consignee := lifecycleDraft("")
 	consignee.BillToName = "Beta Farms"
 	consignee.IsSplitBill = true
-	fake := &fakeInvoiceLifecycle{guard: &writeGuard{}, createPlan: &invoiceports.CreateInvoicesPlan{
+	fake := &fakeInvoiceLifecycle{guard: &agenttoolstest.WriteGuard{}, createPlan: &invoiceports.CreateInvoicesPlan{
 		Drafts:       []*invoice.Invoice{shipper, consignee},
 		PrimaryIndex: 1,
 	}}
-	tool := newCreateInvoiceTool(fake)
+	tool := invoicetools.NewCreateInvoiceTool(fake)
 	shipmentID := pulid.MustNew("shp_")
-	params := executeParams(map[string]any{
-		paramShipmentIDs:  []any{shipmentID.String()},
-		paramOffCycleNote: "Customer asked for this load on its own",
+	params := agenttoolstest.ExecuteParams(map[string]any{
+		common.ParamShipmentIDs:        []any{shipmentID.String()},
+		invoicetools.ParamOffCycleNote: "Customer asked for this load on its own",
 	})
 
-	preview := previewWithoutWrites(t, fake.guard, func() (*agent.ToolPreview, error) {
+	preview := agenttoolstest.PreviewWithoutWrites(t, fake.guard, func() (*agent.ToolPreview, error) {
 		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would create 2 draft invoices")
 	assert.Contains(t, preview.Summary, "Acme Foods")
 	assert.Contains(t, preview.Summary, "Beta Farms")
 	require.Len(t, preview.Changes, 2)
-	assert.Equal(t, agent.PreviewOperationCreate, previewChange(t, preview, 0).Operation)
-	require.NotNil(t, previewChange(t, preview, 1).Money)
+	assert.Equal(t, agent.PreviewOperationCreate, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	require.NotNil(t, agenttoolstest.PreviewChange(t, preview, 1).Money)
 	require.NotNil(t, fake.planned)
 	assert.Equal(t, []pulid.ID{shipmentID}, fake.planned.ShipmentIDs)
 	assert.Equal(t, "Customer asked for this load on its own", fake.planned.OffCycleReason)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
 	result, err := tool.(agentports.ToolResultReporter).
-		ExecuteWithResult(t.Context(), approved(params))
+		ExecuteWithResult(t.Context(), agenttoolstest.Approved(params))
 	require.NoError(t, err)
 	require.NotNil(t, fake.fromShips)
 	assert.Nil(t, fake.fromOrder)
 	require.NotNil(t, result.Record)
-	assert.Equal(t, invoiceRecordEntity, result.Record.EntityType)
+	assert.Equal(t, common.InvoiceRecordEntity, result.Record.EntityType)
 
 	orderID := pulid.MustNew("ord_")
-	byOrder := approved(executeParams(map[string]any{paramOrderID: orderID.String()}))
+	byOrder := agenttoolstest.Approved(agenttoolstest.ExecuteParams(map[string]any{common.ParamOrderID: orderID.String()}))
 	_, err = tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), byOrder)
 	require.NoError(t, err)
 	require.NotNil(t, fake.fromOrder)
 	assert.Equal(t, orderID, fake.fromOrder.OrderID)
 
-	both := executeParams(map[string]any{})
+	both := agenttoolstest.ExecuteParams(map[string]any{})
 	err = tool.(agentports.ToolValidator).Validate(t.Context(), both)
-	require.ErrorIs(t, err, errOrderOrShipments)
+	require.ErrorIs(t, err, invoicetools.ErrOrderOrShipments)
 }
 
 func TestCreateInvoiceMemo_PreviewsTheMemoAndNeverPostsIt(t *testing.T) {
@@ -376,30 +373,30 @@ func TestCreateInvoiceMemo_PreviewsTheMemoAndNeverPostsIt(t *testing.T) {
 	memo.Scope = invoice.ScopeMemo
 	memo.TotalAmount = decimal.RequireFromString("-75.50")
 	memo.TotalAmountMinor = -7550
-	fake := &fakeInvoiceLifecycle{guard: &writeGuard{}, memoPlan: memo}
-	tool := newCreateInvoiceMemoTool(fake)
+	fake := &fakeInvoiceLifecycle{guard: &agenttoolstest.WriteGuard{}, memoPlan: memo}
+	tool := invoicetools.NewCreateInvoiceMemoTool(fake)
 	customerID := pulid.MustNew("cus_")
-	params := executeParams(map[string]any{
-		paramCustomerID: customerID.String(),
-		"billType":      string(billingqueue.BillTypeCreditMemo),
-		paramReason:     "Goodwill credit after a late delivery",
-		"invoiceDate":   "2026-09-25",
+	params := agenttoolstest.ExecuteParams(map[string]any{
+		common.ParamCustomerID: customerID.String(),
+		"billType":             string(billingqueue.BillTypeCreditMemo),
+		common.ParamReason:     "Goodwill credit after a late delivery",
+		"invoiceDate":          "2026-09-25",
 		"lines": []any{
-			map[string]any{"description": "Late delivery goodwill", paramAmount: "50.00"},
-			map[string]any{"description": "Detention waived", paramAmount: "25.50", "quantity": "1"},
+			map[string]any{"description": "Late delivery goodwill", common.ParamAmount: "50.00"},
+			map[string]any{"description": "Detention waived", common.ParamAmount: "25.50", "quantity": "1"},
 		},
 	})
 
-	preview := previewWithoutWrites(t, fake.guard, func() (*agent.ToolPreview, error) {
+	preview := agenttoolstest.PreviewWithoutWrites(t, fake.guard, func() (*agent.ToolPreview, error) {
 		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would raise a draft CreditMemo to Acme Foods for -75.50 USD")
 	assert.Contains(t, preview.Summary, "post_invoice")
 	require.Len(t, preview.Changes, 1)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
 	result, err := tool.(agentports.ToolResultReporter).
-		ExecuteWithResult(t.Context(), approved(params))
+		ExecuteWithResult(t.Context(), agenttoolstest.Approved(params))
 	require.NoError(t, err)
 	require.NotNil(t, fake.memo)
 	assert.False(t, fake.memo.AutoPost)
@@ -411,11 +408,11 @@ func TestCreateInvoiceMemo_PreviewsTheMemoAndNeverPostsIt(t *testing.T) {
 	assert.True(t, fake.memo.Lines[1].Quantity.Equal(decimal.NewFromInt(1)))
 	assert.Equal(t, "CM-0042", result.IDs["number"])
 
-	bad := executeParams(map[string]any{
-		paramCustomerID: customerID.String(),
-		"billType":      string(billingqueue.BillTypeInvoice),
-		paramReason:     "x",
-		"lines":         []any{map[string]any{"description": "y", paramAmount: "1"}},
+	bad := agenttoolstest.ExecuteParams(map[string]any{
+		common.ParamCustomerID: customerID.String(),
+		"billType":             string(billingqueue.BillTypeInvoice),
+		common.ParamReason:     "x",
+		"lines":                []any{map[string]any{"description": "y", common.ParamAmount: "1"}},
 	})
 	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), bad))
 }
@@ -428,25 +425,25 @@ func TestVoidInvoice_PreviewsADraftVoidAndAPostedReversal(t *testing.T) {
 	after.Status = invoice.StatusVoided
 	after.VoidReason = "Billed the wrong customer"
 	after.VoidDisposition = invoice.VoidDispositionRebill
-	fake := &fakeInvoiceLifecycle{guard: &writeGuard{}, voidPlan: &invoiceports.InvoiceVoidPreview{
+	fake := &fakeInvoiceLifecycle{guard: &agenttoolstest.WriteGuard{}, voidPlan: &invoiceports.InvoiceVoidPreview{
 		Before: before, After: &after,
 	}}
-	tool := newVoidInvoiceTool(fake)
-	params := executeParams(map[string]any{
-		paramInvoiceID:       before.ID.String(),
-		paramReason:          "Billed the wrong customer",
-		paramVoidDisposition: string(invoice.VoidDispositionRebill),
+	tool := invoicetools.NewVoidInvoiceTool(fake)
+	params := agenttoolstest.ExecuteParams(map[string]any{
+		common.ParamInvoiceID:             before.ID.String(),
+		common.ParamReason:                "Billed the wrong customer",
+		invoicetools.ParamVoidDisposition: string(invoice.VoidDispositionRebill),
 	})
 
-	preview := previewWithoutWrites(t, fake.guard, func() (*agent.ToolPreview, error) {
+	preview := agenttoolstest.PreviewWithoutWrites(t, fake.guard, func() (*agent.ToolPreview, error) {
 		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would void draft Invoice INV-5003")
 	assert.Contains(t, preview.Summary, "back to the billing queue")
-	change := previewChange(t, preview, 0)
-	assert.Equal(t, "Voided", fieldByPath(t, change, fieldStatus).After)
+	change := agenttoolstest.PreviewChange(t, preview, 0)
+	assert.Equal(t, "Voided", agenttoolstest.FieldByPath(t, change, common.FieldStatus).After)
 
-	posted := receivableInvoice("INV-5004", 100000, 0)
+	posted := agenttoolstest.ReceivableInvoice("INV-5004", 100000, 0)
 	postedAfter := *posted
 	postedAfter.VoidDisposition = invoice.VoidDispositionDoNotRebill
 	fake.voidPlan = &invoiceports.InvoiceVoidPreview{
@@ -465,10 +462,10 @@ func TestVoidInvoice_PreviewsADraftVoidAndAPostedReversal(t *testing.T) {
 	assert.Contains(t, preview.Summary, "full reversal crediting 1000.00")
 	assert.Contains(t, preview.Summary, "waits for approval")
 	assert.Contains(t, preview.Summary, "canceled")
-	require.NotNil(t, previewChange(t, preview, 0).Money)
+	require.NotNil(t, agenttoolstest.PreviewChange(t, preview, 0).Money)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), ErrNeedsAPersonsApproval)
-	_, err = tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), approved(params))
+	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	_, err = tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), agenttoolstest.Approved(params))
 	require.NoError(t, err)
 	require.NotNil(t, fake.voided)
 	assert.Equal(t, invoice.VoidDispositionRebill, fake.voided.Disposition)
@@ -481,8 +478,8 @@ func TestVoidInvoice_PreviewsADraftVoidAndAPostedReversal(t *testing.T) {
 func TestSendInvoiceEDI_PreviewsThePartnerAndOnlyAPersonSends(t *testing.T) {
 	t.Parallel()
 
-	inv := receivableInvoice("INV-5005", 100000, 0)
-	fake := &fakeInvoiceLifecycle{guard: &writeGuard{}, ediPlan: &invoiceports.InvoiceEDISendPreview{
+	inv := agenttoolstest.ReceivableInvoice("INV-5005", 100000, 0)
+	fake := &fakeInvoiceLifecycle{guard: &agenttoolstest.WriteGuard{}, ediPlan: &invoiceports.InvoiceEDISendPreview{
 		Invoice: inv,
 		Plan: &invoiceports.InvoiceEDISendPlan{
 			Enabled:             true,
@@ -490,20 +487,20 @@ func TestSendInvoiceEDI_PreviewsThePartnerAndOnlyAPersonSends(t *testing.T) {
 			CommunicationMethod: "SFTP",
 		},
 	}}
-	tool := newSendInvoiceEDITool(fake)
-	params := executeParams(map[string]any{paramInvoiceID: inv.ID.String()})
+	tool := invoicetools.NewSendInvoiceEDITool(fake)
+	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamInvoiceID: inv.ID.String()})
 
-	preview := previewWithoutWrites(t, fake.guard, func() (*agent.ToolPreview, error) {
+	preview := agenttoolstest.PreviewWithoutWrites(t, fake.guard, func() (*agent.ToolPreview, error) {
 		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would send Invoice INV-5005 to Acme EDI as an EDI 210")
-	change := previewChange(t, preview, 0)
+	change := agenttoolstest.PreviewChange(t, preview, 0)
 	require.NotNil(t, change.Message)
 	assert.Equal(t, agent.MessageChannelEDI, change.Message.Channel)
 	assert.Equal(t, []string{"Acme EDI"}, change.Message.To)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), ErrNeedsAPersonsApproval)
-	require.NoError(t, tool.Execute(t.Context(), approved(params)))
+	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.Approved(params)))
 	require.NotNil(t, fake.ediSent)
 	assert.False(t, fake.ediSent.Force)
 
@@ -511,7 +508,7 @@ func TestSendInvoiceEDI_PreviewsThePartnerAndOnlyAPersonSends(t *testing.T) {
 		"This invoice has already been sent by EDI; resend it with force")
 	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	requireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
 
 	policy := tool.Policy()
 	assert.Equal(t, permission.OpSubmit, policy.Operation)
@@ -527,43 +524,43 @@ func TestReceivableTools_PinTheRecordTheyChange(t *testing.T) {
 		key      string
 		resource permission.Resource
 	}{
-		{newResolveInvoiceDisputeTool(nil), paramDisputeID, permission.ResourceInvoiceDispute},
-		{newWithdrawInvoiceDisputeTool(nil), paramDisputeID, permission.ResourceInvoiceDispute},
+		{invoicetools.NewResolveInvoiceDisputeTool(nil), common.ParamDisputeID, permission.ResourceInvoiceDispute},
+		{invoicetools.NewWithdrawInvoiceDisputeTool(nil), common.ParamDisputeID, permission.ResourceInvoiceDispute},
 		{
-			newApplyCustomerPaymentTool(nil),
-			paramCustomerPaymentID,
+			receivabletools.NewApplyCustomerPaymentTool(nil),
+			receivabletools.ParamCustomerPaymentID,
 			permission.ResourceCustomerPayment,
 		},
 		{
-			newReverseCustomerPaymentTool(nil),
-			paramCustomerPaymentID,
+			receivabletools.NewReverseCustomerPaymentTool(nil),
+			receivabletools.ParamCustomerPaymentID,
 			permission.ResourceCustomerPayment,
 		},
 		{
-			newUnapplyCreditMemoTool(nil),
-			paramCreditMemoApplicationID,
+			receivabletools.NewUnapplyCreditMemoTool(nil),
+			receivabletools.ParamCreditMemoApplicationID,
 			agentports.RecordCreditMemoApplication,
 		},
 		{
-			newApproveInvoiceAdjustmentTool(nil),
-			paramAdjustmentID,
+			invoicetools.NewApproveInvoiceAdjustmentTool(nil),
+			invoicetools.ParamAdjustmentID,
 			agentports.RecordInvoiceAdjustment,
 		},
 		{
-			newRejectInvoiceAdjustmentTool(nil),
-			paramAdjustmentID,
+			invoicetools.NewRejectInvoiceAdjustmentTool(nil),
+			invoicetools.ParamAdjustmentID,
 			agentports.RecordInvoiceAdjustment,
 		},
 		{
-			newSubmitInvoiceAdjustmentTool(nil),
-			paramDraftAdjustmentID,
+			invoicetools.NewSubmitInvoiceAdjustmentTool(nil),
+			invoicetools.ParamDraftAdjustmentID,
 			agentports.RecordInvoiceAdjustment,
 		},
-		{newCommitInvoiceRunTool(nil), paramInvoiceRunID, permission.ResourceInvoiceRun},
-		{newCancelInvoiceRunTool(nil), paramInvoiceRunID, permission.ResourceInvoiceRun},
-		{newUpdateInvoiceDraftTool(nil), paramInvoiceID, permission.ResourceInvoice},
-		{newVoidInvoiceTool(nil), paramInvoiceID, permission.ResourceInvoice},
-		{newSendInvoiceEDITool(nil), paramInvoiceID, permission.ResourceInvoice},
+		{invoicetools.NewCommitInvoiceRunTool(nil), invoicetools.ParamInvoiceRunID, permission.ResourceInvoiceRun},
+		{invoicetools.NewCancelInvoiceRunTool(nil), invoicetools.ParamInvoiceRunID, permission.ResourceInvoiceRun},
+		{invoicetools.NewUpdateInvoiceDraftTool(nil), common.ParamInvoiceID, permission.ResourceInvoice},
+		{invoicetools.NewVoidInvoiceTool(nil), common.ParamInvoiceID, permission.ResourceInvoice},
+		{invoicetools.NewSendInvoiceEDITool(nil), common.ParamInvoiceID, permission.ResourceInvoice},
 	}
 	for _, tc := range cases {
 		t.Run(tc.tool.Name(), func(t *testing.T) {

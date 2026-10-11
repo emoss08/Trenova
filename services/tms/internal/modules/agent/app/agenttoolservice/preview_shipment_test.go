@@ -4,14 +4,17 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -98,7 +101,7 @@ func TestUpdateShipmentPreview_IsThePatchExecuteSaves(t *testing.T) {
 
 	shipmentID := pulid.MustNew("shp_")
 	weight := int64(40000)
-	writer := &fakeShipmentWriter{existing: &shipment.Shipment{
+	writer := &agenttoolstest.FakeShipmentWriter{Existing: &shipment.Shipment{
 		ID:        shipmentID,
 		ProNumber: "SHP-2001",
 		BOL:       "BOL-1",
@@ -106,9 +109,9 @@ func TestUpdateShipmentPreview_IsThePatchExecuteSaves(t *testing.T) {
 		Version:   5,
 	}}
 	partners := &fakePartnerNotices{}
-	tool := newUpdateShipmentTool(writer, partners)
+	tool := operationstools.NewUpdateShipmentTool(writer, partners)
 	customerID := pulid.MustNew("cus_")
-	params := executeParams(map[string]any{
+	params := agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": shipmentID.String(),
 		"bol":        "BOL-2",
 		"weight":     42000,
@@ -117,38 +120,38 @@ func TestUpdateShipmentPreview_IsThePatchExecuteSaves(t *testing.T) {
 
 	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	require.Nil(t, writer.updated, "a preview must not save")
-	assert.Equal(t, "BOL-1", writer.existing.BOL, "a preview must not touch what it read")
+	require.Nil(t, writer.Updated, "a preview must not save")
+	assert.Equal(t, "BOL-1", writer.Existing.BOL, "a preview must not touch what it read")
 
-	change := findChange(t, preview, agent.PreviewOperationUpdate)
+	change := agenttoolstest.FindChange(t, preview, agent.PreviewOperationUpdate)
 	assert.Equal(t, permission.ResourceShipment, change.Resource)
 	assert.Equal(t, int64(5), *change.Version)
-	bol := findField(t, change, "bol")
+	bol := agenttoolstest.FindField(t, change, "bol")
 	assert.Equal(t, "BOL-1", bol.Before)
 	assert.Equal(t, "BOL-2", bol.After)
-	customer := findField(t, change, "customerId")
+	customer := agenttoolstest.FindField(t, change, "customerId")
 	require.NotNil(t, customer.AfterRef)
 	assert.Equal(t, permission.ResourceCustomer, customer.AfterRef.Resource)
 
-	send := findChange(t, preview, agent.PreviewOperationSend)
+	send := agenttoolstest.FindChange(t, preview, agent.PreviewOperationSend)
 	assert.Equal(t, agent.MessageChannelEDI, send.Message.Channel)
 	assert.Equal(t, []string{"Halstead Grocery EDI"}, send.Message.To)
 	assert.Equal(t, "Changed: bol.", send.Message.Body)
 	assert.Equal(t, "BOL-2", partners.updated.BOL)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
-	require.NotNil(t, writer.updated)
-	assert.Equal(t, bol.After, writer.updated.BOL)
+	require.NotNil(t, writer.Updated)
+	assert.Equal(t, bol.After, writer.Updated.BOL)
 	assert.Equal(t, customerID.String(), customer.After)
-	assert.Equal(t, int64(42000), *writer.updated.Weight)
+	assert.Equal(t, int64(42000), *writer.Updated.Weight)
 }
 
 func TestCancelShipmentPreview_ShowsWhoIsToldAndWhatIsWithdrawn(t *testing.T) {
 	t.Parallel()
 
 	shipments := &fakeShipmentService{}
-	tool := newCancelShipmentTool(shipments, &fakePartnerNotices{}, fakeLiveTenders{})
-	params := executeParams(map[string]any{
+	tool := shipmenttools.NewCancelShipmentTool(shipments, &fakePartnerNotices{}, fakeLiveTenders{})
+	params := agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId":   pulid.MustNew("shp_").String(),
 		"cancelReason": "Customer pulled the load",
 	})
@@ -159,10 +162,10 @@ func TestCancelShipmentPreview_ShowsWhoIsToldAndWhatIsWithdrawn(t *testing.T) {
 	assert.Contains(t, preview.Summary, "SHP-3001")
 	assert.Contains(t, preview.Summary, "1 live tender would be withdrawn")
 
-	status := findChange(t, preview, agent.PreviewOperationUpdate)
-	assert.Equal(t, "Canceled", findField(t, status, "status").After)
-	assert.Equal(t, "Customer pulled the load", findField(t, status, "cancelReason").After)
-	assert.True(t, findField(t, status, "canceledAt").Volatile)
+	status := agenttoolstest.FindChange(t, preview, agent.PreviewOperationUpdate)
+	assert.Equal(t, "Canceled", agenttoolstest.FindField(t, status, "status").After)
+	assert.Equal(t, "Customer pulled the load", agenttoolstest.FindField(t, status, "cancelReason").After)
+	assert.True(t, agenttoolstest.FindField(t, status, "canceledAt").Volatile)
 
 	var channels []agent.MessageChannel
 	for i := range preview.Changes {
@@ -172,7 +175,7 @@ func TestCancelShipmentPreview_ShowsWhoIsToldAndWhatIsWithdrawn(t *testing.T) {
 	}
 	assert.Equal(t, []agent.MessageChannel{agent.MessageChannelEDI, agent.MessageChannelEmail}, channels,
 		"the linked partner is sent the 214, and only the carrier holding an offer is told")
-	withdrawn := findChange(t, preview, agent.PreviewOperationArchive)
+	withdrawn := agenttoolstest.FindChange(t, preview, agent.PreviewOperationArchive)
 	assert.Equal(t, permission.ResourceTender, withdrawn.Resource)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -184,8 +187,8 @@ func TestAddShipmentCommentPreview_ShowsTheNoteAndWhoReadsIt(t *testing.T) {
 	t.Parallel()
 
 	comments := &fakeCommentService{}
-	tool := newAddShipmentCommentTool(comments)
-	params := executeParams(map[string]any{
+	tool := shipmenttools.NewAddShipmentCommentTool(comments)
+	params := agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
 		"comment":    "Delivery moved to 3 PM at the receiver's request.",
 		"visibility": "Customer",
@@ -195,10 +198,10 @@ func TestAddShipmentCommentPreview_ShowsTheNoteAndWhoReadsIt(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, comments.created, "a preview must not comment")
 
-	created := findChange(t, preview, agent.PreviewOperationCreate)
+	created := agenttoolstest.FindChange(t, preview, agent.PreviewOperationCreate)
 	assert.Equal(t, permission.ResourceShipmentComment, created.Resource)
-	assert.Equal(t, "Customer", findField(t, created, "visibility").After)
-	shared := findChange(t, preview, agent.PreviewOperationSend)
+	assert.Equal(t, "Customer", agenttoolstest.FindField(t, created, "visibility").After)
+	shared := agenttoolstest.FindChange(t, preview, agent.PreviewOperationSend)
 	assert.Equal(t, agent.MessageChannelComment, shared.Message.Channel)
 	assert.Equal(t, "Customer", shared.Message.Visibility)
 	assert.Equal(t, []string{"The customer"}, shared.Message.To)
@@ -206,5 +209,5 @@ func TestAddShipmentCommentPreview_ShowsTheNoteAndWhoReadsIt(t *testing.T) {
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, comments.created)
 	assert.Equal(t, comments.created.Comment, shared.Message.Body)
-	assert.Equal(t, string(comments.created.Type), findField(t, created, "type").After)
+	assert.Equal(t, string(comments.created.Type), agenttoolstest.FindField(t, created, "type").After)
 }

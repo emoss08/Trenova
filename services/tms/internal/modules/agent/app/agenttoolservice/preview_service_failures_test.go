@@ -4,14 +4,16 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +21,7 @@ import (
 )
 
 type detectingFailures struct {
-	serviceFailureDecider
+	operationstools.ServiceFailureDecider
 
 	shipment *shipment.Shipment
 	late     []*shipment.Stop
@@ -27,7 +29,7 @@ type detectingFailures struct {
 	refuse   error
 	saved    []*servicefailure.ServiceFailure
 	delayed  bool
-	guard    writeGuard
+	guard    agenttoolstest.WriteGuard
 }
 
 func (f *detectingFailures) plan() (*servicefailureports.ServiceFailureDetectionPlan, error) {
@@ -87,7 +89,7 @@ func (f *detectingFailures) EvaluateShipment(
 	*servicefailureports.EvaluateShipmentServiceFailuresRequest,
 	*permissionports.RequestActor,
 ) (*servicefailureports.ServiceFailureEvaluationResult, error) {
-	if err := f.guard.write(); err != nil {
+	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	plan, err := f.plan()
@@ -143,7 +145,7 @@ func lateShipment() (*shipment.Shipment, *shipment.Stop, *shipment.Stop) {
 }
 
 func evaluateParams(entity *shipment.Shipment) agentports.ToolExecuteParams {
-	return executeParams(map[string]any{"shipmentId": entity.ID.String()})
+	return agenttoolstest.ExecuteParams(map[string]any{"shipmentId": entity.ID.String()})
 }
 
 func TestEvaluateServiceFailures_PreviewMatchesWhatIsSaved(t *testing.T) {
@@ -168,10 +170,10 @@ func TestEvaluateServiceFailures_PreviewMatchesWhatIsSaved(t *testing.T) {
 		late:     []*shipment.Stop{pickup, delivery},
 		open:     map[pulid.ID]*servicefailure.ServiceFailure{pickup.ID: existing},
 	}
-	tool := newEvaluateServiceFailuresTool(failures).(*evaluateServiceFailuresTool)
+	tool := operationstools.NewEvaluateServiceFailuresTool(failures).(*operationstools.EvaluateServiceFailuresTool)
 	params := evaluateParams(entity)
 
-	preview := previewWithoutWrites(t, &failures.guard, func() (*agent.ToolPreview, error) {
+	preview := agenttoolstest.PreviewWithoutWrites(t, &failures.guard, func() (*agent.ToolPreview, error) {
 		return tool.Preview(t.Context(), params)
 	})
 
@@ -182,28 +184,28 @@ func TestEvaluateServiceFailures_PreviewMatchesWhatIsSaved(t *testing.T) {
 	assert.Contains(t, preview.Summary, "mark the shipment delayed")
 	require.Len(t, preview.Changes, 3)
 
-	refreshed := previewChange(t, preview, 0)
+	refreshed := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationUpdate, refreshed.Operation)
 	assert.Equal(t, existing.ID, refreshed.EntityID)
 	assert.Equal(t, "SF-3", refreshed.Label)
-	arrived := fieldByPath(t, refreshed, "actualArrival")
+	arrived := agenttoolstest.FieldByPath(t, refreshed, "actualArrival")
 	assert.Equal(t, "Arrived", arrived.Label)
 
-	opened := previewChange(t, preview, 1)
+	opened := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, agent.PreviewOperationCreate, opened.Operation)
 	assert.Equal(t, permission.ResourceServiceFailure, opened.Resource)
 	assert.Equal(t, "Late delivery, Delivery at Warehouse 12", opened.Label)
-	assert.Equal(t, "LateDelivery", fieldByPath(t, opened, "type").After)
+	assert.Equal(t, "LateDelivery", agenttoolstest.FieldByPath(t, opened, "type").After)
 
-	delayed := previewChange(t, preview, 2)
+	delayed := agenttoolstest.PreviewChange(t, preview, 2)
 	assert.Equal(t, permission.ResourceShipment, delayed.Resource)
 	assert.Equal(t, entity.ID, delayed.EntityID)
-	assert.Equal(t, string(shipment.StatusDelayed), fieldByPath(t, delayed, "status").After)
+	assert.Equal(t, string(shipment.StatusDelayed), agenttoolstest.FieldByPath(t, delayed, "status").After)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.Len(t, failures.saved, 2)
-	requireUpdateParity(t, refreshed, &before, failures.saved[0], detectedFailureOptions()...)
-	requireCreateParity(t, opened, failures.saved[1], detectedFailureOptions()...)
+	agenttoolstest.RequireUpdateParity(t, refreshed, &before, failures.saved[0], operationstools.DetectedFailureOptions()...)
+	agenttoolstest.RequireCreateParity(t, opened, failures.saved[1], operationstools.DetectedFailureOptions()...)
 	assert.True(t, failures.delayed)
 }
 
@@ -212,9 +214,9 @@ func TestEvaluateServiceFailures_PreviewSaysWhenNothingIsLate(t *testing.T) {
 
 	entity, _, _ := lateShipment()
 	failures := &detectingFailures{shipment: entity}
-	tool := newEvaluateServiceFailuresTool(failures).(*evaluateServiceFailuresTool)
+	tool := operationstools.NewEvaluateServiceFailuresTool(failures).(*operationstools.EvaluateServiceFailuresTool)
 
-	preview := previewWithoutWrites(t, &failures.guard, func() (*agent.ToolPreview, error) {
+	preview := agenttoolstest.PreviewWithoutWrites(t, &failures.guard, func() (*agent.ToolPreview, error) {
 		return tool.Preview(t.Context(), evaluateParams(entity))
 	})
 
@@ -231,12 +233,12 @@ func TestEvaluateServiceFailures_PreviewWarnsWhenTheShipmentIsRefused(t *testing
 		shipment: entity,
 		refuse:   errortypes.NewBusinessError("Service failure detection is off"),
 	}
-	tool := newEvaluateServiceFailuresTool(failures).(*evaluateServiceFailuresTool)
+	tool := operationstools.NewEvaluateServiceFailuresTool(failures).(*operationstools.EvaluateServiceFailuresTool)
 
-	preview := previewWithoutWrites(t, &failures.guard, func() (*agent.ToolPreview, error) {
+	preview := agenttoolstest.PreviewWithoutWrites(t, &failures.guard, func() (*agent.ToolPreview, error) {
 		return tool.Preview(t.Context(), evaluateParams(entity))
 	})
 
 	assert.Empty(t, preview.Changes)
-	requireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
 }

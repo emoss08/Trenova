@@ -1,6 +1,9 @@
 package agenttoolservice
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ratetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/reporttools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -49,7 +52,7 @@ func ratesToolProviders() []any {
 		provideDeleteReportScheduleTool,
 	}
 
-	for _, step := range agreementReviewSteps() {
+	for _, step := range ratetools.AgreementReviewSteps() {
 		providers = append(providers, provideAgreementReviewTool(step))
 	}
 
@@ -60,167 +63,167 @@ func provideRecordFuelPurchaseTool(
 	purchases *fuelpurchaseservice.Service,
 	jurisdictions *iftaservice.Service,
 ) agentports.AgentTool {
-	return newRecordFuelPurchaseTool(purchases, jurisdictions)
+	return receivabletools.NewRecordFuelPurchaseTool(purchases, jurisdictions)
 }
 
 func provideCorrectFuelPurchaseTool(
 	purchases *fuelpurchaseservice.Service,
 	jurisdictions *iftaservice.Service,
 ) agentports.AgentTool {
-	return newCorrectFuelPurchaseTool(purchases, jurisdictions)
+	return receivabletools.NewCorrectFuelPurchaseTool(purchases, jurisdictions)
 }
 
 func provideDeleteFuelPurchaseTool(
 	purchases *fuelpurchaseservice.Service,
 	jurisdictions *iftaservice.Service,
 ) agentports.AgentTool {
-	return newDeleteFuelPurchaseTool(purchases, jurisdictions)
+	return receivabletools.NewDeleteFuelPurchaseTool(purchases, jurisdictions)
 }
 
 func provideAssignFuelCardTool(cards *fuelpurchaseservice.Service) agentports.AgentTool {
-	return newAssignFuelCardTool(cards)
+	return receivabletools.NewAssignFuelCardTool(cards)
 }
 
 func provideCommitFuelPurchaseImportTool(
 	imports *fuelpurchaseservice.Service,
 ) agentports.AgentTool {
-	return newCommitFuelPurchaseImportTool(imports)
+	return receivabletools.NewCommitFuelPurchaseImportTool(imports)
 }
 
 func provideResolveFuelPurchaseImportRowsTool(
 	imports *fuelpurchaseservice.Service,
 ) agentports.AgentTool {
-	return newResolveFuelPurchaseImportRowsTool(imports)
+	return receivabletools.NewResolveFuelPurchaseImportRowsTool(imports)
 }
 
 func provideDiscardFuelPurchaseImportTool(
 	imports *fuelpurchaseservice.Service,
 ) agentports.AgentTool {
-	return newDiscardFuelPurchaseImportTool(imports)
+	return receivabletools.NewDiscardFuelPurchaseImportTool(imports)
 }
 
 func provideRecordFuelIndexPriceTool(prices *fuelsurchargeservice.Service) agentports.AgentTool {
-	return newRecordFuelIndexPriceTool(prices)
+	return receivabletools.NewRecordFuelIndexPriceTool(prices)
 }
 
 func provideCorrectFuelIndexPriceTool(prices *fuelsurchargeservice.Service) agentports.AgentTool {
-	return newCorrectFuelIndexPriceTool(prices)
+	return receivabletools.NewCorrectFuelIndexPriceTool(prices)
 }
 
 func provideGenerateIFTAReturnTool(returns *iftaservice.Service) agentports.AgentTool {
-	return newGenerateIFTAReturnTool(returns)
+	return receivabletools.NewGenerateIFTAReturnTool(returns)
 }
 
 func provideRecomputeIFTAReturnTool(returns *iftaservice.Service) agentports.AgentTool {
-	return newRecomputeIFTAReturnTool(returns)
+	return receivabletools.NewRecomputeIFTAReturnTool(returns)
 }
 
 func provideAmendIFTAReturnTool(returns *iftaservice.Service) agentports.AgentTool {
-	return newAmendIFTAReturnTool(returns)
+	return receivabletools.NewAmendIFTAReturnTool(returns)
 }
 
 func provideDeleteIFTAReturnTool(returns *iftaservice.Service) agentports.AgentTool {
-	return newDeleteIFTAReturnTool(returns)
+	return receivabletools.NewDeleteIFTAReturnTool(returns)
 }
 
 func provideRecordIFTAMileageEntryTool(entries *iftaservice.Service) agentports.AgentTool {
-	return newRecordIFTAMileageEntryTool(entries)
+	return receivabletools.NewRecordIFTAMileageEntryTool(entries)
 }
 
 func provideCorrectIFTAMileageEntryTool(entries *iftaservice.Service) agentports.AgentTool {
-	return newCorrectIFTAMileageEntryTool(entries)
+	return receivabletools.NewCorrectIFTAMileageEntryTool(entries)
 }
 
 func provideDeleteIFTAMileageEntryTool(entries *iftaservice.Service) agentports.AgentTool {
-	return newDeleteIFTAMileageEntryTool(entries)
+	return receivabletools.NewDeleteIFTAMileageEntryTool(entries)
 }
 
 func provideRecalculateMoveJurisdictionMilesTool(
 	router shipmentports.DistanceCalculationService,
 ) agentports.AgentTool {
-	return newRecalculateMoveJurisdictionMilesTool(router)
+	return receivabletools.NewRecalculateMoveJurisdictionMilesTool(router)
 }
 
 func provideBackfillJurisdictionMilesTool(
 	returns *iftaservice.Service,
 	router shipmentports.DistanceCalculationService,
 ) agentports.AgentTool {
-	return newBackfillJurisdictionMilesTool(returns, router)
+	return receivabletools.NewBackfillJurisdictionMilesTool(returns, router)
 }
 
 func provideDraftRateAgreementTool(
 	agreements *rateagreementservice.Service,
 	states usstateports.UsStateRepository,
 ) agentports.AgentTool {
-	return newDraftRateAgreementTool(agreements, states)
+	return ratetools.NewDraftRateAgreementTool(agreements, states)
 }
 
 func provideReviseRateAgreementDraftTool(
 	agreements *rateagreementservice.Service,
 	states usstateports.UsStateRepository,
 ) agentports.AgentTool {
-	return newReviseRateAgreementDraftTool(agreements, states)
+	return ratetools.NewReviseRateAgreementDraftTool(agreements, states)
 }
 
 func provideDuplicateRateAgreementTool(
 	agreements *rateagreementservice.Service,
 ) agentports.AgentTool {
-	return newDuplicateRateAgreementTool(agreements)
+	return ratetools.NewDuplicateRateAgreementTool(agreements)
 }
 
 func provideAmendRateAgreementRulesTool(
 	agreements *rateagreementservice.Service,
 	states usstateports.UsStateRepository,
 ) agentports.AgentTool {
-	return newAmendRateAgreementRulesTool(agreements, states)
+	return ratetools.NewAmendRateAgreementRulesTool(agreements, states)
 }
 
 func provideApplyRateIncreaseTool(agreements *rateagreementservice.Service) agentports.AgentTool {
-	return newApplyRateIncreaseTool(agreements)
+	return ratetools.NewApplyRateIncreaseTool(agreements)
 }
 
 func provideAgreementReviewTool(
-	step *agreementReviewStep,
+	step *ratetools.AgreementReviewStep,
 ) func(*rateagreementservice.Service) agentports.AgentTool {
 	return func(agreements *rateagreementservice.Service) agentports.AgentTool {
-		return newAgreementReviewTool(agreements, step)
+		return ratetools.NewAgreementReviewTool(agreements, step)
 	}
 }
 
 func provideCommitRateImportTool(imports *rateimportservice.Service) agentports.AgentTool {
-	return newCommitRateImportTool(imports)
+	return ratetools.NewCommitRateImportTool(imports)
 }
 
 func provideDiscardRateImportTool(imports *rateimportservice.Service) agentports.AgentTool {
-	return newDiscardRateImportTool(imports)
+	return ratetools.NewDiscardRateImportTool(imports)
 }
 
 func provideRunRateSimulationTool(
 	simulations *ratesimulationservice.Service,
 ) agentports.AgentTool {
-	return newRunRateSimulationTool(simulations)
+	return ratetools.NewRunRateSimulationTool(simulations)
 }
 
 func provideCancelReportRunTool(reports *reporting.Service) agentports.AgentTool {
-	return newCancelReportRunTool(reports)
+	return reporttools.NewCancelReportRunTool(reports)
 }
 
 func provideDeleteReportTool(reports *reporting.Service) agentports.AgentTool {
-	return newDeleteReportTool(reports)
+	return reporttools.NewDeleteReportTool(reports)
 }
 
 func provideResetReportForkTool(reports *reporting.Service) agentports.AgentTool {
-	return newResetReportForkTool(reports)
+	return reporttools.NewResetReportForkTool(reports)
 }
 
 func provideDeleteDashboardTool(reports *reporting.Service) agentports.AgentTool {
-	return newDeleteDashboardTool(reports)
+	return reporttools.NewDeleteDashboardTool(reports)
 }
 
 func provideUpdateReportScheduleTool(reports *reporting.Service) agentports.AgentTool {
-	return newUpdateReportScheduleTool(reports)
+	return reporttools.NewUpdateReportScheduleTool(reports)
 }
 
 func provideDeleteReportScheduleTool(reports *reporting.Service) agentports.AgentTool {
-	return newDeleteReportScheduleTool(reports)
+	return reporttools.NewDeleteReportScheduleTool(reports)
 }

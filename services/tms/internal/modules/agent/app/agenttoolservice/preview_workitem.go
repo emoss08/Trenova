@@ -1,72 +1,8 @@
 package agenttoolservice
 
 import (
-	"context"
-	"fmt"
-
-	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicetools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptworkitemservice"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-var _ agentports.ToolPreviewer = (*resolveBankReceiptWorkItemTool)(nil)
-
-var closedWorkItemFields = []string{fieldStatus, "resolutionType", "resolutionNote", "resolvedAt"}
-
-func (a resolveWorkItemArgs) close(
-	item *bankreceiptworkitem.WorkItem,
-	tenant pagination.TenantInfo,
-	userID pulid.ID,
-	now int64,
-) error {
-	if a.dismisses() {
-		return bankreceiptworkitemservice.DismissWorkItem(item, a.dismissal(tenant), userID, now)
-	}
-
-	return bankreceiptworkitemservice.ResolveWorkItem(item, a.resolved(tenant), userID, now)
-}
-
-func (t *resolveBankReceiptWorkItemTool) Preview(
-	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	args, err := t.arguments(params)
-	if err != nil {
-		return nil, err
-	}
-
-	tenant := tenantFrom(params)
-	item, err := t.items.Get(ctx, &bankreceiptworkitemports.GetBankReceiptWorkItemRequest{
-		WorkItemID: args.id,
-		TenantInfo: tenant,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	now := timeutils.NowUnix()
-	plan, err := planArchive(toolpreview.Record{
-		Resource: permission.ResourceBankReceiptWorkItem,
-		ID:       item.ID,
-		Label:    "Bank receipt reconciliation",
-		Version:  previewVersion(item.Version),
-	}, item, func(closed *bankreceiptworkitem.WorkItem) error {
-		return args.close(closed, tenant, params.Actor.UserID, now)
-	}, toolpreview.Only(closedWorkItemFields...), toolpreview.Volatile("resolvedAt"))
-	if err != nil {
-		return nil, err
-	}
-
-	return plan.preview(fmt.Sprintf(
-		"Would close this bank receipt's reconciliation work item as %s without matching it; "+
-			"no money moves.",
-		args.resolution,
-	)), nil
-}
+var _ agentports.ToolPreviewer = (*invoicetools.ResolveBankReceiptWorkItemTool)(nil)

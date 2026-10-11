@@ -5,13 +5,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
-	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,10 +21,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-// The fakes below answer a preview from the request alone, so what a preview
-// shows can be compared with what the write then sends, and a fake that
-// recorded a send during a preview would show it.
 
 func (f *fakeDriverNotifier) Preview(
 	_ context.Context,
@@ -112,34 +110,12 @@ func decidedPTO(
 	}
 }
 
-func (s *stubCredentialActor) PreviewRenewal(
-	_ context.Context,
-	req *workercredentialservice.RenewalRequest,
-) (*workercredentialservice.RenewalPreview, error) {
-	expires := int64(1_790_000_000)
-
-	return &workercredentialservice.RenewalPreview{
-		Credentials: []*worker.WorkerCredential{{
-			ID:             req.CredentialIDs[0],
-			ExpiresAt:      &expires,
-			CredentialType: &worker.WorkerCredentialType{Name: "CDL"},
-		}},
-		Notification: &notificationports.DriverNotificationPreview{
-			WorkerID:   req.WorkerID,
-			WorkerName: "Marcus Dell",
-			Reachable:  false,
-			Title:      "Renew your CDL",
-			Message:    req.Note,
-		},
-	}, nil
-}
-
 func TestNotifyDriverPreview_ShowsTheDashMessage(t *testing.T) {
 	t.Parallel()
 
 	drivers := &fakeDriverNotifier{}
-	tool := newNotifyDriverTool(drivers)
-	params := executeParams(map[string]any{
+	tool := operationstools.NewNotifyDriverTool(drivers)
+	params := agenttoolstest.ExecuteParams(map[string]any{
 		"workerId": pulid.MustNew("wrk_").String(),
 		"title":    "Delivery moved to 3 PM",
 		"message":  "Houston DC moved your appointment to 3 PM.",
@@ -151,7 +127,7 @@ func TestNotifyDriverPreview_ShowsTheDashMessage(t *testing.T) {
 	require.Nil(t, drivers.sent, "a preview must not message the driver")
 	assert.Empty(t, preview.Warnings)
 
-	send := findChange(t, preview, agent.PreviewOperationSend)
+	send := agenttoolstest.FindChange(t, preview, agent.PreviewOperationSend)
 	assert.Equal(t, permission.ResourceWorker, send.Resource)
 	require.NotNil(t, send.Message)
 	assert.Equal(t, agent.MessageChannelDash, send.Message.Channel)
@@ -166,8 +142,8 @@ func TestNotifyDriverPreview_ShowsTheDashMessage(t *testing.T) {
 func TestNotifyDriverPreview_WarnsADriverWithoutDash(t *testing.T) {
 	t.Parallel()
 
-	tool := newNotifyDriverTool(&unreachableDriverNotifier{})
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), executeParams(map[string]any{
+	tool := operationstools.NewNotifyDriverTool(&unreachableDriverNotifier{})
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"workerId": pulid.MustNew("wrk_").String(),
 		"title":    "Call dispatch",
 		"message":  "Call when you are parked.",
@@ -181,8 +157,8 @@ func TestRejectWorkerPTOPreview_ShowsTheDecisionAndWhatTheDriverIsSent(t *testin
 	t.Parallel()
 
 	pto := &fakePTODecider{}
-	tool := newRejectWorkerPTOTool(pto)
-	params := executeParams(map[string]any{
+	tool := operationstools.NewRejectWorkerPTOTool(pto)
+	params := agenttoolstest.ExecuteParams(map[string]any{
 		"ptoId":  pulid.MustNew("wrkpto_").String(),
 		"reason": "Coverage gap on that route",
 	})
@@ -192,10 +168,10 @@ func TestRejectWorkerPTOPreview_ShowsTheDecisionAndWhatTheDriverIsSent(t *testin
 	require.Nil(t, pto.rejected, "a preview must not reject")
 	assert.Contains(t, preview.Summary, "Coverage gap on that route")
 
-	status := findChange(t, preview, agent.PreviewOperationUpdate)
+	status := agenttoolstest.FindChange(t, preview, agent.PreviewOperationUpdate)
 	assert.Equal(t, permission.ResourceWorkerPTO, status.Resource)
-	assert.Equal(t, "Rejected", findField(t, status, "status").After)
-	assert.Equal(t, "Coverage gap on that route", findField(t, status, "rejectionReason").After)
+	assert.Equal(t, "Rejected", agenttoolstest.FindField(t, status, "status").After)
+	assert.Equal(t, "Coverage gap on that route", agenttoolstest.FindField(t, status, "rejectionReason").After)
 
 	var channels []agent.MessageChannel
 	for i := range preview.Changes {
@@ -214,8 +190,8 @@ func TestCancelWorkerPTOPreview_SaysTheDaysGoBack(t *testing.T) {
 	t.Parallel()
 
 	pto := &fakePTODecider{}
-	tool := newCancelWorkerPTOTool(pto)
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), executeParams(map[string]any{
+	tool := operationstools.NewCancelWorkerPTOTool(pto)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"ptoId":  pulid.MustNew("wrkpto_").String(),
 		"reason": "Route covered",
 	}))
@@ -227,9 +203,9 @@ func TestCancelWorkerPTOPreview_SaysTheDaysGoBack(t *testing.T) {
 func TestRequestCredentialRenewalPreview_ShowsTheAskAndWhoCannotReadIt(t *testing.T) {
 	t.Parallel()
 
-	stub := &stubCredentialActor{}
-	tool := newRequestCredentialRenewalTool(stub)
-	params := deskParams(map[string]any{
+	stub := &agenttoolstest.StubCredentialActor{}
+	tool := masterdatatools.NewRequestCredentialRenewalTool(stub)
+	params := agenttoolstest.DeskParams(map[string]any{
 		"workerId":      pulid.MustNew("wrk_").String(),
 		"credentialIds": []any{pulid.MustNew("wcred_").String()},
 		"note":          "Your CDL is due this month.",
@@ -237,10 +213,10 @@ func TestRequestCredentialRenewalPreview_ShowsTheAskAndWhoCannotReadIt(t *testin
 
 	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	require.Nil(t, stub.asked, "a preview must not ask")
+	require.Nil(t, stub.Asked, "a preview must not ask")
 	assert.Contains(t, preview.Summary, "CDL (expires 2026-09-21)")
 
-	send := findChange(t, preview, agent.PreviewOperationSend)
+	send := agenttoolstest.FindChange(t, preview, agent.PreviewOperationSend)
 	assert.Equal(t, "Renew your CDL", send.Message.Subject)
 	assert.Equal(t, "Your CDL is due this month.", send.Message.Body)
 	require.Len(t, preview.Warnings, 1)
@@ -265,7 +241,7 @@ func TestPTOLabel_NamesTheDaysInTheOrganizationsZone(t *testing.T) {
 		EndDate:   start + 86_400,
 	}
 
-	assert.Equal(t, "Vacation time off from 2027-05-02 to 2027-05-03", ptoLabel(pto, chicago))
-	assert.Equal(t, "Vacation time off from 2027-05-03 to 2027-05-04", ptoLabel(pto, nil),
+	assert.Equal(t, "Vacation time off from 2027-05-02 to 2027-05-03", operationstools.PtoLabel(pto, chicago))
+	assert.Equal(t, "Vacation time off from 2027-05-03 to 2027-05-04", operationstools.PtoLabel(pto, nil),
 		"with no zone known it falls back to UTC")
 }

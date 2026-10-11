@@ -5,32 +5,15 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/providertest"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/stretchr/testify/require"
 )
-
-/*
-A tool a scheduled desk is told to use, whose permission no agent may hold,
-does nothing — and says so only when the desk is woken for real work.
-
-agentAllowedPermissions is the whole permission model for an agent principal:
-there is no role behind it, so a missing entry is a flat refusal at the moment
-the run tries to act. It is also the ceiling on what any agent can ever do, so
-it must not be wider than the desks need either. Several entries were missing
-against the templates already shipped — the load monitor is told to evaluate
-service failures and resolve them, and could do neither.
-
-The rule is the desks, not the catalog: a tool a background template lists
-must be one an agent may call, and a tool only a person's assistant offers
-need not be. That is what keeps update_shipment closed to an agent while
-create_shipment, which the intake desk runs on, is open.
-*/
 
 type toolPermission struct {
 	resource  permission.Resource

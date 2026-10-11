@@ -3,8 +3,10 @@ package agenttoolservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,9 +20,9 @@ func TestAddShipmentComment_TakesEveryDomainPriorityAndRefusesTheRest(t *testing
 	t.Parallel()
 
 	comments := &fakeCommentService{}
-	tool := newAddShipmentCommentTool(comments)
+	tool := shipmenttools.NewAddShipmentCommentTool(comments)
 
-	require.NoError(t, tool.Execute(t.Context(), executeParams(map[string]any{
+	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
 		"comment":    "Reefer alarm; call the driver now.",
 		"priority":   "Urgent",
@@ -30,8 +32,8 @@ func TestAddShipmentComment_TakesEveryDomainPriorityAndRefusesTheRest(t *testing
 		"an absent visibility is Internal")
 
 	comments = &fakeCommentService{}
-	tool = newAddShipmentCommentTool(comments)
-	err := tool.Execute(t.Context(), executeParams(map[string]any{
+	tool = shipmenttools.NewAddShipmentCommentTool(comments)
+	err := tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
 		"comment":    "Update.",
 		"visibility": "Customers",

@@ -3,21 +3,19 @@ package agenttoolservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/alerttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/workforcetools"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/stretchr/testify/assert"
 )
-
-func callLimit(call agentports.CallPolicy) agent.AutonomyTier {
-	limit := call.Egress.Ceiling()
-	if call.MaxTier.IsValid() {
-		limit = limit.AtMost(call.MaxTier)
-	}
-
-	return limit
-}
 
 // Every tool that sends something outside the organization declares that a
 // person approves it, whatever it earns.
@@ -25,20 +23,20 @@ func TestEgressTools_NeverRunWithoutAPerson(t *testing.T) {
 	t.Parallel()
 
 	for _, tool := range []agentports.AgentTool{
-		&emailCustomerTool{},
-		&sendDetentionNoticeTool{},
-		&notifyDriverTool{},
-		&requestMissingDocsTool{},
-		&requestCredentialRenewalTool{},
-		&tenderToRoutingGuideTool{},
-		&tenderToCarriersTool{},
-		&replyToInboundMessageTool{},
-		&scheduleReportTool{},
-		&cancelShipmentTool{},
-		&updateShipmentTool{},
-		&resolveServiceFailureTool{},
-		&rejectWorkerPTOTool{},
-		&cancelWorkerPTOTool{},
+		&operationstools.EmailCustomerTool{},
+		&operationstools.SendDetentionNoticeTool{},
+		&operationstools.NotifyDriverTool{},
+		&workforcetools.RequestMissingDocsTool{},
+		&masterdatatools.RequestCredentialRenewalTool{},
+		&tendertools.TenderToRoutingGuideTool{},
+		&tendertools.TenderToCarriersTool{},
+		&workforcetools.ReplyToInboundMessageTool{},
+		&alerttools.ScheduleReportTool{},
+		&shipmenttools.CancelShipmentTool{},
+		&operationstools.UpdateShipmentTool{},
+		&operationstools.ResolveServiceFailureTool{},
+		&operationstools.RejectWorkerPTOTool{},
+		&operationstools.CancelWorkerPTOTool{},
 	} {
 		policy := tool.Policy()
 		assert.Equal(t, agent.TierActWithApproval, policy.MaxTier, tool.Name())
@@ -46,7 +44,7 @@ func TestEgressTools_NeverRunWithoutAPerson(t *testing.T) {
 	}
 
 	assert.Equal(t, agent.TierAutoExecute,
-		agenttoolpolicy.Promotable((&addShipmentCommentTool{}).Policy()),
+		agenttoolpolicy.Promotable((&shipmenttools.AddShipmentCommentTool{}).Policy()),
 		"an internal note has no ceiling of its own")
 }
 
@@ -55,7 +53,7 @@ func TestEgressTools_NeverRunWithoutAPerson(t *testing.T) {
 func TestAddShipmentComment_HoldsANoteOutsidersReadForApproval(t *testing.T) {
 	t.Parallel()
 
-	policy := (&addShipmentCommentTool{}).Policy()
+	policy := (&shipmenttools.AddShipmentCommentTool{}).Policy()
 	cases := map[string]struct {
 		class agent.EgressClass
 		limit agent.AutonomyTier
@@ -71,7 +69,7 @@ func TestAddShipmentComment_HoldsANoteOutsidersReadForApproval(t *testing.T) {
 		params := agentports.ToolExecuteParams{Params: map[string]any{"visibility": visibility}}
 		call := policy.Classified(params)
 		assert.Equal(t, want.class, call.Egress, visibility)
-		assert.Equal(t, want.limit, callLimit(call), visibility)
+		assert.Equal(t, want.limit, agenttoolstest.CallLimit(call), visibility)
 	}
 }
 
@@ -80,16 +78,16 @@ func TestAddShipmentComment_HoldsANoteOutsidersReadForApproval(t *testing.T) {
 func TestSaveTableView_ClassifiesAPrivateViewAsPersonal(t *testing.T) {
 	t.Parallel()
 
-	policy := (&saveTableViewTool{}).Policy()
+	policy := (&masterdatatools.SaveTableViewTool{}).Policy()
 	assert.True(t, policy.PersonalRunsUnasked)
 
-	person := personParams(map[string]any{"entity": "shipment"})
+	person := agenttoolstest.PersonParams(map[string]any{"entity": "shipment"})
 	assert.Equal(t, agent.EgressPersonal, policy.Classified(person).Egress)
 
-	shared := personParams(map[string]any{"entity": "shipment", "shared": true})
+	shared := agenttoolstest.PersonParams(map[string]any{"entity": "shipment", "shared": true})
 	assert.Equal(t, agent.EgressInternal, policy.Classified(shared).Egress)
 
-	agentCall := personParams(map[string]any{"entity": "shipment"})
+	agentCall := agenttoolstest.PersonParams(map[string]any{"entity": "shipment"})
 	agentCall.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 	assert.Equal(t, agent.EgressInternal, policy.Classified(agentCall).Egress)
 }

@@ -4,13 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -24,7 +26,7 @@ type savingHolds struct {
 	reason  *holdreason.HoldReason
 	current *shipment.ShipmentHold
 	saved   *shipment.ShipmentHold
-	guard   writeGuard
+	guard   agenttoolstest.WriteGuard
 }
 
 func (f *savingHolds) plan(req *shipmentports.CreateShipmentHoldRequest) *shipment.ShipmentHold {
@@ -60,7 +62,7 @@ func (f *savingHolds) Create(
 	req *shipmentports.CreateShipmentHoldRequest,
 	_ *permissionports.RequestActor,
 ) (*shipment.ShipmentHold, error) {
-	if err := f.guard.write(); err != nil {
+	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.saved = f.plan(req)
@@ -103,7 +105,7 @@ func (f *savingHolds) Release(
 	_ *shipmentports.ReleaseShipmentHoldRequest,
 	actor *permissionports.RequestActor,
 ) (*shipment.ShipmentHold, error) {
-	if err := f.guard.write(); err != nil {
+	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	released, err := f.release(actor)
@@ -131,46 +133,46 @@ func TestPlaceShipmentHold_PreviewMatchesWhatIsSaved(t *testing.T) {
 	t.Parallel()
 
 	holds := &savingHolds{reason: documentsHoldReason(true)}
-	tool := newPlaceShipmentHoldTool(holds).(*placeShipmentHoldTool)
+	tool := shipmenttools.NewPlaceShipmentHoldTool(holds).(*shipmenttools.PlaceShipmentHoldTool)
 	shipmentID := pulid.MustNew("shp_")
-	params := executeParams(map[string]any{
+	params := agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId":   shipmentID.String(),
 		"holdReasonId": holds.reason.ID.String(),
 		"notes":        "Waiting on the signed BOL.",
 	})
 
-	preview := previewWithoutWrites(t, &holds.guard, func() (*agent.ToolPreview, error) {
+	preview := agenttoolstest.PreviewWithoutWrites(t, &holds.guard, func() (*agent.ToolPreview, error) {
 		return tool.Preview(t.Context(), params)
 	})
 
-	change := previewChange(t, preview, 0)
+	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
 	assert.Equal(t, permission.ResourceShipmentHold, change.Resource)
-	assert.Equal(t, true, fieldByPath(t, change, "blocksDispatch").After)
-	shipmentField := fieldByPath(t, change, "shipmentId")
+	assert.Equal(t, true, agenttoolstest.FieldByPath(t, change, "blocksDispatch").After)
+	shipmentField := agenttoolstest.FieldByPath(t, change, "shipmentId")
 	require.NotNil(t, shipmentField.AfterRef)
 	assert.Equal(t, shipmentID, shipmentField.AfterRef.ID)
 	assert.Contains(t, preview.Summary, "blocks dispatch, billing")
 
 	require.NoError(t, tool.Execute(t.Context(), params))
-	requireCreateParity(t, change, holds.saved, placedHoldOptions()...)
+	agenttoolstest.RequireCreateParity(t, change, holds.saved, shipmenttools.PlacedHoldOptions()...)
 }
 
 func TestPlaceShipmentHold_PreviewWarnsOnAnInactiveReason(t *testing.T) {
 	t.Parallel()
 
 	holds := &savingHolds{reason: documentsHoldReason(false)}
-	tool := newPlaceShipmentHoldTool(holds).(*placeShipmentHoldTool)
+	tool := shipmenttools.NewPlaceShipmentHoldTool(holds).(*shipmenttools.PlaceShipmentHoldTool)
 
-	preview := previewWithoutWrites(t, &holds.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), executeParams(map[string]any{
+	preview := agenttoolstest.PreviewWithoutWrites(t, &holds.guard, func() (*agent.ToolPreview, error) {
+		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 			"shipmentId":   pulid.MustNew("shp_").String(),
 			"holdReasonId": holds.reason.ID.String(),
 		}))
 	})
 
 	assert.Empty(t, preview.Changes)
-	requireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
 }
 
 func TestReleaseShipmentHold_PreviewMatchesWhatIsSaved(t *testing.T) {
@@ -186,25 +188,25 @@ func TestReleaseShipmentHold_PreviewMatchesWhatIsSaved(t *testing.T) {
 		Version:        4,
 	}
 	holds := &savingHolds{reason: reason, current: current}
-	tool := newReleaseShipmentHoldTool(holds).(*releaseShipmentHoldTool)
-	params := executeParams(map[string]any{
+	tool := shipmenttools.NewReleaseShipmentHoldTool(holds).(*shipmenttools.ReleaseShipmentHoldTool)
+	params := agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": current.ShipmentID.String(),
 		"holdId":     current.ID.String(),
 	})
 
-	preview := previewWithoutWrites(t, &holds.guard, func() (*agent.ToolPreview, error) {
+	preview := agenttoolstest.PreviewWithoutWrites(t, &holds.guard, func() (*agent.ToolPreview, error) {
 		return tool.Preview(t.Context(), params)
 	})
 
-	change := previewChange(t, preview, 0)
+	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationArchive, change.Operation)
 	assert.Equal(t, current.ID, change.EntityID)
-	assert.True(t, fieldByPath(t, change, "releasedAt").Volatile)
+	assert.True(t, agenttoolstest.FieldByPath(t, change, "releasedAt").Volatile)
 	assert.Contains(t, preview.Summary, "blocks delivery")
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	want, err := toolpreview.Changed(toolpreview.Record{Resource: change.Resource},
-		current, holds.saved, toolpreview.Only(releasedHoldFields...))
+		current, holds.saved, toolpreview.Only(shipmenttools.ReleasedHoldFields...))
 	require.NoError(t, err)
 	assert.Equal(t, []string{"releasedAt"}, fieldPaths(want.Fields))
 	assert.Equal(t, fieldPaths(want.Fields), fieldPaths(change.Fields))
@@ -216,17 +218,17 @@ func TestReleaseShipmentHold_PreviewWarnsOnAHoldAlreadyReleased(t *testing.T) {
 	released := int64(100)
 	current := &shipment.ShipmentHold{ID: pulid.MustNew("shld_"), ReleasedAt: &released}
 	holds := &savingHolds{reason: documentsHoldReason(true), current: current}
-	tool := newReleaseShipmentHoldTool(holds).(*releaseShipmentHoldTool)
+	tool := shipmenttools.NewReleaseShipmentHoldTool(holds).(*shipmenttools.ReleaseShipmentHoldTool)
 
-	preview := previewWithoutWrites(t, &holds.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), executeParams(map[string]any{
+	preview := agenttoolstest.PreviewWithoutWrites(t, &holds.guard, func() (*agent.ToolPreview, error) {
+		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 			"shipmentId": pulid.MustNew("shp_").String(),
 			"holdId":     current.ID.String(),
 		}))
 	})
 
 	assert.Empty(t, preview.Changes)
-	requireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
 }
 
 func fieldPaths(fields []agent.PreviewFieldChange) []string {

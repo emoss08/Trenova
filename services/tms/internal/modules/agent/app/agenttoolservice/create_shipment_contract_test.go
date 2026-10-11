@@ -6,13 +6,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,7 +44,7 @@ func schemaCheck(tool agentports.AgentTool, args map[string]any) error {
 func TestCreateShipment_TheSchemaAsksForWhatTheDomainNeeds(t *testing.T) {
 	t.Parallel()
 
-	tool := newCreateShipmentTool(createShipmentDeps{Shipments: &fakeShipmentWriter{}})
+	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: &agenttoolstest.FakeShipmentWriter{}})
 	payload := shipmentPayload(
 		pulid.MustNew("cus_"), pulid.MustNew("svc_"), pulid.MustNew("loc_"), pulid.MustNew("loc_"),
 	)
@@ -97,21 +100,21 @@ func TestCreateShipment_UsesTheContractsRatingWhenNoneIsGiven(t *testing.T) {
 		FormulaTemplateID: &template,
 		BaseRate:          decimal.NewNullDecimal(decimal.RequireFromString("2.10")),
 	}}
-	tool := newCreateShipmentTool(createShipmentDeps{
-		Shipments: &fakeShipmentWriter{},
+	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{
+		Shipments: &agenttoolstest.FakeShipmentWriter{},
 		Contracts: contracts,
-	}).(*createShipmentTool)
+	}).(*operationstools.CreateShipmentTool)
 	params := createShipmentParams()
 	delete(params.Params["shipment"].(map[string]any), "formulaTemplateId")
 
-	entity, err := tool.draft(t.Context(), &params)
+	entity, err := tool.Draft(t.Context(), &params)
 	require.NoError(t, err)
 	assert.Equal(t, template, entity.FormulaTemplateID)
 	require.True(t, entity.BaseRate.Valid)
 	assert.True(t, entity.BaseRate.Decimal.Equal(decimal.RequireFromString("2.10")))
 
 	named := createShipmentParams()
-	_, err = tool.draft(t.Context(), &named)
+	_, err = tool.Draft(t.Context(), &named)
 	require.NoError(t, err)
 	assert.Equal(t, 1, contracts.calls, "a rating the call names is never second-guessed")
 }
@@ -119,16 +122,16 @@ func TestCreateShipment_UsesTheContractsRatingWhenNoneIsGiven(t *testing.T) {
 func TestCreateShipment_AsksForARatingWhenNoAgreementPricesTheLane(t *testing.T) {
 	t.Parallel()
 
-	tool := newCreateShipmentTool(createShipmentDeps{
-		Shipments: &fakeShipmentWriter{},
+	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{
+		Shipments: &agenttoolstest.FakeShipmentWriter{},
 		Contracts: &fakeContractRates{priced: &shipmentports.ContractRateApplication{
 			Outcome: ratequote.OutcomeNoRateFound,
 		}},
-	}).(*createShipmentTool)
+	}).(*operationstools.CreateShipmentTool)
 	params := createShipmentParams()
 	delete(params.Params["shipment"].(map[string]any), "formulaTemplateId")
 
-	_, err := tool.draft(t.Context(), &params)
+	_, err := tool.Draft(t.Context(), &params)
 	var refusal *errortypes.Error
 	require.ErrorAs(t, err, &refusal)
 	assert.Equal(t, "formulaTemplateId", refusal.Field)
@@ -138,7 +141,7 @@ func TestCreateShipment_AsksForARatingWhenNoAgreementPricesTheLane(t *testing.T)
 func TestCreateShipment_TheSchemaRefusesWhatOnlyTheRaterOrTheSystemSets(t *testing.T) {
 	t.Parallel()
 
-	tool := newCreateShipmentTool(createShipmentDeps{Shipments: &fakeShipmentWriter{}})
+	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: &agenttoolstest.FakeShipmentWriter{}})
 	for field, value := range map[string]any{
 		"rateLocked":          true,
 		"rateOverrideAmount":  "0",
@@ -162,8 +165,8 @@ func TestCreateShipment_TheSchemaRefusesWhatOnlyTheRaterOrTheSystemSets(t *testi
 func TestCreateShipment_ReplaysTheCallThatWasCreatedUnrated(t *testing.T) {
 	t.Parallel()
 
-	writer := &fakeShipmentWriter{}
-	tool := newCreateShipmentTool(createShipmentDeps{Shipments: writer})
+	writer := &agenttoolstest.FakeShipmentWriter{}
+	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: writer})
 	origin, dest := pulid.MustNew("loc_"), pulid.MustNew("loc_")
 	sent := map[string]any{"shipment": map[string]any{
 		"customerId":     pulid.MustNew("cus_").String(),
@@ -202,62 +205,62 @@ func TestCreateShipment_ReplaysTheCallThatWasCreatedUnrated(t *testing.T) {
 	stops[1].(map[string]any)["scheduledWindowStart"] = "2026-10-02T08:00"
 	require.NoError(t, schemaCheck(tool, sent), "what is left fits the schema")
 
-	err = tool.(agentports.ToolValidator).Validate(t.Context(), executeParams(sent))
+	err = tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(sent))
 	require.Error(t, err, "stops numbered from 1 are refused before anything is filed")
 	assert.Contains(t, err.Error(),
 		"moves[0].stops[0].sequence: Sequences count from 0 in travel order, so this one is 0, not 1")
 	assert.Contains(t, err.Error(), "moves[0].stops[1].sequence:")
-	assert.Zero(t, writer.previews, "the plan never ran on a misnumbered shipment")
+	assert.Zero(t, writer.Previews, "the plan never ran on a misnumbered shipment")
 }
 
 func TestCreateShipment_NumbersStopsFromZeroInTravelOrder(t *testing.T) {
 	t.Parallel()
 
-	writer := &fakeShipmentWriter{}
-	tool := newCreateShipmentTool(createShipmentDeps{Shipments: writer})
+	writer := &agenttoolstest.FakeShipmentWriter{}
+	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: writer})
 	payload := shipmentPayload(
 		pulid.MustNew("cus_"), pulid.MustNew("svc_"), pulid.MustNew("loc_"), pulid.MustNew("loc_"),
 	)
 	for _, stop := range payload["moves"].([]any)[0].(map[string]any)["stops"].([]any) {
 		delete(stop.(map[string]any), "sequence")
 	}
-	params := executeParams(map[string]any{"shipment": payload})
+	params := agenttoolstest.ExecuteParams(map[string]any{"shipment": payload})
 	params.IdempotencyKey = "idem-seq"
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 
-	stops := writer.created.Moves[0].Stops
+	stops := writer.Created.Moves[0].Stops
 	require.Len(t, stops, 2)
 	assert.Equal(t, []int64{0, 1}, []int64{stops[0].Sequence, stops[1].Sequence})
 	assert.Equal(t, shipment.StopTypePickup, stops[0].Type)
-	assert.True(t, writer.created.Moves[0].Loaded, "a move is loaded unless it says otherwise")
+	assert.True(t, writer.Created.Moves[0].Loaded, "a move is loaded unless it says otherwise")
 }
 
 func TestCreateShipment_ReadsEachWindowWhereTheStopIs(t *testing.T) {
 	t.Parallel()
 
-	writer := &fakeShipmentWriter{}
+	writer := &agenttoolstest.FakeShipmentWriter{}
 	origin, dest := pulid.MustNew("loc_"), pulid.MustNew("loc_")
-	tool := newCreateShipmentTool(createShipmentDeps{
+	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{
 		Shipments: writer,
-		Locations: fakeLocationZones{zones: map[pulid.ID]string{origin: "America/Los_Angeles"}},
+		Locations: agenttoolstest.FakeLocationZones{Zones: map[pulid.ID]string{origin: "America/Los_Angeles"}},
 	})
 	payload := shipmentPayload(pulid.MustNew("cus_"), pulid.MustNew("svc_"), origin, dest)
 	stops := payload["moves"].([]any)[0].(map[string]any)["stops"].([]any)
 	stops[0].(map[string]any)["scheduledWindowEnd"] = "2026-10-01T10:30"
-	params := executeParams(map[string]any{"shipment": payload})
+	params := agenttoolstest.ExecuteParams(map[string]any{"shipment": payload})
 	params.IdempotencyKey = "idem-zones"
 	params.Timezone = "America/Chicago"
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 
-	created := writer.created.Moves[0].Stops
-	assert.Equal(t, localInstant(t, "America/Los_Angeles", 2026, 10, 1, 8, 0),
+	created := writer.Created.Moves[0].Stops
+	assert.Equal(t, agenttoolstest.LocalInstant(t, "America/Los_Angeles", 2026, 10, 1, 8, 0),
 		created[0].ScheduledWindowStart, "the pickup's own zone")
 	require.NotNil(t, created[0].ScheduledWindowEnd)
-	assert.Equal(t, localInstant(t, "America/Los_Angeles", 2026, 10, 1, 10, 30),
+	assert.Equal(t, agenttoolstest.LocalInstant(t, "America/Los_Angeles", 2026, 10, 1, 10, 30),
 		*created[0].ScheduledWindowEnd)
-	assert.Equal(t, localInstant(t, "America/Chicago", 2026, 10, 2, 8, 0),
+	assert.Equal(t, agenttoolstest.LocalInstant(t, "America/Chicago", 2026, 10, 2, 8, 0),
 		created[1].ScheduledWindowStart, "a location with no zone is read in the organization's")
 }
 
@@ -273,15 +276,15 @@ func TestCreateShipment_RefusesAWindowItCannotRead(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			writer := &fakeShipmentWriter{}
-			tool := newCreateShipmentTool(createShipmentDeps{Shipments: writer})
+			writer := &agenttoolstest.FakeShipmentWriter{}
+			tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: writer})
 			payload := shipmentPayload(
 				pulid.MustNew("cus_"), pulid.MustNew("svc_"), pulid.MustNew("loc_"),
 				pulid.MustNew("loc_"),
 			)
 			stops := payload["moves"].([]any)[0].(map[string]any)["stops"].([]any)
 			stops[0].(map[string]any)["scheduledWindowStart"] = window
-			params := executeParams(map[string]any{"shipment": payload})
+			params := agenttoolstest.ExecuteParams(map[string]any{"shipment": payload})
 			params.IdempotencyKey = "idem-window"
 			params.Timezone = "America/Chicago"
 
@@ -289,7 +292,7 @@ func TestCreateShipment_RefusesAWindowItCannotRead(t *testing.T) {
 
 			require.Error(t, err)
 			assert.Equal(t, []string{"moves[0].stops[0].scheduledWindowStart"}, errorFields(t, err))
-			assert.Nil(t, writer.created)
+			assert.Nil(t, writer.Created)
 		})
 	}
 }
@@ -297,8 +300,8 @@ func TestCreateShipment_RefusesAWindowItCannotRead(t *testing.T) {
 func TestCreateShipment_EntersTheFreightChargesAndRating(t *testing.T) {
 	t.Parallel()
 
-	writer := &fakeShipmentWriter{}
-	tool := newCreateShipmentTool(createShipmentDeps{Shipments: writer})
+	writer := &agenttoolstest.FakeShipmentWriter{}
+	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: writer})
 	commodityID, accessorialID := pulid.MustNew("com_"), pulid.MustNew("acc_")
 	billTo, template := pulid.MustNew("cus_"), pulid.MustNew("fmt_")
 	payload := shipmentPayload(
@@ -315,12 +318,12 @@ func TestCreateShipment_EntersTheFreightChargesAndRating(t *testing.T) {
 		"accessorialChargeId": accessorialID.String(), "method": "Flat", "unit": 1,
 		"amount": "125.00",
 	}}
-	params := executeParams(map[string]any{"shipment": payload})
+	params := agenttoolstest.ExecuteParams(map[string]any{"shipment": payload})
 	params.IdempotencyKey = "idem-freight"
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 
-	created := writer.created
+	created := writer.Created
 	assert.Equal(t, template, created.FormulaTemplateID)
 	require.NotNil(t, created.BillToCustomerID)
 	assert.Equal(t, billTo, *created.BillToCustomerID)
@@ -343,9 +346,9 @@ func TestCreateShipment_EntersTheFreightChargesAndRating(t *testing.T) {
 func TestCreateShipment_SaysWhatItCreated(t *testing.T) {
 	t.Parallel()
 
-	writer := &fakeShipmentWriter{}
-	tool := newCreateShipmentTool(createShipmentDeps{Shipments: writer})
-	params := executeParams(map[string]any{"shipment": shipmentPayload(
+	writer := &agenttoolstest.FakeShipmentWriter{}
+	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: writer})
+	params := agenttoolstest.ExecuteParams(map[string]any{"shipment": shipmentPayload(
 		pulid.MustNew("cus_"), pulid.MustNew("svc_"), pulid.MustNew("loc_"), pulid.MustNew("loc_"),
 	)})
 	params.IdempotencyKey = "idem-result"
@@ -353,13 +356,13 @@ func TestCreateShipment_SaysWhatItCreated(t *testing.T) {
 	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 
-	id := writer.created.ID.String()
+	id := writer.Created.ID.String()
 	assert.Equal(t, "created", result.Action)
 	assert.Equal(t, "shipment", result.Kind)
-	assert.Equal(t, writer.created.ProNumber, result.Name)
+	assert.Equal(t, writer.Created.ProNumber, result.Name)
 	assert.Equal(t, map[string]string{"shipmentId": id}, result.IDs)
 	assert.Equal(t, &agent.RecordRef{EntityType: "shipment", ID: id}, result.Record)
-	assert.Contains(t, result.Describe(), `created the shipment "`+writer.created.ProNumber+`"`)
+	assert.Contains(t, result.Describe(), `created the shipment "`+writer.Created.ProNumber+`"`)
 	assert.Contains(t, result.IDNote(), "shipmentId "+id)
 }
 
@@ -397,9 +400,9 @@ func TestCreateShipment_PreviewWarnsOfAShipmentNothingPrices(t *testing.T) {
 			errortypes.SeverityWarn,
 		).WithRuleKey("capability_policy"),
 	}}
-	tool := newCreateShipmentTool(createShipmentDeps{Shipments: shipments}).(*createShipmentTool)
+	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: shipments}).(*operationstools.CreateShipmentTool)
 
-	preview := previewWithoutWrites(t, &shipments.guard, func() (*agent.ToolPreview, error) {
+	preview := agenttoolstest.PreviewWithoutWrites(t, &shipments.guard, func() (*agent.ToolPreview, error) {
 		return tool.Preview(t.Context(), createShipmentParams())
 	})
 
@@ -410,7 +413,7 @@ func TestCreateShipment_PreviewWarnsOfAShipmentNothingPrices(t *testing.T) {
 		[]string{"No rate agreement covers this lane, so this shipment is priced at zero"},
 		warning.Args)
 	assert.Nil(t, preview.Refusal(), "a flagged shipment can still be approved")
-	require.NotNil(t, previewChange(t, preview, 0).Money, "the rating is shown as money")
+	require.NotNil(t, agenttoolstest.PreviewChange(t, preview, 0).Money, "the rating is shown as money")
 }
 
 func TestLocalTimeProperty_NeverAsksForUnixSeconds(t *testing.T) {
@@ -422,14 +425,14 @@ func TestLocalTimeProperty_NeverAsksForUnixSeconds(t *testing.T) {
 
 	chicago, err := time.LoadLocation("America/Chicago")
 	require.NoError(t, err)
-	seconds, err := requireLocalTime(map[string]any{"at": "2026-10-01T08:00"}, "at", chicago)
+	seconds, err := common.RequireLocalTime(map[string]any{"at": "2026-10-01T08:00"}, "at", chicago)
 	require.NoError(t, err)
 	assert.Equal(t, time.Date(2026, 10, 1, 8, 0, 0, 0, chicago).Unix(), seconds)
 
-	_, err = requireLocalTime(map[string]any{}, "at", chicago)
+	_, err = common.RequireLocalTime(map[string]any{}, "at", chicago)
 	require.Error(t, err)
 
-	absent, err := optionalLocalTime(map[string]any{"at": ""}, "at", chicago)
+	absent, err := common.OptionalLocalTime(map[string]any{"at": ""}, "at", chicago)
 	require.NoError(t, err)
 	assert.Nil(t, absent)
 }

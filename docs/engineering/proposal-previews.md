@@ -328,7 +328,7 @@ records, and approves exactly the set that remains:
 | `approve_carrier_settlements` | `settlementIds` (carrier settlement) | `approve_carrier_settlement` |
 | `post_carrier_settlements` | `settlementIds` (carrier settlement) | `post_carrier_settlement` |
 
-Each bulk tool wraps its single-record tool (`agenttoolservice/bulk_records.go`) and copies
+Each bulk tool wraps its single-record tool (`agenttools/common/bulk_records.go`) and copies
 its policy: the same class, permission and floor. A twin of a person-only tool runs only from a
 person's approval; a twin of a tool that may run on its own (`assign_billing_queue_billers`,
 `transition_items_to_in_review`) runs wherever its single would, and the review twin is held
@@ -346,7 +346,7 @@ refused: …". A run in which every record was refused fails. The single tools s
 their record, and their descriptions point to the bulk tool when there is more than one
 record.
 
-The settlement twins (`agenttoolservice/settlement_bulk_tools.go`) build their single tool
+The settlement twins (`agenttools/settlementtools/settlement_bulk_tools.go`) build their single tool
 from the same lifecycle text and ledger, so each settlement is planned and performed by
 `PlanAction` and `Perform` exactly as the single approve or post would, including the
 journal entry a posting books and, for a driver, the driver-visible egress that classifies

@@ -137,7 +137,7 @@ findings:
       against mutation updateShipment beside update_shipment, Unbound in toolcontract with its
       reason; update_shipment now points to it. To verify in a run.
     files:
-      - services/tms/internal/modules/agent/app/agenttoolservice/shipment_edit_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/shipmenttools/shipment_edit_tools.go
       - services/tms/internal/api/writecoverage/writecoverage.yml
     fixedIn: .deskbench/runs/20261009-203702-run
 
@@ -419,7 +419,7 @@ findings:
       add_shipment_charge already existed with no holder; Billing exceptions now holds it (DB-019).
     fixedIn: "uncommitted; verified by the new lumper-charge-on-a-load case (both models: one $175 lumper proposed, approved and on SEED-SHP-008)"
     files:
-      - services/tms/internal/modules/agent/app/agenttoolservice/shipment_edit_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/shipmenttools/shipment_edit_tools.go
       - services/tms/internal/modules/agent/domain/agentdefinition/tools.go
       - services/tms/deskbench/scenarios/billing.yaml
   - id: DB-018
@@ -466,8 +466,8 @@ findings:
     fixedIn: "uncommitted; verified in .deskbench/runs/20261010-101625-run: get_dispatch_board, record_stop_actual, get_shipment_tracking, get_worker_hos, explain_rate, approve_detention and email_customer were all called by the agents that now hold them"
     files:
       - services/tms/internal/modules/agent/domain/agentdefinition/tools.go
-      - services/tms/internal/modules/agent/app/agenttoolservice/desk_tools.go
-      - services/tms/internal/modules/agent/app/agenttoolservice/monitoring_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/masterdatatools/desk_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/operationstools/monitoring_tools.go
       - services/tms/internal/infrastructure/database/seeds/development/26_agent_definition.go
       - docs/engineering/agent-workforce-tools.md
   - id: DB-020
@@ -532,7 +532,7 @@ findings:
       TestEveryToolSchemaCompiles (agentevalgate) compiles every query and action tool's schema,
       so a schema the validator cannot read fails CI instead of every call. To verify in a run.
     files:
-      - services/tms/internal/modules/agent/app/agenttoolservice/receivable_tool.go
+      - services/tms/internal/modules/agent/app/agenttools/common/receivable_tool.go
       - services/tms/pkg/toolschema/validate.go
       - services/tms/internal/modules/agent/app/agentevalgate/catalog_schema_test.go
     fixedIn: .deskbench/runs/20261009-175153-run
@@ -576,7 +576,7 @@ findings:
       period is worked out from today's date and proposed. To verify in a run.
     files:
       [
-        services/tms/internal/modules/agent/app/agenttoolservice/settlement_generation_tools.go,
+        services/tms/internal/modules/agent/app/agenttools/settlementtools/settlement_generation_tools.go,
       ]
     fixedIn: .deskbench/runs/20261009-175153-run
 
@@ -782,7 +782,7 @@ findings:
     fix: >
       totalAmount is optional when unitPrice is given; the tool works out quantity x unit price to
       the cent, and refuses with both names when neither is given. To verify in a run.
-    files: [services/tms/internal/modules/agent/app/agenttoolservice/fuel_tools.go]
+    files: [services/tms/internal/modules/agent/app/agenttools/receivabletools/fuel_tools.go]
     fixedIn: .deskbench/runs/20261009-203702-run
 
   - id: DB-034
@@ -802,7 +802,7 @@ findings:
       is proposed, with any concern in the reply beside the proposal. To verify in a run.
     files:
       [
-        services/tms/internal/modules/agent/app/agenttoolservice/settlement_lifecycle_tools.go,
+        services/tms/internal/modules/agent/app/agenttools/settlementtools/settlement_lifecycle_tools.go,
       ]
     fixedIn: .deskbench/runs/20261009-195808-run
 
@@ -883,9 +883,9 @@ findings:
       to operations email, then the general one (its existing fallback), and the preview resolves
       the sender, so a missing profile is refused before anyone approves. To verify in a run.
     files:
-      - services/tms/internal/modules/agent/app/agenttoolservice/monitoring_tools.go
-      - services/tms/internal/modules/agent/app/agenttoolservice/preview_email.go
-      - services/tms/internal/modules/agent/app/agenttoolservice/inbound_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/operationstools/monitoring_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/workforcetools/preview_email.go
+      - services/tms/internal/modules/agent/app/agenttools/workforcetools/inbound_tools.go
     fixedIn: .deskbench/runs/20261009-185431-run
 
   - id: DB-038
@@ -984,7 +984,7 @@ findings:
       temperature control is refused as a placeholder, and a minimum above the maximum is refused.
       To verify in a run.
     files:
-      [services/tms/internal/modules/agent/app/agenttoolservice/intake_tools.go]
+      [services/tms/internal/modules/agent/app/agenttools/operationstools/intake_tools.go]
     fixedIn: "uncommitted; verified in .deskbench/runs/20261010-055944-run, 071353 and 082904 (both models)"
 
   - id: DB-042
@@ -1094,7 +1094,7 @@ findings:
       purchasedAt takes a day alone (2026-10-08, yesterday), recorded at noon in the
       organization's time zone; a local time without an offset is still refused, since the pump's
       zone is not known. To verify in a run.
-    files: [services/tms/internal/modules/agent/app/agenttoolservice/fuel_tools.go]
+    files: [services/tms/internal/modules/agent/app/agenttools/receivabletools/fuel_tools.go]
     fixedIn: .deskbench/runs/20261009-203702-run
 
   - id: DB-047
@@ -1170,8 +1170,8 @@ findings:
       - services/tms/internal/modules/operations/ports/shipmentports/shipmentmove.go
       - services/tms/internal/modules/operations/app/shipmentmoveservice/stopactual_plan.go
       - services/tms/internal/modules/operations/app/shipmentmoveservice/stopactuals.go
-      - services/tms/internal/modules/agent/app/agenttoolservice/move_tools.go
-      - services/tms/internal/modules/agent/app/agenttoolservice/preview_moves.go
+      - services/tms/internal/modules/agent/app/agenttools/movetools/move_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/movetools/preview_moves.go
 
   - id: DB-050
     title: Every driver was "infeasible" for a load whose pickup window had already passed
@@ -1250,10 +1250,10 @@ findings:
     fixedIn: uncommitted; verified by .deskbench/runs/20261009-223506-run (approved from ReadyForReview, posted)
     files:
       - services/tms/internal/modules/billing/domain/billingqueue/review.go
-      - services/tms/internal/modules/agent/app/agenttoolservice/billing_queue_decision_tools.go
-      - services/tms/internal/modules/agent/app/agenttoolservice/preview_billing_decisions.go
-      - services/tms/internal/modules/agent/app/agenttoolservice/approve_billing_queue_item.go
-      - services/tms/internal/modules/agent/app/agenttoolservice/invoice_bulk_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/billingtools/billing_queue_decision_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/billingtools/preview_billing_decisions.go
+      - services/tms/internal/modules/agent/app/agenttools/billingtools/approve_billing_queue_item.go
+      - services/tms/internal/modules/agent/app/agenttools/invoicetools/invoice_bulk_tools.go
       - services/tms/internal/modules/agent/app/agentquerytoolservice/billing_queue_tools.go
 
   - id: DB-053
@@ -1373,8 +1373,8 @@ findings:
       the lane it refuses, naming list_formula_templates. A rating the call names is never
       second-guessed. The tool contract records the exception. To verify in a run.
     files:
-      - services/tms/internal/modules/agent/app/agenttoolservice/intake_tools.go
-      - services/tms/internal/modules/agent/app/agenttoolservice/shipment_draft.go
+      - services/tms/internal/modules/agent/app/agenttools/operationstools/intake_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/shipmenttools/shipment_draft.go
       - services/tms/internal/modules/agent/app/agenttoolservice/module.go
       - services/tms/internal/api/toolcontract/bindings.go
     fixedIn: "uncommitted; verified in .deskbench/runs/20261010-055944-run, 071353 and 082904 (both models)"
@@ -1520,7 +1520,7 @@ findings:
     fixedIn: uncommitted; unit-tested
     files:
       - services/tms/internal/modules/billing/app/billingqueueservice/service.go
-      - services/tms/internal/modules/agent/app/agenttoolservice/billing_queue_decision_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/billingtools/billing_queue_decision_tools.go
 
   - id: DB-065
     title: Records in play missed loads created by an approval, and never reached a directed agent
@@ -1663,7 +1663,7 @@ findings:
       and says which was used.
     fixedIn: uncommitted; to verify in a run
     files:
-      - services/tms/internal/modules/agent/app/agenttoolservice/intake_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/operationstools/intake_tools.go
 
   - id: DB-071
     title: No agent could propose a new customer; the preview's transaction was aborted
@@ -1725,7 +1725,7 @@ findings:
       naming it. The scenario's setup removes earlier runs' schedules.
     fixedIn: uncommitted; TestScheduleReport_RefusesAScheduleTheReportAlreadyHas
     files:
-      - services/tms/internal/modules/agent/app/agenttoolservice/alert_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/alerttools/alert_tools.go
       - services/tms/deskbench/scenarios/backoffice.yaml
 
   - id: DB-074
@@ -1777,7 +1777,7 @@ findings:
     fix: wait_until's description says to check now what can be checked now and say what it means before waiting.
     fixedIn: uncommitted; catalog checks pass
     files:
-      - services/tms/internal/modules/agent/app/agenttoolservice/wait_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/carriertools/wait_tools.go
 
   - id: DB-077
     title: '"Loads rolling" was checked against InTransit alone'
@@ -1942,7 +1942,7 @@ findings:
       and scan can follow, renew when one of the kind is on file.
     fixedIn: uncommitted
     files:
-      - services/tms/internal/modules/agent/app/agenttoolservice/workforce_credential_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/workforcetools/workforce_credential_tools.go
 
   - id: DB-086
     title: Seven more control repositories aborted a preview's read-only transaction on a missing row
@@ -2037,7 +2037,7 @@ findings:
     fix: The description says arrival and departure waits are met when the truck is seen there or the time is recorded.
     fixedIn: uncommitted; catalog checks pass
     files:
-      - services/tms/internal/modules/agent/app/agenttoolservice/wait_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/carriertools/wait_tools.go
 
   - id: DB-091
     title: An agent hunted for a way to withdraw an earlier turn's proposal
@@ -2090,7 +2090,7 @@ findings:
       start date says "next Friday" is the coming Friday.
     fixedIn: uncommitted; to verify in a run
     files:
-      - services/tms/internal/modules/agent/app/agenttoolservice/workforce_pto_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/workforcetools/workforce_pto_tools.go
       - services/tms/internal/api/toolcontract/bindings.go
 
   - id: DB-094
@@ -2109,7 +2109,7 @@ findings:
       and otherwise propose and say coverage was not checked.
     fixedIn: uncommitted; to verify in a run
     files:
-      - services/tms/internal/modules/agent/app/agenttoolservice/pto_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/operationstools/pto_tools.go
 
   - id: DB-095
     title: No tool could list open safety events across the fleet
@@ -2141,7 +2141,7 @@ findings:
     fix: notify_driver says passing on what the person said needs no record checked or changed first.
     fixedIn: uncommitted; to verify in a run
     files:
-      - services/tms/internal/modules/agent/app/agenttoolservice/monitoring_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/operationstools/monitoring_tools.go
 
   - id: DB-097
     title: The empty settlement list's note named settlements without their ids
@@ -2176,7 +2176,7 @@ findings:
     fixedIn: uncommitted; TestPreviewAssignToMove_SaysWhenEquipmentIsOnAMoveInProgress
     files:
       - services/tms/internal/modules/operations/app/assignmentservice/plan.go
-      - services/tms/internal/modules/agent/app/agenttoolservice/preview_assignment.go
+      - services/tms/internal/modules/agent/app/agenttools/masterdatatools/preview_assignment.go
       - services/tms/internal/infrastructure/database/seeds/development/06_test_data.go
 
   - id: DB-099
@@ -2229,7 +2229,7 @@ findings:
     fix: A deadline reads as 08:00 that day until it; the description says the BOL is optional unless given.
     fixedIn: uncommitted; catalog limits hold
     files:
-      - services/tms/internal/modules/agent/app/agenttoolservice/intake_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/operationstools/intake_tools.go
 
   - id: DB-102
     title: A multi-stop move got no distance, so every per-mile carrier tied at its minimum
@@ -2327,7 +2327,7 @@ findings:
       there is nothing to look up, and to ask only when it says none covers the lane.
     fixedIn: uncommitted; catalog limits and floor hold
     files:
-      - services/tms/internal/modules/agent/app/agenttoolservice/intake_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/operationstools/intake_tools.go
 
   - id: DB-107
     title: With no email profile, a send failed as "EmailProfile not found"
@@ -2480,8 +2480,8 @@ findings:
       for the tool that hands out the settlement's id.
     fixedIn: uncommitted
     files:
-      - services/tms/internal/modules/agent/app/agenttoolservice/settlement_decision_tools.go
-      - services/tms/internal/modules/agent/app/agenttoolservice/settlement_lifecycle_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/settlementtools/settlement_decision_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/settlementtools/settlement_lifecycle_tools.go
 
   - id: DB-114
     title: The pay lists took a driver's name as "driver" where every other list takes "query"
@@ -2730,8 +2730,8 @@ findings:
       for every id it takes load and are held with it; primaryWorkerId names search_worker.
     fixedIn: uncommitted; TestAssignMove_LoadsTheLookupsItsIDsComeFrom
     files:
-      - services/tms/internal/modules/agent/app/agenttoolservice/assign_move.go
-      - services/tms/internal/modules/agent/app/agenttoolservice/preview_assignment_test.go
+      - services/tms/internal/modules/agent/app/agenttools/masterdatatools/assign_move.go
+      - services/tms/internal/modules/agent/app/agenttools/masterdatatools/preview_assignment_test.go
 
   - id: DB-125
     title: Agent activity made the open Desk refetch every cached conversation, until the browser hit the rate limit
@@ -2964,8 +2964,8 @@ findings:
     files:
       - services/tms/internal/modules/workforce/ports/workerports/workerpto_services.go
       - services/tms/internal/modules/identity/app/workerptoservice/preview_transition.go
-      - services/tms/internal/modules/agent/app/agenttoolservice/preview_driver.go
-      - services/tms/internal/modules/agent/app/agenttoolservice/preview_pto_approval.go
+      - services/tms/internal/modules/agent/app/agenttools/operationstools/preview_driver.go
+      - services/tms/internal/modules/agent/app/agenttools/operationstools/preview_pto_approval.go
       - services/tms/internal/modules/agent/app/agenttoolservice/preview_driver_test.go
       - services/tms/internal/modules/identity/app/ptoledgerservice/availability.go
 

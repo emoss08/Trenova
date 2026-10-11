@@ -5,11 +5,14 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -78,22 +81,6 @@ func (f *fakeShipmentService) Cancel(
 	return &shipment.Shipment{ID: req.ShipmentID}, f.err
 }
 
-func executeParams(params map[string]any) agentports.ToolExecuteParams {
-	orgID := pulid.MustNew("org_")
-	buID := pulid.MustNew("bu_")
-
-	return agentports.ToolExecuteParams{
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		Actor: &permissionports.RequestActor{
-			UserID:         pulid.MustNew("usr_"),
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
-		},
-		Params: params,
-	}
-}
-
 /*
 A comment the assistant leaves has to be marked as the assistant's.
 
@@ -106,9 +93,9 @@ func TestAddShipmentComment_MarksItselfAsAIWritten(t *testing.T) {
 	t.Parallel()
 
 	comments := &fakeCommentService{}
-	tool := newAddShipmentCommentTool(comments)
+	tool := shipmenttools.NewAddShipmentCommentTool(comments)
 
-	err := tool.Execute(t.Context(), executeParams(map[string]any{
+	err := tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
 		"comment":    "Carrier confirmed a 14:00 pickup.",
 	}))
@@ -125,9 +112,9 @@ func TestAddShipmentComment_DefaultsToInternalVisibility(t *testing.T) {
 	t.Parallel()
 
 	comments := &fakeCommentService{}
-	tool := newAddShipmentCommentTool(comments)
+	tool := shipmenttools.NewAddShipmentCommentTool(comments)
 
-	require.NoError(t, tool.Execute(t.Context(), executeParams(map[string]any{
+	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
 		"comment":    "Checked the BOL.",
 	})))
@@ -139,9 +126,9 @@ func TestAddShipmentComment_CarriesTheAuthorAndTenant(t *testing.T) {
 	t.Parallel()
 
 	comments := &fakeCommentService{}
-	tool := newAddShipmentCommentTool(comments)
+	tool := shipmenttools.NewAddShipmentCommentTool(comments)
 
-	params := executeParams(map[string]any{
+	params := agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
 		"comment":    "Noted.",
 	})
@@ -156,15 +143,15 @@ func TestAddShipmentComment_RejectsAMismatchedActor(t *testing.T) {
 	t.Parallel()
 
 	comments := &fakeCommentService{}
-	tool := newAddShipmentCommentTool(comments)
+	tool := shipmenttools.NewAddShipmentCommentTool(comments)
 
-	params := executeParams(map[string]any{
+	params := agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
 		"comment":    "Noted.",
 	})
 	params.Actor.OrganizationID = pulid.MustNew("org_")
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), ErrTenantMismatch)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrTenantMismatch)
 	assert.Nil(t, comments.created)
 }
 
@@ -178,9 +165,9 @@ func TestPlaceShipmentHold_RequiresARealReason(t *testing.T) {
 	t.Parallel()
 
 	holds := &fakeHoldService{}
-	tool := newPlaceShipmentHoldTool(holds)
+	tool := shipmenttools.NewPlaceShipmentHoldTool(holds)
 
-	err := tool.Execute(t.Context(), executeParams(map[string]any{
+	err := tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
 		"notes":      "Awaiting a corrected BOL.",
 	}))
@@ -192,12 +179,12 @@ func TestPlaceShipmentHold_PassesTheReasonAndNotes(t *testing.T) {
 	t.Parallel()
 
 	holds := &fakeHoldService{}
-	tool := newPlaceShipmentHoldTool(holds)
+	tool := shipmenttools.NewPlaceShipmentHoldTool(holds)
 
 	shipmentID := pulid.MustNew("shp_")
 	reasonID := pulid.MustNew("hrsn_")
 
-	require.NoError(t, tool.Execute(t.Context(), executeParams(map[string]any{
+	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId":   shipmentID.String(),
 		"holdReasonId": reasonID.String(),
 		"notes":        "Awaiting a corrected BOL.",
@@ -216,9 +203,9 @@ func TestPlaceShipmentHold_LeavesBlockingToTheReason(t *testing.T) {
 	t.Parallel()
 
 	holds := &fakeHoldService{}
-	tool := newPlaceShipmentHoldTool(holds)
+	tool := shipmenttools.NewPlaceShipmentHoldTool(holds)
 
-	require.NoError(t, tool.Execute(t.Context(), executeParams(map[string]any{
+	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId":   pulid.MustNew("shp_").String(),
 		"holdReasonId": pulid.MustNew("hrsn_").String(),
 	})))
@@ -232,12 +219,12 @@ func TestReleaseShipmentHold_PassesBothIdentifiers(t *testing.T) {
 	t.Parallel()
 
 	holds := &fakeHoldService{}
-	tool := newReleaseShipmentHoldTool(holds)
+	tool := shipmenttools.NewReleaseShipmentHoldTool(holds)
 
 	shipmentID := pulid.MustNew("shp_")
 	holdID := pulid.MustNew("shld_")
 
-	require.NoError(t, tool.Execute(t.Context(), executeParams(map[string]any{
+	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": shipmentID.String(),
 		"holdId":     holdID.String(),
 	})))
@@ -257,9 +244,9 @@ func TestCancelShipment_RequiresAReason(t *testing.T) {
 	t.Parallel()
 
 	shipments := &fakeShipmentService{}
-	tool := newCancelShipmentTool(shipments, nil, nil)
+	tool := shipmenttools.NewCancelShipmentTool(shipments, nil, nil)
 
-	err := tool.Execute(t.Context(), executeParams(map[string]any{
+	err := tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
 	}))
 	require.Error(t, err)
@@ -270,9 +257,9 @@ func TestCancelShipment_RecordsWhoCanceledIt(t *testing.T) {
 	t.Parallel()
 
 	shipments := &fakeShipmentService{}
-	tool := newCancelShipmentTool(shipments, nil, nil)
+	tool := shipmenttools.NewCancelShipmentTool(shipments, nil, nil)
 
-	params := executeParams(map[string]any{
+	params := agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId":   pulid.MustNew("shp_").String(),
 		"cancelReason": "Customer cancelled the order.",
 	})
@@ -287,7 +274,7 @@ func TestCancelShipment_RecordsWhoCanceledIt(t *testing.T) {
 func TestCancelShipment_IsIrreversibleAndOnlyProposes(t *testing.T) {
 	t.Parallel()
 
-	tool := newCancelShipmentTool(&fakeShipmentService{}, nil, nil)
+	tool := shipmenttools.NewCancelShipmentTool(&fakeShipmentService{}, nil, nil)
 
 	assert.False(t, tool.Policy().Reversible)
 	assert.Equal(t, agent.TierPropose, tool.Policy().DefaultTier)
@@ -303,7 +290,7 @@ func TestShipmentWriteTools_SurfaceServiceFailures(t *testing.T) {
 
 	holds := &fakeHoldService{err: failure}
 	require.ErrorIs(t,
-		newPlaceShipmentHoldTool(holds).Execute(t.Context(), executeParams(map[string]any{
+		shipmenttools.NewPlaceShipmentHoldTool(holds).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 			"shipmentId":   pulid.MustNew("shp_").String(),
 			"holdReasonId": pulid.MustNew("hrsn_").String(),
 		})),
@@ -312,7 +299,7 @@ func TestShipmentWriteTools_SurfaceServiceFailures(t *testing.T) {
 
 	shipments := &fakeShipmentService{err: failure}
 	require.ErrorIs(t,
-		newCancelShipmentTool(shipments, nil, nil).Execute(t.Context(), executeParams(map[string]any{
+		shipmenttools.NewCancelShipmentTool(shipments, nil, nil).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 			"shipmentId":   pulid.MustNew("shp_").String(),
 			"cancelReason": "duplicate booking",
 		})),
@@ -331,10 +318,10 @@ func TestShipmentWriteTools_AuthorizeAgainstWhatTheyWrite(t *testing.T) {
 		resource  permission.Resource
 		operation permission.Operation
 	}{
-		{newAddShipmentCommentTool(nil), permission.ResourceShipmentComment, permission.OpCreate},
-		{newPlaceShipmentHoldTool(nil), permission.ResourceShipmentHold, permission.OpCreate},
-		{newReleaseShipmentHoldTool(nil), permission.ResourceShipmentHold, permission.OpUpdate},
-		{newCancelShipmentTool(nil, nil, nil), permission.ResourceShipment, permission.OpCancel},
+		{shipmenttools.NewAddShipmentCommentTool(nil), permission.ResourceShipmentComment, permission.OpCreate},
+		{shipmenttools.NewPlaceShipmentHoldTool(nil), permission.ResourceShipmentHold, permission.OpCreate},
+		{shipmenttools.NewReleaseShipmentHoldTool(nil), permission.ResourceShipmentHold, permission.OpUpdate},
+		{shipmenttools.NewCancelShipmentTool(nil, nil, nil), permission.ResourceShipment, permission.OpCancel},
 	} {
 		assert.Equal(t, tc.resource, tc.tool.Policy().Resource, tc.tool.Name())
 		assert.Equal(t, tc.operation, tc.tool.Policy().Operation, tc.tool.Name())
@@ -356,9 +343,9 @@ func TestAddShipmentComment_KeepsTypeAndVisibilityConsistent(t *testing.T) {
 		shipment.CommentVisibilityInternal: shipment.CommentTypeInternal,
 	} {
 		comments := &fakeCommentService{}
-		tool := newAddShipmentCommentTool(comments)
+		tool := shipmenttools.NewAddShipmentCommentTool(comments)
 
-		require.NoError(t, tool.Execute(t.Context(), executeParams(map[string]any{
+		require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 			"shipmentId": pulid.MustNew("shp_").String(),
 			"comment":    "Update.",
 			"visibility": string(visibility),

@@ -3,8 +3,19 @@ package agenttoolservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/alerttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carriertools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/movetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ratetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/workforcetools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,7 +25,7 @@ func TestTargetOf_NamesTheRecordFromItsArgument(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("shp_")
-	target, ok := targetOf(
+	target, ok := common.TargetOf(
 		map[string]any{"shipmentId": id.String()},
 		"shipmentId",
 		permission.ResourceShipment,
@@ -37,7 +48,7 @@ func TestTargetOf_YieldsNothingForABadArgument(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			_, ok := targetOf(params, "shipmentId", permission.ResourceShipment)
+			_, ok := common.TargetOf(params, "shipmentId", permission.ResourceShipment)
 			assert.False(t, ok)
 		})
 	}
@@ -54,36 +65,36 @@ func TestSingleRecordTools_NameTheirTarget(t *testing.T) {
 		key      string
 		resource permission.Resource
 	}{
-		{&addShipmentCommentTool{}, "shipmentId", permission.ResourceShipment},
+		{&shipmenttools.AddShipmentCommentTool{}, "shipmentId", permission.ResourceShipment},
 		// The document, not the shipment: attaching changes the document's
 		// lineage, so that is the record whose version the proposal pins.
-		{&attachDocumentTool{}, "documentId", permission.ResourceDocument},
-		{&placeShipmentHoldTool{}, "shipmentId", permission.ResourceShipment},
-		{&releaseShipmentHoldTool{}, "shipmentId", permission.ResourceShipment},
-		{&cancelShipmentTool{}, "shipmentId", permission.ResourceShipment},
-		{&recordStopActualTool{}, "moveId", permission.ResourceShipmentMove},
-		{&assignMoveTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
-		{&approveWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
-		{&rejectWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
-		{&cancelWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
-		{&correctChargeCodeTool{}, "billingQueueItemId", permission.ResourceBillingQueue},
-		{&addDashboardTileTool{}, "dashboardId", permission.ResourceDashboard},
-		{&scheduleReportTool{}, "definitionId", permission.ResourceReport},
-		{&linkInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
-		{&markInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
+		{&masterdatatools.AttachDocumentTool{}, "documentId", permission.ResourceDocument},
+		{&shipmenttools.PlaceShipmentHoldTool{}, "shipmentId", permission.ResourceShipment},
+		{&shipmenttools.ReleaseShipmentHoldTool{}, "shipmentId", permission.ResourceShipment},
+		{&shipmenttools.CancelShipmentTool{}, "shipmentId", permission.ResourceShipment},
+		{&movetools.RecordStopActualTool{}, "moveId", permission.ResourceShipmentMove},
+		{&masterdatatools.AssignMoveTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
+		{&operationstools.ApproveWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
+		{&operationstools.RejectWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
+		{&operationstools.CancelWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
+		{&invoicetools.CorrectChargeCodeTool{}, "billingQueueItemId", permission.ResourceBillingQueue},
+		{&masterdatatools.AddDashboardTileTool{}, "dashboardId", permission.ResourceDashboard},
+		{&alerttools.ScheduleReportTool{}, "definitionId", permission.ResourceReport},
+		{&workforcetools.LinkInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
+		{&workforcetools.MarkInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
 		// The message, not a new record: a reply to a message somebody has
 		// since settled or relinked must be refused as stale.
-		{&replyToInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
-		{&assignMoveToCarrierTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
-		{&cancelCarrierAssignmentTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
+		{&workforcetools.ReplyToInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
+		{&carriertools.AssignMoveToCarrierTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
+		{&carriertools.CancelCarrierAssignmentTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
 		// The tender, whose version moves as it advances or ends, so a
 		// withdrawal proposed against a tender that has since moved is stale.
-		{&cancelTenderTool{}, "tenderId", permission.ResourceTender},
-		{&generateRateConfirmationTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
-		{&sendRateConfirmationTool{}, "rateConfirmationId", permission.ResourceRateConfirmation},
-		{&voidRateConfirmationTool{}, "rateConfirmationId", permission.ResourceRateConfirmation},
+		{&tendertools.CancelTenderTool{}, "tenderId", permission.ResourceTender},
+		{&ratetools.GenerateRateConfirmationTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
+		{&ratetools.SendRateConfirmationTool{}, "rateConfirmationId", permission.ResourceRateConfirmation},
+		{&ratetools.VoidRateConfirmationTool{}, "rateConfirmationId", permission.ResourceRateConfirmation},
 		{
-			&recordRateConfirmationConfirmedTool{},
+			&ratetools.RecordRateConfirmationConfirmedTool{},
 			"rateConfirmationId",
 			permission.ResourceRateConfirmation,
 		},

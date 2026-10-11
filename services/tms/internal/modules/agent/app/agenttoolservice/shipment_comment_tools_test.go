@@ -4,12 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -19,7 +22,7 @@ import (
 )
 
 type fakeCommentModerator struct {
-	guard    *writeGuard
+	guard    *agenttoolstest.WriteGuard
 	current  *shipment.ShipmentComment
 	refusal  error
 	pinned   *bool
@@ -58,7 +61,7 @@ func (f *fakeCommentModerator) GetByID(
 }
 
 func (f *fakeCommentModerator) toggle(pinned, resolved *bool) (*shipment.ShipmentComment, error) {
-	if err := f.guard.write(); err != nil {
+	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.pinned, f.resolved = pinned, resolved
@@ -71,7 +74,7 @@ func (f *fakeCommentModerator) Pin(
 	*shipmentports.ToggleShipmentCommentRequest,
 	*permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
-	return f.toggle(boolPointer(true), nil)
+	return f.toggle(shipmenttools.BoolPointer(true), nil)
 }
 
 func (f *fakeCommentModerator) Unpin(
@@ -79,7 +82,7 @@ func (f *fakeCommentModerator) Unpin(
 	*shipmentports.ToggleShipmentCommentRequest,
 	*permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
-	return f.toggle(boolPointer(false), nil)
+	return f.toggle(shipmenttools.BoolPointer(false), nil)
 }
 
 func (f *fakeCommentModerator) Resolve(
@@ -87,7 +90,7 @@ func (f *fakeCommentModerator) Resolve(
 	*shipmentports.ToggleShipmentCommentRequest,
 	*permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
-	return f.toggle(nil, boolPointer(true))
+	return f.toggle(nil, shipmenttools.BoolPointer(true))
 }
 
 func (f *fakeCommentModerator) Unresolve(
@@ -95,7 +98,7 @@ func (f *fakeCommentModerator) Unresolve(
 	*shipmentports.ToggleShipmentCommentRequest,
 	*permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
-	return f.toggle(nil, boolPointer(false))
+	return f.toggle(nil, shipmenttools.BoolPointer(false))
 }
 
 func (f *fakeCommentModerator) Update(
@@ -103,7 +106,7 @@ func (f *fakeCommentModerator) Update(
 	req *shipmentports.UpdateShipmentCommentRequest,
 	_ *permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
-	if err := f.guard.write(); err != nil {
+	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.updated = req
@@ -116,7 +119,7 @@ func (f *fakeCommentModerator) Delete(
 	req *shipmentports.DeleteShipmentCommentRequest,
 	_ *permissionports.RequestActor,
 ) error {
-	if err := f.guard.write(); err != nil {
+	if err := f.guard.Write(); err != nil {
 		return err
 	}
 	f.deleted = req
@@ -190,52 +193,34 @@ func (f *fakeCommentModerator) PreviewDelete(
 	}, nil
 }
 
-type fakePermissionCheck struct {
-	allowed  bool
-	err      error
-	requests []*permissionports.PermissionCheckRequest
-}
-
-func (f *fakePermissionCheck) Check(
-	_ context.Context,
-	req *permissionports.PermissionCheckRequest,
-) (*permissionports.PermissionCheckResult, error) {
-	f.requests = append(f.requests, req)
-	if f.err != nil {
-		return nil, f.err
-	}
-
-	return &permissionports.PermissionCheckResult{Allowed: f.allowed}, nil
-}
-
 func commentParams(
 	comments *fakeCommentModerator,
 	extra map[string]any,
 ) agentports.ToolExecuteParams {
 	raw := map[string]any{
-		paramShipmentID: comments.comment().ShipmentID.String(),
-		paramCommentID:  comments.comment().ID.String(),
+		common.ParamShipmentID:       comments.comment().ShipmentID.String(),
+		shipmenttools.ParamCommentID: comments.comment().ID.String(),
 	}
 	for key, value := range extra {
 		raw[key] = value
 	}
 
-	return executeParams(raw)
+	return agenttoolstest.ExecuteParams(raw)
 }
 
 func TestPinShipmentComment_PreviewsThePinAndWrites(t *testing.T) {
 	t.Parallel()
 
-	comments := &fakeCommentModerator{guard: &writeGuard{}}
-	tool := newPinShipmentCommentTool(comments)
+	comments := &fakeCommentModerator{guard: &agenttoolstest.WriteGuard{}}
+	tool := shipmenttools.NewPinShipmentCommentTool(comments)
 	params := commentParams(comments, nil)
 
-	preview := previewWithoutWrites(t, comments.guard, func() (*agent.ToolPreview, error) {
+	preview := agenttoolstest.PreviewWithoutWrites(t, comments.guard, func() (*agent.ToolPreview, error) {
 		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
-	change := previewChange(t, preview, 0)
+	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationUpdate, change.Operation)
-	assert.NotNil(t, fieldByPath(t, change, fieldPinnedByID).After)
+	assert.NotNil(t, agenttoolstest.FieldByPath(t, change, shipmenttools.FieldPinnedByID).After)
 
 	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
@@ -253,16 +238,16 @@ func TestUnpinShipmentComment_ClearsThePin(t *testing.T) {
 
 	pinnedAt := int64(1_690_000_000)
 	pinnedBy := pulid.MustNew("usr_")
-	comments := &fakeCommentModerator{guard: &writeGuard{}}
+	comments := &fakeCommentModerator{guard: &agenttoolstest.WriteGuard{}}
 	comments.comment().PinnedAt = &pinnedAt
 	comments.comment().PinnedByID = &pinnedBy
-	tool := newUnpinShipmentCommentTool(comments)
+	tool := shipmenttools.NewUnpinShipmentCommentTool(comments)
 	params := commentParams(comments, nil)
 
-	preview := previewWithoutWrites(t, comments.guard, func() (*agent.ToolPreview, error) {
+	preview := agenttoolstest.PreviewWithoutWrites(t, comments.guard, func() (*agent.ToolPreview, error) {
 		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
-	assert.Nil(t, fieldByPath(t, previewChange(t, preview, 0), fieldPinnedByID).After)
+	assert.Nil(t, agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), shipmenttools.FieldPinnedByID).After)
 
 	err := tool.Execute(t.Context(), params)
 	require.NoError(t, err)
@@ -274,16 +259,16 @@ func TestUnpinShipmentComment_ClearsThePin(t *testing.T) {
 func TestResolveShipmentComment_ResolvesByDefaultAndReopensOnFalse(t *testing.T) {
 	t.Parallel()
 
-	comments := &fakeCommentModerator{guard: &writeGuard{}}
-	tool := newResolveShipmentCommentTool(comments)
+	comments := &fakeCommentModerator{guard: &agenttoolstest.WriteGuard{}}
+	tool := shipmenttools.NewResolveShipmentCommentTool(comments)
 
 	err := tool.Execute(t.Context(), commentParams(comments, nil))
 	require.NoError(t, err)
 	require.NotNil(t, comments.resolved)
 	assert.True(t, *comments.resolved)
 
-	reopen := commentParams(comments, map[string]any{paramResolved: false})
-	preview := previewWithoutWrites(t, comments.guard, func() (*agent.ToolPreview, error) {
+	reopen := commentParams(comments, map[string]any{shipmenttools.ParamResolved: false})
+	preview := agenttoolstest.PreviewWithoutWrites(t, comments.guard, func() (*agent.ToolPreview, error) {
 		return tool.(agentports.ToolPreviewer).Preview(t.Context(), reopen)
 	})
 	assert.Contains(t, preview.Summary, "resolve")
@@ -297,42 +282,42 @@ func TestPinShipmentComment_AReplyIsAWouldFail(t *testing.T) {
 	t.Parallel()
 
 	comments := &fakeCommentModerator{
-		guard: &writeGuard{},
+		guard: &agenttoolstest.WriteGuard{},
 		refusal: errortypes.NewValidationError(
 			"commentId", errortypes.ErrInvalid, "Replies cannot be pinned"),
 	}
-	tool := newPinShipmentCommentTool(comments)
+	tool := shipmenttools.NewPinShipmentCommentTool(comments)
 
 	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(),
 		commentParams(comments, nil))
 	require.NoError(t, err)
-	requireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
 
-	err = tool.Execute(t.Context(), executeParams(map[string]any{paramShipmentID: "x"}))
+	err = tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{common.ParamShipmentID: "x"}))
 	require.Error(t, err)
 }
 
 func TestEditShipmentComment_ChangesOnlyWhatIsSentAndKeepsMentions(t *testing.T) {
 	t.Parallel()
 
-	comments := &fakeCommentModerator{guard: &writeGuard{}}
+	comments := &fakeCommentModerator{guard: &agenttoolstest.WriteGuard{}}
 	comments.comment().MentionedUsers = []*shipment.ShipmentCommentMention{
 		{MentionedUserID: pulid.MustNew("usr_")},
 	}
-	permissions := &fakePermissionCheck{}
-	tool := newEditShipmentCommentTool(comments, permissions)
+	permissions := &agenttoolstest.FakePermissionCheck{}
+	tool := shipmenttools.NewEditShipmentCommentTool(comments, permissions)
 	params := commentParams(comments, map[string]any{
-		fieldPriority: string(shipment.CommentPriorityHigh),
+		shipmenttools.FieldPriority: string(shipment.CommentPriorityHigh),
 	})
 	params.Actor.UserID = comments.comment().UserID
 
-	preview := previewWithoutWrites(t, comments.guard, func() (*agent.ToolPreview, error) {
+	preview := agenttoolstest.PreviewWithoutWrites(t, comments.guard, func() (*agent.ToolPreview, error) {
 		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
-	change := previewChange(t, preview, 0)
-	assert.Equal(t, "High", fieldByPath(t, change, fieldPriority).After)
+	change := agenttoolstest.PreviewChange(t, preview, 0)
+	assert.Equal(t, "High", agenttoolstest.FieldByPath(t, change, shipmenttools.FieldPriority).After)
 	assert.Len(t, change.Fields, 1)
-	assert.Empty(t, permissions.requests, "the author needs no moderation check")
+	assert.Empty(t, permissions.Requests, "the author needs no moderation check")
 
 	err := tool.Execute(t.Context(), params)
 	require.NoError(t, err)
@@ -346,24 +331,24 @@ func TestEditShipmentComment_ChangesOnlyWhatIsSentAndKeepsMentions(t *testing.T)
 func TestEditShipmentComment_TakesEveryDomainPriorityAndRefusesTheRest(t *testing.T) {
 	t.Parallel()
 
-	comments := &fakeCommentModerator{guard: &writeGuard{}}
-	tool := newEditShipmentCommentTool(comments, &fakePermissionCheck{})
-	property, ok := tool.ParamSchema()[toolschema.KeyProperties].(map[string]any)[fieldPriority].(map[string]any)
+	comments := &fakeCommentModerator{guard: &agenttoolstest.WriteGuard{}}
+	tool := shipmenttools.NewEditShipmentCommentTool(comments, &agenttoolstest.FakePermissionCheck{})
+	property, ok := tool.ParamSchema()[toolschema.KeyProperties].(map[string]any)[shipmenttools.FieldPriority].(map[string]any)
 	require.True(t, ok)
 	assert.Equal(t, agenttoolschema.CommentPriorities.Name, property[toolschema.KeyEnumOf])
 	assert.Contains(t, property[toolschema.KeyEnum], string(shipment.CommentPriorityUrgent))
 
 	params := commentParams(comments, map[string]any{
-		fieldPriority: string(shipment.CommentPriorityUrgent),
+		shipmenttools.FieldPriority: string(shipment.CommentPriorityUrgent),
 	})
 	params.Actor.UserID = comments.comment().UserID
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, comments.updated)
 	assert.Equal(t, shipment.CommentPriorityUrgent, comments.updated.Entity.Priority)
 
-	comments = &fakeCommentModerator{guard: &writeGuard{}}
-	tool = newEditShipmentCommentTool(comments, &fakePermissionCheck{})
-	params = commentParams(comments, map[string]any{fieldPriority: "Critical"})
+	comments = &fakeCommentModerator{guard: &agenttoolstest.WriteGuard{}}
+	tool = shipmenttools.NewEditShipmentCommentTool(comments, &agenttoolstest.FakePermissionCheck{})
+	params = commentParams(comments, map[string]any{shipmenttools.FieldPriority: "Critical"})
 	params.Actor.UserID = comments.comment().UserID
 	err := tool.Execute(t.Context(), params)
 	require.Error(t, err)
@@ -374,53 +359,53 @@ func TestEditShipmentComment_TakesEveryDomainPriorityAndRefusesTheRest(t *testin
 func TestEditShipmentComment_AnotherPersonsCommentNeedsTheManagePermission(t *testing.T) {
 	t.Parallel()
 
-	comments := &fakeCommentModerator{guard: &writeGuard{}}
-	permissions := &fakePermissionCheck{allowed: true}
-	tool := newEditShipmentCommentTool(comments, permissions)
-	params := commentParams(comments, map[string]any{paramCommentText: "Receipt received"})
+	comments := &fakeCommentModerator{guard: &agenttoolstest.WriteGuard{}}
+	permissions := &agenttoolstest.FakePermissionCheck{Allowed: true}
+	tool := shipmenttools.NewEditShipmentCommentTool(comments, permissions)
+	params := commentParams(comments, map[string]any{shipmenttools.ParamCommentText: "Receipt received"})
 
 	err := tool.Execute(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, comments.updated)
 	assert.True(t, comments.updated.AsModerator)
-	require.Len(t, permissions.requests, 1)
-	assert.Equal(t, permission.OpManage, permissions.requests[0].Operation)
-	assert.Equal(t, permission.ResourceShipmentComment.String(), permissions.requests[0].Resource)
+	require.Len(t, permissions.Requests, 1)
+	assert.Equal(t, permission.OpManage, permissions.Requests[0].Operation)
+	assert.Equal(t, permission.ResourceShipmentComment.String(), permissions.Requests[0].Resource)
 	assert.Equal(t, "Receipt received", comments.updated.Entity.Comment)
 }
 
 func TestEditShipmentComment_VisibilityDecidesWhoReadsIt(t *testing.T) {
 	t.Parallel()
 
-	tool := newEditShipmentCommentTool(&fakeCommentModerator{}, &fakePermissionCheck{})
+	tool := shipmenttools.NewEditShipmentCommentTool(&fakeCommentModerator{}, &agenttoolstest.FakePermissionCheck{})
 	policy := tool.Policy()
 	assert.ElementsMatch(t, []agent.EgressClass{
 		agent.EgressInternal, agent.EgressCustomerVisible, agent.EgressDriverVisible,
 	}, policy.Egress)
-	assert.Equal(t, agent.EgressCustomerVisible, policy.Classify(executeParams(map[string]any{
-		fieldCommentVisib: string(shipment.CommentVisibilityCustomer),
+	assert.Equal(t, agent.EgressCustomerVisible, policy.Classify(agenttoolstest.ExecuteParams(map[string]any{
+		shipmenttools.FieldCommentVisib: string(shipment.CommentVisibilityCustomer),
 	})).Egress)
-	assert.Equal(t, agent.EgressInternal, policy.Classify(executeParams(map[string]any{})).Egress)
+	assert.Equal(t, agent.EgressInternal, policy.Classify(agenttoolstest.ExecuteParams(map[string]any{})).Egress)
 
-	err := tool.Execute(t.Context(), executeParams(map[string]any{
-		paramShipmentID: pulid.MustNew("shp_").String(),
-		paramCommentID:  pulid.MustNew("sc_").String(),
+	err := tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+		common.ParamShipmentID:       pulid.MustNew("shp_").String(),
+		shipmenttools.ParamCommentID: pulid.MustNew("sc_").String(),
 	}))
-	require.ErrorIs(t, err, errNothingToChange)
+	require.ErrorIs(t, err, common.ErrNothingToChange)
 }
 
 func TestDeleteShipmentComment_SaysWhenAPlaceholderStays(t *testing.T) {
 	t.Parallel()
 
-	comments := &fakeCommentModerator{guard: &writeGuard{}, replies: 2}
-	tool := newDeleteShipmentCommentTool(comments, &fakePermissionCheck{allowed: true})
+	comments := &fakeCommentModerator{guard: &agenttoolstest.WriteGuard{}, replies: 2}
+	tool := shipmenttools.NewDeleteShipmentCommentTool(comments, &agenttoolstest.FakePermissionCheck{Allowed: true})
 	params := commentParams(comments, nil)
 
-	preview := previewWithoutWrites(t, comments.guard, func() (*agent.ToolPreview, error) {
+	preview := agenttoolstest.PreviewWithoutWrites(t, comments.guard, func() (*agent.ToolPreview, error) {
 		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "placeholder")
-	assert.Equal(t, agent.PreviewOperationDelete, previewChange(t, preview, 0).Operation)
+	assert.Equal(t, agent.PreviewOperationDelete, agenttoolstest.PreviewChange(t, preview, 0).Operation)
 
 	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
@@ -436,8 +421,8 @@ func TestDeleteShipmentComment_SaysWhenAPlaceholderStays(t *testing.T) {
 func TestDeleteShipmentComment_WithoutTheManagePermissionRunsAsTheAuthor(t *testing.T) {
 	t.Parallel()
 
-	comments := &fakeCommentModerator{guard: &writeGuard{}}
-	tool := newDeleteShipmentCommentTool(comments, &fakePermissionCheck{allowed: false})
+	comments := &fakeCommentModerator{guard: &agenttoolstest.WriteGuard{}}
+	tool := shipmenttools.NewDeleteShipmentCommentTool(comments, &agenttoolstest.FakePermissionCheck{Allowed: false})
 
 	err := tool.Execute(t.Context(), commentParams(comments, nil))
 	require.NoError(t, err)

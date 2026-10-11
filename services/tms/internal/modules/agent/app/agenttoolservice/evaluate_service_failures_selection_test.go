@@ -3,6 +3,9 @@ package agenttoolservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,11 +19,11 @@ the same thing, so the call is read and filed as the one shipment.
 func TestEvaluateServiceFailures_ReadsAShipmentNamedTwiceAsOne(t *testing.T) {
 	t.Parallel()
 
-	failures := &fakeFailureDecider{}
-	tool := newEvaluateServiceFailuresTool(failures).(*evaluateServiceFailuresTool)
+	failures := &agenttoolstest.FakeFailureDecider{}
+	tool := operationstools.NewEvaluateServiceFailuresTool(failures).(*operationstools.EvaluateServiceFailuresTool)
 	shipmentID := pulid.MustNew("shp_").String()
 
-	resolved, err := tool.ResolveSelection(t.Context(), executeParams(map[string]any{
+	resolved, err := tool.ResolveSelection(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId":  shipmentID,
 		"shipmentIds": []any{shipmentID, shipmentID},
 		"force":       true,
@@ -28,46 +31,46 @@ func TestEvaluateServiceFailures_ReadsAShipmentNamedTwiceAsOne(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{"shipmentId": shipmentID, "force": true}, resolved)
 
-	require.NoError(t, tool.Execute(t.Context(), executeParams(map[string]any{
+	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId":  shipmentID,
 		"shipmentIds": []any{shipmentID},
 	})))
-	require.NotNil(t, failures.evaluated)
-	assert.Equal(t, shipmentID, failures.evaluated.ShipmentID.String())
-	assert.Nil(t, failures.bulk, "one shipment is not a bulk check")
+	require.NotNil(t, failures.Evaluated)
+	assert.Equal(t, shipmentID, failures.Evaluated.ShipmentID.String())
+	assert.Nil(t, failures.Bulk, "one shipment is not a bulk check")
 }
 
 func TestEvaluateServiceFailures_ReadsAListOfOneWithAStopAsThatShipment(t *testing.T) {
 	t.Parallel()
 
-	failures := &fakeFailureDecider{}
-	tool := newEvaluateServiceFailuresTool(failures).(*evaluateServiceFailuresTool)
+	failures := &agenttoolstest.FakeFailureDecider{}
+	tool := operationstools.NewEvaluateServiceFailuresTool(failures).(*operationstools.EvaluateServiceFailuresTool)
 	shipmentID, stopID := pulid.MustNew("shp_"), pulid.MustNew("stp_")
 	params := map[string]any{
-		"shipmentIds": []any{shipmentID.String()},
-		paramStopID:   stopID.String(),
+		"shipmentIds":      []any{shipmentID.String()},
+		common.ParamStopID: stopID.String(),
 	}
 
-	resolved, err := tool.ResolveSelection(t.Context(), executeParams(params))
+	resolved, err := tool.ResolveSelection(t.Context(), agenttoolstest.ExecuteParams(params))
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{
-		"shipmentId": shipmentID.String(),
-		paramStopID:  stopID.String(),
+		"shipmentId":       shipmentID.String(),
+		common.ParamStopID: stopID.String(),
 	}, resolved)
 
-	require.NoError(t, tool.Execute(t.Context(), executeParams(params)))
-	require.NotNil(t, failures.evaluatedStop)
-	assert.Equal(t, shipmentID, failures.evaluatedStop.ShipmentID)
-	assert.Equal(t, stopID, failures.evaluatedStop.StopID)
+	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(params)))
+	require.NotNil(t, failures.EvaluatedStop)
+	assert.Equal(t, shipmentID, failures.EvaluatedStop.ShipmentID)
+	assert.Equal(t, stopID, failures.EvaluatedStop.StopID)
 }
 
 func TestEvaluateServiceFailures_LeavesASeveralShipmentCheckAsItIs(t *testing.T) {
 	t.Parallel()
 
-	tool := newEvaluateServiceFailuresTool(&fakeFailureDecider{}).(*evaluateServiceFailuresTool)
-	params := map[string]any{"shipmentIds": manyIDs(2)}
+	tool := operationstools.NewEvaluateServiceFailuresTool(&agenttoolstest.FakeFailureDecider{}).(*operationstools.EvaluateServiceFailuresTool)
+	params := map[string]any{"shipmentIds": agenttoolstest.ManyIDs(2)}
 
-	resolved, err := tool.ResolveSelection(t.Context(), executeParams(params))
+	resolved, err := tool.ResolveSelection(t.Context(), agenttoolstest.ExecuteParams(params))
 	require.NoError(t, err)
 	assert.Equal(t, params, resolved)
 }
@@ -75,10 +78,10 @@ func TestEvaluateServiceFailures_LeavesASeveralShipmentCheckAsItIs(t *testing.T)
 func TestEvaluateServiceFailures_ARefusalForBothScopesShowsBothCalls(t *testing.T) {
 	t.Parallel()
 
-	tool := newEvaluateServiceFailuresTool(&fakeFailureDecider{}).(*evaluateServiceFailuresTool)
-	params := executeParams(map[string]any{
+	tool := operationstools.NewEvaluateServiceFailuresTool(&agenttoolstest.FakeFailureDecider{}).(*operationstools.EvaluateServiceFailuresTool)
+	params := agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId":  pulid.MustNew("shp_").String(),
-		"shipmentIds": manyIDs(2),
+		"shipmentIds": agenttoolstest.ManyIDs(2),
 	})
 
 	resolved, err := tool.ResolveSelection(t.Context(), params)
@@ -86,7 +89,7 @@ func TestEvaluateServiceFailures_ARefusalForBothScopesShowsBothCalls(t *testing.
 	assert.Equal(t, params.Params, resolved, "Validate is left to refuse it")
 
 	err = tool.Validate(t.Context(), params)
-	require.ErrorIs(t, err, errBothEvaluationScopes)
+	require.ErrorIs(t, err, operationstools.ErrBothEvaluationScopes)
 	assert.Contains(t, err.Error(), "send shipmentId without shipmentIds")
 	assert.Contains(t, err.Error(), "send shipmentIds without shipmentId")
 }

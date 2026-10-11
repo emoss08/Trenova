@@ -3,11 +3,13 @@ package agenttoolservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -32,36 +34,6 @@ func previewedCharge() *detention.DetentionOccurrence {
 	}
 }
 
-func findChange(
-	t *testing.T,
-	preview *agent.ToolPreview,
-	operation agent.PreviewOperation,
-) *agent.RecordChange {
-	t.Helper()
-
-	for i := range preview.Changes {
-		if preview.Changes[i].Operation == operation {
-			return &preview.Changes[i]
-		}
-	}
-	require.Failf(t, "no change", "the preview has no %s change", operation)
-
-	return nil
-}
-
-func findField(t *testing.T, change *agent.RecordChange, path string) agent.PreviewFieldChange {
-	t.Helper()
-
-	for _, field := range change.Fields {
-		if field.Path == path {
-			return field
-		}
-	}
-	require.Failf(t, "no field", "the change has no %q field", path)
-
-	return agent.PreviewFieldChange{}
-}
-
 func TestWaiveDetentionPreview_ShowsTheRevenueGivenUp(t *testing.T) {
 	t.Parallel()
 
@@ -74,13 +46,13 @@ func TestWaiveDetentionPreview_ShowsTheRevenueGivenUp(t *testing.T) {
 	after := *before
 	require.NoError(t, after.Waive(detention.WaiverReasonWeather, "Ice storm", pulid.MustNew("usr_"), 10))
 
-	det := &fakeDetention{change: &detentionservice.OccurrenceChange{
+	det := &agenttoolstest.FakeDetention{Change: &detentionservice.OccurrenceChange{
 		Before:   before,
 		After:    &after,
 		Shipment: []*detention.DetentionOccurrence{before, sibling},
 	}}
-	tool := newWaiveDetentionTool(det)
-	params := approvedParams(map[string]any{
+	tool := operationstools.NewWaiveDetentionTool(det)
+	params := agenttoolstest.ApprovedParams(map[string]any{
 		"occurrenceId": before.ID.String(),
 		"reason":       "Weather",
 		"note":         "Ice storm",
@@ -88,18 +60,18 @@ func TestWaiveDetentionPreview_ShowsTheRevenueGivenUp(t *testing.T) {
 
 	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	require.Nil(t, det.waived, "a preview must not waive")
+	require.Nil(t, det.Waived, "a preview must not waive")
 	assert.Contains(t, preview.Summary, "425.00 USD")
 	assert.Contains(t, preview.Summary, "at Memphis DC on SHP-1001")
 
-	change := findChange(t, preview, agent.PreviewOperationUpdate)
+	change := agenttoolstest.FindChange(t, preview, agent.PreviewOperationUpdate)
 	assert.Equal(t, permission.ResourceDetentionPolicy, change.Resource)
 	assert.Equal(t, before.ID, change.EntityID)
 	assert.Equal(t, int64(4), *change.Version)
-	status := findField(t, change, "status")
+	status := agenttoolstest.FindField(t, change, "status")
 	assert.Equal(t, "Pending", status.Before)
 	assert.Equal(t, "Waived", status.After)
-	assert.True(t, findField(t, change, "waivedAt").Volatile)
+	assert.True(t, agenttoolstest.FindField(t, change, "waivedAt").Volatile)
 
 	require.NotNil(t, change.Money)
 	assert.Equal(t, "USD", change.Money.Currency)
@@ -109,7 +81,7 @@ func TestWaiveDetentionPreview_ShowsTheRevenueGivenUp(t *testing.T) {
 	assert.True(t, change.Money.Delta.Decimal.Equal(decimal.NewFromInt(-425)))
 
 	require.NoError(t, tool.Execute(t.Context(), params))
-	assert.Equal(t, *det.previewedWaive, *det.waived,
+	assert.Equal(t, *det.PreviewedWaive, *det.Waived,
 		"the preview and the write must make the same waiver")
 }
 
@@ -123,7 +95,7 @@ func TestSendDetentionNoticePreview_ShowsTheNoticeAsSent(t *testing.T) {
 	after.NoticeSentAt = &sentAt
 	versionID := pulid.MustNew("dtv_")
 
-	det := &fakeDetention{notice: &detentionservice.NoticePreview{
+	det := &agenttoolstest.FakeDetention{Notice: &detentionservice.NoticePreview{
 		Before:     before,
 		After:      &after,
 		Kind:       detention.NoticeKindStarted,
@@ -140,14 +112,14 @@ func TestSendDetentionNoticePreview_ShowsTheNoticeAsSent(t *testing.T) {
 			Suppressed: []string{"ap@acme.test"},
 		},
 	}}
-	tool := newSendDetentionNoticeTool(det)
-	params := executeParams(map[string]any{"occurrenceId": before.ID.String()})
+	tool := operationstools.NewSendDetentionNoticeTool(det)
+	params := agenttoolstest.ExecuteParams(map[string]any{"occurrenceId": before.ID.String()})
 
 	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	require.Nil(t, det.noticed, "a preview must not send")
+	require.Nil(t, det.Noticed, "a preview must not send")
 
-	send := findChange(t, preview, agent.PreviewOperationSend)
+	send := agenttoolstest.FindChange(t, preview, agent.PreviewOperationSend)
 	require.NotNil(t, send.Message)
 	assert.Equal(t, agent.MessageChannelEmail, send.Message.Channel)
 	assert.Equal(t, "Carrier Billing <notices@carrier.test>", send.Message.From)
@@ -159,11 +131,11 @@ func TestSendDetentionNoticePreview_ShowsTheNoticeAsSent(t *testing.T) {
 	assert.Equal(t, permission.ResourceCustomer, send.Resource)
 	assert.Equal(t, "Acme Foods", send.Label)
 
-	status := findChange(t, preview, agent.PreviewOperationUpdate)
-	assert.Equal(t, "Sent", findField(t, status, "notificationStatus").After)
+	status := agenttoolstest.FindChange(t, preview, agent.PreviewOperationUpdate)
+	assert.Equal(t, "Sent", agenttoolstest.FindField(t, status, "notificationStatus").After)
 	require.Len(t, preview.Warnings, 1)
 	assert.Equal(t, agent.PreviewWarningWouldFail, preview.Warnings[0].Code)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
-	assert.Equal(t, *det.previewedNotice, *det.noticed)
+	assert.Equal(t, *det.PreviewedNotice, *det.Noticed)
 }
