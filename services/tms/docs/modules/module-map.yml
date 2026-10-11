@@ -398,7 +398,6 @@ modules:
   rating:
     level: 6
     domain:
-      - dedicatedlane
       - formulatemplate
       - fuelsurcharge
       - rateagreement

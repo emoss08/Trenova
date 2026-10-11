@@ -3,12 +3,12 @@
  *
  * Usage (from repo root, with the API on :8080 and the web client on :5173):
  *
- *   node scripts/screenshots/capture.mjs \
- *     --pages scripts/screenshots/pages.json \
+ *   node tools/screenshots/capture.mjs \
+ *     --pages tools/screenshots/pages.json \
  *     --out docs/screenshots/light
  *
- *   node scripts/screenshots/capture.mjs \
- *     --pages scripts/screenshots/pages-dark.json \
+ *   node tools/screenshots/capture.mjs \
+ *     --pages tools/screenshots/pages-dark.json \
  *     --out docs/screenshots/dark --theme dark
  *
  * Credentials come from TRENOVA_USER / TRENOVA_PASSWORD.
@@ -34,7 +34,7 @@ function arg(name, fallback) {
 const BASE = arg("base", "http://localhost:5173");
 const OUT = path.resolve(arg("out", "docs/screenshots/light"));
 const THEME = arg("theme", "light");
-const PAGES = JSON.parse(fs.readFileSync(arg("pages", "scripts/screenshots/pages.json"), "utf8"));
+const PAGES = JSON.parse(fs.readFileSync(arg("pages", "tools/screenshots/pages.json"), "utf8"));
 const USER = process.env.TRENOVA_USER;
 const PASSWORD = process.env.TRENOVA_PASSWORD;
 

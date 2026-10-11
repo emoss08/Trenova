@@ -1,7 +1,9 @@
+name: trenova
+
 services:
     db:
         build:
-            context: .
+            context: ..
             dockerfile: deploy/Dockerfile.postgres
         container_name: db
         ports:
@@ -261,7 +263,7 @@ services:
             MEILISEARCH_URL: http://meilisearch:7700
             MEILISEARCH_API_KEY: CErP8m5HUQUTaporAjiCsNNazOoACqS2bw3IGRsi94I
         volumes:
-            - ./deploy/gtc/sinks.yaml:/config/sinks.yaml:ro
+            - ../deploy/gtc/sinks.yaml:/config/sinks.yaml:ro
         ports:
             - "8095:8080"
         depends_on:
@@ -275,8 +277,8 @@ services:
 
     samsara-sim:
         build:
-            context: .
-            dockerfile: services/samsara-sim/Dockerfile
+            context: ..
+            dockerfile: dev/samsara-sim/Dockerfile
         container_name: samsara-sim
         profiles:
             - samsara-sim

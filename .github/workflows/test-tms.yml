@@ -10,6 +10,8 @@ on:
     paths:
       - "services/**"
       - "shared/**"
+      - "dev/samsara-sim/**"
+      - "dev/edi-partner-sim/**"
       - "go.work"
       - "go.work.sum"
       - ".golangci.yml"
@@ -27,6 +29,8 @@ on:
     paths:
       - "services/**"
       - "shared/**"
+      - "dev/samsara-sim/**"
+      - "dev/edi-partner-sim/**"
       - "go.work"
       - "go.work.sum"
       - ".golangci.yml"
@@ -75,7 +79,7 @@ jobs:
       - name: Run unit tests
         run: |
           set -euo pipefail
-          for module in shared services/tms services/samsara-sim services/edi-partner-sim; do
+          for module in shared services/tms dev/samsara-sim dev/edi-partner-sim; do
             echo "::group::${module}"
             (cd "$module" && go test -coverprofile=coverage-unit.out -covermode=atomic ./...)
             echo "::endgroup::"
@@ -404,7 +408,7 @@ jobs:
       - name: Build every workspace module
         run: |
           set -euo pipefail
-          for module in shared services/tms services/samsara-sim services/edi-partner-sim; do
+          for module in shared services/tms dev/samsara-sim dev/edi-partner-sim; do
             echo "::group::${module}"
             (cd "$module" && go build ./...)
             echo "::endgroup::"

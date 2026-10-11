@@ -156,7 +156,7 @@ func TestContractParseReplyRejectsMalformedText(t *testing.T) {
 	require.ErrorIs(t, err, agentports.ErrModelSchemaValidation)
 }
 
-const pipelineSchemaFixture = "../../../../../../../ml/extraction-finetune/tests/fixtures/extraction-schema.json"
+const pipelineSchemaFixture = "../../../../../../../tools/extraction-finetune/tests/fixtures/extraction-schema.json"
 
 func TestFineTuningPipelineSchemaFixtureIsCurrent(t *testing.T) {
 	t.Parallel()

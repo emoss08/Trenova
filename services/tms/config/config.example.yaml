@@ -332,7 +332,7 @@ reporting:
 #
 # The sidecar renders organization-authored markup, so it must never be exposed:
 # no published port, no reverse-proxy route, and an internal-only network. See
-# docker-compose-local.yml for the hardened service definition.
+# dev/compose.yml for the hardened service definition.
 renderer:
     gotenbergUrl: http://gotenberg:3000
     requestTimeout: 45s # HTTP timeout for one convert call

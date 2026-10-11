@@ -9,16 +9,24 @@ Trenova is a Transportation Management System (TMS) built as a Go monorepo with 
 ## Repository Structure
 
 ```
-trenova-2/
-├── services/
-│   ├── tms/                    # Main TMS service (API, worker, CLI)
-│   ├── gtc/                    # CDC pipeline (Postgres → Redis/Meilisearch)
-│   └── samsara-sim/            # Samsara simulator service
-├── shared/                     # Shared Go packages across services
-├── client/                     # Frontend Turborepo (apps/* + packages/*, pnpm)
-├── go.work                     # Go workspace configuration
-└── docker-compose-local.yml    # Local development infrastructure
+trenova/
+├── services/tms/          # Main TMS service (API, worker, CLI)
+├── client/                # pnpm + Turborepo: apps/web, apps/dash, packages/*
+├── desktop/capture/       # Windows scanning and printing companion (Rust)
+├── shared/                # Shared Go packages (its own module in go.work)
+├── i18n/                  # Translation catalogs and their tooling
+├── dev/                   # Local environment: compose.yml, config/, samsara-sim, edi-partner-sim
+├── deploy/                # Dockerfiles, self-host compose, Caddy, GTC routing, observability
+├── tools/                 # Not shipped: extraction-finetune (Python), screenshots, smack, release
+├── scripts/dialect-convert # SQLite migration converter (goes away with SQLite)
+├── docs/                  # engineering/, product-guide/, self-hosting/, notes/
+└── go.work                # Go workspace: services/tms, shared, dev/samsara-sim, dev/edi-partner-sim
 ```
+
+GTC, the change-data-capture pipeline, is a separate project (`github.com/emoss08/gtc`); this
+repository runs its image and keeps its routing in `deploy/gtc/sinks.yaml`. Each top-level
+directory names a role, not a language: put a new project where its role is, and keep `dev/`
+for what only a developer's machine runs and `tools/` for what is never shipped.
 
 ## Common Commands
 
@@ -152,7 +160,7 @@ Seeds are registered in `internal/infrastructure/database/seeder/seeds/register.
 
 ## Infrastructure (Docker Compose)
 
-Local development uses `docker-compose-local.yml`:
+Local development uses `dev/compose.yml`:
 
 | Service | Port | Purpose |
 |---------|------|---------|
@@ -437,7 +445,7 @@ and every example is recorded so a withdrawal can be honoured later. **Read
 [docs/engineering/ai-training-export.md](docs/engineering/ai-training-export.md) before
 changing `domain/aitraining`, the Cloud edition's `internal/cloud/aitraining` packages
 (`aitrainingservice`, `aitrainingjobs`), or what a correction stores.** Datasets are rendered from an export with the production prompt builder and scored
-with the production reply reader; `ml/extraction-finetune` (Python) owns the training recipe — how a
+with the production reply reader; `tools/extraction-finetune` (Python) owns the training recipe — how a
 confirmed answer becomes a target, which examples become preference pairs — and the training
 itself. **Read [docs/engineering/extraction-fine-tuning.md](docs/engineering/extraction-fine-tuning.md)
 before changing the extraction prompt, reply schema, `aicorrection.Score`, or that pipeline** — a
@@ -492,8 +500,8 @@ exists, and new code goes in its module.
 
 ## Bun ORM
 
-For help with Bun ORM, look in the [docs](docs/bun/).
-When writing repositories, always use the generated column helpers in `services/tms/pkg/buncolgen/` — never hand-write column references. Read [docs/bun/buncolgen.md](docs/bun/buncolgen.md) for the full method reference, canonical repository patterns, and regeneration workflow before writing any repository code.
+For help with Bun ORM, look in the [docs](docs/engineering/bun/).
+When writing repositories, always use the generated column helpers in `services/tms/pkg/buncolgen/` — never hand-write column references. Read [docs/engineering/bun/buncolgen.md](docs/engineering/bun/buncolgen.md) for the full method reference, canonical repository patterns, and regeneration workflow before writing any repository code.
 
 ## DO NOT
 - **Processes**: Do not run high usage tasks that will max out CPU, Disk and/or memory usage.

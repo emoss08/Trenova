@@ -293,7 +293,7 @@ as the Temporal runtime, `m2msync`, and the storage and search clients.
 
 1. Create `internal/modules/<module>/adapters/postgres/<entity>repository/` with a `New`
    constructor that returns the port interface.
-2. Use the generated `<domain>col` helpers ([docs/bun/buncolgen.md](../bun/buncolgen.md)) and run
+2. Use the generated `<domain>col` helpers ([docs/engineering/bun/buncolgen.md](bun/buncolgen.md)) and run
    every exported method in `dbtx.Read` or `dbtx.Write`
    ([row-level-security.md](row-level-security.md)).
 3. Register `<entity>repository.New` in the module's `SharedOptions()`.

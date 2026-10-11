@@ -7,8 +7,8 @@ includes:
     taskfile: ./services/tms/Taskfile.yml
     dir: ./services/tms
   samsara:
-    taskfile: ./services/samsara-sim/Taskfile.yml
-    dir: ./services/samsara-sim
+    taskfile: ./dev/samsara-sim/Taskfile.yml
+    dir: ./dev/samsara-sim
 
 tasks:
   default:

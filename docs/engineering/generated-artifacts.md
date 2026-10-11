@@ -199,7 +199,7 @@ named `My<Thing>`.
 `task generate-columns` regenerates `pkg/buncolgen` from the domain entities. Adding or
 removing a field on a Bun model without rerunning it leaves repositories referencing a
 column helper that no longer matches the table — and, as above, can break the projection
-generator too. Never hand-write column references; see [docs/bun/buncolgen.md](../bun/buncolgen.md).
+generator too. Never hand-write column references; see [docs/engineering/bun/buncolgen.md](bun/buncolgen.md).
 
 ## Client checks are narrower than they look
 

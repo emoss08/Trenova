@@ -8,7 +8,7 @@ on:
       - develop
       - "claude/**"
     paths:
-      - "ml/**"
+      - "tools/extraction-finetune/**"
       - ".github/workflows/test-ml.yml"
   pull_request:
     branches:
@@ -16,7 +16,7 @@ on:
       - main
       - develop
     paths:
-      - "ml/**"
+      - "tools/extraction-finetune/**"
       - ".github/workflows/test-ml.yml"
 
 permissions:
@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ml/extraction-finetune
+        working-directory: tools/extraction-finetune
 
     steps:
       - name: Checkout code

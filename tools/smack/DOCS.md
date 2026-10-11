@@ -50,7 +50,7 @@ X-API-Key: <api-key>
 - `--api-key KEY`: API key used for authentication
 - `--auth-header NAME`: Authentication header override. Default: `Authorization`
 - `--auth-scheme SCHEME`: Authentication scheme override. Default: `Bearer`
-- `--results-dir PATH`: Output directory for logs and reports. Default: `scripts/smack/results`
+- `--results-dir PATH`: Output directory for logs and reports. Default: `tools/smack/results`
 - `--hey`: Use `hey` instead of `curl`
 - `-m, --monitor`: Enable system monitoring when supported
 - `-v, --verbose`: Enable shell tracing

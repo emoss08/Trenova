@@ -5,7 +5,7 @@ most pages and a 493x312 image behind the welcome and finish pages, whose
 text sits on its right, so only the left panel is drawn on. Run it again
 when the logo changes:
 
-    python3 native/capture/installer/assets/make-bitmaps.py
+    python3 desktop/capture/installer/assets/make-bitmaps.py
 """
 
 from pathlib import Path

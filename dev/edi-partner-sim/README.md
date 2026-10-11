@@ -37,7 +37,7 @@ exists.
 
 ```bash
 # terminal 1 — start the simulator
-task sim              # from services/edi-partner-sim, or:
+task sim              # from dev/edi-partner-sim, or:
 go run ./cmd/edi-partner-sim -listen :9210 -sftp-listen :9222 -identity-dir ./.sim-identity
 
 # terminal 2 — run the end-to-end scenario

@@ -24,7 +24,7 @@ func assertPDFLacksMarker(t *testing.T, pdf []byte, marker string) {
 
 // liveClient builds a client against a real sidecar, or skips.
 //
-// Start one with `docker compose -f docker-compose-local.yml up -d gotenberg`
+// Start one with `docker compose -f dev/compose.yml up -d gotenberg`
 // and run with RENDERER_GOTENBERG_URL=http://localhost:3009.
 func liveClient(t *testing.T) *Client {
 	t.Helper()

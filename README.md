@@ -60,14 +60,17 @@ See the full capability list at [trenova.app/features](https://trenova.app/featu
 ## Repository layout
 
 ```text
-services/tms          Core TMS API (Go)
-services/samsara-sim  Samsara telematics simulator for local development
-services/edi-partner-sim  EDI trading-partner simulator
-shared/               Shared Go packages (money, geo, dispatch planner, PC*MILER, AS2, ...)
-client/apps/web       Web application (React)
-client/apps/dash      Admin dashboard (React)
-deploy/               Dockerfiles, Caddyfile, observability stack
-docs/                 Engineering guides referenced by CLAUDE.md, Bun notes, product guide
+services/tms              Core TMS: API, worker and CLI (Go)
+client/apps/web           Web application (React)
+client/apps/dash          Driver portal (React)
+client/packages/          Shared TypeScript packages: design system, GraphQL client, config
+desktop/capture           Windows companion for scanning and printing (Rust)
+shared/                   Shared Go packages (money, geo, dispatch planner, PC*MILER, AS2, ...)
+i18n/                     Translation catalogs and the extraction tooling
+dev/                      Local environment: compose.yml, its configs, Samsara and EDI partner simulators
+deploy/                   Dockerfiles, self-host compose, Caddy, GTC routing, observability, PgBouncer example
+tools/                    Tooling that is not shipped: extraction fine-tuning (Python), screenshots, load tests, release
+docs/                     Engineering guides referenced by CLAUDE.md, product guide, self-hosting
 ```
 
 ## Quick start (local development)
@@ -80,7 +83,7 @@ cd trenova
 cp .env.example .env
 
 # Start PostgreSQL, Redis, MinIO, Meilisearch, and Gotenberg
-docker compose -f docker-compose-local.yml up -d
+docker compose -f dev/compose.yml up -d
 
 # Run the TMS API
 task tms:run

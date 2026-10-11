@@ -27,7 +27,7 @@ import (
 // and renders to HTML" is not the same claim as "a customer receives a legible
 // invoice", and only a real render settles the second one.
 //
-// Start the sidecar with `docker compose -f docker-compose-local.yml up -d gotenberg`
+// Start the sidecar with `docker compose -f dev/compose.yml up -d gotenberg`
 // and run with RENDERER_GOTENBERG_URL=http://localhost:3009.
 func liveRenderer(t *testing.T) documenttemplateports.PDFRenderer {
 	t.Helper()

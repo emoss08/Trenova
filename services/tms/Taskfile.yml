@@ -7,9 +7,8 @@ vars:
   BUILD_DIR: ./build
   CLI_BINARY: "trenova-cli{{exeExt}}"
   CLI_PATH: "{{.BUILD_DIR}}/{{.CLI_BINARY}}"
-  DOCKER_COMPOSE_LOCAL: "docker compose -f {{.ROOT_DIR}}/docker-compose-local.yml"
+  DOCKER_COMPOSE_LOCAL: "docker compose -f {{.ROOT_DIR}}/dev/compose.yml"
   CLIENT_DIR: "{{.ROOT_DIR}}/client"
-  KAFKA_SCRIPTS: "{{.ROOT_DIR}}/scripts/kafka"
   TEST_DB_CONTAINER: trenova-integration-postgres
   TEST_DB_PORT: "55432"
   TEST_POSTGRES_DSN: "postgres://postgres:postgres@localhost:55432/trenova_test?sslmode=disable"
@@ -628,19 +627,11 @@ tasks:
       - go install github.com/air-verse/air@latest
       - go install github.com/sonatype-nexus-community/nancy@latest
 
-  kafka-reset:
-    desc: Reset Kafka
-    cmds:
-      - bash {{.KAFKA_SCRIPTS}}/reset-kafka.sh
-
-  kafka-setup:
-    desc: Setup Kafka
-    cmds:
-      - bash {{.KAFKA_SCRIPTS}}/setup-debezium-connector.sh
-
   reset-all:
-    desc: Reset all services
-    deps: [db-reset, db-seed, redis-flush, kafka-reset, kafka-setup]
+    desc: Reset the database (drop, create, migrate, seed) and flush Redis
+    cmds:
+      - task: db-reset
+      - task: redis-flush
 
   quick-start:
     desc: Quick start for new developers

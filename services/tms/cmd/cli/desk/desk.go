@@ -82,7 +82,7 @@ its preview, and every decision and follow-up.
 
 It hosts its own worker on a Temporal namespace of its own (deskbench), so a dev worker
 running older code never answers its turns. It needs Postgres, Redis and Temporal from
-docker-compose-local.yml; the API and worker do not need to be running.
+dev/compose.yml; the API and worker do not need to be running.
 
 Each run writes to .deskbench/runs/<time>/: summary.md, transcript.md, report.json, the
 exact request of every model call under calls/, each distinct system prompt under prompts/,

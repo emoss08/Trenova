@@ -49,7 +49,7 @@ var plannedDomainPackages = []string{
 	"documentupload", "capture", "inboundmessage", "extractioneval",
 	"extractionrollout", "extractionshadow",
 	"rateagreement", "rateconfirmation", "rateimport", "ratematrix", "ratequote",
-	"ratesimulation", "ratezone", "fuelsurcharge", "formulatemplate", "dedicatedlane",
+	"ratesimulation", "ratezone", "fuelsurcharge", "formulatemplate",
 	"shipment", "shipmentevent", "shipmentstate", "shipmentsuggestion", "order",
 	"recurringshipment", "tender", "dispatchcontrol", "servicefailure", "detention",
 	"weatheralert", "documentshipmentdraft",

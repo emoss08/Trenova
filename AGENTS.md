@@ -5,9 +5,13 @@
 This is a Go monorepo with a frontend client.
 
 - `services/tms/`: main TMS backend (`cmd/`, `internal/`, `pkg/`, `config/`).
-- `shared/`: shared Go utilities used by both services.
-- `client/`: React + TypeScript app (Vite), UI routes/components in `client/src/`.
-- `deploy/`, `docker-compose-local.yml`, `config/`: local infrastructure and deployment configs.
+- `shared/`: shared Go packages used by the services and simulators.
+- `client/`: pnpm + Turborepo workspace: `apps/web`, `apps/dash` and the shared `packages/*`.
+- `desktop/capture/`: the Windows scanning and printing companion (Rust).
+- `i18n/`: translation catalogs and their tooling.
+- `dev/`: local environment (`dev/compose.yml`, its configs, the Samsara and EDI partner simulators).
+- `deploy/`: Dockerfiles and self-host deployment.
+- `tools/`: tooling that is not shipped (extraction fine-tuning, screenshots, load tests, release).
 - `CLAUDE.md`: repository-specific conventions and architecture notes for agent-driven work.
 
 ## Build, Test, and Development Commands
@@ -18,7 +22,7 @@ Use service-local commands from each module.
 - `cd services/tms && task test`, `task test-integration`, `task lint`: unit/integration/lint checks.
 - `cd client && pnpm dev`: run frontend locally.
 - `cd client && pnpm build && pnpm lint`: production build and lint.
-- `docker compose -f docker-compose-local.yml up -d`: start local dependencies (Postgres, Redis, MinIO, Meilisearch, etc.).
+- `docker compose -f dev/compose.yml up -d`: start local dependencies (Postgres, Redis, MinIO, Meilisearch, etc.).
 
 ## Coding Style & Naming Conventions
 
@@ -28,10 +32,10 @@ Use service-local commands from each module.
 - TypeScript/React: OXFMT + OXLINT are enforced (`client/.oxfmtrc.json` and `client/.oxlintrc.json`).
 - Naming: use descriptive domain-based names (`userservice`, `locationcategory`, `formula_template`); keep files/packages lower-case.
 - Keep functions small and explicit; avoid introducing `encoding/json` in Go where project lint rules disallow it.
-- Bun ORM: use the [docs](docs/bun/) for help.
+- Bun ORM: use the [docs](docs/engineering/bun/) for help.
 - **Row-level security**: repository methods wrap their body in `dbtx.Read`/`dbtx.Write` and query through `DBForContext(ctx)`, never `.DB()`; new tenant tables end their migration with `SELECT trenova_rls.reconcile();`; cross-tenant code declares `dbscope.WithSystem` and is allowlisted. Read [docs/engineering/row-level-security.md](docs/engineering/row-level-security.md) first.
 - **Security audit**: a mutation that changes access (API keys, roles, permissions, IAM, memberships) calls `SecurityAuditor.RecordChange` after it commits; a refused cross-tenant request calls `tenantboundary.Report`; audit and auth event rows are never updated or deleted outside the retention sweep. Read [docs/engineering/security-audit.md](docs/engineering/security-audit.md) first.
-- **Repositories**: When writing repositories, always use the generated column helpers in `services/tms/pkg/buncolgen/` — never hand-write column references. Read [docs/bun/buncolgen.md](docs/bun/buncolgen.md) for the full method reference, canonical repository patterns, and regeneration workflow before writing any repository code.
+- **Repositories**: When writing repositories, always use the generated column helpers in `services/tms/pkg/buncolgen/` — never hand-write column references. Read [docs/engineering/bun/buncolgen.md](docs/engineering/bun/buncolgen.md) for the full method reference, canonical repository patterns, and regeneration workflow before writing any repository code.
 - **Function signatures**: When a Go function has more than ~3-4 parameters, define a params struct instead of a long parameter list.
 - **Utility functions go in `shared/` (backend) and `client/src/lib/` (frontend)**: Do NOT place generic utility/helper functions inside domain, service, or handler files, nor inline in React components/hooks/routes. Backend utilities live in `shared/` (`shared/stringutils`, `shared/sliceutils`, `shared/intutils`, etc.) — create new sub-packages there if needed. Frontend utilities live in `client/src/lib/` (`utils.ts`, `date.ts`, etc.). If a utility that does the same thing already exists, reuse it — never write a duplicate.
 - **Performance**: Write efficient, allocation-conscious code. Preallocate slices/maps when sizes are known. Avoid unnecessary copies. Use appropriate data structures for the problem.

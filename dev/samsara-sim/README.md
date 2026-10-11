@@ -5,7 +5,7 @@
 ## Run
 
 ```bash
-cd services/samsara-sim
+cd dev/samsara-sim
 task run
 ```
 
@@ -521,7 +521,7 @@ leaves no partial change and consumes no ID. `POST /_sim/state/reset` restores t
 deletes the file. `GET /_sim/state/summary` reports the path and write count.
 
 `config.example.yaml` enables persistence at `./data/state.json`, which is
-`/app/data/state.json` in the container; `docker-compose-local.yml` mounts the
+`/app/data/state.json` in the container; `dev/compose.yml` mounts the
 `samsara_sim_data` volume there, so rebuilding the container keeps the IDs TMS
 has stored. To start over, call `POST /_sim/state/reset`, or stop the
 container and remove only that volume (`docker volume rm trenova_samsara_sim_data`
@@ -637,7 +637,7 @@ Control plane:
 Start simulator container from repository root:
 
 ```bash
-docker compose -f docker-compose-local.yml --profile samsara-sim up -d samsara-sim
+docker compose -f dev/compose.yml --profile samsara-sim up -d samsara-sim
 ```
 
 ## Route Dataset
@@ -652,7 +652,7 @@ It now includes 12 long-haul corridors for multi-hour travel simulation.
 Refresh the dataset:
 
 ```bash
-cd services/samsara-sim
+cd dev/samsara-sim
 task routes-fetch
 ```
 
@@ -707,35 +707,35 @@ Rule-based fault injection for endpoints and webhook event delivery is available
 Run HOS and asset-location smoke checks:
 
 ```bash
-cd services/samsara-sim
+cd dev/samsara-sim
 task smoke-sim
 ```
 
 Run event and correlation checks:
 
 ```bash
-cd services/samsara-sim
+cd dev/samsara-sim
 task smoke-events
 ```
 
 Run time-control checks:
 
 ```bash
-cd services/samsara-sim
+cd dev/samsara-sim
 task smoke-time
 ```
 
 Run fault-injection checks:
 
 ```bash
-cd services/samsara-sim
+cd dev/samsara-sim
 task smoke-faults
 ```
 
 Run CI smoke suite (health, route lifecycle, moving GPS, HOS delta, webhook inbox, rate-limit 429 envelope and decimal `Retry-After`):
 
 ```bash
-cd services/samsara-sim
+cd dev/samsara-sim
 task smoke-ci
 ```
 
