@@ -274,7 +274,7 @@ describe("reduceTurn reasoning", () => {
 });
 
 /**
- * Contract: services/tms/internal/core/ports/services/assistant.go. A
+ * Contract: services/tms/internal/modules/agent/ports/agentports/assistant.go. A
  * `retrying` event says the model died partway and the reply is starting
  * over, so the text the reader watched is withdrawn while the tools that
  * already ran stay, and `done` after a refusal does not undo the refusal.

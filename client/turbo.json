@@ -14,7 +14,7 @@
         "$TURBO_ROOT$/../services/tms/internal/api/graphql/schema/**",
         "$TURBO_ROOT$/../services/tms/pkg/errortypes/enums.go",
         "$TURBO_ROOT$/../services/tms/internal/api/helpers/problemtypes.go",
-        "$TURBO_ROOT$/../services/tms/internal/core/domain/permission/resource_gen.go"
+        "$TURBO_ROOT$/../services/tms/internal/modules/identity/domain/permission/resource_gen.go"
       ],
       "outputs": ["src/generated/**", "src/schema.graphql"]
     },

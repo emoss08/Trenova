@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 /**
  * The fixture is the Go struct on the wire, not what the UI would like to be
- * handed. `insight.Insight` (services/tms/internal/core/domain/insight/insight.go)
+ * handed. `insight.Insight` (services/tms/internal/modules/agent/domain/insight/insight.go)
  * has two kinds of unset field and they serialize differently:
  *
  * - `DismissedByID` and `ProviderID` are `pulid.ID`. `pulid.ID.MarshalJSON`

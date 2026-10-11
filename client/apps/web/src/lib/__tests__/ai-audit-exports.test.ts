@@ -8,7 +8,7 @@ import { aiAuditExportNotice } from "../ai-audit-exports";
 
 /*
 The resource names and notification kinds below are the ones aiauditservice
-publishes (services/tms/internal/core/ports/services/aiaudit.go):
+publishes (services/tms/internal/modules/agent/ports/aiauditports/aiaudit_services.go):
 AIAuditExportResource "ai-audit-export", AIAuditChainResource
 "ai-audit-chain", and the events ai_audit_export_ready,
 ai_audit_export_failed and ai_audit_chain_mismatch. A name spelled

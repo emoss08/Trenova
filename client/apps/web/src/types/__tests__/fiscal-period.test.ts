@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { fiscalPeriodSchema } from "@/types/fiscal-period";
 import { fiscalYearSchema } from "@/types/fiscal-year";
 
-// Contract: services/tms/internal/core/domain/fiscalperiod. A period's status runs
+// Contract: services/tms/internal/modules/accounting/domain/fiscalperiod. A period's status runs
 // Inactive → Open → Locked → Closed → PermanentlyClosed, its type is Month, Quarter,
 // Week or Adjusting, and operating periods stop at 12 while adjusting periods
 // (Period 13/14) sit above them. Generating a year with adjusting entries allowed

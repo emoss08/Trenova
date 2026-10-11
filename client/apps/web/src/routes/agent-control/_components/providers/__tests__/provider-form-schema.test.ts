@@ -20,7 +20,7 @@ import {
   saveAIProviderRequestSchema,
 } from "@/types/ai-provider";
 
-const ENUMS_FILE = "services/tms/internal/core/domain/aiprovider/enums.go";
+const ENUMS_FILE = "services/tms/internal/modules/agent/domain/aiprovider/enums.go";
 
 const VOYAGE: AIProviderPreset = {
   key: "voyage",

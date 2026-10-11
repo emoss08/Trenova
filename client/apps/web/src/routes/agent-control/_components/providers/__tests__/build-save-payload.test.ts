@@ -40,7 +40,7 @@ function formValues(overrides: Partial<ProviderFormValues> = {}): ProviderFormVa
 }
 
 /**
- * The server contract (services/tms/internal/core/ports/services/aiprovider.go):
+ * The server contract (services/tms/internal/modules/agent/ports/agentports/aiprovider_services.go):
  * an absent apiKey leaves the stored credential alone, an empty string clears it.
  * The edit form never receives the existing secret, so these cases decide whether
  * a credential survives a routine edit.

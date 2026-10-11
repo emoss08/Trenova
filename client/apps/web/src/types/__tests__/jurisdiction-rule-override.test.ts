@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { jurisdictionRuleOverrideSchema } from "@/types/jurisdiction-rule-override";
 
 // Fixtures written from Override.Validate in
-// services/tms/internal/core/domain/jurisdictionrule/override.go.
+// services/tms/internal/modules/places/domain/jurisdictionrule/override.go.
 const base = {
   stateId: "us_01ARZ3NDEKTSV4RRFFQ69G5FAV",
   reason: "Our trailer fleet is narrower than this state allows",

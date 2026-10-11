@@ -4,7 +4,7 @@ import type { AssistantMessage } from "@/types/assistant";
 
 /**
  * Fixtures follow the Go contract in
- * services/tms/internal/core/domain/conversation/message.go: role is one of
+ * services/tms/internal/modules/agent/domain/conversation/message.go: role is one of
  * User, Assistant or Tool, and `refused` is an independent flag the guard sets
  * on a turn it declined.
  */
