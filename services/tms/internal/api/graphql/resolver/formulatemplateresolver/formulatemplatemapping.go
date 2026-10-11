@@ -95,12 +95,11 @@ func formulaTemplateStats(
 	ctx context.Context,
 	obj *formulatemplate.FormulaTemplate,
 ) (formulatemplateports.TemplateStats, error) {
-	loadersForRequest, ok := loaders.FromContext(ctx)
-	if !ok || loadersForRequest == nil {
+	if !loaders.Available(ctx) {
 		return formulatemplateports.TemplateStats{}, errortypes.NewDatabaseError(
 			"Formula template stats loader is not configured",
 		)
 	}
 
-	return loadersForRequest.FormulaTemplateStatsByID.Load(ctx, obj.ID.String())
+	return loaders.FormulaTemplateStatsByID(ctx, obj.ID.String())
 }

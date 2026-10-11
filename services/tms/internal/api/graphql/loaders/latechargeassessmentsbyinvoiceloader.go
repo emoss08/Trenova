@@ -34,7 +34,7 @@ func NewLateChargeAssessmentsByInvoiceIDLoaderFactory(
 	return &LateChargeAssessmentsByInvoiceIDLoaderFactory{assessments: p.LateChargeRepo}
 }
 
-func (f *LateChargeAssessmentsByInvoiceIDLoaderFactory) NewForTenant(
+func newLateChargeAssessmentsByInvoiceIDLoader(f *LateChargeAssessmentsByInvoiceIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*latecharge.LateChargeAssessment] {
 	return newLoader(f.batchFunc(tenantInfo))

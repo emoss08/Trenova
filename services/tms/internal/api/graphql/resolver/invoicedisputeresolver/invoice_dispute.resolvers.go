@@ -13,8 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -29,12 +29,11 @@ func (r *InvoiceResolver) Disputes(ctx context.Context, obj *invoice.Invoice) ([
 		return nil, err
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l == nil {
+	if !loaders.Available(ctx) {
 		return []*invoice.InvoiceDispute{}, nil
 	}
 
-	return l.InvoiceDisputesByInvoiceID.Load(ctx, obj.ID.String())
+	return loaders.InvoiceDisputesByInvoiceID(ctx, obj.ID.String())
 }
 
 func (r *InvoiceResolver) OpenDispute(ctx context.Context, obj *invoice.Invoice) (*invoice.InvoiceDispute, error) {

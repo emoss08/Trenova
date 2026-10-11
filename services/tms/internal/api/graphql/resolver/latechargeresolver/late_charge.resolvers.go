@@ -14,8 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
 func (r *InvoiceResolver) LateChargeAssessments(ctx context.Context, obj *invoice.Invoice) ([]*latecharge.LateChargeAssessment, error) {
@@ -26,12 +26,11 @@ func (r *InvoiceResolver) LateChargeAssessments(ctx context.Context, obj *invoic
 		return nil, err
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l == nil {
+	if !loaders.Available(ctx) {
 		return []*latecharge.LateChargeAssessment{}, nil
 	}
 
-	return l.LateChargeAssessmentsByInvoiceID.Load(ctx, obj.ID.String())
+	return loaders.LateChargeAssessmentsByInvoiceID(ctx, obj.ID.String())
 }
 
 func (r *LateChargeAssessmentResolver) RatePercent(ctx context.Context, obj *latecharge.LateChargeAssessment) (string, error) {

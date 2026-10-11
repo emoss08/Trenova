@@ -33,7 +33,7 @@ func NewIFTAJurisdictionByIDLoaderFactory(
 	}
 }
 
-func (f *IFTAJurisdictionByIDLoaderFactory) NewForTenant(
+func newIFTAJurisdictionByIDLoader(f *IFTAJurisdictionByIDLoaderFactory,
 	_ pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *ifta.Jurisdiction] {
 	return newLoader(f.batchFunc())

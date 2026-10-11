@@ -34,7 +34,7 @@ func NewShiftTemplateActiveAssignmentCountLoaderFactory(
 	return &ShiftTemplateActiveAssignmentCountLoaderFactory{counter: p.SchedulingService}
 }
 
-func (f *ShiftTemplateActiveAssignmentCountLoaderFactory) NewForTenant(
+func newShiftTemplateActiveAssignmentCountLoader(f *ShiftTemplateActiveAssignmentCountLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, int] {
 	return newLoader(f.batchFunc(tenantInfo))

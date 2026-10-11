@@ -25,7 +25,7 @@ func NewAgentDefinitionStatsLoaderFactory(
 	return &AgentDefinitionStatsLoaderFactory{definitionRepo: p.DefinitionRepo}
 }
 
-func (f *AgentDefinitionStatsLoaderFactory) NewForTenant(
+func newAgentDefinitionStatsLoader(f *AgentDefinitionStatsLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, agentdefinitionports.AgentDefinitionStats] {
 	return newLoader(f.batchFunc(tenantInfo))

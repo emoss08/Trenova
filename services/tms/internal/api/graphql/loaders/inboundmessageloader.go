@@ -34,7 +34,7 @@ func NewInboundAttachmentCountLoaderFactory(
 	return &InboundAttachmentCountLoaderFactory{messages: p.MessageRepo}
 }
 
-func (f *InboundAttachmentCountLoaderFactory) NewForTenant(
+func newInboundAttachmentCountLoader(f *InboundAttachmentCountLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, int] {
 	return newLoader(f.batchFunc(tenantInfo))
@@ -77,7 +77,7 @@ func NewShipmentSummaryByIDLoaderFactory(
 	return &ShipmentSummaryByIDLoaderFactory{shipments: p.ShipmentRepo}
 }
 
-func (f *ShipmentSummaryByIDLoaderFactory) NewForTenant(
+func newShipmentSummaryByIDLoader(f *ShipmentSummaryByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *shipmentports.ShipmentSummary] {
 	return newLoader(f.batchFunc(tenantInfo))

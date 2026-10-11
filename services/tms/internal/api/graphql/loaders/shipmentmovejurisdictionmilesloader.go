@@ -36,7 +36,8 @@ func NewShipmentMoveJurisdictionMilesByMoveIDLoaderFactory(
 	}
 }
 
-func (f *ShipmentMoveJurisdictionMilesByMoveIDLoaderFactory) NewForTenant(
+func newShipmentMoveJurisdictionMilesByMoveIDLoader(
+	f *ShipmentMoveJurisdictionMilesByMoveIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*shipment.ShipmentMoveJurisdictionMile] {
 	return newLoader(f.batchFunc(tenantInfo))

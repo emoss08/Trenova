@@ -37,7 +37,7 @@ func NewWorkerDQFVerificationsByWorkerIDLoaderFactory(
 	}
 }
 
-func (f *WorkerDQFVerificationsByWorkerIDLoaderFactory) NewForTenant(
+func newWorkerDQFVerificationsByWorkerIDLoader(f *WorkerDQFVerificationsByWorkerIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*worker.WorkerEmploymentVerification] {
 	return newLoader(f.batchFunc(tenantInfo))

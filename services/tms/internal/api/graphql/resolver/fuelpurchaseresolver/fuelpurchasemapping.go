@@ -507,12 +507,11 @@ func loadFuelCard(ctx context.Context, id *pulid.ID) (*fuelpurchase.FuelCard, er
 		return nil, nil
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l == nil {
+	if !loaders.Available(ctx) {
 		return nil, nil
 	}
 
-	return l.FuelCardByID.Load(ctx, id.String())
+	return loaders.FuelCardByID(ctx, id.String())
 }
 
 func epochPtr(value int64) *int {

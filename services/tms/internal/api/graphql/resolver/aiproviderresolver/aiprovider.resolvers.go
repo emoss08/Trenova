@@ -13,9 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -124,12 +124,11 @@ func (r *AIProviderResolver) MonthlyCapUsd(ctx context.Context, obj *aiprovider.
 }
 
 func (r *AIProviderResolver) MonthSpendUsd(ctx context.Context, obj *aiprovider.Provider) (string, error) {
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l == nil {
+	if !loaders.Available(ctx) {
 		return decimal.Zero.String(), nil
 	}
 
-	spend, err := l.AIProviderMonthSpend.Load(ctx, obj.ID.String())
+	spend, err := loaders.AIProviderMonthSpend(ctx, obj.ID.String())
 	if err != nil {
 		return "", err
 	}

@@ -13,10 +13,9 @@ func LoadUser(ctx context.Context, id pulid.ID) (*tenant.User, error) {
 		return nil, nil //nolint:nilnil // an unset reference resolves to null
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l == nil {
+	if !loaders.Available(ctx) {
 		return nil, nil //nolint:nilnil // outside a request with loaders the relation resolves to null
 	}
 
-	return l.UserByID.Load(ctx, id.String())
+	return loaders.UserByID(ctx, id.String())
 }

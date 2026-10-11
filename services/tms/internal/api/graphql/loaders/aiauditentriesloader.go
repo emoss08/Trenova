@@ -44,7 +44,7 @@ func NewAuditEntriesByAIAuditEventIDLoaderFactory(
 	return &AuditEntriesByAIAuditEventIDLoaderFactory{ledger: p.Ledger}
 }
 
-func (f *AuditEntriesByAIAuditEventIDLoaderFactory) NewForTenant(
+func newAuditEntriesByAIAuditEventIDLoader(f *AuditEntriesByAIAuditEventIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*audit.Entry] {
 	return newLoader(f.batchFunc(tenantInfo))

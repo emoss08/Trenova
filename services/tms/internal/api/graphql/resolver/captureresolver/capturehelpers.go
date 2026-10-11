@@ -36,13 +36,12 @@ func (r *Deps) CaptureRecord(
 		return nil, nil //nolint:nilnil // a record out of reach is left absent
 	}
 
-	l, err := base.RequestLoaders(ctx)
-	if err != nil {
+	if err = base.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
 	return base.OptionalMatch(
-		l.CaptureRecordLabel.Load(ctx, loaders.CaptureRecordKey(resourceType, *id)),
+		loaders.CaptureRecordLabel(ctx, loaders.CaptureRecordKey(resourceType, *id)),
 	)
 }
 

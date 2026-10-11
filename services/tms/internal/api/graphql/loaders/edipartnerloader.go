@@ -29,7 +29,7 @@ func NewEDIPartnerByCustomerIDLoaderFactory(
 	}
 }
 
-func (f *EDIPartnerByCustomerIDLoaderFactory) NewForTenant(
+func newEDIPartnerByCustomerIDLoader(f *EDIPartnerByCustomerIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *edi.EDIPartner] {
 	return newLoader(f.batchFunc(tenantInfo))

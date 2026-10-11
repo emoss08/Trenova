@@ -36,7 +36,8 @@ func NewWorkerCredentialTypeActiveCredentialCountLoaderFactory(
 	}
 }
 
-func (f *WorkerCredentialTypeActiveCredentialCountLoaderFactory) NewForTenant(
+func newWorkerCredentialTypeActiveCredentialCountLoader(
+	f *WorkerCredentialTypeActiveCredentialCountLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, int] {
 	return newLoader(f.batchFunc(tenantInfo))

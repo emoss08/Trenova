@@ -27,7 +27,7 @@ func NewShipmentProfitabilityLoaderFactory(
 	}
 }
 
-func (f *ShipmentProfitabilityLoaderFactory) NewForTenant(
+func newShipmentProfitabilityLoader(f *ShipmentProfitabilityLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *costingservice.ShipmentProfitabilityEstimate] {
 	return newLoader(f.batchFunc(tenantInfo))

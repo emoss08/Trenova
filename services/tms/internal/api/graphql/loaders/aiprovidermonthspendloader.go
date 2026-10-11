@@ -27,7 +27,7 @@ func NewAIProviderMonthSpendLoaderFactory(
 	return &AIProviderMonthSpendLoaderFactory{spend: p.Spend}
 }
 
-func (f *AIProviderMonthSpendLoaderFactory) NewForTenant(
+func newAIProviderMonthSpendLoader(f *AIProviderMonthSpendLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, decimal.Decimal] {
 	return newLoader(batchValueFunc(

@@ -70,12 +70,10 @@ func TestMyAgentDelegates_ServesOnlyDelegatesTheReaderMayUse(t *testing.T) {
 		Definitions: repo,
 		Permissions: &delegatePermissions{granted: []pulid.ID{payroll.ID}},
 	})
-	ctx := loaders.WithLoaders(t.Context(), &loaders.Loaders{
-		UsableAgentByID: factory.NewForTenant(pagination.TenantInfo{
-			OrgID:  pulid.MustNew("org_"),
-			BuID:   pulid.MustNew("bu_"),
-			UserID: pulid.MustNew("usr_"),
-		}),
+	ctx := factory.Attach(t.Context(), pagination.TenantInfo{
+		OrgID:  pulid.MustNew("org_"),
+		BuID:   pulid.MustNew("bu_"),
+		UserID: pulid.MustNew("usr_"),
 	})
 
 	delegates, err := myAgentDelegates(ctx, primary)

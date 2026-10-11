@@ -43,7 +43,8 @@ func NewCustomerPaymentApplicationsByInvoiceIDLoaderFactory(
 	}
 }
 
-func (f *CustomerPaymentApplicationsByInvoiceIDLoaderFactory) NewForTenant(
+func newCustomerPaymentApplicationsByInvoiceIDLoader(
+	f *CustomerPaymentApplicationsByInvoiceIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*customerpayment.Application] {
 	return newLoader(f.batchFunc(tenantInfo))
@@ -83,7 +84,7 @@ func NewCreditMemoApplicationsByInvoiceIDLoaderFactory(
 	}
 }
 
-func (f *CreditMemoApplicationsByInvoiceIDLoaderFactory) NewForTenant(
+func newCreditMemoApplicationsByInvoiceIDLoader(f *CreditMemoApplicationsByInvoiceIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*customerpayment.CreditMemoApplication] {
 	return newLoader(f.batchFunc(tenantInfo))

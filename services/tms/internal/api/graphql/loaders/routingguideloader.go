@@ -37,7 +37,7 @@ func NewRoutingGuideWithEntriesByIDLoaderFactory(
 	}
 }
 
-func (f *RoutingGuideWithEntriesByIDLoaderFactory) NewForTenant(
+func newRoutingGuideWithEntriesByIDLoader(f *RoutingGuideWithEntriesByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *tender.RoutingGuide] {
 	return newLoader(f.batchFunc(tenantInfo))

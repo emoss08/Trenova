@@ -26,7 +26,7 @@ func NewPayProfileActiveAssignmentCountLoaderFactory(
 	return &PayProfileActiveAssignmentCountLoaderFactory{payProfileRepo: p.PayProfileRepo}
 }
 
-func (f *PayProfileActiveAssignmentCountLoaderFactory) NewForTenant(
+func newPayProfileActiveAssignmentCountLoader(f *PayProfileActiveAssignmentCountLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, int] {
 	return newLoader(f.batchFunc(tenantInfo))

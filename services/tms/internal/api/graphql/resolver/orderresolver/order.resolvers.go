@@ -13,10 +13,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
+	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -369,8 +369,8 @@ func (r *OrderResolver) Charges(ctx context.Context, obj *order.Order) ([]*gqlmo
 		allocations := charge.Allocations
 		if allocations == nil {
 			allocations = []*shipmentdomain.ChargeAllocation{}
-			if l, ok := loaders.FromContext(ctx); ok && l != nil {
-				loaded, loadErr := l.ChargeAllocationsByOrderChargeID.Load(ctx, charge.ID.String())
+			if loaders.Available(ctx) {
+				loaded, loadErr := loaders.ChargeAllocationsByOrderChargeID(ctx, charge.ID.String())
 				if loadErr != nil {
 					return nil, loadErr
 				}

@@ -41,7 +41,7 @@ func NewAccessRolesByAgentIDLoaderFactory(
 	return &AccessRolesByAgentIDLoaderFactory{grants: p.Grants}
 }
 
-func (f *AccessRolesByAgentIDLoaderFactory) NewForTenant(
+func newAccessRolesByAgentIDLoader(f *AccessRolesByAgentIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*permission.Role] {
 	return newLoader(f.batchFunc(tenantInfo))
@@ -70,7 +70,7 @@ func NewAgentsByRoleIDLoaderFactory(p AgentGrantLoaderFactoryParams) *AgentsByRo
 	return &AgentsByRoleIDLoaderFactory{grants: p.Grants}
 }
 
-func (f *AgentsByRoleIDLoaderFactory) NewForTenant(
+func newAgentsByRoleIDLoader(f *AgentsByRoleIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*agentdefinition.Definition] {
 	return newLoader(f.batchFunc(tenantInfo))

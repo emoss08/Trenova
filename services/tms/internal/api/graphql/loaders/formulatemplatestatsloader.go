@@ -27,7 +27,7 @@ func NewFormulaTemplateStatsLoaderFactory(
 	return &FormulaTemplateStatsLoaderFactory{templateRepo: p.TemplateRepo}
 }
 
-func (f *FormulaTemplateStatsLoaderFactory) NewForTenant(
+func newFormulaTemplateStatsLoader(f *FormulaTemplateStatsLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, formulatemplateports.TemplateStats] {
 	return newLoader(f.batchFunc(tenantInfo))

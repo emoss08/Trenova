@@ -379,8 +379,8 @@ func (r *TrainingCourseResolver) PassingScore(ctx context.Context, obj *worker.T
 }
 
 func (r *TrainingCourseResolver) OpenRecordCount(ctx context.Context, obj *worker.TrainingCourse) (int, error) {
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		return l.TrainingCourseOpenRecordCount.Load(ctx, obj.ID.String())
+	if loaders.Available(ctx) {
+		return loaders.TrainingCourseOpenRecordCount(ctx, obj.ID.String())
 	}
 	return r.WorkerTrainingService.CountOpenRecords(ctx, obj)
 }

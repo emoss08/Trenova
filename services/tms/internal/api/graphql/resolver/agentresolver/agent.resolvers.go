@@ -14,9 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -111,12 +111,11 @@ func (r *AgentProposalResolver) Modifications(ctx context.Context, obj *agent.Ag
 		return nil, nil
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok {
+	if !loaders.Available(ctx) {
 		return nil, nil
 	}
 
-	decisions, err := l.AgentDecisionsByProposalID.Load(ctx, obj.ID.String())
+	decisions, err := loaders.AgentDecisionsByProposalID(ctx, obj.ID.String())
 	if err != nil {
 		return nil, err
 	}

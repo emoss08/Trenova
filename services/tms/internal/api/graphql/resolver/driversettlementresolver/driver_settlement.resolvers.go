@@ -647,8 +647,8 @@ func (r *PayProfileResolver) ActiveAssignmentCount(ctx context.Context, obj *dri
 	if err != nil {
 		return 0, err
 	}
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		return l.PayProfileActiveAssignmentCount.Load(ctx, obj.ID.String())
+	if loaders.Available(ctx) {
+		return loaders.PayProfileActiveAssignmentCount(ctx, obj.ID.String())
 	}
 	return r.PayProfileRepo.CountActiveAssignments(ctx, base.TenantInfo(authCtx), obj.ID)
 }

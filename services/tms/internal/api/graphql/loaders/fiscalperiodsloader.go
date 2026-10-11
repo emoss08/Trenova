@@ -37,7 +37,7 @@ func NewFiscalPeriodsByFiscalYearIDLoaderFactory(
 	}
 }
 
-func (f *FiscalPeriodsByFiscalYearIDLoaderFactory) NewForTenant(
+func newFiscalPeriodsByFiscalYearIDLoader(f *FiscalPeriodsByFiscalYearIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*fiscalperiod.FiscalPeriod] {
 	return newLoader(f.batchFunc(tenantInfo))

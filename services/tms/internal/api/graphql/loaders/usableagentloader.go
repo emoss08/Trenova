@@ -45,7 +45,7 @@ func NewUsableAgentByIDLoaderFactory(
 	return &UsableAgentByIDLoaderFactory{definitions: p.Definitions, permissions: p.Permissions}
 }
 
-func (f *UsableAgentByIDLoaderFactory) NewForTenant(
+func newUsableAgentByIDLoader(f *UsableAgentByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *agentdefinition.Definition] {
 	return newLoader(batchByIDFunc(

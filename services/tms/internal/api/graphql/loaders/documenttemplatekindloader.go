@@ -37,7 +37,7 @@ func NewDocumentTemplateKindByTemplateIDLoaderFactory(
 	}
 }
 
-func (f *DocumentTemplateKindByTemplateIDLoaderFactory) NewForTenant(
+func newDocumentTemplateKindByTemplateIDLoader(f *DocumentTemplateKindByTemplateIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, documenttemplate.Kind] {
 	return newLoader(f.batchFunc(tenantInfo))

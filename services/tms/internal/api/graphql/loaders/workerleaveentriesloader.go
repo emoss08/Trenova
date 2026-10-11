@@ -37,7 +37,7 @@ func NewWorkerLeaveEntriesByCaseIDLoaderFactory(
 	}
 }
 
-func (f *WorkerLeaveEntriesByCaseIDLoaderFactory) NewForTenant(
+func newWorkerLeaveEntriesByCaseIDLoader(f *WorkerLeaveEntriesByCaseIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*worker.WorkerLeaveEntry] {
 	return newLoader(f.batchFunc(tenantInfo))

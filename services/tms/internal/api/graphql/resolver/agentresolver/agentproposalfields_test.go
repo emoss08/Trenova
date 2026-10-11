@@ -167,11 +167,9 @@ func newChoicesHarness(t *testing.T, granted bool) *choicesHarness {
 	factory := loaders.NewSubsetLabelsLoaderFactory(loaders.SubsetLabelsLoaderFactoryParams{
 		Labeler: h.labeler,
 	}).WithBatchWait(choicesBatchWait)
-	h.ctx = loaders.WithLoaders(gqlctx.WithAuthContext(t.Context(), auth), &loaders.Loaders{
-		SubsetLabels: factory.NewForTenant(pagination.TenantInfo{
-			OrgID: auth.OrganizationID,
-			BuID:  auth.BusinessUnitID,
-		}),
+	h.ctx = factory.Attach(gqlctx.WithAuthContext(t.Context(), auth), pagination.TenantInfo{
+		OrgID: auth.OrganizationID,
+		BuID:  auth.BusinessUnitID,
 	})
 
 	return h

@@ -74,9 +74,7 @@ func (f *transcriptFixture) ctx(t *testing.T) context.Context {
 	factory := loaders.NewAgentRunTranscriptByIDLoaderFactory(
 		loaders.AgentRunTranscriptByIDLoaderFactoryParams{Runs: f.runs},
 	)
-	ctx := loaders.WithLoaders(t.Context(), &loaders.Loaders{
-		AgentRunTranscriptByID: factory.NewForTenant(f.tenant),
-	})
+	ctx := factory.Attach(t.Context(), f.tenant)
 
 	return gqlctx.WithAuthContext(ctx, &authctx.AuthContext{
 		PrincipalType:  authctx.PrincipalTypeUser,

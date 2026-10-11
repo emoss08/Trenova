@@ -12,12 +12,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,8 +34,8 @@ func (r *CustomerPaymentResolver) Customer(ctx context.Context, obj *customerpay
 		return nil, err
 	}
 
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		return l.CustomerByID.Load(ctx, obj.CustomerID.String())
+	if loaders.Available(ctx) {
+		return loaders.CustomerByID(ctx, obj.CustomerID.String())
 	}
 
 	return r.CustomerService.Get(ctx, customerports.GetCustomerByIDRequest{
@@ -50,8 +50,8 @@ func (r *CustomerPaymentApplicationResolver) Invoice(ctx context.Context, obj *c
 		return nil, err
 	}
 
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		return l.InvoiceByID.Load(ctx, obj.InvoiceID.String())
+	if loaders.Available(ctx) {
+		return loaders.InvoiceByID(ctx, obj.InvoiceID.String())
 	}
 
 	return r.InvoiceService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{

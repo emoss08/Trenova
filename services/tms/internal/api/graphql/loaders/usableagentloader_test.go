@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -123,7 +123,7 @@ func TestUsableAgentByID_BatchesAndKeepsOnlyWhatThePersonMayUse(t *testing.T) {
 	t.Parallel()
 
 	f := newUsableAgentsFixture()
-	loader := f.factory.NewForTenant(f.tenant)
+	loader := newUsableAgentByIDLoader(f.factory, f.tenant)
 
 	ids := []pulid.ID{
 		f.open.ID, f.granted.ID, f.withheld.ID, f.disabled.ID, f.scheduled.ID, f.open.ID,
@@ -159,7 +159,7 @@ func TestUsableAgentByID_NothingWithoutTheAssistant(t *testing.T) {
 	f := newUsableAgentsFixture()
 	f.usable.usable = permissionports.UsableAgents{}
 
-	_, err := f.factory.NewForTenant(f.tenant).Load(t.Context(), f.open.ID.String())
+	_, err := newUsableAgentByIDLoader(f.factory, f.tenant).Load(t.Context(), f.open.ID.String())
 
 	assert.True(t, errortypes.IsNotFoundError(err))
 	assert.Empty(t, f.definitions.calls, "the agents are not read for a person who may use none")
@@ -171,7 +171,7 @@ func TestUsableAgentByID_NothingWithoutAPerson(t *testing.T) {
 	f := newUsableAgentsFixture()
 	f.tenant.UserID = pulid.Nil
 
-	_, err := f.factory.NewForTenant(f.tenant).Load(t.Context(), f.open.ID.String())
+	_, err := newUsableAgentByIDLoader(f.factory, f.tenant).Load(t.Context(), f.open.ID.String())
 
 	assert.True(t, errortypes.IsNotFoundError(err))
 	assert.Empty(t, f.usable.actors)

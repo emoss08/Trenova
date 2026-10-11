@@ -194,8 +194,8 @@ func (r *PerformanceReviewTemplateResolver) CadenceMonths(ctx context.Context, o
 }
 
 func (r *PerformanceReviewTemplateResolver) OpenReviewCount(ctx context.Context, obj *worker.PerformanceReviewTemplate) (int, error) {
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		return l.PerformanceReviewTemplateOpenReviewCount.Load(ctx, obj.ID.String())
+	if loaders.Available(ctx) {
+		return loaders.PerformanceReviewTemplateOpenReviewCount(ctx, obj.ID.String())
 	}
 	return r.PerformanceReviewService.CountOpenReviews(ctx, obj)
 }

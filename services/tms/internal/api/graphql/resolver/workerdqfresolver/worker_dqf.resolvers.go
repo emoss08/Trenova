@@ -37,8 +37,8 @@ func (r *DQFFileResolver) Verifications(ctx context.Context, obj *worker.DQFFile
 		return nil, err
 	}
 
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		return l.WorkerDQFVerificationsByWorkerID.Load(ctx, obj.WorkerID.String())
+	if loaders.Available(ctx) {
+		return loaders.WorkerDQFVerificationsByWorkerID(ctx, obj.WorkerID.String())
 	}
 
 	return r.WorkerDQFService.ListVerifications(

@@ -13,14 +13,14 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func (r *FiscalYearResolver) Periods(ctx context.Context, obj *fiscalyear.FiscalYear) ([]*fiscalperiod.FiscalPeriod, error) {
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		return l.FiscalPeriodsByFiscalYearID.Load(ctx, obj.ID.String())
+	if loaders.Available(ctx) {
+		return loaders.FiscalPeriodsByFiscalYearID(ctx, obj.ID.String())
 	}
 
 	return r.FiscalYearService.ListPeriods(ctx, obj.ID, obj.OrganizationID, obj.BusinessUnitID)

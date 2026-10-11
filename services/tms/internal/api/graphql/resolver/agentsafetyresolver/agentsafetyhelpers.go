@@ -115,12 +115,11 @@ func (r *Deps) AgentSafetyTools(
 		return []*agentports.AgentToolSafety{}, nil
 	}
 
-	loadersForRequest, ok := loaders.FromContext(ctx)
-	if !ok || loadersForRequest == nil {
+	if !loaders.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("Agent trust loader is not configured")
 	}
 
-	trust, err := loadersForRequest.ToolTrustByAgentID.Load(ctx, obj.Agent.ID.String())
+	trust, err := loaders.ToolTrustByAgentID(ctx, obj.Agent.ID.String())
 	if err != nil {
 		return nil, err
 	}
@@ -150,12 +149,11 @@ func (r *Deps) AgentSafetyReach(
 		return nil, err
 	}
 
-	loadersForRequest, ok := loaders.FromContext(ctx)
-	if !ok || loadersForRequest == nil {
+	if !loaders.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("Agent access loader is not configured")
 	}
 
-	granted, err := loadersForRequest.AccessRolesByAgentID.Load(ctx, obj.Agent.ID.String())
+	granted, err := loaders.AccessRolesByAgentID(ctx, obj.Agent.ID.String())
 	if err != nil {
 		return nil, err
 	}

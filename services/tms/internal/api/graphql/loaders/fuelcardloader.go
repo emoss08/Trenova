@@ -37,7 +37,7 @@ func NewFuelCardByIDLoaderFactory(
 	}
 }
 
-func (f *FuelCardByIDLoaderFactory) NewForTenant(
+func newFuelCardByIDLoader(f *FuelCardByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *fuelpurchase.FuelCard] {
 	return newLoader(f.batchFunc(tenantInfo))

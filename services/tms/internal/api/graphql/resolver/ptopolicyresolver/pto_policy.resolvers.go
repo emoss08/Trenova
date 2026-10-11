@@ -339,8 +339,8 @@ func (r *PTOPolicyResolver) NegativeFloorDays(ctx context.Context, obj *worker.P
 }
 
 func (r *PTOPolicyResolver) OpenAssignmentCount(ctx context.Context, obj *worker.PTOPolicy) (int, error) {
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		return l.PTOPolicyOpenAssignmentCount.Load(ctx, obj.ID.String())
+	if loaders.Available(ctx) {
+		return loaders.PTOPolicyOpenAssignmentCount(ctx, obj.ID.String())
 	}
 	return r.PtoPolicyService.CountOpenAssignments(ctx, obj)
 }

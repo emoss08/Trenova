@@ -84,8 +84,8 @@ func (r *TenderResolver) RoutingGuide(ctx context.Context, obj *tender.Tender) (
 		return obj.RoutingGuide, nil
 	}
 
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		return l.RoutingGuideWithEntriesByID.Load(ctx, obj.RoutingGuideID.String())
+	if loaders.Available(ctx) {
+		return loaders.RoutingGuideWithEntriesByID(ctx, obj.RoutingGuideID.String())
 	}
 
 	return r.RoutingGuideService.Get(ctx, tenderports.GetRoutingGuideByIDRequest{

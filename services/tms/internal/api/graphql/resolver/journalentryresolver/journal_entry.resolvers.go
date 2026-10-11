@@ -15,9 +15,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -41,8 +41,8 @@ func (r *JournalEntryLineResolver) GlAccount(ctx context.Context, obj *journalen
 	}
 
 	var account *glaccount.GLAccount
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		account, err = l.GLAccountByID.Load(ctx, obj.GLAccountID.String())
+	if loaders.Available(ctx) {
+		account, err = loaders.GLAccountByID(ctx, obj.GLAccountID.String())
 	} else {
 		account, err = r.GlAccountRepo.GetByID(ctx, glaccountports.GetGLAccountByIDRequest{
 			ID:         obj.GLAccountID,

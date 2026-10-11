@@ -33,12 +33,11 @@ func agentRunColumns(ctx context.Context, nodePathPrefix string) []string {
 }
 
 func runTranscript(ctx context.Context, run *agent.AgentRun) (*agent.RunTranscript, error) {
-	l, ok := loaders.FromContext(ctx)
-	if run.Transcript != nil || !ok {
+	if run.Transcript != nil || !loaders.Available(ctx) {
 		return run.Transcript, nil
 	}
 
-	loaded, err := l.AgentRunTranscriptByID.Load(ctx, run.ID.String())
+	loaded, err := loaders.AgentRunTranscriptByID(ctx, run.ID.String())
 	switch {
 	case errortypes.IsNotFoundError(err):
 		return run.Transcript, nil
@@ -63,12 +62,11 @@ func reflectionSignals(reflection *agent.Reflection) []*agent.ReflectionSignal {
 }
 
 func supersededMemory(ctx context.Context, memory *agent.Memory) (*agent.Memory, error) {
-	l, ok := loaders.FromContext(ctx)
-	if !ok || !memory.Replaces() {
+	if !loaders.Available(ctx) || !memory.Replaces() {
 		return nil, nil
 	}
 
-	loaded, err := l.AgentMemoryByID.Load(ctx, memory.SupersedesID.String())
+	loaded, err := loaders.AgentMemoryByID(ctx, memory.SupersedesID.String())
 	switch {
 	case errortypes.IsNotFoundError(err):
 		return nil, nil
@@ -80,12 +78,11 @@ func supersededMemory(ctx context.Context, memory *agent.Memory) (*agent.Memory,
 }
 
 func replacingMemory(ctx context.Context, memory *agent.Memory) (*agent.Memory, error) {
-	l, ok := loaders.FromContext(ctx)
-	if !ok || memory == nil || memory.ID.IsNil() {
+	if !loaders.Available(ctx) || memory == nil || memory.ID.IsNil() {
 		return nil, nil
 	}
 
-	return l.AgentMemoryReplacement.Load(ctx, memory.ID.String())
+	return loaders.AgentMemoryReplacement(ctx, memory.ID.String())
 }
 
 func agentProposalColumns(ctx context.Context, nodePathPrefix string) []string {

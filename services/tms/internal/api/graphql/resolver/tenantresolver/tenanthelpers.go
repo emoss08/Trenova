@@ -18,12 +18,11 @@ func (r *UserResolver) currentOrganization(
 		return nil, nil
 	}
 
-	loadersForRequest, ok := loaders.FromContext(ctx)
-	if !ok || loadersForRequest == nil {
+	if !loaders.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("Organization loader is not configured")
 	}
 
-	return loadersForRequest.OrganizationByID.Load(ctx, obj.CurrentOrganizationID.String())
+	return loaders.OrganizationByID(ctx, obj.CurrentOrganizationID.String())
 }
 
 func (r *MutationResolver) applyOrganizationCapabilities(

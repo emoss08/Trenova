@@ -34,7 +34,7 @@ func NewThreadAgentByIDLoaderFactory(
 	return &ThreadAgentByIDLoaderFactory{threads: p.Conversations}
 }
 
-func (f *ThreadAgentByIDLoaderFactory) NewForTenant(
+func newThreadAgentByIDLoader(f *ThreadAgentByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *conversation.Thread] {
 	return newLoader(batchByIDFunc(

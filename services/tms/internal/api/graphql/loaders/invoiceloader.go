@@ -36,7 +36,7 @@ func NewInvoiceByIDLoaderFactory(
 	}
 }
 
-func (f *InvoiceByIDLoaderFactory) NewForTenant(
+func newInvoiceByIDLoader(f *InvoiceByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *invoice.Invoice] {
 	return newLoader(f.batchFunc(tenantInfo))

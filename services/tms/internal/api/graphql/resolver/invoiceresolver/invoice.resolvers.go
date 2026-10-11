@@ -12,11 +12,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -42,8 +42,8 @@ func (r *InvoiceResolver) ShipperCustomer(ctx context.Context, obj *invoice.Invo
 		return nil, err
 	}
 
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		return l.CustomerByID.Load(ctx, obj.ShipperCustomerID.String())
+	if loaders.Available(ctx) {
+		return loaders.CustomerByID(ctx, obj.ShipperCustomerID.String())
 	}
 
 	return r.CustomerService.Get(ctx, customerports.GetCustomerByIDRequest{
@@ -69,8 +69,7 @@ func (r *InvoiceResolver) RelatedInvoices(ctx context.Context, obj *invoice.Invo
 		return []*invoice.Invoice{}, nil
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l == nil {
+	if !loaders.Available(ctx) {
 		return []*invoice.Invoice{}, nil
 	}
 
@@ -78,7 +77,7 @@ func (r *InvoiceResolver) RelatedInvoices(ctx context.Context, obj *invoice.Invo
 	for _, id := range legIDs {
 		keys = append(keys, id.String())
 	}
-	groups, err := l.InvoicesByShipmentID.LoadAll(ctx, keys)
+	groups, err := loaders.InvoicesByShipmentIDAll(ctx, keys)
 	if err != nil {
 		return nil, err
 	}
@@ -138,8 +137,8 @@ func (r *InvoiceResolver) ReferenceInvoice(ctx context.Context, obj *invoice.Inv
 		return nil, err
 	}
 
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		return l.InvoiceByID.Load(ctx, obj.ReferenceInvoiceID.String())
+	if loaders.Available(ctx) {
+		return loaders.InvoiceByID(ctx, obj.ReferenceInvoiceID.String())
 	}
 
 	return r.InvoiceService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
@@ -184,12 +183,11 @@ func (r *InvoiceResolver) PaymentApplications(ctx context.Context, obj *invoice.
 		return nil, err
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l == nil {
+	if !loaders.Available(ctx) {
 		return []*customerpayment.Application{}, nil
 	}
 
-	return l.CustomerPaymentApplicationsByInvoiceID.Load(ctx, obj.ID.String())
+	return loaders.CustomerPaymentApplicationsByInvoiceID(ctx, obj.ID.String())
 }
 
 func (r *InvoiceResolver) CreditApplications(ctx context.Context, obj *invoice.Invoice) ([]*customerpayment.CreditMemoApplication, error) {
@@ -200,12 +198,11 @@ func (r *InvoiceResolver) CreditApplications(ctx context.Context, obj *invoice.I
 		return nil, err
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l == nil {
+	if !loaders.Available(ctx) {
 		return []*customerpayment.CreditMemoApplication{}, nil
 	}
 
-	return l.CreditMemoApplicationsByInvoiceID.Load(ctx, obj.ID.String())
+	return loaders.CreditMemoApplicationsByInvoiceID(ctx, obj.ID.String())
 }
 
 func (r *InvoiceResolver) EDISendPlan(ctx context.Context, obj *invoice.Invoice) (*invoiceports.InvoiceEDISendPlan, error) {
@@ -216,8 +213,7 @@ func (r *InvoiceResolver) EDISendPlan(ctx context.Context, obj *invoice.Invoice)
 		return nil, err
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l == nil {
+	if !loaders.Available(ctx) {
 		return &invoiceports.InvoiceEDISendPlan{
 			InvoiceID: obj.ID,
 			Status:    obj.EDISendStatus,
@@ -225,7 +221,7 @@ func (r *InvoiceResolver) EDISendPlan(ctx context.Context, obj *invoice.Invoice)
 		}, nil
 	}
 
-	return l.InvoiceEDISendPlanByInvoiceID.Load(ctx, obj.ID.String())
+	return loaders.InvoiceEDISendPlanByInvoiceID(ctx, obj.ID.String())
 }
 
 func (r *InvoiceLineResolver) Quantity(ctx context.Context, obj *invoice.InvoiceLine) (string, error) {

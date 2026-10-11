@@ -7,6 +7,7 @@ package aiauditresolver
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -14,10 +15,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,12 +47,11 @@ func (r *AIAuditEventResolver) Agent(ctx context.Context, obj *aiaudit.AIAuditEv
 		return nil, nil
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok {
+	if !loaders.Available(ctx) {
 		return nil, nil
 	}
 
-	definition, err := l.AgentDefinitionByID.Load(ctx, obj.AgentDefinitionID.String())
+	definition, err := loaders.AgentDefinitionByID(ctx, obj.AgentDefinitionID.String())
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil
@@ -96,12 +96,7 @@ func (r *AIAuditEventResolver) CostUsd(ctx context.Context, obj *aiaudit.AIAudit
 // Arguments are withheld per path at the reader's own ceiling on the tool's
 // resource, asked once per resource for the whole request.
 func (r *AIAuditEventResolver) Arguments(ctx context.Context, obj *aiaudit.AIAuditEvent) (map[string]any, error) {
-	var ceilings aiauditports.FieldCeilings
-	if l, ok := loaders.FromContext(ctx); ok && l.FieldCeilings != nil {
-		ceilings = l.FieldCeilings
-	}
-
-	return r.AiAuditService.ReaderArguments(ctx, obj, ceilings), nil
+	return r.AiAuditService.ReaderArguments(ctx, obj, loaders.FieldCeilings(ctx)), nil
 }
 
 func (r *AIAuditEventResolver) ArgumentSensitivity(ctx context.Context, obj *aiaudit.AIAuditEvent) (map[string]any, error) {
@@ -123,12 +118,10 @@ func (r *AIAuditEventResolver) AuditEntries(ctx context.Context, obj *aiaudit.AI
 		return []*audit.Entry{}, nil
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l.AuditEntriesByAIAuditEventID == nil {
+	entries, err := loaders.AuditEntriesByAIAuditEventID(ctx, obj.ID.String())
+	if errors.Is(err, loaders.ErrNotAttached) {
 		return []*audit.Entry{}, nil
 	}
-
-	entries, err := l.AuditEntriesByAIAuditEventID.Load(ctx, obj.ID.String())
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return []*audit.Entry{}, nil

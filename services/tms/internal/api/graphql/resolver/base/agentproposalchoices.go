@@ -2,6 +2,7 @@ package base
 
 import (
 	"context"
+	"errors"
 	"slices"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
@@ -56,16 +57,14 @@ func (r *Core) subsetLabels(
 		return nil
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l.SubsetLabels == nil {
-		return nil
-	}
-
 	ids := make([]string, len(field.Choices))
 	for idx := range field.Choices {
 		ids[idx] = field.Choices[idx].ID
 	}
-	labels, err := l.SubsetLabels.Load(ctx, loaders.SubsetLabelsKey(resource, ids))
+	labels, err := loaders.SubsetLabels(ctx, loaders.SubsetLabelsKey(resource, ids))
+	if errors.Is(err, loaders.ErrNotAttached) {
+		return nil
+	}
 	if err != nil {
 		r.L.Warn("could not read the labels of the records a proposal offers",
 			zap.String("resource", field.Resource),

@@ -34,7 +34,7 @@ func NewAgentMemoryByIDLoaderFactory(
 	return &AgentMemoryByIDLoaderFactory{memories: p.Memories}
 }
 
-func (f *AgentMemoryByIDLoaderFactory) NewForTenant(
+func newAgentMemoryByIDLoader(f *AgentMemoryByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *agent.Memory] {
 	return newLoader(batchByIDFunc(
@@ -71,7 +71,7 @@ func NewAgentMemoryReplacementLoaderFactory(
 	return &AgentMemoryReplacementLoaderFactory{memories: p.Memories}
 }
 
-func (f *AgentMemoryReplacementLoaderFactory) NewForTenant(
+func newAgentMemoryReplacementLoader(f *AgentMemoryReplacementLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *agent.Memory] {
 	return newLoader(batchReplacementFunc(f.memories, tenantInfo))

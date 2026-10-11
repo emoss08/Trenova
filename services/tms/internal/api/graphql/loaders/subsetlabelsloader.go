@@ -58,7 +58,7 @@ func SubsetLabelsKey(resource permission.Resource, ids []string) string {
 	return key.String()
 }
 
-func (f *SubsetLabelsLoaderFactory) NewForTenant(
+func newSubsetLabelsLoader(f *SubsetLabelsLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, agentports.RecordLabels] {
 	return dataloadgen.NewLoader(

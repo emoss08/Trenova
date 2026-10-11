@@ -58,12 +58,11 @@ func (r *Deps) DocumentTemplateVersionKind(
 		return version.Template.Kind
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l == nil {
+	if !loaders.Available(ctx) {
 		return r.DocumentTemplateService.KindOf(ctx, version, tenant)
 	}
 
-	kind, err := l.DocumentTemplateKindByTemplateID.Load(ctx, version.TemplateID.String())
+	kind, err := loaders.DocumentTemplateKindByTemplateID(ctx, version.TemplateID.String())
 	if err != nil {
 		return ""
 	}

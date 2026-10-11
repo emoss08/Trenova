@@ -29,7 +29,7 @@ func NewGLAccountByIDLoaderFactory(
 	}
 }
 
-func (f *GLAccountByIDLoaderFactory) NewForTenant(
+func newGLAccountByIDLoader(f *GLAccountByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *glaccount.GLAccount] {
 	return newLoader(f.batchFunc(tenantInfo))

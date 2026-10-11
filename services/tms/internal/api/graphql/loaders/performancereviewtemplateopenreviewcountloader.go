@@ -36,7 +36,8 @@ func NewPerformanceReviewTemplateOpenReviewCountLoaderFactory(
 	}
 }
 
-func (f *PerformanceReviewTemplateOpenReviewCountLoaderFactory) NewForTenant(
+func newPerformanceReviewTemplateOpenReviewCountLoader(
+	f *PerformanceReviewTemplateOpenReviewCountLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, int] {
 	return newLoader(f.batchFunc(tenantInfo))

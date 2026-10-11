@@ -31,7 +31,7 @@ func NewUsStateByIDLoaderFactory(p UsStateByIDLoaderFactoryParams) *UsStateByIDL
 	}
 }
 
-func (f *UsStateByIDLoaderFactory) NewForTenant(
+func newUsStateByIDLoader(f *UsStateByIDLoaderFactory,
 	_ pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *usstate.UsState] {
 	return newLoader(f.batchFunc())

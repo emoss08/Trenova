@@ -49,7 +49,7 @@ func NewInvoiceEDISendPlanByInvoiceIDLoaderFactory(
 	}
 }
 
-func (f *InvoiceEDISendPlanByInvoiceIDLoaderFactory) NewForTenant(
+func newInvoiceEDISendPlanByInvoiceIDLoader(f *InvoiceEDISendPlanByInvoiceIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *invoiceports.InvoiceEDISendPlan] {
 	return newLoader(f.batchFunc(tenantInfo))

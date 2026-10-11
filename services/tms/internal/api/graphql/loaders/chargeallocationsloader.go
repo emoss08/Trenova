@@ -40,7 +40,7 @@ func NewChargeAllocationsByShipmentIDLoaderFactory(
 	}
 }
 
-func (f *ChargeAllocationsByShipmentIDLoaderFactory) NewForTenant(
+func newChargeAllocationsByShipmentIDLoader(f *ChargeAllocationsByShipmentIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*shipment.ChargeAllocation] {
 	return newLoader(f.batchFunc(tenantInfo))
@@ -80,7 +80,7 @@ func NewChargeAllocationsByOrderChargeIDLoaderFactory(
 	}
 }
 
-func (f *ChargeAllocationsByOrderChargeIDLoaderFactory) NewForTenant(
+func newChargeAllocationsByOrderChargeIDLoader(f *ChargeAllocationsByOrderChargeIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*shipment.ChargeAllocation] {
 	return newLoader(f.batchFunc(tenantInfo))

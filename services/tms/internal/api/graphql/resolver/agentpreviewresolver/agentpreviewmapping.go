@@ -27,9 +27,7 @@ func (r *Deps) PreviewViewer(
 		Actor: actor,
 		Reads: fieldsensitivity.NewReadAccess(r.PermissionEngine, actor),
 	}
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		viewer.Ceilings = l.FieldCeilings
-	}
+	viewer.Ceilings = loaders.FieldCeilings(ctx)
 
 	return viewer
 }

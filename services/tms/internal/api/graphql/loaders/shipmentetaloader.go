@@ -24,7 +24,7 @@ func NewShipmentEtaLoaderFactory(p ShipmentEtaLoaderFactoryParams) *ShipmentEtaL
 	return &ShipmentEtaLoaderFactory{etas: p.Etas}
 }
 
-func (f *ShipmentEtaLoaderFactory) NewForTenant(
+func newShipmentEtaLoader(f *ShipmentEtaLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *shipmenttrackingports.ShipmentEta] {
 	return newLoader(f.batchFunc(tenantInfo))

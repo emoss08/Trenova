@@ -12,14 +12,14 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -35,8 +35,8 @@ func (r *CarrierResolver) Intelligence(ctx context.Context, obj *carrier.Carrier
 				ctx, base.TenantInfo(authCtx), []pulid.ID{obj.ID},
 			)
 		},
-		func(l *loaders.Loaders) ([]*carrierintel.CarrierIntelSnapshot, error) {
-			return l.CarrierIntelSnapshotByCarrierID.Load(ctx, obj.ID.String())
+		func() ([]*carrierintel.CarrierIntelSnapshot, error) {
+			return loaders.CarrierIntelSnapshotByCarrierID(ctx, obj.ID.String())
 		},
 	)
 }
@@ -46,8 +46,8 @@ func (r *CarrierResolver) OpenIntelEventCount(ctx context.Context, obj *carrier.
 	if err != nil {
 		return 0, nil
 	}
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		return l.CarrierIntelOpenEventCount.Load(ctx, obj.ID.String())
+	if loaders.Available(ctx) {
+		return loaders.CarrierIntelOpenEventCount(ctx, obj.ID.String())
 	}
 	counts, err := r.CarrierIntelService.OpenEventCountsByCarrierIDs(
 		ctx, base.TenantInfo(authCtx), []pulid.ID{obj.ID},
@@ -64,8 +64,8 @@ func (r *CarrierResolver) MonitoringEnrollment(ctx context.Context, obj *carrier
 		return nil, nil
 	}
 	var rows []*carrierintel.CarrierMonitoringEnrollment
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		rows, err = l.CarrierMonitoringEnrollmentByCarrierID.Load(ctx, obj.ID.String())
+	if loaders.Available(ctx) {
+		rows, err = loaders.CarrierMonitoringEnrollmentByCarrierID(ctx, obj.ID.String())
 	} else {
 		rows, err = r.CarrierIntelService.EnrollmentsByCarrierIDs(ctx, base.TenantInfo(authCtx), []pulid.ID{obj.ID})
 	}
@@ -336,8 +336,8 @@ func (r *CustomerResolver) BrokerIntelligence(ctx context.Context, obj *customer
 				ctx, base.TenantInfo(authCtx), carrierintel.SubjectTypeCustomer, []string{obj.ID.String()},
 			)
 		},
-		func(l *loaders.Loaders) ([]*carrierintel.CarrierIntelSnapshot, error) {
-			return l.CarrierIntelSnapshotByCustomerID.Load(ctx, obj.ID.String())
+		func() ([]*carrierintel.CarrierIntelSnapshot, error) {
+			return loaders.CarrierIntelSnapshotByCustomerID(ctx, obj.ID.String())
 		},
 	)
 }

@@ -36,7 +36,8 @@ func NewWorkerChecklistTemplateOpenChecklistCountLoaderFactory(
 	}
 }
 
-func (f *WorkerChecklistTemplateOpenChecklistCountLoaderFactory) NewForTenant(
+func newWorkerChecklistTemplateOpenChecklistCountLoader(
+	f *WorkerChecklistTemplateOpenChecklistCountLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, int] {
 	return newLoader(f.batchFunc(tenantInfo))

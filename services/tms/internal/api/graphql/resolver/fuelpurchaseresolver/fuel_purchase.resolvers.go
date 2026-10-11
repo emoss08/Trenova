@@ -12,12 +12,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/money"
@@ -167,12 +167,11 @@ func (r *FuelPurchaseImportBatchResolver) Document(ctx context.Context, obj *fue
 		return nil, nil
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l == nil {
+	if !loaders.Available(ctx) {
 		return nil, nil
 	}
 
-	return l.DocumentByID.Load(ctx, obj.DocumentID.String())
+	return loaders.DocumentByID(ctx, obj.DocumentID.String())
 }
 
 func (r *FuelPurchaseImportBatchResolver) DefaultFuelCard(ctx context.Context, obj *fuelpurchase.ImportBatch) (*fuelpurchase.FuelCard, error) {

@@ -956,12 +956,11 @@ func (r *ShipmentResolver) loadShipmentOrder(
 		return nil, nil
 	}
 
-	loadersForRequest, ok := loaders.FromContext(ctx)
-	if !ok || loadersForRequest == nil {
+	if !loaders.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("Order loader is not configured")
 	}
 
-	parent, err := loadersForRequest.OrderByID.Load(ctx, *obj.OrderID)
+	parent, err := loaders.OrderByID(ctx, *obj.OrderID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil

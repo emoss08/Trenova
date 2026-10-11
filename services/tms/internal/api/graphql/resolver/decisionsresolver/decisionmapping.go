@@ -17,12 +17,11 @@ func loadAgentRun(ctx context.Context, runID pulid.ID) (*agent.AgentRun, error) 
 		return nil, nil
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok {
+	if !loaders.Available(ctx) {
 		return nil, nil
 	}
 
-	run, err := l.AgentRunByID.Load(ctx, runID.String())
+	run, err := loaders.AgentRunByID(ctx, runID.String())
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil

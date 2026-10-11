@@ -37,7 +37,7 @@ func NewAgentDecisionsByProposalIDLoaderFactory(
 	return &AgentDecisionsByProposalIDLoaderFactory{decisions: p.Decisions}
 }
 
-func (f *AgentDecisionsByProposalIDLoaderFactory) NewForTenant(
+func newAgentDecisionsByProposalIDLoader(f *AgentDecisionsByProposalIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*agent.AgentDecision] {
 	return newLoader(f.batchFunc(tenantInfo))

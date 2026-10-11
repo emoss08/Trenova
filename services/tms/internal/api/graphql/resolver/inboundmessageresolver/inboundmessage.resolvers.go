@@ -10,14 +10,15 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/api/handlers/inboundhandler"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -100,12 +101,11 @@ func (r *InboundMessageResolver) AttachmentCount(ctx context.Context, obj *inbou
 		return len(obj.Attachments), nil
 	}
 
-	l, err := base.RequestLoaders(ctx)
-	if err != nil {
+	if err := base.RequireLoaders(ctx); err != nil {
 		return 0, err
 	}
 
-	return l.InboundAttachmentCount.Load(ctx, obj.ID.String())
+	return loaders.InboundAttachmentCount(ctx, obj.ID.String())
 }
 
 func (r *InboundMessageResolver) Preview(ctx context.Context, obj *inboundmessage.InboundMessage) (string, error) {
@@ -127,12 +127,11 @@ func (r *InboundMessageResolver) MatchedShipment(ctx context.Context, obj *inbou
 		return nil, nil
 	}
 
-	l, err := base.RequestLoaders(ctx)
-	if err != nil {
+	if err := base.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
-	return base.OptionalMatch(l.ShipmentSummaryByID.Load(ctx, obj.MatchedShipmentID.String()))
+	return base.OptionalMatch(loaders.ShipmentSummaryByID(ctx, obj.MatchedShipmentID.String()))
 }
 
 func (r *InboundMessageResolver) MatchedCustomer(ctx context.Context, obj *inboundmessage.InboundMessage) (*customer.Customer, error) {
@@ -148,12 +147,11 @@ func (r *InboundMessageResolver) MatchedCustomer(ctx context.Context, obj *inbou
 		return nil, nil
 	}
 
-	l, err := base.RequestLoaders(ctx)
-	if err != nil {
+	if err := base.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
-	return base.OptionalMatch(l.CustomerByID.Load(ctx, obj.MatchedCustomerID.String()))
+	return base.OptionalMatch(loaders.CustomerByID(ctx, obj.MatchedCustomerID.String()))
 }
 
 func (r *InboundMessageResolver) NeedsReview(ctx context.Context, obj *inboundmessage.InboundMessage) (bool, error) {

@@ -43,7 +43,7 @@ func NewCaptureRecordLabelLoaderFactory(
 	return &CaptureRecordLabelLoaderFactory{records: p.Records}
 }
 
-func (f *CaptureRecordLabelLoaderFactory) NewForTenant(
+func newCaptureRecordLabelLoader(f *CaptureRecordLabelLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *captureports.CaptureRecordLabel] {
 	return newLoader(f.batchFunc(tenantInfo))

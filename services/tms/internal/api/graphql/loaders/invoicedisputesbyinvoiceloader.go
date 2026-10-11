@@ -34,7 +34,7 @@ func NewInvoiceDisputesByInvoiceIDLoaderFactory(
 	return &InvoiceDisputesByInvoiceIDLoaderFactory{disputes: p.InvoiceDisputeRepo}
 }
 
-func (f *InvoiceDisputesByInvoiceIDLoaderFactory) NewForTenant(
+func newInvoiceDisputesByInvoiceIDLoader(f *InvoiceDisputesByInvoiceIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*invoice.InvoiceDispute] {
 	return newLoader(f.batchFunc(tenantInfo))

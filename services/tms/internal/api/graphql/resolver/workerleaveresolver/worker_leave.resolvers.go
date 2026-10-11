@@ -350,8 +350,8 @@ func (r *WorkerLeaveCaseResolver) Entries(ctx context.Context, obj *worker.Worke
 		return nil, err
 	}
 
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		return l.WorkerLeaveEntriesByCaseID.Load(ctx, obj.ID.String())
+	if loaders.Available(ctx) {
+		return loaders.WorkerLeaveEntriesByCaseID(ctx, obj.ID.String())
 	}
 
 	return r.WorkerLeaveService.ListEntries(ctx, &workerports.ListLeaveEntriesRequest{

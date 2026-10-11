@@ -37,7 +37,7 @@ func NewIFTAReturnByIDLoaderFactory(
 	}
 }
 
-func (f *IFTAReturnByIDLoaderFactory) NewForTenant(
+func newIFTAReturnByIDLoader(f *IFTAReturnByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *ifta.Return] {
 	return newLoader(f.batchFunc(tenantInfo))

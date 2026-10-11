@@ -107,14 +107,11 @@ func (h *Handler) handle(c *gin.Context) {
 	reqCtx = gqlctx.WithPermissionMemo(reqCtx, gqlctx.NewPermissionMemo())
 	responseStatus := gqlctx.NewResponseStatus()
 	reqCtx = gqlctx.WithResponseStatus(reqCtx, responseStatus)
-	reqCtx = loaders.WithLoaders(
-		reqCtx,
-		h.loaderFactory.NewForTenant(pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		}),
-	)
+	reqCtx = h.loaderFactory.Attach(reqCtx, pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	})
 
 	c.Request = c.Request.WithContext(reqCtx)
 	h.l.Debug("handling GraphQL request", zap.String("request_id", requestid.Get(c)))

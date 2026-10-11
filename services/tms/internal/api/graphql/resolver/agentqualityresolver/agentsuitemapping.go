@@ -227,12 +227,11 @@ func qualityControlFromInput(
 }
 
 func suiteRunAgentName(ctx context.Context, agentID pulid.ID) (string, error) {
-	l, ok := loaders.FromContext(ctx)
-	if !ok || agentID.IsNil() {
+	if !loaders.Available(ctx) || agentID.IsNil() {
 		return "", nil
 	}
 
-	definition, err := l.AgentDefinitionByID.Load(ctx, agentID.String())
+	definition, err := loaders.AgentDefinitionByID(ctx, agentID.String())
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return "", nil

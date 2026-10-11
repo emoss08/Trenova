@@ -321,8 +321,8 @@ func (r *WorkerChecklistProgressResolver) Complete(ctx context.Context, obj *wor
 }
 
 func (r *WorkerChecklistTemplateResolver) OpenChecklistCount(ctx context.Context, obj *worker.WorkerChecklistTemplate) (int, error) {
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		return l.WorkerChecklistTemplateOpenChecklistCount.Load(ctx, obj.ID.String())
+	if loaders.Available(ctx) {
+		return loaders.WorkerChecklistTemplateOpenChecklistCount(ctx, obj.ID.String())
 	}
 	return r.WorkerChecklistService.CountOpenChecklistsForTemplate(ctx, obj)
 }

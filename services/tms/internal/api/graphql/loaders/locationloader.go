@@ -29,7 +29,7 @@ func NewLocationByIDLoaderFactory(
 	}
 }
 
-func (f *LocationByIDLoaderFactory) NewForTenant(
+func newLocationByIDLoader(f *LocationByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *location.Location] {
 	return newLoader(f.batchFunc(tenantInfo))

@@ -34,7 +34,7 @@ func NewPTOPolicyOpenAssignmentCountLoaderFactory(
 	return &PTOPolicyOpenAssignmentCountLoaderFactory{counter: p.PTOPolicyService}
 }
 
-func (f *PTOPolicyOpenAssignmentCountLoaderFactory) NewForTenant(
+func newPTOPolicyOpenAssignmentCountLoader(f *PTOPolicyOpenAssignmentCountLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, int] {
 	return newLoader(f.batchFunc(tenantInfo))

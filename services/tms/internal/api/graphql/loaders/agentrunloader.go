@@ -37,7 +37,7 @@ func NewAgentRunByIDLoaderFactory(p AgentRunByIDLoaderFactoryParams) *AgentRunBy
 	return &AgentRunByIDLoaderFactory{runs: p.Runs}
 }
 
-func (f *AgentRunByIDLoaderFactory) NewForTenant(
+func newAgentRunByIDLoader(f *AgentRunByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *agent.AgentRun] {
 	return newLoader(batchByIDFunc(
@@ -74,7 +74,7 @@ func NewAgentRunTranscriptByIDLoaderFactory(
 	return &AgentRunTranscriptByIDLoaderFactory{runs: p.Runs}
 }
 
-func (f *AgentRunTranscriptByIDLoaderFactory) NewForTenant(
+func newAgentRunTranscriptByIDLoader(f *AgentRunTranscriptByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *agent.AgentRun] {
 	return newLoader(batchByIDFunc(
@@ -113,7 +113,7 @@ func NewAgentDefinitionByIDLoaderFactory(
 	return &AgentDefinitionByIDLoaderFactory{definitions: p.Definitions}
 }
 
-func (f *AgentDefinitionByIDLoaderFactory) NewForTenant(
+func newAgentDefinitionByIDLoader(f *AgentDefinitionByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *agentdefinition.Definition] {
 	return newLoader(batchByIDFunc(

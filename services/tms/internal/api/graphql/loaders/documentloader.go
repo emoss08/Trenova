@@ -34,7 +34,7 @@ func NewDocumentByIDLoaderFactory(p DocumentByIDLoaderFactoryParams) *DocumentBy
 	}
 }
 
-func (f *DocumentByIDLoaderFactory) NewForTenant(
+func newDocumentByIDLoader(f *DocumentByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *document.Document] {
 	return newLoader(f.batchFunc(tenantInfo))

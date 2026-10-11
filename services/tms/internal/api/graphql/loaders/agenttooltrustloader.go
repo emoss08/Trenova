@@ -34,7 +34,7 @@ func NewToolTrustByAgentIDLoaderFactory(
 	return &ToolTrustByAgentIDLoaderFactory{trust: p.Trust}
 }
 
-func (f *ToolTrustByAgentIDLoaderFactory) NewForTenant(
+func newToolTrustByAgentIDLoader(f *ToolTrustByAgentIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*agent.ToolTrust] {
 	return newLoader(f.batchFunc(tenantInfo))

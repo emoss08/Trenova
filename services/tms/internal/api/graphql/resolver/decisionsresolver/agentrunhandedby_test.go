@@ -47,14 +47,13 @@ func handOffLoaders(
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
-	return loaders.WithLoaders(t.Context(), &loaders.Loaders{
-		ThreadAgentByID: loaders.NewThreadAgentByIDLoaderFactory(
-			loaders.ThreadAgentByIDLoaderFactoryParams{Conversations: threads},
-		).NewForTenant(tenant),
-		AgentDefinitionByID: loaders.NewAgentDefinitionByIDLoaderFactory(
-			loaders.AgentDefinitionByIDLoaderFactoryParams{Definitions: definitions},
-		).NewForTenant(tenant),
-	})
+	ctx := loaders.NewThreadAgentByIDLoaderFactory(
+		loaders.ThreadAgentByIDLoaderFactoryParams{Conversations: threads},
+	).Attach(t.Context(), tenant)
+
+	return loaders.NewAgentDefinitionByIDLoaderFactory(
+		loaders.AgentDefinitionByIDLoaderFactoryParams{Definitions: definitions},
+	).Attach(ctx, tenant)
 }
 
 /*

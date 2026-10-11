@@ -406,12 +406,12 @@ func parseCarrierIntelID(raw, field, label string) (pulid.ID, error) {
 func loadCarrierSnapshot(
 	ctx context.Context,
 	fetch func() ([]*carrierintel.CarrierIntelSnapshot, error),
-	loader func(l *loaders.Loaders) ([]*carrierintel.CarrierIntelSnapshot, error),
+	loader func() ([]*carrierintel.CarrierIntelSnapshot, error),
 ) (*carrierintel.CarrierIntelSnapshot, error) {
 	var snapshots []*carrierintel.CarrierIntelSnapshot
 	var err error
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		snapshots, err = loader(l)
+	if loaders.Available(ctx) {
+		snapshots, err = loader()
 	} else {
 		snapshots, err = fetch()
 	}

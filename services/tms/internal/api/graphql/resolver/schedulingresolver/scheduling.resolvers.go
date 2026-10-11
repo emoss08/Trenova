@@ -343,8 +343,8 @@ func (r *ShiftTemplateResolver) ActiveAssignmentCount(ctx context.Context, obj *
 	if err != nil {
 		return 0, err
 	}
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		return l.ShiftTemplateActiveAssignmentCount.Load(ctx, obj.ID.String())
+	if loaders.Available(ctx) {
+		return loaders.ShiftTemplateActiveAssignmentCount(ctx, obj.ID.String())
 	}
 
 	return r.SchedulingService.CountTemplateAssignments(ctx, base.TenantInfo(authCtx), obj.ID)

@@ -34,7 +34,7 @@ func NewTrainingCourseOpenRecordCountLoaderFactory(
 	return &TrainingCourseOpenRecordCountLoaderFactory{counter: p.WorkerTrainingService}
 }
 
-func (f *TrainingCourseOpenRecordCountLoaderFactory) NewForTenant(
+func newTrainingCourseOpenRecordCountLoader(f *TrainingCourseOpenRecordCountLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, int] {
 	return newLoader(f.batchFunc(tenantInfo))

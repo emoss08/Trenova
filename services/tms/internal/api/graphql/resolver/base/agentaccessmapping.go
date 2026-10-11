@@ -23,12 +23,11 @@ func (r *Core) AgentDefinitionAccessRoles(
 		return []*permission.Role{}, nil
 	}
 
-	loadersForRequest, ok := loaders.FromContext(ctx)
-	if !ok || loadersForRequest == nil {
+	if !loaders.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("Agent access loader is not configured")
 	}
 
-	return loadersForRequest.AccessRolesByAgentID.Load(ctx, obj.ID.String())
+	return loaders.AccessRolesByAgentID(ctx, obj.ID.String())
 }
 
 // roleAgents reads the agents a role is granted through the request's
@@ -45,10 +44,9 @@ func (r *Core) RoleAgents(
 		return []*agentdefinition.Definition{}, nil
 	}
 
-	loadersForRequest, ok := loaders.FromContext(ctx)
-	if !ok || loadersForRequest == nil {
+	if !loaders.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("Agent access loader is not configured")
 	}
 
-	return loadersForRequest.AgentsByRoleID.Load(ctx, obj.ID.String())
+	return loaders.AgentsByRoleID(ctx, obj.ID.String())
 }
