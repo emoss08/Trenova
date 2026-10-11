@@ -342,7 +342,7 @@ func NewAcceptEDILoadTenderTool(decider ediTransferDecider) agentports.AgentTool
 			"list_edi_transfers",
 			"get_edi_transfer",
 			"get_customer",
-			"search_shipments",
+			toolSearchShipments,
 			"quote_shipment",
 			"accept_edi_tender",
 		},

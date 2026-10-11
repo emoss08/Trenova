@@ -149,7 +149,11 @@ func (t *RecordStopActualTool) request(
 
 	// "Arrived" is not "Arrive", and coercing it would record an event that
 	// did not happen.
-	action, err := common.RequireEnum(params.Params, "action", agenttoolschema.StopActualActions.Values)
+	action, err := common.RequireEnum(
+		params.Params,
+		"action",
+		agenttoolschema.StopActualActions.Values,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -174,10 +178,18 @@ func (t *RecordStopActualTool) request(
 	if err != nil {
 		return nil, err
 	}
-	if request.OccurredAt, err = common.OptionalLocalTime(params.Params, "occurredAt", zone); err != nil {
+	if request.OccurredAt, err = common.OptionalLocalTime(
+		params.Params,
+		"occurredAt",
+		zone,
+	); err != nil {
 		return nil, err
 	}
-	if request.DepartedAt, err = common.OptionalLocalTime(params.Params, "departedAt", zone); err != nil {
+	if request.DepartedAt, err = common.OptionalLocalTime(
+		params.Params,
+		"departedAt",
+		zone,
+	); err != nil {
 		return nil, err
 	}
 

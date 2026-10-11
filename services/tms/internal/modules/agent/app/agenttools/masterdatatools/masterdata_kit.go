@@ -405,8 +405,12 @@ func masterDecimal[T any](key, description string, at func(*T) **float64) master
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return clearable(update, true, common.StringProperty(description+" A decimal such as 42.5."+
-				keepSuffix(update, true), 0))
+			return clearable(
+				update,
+				true,
+				common.StringProperty(description+" A decimal such as 42.5."+
+					keepSuffix(update, true), 0),
+			)
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
 			value, present, err := common.OptionalDecimal(in.values, key)
@@ -517,8 +521,14 @@ func masterState[T any](
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return clearable(update, !required,
-				common.StringProperty(description+" "+stateCodeNote+keepSuffix(update, !required), 2))
+			return clearable(
+				update,
+				!required,
+				common.StringProperty(
+					description+" "+stateCodeNote+keepSuffix(update, !required),
+					2,
+				),
+			)
 		},
 		apply: func(ctx context.Context, in *masterInput, entity *T) error {
 			id, err := resolveState(ctx, in, key)

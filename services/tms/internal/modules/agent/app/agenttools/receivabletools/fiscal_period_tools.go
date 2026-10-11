@@ -148,8 +148,11 @@ func (m *fiscalPeriodMove) properties() map[string]any {
 			fiscalPeriodSupplier),
 	}
 	if m.needsReason {
-		properties[common.ParamReason] = common.StringProperty("Why the period must take postings again: "+
-			"the correction and the evidence for it.", maxFiscalReopenReason)
+		properties[common.ParamReason] = common.StringProperty(
+			"Why the period must take postings again: "+
+				"the correction and the evidence for it.",
+			maxFiscalReopenReason,
+		)
 	}
 
 	return properties

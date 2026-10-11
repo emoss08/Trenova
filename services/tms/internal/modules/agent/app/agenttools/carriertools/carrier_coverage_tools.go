@@ -295,7 +295,11 @@ func (t *AssignMoveToCarrierTool) request(
 }
 
 func (t *AssignMoveToCarrierTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, common.PreviewFieldShipmentMoveID, permission.ResourceShipmentMove)
+	return common.TargetOf(
+		params,
+		common.PreviewFieldShipmentMoveID,
+		permission.ResourceShipmentMove,
+	)
 }
 
 // cancelCarrierAssignmentTool takes the carrier off a move that has not
@@ -434,7 +438,11 @@ func (t *CancelCarrierAssignmentTool) request(
 func (t *CancelCarrierAssignmentTool) Target(
 	params map[string]any,
 ) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, common.PreviewFieldShipmentMoveID, permission.ResourceShipmentMove)
+	return common.TargetOf(
+		params,
+		common.PreviewFieldShipmentMoveID,
+		permission.ResourceShipmentMove,
+	)
 }
 
 // carrierRateMethodArg refuses anything but the two ways a carrier is paid.
@@ -470,7 +478,11 @@ func carrierAccessorialsArg(
 
 	out := make([]shipmentports.CarrierAccessorialInput, 0, len(lines))
 	for idx, line := range lines {
-		amount, err := common.DecimalArg(map[string]any{fieldAmount: line.Amount}, fieldAmount, true)
+		amount, err := common.DecimalArg(
+			map[string]any{fieldAmount: line.Amount},
+			fieldAmount,
+			true,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("accessorials[%d]: %w", idx, err)
 		}

@@ -52,14 +52,16 @@ func evidenceItemsProperty(description string) map[string]any {
 
 const evidenceID = "id"
 
+const schemaType = "type"
+
 func (t *FlagManualReviewTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
+		schemaType: "object",
 		"properties": map[string]any{
 			"runId": agenttoolschema.RecordIDText(permission.ResourceAgentRun,
 				"The id of the run you are in, the one working this run's subject; never "+
 					"invent one."),
-			"subjectId": agenttoolschema.KindID(
+			common.FieldSubjectID: agenttoolschema.KindID(
 				"The billing queue item being flagged: this run's subject.",
 				permission.KindBillingQueueItem,
 			),
@@ -73,12 +75,12 @@ func (t *FlagManualReviewTool) ParamSchema() map[string]any {
 				agenttoolschema.Severities,
 			),
 			"attemptSummary": map[string]any{
-				"type": "string",
+				schemaType: "string",
 				"description": "What you checked and why it was not enough, for the biller who " +
 					"takes over.",
 			},
 			"blastRadius": map[string]any{
-				"type":        "integer",
+				schemaType:    "integer",
 				"description": "How many records the problem affects, when more than this one.",
 			},
 			common.FieldEvidence: evidenceItemsProperty(
@@ -88,7 +90,7 @@ func (t *FlagManualReviewTool) ParamSchema() map[string]any {
 		},
 		"required": []string{
 			"runId",
-			"subjectId",
+			common.FieldSubjectID,
 			"category",
 			"severity",
 			"attemptSummary",
@@ -152,7 +154,7 @@ func (t *FlagManualReviewTool) request(
 		return nil, err
 	}
 
-	subjectID, err := common.RequirePulid(params.Params, "subjectId")
+	subjectID, err := common.RequirePulid(params.Params, common.FieldSubjectID)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +168,11 @@ func (t *FlagManualReviewTool) request(
 		return nil, err
 	}
 
-	severity, err := common.RequireEnum(params.Params, common.FieldSeverity, agenttoolschema.Severities.Values)
+	severity, err := common.RequireEnum(
+		params.Params,
+		common.FieldSeverity,
+		agenttoolschema.Severities.Values,
+	)
 	if err != nil {
 		return nil, err
 	}

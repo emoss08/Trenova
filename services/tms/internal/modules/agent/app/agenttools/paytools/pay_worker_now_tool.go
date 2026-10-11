@@ -66,9 +66,12 @@ func (t *PayWorkerNowTool) ParamSchema() map[string]any {
 	}
 
 	return map[string]any{
-		toolschema.KeyType:                 toolschema.TypeObject,
-		toolschema.KeyProperties:           properties,
-		toolschema.KeyRequired:             []string{common.ParamWorkerID, common.ParamPaymentMethod},
+		toolschema.KeyType:       toolschema.TypeObject,
+		toolschema.KeyProperties: properties,
+		toolschema.KeyRequired: []string{
+			common.ParamWorkerID,
+			common.ParamPaymentMethod,
+		},
 		toolschema.KeyAdditionalProperties: false,
 	}
 }
@@ -103,7 +106,12 @@ func (t *PayWorkerNowTool) request(
 		return nil, err
 	}
 	payment := &settlementshared.ActionRequest{}
-	if err = common.FillSettlementPayment(common.DriverPaymentMethods)(params.Params, payment); err != nil {
+	if err = common.FillSettlementPayment(
+		common.DriverPaymentMethods,
+	)(
+		params.Params,
+		payment,
+	); err != nil {
 		return nil, err
 	}
 	req := &driversettlementservice.PayWorkerNowRequest{

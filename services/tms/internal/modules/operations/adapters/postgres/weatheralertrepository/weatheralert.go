@@ -212,7 +212,6 @@ func (r *repository) ListByNWSIDs(
 	})
 }
 
-//nolint:nestif // existing validation flow mirrors business rule nesting
 func (r *repository) UpsertAlert(
 	ctx context.Context,
 	alert *weatheralert.WeatherAlert,
@@ -239,21 +238,7 @@ func (r *repository) UpsertAlert(
 					}
 
 					if dberror.IsNotFoundError(err) {
-						if alert.ID.IsNil() {
-							alert.ID = pulid.MustNew("walt_")
-						}
-						if alert.FirstSeenAt == 0 {
-							alert.FirstSeenAt = timeutils.NowUnix()
-						}
-						if alert.LastUpdatedAt == 0 {
-							alert.LastUpdatedAt = alert.FirstSeenAt
-						}
-						if alert.CreatedAt == 0 {
-							alert.CreatedAt = alert.FirstSeenAt
-						}
-						if alert.UpdatedAt == 0 {
-							alert.UpdatedAt = alert.LastUpdatedAt
-						}
+						prepareNewAlert(alert)
 						if err = r.insertAlert(c, tx, alert); err != nil {
 							return err
 						}
@@ -318,6 +303,24 @@ func (r *repository) UpsertAlert(
 			return result, nil
 		},
 	)
+}
+
+func prepareNewAlert(alert *weatheralert.WeatherAlert) {
+	if alert.ID.IsNil() {
+		alert.ID = pulid.MustNew("walt_")
+	}
+	if alert.FirstSeenAt == 0 {
+		alert.FirstSeenAt = timeutils.NowUnix()
+	}
+	if alert.LastUpdatedAt == 0 {
+		alert.LastUpdatedAt = alert.FirstSeenAt
+	}
+	if alert.CreatedAt == 0 {
+		alert.CreatedAt = alert.FirstSeenAt
+	}
+	if alert.UpdatedAt == 0 {
+		alert.UpdatedAt = alert.LastUpdatedAt
+	}
 }
 
 func (r *repository) ExpireStaleAlerts(

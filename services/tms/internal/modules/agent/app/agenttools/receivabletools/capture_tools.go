@@ -237,7 +237,10 @@ func NewFileCaptureItemsTool(captures CaptureKeeper) agentports.AgentTool {
 			return plans, nil
 		},
 		Refused: func(filing *captureFiling) string {
-			return fmt.Sprintf("Would file %s.", common.CountOf(len(filing.entries), common.ScannedDocument))
+			return fmt.Sprintf(
+				"Would file %s.",
+				common.CountOf(len(filing.entries), common.ScannedDocument),
+			)
 		},
 		Render: renderCaptureFiling,
 		Run: func(
@@ -290,7 +293,10 @@ func captureFilingProperties() map[string]any {
 				toolschema.KeyType: toolschema.TypeObject,
 				toolschema.KeyProperties: map[string]any{
 					paramCaptureItemID: agenttoolschema.KindID(
-						agenttoolschema.IDDescription("The "+common.ScannedDocument, captureSources),
+						agenttoolschema.IDDescription(
+							"The "+common.ScannedDocument,
+							captureSources,
+						),
 						permission.KindScannedDocument,
 					),
 					paramCaptureTarget: agenttoolschema.Enum("The kind of record it "+

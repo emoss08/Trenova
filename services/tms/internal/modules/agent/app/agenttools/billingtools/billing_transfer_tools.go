@@ -122,7 +122,8 @@ func (t *TransferToBillingTool) ParamSchema() map[string]any {
 			"customerId, deliveredFrom and deliveredTo. Use it instead of shipmentIds, never " +
 			"with them; leave it out when naming shipmentIds, whose filters are then ignored.",
 	}
-	properties[common.ParamShipmentIDs] = toolschema.RecordSubset(permission.ResourceShipment.String(),
+	properties[common.ParamShipmentIDs] = toolschema.RecordSubset(
+		permission.ResourceShipment.String(),
 		agenttoolschema.OfResource(map[string]any{
 			toolschema.KeyType: toolschema.TypeArray,
 			toolschema.KeyDescription: "The shipments to transfer, by id from " +
@@ -132,7 +133,8 @@ func (t *TransferToBillingTool) ParamSchema() map[string]any {
 			toolschema.KeyItems: map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
 			},
-		}, permission.ResourceShipment))
+		}, permission.ResourceShipment),
+	)
 	properties[common.ParamBillType] = agenttoolschema.Enum(
 		"What the queue items bill. Defaults to Invoice.", transferBillTypes,
 	)

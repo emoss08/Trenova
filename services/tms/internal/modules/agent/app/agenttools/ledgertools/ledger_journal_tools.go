@@ -67,12 +67,6 @@ const journalReversalRecordEntity = "journal_reversal"
 
 const journalReversalKind = "journal reversal"
 
-const toolListManualJournals = "list_manual_journals"
-
-const toolGetManualJournal = "get_manual_journal"
-
-const toolListJournalReversals = "list_journal_reversals"
-
 const manualJournalSupplier = "The manual journal, from list_manual_journals or get_manual_journal. Never guess one."
 
 const journalReversalSupplier = "The journal reversal, from list_journal_reversals or the result of request_journal_reversal. Never guess one."
@@ -387,7 +381,7 @@ func journalRevisionFrom(params *agentports.ToolExecuteParams) (*common.JournalR
 	if err != nil {
 		return nil, err
 	}
-	revision := &common.JournalRevision{Id: id}
+	revision := &common.JournalRevision{ID: id}
 	if revision.Description, err = common.BoundedText(
 		params.Params,
 		paramJournalDescription,
@@ -403,7 +397,10 @@ func journalRevisionFrom(params *agentports.ToolExecuteParams) (*common.JournalR
 	); err != nil {
 		return nil, err
 	}
-	if revision.Date, _, err = common.OptionalDay(params.Params, common.ParamAccountingDate); err != nil {
+	if revision.Date, _, err = common.OptionalDay(
+		params.Params,
+		common.ParamAccountingDate,
+	); err != nil {
 		return nil, err
 	}
 	if revision.Currency, err = readJournalCurrency(params.Params); err != nil {
@@ -425,7 +422,7 @@ func revisedDraft(
 	params *agentports.ToolExecuteParams,
 ) (*manualjournalports.UpdateManualJournalDraftRequest, error) {
 	current, err := journals.Get(ctx, &manualjournalports.GetManualJournalRequest{
-		RequestID:  revision.Id,
+		RequestID:  revision.ID,
 		TenantInfo: common.TenantFrom(*params),
 	})
 	if err != nil {
@@ -683,7 +680,11 @@ func cancelManualJournalRequest(
 	if err != nil {
 		return nil, err
 	}
-	reason, err := common.RequireBoundedText(params.Params, common.ParamReason, maxJournalCancelReason)
+	reason, err := common.RequireBoundedText(
+		params.Params,
+		common.ParamReason,
+		maxJournalCancelReason,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -712,8 +713,11 @@ func newCancelManualJournalTool(
 		Properties: map[string]any{
 			paramManualJournalID: agenttoolschema.RecordIDText(permission.ResourceManualJournal,
 				manualJournalSupplier),
-			common.ParamReason: common.StringProperty("Why it must not be posted, in a sentence its author "+
-				"can act on.", maxJournalCancelReason),
+			common.ParamReason: common.StringProperty(
+				"Why it must not be posted, in a sentence its author "+
+					"can act on.",
+				maxJournalCancelReason,
+			),
 		},
 		Required: []string{paramManualJournalID, common.ParamReason},
 		Target:   targetManualJournal,
@@ -803,11 +807,19 @@ func journalReversalRequestFrom(
 	if err != nil {
 		return nil, err
 	}
-	code, err := common.RequireBoundedText(params.Params, paramReversalReasonCode, maxReversalReasonCode)
+	code, err := common.RequireBoundedText(
+		params.Params,
+		paramReversalReasonCode,
+		maxReversalReasonCode,
+	)
 	if err != nil {
 		return nil, err
 	}
-	text, err := common.RequireBoundedText(params.Params, paramReversalReasonText, maxReversalReasonText)
+	text, err := common.RequireBoundedText(
+		params.Params,
+		paramReversalReasonText,
+		maxReversalReasonText,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -844,8 +856,11 @@ func newRequestJournalReversalTool(
 				"The day the reversal is booked; a day in a " +
 					"closed period moves to the next open one where policy allows.",
 			),
-			paramReversalReasonCode: common.StringProperty("A short code for the kind of error, such "+
-				"as WrongAccount or Duplicate.", maxReversalReasonCode),
+			paramReversalReasonCode: common.StringProperty(
+				"A short code for the kind of error, such "+
+					"as WrongAccount or Duplicate.",
+				maxReversalReasonCode,
+			),
 			paramReversalReasonText: common.StringProperty("What was wrong with the entry, as the "+
 				"approver and the auditor will read it.", maxReversalReasonText),
 		},
@@ -899,7 +914,11 @@ func cancelJournalReversalRequest(
 	if err != nil {
 		return nil, err
 	}
-	reason, err := common.RequireBoundedText(params.Params, common.ParamReason, maxJournalCancelReason)
+	reason, err := common.RequireBoundedText(
+		params.Params,
+		common.ParamReason,
+		maxJournalCancelReason,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -934,8 +953,11 @@ func newCancelJournalReversalTool(
 			paramJournalReversalID: agenttoolschema.RecordIDText(
 				permission.ResourceJournalReversal, journalReversalSupplier,
 			),
-			common.ParamReason: common.StringProperty("Why the entry should stand, in a sentence the "+
-				"requester can act on.", maxJournalCancelReason),
+			common.ParamReason: common.StringProperty(
+				"Why the entry should stand, in a sentence the "+
+					"requester can act on.",
+				maxJournalCancelReason,
+			),
 		},
 		Required: []string{paramJournalReversalID, common.ParamReason},
 		Target:   targetJournalReversal,

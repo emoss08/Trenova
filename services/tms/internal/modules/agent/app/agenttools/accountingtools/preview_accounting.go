@@ -26,7 +26,13 @@ var accountingCheckFields = []string{
 	"lastErrorMessage",
 }
 
-var mappingFields = []string{common.FieldState, "externalName", "source", common.FieldReason, "confirmedAt"}
+var mappingFields = []string{
+	common.FieldState,
+	"externalName",
+	"source",
+	common.FieldReason,
+	"confirmedAt",
+}
 
 var mappingLabels = map[string]string{"externalName": "Mapped to"}
 

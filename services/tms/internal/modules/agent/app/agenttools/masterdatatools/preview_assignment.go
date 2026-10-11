@@ -94,7 +94,10 @@ func (t *AssignMoveTool) Preview(
 			check.Score.WorkerName,
 			shipmentLabel,
 		)
-		common.LabelRefs(changes[0], map[string]string{common.FieldPrimaryWorkerID: check.Score.WorkerName})
+		common.LabelRefs(
+			changes[0],
+			map[string]string{common.FieldPrimaryWorkerID: check.Score.WorkerName},
+		)
 	}
 	summary += ". The driver sees the assignment." + findingsSentence(check) + note +
 		equipmentInUseSentence(plan.EquipmentInUse)

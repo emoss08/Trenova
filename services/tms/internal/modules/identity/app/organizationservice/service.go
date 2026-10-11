@@ -83,12 +83,7 @@ func (s *service) GetByIDs(
 	ctx context.Context,
 	req tenantports.GetOrganizationsByIDsRequest,
 ) ([]*tenant.Organization, error) {
-	return s.repo.GetByIDs(ctx, tenantports.GetOrganizationsByIDsQuery{
-		TenantInfo:      req.TenantInfo,
-		OrganizationIDs: req.OrganizationIDs,
-		IncludeState:    req.IncludeState,
-		IncludeBU:       req.IncludeBU,
-	})
+	return s.repo.GetByIDs(ctx, tenantports.GetOrganizationsByIDsQuery(req))
 }
 
 func (s *service) SelectOptions(

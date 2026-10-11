@@ -181,7 +181,10 @@ func adjustmentLinesProperty() map[string]any {
 					"The line's id, from get_invoice's lines.", permission.KindInvoiceLine),
 				paramCreditAmount: common.StringProperty(
 					"How much of the line to credit, as a decimal.", 0),
-				paramCreditQuantity: common.StringProperty("The quantity credited, as a decimal.", 0),
+				paramCreditQuantity: common.StringProperty(
+					"The quantity credited, as a decimal.",
+					0,
+				),
 				paramRebillAmount: common.StringProperty(
 					"The line's corrected amount on the reissued invoice, for a Manual rebill.", 0),
 				paramRebillQuantity: common.StringProperty(
@@ -385,8 +388,10 @@ func NewSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) agentports.Agen
 				toolschema.KeyItems: map[string]any{
 					toolschema.KeyType: toolschema.TypeObject,
 					toolschema.KeyProperties: map[string]any{
-						common.ParamInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
-							"The posted invoice, from list_invoices or get_invoice."),
+						common.ParamInvoiceID: agenttoolschema.RecordIDText(
+							permission.ResourceInvoice,
+							"The posted invoice, from list_invoices or get_invoice.",
+						),
 						paramAdjustmentKind: adjustmentKindProperty(),
 						paramRebillStrategy: rebillStrategyProperty(),
 						common.ParamReason: common.StringProperty(
@@ -417,7 +422,10 @@ func NewSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) agentports.Agen
 			if req.draftID.IsNotNil() {
 				return "Would submit the draft adjustment."
 			}
-			return fmt.Sprintf("Would submit %s.", common.CountOf(len(req.items), "invoice adjustment"))
+			return fmt.Sprintf(
+				"Would submit %s.",
+				common.CountOf(len(req.items), "invoice adjustment"),
+			)
 		},
 		Render: renderSubmission,
 		Run: func(
@@ -706,8 +714,10 @@ func NewSaveInvoiceAdjustmentDraftTool(adjustments invoiceAdjuster) agentports.A
 					"Beside adjustmentId it must be that draft's invoice."),
 			paramAdjustmentKind: adjustmentKindProperty(),
 			paramRebillStrategy: rebillStrategyProperty(),
-			common.ParamReason: common.StringProperty("Why, as the customer or the biller would say it.",
-				maxAdjustmentReasonChars),
+			common.ParamReason: common.StringProperty(
+				"Why, as the customer or the biller would say it.",
+				maxAdjustmentReasonChars,
+			),
 			paramAdjustmentLines:       adjustmentLinesProperty(),
 			paramSupportingDocumentIDs: supportingDocumentsProperty(),
 		},
@@ -885,8 +895,10 @@ func NewRejectInvoiceAdjustmentTool(adjustments invoiceAdjuster) agentports.Agen
 			"decision is a person's.",
 		Properties: map[string]any{
 			ParamAdjustmentID: adjustmentIDProperty("pending"),
-			common.ParamReason: common.StringProperty("Why it is rejected, for the person who submitted it.",
-				maxAdjustmentReasonChars),
+			common.ParamReason: common.StringProperty(
+				"Why it is rejected, for the person who submitted it.",
+				maxAdjustmentReasonChars,
+			),
 		},
 		Required: []string{ParamAdjustmentID, common.ParamReason},
 		Target:   targetAdjustment,

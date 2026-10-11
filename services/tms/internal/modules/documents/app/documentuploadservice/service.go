@@ -415,26 +415,7 @@ func (s *Service) Complete(
 		return session, nil
 	}
 
-	if err = usageservice.CheckDocumentUploadLimit(
-		ctx,
-		s.usageProvider,
-		usageservice.DocumentUploadUsageParams{
-			TenantInfo:     req.TenantInfo,
-			Actor:          req.Actor,
-			IdempotencyKey: "document-upload-session:" + req.SessionID.String(),
-		},
-	); err != nil {
-		return nil, err
-	}
-	if err = usageservice.CheckDocumentBytesLimit(
-		ctx,
-		s.usageProvider,
-		usageservice.DocumentBytesUsageParams{
-			TenantInfo: req.TenantInfo,
-			Actor:      req.Actor,
-			Bytes:      session.FileSize,
-		},
-	); err != nil {
+	if err = s.checkCompletionLimits(ctx, req, session); err != nil {
 		return nil, err
 	}
 
@@ -451,16 +432,8 @@ func (s *Service) Complete(
 		return nil, err
 	}
 
-	if session.Strategy == documentupload.StrategyMultipart {
-		if len(uploadedParts) == 0 {
-			return nil, errortypes.NewConflictError("No uploaded parts were found for this session")
-		}
-
-		if kernelports.SumUploadedPartSizes(uploadedParts) != session.FileSize {
-			return nil, errortypes.NewConflictError(
-				"Uploaded file size does not match the original file",
-			)
-		}
+	if err = verifyMultipartUpload(session, uploadedParts); err != nil {
+		return nil, err
 	}
 
 	session.Status = documentupload.StatusUploaded
@@ -498,6 +471,55 @@ func (s *Service) Complete(
 
 	normalizeSession(session)
 	return session, nil
+}
+
+func (s *Service) checkCompletionLimits(
+	ctx context.Context,
+	req *documentuploadports.CompletionRequest,
+	session *documentupload.DocumentUploadSession,
+) error {
+	if err := usageservice.CheckDocumentUploadLimit(
+		ctx,
+		s.usageProvider,
+		usageservice.DocumentUploadUsageParams{
+			TenantInfo:     req.TenantInfo,
+			Actor:          req.Actor,
+			IdempotencyKey: "document-upload-session:" + req.SessionID.String(),
+		},
+	); err != nil {
+		return err
+	}
+
+	return usageservice.CheckDocumentBytesLimit(
+		ctx,
+		s.usageProvider,
+		usageservice.DocumentBytesUsageParams{
+			TenantInfo: req.TenantInfo,
+			Actor:      req.Actor,
+			Bytes:      session.FileSize,
+		},
+	)
+}
+
+func verifyMultipartUpload(
+	session *documentupload.DocumentUploadSession,
+	uploadedParts []kernelports.UploadedPart,
+) error {
+	if session.Strategy != documentupload.StrategyMultipart {
+		return nil
+	}
+
+	if len(uploadedParts) == 0 {
+		return errortypes.NewConflictError("No uploaded parts were found for this session")
+	}
+
+	if kernelports.SumUploadedPartSizes(uploadedParts) != session.FileSize {
+		return errortypes.NewConflictError(
+			"Uploaded file size does not match the original file",
+		)
+	}
+
+	return nil
 }
 
 func (s *Service) Cancel(ctx context.Context, req *documentuploadports.CancelRequest) error {

@@ -72,8 +72,12 @@ func masterNullDecimal[T any](
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return clearable(update, true, common.StringProperty(description+" A decimal such as 2.35."+
-				keepSuffix(update, true), 0))
+			return clearable(
+				update,
+				true,
+				common.StringProperty(description+" A decimal such as 2.35."+
+					keepSuffix(update, true), 0),
+			)
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
 			value, present, err := common.OptionalDecimal(in.values, key)

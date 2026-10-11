@@ -255,10 +255,7 @@ func (s *Service) Delete(
 	req agentports.DeleteAIProviderRequest,
 	actor *permissionports.RequestActor,
 ) error {
-	existing, err := s.repo.GetByID(ctx, agentports.GetAIProviderByIDRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	existing, err := s.repo.GetByID(ctx, agentports.GetAIProviderByIDRequest(req))
 	if err != nil {
 		return err
 	}

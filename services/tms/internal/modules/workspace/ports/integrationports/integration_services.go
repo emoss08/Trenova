@@ -28,6 +28,8 @@ const catalogGoogleMapsLogoURL = "/integrations/logos/googleMaps.svg"
 
 const catalogOandaAPIURL = "https://exchange-rates-api.oanda.com/"
 
+const catalogComdataURL = "https://www.comdata.com/"
+
 var CatalogDefinitions = []CatalogItem{
 	{
 		Type:          integration.TypeResend,
@@ -346,8 +348,8 @@ var CatalogDefinitions = []CatalogItem{
 		LogoURL:       "/integrations/logos/comdata-logo-light.png",
 		LogoLightURL:  "/integrations/logos/comdata-logo-light.png",
 		LogoDarkURL:   "/integrations/logos/comdata-logo-dark.png",
-		DocsURL:       "https://www.comdata.com/",
-		WebsiteURL:    "https://www.comdata.com/",
+		DocsURL:       catalogComdataURL,
+		WebsiteURL:    catalogComdataURL,
 		Color:         "#00539b",
 		GlowFrom:      "#00539b",
 		GlowTo:        "#38bdf8",
@@ -355,7 +357,7 @@ var CatalogDefinitions = []CatalogItem{
 			{
 				Kind:  CatalogLinkKindWebsite,
 				Label: catalogWebsiteLabel,
-				URL:   "https://www.comdata.com/",
+				URL:   catalogComdataURL,
 			},
 		},
 		Featured:           false,

@@ -369,7 +369,11 @@ func (in fuelPurchaseInput) applyChoices(purchase *fuelpurchase.FuelPurchase) er
 		purchase.PurchasedAt = purchasedAt
 	}
 	if in.given(common.ParamFuelType) {
-		fuelType, err := common.RequireEnum(in.values, common.ParamFuelType, common.FuelTypes.Values)
+		fuelType, err := common.RequireEnum(
+			in.values,
+			common.ParamFuelType,
+			common.FuelTypes.Values,
+		)
 		if err != nil {
 			return err
 		}
@@ -383,7 +387,9 @@ func (in fuelPurchaseInput) applyChoices(purchase *fuelpurchase.FuelPurchase) er
 		purchase.QuantityUnit = unit
 	}
 	if in.given(paramCurrencyCode) {
-		code := strings.ToUpper(strings.TrimSpace(common.OptionalString(in.values, paramCurrencyCode)))
+		code := strings.ToUpper(
+			strings.TrimSpace(common.OptionalString(in.values, paramCurrencyCode)),
+		)
 		if len(code) != common.CurrencyCodeLength {
 			return fmt.Errorf("%s must be a three-letter code such as USD", paramCurrencyCode)
 		}
@@ -1314,8 +1320,11 @@ func NewDiscardFuelPurchaseImportTool(imports FuelImportKeeper) agentports.Agent
 		Properties: map[string]any{
 			paramFuelImportID: agenttoolschema.RecordIDText(permission.ResourceFuelPurchaseImport,
 				fuelImportSupplier),
-			common.ParamReason: common.StringProperty("Why it is being discarded, for whoever finds it "+
-				"later.", fuelDiscardReason),
+			common.ParamReason: common.StringProperty(
+				"Why it is being discarded, for whoever finds it "+
+					"later.",
+				fuelDiscardReason,
+			),
 		},
 		Required: []string{paramFuelImportID},
 		Target:   targetFuelImport(permission.ResourceFuelPurchase),
@@ -1347,25 +1356,7 @@ func NewDiscardFuelPurchaseImportTool(imports FuelImportKeeper) agentports.Agent
 		Refused: func(*fuelImportDiscard) string {
 			return "Would discard a fuel purchase import."
 		},
-		Render: func(
-			_ *fuelImportDiscard,
-			plan *fuelpurchaseservice.ImportBatchChange,
-		) (*agent.ToolPreview, error) {
-			change, err := toolpreview.Changed(
-				fuelImportRecord(plan.Before),
-				fuelImportViewOf(plan.Before),
-				fuelImportViewOf(plan.After),
-			)
-			if err != nil {
-				return nil, err
-			}
-
-			return toolpreview.Build(fmt.Sprintf(
-				"Would discard %s (now %s); none of its rows becomes a purchase.",
-				fuelImportRecord(plan.Before).Label,
-				plan.Before.Status,
-			), change), nil
-		},
+		Render: renderFuelImportDiscard,
 		Run: func(
 			ctx context.Context,
 			discard *fuelImportDiscard,
@@ -1380,4 +1371,24 @@ func NewDiscardFuelPurchaseImportTool(imports FuelImportKeeper) agentports.Agent
 			return nil, err
 		},
 	})
+}
+
+func renderFuelImportDiscard(
+	_ *fuelImportDiscard,
+	plan *fuelpurchaseservice.ImportBatchChange,
+) (*agent.ToolPreview, error) {
+	change, err := toolpreview.Changed(
+		fuelImportRecord(plan.Before),
+		fuelImportViewOf(plan.Before),
+		fuelImportViewOf(plan.After),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return toolpreview.Build(fmt.Sprintf(
+		"Would discard %s (now %s); none of its rows becomes a purchase.",
+		fuelImportRecord(plan.Before).Label,
+		plan.Before.Status,
+	), change), nil
 }

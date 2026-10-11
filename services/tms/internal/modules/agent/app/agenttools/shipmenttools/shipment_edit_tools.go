@@ -74,7 +74,7 @@ func (t *rescheduleStopTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
+			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment the stop is on, from search_shipments or list_shipments."),
 			"stopId": agenttoolschema.RecordIDText(permission.ResourceShipmentStop,
 				"The stop to reschedule, from the moves' stops in get_shipment."),
@@ -85,7 +85,7 @@ func (t *rescheduleStopTool) ParamSchema() map[string]any {
 				"When it now closes, in the same local time. Leave it out to keep the " +
 					"window's length."),
 		},
-		"required":             []string{"shipmentId", "stopId", paramWindowStart},
+		"required":             []string{common.ParamShipmentID, "stopId", paramWindowStart},
 		"additionalProperties": false,
 	}
 }
@@ -150,7 +150,7 @@ func (t *rescheduleStopTool) plan(
 		return nil, err
 	}
 
-	shipmentID, err := common.RequirePulid(params.Params, "shipmentId")
+	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 	if err != nil {
 		return nil, err
 	}
@@ -265,7 +265,13 @@ func (t *rescheduleStopTool) Preview(
 		return nil, err
 	}
 
-	changes, err := common.TenderChangeNotices(ctx, t.partners, plan.before, plan.after, params.Actor)
+	changes, err := common.TenderChangeNotices(
+		ctx,
+		t.partners,
+		plan.before,
+		plan.after,
+		params.Actor,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +284,7 @@ func (t *rescheduleStopTool) Preview(
 }
 
 func (t *rescheduleStopTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "shipmentId", permission.ResourceShipment)
+	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
 }
 
 type addShipmentChargeTool struct {
@@ -321,7 +327,7 @@ func (t *addShipmentChargeTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
+			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment to charge, from search_shipments or list_shipments."),
 			"accessorialChargeId": agenttoolschema.RecordIDText(
 				permission.ResourceAccessorialCharge,
@@ -338,7 +344,7 @@ func (t *addShipmentChargeTool) ParamSchema() map[string]any {
 				"The rate per unit, or the flat amount, as a decimal such as 150.00, when the "+
 					"person named one; leave it out to use the charge's configured rate.", 0),
 		},
-		"required":             []string{"shipmentId", "accessorialChargeId"},
+		"required":             []string{common.ParamShipmentID, "accessorialChargeId"},
 		"additionalProperties": false,
 	}
 }
@@ -396,7 +402,7 @@ func (t *addShipmentChargeTool) plan(
 		return nil, err
 	}
 
-	shipmentID, err := common.RequirePulid(params.Params, "shipmentId")
+	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 	if err != nil {
 		return nil, err
 	}
@@ -437,7 +443,10 @@ func (t *addShipmentChargeTool) plan(
 	}
 
 	amount := accessorial.Amount
-	if given, ok, amountErr := common.OptionalDecimal(params.Params, common.ParamAmount); amountErr != nil {
+	if given, ok, amountErr := common.OptionalDecimal(
+		params.Params,
+		common.ParamAmount,
+	); amountErr != nil {
 		return nil, amountErr
 	} else if ok {
 		amount = given
@@ -519,7 +528,10 @@ func (t *addShipmentChargeTool) Preview(
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
 		if common.IsRefusal(err) {
-			return common.WarnWouldFail(toolpreview.Build("Would add a charge to the shipment."), err), nil
+			return common.WarnWouldFail(
+				toolpreview.Build("Would add a charge to the shipment."),
+				err,
+			), nil
 		}
 
 		return nil, err
@@ -545,5 +557,5 @@ func (t *addShipmentChargeTool) Preview(
 }
 
 func (t *addShipmentChargeTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "shipmentId", permission.ResourceShipment)
+	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
 }

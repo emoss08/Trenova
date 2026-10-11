@@ -215,8 +215,10 @@ func NewUpdateInvoiceDraftTool(invoices invoiceDraftEditor) agentports.AgentTool
 				"The note printed on the invoice.", maxInvoiceTextChars)),
 			paramRemittance: toolschema.KeepEmpty(common.StringProperty("How the customer should "+
 				"pay, printed on the invoice.", maxInvoiceTextChars)),
-			paramEmailSubject: toolschema.KeepEmpty(common.StringProperty("The subject of the email "+
-				"the invoice goes in.", invoice.MaxEmailSubjectLength)),
+			paramEmailSubject: toolschema.KeepEmpty(
+				common.StringProperty("The subject of the email "+
+					"the invoice goes in.", invoice.MaxEmailSubjectLength),
+			),
 			paramEmailBody: toolschema.KeepEmpty(common.StringProperty("The body of the email the "+
 				"invoice goes in.", maxInvoiceEmailBodyChars)),
 			paramEmailTo: toolschema.KeepEmpty(
@@ -529,7 +531,10 @@ func NewCreateInvoiceTool(invoices invoiceCreator) agentports.AgentTool {
 			if req.plan.OrderID.IsNotNil() {
 				return "Would invoice the order."
 			}
-			return fmt.Sprintf("Would invoice %s.", common.CountOf(len(req.plan.ShipmentIDs), "shipment"))
+			return fmt.Sprintf(
+				"Would invoice %s.",
+				common.CountOf(len(req.plan.ShipmentIDs), "shipment"),
+			)
 		},
 		Render: renderCreateInvoices,
 		Run: func(
@@ -632,8 +637,10 @@ func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agentports.AgentTool {
 				"The customer, from list_customers or get_invoice."),
 			common.ParamBillType: agenttoolschema.Enum("CreditMemo lowers what the customer owes; "+
 				"DebitMemo raises it.", memoBillTypes),
-			common.ParamReason: common.StringProperty("Why the memo is raised; the customer sees it.",
-				maxInvoiceReasonChars),
+			common.ParamReason: common.StringProperty(
+				"Why the memo is raised; the customer sees it.",
+				maxInvoiceReasonChars,
+			),
 			paramAdjustmentLines: map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,
 				toolschema.KeyDescription: "The memo's lines, each a positive amount.",
@@ -644,24 +651,38 @@ func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agentports.AgentTool {
 					toolschema.KeyProperties: map[string]any{
 						paramLineDescription: common.StringProperty("What the line is for.",
 							maxMemoLineTextChars),
-						common.ParamAmount: common.StringProperty("The line's unit amount in major units, "+
-							"such as 125.00.", 0),
+						common.ParamAmount: common.StringProperty(
+							"The line's unit amount in major units, "+
+								"such as 125.00.",
+							0,
+						),
 						paramMemoQuantity: common.StringProperty("How many; defaults to 1.", 0),
 						paramAccessorialChargeID: agenttoolschema.RecordIDText(
 							permission.ResourceAccessorialCharge,
 							"The accessorial the line corrects, from get_invoice's lines.",
 						),
 					},
-					toolschema.KeyRequired:             []string{paramLineDescription, common.ParamAmount},
+					toolschema.KeyRequired: []string{
+						paramLineDescription,
+						common.ParamAmount,
+					},
 					toolschema.KeyAdditionalProperties: false,
 				},
 			},
 			paramReferenceInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
 				"The posted invoice this memo relates to, from list_invoices or get_invoice."),
 			common.ParamInvoiceDate: agenttoolschema.Date("The memo's date; defaults to today."),
-			paramInvoiceMemo:        common.StringProperty("A note printed on the memo.", maxInvoiceTextChars),
+			paramInvoiceMemo: common.StringProperty(
+				"A note printed on the memo.",
+				maxInvoiceTextChars,
+			),
 		},
-		Required: []string{common.ParamCustomerID, common.ParamBillType, common.ParamReason, paramAdjustmentLines},
+		Required: []string{
+			common.ParamCustomerID,
+			common.ParamBillType,
+			common.ParamReason,
+			paramAdjustmentLines,
+		},
 	}, common.ReceivablePlan[*invoiceports.CreateMemoRequest, *invoice.Invoice]{
 		Request: memoRequest,
 		Plan: func(
@@ -698,7 +719,11 @@ func memoRequest(params *agentports.ToolExecuteParams) (*invoiceports.CreateMemo
 	if err != nil {
 		return nil, err
 	}
-	reason, err := common.RequireBoundedText(params.Params, common.ParamReason, maxInvoiceReasonChars)
+	reason, err := common.RequireBoundedText(
+		params.Params,
+		common.ParamReason,
+		maxInvoiceReasonChars,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -758,7 +783,11 @@ func memoLines(params map[string]any) ([]*invoiceports.CreateMemoLineInput, erro
 }
 
 func memoLine(fields map[string]any) (*invoiceports.CreateMemoLineInput, error) {
-	description, err := common.RequireBoundedText(fields, paramLineDescription, maxMemoLineTextChars)
+	description, err := common.RequireBoundedText(
+		fields,
+		paramLineDescription,
+		maxMemoLineTextChars,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -846,11 +875,19 @@ func voidRequest(params *agentports.ToolExecuteParams) (*invoiceports.VoidInvoic
 	if err != nil {
 		return nil, err
 	}
-	reason, err := common.RequireBoundedText(params.Params, common.ParamReason, maxInvoiceReasonChars)
+	reason, err := common.RequireBoundedText(
+		params.Params,
+		common.ParamReason,
+		maxInvoiceReasonChars,
+	)
 	if err != nil {
 		return nil, err
 	}
-	disposition, err := common.RequireEnum(params.Params, ParamVoidDisposition, voidDispositions.Values)
+	disposition, err := common.RequireEnum(
+		params.Params,
+		ParamVoidDisposition,
+		voidDispositions.Values,
+	)
 	if err != nil {
 		return nil, err
 	}

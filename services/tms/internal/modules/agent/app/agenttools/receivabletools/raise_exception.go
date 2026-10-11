@@ -73,13 +73,13 @@ func (t *RaiseExceptionTool) Description() string {
 
 func (t *RaiseExceptionTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
+		schemaType: "object",
 		"properties": map[string]any{
 			common.FieldSubjectType: agenttoolschema.Enum(
 				"The kind of record the case is about.",
 				agenttoolschema.SubjectTypes,
 			),
-			"subjectId": subjectIDProperty(
+			common.FieldSubjectID: subjectIDProperty(
 				"The id of that record: usually this run's subject, or an id a " +
 					"tool such as get_shipment or list_shipments returned. Its prefix must " +
 					"match subjectType: a report's id starts rd_, a dashboard's rdb_, an " +
@@ -94,17 +94,17 @@ func (t *RaiseExceptionTool) ParamSchema() map[string]any {
 				agenttoolschema.Severities,
 			),
 			"attemptSummary": map[string]any{
-				"type":        "string",
+				schemaType:    "string",
 				"description": "What you tried and why it was not enough, for the person who takes over.",
 			},
 			"blastRadius": map[string]any{
-				"type":        "integer",
+				schemaType:    "integer",
 				"description": "How many records are affected.",
 			},
 		},
 		"required": []string{
 			"subjectType",
-			"subjectId",
+			common.FieldSubjectID,
 			"category",
 			"severity",
 			"attemptSummary",
@@ -237,7 +237,7 @@ func (t *RaiseExceptionTool) subject(
 			strings.Join(agenttoolschema.SubjectTypes.Names(), ", "),
 		)
 	}
-	subjectID, err := common.RequirePulid(params.Params, "subjectId")
+	subjectID, err := common.RequirePulid(params.Params, common.FieldSubjectID)
 	if err != nil {
 		return "", pulid.Nil, err
 	}

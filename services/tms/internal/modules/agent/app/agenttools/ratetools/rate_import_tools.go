@@ -134,8 +134,13 @@ func NewCommitRateImportTool(imports RateImportKeeper) agentports.AgentTool {
 			return toolpreview.Build(fmt.Sprintf(
 				"Would apply the rate sheet %s from %s: close out %s and add %s. Shipments "+
 					"from that day are charged at the new rates.",
-				plan.Batch.FileName, common.DayLabel(plan.Batch.EffectiveFrom),
-				common.CountOf(len(plan.SupersededIDs), "lane"), common.CountOf(len(plan.Rules), "lane"),
+				plan.Batch.FileName,
+				common.DayLabel(plan.Batch.EffectiveFrom),
+				common.CountOf(
+					len(plan.SupersededIDs),
+					"lane",
+				),
+				common.CountOf(len(plan.Rules), "lane"),
 			), change), nil
 		},
 		Run: func(
@@ -260,7 +265,12 @@ func rateSimulationFrom(
 		simulation.PartyType = party
 	}
 	if _, given := params.Params[paramSampleLimit]; given {
-		limit, limitErr := common.RequireIntInRange(params.Params, paramSampleLimit, 1, maxSampleShipments)
+		limit, limitErr := common.RequireIntInRange(
+			params.Params,
+			paramSampleLimit,
+			1,
+			maxSampleShipments,
+		)
 		if limitErr != nil {
 			return nil, limitErr
 		}
@@ -288,7 +298,10 @@ func NewRunRateSimulationTool(simulations RateSimulationKeeper) agentports.Agent
 			paramRateAgreementID: rateAgreementIDProperty(),
 			paramSimulationName: common.StringProperty("What the simulation is called, such as "+
 				"Acme renewal against Q3.", maxSimulationName),
-			paramDescription: common.StringProperty("What it is meant to answer.", maxSimulationText),
+			paramDescription: common.StringProperty(
+				"What it is meant to answer.",
+				maxSimulationText,
+			),
 			paramPartyType: agenttoolschema.Enum("Which side to replay: what customers are "+
 				"charged or what carriers are paid. Defaults to Customer.", simulationParties),
 			paramSampleFrom: agenttoolschema.Date("The first ship day to replay."),

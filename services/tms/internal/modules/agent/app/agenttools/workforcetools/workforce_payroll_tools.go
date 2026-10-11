@@ -26,9 +26,18 @@ const kindPayrollExport = "payroll run"
 const maxPayrollNoteChars = 1000
 
 var payrollExportFields = []string{
-	common.FieldStatus, common.FieldPeriodStart, common.FieldPeriodEnd, "timesheetCount", "regularMinutes",
-	"overtimeMinutes", "paidLeaveMinutes", "generatedById", "generatedAt", common.FieldVoidedAt,
-	"voidReason", common.FieldNote,
+	common.FieldStatus,
+	common.FieldPeriodStart,
+	common.FieldPeriodEnd,
+	"timesheetCount",
+	"regularMinutes",
+	"overtimeMinutes",
+	"paidLeaveMinutes",
+	"generatedById",
+	"generatedAt",
+	common.FieldVoidedAt,
+	"voidReason",
+	common.FieldNote,
 }
 
 type PayrollExporter interface {
@@ -178,7 +187,10 @@ func newVoidPayrollExportTool(exporter PayrollExporter) agentports.AgentTool {
 				"Never guess one.",
 			permission.KindPayrollExport,
 		),
-		common.FieldReason: common.StringProperty("Why the run is voided, kept on it.", maxPayrollNoteChars),
+		common.FieldReason: common.StringProperty(
+			"Why the run is voided, kept on it.",
+			maxPayrollNoteChars,
+		),
 	}, paramPayrollExportID, common.FieldReason), paramPayrollExportID, permission.ResourceTimesheet)
 	spec.SearchTerms = append(spec.SearchTerms, "undo payroll run", "redo payroll", "rerun payroll")
 
@@ -192,7 +204,11 @@ func newVoidPayrollExportTool(exporter PayrollExporter) agentports.AgentTool {
 			if err != nil {
 				return nil, err
 			}
-			reason, err := common.RequireBoundedText(params.Params, common.FieldReason, maxPayrollNoteChars)
+			reason, err := common.RequireBoundedText(
+				params.Params,
+				common.FieldReason,
+				maxPayrollNoteChars,
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -217,9 +233,14 @@ func newVoidPayrollExportTool(exporter PayrollExporter) agentports.AgentTool {
 			_ *timesheetservice.VoidExportRequest,
 			change *timesheetservice.ExportChange,
 		) (*agent.ToolPreview, error) {
-			recorded, err := toolpreview.Changed(payrollExportRecord(change.Before),
-				change.Before, change.After,
-				append(wfOptions(payrollExportFields...), toolpreview.Volatile(common.FieldVoidedAt))...)
+			recorded, err := toolpreview.Changed(
+				payrollExportRecord(change.Before),
+				change.Before,
+				change.After,
+				append(
+					wfOptions(payrollExportFields...),
+					toolpreview.Volatile(common.FieldVoidedAt),
+				)...)
 			if err != nil {
 				return nil, err
 			}

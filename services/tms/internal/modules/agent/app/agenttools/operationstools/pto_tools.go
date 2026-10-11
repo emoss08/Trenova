@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 )
 
+const paramPTOID = "ptoId"
+
 type ApproveWorkerPTOTool struct {
 	pto common.PtoApprover
 }
@@ -42,14 +44,17 @@ func (t *ApproveWorkerPTOTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"ptoId": agenttoolschema.RecordIDText(permission.ResourceWorkerPTO, common.PtoIDNote),
-			"reason": map[string]any{
+			paramPTOID: agenttoolschema.RecordIDText(
+				permission.ResourceWorkerPTO,
+				common.PtoIDNote,
+			),
+			common.ParamReason: map[string]any{
 				"type": "string",
 				"description": "An optional note recorded with the decision. " +
 					"Leave it out unless you were given one.",
 			},
 		},
-		"required":             []string{"ptoId"},
+		"required":             []string{paramPTOID},
 		"additionalProperties": false,
 	}
 }
@@ -114,14 +119,17 @@ func (t *RejectWorkerPTOTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"ptoId": agenttoolschema.RecordIDText(permission.ResourceWorkerPTO, common.PtoIDNote),
-			"reason": map[string]any{
+			paramPTOID: agenttoolschema.RecordIDText(
+				permission.ResourceWorkerPTO,
+				common.PtoIDNote,
+			),
+			common.ParamReason: map[string]any{
 				"type": "string",
 				"description": "Why it is being declined. Required, and shown to the " +
 					"worker. If nobody told you why, ask rather than guessing.",
 			},
 		},
-		"required":             []string{"ptoId", "reason"},
+		"required":             []string{paramPTOID, common.ParamReason},
 		"additionalProperties": false,
 	}
 }
@@ -186,13 +194,16 @@ func (t *CancelWorkerPTOTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"ptoId": agenttoolschema.RecordIDText(permission.ResourceWorkerPTO, common.PtoIDNote),
-			"reason": map[string]any{
+			paramPTOID: agenttoolschema.RecordIDText(
+				permission.ResourceWorkerPTO,
+				common.PtoIDNote,
+			),
+			common.ParamReason: map[string]any{
 				"type":        "string",
 				"description": "Why it is being cancelled. Recorded with the change.",
 			},
 		},
-		"required":             []string{"ptoId", "reason"},
+		"required":             []string{paramPTOID, common.ParamReason},
 		"additionalProperties": false,
 	}
 }
@@ -250,7 +261,7 @@ func ptoDecisionRequest(
 		return nil, err
 	}
 
-	if _, err = common.RequireString(params.Params, "reason"); err != nil {
+	if _, err = common.RequireString(params.Params, common.ParamReason); err != nil {
 		return nil, err
 	}
 
@@ -266,7 +277,7 @@ func ptoDecisionRequest(
 func ptoStatusRequest(
 	params agentports.ToolExecuteParams,
 ) (*workerports.UpdatePTOStatusRequest, error) {
-	id, err := common.RequirePulid(params.Params, "ptoId")
+	id, err := common.RequirePulid(params.Params, paramPTOID)
 	if err != nil {
 		return nil, err
 	}
@@ -275,24 +286,24 @@ func ptoStatusRequest(
 		ID:         id,
 		TenantInfo: common.TenantFrom(params),
 		UserID:     params.Actor.UserID,
-		Reason:     common.OptionalString(params.Params, "reason"),
+		Reason:     common.OptionalString(params.Params, common.ParamReason),
 	}, nil
 }
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
 func (t *ApproveWorkerPTOTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "ptoId", permission.ResourceWorkerPTO)
+	return common.TargetOf(params, paramPTOID, permission.ResourceWorkerPTO)
 }
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
 func (t *RejectWorkerPTOTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "ptoId", permission.ResourceWorkerPTO)
+	return common.TargetOf(params, paramPTOID, permission.ResourceWorkerPTO)
 }
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
 func (t *CancelWorkerPTOTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "ptoId", permission.ResourceWorkerPTO)
+	return common.TargetOf(params, paramPTOID, permission.ResourceWorkerPTO)
 }

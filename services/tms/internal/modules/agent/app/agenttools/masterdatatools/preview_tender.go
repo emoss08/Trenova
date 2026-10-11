@@ -38,8 +38,12 @@ func TenderPreview(
 	lines := make([]agent.MoneyLine, 0, len(entity.Offers))
 	for _, offer := range entity.Offers {
 		lines = append(lines, agent.MoneyLine{
-			Label: fmt.Sprintf("%d. %s (%s)",
-				offer.Rank, offerCarrierName(planned, offer), common.RateMethodWords(offer.RateMethod)),
+			Label: fmt.Sprintf(
+				"%d. %s (%s)",
+				offer.Rank,
+				offerCarrierName(planned, offer),
+				common.RateMethodWords(offer.RateMethod),
+			),
 			After: common.KnownAmount(offer.Rate),
 		})
 	}

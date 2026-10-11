@@ -244,8 +244,10 @@ func NewVetCarrierTool(intel carrierIntelOperator) agentports.AgentTool {
 			common.ParamCarrierID: carrierIDProperty("The carrier"),
 			paramDepth: agenttoolschema.Enum("How deep a lookup: FMCSA is the public record, "+
 				"Lite and Full add the provider's profile. Defaults to Full.", lookupDepths),
-			common.ParamForceResend: common.BooleanProperty("Look up again even when the last result is " +
-				"still current. It is charged; only when the person asks."),
+			common.ParamForceResend: common.BooleanProperty(
+				"Look up again even when the last result is " +
+					"still current. It is charged; only when the person asks.",
+			),
 		},
 		Required: []string{common.ParamCarrierID},
 		Target:   targetCarrier,
@@ -350,8 +352,10 @@ func NewVetCustomerBrokerTool(intel carrierIntelOperator) agentports.AgentTool {
 				"The broker customer, from list_customers. Never "+
 					"guess one.",
 			),
-			common.ParamForceResend: common.BooleanProperty("Look up again even when the last result is " +
-				"still current. It is charged; only when the person asks."),
+			common.ParamForceResend: common.BooleanProperty(
+				"Look up again even when the last result is " +
+					"still current. It is charged; only when the person asks.",
+			),
 		},
 		Required: []string{common.FieldCustomerID},
 		Target: func(params map[string]any) (agentports.ToolTarget, bool) {
@@ -436,7 +440,11 @@ func NewSetCarrierMonitoringTool(intel carrierIntelOperator) agentports.AgentToo
 		Request: func(
 			params *agentports.ToolExecuteParams,
 		) (*carrierintelservice.EnrollSubjectsRequest, error) {
-			ids, err := common.RequirePulidSlice(params.Params, paramCarrierIDs, maxMonitoredCarriers)
+			ids, err := common.RequirePulidSlice(
+				params.Params,
+				paramCarrierIDs,
+				maxMonitoredCarriers,
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -556,7 +564,11 @@ func NewMarkCarrierIntelReviewedTool(intel carrierIntelOperator) agentports.Agen
 			if err != nil {
 				return nil, err
 			}
-			note, err := common.RequireBoundedText(params.Params, common.ParamNote, maxReviewNoteChars)
+			note, err := common.RequireBoundedText(
+				params.Params,
+				common.ParamNote,
+				maxReviewNoteChars,
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -805,7 +817,10 @@ func renderSuggestions(
 	summary := fmt.Sprintf("Would correct %s on carrier %s from its intelligence result",
 		common.CountOf(len(plan.Fields), "profile field"), plan.Before.Name)
 	if len(plan.Insurance) > 0 {
-		summary += fmt.Sprintf(" and update %s", common.CountOf(len(plan.Insurance), "insurance policy"))
+		summary += fmt.Sprintf(
+			" and update %s",
+			common.CountOf(len(plan.Insurance), "insurance policy"),
+		)
 	}
 
 	return toolpreview.Build(summary+".", changes...), nil
@@ -832,10 +847,15 @@ func NewImportSourcedCarrierTool(
 		Properties: map[string]any{
 			paramDOTNumber: common.StringProperty("The carrier's USDOT number, from the sourcing "+
 				"search.", maxDOTNumberChars),
-			paramCarrierCode: common.StringProperty("The short code to file it under. Left out, one "+
-				"is made from its name.", maxCarrierCodeChars),
-			paramEnrollMonitoring: common.BooleanProperty("Start monitoring it at once. Monitoring " +
-				"is billed per carrier."),
+			paramCarrierCode: common.StringProperty(
+				"The short code to file it under. Left out, one "+
+					"is made from its name.",
+				maxCarrierCodeChars,
+			),
+			paramEnrollMonitoring: common.BooleanProperty(
+				"Start monitoring it at once. Monitoring " +
+					"is billed per carrier.",
+			),
 		},
 		Required: []string{paramDOTNumber},
 	}, common.ReceivablePlan[*carrierintelservice.ImportProspectRequest, *carrierintelservice.ImportPlan]{
@@ -859,33 +879,7 @@ func NewImportSourcedCarrierTool(
 		Refused: func(*carrierintelservice.ImportProspectRequest) string {
 			return "Would add the sourced carrier."
 		},
-		Render: func(
-			_ *carrierintelservice.ImportProspectRequest,
-			plan *carrierintelservice.ImportPlan,
-		) (*agent.ToolPreview, error) {
-			change, err := toolpreview.Create(
-				toolpreview.Record{
-					Resource: permission.ResourceCarrier,
-					Label:    "DOT " + plan.DOTNumber,
-				},
-				&importView{
-					DOTNumber:        plan.DOTNumber,
-					Code:             plan.Code,
-					Source:           plan.Provider.String(),
-					EnrollMonitoring: plan.EnrollMonitoring,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			preview := toolpreview.Build(fmt.Sprintf(
-				"Would add the carrier with DOT %s, filled from %s's profile.",
-				plan.DOTNumber, plan.Provider.String(),
-			), change)
-			preview.Partial = true
-
-			return preview, nil
-		},
+		Render: renderSourcedCarrierImport,
 		Run: func(
 			ctx context.Context,
 			req *carrierintelservice.ImportProspectRequest,
@@ -910,6 +904,34 @@ func NewImportSourcedCarrierTool(
 			return out, nil
 		},
 	})
+}
+
+func renderSourcedCarrierImport(
+	_ *carrierintelservice.ImportProspectRequest,
+	plan *carrierintelservice.ImportPlan,
+) (*agent.ToolPreview, error) {
+	change, err := toolpreview.Create(
+		toolpreview.Record{
+			Resource: permission.ResourceCarrier,
+			Label:    "DOT " + plan.DOTNumber,
+		},
+		&importView{
+			DOTNumber:        plan.DOTNumber,
+			Code:             plan.Code,
+			Source:           plan.Provider.String(),
+			EnrollMonitoring: plan.EnrollMonitoring,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	preview := toolpreview.Build(fmt.Sprintf(
+		"Would add the carrier with DOT %s, filled from %s's profile.",
+		plan.DOTNumber, plan.Provider.String(),
+	), change)
+	preview.Partial = true
+
+	return preview, nil
 }
 
 type importView struct {
@@ -975,8 +997,15 @@ func NewVerifyCarrierEquipmentTool(intel carrierIntelOperator) agentports.AgentT
 					Label:    plan.carrier.Name + " equipment check",
 				},
 				plan.verification,
-				toolpreview.Only(common.ParamCarrierID, "expectedDotNumber", paramUnitType, paramVIN,
-					paramPlateNumber, paramPlateState, paramUnitNumber),
+				toolpreview.Only(
+					common.ParamCarrierID,
+					"expectedDotNumber",
+					paramUnitType,
+					paramVIN,
+					paramPlateNumber,
+					paramPlateState,
+					paramUnitNumber,
+				),
 				toolpreview.WithRefs(map[string]permission.Resource{
 					common.ParamCarrierID: permission.ResourceCarrier,
 				}),

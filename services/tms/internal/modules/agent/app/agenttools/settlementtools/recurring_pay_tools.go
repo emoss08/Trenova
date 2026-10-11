@@ -140,8 +140,10 @@ func (t *RecurringPayTool[E]) ParamSchema() map[string]any {
 		),
 		paramRecurringDescription: common.StringProperty("What it is for, as it will read on the "+
 			"driver's statement.", maxRecurringDescription),
-		common.ParamDriverPayAmount: common.AmountProperty("The amount each time, as a decimal such as " +
-			"25.00."),
+		common.ParamDriverPayAmount: common.AmountProperty(
+			"The amount each time, as a decimal such as " +
+				"25.00.",
+		),
 		paramRecurringFrequency: agenttoolschema.Enum("How often it applies.", t.kind.frequencies),
 		paramRecurringCap: common.AmountProperty("The total after which it stops, when there is " +
 			"one."),
@@ -409,8 +411,12 @@ func (t *RecurringPayTool[E]) Preview(
 	}
 
 	fields := []string{
-		common.FieldStatus, fieldRecurringFrequency, paramRecurringDescription, common.FieldRecurringStart,
-		common.FieldRecurringEnd, fieldEscrowAccountID,
+		common.FieldStatus,
+		fieldRecurringFrequency,
+		paramRecurringDescription,
+		common.FieldRecurringStart,
+		common.FieldRecurringEnd,
+		fieldEscrowAccountID,
 	}
 	var change *agent.RecordChange
 	if t.update {

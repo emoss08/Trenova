@@ -43,8 +43,6 @@ const paramExcuseReason = "excuseReason"
 
 const kindDOTTest = "DOT test"
 
-const kindRandomRound = "random testing round"
-
 const kindRandomPick = "random selection"
 
 var dotTestTypes = agenttoolschema.Source("worker.dotTestType", worker.DOTTestTypeValues())
@@ -70,8 +68,17 @@ var dotTestFields = []string{
 }
 
 var drawFields = []string{
-	"periodKey", common.FieldPeriodStart, common.FieldPeriodEnd, common.FieldStatus, "poolSize", "drugTarget",
-	"alcoholTarget", "drugSelected", "alcoholSelected", "drawnAt", "finalizedAt",
+	"periodKey",
+	common.FieldPeriodStart,
+	common.FieldPeriodEnd,
+	common.FieldStatus,
+	"poolSize",
+	"drugTarget",
+	"alcoholTarget",
+	"drugSelected",
+	"alcoholSelected",
+	"drawnAt",
+	"finalizedAt",
 	wfFieldNotes,
 }
 
@@ -249,8 +256,10 @@ func newScheduleDOTTestTool(tests DrugAlcoholKeeper) agentports.AgentTool {
 				"get_dot_random_draw.",
 			permission.KindDOTRandomSelection,
 		),
-		paramIsDOT: common.BooleanProperty("Whether it is a DOT-regulated test. Defaults to true; " +
-			"a company-policy test is false."),
+		paramIsDOT: common.BooleanProperty(
+			"Whether it is a DOT-regulated test. Defaults to true; " +
+				"a company-policy test is false.",
+		),
 		common.FieldNotes: wfNoteProperty("Anything the collector should know."),
 	}, common.ParamWorkerID, paramDOTTestType, paramSubstance)
 	spec.SearchTerms = []string{"drug test", "alcohol test", "random test", "collection"}

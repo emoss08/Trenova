@@ -305,7 +305,11 @@ func NewManageBillingTransferRunTool(runs transferRunKeeper) agentports.AgentToo
 			if err != nil {
 				return nil, err
 			}
-			action, err := common.RequireEnum(params.Params, paramRunAction, transferRunActions.Values)
+			action, err := common.RequireEnum(
+				params.Params,
+				paramRunAction,
+				transferRunActions.Values,
+			)
 			if err != nil {
 				return nil, err
 			}

@@ -16,9 +16,9 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const paramCredentialID = "credentialId"
+const paramCredentialID = "credentialId" //nolint:gosec // G101: a parameter name, not a credential
 
-const paramCredentialTypeID = "credentialTypeId"
+const paramCredentialTypeID = "credentialTypeId" //nolint:gosec // G101: a parameter name, not a credential
 
 const paramCredentialNumber = "number"
 
@@ -131,7 +131,11 @@ func applyCredentialFacts(entity *worker.WorkerCredential, params map[string]any
 	} else if authority != nil {
 		entity.IssuingAuthority = *authority
 	}
-	if notes, notesErr := common.OptionalBoundedText(params, common.FieldNotes, wfNoteChars); notesErr != nil {
+	if notes, notesErr := common.OptionalBoundedText(
+		params,
+		common.FieldNotes,
+		wfNoteChars,
+	); notesErr != nil {
 		return notesErr
 	} else if notes != nil {
 		entity.Notes = *notes

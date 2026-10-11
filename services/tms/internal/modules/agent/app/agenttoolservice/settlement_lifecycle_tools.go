@@ -9,9 +9,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 )
 
-var _ settlementtools.SettlementBook[driversettlement.Settlement] = (*driversettlementservice.Service)(nil)
+var _ settlementtools.SettlementBook[driversettlement.Settlement] = (*driversettlementservice.Service)(
+	nil,
+)
 
-var _ settlementtools.SettlementBook[carriersettlement.CarrierSettlement] = (*carriersettlementservice.Service)(nil)
+var _ settlementtools.SettlementBook[carriersettlement.CarrierSettlement] = (*carriersettlementservice.Service)(
+	nil,
+)
 
 var _ agentports.ToolPreviewer = (*settlementtools.SettlementDecisionTool[driversettlement.Settlement])(
 	nil,

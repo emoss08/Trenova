@@ -203,7 +203,11 @@ func (t *TransitionItemsToInReviewTool) tierLimit(
 	if params.Actor == nil {
 		return agent.TierPropose
 	}
-	ids, err := common.RequirePulidSlice(params.Params, common.ParamBillingQueueItemIDs, common.MaxBulkRecords)
+	ids, err := common.RequirePulidSlice(
+		params.Params,
+		common.ParamBillingQueueItemIDs,
+		common.MaxBulkRecords,
+	)
 	if err != nil {
 		return agent.TierPropose
 	}

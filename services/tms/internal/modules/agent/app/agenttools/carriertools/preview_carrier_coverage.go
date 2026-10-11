@@ -72,8 +72,15 @@ func (t *AssignMoveToCarrierTool) Preview(
 	if err != nil {
 		return nil, err
 	}
-	common.LabelRefs(created, map[string]string{common.FieldCarrierID: common.CarrierName(plan.Carrier)})
-	toolpreview.AttachMoney(created, common.CarrierPay(plan.Created), toolpreview.SensitiveAs("totalCost"))
+	common.LabelRefs(
+		created,
+		map[string]string{common.FieldCarrierID: common.CarrierName(plan.Carrier)},
+	)
+	toolpreview.AttachMoney(
+		created,
+		common.CarrierPay(plan.Created),
+		toolpreview.SensitiveAs("totalCost"),
+	)
 
 	changes := []*agent.RecordChange{created}
 	retired, err := retiredCoverageChanges(plan, shipmentLabel)

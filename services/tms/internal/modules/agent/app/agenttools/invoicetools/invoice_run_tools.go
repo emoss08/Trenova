@@ -126,7 +126,11 @@ func NewBuildInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 				"The date the invoices carry, defaulting to today.",
 			),
 		},
-		Required:      []string{common.ParamCustomerIDs, common.ParamPeriodStart, common.ParamPeriodEnd},
+		Required: []string{
+			common.ParamCustomerIDs,
+			common.ParamPeriodStart,
+			common.ParamPeriodEnd,
+		},
 		SearchTerms:   []string{"statement billing", "consolidated billing", "bill the period"},
 		Prerequisites: []string{"list_open_statements", "list_customers"},
 		Recipe: []string{
@@ -163,7 +167,11 @@ func NewBuildInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 func buildRunRequest(
 	params *agentports.ToolExecuteParams,
 ) (*invoicerunports.PreviewInvoiceRunRequest, error) {
-	customerIDs, err := common.RequirePulidSlice(params.Params, common.ParamCustomerIDs, maxRunCustomers)
+	customerIDs, err := common.RequirePulidSlice(
+		params.Params,
+		common.ParamCustomerIDs,
+		maxRunCustomers,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -176,8 +184,13 @@ func buildRunRequest(
 		return nil, err
 	}
 	if end.Before(start) {
-		return nil, fmt.Errorf("%s %s is before %s %s", common.ParamPeriodEnd, end.Format(common.DayLayout),
-			common.ParamPeriodStart, start.Format(common.DayLayout))
+		return nil, fmt.Errorf(
+			"%s %s is before %s %s",
+			common.ParamPeriodEnd,
+			end.Format(common.DayLayout),
+			common.ParamPeriodStart,
+			start.Format(common.DayLayout),
+		)
 	}
 
 	req := &invoicerunports.PreviewInvoiceRunRequest{
@@ -233,9 +246,15 @@ func NewAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agentports.AgentTo
 					toolschema.KeyType: toolschema.TypeObject,
 					toolschema.KeyProperties: map[string]any{
 						common.ParamItemID: itemProperty,
-						common.ParamReason: common.StringProperty("Why it is held back.", maxRunReasonChars),
+						common.ParamReason: common.StringProperty(
+							"Why it is held back.",
+							maxRunReasonChars,
+						),
 					},
-					toolschema.KeyRequired:             []string{common.ParamItemID, common.ParamReason},
+					toolschema.KeyRequired: []string{
+						common.ParamItemID,
+						common.ParamReason,
+					},
 					toolschema.KeyAdditionalProperties: false,
 				},
 			},
@@ -253,7 +272,10 @@ func NewAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agentports.AgentTo
 							"The invoice it moves to, by the group id get_invoice_run lists.",
 							permission.KindInvoiceRunGroup),
 					},
-					toolschema.KeyRequired:             []string{common.ParamItemID, paramTargetGroupID},
+					toolschema.KeyRequired: []string{
+						common.ParamItemID,
+						paramTargetGroupID,
+					},
 					toolschema.KeyAdditionalProperties: false,
 				},
 			},
@@ -355,7 +377,11 @@ func readRunExclusions(params map[string]any) ([]invoicerunports.ItemExclusion, 
 		if idErr != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", paramExclude, idx, idErr)
 		}
-		reason, reasonErr := common.RequireBoundedText(fields, common.ParamReason, maxRunReasonChars)
+		reason, reasonErr := common.RequireBoundedText(
+			fields,
+			common.ParamReason,
+			maxRunReasonChars,
+		)
 		if reasonErr != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", paramExclude, idx, reasonErr)
 		}
@@ -471,7 +497,11 @@ func NewCancelInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 			if err != nil {
 				return nil, err
 			}
-			reason, err := common.RequireBoundedText(params.Params, common.ParamReason, maxRunReasonChars)
+			reason, err := common.RequireBoundedText(
+				params.Params,
+				common.ParamReason,
+				maxRunReasonChars,
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -535,7 +565,10 @@ func NewBillStatementNowTool(runs invoiceRunKeeper) agentports.AgentTool {
 						paramBillingQueueItems: agenttoolschema.KindID(
 							"The shipment's billing queue item, from list_open_statements.",
 							permission.KindBillingQueueItem),
-						common.ParamReason: common.StringProperty("Why it is held back.", maxRunReasonChars),
+						common.ParamReason: common.StringProperty(
+							"Why it is held back.",
+							maxRunReasonChars,
+						),
 					},
 					toolschema.KeyRequired: []string{
 						paramBillingQueueItems,

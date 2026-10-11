@@ -257,7 +257,8 @@ func tractorFields() []masterField[tractor.Tractor] {
 		externalID:    func(t *tractor.Tractor) *string { return &t.ExternalID },
 	})
 
-	return append(fields,
+	return append(
+		fields,
 		masterID(paramPrimaryWorkerID, permission.ResourceWorker,
 			"The driver who runs it, from search_worker or list_workers.",
 			func(t *tractor.Tractor) *pulid.ID { return &t.PrimaryWorkerID }),
@@ -266,9 +267,13 @@ func tractorFields() []masterField[tractor.Tractor] {
 			func(t *tractor.Tractor) *pulid.ID { return &t.SecondaryWorkerID }),
 		masterState(mdState, "The state it is registered in.", false,
 			func(t *tractor.Tractor) *pulid.ID { return &t.StateID }),
-		masterEnum(common.ParamFuelType, "The fuel it burns; its miles land on this fuel's lines of "+
-			"an IFTA return. Defaults to Diesel.", common.FuelTypes,
-			func(t *tractor.Tractor) *domaintypes.IFTAFuelType { return &t.FuelType }),
+		masterEnum(
+			common.ParamFuelType,
+			"The fuel it burns; its miles land on this fuel's lines of "+
+				"an IFTA return. Defaults to Diesel.",
+			common.FuelTypes,
+			func(t *tractor.Tractor) *domaintypes.IFTAFuelType { return &t.FuelType },
+		),
 		masterBool("iftaQualified", "Whether its miles and fuel enter the IFTA return. "+
 			"Defaults to true.", func(t *tractor.Tractor) *bool { return &t.IFTAQualified }),
 	)
@@ -557,8 +562,12 @@ func NewLocateTractorTool(tractors TractorKeeper) agentports.AgentTool {
 		Artifact:    tractorRecordEntity,
 		Rationale: "Moves where Trenova thinks a tractor is; nothing is sent and locating it " +
 			"again moves it back.",
-		Properties: locateProperties(common.ParamTractorID, tractorRecordEntity, "from list_tractors",
-			permission.ResourceTractor),
+		Properties: locateProperties(
+			common.ParamTractorID,
+			tractorRecordEntity,
+			"from list_tractors",
+			permission.ResourceTractor,
+		),
 		Required:    []string{common.ParamTractorID, paramNewLocationID},
 		SearchTerms: []string{"locate tractor", "relocate truck", "move tractor", "yard"},
 		Target: func(params map[string]any) (agentports.ToolTarget, bool) {

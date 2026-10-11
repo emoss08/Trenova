@@ -18,8 +18,6 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
-const ()
-
 // CommitResult says how the window closed.
 type CommitResult struct {
 	Committed bool `json:"committed"`

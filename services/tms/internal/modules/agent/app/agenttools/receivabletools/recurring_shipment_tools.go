@@ -178,10 +178,16 @@ func seriesProperties() map[string]any {
 			"The first day shipments may be generated, in the " +
 				"series' timezone.",
 		),
-		common.FieldRecurringEnd: agenttoolschema.Date("The last day shipments may be generated, in the " +
-			"series' timezone. Leave out for no end."),
-		paramMaxOccurrences: common.IntegerProperty("Stop after this many shipments. Leave out for "+
-			"no limit.", 1, maxSeriesOccurrences),
+		common.FieldRecurringEnd: agenttoolschema.Date(
+			"The last day shipments may be generated, in the " +
+				"series' timezone. Leave out for no end.",
+		),
+		paramMaxOccurrences: common.IntegerProperty(
+			"Stop after this many shipments. Leave out for "+
+				"no limit.",
+			1,
+			maxSeriesOccurrences,
+		),
 		paramLeadTimeDays: common.IntegerProperty("How many days before each pickup its shipment "+
 			"is created.", 0, recurringshipment.MaxLeadTimeDays),
 		paramSkipWeekends: common.BooleanProperty("Treat Saturday and Sunday like blackout days."),
@@ -194,8 +200,10 @@ func seriesProperties() map[string]any {
 			toolschema.KeyMaxItems:    recurringshipment.MaxBlackoutDates,
 			toolschema.KeyItems:       agenttoolschema.Date("A blackout day."),
 		}),
-		paramAutoGenerate: common.BooleanProperty("Create each shipment on schedule without anyone " +
-			"asking. Off, a person generates each one."),
+		paramAutoGenerate: common.BooleanProperty(
+			"Create each shipment on schedule without anyone " +
+				"asking. Off, a person generates each one.",
+		),
 	}
 }
 
@@ -223,7 +231,11 @@ func applySeriesArgs(series *recurringshipment.RecurringShipment, params map[str
 			*target = *value
 		}
 	}
-	description, err := common.OptionalBoundedText(params, common.FieldDescription, common.MaxOperationNoteChars)
+	description, err := common.OptionalBoundedText(
+		params,
+		common.FieldDescription,
+		common.MaxOperationNoteChars,
+	)
 	if err != nil {
 		return err
 	}
@@ -266,7 +278,11 @@ func applySeriesFlags(series *recurringshipment.RecurringShipment, params map[st
 			*target = *value
 		}
 	}
-	policy, given, err := common.OptionalEnum(params, paramExceptionPolicy, seriesExceptionPolicies.Values)
+	policy, given, err := common.OptionalEnum(
+		params,
+		paramExceptionPolicy,
+		seriesExceptionPolicies.Values,
+	)
 	if err != nil {
 		return err
 	}
@@ -278,7 +294,12 @@ func applySeriesFlags(series *recurringshipment.RecurringShipment, params map[st
 }
 
 func applySeriesDays(series *recurringshipment.RecurringShipment, params map[string]any) error {
-	if !common.SendsAny(params, common.FieldRecurringStart, common.FieldRecurringEnd, paramBlackoutDates) {
+	if !common.SendsAny(
+		params,
+		common.FieldRecurringStart,
+		common.FieldRecurringEnd,
+		paramBlackoutDates,
+	) {
 		return nil
 	}
 	location, err := time.LoadLocation(series.Timezone)
@@ -615,7 +636,11 @@ func NewSetRecurringShipmentStatusTool(series recurringShipmentKeeper) agentport
 			if err != nil {
 				return nil, err
 			}
-			status, err := common.RequireEnum(params.Params, common.FieldStatus, seriesStatuses.Values)
+			status, err := common.RequireEnum(
+				params.Params,
+				common.FieldStatus,
+				seriesStatuses.Values,
+			)
 			if err != nil {
 				return nil, err
 			}

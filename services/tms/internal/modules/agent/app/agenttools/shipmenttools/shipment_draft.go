@@ -275,7 +275,11 @@ func buildStop(draft *stopDraft, b stopBuild) *shipment.Stop {
 	}
 
 	if strings.TrimSpace(draft.ScheduledWindowEnd) != "" {
-		end, err := common.ParseLocalTime(b.path+".scheduledWindowEnd", draft.ScheduledWindowEnd, zone)
+		end, err := common.ParseLocalTime(
+			b.path+".scheduledWindowEnd",
+			draft.ScheduledWindowEnd,
+			zone,
+		)
 		if err != nil {
 			b.read.multiErr.AddError(err)
 		} else {

@@ -24,6 +24,8 @@ import (
 
 const maxSchedulesCompared = 50
 
+const schemaItems = "items"
+
 type scheduleWriter interface {
 	CreateSchedule(
 		ctx context.Context,
@@ -90,12 +92,12 @@ func (t *ScheduleReportTool) ParamSchema() map[string]any {
 			"emailRecipients": map[string]any{
 				"type":        "array",
 				"maxItems":    20,
-				"items":       map[string]any{"type": "string"},
+				schemaItems:   map[string]any{"type": "string"},
 				"description": "The email addresses it goes to.",
 			},
 			"formats": map[string]any{
 				"type":        "array",
-				"items":       agenttoolschema.Enum("", common.ReportFormats),
+				schemaItems:   agenttoolschema.Enum("", common.ReportFormats),
 				"description": "Which formats to attach. Defaults to xlsx, as the schedule form does.",
 			},
 			"attach": map[string]any{
@@ -327,8 +329,12 @@ func (t *CreateTableChangeAlertTool) Description() string {
 
 func (t *CreateTableChangeAlertTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type":                 "object",
-		"required":             []string{masterdatatools.MdName, masterdatatools.AlertTableName, "eventTypes"},
+		"type": "object",
+		"required": []string{
+			masterdatatools.MdName,
+			masterdatatools.AlertTableName,
+			"eventTypes",
+		},
 		"properties":           alertProperties(""),
 		"additionalProperties": false,
 	}
@@ -349,11 +355,11 @@ func alertProperties(keep string) map[string]any {
 			"maxItems": 3,
 			"description": "Which changes to watch: INSERT for a new record, UPDATE for " +
 				"an edit, DELETE for a removal. A status change is an UPDATE." + keep,
-			"items": agenttoolschema.Enum("", alertEventTypes),
+			schemaItems: agenttoolschema.Enum("", alertEventTypes),
 		},
 		"watchedColumns": map[string]any{
-			"type":  "array",
-			"items": map[string]any{"type": "string"},
+			"type":      "array",
+			schemaItems: map[string]any{"type": "string"},
 			"description": "Only fire when one of these columns changed. " +
 				"Leave empty to fire on any change." + keep,
 		},
@@ -363,7 +369,7 @@ func alertProperties(keep string) map[string]any {
 			"description": "Narrow when it fires: each compares a column (field) to a " +
 				"value, e.g. status changed_to Delayed. is_null, is_not_null and changed " +
 				"take no value. Leave empty to fire on every matching event." + keep,
-			"items": map[string]any{
+			schemaItems: map[string]any{
 				"type":     "object",
 				"required": []string{"field", "operator"},
 				"properties": map[string]any{

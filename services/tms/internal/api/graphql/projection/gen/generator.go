@@ -192,7 +192,7 @@ func resolveOptions(opts generatorOptions) (generatorOptions, error) {
 		resolved.GqlgenPath = filepath.Join(root, "gqlgen.yml")
 	}
 	if resolved.DomainDir == "" {
-		resolved.DomainDir = filepath.Join(root, "internal/modules/*/domain")
+		resolved.DomainDir = filepath.Join(root, "internal", "modules", "*", "domain")
 	}
 	if resolved.BuncolgenDir == "" {
 		resolved.BuncolgenDir = filepath.Join(root, "pkg/buncolgen")
@@ -1113,7 +1113,7 @@ func namedType(t *gqlast.Type) string {
 	return t.Name()
 }
 
-func loadGoStructs(pattern string, modulePath string) (map[string]goStruct, error) {
+func loadGoStructs(pattern, modulePath string) (map[string]goStruct, error) {
 	roots, err := filepath.Glob(pattern)
 	if err != nil {
 		return nil, fmt.Errorf("expanding %q: %w", pattern, err)
@@ -1132,70 +1132,30 @@ func loadGoStructs(pattern string, modulePath string) (map[string]goStruct, erro
 	return structs, nil
 }
 
-func loadGoStructsFrom(root string, modulePath string, structs map[string]goStruct) error {
-	fset := token.NewFileSet()
+type goStructLoader struct {
+	fset       *token.FileSet
+	root       string
+	modulePath string
+	structs    map[string]goStruct
+}
+
+func loadGoStructsFrom(root, modulePath string, structs map[string]goStruct) error {
+	loader := goStructLoader{
+		fset:       token.NewFileSet(),
+		root:       root,
+		modulePath: modulePath,
+		structs:    structs,
+	}
 
 	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}
-		if entry.IsDir() {
-			return nil
-		}
-		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+		if entry.IsDir() || !isGoSourceFile(path) {
 			return nil
 		}
 
-		file, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
-		if err != nil {
-			return fmt.Errorf("parsing %q: %w", path, err)
-		}
-
-		packagePath, err := packagePathForFile(root, modulePath, path)
-		if err != nil {
-			return err
-		}
-
-		for _, decl := range file.Decls {
-			genDecl, ok := decl.(*ast.GenDecl)
-			if !ok || genDecl.Tok != token.TYPE {
-				continue
-			}
-			for _, spec := range genDecl.Specs {
-				typeSpec, ok := spec.(*ast.TypeSpec)
-				if !ok {
-					continue
-				}
-				structType, ok := typeSpec.Type.(*ast.StructType)
-				if !ok {
-					continue
-				}
-
-				st := goStruct{
-					PackagePath: packagePath,
-					PackageName: file.Name.Name,
-					Name:        typeSpec.Name.Name,
-					FullName:    packagePath + "." + typeSpec.Name.Name,
-					Fields:      map[string]goField{},
-				}
-				for _, field := range structType.Fields.List {
-					if len(field.Names) == 0 {
-						if isBunEntityEmbed(field) {
-							st.IsEntity = true
-						}
-						continue
-					}
-					parsed, ok := parseGoStructField(field)
-					if !ok {
-						continue
-					}
-					st.Fields[parsed.JSONName] = parsed
-				}
-				structs[st.FullName] = st
-			}
-		}
-
-		return nil
+		return loader.loadFile(path)
 	})
 	if err != nil {
 		return fmt.Errorf("walking Go domain structs in %q: %w", root, err)
@@ -1204,7 +1164,70 @@ func loadGoStructsFrom(root string, modulePath string, structs map[string]goStru
 	return nil
 }
 
-func packagePathForFile(root string, modulePath string, path string) (string, error) {
+func isGoSourceFile(path string) bool {
+	return strings.HasSuffix(path, ".go") && !strings.HasSuffix(path, "_test.go")
+}
+
+func (l goStructLoader) loadFile(path string) error {
+	file, err := parser.ParseFile(l.fset, path, nil, parser.ParseComments)
+	if err != nil {
+		return fmt.Errorf("parsing %q: %w", path, err)
+	}
+
+	packagePath, err := packagePathForFile(l.root, l.modulePath, path)
+	if err != nil {
+		return err
+	}
+
+	for _, decl := range file.Decls {
+		genDecl, ok := decl.(*ast.GenDecl)
+		if !ok || genDecl.Tok != token.TYPE {
+			continue
+		}
+		for _, spec := range genDecl.Specs {
+			typeSpec, ok := spec.(*ast.TypeSpec)
+			if !ok {
+				continue
+			}
+			structType, ok := typeSpec.Type.(*ast.StructType)
+			if !ok {
+				continue
+			}
+
+			st := buildGoStruct(packagePath, file.Name.Name, typeSpec.Name.Name, structType)
+			l.structs[st.FullName] = st
+		}
+	}
+
+	return nil
+}
+
+func buildGoStruct(packagePath, packageName, name string, structType *ast.StructType) goStruct {
+	st := goStruct{
+		PackagePath: packagePath,
+		PackageName: packageName,
+		Name:        name,
+		FullName:    packagePath + "." + name,
+		Fields:      map[string]goField{},
+	}
+	for _, field := range structType.Fields.List {
+		if len(field.Names) == 0 {
+			if isBunEntityEmbed(field) {
+				st.IsEntity = true
+			}
+			continue
+		}
+		parsed, ok := parseGoStructField(field)
+		if !ok {
+			continue
+		}
+		st.Fields[parsed.JSONName] = parsed
+	}
+
+	return st
+}
+
+func packagePathForFile(root, modulePath, path string) (string, error) {
 	rootAbs, err := filepath.Abs(root)
 	if err != nil {
 		return "", fmt.Errorf("resolving root %q: %w", root, err)

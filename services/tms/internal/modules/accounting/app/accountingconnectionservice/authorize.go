@@ -193,11 +193,7 @@ func (s *Service) offerCompanyChoice(
 
 	choices := make([]accountingsyncports.AccountingOAuthCompany, 0, len(offer.companies))
 	for _, company := range offer.companies {
-		choices = append(choices, accountingsyncports.AccountingOAuthCompany{
-			ID:           company.ID,
-			Name:         company.Name,
-			ConnectionID: company.ConnectionID,
-		})
+		choices = append(choices, accountingsyncports.AccountingOAuthCompany(company))
 	}
 
 	now := timeutils.NowUnix()
@@ -308,11 +304,7 @@ func splitChoice(
 ) (chosen *accountingsyncports.AccountingCompany, others []accountingsyncports.AccountingCompany) {
 	others = make([]accountingsyncports.AccountingCompany, 0, len(choices))
 	for _, choice := range choices {
-		company := accountingsyncports.AccountingCompany{
-			ID:           choice.ID,
-			Name:         choice.Name,
-			ConnectionID: choice.ConnectionID,
-		}
+		company := accountingsyncports.AccountingCompany(choice)
 		if chosen == nil && choice.ID == companyID {
 			chosen = &company
 			continue

@@ -6,14 +6,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (p *TransferRunPayload) Tenant() pagination.TenantInfo {
-	return pagination.TenantInfo{
-		OrgID:  p.OrganizationID,
-		BuID:   p.BusinessUnitID,
-		UserID: p.UserID,
-	}
-}
-
 const BulkBillingTransferWorkflowName = "BulkBillingTransferWorkflow"
 
 // CancelSignalName shortens how long a cancel waits to take effect. It is
@@ -26,4 +18,12 @@ type TransferRunPayload struct {
 	temporaltype.BasePayload
 
 	RunID pulid.ID `json:"runId"`
+}
+
+func (p *TransferRunPayload) Tenant() pagination.TenantInfo {
+	return pagination.TenantInfo{
+		OrgID:  p.OrganizationID,
+		BuID:   p.BusinessUnitID,
+		UserID: p.UserID,
+	}
 }

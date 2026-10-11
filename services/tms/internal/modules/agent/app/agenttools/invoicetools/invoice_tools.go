@@ -64,7 +64,10 @@ func invoiceSchema(description string) map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			common.ParamInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice, description),
+			common.ParamInvoiceID: agenttoolschema.RecordIDText(
+				permission.ResourceInvoice,
+				description,
+			),
 		},
 		toolschema.KeyRequired:             []string{common.ParamInvoiceID},
 		toolschema.KeyAdditionalProperties: false,

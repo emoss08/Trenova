@@ -283,7 +283,11 @@ func shareRequest(
 	if err != nil {
 		return nil, err
 	}
-	userIDs, err := common.RequirePulidSlice(params.Params, paramUserIDs, invoice.MaxShareRecipients)
+	userIDs, err := common.RequirePulidSlice(
+		params.Params,
+		paramUserIDs,
+		invoice.MaxShareRecipients,
+	)
 	if err != nil {
 		return nil, err
 	}

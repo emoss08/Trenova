@@ -152,7 +152,11 @@ func NewDeleteDocumentsTool(documents DocumentKeeper) agentports.AgentTool {
 
 			return toolpreview.Build(fmt.Sprintf(
 				"Would delete %s and %s stored with them; nothing brings them back.",
-				common.CountOf(len(plan.Documents), documentKind), common.CountOf(plan.FileCount(), "file"),
+				common.CountOf(
+					len(plan.Documents),
+					documentKind,
+				),
+				common.CountOf(plan.FileCount(), "file"),
 			), changes...), nil
 		},
 		Run: func(
@@ -205,7 +209,12 @@ func restoreRequest(params *agentports.ToolExecuteParams) (*documentRestore, err
 	if err != nil {
 		return nil, err
 	}
-	version, err := common.RequireIntInRange(params.Params, paramVersionNumber, 1, maxDocumentVersion)
+	version, err := common.RequireIntInRange(
+		params.Params,
+		paramVersionNumber,
+		1,
+		maxDocumentVersion,
+	)
 	if err != nil {
 		return nil, err
 	}

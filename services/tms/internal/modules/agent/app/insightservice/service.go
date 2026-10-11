@@ -534,12 +534,7 @@ func (s *Service) Dismiss(
 	ctx context.Context,
 	req insightports.DismissInsightRequest,
 ) (*insight.Insight, error) {
-	return s.repo.Dismiss(ctx, insightports.DismissInsightQuery{
-		ID:         req.ID,
-		UserID:     req.UserID,
-		Reason:     req.Reason,
-		TenantInfo: req.TenantInfo,
-	})
+	return s.repo.Dismiss(ctx, insightports.DismissInsightQuery(req))
 }
 
 // Restore undoes a dismissal.
@@ -551,20 +546,14 @@ func (s *Service) Restore(
 		return nil, err
 	}
 
-	return s.repo.Restore(ctx, insightports.RestoreInsightQuery{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	return s.repo.Restore(ctx, insightports.RestoreInsightQuery(req))
 }
 
 func (s *Service) PlanRestore(
 	ctx context.Context,
 	req insightports.RestoreInsightRequest,
 ) (*kernelports.RecordChange[insight.Insight], error) {
-	found, err := s.repo.GetByID(ctx, insightports.GetInsightByIDRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	found, err := s.repo.GetByID(ctx, insightports.GetInsightByIDRequest(req))
 	if err != nil {
 		return nil, err
 	}

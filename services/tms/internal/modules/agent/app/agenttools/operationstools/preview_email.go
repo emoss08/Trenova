@@ -148,7 +148,10 @@ func (t *EmailCustomerTool) Preview(
 			ID:       composed.Shipment.CustomerID,
 			Label:    composed.Data.CustomerName,
 		},
-		common.EmailMessagePreview(sender, common.RenderedEmailPreview(composed.Send, composed.VersionID)),
+		common.EmailMessagePreview(
+			sender,
+			common.RenderedEmailPreview(composed.Send, composed.VersionID),
+		),
 	)
 
 	comment := common.CustomerUpdateComment(composed)

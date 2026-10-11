@@ -21,6 +21,7 @@ const ParamCustomerPaymentID = "customerPaymentId"
 
 const paramCreditMemoID = "creditMemoId"
 
+//nolint:gosec // G101: a parameter name; "credit" matches the credential pattern, not a secret
 const ParamCreditMemoApplicationID = "creditMemoApplicationId"
 
 const maxReceivableReasonChars = 1000
@@ -89,7 +90,10 @@ func applicationsProperty(description string, withShortPay bool) map[string]any 
 		common.ParamInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
 			"An open posted invoice or debit memo of the same customer, from list_invoices "+
 				"or list_ar_open_items."),
-		common.ParamAmount: common.StringProperty("Applied to this invoice, as a decimal such as 250.00.", 0),
+		common.ParamAmount: common.StringProperty(
+			"Applied to this invoice, as a decimal such as 250.00.",
+			0,
+		),
 	}
 	if withShortPay {
 		properties[common.ParamShortPayAmount] = common.StringProperty(
@@ -143,8 +147,12 @@ func NewApplyCustomerPaymentTool(payments receivablesKeeper) agentports.AgentToo
 			common.ParamApplications: applicationsProperty(
 				"The invoices the unapplied cash pays and how much goes to each.", true),
 		},
-		Required: []string{ParamCustomerPaymentID, common.ParamAccountingDate, common.ParamApplications},
-		Target:   targetCustomerPayment,
+		Required: []string{
+			ParamCustomerPaymentID,
+			common.ParamAccountingDate,
+			common.ParamApplications,
+		},
+		Target: targetCustomerPayment,
 	}), common.ReceivablePlan[*customerpaymentports.ApplyCustomerPaymentRequest, *customerpaymentports.CustomerPaymentChangePreview]{
 		Request: applyPaymentRequest,
 		Plan: func(
@@ -251,7 +259,11 @@ func reversePaymentRequest(
 	if err != nil {
 		return nil, err
 	}
-	reason, err := common.RequireBoundedText(params.Params, common.ParamReason, maxReceivableReasonChars)
+	reason, err := common.RequireBoundedText(
+		params.Params,
+		common.ParamReason,
+		maxReceivableReasonChars,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -364,7 +376,10 @@ func NewUnapplyCreditMemoTool(payments receivablesKeeper) agentports.AgentTool {
 			ParamCreditMemoApplicationID: agenttoolschema.KindID(
 				"The application, from list_credit_memo_applications. Never guess one.",
 				permission.KindCreditMemoApplication),
-			common.ParamReason: common.StringProperty("Why it is taken back.", maxReceivableReasonChars),
+			common.ParamReason: common.StringProperty(
+				"Why it is taken back.",
+				maxReceivableReasonChars,
+			),
 		},
 		Required: []string{ParamCreditMemoApplicationID, common.ParamReason},
 		Target: func(params map[string]any) (agentports.ToolTarget, bool) {
@@ -403,7 +418,11 @@ func unapplyCreditRequest(
 	if err != nil {
 		return nil, err
 	}
-	reason, err := common.RequireBoundedText(params.Params, common.ParamReason, maxReceivableReasonChars)
+	reason, err := common.RequireBoundedText(
+		params.Params,
+		common.ParamReason,
+		maxReceivableReasonChars,
+	)
 	if err != nil {
 		return nil, err
 	}

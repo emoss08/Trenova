@@ -31,11 +31,11 @@ type AIUsageAttribution struct {
 	DefinitionVersion *int64 `json:",omitempty"`
 }
 
-func (a AIUsageAttribution) Evaluates() bool {
+func (a *AIUsageAttribution) Evaluates() bool {
 	return a.ResolvedPurpose() == AIUsagePurposeEvaluation
 }
 
-func (a AIUsageAttribution) ResolvedPurpose() kernelports.AIUsagePurpose {
+func (a *AIUsageAttribution) ResolvedPurpose() kernelports.AIUsagePurpose {
 	if a.Purpose != kernelports.AIUsagePurposeLive {
 		return a.Purpose
 	}
@@ -164,17 +164,10 @@ func SummaryFromRepository(since int64, summary *AIUsageSummaryRow) *AIUsageSumm
 		RecentFailures:  make([]AIUsageFailure, 0, len(summary.RecentFailures)),
 	}
 	for _, failure := range summary.RecentFailures {
-		out.RecentFailures = append(out.RecentFailures, AIUsageFailure{
-			ProviderID:   failure.ProviderID,
-			ProviderName: failure.ProviderName,
-			Model:        failure.Model,
-			Task:         failure.Task,
-			ErrorClass:   failure.ErrorClass,
-			Message:      failure.Message,
-			At:           failure.At,
-		})
+		out.RecentFailures = append(out.RecentFailures, AIUsageFailure(failure))
 	}
-	for _, slice := range summary.ByProvider {
+	for i := range summary.ByProvider {
+		slice := &summary.ByProvider[i]
 		out.ByProvider = append(out.ByProvider, AIUsageProviderSlice{
 			ProviderID:      slice.ProviderID,
 			ProviderName:    slice.ProviderName,

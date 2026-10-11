@@ -164,16 +164,20 @@ func shipmentDraftSchema() map[string]any {
 			),
 			common.FieldServiceTypeID: agenttoolschema.RecordIDText(permission.ResourceServiceType,
 				"From list_service_types."),
-			common.FieldShipmentTypeID: agenttoolschema.RecordIDText(permission.ResourceShipmentType,
-				"From list_shipment_types."),
+			common.FieldShipmentTypeID: agenttoolschema.RecordIDText(
+				permission.ResourceShipmentType,
+				"From list_shipment_types.",
+			),
 			"formulaTemplateId": agenttoolschema.RecordIDText(
 				permission.ResourceFormulaTemplate,
 				"The rating method that prices the freight, from "+
 					"list_formula_templates. Leave it out when the customer's rate agreement "+
 					"covers the lane, and the contract's is used.",
 			),
-			"baseRate": common.AmountProperty("The rate the rating method prices with, as the person " +
-				"gave it: 2450 for a $2,450 flat load, 2.10 for $2.10 a mile."),
+			"baseRate": common.AmountProperty(
+				"The rate the rating method prices with, as the person " +
+					"gave it: 2450 for a $2,450 flat load, 2.10 for $2.10 a mile.",
+			),
 			"freightTerms": agenttoolschema.Enum(
 				"Who pays the freight. Defaults to Prepaid.",
 				agenttoolschema.FreightTerms,
@@ -186,9 +190,12 @@ func shipmentDraftSchema() map[string]any {
 				permission.ResourceEquipmentType,
 				"A trailer equipment type, from list_equipment_types.",
 			),
-			"bol": common.StringProperty("The customer's BOL or reference. It must be unique among "+
-				"open shipments, so never reuse one from another shipment. Optional unless the "+
-				"customer's billing requires a BOL; leave it out when none is known.", 100),
+			"bol": common.StringProperty(
+				"The customer's BOL or reference. It must be unique among "+
+					"open shipments, so never reuse one from another shipment. Optional unless the "+
+					"customer's billing requires a BOL; leave it out when none is known.",
+				100,
+			),
 			"externalReference": common.StringProperty("The customer's own order or load number, "+
 				"as it appears on their tender, email or rate confirmation. One live shipment "+
 				"per customer may carry it, so a second booking of the same order is refused; "+
@@ -199,8 +206,16 @@ func shipmentDraftSchema() map[string]any {
 				1_000_000,
 			),
 			common.FieldWeight: common.IntegerProperty("Pounds.", 0, 10_000_000),
-			"temperatureMin":   common.IntegerProperty("Fahrenheit, for reefer freight.", -100, 200),
-			"temperatureMax":   common.IntegerProperty("Fahrenheit, for reefer freight.", -100, 200),
+			"temperatureMin": common.IntegerProperty(
+				"Fahrenheit, for reefer freight.",
+				-100,
+				200,
+			),
+			"temperatureMax": common.IntegerProperty(
+				"Fahrenheit, for reefer freight.",
+				-100,
+				200,
+			),
 			"ratingUnit": common.IntegerProperty("How many units the rating method prices. "+
 				"Defaults to 1.", 1, 1_000_000),
 			"moves": map[string]any{
@@ -236,8 +251,12 @@ func moveDraftSchema() map[string]any {
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
 			"loaded": common.BooleanProperty("False for a deadhead move. Defaults to true."),
-			"sequence": common.IntegerProperty("The move's place, counting from 0. Leave it out to "+
-				"take the order given.", 0, 50),
+			"sequence": common.IntegerProperty(
+				"The move's place, counting from 0. Leave it out to "+
+					"take the order given.",
+				0,
+				50,
+			),
 			"stops": map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,
 				toolschema.KeyDescription: "The stops in travel order: a pickup first, a delivery last.",
@@ -278,8 +297,12 @@ func stopDraftSchema() map[string]any {
 					"the part of the day they named.",
 			),
 			common.FieldPieces: common.IntegerProperty("Pieces handled at the stop.", 0, 1_000_000),
-			common.FieldWeight: common.IntegerProperty("Pounds handled at the stop.", 0, 10_000_000),
-			"addressLine":      common.StringProperty("A dock or suite note for the stop.", 200),
+			common.FieldWeight: common.IntegerProperty(
+				"Pounds handled at the stop.",
+				0,
+				10_000_000,
+			),
+			"addressLine": common.StringProperty("A dock or suite note for the stop.", 200),
 		},
 		toolschema.KeyRequired: []string{
 			common.FieldLocationID,
@@ -298,7 +321,11 @@ func commodityDraftSchema() map[string]any {
 				permission.ResourceCommodity,
 				"The commodity, from list_commodities.",
 			),
-			common.FieldPieces: common.IntegerProperty("Pieces of it. Defaults to 1.", 0, 1_000_000),
+			common.FieldPieces: common.IntegerProperty(
+				"Pieces of it. Defaults to 1.",
+				0,
+				1_000_000,
+			),
 			common.FieldWeight: common.IntegerProperty("Pounds of it.", 0, 10_000_000),
 		},
 		toolschema.KeyRequired:             []string{"commodityId"},
@@ -319,10 +346,15 @@ func chargeLineDraftSchema() map[string]any {
 					"the linehaul.",
 				agenttoolschema.AccessorialMethods,
 			),
-			"unit": common.IntegerProperty("How many units the charge covers; 1 for a flat charge.", 1,
-				10_000),
-			common.ParamAmount: common.AmountProperty("The charge's amount in major units, as a decimal such " +
-				"as 125.00."),
+			"unit": common.IntegerProperty(
+				"How many units the charge covers; 1 for a flat charge.",
+				1,
+				10_000,
+			),
+			common.ParamAmount: common.AmountProperty(
+				"The charge's amount in major units, as a decimal such " +
+					"as 125.00.",
+			),
 		},
 		toolschema.KeyRequired: []string{
 			"accessorialChargeId", "method", "unit", common.ParamAmount,
@@ -539,7 +571,7 @@ func (t *UpdateShipmentTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
+			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment to change, from the page, list_shipments or search_shipments."),
 			"customerId": agenttoolschema.RecordIDText(permission.ResourceCustomer,
 				"The new customer, from list_customers."),
@@ -575,7 +607,7 @@ func (t *UpdateShipmentTool) ParamSchema() map[string]any {
 				"description": "Fahrenheit, with temperatureMin.",
 			},
 		},
-		"required":             []string{"shipmentId"},
+		"required":             []string{common.ParamShipmentID},
 		"additionalProperties": false,
 	}
 }
@@ -643,7 +675,7 @@ func (t *UpdateShipmentTool) plan(
 		return nil, nil, err
 	}
 
-	shipmentID, err := common.RequirePulid(params.Params, "shipmentId")
+	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -654,7 +686,7 @@ func (t *UpdateShipmentTool) plan(
 	}
 	if patch.empty() {
 		return nil, nil, errortypes.NewValidationError(
-			"shipmentId",
+			common.ParamShipmentID,
 			errortypes.ErrInvalid,
 			"Nothing to change: send at least one field besides the shipment id",
 		)
@@ -743,5 +775,5 @@ func placeholderTemperatures(entity *shipment.Shipment, patch shipmentPatch) err
 }
 
 func (t *UpdateShipmentTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "shipmentId", permission.ResourceShipment)
+	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
 }

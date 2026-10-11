@@ -36,7 +36,7 @@ func (t *AddShipmentCommentTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
+			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment to comment on, from the page, list_shipments or "+
 					"search_shipments."),
 			"comment": map[string]any{
@@ -55,7 +55,7 @@ func (t *AddShipmentCommentTool) ParamSchema() map[string]any {
 				agenttoolschema.CommentPriorities,
 			),
 		},
-		"required":             []string{"shipmentId", "comment"},
+		"required":             []string{common.ParamShipmentID, "comment"},
 		"additionalProperties": false,
 	}
 }
@@ -107,7 +107,7 @@ func (t *AddShipmentCommentTool) comment(
 		return nil, err
 	}
 
-	shipmentID, err := common.RequirePulid(params.Params, "shipmentId")
+	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +217,7 @@ func (t *PlaceShipmentHoldTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
+			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment to hold, from the page, list_shipments or search_shipments."),
 			"holdReasonId": agenttoolschema.RecordIDText(permission.ResourceHoldReason,
 				"A hold reason id from list_hold_reasons."),
@@ -227,7 +227,7 @@ func (t *PlaceShipmentHoldTool) ParamSchema() map[string]any {
 					"Say what would have to be true to clear it.",
 			},
 		},
-		"required":             []string{"shipmentId", "holdReasonId"},
+		"required":             []string{common.ParamShipmentID, "holdReasonId"},
 		"additionalProperties": false,
 	}
 }
@@ -271,7 +271,7 @@ func (t *PlaceShipmentHoldTool) Execute(
 func (t *PlaceShipmentHoldTool) request(
 	params *agentports.ToolExecuteParams,
 ) (*shipmentports.CreateShipmentHoldRequest, error) {
-	shipmentID, err := common.RequirePulid(params.Params, "shipmentId")
+	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 	if err != nil {
 		return nil, err
 	}
@@ -312,14 +312,14 @@ func (t *ReleaseShipmentHoldTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
+			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment the hold is on, from the page, list_shipments or "+
 					"search_shipments."),
 			"holdId": agenttoolschema.RecordIDText(permission.ResourceShipmentHold,
 				"The hold to release. No tool lists a shipment's holds, so it comes from "+
 					"the page or the event that started this run; never guess one."),
 		},
-		"required":             []string{"shipmentId", "holdId"},
+		"required":             []string{common.ParamShipmentID, "holdId"},
 		"additionalProperties": false,
 	}
 }
@@ -362,7 +362,7 @@ func (t *ReleaseShipmentHoldTool) Execute(
 func (t *ReleaseShipmentHoldTool) request(
 	params *agentports.ToolExecuteParams,
 ) (*shipmentports.ReleaseShipmentHoldRequest, error) {
-	shipmentID, err := common.RequirePulid(params.Params, "shipmentId")
+	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 	if err != nil {
 		return nil, err
 	}
@@ -406,7 +406,7 @@ func (t *CancelShipmentTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
+			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment to cancel, from the page, list_shipments or search_shipments."),
 			"cancelReason": map[string]any{
 				"type": "string",
@@ -414,7 +414,7 @@ func (t *CancelShipmentTool) ParamSchema() map[string]any {
 					"dispatcher's own terms. This is kept on the record.",
 			},
 		},
-		"required":             []string{"shipmentId", "cancelReason"},
+		"required":             []string{common.ParamShipmentID, "cancelReason"},
 		"additionalProperties": false,
 	}
 }
@@ -457,7 +457,7 @@ func (t *CancelShipmentTool) request(
 		return nil, err
 	}
 
-	shipmentID, err := common.RequirePulid(params.Params, "shipmentId")
+	shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
 	if err != nil {
 		return nil, err
 	}
@@ -479,23 +479,23 @@ func (t *CancelShipmentTool) request(
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
 func (t *AddShipmentCommentTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "shipmentId", permission.ResourceShipment)
+	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
 }
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
 func (t *PlaceShipmentHoldTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "shipmentId", permission.ResourceShipment)
+	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
 }
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
 func (t *ReleaseShipmentHoldTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "shipmentId", permission.ResourceShipment)
+	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
 }
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
 func (t *CancelShipmentTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "shipmentId", permission.ResourceShipment)
+	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
 }

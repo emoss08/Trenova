@@ -48,7 +48,6 @@ import (
 	"go.uber.org/fx"
 )
 
-//nolint:funlen // the module's providers are its part of the application graph
 func SharedOptions() fx.Option {
 	return fx.Options(
 		fx.Provide(

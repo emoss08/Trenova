@@ -36,7 +36,7 @@ type ToolExecuteParams struct {
 	Delegated    bool
 }
 
-func (p ToolExecuteParams) CarriedTaint(at int64) *agent.RunTaint {
+func (p *ToolExecuteParams) CarriedTaint(at int64) *agent.RunTaint {
 	if p.Taint != nil || p.ApprovedFromProposal() {
 		return p.Taint
 	}
@@ -44,7 +44,7 @@ func (p ToolExecuteParams) CarriedTaint(at int64) *agent.RunTaint {
 	return agent.RunRecordTaint(p.RunID, at)
 }
 
-func (p ToolExecuteParams) ApprovedFromProposal() bool {
+func (p *ToolExecuteParams) ApprovedFromProposal() bool {
 	return p.ProposalID.IsNotNil()
 }
 
@@ -225,6 +225,7 @@ type ToolTarget struct {
 
 const RecordInvoiceAdjustment permission.Resource = "invoice_adjustment"
 
+//nolint:gosec // G101: a permission resource name, not a credential
 const RecordCreditMemoApplication permission.Resource = "credit_memo_application"
 
 // TargetedTool is a tool that can say which record a call would change, from

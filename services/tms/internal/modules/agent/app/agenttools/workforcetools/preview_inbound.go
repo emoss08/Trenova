@@ -109,7 +109,10 @@ func (t *MarkInboundMessageTool) Preview(
 	message, status, note, err := t.settle(ctx, params)
 	if err != nil {
 		if common.IsRefusal(err) || errors.Is(err, errInboundQuarantined) {
-			return common.WarnWouldFail(toolpreview.Build("Would settle an inbound message."), err), nil
+			return common.WarnWouldFail(
+				toolpreview.Build("Would settle an inbound message."),
+				err,
+			), nil
 		}
 
 		return nil, err

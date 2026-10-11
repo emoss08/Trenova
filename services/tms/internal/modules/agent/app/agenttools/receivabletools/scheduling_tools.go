@@ -364,11 +364,17 @@ func NewEndWorkerShiftAssignmentTool(
 					"Never guess one.",
 				permission.KindShiftAssignment,
 			),
-			common.FieldEffectiveTo: agenttoolschema.Date("The last day the worker works the pattern."),
+			common.FieldEffectiveTo: agenttoolschema.Date(
+				"The last day the worker works the pattern.",
+			),
 		},
 		[]string{paramShiftAssignmentID, common.FieldEffectiveTo},
 		func(params map[string]any) (agentports.ToolTarget, bool) {
-			return common.TargetOf(params, paramShiftAssignmentID, permission.ResourceWorkerSchedule)
+			return common.TargetOf(
+				params,
+				paramShiftAssignmentID,
+				permission.ResourceWorkerSchedule,
+			)
 		},
 	)
 	spec.SearchTerms = []string{"shift pattern", "end shift", "remove from shift pattern"}
@@ -407,21 +413,7 @@ func NewEndWorkerShiftAssignmentTool(
 		Refused: func(*assignmentEnd) string {
 			return "Would end the worker's shift pattern."
 		},
-		Render: func(
-			_ *assignmentEnd,
-			plan *schedulingservice.AssignmentChange,
-		) (*agent.ToolPreview, error) {
-			change, err := toolpreview.Changed(shiftAssignmentRecord(plan.Before), plan.Before,
-				plan.After, scheduleOptions(common.FieldEffectiveTo)...)
-			if err != nil {
-				return nil, err
-			}
-
-			return toolpreview.Build(fmt.Sprintf(
-				"Would end the worker's shift pattern after %s.",
-				time.Unix(*plan.After.EffectiveTo, 0).UTC().Format(common.DayLayout),
-			), change), nil
-		},
+		Render: renderShiftAssignmentEnd,
 		Run: func(
 			ctx context.Context,
 			end *assignmentEnd,
@@ -443,6 +435,22 @@ func NewEndWorkerShiftAssignmentTool(
 			}, nil
 		},
 	})
+}
+
+func renderShiftAssignmentEnd(
+	_ *assignmentEnd,
+	plan *schedulingservice.AssignmentChange,
+) (*agent.ToolPreview, error) {
+	change, err := toolpreview.Changed(shiftAssignmentRecord(plan.Before), plan.Before,
+		plan.After, scheduleOptions(common.FieldEffectiveTo)...)
+	if err != nil {
+		return nil, err
+	}
+
+	return toolpreview.Build(fmt.Sprintf(
+		"Would end the worker's shift pattern after %s.",
+		time.Unix(*plan.After.EffectiveTo, 0).UTC().Format(common.DayLayout),
+	), change), nil
 }
 
 // requireAssignmentScope reads the worker off the assignment being ended, the
@@ -479,8 +487,10 @@ func NewSetWorkerAvailabilityPreferenceTool(
 			paramDayOfWeek:       agenttoolschema.Enum("The weekday it is about.", weekdays),
 			paramPreference: agenttoolschema.Enum("What the worker said about that day.",
 				availabilityPreferences),
-			common.ParamNote: common.StringProperty("Why, in the worker's words where you have them.",
-				maxScheduleNote),
+			common.ParamNote: common.StringProperty(
+				"Why, in the worker's words where you have them.",
+				maxScheduleNote,
+			),
 		},
 		[]string{common.ParamWorkerID, paramDayOfWeek, paramPreference},
 		targetScheduledWorker,
@@ -612,8 +622,10 @@ func NewProposeShiftSwapTool(schedules scheduleKeeper) agentports.AgentTool {
 				"The day offered back, when it is a trade " +
 					"rather than a hand-off.",
 			),
-			common.FieldReason: common.StringProperty("Why, in the worker's words where you have them.",
-				maxScheduleNote),
+			common.FieldReason: common.StringProperty(
+				"Why, in the worker's words where you have them.",
+				maxScheduleNote,
+			),
 		},
 		Required: []string{paramRequestingWorkerID, paramShiftDate},
 		Target: func(params map[string]any) (agentports.ToolTarget, bool) {
@@ -637,26 +649,7 @@ func NewProposeShiftSwapTool(schedules scheduleKeeper) agentports.AgentTool {
 		Refused: func(*schedulingservice.ProposeSwapRequest) string {
 			return "Would raise a shift swap."
 		},
-		Render: func(
-			_ *schedulingservice.ProposeSwapRequest,
-			swap *worker.ShiftSwapRequest,
-		) (*agent.ToolPreview, error) {
-			change, err := toolpreview.Create(
-				toolpreview.Record{Resource: permission.ResourceShiftSwap, Label: "New shift swap"},
-				swap,
-				scheduleOptions(paramRequestingWorkerID, paramCounterpartyWorkerID,
-					paramShiftDate, paramCounterpartyDate, common.FieldReason, common.FieldStatus)...,
-			)
-			if err != nil {
-				return nil, err
-			}
-
-			return toolpreview.Build(fmt.Sprintf(
-				"Would raise a swap of %s for the worker; nobody's schedule changes until "+
-					"the office approves it.",
-				time.Unix(swap.ShiftDate, 0).UTC().Format(common.DayLayout),
-			), change), nil
-		},
+		Render: renderShiftSwapProposal,
 		Run: func(
 			ctx context.Context,
 			req *schedulingservice.ProposeSwapRequest,
@@ -675,6 +668,33 @@ func NewProposeShiftSwapTool(schedules scheduleKeeper) agentports.AgentTool {
 			}, nil
 		},
 	})
+}
+
+func renderShiftSwapProposal(
+	_ *schedulingservice.ProposeSwapRequest,
+	swap *worker.ShiftSwapRequest,
+) (*agent.ToolPreview, error) {
+	change, err := toolpreview.Create(
+		toolpreview.Record{Resource: permission.ResourceShiftSwap, Label: "New shift swap"},
+		swap,
+		scheduleOptions(
+			paramRequestingWorkerID,
+			paramCounterpartyWorkerID,
+			paramShiftDate,
+			paramCounterpartyDate,
+			common.FieldReason,
+			common.FieldStatus,
+		)...,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return toolpreview.Build(fmt.Sprintf(
+		"Would raise a swap of %s for the worker; nobody's schedule changes until "+
+			"the office approves it.",
+		time.Unix(swap.ShiftDate, 0).UTC().Format(common.DayLayout),
+	), change), nil
 }
 
 func proposeSwapRequest(
@@ -788,9 +808,15 @@ func newSwapDecisionTool(schedules scheduleKeeper, spec *swapDecisionSpec) agent
 			_ *schedulingservice.TransitionSwapRequest,
 			plan *schedulingservice.SwapChange,
 		) (*agent.ToolPreview, error) {
-			change, err := toolpreview.Changed(swapRecord(plan.Before), plan.Before, plan.After,
-				append(scheduleOptions(common.FieldStatus, "responseNote", "decidedAt", "decidedById",
-					"respondedAt"), toolpreview.Volatile("decidedAt", "respondedAt"))...)
+			change, err := toolpreview.Changed(
+				swapRecord(plan.Before),
+				plan.Before,
+				plan.After,
+				append(
+					scheduleOptions(common.FieldStatus, "responseNote", "decidedAt", "decidedById",
+						"respondedAt"),
+					toolpreview.Volatile("decidedAt", "respondedAt"),
+				)...)
 			if err != nil {
 				return nil, err
 			}

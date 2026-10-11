@@ -70,9 +70,9 @@ type getShipmentTrackingTool struct {
 func newGetShipmentTrackingTool(
 	shipments shipmentports.ShipmentRepository,
 	board boardMoveLister,
-	telematics telematicsReader,
+	reader telematicsReader,
 ) agentports.AgentQueryTool {
-	return &getShipmentTrackingTool{shipments: shipments, board: board, telematics: telematics}
+	return &getShipmentTrackingTool{shipments: shipments, board: board, telematics: reader}
 }
 
 func (t *getShipmentTrackingTool) Name() string { return "get_shipment_tracking" }
@@ -345,10 +345,10 @@ type listVehiclePositionsTool struct {
 }
 
 func newListVehiclePositionsTool(
-	telematics telematicsReader,
+	reader telematicsReader,
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
-	return &listVehiclePositionsTool{telematics: telematics, access: newFieldAccess(permissions)}
+	return &listVehiclePositionsTool{telematics: reader, access: newFieldAccess(permissions)}
 }
 
 func (t *listVehiclePositionsTool) Name() string { return "list_vehicle_positions" }
@@ -495,8 +495,8 @@ type getWorkerHOSTool struct {
 	telematics telematicsReader
 }
 
-func newGetWorkerHOSTool(telematics telematicsReader) agentports.AgentQueryTool {
-	return &getWorkerHOSTool{telematics: telematics}
+func newGetWorkerHOSTool(reader telematicsReader) agentports.AgentQueryTool {
+	return &getWorkerHOSTool{telematics: reader}
 }
 
 func (t *getWorkerHOSTool) Name() string { return "get_worker_hos" }

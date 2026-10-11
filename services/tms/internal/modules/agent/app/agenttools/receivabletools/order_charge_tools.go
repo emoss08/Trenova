@@ -197,10 +197,17 @@ func NewAddOrderChargeTool(charges orderChargeKeeper) agentports.AgentTool {
 			"remove_order_charge takes it off until it is invoiced.",
 		map[string]any{
 			common.ParamOrderID: orderIDProperty("The order"),
-			common.FieldDescription: common.StringProperty("What the charge is for, as the invoice "+
-				"line should read.", maxOrderChargeText),
-			common.ParamAmount:      common.AmountProperty("The amount, as a decimal such as 150.00."),
-			common.ParamAllocations: common.AllocationsProperty("How the charge is split among payers."),
+			common.FieldDescription: common.StringProperty(
+				"What the charge is for, as the invoice "+
+					"line should read.",
+				maxOrderChargeText,
+			),
+			common.ParamAmount: common.AmountProperty(
+				"The amount, as a decimal such as 150.00.",
+			),
+			common.ParamAllocations: common.AllocationsProperty(
+				"How the charge is split among payers.",
+			),
 		},
 		common.ParamOrderID, common.FieldDescription, common.ParamAmount,
 	), common.ReceivablePlan[*orderservice.AddChargeRequest, *orderservice.ChargePlan]{
@@ -387,59 +394,71 @@ func NewUpdateOrderChargeTool(charges orderChargeKeeper) agentports.AgentTool {
 			paramChargeID:       chargeIDProperty(),
 			common.FieldDescription: common.StringProperty("The new description, in full.",
 				maxOrderChargeText),
-			common.ParamAmount: common.AmountProperty("The new amount, as a decimal such as 150.00."),
-			common.ParamAllocations: common.AllocationsProperty("The whole new payer split; an empty " +
-				"list bills it all to the order's customer."),
+			common.ParamAmount: common.AmountProperty(
+				"The new amount, as a decimal such as 150.00.",
+			),
+			common.ParamAllocations: common.AllocationsProperty(
+				"The whole new payer split; an empty " +
+					"list bills it all to the order's customer.",
+			),
 		},
 		common.ParamOrderID, paramChargeID,
 	)
 	spec.SearchTerms = []string{"charge amount", "correct charge", "edit accessorial"}
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[*chargeRef, *orderservice.ChargePlan]{
-		Request: func(params *agentports.ToolExecuteParams) (*chargeRef, error) {
-			ref, err := readChargeRef(params)
-			if err != nil {
-				return nil, err
-			}
-			if !common.SendsAny(params.Params, common.FieldDescription, common.ParamAmount, common.ParamAllocations) {
-				return nil, common.ErrNothingToChange
-			}
+	return common.NewReportingReceivableTool(
+		spec,
+		common.ReceivablePlan[*chargeRef, *orderservice.ChargePlan]{
+			Request: func(params *agentports.ToolExecuteParams) (*chargeRef, error) {
+				ref, err := readChargeRef(params)
+				if err != nil {
+					return nil, err
+				}
+				if !common.SendsAny(
+					params.Params,
+					common.FieldDescription,
+					common.ParamAmount,
+					common.ParamAllocations,
+				) {
+					return nil, common.ErrNothingToChange
+				}
 
-			return ref, nil
-		},
-		Plan: func(
-			ctx context.Context,
-			ref *chargeRef,
-			_ *agentports.ToolExecuteParams,
-		) (*orderservice.ChargePlan, error) {
-			req, err := ref.updateRequest(ctx, charges)
-			if err != nil {
-				return nil, err
-			}
+				return ref, nil
+			},
+			Plan: func(
+				ctx context.Context,
+				ref *chargeRef,
+				_ *agentports.ToolExecuteParams,
+			) (*orderservice.ChargePlan, error) {
+				req, err := ref.updateRequest(ctx, charges)
+				if err != nil {
+					return nil, err
+				}
 
-			return charges.PlanUpdateCharge(ctx, req)
-		},
-		Refused: func(*chargeRef) string { return "Would change a charge on the order." },
-		Render: func(ref *chargeRef, plan *orderservice.ChargePlan) (*agent.ToolPreview, error) {
-			return renderChargePlan("change")(ref, plan)
-		},
-		Run: func(
-			ctx context.Context,
-			ref *chargeRef,
-			params *agentports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
-			req, err := ref.updateRequest(ctx, charges)
-			if err != nil {
-				return nil, err
-			}
-			updated, err := charges.UpdateCharge(ctx, req, params.Actor)
-			if err != nil {
-				return nil, err
-			}
+				return charges.PlanUpdateCharge(ctx, req)
+			},
+			Refused: func(*chargeRef) string { return "Would change a charge on the order." },
+			Render: func(ref *chargeRef, plan *orderservice.ChargePlan) (*agent.ToolPreview, error) {
+				return renderChargePlan("change")(ref, plan)
+			},
+			Run: func(
+				ctx context.Context,
+				ref *chargeRef,
+				params *agentports.ToolExecuteParams,
+			) (*agent.ToolExecutionResult, error) {
+				req, err := ref.updateRequest(ctx, charges)
+				if err != nil {
+					return nil, err
+				}
+				updated, err := charges.UpdateCharge(ctx, req, params.Actor)
+				if err != nil {
+					return nil, err
+				}
 
-			return orderResult("charge updated", updated), nil
+				return orderResult("charge updated", updated), nil
+			},
 		},
-	})
+	)
 }
 
 func NewSetOrderChargeAllocationsTool(charges orderChargeKeeper) agentports.AgentTool {
@@ -459,55 +478,58 @@ func NewSetOrderChargeAllocationsTool(charges orderChargeKeeper) agentports.Agen
 	)
 	spec.SearchTerms = []string{"split charge", "payer split", "allocate charge"}
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[*chargeRef, *orderservice.ChargePlan]{
-		Request: func(params *agentports.ToolExecuteParams) (*chargeRef, error) {
-			ref, err := readChargeRef(params)
-			if err != nil {
-				return nil, err
-			}
-			if _, err = common.ReadAllocations(params.Params, ref.tenant,
-				shipment.ChargeAllocationKindOrderCharge, nil); err != nil {
-				return nil, err
-			}
-			if !common.SendsAny(params.Params, common.ParamAllocations) {
-				return nil, fmt.Errorf("missing required parameter %q", common.ParamAllocations)
-			}
+	return common.NewReportingReceivableTool(
+		spec,
+		common.ReceivablePlan[*chargeRef, *orderservice.ChargePlan]{
+			Request: func(params *agentports.ToolExecuteParams) (*chargeRef, error) {
+				ref, err := readChargeRef(params)
+				if err != nil {
+					return nil, err
+				}
+				if _, err = common.ReadAllocations(params.Params, ref.tenant,
+					shipment.ChargeAllocationKindOrderCharge, nil); err != nil {
+					return nil, err
+				}
+				if !common.SendsAny(params.Params, common.ParamAllocations) {
+					return nil, fmt.Errorf("missing required parameter %q", common.ParamAllocations)
+				}
 
-			return ref, nil
-		},
-		Plan: func(
-			ctx context.Context,
-			ref *chargeRef,
-			_ *agentports.ToolExecuteParams,
-		) (*orderservice.ChargePlan, error) {
-			req, err := ref.allocationRequest(ctx, charges)
-			if err != nil {
-				return nil, err
-			}
+				return ref, nil
+			},
+			Plan: func(
+				ctx context.Context,
+				ref *chargeRef,
+				_ *agentports.ToolExecuteParams,
+			) (*orderservice.ChargePlan, error) {
+				req, err := ref.allocationRequest(ctx, charges)
+				if err != nil {
+					return nil, err
+				}
 
-			return charges.PlanSetChargeAllocations(ctx, req)
-		},
-		Refused: func(*chargeRef) string { return "Would change who pays a charge on the order." },
-		Render: func(ref *chargeRef, plan *orderservice.ChargePlan) (*agent.ToolPreview, error) {
-			return renderChargePlan("re-split")(ref, plan)
-		},
-		Run: func(
-			ctx context.Context,
-			ref *chargeRef,
-			params *agentports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
-			req, err := ref.allocationRequest(ctx, charges)
-			if err != nil {
-				return nil, err
-			}
-			updated, err := charges.SetChargeAllocations(ctx, req, params.Actor)
-			if err != nil {
-				return nil, err
-			}
+				return charges.PlanSetChargeAllocations(ctx, req)
+			},
+			Refused: func(*chargeRef) string { return "Would change who pays a charge on the order." },
+			Render: func(ref *chargeRef, plan *orderservice.ChargePlan) (*agent.ToolPreview, error) {
+				return renderChargePlan("re-split")(ref, plan)
+			},
+			Run: func(
+				ctx context.Context,
+				ref *chargeRef,
+				params *agentports.ToolExecuteParams,
+			) (*agent.ToolExecutionResult, error) {
+				req, err := ref.allocationRequest(ctx, charges)
+				if err != nil {
+					return nil, err
+				}
+				updated, err := charges.SetChargeAllocations(ctx, req, params.Actor)
+				if err != nil {
+					return nil, err
+				}
 
-			return orderResult("charge split updated", updated), nil
+				return orderResult("charge split updated", updated), nil
+			},
 		},
-	})
+	)
 }
 
 func NewRemoveOrderChargeTool(charges orderChargeKeeper) agentports.AgentTool {
@@ -525,31 +547,34 @@ func NewRemoveOrderChargeTool(charges orderChargeKeeper) agentports.AgentTool {
 	)
 	spec.SearchTerms = []string{"drop charge", "delete charge", "remove accessorial"}
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[*chargeRef, *orderservice.ChargePlan]{
-		Request: readChargeRef,
-		Plan: func(
-			ctx context.Context,
-			ref *chargeRef,
-			_ *agentports.ToolExecuteParams,
-		) (*orderservice.ChargePlan, error) {
-			return charges.PlanRemoveCharge(ctx, ref.tenant, ref.orderID, ref.chargeID)
-		},
-		Refused: func(*chargeRef) string { return "Would remove a charge from the order." },
-		Render: func(ref *chargeRef, plan *orderservice.ChargePlan) (*agent.ToolPreview, error) {
-			return renderChargePlan("remove")(ref, plan)
-		},
-		Run: func(
-			ctx context.Context,
-			ref *chargeRef,
-			params *agentports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
-			updated, err := charges.RemoveCharge(ctx, ref.tenant, ref.orderID, ref.chargeID,
-				params.Actor)
-			if err != nil {
-				return nil, err
-			}
+	return common.NewReportingReceivableTool(
+		spec,
+		common.ReceivablePlan[*chargeRef, *orderservice.ChargePlan]{
+			Request: readChargeRef,
+			Plan: func(
+				ctx context.Context,
+				ref *chargeRef,
+				_ *agentports.ToolExecuteParams,
+			) (*orderservice.ChargePlan, error) {
+				return charges.PlanRemoveCharge(ctx, ref.tenant, ref.orderID, ref.chargeID)
+			},
+			Refused: func(*chargeRef) string { return "Would remove a charge from the order." },
+			Render: func(ref *chargeRef, plan *orderservice.ChargePlan) (*agent.ToolPreview, error) {
+				return renderChargePlan("remove")(ref, plan)
+			},
+			Run: func(
+				ctx context.Context,
+				ref *chargeRef,
+				params *agentports.ToolExecuteParams,
+			) (*agent.ToolExecutionResult, error) {
+				updated, err := charges.RemoveCharge(ctx, ref.tenant, ref.orderID, ref.chargeID,
+					params.Actor)
+				if err != nil {
+					return nil, err
+				}
 
-			return orderResult("charge removed", updated), nil
+				return orderResult("charge removed", updated), nil
+			},
 		},
-	})
+	)
 }

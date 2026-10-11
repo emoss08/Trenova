@@ -90,7 +90,7 @@ func itemFromInput(input watchtowerports.WatchtowerItemInput) *watchtower.Item {
 // Upsert projects one source record. Nothing here reaches the caller: a
 // projection that fails is logged, and the nightly reconcile catches it.
 func (p *Projector) Upsert(ctx context.Context, input watchtowerports.WatchtowerItemInput) {
-	if _, err := p.upsert(ctx, input); err != nil {
+	if err := p.upsert(ctx, input); err != nil {
 		p.l.Warn("watchtower projection lost",
 			zap.String("kind", string(input.SourceKind)),
 			zap.String("source", input.SourceID),
@@ -102,18 +102,18 @@ func (p *Projector) Upsert(ctx context.Context, input watchtowerports.Watchtower
 func (p *Projector) upsert(
 	ctx context.Context,
 	input watchtowerports.WatchtowerItemInput,
-) (*watchtower.Item, error) {
+) error {
 	item := itemFromInput(input)
 	multiErr := errortypes.NewMultiError()
 	item.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return nil, multiErr
+		return multiErr
 	}
 
 	ctx = dbscope.WithTenant(ctx, input.TenantInfo.DBTenant())
 	saved, inserted, err := p.repo.Upsert(ctx, item)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	action := agentports.ActivityUpdated
@@ -125,7 +125,7 @@ func (p *Projector) upsert(
 		p.notifyCritical(ctx, saved)
 	}
 
-	return saved, nil
+	return nil
 }
 
 // Resolve closes the item for a source record that is no longer open.

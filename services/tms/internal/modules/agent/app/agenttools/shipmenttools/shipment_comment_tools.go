@@ -391,7 +391,10 @@ func readCommentEdit(params *agentports.ToolExecuteParams) (*commentEdit, error)
 	if given {
 		edit.priority = &priority
 	}
-	if edit.requiresAck, err = common.OptionalBoolPointer(params.Params, fieldRequiresAck); err != nil {
+	if edit.requiresAck, err = common.OptionalBoolPointer(
+		params.Params,
+		fieldRequiresAck,
+	); err != nil {
 		return nil, err
 	}
 	if edit.text == nil && edit.visibility == nil && edit.priority == nil &&
@@ -508,7 +511,10 @@ func NewEditShipmentCommentTool(
 		Properties: map[string]any{
 			common.ParamShipmentID: common.ShipmentIDProperty("The shipment the comment is on"),
 			ParamCommentID:         commentIDProperty(),
-			ParamCommentText:       common.StringProperty("The new text, in full.", maxCommentChars),
+			ParamCommentText: common.StringProperty(
+				"The new text, in full.",
+				maxCommentChars,
+			),
 			FieldCommentVisib: agenttoolschema.Enum("Who sees it. Only widen it to a customer "+
 				"or a driver when the person asked.", agenttoolschema.CommentVisibilities),
 			FieldPriority: agenttoolschema.Enum("How urgently dispatch should read it.",
@@ -537,26 +543,7 @@ func NewEditShipmentCommentTool(
 			return &commentEditPlan{change: change}, nil
 		},
 		Refused: func(*commentEdit) string { return "Would edit the comment on the shipment." },
-		Render: func(_ *commentEdit, plan *commentEditPlan) (*agent.ToolPreview, error) {
-			change, err := toolpreview.Changed(
-				commentRecord(plan.change.Before),
-				plan.change.Before,
-				plan.change.After,
-				toolpreview.Only(fieldCommentText, fieldCommentType, FieldCommentVisib,
-					FieldPriority, fieldRequiresAck, fieldEditedAt),
-				toolpreview.Volatile(fieldEditedAt),
-			)
-			if err != nil {
-				return nil, err
-			}
-			summary := "Would edit the comment on the shipment."
-			if audience := commentAudience(plan.change.After.Visibility); audience != "" &&
-				plan.change.After.Visibility != plan.change.Before.Visibility {
-				summary += " " + audience
-			}
-
-			return toolpreview.Build(summary, change), nil
-		},
+		Render:  renderCommentEdit,
 		Run: func(
 			ctx context.Context,
 			edit *commentEdit,
@@ -584,6 +571,27 @@ func NewEditShipmentCommentTool(
 		},
 		Classify: classifyCommentEditVisibility,
 	}
+}
+
+func renderCommentEdit(_ *commentEdit, plan *commentEditPlan) (*agent.ToolPreview, error) {
+	change, err := toolpreview.Changed(
+		commentRecord(plan.change.Before),
+		plan.change.Before,
+		plan.change.After,
+		toolpreview.Only(fieldCommentText, fieldCommentType, FieldCommentVisib,
+			FieldPriority, fieldRequiresAck, fieldEditedAt),
+		toolpreview.Volatile(fieldEditedAt),
+	)
+	if err != nil {
+		return nil, err
+	}
+	summary := "Would edit the comment on the shipment."
+	if audience := commentAudience(plan.change.After.Visibility); audience != "" &&
+		plan.change.After.Visibility != plan.change.Before.Visibility {
+		summary += " " + audience
+	}
+
+	return toolpreview.Build(summary, change), nil
 }
 
 func commentUpdateRequest(

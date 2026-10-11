@@ -543,10 +543,16 @@ func NewUpdateReportScheduleTool(reports ReportAdministrator) agentports.AgentTo
 				"The saved report it runs, from list_reports. "+
 					"Leave it out to keep it.",
 			),
-			receivabletools.ParamCronExpression: common.StringProperty("When it runs, as five cron fields, such as "+
-				"\"0 7 * * 1\" for 07:00 every Monday.", 0),
-			receivabletools.ParamTimezone: common.StringProperty("The zone the schedule is read in, as an IANA name "+
-				"such as America/New_York.", 0),
+			receivabletools.ParamCronExpression: common.StringProperty(
+				"When it runs, as five cron fields, such as "+
+					"\"0 7 * * 1\" for 07:00 every Monday.",
+				0,
+			),
+			receivabletools.ParamTimezone: common.StringProperty(
+				"The zone the schedule is read in, as an IANA name "+
+					"such as America/New_York.",
+				0,
+			),
 			paramFormats: map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,
 				toolschema.KeyDescription: "Which formats to attach.",
@@ -560,7 +566,9 @@ func NewUpdateReportScheduleTool(reports ReportAdministrator) agentports.AgentTo
 					toolschema.KeyType: toolschema.TypeString,
 				},
 			},
-			paramEmailAttach:          common.BooleanProperty("Attach the file rather than only linking to it."),
+			paramEmailAttach: common.BooleanProperty(
+				"Attach the file rather than only linking to it.",
+			),
 			paramEmailInline:          common.BooleanProperty("Put the rows in the email body."),
 			carriertools.ParamEnabled: common.BooleanProperty("Whether the schedule runs."),
 		},
@@ -584,27 +592,7 @@ func NewUpdateReportScheduleTool(reports ReportAdministrator) agentports.AgentTo
 		Refused: func(scheduleEdit) string {
 			return "Would change a report schedule."
 		},
-		Render: func(_ scheduleEdit, plan *reporting.ScheduleChange) (*agent.ToolPreview, error) {
-			change, err := toolpreview.Changed(
-				reportScheduleRecord(plan.Before),
-				reportScheduleViewOf(plan.Before),
-				reportScheduleViewOf(plan.After),
-			)
-			if err != nil {
-				return nil, err
-			}
-
-			recipients := 0
-			if plan.After.Delivery != nil {
-				recipients = len(plan.After.Delivery.EmailRecipients)
-			}
-
-			return toolpreview.Build(fmt.Sprintf(
-				"Would change the schedule of the report %q to run %s (%s) and email it to %s.",
-				plan.Definition.Name, plan.After.CronExpression, plan.After.Timezone,
-				common.CountOf(recipients, "recipient"),
-			), change), nil
-		},
+		Render: renderReportScheduleUpdate,
 		Run: func(
 			ctx context.Context,
 			edit scheduleEdit,
@@ -619,6 +607,31 @@ func NewUpdateReportScheduleTool(reports ReportAdministrator) agentports.AgentTo
 			return nil, err
 		},
 	})
+}
+
+func renderReportScheduleUpdate(
+	_ scheduleEdit,
+	plan *reporting.ScheduleChange,
+) (*agent.ToolPreview, error) {
+	change, err := toolpreview.Changed(
+		reportScheduleRecord(plan.Before),
+		reportScheduleViewOf(plan.Before),
+		reportScheduleViewOf(plan.After),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	recipients := 0
+	if plan.After.Delivery != nil {
+		recipients = len(plan.After.Delivery.EmailRecipients)
+	}
+
+	return toolpreview.Build(fmt.Sprintf(
+		"Would change the schedule of the report %q to run %s (%s) and email it to %s.",
+		plan.Definition.Name, plan.After.CronExpression, plan.After.Timezone,
+		common.CountOf(recipients, "recipient"),
+	), change), nil
 }
 
 func NewDeleteReportScheduleTool(reports ReportAdministrator) agentports.AgentTool {

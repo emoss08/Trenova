@@ -18,6 +18,8 @@ import (
 
 const paramEDIPartnerID = "ediPartnerId"
 
+const toolSearchShipments = "search_shipments"
+
 const ParamServiceFailureID = "serviceFailureId"
 
 const ediPartnerIDGuidance = "from list_edi_partners or get_edi_partner. Never guess one."
@@ -69,12 +71,12 @@ func NewSendEDILoadTenderTool(tenders loadTenderSubmitter) agentports.AgentTool 
 func (t *SendEDILoadTenderTool) Name() string { return "send_edi_tender" }
 
 func (t *SendEDILoadTenderTool) Prerequisites() []string {
-	return []string{"search_shipments", "list_edi_partners"}
+	return []string{toolSearchShipments, "list_edi_partners"}
 }
 
 func (t *SendEDILoadTenderTool) Recipe() []string {
 	return []string{
-		"search_shipments",
+		toolSearchShipments,
 		"list_edi_partners",
 		"send_edi_tender",
 		"list_edi_transfers",

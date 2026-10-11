@@ -208,7 +208,11 @@ func applyOrderArgs(entity *order.Order, params map[string]any) error {
 			*target = *value
 		}
 	}
-	currency, err := common.OptionalBoundedText(params, paramCurrencyCode, common.CurrencyCodeLength)
+	currency, err := common.OptionalBoundedText(
+		params,
+		paramCurrencyCode,
+		common.CurrencyCodeLength,
+	)
 	if err != nil {
 		return err
 	}
@@ -641,7 +645,12 @@ func NewDetachOrderShipmentTool(orders orderKeeper) agentports.AgentTool {
 			created, err := toolpreview.Create(
 				orderRecord(plan.Replacement),
 				plan.Replacement,
-				toolpreview.Only(common.FieldCustomerID, common.FieldStatus, paramCurrencyCode, "totalAmount"),
+				toolpreview.Only(
+					common.FieldCustomerID,
+					common.FieldStatus,
+					paramCurrencyCode,
+					"totalAmount",
+				),
 				toolpreview.WithRefs(orderRefs),
 			)
 			if err != nil {

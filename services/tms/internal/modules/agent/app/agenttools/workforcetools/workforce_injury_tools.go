@@ -154,11 +154,18 @@ func injuryDetailProperties() map[string]any {
 		paramReportedAt:    agenttoolschema.Date("When the worker reported it."),
 		paramReturnedAt:    agenttoolschema.Date("When the worker came back to work."),
 		paramEventLocation: common.StringProperty("Where it happened.", wfShortChars),
-		paramBodyPart:      common.StringProperty("The part of the body affected.", maxCredentialField),
+		paramBodyPart: common.StringProperty(
+			"The part of the body affected.",
+			maxCredentialField,
+		),
 		paramHarmfulAgent: common.StringProperty("What harmed the worker, such as a load strap.",
 			wfShortChars),
-		paramDaysAway: common.IntegerProperty("Days away from work, capped at 180 as the log counts "+
-			"them.", 0, maxInjuryDays),
+		paramDaysAway: common.IntegerProperty(
+			"Days away from work, capped at 180 as the log counts "+
+				"them.",
+			0,
+			maxInjuryDays,
+		),
 		paramDaysRestricted: common.IntegerProperty("Days on restricted duty or job transfer.", 0,
 			maxInjuryDays),
 		paramPrivacyCase: common.BooleanProperty("Whether the worker's name is withheld from the " +
@@ -384,7 +391,10 @@ func newUpdateWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
 	properties[paramInjuryStatus] = agenttoolschema.Enum("Open or Closed.", injuryStatuses)
 	properties[paramClaimClosedAt] = agenttoolschema.Date("When the claim closed.")
 	properties[wfParamOccurred] = agenttoolschema.DateTime("When it happened.")
-	properties[common.FieldDescription] = common.StringProperty("What happened and the injury.", wfNoteChars)
+	properties[common.FieldDescription] = common.StringProperty(
+		"What happened and the injury.",
+		wfNoteChars,
+	)
 	spec := targeting(withSchema(wfSpec(
 		"update_worker_injury",
 		"Correct or bring up to date an injury case: its classification, treatment, days "+
@@ -412,7 +422,10 @@ func newUpdateWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
 				InjuryID:   id,
 				UserID:     params.Actor.UserID,
 			}
-			if req.OccurredAt, err = common.OptionalDateTime(params.Params, wfParamOccurred); err != nil {
+			if req.OccurredAt, err = common.OptionalDateTime(
+				params.Params,
+				wfParamOccurred,
+			); err != nil {
 				return nil, err
 			}
 			return req, injuryUpdateFrom(params.Params, req)
@@ -469,34 +482,37 @@ func newDeleteWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
 	spec.MaxTier = agent.TierPropose
 	spec.Reversible = false
 
-	return common.NewReceivableTool(spec, common.ReceivablePlan[*recordDelete, *worker.WorkerInjury]{
-		Request: recordDeleteFrom(paramInjuryID),
-		Plan: func(
-			ctx context.Context,
-			req *recordDelete,
-			_ *agentports.ToolExecuteParams,
-		) (*worker.WorkerInjury, error) {
-			return injuries.PlanDeleteInjury(ctx, req.tenant, req.id)
+	return common.NewReceivableTool(
+		spec,
+		common.ReceivablePlan[*recordDelete, *worker.WorkerInjury]{
+			Request: recordDeleteFrom(paramInjuryID),
+			Plan: func(
+				ctx context.Context,
+				req *recordDelete,
+				_ *agentports.ToolExecuteParams,
+			) (*worker.WorkerInjury, error) {
+				return injuries.PlanDeleteInjury(ctx, req.tenant, req.id)
+			},
+			Refused: func(*recordDelete) string { return "Would delete an injury case." },
+			Render: func(_ *recordDelete, injury *worker.WorkerInjury) (*agent.ToolPreview, error) {
+				change, err := toolpreview.Delete(injuryRecord(injury), injury,
+					wfOptions(injuryFields...)...)
+				if err != nil {
+					return nil, err
+				}
+				return toolpreview.Build(fmt.Sprintf(
+					"Would delete case %d-%d from the injury log.", injury.CaseYear,
+					injury.CaseNumber), change), nil
+			},
+			Run: func(
+				ctx context.Context,
+				req *recordDelete,
+				_ *agentports.ToolExecuteParams,
+			) (*agent.ToolExecutionResult, error) {
+				return nil, injuries.DeleteInjury(ctx, req.tenant, req.id, req.userID)
+			},
 		},
-		Refused: func(*recordDelete) string { return "Would delete an injury case." },
-		Render: func(_ *recordDelete, injury *worker.WorkerInjury) (*agent.ToolPreview, error) {
-			change, err := toolpreview.Delete(injuryRecord(injury), injury,
-				wfOptions(injuryFields...)...)
-			if err != nil {
-				return nil, err
-			}
-			return toolpreview.Build(fmt.Sprintf(
-				"Would delete case %d-%d from the injury log.", injury.CaseYear,
-				injury.CaseNumber), change), nil
-		},
-		Run: func(
-			ctx context.Context,
-			req *recordDelete,
-			_ *agentports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
-			return nil, injuries.DeleteInjury(ctx, req.tenant, req.id, req.userID)
-		},
-	})
+	)
 }
 
 func provideRecordWorkerInjuryTool(s *workerinjuryservice.Service) agentports.AgentTool {

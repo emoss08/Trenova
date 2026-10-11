@@ -188,7 +188,11 @@ func (t *GenerateRateConfirmationTool) moveID(
 func (t *GenerateRateConfirmationTool) Target(
 	params map[string]any,
 ) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, common.PreviewFieldShipmentMoveID, permission.ResourceShipmentMove)
+	return common.TargetOf(
+		params,
+		common.PreviewFieldShipmentMoveID,
+		permission.ResourceShipmentMove,
+	)
 }
 
 // sendRateConfirmationTool emails a revision to the carrier's rate

@@ -60,9 +60,19 @@ var reviewGoalStatuses = agenttoolschema.Source(
 )
 
 var reviewFields = []string{
-	wfFieldWorkerID, paramReviewTemplate, "reviewerId", common.FieldStatus, paramTitle,
-	common.FieldPeriodStart, common.FieldPeriodEnd, paramRatings, "overallScore", paramReviewSummary,
-	paramStrengths, paramImprovements, paramGoals,
+	wfFieldWorkerID,
+	paramReviewTemplate,
+	"reviewerId",
+	common.FieldStatus,
+	paramTitle,
+	common.FieldPeriodStart,
+	common.FieldPeriodEnd,
+	paramRatings,
+	"overallScore",
+	paramReviewSummary,
+	paramStrengths,
+	paramImprovements,
+	paramGoals,
 }
 
 type ReviewKeeper interface {
@@ -135,7 +145,10 @@ func newStartPerformanceReviewTool(reviews ReviewKeeper) agentports.AgentTool {
 			"The review template, from list_performance_reviews. "+
 				"Never guess one.",
 		),
-		paramTitle:              common.StringProperty("A title; defaults to the template and period.", 120),
+		paramTitle: common.StringProperty(
+			"A title; defaults to the template and period.",
+			120,
+		),
 		common.FieldPeriodStart: agenttoolschema.Date("The first day the review covers."),
 		common.FieldPeriodEnd:   agenttoolschema.Date("The last day the review covers."),
 	}, common.ParamWorkerID, paramReviewTemplate, common.FieldPeriodStart, common.FieldPeriodEnd)
@@ -483,33 +496,36 @@ func newDeletePerformanceReviewTool(reviews ReviewKeeper) agentports.AgentTool {
 	spec.MaxTier = agent.TierPropose
 	spec.Reversible = false
 
-	return common.NewReceivableTool(spec, common.ReceivablePlan[*recordDelete, *worker.PerformanceReview]{
-		Request: recordDeleteFrom(paramReviewID),
-		Plan: func(
-			ctx context.Context,
-			req *recordDelete,
-			_ *agentports.ToolExecuteParams,
-		) (*worker.PerformanceReview, error) {
-			return reviews.PlanDeleteReview(ctx, req.tenant, req.id)
+	return common.NewReceivableTool(
+		spec,
+		common.ReceivablePlan[*recordDelete, *worker.PerformanceReview]{
+			Request: recordDeleteFrom(paramReviewID),
+			Plan: func(
+				ctx context.Context,
+				req *recordDelete,
+				_ *agentports.ToolExecuteParams,
+			) (*worker.PerformanceReview, error) {
+				return reviews.PlanDeleteReview(ctx, req.tenant, req.id)
+			},
+			Refused: func(*recordDelete) string { return "Would delete a draft review." },
+			Render: func(_ *recordDelete, review *worker.PerformanceReview) (*agent.ToolPreview, error) {
+				change, err := toolpreview.Delete(reviewRecord(review), review,
+					wfOptions(reviewFields...)...)
+				if err != nil {
+					return nil, err
+				}
+				return toolpreview.Build(fmt.Sprintf("Would delete the draft %q.", review.Title),
+					change), nil
+			},
+			Run: func(
+				ctx context.Context,
+				req *recordDelete,
+				_ *agentports.ToolExecuteParams,
+			) (*agent.ToolExecutionResult, error) {
+				return nil, reviews.DeleteReview(ctx, req.tenant, req.id, req.userID)
+			},
 		},
-		Refused: func(*recordDelete) string { return "Would delete a draft review." },
-		Render: func(_ *recordDelete, review *worker.PerformanceReview) (*agent.ToolPreview, error) {
-			change, err := toolpreview.Delete(reviewRecord(review), review,
-				wfOptions(reviewFields...)...)
-			if err != nil {
-				return nil, err
-			}
-			return toolpreview.Build(fmt.Sprintf("Would delete the draft %q.", review.Title),
-				change), nil
-		},
-		Run: func(
-			ctx context.Context,
-			req *recordDelete,
-			_ *agentports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
-			return nil, reviews.DeleteReview(ctx, req.tenant, req.id, req.userID)
-		},
-	})
+	)
 }
 
 func provideStartPerformanceReviewTool(

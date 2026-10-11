@@ -76,8 +76,16 @@ func NewSplitMoveTool(moves moveSplitter) agentports.AgentTool {
 					"the relay pickup window.",
 			),
 			paramNewDeliveryEnd: agenttoolschema.DateTime("When the final delivery window closes."),
-			common.FieldPieces:  common.IntegerProperty("Pieces going on from the relay.", 1, 1000000),
-			common.FieldWeight:  common.IntegerProperty("Weight going on from the relay.", 1, 1000000),
+			common.FieldPieces: common.IntegerProperty(
+				"Pieces going on from the relay.",
+				1,
+				1000000,
+			),
+			common.FieldWeight: common.IntegerProperty(
+				"Weight going on from the relay.",
+				1,
+				1000000,
+			),
 		},
 		Required: []string{
 			ParamMoveID, ParamNewDeliveryLocationID, ParamRelayPickupStart, ParamNewDeliveryStart,

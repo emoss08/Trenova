@@ -20,7 +20,7 @@ type LedgerAccounts interface {
 }
 
 type JournalRevision struct {
-	Id          pulid.ID                                     `json:"-"`
+	ID          pulid.ID                                     `json:"-"`
 	Description string                                       `json:"-"`
 	Reason      string                                       `json:"-"`
 	HasReason   bool                                         `json:"-"`

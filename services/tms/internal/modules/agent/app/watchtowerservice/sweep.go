@@ -58,7 +58,7 @@ func (s *Service) sweep(
 		for _, input := range snapshot {
 			input.TenantInfo = tenant
 			input.SourceKind = kind
-			if _, uErr := s.projector.upsert(ctx, input); uErr != nil {
+			if uErr := s.projector.upsert(ctx, input); uErr != nil {
 				s.l.Warn("watchtower snapshot item rejected",
 					zap.String("kind", string(kind)),
 					zap.String("source", input.SourceID),

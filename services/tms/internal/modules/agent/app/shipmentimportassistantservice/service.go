@@ -337,7 +337,7 @@ func (s *Service) ensureConversation(
 		)
 	}
 
-	conversation, err := s.chatRepo.GetConversationByDocument(
+	chat, err := s.chatRepo.GetConversationByDocument(
 		ctx,
 		shipmentimportchatports.GetShipmentImportConversationRequest{
 			DocumentID: documentID,
@@ -346,10 +346,10 @@ func (s *Service) ensureConversation(
 		},
 	)
 	if err == nil {
-		if req.ConversationID == "" && conversation.ExternalConversationID != "" {
-			req.ConversationID = conversation.ExternalConversationID
+		if req.ConversationID == "" && chat.ExternalConversationID != "" {
+			req.ConversationID = chat.ExternalConversationID
 		}
-		return conversation, nil
+		return chat, nil
 	}
 	if !errortypes.IsNotFoundError(err) {
 		return nil, err
@@ -486,7 +486,7 @@ func toHistoryActions(
 func (s *Service) persistConversationTurn(
 	ctx context.Context,
 	req *shipmentports.ShipmentImportChatRequest,
-	conversation *shipmentimportchat.Conversation,
+	chat *shipmentimportchat.Conversation,
 	responseConversationID string,
 	assistantMessage string,
 	suggestions []shipmentports.ShipmentImportSuggestion,
@@ -496,7 +496,7 @@ func (s *Service) persistConversationTurn(
 	resultStatus shipmentimportchat.TurnResultStatus,
 	errorMessage string,
 ) error {
-	if conversation == nil {
+	if chat == nil {
 		return nil
 	}
 
@@ -512,22 +512,22 @@ func (s *Service) persistConversationTurn(
 		ctx,
 		kernelports.TxOptions{},
 		func(txCtx context.Context, _ bun.Tx) error {
-			conversation.UserID = req.TenantInfo.UserID
-			conversation.ExternalConversationID = responseConversationID
-			conversation.TurnCount++
-			conversation.LastMessageAt = &now
+			chat.UserID = req.TenantInfo.UserID
+			chat.ExternalConversationID = responseConversationID
+			chat.TurnCount++
+			chat.LastMessageAt = &now
 
-			if _, err := s.chatRepo.UpdateConversation(txCtx, conversation); err != nil {
+			if _, err := s.chatRepo.UpdateConversation(txCtx, chat); err != nil {
 				return err
 			}
 
 			_, err := s.chatRepo.AppendTurn(txCtx, &shipmentimportchat.Turn{
-				ConversationID:         conversation.ID,
+				ConversationID:         chat.ID,
 				OrganizationID:         req.TenantInfo.OrgID,
 				BusinessUnitID:         req.TenantInfo.BuID,
-				DocumentID:             conversation.DocumentID,
+				DocumentID:             chat.DocumentID,
 				UserID:                 req.TenantInfo.UserID,
-				TurnIndex:              conversation.TurnCount,
+				TurnIndex:              chat.TurnCount,
 				UserMessage:            req.UserMessage,
 				AssistantMessage:       assistantMessage,
 				RequestConversationID:  req.ConversationID,
@@ -549,14 +549,14 @@ func (s *Service) persistConversationTurn(
 	if s.chatCacheRepo != nil {
 		if cacheErr := s.chatCacheRepo.DeleteHistory(
 			ctx,
-			conversation.DocumentID,
+			chat.DocumentID,
 			req.TenantInfo,
 		); cacheErr != nil {
 			s.logger.Warn("failed to invalidate shipment import chat cache", zap.Error(cacheErr))
 		}
 	}
 
-	snapshot, historyErr := s.getHistorySnapshot(ctx, conversation.DocumentID, req.TenantInfo)
+	snapshot, historyErr := s.getHistorySnapshot(ctx, chat.DocumentID, req.TenantInfo)
 	if historyErr == nil && snapshot != nil && s.chatCacheRepo != nil {
 		if cacheErr := s.chatCacheRepo.SetHistory(ctx, snapshot, req.TenantInfo); cacheErr != nil {
 			s.logger.Warn("failed to cache shipment import chat history", zap.Error(cacheErr))
@@ -584,7 +584,7 @@ func (s *Service) getHistorySnapshot(
 		}
 	}
 
-	conversation, err := s.chatRepo.GetConversationByDocument(
+	chat, err := s.chatRepo.GetConversationByDocument(
 		ctx,
 		shipmentimportchatports.GetShipmentImportConversationRequest{
 			DocumentID: documentID,
@@ -604,7 +604,7 @@ func (s *Service) getHistorySnapshot(
 	}
 
 	turns, err := s.chatRepo.ListTurns(ctx, shipmentimportchatports.ListShipmentImportTurnsRequest{
-		ConversationID: conversation.ID,
+		ConversationID: chat.ID,
 		TenantInfo:     tenantInfo,
 	})
 	if err != nil {
@@ -634,13 +634,13 @@ func (s *Service) getHistorySnapshot(
 
 	snapshot := &shipmentimportchat.HistorySnapshot{
 		DocumentID:     documentID.String(),
-		ConversationID: conversation.ExternalConversationID,
-		Status:         conversation.Status,
-		StatusReason:   conversation.StatusReason,
-		TurnCount:      conversation.TurnCount,
-		LastMessageAt:  conversation.LastMessageAt,
+		ConversationID: chat.ExternalConversationID,
+		Status:         chat.Status,
+		StatusReason:   chat.StatusReason,
+		TurnCount:      chat.TurnCount,
+		LastMessageAt:  chat.LastMessageAt,
 		Messages:       messages,
-		UpdatedAt:      conversation.UpdatedAt,
+		UpdatedAt:      chat.UpdatedAt,
 	}
 
 	if s.chatCacheRepo != nil {
@@ -655,21 +655,21 @@ func (s *Service) getHistorySnapshot(
 func (s *Service) recordFailedTurn(
 	ctx context.Context,
 	req *shipmentports.ShipmentImportChatRequest,
-	conversation *shipmentimportchat.Conversation,
+	chat *shipmentimportchat.Conversation,
 	conversationID string,
 	assistantMessage string,
 	toolCalls []shipmentports.ShipmentImportToolCallRecord,
 	actions []shipmentports.ShipmentImportAction,
 	errorMessage string,
 ) {
-	if conversation == nil {
+	if chat == nil {
 		return
 	}
 
 	if err := s.persistConversationTurn(
 		ctx,
 		req,
-		conversation,
+		chat,
 		conversationID,
 		assistantMessage,
 		nil,

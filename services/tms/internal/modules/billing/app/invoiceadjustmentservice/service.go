@@ -123,9 +123,8 @@ type previewLineValues struct {
 	payload        map[string]any
 }
 
-func New(
-	p Params,
-) invoiceadjustmentports.InvoiceAdjustmentService { //nolint:gocritic // stable API shape
+//nolint:gocritic // stable API shape
+func New(p Params) invoiceadjustmentports.InvoiceAdjustmentService {
 	return &Service{
 		l:                  p.Logger.Named("service.invoice-adjustment"),
 		db:                 p.DB,

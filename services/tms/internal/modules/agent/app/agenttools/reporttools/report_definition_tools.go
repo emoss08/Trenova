@@ -22,6 +22,8 @@ import (
 // is not organized, it is a model padding a field it was told about.
 const maxReportTags = 10
 
+const paramReportName = "name"
+
 // reportDefinitionWriter is the slice of the reporting service these tools
 // need. The compiler behind CreateDefinition and UpdateDefinition validates
 // and authorizes every field the definition names, which is what makes it
@@ -111,19 +113,21 @@ type reportMetadata struct {
 func readReportMetadata(params map[string]any) (reportMetadata, error) {
 	meta := reportMetadata{given: make(map[string]bool, 6)}
 	for _, key := range []string{
-		"name", "description", "category", "tags", "visibility", "defaultFormat",
+		paramReportName, "description", "category", "tags", "visibility", "defaultFormat",
 	} {
 		if _, ok := params[key]; ok {
 			meta.given[key] = true
 		}
 	}
 
-	meta.Name = strings.TrimSpace(common.OptionalString(params, "name"))
+	meta.Name = strings.TrimSpace(common.OptionalString(params, paramReportName))
 	meta.Description = strings.TrimSpace(common.OptionalString(params, "description"))
 	meta.Category = strings.TrimSpace(common.OptionalString(params, "category"))
 
 	if meta.given["visibility"] {
-		meta.Visibility = report.Visibility(strings.TrimSpace(common.OptionalString(params, "visibility")))
+		meta.Visibility = report.Visibility(
+			strings.TrimSpace(common.OptionalString(params, "visibility")),
+		)
 		if !meta.Visibility.IsValid() {
 			return meta, fmt.Errorf(
 				"parameter \"visibility\" must be %q or %q",
@@ -296,13 +300,13 @@ func (t *CreateReportTool) SearchTerms() []string {
 
 func (t *CreateReportTool) ParamSchema() map[string]any {
 	properties := reportMetadataProperties()
-	properties["name"] = map[string]any{"type": "string", "description": reportNameNote}
+	properties[paramReportName] = map[string]any{"type": "string", "description": reportNameNote}
 	properties["definition"] = report.DefinitionJSONSchema()
 
 	return map[string]any{
 		"type":                 "object",
 		"properties":           properties,
-		"required":             []string{"name", "definition"},
+		"required":             []string{paramReportName, "definition"},
 		"additionalProperties": false,
 	}
 }
@@ -360,7 +364,7 @@ func (t *CreateReportTool) prepare(
 		return nil, err
 	}
 
-	name, err := common.RequireString(params.Params, "name")
+	name, err := common.RequireString(params.Params, paramReportName)
 	if err != nil {
 		return nil, err
 	}
@@ -418,7 +422,7 @@ func (t *UpdateReportTool) ParamSchema() map[string]any {
 		permission.ResourceReport,
 		"The definitionId of the saved report, from list_reports or describe_report.",
 	)
-	properties["name"] = map[string]any{"type": "string", "description": reportNameNote}
+	properties[paramReportName] = map[string]any{"type": "string", "description": reportNameNote}
 	properties["definition"] = report.DefinitionJSONSchema()
 	properties["status"] = agenttoolschema.Enum(
 		"Optional: active runs, draft is kept but hidden from runs, archived "+
@@ -560,7 +564,7 @@ func (t *UpdateReportTool) prepare(
 		Definition:    existing.Definition,
 		Version:       existing.Version,
 	}
-	if meta.given["name"] {
+	if meta.given[paramReportName] {
 		if meta.Name == "" {
 			return nil, nil, errors.New("parameter \"name\" must be a non-empty string")
 		}
@@ -634,7 +638,7 @@ func (t *ForkReportTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "The reportKey of the built-in report, from list_reports.",
 			},
-			"name": map[string]any{
+			paramReportName: map[string]any{
 				"type":        "string",
 				"description": "Optional name for the copy. Defaults to the original's name.",
 			},
@@ -692,7 +696,10 @@ func (t *ForkReportTool) ExecuteWithResult(
 	}
 
 	if forked == nil {
-		return &agent.ToolExecutionResult{Action: "created", Kind: "report"}, nil
+		return &agent.ToolExecutionResult{
+			Action: common.ResultCreated,
+			Kind:   reportRecordEntity,
+		}, nil
 	}
 
 	return reportResult(forked.ID.String(), forked.Name), nil

@@ -257,7 +257,7 @@ func (t *PostCustomerPaymentTool) ParamSchema() map[string]any {
 				"The paying customer, from list_customers or get_bank_receipt's "+
 					"suggestions.",
 			),
-			"amount": map[string]any{
+			common.ParamAmount: map[string]any{
 				"type":        "string",
 				"description": "The payment amount as a decimal string, such as 1250.00.",
 			},
@@ -287,7 +287,7 @@ func (t *PostCustomerPaymentTool) ParamSchema() map[string]any {
 							permission.ResourceInvoice,
 							"An open invoice of this customer, from list_invoices.",
 						),
-						"amount": map[string]any{
+						common.ParamAmount: map[string]any{
 							"type":        "string",
 							"description": "Applied to this invoice, as a decimal string.",
 						},
@@ -296,7 +296,7 @@ func (t *PostCustomerPaymentTool) ParamSchema() map[string]any {
 							"description": "Written off on this invoice as a short pay, if any.",
 						},
 					},
-					"required":             []string{"invoiceId", "amount"},
+					"required":             []string{"invoiceId", common.ParamAmount},
 					"additionalProperties": false,
 				},
 			},
@@ -307,7 +307,7 @@ func (t *PostCustomerPaymentTool) ParamSchema() map[string]any {
 					"step.",
 			),
 		},
-		"required":             []string{"customerId", "amount", "paymentDate"},
+		"required":             []string{"customerId", common.ParamAmount, "paymentDate"},
 		"additionalProperties": false,
 	}
 }
@@ -387,7 +387,7 @@ func (t *PostCustomerPaymentTool) arguments(
 	if err != nil {
 		return postPaymentArgs{}, err
 	}
-	amount, err := common.RequireMoney(params.Params, "amount")
+	amount, err := common.RequireMoney(params.Params, common.ParamAmount)
 	if err != nil {
 		return postPaymentArgs{}, err
 	}
@@ -676,7 +676,9 @@ func (t *ResolveBankReceiptWorkItemTool) arguments(
 		return resolveWorkItemArgs{}, err
 	}
 
-	resolution := bankreceiptworkitem.ResolutionType(common.OptionalString(params.Params, "resolution"))
+	resolution := bankreceiptworkitem.ResolutionType(
+		common.OptionalString(params.Params, "resolution"),
+	)
 	switch resolution {
 	case bankreceiptworkitem.ResolutionRequiresExternalFollowUp,
 		bankreceiptworkitem.ResolutionMarkedFalsePositive:

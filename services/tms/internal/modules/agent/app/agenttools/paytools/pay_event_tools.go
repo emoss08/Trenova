@@ -102,8 +102,11 @@ func (t *PayEventHoldTool) ParamSchema() map[string]any {
 	}
 	required := []string{paramPayEventID}
 	if t.hold {
-		properties[paramHoldReason] = common.StringProperty("Why the pay is held, in words for the "+
-			"driver.", maxHoldReasonChars)
+		properties[paramHoldReason] = common.StringProperty(
+			"Why the pay is held, in words for the "+
+				"driver.",
+			maxHoldReasonChars,
+		)
 		required = append(required, paramHoldReason)
 	}
 
@@ -524,7 +527,7 @@ func (t *PayEventTransferTool) Preview(
 
 	change, err := toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceDriverSettlement,
-		ID:       before.Id,
+		ID:       before.ID,
 		Label:    before.Number,
 		Version:  common.PinnedVersion(before.Version),
 	}, plan.Before, plan.After, toolpreview.Only("shipmentCount"))

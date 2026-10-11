@@ -244,7 +244,7 @@ type ProposalOutcome struct {
 }
 
 // Pending reports that the person has not decided yet.
-func (o ProposalOutcome) Pending() bool {
+func (o *ProposalOutcome) Pending() bool {
 	return o.Status == agent.ProposalStatusPending
 }
 

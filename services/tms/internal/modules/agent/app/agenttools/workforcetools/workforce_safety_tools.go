@@ -271,8 +271,11 @@ func safetyEventProperties() map[string]any {
 		paramEventKind:     agenttoolschema.Enum("What happened.", safetyEventKinds),
 		paramEventSeverity: agenttoolschema.Enum("How serious it was.", safetySeverities),
 		wfParamOccurred:    agenttoolschema.DateTime("When it happened."),
-		common.FieldDescription: common.StringProperty("What happened, in the words of the report or "+
-			"the person who told you.", wfNoteChars),
+		common.FieldDescription: common.StringProperty(
+			"What happened, in the words of the report or "+
+				"the person who told you.",
+			wfNoteChars,
+		),
 		paramEventLocation: common.StringProperty("Where it happened.", wfShortChars),
 		paramPreventable: common.BooleanProperty("For an accident: whether it was preventable. " +
 			"Leave it out unless the report says so."),
@@ -690,11 +693,19 @@ func newChangeWorkerSafetyEventStatusTool(events SafetyKeeper) agentports.AgentT
 				if err != nil {
 					return nil, err
 				}
-				move, err := common.RequireEnum(params.Params, paramEventMove, safetyEventMoves.Values)
+				move, err := common.RequireEnum(
+					params.Params,
+					paramEventMove,
+					safetyEventMoves.Values,
+				)
 				if err != nil {
 					return nil, err
 				}
-				resolution, err := common.BoundedText(params.Params, paramResolutionText, wfNoteChars)
+				resolution, err := common.BoundedText(
+					params.Params,
+					paramResolutionText,
+					wfNoteChars,
+				)
 				if err != nil {
 					return nil, err
 				}
@@ -723,24 +734,7 @@ func newChangeWorkerSafetyEventStatusTool(events SafetyKeeper) agentports.AgentT
 				return fmt.Sprintf("Would %s the safety event.",
 					strings.ToLower(string(move.move)))
 			},
-			Render: func(
-				move *safetyEventStatusMove,
-				change *workersafetyservice.EventChange,
-			) (*agent.ToolPreview, error) {
-				recorded, err := toolpreview.Changed(safetyEventRecord(change.Before),
-					change.Before, change.After,
-					wfOptions(common.FieldStatus, wfFieldClosedAt, "closedById", paramResolutionText)...)
-				if err != nil {
-					return nil, err
-				}
-				summary := fmt.Sprintf("Would move the safety event from %s to %s.",
-					change.Before.Status, change.After.Status)
-				if change.Before.Status == change.After.Status {
-					summary = fmt.Sprintf("The safety event is already %s; %s changes nothing.",
-						change.Before.Status, strings.ToLower(string(move.move)))
-				}
-				return toolpreview.Build(summary, recorded), nil
-			},
+			Render: renderSafetyEventStatusMove,
 			Run: func(
 				ctx context.Context,
 				move *safetyEventStatusMove,
@@ -756,6 +750,32 @@ func newChangeWorkerSafetyEventStatusTool(events SafetyKeeper) agentports.AgentT
 		})
 }
 
+func renderSafetyEventStatusMove(
+	move *safetyEventStatusMove,
+	change *workersafetyservice.EventChange,
+) (*agent.ToolPreview, error) {
+	recorded, err := toolpreview.Changed(
+		safetyEventRecord(change.Before),
+		change.Before,
+		change.After,
+		wfOptions(
+			common.FieldStatus,
+			wfFieldClosedAt,
+			"closedById",
+			paramResolutionText,
+		)...)
+	if err != nil {
+		return nil, err
+	}
+	summary := fmt.Sprintf("Would move the safety event from %s to %s.",
+		change.Before.Status, change.After.Status)
+	if change.Before.Status == change.After.Status {
+		summary = fmt.Sprintf("The safety event is already %s; %s changes nothing.",
+			change.Before.Status, strings.ToLower(string(move.move)))
+	}
+	return toolpreview.Build(summary, recorded), nil
+}
+
 type recordDelete struct {
 	id     pulid.ID
 	tenant pagination.TenantInfo
@@ -768,7 +788,11 @@ func recordDeleteFrom(key string) func(*agentports.ToolExecuteParams) (*recordDe
 		if err != nil {
 			return nil, err
 		}
-		return &recordDelete{id: id, tenant: common.TenantFrom(*params), userID: params.Actor.UserID}, nil
+		return &recordDelete{
+			id:     id,
+			tenant: common.TenantFrom(*params),
+			userID: params.Actor.UserID,
+		}, nil
 	}
 }
 
@@ -787,36 +811,39 @@ func newDeleteWorkerSafetyEventTool(events SafetyKeeper) agentports.AgentTool {
 	spec.MaxTier = agent.TierPropose
 	spec.Reversible = false
 
-	return common.NewReceivableTool(spec, common.ReceivablePlan[*recordDelete, *worker.WorkerSafetyEvent]{
-		Request: recordDeleteFrom(paramSafetyEventID),
-		Plan: func(
-			ctx context.Context,
-			del *recordDelete,
-			_ *agentports.ToolExecuteParams,
-		) (*worker.WorkerSafetyEvent, error) {
-			return events.PlanDeleteEvent(ctx, del.tenant, del.id)
+	return common.NewReceivableTool(
+		spec,
+		common.ReceivablePlan[*recordDelete, *worker.WorkerSafetyEvent]{
+			Request: recordDeleteFrom(paramSafetyEventID),
+			Plan: func(
+				ctx context.Context,
+				del *recordDelete,
+				_ *agentports.ToolExecuteParams,
+			) (*worker.WorkerSafetyEvent, error) {
+				return events.PlanDeleteEvent(ctx, del.tenant, del.id)
+			},
+			Refused: func(*recordDelete) string {
+				return "Would delete a safety event from the driver's record."
+			},
+			Render: func(_ *recordDelete, event *worker.WorkerSafetyEvent) (*agent.ToolPreview, error) {
+				change, err := toolpreview.Delete(safetyEventRecord(event), event,
+					wfOptions(safetyEventFields...)...)
+				if err != nil {
+					return nil, err
+				}
+				return toolpreview.Build(fmt.Sprintf(
+					"Would delete the %s and its %d points from the driver's record.",
+					strings.ToLower(event.Kind.String()), event.Points), change), nil
+			},
+			Run: func(
+				ctx context.Context,
+				del *recordDelete,
+				_ *agentports.ToolExecuteParams,
+			) (*agent.ToolExecutionResult, error) {
+				return nil, events.DeleteEvent(ctx, del.tenant, del.id, del.userID)
+			},
 		},
-		Refused: func(*recordDelete) string {
-			return "Would delete a safety event from the driver's record."
-		},
-		Render: func(_ *recordDelete, event *worker.WorkerSafetyEvent) (*agent.ToolPreview, error) {
-			change, err := toolpreview.Delete(safetyEventRecord(event), event,
-				wfOptions(safetyEventFields...)...)
-			if err != nil {
-				return nil, err
-			}
-			return toolpreview.Build(fmt.Sprintf(
-				"Would delete the %s and its %d points from the driver's record.",
-				strings.ToLower(event.Kind.String()), event.Points), change), nil
-		},
-		Run: func(
-			ctx context.Context,
-			del *recordDelete,
-			_ *agentports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
-			return nil, events.DeleteEvent(ctx, del.tenant, del.id, del.userID)
-		},
-	})
+	)
 }
 
 func recognitionFrom(params *agentports.ToolExecuteParams) (*worker.WorkerRecognition, error) {
@@ -949,34 +976,37 @@ func newDeleteWorkerRecognitionTool(events SafetyKeeper) agentports.AgentTool {
 	spec.MaxTier = agent.TierPropose
 	spec.Reversible = false
 
-	return common.NewReceivableTool(spec, common.ReceivablePlan[*recordDelete, *worker.WorkerRecognition]{
-		Request: recordDeleteFrom(paramRecognitionID),
-		Plan: func(
-			ctx context.Context,
-			del *recordDelete,
-			_ *agentports.ToolExecuteParams,
-		) (*worker.WorkerRecognition, error) {
-			return events.PlanDeleteRecognition(ctx, del.tenant, del.id)
+	return common.NewReceivableTool(
+		spec,
+		common.ReceivablePlan[*recordDelete, *worker.WorkerRecognition]{
+			Request: recordDeleteFrom(paramRecognitionID),
+			Plan: func(
+				ctx context.Context,
+				del *recordDelete,
+				_ *agentports.ToolExecuteParams,
+			) (*worker.WorkerRecognition, error) {
+				return events.PlanDeleteRecognition(ctx, del.tenant, del.id)
+			},
+			Refused: func(*recordDelete) string { return "Would remove a recognition." },
+			Render: func(_ *recordDelete, rec *worker.WorkerRecognition) (*agent.ToolPreview, error) {
+				change, err := toolpreview.Delete(
+					wfRecord(permission.ResourceWorkerRecognition, rec.ID, rec.Title, rec.Version),
+					rec, wfOptions(recognitionFields...)...)
+				if err != nil {
+					return nil, err
+				}
+				return toolpreview.Build(fmt.Sprintf("Would remove the recognition %q.",
+					rec.Title), change), nil
+			},
+			Run: func(
+				ctx context.Context,
+				del *recordDelete,
+				_ *agentports.ToolExecuteParams,
+			) (*agent.ToolExecutionResult, error) {
+				return nil, events.DeleteRecognition(ctx, del.tenant, del.id, del.userID)
+			},
 		},
-		Refused: func(*recordDelete) string { return "Would remove a recognition." },
-		Render: func(_ *recordDelete, rec *worker.WorkerRecognition) (*agent.ToolPreview, error) {
-			change, err := toolpreview.Delete(
-				wfRecord(permission.ResourceWorkerRecognition, rec.ID, rec.Title, rec.Version),
-				rec, wfOptions(recognitionFields...)...)
-			if err != nil {
-				return nil, err
-			}
-			return toolpreview.Build(fmt.Sprintf("Would remove the recognition %q.",
-				rec.Title), change), nil
-		},
-		Run: func(
-			ctx context.Context,
-			del *recordDelete,
-			_ *agentports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
-			return nil, events.DeleteRecognition(ctx, del.tenant, del.id, del.userID)
-		},
-	})
+	)
 }
 
 var violationFields = []string{
@@ -999,8 +1029,10 @@ func violationProperties() map[string]any {
 			"take what the event implies.", csaBasics),
 		paramViolationCode: common.StringProperty("The regulation cited, such as 393.47(e).",
 			wfShortChars),
-		common.FieldDescription: common.StringProperty("What was cited, as the inspection report words it.",
-			wfNoteChars),
+		common.FieldDescription: common.StringProperty(
+			"What was cited, as the inspection report words it.",
+			wfNoteChars,
+		),
 		paramSeverityWeight: common.IntegerProperty("The FMCSA severity weight, 1 to 10.", 1,
 			maxSeverityWeight),
 		paramOutOfService: common.BooleanProperty("Whether this violation put the driver or " +
@@ -1043,7 +1075,11 @@ func newRecordSafetyViolationTool(events SafetyKeeper) agentports.AgentTool {
 			if err != nil {
 				return nil, err
 			}
-			description, err := common.RequireBoundedText(params.Params, common.FieldDescription, wfNoteChars)
+			description, err := common.RequireBoundedText(
+				params.Params,
+				common.FieldDescription,
+				wfNoteChars,
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -1251,36 +1287,39 @@ func newDeleteSafetyViolationTool(events SafetyKeeper) agentports.AgentTool {
 	spec.MaxTier = agent.TierPropose
 	spec.Reversible = false
 
-	return common.NewReceivableTool(spec, common.ReceivablePlan[*recordDelete, *worker.WorkerSafetyViolation]{
-		Request: recordDeleteFrom(paramViolationID),
-		Plan: func(
-			ctx context.Context,
-			del *recordDelete,
-			_ *agentports.ToolExecuteParams,
-		) (*worker.WorkerSafetyViolation, error) {
-			return events.PlanDeleteViolation(ctx, del.tenant, del.id)
+	return common.NewReceivableTool(
+		spec,
+		common.ReceivablePlan[*recordDelete, *worker.WorkerSafetyViolation]{
+			Request: recordDeleteFrom(paramViolationID),
+			Plan: func(
+				ctx context.Context,
+				del *recordDelete,
+				_ *agentports.ToolExecuteParams,
+			) (*worker.WorkerSafetyViolation, error) {
+				return events.PlanDeleteViolation(ctx, del.tenant, del.id)
+			},
+			Refused: func(*recordDelete) string { return "Would remove a cited violation." },
+			Render: func(
+				_ *recordDelete,
+				violation *worker.WorkerSafetyViolation,
+			) (*agent.ToolPreview, error) {
+				change, err := toolpreview.Delete(violationRecord(violation), violation,
+					wfOptions(violationFields...)...)
+				if err != nil {
+					return nil, err
+				}
+				return toolpreview.Build(fmt.Sprintf("Would remove the %s violation.",
+					violation.Basic), change), nil
+			},
+			Run: func(
+				ctx context.Context,
+				del *recordDelete,
+				_ *agentports.ToolExecuteParams,
+			) (*agent.ToolExecutionResult, error) {
+				return nil, events.DeleteViolation(ctx, del.tenant, del.id, del.userID)
+			},
 		},
-		Refused: func(*recordDelete) string { return "Would remove a cited violation." },
-		Render: func(
-			_ *recordDelete,
-			violation *worker.WorkerSafetyViolation,
-		) (*agent.ToolPreview, error) {
-			change, err := toolpreview.Delete(violationRecord(violation), violation,
-				wfOptions(violationFields...)...)
-			if err != nil {
-				return nil, err
-			}
-			return toolpreview.Build(fmt.Sprintf("Would remove the %s violation.",
-				violation.Basic), change), nil
-		},
-		Run: func(
-			ctx context.Context,
-			del *recordDelete,
-			_ *agentports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
-			return nil, events.DeleteViolation(ctx, del.tenant, del.id, del.userID)
-		},
-	})
+	)
 }
 
 func provideOpenWorkerSafetyEventTool(s *workersafetyservice.Service) agentports.AgentTool {

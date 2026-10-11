@@ -40,7 +40,6 @@ func Options() fx.Option {
 	return OptionsFor(edition.Current())
 }
 
-//nolint:funlen // the module list is the shared application graph
 func OptionsFor(e *edition.Edition) fx.Option {
 	return fx.Options(
 		config.SectionsOption(e.ConfigSections...),

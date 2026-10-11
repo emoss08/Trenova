@@ -111,7 +111,10 @@ func (t *RequestMissingDocsTool) Preview(
 	)
 	send := toolpreview.Send(
 		toolpreview.Record{Resource: permission.ResourceCustomerCommunication, Label: label},
-		common.EmailMessagePreview(sender, common.RenderedEmailPreview(composed.send, composed.versionID)),
+		common.EmailMessagePreview(
+			sender,
+			common.RenderedEmailPreview(composed.send, composed.versionID),
+		),
 	)
 
 	summary := "Would email " + strings.Join(composed.send.To, ", ") +
@@ -221,7 +224,10 @@ func (t *ReplyToInboundMessageTool) Preview(
 			ID:       message.ID,
 			Label:    message.FromAddress,
 		},
-		common.EmailMessagePreview(sender, common.RenderedEmailPreview(composed.send, composed.versionID)),
+		common.EmailMessagePreview(
+			sender,
+			common.RenderedEmailPreview(composed.send, composed.versionID),
+		),
 	)
 
 	settled, err := toolpreview.Update(

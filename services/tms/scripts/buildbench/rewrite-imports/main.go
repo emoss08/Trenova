@@ -20,7 +20,7 @@ import (
 )
 
 var errUsage = errors.New(
-	"usage: rewrite-imports [-moves moves.tsv] [-symbols symbol-moves.tsv] <dir>...",
+	"usage: rewrite-imports [-moves moves.tsv] [-symbols symbol-moves.tsv] <dir> [dir ...]",
 )
 
 type symbolTarget struct {
@@ -222,6 +222,7 @@ func rewriteFile(p string, l *ledger) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("format %s: %w", p, err)
 	}
+	//nolint:gosec // G703: the file is rewritten in place under a directory the operator named
 	if err = os.WriteFile(p, formatted, 0o600); err != nil {
 		return false, fmt.Errorf("write %s: %w", p, err)
 	}

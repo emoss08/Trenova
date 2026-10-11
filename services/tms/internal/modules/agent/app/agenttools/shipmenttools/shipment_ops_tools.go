@@ -502,7 +502,11 @@ func settleFirstPickup(
 		}
 	}
 
-	firstPickup, err := common.OptionalLocalTime(params.Params, ParamFirstPickupAt, zones.At(pickup))
+	firstPickup, err := common.OptionalLocalTime(
+		params.Params,
+		ParamFirstPickupAt,
+		zones.At(pickup),
+	)
 	if err != nil {
 		return err
 	}

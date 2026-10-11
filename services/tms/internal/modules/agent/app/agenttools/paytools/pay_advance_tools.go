@@ -67,9 +67,14 @@ func (t *IssuePayAdvanceTool) Description() string {
 
 func (t *IssuePayAdvanceTool) ParamSchema() map[string]any {
 	return common.ObjectParams(map[string]any{
-		common.ParamWorkerID:        common.WorkerProperty(),
-		common.ParamDriverPayAmount: common.AmountProperty("The amount advanced, as a decimal such as 300.00."),
-		ParamAdvanceSource:          agenttoolschema.Enum("How it was given.", common.AdvanceSources),
+		common.ParamWorkerID: common.WorkerProperty(),
+		common.ParamDriverPayAmount: common.AmountProperty(
+			"The amount advanced, as a decimal such as 300.00.",
+		),
+		ParamAdvanceSource: agenttoolschema.Enum(
+			"How it was given.",
+			common.AdvanceSources,
+		),
 		ParamAdvanceRef: common.StringProperty("The money code, card transaction or receipt "+
 			"number.", common.MaxPayReferenceChars),
 		ParamIssuedDate: agenttoolschema.Date("The day it was given; leave it out for today."),
@@ -102,18 +107,32 @@ func (t *IssuePayAdvanceTool) entity(
 	if err != nil {
 		return nil, err
 	}
-	source, ok, err := common.OptionalEnum(params.Params, ParamAdvanceSource, common.AdvanceSources.Values)
+	source, ok, err := common.OptionalEnum(
+		params.Params,
+		ParamAdvanceSource,
+		common.AdvanceSources.Values,
+	)
 	if err != nil {
 		return nil, err
 	}
 	if !ok {
 		return nil, fmt.Errorf("missing required parameter %q", ParamAdvanceSource)
 	}
-	reference, err := common.BoundedString(params.Params, ParamAdvanceRef, common.MaxPayReferenceChars, false)
+	reference, err := common.BoundedString(
+		params.Params,
+		ParamAdvanceRef,
+		common.MaxPayReferenceChars,
+		false,
+	)
 	if err != nil {
 		return nil, err
 	}
-	notes, err := common.BoundedString(params.Params, common.ParamDriverPayNotes, common.MaxDriverPayNotes, false)
+	notes, err := common.BoundedString(
+		params.Params,
+		common.ParamDriverPayNotes,
+		common.MaxDriverPayNotes,
+		false,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -191,8 +210,14 @@ func (t *IssuePayAdvanceTool) Preview(
 	change, err := toolpreview.Create(
 		toolpreview.Record{Resource: permission.ResourcePayAdvance, Label: "New pay advance"},
 		entity,
-		toolpreview.Only(common.ParamWorkerID, common.FieldStatus, ParamAdvanceSource, ParamAdvanceRef,
-			ParamIssuedDate, common.ParamDriverPayNotes),
+		toolpreview.Only(
+			common.ParamWorkerID,
+			common.FieldStatus,
+			ParamAdvanceSource,
+			ParamAdvanceRef,
+			ParamIssuedDate,
+			common.ParamDriverPayNotes,
+		),
 		toolpreview.Volatile(ParamIssuedDate),
 		toolpreview.WithRefs(map[string]permission.Resource{
 			common.ParamWorkerID: permission.ResourceWorker,
@@ -244,7 +269,10 @@ func (t *WriteOffPayAdvanceTool) ParamSchema() map[string]any {
 	return common.ObjectParams(map[string]any{
 		ParamAdvanceID: agenttoolschema.RecordIDText(permission.ResourcePayAdvance,
 			"The advance, from "+advanceSourcesTool+". Never guess one."),
-		ParamWriteOffReason: common.StringProperty("Why it cannot be recovered.", maxWriteOffReason),
+		ParamWriteOffReason: common.StringProperty(
+			"Why it cannot be recovered.",
+			maxWriteOffReason,
+		),
 	}, ParamAdvanceID, ParamWriteOffReason)
 }
 

@@ -364,6 +364,12 @@ func (c *Conversation) capture(ctx context.Context, started StartedTurn) *TurnRe
 	record.Usage, record.Models = usageOf(record.ModelCalls)
 	record.Unattributed = summarizeCalls(bench.recorder.Unattributed(from, record.FinishedAt))
 
+	announceTurnEnd(live, record)
+
+	return record
+}
+
+func announceTurnEnd(live *liveTurn, record *TurnRecord) {
 	live.flush()
 	live.line("== %s · %s · %d tool calls · %s ==", record.Status,
 		record.Duration().Round(100*time.Millisecond), len(record.Tools), usageLine(record.Usage))
@@ -381,8 +387,6 @@ func (c *Conversation) capture(ctx context.Context, started StartedTurn) *TurnRe
 	if record.Failure != "" {
 		live.line("failure: %s", record.Failure)
 	}
-
-	return record
 }
 
 func (c *Conversation) fill(

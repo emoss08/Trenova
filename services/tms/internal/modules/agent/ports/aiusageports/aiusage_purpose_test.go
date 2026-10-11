@@ -35,8 +35,11 @@ func TestAttributedPurpose_SurvivesALostField(t *testing.T) {
 func TestAIUsageAttributionEvaluates(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, aiusageports.AIUsageAttribution{Purpose: aiusageports.AIUsagePurposeEvaluation}.Evaluates())
-	assert.True(t, aiusageports.AIUsageAttribution{RunID: pulid.MustNew("aeval_")}.Evaluates())
-	assert.False(t, aiusageports.AIUsageAttribution{RunID: pulid.MustNew("ar_")}.Evaluates())
-	assert.False(t, aiusageports.AIUsageAttribution{}.Evaluates())
+	assert.True(
+		t,
+		(&aiusageports.AIUsageAttribution{Purpose: aiusageports.AIUsagePurposeEvaluation}).Evaluates(),
+	)
+	assert.True(t, (&aiusageports.AIUsageAttribution{RunID: pulid.MustNew("aeval_")}).Evaluates())
+	assert.False(t, (&aiusageports.AIUsageAttribution{RunID: pulid.MustNew("ar_")}).Evaluates())
+	assert.False(t, (&aiusageports.AIUsageAttribution{}).Evaluates())
 }

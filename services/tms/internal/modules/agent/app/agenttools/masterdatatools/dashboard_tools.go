@@ -16,6 +16,10 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+const schemaItems = "items"
+
+const paramTile = "tile"
+
 var dashboardTileKinds = agenttoolschema.Source("report.tileKind", []report.TileKind{
 	report.TileKindTable,
 	report.TileKindChart,
@@ -98,7 +102,7 @@ func (t *CreateDashboardTool) ParamSchema() map[string]any {
 				"type":        "array",
 				"maxItems":    report.MaxDashboardTiles,
 				"description": "What the page shows, in reading order.",
-				"items":       tileSchema(),
+				schemaItems:   tileSchema(),
 			},
 		},
 		"additionalProperties": false,
@@ -331,13 +335,13 @@ func (t *AddDashboardTileTool) ParamSchema() map[string]any {
 
 	return map[string]any{
 		"type":     "object",
-		"required": []string{"dashboardId", "tile"},
+		"required": []string{"dashboardId", paramTile},
 		"properties": map[string]any{
 			"dashboardId": agenttoolschema.RecordIDText(
 				permission.ResourceDashboard,
 				"The dashboard to add to, from list_dashboards.",
 			),
-			"tile": tile,
+			paramTile: tile,
 		},
 		"additionalProperties": false,
 	}
@@ -385,9 +389,9 @@ func (t *AddDashboardTileTool) Validate(
 		return multiErr
 	}
 
-	tile, _ := params.Params["tile"].(map[string]any)
+	tile, _ := params.Params[paramTile].(map[string]any)
 
-	return checkTileTargets(ctx, t.dashboards, tenant, []map[string]any{tile}, "tile")
+	return checkTileTargets(ctx, t.dashboards, tenant, []map[string]any{tile}, paramTile)
 }
 
 func (t *AddDashboardTileTool) validateArgs(params map[string]any) error {
@@ -396,9 +400,9 @@ func (t *AddDashboardTileTool) validateArgs(params map[string]any) error {
 		multiErr.Add("dashboardId", errortypes.ErrRequired, "Name the dashboard to add to")
 	}
 
-	tile, ok := params["tile"].(map[string]any)
+	tile, ok := params[paramTile].(map[string]any)
 	if !ok {
-		multiErr.Add("tile", errortypes.ErrRequired, "Describe the tile to add")
+		multiErr.Add(paramTile, errortypes.ErrRequired, "Describe the tile to add")
 	} else {
 		validateTiles([]map[string]any{tile}, multiErr)
 	}
@@ -459,7 +463,7 @@ func (t *AddDashboardTileTool) request(
 		)
 	}
 
-	tile, _ := params.Params["tile"].(map[string]any)
+	tile, _ := params.Params[paramTile].(map[string]any)
 	// The new tile is placed below what is already there rather than at the
 	// origin, which is what keeps adding one from landing it on top of another.
 	added, err := buildTiles([]map[string]any{tile}, nextRow(tiles))
@@ -632,7 +636,7 @@ func checkTileTargets(
 }
 
 func tilePath(field string, index, count int) string {
-	if field == "tile" && count == 1 {
+	if field == paramTile && count == 1 {
 		return field
 	}
 

@@ -160,7 +160,11 @@ func openDisputeRequest(
 	if err != nil {
 		return nil, err
 	}
-	reason, err := common.RequireEnum(params.Params, paramDisputeReasonCode, disputeReasonCodes.Values)
+	reason, err := common.RequireEnum(
+		params.Params,
+		paramDisputeReasonCode,
+		disputeReasonCodes.Values,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +256,11 @@ func resolveDisputeRequest(
 	if err != nil {
 		return nil, err
 	}
-	resolution, err := common.RequireEnum(params.Params, paramDisputeResolution, disputeResolutions.Values)
+	resolution, err := common.RequireEnum(
+		params.Params,
+		paramDisputeResolution,
+		disputeResolutions.Values,
+	)
 	if err != nil {
 		return nil, err
 	}

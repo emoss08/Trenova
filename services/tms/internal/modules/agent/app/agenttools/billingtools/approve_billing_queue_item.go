@@ -110,8 +110,10 @@ func (t *ApproveBillingQueueItemTool) Preview(
 
 	switch {
 	case draft.DeferredToStatement:
-		return plan.PlanPreview(summary + "; the customer is billed on a statement, so the charge " +
-			"goes onto their next statement and no invoice is made now."), nil
+		return plan.PlanPreview(
+			summary + "; the customer is billed on a statement, so the charge " +
+				"goes onto their next statement and no invoice is made now.",
+		), nil
 	case draft.Invoice == nil:
 		return plan.PlanPreview(summary + "."), nil
 	case draft.Invoice.ID.IsNotNil():
@@ -155,7 +157,10 @@ func (t *ApproveBillingQueueItemTool) ExecuteWithResult(
 	made, err := t.invoices.PreviewApprovalInvoice(ctx, draftReq)
 	if err != nil || made == nil || made.Invoice == nil || made.Invoice.ID.IsNil() {
 		//nolint:nilerr // the approval is made; not finding its invoice only costs the pointer
-		return &agent.ToolExecutionResult{Action: common.PastApproved, Kind: "billing queue item"}, nil
+		return &agent.ToolExecutionResult{
+			Action: common.PastApproved,
+			Kind:   "billing queue item",
+		}, nil
 	}
 
 	return &agent.ToolExecutionResult{
@@ -163,7 +168,10 @@ func (t *ApproveBillingQueueItemTool) ExecuteWithResult(
 		Kind:   common.InvoiceRecordEntity,
 		Name:   made.Invoice.Number,
 		IDs:    map[string]string{common.ParamInvoiceID: made.Invoice.ID.String()},
-		Record: &agent.RecordRef{EntityType: common.InvoiceRecordEntity, ID: made.Invoice.ID.String()},
+		Record: &agent.RecordRef{
+			EntityType: common.InvoiceRecordEntity,
+			ID:         made.Invoice.ID.String(),
+		},
 	}, nil
 }
 

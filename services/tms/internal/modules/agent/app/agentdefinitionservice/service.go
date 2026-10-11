@@ -252,10 +252,7 @@ func (s *Service) Delete(
 	req agentdefinitionports.DeleteAgentDefinitionRequest,
 	actor *permissionports.RequestActor,
 ) error {
-	existing, err := s.repo.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	existing, err := s.repo.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest(req))
 	if err != nil {
 		return err
 	}

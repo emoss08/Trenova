@@ -309,7 +309,6 @@ func (r *versionRepository) Publish(
 			)
 
 			vCols := documenttemplatecol.DocumentTemplateVersionColumns
-			tCols := documenttemplatecol.DocumentTemplateColumns
 			entity := new(documenttemplate.DocumentTemplateVersion)
 
 			err := r.db.WithTx(
@@ -339,20 +338,9 @@ func (r *versionRepository) Publish(
 					// Archive first: the partial unique index allows exactly one Active row
 					// per template and is checked per statement, so activating before
 					// archiving would abort the transaction.
-					if _, aErr := r.db.DBForContext(c).
-						NewUpdate().
-						Model((*documenttemplate.DocumentTemplateVersion)(nil)).
-						WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-							return documenttemplatecol.DocumentTemplateVersionScopeTenantUpdate(uq, req.TenantInfo).
-								Where(vCols.TemplateID.Eq(), incoming.TemplateID).
-								Where(vCols.Status.Eq(), documenttemplate.VersionStatusActive)
-						}).
-						Set(vCols.Status.Set(), documenttemplate.VersionStatusArchived).
-						Set(vCols.ArchivedAt.Set(), now).
-						Set(vCols.ArchivedByID.Set(), req.PublishedByID).
-						Set(vCols.UpdatedAt.Set(), now).
-						Set(vCols.Version.Inc(1)).
-						Exec(c); aErr != nil {
+					if aErr := r.archiveActiveVersion(
+						c, req, incoming.TemplateID, now,
+					); aErr != nil {
 						return aErr
 					}
 
@@ -384,19 +372,7 @@ func (r *versionRepository) Publish(
 
 					// Repointing last means no window exists in which the template names a
 					// version that is not yet Active.
-					_, tErr := r.db.DBForContext(c).
-						NewUpdate().
-						Model((*documenttemplate.DocumentTemplate)(nil)).
-						WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-							return documenttemplatecol.DocumentTemplateScopeTenantUpdate(uq, req.TenantInfo).
-								Where(tCols.ID.Eq(), incoming.TemplateID)
-						}).
-						Set(tCols.ActiveVersionID.Set(), req.VersionID).
-						Set(tCols.UpdatedAt.Set(), now).
-						Set(tCols.Version.Inc(1)).
-						Exec(c)
-
-					return tErr
+					return r.pointTemplateAtVersion(c, req, incoming.TemplateID, now)
 				},
 			)
 			if err != nil {
@@ -410,6 +386,55 @@ func (r *versionRepository) Publish(
 			return entity, nil
 		},
 	)
+}
+
+func (r *versionRepository) archiveActiveVersion(
+	ctx context.Context,
+	req *documenttemplateports.PublishDocumentTemplateVersionRequest,
+	templateID pulid.ID,
+	now int64,
+) error {
+	vCols := documenttemplatecol.DocumentTemplateVersionColumns
+
+	_, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*documenttemplate.DocumentTemplateVersion)(nil)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return documenttemplatecol.DocumentTemplateVersionScopeTenantUpdate(uq, req.TenantInfo).
+				Where(vCols.TemplateID.Eq(), templateID).
+				Where(vCols.Status.Eq(), documenttemplate.VersionStatusActive)
+		}).
+		Set(vCols.Status.Set(), documenttemplate.VersionStatusArchived).
+		Set(vCols.ArchivedAt.Set(), now).
+		Set(vCols.ArchivedByID.Set(), req.PublishedByID).
+		Set(vCols.UpdatedAt.Set(), now).
+		Set(vCols.Version.Inc(1)).
+		Exec(ctx)
+
+	return err
+}
+
+func (r *versionRepository) pointTemplateAtVersion(
+	ctx context.Context,
+	req *documenttemplateports.PublishDocumentTemplateVersionRequest,
+	templateID pulid.ID,
+	now int64,
+) error {
+	tCols := documenttemplatecol.DocumentTemplateColumns
+
+	_, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*documenttemplate.DocumentTemplate)(nil)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return documenttemplatecol.DocumentTemplateScopeTenantUpdate(uq, req.TenantInfo).
+				Where(tCols.ID.Eq(), templateID)
+		}).
+		Set(tCols.ActiveVersionID.Set(), req.VersionID).
+		Set(tCols.UpdatedAt.Set(), now).
+		Set(tCols.Version.Inc(1)).
+		Exec(ctx)
+
+	return err
 }
 
 // Archive retires a version. Archiving the live one also clears the template's

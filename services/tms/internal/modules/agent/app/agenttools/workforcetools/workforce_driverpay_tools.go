@@ -45,11 +45,19 @@ const maxDisputeResolution = 2000
 const defaultPayCurrency = "USD"
 
 var payDisputeFields = []string{
-	common.FieldStatus, common.FieldCategory, "resolutionNote", wfFieldResolvedByID, common.FieldResolvedAt,
+	common.FieldStatus,
+	common.FieldCategory,
+	"resolutionNote",
+	wfFieldResolvedByID,
+	common.FieldResolvedAt,
 }
 
 var expenseFields = []string{
-	common.FieldStatus, common.FieldDescription, "reviewNote", "reviewedById", common.FieldReviewedAt,
+	common.FieldStatus,
+	common.FieldDescription,
+	"reviewNote",
+	"reviewedById",
+	common.FieldReviewedAt,
 }
 
 var disputeDecisions = agenttoolschema.Source("settlementDispute.decision",
@@ -283,8 +291,10 @@ func newResolveSettlementDisputeTool(reviewer DriverPayReviewer) agentports.Agen
 			"turn the dispute down.", disputeDecisions),
 		paramResolutionNote: common.StringProperty("The decision in words the driver reads in "+
 			"Dash. Required either way.", maxDisputeResolution),
-		paramAdjustmentAmountMoney: common.AmountProperty("For an approval, what to pay back as a " +
-			"decimal such as 42.50; negative to take money back. Leave it out for none."),
+		paramAdjustmentAmountMoney: common.AmountProperty(
+			"For an approval, what to pay back as a " +
+				"decimal such as 42.50; negative to take money back. Leave it out for none.",
+		),
 		paramAdjustmentLabel: common.StringProperty("What the adjustment is for, as the driver "+
 			"and payroll read it. Required with an adjustment.", common.MaxAdjustmentDescription),
 		common.ParamPayCodeID: agenttoolschema.RecordIDText(permission.ResourcePayCode,
@@ -317,46 +327,7 @@ func newResolveSettlementDisputeTool(reviewer DriverPayReviewer) agentports.Agen
 		Refused: func(*driversettlementservice.ResolveDisputeRequest) string {
 			return "Would decide a driver's pay dispute."
 		},
-		Render: func(
-			req *driversettlementservice.ResolveDisputeRequest,
-			plan *driversettlementservice.ResolveDisputePlan,
-		) (*agent.ToolPreview, error) {
-			recorded, err := toolpreview.Changed(disputeRecord(plan.Dispute.Before),
-				plan.Dispute.Before, plan.Dispute.After,
-				append(wfOptions(payDisputeFields...), toolpreview.Volatile(common.FieldResolvedAt))...)
-			if err != nil {
-				return nil, err
-			}
-			changes := []*agent.RecordChange{recorded}
-			verb := "deny"
-			if req.Approve {
-				verb = "approve"
-			}
-			summary := fmt.Sprintf("Would %s the pay dispute and tell the driver.", verb)
-			if req.Adjustment != nil {
-				adjustment := toolpreview.Money(
-					toolpreview.Record{
-						Resource: permission.ResourceDriverSettlement,
-						Label:    req.Adjustment.Description,
-					},
-					toolpreview.MoneyBlock(
-						settlementCurrency(plan.AdjustmentTarget),
-						agent.MoneyLine{
-							Label: "Dispute adjustment",
-							After: common.MinorAmount(req.Adjustment.AmountMinor),
-						},
-					),
-					toolpreview.SensitiveAs("amountMinor"),
-				)
-				adjustment.Operation = agent.PreviewOperationCreate
-				changes = append(changes, adjustment)
-				summary += fmt.Sprintf(" An adjustment of %s lands on %s.",
-					money.FormatMinor(req.Adjustment.AmountMinor,
-						settlementCurrency(plan.AdjustmentTarget)),
-					settlementTargetText(plan.AdjustmentTarget))
-			}
-			return toolpreview.Build(summary, changes...), nil
-		},
+		Render: renderSettlementDisputeResolution,
 		Run: func(
 			ctx context.Context,
 			req *driversettlementservice.ResolveDisputeRequest,
@@ -370,6 +341,52 @@ func newResolveSettlementDisputeTool(reviewer DriverPayReviewer) agentports.Agen
 				updated.ID, updated.WorkerID), nil
 		},
 	})
+}
+
+func renderSettlementDisputeResolution(
+	req *driversettlementservice.ResolveDisputeRequest,
+	plan *driversettlementservice.ResolveDisputePlan,
+) (*agent.ToolPreview, error) {
+	recorded, err := toolpreview.Changed(
+		disputeRecord(plan.Dispute.Before),
+		plan.Dispute.Before,
+		plan.Dispute.After,
+		append(
+			wfOptions(payDisputeFields...),
+			toolpreview.Volatile(common.FieldResolvedAt),
+		)...)
+	if err != nil {
+		return nil, err
+	}
+	changes := []*agent.RecordChange{recorded}
+	verb := "deny"
+	if req.Approve {
+		verb = "approve"
+	}
+	summary := fmt.Sprintf("Would %s the pay dispute and tell the driver.", verb)
+	if req.Adjustment != nil {
+		adjustment := toolpreview.Money(
+			toolpreview.Record{
+				Resource: permission.ResourceDriverSettlement,
+				Label:    req.Adjustment.Description,
+			},
+			toolpreview.MoneyBlock(
+				settlementCurrency(plan.AdjustmentTarget),
+				agent.MoneyLine{
+					Label: "Dispute adjustment",
+					After: common.MinorAmount(req.Adjustment.AmountMinor),
+				},
+			),
+			toolpreview.SensitiveAs("amountMinor"),
+		)
+		adjustment.Operation = agent.PreviewOperationCreate
+		changes = append(changes, adjustment)
+		summary += fmt.Sprintf(" An adjustment of %s lands on %s.",
+			money.FormatMinor(req.Adjustment.AmountMinor,
+				settlementCurrency(plan.AdjustmentTarget)),
+			settlementTargetText(plan.AdjustmentTarget))
+	}
+	return toolpreview.Build(summary, changes...), nil
 }
 
 func reviewExpenseFrom(
@@ -414,8 +431,11 @@ func newReviewDriverExpenseTool(reviewer DriverPayReviewer) agentports.AgentTool
 		),
 		paramDecision: agenttoolschema.Enum("Approve to reimburse it, Reject to turn it down.",
 			expenseDecisions),
-		common.FieldNote: common.StringProperty("What the driver reads with the decision. Required "+
-			"to reject.", maxDisputeResolution),
+		common.FieldNote: common.StringProperty(
+			"What the driver reads with the decision. Required "+
+				"to reject.",
+			maxDisputeResolution,
+		),
 	}, paramExpenseID, paramDecision)), paramExpenseID, permission.ResourceDriverExpense)
 	spec.Egress = agent.EgressDriverVisible
 	spec.AlsoEgress = []agent.EgressClass{agent.EgressMoney}
@@ -442,9 +462,14 @@ func newReviewDriverExpenseTool(reviewer DriverPayReviewer) agentports.AgentTool
 			req *driversettlementservice.ReviewExpenseRequest,
 			plan *driversettlementservice.ReviewExpensePlan,
 		) (*agent.ToolPreview, error) {
-			recorded, err := toolpreview.Changed(expenseRecord(plan.Before), plan.Before,
+			recorded, err := toolpreview.Changed(
+				expenseRecord(plan.Before),
+				plan.Before,
 				plan.After,
-				append(wfOptions(expenseFields...), toolpreview.Volatile(common.FieldReviewedAt))...)
+				append(
+					wfOptions(expenseFields...),
+					toolpreview.Volatile(common.FieldReviewedAt),
+				)...)
 			if err != nil {
 				return nil, err
 			}

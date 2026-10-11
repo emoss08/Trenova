@@ -44,7 +44,7 @@ func DriverSettlementLedger() SettlementLedger[driversettlement.Settlement] {
 
 func DriverSettlementFacts(entity *driversettlement.Settlement) *SettlementFacts {
 	facts := &SettlementFacts{
-		Id:       entity.ID,
+		ID:       entity.ID,
 		Number:   entity.SettlementNumber,
 		Version:  entity.Version,
 		Status:   string(entity.Status),

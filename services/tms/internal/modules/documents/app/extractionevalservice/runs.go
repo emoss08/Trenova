@@ -79,15 +79,7 @@ func (s *Service) StartRun(
 		)
 	}
 
-	results := make([]*extractioneval.ExtractionResult, 0, len(cases))
-	for idx, item := range cases {
-		results = append(results, &extractioneval.ExtractionResult{
-			CaseID:    item.ID,
-			CaseTitle: item.Title,
-			Ordinal:   idx + 1,
-			Status:    extractioneval.ResultStatusPending,
-		})
-	}
+	results := pendingResults(cases)
 	run.CasesTotal = len(results)
 
 	created, err := s.runs.Create(ctx, run, results)
@@ -127,6 +119,20 @@ func (s *Service) StartRun(
 	s.logRun(actor, updated, permission.OpCreate, "Extraction evaluation started")
 
 	return updated, nil
+}
+
+func pendingResults(cases []*extractioneval.ExtractionCase) []*extractioneval.ExtractionResult {
+	results := make([]*extractioneval.ExtractionResult, 0, len(cases))
+	for idx, item := range cases {
+		results = append(results, &extractioneval.ExtractionResult{
+			CaseID:    item.ID,
+			CaseTitle: item.Title,
+			Ordinal:   idx + 1,
+			Status:    extractioneval.ResultStatusPending,
+		})
+	}
+
+	return results
 }
 
 func (s *Service) evaluatedProvider(

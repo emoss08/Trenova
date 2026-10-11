@@ -107,7 +107,7 @@ type StepVerdict struct {
 }
 
 // Replayed reports a verdict that carries an earlier attempt's answer.
-func (v StepVerdict) Replayed() bool {
+func (v *StepVerdict) Replayed() bool {
 	return v.State == StepCompleted || v.State == StepFailed
 }
 

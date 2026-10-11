@@ -136,9 +136,15 @@ func (t *ForgetMemoryTool) Preview(
 		ByUserID: agentmemoryservice.StatusActor(params.Actor),
 		At:       timeutils.NowUnix(),
 	}
-	plan, err := common.PlanArchive(memoryRecord(memory), memory, func(retired *agent.Memory) error {
-		return agentmemoryservice.PlanStatus(retired, change)
-	}, toolpreview.Only(retiredMemoryFields...), toolpreview.Volatile("retiredAt"))
+	plan, err := common.PlanArchive(
+		memoryRecord(memory),
+		memory,
+		func(retired *agent.Memory) error {
+			return agentmemoryservice.PlanStatus(retired, change)
+		},
+		toolpreview.Only(retiredMemoryFields...),
+		toolpreview.Volatile("retiredAt"),
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -202,7 +202,7 @@ func equipmentStatusSchema(
 		"properties": map[string]any{
 			idsKey: agenttoolschema.OfResource(map[string]any{
 				"type":        "array",
-				"items":       map[string]any{"type": "string"},
+				schemaItems:   map[string]any{"type": "string"},
 				"minItems":    1,
 				"maxItems":    maxEquipmentPerStatusChange,
 				"description": idsDescription,

@@ -27,6 +27,8 @@ import (
 	"go.uber.org/fx"
 )
 
+const paramMessageID = "messageId"
+
 // maxInboundReviewNote is the note column a person reads beside the
 // message, and the same bound the inbox's own review applies.
 const maxInboundReviewNote = 2000
@@ -78,7 +80,7 @@ func loadInboundMessage(
 	desk inboundMessageDesk,
 	params agentports.ToolExecuteParams,
 ) (*inboundmessage.InboundMessage, error) {
-	messageID, err := common.RequirePulid(params.Params, "messageId")
+	messageID, err := common.RequirePulid(params.Params, paramMessageID)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +161,7 @@ func (t *LinkInboundMessageTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"messageId": agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
+			paramMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
 				"The message, from the run's subject or list_inbound_messages."),
 			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"Optional: the shipment the message is about, from search_shipments or "+
@@ -174,7 +176,7 @@ func (t *LinkInboundMessageTool) ParamSchema() map[string]any {
 				"description": "Why these are the right records, in words a person can check.",
 			},
 		},
-		"required":             []string{"messageId", "reason"},
+		"required":             []string{paramMessageID, "reason"},
 		"additionalProperties": false,
 	}
 }
@@ -199,13 +201,13 @@ func (t *LinkInboundMessageTool) Policy() agentports.ToolPolicy {
 }
 
 func (t *LinkInboundMessageTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "messageId", permission.ResourceInboundMessage)
+	return common.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
 }
 
 func (t *LinkInboundMessageTool) request(
 	params agentports.ToolExecuteParams,
 ) (inboundmessageservice.LinkRequest, error) {
-	messageID, err := common.RequirePulid(params.Params, "messageId")
+	messageID, err := common.RequirePulid(params.Params, paramMessageID)
 	if err != nil {
 		return inboundmessageservice.LinkRequest{}, err
 	}
@@ -296,7 +298,7 @@ func (t *MarkInboundMessageTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"messageId": agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
+			paramMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
 				"The message, from the run's subject or list_inbound_messages."),
 			common.FieldStatus: agenttoolschema.Enum(
 				"Actioned when it was dealt with, Ignored when there was nothing to do.",
@@ -308,7 +310,7 @@ func (t *MarkInboundMessageTool) ParamSchema() map[string]any {
 				"description": "What was done, or why nothing was, for the person reading the inbox.",
 			},
 		},
-		"required":             []string{"messageId", "status", "note"},
+		"required":             []string{paramMessageID, "status", "note"},
 		"additionalProperties": false,
 	}
 }
@@ -332,7 +334,7 @@ func (t *MarkInboundMessageTool) Policy() agentports.ToolPolicy {
 }
 
 func (t *MarkInboundMessageTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "messageId", permission.ResourceInboundMessage)
+	return common.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
 }
 
 func (t *MarkInboundMessageTool) arguments(
@@ -493,7 +495,7 @@ func (t *ReplyToInboundMessageTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"messageId": agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
+			paramMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
 				"The message being answered, from this run's subject or "+
 					"list_inbound_messages."),
 			"profileId": agenttoolschema.RecordIDText(permission.ResourceEmailProfile,
@@ -506,7 +508,7 @@ func (t *ReplyToInboundMessageTool) ParamSchema() map[string]any {
 					"shipment reference and the sign-off, so leave those out.",
 			},
 		},
-		"required":             []string{"messageId", "body"},
+		"required":             []string{paramMessageID, "body"},
 		"additionalProperties": false,
 	}
 }
@@ -530,7 +532,7 @@ func (t *ReplyToInboundMessageTool) Policy() agentports.ToolPolicy {
 }
 
 func (t *ReplyToInboundMessageTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "messageId", permission.ResourceInboundMessage)
+	return common.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
 }
 
 type inboundReply struct {

@@ -70,7 +70,10 @@ func (t *CancelTenderTool) Preview(
 	summary = fmt.Sprintf(
 		"Would withdraw the %s tender: %s carriers hold would be withdrawn and their answer "+
 			"links stop working, and %s not yet asked would be skipped. Reason: %s",
-		plan.Before.Mode, common.CountOf(withdrawn, "offer"), common.CountOf(skipped, "carrier"), request.Reason,
+		plan.Before.Mode,
+		common.CountOf(withdrawn, "offer"),
+		common.CountOf(skipped, "carrier"),
+		request.Reason,
 	)
 	if plan.Before.Status == tender.StatusNeedsReview {
 		summary += " A carrier's acceptance is waiting on review in this tender."
@@ -183,13 +186,25 @@ func tenderOfferChanges(before, after *tender.Tender) ([]*agent.RecordChange, er
 		if !ok || prior.Status == offer.Status {
 			continue
 		}
-		change, err := toolpreview.Changed(toolpreview.Record{
-			Resource: permission.ResourceTender,
-			ID:       offer.ID,
-			Label:    fmt.Sprintf("Offer %d to %s", offer.Rank, shipmenttools.CarrierNameOfOffer(prior)),
-			Version:  common.PreviewVersion(prior.Version),
-		}, prior, offer,
-			toolpreview.Only(common.FieldStatus, "responseSource", fieldDeclineReason, "respondedAt"),
+		change, err := toolpreview.Changed(
+			toolpreview.Record{
+				Resource: permission.ResourceTender,
+				ID:       offer.ID,
+				Label: fmt.Sprintf(
+					"Offer %d to %s",
+					offer.Rank,
+					shipmenttools.CarrierNameOfOffer(prior),
+				),
+				Version: common.PreviewVersion(prior.Version),
+			},
+			prior,
+			offer,
+			toolpreview.Only(
+				common.FieldStatus,
+				"responseSource",
+				fieldDeclineReason,
+				"respondedAt",
+			),
 			toolpreview.Volatile("respondedAt"),
 			toolpreview.Labels(tenderOfferLabels),
 		)
@@ -235,8 +250,12 @@ func attachOfferPay(changes []*agent.RecordChange, offer *tender.TenderOffer, ca
 		if change.EntityID != offer.ID {
 			continue
 		}
-		toolpreview.AttachMoney(change, toolpreview.MoneyBlock(money.DefaultCurrencyCode,
-			agent.MoneyLine{Label: "Carrier pay to " + carrier, After: common.KnownAmount(offer.Rate)},
+		toolpreview.AttachMoney(change, toolpreview.MoneyBlock(
+			money.DefaultCurrencyCode,
+			agent.MoneyLine{
+				Label: "Carrier pay to " + carrier,
+				After: common.KnownAmount(offer.Rate),
+			},
 		), toolpreview.SensitiveAs("rate"))
 
 		return

@@ -24,7 +24,9 @@ type adjustmentView struct {
 	LineCount      int      `json:"lineCount"`
 }
 
-var adjustmentRefs = map[string]permission.Resource{common.ParamInvoiceID: permission.ResourceInvoice}
+var adjustmentRefs = map[string]permission.Resource{
+	common.ParamInvoiceID: permission.ResourceInvoice,
+}
 
 func adjustmentInvoiceLabel(number string) string {
 	if strings.TrimSpace(number) == "" {
@@ -48,7 +50,10 @@ func adjustmentMoney(
 	}
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(
 		currency,
-		agent.MoneyLine{Label: "Credited", After: common.KnownAmount(figures.CreditTotalAmount.Abs())},
+		agent.MoneyLine{
+			Label: "Credited",
+			After: common.KnownAmount(figures.CreditTotalAmount.Abs()),
+		},
 		agent.MoneyLine{Label: "Rebilled", After: common.KnownAmount(figures.RebillTotalAmount)},
 	), toolpreview.SensitiveAs("totalAmount"))
 }

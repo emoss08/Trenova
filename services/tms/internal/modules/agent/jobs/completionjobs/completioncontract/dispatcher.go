@@ -138,7 +138,7 @@ func (d *Dispatcher) WriteForDay(
 ) (*briefingports.WriteBriefingResult, error) {
 	var result briefingports.WriteBriefingResult
 	if err := d.await(ctx, &call{
-		id:           briefingWriteID(req),
+		id:           briefingWriteID(&req),
 		workflow:     WriteBriefingWorkflowName,
 		summary:      "Write the briefing",
 		feature:      jobFeatureBriefing,
@@ -151,7 +151,7 @@ func (d *Dispatcher) WriteForDay(
 	return &result, nil
 }
 
-func briefingWriteID(req briefingports.WriteBriefingRequest) string {
+func briefingWriteID(req *briefingports.WriteBriefingRequest) string {
 	roles := make([]string, 0, len(req.Roles))
 	for _, role := range req.Roles {
 		roles = append(roles, string(role))

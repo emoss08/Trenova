@@ -57,9 +57,10 @@ func (p ToolPolicy) EffectiveEffect() agent.ToolEffect {
 		return agent.ToolEffectChange
 	case agent.ToolKindQuery:
 		return agent.ToolEffectLookup
-	default:
-		return ""
+	case agent.ToolKindRuntime:
 	}
+
+	return ""
 }
 
 func (p ToolPolicy) HighestEgress() agent.EgressClass {

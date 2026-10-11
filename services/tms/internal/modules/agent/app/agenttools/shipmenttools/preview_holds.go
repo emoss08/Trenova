@@ -27,7 +27,10 @@ var placedHoldFields = []string{
 	"startedAt",
 }
 
-var placedHoldLabels = map[string]string{common.FieldShipmentID: common.LabelShipment, "reasonCode": "Reason"}
+var placedHoldLabels = map[string]string{
+	common.FieldShipmentID: common.LabelShipment,
+	"reasonCode":           "Reason",
+}
 
 var ReleasedHoldFields = []string{"releasedAt"}
 
@@ -80,7 +83,10 @@ func (t *PlaceShipmentHoldTool) Preview(
 	hold, err := t.holds.PreviewCreate(ctx, request, params.Actor)
 	if err != nil {
 		if common.IsRefusal(err) {
-			return common.WarnWouldFail(toolpreview.Build("Would put a shipment on hold."), err), nil
+			return common.WarnWouldFail(
+				toolpreview.Build("Would put a shipment on hold."),
+				err,
+			), nil
 		}
 
 		return nil, err

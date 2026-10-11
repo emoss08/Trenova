@@ -194,10 +194,14 @@ func NewUpdateTableChangeAlertTool(alerts AlertKeeper) agentports.AgentTool {
 		Reversible:  true,
 		Rationale: "Changes an alert whose notices go to the person who owns it; nothing " +
 			"else changes.",
-		Properties:  properties,
-		Required:    []string{ParamAlertID},
-		SearchTerms: []string{masterdatatools.AlertKind, "edit notification", "watch different column"},
-		Target:      targetAlert,
+		Properties: properties,
+		Required:   []string{ParamAlertID},
+		SearchTerms: []string{
+			masterdatatools.AlertKind,
+			"edit notification",
+			"watch different column",
+		},
+		Target: targetAlert,
 	}, common.ReceivablePlan[*alertEdit, *kernelports.RecordChange[tablechangealert.TCASubscription]]{
 		Request: alertEditFrom,
 		Plan: func(
@@ -241,8 +245,12 @@ func NewUpdateTableChangeAlertTool(alerts AlertKeeper) agentports.AgentTool {
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{Action: masterdatatools.ActionUpdated, Kind: masterdatatools.AlertKind,
-				Name: updated.Name, IDs: map[string]string{ParamAlertID: updated.ID.String()}}, nil
+			return &agent.ToolExecutionResult{
+				Action: masterdatatools.ActionUpdated,
+				Kind:   masterdatatools.AlertKind,
+				Name:   updated.Name,
+				IDs:    map[string]string{ParamAlertID: updated.ID.String()},
+			}, nil
 		},
 	})
 }
@@ -269,8 +277,10 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agentports.AgentTool {
 			ParamAlertID: agenttoolschema.RecordIDText(
 				permission.ResourceTableChangeAlert, alertSupplier,
 			),
-			common.FieldStatus: agenttoolschema.Enum("Paused stops its notices; Active resumes them.",
-				alertStatuses),
+			common.FieldStatus: agenttoolschema.Enum(
+				"Paused stops its notices; Active resumes them.",
+				alertStatuses,
+			),
 		},
 		Required:    []string{ParamAlertID, common.FieldStatus},
 		SearchTerms: []string{"pause alert", "resume alert", "mute notification"},
@@ -281,7 +291,11 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agentports.AgentTool {
 			if err != nil {
 				return nil, err
 			}
-			status, err := common.RequireEnum(params.Params, common.FieldStatus, alertStatuses.Values)
+			status, err := common.RequireEnum(
+				params.Params,
+				common.FieldStatus,
+				alertStatuses.Values,
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -327,8 +341,12 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agentports.AgentTool {
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{Action: masterdatatools.ActionUpdated, Kind: masterdatatools.AlertKind,
-				Name: updated.Name, IDs: map[string]string{ParamAlertID: updated.ID.String()}}, nil
+			return &agent.ToolExecutionResult{
+				Action: masterdatatools.ActionUpdated,
+				Kind:   masterdatatools.AlertKind,
+				Name:   updated.Name,
+				IDs:    map[string]string{ParamAlertID: updated.ID.String()},
+			}, nil
 		},
 	})
 }
@@ -382,8 +400,11 @@ func NewDeleteTableChangeAlertTool(alerts AlertKeeper) agentports.AgentTool {
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{Action: common.ActionDeleted, Kind: masterdatatools.AlertKind,
-				IDs: map[string]string{ParamAlertID: id.String()}}, nil
+			return &agent.ToolExecutionResult{
+				Action: common.ActionDeleted,
+				Kind:   masterdatatools.AlertKind,
+				IDs:    map[string]string{ParamAlertID: id.String()},
+			}, nil
 		},
 	})
 }

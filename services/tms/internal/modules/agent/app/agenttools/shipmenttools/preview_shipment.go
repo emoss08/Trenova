@@ -38,7 +38,13 @@ func (t *AddShipmentCommentTool) Preview(
 	created, err := toolpreview.Create(
 		toolpreview.Record{Resource: permission.ResourceShipmentComment, Label: "Shipment comment"},
 		entity,
-		toolpreview.Only(common.PreviewFieldShipmentID, "comment", "type", "visibility", "priority"),
+		toolpreview.Only(
+			common.PreviewFieldShipmentID,
+			"comment",
+			"type",
+			"visibility",
+			"priority",
+		),
 		toolpreview.WithRefs(map[string]permission.Resource{
 			common.PreviewFieldShipmentID: permission.ResourceShipment,
 		}),

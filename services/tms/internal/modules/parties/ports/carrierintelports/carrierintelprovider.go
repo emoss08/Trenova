@@ -68,7 +68,7 @@ type CarrierIntelIdentifier struct {
 	Phone        string
 }
 
-func (i CarrierIntelIdentifier) IsZero() bool {
+func (i *CarrierIntelIdentifier) IsZero() bool {
 	return i.DOTNumber == "" && i.DocketNumber == "" && i.Company == "" && i.EIN == "" &&
 		i.Email == "" && i.Phone == ""
 }

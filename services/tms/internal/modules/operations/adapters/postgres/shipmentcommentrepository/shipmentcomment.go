@@ -109,24 +109,7 @@ func (r *repository) ListByShipmentID(
 					},
 					Apply: func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
 						if req.Cursor.After != "" {
-							q = q.WhereGroup(" AND ", func(cq *bun.SelectQuery) *bun.SelectQuery {
-								if replyMode {
-									return cq.
-										Where(sc.CreatedAt.Gt(), req.Cursor.Cursor.CreatedAt).
-										WhereOr(
-											sc.CreatedAt.Eq()+" AND "+sc.ID.Gt(),
-											req.Cursor.Cursor.CreatedAt,
-											req.Cursor.Cursor.ID,
-										)
-								}
-								return cq.
-									Where(sc.CreatedAt.Lt(), req.Cursor.Cursor.CreatedAt).
-									WhereOr(
-										sc.CreatedAt.Eq()+" AND "+sc.ID.Lt(),
-										req.Cursor.Cursor.CreatedAt,
-										req.Cursor.Cursor.ID,
-									)
-							})
+							q = q.WhereGroup(" AND ", commentCursorCondition(req, replyMode))
 						}
 						req.Filter.CursorSort = cursorSort
 						req.Filter.CursorColumns = cursorColumns
@@ -148,6 +131,32 @@ func (r *repository) ListByShipmentID(
 			return result, nil
 		},
 	)
+}
+
+func commentCursorCondition(
+	req *shipmentports.ListShipmentCommentsRequest,
+	replyMode bool,
+) func(*bun.SelectQuery) *bun.SelectQuery {
+	sc := shipmentcol.ShipmentCommentColumns
+
+	return func(cq *bun.SelectQuery) *bun.SelectQuery {
+		if replyMode {
+			return cq.
+				Where(sc.CreatedAt.Gt(), req.Cursor.Cursor.CreatedAt).
+				WhereOr(
+					sc.CreatedAt.Eq()+" AND "+sc.ID.Gt(),
+					req.Cursor.Cursor.CreatedAt,
+					req.Cursor.Cursor.ID,
+				)
+		}
+		return cq.
+			Where(sc.CreatedAt.Lt(), req.Cursor.Cursor.CreatedAt).
+			WhereOr(
+				sc.CreatedAt.Eq()+" AND "+sc.ID.Lt(),
+				req.Cursor.Cursor.CreatedAt,
+				req.Cursor.Cursor.ID,
+			)
+	}
 }
 
 func (r *repository) applyListConditions(

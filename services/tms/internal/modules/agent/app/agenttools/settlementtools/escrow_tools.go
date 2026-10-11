@@ -481,10 +481,15 @@ func (t *AdjustEscrowAccountTool) SearchTerms() []string {
 func (t *AdjustEscrowAccountTool) ParamSchema() map[string]any {
 	return common.ObjectParams(map[string]any{
 		paramEscrowAccountID: escrowAccountProperty(),
-		common.ParamDriverPayAmount: common.AmountProperty("The amount as a decimal; negative to draw " +
-			"from the balance. Never zero."),
-		paramEscrowDescription: common.StringProperty("What the adjustment is for, as it will read "+
-			"on the escrow ledger.", maxEscrowDescription),
+		common.ParamDriverPayAmount: common.AmountProperty(
+			"The amount as a decimal; negative to draw " +
+				"from the balance. Never zero.",
+		),
+		paramEscrowDescription: common.StringProperty(
+			"What the adjustment is for, as it will read "+
+				"on the escrow ledger.",
+			maxEscrowDescription,
+		),
 		paramEscrowOccurredDate: agenttoolschema.Date(
 			"The day it happened; leave it out for today.",
 		),

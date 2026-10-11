@@ -250,14 +250,14 @@ func (s *Service) recordCall(
 func isBillable(
 	price carrierintel.EndpointPrice,
 	call carrierintelports.CarrierIntelCall,
-) (bool, int) {
+) (billable bool, units int) {
 	if price.Model == carrierintel.BillingModelFree || !price.UnitCost.IsPositive() {
 		return false, 0
 	}
 	if call.Err != nil && !call.Found {
 		return false, 0
 	}
-	units := max(call.Units, 1)
+	units = max(call.Units, 1)
 	switch price.Model {
 	case carrierintel.BillingModelPerMatch, carrierintel.BillingModelPerDOTMonth:
 		return call.Found, units

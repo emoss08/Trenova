@@ -37,7 +37,11 @@ var holdSeverities = agenttoolschema.Source(
 )
 
 var updatedHoldFields = []string{
-	common.FieldSeverity, common.FieldNotes, paramBlocksDispatch, ParamBlocksDelivery, ParamBlocksBilling,
+	common.FieldSeverity,
+	common.FieldNotes,
+	paramBlocksDispatch,
+	ParamBlocksDelivery,
+	ParamBlocksBilling,
 	ParamVisibleToCustomer,
 }
 
@@ -126,7 +130,11 @@ func readHoldPatch(params *agentports.ToolExecuteParams) (*holdPatch, error) {
 		ShipmentID: shipmentID,
 		TenantInfo: common.TenantFrom(*params),
 	}}
-	severity, given, err := common.OptionalEnum(params.Params, ParamHoldSeverity, holdSeverities.Values)
+	severity, given, err := common.OptionalEnum(
+		params.Params,
+		ParamHoldSeverity,
+		holdSeverities.Values,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -198,15 +206,19 @@ func NewUpdateShipmentHoldTool(holds holdUpdater) agentports.AgentTool {
 					"the page you are on. Never guess one.",
 			),
 			ParamHoldSeverity: agenttoolschema.Enum("How strongly it applies.", holdSeverities),
-			common.FieldNotes: common.StringProperty("What the hold waits on, replacing the notes on it.",
-				maxHoldNoteChars),
+			common.FieldNotes: common.StringProperty(
+				"What the hold waits on, replacing the notes on it.",
+				maxHoldNoteChars,
+			),
 			paramBlocksDispatch: common.BooleanProperty(
 				"Whether it stops the shipment being dispatched.",
 			),
 			ParamBlocksDelivery: common.BooleanProperty(
 				"Whether it stops the shipment being delivered.",
 			),
-			ParamBlocksBilling:     common.BooleanProperty("Whether it stops the shipment being billed."),
+			ParamBlocksBilling: common.BooleanProperty(
+				"Whether it stops the shipment being billed.",
+			),
 			ParamVisibleToCustomer: common.BooleanProperty("Whether the customer sees the hold."),
 		},
 		Required: []string{common.ParamShipmentID, ParamHoldID},

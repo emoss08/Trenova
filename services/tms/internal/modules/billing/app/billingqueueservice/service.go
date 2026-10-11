@@ -860,14 +860,14 @@ func (s *service) projectToWatchtower(
 		return
 	}
 
-	tenant := pagination.TenantInfo{OrgID: item.OrganizationID, BuID: item.BusinessUnitID}
+	tenantInfo := pagination.TenantInfo{OrgID: item.OrganizationID, BuID: item.BusinessUnitID}
 	if item.Status == billingqueue.StatusException {
 		s.watchtower.Upsert(ctx, watchtowersources.DescribeBillingException(item))
 
 		return
 	}
 
-	s.watchtower.Resolve(ctx, tenant, watchtower.SourceBillingException, item.ID.String())
+	s.watchtower.Resolve(ctx, tenantInfo, watchtower.SourceBillingException, item.ID.String())
 }
 
 func (s *service) completeReplacementReview(

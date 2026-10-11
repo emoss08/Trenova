@@ -38,8 +38,11 @@ func NewDisputeDetentionTool(detentions common.DetentionDisputer) agentports.Age
 					"get_shipment. Never guess one.",
 				permission.KindDetentionOccurrence,
 			),
-			common.ParamNote: common.StringProperty("What the customer disputes, in their words where "+
-				"you have them.", common.MaxOperationNoteChars),
+			common.ParamNote: common.StringProperty(
+				"What the customer disputes, in their words where "+
+					"you have them.",
+				common.MaxOperationNoteChars,
+			),
 		},
 		Required: []string{ParamOccurrenceID, common.ParamNote},
 		Target: func(params map[string]any) (agentports.ToolTarget, bool) {
@@ -51,7 +54,11 @@ func NewDisputeDetentionTool(detentions common.DetentionDisputer) agentports.Age
 			if err != nil {
 				return nil, err
 			}
-			note, err := common.RequireBoundedText(params.Params, common.ParamNote, common.MaxOperationNoteChars)
+			note, err := common.RequireBoundedText(
+				params.Params,
+				common.ParamNote,
+				common.MaxOperationNoteChars,
+			)
 			if err != nil {
 				return nil, err
 			}

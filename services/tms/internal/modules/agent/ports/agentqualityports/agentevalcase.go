@@ -55,7 +55,7 @@ type EvalCaseCaptureCandidate struct {
 	DecidedAt         int64    `bun:"decided_at"`
 }
 
-func (c EvalCaseCaptureCandidate) TenantInfo() pagination.TenantInfo {
+func (c *EvalCaseCaptureCandidate) TenantInfo() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: c.OrganizationID, BuID: c.BusinessUnitID}
 }
 

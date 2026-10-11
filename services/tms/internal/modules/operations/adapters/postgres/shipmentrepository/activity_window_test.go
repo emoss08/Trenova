@@ -55,10 +55,10 @@ func TestApplyShipmentOptionFilters_NoWindowLeavesQueryUntouched(t *testing.T) {
 func TestApplyShipmentOptionFilters_HalfOpenWindowIgnored(t *testing.T) {
 	t.Parallel()
 
-	require.False(t, shipmentports.ShipmentOptions{ActivityWindowStart: 100}.HasActivityWindow())
-	require.False(t, shipmentports.ShipmentOptions{ActivityWindowEnd: 100}.HasActivityWindow())
-	require.True(t, shipmentports.ShipmentOptions{
+	require.False(t, (&shipmentports.ShipmentOptions{ActivityWindowStart: 100}).HasActivityWindow())
+	require.False(t, (&shipmentports.ShipmentOptions{ActivityWindowEnd: 100}).HasActivityWindow())
+	require.True(t, (&shipmentports.ShipmentOptions{
 		ActivityWindowStart: 100,
 		ActivityWindowEnd:   200,
-	}.HasActivityWindow())
+	}).HasActivityWindow())
 }

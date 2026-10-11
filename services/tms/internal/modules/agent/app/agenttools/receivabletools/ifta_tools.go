@@ -54,10 +54,6 @@ const iftaMileageSupplier = "The mileage entry, from list_ifta_mileage_entries. 
 
 const iftaMileageTaintHold = "Miles read from a log or a message someone outside sent are proposed, since the IFTA return is computed from them."
 
-const iftaReturnRecordKind = "IFTA return"
-
-const iftaMileageRecordKind = "mileage entry"
-
 var iftaMileageDates = map[string]assistantartifact.DisplayType{
 	paramTraveledAt: assistantartifact.DisplayDateTime,
 }
@@ -393,8 +389,11 @@ func NewAmendIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 		Properties: map[string]any{
 			paramIFTAReturnID: agenttoolschema.KindID(iftaReturnSupplier+" It must be Filed.",
 				permission.KindIFTAReturn),
-			common.ParamReason: common.StringProperty("What was wrong with the filed return, at least ten "+
-				"characters, as the auditor will read it.", maxAmendReason),
+			common.ParamReason: common.StringProperty(
+				"What was wrong with the filed return, at least ten "+
+					"characters, as the auditor will read it.",
+				maxAmendReason,
+			),
 		},
 		Required: []string{paramIFTAReturnID, common.ParamReason},
 		Target:   targetIFTAReturn,
@@ -404,7 +403,11 @@ func NewAmendIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 			if err != nil {
 				return nil, err
 			}
-			reason, err := common.RequireBoundedText(params.Params, common.ParamReason, maxAmendReason)
+			reason, err := common.RequireBoundedText(
+				params.Params,
+				common.ParamReason,
+				maxAmendReason,
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -662,8 +665,13 @@ func NewRecordIFTAMileageEntryTool(entries IftaMileageKeeper) agentports.AgentTo
 		TaintHold:  iftaMileageTaintHold,
 		Rationale: "Adds jurisdiction miles inside Trenova that the next IFTA return counts; " +
 			"nothing is sent, and delete_ifta_mileage_entry removes them.",
-		Properties:  iftaMileageProperties(false),
-		Required:    []string{common.ParamTractorID, paramJurisdictionID, paramTraveledAt, paramMiles},
+		Properties: iftaMileageProperties(false),
+		Required: []string{
+			common.ParamTractorID,
+			paramJurisdictionID,
+			paramTraveledAt,
+			paramMiles,
+		},
 		SearchTerms: []string{searchTermIFTA, "miles", "trip sheet", "state miles", "jurisdiction"},
 	}), common.ReceivablePlan[*ifta.JurisdictionMileageEntry, *labelledMileage]{
 		Request: func(params *agentports.ToolExecuteParams) (*ifta.JurisdictionMileageEntry, error) {
@@ -731,7 +739,11 @@ func NewRecordIFTAMileageEntryTool(entries IftaMileageKeeper) agentports.AgentTo
 }
 
 func targetIFTAMileage(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, paramIFTAMileageEntryID, permission.ResourceIFTAJurisdictionMileage)
+	return common.TargetOf(
+		params,
+		paramIFTAMileageEntryID,
+		permission.ResourceIFTAJurisdictionMileage,
+	)
 }
 
 type mileageCorrection struct {
@@ -981,12 +993,18 @@ func NewRecalculateMoveJurisdictionMilesTool(router JurisdictionMileRouter) agen
 			"nothing is sent to a customer or carrier, and running it again gives the same " +
 			"miles.",
 		Properties: map[string]any{
-			common.ParamShipmentMoveID: agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
-				"The move, from get_shipment. Never guess one."),
+			common.ParamShipmentMoveID: agenttoolschema.RecordIDText(
+				permission.ResourceShipmentMove,
+				"The move, from get_shipment. Never guess one.",
+			),
 		},
 		Required: []string{common.ParamShipmentMoveID},
 		Target: func(params map[string]any) (agentports.ToolTarget, bool) {
-			return common.TargetOf(params, common.ParamShipmentMoveID, permission.ResourceShipmentMove)
+			return common.TargetOf(
+				params,
+				common.ParamShipmentMoveID,
+				permission.ResourceShipmentMove,
+			)
 		},
 	}), common.ReceivablePlan[shipmentports.RecalculateMoveJurisdictionMilesRequest, *shipmentports.MoveJurisdictionMilesPlan]{
 		Request: moveJurisdictionRequest,
@@ -1034,7 +1052,12 @@ func (b *backfillRequest) service(
 	params *agentports.ToolExecuteParams,
 	dryRun bool,
 ) (shipmentports.BackfillJurisdictionMilesRequest, error) {
-	info, err := returns.PeriodInfo(ctx, common.TenantFrom(*params), b.period.Year, b.period.Quarter)
+	info, err := returns.PeriodInfo(
+		ctx,
+		common.TenantFrom(*params),
+		b.period.Year,
+		b.period.Quarter,
+	)
 	if err != nil {
 		return shipmentports.BackfillJurisdictionMilesRequest{}, err
 	}

@@ -163,7 +163,10 @@ func markPaidDecision(text *lifecycleText) *settlementDecision {
 		required:   []string{common.ParamPaymentMethod},
 		fill:       common.FillSettlementPayment(text.methods),
 		fields: []string{
-			common.FieldStatus, fieldPaidAt, common.ParamPaymentMethod, common.ParamPaymentReference,
+			common.FieldStatus,
+			fieldPaidAt,
+			common.ParamPaymentMethod,
+			common.ParamPaymentReference,
 		},
 		volatile: []string{fieldPaidAt},
 	}
@@ -341,7 +344,10 @@ func fillDriverAdjustment(params map[string]any, req *settlementshared.ActionReq
 	if err != nil {
 		return err
 	}
-	if input.Quantity, _, err = common.OptionalDecimal(params, paramAdjustmentQuantity); err != nil {
+	if input.Quantity, _, err = common.OptionalDecimal(
+		params,
+		paramAdjustmentQuantity,
+	); err != nil {
 		return err
 	}
 	if input.Rate, _, err = common.OptionalDecimal(params, paramAdjustmentRate); err != nil {
@@ -439,7 +445,11 @@ func driverDecisionTool(
 	decision func(*lifecycleText) *settlementDecision,
 	book SettlementBook[driversettlement.Settlement],
 ) agentports.AgentTool {
-	return newSettlementDecisionTool(common.DriverSettlementLedger(), decision(driverLifecycle()), book)
+	return newSettlementDecisionTool(
+		common.DriverSettlementLedger(),
+		decision(driverLifecycle()),
+		book,
+	)
 }
 
 func carrierDecisionTool(

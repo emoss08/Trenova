@@ -49,7 +49,7 @@ func StartCompactionWorkflow(
 	ctx context.Context,
 	workflows kernelports.WorkflowStarter,
 	turn *conversation.AssistantTurn,
-	actor permissionports.RequestActor,
+	actor *permissionports.RequestActor,
 	auto bool,
 ) (client.WorkflowRun, error) {
 	return workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
@@ -71,7 +71,7 @@ func StartCompactionWorkflow(
 		},
 		TurnID:   turn.ID,
 		ThreadID: turn.ThreadID,
-		Actor:    actor,
+		Actor:    *actor,
 		Auto:     auto,
 	})
 }
@@ -113,7 +113,7 @@ func StartCompaction(
 		TenantInfo: req.TenantInfo,
 		Origin:     conversation.AssistantTurnOriginCompaction,
 	}, func(turn *conversation.AssistantTurn) (string, error) {
-		run, err := StartCompactionWorkflow(ctx, workflows, turn, req.Actor, req.Auto)
+		run, err := StartCompactionWorkflow(ctx, workflows, turn, &req.Actor, req.Auto)
 		if err != nil {
 			return "", err
 		}
@@ -297,13 +297,13 @@ type AssistantTurnRequest struct {
 
 // ReportsDecision says the turn was started to report a decision rather than
 // to answer something the person asked.
-func (r AssistantTurnRequest) ReportsDecision() bool {
+func (r *AssistantTurnRequest) ReportsDecision() bool {
 	return r.FollowUpProposalID.IsNotNil() || r.FollowUpPlanID.IsNotNil()
 }
 
 // ResumesWait says the turn was started to pick up work the agent parked on
 // a wait rather than to answer something the person asked.
-func (r AssistantTurnRequest) ResumesWait() bool {
+func (r *AssistantTurnRequest) ResumesWait() bool {
 	return r.ResumeWaitID.IsNotNil()
 }
 

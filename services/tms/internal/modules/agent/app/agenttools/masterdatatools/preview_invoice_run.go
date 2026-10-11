@@ -245,8 +245,10 @@ func RenderCommit(
 	plan *invoicerunports.InvoiceRunCommitPlan,
 ) (*agent.ToolPreview, error) {
 	if plan.AlreadyCommitted {
-		return toolpreview.Build(common.RunLabel(plan.Run) + " is already committed; committing it " +
-			"again changes nothing."), nil
+		return toolpreview.Build(
+			common.RunLabel(plan.Run) + " is already committed; committing it " +
+				"again changes nothing.",
+		), nil
 	}
 
 	after := *plan.Run

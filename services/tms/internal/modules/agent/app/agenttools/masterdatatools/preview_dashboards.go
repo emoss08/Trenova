@@ -99,7 +99,10 @@ func (t *AddDashboardTileTool) Preview(
 	request, existing, err := t.request(ctx, &params)
 	if err != nil {
 		if common.IsRefusal(err) {
-			return common.WarnWouldFail(toolpreview.Build("Would add a tile to a dashboard."), err), nil
+			return common.WarnWouldFail(
+				toolpreview.Build("Would add a tile to a dashboard."),
+				err,
+			), nil
 		}
 
 		return nil, err

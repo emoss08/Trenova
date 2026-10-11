@@ -50,14 +50,6 @@ const toolListSyncRecords = "list_accounting_sync_records"
 
 const toolGetSyncStatus = "get_accounting_sync_status"
 
-const fieldSyncStatus = "status"
-
-const fieldSending = "sending"
-
-const sendingPausedLabel = "Paused"
-
-const sendingRunningLabel = "Sending"
-
 const secondsInOneDay = int64(24 * time.Hour / time.Second)
 
 type accountingSyncOperator interface {

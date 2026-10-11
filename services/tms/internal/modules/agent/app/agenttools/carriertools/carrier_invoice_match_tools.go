@@ -615,7 +615,11 @@ func (t *LinkEDICarrierInvoiceTool) request(
 		return nil, err
 	}
 
-	return &linkRequest{tenant: common.TenantFrom(*params), invoiceID: invoiceID, carrierID: carrierID},
+	return &linkRequest{
+			tenant:    common.TenantFrom(*params),
+			invoiceID: invoiceID,
+			carrierID: carrierID,
+		},
 		nil
 }
 

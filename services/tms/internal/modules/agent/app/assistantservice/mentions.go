@@ -180,12 +180,7 @@ func (s *Service) searchKinds(
 
 	out := make([]agentports.MentionCandidate, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, agentports.MentionCandidate{
-			Type:     row.Type,
-			ID:       row.ID,
-			Label:    row.Label,
-			Subtitle: row.Subtitle,
-		})
+		out = append(out, agentports.MentionCandidate(row))
 	}
 
 	return out, nil

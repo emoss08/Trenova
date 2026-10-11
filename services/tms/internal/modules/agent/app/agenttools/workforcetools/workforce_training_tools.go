@@ -150,7 +150,11 @@ type trainingAssignment struct {
 }
 
 func trainingAssignmentFrom(params *agentports.ToolExecuteParams) (*trainingAssignment, error) {
-	workers, err := common.RequirePulidSlice(params.Params, paramTrainingWorkers, maxTrainingWorkers)
+	workers, err := common.RequirePulidSlice(
+		params.Params,
+		paramTrainingWorkers,
+		maxTrainingWorkers,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +244,9 @@ func newAssignWorkerTrainingTool(training TrainingKeeper) agentports.AgentTool {
 		),
 		paramCourseIDs: agenttoolschema.RecordIDs(permission.ResourceTrainingCourse,
 			"The courses, from list_training_courses.", maxTrainingCourses),
-		wfParamDueDate:    agenttoolschema.Date("When it is due, when not the course's own schedule."),
+		wfParamDueDate: agenttoolschema.Date(
+			"When it is due, when not the course's own schedule.",
+		),
 		common.FieldNotes: wfNoteProperty("Anything the assignment should say."),
 	}, paramTrainingWorkers, paramCourseIDs)
 	spec.Egress = agent.EgressDriverVisible
@@ -404,7 +410,11 @@ func completionFrom(
 	if req.DocumentID, err = common.OptionalID(params.Params, wfParamDocument); err != nil {
 		return nil, err
 	}
-	if req.Notes, err = common.BoundedText(params.Params, common.FieldNotes, wfNoteChars); err != nil {
+	if req.Notes, err = common.BoundedText(
+		params.Params,
+		common.FieldNotes,
+		wfNoteChars,
+	); err != nil {
 		return nil, err
 	}
 	return req, nil
@@ -643,7 +653,11 @@ func newCloseWorkerTrainingTool(training TrainingKeeper) agentports.AgentTool {
 			if err != nil {
 				return nil, err
 			}
-			action, err := common.RequireEnum(params.Params, paramTrainingClose, trainingCloses.Values)
+			action, err := common.RequireEnum(
+				params.Params,
+				paramTrainingClose,
+				trainingCloses.Values,
+			)
 			if err != nil {
 				return nil, err
 			}

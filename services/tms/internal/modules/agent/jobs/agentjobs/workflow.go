@@ -250,8 +250,7 @@ func (w *Workflows) AgentRunWorkflow(
 	var a *Activities
 	tenant := payload.TenantInfo()
 
-	prepareCtx := workflow.WithActivityOptions(ctx, withPriority(prepareActivityOptions, payload,
-		agentflowcontract.PriorityBackground))
+	prepareCtx := workflow.WithActivityOptions(ctx, withPriority(prepareActivityOptions, payload))
 	var prepared PrepareRunResult
 	if err := workflow.ExecuteActivity(prepareCtx, a.PrepareRunActivity, payload).
 		Get(prepareCtx, &prepared); err != nil {
@@ -271,8 +270,7 @@ func (w *Workflows) AgentRunWorkflow(
 		}
 	})
 
-	openCtx := workflow.WithActivityOptions(runCtx, withPriority(prepareActivityOptions, payload,
-		agentflowcontract.PriorityBackground))
+	openCtx := workflow.WithActivityOptions(runCtx, withPriority(prepareActivityOptions, payload))
 	var opened OpenRunResult
 	if err := workflow.ExecuteActivity(openCtx, a.OpenRunActivity, &OpenRunInput{
 		Payload:    payload,
@@ -292,8 +290,7 @@ func (w *Workflows) AgentRunWorkflow(
 		)
 	}
 
-	finishCtx := workflow.WithActivityOptions(ctx, withPriority(persistActivityOptions, payload,
-		agentflowcontract.PriorityBackground))
+	finishCtx := workflow.WithActivityOptions(ctx, withPriority(persistActivityOptions, payload))
 	var finished FinishRunResult
 	if err := workflow.ExecuteActivity(finishCtx, a.FinishRunActivity, &FinishRunInput{
 		Payload:    payload,
@@ -349,8 +346,7 @@ func awaitEveryDecision(
 
 	decisions := workflow.GetSignalChannel(ctx, agentcontract.AgentDecisionSignalName)
 	deadline := workflow.Now(ctx).Add(time.Duration(timeoutSeconds) * time.Second)
-	countCtx := workflow.WithActivityOptions(ctx, withPriority(persistActivityOptions, payload,
-		agentflowcontract.PriorityBackground))
+	countCtx := workflow.WithActivityOptions(ctx, withPriority(persistActivityOptions, payload))
 
 	for {
 		remaining := deadline.Sub(workflow.Now(ctx))
@@ -380,10 +376,9 @@ func awaitEveryDecision(
 func withPriority(
 	options workflow.ActivityOptions,
 	payload *agentcontract.AgentRunPayload,
-	priorityKey int,
 ) workflow.ActivityOptions {
 	options.Priority = temporal.Priority{
-		PriorityKey: priorityKey,
+		PriorityKey: agentflowcontract.PriorityBackground,
 		FairnessKey: payload.OrganizationID.String(),
 	}
 

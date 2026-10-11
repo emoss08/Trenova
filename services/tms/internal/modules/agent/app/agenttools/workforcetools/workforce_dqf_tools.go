@@ -303,7 +303,10 @@ func applyVerificationEmployer(
 	if req.EmployedTo, err = common.OptionalScheduleDay(params, paramEmployedTo); err != nil {
 		return err
 	}
-	if req.WasDOTRegulated, err = common.OptionalBoolPointer(params, paramWasDOTRegulated); err != nil {
+	if req.WasDOTRegulated, err = common.OptionalBoolPointer(
+		params,
+		paramWasDOTRegulated,
+	); err != nil {
 		return err
 	}
 	if method, given, methodErr := common.OptionalEnum(params, paramVerifyMethod,
@@ -356,7 +359,10 @@ func applyVerificationResponse(
 	} else if given {
 		req.Status = &status
 	}
-	if req.ResponseReceivedAt, err = common.OptionalScheduleDay(params, paramResponseAt); err != nil {
+	if req.ResponseReceivedAt, err = common.OptionalScheduleDay(
+		params,
+		paramResponseAt,
+	); err != nil {
 		return err
 	}
 	if req.DrugAlcoholResponseReceivedAt, err = common.OptionalScheduleDay(params,
@@ -370,7 +376,11 @@ func applyVerificationResponse(
 		paramHadDAViolations); err != nil {
 		return err
 	}
-	if req.Findings, err = common.OptionalBoundedText(params, paramFindings, wfNoteChars); err != nil {
+	if req.Findings, err = common.OptionalBoundedText(
+		params,
+		paramFindings,
+		wfNoteChars,
+	); err != nil {
 		return err
 	}
 	if req.DocumentID, err = common.OptionalID(params, wfParamDocument); err != nil {
@@ -537,7 +547,12 @@ func newLogEmploymentVerificationRequestTool(dqf VerificationKeeper) agentports.
 			change *workerdqfservice.VerificationChange,
 		) (*agent.ToolPreview, error) {
 			options := append(
-				wfOptions(common.FieldStatus, wfFieldRequestedAt, "followUpCount", "lastFollowUpAt"),
+				wfOptions(
+					common.FieldStatus,
+					wfFieldRequestedAt,
+					"followUpCount",
+					"lastFollowUpAt",
+				),
 				toolpreview.Volatile(wfFieldRequestedAt, "lastFollowUpAt"),
 			)
 			recorded, err := toolpreview.Changed(verificationRecord(change.Before),

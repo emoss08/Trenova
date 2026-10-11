@@ -115,8 +115,14 @@ func postedInvoiceChange(post *invoiceservice.PostPreview) (*agent.RecordChange,
 
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(
 		post.Before.CurrencyCode,
-		agent.MoneyLine{Label: common.MoneyLineFreight, After: common.KnownAmount(post.Before.SubtotalAmount)},
-		agent.MoneyLine{Label: common.MoneyLineAccessorials, After: common.KnownAmount(post.Before.OtherAmount)},
+		agent.MoneyLine{
+			Label: common.MoneyLineFreight,
+			After: common.KnownAmount(post.Before.SubtotalAmount),
+		},
+		agent.MoneyLine{
+			Label: common.MoneyLineAccessorials,
+			After: common.KnownAmount(post.Before.OtherAmount),
+		},
 	), toolpreview.SensitiveAs("totalAmount", "subtotalAmount", "otherAmount"))
 
 	return change, nil

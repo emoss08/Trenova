@@ -35,7 +35,7 @@ type SettlementTotal struct {
 }
 
 type SettlementFacts struct {
-	Id       pulid.ID          `json:"-"`
+	ID       pulid.ID          `json:"-"`
 	Number   string            `json:"-"`
 	Version  int64             `json:"-"`
 	Status   string            `json:"-"`

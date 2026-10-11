@@ -107,7 +107,10 @@ func (t *CreateShipmentTool) Preview(
 	plan, err := t.shipments.PreviewCreate(ctx, entity, params.Actor)
 	if err != nil {
 		if common.IsRefusal(err) {
-			return common.WarnWouldFail(toolpreview.Build(enteredShipmentSummary(entity, nil)), err), nil
+			return common.WarnWouldFail(
+				toolpreview.Build(enteredShipmentSummary(entity, nil)),
+				err,
+			), nil
 		}
 
 		return nil, err

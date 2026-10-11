@@ -24,15 +24,11 @@ const wfParamOccurred = "occurredAt"
 
 const wfParamDueDate = "dueDate"
 
-const wfFieldStatus = "status"
-
 const wfFieldNotes = "notes"
 
 const wfFieldWorkerID = "workerId"
 
 const wfFieldDocument = "documentId"
-
-const wfFieldCreatedAt = "createdAt"
 
 const wfFieldCompletedAt = "completedAt"
 
@@ -92,7 +88,11 @@ func withSchema(
 	return spec
 }
 
-func targeting(spec *common.ReceivableSpec, key string, resource permission.Resource) *common.ReceivableSpec {
+func targeting(
+	spec *common.ReceivableSpec,
+	key string,
+	resource permission.Resource,
+) *common.ReceivableSpec {
 	spec.Target = func(params map[string]any) (agentports.ToolTarget, bool) {
 		return common.TargetOf(params, key, resource)
 	}

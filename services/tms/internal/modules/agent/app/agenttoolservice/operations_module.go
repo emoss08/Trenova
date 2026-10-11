@@ -235,7 +235,10 @@ func provideAssignWorkerShiftTool(
 	permissions permissionports.PermissionEngine,
 	teams *orgstructureservice.Service,
 ) agentports.AgentTool {
-	return receivabletools.NewAssignWorkerShiftTool(schedules, receivabletools.NewTeamScope(permissions, teams))
+	return receivabletools.NewAssignWorkerShiftTool(
+		schedules,
+		receivabletools.NewTeamScope(permissions, teams),
+	)
 }
 
 func provideEndWorkerShiftAssignmentTool(

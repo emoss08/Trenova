@@ -414,7 +414,7 @@ func TestUpsert_RefusesAPathThatLeavesTheApplication(t *testing.T) {
 
 	bad := input(tenant, watchtower.SourceInsight, "ins_1", watchtower.SeverityInfo, 100)
 	bad.Path = "//evil.example/x"
-	_, err := svc.projector.upsert(t.Context(), bad)
+	err := svc.projector.upsert(t.Context(), bad)
 	require.Error(t, err)
 	assert.Empty(t, repo.items)
 }
@@ -436,8 +436,8 @@ func TestHandOff_PublishesToSubscribersOrNamesWhoCouldTakeIt(t *testing.T) {
 	in.SubjectType = agent.SubjectShipment
 	in.SubjectID = subject
 	in.EventKind = agent.EventServiceFailureDetected
-	item, err := svc.projector.upsert(t.Context(), in)
-	require.NoError(t, err)
+	require.NoError(t, svc.projector.upsert(t.Context(), in))
+	item := repo.items[repo.key(in.SourceKind, in.SourceID)]
 
 	// Nobody subscribes: the person is told who could take it.
 	definitions.enabled = []*agentdefinition.Definition{
@@ -526,8 +526,8 @@ func TestHandOff_SuggestsTheStarterThatListensForTheEvent(t *testing.T) {
 			in.SubjectType = tc.event.SubjectType()
 			in.SubjectID = pulid.MustNew("sub_")
 			in.EventKind = tc.event
-			item, err := svc.projector.upsert(t.Context(), in)
-			require.NoError(t, err)
+			require.NoError(t, svc.projector.upsert(t.Context(), in))
+			item := repo.items[repo.key(in.SourceKind, in.SourceID)]
 
 			result, err := svc.HandOff(
 				t.Context(),
@@ -553,10 +553,10 @@ func TestHandOff_RefusesAnItemTheReaderMayNotSee(t *testing.T) {
 	in := input(tenant, watchtower.SourceBillingException, "bqi_1", watchtower.SeverityWarning, 100)
 	in.SubjectType = agent.SubjectBillingQueueItem
 	in.SubjectID = pulid.MustNew("bqi_")
-	item, err := svc.projector.upsert(t.Context(), in)
-	require.NoError(t, err)
+	require.NoError(t, svc.projector.upsert(t.Context(), in))
+	item := repo.items[repo.key(in.SourceKind, in.SourceID)]
 
-	_, err = svc.HandOff(
+	_, err := svc.HandOff(
 		t.Context(),
 		watchtowerports.HandOffWatchtowerItemRequest{TenantInfo: tenant, ItemID: item.ID},
 		actor,

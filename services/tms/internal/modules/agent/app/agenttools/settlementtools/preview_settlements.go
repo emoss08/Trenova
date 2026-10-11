@@ -61,7 +61,7 @@ func (t *SettlementDecisionTool[E]) Preview(
 
 	change, err := toolpreview.Changed(toolpreview.Record{
 		Resource: t.ledger.Resource,
-		ID:       before.Id,
+		ID:       before.ID,
 		Label:    before.Number,
 		Version:  common.PinnedVersion(before.Version),
 	}, plan.Before, plan.After,

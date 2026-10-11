@@ -125,7 +125,7 @@ func (t *EvaluateServiceFailuresTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentId": agenttoolschema.RecordIDText(
+			common.ParamShipmentID: agenttoolschema.RecordIDText(
 				permission.ResourceShipment,
 				"The shipment to check, from get_shipment_tracking, "+
 					"list_shipments or this run's subject. For several shipments send "+
@@ -174,7 +174,7 @@ func (t *EvaluateServiceFailuresTool) Policy() agentports.ToolPolicy {
 func (t *EvaluateServiceFailuresTool) Target(
 	params map[string]any,
 ) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "shipmentId", permission.ResourceShipment)
+	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
 }
 
 func (t *EvaluateServiceFailuresTool) Execute(
@@ -249,7 +249,10 @@ func (t *EvaluateServiceFailuresTool) request(
 	}
 
 	var err error
-	if scope.shipmentID, _, err = common.OptionalPulid(params.Params, "shipmentId"); err != nil {
+	if scope.shipmentID, _, err = common.OptionalPulid(
+		params.Params,
+		common.ParamShipmentID,
+	); err != nil {
 		return nil, fmt.Errorf("parameter \"shipmentId\" is not a valid id: %w", err)
 	}
 	if scope.stopID, _, err = common.OptionalPulid(params.Params, common.ParamStopID); err != nil {
@@ -314,7 +317,7 @@ func (t *EvaluateServiceFailuresTool) ResolveSelection(
 	}
 
 	resolved := maputils.WithoutKeys(params.Params, "shipmentIds")
-	resolved["shipmentId"] = scope.shipmentID.String()
+	resolved[common.ParamShipmentID] = scope.shipmentID.String()
 
 	return resolved, nil
 }
@@ -531,7 +534,7 @@ func (t *NotifyDriverTool) ParamSchema() map[string]any {
 				"How urgently the phone should show it. Default medium.",
 				driverMessagePriorities,
 			),
-			"shipmentId": agenttoolschema.RecordIDText(
+			common.ParamShipmentID: agenttoolschema.RecordIDText(
 				permission.ResourceShipment,
 				"Optional: the shipment the message is about, so Dash can open "+
 					"it; from get_dispatch_board, get_shipment_tracking or search_shipments.",
@@ -620,12 +623,12 @@ func (t *NotifyDriverTool) request(
 			AlertMessage: strings.TrimSpace(message),
 		},
 	}
-	if raw := common.OptionalString(params.Params, "shipmentId"); raw != "" {
+	if raw := common.OptionalString(params.Params, common.ParamShipmentID); raw != "" {
 		shipmentID, parseErr := pulid.Parse(raw)
 		if parseErr != nil {
 			return nil, fmt.Errorf("parameter \"shipmentId\" is not a valid id: %w", parseErr)
 		}
-		request.RelatedEntities = map[string]any{"shipmentId": shipmentID.String()}
+		request.RelatedEntities = map[string]any{common.ParamShipmentID: shipmentID.String()}
 		request.Link = "/loads/" + shipmentID.String()
 	}
 
@@ -702,7 +705,7 @@ func (t *EmailCustomerTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentId": agenttoolschema.RecordIDText(
+			common.ParamShipmentID: agenttoolschema.RecordIDText(
 				permission.ResourceShipment,
 				"The shipment the update is about, from search_shipments, "+
 					"list_shipments or this run's subject. Its customer is who receives it.",
@@ -720,7 +723,7 @@ func (t *EmailCustomerTool) ParamSchema() map[string]any {
 					"shipment reference and the sign-off, so leave those out.",
 			},
 		},
-		"required":             []string{"shipmentId", "subject", "body"},
+		"required":             []string{common.ParamShipmentID, "subject", "body"},
 		"additionalProperties": false,
 	}
 }
@@ -743,7 +746,7 @@ func (t *EmailCustomerTool) Policy() agentports.ToolPolicy {
 }
 
 func (t *EmailCustomerTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "shipmentId", permission.ResourceShipment)
+	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
 }
 
 func (t *EmailCustomerTool) Execute(
@@ -773,7 +776,10 @@ func (t *EmailCustomerTool) record(ctx context.Context, composed *common.Custome
 		return nil
 	}
 
-	if _, err := t.Deps.Comments.CreateSystem(ctx, common.CustomerUpdateComment(composed)); err != nil {
+	if _, err := t.Deps.Comments.CreateSystem(
+		ctx,
+		common.CustomerUpdateComment(composed),
+	); err != nil {
 		return fmt.Errorf("the email was sent but could not be recorded on the shipment: %w", err)
 	}
 
@@ -806,8 +812,8 @@ type SendDetentionNoticeTool struct {
 	detention detentionActor
 }
 
-func NewSendDetentionNoticeTool(detention detentionActor) agentports.AgentTool {
-	return &SendDetentionNoticeTool{detention: detention}
+func NewSendDetentionNoticeTool(detentions detentionActor) agentports.AgentTool {
+	return &SendDetentionNoticeTool{detention: detentions}
 }
 
 func (t *SendDetentionNoticeTool) Name() string { return "send_detention_notice" }
@@ -896,8 +902,8 @@ type WaiveDetentionTool struct {
 	detention detentionActor
 }
 
-func NewWaiveDetentionTool(detention detentionActor) agentports.AgentTool {
-	return &WaiveDetentionTool{detention: detention}
+func NewWaiveDetentionTool(detentions detentionActor) agentports.AgentTool {
+	return &WaiveDetentionTool{detention: detentions}
 }
 
 func (t *WaiveDetentionTool) Name() string { return "waive_detention" }
@@ -921,13 +927,16 @@ func (t *WaiveDetentionTool) ParamSchema() map[string]any {
 				"The occurrence id from list_detention_desk.",
 				permission.KindDetentionOccurrence,
 			),
-			common.FieldReason: agenttoolschema.Enum("The coded reason for the waiver.", waiverReasons),
+			common.FieldReason: agenttoolschema.Enum(
+				"The coded reason for the waiver.",
+				waiverReasons,
+			),
 			"note": map[string]any{
 				"type":        "string",
 				"description": "Why, in a sentence a person can read on the occurrence later.",
 			},
 		},
-		"required":             []string{"occurrenceId", "reason", "note"},
+		"required":             []string{"occurrenceId", common.FieldReason, "note"},
 		"additionalProperties": false,
 	}
 }
@@ -981,7 +990,7 @@ func (t *WaiveDetentionTool) request(
 	if err != nil {
 		return detentionservice.WaiveParams{}, err
 	}
-	rawReason, err := common.RequireString(params.Params, "reason")
+	rawReason, err := common.RequireString(params.Params, common.FieldReason)
 	if err != nil {
 		return detentionservice.WaiveParams{}, err
 	}

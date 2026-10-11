@@ -77,8 +77,10 @@ func (t *AssignPayProfileTool) ParamSchema() map[string]any {
 			permission.KindPayProfile,
 		),
 		common.ParamEffectiveFrom: agenttoolschema.Date("The first day pay is computed under it."),
-		common.ParamEffectiveTo: agenttoolschema.Date("The day it stops, when it is temporary; leave it " +
-			"out for open-ended."),
+		common.ParamEffectiveTo: agenttoolschema.Date(
+			"The day it stops, when it is temporary; leave it " +
+				"out for open-ended.",
+		),
 		paramSplitPercent: common.AmountProperty("The driver's share of each load, as a percent; " +
 			"50 for an even team split. Leave it out for 100."),
 		common.ParamDriverPayNotes: common.StringProperty("Why the driver moves to this profile.",
@@ -125,7 +127,12 @@ func (t *AssignPayProfileTool) entity(
 	if !hasSplit {
 		split = decimal.NewFromInt(fullSplitPercent)
 	}
-	notes, err := common.BoundedString(params.Params, common.ParamDriverPayNotes, maxAssignmentNotes, false)
+	notes, err := common.BoundedString(
+		params.Params,
+		common.ParamDriverPayNotes,
+		maxAssignmentNotes,
+		false,
+	)
 	if err != nil {
 		return nil, err
 	}

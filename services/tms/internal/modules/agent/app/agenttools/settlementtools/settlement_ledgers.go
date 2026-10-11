@@ -34,7 +34,7 @@ func carrierSettlementLedger() common.SettlementLedger[carriersettlement.Carrier
 
 func carrierSettlementFacts(entity *carriersettlement.CarrierSettlement) *common.SettlementFacts {
 	facts := &common.SettlementFacts{
-		Id:       entity.ID,
+		ID:       entity.ID,
 		Number:   entity.SettlementNumber,
 		Version:  entity.Version,
 		Status:   string(entity.Status),

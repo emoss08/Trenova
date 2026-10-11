@@ -35,11 +35,18 @@ func (t *GenerateRateConfirmationTool) Preview(
 	}
 
 	shipmentLabel := plan.Shipment.ProNumber
-	created, err := toolpreview.Create(toolpreview.Record{
-		Resource: permission.ResourceRateConfirmation,
-		Label:    common.RateConfirmationLabel(plan.Created, shipmentLabel),
-	}, plan.Created,
-		toolpreview.Only("revision", common.FieldStatus, common.FieldCarrierID, common.PreviewFieldShipmentMoveID),
+	created, err := toolpreview.Create(
+		toolpreview.Record{
+			Resource: permission.ResourceRateConfirmation,
+			Label:    common.RateConfirmationLabel(plan.Created, shipmentLabel),
+		},
+		plan.Created,
+		toolpreview.Only(
+			"revision",
+			common.FieldStatus,
+			common.FieldCarrierID,
+			common.PreviewFieldShipmentMoveID,
+		),
 		toolpreview.WithRefs(map[string]permission.Resource{
 			common.FieldCarrierID:             permission.ResourceCarrier,
 			common.PreviewFieldShipmentMoveID: permission.ResourceShipmentMove,
@@ -49,7 +56,10 @@ func (t *GenerateRateConfirmationTool) Preview(
 	if err != nil {
 		return nil, err
 	}
-	common.LabelRefs(created, map[string]string{common.FieldCarrierID: common.CarrierName(plan.Carrier)})
+	common.LabelRefs(
+		created,
+		map[string]string{common.FieldCarrierID: common.CarrierName(plan.Carrier)},
+	)
 	toolpreview.AttachMoney(
 		created,
 		common.CarrierPay(plan.Assignment),
@@ -152,15 +162,27 @@ func (t *VoidRateConfirmationTool) Preview(
 		)), nil
 	}
 
-	changes, err := rateConfirmationChanges(plan, common.FieldStatus, common.FieldVoidReason, common.FieldVoidedAt)
+	changes, err := rateConfirmationChanges(
+		plan,
+		common.FieldStatus,
+		common.FieldVoidReason,
+		common.FieldVoidedAt,
+	)
 	if err != nil {
 		return nil, err
 	}
 	changes[0].Operation = agent.PreviewOperationArchive
 
-	summary = fmt.Sprintf("Would void revision %d of the rate confirmation for %s, which "+
-		"is %s; its sign link would stop working. Reason: %s", plan.Before.Revision,
-		common.CarrierName(plan.Before.Carrier), rateConfirmationStanding(plan.Before.Status), reason)
+	summary = fmt.Sprintf(
+		"Would void revision %d of the rate confirmation for %s, which "+
+			"is %s; its sign link would stop working. Reason: %s",
+		plan.Before.Revision,
+		common.CarrierName(
+			plan.Before.Carrier,
+		),
+		rateConfirmationStanding(plan.Before.Status),
+		reason,
+	)
 	if plan.AssignmentAfter != nil {
 		summary += " The carrier's assignment would go back to awaiting confirmation."
 	}

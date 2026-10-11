@@ -34,8 +34,15 @@ const kindBalance = "time off balance"
 const maxPTOReasonChars = 255
 
 var ptoFields = []string{
-	wfFieldWorkerID, paramPTOType, common.FieldStatus, paramPTOStart, paramPTOEnd, common.FieldReason,
-	"days", "autoApproved", wfFieldApproverID,
+	wfFieldWorkerID,
+	paramPTOType,
+	common.FieldStatus,
+	paramPTOStart,
+	paramPTOEnd,
+	common.FieldReason,
+	"days",
+	"autoApproved",
+	wfFieldApproverID,
 }
 
 type ptoRequester interface {
@@ -91,8 +98,11 @@ func ptoDatesProperties() map[string]any {
 		paramPTOStart: agenttoolschema.Date("The first day off. \"Next Friday\" is the coming " +
 			"Friday, not the one a week later."),
 		paramPTOEnd: agenttoolschema.Date("The last day off."),
-		common.FieldReason: common.StringProperty("The reason the worker gave, when one was given; the "+
-			"driver sees it with the request. Omit it rather than ask, and the kind is used.", maxPTOReasonChars),
+		common.FieldReason: common.StringProperty(
+			"The reason the worker gave, when one was given; the "+
+				"driver sees it with the request. Omit it rather than ask, and the kind is used.",
+			maxPTOReasonChars,
+		),
 	}
 }
 
@@ -152,57 +162,66 @@ func newRequestWorkerPTOTool(pto ptoRequester) agentports.AgentTool {
 	spec.Egress = agent.EgressDriverVisible
 	spec.SearchTerms = []string{"vacation", "time off", "PTO request", "day off"}
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[*worker.WorkerPTO, *worker.WorkerPTO]{
-		Request: func(params *agentports.ToolExecuteParams) (*worker.WorkerPTO, error) {
-			workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
-			if err != nil {
-				return nil, err
-			}
-			entity := &worker.WorkerPTO{
-				OrganizationID: params.OrganizationID,
-				BusinessUnitID: params.BusinessUnitID,
-				WorkerID:       workerID,
-				Status:         worker.PTOStatusRequested,
-			}
-			return entity, applyPTODates(entity, params.Params, true)
+	return common.NewReportingReceivableTool(
+		spec,
+		common.ReceivablePlan[*worker.WorkerPTO, *worker.WorkerPTO]{
+			Request: func(params *agentports.ToolExecuteParams) (*worker.WorkerPTO, error) {
+				workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+				if err != nil {
+					return nil, err
+				}
+				entity := &worker.WorkerPTO{
+					OrganizationID: params.OrganizationID,
+					BusinessUnitID: params.BusinessUnitID,
+					WorkerID:       workerID,
+					Status:         worker.PTOStatusRequested,
+				}
+				return entity, applyPTODates(entity, params.Params, true)
+			},
+			Plan: func(
+				ctx context.Context,
+				entity *worker.WorkerPTO,
+				params *agentports.ToolExecuteParams,
+			) (*worker.WorkerPTO, error) {
+				return pto.PlanCreate(ctx, entity, params.Actor.UserID)
+			},
+			Refused: func(*worker.WorkerPTO) string { return "Would file a time-off request." },
+			Render: func(_ *worker.WorkerPTO, planned *worker.WorkerPTO) (*agent.ToolPreview, error) {
+				change, err := toolpreview.Create(
+					wfRecord(permission.ResourceWorkerPTO, pulid.Nil,
+						ptoRecord(planned).Label, 0),
+					planned, wfOptions(ptoFields...)...)
+				if err != nil {
+					return nil, err
+				}
+				summary := fmt.Sprintf("Would request %s days of %s from %s to %s.",
+					planned.Days.String(), planned.Type, common.DayText(planned.StartDate),
+					common.DayText(planned.EndDate))
+				if planned.AutoApproved {
+					summary += " The worker's policy needs no approval, so it is booked at once " +
+						"and the driver is told."
+				}
+				return toolpreview.Build(summary, change), nil
+			},
+			Run: func(
+				ctx context.Context,
+				entity *worker.WorkerPTO,
+				params *agentports.ToolExecuteParams,
+			) (*agent.ToolExecutionResult, error) {
+				created, err := pto.Create(ctx, entity, params.Actor.UserID)
+				if err != nil {
+					return nil, err
+				}
+				return wfResult(
+					"requested",
+					kindTimeOff,
+					"ptoId",
+					created.ID,
+					created.WorkerID,
+				), nil
+			},
 		},
-		Plan: func(
-			ctx context.Context,
-			entity *worker.WorkerPTO,
-			params *agentports.ToolExecuteParams,
-		) (*worker.WorkerPTO, error) {
-			return pto.PlanCreate(ctx, entity, params.Actor.UserID)
-		},
-		Refused: func(*worker.WorkerPTO) string { return "Would file a time-off request." },
-		Render: func(_ *worker.WorkerPTO, planned *worker.WorkerPTO) (*agent.ToolPreview, error) {
-			change, err := toolpreview.Create(
-				wfRecord(permission.ResourceWorkerPTO, pulid.Nil,
-					ptoRecord(planned).Label, 0),
-				planned, wfOptions(ptoFields...)...)
-			if err != nil {
-				return nil, err
-			}
-			summary := fmt.Sprintf("Would request %s days of %s from %s to %s.",
-				planned.Days.String(), planned.Type, common.DayText(planned.StartDate),
-				common.DayText(planned.EndDate))
-			if planned.AutoApproved {
-				summary += " The worker's policy needs no approval, so it is booked at once " +
-					"and the driver is told."
-			}
-			return toolpreview.Build(summary, change), nil
-		},
-		Run: func(
-			ctx context.Context,
-			entity *worker.WorkerPTO,
-			params *agentports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
-			created, err := pto.Create(ctx, entity, params.Actor.UserID)
-			if err != nil {
-				return nil, err
-			}
-			return wfResult("requested", kindTimeOff, "ptoId", created.ID, created.WorkerID), nil
-		},
-	})
+	)
 }
 
 type ptoEdit struct {
@@ -225,7 +244,10 @@ func (e *ptoEdit) entity(ctx context.Context, pto ptoRequester) (*worker.WorkerP
 
 func newUpdateWorkerPTOTool(pto ptoRequester) agentports.AgentTool {
 	properties := ptoDatesProperties()
-	properties["ptoId"] = agenttoolschema.RecordIDText(permission.ResourceWorkerPTO, common.PtoIDNote)
+	properties["ptoId"] = agenttoolschema.RecordIDText(
+		permission.ResourceWorkerPTO,
+		common.PtoIDNote,
+	)
 	spec := targeting(withSchema(wfSpec(
 		"update_worker_pto",
 		"Change the kind, days or reason of a time-off request still waiting for a "+
@@ -346,9 +368,14 @@ func newAdjustWorkerPTOBalanceTool(ledger PtoBalanceAdjuster) agentports.AgentTo
 		permission.OpManage,
 	), map[string]any{
 		common.ParamWorkerID: common.WorkerProperty(),
-		paramPTOType:         agenttoolschema.Enum("The balance to adjust.", agenttoolschema.PTOTypes),
-		paramAmountDays: common.AmountProperty("Days to add, or a negative number of days to take " +
-			"away, such as 1.5 or -2."),
+		paramPTOType: agenttoolschema.Enum(
+			"The balance to adjust.",
+			agenttoolschema.PTOTypes,
+		),
+		paramAmountDays: common.AmountProperty(
+			"Days to add, or a negative number of days to take " +
+				"away, such as 1.5 or -2.",
+		),
 		paramEffectiveOn: agenttoolschema.Date("The day it takes effect. Defaults to today."),
 		common.FieldNote: common.StringProperty("Why, kept on the ledger. Required.", wfShortChars),
 	}, common.ParamWorkerID, paramPTOType, paramAmountDays, common.FieldNote))

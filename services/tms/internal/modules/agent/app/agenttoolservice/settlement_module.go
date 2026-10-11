@@ -7,7 +7,10 @@ import (
 )
 
 func settlementToolProviders() []any {
-	return append(append(settlementtools.SettlementDecisionProviders(), settlementtools.SettlementBulkProviders()...),
+	return append(
+		append(
+			settlementtools.SettlementDecisionProviders(),
+			settlementtools.SettlementBulkProviders()...),
 		paytools.ProvideHoldDriverPayEventTool,
 		paytools.ProvideReleaseDriverPayEventTool,
 		paytools.ProvideAttachPayEventsTool,

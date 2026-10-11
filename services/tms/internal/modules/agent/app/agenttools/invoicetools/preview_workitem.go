@@ -17,7 +17,12 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-var closedWorkItemFields = []string{common.FieldStatus, "resolutionType", "resolutionNote", "resolvedAt"}
+var closedWorkItemFields = []string{
+	common.FieldStatus,
+	"resolutionType",
+	"resolutionNote",
+	"resolvedAt",
+}
 
 func (a resolveWorkItemArgs) close(
 	item *bankreceiptworkitem.WorkItem,

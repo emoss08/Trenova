@@ -31,7 +31,6 @@ import (
 	"go.uber.org/zap"
 )
 
-//nolint:funlen // the module list is the worker-only application graph
 func Modules() fx.Option {
 	return fx.Options(
 		partiesworker.WorkerOptions(),

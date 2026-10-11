@@ -109,7 +109,23 @@ func serviceFailureResult(
 }
 
 func targetServiceFailure(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, editools.ParamServiceFailureID, permission.ResourceServiceFailure)
+	return common.TargetOf(
+		params,
+		editools.ParamServiceFailureID,
+		permission.ResourceServiceFailure,
+	)
+}
+
+func getServiceFailure(
+	ctx context.Context,
+	failures serviceFailureLifecycle,
+	id pulid.ID,
+	tenant pagination.TenantInfo,
+) (*servicefailure.ServiceFailure, error) {
+	return failures.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
+		ID:         id,
+		TenantInfo: tenant,
+	})
 }
 
 type serviceFailureEdit struct {
@@ -134,11 +150,18 @@ func readServiceFailureEdit(params *agentports.ToolExecuteParams) (*serviceFailu
 		tenant:      common.TenantFrom(*params),
 		clearReason: common.OptionalBool(params.Params, paramClearReasonCode),
 	}
-	if edit.reasonCodeID, _, err = common.OptionalPulid(params.Params, common.FieldReasonCodeID); err != nil {
+	if edit.reasonCodeID, _, err = common.OptionalPulid(
+		params.Params,
+		common.FieldReasonCodeID,
+	); err != nil {
 		return nil, fmt.Errorf("parameter %q is not a valid id: %w", common.FieldReasonCodeID, err)
 	}
 	if edit.clearReason && edit.reasonCodeID.IsNotNil() {
-		return nil, fmt.Errorf("send %s or %s, not both", common.FieldReasonCodeID, paramClearReasonCode)
+		return nil, fmt.Errorf(
+			"send %s or %s, not both",
+			common.FieldReasonCodeID,
+			paramClearReasonCode,
+		)
 	}
 	if edit.notes, err = common.OptionalBoundedText(
 		params.Params,
@@ -239,16 +262,22 @@ func NewUpdateServiceFailureTool(failures serviceFailureLifecycle) agentports.Ag
 			),
 			paramClearReasonCode: common.BooleanProperty("True to remove the reason code. A " +
 				"reviewed failure keeps its reason."),
-			common.FieldNotes: toolschema.KeepEmpty(common.StringProperty("What the customer may read "+
-				"about the failure.", common.MaxOperationNoteChars)),
-			paramInternalNotes: toolschema.KeepEmpty(common.StringProperty("What staff should know.",
-				common.MaxOperationNoteChars)),
+			common.FieldNotes: toolschema.KeepEmpty(
+				common.StringProperty("What the customer may read "+
+					"about the failure.", common.MaxOperationNoteChars),
+			),
+			paramInternalNotes: toolschema.KeepEmpty(
+				common.StringProperty("What staff should know.",
+					common.MaxOperationNoteChars),
+			),
 			paramX12Status: toolschema.KeepEmpty(common.StringProperty("EDI 214 status code "+
 				"override, three characters.", maxX12CodeChars)),
 			paramX12Reason: toolschema.KeepEmpty(common.StringProperty("EDI 214 reason code "+
 				"override, three characters.", maxX12CodeChars)),
-			paramX12Exception: toolschema.KeepEmpty(common.StringProperty("EDI 214 exception code, "+
-				"three characters.", maxX12CodeChars)),
+			paramX12Exception: toolschema.KeepEmpty(
+				common.StringProperty("EDI 214 exception code, "+
+					"three characters.", maxX12CodeChars),
+			),
 		},
 		Required: []string{editools.ParamServiceFailureID},
 		Target:   targetServiceFailure,
@@ -259,10 +288,7 @@ func NewUpdateServiceFailureTool(failures serviceFailureLifecycle) agentports.Ag
 			edit *serviceFailureEdit,
 			_ *agentports.ToolExecuteParams,
 		) (*servicefailureports.ServiceFailureLifecyclePreview, error) {
-			current, err := failures.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
-				ID:         edit.id,
-				TenantInfo: edit.tenant,
-			})
+			current, err := getServiceFailure(ctx, failures, edit.id, edit.tenant)
 			if err != nil {
 				return nil, err
 			}
@@ -296,10 +322,7 @@ func NewUpdateServiceFailureTool(failures serviceFailureLifecycle) agentports.Ag
 			edit *serviceFailureEdit,
 			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
-			current, err := failures.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
-				ID:         edit.id,
-				TenantInfo: edit.tenant,
-			})
+			current, err := getServiceFailure(ctx, failures, edit.id, edit.tenant)
 			if err != nil {
 				return nil, err
 			}
@@ -336,9 +359,17 @@ func readServiceFailureTransition(
 		return nil, fmt.Errorf("parameter %q is not a valid id: %w", common.FieldReasonCodeID, err)
 	}
 	if notesRequired {
-		transition.notes, err = common.RequireBoundedText(params.Params, common.FieldNotes, common.MaxOperationNoteChars)
+		transition.notes, err = common.RequireBoundedText(
+			params.Params,
+			common.FieldNotes,
+			common.MaxOperationNoteChars,
+		)
 	} else {
-		transition.notes, err = common.BoundedText(params.Params, common.FieldNotes, common.MaxOperationNoteChars)
+		transition.notes, err = common.BoundedText(
+			params.Params,
+			common.FieldNotes,
+			common.MaxOperationNoteChars,
+		)
 	}
 	if err != nil {
 		return nil, err
@@ -391,8 +422,11 @@ func newServiceFailureTransitionTool(
 ) agentports.AgentTool {
 	properties := map[string]any{
 		editools.ParamServiceFailureID: serviceFailureIDProperty(),
-		common.FieldNotes: common.StringProperty("What was found, in a sentence a person reads on the "+
-			"failure later.", common.MaxOperationNoteChars),
+		common.FieldNotes: common.StringProperty(
+			"What was found, in a sentence a person reads on the "+
+				"failure later.",
+			common.MaxOperationNoteChars,
+		),
 	}
 	required := []string{editools.ParamServiceFailureID}
 	if spec.notesRequired {
@@ -429,10 +463,7 @@ func newServiceFailureTransitionTool(
 			transition *serviceFailureTransition,
 			params *agentports.ToolExecuteParams,
 		) (*servicefailureports.ServiceFailureLifecyclePreview, error) {
-			current, err := failures.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
-				ID:         transition.id,
-				TenantInfo: transition.tenant,
-			})
+			current, err := getServiceFailure(ctx, failures, transition.id, transition.tenant)
 			if err != nil {
 				return nil, err
 			}
@@ -459,17 +490,19 @@ func newServiceFailureTransitionTool(
 			}
 			summary := fmt.Sprintf("Would %s service failure %s.", spec.verb, plan.Before.Number)
 
-			return operationstools.ServiceFailureLifecyclePreview(summary, change, plan, spec.action), nil
+			return operationstools.ServiceFailureLifecyclePreview(
+				summary,
+				change,
+				plan,
+				spec.action,
+			), nil
 		},
 		Run: func(
 			ctx context.Context,
 			transition *serviceFailureTransition,
 			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
-			current, err := failures.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
-				ID:         transition.id,
-				TenantInfo: transition.tenant,
-			})
+			current, err := getServiceFailure(ctx, failures, transition.id, transition.tenant)
 			if err != nil {
 				return nil, err
 			}
@@ -522,9 +555,14 @@ func NewVoidServiceFailureTool(failures serviceFailureLifecycle) agentports.Agen
 		verb:          "void",
 		action:        "voided",
 		notesRequired: true,
-		fields:        []string{common.FieldStatus, "voidReason", "voidedAt", common.FieldVoidedByID},
-		volatile:      "voidedAt",
-		preview:       serviceFailureLifecycle.PreviewVoid,
-		run:           serviceFailureLifecycle.Void,
+		fields: []string{
+			common.FieldStatus,
+			"voidReason",
+			"voidedAt",
+			common.FieldVoidedByID,
+		},
+		volatile: "voidedAt",
+		preview:  serviceFailureLifecycle.PreviewVoid,
+		run:      serviceFailureLifecycle.Void,
 	})
 }

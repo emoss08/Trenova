@@ -54,7 +54,11 @@ var checklistItemMoves = agenttoolschema.Source(
 )
 
 var checklistItemFields = []string{
-	common.FieldStatus, wfFieldCompletedAt, "completedById", common.FieldNote, paramEvidenceDocument,
+	common.FieldStatus,
+	wfFieldCompletedAt,
+	"completedById",
+	common.FieldNote,
+	paramEvidenceDocument,
 }
 
 type ChecklistKeeper interface {
@@ -312,8 +316,11 @@ func newUpdateWorkerChecklistItemTool(checklists ChecklistKeeper) agentports.Age
 		),
 		paramItemMove: agenttoolschema.Enum("Complete, Skip, NotApplicable or Reopen.",
 			checklistItemMoves),
-		common.FieldNote: common.StringProperty("What was done, or why it was skipped or does not apply. "+
-			"Required to skip or mark not applicable.", wfNoteChars),
+		common.FieldNote: common.StringProperty(
+			"What was done, or why it was skipped or does not apply. "+
+				"Required to skip or mark not applicable.",
+			wfNoteChars,
+		),
 		paramEvidenceDocument: agenttoolschema.RecordIDText(
 			permission.ResourceDocument,
 			"For Complete: a document filed on the worker "+
@@ -431,7 +438,11 @@ func newCancelWorkerChecklistTool(checklists ChecklistKeeper) agentports.AgentTo
 			if err != nil {
 				return nil, err
 			}
-			reason, err := common.RequireBoundedText(params.Params, common.FieldReason, wfShortChars)
+			reason, err := common.RequireBoundedText(
+				params.Params,
+				common.FieldReason,
+				wfShortChars,
+			)
 			if err != nil {
 				return nil, err
 			}

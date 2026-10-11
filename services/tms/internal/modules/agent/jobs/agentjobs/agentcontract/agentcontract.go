@@ -242,8 +242,14 @@ func scheduleOptionsFor(definition *agentdefinition.Definition) (*client.Schedul
 		spec.Intervals = []client.ScheduleIntervalSpec{{
 			Every: time.Duration(definition.IntervalSeconds) * time.Second,
 		}}
-	default:
+	case agentdefinition.TriggerChat, agentdefinition.TriggerEvent:
 		return nil, fmt.Errorf("agent %s does not run on a schedule", definition.ID)
+	default:
+		return nil, fmt.Errorf(
+			"agent %s has unknown trigger mode %q",
+			definition.ID,
+			definition.TriggerMode,
+		)
 	}
 	if definition.EndsAt != nil {
 		spec.EndAt = time.Unix(*definition.EndsAt, 0)

@@ -272,7 +272,7 @@ func (t *AddHomeWidgetTool) ParamSchema() map[string]any {
 					},
 					"metrics": map[string]any{
 						"type":        "array",
-						"items":       map[string]any{"type": "string"},
+						schemaItems:   map[string]any{"type": "string"},
 						"description": "Metric keys from list_home_widgets, for a kpi row.",
 					},
 					"definitionId": agenttoolschema.RecordIDText(permission.ResourceReport,
@@ -672,7 +672,7 @@ func (t *ArrangeHomeLayoutTool) ParamSchema() map[string]any {
 			"version": versionProperty(),
 			"widgetIds": map[string]any{
 				"type":        "array",
-				"items":       map[string]any{"type": "string"},
+				schemaItems:   map[string]any{"type": "string"},
 				"description": "Every widget id from get_my_home_layout, first to last.",
 			},
 		},

@@ -57,8 +57,10 @@ func permitFactProperties() map[string]any {
 		paramStateID: agenttoolschema.KindID("The state that issued it, as the stateId of the "+
 			"requirement it satisfies in list_shipment_permits. Never guess one.",
 			permission.KindUSState),
-		paramPermitNumber: common.StringProperty("The permit number exactly as the state printed it.",
-			maxPermitNumber),
+		paramPermitNumber: common.StringProperty(
+			"The permit number exactly as the state printed it.",
+			maxPermitNumber,
+		),
 		common.FieldStatus: agenttoolschema.Enum("Where the permit stands. An active permit "+
 			"records when it expires.", permitStatuses),
 		paramPermitIssued: agenttoolschema.DateTime("When the permit takes effect."),
@@ -110,7 +112,11 @@ func applyPermitFacts(entity *permit.Permit, params map[string]any) error {
 	} else if cost.Valid {
 		entity.Cost = cost
 	}
-	if notes, notesErr := common.OptionalBoundedText(params, common.FieldNotes, wfNoteChars); notesErr != nil {
+	if notes, notesErr := common.OptionalBoundedText(
+		params,
+		common.FieldNotes,
+		wfNoteChars,
+	); notesErr != nil {
 		return notesErr
 	} else if notes != nil {
 		entity.Notes = *notes
@@ -157,50 +163,53 @@ func newRecordShipmentPermitTool(permits permitports.PermitService) agentports.A
 		permission.ResourceShipment)
 	spec.Recipe = []string{"list_shipment_permits", "record_shipment_permit"}
 
-	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[*permit.Permit, *permit.Permit]{
-		Request: func(params *agentports.ToolExecuteParams) (*permit.Permit, error) {
-			shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
-			if err != nil {
-				return nil, err
-			}
-			entity := &permit.Permit{
-				OrganizationID: params.OrganizationID,
-				BusinessUnitID: params.BusinessUnitID,
-				ShipmentID:     shipmentID,
-				Status:         permit.StatusPending,
-			}
-			return entity, applyPermitFacts(entity, params.Params)
+	return common.NewReportingReceivableTool(
+		spec,
+		common.ReceivablePlan[*permit.Permit, *permit.Permit]{
+			Request: func(params *agentports.ToolExecuteParams) (*permit.Permit, error) {
+				shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
+				if err != nil {
+					return nil, err
+				}
+				entity := &permit.Permit{
+					OrganizationID: params.OrganizationID,
+					BusinessUnitID: params.BusinessUnitID,
+					ShipmentID:     shipmentID,
+					Status:         permit.StatusPending,
+				}
+				return entity, applyPermitFacts(entity, params.Params)
+			},
+			Plan: func(
+				ctx context.Context,
+				entity *permit.Permit,
+				_ *agentports.ToolExecuteParams,
+			) (*permit.Permit, error) {
+				planned := *entity
+				return permits.PlanCreatePermit(ctx, &planned)
+			},
+			Refused: func(*permit.Permit) string { return "Would record a permit on the shipment." },
+			Render: func(_ *permit.Permit, planned *permit.Permit) (*agent.ToolPreview, error) {
+				created, err := toolpreview.Create(permitRecord(planned, pulid.Nil), planned,
+					permitOptions()...)
+				if err != nil {
+					return nil, err
+				}
+				return toolpreview.Build(fmt.Sprintf("Would record permit %s as %s.",
+					planned.PermitNumber, planned.Status), created), nil
+			},
+			Run: func(
+				ctx context.Context,
+				entity *permit.Permit,
+				params *agentports.ToolExecuteParams,
+			) (*agent.ToolExecutionResult, error) {
+				created, err := permits.CreatePermit(ctx, entity, params.Actor)
+				if err != nil {
+					return nil, err
+				}
+				return permitResult("recorded", created), nil
+			},
 		},
-		Plan: func(
-			ctx context.Context,
-			entity *permit.Permit,
-			_ *agentports.ToolExecuteParams,
-		) (*permit.Permit, error) {
-			planned := *entity
-			return permits.PlanCreatePermit(ctx, &planned)
-		},
-		Refused: func(*permit.Permit) string { return "Would record a permit on the shipment." },
-		Render: func(_ *permit.Permit, planned *permit.Permit) (*agent.ToolPreview, error) {
-			created, err := toolpreview.Create(permitRecord(planned, pulid.Nil), planned,
-				permitOptions()...)
-			if err != nil {
-				return nil, err
-			}
-			return toolpreview.Build(fmt.Sprintf("Would record permit %s as %s.",
-				planned.PermitNumber, planned.Status), created), nil
-		},
-		Run: func(
-			ctx context.Context,
-			entity *permit.Permit,
-			params *agentports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
-			created, err := permits.CreatePermit(ctx, entity, params.Actor)
-			if err != nil {
-				return nil, err
-			}
-			return permitResult("recorded", created), nil
-		},
-	})
+	)
 }
 
 type permitEdit struct {

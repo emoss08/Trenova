@@ -14,7 +14,12 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var uncancelFields = []string{common.FieldStatus, common.FieldCanceledAt, common.FieldCanceledByID, common.ParamCancelReason}
+var uncancelFields = []string{
+	common.FieldStatus,
+	common.FieldCanceledAt,
+	common.FieldCanceledByID,
+	common.ParamCancelReason,
+}
 
 var rerateFields = []string{
 	common.FieldFormulaTemplateID, "baseRate", common.FieldFreightChargeAmount, "otherChargeAmount",

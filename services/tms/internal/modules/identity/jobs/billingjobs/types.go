@@ -4,8 +4,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const ()
-
 type AutoPostInvoiceResult struct {
 	InvoiceID     pulid.ID `json:"invoiceId"`
 	PostedAt      int64    `json:"postedAt"`

@@ -33,7 +33,7 @@ type ShipmentOptions struct {
 	QuickFilterBasis *ShipmentQuickFilterBasis  `form:"-" json:"-" query:"-"`
 }
 
-func (o ShipmentOptions) HasActivityWindow() bool {
+func (o *ShipmentOptions) HasActivityWindow() bool {
 	return o.ActivityWindowStart > 0 && o.ActivityWindowEnd > 0
 }
 

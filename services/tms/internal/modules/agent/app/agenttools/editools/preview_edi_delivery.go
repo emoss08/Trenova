@@ -156,7 +156,10 @@ func (t *RetryEDIMessageDeliveryTool) Preview(
 	for _, id := range checked {
 		plan, planErr := t.deliveries.PlanRetryMessageDelivery(
 			ctx,
-			&ediservice.RetryMessageDeliveryRequest{MessageID: id, TenantInfo: common.TenantFrom(params)},
+			&ediservice.RetryMessageDeliveryRequest{
+				MessageID:  id,
+				TenantInfo: common.TenantFrom(params),
+			},
 		)
 		if planErr != nil {
 			if !common.IsRefusal(planErr) && !errortypes.IsNotFoundError(planErr) {

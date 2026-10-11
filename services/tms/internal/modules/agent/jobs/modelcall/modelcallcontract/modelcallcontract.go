@@ -200,7 +200,7 @@ func (f *Failure) err() error {
 	case f.SchemaInvalid:
 		return fmt.Errorf("%s: %w", f.Message, agentports.ErrModelSchemaValidation)
 	case f.Status != 0:
-		return providerFailure{f}
+		return providerFailureError{f}
 	case f.Resting:
 		return fmt.Errorf("%s: %w", f.Message, agentports.ErrProvidersResting)
 	case f.TimedOut:
@@ -235,8 +235,8 @@ func (r *refusal) err() error {
 	return business
 }
 
-type providerFailure struct{ f *Failure }
+type providerFailureError struct{ f *Failure }
 
-func (p providerFailure) Error() string           { return p.f.Message }
-func (p providerFailure) ProviderStatus() int     { return p.f.Status }
-func (p providerFailure) ProviderRetryable() bool { return p.f.Retryable }
+func (p providerFailureError) Error() string           { return p.f.Message }
+func (p providerFailureError) ProviderStatus() int     { return p.f.Status }
+func (p providerFailureError) ProviderRetryable() bool { return p.f.Retryable }

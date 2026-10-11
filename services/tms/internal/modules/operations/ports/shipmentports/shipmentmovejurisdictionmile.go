@@ -26,7 +26,7 @@ type UnattributedMovesRequest struct {
 	Offset     int                   `json:"offset"`
 }
 
-func (r UnattributedMovesRequest) PageSize() int {
+func (r *UnattributedMovesRequest) PageSize() int {
 	if r.Limit <= 0 {
 		return DefaultUnattributedMovesPageSize
 	}

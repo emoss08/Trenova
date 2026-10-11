@@ -533,7 +533,10 @@ func (t *GenerateDriverBatchTool) Preview(
 		changes = append(changes, change)
 	}
 
-	summary += fmt.Sprintf(" %s would get a draft settlement.", common.CountOf(len(changes), "driver"))
+	summary += fmt.Sprintf(
+		" %s would get a draft settlement.",
+		common.CountOf(len(changes), "driver"),
+	)
 	if plan.ExistingBatch != nil {
 		summary += " They join the open batch " + plan.ExistingBatch.Name + "."
 	}
@@ -576,8 +579,12 @@ func plannedWorkerChange(
 	if err != nil {
 		return nil, err
 	}
-	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(money.DefaultCurrencyCode,
-		agent.MoneyLine{Label: "Accrued earnings", After: common.MinorAmount(worker.GrossAmountMinor)},
+	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(
+		money.DefaultCurrencyCode,
+		agent.MoneyLine{
+			Label: "Accrued earnings",
+			After: common.MinorAmount(worker.GrossAmountMinor),
+		},
 	), toolpreview.SensitiveAs("grossAmountMinor"))
 
 	return change, nil
@@ -721,7 +728,11 @@ func (t *GenerateCarrierBatchTool) Preview(
 			},
 			settlement,
 			toolpreview.Only(
-				common.ParamCarrierID, common.FieldStatus, common.FieldPeriodStart, common.FieldPeriodEnd, common.FieldPayDate,
+				common.ParamCarrierID,
+				common.FieldStatus,
+				common.FieldPeriodStart,
+				common.FieldPeriodEnd,
+				common.FieldPayDate,
 				"shipmentCount",
 			),
 			toolpreview.WithRefs(map[string]permission.Resource{

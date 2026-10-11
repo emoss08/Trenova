@@ -359,7 +359,11 @@ func lineEnum[T ~string](
 	}
 	value := T(strings.TrimSpace(raw))
 	if !slices.Contains(source.Values, value) {
-		return "", common.ErrUnknownValue(fmt.Sprintf("lines[%d].%s", idx, key), raw, source.Names())
+		return "", common.ErrUnknownValue(
+			fmt.Sprintf("lines[%d].%s", idx, key),
+			raw,
+			source.Names(),
+		)
 	}
 
 	return value, nil

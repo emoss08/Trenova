@@ -301,7 +301,11 @@ func waitCondition(
 	}
 
 	if kind == agentwait.KindTime {
-		at, err := common.RequireLocalTime(params.Params, "at", timeutils.LoadLocation(params.Timezone))
+		at, err := common.RequireLocalTime(
+			params.Params,
+			"at",
+			timeutils.LoadLocation(params.Timezone),
+		)
 		if err != nil {
 			return condition, err
 		}

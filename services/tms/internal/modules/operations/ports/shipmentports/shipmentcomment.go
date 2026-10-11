@@ -20,7 +20,7 @@ type ShipmentCommentListFilters struct {
 	Search         string                     `json:"search,omitempty"`
 }
 
-func (f ShipmentCommentListFilters) HasAny() bool {
+func (f *ShipmentCommentListFilters) HasAny() bool {
 	return len(f.Types) > 0 || len(f.Priorities) > 0 || len(f.AuthorIDs) > 0 ||
 		f.MentionsUserID != nil || f.PinnedOnly || f.UnresolvedOnly || f.Search != ""
 }

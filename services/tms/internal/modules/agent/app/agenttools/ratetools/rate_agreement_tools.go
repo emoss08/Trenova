@@ -250,8 +250,10 @@ func rateAgreementIDProperty() map[string]any {
 
 func laneProperty(forRevision bool) map[string]any {
 	properties := map[string]any{
-		paramLaneLabel: common.StringProperty("A short name for the lane, such as Dallas to Atlanta.",
-			maxLaneLabel),
+		paramLaneLabel: common.StringProperty(
+			"A short name for the lane, such as Dallas to Atlanta.",
+			maxLaneLabel,
+		),
 		paramOriginScopeType: agenttoolschema.Enum("How the origin is named. Defaults to "+
 			"Any.", laneScopeTypes),
 		paramOriginValue: common.StringProperty("The origin for its scope type: a three-letter "+
@@ -443,7 +445,12 @@ func (r laneReader) applyTerms(rule *rateagreement.RateAgreementRule, fields map
 		rule.Direction = direction
 	}
 	if _, given := fields[paramPriority]; given {
-		priority, rangeErr := common.RequireIntInRange(fields, paramPriority, 0, maxAgreementPriority)
+		priority, rangeErr := common.RequireIntInRange(
+			fields,
+			paramPriority,
+			0,
+			maxAgreementPriority,
+		)
 		if rangeErr != nil {
 			return rangeErr
 		}
@@ -603,16 +610,28 @@ func agreementHeaderProperties() map[string]any {
 			maxContractRef),
 		paramPriority: common.IntegerProperty("Which agreement wins when two price a shipment; "+
 			"higher wins.", 0, maxAgreementPriority),
-		common.ParamEffectiveFrom: agenttoolschema.Date("The first day the agreement prices shipments."),
+		common.ParamEffectiveFrom: agenttoolschema.Date(
+			"The first day the agreement prices shipments.",
+		),
 		common.ParamEffectiveTo: agenttoolschema.Date(
 			"The last day it prices shipments. Leave it out for an open-ended agreement.",
 		),
 		paramAutoRenew: common.BooleanProperty("Whether it renews itself at its end."),
-		paramRenewalNoticeDays: common.IntegerProperty("How many days before its end to warn about "+
-			"renewal.", 0, maxRenewalNotice),
-		paramAgreementCurrency: common.StringProperty("The ISO currency code it prices in. Defaults "+
-			"to USD.", common.CurrencyCodeLength),
-		paramDefaultMinCharge: common.StringProperty("The least any lane charges, as a decimal.", 0),
+		paramRenewalNoticeDays: common.IntegerProperty(
+			"How many days before its end to warn about "+
+				"renewal.",
+			0,
+			maxRenewalNotice,
+		),
+		paramAgreementCurrency: common.StringProperty(
+			"The ISO currency code it prices in. Defaults "+
+				"to USD.",
+			common.CurrencyCodeLength,
+		),
+		paramDefaultMinCharge: common.StringProperty(
+			"The least any lane charges, as a decimal.",
+			0,
+		),
 		paramDefaultMaxCharge: common.StringProperty("The most any lane charges, as a decimal.", 0),
 	}
 }
@@ -646,7 +665,9 @@ func (h agreementHeader) applyTexts(entity *rateagreement.RateAgreement) error {
 		}
 	}
 	if h.given(paramAgreementCurrency) {
-		code := strings.ToUpper(strings.TrimSpace(common.OptionalString(h.values, paramAgreementCurrency)))
+		code := strings.ToUpper(
+			strings.TrimSpace(common.OptionalString(h.values, paramAgreementCurrency)),
+		)
 		if len(code) != common.CurrencyCodeLength {
 			return fmt.Errorf("%s must be a three-letter code such as USD", paramAgreementCurrency)
 		}
@@ -666,14 +687,24 @@ func (h agreementHeader) applyTerms(entity *rateagreement.RateAgreement) error {
 		}
 	}
 	if h.given(paramPriority) {
-		priority, rangeErr := common.RequireIntInRange(h.values, paramPriority, 0, maxAgreementPriority)
+		priority, rangeErr := common.RequireIntInRange(
+			h.values,
+			paramPriority,
+			0,
+			maxAgreementPriority,
+		)
 		if rangeErr != nil {
 			return rangeErr
 		}
 		entity.Priority = int16(priority) //nolint:gosec // bounded to maxAgreementPriority above
 	}
 	if h.given(paramRenewalNoticeDays) {
-		days, rangeErr := common.RequireIntInRange(h.values, paramRenewalNoticeDays, 0, maxRenewalNotice)
+		days, rangeErr := common.RequireIntInRange(
+			h.values,
+			paramRenewalNoticeDays,
+			0,
+			maxRenewalNotice,
+		)
 		if rangeErr != nil {
 			return rangeErr
 		}
@@ -1142,10 +1173,16 @@ func NewDuplicateRateAgreementTool(agreements RateAgreementKeeper) agentports.Ag
 			"until a person approves it.",
 		Properties: map[string]any{
 			paramRateAgreementID: rateAgreementIDProperty(),
-			paramAgreementCode: common.StringProperty("The copy's code. Defaults to the original's "+
-				"with -COPY.", maxAgreementCode),
-			paramAgreementName: common.StringProperty("The copy's name. Defaults to the original's "+
-				"with (Copy).", maxAgreementName),
+			paramAgreementCode: common.StringProperty(
+				"The copy's code. Defaults to the original's "+
+					"with -COPY.",
+				maxAgreementCode,
+			),
+			paramAgreementName: common.StringProperty(
+				"The copy's name. Defaults to the original's "+
+					"with (Copy).",
+				maxAgreementName,
+			),
 		},
 		Required: []string{paramRateAgreementID},
 		Target:   targetRateAgreement,
@@ -1577,7 +1614,10 @@ func rateIncreaseRequestFrom(
 ) (*rateagreementservice.RateIncreaseRequest, error) {
 	req := &rateagreementservice.RateIncreaseRequest{TenantInfo: common.TenantFrom(*params)}
 	var err error
-	if req.EffectiveFrom, err = common.RequireDay(params.Params, common.ParamEffectiveFrom); err != nil {
+	if req.EffectiveFrom, err = common.RequireDay(
+		params.Params,
+		common.ParamEffectiveFrom,
+	); err != nil {
 		return nil, err
 	}
 	if _, given := params.Params[paramAgreementIDs]; given {
@@ -1729,8 +1769,11 @@ func NewApplyRateIncreaseTool(agreements RateAgreementKeeper) agentports.AgentTo
 				"when no agreements, customer or carrier is named.", partyTypes),
 			paramPercentChange: common.StringProperty("The change in percent, such as 3.5 or -2. "+
 				"Give this or flatChange.", 0),
-			paramFlatChange: common.StringProperty("The change per rating unit, such as 0.10. Give "+
-				"this or percentChange.", 0),
+			paramFlatChange: common.StringProperty(
+				"The change per rating unit, such as 0.10. Give "+
+					"this or percentChange.",
+				0,
+			),
 		},
 		Required:    []string{common.ParamEffectiveFrom},
 		SearchTerms: []string{"gri", "general rate increase", "raise rates", "price increase"},

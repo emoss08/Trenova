@@ -727,16 +727,7 @@ func (s *Service) fileDocument(
 		return
 	}
 
-	requestActor := permissionports.RequestActor{
-		PrincipalType:  permissionports.PrincipalTypeSystem,
-		PrincipalID:    permissionports.SystemPrincipalID,
-		UserID:         tenantInfo.UserID,
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-	}
-	if actor != nil {
-		requestActor = *actor
-	}
+	requestActor := filingActor(tenantInfo, actor)
 
 	session, err := s.uploadService.CreateSession(ctx, &documentuploadports.CreateSessionRequest{
 		TenantInfo:     tenantInfo,
@@ -803,6 +794,23 @@ func (s *Service) fileDocument(
 		},
 	); err != nil {
 		log.Warn("could not record the generated rate confirmation PDF", zap.Error(err))
+	}
+}
+
+func filingActor(
+	tenantInfo pagination.TenantInfo,
+	actor *permissionports.RequestActor,
+) permissionports.RequestActor {
+	if actor != nil {
+		return *actor
+	}
+
+	return permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeSystem,
+		PrincipalID:    permissionports.SystemPrincipalID,
+		UserID:         tenantInfo.UserID,
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
 	}
 }
 

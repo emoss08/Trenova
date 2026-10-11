@@ -59,8 +59,8 @@ type EscalateDetentionTool struct {
 	detention detentionEscalator
 }
 
-func NewEscalateDetentionTool(detention detentionEscalator) agentports.AgentTool {
-	return &EscalateDetentionTool{detention: detention}
+func NewEscalateDetentionTool(escalator detentionEscalator) agentports.AgentTool {
+	return &EscalateDetentionTool{detention: escalator}
 }
 
 func (t *EscalateDetentionTool) Name() string { return "escalate_detention" }
@@ -86,13 +86,13 @@ func (t *EscalateDetentionTool) ParamSchema() map[string]any {
 					"get_detention_occurrence.",
 				permission.KindDetentionOccurrence,
 			),
-			"reason": map[string]any{
+			common.ParamReason: map[string]any{
 				"type": "string",
 				"description": "Why this needs a person, in a sentence they can act on: " +
 					"what is blocking the notice, and what the charge stands at.",
 			},
 		},
-		"required":             []string{"occurrenceId", "reason"},
+		"required":             []string{"occurrenceId", common.ParamReason},
 		"additionalProperties": false,
 	}
 }
@@ -125,7 +125,7 @@ func (t *EscalateDetentionTool) arguments(
 	if err != nil {
 		return "", "", err
 	}
-	reason, err := common.RequireString(params.Params, "reason")
+	reason, err := common.RequireString(params.Params, common.ParamReason)
 	if err != nil {
 		return "", "", err
 	}
@@ -211,8 +211,8 @@ type ApproveDetentionTool struct {
 	detention detentionApprover
 }
 
-func NewApproveDetentionTool(detention detentionApprover) agentports.AgentTool {
-	return &ApproveDetentionTool{detention: detention}
+func NewApproveDetentionTool(approver detentionApprover) agentports.AgentTool {
+	return &ApproveDetentionTool{detention: approver}
 }
 
 func (t *ApproveDetentionTool) Name() string { return "approve_detention" }
@@ -419,7 +419,7 @@ func (t *RequestCredentialRenewalTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"workerId": agenttoolschema.RecordIDText(
+			common.ParamWorkerID: agenttoolschema.RecordIDText(
 				permission.ResourceWorker,
 				"The driver whose papers are due, from get_worker.",
 			),
@@ -428,16 +428,16 @@ func (t *RequestCredentialRenewalTool) ParamSchema() map[string]any {
 				"description": "Every credential this ask covers, by the id " +
 					"list_expiring_credentials or get_worker_credential returns, or the one " +
 					"the event that started this run names. Never invent one.",
-				"items":    map[string]any{"type": "string"},
-				"minItems": 1,
+				schemaItems: map[string]any{"type": "string"},
+				"minItems":  1,
 			}, permission.ResourceWorkerCredential),
-			"note": map[string]any{
+			common.ParamNote: map[string]any{
 				"type": "string",
 				"description": "What the driver is being asked for, in their words: " +
 					"which papers, by when, and where to send them.",
 			},
 		},
-		"required":             []string{"workerId", "credentialIds", "note"},
+		"required":             []string{common.ParamWorkerID, "credentialIds", common.ParamNote},
 		"additionalProperties": false,
 	}
 }
@@ -467,7 +467,7 @@ func (t *RequestCredentialRenewalTool) arguments(
 		return out, err
 	}
 
-	workerID, err := common.RequirePulid(params.Params, "workerId")
+	workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
 	if err != nil {
 		return out, err
 	}
@@ -488,14 +488,14 @@ func (t *RequestCredentialRenewalTool) arguments(
 		credentialIDs = append(credentialIDs, id)
 	}
 
-	note, err := common.RequireString(params.Params, "note")
+	note, err := common.RequireString(params.Params, common.ParamNote)
 	if err != nil {
 		return out, err
 	}
 	if len(note) > maxRenewalNoteChars {
 		return out, fmt.Errorf(
 			"parameter %q is %d characters, and the ask is capped at %d",
-			"note", len(note), maxRenewalNoteChars,
+			common.ParamNote, len(note), maxRenewalNoteChars,
 		)
 	}
 
@@ -533,7 +533,7 @@ func (t *RequestCredentialRenewalTool) Execute(
 func (t *RequestCredentialRenewalTool) Target(
 	params map[string]any,
 ) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "workerId", permission.ResourceWorker)
+	return common.TargetOf(params, common.ParamWorkerID, permission.ResourceWorker)
 }
 
 type workerHolder interface {
@@ -573,17 +573,17 @@ func (t *PlaceWorkerDispatchHoldTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"workerId": agenttoolschema.RecordIDText(
+			common.ParamWorkerID: agenttoolschema.RecordIDText(
 				permission.ResourceWorker,
 				"The driver to hold, from get_worker.",
 			),
-			"reason": map[string]any{
+			common.ParamReason: map[string]any{
 				"type": "string",
 				"description": "Which paper lapsed and when, in a sentence a dispatcher " +
 					"can read on the board.",
 			},
 		},
-		"required":             []string{"workerId", "reason"},
+		"required":             []string{common.ParamWorkerID, common.ParamReason},
 		"additionalProperties": false,
 	}
 }
@@ -613,11 +613,11 @@ func (t *PlaceWorkerDispatchHoldTool) arguments(
 		return out, err
 	}
 
-	workerID, err := common.RequirePulid(params.Params, "workerId")
+	workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
 	if err != nil {
 		return out, err
 	}
-	reason, err := common.RequireString(params.Params, "reason")
+	reason, err := common.RequireString(params.Params, common.ParamReason)
 	if err != nil {
 		return out, err
 	}
@@ -671,7 +671,7 @@ func (t *PlaceWorkerDispatchHoldTool) Execute(
 func (t *PlaceWorkerDispatchHoldTool) Target(
 	params map[string]any,
 ) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "workerId", permission.ResourceWorker)
+	return common.TargetOf(params, common.ParamWorkerID, permission.ResourceWorker)
 }
 
 type carrierIntelActor interface {
@@ -791,7 +791,7 @@ func (t *carrierIntelEventTool) ParamSchema() map[string]any {
 				"The finding id from get_carrier_intel_event.",
 				permission.KindCarrierIntelligenceEvent,
 			),
-			"note": map[string]any{
+			common.ParamNote: map[string]any{
 				"type":        "string",
 				"description": "Why you are " + verb + " it, for the carrier's record.",
 			},
@@ -809,10 +809,10 @@ func (t *carrierIntelEventTool) ParamSchema() map[string]any {
 // finding has to say what came of it, acknowledging one does not.
 func (t *carrierIntelEventTool) required() []string {
 	if t.resolves {
-		return []string{"eventId", "resolution", "note"}
+		return []string{"eventId", "resolution", common.ParamNote}
 	}
 
-	return []string{"eventId", "note"}
+	return []string{"eventId", common.ParamNote}
 }
 
 func (t *carrierIntelEventTool) arguments(
@@ -826,7 +826,7 @@ func (t *carrierIntelEventTool) arguments(
 	if err != nil {
 		return nil, err
 	}
-	note, err := common.RequireString(params.Params, "note")
+	note, err := common.RequireString(params.Params, common.ParamNote)
 	if err != nil {
 		return nil, err
 	}
