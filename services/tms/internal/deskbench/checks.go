@@ -12,10 +12,12 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/shared/numberguard"
 	"github.com/emoss08/trenova/shared/recordids"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
+	"github.com/uptrace/bun"
 )
 
 const (
@@ -616,48 +618,61 @@ func (b *Bench) FactValues(ctx context.Context, session *Session, statement stri
 // want a hold for missing paperwork", and the case that asks for that hold
 // failed on every run after. Memories from people's own conversations are
 // never touched.
-var benchLeftovers = []string{
-	`CREATE TEMP TABLE bench_leftovers ON COMMIT DROP AS
-	SELECT s.id FROM shipments s
-	WHERE s.status = 'New' AND s.pro_number NOT LIKE 'SEED-%' AND s.id IN (
-		SELECT p.execution_result->'record'->>'id'
-		FROM agent_proposals p
-		JOIN agent_runs r ON r.id = p.run_id
-		JOIN assistant_threads t ON t.id = r.subject_id
-		WHERE t.title LIKE '[bench]%'
-			AND p.status = 'Executed'
-			AND p.tool_name IN ('create_shipment', 'duplicate_shipment')
-			AND p.execution_result->'record'->>'entityType' = 'shipment')`,
-	`UPDATE assignments a SET status = 'Canceled' FROM shipment_moves sm
-	WHERE a.shipment_move_id = sm.id AND sm.shipment_id IN (SELECT id FROM bench_leftovers)`,
-	`UPDATE shipment_moves SET status = 'Canceled'
-	WHERE shipment_id IN (SELECT id FROM bench_leftovers)`,
-	`UPDATE shipments SET status = 'Canceled' WHERE id IN (SELECT id FROM bench_leftovers)`,
-	`CREATE TEMP TABLE bench_lessons ON COMMIT DROP AS
-	SELECT m.id FROM agent_memories m
-	WHERE m.status IN ('Active', 'Paused', 'Suggested') AND (
-		m.reflection_id IN (
-			SELECT rf.id FROM agent_reflections rf
-			LEFT JOIN agent_runs r ON r.id = rf.run_id
-			JOIN assistant_threads t ON t.id = COALESCE(rf.thread_id, r.subject_id)
-			WHERE t.title LIKE '[bench]%')
-		OR m.source_run_id IN (
-			SELECT r.id FROM agent_runs r
+func benchLeftovers(db bun.IDB) []string {
+	nowEpoch := dbdialect.NowEpochFromBun(db)
+
+	return []string{
+		`CREATE TEMP TABLE bench_leftovers ON COMMIT DROP AS
+		SELECT s.id FROM shipments s
+		WHERE s.status = 'New' AND s.pro_number NOT LIKE 'SEED-%' AND s.id IN (
+			SELECT p.execution_result->'record'->>'id'
+			FROM agent_proposals p
+			JOIN agent_runs r ON r.id = p.run_id
 			JOIN assistant_threads t ON t.id = r.subject_id
-			WHERE t.title LIKE '[bench]%'))`,
-	`UPDATE agent_memories SET
-		status = CASE WHEN status = 'Suggested' THEN 'Dismissed' ELSE 'Retired' END,
-		retired_at = CASE WHEN status = 'Suggested' THEN retired_at
-			ELSE extract(epoch FROM now())::bigint END,
-		version = version + 1,
-		updated_at = extract(epoch FROM now())::bigint
-	WHERE id IN (SELECT id FROM bench_lessons)`,
+			WHERE t.title LIKE '[bench]%'
+				AND p.status = 'Executed'
+				AND p.tool_name IN ('create_shipment', 'duplicate_shipment')
+				AND p.execution_result->'record'->>'entityType' = 'shipment')`,
+		`UPDATE assignments a SET status = 'Canceled' FROM shipment_moves sm
+		WHERE a.shipment_move_id = sm.id AND sm.shipment_id IN (SELECT id FROM bench_leftovers)`,
+		`UPDATE shipment_moves SET status = 'Canceled'
+		WHERE shipment_id IN (SELECT id FROM bench_leftovers)`,
+		`UPDATE shipments SET status = 'Canceled' WHERE id IN (SELECT id FROM bench_leftovers)`,
+		`CREATE TEMP TABLE bench_lessons ON COMMIT DROP AS
+		SELECT m.id FROM agent_memories m
+		WHERE m.status IN ('Active', 'Paused', 'Suggested') AND (
+			m.reflection_id IN (
+				SELECT rf.id FROM agent_reflections rf
+				LEFT JOIN agent_runs r ON r.id = rf.run_id
+				JOIN assistant_threads t ON t.id = COALESCE(rf.thread_id, r.subject_id)
+				WHERE t.title LIKE '[bench]%')
+			OR m.source_run_id IN (
+				SELECT r.id FROM agent_runs r
+				JOIN assistant_threads t ON t.id = r.subject_id
+				WHERE t.title LIKE '[bench]%'))`,
+		`UPDATE agent_memories SET
+			status = CASE WHEN status = 'Suggested' THEN 'Dismissed' ELSE 'Retired' END,
+			retired_at = CASE WHEN status = 'Suggested' THEN retired_at
+				ELSE ` + nowEpoch + ` END,
+			version = version + 1,
+			updated_at = ` + nowEpoch + `
+		WHERE id IN (SELECT id FROM bench_lessons)`,
+	}
 }
 
 func (b *Bench) runSetup(ctx context.Context, session *Session, statements []string) error {
 	if len(statements) == 0 {
 		return nil
 	}
+
+	return b.runStatements(ctx, session, func(bun.IDB) []string { return statements })
+}
+
+func (b *Bench) runStatements(
+	ctx context.Context,
+	session *Session,
+	build func(db bun.IDB) []string,
+) error {
 	ctx = session.Context(ctx)
 
 	return dbtx.WriteErr(ctx, b.DB, func(ctx context.Context) error {
@@ -665,7 +680,7 @@ func (b *Bench) runSetup(ctx context.Context, session *Session, statements []str
 		if _, err := db.ExecContext(ctx, "SET LOCAL statement_timeout = '"+factTimeout+"'"); err != nil {
 			return fmt.Errorf("bound the setup: %w", err)
 		}
-		for idx, statement := range statements {
+		for idx, statement := range build(db) {
 			if _, err := db.ExecContext(ctx, statement); err != nil {
 				return fmt.Errorf("setup %d: %w", idx+1, err)
 			}

@@ -236,7 +236,7 @@ tasks:
     desc: Run linter
     cmds:
       - golangci-lint run{{if .GO_JOBS}} --concurrency={{.GO_JOBS}}{{end}} ./...
-      - go tool go-arch-lint check
+      - go run ./scripts/archlint
 
   fmt:
     desc: Format code

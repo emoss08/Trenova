@@ -176,7 +176,7 @@ func (b *Bench) runCase(ctx context.Context, opts *RunOptions, planned plannedCa
 	result.Model = providerModel(provider)
 
 	b.tidied.Do(func() {
-		if tidyErr := b.runSetup(ctx, session, benchLeftovers); tidyErr != nil {
+		if tidyErr := b.runStatements(ctx, session, benchLeftovers); tidyErr != nil {
 			b.live.Line("bench", "could not cancel what earlier bench runs left open: %v", tidyErr)
 		}
 	})

@@ -155,9 +155,9 @@ func TestRegisteredStarterTools_DropsToolsNotYetRegistered(t *testing.T) {
 	t.Parallel()
 
 	actions, queries := testRegistries()
-	tools := registeredStarterTools(agentdefinition.TemplateDispatchAssistant, actions, queries)
+	tools := registeredStarterTools(agentdefinition.TemplateBillingException, actions, queries)
 
-	assert.Equal(t, []string{"get_shipment"}, tools,
+	assert.Equal(t, []string{"get_shipment", "correct_charge_code"}, tools,
 		"starter tools that no registry provides are not offered")
 }
 

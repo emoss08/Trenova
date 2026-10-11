@@ -273,7 +273,7 @@ jobs:
 
       - name: Run go-arch-lint
         working-directory: ./services/tms
-        run: go tool go-arch-lint check
+        run: go run ./scripts/archlint
 
   codegen-checks:
     name: Codegen Checks

@@ -100,7 +100,7 @@ func TestThreadPageQueryContinuesBelowTheCursorInRailOrder(t *testing.T) {
 	assert.Contains(
 		t,
 		sql,
-		"ORDER BY athr.pinned DESC, athr.last_message_at DESC, athr.created_at DESC, athr.id DESC",
+		`ORDER BY "athr"."pinned" DESC, "athr"."last_message_at" DESC, "athr"."created_at" DESC, "athr"."id" DESC`,
 	)
 	assert.Contains(t, sql, "LIMIT 51", "one more than the page says whether another follows")
 	assert.Contains(t, sql, "athr.origin NOT IN", "unlisted conversations stay off the rail")
