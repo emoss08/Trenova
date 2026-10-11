@@ -3,6 +3,7 @@ package temporaltype
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"go.temporal.io/sdk/temporal"
 
@@ -120,6 +121,28 @@ func TestNewNonRetryableErrorToTemporalError(t *testing.T) {
 	assert.Equal(t, ErrorTypeNonRetryable.String(), appErr.Type())
 	assert.True(t, appErr.NonRetryable())
 	assert.False(t, IsRetryable(err))
+}
+
+func TestRetryableErrorWithDelayToTemporalError(t *testing.T) {
+	t.Parallel()
+
+	err := NewRetryableErrorWithDelay("rate limited", errors.New("429"), 30).ToTemporalError()
+
+	var appErr *temporal.ApplicationError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, ErrorTypeRetryable.String(), appErr.Type())
+	assert.False(t, appErr.NonRetryable())
+	assert.Equal(t, 30*time.Second, appErr.NextRetryDelay())
+}
+
+func TestRetryableErrorWithoutDelayToTemporalError(t *testing.T) {
+	t.Parallel()
+
+	err := NewRetryableError("unavailable", errors.New("503")).ToTemporalError()
+
+	var appErr *temporal.ApplicationError
+	require.ErrorAs(t, err, &appErr)
+	assert.Zero(t, appErr.NextRetryDelay())
 }
 
 func TestNewInvalidInputError(t *testing.T) {

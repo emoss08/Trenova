@@ -2,6 +2,7 @@ package smsjobs
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/infrastructure/sms"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
@@ -60,7 +61,7 @@ func (a *Activities) SendSMSActivity(
 
 	activity.RecordHeartbeat(ctx, "sending SMS")
 
-	err := a.smsClient.Send(sms.SendRequest{
+	err := a.smsClient.Send(ctx, sms.SendRequest{
 		To:   payload.PhoneNumber,
 		Body: payload.Message,
 	})
@@ -69,7 +70,7 @@ func (a *Activities) SendSMSActivity(
 		return &SendSMSResult{
 			Success: false,
 			Error:   err.Error(),
-		}, temporaltype.NewRetryableError("Failed to send SMS", err).ToTemporalError()
+		}, sendFailure(err)
 	}
 
 	logger.Info("SMS sent successfully")
@@ -77,4 +78,27 @@ func (a *Activities) SendSMSActivity(
 	return &SendSMSResult{
 		Success: true,
 	}, nil
+}
+
+func sendFailure(err error) error {
+	if errors.Is(err, sms.ErrNotConfigured) {
+		return temporaltype.NewNonRetryableError("SMS is not configured", err).ToTemporalError()
+	}
+
+	var apiErr *sms.APIError
+	if errors.As(err, &apiErr) {
+		if !apiErr.Retryable() {
+			return temporaltype.NewNonRetryableError("Twilio refused the SMS", err).
+				ToTemporalError()
+		}
+		if apiErr.RetryAfter > 0 {
+			return temporaltype.NewRetryableErrorWithDelay(
+				"Failed to send SMS",
+				err,
+				apiErr.RetryAfter,
+			).ToTemporalError()
+		}
+	}
+
+	return temporaltype.NewRetryableError("Failed to send SMS", err).ToTemporalError()
 }
