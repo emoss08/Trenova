@@ -436,7 +436,34 @@ the family's place in `ToolProviders()` (or the family's own provider list, such
 
 ## Measured results
 
-<!-- numbers filled in after the final benchmark -->
+Measured on 2026-10-11 with `task build-bench` on a 16-core WSL2 machine (15 GB), comparing
+`master` at `70f77e005` with this branch. Four configurations ran interleaved, one discarded
+priming round and then three measured rounds each; the table gives the median wall time and the
+first-party packages recompiled. The three runs of each cell agreed within a few percent.
+
+| Edit | A: `master` cli, unstripped (old `run-watch`) | B: `master` cli, stripped | C: branch cli, stripped | D: branch api, stripped (new `run-watch`) |
+|---|---|---|---|---|
+| S1 no-op rebuild | 0.7s | 0.7s | 0.8s | 0.7s |
+| S2 unexported func in `shipmentservice` | 13.9s (6) | 8.5s (6) | 6.5s (6) | 6.3s (6) |
+| S3 unexported func in `shipmentresolver` | 13.6s (2) | 8.4s (2) | 7.8s (2) | 6.8s (2) |
+| S4 exported func in `domain/shipment` | 100.6s (1,079) | 95.8s (1,079) | 55.2s (627) | 47.8s (598) |
+| S5 exported type beside `ShipmentRepository` | 100.9s (1,056) | 94.8s (1,056) | 38.4s (451) | 36.0s (423) |
+| S6 exported func in the least-depended-on domain | 13.2s (12) | 7.6s (12) | 5.8s (6) | 5.6s (5) |
+| Link | 10.6s | 5.1s | 4.6s | 4.4s |
+| Binary | 347 MB | 268 MB | 245 MB | 233 MB |
+
+- A to D is what a reload costs now against before: about half for a small edit, and 52% and
+  64% less for the two edits that ripple through the shipment domain.
+- B to C is the code alone, with the same binary and flags: the module split, the contract
+  packages and the three generic fixes in "Generics and build time" cut S4 by 42% and S5 by 59%,
+  because those edits recompile 40-57% fewer packages and the packages that recompile define far
+  fewer generic functions.
+- A to B is stripping the watch builds (`-ldflags='-s -w'`) alone: it halves the link, which is
+  most of a small edit's time, and barely moves the large edits.
+
+The runs and the script that summarises them are reproducible with `task build-bench -- --target
+<cli|api> --mode air` on each tree; compare medians of several warm runs, since single runs on
+this machine varied by up to 2x.
 
 ## Not done yet
 
