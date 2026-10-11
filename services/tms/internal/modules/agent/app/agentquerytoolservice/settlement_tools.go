@@ -8,18 +8,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -588,14 +588,20 @@ func driverSettlementViewFrom(
 ) driverSettlementView {
 	view := driverSettlementView{
 		driverSettlementRow: driverSettlementRowFrom(entity, gate),
-		SubmittedAt:         expectedDate(typeutils.ValueOrZero(entity.SubmittedAt), absentNotSubmitted),
-		ApprovedAt:          expectedDate(typeutils.ValueOrZero(entity.ApprovedAt), absentNotApproved),
-		PostedAt:            expectedDate(typeutils.ValueOrZero(entity.PostedAt), absentNotPosted),
-		PaidAt:              expectedDate(typeutils.ValueOrZero(entity.PaidAt), absentNotPaid),
-		PaymentMethod:       entity.PaymentMethod,
-		VoidedAt:            expectedDate(typeutils.ValueOrZero(entity.VoidedAt), absentNotVoided),
-		Exceptions:          make([]settlementExceptionRow, 0, len(entity.Exceptions)),
-		LineCount:           len(entity.Lines),
+		SubmittedAt: expectedDate(
+			typeutils.ValueOrZero(entity.SubmittedAt),
+			absentNotSubmitted,
+		),
+		ApprovedAt: expectedDate(
+			typeutils.ValueOrZero(entity.ApprovedAt),
+			absentNotApproved,
+		),
+		PostedAt:      expectedDate(typeutils.ValueOrZero(entity.PostedAt), absentNotPosted),
+		PaidAt:        expectedDate(typeutils.ValueOrZero(entity.PaidAt), absentNotPaid),
+		PaymentMethod: entity.PaymentMethod,
+		VoidedAt:      expectedDate(typeutils.ValueOrZero(entity.VoidedAt), absentNotVoided),
+		Exceptions:    make([]settlementExceptionRow, 0, len(entity.Exceptions)),
+		LineCount:     len(entity.Lines),
 	}
 	if gate.show("carryForwardInMinor", "carryForwardIn") {
 		view.CarryForwardIn = minorText(entity.CarryForwardInMinor)
@@ -988,11 +994,14 @@ func (t *getSettlementDisputeTool) Query(
 		return nil, err
 	}
 
-	dispute, err := t.settlements.GetDispute(ctx, driversettlementports.GetSettlementDisputeByIDRequest{
-		ID:               id,
-		TenantInfo:       tenantOf(params),
-		IncludeRelations: true,
-	})
+	dispute, err := t.settlements.GetDispute(
+		ctx,
+		driversettlementports.GetSettlementDisputeByIDRequest{
+			ID:               id,
+			TenantInfo:       tenantOf(params),
+			IncludeRelations: true,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1008,7 +1017,10 @@ func (t *getSettlementDisputeTool) Query(
 		Category:         string(dispute.Category),
 		OpenedAt:         recordedDate(dispute.CreatedAt),
 		ResolutionLineID: pointerIDString(dispute.ResolutionLineID),
-		ResolvedAt:       expectedDate(typeutils.ValueOrZero(dispute.ResolvedAt), absentNotResolved),
+		ResolvedAt: expectedDate(
+			typeutils.ValueOrZero(dispute.ResolvedAt),
+			absentNotResolved,
+		),
 	}
 	if dispute.Settlement != nil {
 		view.SettlementNumber = dispute.Settlement.SettlementNumber
@@ -1265,13 +1277,19 @@ func (t *getCarrierSettlementTool) Query(
 	view := carrierSettlementView{
 		carrierSettlementRow: carrierSettlementRowFrom(entity, gate),
 		Notes:                entity.Notes,
-		SubmittedAt:          expectedDate(typeutils.ValueOrZero(entity.SubmittedAt), absentNotSubmitted),
-		ApprovedAt:           expectedDate(typeutils.ValueOrZero(entity.ApprovedAt), absentNotApproved),
-		PostedAt:             expectedDate(typeutils.ValueOrZero(entity.PostedAt), absentNotPosted),
-		PaidAt:               expectedDate(typeutils.ValueOrZero(entity.PaidAt), absentNotPaid),
-		VoidedAt:             expectedDate(typeutils.ValueOrZero(entity.VoidedAt), absentNotVoided),
-		VoidReason:           entity.VoidReason,
-		LineCount:            len(entity.Lines),
+		SubmittedAt: expectedDate(
+			typeutils.ValueOrZero(entity.SubmittedAt),
+			absentNotSubmitted,
+		),
+		ApprovedAt: expectedDate(
+			typeutils.ValueOrZero(entity.ApprovedAt),
+			absentNotApproved,
+		),
+		PostedAt:   expectedDate(typeutils.ValueOrZero(entity.PostedAt), absentNotPosted),
+		PaidAt:     expectedDate(typeutils.ValueOrZero(entity.PaidAt), absentNotPaid),
+		VoidedAt:   expectedDate(typeutils.ValueOrZero(entity.VoidedAt), absentNotVoided),
+		VoidReason: entity.VoidReason,
+		LineCount:  len(entity.Lines),
 	}
 	if entity.PaymentMethod != "" && gate.show("paymentMethod", "paymentMethod") {
 		view.PaymentMethod = entity.PaymentMethod
@@ -1436,8 +1454,11 @@ func (t *listCarrierInvoiceMatchesTool) Query(
 			SettlementID:   pointerIDString(match.CarrierSettlementID),
 			Currency:       match.CurrencyCode,
 			ResolutionNote: match.ResolutionNote,
-			ResolvedAt:     expectedDate(typeutils.ValueOrZero(match.ResolvedAt), absentNotResolved),
-			CreatedAt:      recordedDate(match.CreatedAt),
+			ResolvedAt: expectedDate(
+				typeutils.ValueOrZero(match.ResolvedAt),
+				absentNotResolved,
+			),
+			CreatedAt: recordedDate(match.CreatedAt),
 		}
 		if match.Carrier != nil {
 			row.Carrier = match.Carrier.Name
@@ -1582,8 +1603,11 @@ func (t *listEDICarrierInvoicesTool) Query(
 			Reconciliation:    string(invoice.ReconciliationStatus),
 			ProNumber:         invoice.ProNumber,
 			ShipmentReference: invoice.ShipmentReference,
-			InvoiceDate:       expectedDate(typeutils.ValueOrZero(invoice.InvoiceDate), "not dated"),
-			Currency:          invoice.CurrencyCode,
+			InvoiceDate: expectedDate(
+				typeutils.ValueOrZero(invoice.InvoiceDate),
+				"not dated",
+			),
+			Currency: invoice.CurrencyCode,
 		}
 		if invoice.CarrierID.IsNotNil() {
 			row.CarrierID = invoice.CarrierID.String()

@@ -195,7 +195,8 @@ func (r *repository) deleteMissingAccessorials(
 				dq = shipmentcol.CarrierAssignmentAccessorialScopeTenantDelete(dq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
-				}).Where(shipmentcol.CarrierAssignmentAccessorialColumns.CarrierAssignmentID.Eq(), entity.ID)
+				}).
+					Where(shipmentcol.CarrierAssignmentAccessorialColumns.CarrierAssignmentID.Eq(), entity.ID)
 				if len(kept) > 0 {
 					dq = dq.Where(
 						shipmentcol.CarrierAssignmentAccessorialColumns.ID.NotIn(),

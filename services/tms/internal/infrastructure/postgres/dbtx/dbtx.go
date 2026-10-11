@@ -27,11 +27,19 @@ func Write[T any](
 	return run(ctx, conn, false, fn)
 }
 
-func ReadErr(ctx context.Context, conn kernelports.DBConnection, fn func(context.Context) error) error {
+func ReadErr(
+	ctx context.Context,
+	conn kernelports.DBConnection,
+	fn func(context.Context) error,
+) error {
 	return runErr(ctx, conn, true, fn)
 }
 
-func WriteErr(ctx context.Context, conn kernelports.DBConnection, fn func(context.Context) error) error {
+func WriteErr(
+	ctx context.Context,
+	conn kernelports.DBConnection,
+	fn func(context.Context) error,
+) error {
 	return runErr(ctx, conn, false, fn)
 }
 
@@ -122,7 +130,11 @@ func runErr(
 	)
 }
 
-func Savepoint(ctx context.Context, conn kernelports.DBConnection, fn func(context.Context) error) error {
+func Savepoint(
+	ctx context.Context,
+	conn kernelports.DBConnection,
+	fn func(context.Context) error,
+) error {
 	tx, ok := conn.DBForContext(ctx).(bun.Tx)
 	if !ok {
 		return fn(ctx)

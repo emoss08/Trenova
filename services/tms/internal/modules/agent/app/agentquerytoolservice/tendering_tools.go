@@ -4,13 +4,13 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -272,10 +272,13 @@ func (t *listRateConfirmationsTool) Query(
 		return nil, err
 	}
 
-	entities, err := t.rateCons.ListByMoveID(ctx, &rateconfirmationports.ListRateConfirmationsByMoveRequest{
-		TenantInfo:     tenantOf(params),
-		ShipmentMoveID: moveID,
-	})
+	entities, err := t.rateCons.ListByMoveID(
+		ctx,
+		&rateconfirmationports.ListRateConfirmationsByMoveRequest{
+			TenantInfo:     tenantOf(params),
+			ShipmentMoveID: moveID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

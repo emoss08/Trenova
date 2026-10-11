@@ -89,65 +89,69 @@ func (r *repository) ListCourses(
 	ctx context.Context,
 	req *workerports.ListTrainingCoursesRequest,
 ) (*pagination.CursorListResult[*worker.TrainingCourse], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*worker.TrainingCourse], error) {
-		log := r.l.With(zap.String("operation", "ListCourses"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*worker.TrainingCourse], error) {
+			log := r.l.With(zap.String("operation", "ListCourses"))
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*worker.TrainingCourse)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						workercol.TrainingCourseTable.Alias,
-						req.Filter,
-						(*worker.TrainingCourse)(nil),
-					)
-					return r.applyCourseFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*worker.TrainingCourse)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							workercol.TrainingCourseTable.Alias,
+							req.Filter,
+							(*worker.TrainingCourse)(nil),
+						)
+						return r.applyCourseFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count training courses", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*worker.TrainingCourse]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(items *[]*worker.TrainingCourse) *bun.SelectQuery {
+						return dba.NewSelect().
+							Model(items).
+							ColumnExpr(workercol.TrainingCourseTable.All())
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						sq, applyErr := querybuilder.ApplyCursorFilters(
+							sq,
+							workercol.TrainingCourseTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*worker.TrainingCourse)(nil),
+						)
+						if applyErr != nil {
+							return sq, applyErr
+						}
+						return r.applyCourseFilters(sq, req), nil
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count training courses", zap.Error(err))
+				log.Error("failed to list training courses", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*worker.TrainingCourse]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(items *[]*worker.TrainingCourse) *bun.SelectQuery {
-					return dba.NewSelect().
-						Model(items).
-						ColumnExpr(workercol.TrainingCourseTable.All())
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					sq, applyErr := querybuilder.ApplyCursorFilters(
-						sq,
-						workercol.TrainingCourseTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*worker.TrainingCourse)(nil),
-					)
-					if applyErr != nil {
-						return sq, applyErr
-					}
-					return r.applyCourseFilters(sq, req), nil
-				},
-			},
-		)
-		if err != nil {
-			log.Error("failed to list training courses", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) ListActiveCourses(
@@ -179,41 +183,45 @@ func (r *repository) CourseSelectOptions(
 	ctx context.Context,
 	req *workerports.TrainingCourseSelectOptionsRequest,
 ) (*pagination.ListResult[*worker.TrainingCourse], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*worker.TrainingCourse], error) {
-		cols := workercol.TrainingCourseColumns
-		return dbhelper.SelectOptions[*worker.TrainingCourse](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					cols.ID,
-					cols.Code,
-					cols.Name,
-					cols.Description,
-					cols.Category,
-					cols.Delivery,
-					cols.DurationMinutes,
-					cols.PassingScore,
-					cols.DueDaysAfterAssignment,
-					cols.ValidityMonths,
-					cols.SortOrder,
-					cols.CreatedAt,
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*worker.TrainingCourse], error) {
+			cols := workercol.TrainingCourseColumns
+			return dbhelper.SelectOptions[*worker.TrainingCourse](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.Code,
+						cols.Name,
+						cols.Description,
+						cols.Category,
+						cols.Delivery,
+						cols.DurationMinutes,
+						cols.PassingScore,
+						cols.DueDaysAfterAssignment,
+						cols.ValidityMonths,
+						cols.SortOrder,
+						cols.CreatedAt,
+					},
+					OrgColumnRef: &cols.OrganizationID,
+					BuColumnRef:  &cols.BusinessUnitID,
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						return orderCourses(q.Where(cols.Status.Eq(), domaintypes.StatusActive))
+					},
+					EntityName: "TrainingCourse",
+					SearchColumnRefs: []buncolgen.Column{
+						cols.Code,
+						cols.Name,
+						cols.Description,
+					},
 				},
-				OrgColumnRef: &cols.OrganizationID,
-				BuColumnRef:  &cols.BusinessUnitID,
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					return orderCourses(q.Where(cols.Status.Eq(), domaintypes.StatusActive))
-				},
-				EntityName: "TrainingCourse",
-				SearchColumnRefs: []buncolgen.Column{
-					cols.Code,
-					cols.Name,
-					cols.Description,
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 func (r *repository) GetCourseByID(
@@ -308,7 +316,11 @@ func (r *repository) UpdateCourse(
 			r.l.Error("failed to update training course", zap.Error(err))
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, "TrainingCourse", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"TrainingCourse",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -502,7 +514,11 @@ func (r *repository) Update(
 			r.l.Error("failed to update worker training record", zap.Error(err))
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, "WorkerTrainingRecord", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"WorkerTrainingRecord",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -553,7 +569,10 @@ func (r *repository) ListDue(
 	req *workerports.ListTrainingRemindersRequest,
 ) ([]*worker.WorkerTrainingRecord, error) {
 	if req.TenantInfo.OrgID.IsNil() {
-		ctx = dbscope.WithSystem(ctx, "list training due across every organization for the reminder sweep")
+		ctx = dbscope.WithSystem(
+			ctx,
+			"list training due across every organization for the reminder sweep",
+		)
 	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerTrainingRecord, error) {
 		cols := workercol.WorkerTrainingRecordColumns
@@ -580,7 +599,10 @@ func (r *repository) ListExpiring(
 	req *workerports.ListTrainingRemindersRequest,
 ) ([]*worker.WorkerTrainingRecord, error) {
 	if req.TenantInfo.OrgID.IsNil() {
-		ctx = dbscope.WithSystem(ctx, "list expiring training across every organization for the reminder sweep")
+		ctx = dbscope.WithSystem(
+			ctx,
+			"list expiring training across every organization for the reminder sweep",
+		)
 	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerTrainingRecord, error) {
 		cols := workercol.WorkerTrainingRecordColumns

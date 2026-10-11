@@ -4,12 +4,12 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -270,10 +270,13 @@ func (s *Service) ReviewQueue(
 	tenantInfo pagination.TenantInfo,
 	limit int,
 ) ([]*carrierintel.CarrierIntelSnapshot, error) {
-	return s.snapshotRepo.ListReviewQueue(ctx, &carrierintelports.ListCarrierIntelReviewQueueRequest{
-		TenantInfo: tenantInfo,
-		Limit:      limit,
-	})
+	return s.snapshotRepo.ListReviewQueue(
+		ctx,
+		&carrierintelports.ListCarrierIntelReviewQueueRequest{
+			TenantInfo: tenantInfo,
+			Limit:      limit,
+		},
+	)
 }
 
 func (s *Service) SnapshotHistory(

@@ -5,9 +5,9 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -58,10 +58,13 @@ func (s *Service) List(
 		)
 	}
 
-	templates, err := s.checklists.ListTemplates(ctx, &deskcaseports.ListCaseChecklistTemplatesRequest{
-		TenantInfo: req.TenantInfo,
-		Kind:       req.Kind,
-	})
+	templates, err := s.checklists.ListTemplates(
+		ctx,
+		&deskcaseports.ListCaseChecklistTemplatesRequest{
+			TenantInfo: req.TenantInfo,
+			Kind:       req.Kind,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -162,10 +165,13 @@ func (s *Service) checkDocumentTypes(
 		return nil
 	}
 
-	count, err := s.checklists.CountDocumentTypes(ctx, &deskcaseports.CountCaseChecklistDocumentTypesRequest{
-		TenantInfo: req.TenantInfo,
-		IDs:        ids,
-	})
+	count, err := s.checklists.CountDocumentTypes(
+		ctx,
+		&deskcaseports.CountCaseChecklistDocumentTypesRequest{
+			TenantInfo: req.TenantInfo,
+			IDs:        ids,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -181,7 +187,10 @@ func (s *Service) checkDocumentTypes(
 
 // Delete removes a template: a customer's goes back to the organization's,
 // the organization's back to the default.
-func (s *Service) Delete(ctx context.Context, req *deskcaseports.DeleteCaseChecklistTemplateRequest) error {
+func (s *Service) Delete(
+	ctx context.Context,
+	req *deskcaseports.DeleteCaseChecklistTemplateRequest,
+) error {
 	stored, err := s.checklists.GetTemplate(ctx, &deskcaseports.GetCaseChecklistTemplateRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,

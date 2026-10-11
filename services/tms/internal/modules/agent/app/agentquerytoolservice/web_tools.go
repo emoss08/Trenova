@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
 const (
@@ -123,11 +123,15 @@ func (t *webSearchTool) Query(
 		return nil, err
 	}
 
-	outcome, err := t.research.SearchWeb(ctx, params.Actor.TenantInfo(), agentextensionports.WebSearchQuery{
-		Query:               query,
-		PublishedWithinDays: max(optionalInt(params.Params, "publishedWithinDays", 0), 0),
-		ResultLimit:         max(optionalInt(params.Params, "limit", 0), 0),
-	})
+	outcome, err := t.research.SearchWeb(
+		ctx,
+		params.Actor.TenantInfo(),
+		agentextensionports.WebSearchQuery{
+			Query:               query,
+			PublishedWithinDays: max(optionalInt(params.Params, "publishedWithinDays", 0), 0),
+			ResultLimit:         max(optionalInt(params.Params, "limit", 0), 0),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -250,11 +254,15 @@ func (t *webReadTool) Query(
 		return nil, err
 	}
 
-	page, err := t.research.ReadWebPage(ctx, params.Actor.TenantInfo(), agentextensionports.WebPageQuery{
-		URL:  target,
-		Ref:  ref,
-		Part: max(optionalInt(params.Params, "part", 1), 1),
-	})
+	page, err := t.research.ReadWebPage(
+		ctx,
+		params.Actor.TenantInfo(),
+		agentextensionports.WebPageQuery{
+			URL:  target,
+			Ref:  ref,
+			Part: max(optionalInt(params.Params, "part", 1), 1),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

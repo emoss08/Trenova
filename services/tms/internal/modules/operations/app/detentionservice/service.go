@@ -4,25 +4,25 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
@@ -294,10 +294,13 @@ func (s *Service) computeStop(
 
 	policy := resolution.Policy
 
-	accessorial, err := s.accessorialRepo.GetByID(ctx, accessorialchargeports.GetAccessorialChargeByIDRequest{
-		ID:         policy.AccessorialChargeID,
-		TenantInfo: &p.tenantInfo,
-	})
+	accessorial, err := s.accessorialRepo.GetByID(
+		ctx,
+		accessorialchargeports.GetAccessorialChargeByIDRequest{
+			ID:         policy.AccessorialChargeID,
+			TenantInfo: &p.tenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

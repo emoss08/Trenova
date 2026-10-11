@@ -11,9 +11,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/exchangerate"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"

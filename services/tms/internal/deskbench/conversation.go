@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -173,7 +173,10 @@ func (c *Conversation) Say(ctx context.Context, u Utterance) ([]*TurnRecord, err
 	return c.collect(ctx, firstTurnWithin)
 }
 
-func (c *Conversation) Decide(ctx context.Context, d Decide) ([]*DecisionRecord, []*TurnRecord, error) {
+func (c *Conversation) Decide(
+	ctx context.Context,
+	d Decide,
+) ([]*DecisionRecord, []*TurnRecord, error) {
 	return c.decide(ctx, d, followUpWithin)
 }
 
@@ -297,7 +300,11 @@ func (c *Conversation) capture(ctx context.Context, started StartedTurn) *TurnRe
 	}
 
 	live := bench.live.turn(c.Label)
-	live.line("== turn %s (%s) ==", started.TurnID, stringutils.WithDefault(string(record.Origin), "Person"))
+	live.line(
+		"== turn %s (%s) ==",
+		started.TurnID,
+		stringutils.WithDefault(string(record.Origin), "Person"),
+	)
 	if started.Content != "" {
 		live.line("person: %s", started.Content)
 	}
@@ -361,8 +368,15 @@ func (c *Conversation) capture(ctx context.Context, started StartedTurn) *TurnRe
 	live.line("== %s · %s · %d tool calls · %s ==", record.Status,
 		record.Duration().Round(100*time.Millisecond), len(record.Tools), usageLine(record.Usage))
 	for _, proposal := range record.Proposals {
-		live.line("proposal %s %s (%s)", proposal.Tool,
-			stringutils.Ellipsize(compactJSON(proposal.Arguments, liveArgsLimit), liveArgsLimit), proposal.Status)
+		live.line(
+			"proposal %s %s (%s)",
+			proposal.Tool,
+			stringutils.Ellipsize(
+				compactJSON(proposal.Arguments, liveArgsLimit),
+				liveArgsLimit,
+			),
+			proposal.Status,
+		)
 	}
 	if record.Failure != "" {
 		live.line("failure: %s", record.Failure)
@@ -441,7 +455,10 @@ func (c *Conversation) describeProposal(
 	return record
 }
 
-func (c *Conversation) loadProposal(ctx context.Context, id pulid.ID) (*agent.AgentProposal, error) {
+func (c *Conversation) loadProposal(
+	ctx context.Context,
+	id pulid.ID,
+) (*agent.AgentProposal, error) {
 	return c.session.bench.Proposals.GetByID(ctx, agentports.GetAgentProposalByIDRequest{
 		ID:         id,
 		TenantInfo: &c.session.Tenant,
@@ -615,7 +632,10 @@ func (c *Conversation) settlePlan(ctx context.Context, decision *DecisionRecord)
 	decision.Executed = executed
 }
 
-func (c *Conversation) lookupTurn(ctx context.Context, turnID pulid.ID) (*conversation.AssistantTurn, error) {
+func (c *Conversation) lookupTurn(
+	ctx context.Context,
+	turnID pulid.ID,
+) (*conversation.AssistantTurn, error) {
 	req := agentports.GetAssistantTurnRequest{
 		ID:         turnID,
 		TenantInfo: c.session.Tenant,

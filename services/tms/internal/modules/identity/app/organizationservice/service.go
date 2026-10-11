@@ -7,16 +7,16 @@ import (
 	"mime/multipart"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -109,21 +109,25 @@ func (s *service) Update(
 	}
 
 	var updatedEntity *tenant.Organization
-	if err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		if err := s.guardCapabilityDisable(txCtx, entity); err != nil {
-			return err
-		}
+	if err := s.db.WithTx(
+		ctx,
+		kernelports.TxOptions{},
+		func(txCtx context.Context, _ bun.Tx) error {
+			if err := s.guardCapabilityDisable(txCtx, entity); err != nil {
+				return err
+			}
 
-		updated, err := s.repo.Update(txCtx, entity)
-		if err != nil {
-			log.Error("failed to update organization", zap.Error(err))
-			return mapOrganizationUniqueConstraint(err)
-		}
+			updated, err := s.repo.Update(txCtx, entity)
+			if err != nil {
+				log.Error("failed to update organization", zap.Error(err))
+				return mapOrganizationUniqueConstraint(err)
+			}
 
-		updatedEntity = updated
+			updatedEntity = updated
 
-		return nil
-	}); err != nil {
+			return nil
+		},
+	); err != nil {
 		return nil, err
 	}
 

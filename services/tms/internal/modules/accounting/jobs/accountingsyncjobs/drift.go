@@ -198,12 +198,15 @@ func (a *Activities) ReconcileAccountingDriftBalancesActivity(
 	ctx context.Context,
 	payload *accountingsynccontract.DriftPayload,
 ) (*accountingsyncports.AccountingDriftBalanceResult, error) {
-	result, err := a.drift.ReconcileBalances(ctx, &accountingsyncports.ReconcileAccountingDriftBalancesRequest{
-		TenantInfo:      payload.TenantInfo(),
-		ConnectionID:    payload.ConnectionID,
-		AfterCustomerID: payload.AfterCustomerID,
-		EventBudget:     payload.EventsLeft,
-	})
+	result, err := a.drift.ReconcileBalances(
+		ctx,
+		&accountingsyncports.ReconcileAccountingDriftBalancesRequest{
+			TenantInfo:      payload.TenantInfo(),
+			ConnectionID:    payload.ConnectionID,
+			AfterCustomerID: payload.AfterCustomerID,
+			EventBudget:     payload.EventsLeft,
+		},
+	)
 	if err != nil {
 		return result, syncError(err)
 	}
@@ -214,10 +217,12 @@ func (a *Activities) FinishAccountingDriftCheckActivity(
 	ctx context.Context,
 	payload *accountingsynccontract.DriftPayload,
 ) error {
-	return syncError(a.drift.FinishCheck(ctx, &accountingsyncports.FinishAccountingDriftCheckRequest{
-		TenantInfo:   payload.TenantInfo(),
-		ConnectionID: payload.ConnectionID,
-	}))
+	return syncError(
+		a.drift.FinishCheck(ctx, &accountingsyncports.FinishAccountingDriftCheckRequest{
+			TenantInfo:   payload.TenantInfo(),
+			ConnectionID: payload.ConnectionID,
+		}),
+	)
 }
 
 func (a *Activities) eachDriftConnection(

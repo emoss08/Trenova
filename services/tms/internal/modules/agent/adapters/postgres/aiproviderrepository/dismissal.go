@@ -50,7 +50,10 @@ func (r *dismissalRepository) List(
 	})
 }
 
-func (r *dismissalRepository) Upsert(ctx context.Context, dismissal *aiprovider.FailureDismissal) error {
+func (r *dismissalRepository) Upsert(
+	ctx context.Context,
+	dismissal *aiprovider.FailureDismissal,
+) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := aiprovidercol.FailureDismissalColumns
 		_, err := r.db.DBForContext(ctx).

@@ -314,7 +314,11 @@ func ReadyToBill(f *ShipmentFacts) *Checklist {
 		ready = StepSendInvoice
 	}
 
-	return finish(ChecklistReadyToBill, arrange(ChecklistReadyToBill, &f.Arrangement, builtins), ready)
+	return finish(
+		ChecklistReadyToBill,
+		arrange(ChecklistReadyToBill, &f.Arrangement, builtins),
+		ready,
+	)
 }
 
 func deliveredItem(f *ShipmentFacts, isDelivered bool) *Item {
@@ -498,7 +502,11 @@ func ReadyToClose(f *InvoiceFacts) *Checklist {
 		ItemPaid:    paidItem(f),
 	}
 
-	return finish(ChecklistReadyToClose, arrange(ChecklistReadyToClose, &f.Arrangement, builtins), "")
+	return finish(
+		ChecklistReadyToClose,
+		arrange(ChecklistReadyToClose, &f.Arrangement, builtins),
+		"",
+	)
 }
 
 func postedItem(f *InvoiceFacts) *Item {

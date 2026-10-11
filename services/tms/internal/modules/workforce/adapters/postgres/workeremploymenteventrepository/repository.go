@@ -148,7 +148,11 @@ func (r *repository) Update(
 			r.l.Error("failed to update worker employment event", zap.Error(err))
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, "WorkerEmploymentEvent", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"WorkerEmploymentEvent",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 

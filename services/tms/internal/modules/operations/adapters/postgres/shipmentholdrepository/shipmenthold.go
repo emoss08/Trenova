@@ -41,37 +41,41 @@ func (r *repository) ListByShipmentID(
 	ctx context.Context,
 	req *shipmentports.ListShipmentHoldsRequest,
 ) (*pagination.ListResult[*shipment.ShipmentHold], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*shipment.ShipmentHold], error) {
-		if req.Filter.Pagination.Limit <= 0 {
-			req.Filter.Pagination.Limit = 50
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*shipment.ShipmentHold], error) {
+			if req.Filter.Pagination.Limit <= 0 {
+				req.Filter.Pagination.Limit = 50
+			}
 
-		shh := shipmentcol.ShipmentHoldColumns
-		db := r.db.DBForContext(ctx)
-		holds := make([]*shipment.ShipmentHold, 0, req.Filter.Pagination.SafeLimit())
+			shh := shipmentcol.ShipmentHoldColumns
+			db := r.db.DBForContext(ctx)
+			holds := make([]*shipment.ShipmentHold, 0, req.Filter.Pagination.SafeLimit())
 
-		total, err := db.NewSelect().
-			Model(&holds).
-			Where(shh.ShipmentID.Eq(), req.ShipmentID).
-			Apply(shipmentcol.ShipmentHoldApplyTenant(req.Filter.TenantInfo)).
-			Relation(shipmentcol.ShipmentHoldRelations.HoldReason).
-			Relation(shipmentcol.ShipmentHoldRelations.CreatedBy).
-			Relation(shipmentcol.ShipmentHoldRelations.ReleasedBy).
-			OrderExpr(shh.ReleasedAt.Expr("{} IS NULL DESC")).
-			Order(shh.StartedAt.OrderDesc()).
-			OrderExpr(shh.ReleasedAt.Expr("COALESCE({}, 0) DESC")).
-			Limit(req.Filter.Pagination.Limit).
-			Offset(req.Filter.Pagination.Offset).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := db.NewSelect().
+				Model(&holds).
+				Where(shh.ShipmentID.Eq(), req.ShipmentID).
+				Apply(shipmentcol.ShipmentHoldApplyTenant(req.Filter.TenantInfo)).
+				Relation(shipmentcol.ShipmentHoldRelations.HoldReason).
+				Relation(shipmentcol.ShipmentHoldRelations.CreatedBy).
+				Relation(shipmentcol.ShipmentHoldRelations.ReleasedBy).
+				OrderExpr(shh.ReleasedAt.Expr("{} IS NULL DESC")).
+				Order(shh.StartedAt.OrderDesc()).
+				OrderExpr(shh.ReleasedAt.Expr("COALESCE({}, 0) DESC")).
+				Limit(req.Filter.Pagination.Limit).
+				Offset(req.Filter.Pagination.Offset).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*shipment.ShipmentHold]{
-			Items: holds,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*shipment.ShipmentHold]{
+				Items: holds,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -149,7 +153,11 @@ func (r *repository) Update(
 		if err != nil {
 			return nil, fmt.Errorf("update shipment hold: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(result, "Shipment hold", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			result,
+			"Shipment hold",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -182,7 +190,11 @@ func (r *repository) Release(
 		if err != nil {
 			return nil, fmt.Errorf("release shipment hold: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(result, "Shipment hold", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			result,
+			"Shipment hold",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 

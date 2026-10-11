@@ -6,12 +6,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -55,7 +55,12 @@ type weatherReader interface {
 var (
 	serviceFailureStatuses = []string{"Open", "Reviewed", "Resolved", "Voided"}
 	serviceFailureTypes    = []string{
-		"LatePickup", "LateDelivery", "MissedPickup", "MissedDelivery", "AppointmentMissed", "Other",
+		"LatePickup",
+		"LateDelivery",
+		"MissedPickup",
+		"MissedDelivery",
+		"AppointmentMissed",
+		"Other",
 	}
 	serviceFailureSources = []string{"Detected", "Manual", "EDI", "Integration"}
 	stopTypes             = []string{"Pickup", "Delivery", "SplitDelivery", "SplitPickup"}
@@ -113,7 +118,10 @@ func newListServiceFailuresTool(failures serviceFailureLister) agentports.AgentQ
 		opts *pagination.QueryOptions,
 		clk clock,
 	) ([]any, error) {
-		result, err := failures.List(ctx, &servicefailureports.ListServiceFailuresRequest{Filter: opts})
+		result, err := failures.List(
+			ctx,
+			&servicefailureports.ListServiceFailuresRequest{Filter: opts},
+		)
 		if err != nil {
 			return nil, err
 		}

@@ -45,7 +45,10 @@ func (s *Service) VisibleFailures(
 
 // DismissFailure puts away the notice of a provider's failure for one person,
 // up to the failure they saw.
-func (s *Service) DismissFailure(ctx context.Context, req *aicontrolsummaryports.ProviderFailureDismissal) error {
+func (s *Service) DismissFailure(
+	ctx context.Context,
+	req *aicontrolsummaryports.ProviderFailureDismissal,
+) error {
 	if req.UserID.IsNil() {
 		return errortypes.NewBusinessError("Only a person can put a notice away")
 	}
@@ -66,7 +69,10 @@ func (s *Service) DismissFailure(ctx context.Context, req *aicontrolsummaryports
 }
 
 // RestoreFailure brings a dismissed notice back, for the undo after a dismissal.
-func (s *Service) RestoreFailure(ctx context.Context, req *aicontrolsummaryports.ProviderFailureDismissal) error {
+func (s *Service) RestoreFailure(
+	ctx context.Context,
+	req *aicontrolsummaryports.ProviderFailureDismissal,
+) error {
 	return s.dismissals.Delete(ctx, &agentports.DeleteFailureDismissalRequest{
 		TenantInfo: req.TenantInfo,
 		UserID:     req.UserID,

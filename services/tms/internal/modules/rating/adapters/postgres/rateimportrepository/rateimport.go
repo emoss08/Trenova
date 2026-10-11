@@ -80,71 +80,85 @@ func (r *repository) List(
 	ctx context.Context,
 	req *rateimportports.ListRateImportBatchesRequest,
 ) (*pagination.ListResult[*rateimport.RateImportBatch], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*rateimport.RateImportBatch], error) {
-		cols := rateimportcol.RateImportBatchColumns
-		entities := make([]*rateimport.RateImportBatch, 0, req.Filter.Pagination.SafeLimit())
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*rateimport.RateImportBatch], error) {
+			cols := rateimportcol.RateImportBatchColumns
+			entities := make([]*rateimport.RateImportBatch, 0, req.Filter.Pagination.SafeLimit())
 
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(rateimportcol.RateImportBatchApplyTenant(req.Filter.TenantInfo))
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(rateimportcol.RateImportBatchApplyTenant(req.Filter.TenantInfo))
 
-		if req.RateAgreementID != nil && !req.RateAgreementID.IsNil() {
-			q = q.Where(cols.RateAgreementID.Eq(), *req.RateAgreementID)
-		}
+			if req.RateAgreementID != nil && !req.RateAgreementID.IsNil() {
+				q = q.Where(cols.RateAgreementID.Eq(), *req.RateAgreementID)
+			}
 
-		// Newest first: an import is reviewed while it is fresh.
-		q = q.Order(cols.CreatedAt.OrderDesc()).
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset())
+			// Newest first: an import is reviewed while it is fresh.
+			q = q.Order(cols.CreatedAt.OrderDesc()).
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset())
 
-		total, err := q.ScanAndCount(ctx)
-		if err != nil {
-			r.l.Error("failed to list rate import batches", zap.Error(err))
-			return nil, err
-		}
+			total, err := q.ScanAndCount(ctx)
+			if err != nil {
+				r.l.Error("failed to list rate import batches", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*rateimport.RateImportBatch]{Items: entities, Total: total}, nil
-	})
+			return &pagination.ListResult[*rateimport.RateImportBatch]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) ListRows(
 	ctx context.Context,
 	req *rateimportports.ListRateImportRowsRequest,
 ) (*pagination.ListResult[*rateimport.RateImportRow], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*rateimport.RateImportRow], error) {
-		cols := rateimportcol.RateImportRowColumns
-		entities := make([]*rateimport.RateImportRow, 0)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*rateimport.RateImportRow], error) {
+			cols := rateimportcol.RateImportRowColumns
+			entities := make([]*rateimport.RateImportRow, 0)
 
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return rateimportcol.RateImportRowScopeTenant(sq, req.TenantInfo).
-					Where(cols.RateImportBatchID.Eq(), req.RateImportBatchID)
-			})
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return rateimportcol.RateImportRowScopeTenant(sq, req.TenantInfo).
+						Where(cols.RateImportBatchID.Eq(), req.RateImportBatchID)
+				})
 
-		// The rows that would not read are what somebody opened the import to fix,
-		// and on a good sheet there are none of them among thousands.
-		if req.FailedOnly {
-			q = q.Where(cols.Error.IsNotNull())
-		}
+			// The rows that would not read are what somebody opened the import to fix,
+			// and on a good sheet there are none of them among thousands.
+			if req.FailedOnly {
+				q = q.Where(cols.Error.IsNotNull())
+			}
 
-		q = q.Order(cols.RowNumber.OrderAsc())
+			q = q.Order(cols.RowNumber.OrderAsc())
 
-		if req.Filter != nil {
-			q = q.Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset())
-		}
+			if req.Filter != nil {
+				q = q.Limit(req.Filter.Pagination.SafeLimit()).
+					Offset(req.Filter.Pagination.SafeOffset())
+			}
 
-		total, err := q.ScanAndCount(ctx)
-		if err != nil {
-			r.l.Error("failed to list rate import rows", zap.Error(err))
-			return nil, err
-		}
+			total, err := q.ScanAndCount(ctx)
+			if err != nil {
+				r.l.Error("failed to list rate import rows", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*rateimport.RateImportRow]{Items: entities, Total: total}, nil
-	})
+			return &pagination.ListResult[*rateimport.RateImportRow]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 // Create stages a batch and its rows together.

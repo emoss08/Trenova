@@ -3,8 +3,8 @@ package reporting
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.uber.org/zap"
 )

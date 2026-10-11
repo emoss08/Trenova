@@ -186,7 +186,11 @@ func (r *repository) UpdateInjury(
 			r.l.Error("failed to update injury", zap.Error(err))
 			return nil, fmt.Errorf("update injury: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(results, "WorkerInjury", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"WorkerInjury",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 

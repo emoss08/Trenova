@@ -71,7 +71,11 @@ func (r *scheduleRepository) Update(
 			return nil, err
 		}
 
-		if err = dberror.CheckRowsAffected(result, "ReportSchedule", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			result,
+			"ReportSchedule",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 

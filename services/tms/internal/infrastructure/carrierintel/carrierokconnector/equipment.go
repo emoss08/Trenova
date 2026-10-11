@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/shared/carrierok"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -75,7 +75,9 @@ func (c *Client) FindByEquipment(
 	}, nil
 }
 
-func equipmentQuery(req *carrierintelports.CarrierIntelEquipmentRequest) (carrierok.ProfileQuery, bool) {
+func equipmentQuery(
+	req *carrierintelports.CarrierIntelEquipmentRequest,
+) (carrierok.ProfileQuery, bool) {
 	vin := strings.TrimSpace(req.VIN)
 	plate := strings.TrimSpace(req.PlateNumber)
 	unit := strings.TrimSpace(req.UnitNumber)

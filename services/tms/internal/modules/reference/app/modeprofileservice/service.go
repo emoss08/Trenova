@@ -3,8 +3,8 @@ package modeprofileservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"

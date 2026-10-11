@@ -3,18 +3,18 @@ package watchtowersources
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
@@ -222,10 +222,13 @@ func (s *DecisionSource) agentNames(
 		return names
 	}
 
-	definitions, err := s.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
-		IDs:        unique(definitionIDs),
-		TenantInfo: tenant,
-	})
+	definitions, err := s.definitions.ListByIDs(
+		ctx,
+		agentdefinitionports.ListAgentDefinitionsByIDsRequest{
+			IDs:        unique(definitionIDs),
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		return names
 	}
@@ -367,7 +370,9 @@ type ServiceFailureSource struct {
 	repo servicefailureports.ServiceFailureRepository
 }
 
-func NewServiceFailureSource(repo servicefailureports.ServiceFailureRepository) watchtowerports.WatchtowerSource {
+func NewServiceFailureSource(
+	repo servicefailureports.ServiceFailureRepository,
+) watchtowerports.WatchtowerSource {
 	return &ServiceFailureSource{repo: repo}
 }
 
@@ -443,7 +448,9 @@ type WeatherSource struct {
 	repo weatheralertports.WeatherAlertRepository
 }
 
-func NewWeatherSource(repo weatheralertports.WeatherAlertRepository) watchtowerports.WatchtowerSource {
+func NewWeatherSource(
+	repo weatheralertports.WeatherAlertRepository,
+) watchtowerports.WatchtowerSource {
 	return &WeatherSource{repo: repo}
 }
 
@@ -477,7 +484,9 @@ type EDIQuarantineSource struct {
 	repo ediports.EDIInboundFileRepository
 }
 
-func NewEDIQuarantineSource(repo ediports.EDIInboundFileRepository) watchtowerports.WatchtowerSource {
+func NewEDIQuarantineSource(
+	repo ediports.EDIInboundFileRepository,
+) watchtowerports.WatchtowerSource {
 	return &EDIQuarantineSource{repo: repo}
 }
 
@@ -515,7 +524,9 @@ type BillingExceptionSource struct {
 	repo billingqueueports.BillingQueueRepository
 }
 
-func NewBillingExceptionSource(repo billingqueueports.BillingQueueRepository) watchtowerports.WatchtowerSource {
+func NewBillingExceptionSource(
+	repo billingqueueports.BillingQueueRepository,
+) watchtowerports.WatchtowerSource {
 	return &BillingExceptionSource{repo: repo}
 }
 
@@ -552,7 +563,9 @@ type DetentionSource struct {
 	repo detentionports.DetentionOccurrenceRepository
 }
 
-func NewDetentionSource(repo detentionports.DetentionOccurrenceRepository) watchtowerports.WatchtowerSource {
+func NewDetentionSource(
+	repo detentionports.DetentionOccurrenceRepository,
+) watchtowerports.WatchtowerSource {
 	return &DetentionSource{repo: repo}
 }
 

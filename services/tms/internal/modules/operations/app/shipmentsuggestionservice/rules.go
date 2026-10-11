@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -50,7 +50,11 @@ func (in *ruleInput) clock(unix int64) string {
 
 type rule interface {
 	name() string
-	collect(ctx context.Context, s *Service, in *ruleInput) ([]*shipmentsuggestionports.ShipmentSuggestion, error)
+	collect(
+		ctx context.Context,
+		s *Service,
+		in *ruleInput,
+	) ([]*shipmentsuggestionports.ShipmentSuggestion, error)
 }
 
 func defaultRules() []rule {
@@ -242,7 +246,10 @@ func (s *Service) bestDriver(
 	return nil, nil //nolint:nilnil // no driver can take the move
 }
 
-func coverageTone(in *ruleInput, move *dispatchconsoleservice.BoardMove) shipmentsuggestionports.SuggestionTone {
+func coverageTone(
+	in *ruleInput,
+	move *dispatchconsoleservice.BoardMove,
+) shipmentsuggestionports.SuggestionTone {
 	if move.OriginWindowStart < in.now.Unix() {
 		return shipmentsuggestionports.SuggestionToneDanger
 	}

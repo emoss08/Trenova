@@ -203,7 +203,12 @@ func (s *Service) awaitSlot(
 	}
 }
 
-func (s *Service) holdSlot(providerID pulid.ID, token string, ttl time.Duration, stop <-chan struct{}) {
+func (s *Service) holdSlot(
+	providerID pulid.ID,
+	token string,
+	ttl time.Duration,
+	stop <-chan struct{},
+) {
 	ticker := time.NewTicker(ttl / 3)
 	defer ticker.Stop()
 
@@ -289,7 +294,11 @@ func keyRefused(err error) bool {
 	return status == http.StatusUnauthorized || status == http.StatusForbidden
 }
 
-func (s *Service) touchKey(ctx context.Context, provider *aiprovider.Provider, tenant pagination.TenantInfo) {
+func (s *Service) touchKey(
+	ctx context.Context,
+	provider *aiprovider.Provider,
+	tenant pagination.TenantInfo,
+) {
 	if s.limits == nil || s.limits.keys == nil || !provider.HasStoredAPIKey() ||
 		tenant.OrgID.IsNil() {
 		return

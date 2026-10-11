@@ -18,20 +18,20 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -166,7 +166,10 @@ func New(p Params) agentports.AgentProposalNotifier {
 // are stored. A chat run is skipped: the person who asked is looking at the
 // answer. A run in shadow is skipped too, because its proposals are hidden
 // and a notice that leads to nothing to decide is worse than none.
-func (s *Service) NotifyPending(ctx context.Context, notice agentports.PendingProposalsNotice) error {
+func (s *Service) NotifyPending(
+	ctx context.Context,
+	notice agentports.PendingProposalsNotice,
+) error {
 	if notice.Run == nil || notice.Definition == nil || notice.Run.Trigger == agent.RunTriggerChat {
 		return nil
 	}
@@ -281,10 +284,13 @@ func (s *Service) remindGroup(ctx context.Context, group proposalGroup, now int6
 	group.run = run
 
 	if run.AgentDefinitionID.IsNotNil() {
-		definition, defErr := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-			ID:         run.AgentDefinitionID,
-			TenantInfo: group.tenant,
-		})
+		definition, defErr := s.definitions.GetByID(
+			ctx,
+			agentdefinitionports.GetAgentDefinitionByIDRequest{
+				ID:         run.AgentDefinitionID,
+				TenantInfo: group.tenant,
+			},
+		)
 		if defErr != nil {
 			return fmt.Errorf("read agent: %w", defErr)
 		}
@@ -354,13 +360,16 @@ func (s *Service) deciders(
 	tenantInfo pagination.TenantInfo,
 	now int64,
 ) ([]permissionports.PermittedUser, error) {
-	users, err := s.roles.ListUsersWithPermission(ctx, permissionports.ListUsersWithPermissionRequest{
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		Resource:       permission.ResourceAgentProposal,
-		Operation:      permission.OpUpdate,
-		Now:            now,
-	})
+	users, err := s.roles.ListUsersWithPermission(
+		ctx,
+		permissionports.ListUsersWithPermissionRequest{
+			OrganizationID: tenantInfo.OrgID,
+			BusinessUnitID: tenantInfo.BuID,
+			Resource:       permission.ResourceAgentProposal,
+			Operation:      permission.OpUpdate,
+			Now:            now,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("list deciders: %w", err)
 	}

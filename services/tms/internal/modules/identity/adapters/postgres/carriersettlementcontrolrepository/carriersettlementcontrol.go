@@ -80,88 +80,100 @@ func (r *repository) selectControl(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*tenant.CarrierSettlementControl, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.CarrierSettlementControl, error) {
-		entity := new(tenant.CarrierSettlementControl)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return tenantcol.CarrierSettlementControlScopeTenant(sq, tenantInfo)
-			}).
-			Scan(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return entity, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*tenant.CarrierSettlementControl, error) {
+			entity := new(tenant.CarrierSettlementControl)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return tenantcol.CarrierSettlementControlScopeTenant(sq, tenantInfo)
+				}).
+				Scan(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) ListAutoGenerate(
 	ctx context.Context,
 ) ([]*tenant.CarrierSettlementControl, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations that auto-generate carrier settlements")
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tenant.CarrierSettlementControl, error) {
-		cols := tenantcol.CarrierSettlementControlColumns
-		items := make([]*tenant.CarrierSettlementControl, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where(cols.AutoGenerateBatches.IsTrue()).
-			Scan(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("list auto-generate carrier settlement controls: %w", err)
-		}
-		return items, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*tenant.CarrierSettlementControl, error) {
+			cols := tenantcol.CarrierSettlementControlColumns
+			items := make([]*tenant.CarrierSettlementControl, 0)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&items).
+				Where(cols.AutoGenerateBatches.IsTrue()).
+				Scan(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list auto-generate carrier settlement controls: %w", err)
+			}
+			return items, nil
+		},
+	)
 }
 
 func (r *repository) Update(
 	ctx context.Context,
 	entity *tenant.CarrierSettlementControl,
 ) (*tenant.CarrierSettlementControl, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.CarrierSettlementControl, error) {
-		cols := tenantcol.CarrierSettlementControlColumns
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return tenantcol.CarrierSettlementControlScopeTenantUpdate(uq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*tenant.CarrierSettlementControl, error) {
+			cols := tenantcol.CarrierSettlementControlColumns
+			res, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(entity).
+				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+					return tenantcol.CarrierSettlementControlScopeTenantUpdate(uq, pagination.TenantInfo{
+						OrgID: entity.OrganizationID,
+						BuID:  entity.BusinessUnitID,
+					}).
+						Where(cols.ID.Eq(), entity.ID).
+						Where(cols.Version.Eq(), entity.Version)
 				}).
-					Where(cols.ID.Eq(), entity.ID).
-					Where(cols.Version.Eq(), entity.Version)
-			}).
-			Set(cols.PayTrigger.Set(), entity.PayTrigger).
-			Set(cols.PayPeriodFrequency.Set(), entity.PayPeriodFrequency).
-			Set(cols.PeriodEndDayOfWeek.Set(), entity.PeriodEndDayOfWeek).
-			Set(cols.PayDelayDays.Set(), entity.PayDelayDays).
-			Set(cols.AutoGenerateBatches.Set(), entity.AutoGenerateBatches).
-			Set(cols.AutoPostOnApprove.Set(), entity.AutoPostOnApprove).
-			Set(cols.VarianceToleranceMinor.Set(), entity.VarianceToleranceMinor).
-			Set(cols.AutoMatchInboundInvoices.Set(), entity.AutoMatchInboundInvoices).
-			Set(cols.AutoAcceptWithinTolerance.Set(), entity.AutoAcceptWithinTolerance).
-			Set(cols.HoldUntilInvoiceMatched.Set(), entity.HoldUntilInvoiceMatched).
-			Set(cols.DefaultAPAccountID.Set(), entity.DefaultAPAccountID).
-			Set(
-				cols.DefaultPurchasedTransportationAccountID.Set(),
-				entity.DefaultPurchasedTransportationAccountID,
-			).
-			Set(cols.Version.Inc(1)).
-			Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("update carrier settlement control: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(
-			res,
-			"CarrierSettlementControl",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
-		}
-		return r.GetOrCreate(ctx, pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		})
-	})
+				Set(cols.PayTrigger.Set(), entity.PayTrigger).
+				Set(cols.PayPeriodFrequency.Set(), entity.PayPeriodFrequency).
+				Set(cols.PeriodEndDayOfWeek.Set(), entity.PeriodEndDayOfWeek).
+				Set(cols.PayDelayDays.Set(), entity.PayDelayDays).
+				Set(cols.AutoGenerateBatches.Set(), entity.AutoGenerateBatches).
+				Set(cols.AutoPostOnApprove.Set(), entity.AutoPostOnApprove).
+				Set(cols.VarianceToleranceMinor.Set(), entity.VarianceToleranceMinor).
+				Set(cols.AutoMatchInboundInvoices.Set(), entity.AutoMatchInboundInvoices).
+				Set(cols.AutoAcceptWithinTolerance.Set(), entity.AutoAcceptWithinTolerance).
+				Set(cols.HoldUntilInvoiceMatched.Set(), entity.HoldUntilInvoiceMatched).
+				Set(cols.DefaultAPAccountID.Set(), entity.DefaultAPAccountID).
+				Set(
+					cols.DefaultPurchasedTransportationAccountID.Set(),
+					entity.DefaultPurchasedTransportationAccountID,
+				).
+				Set(cols.Version.Inc(1)).
+				Exec(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("update carrier settlement control: %w", err)
+			}
+			if err = dberror.CheckRowsAffected(
+				res,
+				"CarrierSettlementControl",
+				entity.ID.String(),
+			); err != nil {
+				return nil, err
+			}
+			return r.GetOrCreate(ctx, pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			})
+		},
+	)
 }

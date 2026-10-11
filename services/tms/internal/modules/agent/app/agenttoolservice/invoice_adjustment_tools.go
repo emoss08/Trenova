@@ -7,12 +7,12 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -583,11 +583,15 @@ func planBulkSubmission(
 	req *adjustmentSubmission,
 	params *agentports.ToolExecuteParams,
 ) (*submissionPlan, error) {
-	figures, err := adjustments.BulkPreview(ctx, &invoiceadjustmentports.InvoiceAdjustmentBulkRequest{
-		IdempotencyKey: req.key,
-		Items:          req.items,
-		TenantInfo:     tenantFrom(*params),
-	}, params.Actor)
+	figures, err := adjustments.BulkPreview(
+		ctx,
+		&invoiceadjustmentports.InvoiceAdjustmentBulkRequest{
+			IdempotencyKey: req.key,
+			Items:          req.items,
+			TenantInfo:     tenantFrom(*params),
+		},
+		params.Actor,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -622,11 +626,15 @@ func runSubmission(
 		}
 		return adjustmentResult(submitted), nil
 	default:
-		batch, err := adjustments.BulkSubmit(ctx, &invoiceadjustmentports.InvoiceAdjustmentBulkRequest{
-			IdempotencyKey: req.key,
-			Items:          req.items,
-			TenantInfo:     tenantFrom(*params),
-		}, params.Actor)
+		batch, err := adjustments.BulkSubmit(
+			ctx,
+			&invoiceadjustmentports.InvoiceAdjustmentBulkRequest{
+				IdempotencyKey: req.key,
+				Items:          req.items,
+				TenantInfo:     tenantFrom(*params),
+			},
+			params.Actor,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -789,10 +797,13 @@ func draftOnInvoice(
 	if req.AdjustmentID.IsNil() || req.InvoiceID.IsNil() {
 		return nil
 	}
-	draft, err := adjustments.GetDetail(ctx, &invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
-		AdjustmentID: req.AdjustmentID,
-		TenantInfo:   req.TenantInfo,
-	})
+	draft, err := adjustments.GetDetail(
+		ctx,
+		&invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
+			AdjustmentID: req.AdjustmentID,
+			TenantInfo:   req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -925,16 +936,24 @@ func newDecisionTool(
 			) (*agent.ToolExecutionResult, error) {
 				var err error
 				if req.approve {
-					_, err = adjustments.Approve(ctx, &invoiceadjustmentports.ApproveInvoiceAdjustmentRequest{
-						AdjustmentID: req.adjustmentID,
-						TenantInfo:   tenantFrom(*params),
-					}, params.Actor)
+					_, err = adjustments.Approve(
+						ctx,
+						&invoiceadjustmentports.ApproveInvoiceAdjustmentRequest{
+							AdjustmentID: req.adjustmentID,
+							TenantInfo:   tenantFrom(*params),
+						},
+						params.Actor,
+					)
 				} else {
-					_, err = adjustments.Reject(ctx, &invoiceadjustmentports.RejectInvoiceAdjustmentRequest{
-						AdjustmentID: req.adjustmentID,
-						Reason:       req.reason,
-						TenantInfo:   tenantFrom(*params),
-					}, params.Actor)
+					_, err = adjustments.Reject(
+						ctx,
+						&invoiceadjustmentports.RejectInvoiceAdjustmentRequest{
+							AdjustmentID: req.adjustmentID,
+							Reason:       req.reason,
+							TenantInfo:   tenantFrom(*params),
+						},
+						params.Actor,
+					)
 				}
 				return nil, err
 			},

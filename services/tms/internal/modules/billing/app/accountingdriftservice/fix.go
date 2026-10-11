@@ -5,13 +5,13 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -432,12 +432,16 @@ func (s *Service) runAdjustment(
 	reason := s.adjustmentReason(plan)
 	switch plan.fixObject {
 	case accountingsync.DriftFixPaymentReversal:
-		reversed, err := s.payments.Reverse(ctx, &customerpaymentports.ReverseCustomerPaymentRequest{
-			PaymentID:      plan.payment.ID,
-			AccountingDate: s.now().Unix(),
-			Reason:         reason,
-			TenantInfo:     tenant,
-		}, actor)
+		reversed, err := s.payments.Reverse(
+			ctx,
+			&customerpaymentports.ReverseCustomerPaymentRequest{
+				PaymentID:      plan.payment.ID,
+				AccountingDate: s.now().Unix(),
+				Reason:         reason,
+				TenantInfo:     tenant,
+			},
+			actor,
+		)
 		if err != nil {
 			return pulid.Nil, err
 		}
@@ -528,10 +532,13 @@ func (s *Service) reflect(
 	if len(ids) == 0 {
 		return nil
 	}
-	current, err := s.records.GetByIDs(ctx, accountingsyncports.GetAccountingSyncRecordsByIDsRequest{
-		TenantInfo: plan.finding.TenantInfo(),
-		IDs:        ids,
-	})
+	current, err := s.records.GetByIDs(
+		ctx,
+		accountingsyncports.GetAccountingSyncRecordsByIDsRequest{
+			TenantInfo: plan.finding.TenantInfo(),
+			IDs:        ids,
+		},
+	)
 	if err != nil {
 		return err
 	}

@@ -6,17 +6,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/reference/app/modeprofileservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/app/permitservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/app/modeprofileservice"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/permitservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -356,13 +356,16 @@ func deckLengthFeet(
 		return 0
 	}
 
-	equipmentType, err := equipmentTypeRepo.GetByID(ctx, equipmenttypeports.GetEquipmentTypeByIDRequest{
-		ID: entity.TrailerTypeID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
+	equipmentType, err := equipmentTypeRepo.GetByID(
+		ctx,
+		equipmenttypeports.GetEquipmentTypeByIDRequest{
+			ID: entity.TrailerTypeID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
 		},
-	})
+	)
 	if err != nil || equipmentType.InteriorLength == nil {
 		return 0
 	}

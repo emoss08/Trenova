@@ -122,7 +122,9 @@ func nameOf(object map[string]any, key string) string {
 			return text
 		}
 	}
-	if full := strings.TrimSpace(textOf(nested, "firstName") + " " + textOf(nested, "lastName")); full != "" {
+	if full := strings.TrimSpace(
+		textOf(nested, "firstName") + " " + textOf(nested, "lastName"),
+	); full != "" {
 		return full
 	}
 

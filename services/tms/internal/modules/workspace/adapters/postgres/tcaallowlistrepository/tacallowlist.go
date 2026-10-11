@@ -37,25 +37,29 @@ func (r *repository) List(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*tablechangealert.TCAAllowlistedTable, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tablechangealert.TCAAllowlistedTable, error) {
-		log := r.l.With(zap.String("operation", "List"))
-		cols := tablechangealertcol.TCAAllowlistedTableColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*tablechangealert.TCAAllowlistedTable, error) {
+			log := r.l.With(zap.String("operation", "List"))
+			cols := tablechangealertcol.TCAAllowlistedTableColumns
 
-		entities := make([]*tablechangealert.TCAAllowlistedTable, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(tablechangealertcol.TCAAllowlistedTableApplyTenant(tenantInfo)).
-			Where(cols.Enabled.Eq(), true).
-			Order(cols.DisplayName.OrderAsc()).
-			Scan(ctx)
-		if err != nil {
-			log.Error("failed to list tca allowlisted tables", zap.Error(err))
-			return nil, err
-		}
+			entities := make([]*tablechangealert.TCAAllowlistedTable, 0)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(tablechangealertcol.TCAAllowlistedTableApplyTenant(tenantInfo)).
+				Where(cols.Enabled.Eq(), true).
+				Order(cols.DisplayName.OrderAsc()).
+				Scan(ctx)
+			if err != nil {
+				log.Error("failed to list tca allowlisted tables", zap.Error(err))
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) IsTableAllowed(

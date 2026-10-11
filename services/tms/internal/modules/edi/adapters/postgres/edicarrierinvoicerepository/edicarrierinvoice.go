@@ -39,34 +39,38 @@ func (r *repository) ListCarrierInvoices(
 	ctx context.Context,
 	req *ediports.ListEDICarrierInvoicesRequest,
 ) (*pagination.ListResult[*edi.CarrierInvoice], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.CarrierInvoice], error) {
-		entities := make([]*edi.CarrierInvoice, 0, req.Filter.Pagination.SafeLimit())
-		cols := edicol.CarrierInvoiceColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*edi.CarrierInvoice], error) {
+			entities := make([]*edi.CarrierInvoice, 0, req.Filter.Pagination.SafeLimit())
+			cols := edicol.CarrierInvoiceColumns
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation("Partner")
-		if req.ReconciliationStatus != "" {
-			query = query.Where(cols.ReconciliationStatus.Eq(), req.ReconciliationStatus)
-		}
-		if req.PartnerID.IsNotNil() {
-			query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
-		}
-		if req.ShipmentID.IsNotNil() {
-			query = query.Where(cols.ShipmentID.Eq(), req.ShipmentID)
-		}
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Relation("Partner")
+			if req.ReconciliationStatus != "" {
+				query = query.Where(cols.ReconciliationStatus.Eq(), req.ReconciliationStatus)
+			}
+			if req.PartnerID.IsNotNil() {
+				query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
+			}
+			if req.ShipmentID.IsNotNil() {
+				query = query.Where(cols.ShipmentID.Eq(), req.ShipmentID)
+			}
 
-		total, err := querybuilder.ApplyFilters(query, "ecinv", req.Filter, (*edi.CarrierInvoice)(nil)).
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return &pagination.ListResult[*edi.CarrierInvoice]{Items: entities, Total: total}, nil
-	})
+			total, err := querybuilder.ApplyFilters(query, "ecinv", req.Filter, (*edi.CarrierInvoice)(nil)).
+				Order(cols.CreatedAt.OrderDesc()).
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return &pagination.ListResult[*edi.CarrierInvoice]{Items: entities, Total: total}, nil
+		},
+	)
 }
 
 func (r *repository) GetCarrierInvoiceByID(
@@ -147,7 +151,11 @@ func (r *repository) UpdateCarrierInvoice(
 			entity.Version = ov
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, "CarrierInvoice", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"CarrierInvoice",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 		return entity, nil

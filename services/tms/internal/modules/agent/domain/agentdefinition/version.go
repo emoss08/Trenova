@@ -3,8 +3,8 @@ package agentdefinition
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/editchange"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/editchange"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"

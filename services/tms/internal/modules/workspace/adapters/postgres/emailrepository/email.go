@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -63,23 +63,27 @@ func (r *repository) ListProfiles(
 	ctx context.Context,
 	req *emailports.ListEmailProfilesRequest,
 ) (*pagination.ListResult[*email.Profile], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*email.Profile], error) {
-		entities := make([]*email.Profile, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-				q = applyTenant(q, "ep", req.Filter.TenantInfo)
-				q = querybuilder.ApplyFilters(q, "ep", req.Filter, (*email.Profile)(nil))
-				return q.Limit(req.Filter.Pagination.SafeLimit()).
-					Offset(req.Filter.Pagination.SafeOffset())
-			}).
-			OrderExpr("ep.created_at DESC").
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return &pagination.ListResult[*email.Profile]{Items: entities, Total: total}, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*email.Profile], error) {
+			entities := make([]*email.Profile, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).NewSelect().
+				Model(&entities).
+				Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
+					q = applyTenant(q, "ep", req.Filter.TenantInfo)
+					q = querybuilder.ApplyFilters(q, "ep", req.Filter, (*email.Profile)(nil))
+					return q.Limit(req.Filter.Pagination.SafeLimit()).
+						Offset(req.Filter.Pagination.SafeOffset())
+				}).
+				OrderExpr("ep.created_at DESC").
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return &pagination.ListResult[*email.Profile]{Items: entities, Total: total}, nil
+		},
+	)
 }
 
 func (r *repository) applyProfileCursorPageFilters(
@@ -119,93 +123,101 @@ func (r *repository) ListProfilesConnection(
 	ctx context.Context,
 	req *emailports.ListEmailProfileConnectionRequest,
 ) (*pagination.CursorListResult[*email.Profile], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*email.Profile], error) {
-		log := r.l.With(
-			zap.String("operation", "ListProfilesConnection"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*email.Profile], error) {
+			log := r.l.With(
+				zap.String("operation", "ListProfilesConnection"),
+				zap.Any("request", req),
+			)
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*email.Profile)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyProfileTotalCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*email.Profile)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyProfileTotalCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count email profiles", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*email.Profile]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*email.Profile) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return applyEmailProfileColumns(sq, req.EmailProfileColumns)
+							})
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return r.applyProfileCursorPageFilters(sq, req)
+					},
+				})
 			if err != nil {
-				log.Error("failed to count email profiles", zap.Error(err))
+				log.Error("failed to scan email profiles", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*email.Profile]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*email.Profile) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return applyEmailProfileColumns(sq, req.EmailProfileColumns)
-						})
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return r.applyProfileCursorPageFilters(sq, req)
-				},
-			})
-		if err != nil {
-			log.Error("failed to scan email profiles", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) SelectProfileOptions(
 	ctx context.Context,
 	req *emailports.EmailProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*email.Profile], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*email.Profile], error) {
-		return dbhelper.SelectOptions[*email.Profile](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				Columns: []string{
-					"id",
-					"business_unit_id",
-					"organization_id",
-					"name",
-					"from_name",
-					"from_address",
-					"reply_to",
-					"provider_type",
-					"status",
-					"updated_at",
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*email.Profile], error) {
+			return dbhelper.SelectOptions[*email.Profile](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					Columns: []string{
+						"id",
+						"business_unit_id",
+						"organization_id",
+						"name",
+						"from_name",
+						"from_address",
+						"reply_to",
+						"provider_type",
+						"status",
+						"updated_at",
+					},
+					OrgColumn: "ep.organization_id",
+					BuColumn:  "ep.business_unit_id",
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						return q.Where("ep.status = ?", email.ProfileStatusActive).
+							OrderExpr("ep.name ASC")
+					},
+					EntityName: "EmailProfile",
+					SearchColumns: []string{
+						"ep.name",
+						"ep.from_address",
+						"ep.from_name",
+					},
 				},
-				OrgColumn: "ep.organization_id",
-				BuColumn:  "ep.business_unit_id",
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Where("ep.status = ?", email.ProfileStatusActive).
-						OrderExpr("ep.name ASC")
-				},
-				EntityName: "EmailProfile",
-				SearchColumns: []string{
-					"ep.name",
-					"ep.from_address",
-					"ep.from_name",
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 func (r *repository) GetProfile(
@@ -229,7 +241,11 @@ func (r *repository) CreateProfile(
 	entity *email.Profile,
 ) (*email.Profile, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*email.Profile, error) {
-		_, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning(profileReturningColumns).Exec(ctx)
+		_, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning(profileReturningColumns).
+			Exec(ctx)
 		return entity, err
 	})
 }
@@ -508,7 +524,10 @@ func (r *repository) GetEmailWebhookConfig(
 	ctx context.Context,
 	req emailports.GetEmailWebhookConfigRequest,
 ) (*emailports.EmailWebhookConfig, error) {
-	ctx = dbscope.WithSystem(ctx, "resolve the email provider webhook that was called before its tenant is known")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"resolve the email provider webhook that was called before its tenant is known",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*emailports.EmailWebhookConfig, error) {
 		var row struct {
 			OrganizationID       string `bun:"organization_id"`
@@ -551,24 +570,28 @@ func (r *repository) ListMessages(
 	ctx context.Context,
 	req *emailports.ListEmailMessagesRequest,
 ) (*pagination.ListResult[*email.Message], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*email.Message], error) {
-		entities := make([]*email.Message, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Relation("Profile").
-			Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-				q = applyTenant(q, "em", req.Filter.TenantInfo)
-				q = querybuilder.ApplyFilters(q, "em", req.Filter, (*email.Message)(nil))
-				return q.Limit(req.Filter.Pagination.SafeLimit()).
-					Offset(req.Filter.Pagination.SafeOffset())
-			}).
-			OrderExpr("em.created_at DESC").
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return &pagination.ListResult[*email.Message]{Items: entities, Total: total}, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*email.Message], error) {
+			entities := make([]*email.Message, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).NewSelect().
+				Model(&entities).
+				Relation("Profile").
+				Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
+					q = applyTenant(q, "em", req.Filter.TenantInfo)
+					q = querybuilder.ApplyFilters(q, "em", req.Filter, (*email.Message)(nil))
+					return q.Limit(req.Filter.Pagination.SafeLimit()).
+						Offset(req.Filter.Pagination.SafeOffset())
+				}).
+				OrderExpr("em.created_at DESC").
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return &pagination.ListResult[*email.Message]{Items: entities, Total: total}, nil
+		},
+	)
 }
 
 func (r *repository) CreateEvent(ctx context.Context, entity *email.Event) (bool, error) {
@@ -589,22 +612,26 @@ func (r *repository) ListSuppressions(
 	ctx context.Context,
 	req *emailports.ListEmailSuppressionsRequest,
 ) (*pagination.ListResult[*email.Suppression], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*email.Suppression], error) {
-		entities := make([]*email.Suppression, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-				return applyTenant(q, "es", req.Filter.TenantInfo).
-					Limit(req.Filter.Pagination.SafeLimit()).
-					Offset(req.Filter.Pagination.SafeOffset())
-			}).
-			OrderExpr("es.created_at DESC").
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return &pagination.ListResult[*email.Suppression]{Items: entities, Total: total}, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*email.Suppression], error) {
+			entities := make([]*email.Suppression, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).NewSelect().
+				Model(&entities).
+				Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
+					return applyTenant(q, "es", req.Filter.TenantInfo).
+						Limit(req.Filter.Pagination.SafeLimit()).
+						Offset(req.Filter.Pagination.SafeOffset())
+				}).
+				OrderExpr("es.created_at DESC").
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return &pagination.ListResult[*email.Suppression]{Items: entities, Total: total}, nil
+		},
+	)
 }
 
 func (r *repository) CreateSuppression(

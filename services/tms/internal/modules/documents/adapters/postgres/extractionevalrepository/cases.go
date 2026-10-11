@@ -53,7 +53,11 @@ func (r *caseRepository) Create(
 	entity *extractioneval.ExtractionCase,
 ) (*extractioneval.ExtractionCase, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*extractioneval.ExtractionCase, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
 				return nil, errortypes.NewBusinessError(
 					"This document is already in the evaluation set",
@@ -182,132 +186,149 @@ func (r *caseRepository) ListConnection(
 	ctx context.Context,
 	req *extractionevalports.ListExtractionEvalCaseConnectionRequest,
 ) (*pagination.CursorListResult[*extractioneval.ExtractionCase], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*extractioneval.ExtractionCase], error) {
-		dba := r.db.DBForContext(ctx)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*extractioneval.ExtractionCase], error) {
+			dba := r.db.DBForContext(ctx)
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.NewSelect().
-				Model((*extractioneval.ExtractionCase)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						extractionevalcol.ExtractionCaseTable.Alias,
-						req.Filter,
-						(*extractioneval.ExtractionCase)(nil),
-					)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.NewSelect().
+					Model((*extractioneval.ExtractionCase)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							extractionevalcol.ExtractionCaseTable.Alias,
+							req.Filter,
+							(*extractioneval.ExtractionCase)(nil),
+						)
 
-					return sq.Apply(extractionevalcol.ExtractionCaseApplyTenant(req.Filter.TenantInfo))
-				}).
-				Count(ctx)
+						return sq.Apply(
+							extractionevalcol.ExtractionCaseApplyTenant(req.Filter.TenantInfo),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					r.l.Error("failed to count extraction eval cases", zap.Error(err))
+
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*extractioneval.ExtractionCase]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*extractioneval.ExtractionCase) *bun.SelectQuery {
+						q := dba.NewSelect().Model(entities)
+						if len(req.Columns) > 0 {
+							q = q.Column(req.Columns...)
+						}
+
+						return q
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							extractionevalcol.ExtractionCaseTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*extractioneval.ExtractionCase)(nil),
+						)
+					},
+				},
+			)
 			if err != nil {
-				r.l.Error("failed to count extraction eval cases", zap.Error(err))
+				r.l.Error("failed to list extraction eval cases", zap.Error(err))
 
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*extractioneval.ExtractionCase]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*extractioneval.ExtractionCase) *bun.SelectQuery {
-				q := dba.NewSelect().Model(entities)
-				if len(req.Columns) > 0 {
-					q = q.Column(req.Columns...)
-				}
-
-				return q
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return querybuilder.ApplyCursorFilters(
-					sq,
-					extractionevalcol.ExtractionCaseTable.Alias,
-					req.Filter,
-					req.Cursor,
-					(*extractioneval.ExtractionCase)(nil),
-				)
-			},
-		})
-		if err != nil {
-			r.l.Error("failed to list extraction eval cases", zap.Error(err))
-
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *caseRepository) ListActive(
 	ctx context.Context,
 	req extractionevalports.ListActiveExtractionEvalCasesRequest,
 ) ([]*extractioneval.ExtractionCase, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*extractioneval.ExtractionCase, error) {
-		cols := extractionevalcol.ExtractionCaseColumns
-		limit := req.Limit
-		if limit <= 0 {
-			limit = defaultCaseLimit
-		}
-		limit = min(limit, maxActiveCaseRead)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*extractioneval.ExtractionCase, error) {
+			cols := extractionevalcol.ExtractionCaseColumns
+			limit := req.Limit
+			if limit <= 0 {
+				limit = defaultCaseLimit
+			}
+			limit = min(limit, maxActiveCaseRead)
 
-		entities := make([]*extractioneval.ExtractionCase, 0, limit)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Column(cols.ID.Bare(), cols.Title.Bare(), cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return extractionevalcol.ExtractionCaseScopeTenant(sq, req.TenantInfo).
-					Where(cols.Task.Eq(), req.Task).
-					Where(cols.Status.Eq(), extractioneval.CaseStatusActive)
-			}).
-			Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderAsc()).
-			Limit(limit).
-			Scan(ctx)
-		if err != nil {
-			r.l.Error("failed to list active extraction eval cases", zap.Error(err))
+			entities := make([]*extractioneval.ExtractionCase, 0, limit)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Column(cols.ID.Bare(), cols.Title.Bare(), cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return extractionevalcol.ExtractionCaseScopeTenant(sq, req.TenantInfo).
+						Where(cols.Task.Eq(), req.Task).
+						Where(cols.Status.Eq(), extractioneval.CaseStatusActive)
+				}).
+				Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderAsc()).
+				Limit(limit).
+				Scan(ctx)
+			if err != nil {
+				r.l.Error("failed to list active extraction eval cases", zap.Error(err))
 
-			return nil, fmt.Errorf("list active extraction eval cases: %w", err)
-		}
+				return nil, fmt.Errorf("list active extraction eval cases: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *caseRepository) Counts(
 	ctx context.Context,
 	req extractionevalports.CountExtractionEvalCasesRequest,
 ) (*extractionevalports.ExtractionEvalCaseCounts, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*extractionevalports.ExtractionEvalCaseCounts, error) {
-		cols := extractionevalcol.ExtractionCaseColumns
-		var row struct {
-			Candidate int `bun:"candidate"`
-			Active    int `bun:"active"`
-			Retired   int `bun:"retired"`
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*extractionevalports.ExtractionEvalCaseCounts, error) {
+			cols := extractionevalcol.ExtractionCaseColumns
+			var row struct {
+				Candidate int `bun:"candidate"`
+				Active    int `bun:"active"`
+				Retired   int `bun:"retired"`
+			}
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*extractioneval.ExtractionCase)(nil)).
-			ColumnExpr(buncolgen.CountFilter("candidate", cols.Status.Eq()), extractioneval.CaseStatusCandidate).
-			ColumnExpr(buncolgen.CountFilter("active", cols.Status.Eq()), extractioneval.CaseStatusActive).
-			ColumnExpr(buncolgen.CountFilter("retired", cols.Status.Eq()), extractioneval.CaseStatusRetired).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return extractionevalcol.ExtractionCaseScopeTenant(sq, req.TenantInfo).
-					Where(cols.Task.Eq(), req.Task)
-			}).
-			Scan(ctx, &row)
-		if err != nil {
-			r.l.Error("failed to count extraction eval cases", zap.Error(err))
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*extractioneval.ExtractionCase)(nil)).
+				ColumnExpr(buncolgen.CountFilter("candidate", cols.Status.Eq()), extractioneval.CaseStatusCandidate).
+				ColumnExpr(buncolgen.CountFilter("active", cols.Status.Eq()), extractioneval.CaseStatusActive).
+				ColumnExpr(buncolgen.CountFilter("retired", cols.Status.Eq()), extractioneval.CaseStatusRetired).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return extractionevalcol.ExtractionCaseScopeTenant(sq, req.TenantInfo).
+						Where(cols.Task.Eq(), req.Task)
+				}).
+				Scan(ctx, &row)
+			if err != nil {
+				r.l.Error("failed to count extraction eval cases", zap.Error(err))
 
-			return nil, fmt.Errorf("count extraction eval cases: %w", err)
-		}
+				return nil, fmt.Errorf("count extraction eval cases: %w", err)
+			}
 
-		return &extractionevalports.ExtractionEvalCaseCounts{
-			Candidate: row.Candidate,
-			Active:    row.Active,
-			Retired:   row.Retired,
-		}, nil
-	})
+			return &extractionevalports.ExtractionEvalCaseCounts{
+				Candidate: row.Candidate,
+				Active:    row.Active,
+				Retired:   row.Retired,
+			}, nil
+		},
+	)
 }

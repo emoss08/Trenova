@@ -99,7 +99,11 @@ func (r *batchRepository) Update(
 
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, "Capture batch", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"Capture batch",
+			entity.ID.String(),
+		); err != nil {
 			entity.Version = ov
 
 			return nil, err
@@ -173,47 +177,51 @@ func (r *batchRepository) ListCursor(
 	ctx context.Context,
 	req *captureports.ListCaptureBatchesRequest,
 ) (*pagination.CursorListResult[*capture.CaptureBatch], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*capture.CaptureBatch], error) {
-		dba := r.db.DBForContext(ctx)
-		alias := capturecol.CaptureBatchTable.Alias
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*capture.CaptureBatch], error) {
+			dba := r.db.DBForContext(ctx)
+			alias := capturecol.CaptureBatchTable.Alias
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.NewSelect().
-				Model((*capture.CaptureBatch)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.narrowBatches(ctx, querybuilder.ApplyFiltersWithoutSort(
-						sq, alias, req.Filter, (*capture.CaptureBatch)(nil),
-					), req)
-				}).
-				Count(ctx)
-			if err != nil {
-				return nil, err
-			}
-			totalCount = &total
-		}
-
-		return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*capture.CaptureBatch]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*capture.CaptureBatch) *bun.SelectQuery {
-				return dba.NewSelect().
-					Model(entities).
-					Relation(capturecol.CaptureBatchRelations.CaptureDevice)
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				sq, err := querybuilder.ApplyCursorFilters(
-					sq, alias, req.Filter, req.Cursor, (*capture.CaptureBatch)(nil),
-				)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.NewSelect().
+					Model((*capture.CaptureBatch)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.narrowBatches(ctx, querybuilder.ApplyFiltersWithoutSort(
+							sq, alias, req.Filter, (*capture.CaptureBatch)(nil),
+						), req)
+					}).
+					Count(ctx)
 				if err != nil {
-					return sq, err
+					return nil, err
 				}
+				totalCount = &total
+			}
 
-				return r.narrowBatches(ctx, sq, req), nil
-			},
-		})
-	})
+			return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*capture.CaptureBatch]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(entities *[]*capture.CaptureBatch) *bun.SelectQuery {
+					return dba.NewSelect().
+						Model(entities).
+						Relation(capturecol.CaptureBatchRelations.CaptureDevice)
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					sq, err := querybuilder.ApplyCursorFilters(
+						sq, alias, req.Filter, req.Cursor, (*capture.CaptureBatch)(nil),
+					)
+					if err != nil {
+						return sq, err
+					}
+
+					return r.narrowBatches(ctx, sq, req), nil
+				},
+			})
+		},
+	)
 }
 
 // narrowBatches applies the queue's own filters on top of the generic ones.
@@ -266,7 +274,8 @@ func (r *batchRepository) forRecord(
 		Where(item.Status.NotEq(), capture.ItemDiscarded).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.WhereGroup(" OR ", func(filed *bun.SelectQuery) *bun.SelectQuery {
-				return filed.Where(item.FiledType.Eq(), resourceType).Where(item.FiledID.Eq(), resourceID)
+				return filed.Where(item.FiledType.Eq(), resourceType).
+					Where(item.FiledID.Eq(), resourceID)
 			}).WhereGroup(" OR ", func(suggested *bun.SelectQuery) *bun.SelectQuery {
 				return suggested.Where(item.SuggestedType.Eq(), resourceType).
 					Where(item.SuggestedID.Eq(), resourceID)
@@ -275,7 +284,8 @@ func (r *batchRepository) forRecord(
 
 	return q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.WhereGroup(" OR ", func(target *bun.SelectQuery) *bun.SelectQuery {
-			return target.Where(batch.TargetType.Eq(), resourceType).Where(batch.TargetID.Eq(), resourceID)
+			return target.Where(batch.TargetType.Eq(), resourceType).
+				Where(batch.TargetID.Eq(), resourceID)
 		}).WhereOr("EXISTS (?)", items)
 	})
 }
@@ -408,7 +418,10 @@ func (r *batchRepository) ListRetentionReminders(
 	ctx context.Context,
 	req captureports.ListRetentionReminderCaptureBatchesRequest,
 ) ([]*capture.CaptureBatch, error) {
-	ctx = dbscope.WithSystem(ctx, "list capture batches due a retention reminder across every organization")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"list capture batches due a retention reminder across every organization",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureBatch, error) {
 		limit := boundedLimit(req.Limit)
 		entities := make([]*capture.CaptureBatch, 0)

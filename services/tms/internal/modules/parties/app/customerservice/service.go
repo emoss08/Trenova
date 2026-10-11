@@ -5,15 +5,15 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -81,12 +81,16 @@ func (s *Service) updateAndQueueSync(
 		if updated.SamePartyDetails(original) {
 			return nil
 		}
-		return accountingsyncports.EnqueueAccountingSync(txCtx, s.sync, accountingsyncports.CustomerSyncRequest(
-			pagination.TenantInfo{OrgID: updated.OrganizationID, BuID: updated.BusinessUnitID},
-			updated.ID,
-			updated.Name,
-			updated.Version,
-		))
+		return accountingsyncports.EnqueueAccountingSync(
+			txCtx,
+			s.sync,
+			accountingsyncports.CustomerSyncRequest(
+				pagination.TenantInfo{OrgID: updated.OrganizationID, BuID: updated.BusinessUnitID},
+				updated.ID,
+				updated.Name,
+				updated.Version,
+			),
+		)
 	})
 	if err != nil {
 		return nil, err

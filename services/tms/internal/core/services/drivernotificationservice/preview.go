@@ -5,10 +5,10 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 )
 

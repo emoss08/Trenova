@@ -196,7 +196,8 @@ func (r *repository) RecordFingerprint(
 			Model((*conversation.AssistantTurn)(nil)).
 			Set(cols.Fingerprint.Set(), req.Fingerprint).
 			Where(cols.ID.Eq(), req.ID)
-		if _, err := conversationcol.AssistantTurnScopeTenantUpdate(q, req.TenantInfo).Exec(ctx); err != nil {
+		if _, err := conversationcol.AssistantTurnScopeTenantUpdate(q, req.TenantInfo).
+			Exec(ctx); err != nil {
 			return fmt.Errorf("record the agent a turn ran as: %w", err)
 		}
 

@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"

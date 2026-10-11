@@ -89,7 +89,9 @@ func (c *Connector) DeleteJournalEntry(
 	return &accountingsyncports.AccountingDocumentResult{ExternalID: id}, nil
 }
 
-func (c *Connector) journalResult(saved *quickbooks.TxnResult) *accountingsyncports.AccountingDocumentResult {
+func (c *Connector) journalResult(
+	saved *quickbooks.TxnResult,
+) *accountingsyncports.AccountingDocumentResult {
 	return &accountingsyncports.AccountingDocumentResult{
 		ExternalID: saved.ID,
 		DocNumber:  saved.DocNumber,
@@ -104,7 +106,9 @@ func (c *Connector) journalResult(saved *quickbooks.TxnResult) *accountingsyncpo
 	}
 }
 
-func journalTxnOf(doc *accountingsyncports.AccountingJournalDocument) (*quickbooks.JournalTxn, error) {
+func journalTxnOf(
+	doc *accountingsyncports.AccountingJournalDocument,
+) (*quickbooks.JournalTxn, error) {
 	txn := &quickbooks.JournalTxn{
 		DocNumber:    doc.DocNumber,
 		TxnDate:      doc.TxnDate,
@@ -135,7 +139,9 @@ func journalTxnOf(doc *accountingsyncports.AccountingJournalDocument) (*quickboo
 	return txn, nil
 }
 
-func postingOf(posting accountingsyncports.AccountingJournalPosting) (quickbooks.PostingType, error) {
+func postingOf(
+	posting accountingsyncports.AccountingJournalPosting,
+) (quickbooks.PostingType, error) {
 	switch posting {
 	case accountingsyncports.AccountingJournalDebit:
 		return quickbooks.PostingDebit, nil
@@ -146,7 +152,9 @@ func postingOf(posting accountingsyncports.AccountingJournalPosting) (quickbooks
 	}
 }
 
-func journalEntityOf(line *accountingsyncports.AccountingJournalLine) (quickbooks.JournalEntityType, error) {
+func journalEntityOf(
+	line *accountingsyncports.AccountingJournalLine,
+) (quickbooks.JournalEntityType, error) {
 	switch line.PartyKind {
 	case "":
 		return "", nil

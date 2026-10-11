@@ -4,15 +4,15 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -75,13 +75,17 @@ func (s *Service) updateAndQueueSync(
 		if updated.SamePartyDetails(original) {
 			return nil
 		}
-		return accountingsyncports.EnqueueAccountingSync(txCtx, s.sync, accountingsyncports.VendorSyncRequest(
-			pagination.TenantInfo{OrgID: updated.OrganizationID, BuID: updated.BusinessUnitID},
-			accountingsync.SyncObjectCarrierVendor,
-			updated.ID,
-			updated.Name,
-			updated.Version,
-		))
+		return accountingsyncports.EnqueueAccountingSync(
+			txCtx,
+			s.sync,
+			accountingsyncports.VendorSyncRequest(
+				pagination.TenantInfo{OrgID: updated.OrganizationID, BuID: updated.BusinessUnitID},
+				accountingsync.SyncObjectCarrierVendor,
+				updated.ID,
+				updated.Name,
+				updated.Version,
+			),
+		)
 	})
 	if err != nil {
 		return nil, err
@@ -323,7 +327,10 @@ func (s *Service) SetLifecycleObserver(observer carrierintelports.CarrierLifecyc
 	s.observer = observer
 }
 
-func (s *Service) notifyObserver(ctx context.Context, event *carrierintelports.CarrierLifecycleEvent) {
+func (s *Service) notifyObserver(
+	ctx context.Context,
+	event *carrierintelports.CarrierLifecycleEvent,
+) {
 	if s.observer == nil {
 		return
 	}

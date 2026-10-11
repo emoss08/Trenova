@@ -3,9 +3,9 @@ package invoiceservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"

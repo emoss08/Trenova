@@ -55,7 +55,11 @@ func (s *Service) Daily(
 
 // fillDays lays the days that had usage over every day of the window, so a
 // quiet day is a zero rather than a gap.
-func fillDays(first time.Time, days int, rows []aiusageports.AIUsageDayTotals) []aiusageports.AIUsageDay {
+func fillDays(
+	first time.Time,
+	days int,
+	rows []aiusageports.AIUsageDayTotals,
+) []aiusageports.AIUsageDay {
 	byDay := make(map[string]*aiusageports.AIUsageDayTotals, len(rows))
 	for idx := range rows {
 		byDay[rows[idx].Day] = &rows[idx]

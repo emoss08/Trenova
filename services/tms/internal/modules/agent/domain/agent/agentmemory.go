@@ -382,22 +382,22 @@ type Memory struct {
 	RoleID      *pulid.ID `json:"roleId"      bun:"role_id,type:VARCHAR(100),nullzero"`
 	// SourceThreadID is the conversation the run that recorded the memory
 	// was answering, so a list can say which conversation it came from.
-	SourceThreadID   *pulid.ID `json:"sourceThreadId" bun:"source_thread_id,type:VARCHAR(100),nullzero"`
-	Tainted          bool      `json:"tainted"           bun:"tainted,type:BOOLEAN,notnull,default:false"`
-	TaintRunID       *pulid.ID `json:"taintRunId"        bun:"taint_run_id,type:VARCHAR(100),nullzero"`
-	SourceRunID      *pulid.ID `json:"sourceRunId"       bun:"source_run_id,type:VARCHAR(100),nullzero"`
-	SourceProposalID *pulid.ID `json:"sourceProposalId"  bun:"source_proposal_id,type:VARCHAR(100),nullzero"`
-	ReflectionID     *pulid.ID `json:"reflectionId"      bun:"reflection_id,type:VARCHAR(100),nullzero"`
-	SupersedesID     *pulid.ID `json:"supersedesId"      bun:"supersedes_id,type:VARCHAR(100),nullzero"`
-	CreatedByUserID  *pulid.ID `json:"createdByUserId"   bun:"created_by_user_id,type:VARCHAR(100),nullzero"`
-	RetiredByUserID  *pulid.ID `json:"retiredByUserId"   bun:"retired_by_user_id,type:VARCHAR(100),nullzero"`
-	RetiredAt        *int64    `json:"retiredAt"         bun:"retired_at,type:BIGINT,nullzero"`
+	SourceThreadID   *pulid.ID `json:"sourceThreadId"   bun:"source_thread_id,type:VARCHAR(100),nullzero"`
+	Tainted          bool      `json:"tainted"          bun:"tainted,type:BOOLEAN,notnull,default:false"`
+	TaintRunID       *pulid.ID `json:"taintRunId"       bun:"taint_run_id,type:VARCHAR(100),nullzero"`
+	SourceRunID      *pulid.ID `json:"sourceRunId"      bun:"source_run_id,type:VARCHAR(100),nullzero"`
+	SourceProposalID *pulid.ID `json:"sourceProposalId" bun:"source_proposal_id,type:VARCHAR(100),nullzero"`
+	ReflectionID     *pulid.ID `json:"reflectionId"     bun:"reflection_id,type:VARCHAR(100),nullzero"`
+	SupersedesID     *pulid.ID `json:"supersedesId"     bun:"supersedes_id,type:VARCHAR(100),nullzero"`
+	CreatedByUserID  *pulid.ID `json:"createdByUserId"  bun:"created_by_user_id,type:VARCHAR(100),nullzero"`
+	RetiredByUserID  *pulid.ID `json:"retiredByUserId"  bun:"retired_by_user_id,type:VARCHAR(100),nullzero"`
+	RetiredAt        *int64    `json:"retiredAt"        bun:"retired_at,type:BIGINT,nullzero"`
 	// ReviewedByUserID is the person who read a tainted memory and kept it,
 	// approving it as a suggestion or reviewing it in AI Control. Tainted
 	// still says where it came from; a reviewed memory taints no turn.
-	ReviewedByUserID *pulid.ID `json:"reviewedByUserId"  bun:"reviewed_by_user_id,type:VARCHAR(100),nullzero"`
-	ReviewedAt       *int64    `json:"reviewedAt"        bun:"reviewed_at,type:BIGINT,nullzero"`
-	ExpiresAt        *int64    `json:"expiresAt"         bun:"expires_at,type:BIGINT,nullzero"`
+	ReviewedByUserID *pulid.ID `json:"reviewedByUserId" bun:"reviewed_by_user_id,type:VARCHAR(100),nullzero"`
+	ReviewedAt       *int64    `json:"reviewedAt"       bun:"reviewed_at,type:BIGINT,nullzero"`
+	ExpiresAt        *int64    `json:"expiresAt"        bun:"expires_at,type:BIGINT,nullzero"`
 
 	UseCount   int    `json:"useCount"   bun:"use_count,type:INTEGER,notnull,default:0"`
 	LastUsedAt *int64 `json:"lastUsedAt" bun:"last_used_at,type:BIGINT,nullzero"`
@@ -487,18 +487,30 @@ func (m *Memory) Validate(multiErr *errortypes.MultiError) {
 	switch m.Scope {
 	case MemoryScopeUser:
 		if m.OwnerUserID == nil || m.OwnerUserID.IsNil() {
-			multiErr.Add("scope", errortypes.ErrInvalid, "A memory kept for one person needs that person")
+			multiErr.Add(
+				"scope",
+				errortypes.ErrInvalid,
+				"A memory kept for one person needs that person",
+			)
 		}
 	case MemoryScopeRole:
 		if m.RoleID == nil || m.RoleID.IsNil() {
-			multiErr.Add("roleId", errortypes.ErrRequired, "A memory kept for a role needs the role")
+			multiErr.Add(
+				"roleId",
+				errortypes.ErrRequired,
+				"A memory kept for a role needs the role",
+			)
 		}
 	}
 	// A suggestion is drawn from feedback, or offered by an agent to the
 	// person who asked to be asked first; nothing else waits to be accepted.
 	if m.Status.IsSuggestion() && m.Source != MemorySourceFeedback &&
 		!m.Source.OfferedByAgent() {
-		multiErr.Add("status", errortypes.ErrInvalid, "Only feedback or an agent can suggest a memory")
+		multiErr.Add(
+			"status",
+			errortypes.ErrInvalid,
+			"Only feedback or an agent can suggest a memory",
+		)
 	}
 	if m.Source == MemorySourceReflection && (m.ReflectionID == nil || m.ReflectionID.IsNil()) {
 		multiErr.Add(

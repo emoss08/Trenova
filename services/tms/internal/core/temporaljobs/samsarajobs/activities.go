@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs/samsaracontract"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/app/samsarasyncservice"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/samsarasyncservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"

@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"

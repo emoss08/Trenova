@@ -199,42 +199,46 @@ func (r *repository) ListVersions(
 	ctx context.Context,
 	req *rateagreementports.ListRateAgreementVersionsRequest,
 ) (*pagination.ListResult[*rateagreement.RateAgreementVersion], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*rateagreement.RateAgreementVersion], error) {
-		log := r.l.With(zap.String("operation", "ListVersions"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*rateagreement.RateAgreementVersion], error) {
+			log := r.l.With(zap.String("operation", "ListVersions"))
 
-		cols := rateagreementcol.RateAgreementVersionColumns
-		entities := make([]*rateagreement.RateAgreementVersion, 0)
+			cols := rateagreementcol.RateAgreementVersionColumns
+			entities := make([]*rateagreement.RateAgreementVersion, 0)
 
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(buncolgen.Rel(rateagreementcol.RateAgreementVersionRelations.CreatedBy)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return rateagreementcol.RateAgreementVersionScopeTenant(sq, req.TenantInfo).
-					Where(cols.RateAgreementID.Eq(), req.RateAgreementID)
-			}).
-			Order(cols.VersionNumber.OrderDesc())
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Relation(buncolgen.Rel(rateagreementcol.RateAgreementVersionRelations.CreatedBy)).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return rateagreementcol.RateAgreementVersionScopeTenant(sq, req.TenantInfo).
+						Where(cols.RateAgreementID.Eq(), req.RateAgreementID)
+				}).
+				Order(cols.VersionNumber.OrderDesc())
 
-		if req.Limit > 0 {
-			q = q.Limit(req.Limit).Offset(req.Offset)
-		}
+			if req.Limit > 0 {
+				q = q.Limit(req.Limit).Offset(req.Offset)
+			}
 
-		total, err := q.ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to list rate agreement versions", zap.Error(err))
-			return nil, err
-		}
+			total, err := q.ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to list rate agreement versions", zap.Error(err))
+				return nil, err
+			}
 
-		if err = r.resolveAccessorialNames(ctx, req.TenantInfo, entities); err != nil {
-			log.Error("failed to resolve accessorial names for versions", zap.Error(err))
-			return nil, err
-		}
+			if err = r.resolveAccessorialNames(ctx, req.TenantInfo, entities); err != nil {
+				log.Error("failed to resolve accessorial names for versions", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*rateagreement.RateAgreementVersion]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*rateagreement.RateAgreementVersion]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 // resolveAccessorialNames patches each version's id → code map for every
@@ -348,38 +352,42 @@ func (r *repository) GetEffectiveVersion(
 	ctx context.Context,
 	req *rateagreementports.GetEffectiveAgreementVersionRequest,
 ) (*rateagreement.RateAgreementVersion, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*rateagreement.RateAgreementVersion, error) {
-		log := r.l.With(zap.String("operation", "GetEffectiveVersion"))
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*rateagreement.RateAgreementVersion, error) {
+			log := r.l.With(zap.String("operation", "GetEffectiveVersion"))
 
-		cols := rateagreementcol.RateAgreementVersionColumns
-		entity := new(rateagreement.RateAgreementVersion)
+			cols := rateagreementcol.RateAgreementVersionColumns
+			entity := new(rateagreement.RateAgreementVersion)
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return rateagreementcol.RateAgreementVersionScopeTenant(sq, req.TenantInfo).
-					Where(cols.RateAgreementID.Eq(), req.RateAgreementID).
-					Where(cols.EffectiveFrom.Lte(), req.AsOf).
-					WhereGroup(" AND ", func(wq *bun.SelectQuery) *bun.SelectQuery {
-						return wq.
-							Where(cols.EffectiveTo.IsNull()).
-							WhereOr(cols.EffectiveTo.Gt(), req.AsOf)
-					})
-			}).
-			Order(cols.VersionNumber.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
-		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, nil //nolint:nilnil // an agreement never amended has no version rows
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return rateagreementcol.RateAgreementVersionScopeTenant(sq, req.TenantInfo).
+						Where(cols.RateAgreementID.Eq(), req.RateAgreementID).
+						Where(cols.EffectiveFrom.Lte(), req.AsOf).
+						WhereGroup(" AND ", func(wq *bun.SelectQuery) *bun.SelectQuery {
+							return wq.
+								Where(cols.EffectiveTo.IsNull()).
+								WhereOr(cols.EffectiveTo.Gt(), req.AsOf)
+						})
+				}).
+				Order(cols.VersionNumber.OrderDesc()).
+				Limit(1).
+				Scan(ctx)
+			if err != nil {
+				if dberror.IsNotFoundError(err) {
+					return nil, nil //nolint:nilnil // an agreement never amended has no version rows
+				}
+				log.Error("failed to get effective agreement version", zap.Error(err))
+				return nil, err
 			}
-			log.Error("failed to get effective agreement version", zap.Error(err))
-			return nil, err
-		}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 // CreateVersion closes the version it supersedes and writes the new one, so the
@@ -388,48 +396,56 @@ func (r *repository) CreateVersion(
 	ctx context.Context,
 	version *rateagreement.RateAgreementVersion,
 ) (*rateagreement.RateAgreementVersion, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*rateagreement.RateAgreementVersion, error) {
-		log := r.l.With(
-			zap.String("operation", "CreateVersion"),
-			zap.String("agreementId", version.RateAgreementID.String()),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*rateagreement.RateAgreementVersion, error) {
+			log := r.l.With(
+				zap.String("operation", "CreateVersion"),
+				zap.String("agreementId", version.RateAgreementID.String()),
+			)
 
-		cols := rateagreementcol.RateAgreementVersionColumns
-		tenantInfo := pagination.TenantInfo{
-			OrgID: version.OrganizationID,
-			BuID:  version.BusinessUnitID,
-		}
-
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			if _, uErr := r.db.DBForContext(c).
-				NewUpdate().
-				Model((*rateagreement.RateAgreementVersion)(nil)).
-				Set(cols.EffectiveTo.Set(), version.EffectiveFrom).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return rateagreementcol.RateAgreementVersionScopeTenantUpdate(uq, tenantInfo).
-						Where(cols.RateAgreementID.Eq(), version.RateAgreementID).
-						Where(cols.EffectiveTo.IsNull())
-				}).
-				Exec(c); uErr != nil {
-				return uErr
+			cols := rateagreementcol.RateAgreementVersionColumns
+			tenantInfo := pagination.TenantInfo{
+				OrgID: version.OrganizationID,
+				BuID:  version.BusinessUnitID,
 			}
 
-			_, iErr := r.db.DBForContext(c).
-				NewInsert().
-				Model(version).
-				Returning("*").
-				Exec(c)
+			err := r.db.WithTx(
+				ctx,
+				kernelports.TxOptions{},
+				func(c context.Context, _ bun.Tx) error {
+					if _, uErr := r.db.DBForContext(c).
+						NewUpdate().
+						Model((*rateagreement.RateAgreementVersion)(nil)).
+						Set(cols.EffectiveTo.Set(), version.EffectiveFrom).
+						WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+							return rateagreementcol.RateAgreementVersionScopeTenantUpdate(uq, tenantInfo).
+								Where(cols.RateAgreementID.Eq(), version.RateAgreementID).
+								Where(cols.EffectiveTo.IsNull())
+						}).
+						Exec(c); uErr != nil {
+						return uErr
+					}
 
-			return iErr
-		})
-		if err != nil {
-			log.Error("failed to create rate agreement version", zap.Error(err))
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Rate agreement is busy. Retry the request.",
+					_, iErr := r.db.DBForContext(c).
+						NewInsert().
+						Model(version).
+						Returning("*").
+						Exec(c)
+
+					return iErr
+				},
 			)
-		}
+			if err != nil {
+				log.Error("failed to create rate agreement version", zap.Error(err))
+				return nil, dberror.MapRetryableTransactionError(
+					err,
+					"Rate agreement is busy. Retry the request.",
+				)
+			}
 
-		return version, nil
-	})
+			return version, nil
+		},
+	)
 }

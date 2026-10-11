@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -77,7 +77,12 @@ func (t *sendEDILoadTenderTool) Prerequisites() []string {
 }
 
 func (t *sendEDILoadTenderTool) Recipe() []string {
-	return []string{"search_shipments", "list_edi_partners", "send_edi_tender", "list_edi_transfers"}
+	return []string{
+		"search_shipments",
+		"list_edi_partners",
+		"send_edi_tender",
+		"list_edi_transfers",
+	}
 }
 
 func (t *sendEDILoadTenderTool) Description() string {

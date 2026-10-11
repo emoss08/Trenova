@@ -3,10 +3,10 @@ package formulatemplateservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
@@ -24,11 +24,14 @@ func (s *Service) UpdateVersionEffectiveDate(
 		zap.Int64("versionNumber", req.VersionNumber),
 	)
 
-	version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &formulatemplateports.GetVersionRequest{
-		TenantInfo:    req.TenantInfo,
-		TemplateID:    req.TemplateID,
-		VersionNumber: req.VersionNumber,
-	})
+	version, err := s.versionRepo.GetByTemplateAndVersion(
+		ctx,
+		&formulatemplateports.GetVersionRequest{
+			TenantInfo:    req.TenantInfo,
+			TemplateID:    req.TemplateID,
+			VersionNumber: req.VersionNumber,
+		},
+	)
 	if err != nil {
 		log.Error("failed to get version", zap.Error(err))
 		return nil, err

@@ -37,96 +37,104 @@ func (r *payCodeRepository) List(
 	ctx context.Context,
 	req *driverpayports.ListPayCodesRequest,
 ) (*pagination.ListResult[*driverpay.PayCode], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driverpay.PayCode], error) {
-		limit := req.Filter.Pagination.SafeLimit()
-		items := make([]*driverpay.PayCode, 0, limit)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*driverpay.PayCode], error) {
+			limit := req.Filter.Pagination.SafeLimit()
+			items := make([]*driverpay.PayCode, 0, limit)
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("payc.organization_id = ?", req.Filter.TenantInfo.OrgID).
-			Where("payc.business_unit_id = ?", req.Filter.TenantInfo.BuID).
-			Relation("GLAccount", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
-			Order("payc.direction ASC", "payc.code ASC").
-			Limit(limit).
-			Offset(req.Filter.Pagination.SafeOffset())
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&items).
+				Where("payc.organization_id = ?", req.Filter.TenantInfo.OrgID).
+				Where("payc.business_unit_id = ?", req.Filter.TenantInfo.BuID).
+				Relation("GLAccount", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
+				Order("payc.direction ASC", "payc.code ASC").
+				Limit(limit).
+				Offset(req.Filter.Pagination.SafeOffset())
 
-		if req.Filter.Query != "" {
-			term := "%" + req.Filter.Query + "%"
-			query = query.Where("(payc.code ILIKE ? OR payc.name ILIKE ?)", term, term)
-		}
-		if req.Direction != "" {
-			query = query.Where("payc.direction = ?", req.Direction)
-		}
+			if req.Filter.Query != "" {
+				term := "%" + req.Filter.Query + "%"
+				query = query.Where("(payc.code ILIKE ? OR payc.name ILIKE ?)", term, term)
+			}
+			if req.Direction != "" {
+				query = query.Where("payc.direction = ?", req.Direction)
+			}
 
-		total, err := query.ScanAndCount(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("list pay codes: %w", err)
-		}
+			total, err := query.ScanAndCount(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list pay codes: %w", err)
+			}
 
-		return &pagination.ListResult[*driverpay.PayCode]{Items: items, Total: total}, nil
-	})
+			return &pagination.ListResult[*driverpay.PayCode]{Items: items, Total: total}, nil
+		},
+	)
 }
 
 func (r *payCodeRepository) ListConnection(
 	ctx context.Context,
 	req *driverpayports.ListPayCodeConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.PayCode], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driverpay.PayCode], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*driverpay.PayCode], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*driverpay.PayCode)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						"payc",
-						req.Filter,
-						(*driverpay.PayCode)(nil),
-					)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*driverpay.PayCode)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							"payc",
+							req.Filter,
+							(*driverpay.PayCode)(nil),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count pay codes", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*driverpay.PayCode]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*driverpay.PayCode) *bun.SelectQuery {
+						return dba.NewSelect().
+							Model(entities).
+							ColumnExpr(driverpaycol.PayCodeTable.All()).
+							Relation("GLAccount", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							"payc",
+							req.Filter,
+							req.Cursor,
+							(*driverpay.PayCode)(nil),
+						)
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count pay codes", zap.Error(err))
+				log.Error("failed to scan pay codes", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*driverpay.PayCode]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*driverpay.PayCode) *bun.SelectQuery {
-					return dba.NewSelect().
-						Model(entities).
-						ColumnExpr(driverpaycol.PayCodeTable.All()).
-						Relation("GLAccount", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return querybuilder.ApplyCursorFilters(
-						sq,
-						"payc",
-						req.Filter,
-						req.Cursor,
-						(*driverpay.PayCode)(nil),
-					)
-				},
-			},
-		)
-		if err != nil {
-			log.Error("failed to scan pay codes", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *payCodeRepository) ListActive(
@@ -156,42 +164,46 @@ func (r *payCodeRepository) SelectOptions(
 	ctx context.Context,
 	req *driverpayports.PayCodeSelectOptionsRequest,
 ) (*pagination.ListResult[*driverpay.PayCode], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driverpay.PayCode], error) {
-		cols := driverpaycol.PayCodeColumns
-		return dbhelper.SelectOptions[*driverpay.PayCode](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					cols.ID,
-					cols.Code,
-					cols.Name,
-					cols.Description,
-					cols.Direction,
-					cols.Taxable,
-					cols.CountsTowardGuarantee,
-					cols.DefaultAmountMinor,
-					cols.CreatedAt,
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*driverpay.PayCode], error) {
+			cols := driverpaycol.PayCodeColumns
+			return dbhelper.SelectOptions[*driverpay.PayCode](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.Code,
+						cols.Name,
+						cols.Description,
+						cols.Direction,
+						cols.Taxable,
+						cols.CountsTowardGuarantee,
+						cols.DefaultAmountMinor,
+						cols.CreatedAt,
+					},
+					OrgColumnRef: &cols.OrganizationID,
+					BuColumnRef:  &cols.BusinessUnitID,
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						q = q.Where(cols.Status.Eq(), domaintypes.StatusActive)
+						if req.Direction != "" {
+							q = q.Where(cols.Direction.Eq(), req.Direction)
+						}
+						return q.Order(cols.Code.OrderAsc())
+					},
+					EntityName: "PayCode",
+					SearchColumnRefs: []buncolgen.Column{
+						cols.Code,
+						cols.Name,
+						cols.Description,
+					},
 				},
-				OrgColumnRef: &cols.OrganizationID,
-				BuColumnRef:  &cols.BusinessUnitID,
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					q = q.Where(cols.Status.Eq(), domaintypes.StatusActive)
-					if req.Direction != "" {
-						q = q.Where(cols.Direction.Eq(), req.Direction)
-					}
-					return q.Order(cols.Code.OrderAsc())
-				},
-				EntityName: "PayCode",
-				SearchColumnRefs: []buncolgen.Column{
-					cols.Code,
-					cols.Name,
-					cols.Description,
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 func (r *payCodeRepository) GetByID(

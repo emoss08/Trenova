@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -63,12 +63,15 @@ func (s *Service) Report(
 		return nil, err
 	}
 
-	scored, err := s.results.ListScored(ctx, &extractionshadowports.ListScoredExtractionShadowResultsRequest{
-		TenantInfo: req.TenantInfo,
-		ProviderID: providerID,
-		Since:      since,
-		Limit:      reportSampleLimit,
-	})
+	scored, err := s.results.ListScored(
+		ctx,
+		&extractionshadowports.ListScoredExtractionShadowResultsRequest{
+			TenantInfo: req.TenantInfo,
+			ProviderID: providerID,
+			Since:      since,
+			Limit:      reportSampleLimit,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -88,11 +91,14 @@ func (s *Service) addTotals(
 	providerID pulid.ID,
 	since int64,
 ) error {
-	totals, err := s.results.TotalsByStatus(ctx, extractionshadowports.TotalExtractionShadowResultsRequest{
-		TenantInfo: tenant,
-		ProviderID: providerID,
-		Since:      since,
-	})
+	totals, err := s.results.TotalsByStatus(
+		ctx,
+		extractionshadowports.TotalExtractionShadowResultsRequest{
+			TenantInfo: tenant,
+			ProviderID: providerID,
+			Since:      since,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -122,7 +128,10 @@ func (s *Service) addTotals(
 	return nil
 }
 
-func addScored(report *extractionshadowports.ExtractionShadowReport, scored []*extractionshadow.ShadowResult) {
+func addScored(
+	report *extractionshadowports.ExtractionShadowReport,
+	scored []*extractionshadow.ShadowResult,
+) {
 	candidate := aicorrection.NewAccuracyAggregator()
 	production := aicorrection.NewAccuracyAggregator()
 	for _, result := range scored {
@@ -167,7 +176,10 @@ func addScored(report *extractionshadowports.ExtractionShadowReport, scored []*e
 	report.Fields = aicorrection.CompareFields(candidate.Fields(), production.Fields())
 }
 
-func addSide(side *extractionshadowports.ExtractionShadowSide, scored, correct, corrected, missed int) {
+func addSide(
+	side *extractionshadowports.ExtractionShadowSide,
+	scored, correct, corrected, missed int,
+) {
 	side.Scored += scored
 	side.Correct += correct
 	side.Corrected += corrected

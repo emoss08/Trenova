@@ -7,9 +7,9 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentsearch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentsearch"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
@@ -157,10 +157,13 @@ func (s *Service) agentName(ctx context.Context, tenant pagination.TenantInfo, i
 		return fallbackAgentName
 	}
 
-	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         id,
-		TenantInfo: tenant,
-	})
+	definition, err := s.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         id,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil || strings.TrimSpace(definition.Name) == "" {
 		return fallbackAgentName
 	}

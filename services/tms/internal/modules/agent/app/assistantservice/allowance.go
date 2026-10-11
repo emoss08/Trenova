@@ -62,7 +62,8 @@ func (s *Service) assertWithinAllowance(
 
 	refused := errortypes.NewBusinessError(
 		"You've used your AI allowance for this month ({0} of {1} questions). It refreshes on the first of next month.",
-		allowance.Used, allowance.Limit,
+		allowance.Used,
+		allowance.Limit,
 	)
 	refused.Params = map[string]string{
 		"code":     "person_allowance",

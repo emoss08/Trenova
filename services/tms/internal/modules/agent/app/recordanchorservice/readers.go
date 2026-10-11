@@ -95,7 +95,10 @@ func invoiceFacts(entity *invoice.Invoice, read *kindRead) []agentdefinition.Anc
 		facts = append(facts, agentdefinition.AnchorFact{Name: "bill to", Value: entity.BillToName})
 	}
 	if entity.ShipmentProNumber != "" {
-		facts = append(facts, agentdefinition.AnchorFact{Name: "shipment", Value: entity.ShipmentProNumber})
+		facts = append(
+			facts,
+			agentdefinition.AnchorFact{Name: "shipment", Value: entity.ShipmentProNumber},
+		)
 	}
 	if entity.DueDate != nil && *entity.DueDate > 0 {
 		due := timeutils.FormatCalendarDate(*entity.DueDate, read.zone)
@@ -122,10 +125,13 @@ func tractorReader(
 		}
 		positions := map[pulid.ID]*telematics.VehiclePosition{}
 		if telem != nil {
-			listed, listErr := telem.ListVehiclePositions(ctx, &telematicsports.ListVehiclePositionsRequest{
-				TenantInfo: read.tenant,
-				TractorIDs: read.ids,
-			})
+			listed, listErr := telem.ListVehiclePositions(
+				ctx,
+				&telematicsports.ListVehiclePositionsRequest{
+					TenantInfo: read.tenant,
+					TractorIDs: read.ids,
+				},
+			)
 			if listErr != nil {
 				return nil, listErr
 			}
@@ -263,10 +269,13 @@ func detentionReader(
 	return func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentdefinition.RuntimeAnchor, error) {
 		out := make(map[pulid.ID]*agentdefinition.RuntimeAnchor, len(read.ids))
 		for _, id := range read.ids {
-			occurrence, err := occurrences.GetByID(ctx, &detentionports.GetDetentionOccurrenceByIDRequest{
-				OccurrenceID: id,
-				TenantInfo:   read.tenant,
-			})
+			occurrence, err := occurrences.GetByID(
+				ctx,
+				&detentionports.GetDetentionOccurrenceByIDRequest{
+					OccurrenceID: id,
+					TenantInfo:   read.tenant,
+				},
+			)
 			if err != nil {
 				if errortypes.IsNotFoundError(err) {
 					continue
@@ -304,7 +313,10 @@ func detentionAnchor(
 	if occurrence.ArrivedAt != nil && *occurrence.ArrivedAt > 0 {
 		clock := "arrived " + timeutils.FormatUnixDateTimeIn(*occurrence.ArrivedAt, read.timezone)
 		if occurrence.DepartedAt != nil && *occurrence.DepartedAt > 0 {
-			clock += ", departed " + timeutils.FormatUnixDateTimeIn(*occurrence.DepartedAt, read.timezone)
+			clock += ", departed " + timeutils.FormatUnixDateTimeIn(
+				*occurrence.DepartedAt,
+				read.timezone,
+			)
 		} else {
 			clock += ", no departure recorded"
 		}

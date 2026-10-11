@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/shared/carrierok"
 	"github.com/emoss08/trenova/shared/jsonflex"
@@ -263,7 +263,9 @@ func normalizePage(page, pageSize int) (normalizedPage, normalizedSize int) {
 	return normalizedPage, min(normalizedSize, maxMonitoringPageSize)
 }
 
-func changedProfile(monitored *carrierok.MonitoredProfile) carrierintelports.CarrierIntelChangedProfile {
+func changedProfile(
+	monitored *carrierok.MonitoredProfile,
+) carrierintelports.CarrierIntelChangedProfile {
 	changes := make([]carrierintelports.CarrierIntelVendorChange, 0, len(monitored.Changes))
 	for idx := range monitored.Changes {
 		change := &monitored.Changes[idx]

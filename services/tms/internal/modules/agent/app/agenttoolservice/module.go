@@ -1,41 +1,41 @@
 package agenttoolservice
 
 import (
+	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
+	"github.com/emoss08/trenova/internal/core/services/invoiceshareservice"
+	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptworkitemservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
-	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
-	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
-	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicerunservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
-	"github.com/emoss08/trenova/internal/core/services/invoiceshareservice"
-	"github.com/emoss08/trenova/internal/modules/places/app/locationservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
-	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
-	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
-	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/places/app/locationservice"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -239,7 +239,9 @@ func provideEvaluateServiceFailuresTool(
 	return newEvaluateServiceFailuresTool(failures)
 }
 
-func provideResolveServiceFailureTool(failures servicefailureports.ServiceFailureService) agentports.AgentTool {
+func provideResolveServiceFailureTool(
+	failures servicefailureports.ServiceFailureService,
+) agentports.AgentTool {
 	return newResolveServiceFailureTool(failures)
 }
 
@@ -373,15 +375,21 @@ func provideSendBackToOpsTool(billing billingqueueports.BillingQueueService) age
 	return newSendBackToOpsTool(billing)
 }
 
-func provideMoveToExceptionTool(billing billingqueueports.BillingQueueService) agentports.AgentTool {
+func provideMoveToExceptionTool(
+	billing billingqueueports.BillingQueueService,
+) agentports.AgentTool {
 	return newMoveToExceptionTool(billing)
 }
 
-func provideHoldBillingQueueItemTool(billing billingqueueports.BillingQueueService) agentports.AgentTool {
+func provideHoldBillingQueueItemTool(
+	billing billingqueueports.BillingQueueService,
+) agentports.AgentTool {
 	return newHoldBillingQueueItemTool(billing)
 }
 
-func provideCancelBillingQueueItemTool(billing billingqueueports.BillingQueueService) agentports.AgentTool {
+func provideCancelBillingQueueItemTool(
+	billing billingqueueports.BillingQueueService,
+) agentports.AgentTool {
 	return newCancelBillingQueueItemTool(billing)
 }
 
@@ -393,7 +401,9 @@ func provideAssignBillersTool(billing billingqueueports.BillingQueueService) age
 	return newAssignBillersTool(billing)
 }
 
-func provideTransitionToInReviewTool(billing billingqueueports.BillingQueueService) agentports.AgentTool {
+func provideTransitionToInReviewTool(
+	billing billingqueueports.BillingQueueService,
+) agentports.AgentTool {
 	return newTransitionToInReviewTool(billing)
 }
 
@@ -530,19 +540,27 @@ func provideSendEDIStatusUpdateTool(edi *ediservice.Service) agentports.AgentToo
 	return newSendEDIStatusUpdateTool(edi)
 }
 
-func provideOpenInvoiceDisputeTool(disputes invoiceports.InvoiceDisputeService) agentports.AgentTool {
+func provideOpenInvoiceDisputeTool(
+	disputes invoiceports.InvoiceDisputeService,
+) agentports.AgentTool {
 	return newOpenInvoiceDisputeTool(disputes)
 }
 
-func provideResolveInvoiceDisputeTool(disputes invoiceports.InvoiceDisputeService) agentports.AgentTool {
+func provideResolveInvoiceDisputeTool(
+	disputes invoiceports.InvoiceDisputeService,
+) agentports.AgentTool {
 	return newResolveInvoiceDisputeTool(disputes)
 }
 
-func provideWithdrawInvoiceDisputeTool(disputes invoiceports.InvoiceDisputeService) agentports.AgentTool {
+func provideWithdrawInvoiceDisputeTool(
+	disputes invoiceports.InvoiceDisputeService,
+) agentports.AgentTool {
 	return newWithdrawInvoiceDisputeTool(disputes)
 }
 
-func provideApplyCustomerPaymentTool(payments customerpaymentports.CustomerPaymentService) agentports.AgentTool {
+func provideApplyCustomerPaymentTool(
+	payments customerpaymentports.CustomerPaymentService,
+) agentports.AgentTool {
 	return newApplyCustomerPaymentTool(payments)
 }
 
@@ -552,11 +570,15 @@ func provideReverseCustomerPaymentTool(
 	return newReverseCustomerPaymentTool(payments)
 }
 
-func provideApplyCreditMemoTool(payments customerpaymentports.CustomerPaymentService) agentports.AgentTool {
+func provideApplyCreditMemoTool(
+	payments customerpaymentports.CustomerPaymentService,
+) agentports.AgentTool {
 	return newApplyCreditMemoTool(payments)
 }
 
-func provideUnapplyCreditMemoTool(payments customerpaymentports.CustomerPaymentService) agentports.AgentTool {
+func provideUnapplyCreditMemoTool(
+	payments customerpaymentports.CustomerPaymentService,
+) agentports.AgentTool {
 	return newUnapplyCreditMemoTool(payments)
 }
 

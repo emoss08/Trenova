@@ -8,4 +8,6 @@ import (
 
 const ()
 
-var _ conversationscheduleports.ConversationScheduleSyncer = (*conversationschedulecontract.Schedules)(nil)
+var _ conversationscheduleports.ConversationScheduleSyncer = (*conversationschedulecontract.Schedules)(
+	nil,
+)

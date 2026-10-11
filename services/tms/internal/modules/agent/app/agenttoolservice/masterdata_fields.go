@@ -1,8 +1,8 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
 

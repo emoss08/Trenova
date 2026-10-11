@@ -3,9 +3,9 @@ package fuelcardjobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.temporal.io/sdk/activity"

@@ -129,6 +129,11 @@ func coverageLine(crews []string, moves, open int) string {
 	case open == moves:
 		return coverageNone
 	default:
-		return fmt.Sprintf("%s; needs a driver on %d of %d moves", strings.Join(crews, "; "), open, moves)
+		return fmt.Sprintf(
+			"%s; needs a driver on %d of %d moves",
+			strings.Join(crews, "; "),
+			open,
+			moves,
+		)
 	}
 }

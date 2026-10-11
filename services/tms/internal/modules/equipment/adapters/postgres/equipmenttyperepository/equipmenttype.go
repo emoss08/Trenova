@@ -98,52 +98,59 @@ func (r *repository) List(
 	ctx context.Context,
 	req *equipmenttypeports.ListEquipmentTypesRequest,
 ) (*pagination.CursorListResult[*equipmenttype.EquipmentType], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*equipmenttype.EquipmentType], error) {
-		log := r.l.With(
-			zap.String("operation", "List"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*equipmenttype.EquipmentType], error) {
+			log := r.l.With(
+				zap.String("operation", "List"),
+				zap.Any("request", req),
+			)
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*equipmenttype.EquipmentType)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyTotalCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*equipmenttype.EquipmentType)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyTotalCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count equipment types", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*equipmenttype.EquipmentType]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*equipmenttype.EquipmentType) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return applyEquipmentTypeColumns(sq, req.EquipmentTypeColumns)
+							})
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return r.applyCursorPageFilters(sq, req)
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count equipment types", zap.Error(err))
+				log.Error("failed to scan equipment types", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*equipmenttype.EquipmentType]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*equipmenttype.EquipmentType) *bun.SelectQuery {
-				return dba.
-					NewSelect().
-					Model(entities).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyEquipmentTypeColumns(sq, req.EquipmentTypeColumns)
-					})
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.applyCursorPageFilters(sq, req)
-			},
-		})
-		if err != nil {
-			log.Error("failed to scan equipment types", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func applyEquipmentTypeColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
@@ -164,7 +171,11 @@ func (r *repository) Create(
 			zap.String("code", entity.Code),
 		)
 
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
 			log.Error("failed to create equipment type", zap.Error(err))
 			return nil, err
 		}
@@ -199,7 +210,11 @@ func (r *repository) Update(
 			return nil, err
 		}
 
-		if err = dberror.CheckRowsAffected(results, "EquipmentType", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"EquipmentType",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -240,35 +255,39 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *equipmenttypeports.EquipmentTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*equipmenttype.EquipmentType], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*equipmenttype.EquipmentType], error) {
-		return dbhelper.SelectOptions[*equipmenttype.EquipmentType](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				Columns: []string{
-					"id",
-					"created_at",
-					"code",
-					"description",
-					"class",
-					"color",
-					"status",
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*equipmenttype.EquipmentType], error) {
+			return dbhelper.SelectOptions[*equipmenttype.EquipmentType](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					Columns: []string{
+						"id",
+						"created_at",
+						"code",
+						"description",
+						"class",
+						"color",
+						"status",
+					},
+					OrgColumn: "et.organization_id",
+					BuColumn:  "et.business_unit_id",
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						return applyClassFilter(q, req.Classes).
+							Where("et.status = ?", domaintypes.StatusActive)
+					},
+					EntityName: "EquipmentType",
+					SearchColumns: []string{
+						"et.code",
+						"et.description",
+					},
 				},
-				OrgColumn: "et.organization_id",
-				BuColumn:  "et.business_unit_id",
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					return applyClassFilter(q, req.Classes).
-						Where("et.status = ?", domaintypes.StatusActive)
-				},
-				EntityName: "EquipmentType",
-				SearchColumns: []string{
-					"et.code",
-					"et.description",
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 func (r *repository) BulkUpdateStatus(

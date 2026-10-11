@@ -71,7 +71,9 @@ func aiProviderConnectionToModel(
 	}, nil
 }
 
-func endpointFromInput(input *gqlmodel.AIProviderEndpointInput) (agentports.AIProviderEndpoint, error) {
+func endpointFromInput(
+	input *gqlmodel.AIProviderEndpointInput,
+) (agentports.AIProviderEndpoint, error) {
 	if input == nil {
 		return agentports.AIProviderEndpoint{}, errortypes.NewValidationError(
 			"endpoint", errortypes.ErrRequired, "Endpoint is required",
@@ -92,7 +94,9 @@ func endpointFromInput(input *gqlmodel.AIProviderEndpointInput) (agentports.AIPr
 	}, nil
 }
 
-func patchFromInput(input *gqlmodel.AIProviderPatchInput) (*agentports.PatchAIProviderRequest, error) {
+func patchFromInput(
+	input *gqlmodel.AIProviderPatchInput,
+) (*agentports.PatchAIProviderRequest, error) {
 	inputCost, err := omittableDecimal("inputCostPerMillion", input.InputCostPerMillion)
 	if err != nil {
 		return nil, err
@@ -149,7 +153,9 @@ func omittableDecimal(
 	return optional.Some(&parsed.Decimal), nil
 }
 
-func modelOptionsToModel(models []agentports.AIProviderModelOption) []*gqlmodel.AIProviderModelOption {
+func modelOptionsToModel(
+	models []agentports.AIProviderModelOption,
+) []*gqlmodel.AIProviderModelOption {
 	out := make([]*gqlmodel.AIProviderModelOption, 0, len(models))
 	for idx := range models {
 		model := &models[idx]

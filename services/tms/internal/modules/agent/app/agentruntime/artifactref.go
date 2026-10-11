@@ -12,7 +12,9 @@ import (
 const ArtifactHrefScheme = "artifact:"
 
 // artifactLink matches a reply's link to an artifact: its words, and the id.
-var artifactLink = regexp.MustCompile(`\[([^\[\]\n]+)\]\(` + ArtifactHrefScheme + `([A-Za-z0-9_]+)\)`)
+var artifactLink = regexp.MustCompile(
+	`\[([^\[\]\n]+)\]\(` + ArtifactHrefScheme + `([A-Za-z0-9_]+)\)`,
+)
 
 // ArtifactRef is how the model names an artifact inside a sentence.
 func ArtifactRef(shown *agentports.ShownArtifact) string {

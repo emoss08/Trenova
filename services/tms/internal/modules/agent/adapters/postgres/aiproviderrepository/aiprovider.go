@@ -65,86 +65,94 @@ func (r *repository) List(
 	ctx context.Context,
 	req *agentports.ListAIProviderRequest,
 ) (*pagination.ListResult[*aiprovider.Provider], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*aiprovider.Provider], error) {
-		log := r.l.With(zap.String("operation", "List"))
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*aiprovider.Provider], error) {
+			log := r.l.With(zap.String("operation", "List"))
 
-		entities := make([]*aiprovider.Provider, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterQuery(sq, req)
-			}).ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count ai providers", zap.Error(err))
-			return nil, err
-		}
+			entities := make([]*aiprovider.Provider, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count ai providers", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*aiprovider.Provider]{Items: entities, Total: total}, nil
-	})
+			return &pagination.ListResult[*aiprovider.Provider]{Items: entities, Total: total}, nil
+		},
+	)
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *agentports.ListAIProviderConnectionRequest,
 ) (*pagination.CursorListResult[*aiprovider.Provider], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*aiprovider.Provider], error) {
-		dba := r.db.DBForContext(ctx)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*aiprovider.Provider], error) {
+			dba := r.db.DBForContext(ctx)
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*aiprovider.Provider)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						aiprovidercol.ProviderTable.Alias,
-						req.Filter,
-						(*aiprovider.Provider)(nil),
-					)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*aiprovider.Provider)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							aiprovidercol.ProviderTable.Alias,
+							req.Filter,
+							(*aiprovider.Provider)(nil),
+						)
 
-					return sq.Apply(aiprovidercol.ProviderApplyTenant(req.Filter.TenantInfo))
-				}).
-				Count(ctx)
+						return sq.Apply(aiprovidercol.ProviderApplyTenant(req.Filter.TenantInfo))
+					}).
+					Count(ctx)
+				if err != nil {
+					r.l.Error("failed to count ai providers", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*aiprovider.Provider]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*aiprovider.Provider) *bun.SelectQuery {
+						sq := dba.NewSelect().Model(entities)
+						if len(req.Columns) == 0 {
+							return sq.ColumnExpr(aiprovidercol.ProviderTable.All())
+						}
+
+						return sq.Column(req.Columns...)
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							aiprovidercol.ProviderTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*aiprovider.Provider)(nil),
+						)
+					},
+				})
 			if err != nil {
-				r.l.Error("failed to count ai providers", zap.Error(err))
+				r.l.Error("failed to scan ai providers", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*aiprovider.Provider]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*aiprovider.Provider) *bun.SelectQuery {
-					sq := dba.NewSelect().Model(entities)
-					if len(req.Columns) == 0 {
-						return sq.ColumnExpr(aiprovidercol.ProviderTable.All())
-					}
-
-					return sq.Column(req.Columns...)
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return querybuilder.ApplyCursorFilters(
-						sq,
-						aiprovidercol.ProviderTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*aiprovider.Provider)(nil),
-					)
-				},
-			})
-		if err != nil {
-			r.l.Error("failed to scan ai providers", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -203,7 +211,8 @@ func (r *repository) ListEnabled(
 			Model(&entities).
 			ExcludeColumn(cols.APIKey.Bare(), cols.PreviousAPIKey.Bare()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return aiprovidercol.ProviderScopeTenant(sq, tenantInfo).Where(cols.Enabled.IsTrue())
+				return aiprovidercol.ProviderScopeTenant(sq, tenantInfo).
+					Where(cols.Enabled.IsTrue())
 			}).
 			Order(cols.Priority.OrderAsc(), cols.CreatedAt.OrderAsc()).
 			Scan(ctx)
@@ -250,33 +259,37 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *agentports.AIProviderSelectOptionsRequest,
 ) (*pagination.ListResult[*aiprovider.Provider], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*aiprovider.Provider], error) {
-		cols := aiprovidercol.ProviderColumns
-		return dbhelper.SelectOptions[*aiprovider.Provider](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					cols.ID,
-					cols.Name,
-					cols.Model,
-					cols.Kind,
-					cols.Enabled,
-					cols.Tasks,
-					cols.Priority,
-					cols.CreatedAt,
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*aiprovider.Provider], error) {
+			cols := aiprovidercol.ProviderColumns
+			return dbhelper.SelectOptions[*aiprovider.Provider](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.Name,
+						cols.Model,
+						cols.Kind,
+						cols.Enabled,
+						cols.Tasks,
+						cols.Priority,
+						cols.CreatedAt,
+					},
+					OrgColumnRef: &cols.OrganizationID,
+					BuColumnRef:  &cols.BusinessUnitID,
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						return applySelectOptionsFilter(q, req.Task)
+					},
+					EntityName:       "AIProvider",
+					SearchColumnRefs: []buncolgen.Column{cols.Name, cols.Model},
 				},
-				OrgColumnRef: &cols.OrganizationID,
-				BuColumnRef:  &cols.BusinessUnitID,
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					return applySelectOptionsFilter(q, req.Task)
-				},
-				EntityName:       "AIProvider",
-				SearchColumnRefs: []buncolgen.Column{cols.Name, cols.Model},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 func applySelectOptionsFilter(q *bun.SelectQuery, task aiprovider.Task) *bun.SelectQuery {

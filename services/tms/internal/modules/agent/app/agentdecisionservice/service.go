@@ -4,19 +4,19 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -457,7 +457,12 @@ func (s *Service) settleModifications(
 	}
 
 	if s.executor != nil {
-		if _, err := s.executor.CheckModifications(ctx, proposal, settled.Modifications, actor); err != nil {
+		if _, err := s.executor.CheckModifications(
+			ctx,
+			proposal,
+			settled.Modifications,
+			actor,
+		); err != nil {
 			return nil, err
 		}
 	}
@@ -624,13 +629,18 @@ func (s *Service) signalWorkflow(
 		return nil
 	}
 
-	return s.workflows.SignalWorkflow(ctx, run.WorkflowID, "", agentcontract.AgentDecisionSignalName,
+	return s.workflows.SignalWorkflow(
+		ctx,
+		run.WorkflowID,
+		"",
+		agentcontract.AgentDecisionSignalName,
 		agentcontract.DecisionSignal{
 			ProposalID:      *decision.ProposalID,
 			Decision:        decision.Decision,
 			DecidedByUserID: decision.DecidedByUserID,
 			ReasonCode:      decision.ReasonCode,
-		})
+		},
+	)
 }
 
 // reasonCodeFor fills in a code when the decision came without one. The

@@ -46,31 +46,35 @@ func (r *repository) List(
 	ctx context.Context,
 	req *servicefailureports.ListServiceFailureReasonCodesRequest,
 ) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
-		if req.Filter.Pagination.Limit <= 0 {
-			req.Filter.Pagination.Limit = 50
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
+			if req.Filter.Pagination.Limit <= 0 {
+				req.Filter.Pagination.Limit = 50
+			}
 
-		entities := make([]*servicefailure.ReasonCode, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-				return querybuilder.ApplyFilters(q, "sfrc", req.Filter, (*servicefailure.ReasonCode)(nil)).
-					Limit(req.Filter.Pagination.SafeLimit()).
-					Offset(req.Filter.Pagination.SafeOffset())
-			}).
-			Order("sfrc.sort_order ASC", "sfrc.code ASC").
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("list service failure reason codes: %w", err)
-		}
+			entities := make([]*servicefailure.ReasonCode, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
+					return querybuilder.ApplyFilters(q, "sfrc", req.Filter, (*servicefailure.ReasonCode)(nil)).
+						Limit(req.Filter.Pagination.SafeLimit()).
+						Offset(req.Filter.Pagination.SafeOffset())
+				}).
+				Order("sfrc.sort_order ASC", "sfrc.code ASC").
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list service failure reason codes: %w", err)
+			}
 
-		return &pagination.ListResult[*servicefailure.ReasonCode]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*servicefailure.ReasonCode]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -110,57 +114,61 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *servicefailureports.ListServiceFailureReasonCodeConnectionRequest,
 ) (*pagination.CursorListResult[*servicefailure.ReasonCode], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*servicefailure.ReasonCode], error) {
-		log := r.l.With(
-			zap.String("operation", "ListConnection"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*servicefailure.ReasonCode], error) {
+			log := r.l.With(
+				zap.String("operation", "ListConnection"),
+				zap.Any("request", req),
+			)
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*servicefailure.ReasonCode)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyTotalCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*servicefailure.ReasonCode)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyTotalCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count service failure reason codes", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*servicefailure.ReasonCode]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*servicefailure.ReasonCode) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return applyServiceFailureReasonCodeColumns(
+									sq,
+									req.ServiceFailureReasonCodeColumns,
+								)
+							})
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return r.applyCursorPageFilters(sq, req)
+					},
+				})
 			if err != nil {
-				log.Error("failed to count service failure reason codes", zap.Error(err))
+				log.Error("failed to scan service failure reason codes", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*servicefailure.ReasonCode]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*servicefailure.ReasonCode) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return applyServiceFailureReasonCodeColumns(
-								sq,
-								req.ServiceFailureReasonCodeColumns,
-							)
-						})
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return r.applyCursorPageFilters(sq, req)
-				},
-			})
-		if err != nil {
-			log.Error("failed to scan service failure reason codes", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -361,24 +369,28 @@ func (r *repository) Reorder(
 	req *servicefailureports.ReorderServiceFailureReasonCodesRequest,
 ) ([]*servicefailure.ReasonCode, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*servicefailure.ReasonCode, error) {
-		if err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-			for idx, id := range req.ReasonIDs {
-				_, err := r.db.DBForContext(txCtx).
-					NewUpdate().
-					Model((*servicefailure.ReasonCode)(nil)).
-					Where("id = ?", id).
-					Where("organization_id = ?", req.TenantInfo.OrgID).
-					Where("business_unit_id = ?", req.TenantInfo.BuID).
-					Set("sort_order = ?", int32((idx+1)*10)).
-					Set("version = version + 1").
-					Set("updated_at = ?", timeutils.NowUnix()).
-					Exec(txCtx)
-				if err != nil {
-					return fmt.Errorf("reorder service failure reason code: %w", err)
+		if err := r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, _ bun.Tx) error {
+				for idx, id := range req.ReasonIDs {
+					_, err := r.db.DBForContext(txCtx).
+						NewUpdate().
+						Model((*servicefailure.ReasonCode)(nil)).
+						Where("id = ?", id).
+						Where("organization_id = ?", req.TenantInfo.OrgID).
+						Where("business_unit_id = ?", req.TenantInfo.BuID).
+						Set("sort_order = ?", int32((idx+1)*10)).
+						Set("version = version + 1").
+						Set("updated_at = ?", timeutils.NowUnix()).
+						Exec(txCtx)
+					if err != nil {
+						return fmt.Errorf("reorder service failure reason code: %w", err)
+					}
 				}
-			}
-			return nil
-		}); err != nil {
+				return nil
+			},
+		); err != nil {
 			return nil, err
 		}
 
@@ -403,46 +415,50 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *servicefailureports.ServiceFailureReasonCodeSelectOptionsRequest,
 ) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
-		return dbhelper.SelectOptions[*servicefailure.ReasonCode](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				Columns: []string{
-					"id",
-					"code",
-					"label",
-					"category",
-					"applies_to",
-					"default_status_code",
-					"default_reason_code",
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
+			return dbhelper.SelectOptions[*servicefailure.ReasonCode](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					Columns: []string{
+						"id",
+						"code",
+						"label",
+						"category",
+						"applies_to",
+						"default_status_code",
+						"default_reason_code",
+					},
+					OrgColumn: "sfrc.organization_id",
+					BuColumn:  "sfrc.business_unit_id",
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						q = q.Where("sfrc.active = TRUE")
+						if req.AppliesTo.IsValid() {
+							q = q.Where(
+								"sfrc.applies_to IN (?)",
+								bun.List([]servicefailure.ReasonCodeAppliesTo{
+									req.AppliesTo,
+									servicefailure.ReasonCodeAppliesToBoth,
+									servicefailure.ReasonCodeAppliesToAll,
+								}),
+							)
+						}
+						return q.Order("sfrc.sort_order ASC", "sfrc.code ASC")
+					},
+					EntityName: "ServiceFailureReasonCode",
+					SearchColumns: []string{
+						"sfrc.code",
+						"sfrc.label",
+						"sfrc.description",
+					},
 				},
-				OrgColumn: "sfrc.organization_id",
-				BuColumn:  "sfrc.business_unit_id",
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					q = q.Where("sfrc.active = TRUE")
-					if req.AppliesTo.IsValid() {
-						q = q.Where(
-							"sfrc.applies_to IN (?)",
-							bun.List([]servicefailure.ReasonCodeAppliesTo{
-								req.AppliesTo,
-								servicefailure.ReasonCodeAppliesToBoth,
-								servicefailure.ReasonCodeAppliesToAll,
-							}),
-						)
-					}
-					return q.Order("sfrc.sort_order ASC", "sfrc.code ASC")
-				},
-				EntityName: "ServiceFailureReasonCode",
-				SearchColumns: []string{
-					"sfrc.code",
-					"sfrc.label",
-					"sfrc.description",
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 func mapReasonCodeConstraint(err error) error {

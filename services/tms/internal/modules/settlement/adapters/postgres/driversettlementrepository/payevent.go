@@ -35,98 +35,112 @@ func (r *payEventRepository) List(
 	ctx context.Context,
 	req *driversettlementports.ListPayEventsRequest,
 ) (*pagination.ListResult[*driversettlement.PayEvent], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driversettlement.PayEvent], error) {
-		limit := req.Filter.Pagination.SafeLimit()
-		items := make([]*driversettlement.PayEvent, 0, limit)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*driversettlement.PayEvent], error) {
+			limit := req.Filter.Pagination.SafeLimit()
+			items := make([]*driversettlement.PayEvent, 0, limit)
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("dpe.organization_id = ?", req.Filter.TenantInfo.OrgID).
-			Where("dpe.business_unit_id = ?", req.Filter.TenantInfo.BuID).
-			Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
-			Order("dpe.event_date DESC").
-			Limit(limit).
-			Offset(req.Filter.Pagination.SafeOffset())
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&items).
+				Where("dpe.organization_id = ?", req.Filter.TenantInfo.OrgID).
+				Where("dpe.business_unit_id = ?", req.Filter.TenantInfo.BuID).
+				Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
+				Order("dpe.event_date DESC").
+				Limit(limit).
+				Offset(req.Filter.Pagination.SafeOffset())
 
-		if req.Filter.Query != "" {
-			query = query.Where("dpe.pro_number ILIKE ?", "%"+req.Filter.Query+"%")
-		}
-		if !req.WorkerID.IsNil() {
-			query = query.Where("dpe.worker_id = ?", req.WorkerID)
-		}
-		if !req.ShipmentID.IsNil() {
-			query = query.Where("dpe.shipment_id = ?", req.ShipmentID)
-		}
-		if req.Status != "" {
-			query = query.Where("dpe.status = ?", req.Status)
-		}
+			if req.Filter.Query != "" {
+				query = query.Where("dpe.pro_number ILIKE ?", "%"+req.Filter.Query+"%")
+			}
+			if !req.WorkerID.IsNil() {
+				query = query.Where("dpe.worker_id = ?", req.WorkerID)
+			}
+			if !req.ShipmentID.IsNil() {
+				query = query.Where("dpe.shipment_id = ?", req.ShipmentID)
+			}
+			if req.Status != "" {
+				query = query.Where("dpe.status = ?", req.Status)
+			}
 
-		total, err := query.ScanAndCount(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("list pay events: %w", err)
-		}
+			total, err := query.ScanAndCount(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list pay events: %w", err)
+			}
 
-		return &pagination.ListResult[*driversettlement.PayEvent]{Items: items, Total: total}, nil
-	})
+			return &pagination.ListResult[*driversettlement.PayEvent]{
+				Items: items,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *payEventRepository) ListConnection(
 	ctx context.Context,
 	req *driversettlementports.ListPayEventConnectionRequest,
 ) (*pagination.CursorListResult[*driversettlement.PayEvent], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driversettlement.PayEvent], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*driversettlement.PayEvent], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*driversettlement.PayEvent)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						"dpe",
-						req.Filter,
-						(*driversettlement.PayEvent)(nil),
-					)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*driversettlement.PayEvent)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							"dpe",
+							req.Filter,
+							(*driversettlement.PayEvent)(nil),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count pay events", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*driversettlement.PayEvent]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*driversettlement.PayEvent) *bun.SelectQuery {
+						return dba.NewSelect().
+							Model(entities).
+							ColumnExpr(driversettlementcol.PayEventTable.All()).
+							Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							"dpe",
+							req.Filter,
+							req.Cursor,
+							(*driversettlement.PayEvent)(nil),
+						)
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count pay events", zap.Error(err))
+				log.Error("failed to scan pay events", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*driversettlement.PayEvent]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*driversettlement.PayEvent) *bun.SelectQuery {
-				return dba.NewSelect().
-					Model(entities).
-					ColumnExpr(driversettlementcol.PayEventTable.All()).
-					Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return querybuilder.ApplyCursorFilters(
-					sq,
-					"dpe",
-					req.Filter,
-					req.Cursor,
-					(*driversettlement.PayEvent)(nil),
-				)
-			},
-		})
-		if err != nil {
-			log.Error("failed to scan pay events", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *payEventRepository) GetByID(
@@ -186,7 +200,10 @@ func (r *payEventRepository) ListAccruedForWorker(
 					Where(cols.WorkerID.Eq(), req.WorkerID).
 					Where(cols.OnHold.Eq(), false).
 					WhereGroup(" AND ", func(status *bun.SelectQuery) *bun.SelectQuery {
-						status = status.Where(cols.Status.Eq(), driversettlement.PayEventStatusAccrued)
+						status = status.Where(
+							cols.Status.Eq(),
+							driversettlement.PayEventStatusAccrued,
+						)
 						if req.ReleasedFrom.IsNil() {
 							return status
 						}
@@ -241,23 +258,27 @@ func (r *payEventRepository) GetAccruedTotalsForWorker(
 	ctx context.Context,
 	req driversettlementports.GetAccruedTotalsForWorkerRequest,
 ) (*driversettlementports.AccruedPayTotals, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driversettlementports.AccruedPayTotals, error) {
-		totals := new(driversettlementports.AccruedPayTotals)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*driversettlement.PayEvent)(nil)).
-			ColumnExpr("COUNT(*) AS event_count").
-			ColumnExpr("COALESCE(SUM(gross_amount_minor), 0) AS gross_amount_minor").
-			Where("organization_id = ?", req.TenantInfo.OrgID).
-			Where("business_unit_id = ?", req.TenantInfo.BuID).
-			Where("worker_id = ?", req.WorkerID).
-			Where("status = ?", driversettlement.PayEventStatusAccrued).
-			Scan(ctx, totals)
-		if err != nil {
-			return nil, fmt.Errorf("get accrued totals for worker: %w", err)
-		}
-		return totals, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*driversettlementports.AccruedPayTotals, error) {
+			totals := new(driversettlementports.AccruedPayTotals)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*driversettlement.PayEvent)(nil)).
+				ColumnExpr("COUNT(*) AS event_count").
+				ColumnExpr("COALESCE(SUM(gross_amount_minor), 0) AS gross_amount_minor").
+				Where("organization_id = ?", req.TenantInfo.OrgID).
+				Where("business_unit_id = ?", req.TenantInfo.BuID).
+				Where("worker_id = ?", req.WorkerID).
+				Where("status = ?", driversettlement.PayEventStatusAccrued).
+				Scan(ctx, totals)
+			if err != nil {
+				return nil, fmt.Errorf("get accrued totals for worker: %w", err)
+			}
+			return totals, nil
+		},
+	)
 }
 
 func (r *payEventRepository) ListByShipment(
@@ -338,9 +359,12 @@ func (r *payEventRepository) ListUnsettledWorkerSummaries(
 	ctx context.Context,
 	req *driversettlementports.ListUnsettledWorkerSummariesRequest,
 ) ([]*driversettlementports.UnsettledWorkerSummary, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*driversettlementports.UnsettledWorkerSummary, error) {
-		summaries := make([]*driversettlementports.UnsettledWorkerSummary, 0)
-		err := r.db.DBForContext(ctx).NewRaw(`
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*driversettlementports.UnsettledWorkerSummary, error) {
+			summaries := make([]*driversettlementports.UnsettledWorkerSummary, 0)
+			err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT
 			dpe.worker_id,
 			TRIM(w.first_name || ' ' || w.last_name) AS worker_name,
@@ -369,43 +393,48 @@ func (r *payEventRepository) ListUnsettledWorkerSummaries(
 		GROUP BY dpe.worker_id, dpe.organization_id, dpe.business_unit_id, w.first_name, w.last_name
 		ORDER BY gross_amount_minor DESC
 	`,
-			req.PeriodStart, req.PeriodEnd,
-			req.TenantInfo.OrgID, req.TenantInfo.BuID, req.PeriodEnd,
-		).Scan(ctx, &summaries)
-		if err != nil {
-			return nil, fmt.Errorf("list unsettled worker summaries: %w", err)
-		}
-		return summaries, nil
-	})
+				req.PeriodStart, req.PeriodEnd,
+				req.TenantInfo.OrgID, req.TenantInfo.BuID, req.PeriodEnd,
+			).Scan(ctx, &summaries)
+			if err != nil {
+				return nil, fmt.Errorf("list unsettled worker summaries: %w", err)
+			}
+			return summaries, nil
+		},
+	)
 }
 
 func (r *payEventRepository) GetUnsettledSummary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*driversettlementports.UnsettledPayEventSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driversettlementports.UnsettledPayEventSummary, error) {
-		summary := new(driversettlementports.UnsettledPayEventSummary)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*driversettlement.PayEvent)(nil)).
-			ColumnExpr("COUNT(*) FILTER (WHERE on_hold = false) AS accrued_count").
-			ColumnExpr(
-				"COALESCE(SUM(gross_amount_minor) FILTER (WHERE on_hold = false), 0) AS accrued_gross_minor",
-			).
-			ColumnExpr("COUNT(*) FILTER (WHERE on_hold = true) AS held_count").
-			ColumnExpr(
-				"COALESCE(SUM(gross_amount_minor) FILTER (WHERE on_hold = true), 0) AS held_gross_minor",
-			).
-			ColumnExpr("COUNT(DISTINCT worker_id) AS worker_count").
-			Where("organization_id = ?", tenantInfo.OrgID).
-			Where("business_unit_id = ?", tenantInfo.BuID).
-			Where("status = ?", driversettlement.PayEventStatusAccrued).
-			Scan(ctx, summary)
-		if err != nil {
-			return nil, fmt.Errorf("get unsettled pay event summary: %w", err)
-		}
-		return summary, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*driversettlementports.UnsettledPayEventSummary, error) {
+			summary := new(driversettlementports.UnsettledPayEventSummary)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*driversettlement.PayEvent)(nil)).
+				ColumnExpr("COUNT(*) FILTER (WHERE on_hold = false) AS accrued_count").
+				ColumnExpr(
+					"COALESCE(SUM(gross_amount_minor) FILTER (WHERE on_hold = false), 0) AS accrued_gross_minor",
+				).
+				ColumnExpr("COUNT(*) FILTER (WHERE on_hold = true) AS held_count").
+				ColumnExpr(
+					"COALESCE(SUM(gross_amount_minor) FILTER (WHERE on_hold = true), 0) AS held_gross_minor",
+				).
+				ColumnExpr("COUNT(DISTINCT worker_id) AS worker_count").
+				Where("organization_id = ?", tenantInfo.OrgID).
+				Where("business_unit_id = ?", tenantInfo.BuID).
+				Where("status = ?", driversettlement.PayEventStatusAccrued).
+				Scan(ctx, summary)
+			if err != nil {
+				return nil, fmt.Errorf("get unsettled pay event summary: %w", err)
+			}
+			return summary, nil
+		},
+	)
 }
 
 func (r *payEventRepository) Create(

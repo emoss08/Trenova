@@ -12,16 +12,16 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/app/toolsimulation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/toolsimulation"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -151,10 +151,13 @@ func (r runDefinitions) ForRun(
 		return nil, nil
 	}
 
-	definition, err := r.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         run.AgentDefinitionID,
-		TenantInfo: tenant,
-	})
+	definition, err := r.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         run.AgentDefinitionID,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil
@@ -808,7 +811,8 @@ func refuseRetarget(tool agentports.AgentTool, proposed, merged map[string]any) 
 // the tool's declared parameters, so it is set aside for the check and the
 // schema judges only what the model and the approver supplied.
 func (s *Service) validateParams(tool agentports.AgentTool, params map[string]any) error {
-	if _, owned := params[agentports.SelfScopeOwnerParam]; !owned || !agentports.IsSelfScoped(tool) {
+	if _, owned := params[agentports.SelfScopeOwnerParam]; !owned ||
+		!agentports.IsSelfScoped(tool) {
 		return s.schemas.ValidateFor(tool.Name(), tool.ParamSchema(), params)
 	}
 

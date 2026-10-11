@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -65,10 +65,13 @@ func (h *Handler) list(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.List(c.Request.Context(), &deskcaseports.ListCaseChecklistTemplatesRequest{
-		TenantInfo: pagination.FromAuthAsUser(authctx.GetAuthContext(c)),
-		Kind:       query.Kind,
-	})
+	result, err := h.service.List(
+		c.Request.Context(),
+		&deskcaseports.ListCaseChecklistTemplatesRequest{
+			TenantInfo: pagination.FromAuthAsUser(authctx.GetAuthContext(c)),
+			Kind:       query.Kind,
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -85,15 +88,18 @@ func (h *Handler) save(c *gin.Context) {
 	}
 	authCtx := authctx.GetAuthContext(c)
 
-	saved, err := h.service.Save(c.Request.Context(), &deskcaseports.SaveCaseChecklistTemplateRequest{
-		TenantInfo: pagination.FromAuthAsUser(authCtx),
-		UserID:     authCtx.UserID,
-		ID:         body.ID,
-		Version:    body.Version,
-		Kind:       body.Kind,
-		CustomerID: body.CustomerID,
-		Items:      body.Items,
-	})
+	saved, err := h.service.Save(
+		c.Request.Context(),
+		&deskcaseports.SaveCaseChecklistTemplateRequest{
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+			UserID:     authCtx.UserID,
+			ID:         body.ID,
+			Version:    body.Version,
+			Kind:       body.Kind,
+			CustomerID: body.CustomerID,
+			Items:      body.Items,
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -110,11 +116,14 @@ func (h *Handler) delete(c *gin.Context) {
 	}
 	authCtx := authctx.GetAuthContext(c)
 
-	if err = h.service.Delete(c.Request.Context(), &deskcaseports.DeleteCaseChecklistTemplateRequest{
-		TenantInfo: pagination.FromAuthAsUser(authCtx),
-		UserID:     authCtx.UserID,
-		ID:         templateID,
-	}); err != nil {
+	if err = h.service.Delete(
+		c.Request.Context(),
+		&deskcaseports.DeleteCaseChecklistTemplateRequest{
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+			UserID:     authCtx.UserID,
+			ID:         templateID,
+		},
+	); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

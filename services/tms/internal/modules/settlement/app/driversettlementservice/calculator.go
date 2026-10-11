@@ -3,9 +3,9 @@ package driversettlementservice
 import (
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/shopspring/decimal"
 )
 

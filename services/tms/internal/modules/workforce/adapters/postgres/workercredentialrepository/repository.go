@@ -74,65 +74,69 @@ func (r *repository) ListTypes(
 	ctx context.Context,
 	req *workerports.ListCredentialTypesRequest,
 ) (*pagination.CursorListResult[*worker.WorkerCredentialType], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*worker.WorkerCredentialType], error) {
-		log := r.l.With(zap.String("operation", "ListTypes"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*worker.WorkerCredentialType], error) {
+			log := r.l.With(zap.String("operation", "ListTypes"))
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*worker.WorkerCredentialType)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						workercol.WorkerCredentialTypeTable.Alias,
-						req.Filter,
-						(*worker.WorkerCredentialType)(nil),
-					)
-					return r.applyTypeFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*worker.WorkerCredentialType)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							workercol.WorkerCredentialTypeTable.Alias,
+							req.Filter,
+							(*worker.WorkerCredentialType)(nil),
+						)
+						return r.applyTypeFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count credential types", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*worker.WorkerCredentialType]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(items *[]*worker.WorkerCredentialType) *bun.SelectQuery {
+						return dba.NewSelect().
+							Model(items).
+							ColumnExpr(workercol.WorkerCredentialTypeTable.All())
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						sq, applyErr := querybuilder.ApplyCursorFilters(
+							sq,
+							workercol.WorkerCredentialTypeTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*worker.WorkerCredentialType)(nil),
+						)
+						if applyErr != nil {
+							return sq, applyErr
+						}
+						return r.applyTypeFilters(sq, req), nil
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count credential types", zap.Error(err))
+				log.Error("failed to list credential types", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*worker.WorkerCredentialType]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(items *[]*worker.WorkerCredentialType) *bun.SelectQuery {
-					return dba.NewSelect().
-						Model(items).
-						ColumnExpr(workercol.WorkerCredentialTypeTable.All())
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					sq, applyErr := querybuilder.ApplyCursorFilters(
-						sq,
-						workercol.WorkerCredentialTypeTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*worker.WorkerCredentialType)(nil),
-					)
-					if applyErr != nil {
-						return sq, applyErr
-					}
-					return r.applyTypeFilters(sq, req), nil
-				},
-			},
-		)
-		if err != nil {
-			log.Error("failed to list credential types", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) ListActiveTypes(
@@ -164,41 +168,45 @@ func (r *repository) TypeSelectOptions(
 	ctx context.Context,
 	req *workerports.WorkerCredentialTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*worker.WorkerCredentialType], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*worker.WorkerCredentialType], error) {
-		cols := workercol.WorkerCredentialTypeColumns
-		return dbhelper.SelectOptions[*worker.WorkerCredentialType](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					cols.ID,
-					cols.Code,
-					cols.Name,
-					cols.Description,
-					cols.Category,
-					cols.IsRequired,
-					cols.ValidityMonths,
-					cols.RequiresNumber,
-					cols.RequiresDocument,
-					cols.ProfileField,
-					cols.SortOrder,
-					cols.CreatedAt,
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*worker.WorkerCredentialType], error) {
+			cols := workercol.WorkerCredentialTypeColumns
+			return dbhelper.SelectOptions[*worker.WorkerCredentialType](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.Code,
+						cols.Name,
+						cols.Description,
+						cols.Category,
+						cols.IsRequired,
+						cols.ValidityMonths,
+						cols.RequiresNumber,
+						cols.RequiresDocument,
+						cols.ProfileField,
+						cols.SortOrder,
+						cols.CreatedAt,
+					},
+					OrgColumnRef: &cols.OrganizationID,
+					BuColumnRef:  &cols.BusinessUnitID,
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						return orderTypes(q.Where(cols.Status.Eq(), domaintypes.StatusActive))
+					},
+					EntityName: "WorkerCredentialType",
+					SearchColumnRefs: []buncolgen.Column{
+						cols.Code,
+						cols.Name,
+						cols.Description,
+					},
 				},
-				OrgColumnRef: &cols.OrganizationID,
-				BuColumnRef:  &cols.BusinessUnitID,
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					return orderTypes(q.Where(cols.Status.Eq(), domaintypes.StatusActive))
-				},
-				EntityName: "WorkerCredentialType",
-				SearchColumnRefs: []buncolgen.Column{
-					cols.Code,
-					cols.Name,
-					cols.Description,
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 func (r *repository) GetTypeByID(
@@ -301,7 +309,11 @@ func (r *repository) UpdateType(
 			r.l.Error("failed to update credential type", zap.Error(err))
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, "WorkerCredentialType", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"WorkerCredentialType",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -564,7 +576,11 @@ func (r *repository) Update(
 			r.l.Error("failed to update worker credential", zap.Error(err))
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, "WorkerCredential", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"WorkerCredential",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -577,7 +593,10 @@ func (r *repository) ListExpiring(
 	req *workerports.ListExpiringWorkerCredentialsRequest,
 ) ([]*worker.WorkerCredential, error) {
 	if req.TenantInfo.OrgID.IsNil() {
-		ctx = dbscope.WithSystem(ctx, "list expiring credentials across every organization for the expiry sweep")
+		ctx = dbscope.WithSystem(
+			ctx,
+			"list expiring credentials across every organization for the expiry sweep",
+		)
 	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerCredential, error) {
 		now := timeutils.NowUnix()

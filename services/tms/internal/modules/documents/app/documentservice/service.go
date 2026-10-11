@@ -12,30 +12,30 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
-	"github.com/emoss08/trenova/internal/modules/kernel/app/usageservice"
 	workflowstarterservice "github.com/emoss08/trenova/internal/core/services/workflowstarter"
-	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs/documentuploadcontract"
-	"github.com/emoss08/trenova/internal/modules/documents/jobs/thumbnailjobs/thumbnailcontract"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs/documentuploadcontract"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/thumbnailjobs/thumbnailcontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/usageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/documentshipmentdraftports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -807,18 +807,22 @@ func (s *Service) Delete(
 	}
 
 	if doc.LineageID.IsNil() {
-		if err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-			if txErr := s.detachUploadSessionsForDocuments(
-				txCtx,
-				[]pulid.ID{doc.ID},
-				req.TenantInfo,
-			); txErr != nil {
-				log.Error("failed to clear upload session document reference", zap.Error(txErr))
-				return errortypes.NewDatabaseError("Failed to detach upload sessions from document").
-					WithInternal(txErr)
-			}
-			return s.repo.Delete(txCtx, req)
-		}); err != nil {
+		if err = s.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, _ bun.Tx) error {
+				if txErr := s.detachUploadSessionsForDocuments(
+					txCtx,
+					[]pulid.ID{doc.ID},
+					req.TenantInfo,
+				); txErr != nil {
+					log.Error("failed to clear upload session document reference", zap.Error(txErr))
+					return errortypes.NewDatabaseError("Failed to detach upload sessions from document").
+						WithInternal(txErr)
+				}
+				return s.repo.Delete(txCtx, req)
+			},
+		); err != nil {
 			return err
 		}
 
@@ -924,24 +928,28 @@ func (s *Service) BulkDelete( //nolint:gocognit // legacy workflow
 		docs,
 		func(doc *document.Document) bool { return doc.LineageID.IsNil() },
 	) {
-		if err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-			if txErr := s.detachUploadSessionsForDocuments(
-				txCtx,
-				documentIDs(docs),
-				req.TenantInfo,
-			); txErr != nil {
-				log.Error(
-					"failed to clear upload session document references during bulk delete",
-					zap.Error(txErr),
-				)
-				return errortypes.NewDatabaseError("Failed to detach upload sessions from documents").
-					WithInternal(txErr)
-			}
-			return s.repo.BulkDelete(txCtx, documentports.BulkDeleteDocumentRequest{
-				IDs:        req.IDs,
-				TenantInfo: req.TenantInfo,
-			})
-		}); err != nil {
+		if err = s.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, _ bun.Tx) error {
+				if txErr := s.detachUploadSessionsForDocuments(
+					txCtx,
+					documentIDs(docs),
+					req.TenantInfo,
+				); txErr != nil {
+					log.Error(
+						"failed to clear upload session document references during bulk delete",
+						zap.Error(txErr),
+					)
+					return errortypes.NewDatabaseError("Failed to detach upload sessions from documents").
+						WithInternal(txErr)
+				}
+				return s.repo.BulkDelete(txCtx, documentports.BulkDeleteDocumentRequest{
+					IDs:        req.IDs,
+					TenantInfo: req.TenantInfo,
+				})
+			},
+		); err != nil {
 			log.Error("failed to bulk delete documents from database", zap.Error(err))
 			return nil, err
 		}
@@ -1155,10 +1163,13 @@ func (s *Service) PresignDocumentURLs(
 
 		set := DocumentURLSet{DownloadURL: downloadURL}
 		if doc.PreviewStatus == document.PreviewStatusReady && doc.PreviewStoragePath != "" {
-			previewURL, previewErr := s.storage.GetPresignedURL(ctx, &kernelports.PresignedURLParams{
-				Key:    doc.PreviewStoragePath,
-				Expiry: expiry,
-			})
+			previewURL, previewErr := s.storage.GetPresignedURL(
+				ctx,
+				&kernelports.PresignedURLParams{
+					Key:    doc.PreviewStoragePath,
+					Expiry: expiry,
+				},
+			)
 			if previewErr != nil {
 				s.l.Warn("failed to presign document preview URL",
 					zap.String("documentId", doc.ID.String()),

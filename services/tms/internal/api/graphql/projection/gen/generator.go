@@ -355,7 +355,12 @@ func generate(data discovery) ([]byte, error) {
 		return nil, fmt.Errorf("executing template: %w", err)
 	}
 
-	source := bytes.Replace(buf.Bytes(), []byte(specsImportPlaceholder), []byte(columnImports(specs)), 1)
+	source := bytes.Replace(
+		buf.Bytes(),
+		[]byte(specsImportPlaceholder),
+		[]byte(columnImports(specs)),
+		1,
+	)
 	formatted, err := format.Source(source)
 	if err != nil {
 		return nil, fmt.Errorf("formatting generated specs: %w\n%s", err, string(source))

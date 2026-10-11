@@ -239,67 +239,75 @@ func (r *repository) ListWorkerHOSViolations(
 	ctx context.Context,
 	req *telematicsports.ListWorkerHOSViolationsRequest,
 ) ([]*telematics.WorkerHOSViolation, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematics.WorkerHOSViolation, error) {
-		cols := telematicscol.WorkerHOSViolationColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*telematics.WorkerHOSViolation, error) {
+			cols := telematicscol.WorkerHOSViolationColumns
 
-		entities := make([]*telematics.WorkerHOSViolation, 0)
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = telematicscol.WorkerHOSViolationScopeTenant(sq, req.TenantInfo)
-				if !req.WorkerID.IsNil() {
-					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
-				}
-				if req.Since > 0 {
-					sq = sq.Where(cols.ViolationStartAt.Gte(), req.Since)
-				}
-				return sq
-			}).
-			Order(cols.ViolationStartAt.OrderDesc())
+			entities := make([]*telematics.WorkerHOSViolation, 0)
+			q := r.db.DBForContext(ctx).NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = telematicscol.WorkerHOSViolationScopeTenant(sq, req.TenantInfo)
+					if !req.WorkerID.IsNil() {
+						sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
+					}
+					if req.Since > 0 {
+						sq = sq.Where(cols.ViolationStartAt.Gte(), req.Since)
+					}
+					return sq
+				}).
+				Order(cols.ViolationStartAt.OrderDesc())
 
-		if req.Limit > 0 {
-			q = q.Limit(req.Limit)
-		}
+			if req.Limit > 0 {
+				q = q.Limit(req.Limit)
+			}
 
-		if err := q.Scan(ctx); err != nil {
-			return nil, fmt.Errorf("list worker hos violations: %w", err)
-		}
-		return entities, nil
-	})
+			if err := q.Scan(ctx); err != nil {
+				return nil, fmt.Errorf("list worker hos violations: %w", err)
+			}
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) ListWorkerHOSViolationStats(
 	ctx context.Context,
 	req *telematicsports.ListWorkerHOSViolationStatsRequest,
 ) ([]*telematicsports.WorkerHOSViolationStats, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematicsports.WorkerHOSViolationStats, error) {
-		cols := telematicscol.WorkerHOSViolationColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*telematicsports.WorkerHOSViolationStats, error) {
+			cols := telematicscol.WorkerHOSViolationColumns
 
-		rows := make([]*telematicsports.WorkerHOSViolationStats, 0, len(req.WorkerIDs))
-		err := r.db.DBForContext(ctx).NewSelect().
-			TableExpr(telematicscol.WorkerHOSViolationTable.Name+" AS "+telematicscol.WorkerHOSViolationTable.Alias).
-			ColumnExpr(cols.WorkerID.As("worker_id")).
-			ColumnExpr(buncolgen.Count("violation_count")).
-			ColumnExpr(buncolgen.Max(cols.ViolationStartAt, "last_violation_at")).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = sq.
-					Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-					Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID)
-				if len(req.WorkerIDs) > 0 {
-					sq = sq.Where(cols.WorkerID.In(), bun.List(req.WorkerIDs))
-				}
-				if req.Since > 0 {
-					sq = sq.Where(cols.ViolationStartAt.Gte(), req.Since)
-				}
-				return sq
-			}).
-			GroupExpr(cols.WorkerID.Qualified()).
-			Scan(ctx, &rows)
-		if err != nil {
-			return nil, fmt.Errorf("list worker hos violation stats: %w", err)
-		}
-		return rows, nil
-	})
+			rows := make([]*telematicsports.WorkerHOSViolationStats, 0, len(req.WorkerIDs))
+			err := r.db.DBForContext(ctx).NewSelect().
+				TableExpr(telematicscol.WorkerHOSViolationTable.Name+" AS "+telematicscol.WorkerHOSViolationTable.Alias).
+				ColumnExpr(cols.WorkerID.As("worker_id")).
+				ColumnExpr(buncolgen.Count("violation_count")).
+				ColumnExpr(buncolgen.Max(cols.ViolationStartAt, "last_violation_at")).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = sq.
+						Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+						Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID)
+					if len(req.WorkerIDs) > 0 {
+						sq = sq.Where(cols.WorkerID.In(), bun.List(req.WorkerIDs))
+					}
+					if req.Since > 0 {
+						sq = sq.Where(cols.ViolationStartAt.Gte(), req.Since)
+					}
+					return sq
+				}).
+				GroupExpr(cols.WorkerID.Qualified()).
+				Scan(ctx, &rows)
+			if err != nil {
+				return nil, fmt.Errorf("list worker hos violation stats: %w", err)
+			}
+			return rows, nil
+		},
+	)
 }
 
 func (r *repository) SyncWorkerHOSLogs(
@@ -516,9 +524,12 @@ func (r *repository) ListOpenStopReviews(
 			ColumnExpr(telematicscol.TelematicsEventTable.All()).
 			ColumnExpr(moveCols.ShipmentID.As("move_shipment_id")).
 			Join(
-				"JOIN "+shipmentcol.ShipmentMoveTable.As(shipmentcol.ShipmentMoveTable.Alias)+" ON "+
-					moveCols.ID.EqColumn(cols.ShipmentMoveID)+" AND "+
-					moveCols.OrganizationID.EqColumn(cols.OrganizationID)+" AND "+
+				"JOIN "+shipmentcol.ShipmentMoveTable.As(shipmentcol.ShipmentMoveTable.Alias)+
+					" ON "+
+					moveCols.ID.EqColumn(cols.ShipmentMoveID)+
+					" AND "+
+					moveCols.OrganizationID.EqColumn(cols.OrganizationID)+
+					" AND "+
 					moveCols.BusinessUnitID.EqColumn(cols.BusinessUnitID),
 			).
 			Join(
@@ -631,55 +642,63 @@ func (r *repository) ListWorkerMappings(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]telematicsports.WorkerTelematicsMapping, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]telematicsports.WorkerTelematicsMapping, error) {
-		cols := workercol.WorkerColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]telematicsports.WorkerTelematicsMapping, error) {
+			cols := workercol.WorkerColumns
 
-		rows := make([]telematicsports.WorkerTelematicsMapping, 0)
-		err := r.db.DBForContext(ctx).NewSelect().
-			TableExpr(workercol.WorkerTable.Name+" AS "+workercol.WorkerTable.Alias).
-			ColumnExpr(cols.ID.As("worker_id")).
-			ColumnExpr(cols.ExternalID.As("external_id")).
-			ColumnExpr(cols.FirstName.As("first_name")).
-			ColumnExpr(cols.LastName.As("last_name")).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
-					Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
-					Where(cols.ExternalID.Expr("NULLIF(BTRIM({}), '') IS NOT NULL"))
-			}).
-			Scan(ctx, &rows)
-		if err != nil {
-			return nil, fmt.Errorf("list worker telematics mappings: %w", err)
-		}
-		return rows, nil
-	})
+			rows := make([]telematicsports.WorkerTelematicsMapping, 0)
+			err := r.db.DBForContext(ctx).NewSelect().
+				TableExpr(workercol.WorkerTable.Name+" AS "+workercol.WorkerTable.Alias).
+				ColumnExpr(cols.ID.As("worker_id")).
+				ColumnExpr(cols.ExternalID.As("external_id")).
+				ColumnExpr(cols.FirstName.As("first_name")).
+				ColumnExpr(cols.LastName.As("last_name")).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.
+						Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
+						Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
+						Where(cols.ExternalID.Expr("NULLIF(BTRIM({}), '') IS NOT NULL"))
+				}).
+				Scan(ctx, &rows)
+			if err != nil {
+				return nil, fmt.Errorf("list worker telematics mappings: %w", err)
+			}
+			return rows, nil
+		},
+	)
 }
 
 func (r *repository) ListTractorMappings(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]telematicsports.TractorTelematicsMapping, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]telematicsports.TractorTelematicsMapping, error) {
-		cols := tractorcol.TractorColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]telematicsports.TractorTelematicsMapping, error) {
+			cols := tractorcol.TractorColumns
 
-		rows := make([]telematicsports.TractorTelematicsMapping, 0)
-		err := r.db.DBForContext(ctx).NewSelect().
-			TableExpr(tractorcol.TractorTable.Name+" AS "+tractorcol.TractorTable.Alias).
-			ColumnExpr(cols.ID.As("tractor_id")).
-			ColumnExpr(buncolgen.Coalesce(cols.ExternalID, "''", "external_id")).
-			ColumnExpr(buncolgen.Coalesce(cols.Vin, "''", "vin")).
-			ColumnExpr(cols.Code.As("code")).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
-					Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID)
-			}).
-			Scan(ctx, &rows)
-		if err != nil {
-			return nil, fmt.Errorf("list tractor telematics mappings: %w", err)
-		}
-		return rows, nil
-	})
+			rows := make([]telematicsports.TractorTelematicsMapping, 0)
+			err := r.db.DBForContext(ctx).NewSelect().
+				TableExpr(tractorcol.TractorTable.Name+" AS "+tractorcol.TractorTable.Alias).
+				ColumnExpr(cols.ID.As("tractor_id")).
+				ColumnExpr(buncolgen.Coalesce(cols.ExternalID, "''", "external_id")).
+				ColumnExpr(buncolgen.Coalesce(cols.Vin, "''", "vin")).
+				ColumnExpr(cols.Code.As("code")).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.
+						Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
+						Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID)
+				}).
+				Scan(ctx, &rows)
+			if err != nil {
+				return nil, fmt.Errorf("list tractor telematics mappings: %w", err)
+			}
+			return rows, nil
+		},
+	)
 }
 
 func (r *repository) AssignTractorExternalIDs(
@@ -727,27 +746,31 @@ func (r *repository) ListTrailerMappings(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]telematicsports.TrailerTelematicsMapping, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]telematicsports.TrailerTelematicsMapping, error) {
-		cols := trailercol.TrailerColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]telematicsports.TrailerTelematicsMapping, error) {
+			cols := trailercol.TrailerColumns
 
-		rows := make([]telematicsports.TrailerTelematicsMapping, 0)
-		err := r.db.DBForContext(ctx).NewSelect().
-			TableExpr(trailercol.TrailerTable.Name+" AS "+trailercol.TrailerTable.Alias).
-			ColumnExpr(cols.ID.As("trailer_id")).
-			ColumnExpr(buncolgen.Coalesce(cols.ExternalID, "''", "external_id")).
-			ColumnExpr(buncolgen.Coalesce(cols.Vin, "''", "vin")).
-			ColumnExpr(cols.Code.As("code")).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
-					Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID)
-			}).
-			Scan(ctx, &rows)
-		if err != nil {
-			return nil, fmt.Errorf("list trailer telematics mappings: %w", err)
-		}
-		return rows, nil
-	})
+			rows := make([]telematicsports.TrailerTelematicsMapping, 0)
+			err := r.db.DBForContext(ctx).NewSelect().
+				TableExpr(trailercol.TrailerTable.Name+" AS "+trailercol.TrailerTable.Alias).
+				ColumnExpr(cols.ID.As("trailer_id")).
+				ColumnExpr(buncolgen.Coalesce(cols.ExternalID, "''", "external_id")).
+				ColumnExpr(buncolgen.Coalesce(cols.Vin, "''", "vin")).
+				ColumnExpr(cols.Code.As("code")).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.
+						Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
+						Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID)
+				}).
+				Scan(ctx, &rows)
+			if err != nil {
+				return nil, fmt.Errorf("list trailer telematics mappings: %w", err)
+			}
+			return rows, nil
+		},
+	)
 }
 
 func (r *repository) AssignTrailerExternalIDs(
@@ -839,48 +862,55 @@ func (r *repository) GetWebhookConfigByToken(
 	typ integration.Type,
 	token string,
 ) (*telematicsports.TelematicsWebhookConfig, error) {
-	ctx = dbscope.WithSystem(ctx, "resolve the telematics webhook a provider called before its tenant is known")
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*telematicsports.TelematicsWebhookConfig, error) {
-		var row struct {
-			OrganizationID string `bun:"organization_id"`
-			BusinessUnitID string `bun:"business_unit_id"`
-			WebhookSecret  string `bun:"webhook_secret"`
-		}
+	ctx = dbscope.WithSystem(
+		ctx,
+		"resolve the telematics webhook a provider called before its tenant is known",
+	)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*telematicsports.TelematicsWebhookConfig, error) {
+			var row struct {
+				OrganizationID string `bun:"organization_id"`
+				BusinessUnitID string `bun:"business_unit_id"`
+				WebhookSecret  string `bun:"webhook_secret"`
+			}
 
-		cols := integrationcol.IntegrationColumns
-		err := r.db.DBForContext(ctx).NewSelect().
-			TableExpr(integrationcol.IntegrationTable.Name+" AS "+integrationcol.IntegrationTable.Alias).
-			ColumnExpr(cols.OrganizationID.String()).
-			ColumnExpr(cols.BusinessUnitID.String()).
-			ColumnExpr(cols.Configuration.Expr("{} ->> 'webhookSecret'")+" AS webhook_secret").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where(cols.Type.Eq(), typ).
-					Where(cols.Configuration.Expr("{} ->> 'webhookToken'")+" = ?", token).
-					Where(cols.Enabled.IsTrue())
-			}).
-			Scan(ctx, &row)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "TelematicsWebhook")
-		}
+			cols := integrationcol.IntegrationColumns
+			err := r.db.DBForContext(ctx).NewSelect().
+				TableExpr(integrationcol.IntegrationTable.Name+" AS "+integrationcol.IntegrationTable.Alias).
+				ColumnExpr(cols.OrganizationID.String()).
+				ColumnExpr(cols.BusinessUnitID.String()).
+				ColumnExpr(cols.Configuration.Expr("{} ->> 'webhookSecret'")+" AS webhook_secret").
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.
+						Where(cols.Type.Eq(), typ).
+						Where(cols.Configuration.Expr("{} ->> 'webhookToken'")+" = ?", token).
+						Where(cols.Enabled.IsTrue())
+				}).
+				Scan(ctx, &row)
+			if err != nil {
+				return nil, dberror.HandleNotFoundError(err, "TelematicsWebhook")
+			}
 
-		orgID, err := pulid.Parse(row.OrganizationID)
-		if err != nil {
-			return nil, fmt.Errorf("parse webhook organization id: %w", err)
-		}
-		buID, err := pulid.Parse(row.BusinessUnitID)
-		if err != nil {
-			return nil, fmt.Errorf("parse webhook business unit id: %w", err)
-		}
+			orgID, err := pulid.Parse(row.OrganizationID)
+			if err != nil {
+				return nil, fmt.Errorf("parse webhook organization id: %w", err)
+			}
+			buID, err := pulid.Parse(row.BusinessUnitID)
+			if err != nil {
+				return nil, fmt.Errorf("parse webhook business unit id: %w", err)
+			}
 
-		return &telematicsports.TelematicsWebhookConfig{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: orgID,
-				BuID:  buID,
-			},
-			WebhookSecret: row.WebhookSecret,
-		}, nil
-	})
+			return &telematicsports.TelematicsWebhookConfig{
+				TenantInfo: pagination.TenantInfo{
+					OrgID: orgID,
+					BuID:  buID,
+				},
+				WebhookSecret: row.WebhookSecret,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) CleanupExpired(

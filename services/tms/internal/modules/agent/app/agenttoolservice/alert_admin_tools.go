@@ -7,13 +7,13 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/tablechangealertports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -154,10 +154,13 @@ func (e *alertEdit) build(
 	alerts alertKeeper,
 	params *agentports.ToolExecuteParams,
 ) (*tablechangealert.TCASubscription, error) {
-	stored, err := alerts.GetSubscriptionByID(ctx, tablechangealertports.GetTCASubscriptionByIDRequest{
-		SubscriptionID: e.id,
-		TenantInfo:     tenantFrom(*params),
-	})
+	stored, err := alerts.GetSubscriptionByID(
+		ctx,
+		tablechangealertports.GetTCASubscriptionByIDRequest{
+			SubscriptionID: e.id,
+			TenantInfo:     tenantFrom(*params),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

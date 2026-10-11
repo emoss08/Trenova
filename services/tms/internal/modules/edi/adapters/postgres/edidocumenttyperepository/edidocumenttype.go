@@ -55,47 +55,55 @@ func (r *repository) SelectDocumentTypeOptions(
 	ctx context.Context,
 	req *ediports.EDIDocumentTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIDocumentType], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIDocumentType], error) {
-		entities := make([]*edi.EDIDocumentType, 0, req.SelectQueryRequest.Pagination.SafeLimit())
-		cols := edicol.EDIDocumentTypeColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*edi.EDIDocumentType], error) {
+			entities := make(
+				[]*edi.EDIDocumentType,
+				0,
+				req.SelectQueryRequest.Pagination.SafeLimit(),
+			)
+			cols := edicol.EDIDocumentTypeColumns
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Column(
-				cols.ID.Bare(),
-				cols.Code.Bare(),
-				cols.Name.Bare(),
-				cols.Standard.Bare(),
-				cols.TransactionSet.Bare(),
-				cols.Direction.Bare(),
-				cols.DefaultVersion.Bare(),
-				cols.Status.Bare(),
-				cols.CreatedAt.Bare(),
-			).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return filterDocumentTypesQuery(sq, ediports.ListEDIDocumentTypesRequest{
-					Standard:       req.Standard,
-					TransactionSet: req.TransactionSet,
-					Direction:      req.Direction,
-					Status:         req.Status,
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Column(
+					cols.ID.Bare(),
+					cols.Code.Bare(),
+					cols.Name.Bare(),
+					cols.Standard.Bare(),
+					cols.TransactionSet.Bare(),
+					cols.Direction.Bare(),
+					cols.DefaultVersion.Bare(),
+					cols.Status.Bare(),
+					cols.CreatedAt.Bare(),
+				).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return filterDocumentTypesQuery(sq, ediports.ListEDIDocumentTypesRequest{
+						Standard:       req.Standard,
+						TransactionSet: req.TransactionSet,
+						Direction:      req.Direction,
+						Status:         req.Status,
+					})
+				}).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return applyDocumentTypeSearch(sq, req.SelectQueryRequest.Query)
 				})
-			}).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return applyDocumentTypeSearch(sq, req.SelectQueryRequest.Query)
-			})
 
-		total, err := query.
-			Order(cols.Code.OrderAsc()).
-			Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
-			Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := query.
+				Order(cols.Code.OrderAsc()).
+				Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
+				Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*edi.EDIDocumentType]{Items: entities, Total: total}, nil
-	})
+			return &pagination.ListResult[*edi.EDIDocumentType]{Items: entities, Total: total}, nil
+		},
+	)
 }
 
 func filterDocumentTypesQuery(

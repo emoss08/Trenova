@@ -51,23 +51,29 @@ func (s *Service) PullReference(
 		if pages >= maxReferencePagesGuard {
 			return nil, fmt.Errorf("stopped after %d pages of %s records", pages, kind)
 		}
-		page, listErr := reader.ListReference(ctx, &accountingsyncports.AccountingReferencePageRequest{
-			RealmID:       session.Connection.ExternalRealmID,
-			AccessToken:   session.AccessToken,
-			Kind:          kind,
-			StartPosition: start,
-			PageSize:      reader.MaxReferencePageSize(),
-		})
+		page, listErr := reader.ListReference(
+			ctx,
+			&accountingsyncports.AccountingReferencePageRequest{
+				RealmID:       session.Connection.ExternalRealmID,
+				AccessToken:   session.AccessToken,
+				Kind:          kind,
+				StartPosition: start,
+				PageSize:      reader.MaxReferencePageSize(),
+			},
+		)
 		if listErr != nil {
 			s.connectionService.ReportCallFailure(ctx, tenantInfo, connectionID, listErr)
 			return nil, listErr
 		}
-		if err = s.references.Upsert(ctx, &accountingsyncports.UpsertAccountingReferenceObjectsRequest{
-			TenantInfo:   tenantInfo,
-			ConnectionID: connectionID,
-			Objects:      page.Objects,
-			SeenAt:       seenAt,
-		}); err != nil {
+		if err = s.references.Upsert(
+			ctx,
+			&accountingsyncports.UpsertAccountingReferenceObjectsRequest{
+				TenantInfo:   tenantInfo,
+				ConnectionID: connectionID,
+				Objects:      page.Objects,
+				SeenAt:       seenAt,
+			},
+		); err != nil {
 			return nil, err
 		}
 		pull.Fetched += len(page.Objects)
@@ -172,7 +178,10 @@ func (s *Service) Rescore(
 	return result, nil
 }
 
-func tallyRow(result *accountingsyncports.AccountingRescoreResult, row *accountingsync.AccountingMapping) {
+func tallyRow(
+	result *accountingsyncports.AccountingRescoreResult,
+	row *accountingsync.AccountingMapping,
+) {
 	if row.State == accountingsync.MappingStateProposed {
 		result.Proposed++
 	}

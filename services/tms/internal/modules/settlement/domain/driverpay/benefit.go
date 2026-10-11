@@ -149,8 +149,8 @@ type BenefitPlan struct {
 	// PayCodeID is what a contribution shows up as on a settlement. Required
 	// rather than optional: a deduction nobody can categorise is a deduction
 	// nobody can explain.
-	PayCodeID pulid.ID `json:"payCodeId"    bun:"pay_code_id,type:VARCHAR(100),notnull"`
-	PlanYear  int16    `json:"planYear"     bun:"plan_year,type:SMALLINT,notnull"`
+	PayCodeID pulid.ID `json:"payCodeId" bun:"pay_code_id,type:VARCHAR(100),notnull"`
+	PlanYear  int16    `json:"planYear"  bun:"plan_year,type:SMALLINT,notnull"`
 
 	EmployeeCostMinor int64 `json:"employeeCostMinor" bun:"employee_cost_minor,type:BIGINT,notnull"`
 	// EmployerCostMinor is never deducted. It is carried so a

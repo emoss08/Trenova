@@ -83,7 +83,10 @@ func watchedRecords(req *agentports.RunRequest) []agent.EntityRef {
 	records = append(records, req.Records...)
 	for _, anchor := range req.Context.Anchors {
 		if anchor.Note == "" {
-			records = append(records, agent.EntityRef{Type: anchor.Kind, ID: anchor.ID, Label: anchor.Label})
+			records = append(
+				records,
+				agent.EntityRef{Type: anchor.Kind, ID: anchor.ID, Label: anchor.Label},
+			)
 		}
 	}
 

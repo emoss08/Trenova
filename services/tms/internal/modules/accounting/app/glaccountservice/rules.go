@@ -3,8 +3,8 @@ package glaccountservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -96,7 +96,11 @@ func createCircularReferenceRule(
 				}
 
 				if entity.ParentID == entity.ID {
-					multiErr.Add("parentId", errortypes.ErrInvalid, "Account cannot be its own parent")
+					multiErr.Add(
+						"parentId",
+						errortypes.ErrInvalid,
+						"Account cannot be its own parent",
+					)
 					return nil
 				}
 

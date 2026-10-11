@@ -104,7 +104,8 @@ func (r *repository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return briefingcol.BriefingScopeTenant(sq, req.TenantInfo).Where(cols.ID.Eq(), req.ID)
+				return briefingcol.BriefingScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {

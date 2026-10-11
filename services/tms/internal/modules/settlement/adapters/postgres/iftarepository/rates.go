@@ -66,72 +66,76 @@ func (r *repository) ListTaxRates(
 	ctx context.Context,
 	req *iftaports.ListTaxRatesRequest,
 ) (*pagination.CursorListResult[*ifta.TaxRate], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*ifta.TaxRate], error) {
-		dba := r.db.DBForContext(ctx)
-		filter := filterOrEmpty(req.Filter)
-		cols := iftacol.TaxRateColumns
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*ifta.TaxRate], error) {
+			dba := r.db.DBForContext(ctx)
+			filter := filterOrEmpty(req.Filter)
+			cols := iftacol.TaxRateColumns
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.NewSelect().
-				Model((*ifta.TaxRate)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutTenantScope(
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.NewSelect().
+					Model((*ifta.TaxRate)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutTenantScope(
+							sq,
+							iftacol.TaxRateTable.Alias,
+							withoutSort(filter),
+							(*ifta.TaxRate)(nil),
+						)
+						return r.applyTaxRateFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					r.l.Error("failed to count ifta tax rates", zap.Error(err))
+					return nil, fmt.Errorf("count ifta tax rates: %w", err)
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*ifta.TaxRate]{
+				Filter:     filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(items *[]*ifta.TaxRate) *bun.SelectQuery {
+					q := dba.NewSelect().
+						Model(items).
+						ColumnExpr(iftacol.TaxRateTable.All())
+					if req.IncludeJurisdiction {
+						q = q.Relation(iftacol.TaxRateRelations.Jurisdiction)
+					}
+					return q
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					sq, applyErr := querybuilder.ApplyCursorFiltersWithoutTenantScope(
 						sq,
 						iftacol.TaxRateTable.Alias,
-						withoutSort(filter),
+						filter,
+						req.Cursor,
 						(*ifta.TaxRate)(nil),
 					)
-					return r.applyTaxRateFilters(sq, req)
-				}).
-				Count(ctx)
+					if applyErr != nil {
+						return sq, applyErr
+					}
+					sq = r.applyTaxRateFilters(sq, req)
+					if len(filter.Sort) == 0 {
+						sq = sq.Order(cols.Year.OrderDesc()).
+							Order(cols.Quarter.OrderDesc()).
+							Order(cols.FuelType.OrderAsc())
+					}
+					return sq, nil
+				},
+			})
 			if err != nil {
-				r.l.Error("failed to count ifta tax rates", zap.Error(err))
-				return nil, fmt.Errorf("count ifta tax rates: %w", err)
+				r.l.Error("failed to list ifta tax rates", zap.Error(err))
+				return nil, fmt.Errorf("list ifta tax rates: %w", err)
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*ifta.TaxRate]{
-			Filter:     filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(items *[]*ifta.TaxRate) *bun.SelectQuery {
-				q := dba.NewSelect().
-					Model(items).
-					ColumnExpr(iftacol.TaxRateTable.All())
-				if req.IncludeJurisdiction {
-					q = q.Relation(iftacol.TaxRateRelations.Jurisdiction)
-				}
-				return q
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				sq, applyErr := querybuilder.ApplyCursorFiltersWithoutTenantScope(
-					sq,
-					iftacol.TaxRateTable.Alias,
-					filter,
-					req.Cursor,
-					(*ifta.TaxRate)(nil),
-				)
-				if applyErr != nil {
-					return sq, applyErr
-				}
-				sq = r.applyTaxRateFilters(sq, req)
-				if len(filter.Sort) == 0 {
-					sq = sq.Order(cols.Year.OrderDesc()).
-						Order(cols.Quarter.OrderDesc()).
-						Order(cols.FuelType.OrderAsc())
-				}
-				return sq, nil
-			},
-		})
-		if err != nil {
-			r.l.Error("failed to list ifta tax rates", zap.Error(err))
-			return nil, fmt.Errorf("list ifta tax rates: %w", err)
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetTaxRateByID(ctx context.Context, id pulid.ID) (*ifta.TaxRate, error) {

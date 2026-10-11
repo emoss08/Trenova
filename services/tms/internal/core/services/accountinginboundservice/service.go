@@ -4,23 +4,23 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/services/accountingconnlookup"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -199,11 +199,14 @@ func (s *Service) Overview(
 	if err != nil {
 		return nil, err
 	}
-	summary, err := s.changes.Summarize(ctx, &accountingsyncports.SummarizeAccountingInboundChangesRequest{
-		TenantInfo:   req.TenantInfo,
-		ConnectionID: conn.ID,
-		DecidedSince: s.now().Add(-summaryWindow).Unix(),
-	})
+	summary, err := s.changes.Summarize(
+		ctx,
+		&accountingsyncports.SummarizeAccountingInboundChangesRequest{
+			TenantInfo:   req.TenantInfo,
+			ConnectionID: conn.ID,
+			DecidedSince: s.now().Add(-summaryWindow).Unix(),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -305,11 +308,14 @@ func (s *Service) refreshAttention(ctx context.Context, conn *accountingsync.Acc
 		return
 	}
 	tenant := tenantOf(conn)
-	groups, err := s.changes.ListAttention(ctx, &accountingsyncports.ListAccountingInboundAttentionRequest{
-		TenantInfo:     tenant,
-		ConnectionID:   conn.ID,
-		DetectedBefore: s.now().Add(-watchtowersources.AccountingInboundAfter).Unix(),
-	})
+	groups, err := s.changes.ListAttention(
+		ctx,
+		&accountingsyncports.ListAccountingInboundAttentionRequest{
+			TenantInfo:     tenant,
+			ConnectionID:   conn.ID,
+			DetectedBefore: s.now().Add(-watchtowersources.AccountingInboundAfter).Unix(),
+		},
+	)
 	if err != nil {
 		s.l.Warn("failed to read accounting inbound attention", zap.Error(err))
 		return

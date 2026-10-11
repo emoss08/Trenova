@@ -68,12 +68,19 @@ func ExtractionEvalRunWorkflow(
 		BusinessUnitID: payload.BusinessUnitID,
 		RunID:          payload.RunID,
 	}
-	bookCtx := workflow.WithActivityOptions(ctx, withPriority(bookkeepingOptions, payload.OrganizationID))
-	evalCtx := workflow.WithActivityOptions(ctx, withPriority(evaluateOptions, payload.OrganizationID))
+	bookCtx := workflow.WithActivityOptions(
+		ctx,
+		withPriority(bookkeepingOptions, payload.OrganizationID),
+	)
+	evalCtx := workflow.WithActivityOptions(
+		ctx,
+		withPriority(evaluateOptions, payload.OrganizationID),
+	)
 
 	var a *Activities
 	if payload.AfterOrdinal == 0 {
-		if err := workflow.ExecuteActivity(bookCtx, a.BeginExtractionEvalRunActivity, &input).Get(bookCtx, nil); err != nil {
+		if err := workflow.ExecuteActivity(bookCtx, a.BeginExtractionEvalRunActivity, &input).
+			Get(bookCtx, nil); err != nil {
 			return nil, failRun(bookCtx, &input, "The evaluation could not be started", err)
 		}
 	}
@@ -86,7 +93,8 @@ func ExtractionEvalRunWorkflow(
 			RunInput:     input,
 			AfterOrdinal: after,
 			Limit:        pendingPageSize,
-		}).Get(bookCtx, &page); err != nil {
+		}).
+			Get(bookCtx, &page); err != nil {
 			return nil, failRun(bookCtx, &input, "The evaluation's cases could not be read", err)
 		}
 		if len(page) == 0 {
@@ -111,7 +119,12 @@ func ExtractionEvalRunWorkflow(
 			var decision ContinueDecision
 			if err := workflow.ExecuteActivity(bookCtx, a.CheckExtractionEvalBudgetActivity, &input).
 				Get(bookCtx, &decision); err != nil {
-				return nil, failRun(bookCtx, &input, "The evaluation budget could not be checked", err)
+				return nil, failRun(
+					bookCtx,
+					&input,
+					"The evaluation budget could not be checked",
+					err,
+				)
 			}
 			if decision.Stop {
 				return finishRun(bookCtx, &input, decision.Status, decision.Reason)
@@ -120,7 +133,8 @@ func ExtractionEvalRunWorkflow(
 			if err := workflow.ExecuteActivity(evalCtx, a.EvaluateExtractionEvalCaseActivity, &EvaluateInput{
 				RunInput: input,
 				ResultID: pending.ResultID,
-			}).Get(evalCtx, nil); err != nil {
+			}).
+				Get(evalCtx, nil); err != nil {
 				return nil, failRun(bookCtx, &input, "A case could not be evaluated or saved", err)
 			}
 

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/requestmeta"
 	"github.com/emoss08/trenova/pkg/validationframework"

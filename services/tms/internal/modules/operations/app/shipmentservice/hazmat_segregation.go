@@ -3,11 +3,11 @@ package shipmentservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/hazmatsegregationruleports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -55,13 +55,16 @@ func createHazmatSegregationRule(
 				return nil
 			}
 
-			commodities, err := commodityRepo.GetByIDs(ctx, commodityports.GetCommoditiesByIDsRequest{
-				TenantInfo: pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
+			commodities, err := commodityRepo.GetByIDs(
+				ctx,
+				commodityports.GetCommoditiesByIDsRequest{
+					TenantInfo: pagination.TenantInfo{
+						OrgID: entity.OrganizationID,
+						BuID:  entity.BusinessUnitID,
+					},
+					CommodityIDs: commodityIDs,
 				},
-				CommodityIDs: commodityIDs,
-			})
+			)
 			if err != nil {
 				multiErr.Add(
 					"commodities",

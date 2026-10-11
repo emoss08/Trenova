@@ -6,21 +6,21 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -450,10 +450,13 @@ func (s *Service) CheckHealth(
 	tenantInfo pagination.TenantInfo,
 	connectionID pulid.ID,
 ) (*accountingsync.AccountingConnection, error) {
-	current, err := s.connections.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
-		TenantInfo: tenantInfo,
-		ID:         connectionID,
-	})
+	current, err := s.connections.GetByID(
+		ctx,
+		accountingsyncports.GetAccountingConnectionByIDRequest{
+			TenantInfo: tenantInfo,
+			ID:         connectionID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -516,10 +519,13 @@ func (s *Service) Session(
 	tenantInfo pagination.TenantInfo,
 	connectionID pulid.ID,
 ) (*accountingsyncports.AccountingSession, error) {
-	current, err := s.connections.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
-		TenantInfo: tenantInfo,
-		ID:         connectionID,
-	})
+	current, err := s.connections.GetByID(
+		ctx,
+		accountingsyncports.GetAccountingConnectionByIDRequest{
+			TenantInfo: tenantInfo,
+			ID:         connectionID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -559,10 +565,13 @@ func (s *Service) ReportCallFailure(
 	connectionID pulid.ID,
 	cause error,
 ) accountingsync.ErrorCategory {
-	current, err := s.connections.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
-		TenantInfo: tenantInfo,
-		ID:         connectionID,
-	})
+	current, err := s.connections.GetByID(
+		ctx,
+		accountingsyncports.GetAccountingConnectionByIDRequest{
+			TenantInfo: tenantInfo,
+			ID:         connectionID,
+		},
+	)
 	if err != nil {
 		s.l.Warn("could not load the connection to record a failed call", zap.Error(err))
 		return accountingsync.ErrorCategoryUnknown

@@ -45,83 +45,90 @@ func (r *repository) ListMileageEntries(
 	ctx context.Context,
 	req *iftaports.ListMileageEntriesRequest,
 ) (*pagination.CursorListResult[*ifta.JurisdictionMileageEntry], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*ifta.JurisdictionMileageEntry], error) {
-		dba := r.db.DBForContext(ctx)
-		filter := filterOrEmpty(req.Filter)
-		cols := iftacol.JurisdictionMileageEntryColumns
-		rel := iftacol.JurisdictionMileageEntryRelations
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*ifta.JurisdictionMileageEntry], error) {
+			dba := r.db.DBForContext(ctx)
+			filter := filterOrEmpty(req.Filter)
+			cols := iftacol.JurisdictionMileageEntryColumns
+			rel := iftacol.JurisdictionMileageEntryRelations
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.NewSelect().
-				Model((*ifta.JurisdictionMileageEntry)(nil)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return iftacol.JurisdictionMileageEntryScopeTenant(sq, filter.TenantInfo)
-				}).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						iftacol.JurisdictionMileageEntryTable.Alias,
-						filter,
-						(*ifta.JurisdictionMileageEntry)(nil),
-					)
-					return r.applyMileageEntryFilters(sq, req)
-				}).
-				Count(ctx)
-			if err != nil {
-				r.l.Error("failed to count ifta mileage entries", zap.Error(err))
-				return nil, fmt.Errorf("count ifta mileage entries: %w", err)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.NewSelect().
+					Model((*ifta.JurisdictionMileageEntry)(nil)).
+					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return iftacol.JurisdictionMileageEntryScopeTenant(sq, filter.TenantInfo)
+					}).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							iftacol.JurisdictionMileageEntryTable.Alias,
+							filter,
+							(*ifta.JurisdictionMileageEntry)(nil),
+						)
+						return r.applyMileageEntryFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					r.l.Error("failed to count ifta mileage entries", zap.Error(err))
+					return nil, fmt.Errorf("count ifta mileage entries: %w", err)
+				}
+				totalCount = &total
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*ifta.JurisdictionMileageEntry]{
-				Filter:     filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(items *[]*ifta.JurisdictionMileageEntry) *bun.SelectQuery {
-					q := dba.NewSelect().
-						Model(items).
-						ColumnExpr(iftacol.JurisdictionMileageEntryTable.All()).
-						WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return iftacol.JurisdictionMileageEntryScopeTenant(sq, filter.TenantInfo)
-						})
-					if req.IncludeTractor {
-						q = q.Relation(rel.Tractor)
-					}
-					if req.IncludeJurisdiction {
-						q = q.Relation(rel.Jurisdiction)
-					}
-					return q
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*ifta.JurisdictionMileageEntry]{
+					Filter:     filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(items *[]*ifta.JurisdictionMileageEntry) *bun.SelectQuery {
+						q := dba.NewSelect().
+							Model(items).
+							ColumnExpr(iftacol.JurisdictionMileageEntryTable.All()).
+							WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return iftacol.JurisdictionMileageEntryScopeTenant(
+									sq,
+									filter.TenantInfo,
+								)
+							})
+						if req.IncludeTractor {
+							q = q.Relation(rel.Tractor)
+						}
+						if req.IncludeJurisdiction {
+							q = q.Relation(rel.Jurisdiction)
+						}
+						return q
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						sq, applyErr := querybuilder.ApplyCursorFilters(
+							sq,
+							iftacol.JurisdictionMileageEntryTable.Alias,
+							filter,
+							req.Cursor,
+							(*ifta.JurisdictionMileageEntry)(nil),
+						)
+						if applyErr != nil {
+							return sq, applyErr
+						}
+						sq = r.applyMileageEntryFilters(sq, req)
+						if len(filter.Sort) == 0 {
+							sq = sq.Order(cols.TraveledAt.OrderDesc())
+						}
+						return sq, nil
+					},
 				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					sq, applyErr := querybuilder.ApplyCursorFilters(
-						sq,
-						iftacol.JurisdictionMileageEntryTable.Alias,
-						filter,
-						req.Cursor,
-						(*ifta.JurisdictionMileageEntry)(nil),
-					)
-					if applyErr != nil {
-						return sq, applyErr
-					}
-					sq = r.applyMileageEntryFilters(sq, req)
-					if len(filter.Sort) == 0 {
-						sq = sq.Order(cols.TraveledAt.OrderDesc())
-					}
-					return sq, nil
-				},
-			},
-		)
-		if err != nil {
-			r.l.Error("failed to list ifta mileage entries", zap.Error(err))
-			return nil, fmt.Errorf("list ifta mileage entries: %w", err)
-		}
+			)
+			if err != nil {
+				r.l.Error("failed to list ifta mileage entries", zap.Error(err))
+				return nil, fmt.Errorf("list ifta mileage entries: %w", err)
+			}
 
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetMileageEntryByID(
@@ -204,7 +211,11 @@ func (r *repository) UpdateMileageEntry(
 			r.l.Error("failed to update ifta mileage entry", zap.Error(err))
 			return nil, fmt.Errorf("update ifta mileage entry: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(results, "IFTA mileage entry", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"IFTA mileage entry",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 

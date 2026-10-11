@@ -108,7 +108,9 @@ func (c *Connector) ChangeCursorAt(at time.Time) string {
 	return changeCursor{since: at.UTC()}.String()
 }
 
-func changeTargets(req *accountingsyncports.ReadAccountingChangesRequest) ([]quickbooks.ChangeEntity, error) {
+func changeTargets(
+	req *accountingsyncports.ReadAccountingChangesRequest,
+) ([]quickbooks.ChangeEntity, error) {
 	targets := make([]quickbooks.ChangeEntity, 0, len(req.ReferenceKinds)+2)
 	if req.Payments {
 		targets = append(targets, quickbooks.ChangePayment)
@@ -324,7 +326,9 @@ func inboundLines(links []quickbooks.ChangedLink) []accountingsyncports.Accounti
 	return lines
 }
 
-func inboundPaymentOf(payment *quickbooks.ChangedPayment) accountingsyncports.AccountingInboundPayment {
+func inboundPaymentOf(
+	payment *quickbooks.ChangedPayment,
+) accountingsyncports.AccountingInboundPayment {
 	return accountingsyncports.AccountingInboundPayment{
 		Kind:              accountingsync.InboundCustomerPayment,
 		Operation:         changeOperation(&payment.ChangeMeta),

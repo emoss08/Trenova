@@ -101,7 +101,11 @@ func ApplyOverride(
 		policy.DefaultTier = policy.DefaultTier.AtMost(override.MaxTier)
 	}
 	if override.ReadsExternal.IsValid() &&
-		agent.ExternalReadRank(override.ReadsExternal) > agent.ExternalReadRank(policy.ReadsExternal) {
+		agent.ExternalReadRank(
+			override.ReadsExternal,
+		) > agent.ExternalReadRank(
+			policy.ReadsExternal,
+		) {
 		policy.ReadsExternal = override.ReadsExternal
 	}
 

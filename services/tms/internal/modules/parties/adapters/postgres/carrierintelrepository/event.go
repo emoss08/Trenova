@@ -82,21 +82,25 @@ func (r *eventRepository) InsertIgnoreDuplicates(
 	ctx context.Context,
 	entities []*carrierintel.CarrierIntelEvent,
 ) ([]*carrierintel.CarrierIntelEvent, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierIntelEvent, error) {
-		if len(entities) == 0 {
-			return []*carrierintel.CarrierIntelEvent{}, nil
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*carrierintel.CarrierIntelEvent, error) {
+			if len(entities) == 0 {
+				return []*carrierintel.CarrierIntelEvent{}, nil
+			}
 
-		rows := entities
-		inserted := make([]*carrierintel.CarrierIntelEvent, 0, len(entities))
-		if _, err := buildInsertIgnoreDuplicateEvents(r.db.DBForContext(ctx), &rows).
-			Exec(ctx, &inserted); err != nil {
-			r.l.Error("failed to insert carrier intel events", zap.Error(err))
-			return nil, fmt.Errorf("insert carrier intel events: %w", err)
-		}
+			rows := entities
+			inserted := make([]*carrierintel.CarrierIntelEvent, 0, len(entities))
+			if _, err := buildInsertIgnoreDuplicateEvents(r.db.DBForContext(ctx), &rows).
+				Exec(ctx, &inserted); err != nil {
+				r.l.Error("failed to insert carrier intel events", zap.Error(err))
+				return nil, fmt.Errorf("insert carrier intel events: %w", err)
+			}
 
-		return inserted, nil
-	})
+			return inserted, nil
+		},
+	)
 }
 
 func (r *eventRepository) applyEventFilters(
@@ -133,71 +137,75 @@ func (r *eventRepository) ListConnection(
 	ctx context.Context,
 	req *carrierintelports.ListCarrierIntelEventsRequest,
 ) (*pagination.CursorListResult[*carrierintel.CarrierIntelEvent], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*carrierintel.CarrierIntelEvent], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*carrierintel.CarrierIntelEvent], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
 
-		if req.Filter != nil && len(req.Filter.Sort) == 0 {
-			req.Filter.Sort = []domaintypes.SortField{
-				{Field: eventDetectedAtField, Direction: dbtype.SortDirectionDesc},
+			if req.Filter != nil && len(req.Filter.Sort) == 0 {
+				req.Filter.Sort = []domaintypes.SortField{
+					{Field: eventDetectedAtField, Direction: dbtype.SortDirectionDesc},
+				}
 			}
-		}
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*carrierintel.CarrierIntelEvent)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						carrierintelcol.CarrierIntelEventTable.Alias,
-						req.Filter,
-						(*carrierintel.CarrierIntelEvent)(nil),
-					)
-					return r.applyEventFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*carrierintel.CarrierIntelEvent)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							carrierintelcol.CarrierIntelEventTable.Alias,
+							req.Filter,
+							(*carrierintel.CarrierIntelEvent)(nil),
+						)
+						return r.applyEventFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count carrier intel events", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*carrierintel.CarrierIntelEvent]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(items *[]*carrierintel.CarrierIntelEvent) *bun.SelectQuery {
+						return dba.NewSelect().
+							Model(items).
+							ColumnExpr(carrierintelcol.CarrierIntelEventTable.All())
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						sq, applyErr := querybuilder.ApplyCursorFilters(
+							sq,
+							carrierintelcol.CarrierIntelEventTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*carrierintel.CarrierIntelEvent)(nil),
+						)
+						if applyErr != nil {
+							return sq, applyErr
+						}
+						return r.applyEventFilters(sq, req), nil
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count carrier intel events", zap.Error(err))
+				log.Error("failed to list carrier intel events", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*carrierintel.CarrierIntelEvent]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(items *[]*carrierintel.CarrierIntelEvent) *bun.SelectQuery {
-					return dba.NewSelect().
-						Model(items).
-						ColumnExpr(carrierintelcol.CarrierIntelEventTable.All())
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					sq, applyErr := querybuilder.ApplyCursorFilters(
-						sq,
-						carrierintelcol.CarrierIntelEventTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*carrierintel.CarrierIntelEvent)(nil),
-					)
-					if applyErr != nil {
-						return sq, applyErr
-					}
-					return r.applyEventFilters(sq, req), nil
-				},
-			},
-		)
-		if err != nil {
-			log.Error("failed to list carrier intel events", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *eventRepository) GetByIDs(
@@ -205,54 +213,66 @@ func (r *eventRepository) GetByIDs(
 	tenantInfo pagination.TenantInfo,
 	ids []pulid.ID,
 ) ([]*carrierintel.CarrierIntelEvent, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierIntelEvent, error) {
-		if len(ids) == 0 {
-			return []*carrierintel.CarrierIntelEvent{}, nil
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*carrierintel.CarrierIntelEvent, error) {
+			if len(ids) == 0 {
+				return []*carrierintel.CarrierIntelEvent{}, nil
+			}
 
-		entities := make([]*carrierintel.CarrierIntelEvent, 0, len(ids))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carrierintelcol.CarrierIntelEventScopeTenant(sq, tenantInfo).
-					Where(carrierintelcol.CarrierIntelEventColumns.ID.In(), bun.List(ids))
-			}).
-			Scan(ctx)
-		if err != nil {
-			r.l.Error("failed to get carrier intel events", zap.Error(err))
-			return nil, fmt.Errorf("get carrier intel events: %w", err)
-		}
+			entities := make([]*carrierintel.CarrierIntelEvent, 0, len(ids))
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return carrierintelcol.CarrierIntelEventScopeTenant(sq, tenantInfo).
+						Where(carrierintelcol.CarrierIntelEventColumns.ID.In(), bun.List(ids))
+				}).
+				Scan(ctx)
+			if err != nil {
+				r.l.Error("failed to get carrier intel events", zap.Error(err))
+				return nil, fmt.Errorf("get carrier intel events: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *eventRepository) Update(
 	ctx context.Context,
 	entity *carrierintel.CarrierIntelEvent,
 ) (*carrierintel.CarrierIntelEvent, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*carrierintel.CarrierIntelEvent, error) {
-		ov := entity.Version
-		entity.Version++
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*carrierintel.CarrierIntelEvent, error) {
+			ov := entity.Version
+			entity.Version++
 
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(carrierintelcol.CarrierIntelEventColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			r.l.Error("failed to update carrier intel event", zap.Error(err))
-			return nil, fmt.Errorf("update carrier intel event: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(results, eventEntityName, entity.ID.String()); err != nil {
-			return nil, err
-		}
+			results, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(entity).
+				WherePK().
+				Where(carrierintelcol.CarrierIntelEventColumns.Version.Eq(), ov).
+				Returning("*").
+				Exec(ctx)
+			if err != nil {
+				r.l.Error("failed to update carrier intel event", zap.Error(err))
+				return nil, fmt.Errorf("update carrier intel event: %w", err)
+			}
+			if err = dberror.CheckRowsAffected(
+				results,
+				eventEntityName,
+				entity.ID.String(),
+			); err != nil {
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *eventRepository) BulkAcknowledge(
@@ -327,87 +347,95 @@ func (r *eventRepository) CountOpen(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*carrierintelports.CarrierIntelEventCounts, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrierintelports.CarrierIntelEventCounts, error) {
-		cols := carrierintelcol.CarrierIntelEventColumns
-		counts := &carrierintelports.CarrierIntelEventCounts{
-			BySeverity: make(map[carrierintel.Severity]int, len(eventSeverityOrder)),
-		}
-		severityCounts := make([]int, len(eventSeverityOrder))
-		dest := make([]any, 0, len(eventSeverityOrder)+2)
-		dest = append(dest, &counts.Open, &counts.Acknowledged)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*carrierintelports.CarrierIntelEventCounts, error) {
+			cols := carrierintelcol.CarrierIntelEventColumns
+			counts := &carrierintelports.CarrierIntelEventCounts{
+				BySeverity: make(map[carrierintel.Severity]int, len(eventSeverityOrder)),
+			}
+			severityCounts := make([]int, len(eventSeverityOrder))
+			dest := make([]any, 0, len(eventSeverityOrder)+2)
+			dest = append(dest, &counts.Open, &counts.Acknowledged)
 
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*carrierintel.CarrierIntelEvent)(nil)).
-			ColumnExpr(buncolgen.CountFilter("open_count", cols.Status.Eq()), carrierintel.EventStatusOpen).
-			ColumnExpr(
-				buncolgen.CountFilter("acknowledged_count", cols.Status.Eq()),
-				carrierintel.EventStatusAcknowledged,
-			).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carrierintelcol.CarrierIntelEventScopeTenant(sq, tenantInfo).
-					Where(cols.Status.In(), bun.List(openEventStatuses))
-			})
-		for i, severity := range eventSeverityOrder {
-			q = q.ColumnExpr(
-				buncolgen.CountFilter("severity_"+strconv.Itoa(i), cols.Severity.Eq()),
-				severity,
-			)
-			dest = append(dest, &severityCounts[i])
-		}
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*carrierintel.CarrierIntelEvent)(nil)).
+				ColumnExpr(buncolgen.CountFilter("open_count", cols.Status.Eq()), carrierintel.EventStatusOpen).
+				ColumnExpr(
+					buncolgen.CountFilter("acknowledged_count", cols.Status.Eq()),
+					carrierintel.EventStatusAcknowledged,
+				).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return carrierintelcol.CarrierIntelEventScopeTenant(sq, tenantInfo).
+						Where(cols.Status.In(), bun.List(openEventStatuses))
+				})
+			for i, severity := range eventSeverityOrder {
+				q = q.ColumnExpr(
+					buncolgen.CountFilter("severity_"+strconv.Itoa(i), cols.Severity.Eq()),
+					severity,
+				)
+				dest = append(dest, &severityCounts[i])
+			}
 
-		if err := q.Scan(ctx, dest...); err != nil {
-			r.l.Error("failed to count open carrier intel events", zap.Error(err))
-			return nil, fmt.Errorf("count open carrier intel events: %w", err)
-		}
+			if err := q.Scan(ctx, dest...); err != nil {
+				r.l.Error("failed to count open carrier intel events", zap.Error(err))
+				return nil, fmt.Errorf("count open carrier intel events: %w", err)
+			}
 
-		for i, severity := range eventSeverityOrder {
-			counts.BySeverity[severity] = severityCounts[i]
-		}
+			for i, severity := range eventSeverityOrder {
+				counts.BySeverity[severity] = severityCounts[i]
+			}
 
-		return counts, nil
-	})
+			return counts, nil
+		},
+	)
 }
 
 func (r *eventRepository) ListForDigest(
 	ctx context.Context,
 	req *carrierintelports.ListCarrierIntelDigestEventsRequest,
 ) ([]*carrierintel.CarrierIntelEvent, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierIntelEvent, error) {
-		cols := carrierintelcol.CarrierIntelEventColumns
-		limit := intutils.Clamp(
-			intutils.WithDefault(max(req.Limit, 0), defaultDigestLimit),
-			1,
-			maxDigestLimit,
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*carrierintel.CarrierIntelEvent, error) {
+			cols := carrierintelcol.CarrierIntelEventColumns
+			limit := intutils.Clamp(
+				intutils.WithDefault(max(req.Limit, 0), defaultDigestLimit),
+				1,
+				maxDigestLimit,
+			)
 
-		severityRank := make([]any, 0, len(eventSeverityOrder)*2+1)
-		for i, severity := range eventSeverityOrder {
-			severityRank = append(severityRank, severity, i)
-		}
-		severityRank = append(severityRank, len(eventSeverityOrder))
+			severityRank := make([]any, 0, len(eventSeverityOrder)*2+1)
+			for i, severity := range eventSeverityOrder {
+				severityRank = append(severityRank, severity, i)
+			}
+			severityRank = append(severityRank, len(eventSeverityOrder))
 
-		entities := make([]*carrierintel.CarrierIntelEvent, 0, limit)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carrierintelcol.CarrierIntelEventScopeTenant(sq, req.TenantInfo).
-					Where(cols.Status.Eq(), carrierintel.EventStatusOpen).
-					Where(cols.DetectedAt.Gte(), req.Since).
-					Where(cols.Action.In(), bun.List(digestEventActions))
-			}).
-			OrderExpr(eventSeverityRankExpr, severityRank...).
-			Order(cols.DetectedAt.OrderDesc(), cols.ID.OrderDesc()).
-			Limit(limit).
-			Scan(ctx)
-		if err != nil {
-			r.l.Error("failed to list carrier intel digest events", zap.Error(err))
-			return nil, fmt.Errorf("list carrier intel digest events: %w", err)
-		}
+			entities := make([]*carrierintel.CarrierIntelEvent, 0, limit)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return carrierintelcol.CarrierIntelEventScopeTenant(sq, req.TenantInfo).
+						Where(cols.Status.Eq(), carrierintel.EventStatusOpen).
+						Where(cols.DetectedAt.Gte(), req.Since).
+						Where(cols.Action.In(), bun.List(digestEventActions))
+				}).
+				OrderExpr(eventSeverityRankExpr, severityRank...).
+				Order(cols.DetectedAt.OrderDesc(), cols.ID.OrderDesc()).
+				Limit(limit).
+				Scan(ctx)
+			if err != nil {
+				r.l.Error("failed to list carrier intel digest events", zap.Error(err))
+				return nil, fmt.Errorf("list carrier intel digest events: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *eventRepository) MarkNotified(

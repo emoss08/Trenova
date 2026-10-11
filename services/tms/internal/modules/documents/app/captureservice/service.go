@@ -12,21 +12,21 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -254,7 +254,10 @@ func (s *Service) allowed(
 		return &permissionports.PermissionCheckResult{Allowed: false, Reason: "no_user"}, nil
 	}
 
-	return s.permissions.Check(ctx, permissionports.UserActor(tenantInfo).PermissionCheck(resource, op))
+	return s.permissions.Check(
+		ctx,
+		permissionports.UserActor(tenantInfo).PermissionCheck(resource, op),
+	)
 }
 
 // require is allowed, turned into the error a handler maps to 403.

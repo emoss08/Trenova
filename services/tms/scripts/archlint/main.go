@@ -61,14 +61,28 @@ func main() {
 
 func run(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, "go", "tool", archLintTool, "check", "--json", "--max-warnings", maxWarnings)
+	cmd := exec.CommandContext(
+		ctx,
+		"go",
+		"tool",
+		archLintTool,
+		"check",
+		"--json",
+		"--max-warnings",
+		maxWarnings,
+	)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	runErr := cmd.Run()
 
 	var rep report
 	if err := sonic.Unmarshal(stdout.Bytes(), &rep); err != nil {
-		return fmt.Errorf("%s produced no report: %w: %s", archLintTool, errors.Join(err, runErr), stderr.String())
+		return fmt.Errorf(
+			"%s produced no report: %w: %s",
+			archLintTool,
+			errors.Join(err, runErr),
+			stderr.String(),
+		)
 	}
 
 	problems := make([]string, 0)

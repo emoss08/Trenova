@@ -429,7 +429,10 @@ func metricsOf(value any) []map[string]any {
 		if !ok {
 			continue
 		}
-		metric := map[string]any{labelKey: typeutils.StringOfTrimmed(object[labelKey]), "value": figure}
+		metric := map[string]any{
+			labelKey: typeutils.StringOfTrimmed(object[labelKey]),
+			"value":  figure,
+		}
 		if unit := typeutils.StringOfTrimmed(object["unit"]); unit != "" {
 			metric["unit"] = unit
 		}

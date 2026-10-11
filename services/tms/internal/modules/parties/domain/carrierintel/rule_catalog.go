@@ -750,10 +750,20 @@ func evalOOSRateHigh(ctx *RuleContext) (bool, string) {
 	}
 
 	messages := make([]string, 0, 2)
-	if msg := check(insp.Vehicle, insp.VehicleOOSRate, insp.NationalVehicleOOS, "Vehicle"); msg != "" {
+	if msg := check(
+		insp.Vehicle,
+		insp.VehicleOOSRate,
+		insp.NationalVehicleOOS,
+		"Vehicle",
+	); msg != "" {
 		messages = append(messages, msg)
 	}
-	if msg := check(insp.Driver, insp.DriverOOSRate, insp.NationalDriverOOSRate, "Driver"); msg != "" {
+	if msg := check(
+		insp.Driver,
+		insp.DriverOOSRate,
+		insp.NationalDriverOOSRate,
+		"Driver",
+	); msg != "" {
 		messages = append(messages, msg)
 	}
 	if len(messages) == 0 {

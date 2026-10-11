@@ -31,7 +31,10 @@ func (p *Predictor) Predict(
 ) (*extractionevalports.ExtractionPrediction, error) {
 	pages := make([]documentaiextractionports.AIDocumentPage, 0, len(req.Pages))
 	for _, page := range req.Pages {
-		pages = append(pages, documentaiextractionports.AIDocumentPage{PageNumber: page.Number, Text: page.Text})
+		pages = append(
+			pages,
+			documentaiextractionports.AIDocumentPage{PageNumber: page.Number, Text: page.Text},
+		)
 	}
 
 	result, err := p.documents.ExtractRateConfirmationForEvaluation(

@@ -59,29 +59,33 @@ func (r *repository) List(
 	ctx context.Context,
 	req *documenttypeports.ListDocumentTypesRequest,
 ) (*pagination.ListResult[*documenttype.DocumentType], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*documenttype.DocumentType], error) {
-		log := r.l.With(
-			zap.String("operation", "List"),
-			zap.Any("request", req),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*documenttype.DocumentType], error) {
+			log := r.l.With(
+				zap.String("operation", "List"),
+				zap.Any("request", req),
+			)
 
-		entities := make([]*documenttype.DocumentType, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterQuery(sq, req)
-			}).ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count document types", zap.Error(err))
-			return nil, err
-		}
+			entities := make([]*documenttype.DocumentType, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count document types", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*documenttype.DocumentType]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*documenttype.DocumentType]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -121,54 +125,58 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *documenttypeports.ListDocumentTypeConnectionRequest,
 ) (*pagination.CursorListResult[*documenttype.DocumentType], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*documenttype.DocumentType], error) {
-		log := r.l.With(
-			zap.String("operation", "ListConnection"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*documenttype.DocumentType], error) {
+			log := r.l.With(
+				zap.String("operation", "ListConnection"),
+				zap.Any("request", req),
+			)
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*documenttype.DocumentType)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyTotalCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*documenttype.DocumentType)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyTotalCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count document types", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*documenttype.DocumentType]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*documenttype.DocumentType) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return applyDocumentTypeColumns(sq, req.DocumentTypeColumns)
+							})
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return r.applyCursorPageFilters(sq, req)
+					},
+				})
 			if err != nil {
-				log.Error("failed to count document types", zap.Error(err))
+				log.Error("failed to scan document types", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*documenttype.DocumentType]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*documenttype.DocumentType) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return applyDocumentTypeColumns(sq, req.DocumentTypeColumns)
-						})
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return r.applyCursorPageFilters(sq, req)
-				},
-			})
-		if err != nil {
-			log.Error("failed to scan document types", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) Create(
@@ -181,7 +189,11 @@ func (r *repository) Create(
 			zap.String("name", entity.Name),
 		)
 
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
 			log.Error("failed to create document type", zap.Error(err))
 			return nil, err
 		}
@@ -215,7 +227,11 @@ func (r *repository) Update(
 			return nil, err
 		}
 
-		if err = dberror.CheckRowsAffected(results, "DocumentType", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"DocumentType",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -315,41 +331,45 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*documenttype.DocumentType], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*documenttype.DocumentType], error) {
-		cols := documenttypecol.DocumentTypeColumns
-		return dbhelper.SelectOptions[*documenttype.DocumentType](
-			ctx,
-			r.db.DBForContext(ctx),
-			req,
-			&dbhelper.SelectOptionsConfig{
-				Columns: []string{
-					documenttypecol.DocumentTypeColumns.ID.Bare(),
-					documenttypecol.DocumentTypeColumns.Code.Bare(),
-					documenttypecol.DocumentTypeColumns.Name.Bare(),
-					documenttypecol.DocumentTypeColumns.Description.Bare(),
-					documenttypecol.DocumentTypeColumns.Color.Bare(),
-					documenttypecol.DocumentTypeColumns.DocumentClassification.Bare(),
-					documenttypecol.DocumentTypeColumns.DocumentCategory.Bare(),
-					documenttypecol.DocumentTypeColumns.IsSystem.Bare(),
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*documenttype.DocumentType], error) {
+			cols := documenttypecol.DocumentTypeColumns
+			return dbhelper.SelectOptions[*documenttype.DocumentType](
+				ctx,
+				r.db.DBForContext(ctx),
+				req,
+				&dbhelper.SelectOptionsConfig{
+					Columns: []string{
+						documenttypecol.DocumentTypeColumns.ID.Bare(),
+						documenttypecol.DocumentTypeColumns.Code.Bare(),
+						documenttypecol.DocumentTypeColumns.Name.Bare(),
+						documenttypecol.DocumentTypeColumns.Description.Bare(),
+						documenttypecol.DocumentTypeColumns.Color.Bare(),
+						documenttypecol.DocumentTypeColumns.DocumentClassification.Bare(),
+						documenttypecol.DocumentTypeColumns.DocumentCategory.Bare(),
+						documenttypecol.DocumentTypeColumns.IsSystem.Bare(),
+					},
+					OrgColumn:  documenttypecol.DocumentTypeColumns.OrganizationID.Qualified(),
+					BuColumn:   documenttypecol.DocumentTypeColumns.BusinessUnitID.Qualified(),
+					EntityName: "DocumentType",
+					SearchColumns: []string{
+						documenttypecol.DocumentTypeColumns.Code.Qualified(),
+						documenttypecol.DocumentTypeColumns.Name.Qualified(),
+					},
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						// exclude INVOICE, CREDITMEMO, DEBITMEMO
+						// These document types are system document types and should not be set by the user
+						return q.WhereGroup("AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+							return sq.Where(
+								cols.Code.NotIn(),
+								bun.List([]string{"INVOICE", "CREDITMEMO", "DEBITMEMO"}),
+							)
+						})
+					},
 				},
-				OrgColumn:  documenttypecol.DocumentTypeColumns.OrganizationID.Qualified(),
-				BuColumn:   documenttypecol.DocumentTypeColumns.BusinessUnitID.Qualified(),
-				EntityName: "DocumentType",
-				SearchColumns: []string{
-					documenttypecol.DocumentTypeColumns.Code.Qualified(),
-					documenttypecol.DocumentTypeColumns.Name.Qualified(),
-				},
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					// exclude INVOICE, CREDITMEMO, DEBITMEMO
-					// These document types are system document types and should not be set by the user
-					return q.WhereGroup("AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return sq.Where(
-							cols.Code.NotIn(),
-							bun.List([]string{"INVOICE", "CREDITMEMO", "DEBITMEMO"}),
-						)
-					})
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }

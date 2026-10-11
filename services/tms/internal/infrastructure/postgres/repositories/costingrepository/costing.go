@@ -108,38 +108,39 @@ func (r *repository) createDefaults(
 	req *costingcontrolports.GetCostingControlRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		return r.db.DBForContext(ctx).RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-			control := &costingcontrol.CostingControl{
-				BusinessUnitID:       req.TenantInfo.BuID,
-				OrganizationID:       req.TenantInfo.OrgID,
-				UseLiveFuelPrice:     false,
-				MilesPerGallon:       costingcontrol.DefaultMilesPerGallon(),
-				IncludeDeadheadMiles: true,
-				GLRollingMonths:      3,
-			}
+		return r.db.DBForContext(ctx).
+			RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
+				control := &costingcontrol.CostingControl{
+					BusinessUnitID:       req.TenantInfo.BuID,
+					OrganizationID:       req.TenantInfo.OrgID,
+					UseLiveFuelPrice:     false,
+					MilesPerGallon:       costingcontrol.DefaultMilesPerGallon(),
+					IncludeDeadheadMiles: true,
+					GLRollingMonths:      3,
+				}
 
-			result, err := tx.NewInsert().
-				Model(control).
-				On("CONFLICT (organization_id) DO NOTHING").
-				Exec(txCtx)
-			if err != nil {
+				result, err := tx.NewInsert().
+					Model(control).
+					On("CONFLICT (organization_id) DO NOTHING").
+					Exec(txCtx)
+				if err != nil {
+					return err
+				}
+
+				if rows, rowsErr := result.RowsAffected(); rowsErr == nil && rows == 0 {
+					return nil
+				}
+
+				categories := costingcontrol.DefaultCategories()
+				for _, category := range categories {
+					category.BusinessUnitID = req.TenantInfo.BuID
+					category.OrganizationID = req.TenantInfo.OrgID
+					category.CostingControlID = control.ID
+				}
+
+				_, err = tx.NewInsert().Model(&categories).Exec(txCtx)
 				return err
-			}
-
-			if rows, rowsErr := result.RowsAffected(); rowsErr == nil && rows == 0 {
-				return nil
-			}
-
-			categories := costingcontrol.DefaultCategories()
-			for _, category := range categories {
-				category.BusinessUnitID = req.TenantInfo.BuID
-				category.OrganizationID = req.TenantInfo.OrgID
-				category.CostingControlID = control.ID
-			}
-
-			_, err = tx.NewInsert().Model(&categories).Exec(txCtx)
-			return err
-		})
+			})
 	})
 }
 
@@ -168,7 +169,11 @@ func (r *repository) Update(
 			return nil, err
 		}
 
-		if err = dberror.CheckRowsAffected(result, "CostingControl", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			result,
+			"CostingControl",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -202,7 +207,11 @@ func (r *repository) UpdateCategory(
 			return nil, err
 		}
 
-		if err = dberror.CheckRowsAffected(result, "CostCategory", category.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			result,
+			"CostCategory",
+			category.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -220,33 +229,34 @@ func (r *repository) ReplaceCategoryGLAccounts(
 			zap.String("categoryID", req.CostCategoryID.String()),
 		)
 
-		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-			if _, err := tx.NewDelete().
-				Model((*costingcontrol.CostCategoryGLAccount)(nil)).
-				Where("ccga.cost_category_id = ?", req.CostCategoryID).
-				Where("ccga.organization_id = ?", req.TenantInfo.OrgID).
-				Where("ccga.business_unit_id = ?", req.TenantInfo.BuID).
-				Exec(txCtx); err != nil {
+		err := r.db.DBForContext(ctx).
+			RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
+				if _, err := tx.NewDelete().
+					Model((*costingcontrol.CostCategoryGLAccount)(nil)).
+					Where("ccga.cost_category_id = ?", req.CostCategoryID).
+					Where("ccga.organization_id = ?", req.TenantInfo.OrgID).
+					Where("ccga.business_unit_id = ?", req.TenantInfo.BuID).
+					Exec(txCtx); err != nil {
+					return err
+				}
+
+				if len(req.GLAccountIDs) == 0 {
+					return nil
+				}
+
+				links := make([]*costingcontrol.CostCategoryGLAccount, 0, len(req.GLAccountIDs))
+				for _, glAccountID := range req.GLAccountIDs {
+					links = append(links, &costingcontrol.CostCategoryGLAccount{
+						BusinessUnitID: req.TenantInfo.BuID,
+						OrganizationID: req.TenantInfo.OrgID,
+						CostCategoryID: req.CostCategoryID,
+						GLAccountID:    glAccountID,
+					})
+				}
+
+				_, err := tx.NewInsert().Model(&links).Exec(txCtx)
 				return err
-			}
-
-			if len(req.GLAccountIDs) == 0 {
-				return nil
-			}
-
-			links := make([]*costingcontrol.CostCategoryGLAccount, 0, len(req.GLAccountIDs))
-			for _, glAccountID := range req.GLAccountIDs {
-				links = append(links, &costingcontrol.CostCategoryGLAccount{
-					BusinessUnitID: req.TenantInfo.BuID,
-					OrganizationID: req.TenantInfo.OrgID,
-					CostCategoryID: req.CostCategoryID,
-					GLAccountID:    glAccountID,
-				})
-			}
-
-			_, err := tx.NewInsert().Model(&links).Exec(txCtx)
-			return err
-		})
+			})
 		if err != nil {
 			log.Error("failed to replace cost category GL accounts", zap.Error(err))
 			return err

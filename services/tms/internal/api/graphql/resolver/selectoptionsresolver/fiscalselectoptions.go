@@ -56,10 +56,13 @@ func (r *Deps) resolveFiscalPeriodSelectOptions(
 	if len(req.IDs) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.IDs))
 		for _, id := range req.IDs {
-			entity, err := r.FiscalPeriodRepo.GetByID(ctx, fiscalperiodports.GetFiscalPeriodByIDRequest{
-				ID:         id,
-				TenantInfo: req.TenantInfo,
-			})
+			entity, err := r.FiscalPeriodRepo.GetByID(
+				ctx,
+				fiscalperiodports.GetFiscalPeriodByIDRequest{
+					ID:         id,
+					TenantInfo: req.TenantInfo,
+				},
+			)
 			if err != nil {
 				return nil, err
 			}

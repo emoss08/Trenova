@@ -5,9 +5,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,33 +41,37 @@ func (r *repository) List(
 	ctx context.Context,
 	req *shipmentports.ListAssignmentsRequest,
 ) (*pagination.ListResult[*shipment.Assignment], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*shipment.Assignment], error) {
-		entities := make([]*shipment.Assignment, 0, req.Filter.Pagination.SafeLimit())
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*shipment.Assignment], error) {
+			entities := make([]*shipment.Assignment, 0, req.Filter.Pagination.SafeLimit())
 
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where("a.organization_id = ?", req.Filter.TenantInfo.OrgID).
-			Where("a.business_unit_id = ?", req.Filter.TenantInfo.BuID).
-			Where("a.archived_at IS NULL").
-			Relation("ShipmentMove").
-			Relation("Tractor").
-			Relation("Trailer").
-			Relation("PrimaryWorker").
-			Relation("SecondaryWorker").
-			Order("a.created_at DESC").
-			Limit(req.Filter.Pagination.Limit).
-			Offset(req.Filter.Pagination.Offset).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Where("a.organization_id = ?", req.Filter.TenantInfo.OrgID).
+				Where("a.business_unit_id = ?", req.Filter.TenantInfo.BuID).
+				Where("a.archived_at IS NULL").
+				Relation("ShipmentMove").
+				Relation("Tractor").
+				Relation("Trailer").
+				Relation("PrimaryWorker").
+				Relation("SecondaryWorker").
+				Order("a.created_at DESC").
+				Limit(req.Filter.Pagination.Limit).
+				Offset(req.Filter.Pagination.Offset).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*shipment.Assignment]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*shipment.Assignment]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -335,42 +339,46 @@ func (r *repository) findNearestActualEvent(
 	column string,
 	resourceID pulid.ID,
 ) (*shipmentports.ActualTimelineEvent, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipmentports.ActualTimelineEvent, error) {
-		event := new(shipmentports.ActualTimelineEvent)
-		comparison := "<="
-		order := "event.timestamp DESC"
-		if req.Direction == shipmentports.ActualTimelineDirectionNext {
-			comparison = ">="
-			order = "event.timestamp ASC"
-		}
-
-		actualEvent := r.buildAssignedActualTimelineEventQuery(
-			ctx,
-			req.TenantInfo,
-			column,
-			resourceID,
-		)
-
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			With("actual_event", actualEvent).
-			TableExpr("actual_event AS event").
-			Column("event.timestamp", "event.event_type", "event.stop_id", "event.shipment_move_id", "event.shipment_id", "event.location_name").
-			Where("event.timestamp "+comparison+" ?", req.Timestamp)
-
-		if !req.ExcludeShipmentID.IsNil() {
-			query = query.Where("event.shipment_id != ?", req.ExcludeShipmentID)
-		}
-
-		if err := query.OrderExpr(order).Limit(1).Scan(ctx, event); err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*shipmentports.ActualTimelineEvent, error) {
+			event := new(shipmentports.ActualTimelineEvent)
+			comparison := "<="
+			order := "event.timestamp DESC"
+			if req.Direction == shipmentports.ActualTimelineDirectionNext {
+				comparison = ">="
+				order = "event.timestamp ASC"
 			}
-			return nil, err
-		}
 
-		return event, nil
-	})
+			actualEvent := r.buildAssignedActualTimelineEventQuery(
+				ctx,
+				req.TenantInfo,
+				column,
+				resourceID,
+			)
+
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				With("actual_event", actualEvent).
+				TableExpr("actual_event AS event").
+				Column("event.timestamp", "event.event_type", "event.stop_id", "event.shipment_move_id", "event.shipment_id", "event.location_name").
+				Where("event.timestamp "+comparison+" ?", req.Timestamp)
+
+			if !req.ExcludeShipmentID.IsNil() {
+				query = query.Where("event.shipment_id != ?", req.ExcludeShipmentID)
+			}
+
+			if err := query.OrderExpr(order).Limit(1).Scan(ctx, event); err != nil {
+				if dberror.IsNotFoundError(err) {
+					return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
+				}
+				return nil, err
+			}
+
+			return event, nil
+		},
+	)
 }
 
 func (r *repository) findOverlappingActualWindow(
@@ -379,40 +387,46 @@ func (r *repository) findOverlappingActualWindow(
 	column string,
 	resourceID pulid.ID,
 ) (*shipmentports.ActualTimelineWindow, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipmentports.ActualTimelineWindow, error) {
-		window := new(shipmentports.ActualTimelineWindow)
-		actualEvent := r.buildAssignedActualTimelineEventQuery(
-			ctx,
-			req.TenantInfo,
-			column,
-			resourceID,
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*shipmentports.ActualTimelineWindow, error) {
+			window := new(shipmentports.ActualTimelineWindow)
+			actualEvent := r.buildAssignedActualTimelineEventQuery(
+				ctx,
+				req.TenantInfo,
+				column,
+				resourceID,
+			)
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			With("actual_event", actualEvent).
-			TableExpr("actual_event AS event").
-			ColumnExpr("MIN(event.timestamp) AS start_timestamp").
-			ColumnExpr("MAX(event.timestamp) AS end_timestamp").
-			ColumnExpr("event.shipment_move_id").
-			ColumnExpr("event.shipment_id").
-			GroupExpr("event.shipment_move_id, event.shipment_id").
-			Having("MIN(event.timestamp) <= ?", req.Timestamp).
-			Having("MAX(event.timestamp) >= ?", req.Timestamp)
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				With("actual_event", actualEvent).
+				TableExpr("actual_event AS event").
+				ColumnExpr("MIN(event.timestamp) AS start_timestamp").
+				ColumnExpr("MAX(event.timestamp) AS end_timestamp").
+				ColumnExpr("event.shipment_move_id").
+				ColumnExpr("event.shipment_id").
+				GroupExpr("event.shipment_move_id, event.shipment_id").
+				Having("MIN(event.timestamp) <= ?", req.Timestamp).
+				Having("MAX(event.timestamp) >= ?", req.Timestamp)
 
-		if !req.ExcludeShipmentID.IsNil() {
-			query = query.Where("event.shipment_id != ?", req.ExcludeShipmentID)
-		}
-
-		if err := query.OrderExpr("MIN(event.timestamp) DESC").Limit(1).Scan(ctx, window); err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
+			if !req.ExcludeShipmentID.IsNil() {
+				query = query.Where("event.shipment_id != ?", req.ExcludeShipmentID)
 			}
-			return nil, err
-		}
 
-		return window, nil
-	})
+			if err := query.OrderExpr("MIN(event.timestamp) DESC").
+				Limit(1).
+				Scan(ctx, window); err != nil {
+				if dberror.IsNotFoundError(err) {
+					return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
+				}
+				return nil, err
+			}
+
+			return window, nil
+		},
+	)
 }
 
 func (r *repository) buildAssignedActualTimelineEventQuery(

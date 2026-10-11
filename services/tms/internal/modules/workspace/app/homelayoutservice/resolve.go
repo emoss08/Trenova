@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/homelayoutports"
 	"go.uber.org/zap"
 )

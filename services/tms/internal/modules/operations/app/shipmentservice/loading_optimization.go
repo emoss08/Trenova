@@ -7,10 +7,10 @@ import (
 	"math"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -56,10 +56,13 @@ func (s *service) CalculateLoadingOptimization(
 	trailerLength := defaultTrailerLengthFeet
 	deckHeightFeet := req.DeckHeightFeet
 	if req.EquipmentTypeID != nil && !req.EquipmentTypeID.IsNil() {
-		et, etErr := s.equipmentTypeRepo.GetByID(ctx, equipmenttypeports.GetEquipmentTypeByIDRequest{
-			ID:         *req.EquipmentTypeID,
-			TenantInfo: req.TenantInfo,
-		})
+		et, etErr := s.equipmentTypeRepo.GetByID(
+			ctx,
+			equipmenttypeports.GetEquipmentTypeByIDRequest{
+				ID:         *req.EquipmentTypeID,
+				TenantInfo: req.TenantInfo,
+			},
+		)
 		if etErr == nil && et.InteriorLength != nil && *et.InteriorLength > 0 {
 			trailerLength = *et.InteriorLength
 		}

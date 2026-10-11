@@ -152,10 +152,13 @@ func (s *Service) usableAgent(
 	actor *permissionports.RequestActor,
 	tenant pagination.TenantInfo,
 ) (*agentdefinition.Definition, error) {
-	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         id,
-		TenantInfo: tenant,
-	})
+	definition, err := s.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         id,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

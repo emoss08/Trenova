@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 )
@@ -385,14 +385,17 @@ func (t *getAccountingMappingTool) Query(
 	if search == "" {
 		return detail, nil
 	}
-	refs, err := t.mappings.SearchReference(ctx, &accountingsyncports.SearchAccountingReferenceRequest{
-		TenantInfo:      find.TenantInfo,
-		IntegrationType: system,
-		Kind:            row.ProviderKind,
-		Query:           search,
-		UsableOnly:      true,
-		Limit:           mappingOptionsLimit,
-	})
+	refs, err := t.mappings.SearchReference(
+		ctx,
+		&accountingsyncports.SearchAccountingReferenceRequest{
+			TenantInfo:      find.TenantInfo,
+			IntegrationType: system,
+			Kind:            row.ProviderKind,
+			Query:           search,
+			UsableOnly:      true,
+			Limit:           mappingOptionsLimit,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -5,9 +5,9 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -72,7 +72,11 @@ func (s *Service) PrepareDryRun(
 	case prompt == "":
 		multiErr.Add("prompt", errortypes.ErrRequired, "Enter a message to try the agent with")
 	case utf8.RuneCountInString(prompt) > agentdefinition.MaxTestPromptRunes:
-		multiErr.Add("prompt", errortypes.ErrInvalidLength, "A message cannot be longer than 2000 characters")
+		multiErr.Add(
+			"prompt",
+			errortypes.ErrInvalidLength,
+			"A message cannot be longer than 2000 characters",
+		)
 	}
 	if req.Definition == nil {
 		multiErr.Add("definition", errortypes.ErrRequired, "A dry run needs the agent it tries")

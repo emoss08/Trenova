@@ -6,12 +6,12 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
@@ -49,11 +49,14 @@ func (s *Service) Evaluate(
 		return result, nil
 	}
 
-	inFlight, err := s.records.CountInFlight(ctx, &accountingsyncports.CountAccountingSyncInFlightRequest{
-		TenantInfo:   req.TenantInfo,
-		ConnectionID: conn.ID,
-		ObjectTypes:  echoTypes(),
-	})
+	inFlight, err := s.records.CountInFlight(
+		ctx,
+		&accountingsyncports.CountAccountingSyncInFlightRequest{
+			TenantInfo:   req.TenantInfo,
+			ConnectionID: conn.ID,
+			ObjectTypes:  echoTypes(),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -440,18 +443,22 @@ func (s *Service) execute(
 	}
 
 	if change.AmountMinor > 0 {
-		payment, err := s.customerPayments.PostAndApply(ctx, &customerpaymentports.PostCustomerPaymentRequest{
-			CustomerID:      p.customerID,
-			PaymentDate:     p.paidAt,
-			AccountingDate:  p.paidAt,
-			AmountMinor:     change.AmountMinor,
-			PaymentMethod:   customerpayment.Method(p.method),
-			ReferenceNumber: referenceOf(change),
-			Memo:            paymentMemoPrefix + p.provider + " as " + paymentName(p),
-			CurrencyCode:    change.CurrencyCode,
-			Applications:    p.cash,
-			TenantInfo:      tenant,
-		}, actor)
+		payment, err := s.customerPayments.PostAndApply(
+			ctx,
+			&customerpaymentports.PostCustomerPaymentRequest{
+				CustomerID:      p.customerID,
+				PaymentDate:     p.paidAt,
+				AccountingDate:  p.paidAt,
+				AmountMinor:     change.AmountMinor,
+				PaymentMethod:   customerpayment.Method(p.method),
+				ReferenceNumber: referenceOf(change),
+				Memo:            paymentMemoPrefix + p.provider + " as " + paymentName(p),
+				CurrencyCode:    change.CurrencyCode,
+				Applications:    p.cash,
+				TenantInfo:      tenant,
+			},
+			actor,
+		)
 		if err != nil {
 			return nil, err
 		}

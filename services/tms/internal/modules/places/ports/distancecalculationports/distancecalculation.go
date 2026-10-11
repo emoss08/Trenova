@@ -3,8 +3,8 @@ package distancecalculationports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/places/domain/distancecalculation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distancecalculation"
 )
 
 type DistanceCalculationRepository interface {

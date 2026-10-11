@@ -91,8 +91,10 @@ func Findings(in FindingInput) []*Issue {
 			CheckKey:   CheckCharges,
 			Code:       IssueDetentionAwaitingApproval,
 			SubjectKey: hold.OccurrenceID.String(),
-			Summary:    FormatMoney(hold.BillableAmount) + " detention" + where + " waits on an approver",
-			Reasoning:  "The item can't be approved until this detention charge is approved or dropped on the shipment.",
+			Summary: FormatMoney(
+				hold.BillableAmount,
+			) + " detention" + where + " waits on an approver",
+			Reasoning: "The item can't be approved until this detention charge is approved or dropped on the shipment.",
 		})
 	}
 

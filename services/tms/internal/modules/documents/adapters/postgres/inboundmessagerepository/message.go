@@ -71,76 +71,91 @@ func (r *repository) List(
 	ctx context.Context,
 	req *inboundmessageports.ListInboundMessagesRequest,
 ) (*pagination.ListResult[*inboundmessage.InboundMessage], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*inboundmessage.InboundMessage], error) {
-		entities := make([]*inboundmessage.InboundMessage, 0, req.Filter.Pagination.SafeLimit())
-		cols := inboundmessagecol.InboundMessageColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*inboundmessage.InboundMessage], error) {
+			entities := make([]*inboundmessage.InboundMessage, 0, req.Filter.Pagination.SafeLimit())
+			cols := inboundmessagecol.InboundMessageColumns
 
-		query := narrow(
-			r.db.DBForContext(ctx).NewSelect().Model(&entities).Relation("Mailbox"),
-			req,
-		)
+			query := narrow(
+				r.db.DBForContext(ctx).NewSelect().Model(&entities).Relation("Mailbox"),
+				req,
+			)
 
-		total, err := querybuilder.ApplyFilters(
-			query, "imsg", req.Filter, (*inboundmessage.InboundMessage)(nil),
-		).
-			Order(cols.ReceivedAt.OrderDesc()).
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := querybuilder.ApplyFilters(
+				query, "imsg", req.Filter, (*inboundmessage.InboundMessage)(nil),
+			).
+				Order(cols.ReceivedAt.OrderDesc()).
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*inboundmessage.InboundMessage]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*inboundmessage.InboundMessage]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) ListCursor(
 	ctx context.Context,
 	req *inboundmessageports.ListInboundMessagesRequest,
 ) (*pagination.CursorListResult[*inboundmessage.InboundMessage], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*inboundmessage.InboundMessage], error) {
-		dba := r.db.DBForContext(ctx)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*inboundmessage.InboundMessage], error) {
+			dba := r.db.DBForContext(ctx)
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*inboundmessage.InboundMessage)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return narrow(querybuilder.ApplyFiltersWithoutSort(
-						sq, "imsg", req.Filter, (*inboundmessage.InboundMessage)(nil),
-					), req)
-				}).
-				Count(ctx)
-			if err != nil {
-				return nil, err
-			}
-			totalCount = &total
-		}
-
-		return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*inboundmessage.InboundMessage]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*inboundmessage.InboundMessage) *bun.SelectQuery {
-				return dba.NewSelect().Model(entities).Relation("Mailbox")
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				sq, applyErr := querybuilder.ApplyCursorFilters(
-					sq, "imsg", req.Filter, req.Cursor, (*inboundmessage.InboundMessage)(nil),
-				)
-				if applyErr != nil {
-					return sq, applyErr
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*inboundmessage.InboundMessage)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return narrow(querybuilder.ApplyFiltersWithoutSort(
+							sq, "imsg", req.Filter, (*inboundmessage.InboundMessage)(nil),
+						), req)
+					}).
+					Count(ctx)
+				if err != nil {
+					return nil, err
 				}
+				totalCount = &total
+			}
 
-				return narrow(sq, req), nil
-			},
-		})
-	})
+			return dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*inboundmessage.InboundMessage]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*inboundmessage.InboundMessage) *bun.SelectQuery {
+						return dba.NewSelect().Model(entities).Relation("Mailbox")
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						sq, applyErr := querybuilder.ApplyCursorFilters(
+							sq,
+							"imsg",
+							req.Filter,
+							req.Cursor,
+							(*inboundmessage.InboundMessage)(nil),
+						)
+						if applyErr != nil {
+							return sq, applyErr
+						}
+
+						return narrow(sq, req), nil
+					},
+				},
+			)
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -253,7 +268,11 @@ func (r *repository) Update(
 
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, "InboundMessage", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"InboundMessage",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -267,24 +286,28 @@ func (r *repository) UpdateAttachment(
 	ctx context.Context,
 	entity *inboundmessage.InboundAttachment,
 ) (*inboundmessage.InboundAttachment, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*inboundmessage.InboundAttachment, error) {
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(
-			results, "InboundAttachment", entity.ID.String(),
-		); err != nil {
-			return nil, err
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*inboundmessage.InboundAttachment, error) {
+			results, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(entity).
+				WherePK().
+				Returning("*").
+				Exec(ctx)
+			if err != nil {
+				return nil, err
+			}
+			if err = dberror.CheckRowsAffected(
+				results, "InboundAttachment", entity.ID.String(),
+			); err != nil {
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) ListAttachments(
@@ -292,22 +315,26 @@ func (r *repository) ListAttachments(
 	messageID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) ([]*inboundmessage.InboundAttachment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*inboundmessage.InboundAttachment, error) {
-		entities := make([]*inboundmessage.InboundAttachment, 0, 4)
-		cols := inboundmessagecol.InboundAttachmentColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*inboundmessage.InboundAttachment, error) {
+			entities := make([]*inboundmessage.InboundAttachment, 0, 4)
+			cols := inboundmessagecol.InboundAttachmentColumns
 
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where(cols.MessageID.Eq(), messageID).
-			Apply(inboundmessagecol.InboundAttachmentApplyTenant(tenantInfo)).
-			Order(cols.CreatedAt.OrderAsc()).
-			Scan(ctx); err != nil {
-			return nil, err
-		}
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Where(cols.MessageID.Eq(), messageID).
+				Apply(inboundmessagecol.InboundAttachmentApplyTenant(tenantInfo)).
+				Order(cols.CreatedAt.OrderAsc()).
+				Scan(ctx); err != nil {
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 // CountBreakdown is the inbox's census in one aggregate: a row per status,
@@ -318,15 +345,26 @@ func (r *repository) CountBreakdown(
 	ctx context.Context,
 	req inboundmessageports.CountInboundMessagesRequest,
 ) ([]inboundmessageports.InboundMessageCount, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]inboundmessageports.InboundMessageCount, error) {
-		rows := make([]inboundmessageports.InboundMessageCount, 0, len(inboundmessage.AllStatuses()))
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]inboundmessageports.InboundMessageCount, error) {
+			rows := make(
+				[]inboundmessageports.InboundMessageCount,
+				0,
+				len(inboundmessage.AllStatuses()),
+			)
 
-		if err := countBreakdownQuery(r.db.DBForContext(ctx), req).Scan(ctx, &rows); err != nil {
-			return nil, err
-		}
+			if err := countBreakdownQuery(
+				r.db.DBForContext(ctx),
+				req,
+			).Scan(ctx, &rows); err != nil {
+				return nil, err
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
 func countBreakdownQuery(
@@ -399,31 +437,35 @@ func (r *repository) ListRecentForReview(
 	ctx context.Context,
 	req inboundmessageports.ListRecentInboundMessagesForReviewRequest,
 ) ([]*inboundmessage.InboundMessage, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
-		limit := req.Limit
-		if limit <= 0 {
-			limit = 10
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
+			limit := req.Limit
+			if limit <= 0 {
+				limit = 10
+			}
 
-		entities := make([]*inboundmessage.InboundMessage, 0, limit)
-		cols := inboundmessagecol.InboundMessageColumns
+			entities := make([]*inboundmessage.InboundMessage, 0, limit)
+			cols := inboundmessagecol.InboundMessageColumns
 
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where(cols.Status.In(), bun.In([]inboundmessage.Status{
-				inboundmessage.StatusInReview,
-				inboundmessage.StatusQuarantined,
-			})).
-			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-			Order(cols.ReceivedAt.OrderDesc()).
-			Limit(limit).
-			Scan(ctx); err != nil {
-			return nil, err
-		}
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Where(cols.Status.In(), bun.In([]inboundmessage.Status{
+					inboundmessage.StatusInReview,
+					inboundmessage.StatusQuarantined,
+				})).
+				Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
+				Order(cols.ReceivedAt.OrderDesc()).
+				Limit(limit).
+				Scan(ctx); err != nil {
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 // DeleteBefore removes messages that are finished with and old enough.
@@ -469,14 +511,22 @@ func (r *repository) ListSettledBefore(
 	ctx context.Context,
 	req inboundmessageports.ListSettledInboundMessagesRequest,
 ) ([]*inboundmessage.InboundMessage, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
-		entities := make([]*inboundmessage.InboundMessage, 0, req.Limit)
-		if err := settledBeforeQuery(r.db.DBForContext(ctx), req, &entities).Scan(ctx); err != nil {
-			return nil, err
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
+			entities := make([]*inboundmessage.InboundMessage, 0, req.Limit)
+			if err := settledBeforeQuery(
+				r.db.DBForContext(ctx),
+				req,
+				&entities,
+			).Scan(ctx); err != nil {
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func settledBeforeQuery(
@@ -529,7 +579,10 @@ func (r *repository) DeleteByIDs(
 	})
 }
 
-func deleteByIDsQuery(db bun.IDB, req inboundmessageports.DeleteInboundMessagesRequest) *bun.DeleteQuery {
+func deleteByIDsQuery(
+	db bun.IDB,
+	req inboundmessageports.DeleteInboundMessagesRequest,
+) *bun.DeleteQuery {
 	cols := inboundmessagecol.InboundMessageColumns
 
 	return db.NewDelete().

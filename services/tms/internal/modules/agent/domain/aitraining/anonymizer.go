@@ -208,7 +208,11 @@ func (p *pseudonymizer) applyKnown(text string, value *knownValue) string {
 		switch value.category {
 		case categoryParty:
 			base := text[match[2]:match[3]]
-			name := p.surrogate(categoryParty, value.key, func() string { return companySurrogate(p.rng) })
+			name := p.surrogate(
+				categoryParty,
+				value.key,
+				func() string { return companySurrogate(p.rng) },
+			)
 			return p.hold(styleLike(name, base) + text[match[3]:match[1]])
 		case categoryPerson:
 			return p.hold(styleLike(p.surrogate(categoryPerson, value.key, p.person), original))
@@ -244,7 +248,11 @@ func (p *pseudonymizer) postal(five, extension string) string {
 }
 
 func (p *pseudonymizer) identifier(key, original string) string {
-	value := p.surrogate(categoryIdentifier, key, func() string { return shapeSurrogate(p.rng, key) })
+	value := p.surrogate(
+		categoryIdentifier,
+		key,
+		func() string { return shapeSurrogate(p.rng, key) },
+	)
 
 	return reshape(original, value)
 }
@@ -284,7 +292,10 @@ func (p *pseudonymizer) money(original string, amount decimal.Decimal) string {
 	return prefix + rendered
 }
 
-func (p *pseudonymizer) snapshot(snapshot *aicorrection.Snapshot, known []*knownValue) *ExampleSnapshot {
+func (p *pseudonymizer) snapshot(
+	snapshot *aicorrection.Snapshot,
+	known []*knownValue,
+) *ExampleSnapshot {
 	out := &ExampleSnapshot{Fields: map[string]string{}, Stops: []ExampleStop{}}
 	if snapshot == nil {
 		return out
@@ -430,7 +441,8 @@ func moneyBounded(text string, start, end int) bool {
 			}
 		}
 	}
-	if end+1 < len(text) && (text[end] == '.' || text[end] == ',') && isDigitRune(rune(text[end+1])) {
+	if end+1 < len(text) && (text[end] == '.' || text[end] == ',') &&
+		isDigitRune(rune(text[end+1])) {
 		return false
 	}
 

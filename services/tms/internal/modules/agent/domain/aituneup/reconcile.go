@@ -84,7 +84,8 @@ func expired(stored *TuneUp, now int64) bool {
 	case StatusDismissed:
 		return stored.DismissedUntil == nil || *stored.DismissedUntil <= now
 	case StatusApplied:
-		return stored.DecidedAt == nil || now-*stored.DecidedAt >= AppliedRetentionDays*secondsPerDay
+		return stored.DecidedAt == nil ||
+			now-*stored.DecidedAt >= AppliedRetentionDays*secondsPerDay
 	default:
 		return true
 	}

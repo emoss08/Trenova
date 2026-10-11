@@ -232,10 +232,13 @@ func (s *Service) AgentQuality(
 		return nil, err
 	}
 
-	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         req.AgentDefinitionID,
-		TenantInfo: req.TenantInfo,
-	})
+	definition, err := s.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         req.AgentDefinitionID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -318,12 +321,15 @@ func (s *Service) fillRatings(
 	for _, day := range days {
 		positive += day.Positive
 		negative += day.Negative
-		detail.SatisfactionPoints = append(detail.SatisfactionPoints, &aifeedbackports.AgentFeedbackDay{
-			Day:          day.Day,
-			Positive:     day.Positive,
-			Negative:     day.Negative,
-			Satisfaction: satisfaction(day.Positive, day.Negative),
-		})
+		detail.SatisfactionPoints = append(
+			detail.SatisfactionPoints,
+			&aifeedbackports.AgentFeedbackDay{
+				Day:          day.Day,
+				Positive:     day.Positive,
+				Negative:     day.Negative,
+				Satisfaction: satisfaction(day.Positive, day.Negative),
+			},
+		)
 	}
 	detail.Ratings = positive + negative
 	detail.Satisfaction = satisfaction(positive, negative)
@@ -391,10 +397,13 @@ func (s *Service) agentNames(
 		return names, nil
 	}
 
-	definitions, err := s.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
-		IDs:        ids,
-		TenantInfo: tenant,
-	})
+	definitions, err := s.definitions.ListByIDs(
+		ctx,
+		agentdefinitionports.ListAgentDefinitionsByIDsRequest{
+			IDs:        ids,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

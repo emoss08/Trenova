@@ -5,24 +5,24 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -469,16 +469,19 @@ func (s *Service) Locate( //nolint:gocognit // legacy workflow
 		); err != nil {
 			return err
 		}
-		result, err = s.continuityRepo.Advance(txCtx, equipmentcontinuityports.CreateEquipmentContinuityRequest{
-			TenantInfo:           req.TenantInfo,
-			EquipmentType:        equipmentcontinuity.EquipmentTypeTrailer,
-			EquipmentID:          req.TrailerID,
-			CurrentLocationID:    req.NewLocationID,
-			SourceType:           equipmentcontinuity.SourceTypeManualLocate,
-			SourceShipmentID:     updatedShipment.ID,
-			SourceShipmentMoveID: newMove.ID,
-			SourceAssignmentID:   newAssignment.ID,
-		})
+		result, err = s.continuityRepo.Advance(
+			txCtx,
+			equipmentcontinuityports.CreateEquipmentContinuityRequest{
+				TenantInfo:           req.TenantInfo,
+				EquipmentType:        equipmentcontinuity.EquipmentTypeTrailer,
+				EquipmentID:          req.TrailerID,
+				CurrentLocationID:    req.NewLocationID,
+				SourceType:           equipmentcontinuity.SourceTypeManualLocate,
+				SourceShipmentID:     updatedShipment.ID,
+				SourceShipmentMoveID: newMove.ID,
+				SourceAssignmentID:   newAssignment.ID,
+			},
+		)
 		return err
 	})
 	if err != nil {

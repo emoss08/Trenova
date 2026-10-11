@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -369,7 +369,10 @@ func (s *Service) DecideMany(
 
 // checkBatch refuses a batch before anything in it is decided: one that
 // names a proposal twice, a plan's step, or more than one tool.
-func (s *Service) checkBatch(ctx context.Context, req *agentports.DecideAgentProposalsRequest) error {
+func (s *Service) checkBatch(
+	ctx context.Context,
+	req *agentports.DecideAgentProposalsRequest,
+) error {
 	if err := validateBatch(req); err != nil {
 		return err
 	}

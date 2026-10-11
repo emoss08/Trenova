@@ -3,10 +3,10 @@ package customfieldvaluerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -74,42 +74,46 @@ func (r *repository) GetByResources(
 	ctx context.Context,
 	req *customfieldports.GetCustomFieldValuesByResourcesRequest,
 ) (map[string][]*customfield.CustomFieldValue, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[string][]*customfield.CustomFieldValue, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByResources"),
-			zap.String("resourceType", req.ResourceType),
-			zap.Int("resourceCount", len(req.ResourceIDs)),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[string][]*customfield.CustomFieldValue, error) {
+			log := r.l.With(
+				zap.String("operation", "GetByResources"),
+				zap.String("resourceType", req.ResourceType),
+				zap.Int("resourceCount", len(req.ResourceIDs)),
+			)
 
-		if len(req.ResourceIDs) == 0 {
-			return make(map[string][]*customfield.CustomFieldValue), nil
-		}
+			if len(req.ResourceIDs) == 0 {
+				return make(map[string][]*customfield.CustomFieldValue), nil
+			}
 
-		values := make([]*customfield.CustomFieldValue, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&values).
-			Relation("Definition").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where("cfv.organization_id = ?", req.TenantInfo.OrgID).
-					Where("cfv.business_unit_id = ?", req.TenantInfo.BuID).
-					Where("cfv.resource_type = ?", req.ResourceType).
-					Where("cfv.resource_id IN (?)", bun.List(req.ResourceIDs))
-			}).
-			Scan(ctx)
-		if err != nil {
-			log.Error("failed to get custom field values for resources", zap.Error(err))
-			return nil, err
-		}
+			values := make([]*customfield.CustomFieldValue, 0)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&values).
+				Relation("Definition").
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.
+						Where("cfv.organization_id = ?", req.TenantInfo.OrgID).
+						Where("cfv.business_unit_id = ?", req.TenantInfo.BuID).
+						Where("cfv.resource_type = ?", req.ResourceType).
+						Where("cfv.resource_id IN (?)", bun.List(req.ResourceIDs))
+				}).
+				Scan(ctx)
+			if err != nil {
+				log.Error("failed to get custom field values for resources", zap.Error(err))
+				return nil, err
+			}
 
-		result := make(map[string][]*customfield.CustomFieldValue)
-		for _, v := range values {
-			result[v.ResourceID] = append(result[v.ResourceID], v)
-		}
+			result := make(map[string][]*customfield.CustomFieldValue)
+			for _, v := range values {
+				result[v.ResourceID] = append(result[v.ResourceID], v)
+			}
 
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) Upsert(
@@ -125,11 +129,14 @@ func (r *repository) Upsert(
 		)
 
 		if len(req.Values) == 0 {
-			if err := r.DeleteByResource(ctx, &customfieldports.GetCustomFieldValuesByResourceRequest{
-				TenantInfo:   req.TenantInfo,
-				ResourceType: req.ResourceType,
-				ResourceID:   req.ResourceID,
-			}); err != nil {
+			if err := r.DeleteByResource(
+				ctx,
+				&customfieldports.GetCustomFieldValuesByResourceRequest{
+					TenantInfo:   req.TenantInfo,
+					ResourceType: req.ResourceType,
+					ResourceID:   req.ResourceID,
+				},
+			); err != nil {
 				return err
 			}
 			return nil

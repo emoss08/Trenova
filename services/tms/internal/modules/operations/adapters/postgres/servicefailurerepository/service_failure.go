@@ -45,45 +45,49 @@ func (r *repository) List(
 	ctx context.Context,
 	req *servicefailureports.ListServiceFailuresRequest,
 ) (*pagination.ListResult[*servicefailure.ServiceFailure], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*servicefailure.ServiceFailure], error) {
-		req.EnsureFilter()
-		if req.Filter.Pagination.Limit <= 0 {
-			req.Filter.Pagination.Limit = 50
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*servicefailure.ServiceFailure], error) {
+			req.EnsureFilter()
+			if req.Filter.Pagination.Limit <= 0 {
+				req.Filter.Pagination.Limit = 50
+			}
 
-		entities := make([]*servicefailure.ServiceFailure, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-				q = querybuilder.ApplyFilters(
-					q,
-					"sf",
-					req.Filter,
-					(*servicefailure.ServiceFailure)(nil),
-				)
-				if req.ShipmentID.IsNotNil() {
-					q = q.Where("sf.shipment_id = ?", req.ShipmentID)
-				}
-				return q.Limit(req.Filter.Pagination.SafeLimit()).
-					Offset(req.Filter.Pagination.SafeOffset())
-			}).
-			Relation("ReasonCode").
-			Relation("Shipment").
-			Relation("Stop").
-			Relation("Stop.Location").
-			Relation("Stop.Location.State").
-			Order("sf.created_at DESC").
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("list service failures: %w", err)
-		}
+			entities := make([]*servicefailure.ServiceFailure, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
+					q = querybuilder.ApplyFilters(
+						q,
+						"sf",
+						req.Filter,
+						(*servicefailure.ServiceFailure)(nil),
+					)
+					if req.ShipmentID.IsNotNil() {
+						q = q.Where("sf.shipment_id = ?", req.ShipmentID)
+					}
+					return q.Limit(req.Filter.Pagination.SafeLimit()).
+						Offset(req.Filter.Pagination.SafeOffset())
+				}).
+				Relation("ReasonCode").
+				Relation("Shipment").
+				Relation("Stop").
+				Relation("Stop.Location").
+				Relation("Stop.Location.State").
+				Order("sf.created_at DESC").
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list service failures: %w", err)
+			}
 
-		return &pagination.ListResult[*servicefailure.ServiceFailure]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*servicefailure.ServiceFailure]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -130,57 +134,61 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *servicefailureports.ListServiceFailureConnectionRequest,
 ) (*pagination.CursorListResult[*servicefailure.ServiceFailure], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*servicefailure.ServiceFailure], error) {
-		log := r.l.With(
-			zap.String("operation", "ListConnection"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*servicefailure.ServiceFailure], error) {
+			log := r.l.With(
+				zap.String("operation", "ListConnection"),
+				zap.Any("request", req),
+			)
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*servicefailure.ServiceFailure)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyTotalCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*servicefailure.ServiceFailure)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyTotalCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count service failures", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*servicefailure.ServiceFailure]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*servicefailure.ServiceFailure) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							ColumnExpr(servicefailurecol.ServiceFailureTable.All()).
+							Relation("Shipment").
+							Relation("Stop").
+							Relation("Stop.Location").
+							Relation("Stop.Location.State").
+							Relation("ReasonCode")
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return r.applyCursorPageFilters(sq, req)
+					},
+				})
 			if err != nil {
-				log.Error("failed to count service failures", zap.Error(err))
+				log.Error("failed to scan service failures", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*servicefailure.ServiceFailure]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*servicefailure.ServiceFailure) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						ColumnExpr(servicefailurecol.ServiceFailureTable.All()).
-						Relation("Shipment").
-						Relation("Stop").
-						Relation("Stop.Location").
-						Relation("Stop.Location.State").
-						Relation("ReasonCode")
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return r.applyCursorPageFilters(sq, req)
-				},
-			})
-		if err != nil {
-			log.Error("failed to scan service failures", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -290,7 +298,11 @@ func (r *repository) Update(
 		if err != nil {
 			return nil, mapServiceFailureConstraint(err, entity)
 		}
-		if err = dberror.CheckRowsAffected(result, "Service failure", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			result,
+			"Service failure",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -326,7 +338,11 @@ func (r *repository) UpdateDetectionSnapshot(
 		if err != nil {
 			return nil, mapServiceFailureConstraint(err, entity)
 		}
-		if err = dberror.CheckRowsAffected(result, "Service failure", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			result,
+			"Service failure",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -365,54 +381,62 @@ func (r *repository) ListUnresolvedByShipment(
 	ctx context.Context,
 	req *servicefailureports.ServiceFailuresByShipmentRequest,
 ) ([]*servicefailure.ServiceFailure, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*servicefailure.ServiceFailure, error) {
-		entities := make([]*servicefailure.ServiceFailure, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where("sf.organization_id = ?", req.TenantInfo.OrgID).
-			Where("sf.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("sf.shipment_id = ?", req.ShipmentID).
-			Where("sf.status IN (?)", bun.List(servicefailure.UnresolvedStatuses())).
-			Relation("ReasonCode").
-			Order("sf.created_at DESC").
-			Scan(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("list unresolved service failures: %w", err)
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*servicefailure.ServiceFailure, error) {
+			entities := make([]*servicefailure.ServiceFailure, 0)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Where("sf.organization_id = ?", req.TenantInfo.OrgID).
+				Where("sf.business_unit_id = ?", req.TenantInfo.BuID).
+				Where("sf.shipment_id = ?", req.ShipmentID).
+				Where("sf.status IN (?)", bun.List(servicefailure.UnresolvedStatuses())).
+				Relation("ReasonCode").
+				Order("sf.created_at DESC").
+				Scan(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list unresolved service failures: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) ListUnresolvedByShipmentIDs(
 	ctx context.Context,
 	req *servicefailureports.ServiceFailuresByShipmentIDsRequest,
 ) ([]*servicefailure.ServiceFailure, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*servicefailure.ServiceFailure, error) {
-		entities := make([]*servicefailure.ServiceFailure, 0, len(req.ShipmentIDs))
-		if len(req.ShipmentIDs) == 0 {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*servicefailure.ServiceFailure, error) {
+			entities := make([]*servicefailure.ServiceFailure, 0, len(req.ShipmentIDs))
+			if len(req.ShipmentIDs) == 0 {
+				return entities, nil
+			}
+
+			cols := servicefailurecol.ServiceFailureColumns
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return servicefailurecol.ServiceFailureScopeTenant(sq, req.TenantInfo).
+						Where(cols.ShipmentID.In(), bun.List(req.ShipmentIDs)).
+						Where(cols.Status.In(), bun.List(servicefailure.UnresolvedStatuses()))
+				}).
+				Relation(servicefailurecol.ServiceFailureRelations.ReasonCode).
+				Order(cols.CreatedAt.OrderDesc()).
+				Scan(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list unresolved service failures by shipments: %w", err)
+			}
+
 			return entities, nil
-		}
-
-		cols := servicefailurecol.ServiceFailureColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return servicefailurecol.ServiceFailureScopeTenant(sq, req.TenantInfo).
-					Where(cols.ShipmentID.In(), bun.List(req.ShipmentIDs)).
-					Where(cols.Status.In(), bun.List(servicefailure.UnresolvedStatuses()))
-			}).
-			Relation(servicefailurecol.ServiceFailureRelations.ReasonCode).
-			Order(cols.CreatedAt.OrderDesc()).
-			Scan(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("list unresolved service failures by shipments: %w", err)
-		}
-
-		return entities, nil
-	})
+		},
+	)
 }
 
 func (r *repository) CountUnresolvedByShipment(

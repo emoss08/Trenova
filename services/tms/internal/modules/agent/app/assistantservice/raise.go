@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -45,10 +45,13 @@ func (s *Service) RequestMore(
 	if err != nil {
 		return nil, err
 	}
-	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         thread.AgentDefinitionID,
-		TenantInfo: req.Thread.TenantInfo,
-	})
+	definition, err := s.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         thread.AgentDefinitionID,
+			TenantInfo: req.Thread.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

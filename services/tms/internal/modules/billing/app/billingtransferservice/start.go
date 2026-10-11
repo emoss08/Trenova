@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingtransferjobs/billingtransfercontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -74,11 +74,14 @@ func (s *Service) Start(
 	// A Selected run knows its shipments now, so its report is complete and
 	// ordered before the worker has even picked the job up.
 	if created.Scope == billingtransfer.RunScopeSelected {
-		if _, err = s.runRepo.SeedItems(ctx, &billingtransferports.SeedBillingTransferRunItemsRequest{
-			TenantInfo:  req.TenantInfo,
-			RunID:       created.ID,
-			ShipmentIDs: req.ShipmentIDs,
-		}); err != nil {
+		if _, err = s.runRepo.SeedItems(
+			ctx,
+			&billingtransferports.SeedBillingTransferRunItemsRequest{
+				TenantInfo:  req.TenantInfo,
+				RunID:       created.ID,
+				ShipmentIDs: req.ShipmentIDs,
+			},
+		); err != nil {
 			log.Error("failed to seed billing transfer run items", zap.Error(err))
 			return nil, err
 		}

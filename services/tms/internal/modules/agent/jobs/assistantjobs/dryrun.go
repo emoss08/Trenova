@@ -119,7 +119,10 @@ func (w *Workflows) dryRun(
 		}
 	})
 
-	run := agentflow.NewRunContext(plan.RunRequest(&payload.Actor), agentflowcontract.PriorityInteractive)
+	run := agentflow.NewRunContext(
+		plan.RunRequest(&payload.Actor),
+		agentflowcontract.PriorityInteractive,
+	)
 	outcome, err := agentflow.Run(runCtx, w.runtime, stream.Events(), run, plan.Turn)
 	if err != nil {
 		return dryRunError(ctx, err)
@@ -173,7 +176,11 @@ func dryRunSteps(plan *assistantservice.DryRunPlan, outcome *agentflow.Outcome) 
 			continue
 		}
 		var finished agentports.AssistantToolFinishedEvent
-		if err := jsonutils.Convert(item.Data, &finished); err != nil || finished.AgentID.IsNotNil() {
+		if err := jsonutils.Convert(
+			item.Data,
+			&finished,
+		); err != nil ||
+			finished.AgentID.IsNotNil() {
 			continue
 		}
 		calls = append(calls, agentdryrun.Call{

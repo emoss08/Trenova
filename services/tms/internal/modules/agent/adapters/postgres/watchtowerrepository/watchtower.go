@@ -275,57 +275,66 @@ func (r *repository) Counts(
 	ctx context.Context,
 	req watchtowerports.CountWatchtowerItemsRequest,
 ) (*watchtowerports.WatchtowerCountsRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*watchtowerports.WatchtowerCountsRow, error) {
-		cols := watchtowercol.ItemColumns
-		db := r.db.DBForContext(ctx)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*watchtowerports.WatchtowerCountsRow, error) {
+			cols := watchtowercol.ItemColumns
+			db := r.db.DBForContext(ctx)
 
-		open := func() *bun.SelectQuery {
-			return db.NewSelect().
-				Model((*watchtower.Item)(nil)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = watchtowercol.ItemScopeTenant(sq, req.TenantInfo).Where(cols.ResolvedAt.IsNull())
-					if len(req.Kinds) > 0 {
-						sq = sq.Where(cols.SourceKind.In(), bun.In(req.Kinds))
-					}
+			open := func() *bun.SelectQuery {
+				return db.NewSelect().
+					Model((*watchtower.Item)(nil)).
+					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = watchtowercol.ItemScopeTenant(sq, req.TenantInfo).
+							Where(cols.ResolvedAt.IsNull())
+						if len(req.Kinds) > 0 {
+							sq = sq.Where(cols.SourceKind.In(), bun.In(req.Kinds))
+						}
 
-					return sq
-				})
-		}
+						return sq
+					})
+			}
 
-		var totals struct {
-			Unresolved     int `bun:"unresolved"`
-			Critical       int `bun:"critical"`
-			UnseenCritical int `bun:"unseen_critical"`
-			Unseen         int `bun:"unseen"`
-		}
-		if err := open().
-			ColumnExpr("COUNT(*) AS unresolved").
-			ColumnExpr("COUNT(*) FILTER (WHERE ? = ?) AS critical", bun.Ident(cols.Severity.Qualified()), watchtower.SeverityCritical).
-			ColumnExpr("COUNT(*) FILTER (WHERE ? = ? AND ? > ?) AS unseen_critical",
-				bun.Ident(cols.Severity.Qualified()), watchtower.SeverityCritical,
-				bun.Ident(cols.OccurredAt.Qualified()), req.SeenAt).
-			ColumnExpr("COUNT(*) FILTER (WHERE ? > ?) AS unseen", bun.Ident(cols.OccurredAt.Qualified()), req.SeenAt).
-			Scan(ctx, &totals); err != nil {
-			return nil, fmt.Errorf("count watchtower items: %w", err)
-		}
+			var totals struct {
+				Unresolved     int `bun:"unresolved"`
+				Critical       int `bun:"critical"`
+				UnseenCritical int `bun:"unseen_critical"`
+				Unseen         int `bun:"unseen"`
+			}
+			if err := open().
+				ColumnExpr("COUNT(*) AS unresolved").
+				ColumnExpr("COUNT(*) FILTER (WHERE ? = ?) AS critical", bun.Ident(cols.Severity.Qualified()), watchtower.SeverityCritical).
+				ColumnExpr("COUNT(*) FILTER (WHERE ? = ? AND ? > ?) AS unseen_critical",
+					bun.Ident(cols.Severity.Qualified()), watchtower.SeverityCritical,
+					bun.Ident(cols.OccurredAt.Qualified()), req.SeenAt).
+				ColumnExpr("COUNT(*) FILTER (WHERE ? > ?) AS unseen", bun.Ident(cols.OccurredAt.Qualified()), req.SeenAt).
+				Scan(ctx, &totals); err != nil {
+				return nil, fmt.Errorf("count watchtower items: %w", err)
+			}
 
-		byKind := make([]watchtowerports.WatchtowerKindCount, 0, len(watchtower.AllSourceKinds()))
-		if err := open().
-			ColumnExpr("? AS source_kind", bun.Ident(cols.SourceKind.Qualified())).
-			ColumnExpr("COUNT(*) AS count").
-			GroupExpr("?", bun.Ident(cols.SourceKind.Qualified())).
-			Scan(ctx, &byKind); err != nil {
-			return nil, fmt.Errorf("count watchtower items by kind: %w", err)
-		}
+			byKind := make(
+				[]watchtowerports.WatchtowerKindCount,
+				0,
+				len(watchtower.AllSourceKinds()),
+			)
+			if err := open().
+				ColumnExpr("? AS source_kind", bun.Ident(cols.SourceKind.Qualified())).
+				ColumnExpr("COUNT(*) AS count").
+				GroupExpr("?", bun.Ident(cols.SourceKind.Qualified())).
+				Scan(ctx, &byKind); err != nil {
+				return nil, fmt.Errorf("count watchtower items by kind: %w", err)
+			}
 
-		return &watchtowerports.WatchtowerCountsRow{
-			Unresolved:     totals.Unresolved,
-			Critical:       totals.Critical,
-			UnseenCritical: totals.UnseenCritical,
-			Unseen:         totals.Unseen,
-			ByKind:         byKind,
-		}, nil
-	})
+			return &watchtowerports.WatchtowerCountsRow{
+				Unresolved:     totals.Unresolved,
+				Critical:       totals.Critical,
+				UnseenCritical: totals.UnseenCritical,
+				Unseen:         totals.Unseen,
+				ByKind:         byKind,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) GetCursor(
@@ -390,7 +399,10 @@ func (r *repository) DeleteResolvedBefore(
 	ctx context.Context,
 	req watchtowerports.DeleteResolvedWatchtowerItemsRequest,
 ) (int, error) {
-	ctx = dbscope.WithSystem(ctx, "delete resolved watchtower items past retention across every organization")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"delete resolved watchtower items past retention across every organization",
+	)
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := watchtowercol.ItemColumns
 		limit := req.Limit

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -45,12 +45,15 @@ func (a *Activities) ListPendingExtractionEvalCasesActivity(
 	ctx context.Context,
 	input *ListPendingInput,
 ) ([]PendingCase, error) {
-	results, err := a.runner.ListPending(ctx, extractionevalports.ListPendingExtractionEvalResultsRequest{
-		TenantInfo:   input.tenant(),
-		RunID:        input.RunID,
-		AfterOrdinal: input.AfterOrdinal,
-		Limit:        input.Limit,
-	})
+	results, err := a.runner.ListPending(
+		ctx,
+		extractionevalports.ListPendingExtractionEvalResultsRequest{
+			TenantInfo:   input.tenant(),
+			RunID:        input.RunID,
+			AfterOrdinal: input.AfterOrdinal,
+			Limit:        input.Limit,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("list pending extraction evaluation cases: %w", err)
 	}
@@ -82,7 +85,10 @@ func (a *Activities) CheckExtractionEvalBudgetActivity(
 	}, nil
 }
 
-func (a *Activities) EvaluateExtractionEvalCaseActivity(ctx context.Context, input *EvaluateInput) error {
+func (a *Activities) EvaluateExtractionEvalCaseActivity(
+	ctx context.Context,
+	input *EvaluateInput,
+) error {
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
 
@@ -93,7 +99,10 @@ func (a *Activities) EvaluateExtractionEvalCaseActivity(ctx context.Context, inp
 	})
 }
 
-func (a *Activities) FinishExtractionEvalRunActivity(ctx context.Context, input *FinishInput) (*RunOutcome, error) {
+func (a *Activities) FinishExtractionEvalRunActivity(
+	ctx context.Context,
+	input *FinishInput,
+) (*RunOutcome, error) {
 	run, err := a.runner.FinishRun(ctx, &extractionevalports.FinishExtractionEvalRunRequest{
 		TenantInfo: input.tenant(),
 		RunID:      input.RunID,

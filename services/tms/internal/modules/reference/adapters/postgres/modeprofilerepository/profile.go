@@ -79,27 +79,31 @@ func (r *profileRepository) List(
 	ctx context.Context,
 	req *modeprofileports.ListModeProfilesRequest,
 ) (*pagination.ListResult[*modeprofile.Profile], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*modeprofile.Profile], error) {
-		log := r.l.With(zap.String("operation", "List"))
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*modeprofile.Profile], error) {
+			log := r.l.With(zap.String("operation", "List"))
 
-		entities := make([]*modeprofile.Profile, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(modeprofilecol.ProfileRelations.Rules, orderRules).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterQuery(sq, req)
-			}).ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count mode profiles", zap.Error(err))
-			return nil, err
-		}
+			entities := make([]*modeprofile.Profile, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Relation(modeprofilecol.ProfileRelations.Rules, orderRules).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count mode profiles", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*modeprofile.Profile]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*modeprofile.Profile]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *profileRepository) GetByID(

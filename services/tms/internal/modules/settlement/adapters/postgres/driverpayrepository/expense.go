@@ -100,63 +100,67 @@ func (r *driverExpenseRepository) ListConnection(
 	ctx context.Context,
 	req *driverpayports.ListDriverExpenseConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.Expense], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driverpay.Expense], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
-		alias := driverpaycol.ExpenseTable.Alias
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*driverpay.Expense], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
+			alias := driverpaycol.ExpenseTable.Alias
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*driverpay.Expense)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						alias,
-						req.Filter,
-						(*driverpay.Expense)(nil),
-					)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*driverpay.Expense)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							alias,
+							req.Filter,
+							(*driverpay.Expense)(nil),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count driver expenses", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*driverpay.Expense]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*driverpay.Expense) *bun.SelectQuery {
+						return dba.NewSelect().
+							Model(entities).
+							ColumnExpr(driverpaycol.ExpenseTable.All()).
+							Relation(driverpaycol.ExpenseRelations.Worker).
+							Relation(driverpaycol.ExpenseRelations.PayCode).
+							Relation(driverpaycol.ExpenseRelations.ReviewedBy)
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							alias,
+							req.Filter,
+							req.Cursor,
+							(*driverpay.Expense)(nil),
+						)
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count driver expenses", zap.Error(err))
+				log.Error("failed to scan driver expenses", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
-
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*driverpay.Expense]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*driverpay.Expense) *bun.SelectQuery {
-					return dba.NewSelect().
-						Model(entities).
-						ColumnExpr(driverpaycol.ExpenseTable.All()).
-						Relation(driverpaycol.ExpenseRelations.Worker).
-						Relation(driverpaycol.ExpenseRelations.PayCode).
-						Relation(driverpaycol.ExpenseRelations.ReviewedBy)
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return querybuilder.ApplyCursorFilters(
-						sq,
-						alias,
-						req.Filter,
-						req.Cursor,
-						(*driverpay.Expense)(nil),
-					)
-				},
-			},
-		)
-		if err != nil {
-			log.Error("failed to scan driver expenses", zap.Error(err))
-			return nil, err
-		}
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *driverExpenseRepository) ListForWorker(

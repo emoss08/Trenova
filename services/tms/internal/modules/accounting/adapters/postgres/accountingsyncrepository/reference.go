@@ -35,7 +35,9 @@ type referenceRepository struct {
 	l  *zap.Logger
 }
 
-func NewReferenceRepository(p ReferenceParams) accountingsyncports.AccountingReferenceObjectRepository {
+func NewReferenceRepository(
+	p ReferenceParams,
+) accountingsyncports.AccountingReferenceObjectRepository {
 	return &referenceRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.accounting-reference-repository"),
@@ -164,101 +166,113 @@ func (r *referenceRepository) ListByKind(
 	ctx context.Context,
 	req *accountingsyncports.ListAccountingReferenceObjectsRequest,
 ) ([]*accountingsync.AccountingReferenceObject, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingReferenceObject, error) {
-		entities := make([]*accountingsync.AccountingReferenceObject, 0)
-		cols := accountingsynccol.AccountingReferenceObjectColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*accountingsync.AccountingReferenceObject, error) {
+			entities := make([]*accountingsync.AccountingReferenceObject, 0)
+			cols := accountingsynccol.AccountingReferenceObjectColumns
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(accountingsynccol.AccountingReferenceObjectApplyTenant(req.TenantInfo)).
-			Where(cols.ConnectionID.Eq(), req.ConnectionID).
-			Where(cols.Kind.Eq(), req.Kind).
-			Order(cols.SearchName.OrderAsc(), cols.ExternalID.OrderAsc())
-		if req.UsableOnly {
-			query = applyUsable(query)
-		}
-		if err := query.Scan(ctx); err != nil {
-			return nil, err
-		}
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(accountingsynccol.AccountingReferenceObjectApplyTenant(req.TenantInfo)).
+				Where(cols.ConnectionID.Eq(), req.ConnectionID).
+				Where(cols.Kind.Eq(), req.Kind).
+				Order(cols.SearchName.OrderAsc(), cols.ExternalID.OrderAsc())
+			if req.UsableOnly {
+				query = applyUsable(query)
+			}
+			if err := query.Scan(ctx); err != nil {
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *referenceRepository) Search(
 	ctx context.Context,
 	req *accountingsyncports.SearchAccountingReferenceObjectsRequest,
 ) ([]*accountingsync.AccountingReferenceObject, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingReferenceObject, error) {
-		limit := req.Limit
-		if limit <= 0 {
-			limit = defaultReferenceSearch
-		}
-		limit = min(limit, maxReferenceSearch)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*accountingsync.AccountingReferenceObject, error) {
+			limit := req.Limit
+			if limit <= 0 {
+				limit = defaultReferenceSearch
+			}
+			limit = min(limit, maxReferenceSearch)
 
-		entities := make([]*accountingsync.AccountingReferenceObject, 0, limit)
-		cols := accountingsynccol.AccountingReferenceObjectColumns
+			entities := make([]*accountingsync.AccountingReferenceObject, 0, limit)
+			cols := accountingsynccol.AccountingReferenceObjectColumns
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(accountingsynccol.AccountingReferenceObjectApplyTenant(req.TenantInfo)).
-			Where(cols.ConnectionID.Eq(), req.ConnectionID).
-			Where(cols.Kind.Eq(), req.Kind).
-			Limit(limit)
-		if req.UsableOnly {
-			query = applyUsable(query)
-		}
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(accountingsynccol.AccountingReferenceObjectApplyTenant(req.TenantInfo)).
+				Where(cols.ConnectionID.Eq(), req.ConnectionID).
+				Where(cols.Kind.Eq(), req.Kind).
+				Limit(limit)
+			if req.UsableOnly {
+				query = applyUsable(query)
+			}
 
-		if term := stringutils.NormalizeName(req.Query); term != "" {
-			pattern := "%" + stringutils.EscapeLikePattern(term) + "%"
-			prefix := stringutils.EscapeLikePattern(term) + "%"
-			query = query.
-				WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Where(cols.SearchName.Like(), pattern).
-						WhereOr(cols.Number.ILike(), prefix).
-						WhereOr(cols.ExternalID.Eq(), strings.TrimSpace(req.Query))
-				}).
-				OrderExpr(cols.SearchName.Expr("CASE WHEN {} LIKE ? THEN 0 ELSE 1 END"), prefix)
-		}
-		query = query.Order(cols.SearchName.OrderAsc(), cols.ExternalID.OrderAsc())
+			if term := stringutils.NormalizeName(req.Query); term != "" {
+				pattern := "%" + stringutils.EscapeLikePattern(term) + "%"
+				prefix := stringutils.EscapeLikePattern(term) + "%"
+				query = query.
+					WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+						return q.Where(cols.SearchName.Like(), pattern).
+							WhereOr(cols.Number.ILike(), prefix).
+							WhereOr(cols.ExternalID.Eq(), strings.TrimSpace(req.Query))
+					}).
+					OrderExpr(cols.SearchName.Expr("CASE WHEN {} LIKE ? THEN 0 ELSE 1 END"), prefix)
+			}
+			query = query.Order(cols.SearchName.OrderAsc(), cols.ExternalID.OrderAsc())
 
-		if err := query.Scan(ctx); err != nil {
-			return nil, err
-		}
+			if err := query.Scan(ctx); err != nil {
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *referenceRepository) GetByExternalIDs(
 	ctx context.Context,
 	req *accountingsyncports.GetAccountingReferenceObjectsRequest,
 ) ([]*accountingsync.AccountingReferenceObject, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingReferenceObject, error) {
-		if len(req.ExternalIDs) == 0 {
-			return []*accountingsync.AccountingReferenceObject{}, nil
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*accountingsync.AccountingReferenceObject, error) {
+			if len(req.ExternalIDs) == 0 {
+				return []*accountingsync.AccountingReferenceObject{}, nil
+			}
 
-		entities := make([]*accountingsync.AccountingReferenceObject, 0, len(req.ExternalIDs))
-		cols := accountingsynccol.AccountingReferenceObjectColumns
+			entities := make([]*accountingsync.AccountingReferenceObject, 0, len(req.ExternalIDs))
+			cols := accountingsynccol.AccountingReferenceObjectColumns
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(accountingsynccol.AccountingReferenceObjectApplyTenant(req.TenantInfo)).
-			Where(cols.ConnectionID.Eq(), req.ConnectionID).
-			Where(cols.ExternalID.In(), bun.List(req.ExternalIDs))
-		if req.Kind != "" {
-			query = query.Where(cols.Kind.Eq(), req.Kind)
-		}
-		if err := query.Scan(ctx); err != nil {
-			return nil, err
-		}
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(accountingsynccol.AccountingReferenceObjectApplyTenant(req.TenantInfo)).
+				Where(cols.ConnectionID.Eq(), req.ConnectionID).
+				Where(cols.ExternalID.In(), bun.List(req.ExternalIDs))
+			if req.Kind != "" {
+				query = query.Where(cols.Kind.Eq(), req.Kind)
+			}
+			if err := query.Scan(ctx); err != nil {
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func applyUsable(q *bun.SelectQuery) *bun.SelectQuery {

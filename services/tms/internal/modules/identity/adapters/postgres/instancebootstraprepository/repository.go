@@ -42,7 +42,9 @@ func New(p Params) instancebootstrapports.InstanceBootstrapRepository {
 	}
 }
 
-func (r *repository) GetState(ctx context.Context) (*instancebootstrapports.InstanceBootstrapState, error) {
+func (r *repository) GetState(
+	ctx context.Context,
+) (*instancebootstrapports.InstanceBootstrapState, error) {
 	ctx = dbscope.WithSystem(ctx, stateScopeReason)
 
 	return dbtx.Read(

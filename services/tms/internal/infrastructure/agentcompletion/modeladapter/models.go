@@ -121,7 +121,10 @@ func getBody(
 		return nil, fmt.Errorf("read provider response: %w", err)
 	}
 	if len(payload) > maxModelListBytes {
-		return nil, fmt.Errorf("the provider's model list is larger than %d bytes", maxModelListBytes)
+		return nil, fmt.Errorf(
+			"the provider's model list is larger than %d bytes",
+			maxModelListBytes,
+		)
 	}
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
 		return nil, transportError(resp, payload)
@@ -244,11 +247,17 @@ func decodeOpenAIModels(payload []byte) ([]ModelInfo, error) {
 			continue
 		}
 		info := ModelInfo{
-			ID:            entry.ID,
-			DisplayName:   stringutils.FirstNonEmptyTrimmed(entry.DisplayName, entry.Name),
-			ContextWindow: intutils.FirstPositive(entry.ContextLength, entry.ContextWindow, entry.MaxModelLen, entry.MaxContextLength),
-			Embedding:     entry.Type == "embedding" || entry.embeddingOutput() || IsEmbeddingModelID(entry.ID),
-			CreatedAt:     unixFromAny(entry.Created),
+			ID:          entry.ID,
+			DisplayName: stringutils.FirstNonEmptyTrimmed(entry.DisplayName, entry.Name),
+			ContextWindow: intutils.FirstPositive(
+				entry.ContextLength,
+				entry.ContextWindow,
+				entry.MaxModelLen,
+				entry.MaxContextLength,
+			),
+			Embedding: entry.Type == "embedding" || entry.embeddingOutput() ||
+				IsEmbeddingModelID(entry.ID),
+			CreatedAt: unixFromAny(entry.Created),
 		}
 		info.InputCostPerMillion, info.OutputCostPerMillion = entry.prices()
 		models = append(models, withKnownWindow(info))

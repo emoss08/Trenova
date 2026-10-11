@@ -12,9 +12,9 @@ package assistantfollowupservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -198,10 +198,13 @@ func (s *Service) ownerMayUseAgent(
 		return false
 	}
 
-	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         thread.AgentDefinitionID,
-		TenantInfo: tenant,
-	})
+	definition, err := s.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         thread.AgentDefinitionID,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		s.l.Info("decision follow-up skipped: the conversation's agent could not be read",
 			zap.String("thread", thread.ID.String()),

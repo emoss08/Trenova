@@ -3,8 +3,8 @@ package invoicerun
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -44,7 +44,7 @@ type InvoiceRunGroup struct {
 	MinimumAmount decimal.NullDecimal `json:"minimumAmount" bun:"minimum_amount,type:NUMERIC(19,4),nullzero"`
 	// AutoBill says the customer asked for this to bill without review, so a
 	// scheduled run commits it rather than leaving it for a biller.
-	AutoBill bool `json:"autoBill"      bun:"auto_bill,type:BOOLEAN,notnull"`
+	AutoBill bool `json:"autoBill" bun:"auto_bill,type:BOOLEAN,notnull"`
 
 	InvoiceID  pulid.ID `json:"invoiceId"  bun:"invoice_id,type:VARCHAR(100),nullzero"`
 	SkipReason string   `json:"skipReason" bun:"skip_reason,type:TEXT,nullzero"`

@@ -10,15 +10,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -55,8 +55,14 @@ type caseStore interface {
 		ctx context.Context,
 		req agentqualityports.ListEvalCaseCaptureCandidatesRequest,
 	) ([]agentqualityports.EvalCaseCaptureCandidate, error)
-	PurgeExpired(ctx context.Context, req agentqualityports.PurgeExpiredEvalCasesRequest) (int, error)
-	PurgeOrphaned(ctx context.Context, req agentqualityports.PurgeOrphanedEvalCasesRequest) (int, error)
+	PurgeExpired(
+		ctx context.Context,
+		req agentqualityports.PurgeExpiredEvalCasesRequest,
+	) (int, error)
+	PurgeOrphaned(
+		ctx context.Context,
+		req agentqualityports.PurgeOrphanedEvalCasesRequest,
+	) (int, error)
 }
 
 type proposalReader interface {
@@ -179,10 +185,13 @@ func (s *Service) CreateCurated(
 	req *agentports.CreateCuratedEvalCaseRequest,
 	actor *permissionports.RequestActor,
 ) (*agentports.EvalCaseCapture, error) {
-	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         req.AgentDefinitionID,
-		TenantInfo: req.TenantInfo,
-	})
+	definition, err := s.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         req.AgentDefinitionID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

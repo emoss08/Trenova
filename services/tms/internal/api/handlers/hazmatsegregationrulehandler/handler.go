@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/reference/app/hazmatsegregationruleservice"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/hazmatsegregationruleports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"

@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -110,16 +110,19 @@ func (s *Service) ListRecords(
 		filter = &pagination.QueryOptions{}
 	}
 	filter.TenantInfo = req.TenantInfo
-	return s.records.ListConnection(ctx, &accountingsyncports.ListAccountingSyncRecordsConnectionRequest{
-		Filter:          filter,
-		Cursor:          req.Cursor,
-		ConnectionID:    conn.ID,
-		Statuses:        req.Statuses,
-		ObjectTypes:     req.ObjectTypes,
-		ErrorCategories: req.ErrorCategories,
-		ObjectID:        req.ObjectID,
-		Search:          req.Search,
-	})
+	return s.records.ListConnection(
+		ctx,
+		&accountingsyncports.ListAccountingSyncRecordsConnectionRequest{
+			Filter:          filter,
+			Cursor:          req.Cursor,
+			ConnectionID:    conn.ID,
+			Statuses:        req.Statuses,
+			ObjectTypes:     req.ObjectTypes,
+			ErrorCategories: req.ErrorCategories,
+			ObjectID:        req.ObjectID,
+			Search:          req.Search,
+		},
+	)
 }
 
 func (s *Service) GetRecord(
@@ -558,13 +561,16 @@ func (s *Service) Retry(
 		return 0, err
 	}
 
-	requeued, err := s.records.Requeue(ctx, &accountingsyncports.RequeueAccountingSyncRecordsRequest{
-		TenantInfo:      req.TenantInfo,
-		ConnectionID:    conn.ID,
-		ErrorCategories: req.ErrorCategories,
-		IDs:             req.IDs,
-		At:              timeutils.NowUnix(),
-	})
+	requeued, err := s.records.Requeue(
+		ctx,
+		&accountingsyncports.RequeueAccountingSyncRecordsRequest{
+			TenantInfo:      req.TenantInfo,
+			ConnectionID:    conn.ID,
+			ErrorCategories: req.ErrorCategories,
+			IDs:             req.IDs,
+			At:              timeutils.NowUnix(),
+		},
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -598,13 +604,16 @@ func (s *Service) Release(
 		return 0, err
 	}
 
-	released, err := s.records.Release(ctx, &accountingsyncports.ReleaseAccountingSyncRecordsRequest{
-		TenantInfo:   req.TenantInfo,
-		ConnectionID: conn.ID,
-		IDs:          req.IDs,
-		ActorID:      req.UserID,
-		At:           timeutils.NowUnix(),
-	})
+	released, err := s.records.Release(
+		ctx,
+		&accountingsyncports.ReleaseAccountingSyncRecordsRequest{
+			TenantInfo:   req.TenantInfo,
+			ConnectionID: conn.ID,
+			IDs:          req.IDs,
+			ActorID:      req.UserID,
+			At:           timeutils.NowUnix(),
+		},
+	)
 	if err != nil {
 		return 0, err
 	}

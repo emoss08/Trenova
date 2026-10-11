@@ -4,17 +4,17 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/kernel/app/editconflict"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/editconflict"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/settingversionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -171,9 +171,12 @@ func (s *Service) promoteEarned(
 	}
 
 	promoted, err := s.trust.PromoteReady(ctx, &agentports.PromoteReadyRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: updated.OrganizationID, BuID: updated.BusinessUnitID},
-		Threshold:  updated.PromotionThreshold,
-		DecidedBy:  decidedBy,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: updated.OrganizationID,
+			BuID:  updated.BusinessUnitID,
+		},
+		Threshold: updated.PromotionThreshold,
+		DecidedBy: decidedBy,
 	})
 	if err != nil {
 		s.l.Warn("could not promote the tools that had earned it", zap.Error(err))
@@ -198,12 +201,15 @@ func (s *Service) save(
 			return txErr
 		}
 		return editconflict.Record(txCtx, s.versions, &editconflict.RecordRequest{
-			TenantInfo: pagination.TenantInfo{OrgID: updated.OrganizationID, BuID: updated.BusinessUnitID},
-			Kind:       settingversion.KindAgentControl,
-			SubjectID:  updated.ID,
-			Version:    updated.Version,
-			Snapshot:   updated,
-			AuthorID:   actor.AuditActor().UserID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: updated.OrganizationID,
+				BuID:  updated.BusinessUnitID,
+			},
+			Kind:      settingversion.KindAgentControl,
+			SubjectID: updated.ID,
+			Version:   updated.Version,
+			Snapshot:  updated,
+			AuthorID:  actor.AuditActor().UserID,
 		})
 	})
 	if err != nil {
@@ -226,17 +232,22 @@ func (s *Service) explainConflict(
 		return cause
 	}
 
-	return editconflict.Explain(ctx, s.versions, s.l, &editconflict.ExplainRequest[tenant.AgentControl]{
-		TenantInfo:     tenantInfo,
-		Kind:           settingversion.KindAgentControl,
-		SubjectID:      current.ID,
-		Loaded:         loaded,
-		Current:        current,
-		CurrentVersion: current.Version,
-		UpdatedAt:      current.UpdatedAt,
-		Rules:          tenant.AgentControlChangeRules,
-		Cause:          cause,
-	})
+	return editconflict.Explain(
+		ctx,
+		s.versions,
+		s.l,
+		&editconflict.ExplainRequest[tenant.AgentControl]{
+			TenantInfo:     tenantInfo,
+			Kind:           settingversion.KindAgentControl,
+			SubjectID:      current.ID,
+			Loaded:         loaded,
+			Current:        current,
+			CurrentVersion: current.Version,
+			UpdatedAt:      current.UpdatedAt,
+			Rules:          tenant.AgentControlChangeRules,
+			Cause:          cause,
+		},
+	)
 }
 
 func (s *Service) applyTrainingConsent(

@@ -63,8 +63,8 @@ type AIUsageRecord struct {
 	SubjectType SubjectType `json:"subjectType" bun:"subject_type,type:VARCHAR(50),nullzero"`
 	SubjectID   string      `json:"subjectId"   bun:"subject_id,type:VARCHAR(100),nullzero"`
 
-	Succeeded  bool   `json:"succeeded"    bun:"succeeded,type:BOOLEAN,notnull"`
-	ErrorClass string `json:"errorClass"   bun:"error_class,type:VARCHAR(50),nullzero"`
+	Succeeded  bool   `json:"succeeded"  bun:"succeeded,type:BOOLEAN,notnull"`
+	ErrorClass string `json:"errorClass" bun:"error_class,type:VARCHAR(50),nullzero"`
 	// ErrorMessage is the provider's own words for a failed attempt, cut to
 	// fit. The class says what kind of failure it was; this says why, which
 	// is what an administrator needs when a provider refuses every request.
@@ -77,7 +77,7 @@ type AIUsageRecord struct {
 	ReasoningTokens int   `json:"reasoningTokens" bun:"reasoning_tokens,type:INTEGER,notnull,default:0"`
 	// CostUSD is nil when the provider carries no pricing. It is not zero:
 	// a call that cost something unknown must not be summed as free.
-	CostUSD *decimal.Decimal `json:"costUsd"         bun:"cost_usd,type:NUMERIC(14,6),nullzero"`
+	CostUSD *decimal.Decimal `json:"costUsd" bun:"cost_usd,type:NUMERIC(14,6),nullzero"`
 
 	// Provenance: the span the attempt ran in, the run or turn it was for and
 	// the task a delegate was working on, the agent's version, which try of

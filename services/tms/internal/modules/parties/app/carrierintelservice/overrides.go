@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -159,10 +159,14 @@ func (s *Service) recordOverrideEvent(
 	override *carrierintel.CarrierIntelOverride,
 	summary string,
 ) {
-	snapshot, err := s.snapshotRepo.GetCurrent(ctx, tenantInfo, carrierintelports.CarrierIntelSubjectRef{
-		SubjectType: carrierintel.SubjectTypeCarrier,
-		SubjectID:   override.CarrierID.String(),
-	})
+	snapshot, err := s.snapshotRepo.GetCurrent(
+		ctx,
+		tenantInfo,
+		carrierintelports.CarrierIntelSubjectRef{
+			SubjectType: carrierintel.SubjectTypeCarrier,
+			SubjectID:   override.CarrierID.String(),
+		},
+	)
 	if err != nil || snapshot == nil {
 		return
 	}
@@ -198,7 +202,10 @@ func (s *Service) recordOverrideEvent(
 			Day:         timeutils.DayIndexUTC(now),
 		}),
 	}
-	if _, err = s.eventRepo.InsertIgnoreDuplicates(ctx, []*carrierintel.CarrierIntelEvent{event}); err != nil {
+	if _, err = s.eventRepo.InsertIgnoreDuplicates(
+		ctx,
+		[]*carrierintel.CarrierIntelEvent{event},
+	); err != nil {
 		s.l.Warn("failed to record override event", zap.Error(err))
 	}
 }
@@ -208,10 +215,14 @@ func (s *Service) refreshStoredEvaluation(
 	tenantInfo pagination.TenantInfo,
 	carrierID pulid.ID,
 ) {
-	snapshot, err := s.snapshotRepo.GetCurrent(ctx, tenantInfo, carrierintelports.CarrierIntelSubjectRef{
-		SubjectType: carrierintel.SubjectTypeCarrier,
-		SubjectID:   carrierID.String(),
-	})
+	snapshot, err := s.snapshotRepo.GetCurrent(
+		ctx,
+		tenantInfo,
+		carrierintelports.CarrierIntelSubjectRef{
+			SubjectType: carrierintel.SubjectTypeCarrier,
+			SubjectID:   carrierID.String(),
+		},
+	)
 	if err != nil || snapshot == nil {
 		return
 	}

@@ -5,17 +5,17 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -690,13 +690,16 @@ func (s *Service) markOrderChargeSharesInvoiced(
 	}
 
 	if len(chargeIDs) > 0 {
-		if _, err := s.orderRepo.MarkChargesInvoiced(ctx, &orderports.MarkOrderChargesInvoicedRequest{
-			TenantInfo: tenantInfo,
-			OrderID:    orderID,
-			ChargeIDs:  chargeIDs,
-			InvoiceID:  created.ID,
-			InvoicedAt: created.InvoiceDate,
-		}); err != nil {
+		if _, err := s.orderRepo.MarkChargesInvoiced(
+			ctx,
+			&orderports.MarkOrderChargesInvoicedRequest{
+				TenantInfo: tenantInfo,
+				OrderID:    orderID,
+				ChargeIDs:  chargeIDs,
+				InvoiceID:  created.ID,
+				InvoicedAt: created.InvoiceDate,
+			},
+		); err != nil {
 			return err
 		}
 	}
@@ -704,12 +707,15 @@ func (s *Service) markOrderChargeSharesInvoiced(
 		return nil
 	}
 
-	if _, err := s.chargeAllocationRepo.MarkInvoiced(ctx, &shipmentports.MarkChargeAllocationsInvoicedRequest{
-		TenantInfo:    tenantInfo,
-		AllocationIDs: allocationIDs,
-		InvoiceID:     created.ID,
-		InvoicedAt:    created.InvoiceDate,
-	}); err != nil {
+	if _, err := s.chargeAllocationRepo.MarkInvoiced(
+		ctx,
+		&shipmentports.MarkChargeAllocationsInvoicedRequest{
+			TenantInfo:    tenantInfo,
+			AllocationIDs: allocationIDs,
+			InvoiceID:     created.ID,
+			InvoicedAt:    created.InvoiceDate,
+		},
+	); err != nil {
 		return err
 	}
 	_, err := s.orderRepo.MarkChargesFullyInvoicedWhereComplete(

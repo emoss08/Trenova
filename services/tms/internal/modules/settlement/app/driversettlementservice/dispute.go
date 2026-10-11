@@ -3,14 +3,14 @@ package driversettlementservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -74,11 +74,14 @@ func (s *Service) CreateDispute(
 		return nil, err
 	}
 
-	settlement, err := s.settlementRepo.GetByID(ctx, driversettlementports.GetDriverSettlementByIDRequest{
-		ID:           req.SettlementID,
-		TenantInfo:   req.TenantInfo,
-		IncludeLines: req.SettlementLineID != nil,
-	})
+	settlement, err := s.settlementRepo.GetByID(
+		ctx,
+		driversettlementports.GetDriverSettlementByIDRequest{
+			ID:           req.SettlementID,
+			TenantInfo:   req.TenantInfo,
+			IncludeLines: req.SettlementLineID != nil,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -170,10 +173,13 @@ func (s *Service) WithdrawDispute(
 	disputeID pulid.ID,
 	workerID pulid.ID,
 ) (*driversettlement.Dispute, error) {
-	dispute, err := s.disputeRepo.GetByID(ctx, driversettlementports.GetSettlementDisputeByIDRequest{
-		ID:         disputeID,
-		TenantInfo: tenantInfo,
-	})
+	dispute, err := s.disputeRepo.GetByID(
+		ctx,
+		driversettlementports.GetSettlementDisputeByIDRequest{
+			ID:         disputeID,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

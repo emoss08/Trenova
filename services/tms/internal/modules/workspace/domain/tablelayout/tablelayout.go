@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"

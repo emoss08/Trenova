@@ -88,7 +88,10 @@ type PendingDecisionSummaryRequest struct {
 // the caller loads each record from its own repository, so the queue never
 // becomes a second copy of either.
 type AgentDecisionQueueRepository interface {
-	ListPending(ctx context.Context, req ListPendingDecisionsQuery) (*PendingDecisionsPageRow, error)
+	ListPending(
+		ctx context.Context,
+		req ListPendingDecisionsQuery,
+	) (*PendingDecisionsPageRow, error)
 	// CountPending is the size of the queue under the same filters as
 	// ListPending, for a connection that asks for its total.
 	CountPending(ctx context.Context, req ListPendingDecisionsQuery) (int, error)

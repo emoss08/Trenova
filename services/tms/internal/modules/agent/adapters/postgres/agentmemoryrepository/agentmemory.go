@@ -49,7 +49,11 @@ func New(p Params) agentports.AgentMemoryRepository {
 
 func (r *repository) Create(ctx context.Context, entity *agent.Memory) (*agent.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Memory, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
 			r.l.Error("failed to create agent memory", zap.Error(err))
 
 			return nil, fmt.Errorf("create agent memory: %w", err)
@@ -231,66 +235,70 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *agentports.ListAgentMemoryConnectionRequest,
 ) (*pagination.CursorListResult[*agent.Memory], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*agent.Memory], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*agent.Memory], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*agent.Memory)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						agentcol.MemoryTable.Alias,
-						req.Filter,
-						(*agent.Memory)(nil),
-					)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*agent.Memory)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							agentcol.MemoryTable.Alias,
+							req.Filter,
+							(*agent.Memory)(nil),
+						)
 
-					return sq.Apply(agentcol.MemoryApplyTenant(req.Filter.TenantInfo))
-				}).
-				Count(ctx)
+						return sq.Apply(agentcol.MemoryApplyTenant(req.Filter.TenantInfo))
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count agent memories", zap.Error(err))
+
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*agent.Memory]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*agent.Memory) *bun.SelectQuery {
+						q := dba.NewSelect().Model(entities)
+						if len(req.Columns) > 0 {
+							q = q.Column(req.Columns...)
+						}
+
+						return q
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							agentcol.MemoryTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*agent.Memory)(nil),
+						)
+					},
+				})
 			if err != nil {
-				log.Error("failed to count agent memories", zap.Error(err))
+				log.Error("failed to list agent memories", zap.Error(err))
 
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*agent.Memory]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*agent.Memory) *bun.SelectQuery {
-					q := dba.NewSelect().Model(entities)
-					if len(req.Columns) > 0 {
-						q = q.Column(req.Columns...)
-					}
-
-					return q
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return querybuilder.ApplyCursorFilters(
-						sq,
-						agentcol.MemoryTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*agent.Memory)(nil),
-					)
-				},
-			})
-		if err != nil {
-			log.Error("failed to list agent memories", zap.Error(err))
-
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 // ListActive reads what a prompt carries. The scope clause is a disjunction
@@ -319,15 +327,22 @@ func (r *repository) ListActive(
 
 				return sq.WhereGroup(" AND ", func(scope *bun.SelectQuery) *bun.SelectQuery {
 					if req.OrganizationWide {
-						scope = scope.WhereGroup(" OR ", func(wide *bun.SelectQuery) *bun.SelectQuery {
-							return wide.Where(cols.SubjectType.IsNull()).Where(cols.ToolName.IsNull())
-						})
+						scope = scope.WhereGroup(
+							" OR ",
+							func(wide *bun.SelectQuery) *bun.SelectQuery {
+								return wide.Where(cols.SubjectType.IsNull()).
+									Where(cols.ToolName.IsNull())
+							},
+						)
 					}
 					for _, subject := range req.Subjects {
-						scope = scope.WhereGroup(" OR ", func(one *bun.SelectQuery) *bun.SelectQuery {
-							return one.Where(cols.SubjectType.Eq(), subject.Type).
-								Where(cols.SubjectID.Eq(), subject.ID)
-						})
+						scope = scope.WhereGroup(
+							" OR ",
+							func(one *bun.SelectQuery) *bun.SelectQuery {
+								return one.Where(cols.SubjectType.Eq(), subject.Type).
+									Where(cols.SubjectID.Eq(), subject.ID)
+							},
+						)
 					}
 					if len(req.ToolNames) > 0 {
 						scope = scope.WhereOr(cols.ToolName.In(), bun.In(req.ToolNames))
@@ -470,7 +485,8 @@ func (r *repository) FindActive(
 				sq = sameReaders(sq, &req)
 				if !req.Tainted {
 					sq = sq.WhereGroup(" AND ", func(clean *bun.SelectQuery) *bun.SelectQuery {
-						return clean.Where(cols.Tainted.IsFalse()).WhereOr(cols.ReviewedAt.IsNotNull())
+						return clean.Where(cols.Tainted.IsFalse()).
+							WhereOr(cols.ReviewedAt.IsNotNull())
 					})
 				}
 				if req.Subject != nil {
@@ -740,7 +756,10 @@ func (r *repository) ResolveSuggestion(
 				Set(cols.RetiredAt.Set(), req.At).
 				Set(cols.RetiredByUserID.Set(), nullableID(req.ByUserID))
 		default:
-			return nil, fmt.Errorf("resolve agent memory suggestion: %q is not a resolution", req.Status)
+			return nil, fmt.Errorf(
+				"resolve agent memory suggestion: %q is not a resolution",
+				req.Status,
+			)
 		}
 
 		res, err := query.Exec(ctx)
@@ -821,7 +840,10 @@ func forPerson(sq *bun.SelectQuery, reader agent.MemoryReader) *bun.SelectQuery 
 
 // sameReaders keeps the rows read by exactly the readers the new memory
 // would be: the same agent, the same person or the same role.
-func sameReaders(sq *bun.SelectQuery, req *agentports.FindActiveAgentMemoryRequest) *bun.SelectQuery {
+func sameReaders(
+	sq *bun.SelectQuery,
+	req *agentports.FindActiveAgentMemoryRequest,
+) *bun.SelectQuery {
 	cols := agentcol.MemoryColumns
 	switch req.Scope {
 	case agent.MemoryScopeAgent:

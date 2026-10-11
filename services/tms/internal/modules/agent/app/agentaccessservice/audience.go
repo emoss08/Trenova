@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -21,10 +21,13 @@ func (s *Service) SuggestAudience(
 	ctx context.Context,
 	req *agentdefinitionports.SuggestAgentAudienceRequest,
 ) (*agentdefinitionports.AgentAudienceSuggestion, error) {
-	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         req.AgentID,
-		TenantInfo: req.TenantInfo,
-	})
+	definition, err := s.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         req.AgentID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -58,10 +61,13 @@ func (s *Service) PreviewAudience(
 	}
 	saved := req.AgentID.IsNotNil()
 	if saved {
-		existing, getErr := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-			ID:         req.AgentID,
-			TenantInfo: req.TenantInfo,
-		})
+		existing, getErr := s.definitions.GetByID(
+			ctx,
+			agentdefinitionports.GetAgentDefinitionByIDRequest{
+				ID:         req.AgentID,
+				TenantInfo: req.TenantInfo,
+			},
+		)
 		if getErr != nil {
 			return nil, getErr
 		}
@@ -118,10 +124,13 @@ func (s *Service) audience(
 
 	var granted []*permission.Role
 	if withGrants {
-		byAgent, grantErr := s.grants.ListRolesByAgents(ctx, permissionports.ListGrantsByAgentsRequest{
-			TenantInfo: tenant,
-			AgentIDs:   []pulid.ID{definition.ID},
-		})
+		byAgent, grantErr := s.grants.ListRolesByAgents(
+			ctx,
+			permissionports.ListGrantsByAgentsRequest{
+				TenantInfo: tenant,
+				AgentIDs:   []pulid.ID{definition.ID},
+			},
+		)
 		if grantErr != nil {
 			return nil, grantErr
 		}

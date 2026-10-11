@@ -59,7 +59,7 @@ type BillingControl struct {
 	// late-charge debit memos; the rate and grace live on each customer.
 	LateChargeAssessmentMode LateChargeAssessmentMode `json:"lateChargeAssessmentMode" bun:"late_charge_assessment_mode,type:late_charge_assessment_mode_enum,notnull,default:'Disabled'"`
 	// LateChargeMinimumAmount is the smallest total a run will bill a customer.
-	LateChargeMinimumAmount decimal.Decimal `json:"lateChargeMinimumAmount"  bun:"late_charge_minimum_amount,type:NUMERIC(19,4),notnull,default:0"`
+	LateChargeMinimumAmount decimal.Decimal `json:"lateChargeMinimumAmount" bun:"late_charge_minimum_amount,type:NUMERIC(19,4),notnull,default:0"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

@@ -9,10 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/csrf"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/sessioncookie"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -368,10 +368,13 @@ func (h *Handler) ssoCallback(provider tenant.SSOProvider) gin.HandlerFunc {
 			return
 		}
 
-		resp, err := h.service.HandleSSOCallback(c.Request.Context(), tenantports.SSOCallbackRequest{
-			State: state,
-			Code:  strings.TrimSpace(c.Query("code")),
-		})
+		resp, err := h.service.HandleSSOCallback(
+			c.Request.Context(),
+			tenantports.SSOCallbackRequest{
+				State: state,
+				Code:  strings.TrimSpace(c.Query("code")),
+			},
+		)
 		if err != nil {
 			h.redirectSSOError(c, loginState, err)
 			return

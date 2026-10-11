@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,11 +18,14 @@ func (s *Service) ExportBatchRemittanceCSV(
 	tenantInfo pagination.TenantInfo,
 	batchID pulid.ID,
 ) (string, error) {
-	batch, err := s.batchRepo.GetByID(ctx, carriersettlementports.GetCarrierSettlementBatchByIDRequest{
-		ID:                 batchID,
-		TenantInfo:         tenantInfo,
-		IncludeSettlements: true,
-	})
+	batch, err := s.batchRepo.GetByID(
+		ctx,
+		carriersettlementports.GetCarrierSettlementBatchByIDRequest{
+			ID:                 batchID,
+			TenantInfo:         tenantInfo,
+			IncludeSettlements: true,
+		},
+	)
 	if err != nil {
 		return "", err
 	}

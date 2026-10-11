@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -71,7 +71,8 @@ func LateChargeAssessmentWorkflow(ctx workflow.Context) (*LateChargeAssessmentRe
 
 	var a *Activities
 	tenants := make([]pagination.TenantInfo, 0)
-	if err := workflow.ExecuteActivity(ctx, a.ListLateChargeTenantsActivity).Get(ctx, &tenants); err != nil {
+	if err := workflow.ExecuteActivity(ctx, a.ListLateChargeTenantsActivity).
+		Get(ctx, &tenants); err != nil {
 		logger.Error("Late charge tenant listing failed", "error", err)
 		return nil, err
 	}

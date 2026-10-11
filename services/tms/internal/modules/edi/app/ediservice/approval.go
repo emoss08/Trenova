@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -69,61 +69,65 @@ func (s *Service) ApproveTransfer(
 		ctx,
 		"approve an internal load tender, writing both organizations' shipments in one transaction",
 	)
-	err := s.db.WithTx(approvalCtx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		transfer, err := s.transferRepo.GetTransferForUpdate(
-			txCtx,
-			ediports.GetEDITransferForUpdateRequest{
-				ID:         req.TransferID,
-				TenantInfo: req.TenantInfo,
-				Direction:  "inbound",
-			},
-		)
-		if err != nil {
-			return err
-		}
-		if err = RequireActionableTransfer(transfer, TransferVerbApproved); err != nil {
-			return err
-		}
-		originalCopy := *transfer
-		original = &originalCopy
-
-		if len(req.Mappings) > 0 {
-			if _, err = s.SaveMappingProfile(txCtx, &ediports.SaveMappingItemsRequest{
-				PartnerID:  transfer.TargetPartnerID,
-				TenantInfo: req.TenantInfo,
-				ActorID:    actor.UserID,
-				Items:      req.Mappings,
-			}); err != nil {
+	err := s.db.WithTx(
+		approvalCtx,
+		kernelports.TxOptions{},
+		func(txCtx context.Context, _ bun.Tx) error {
+			transfer, err := s.transferRepo.GetTransferForUpdate(
+				txCtx,
+				ediports.GetEDITransferForUpdateRequest{
+					ID:         req.TransferID,
+					TenantInfo: req.TenantInfo,
+					Direction:  "inbound",
+				},
+			)
+			if err != nil {
 				return err
 			}
-		}
+			if err = RequireActionableTransfer(transfer, TransferVerbApproved); err != nil {
+				return err
+			}
+			originalCopy := *transfer
+			original = &originalCopy
 
-		targetPartner, err := s.partnerRepo.GetByID(txCtx, ediports.GetEDIPartnerByIDRequest{
-			ID:         transfer.TargetPartnerID,
-			TenantInfo: req.TenantInfo,
-		})
-		if err != nil {
+			if len(req.Mappings) > 0 {
+				if _, err = s.SaveMappingProfile(txCtx, &ediports.SaveMappingItemsRequest{
+					PartnerID:  transfer.TargetPartnerID,
+					TenantInfo: req.TenantInfo,
+					ActorID:    actor.UserID,
+					Items:      req.Mappings,
+				}); err != nil {
+					return err
+				}
+			}
+
+			targetPartner, err := s.partnerRepo.GetByID(txCtx, ediports.GetEDIPartnerByIDRequest{
+				ID:         transfer.TargetPartnerID,
+				TenantInfo: req.TenantInfo,
+			})
+			if err != nil {
+				return err
+			}
+
+			preview, err = s.buildMappingPreview(txCtx, targetPartner, transfer.TenderPayload)
+			if err != nil {
+				return err
+			}
+			if len(preview.Unresolved) > 0 {
+				return unresolvedMappingsError(preview.Unresolved)
+			}
+
+			MarkTransferApprovalStarted(transfer, &TransferApprovalMark{
+				BusinessUnitID: req.TenantInfo.BuID,
+				Mapping:        preview.All,
+				ApproverID:     actor.UserID,
+				At:             timeutils.NowUnix(),
+			})
+
+			updated, err = s.transferRepo.UpdateTransfer(txCtx, transfer)
 			return err
-		}
-
-		preview, err = s.buildMappingPreview(txCtx, targetPartner, transfer.TenderPayload)
-		if err != nil {
-			return err
-		}
-		if len(preview.Unresolved) > 0 {
-			return unresolvedMappingsError(preview.Unresolved)
-		}
-
-		MarkTransferApprovalStarted(transfer, &TransferApprovalMark{
-			BusinessUnitID: req.TenantInfo.BuID,
-			Mapping:        preview.All,
-			ApproverID:     actor.UserID,
-			At:             timeutils.NowUnix(),
-		})
-
-		updated, err = s.transferRepo.UpdateTransfer(txCtx, transfer)
-		return err
-	})
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

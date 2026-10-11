@@ -35,12 +35,18 @@ var openMoveStatuses = []shipment.MoveStatus{
 }
 
 var (
-	shipmentJoin = "JOIN " + shipmentcol.ShipmentTable.As(shipmentcol.ShipmentTable.Alias) + " ON " +
-		shipmentcol.ShipmentColumns.ID.EqColumn(shipmentcol.ShipmentMoveColumns.ShipmentID) +
+	shipmentJoin = "JOIN " + shipmentcol.ShipmentTable.As(
+		shipmentcol.ShipmentTable.Alias,
+	) + " ON " +
+		shipmentcol.ShipmentColumns.ID.EqColumn(
+			shipmentcol.ShipmentMoveColumns.ShipmentID,
+		) +
 		" AND " + shipmentcol.ShipmentColumns.OrganizationID.EqColumn(
-		shipmentcol.ShipmentMoveColumns.OrganizationID) +
+		shipmentcol.ShipmentMoveColumns.OrganizationID,
+	) +
 		" AND " + shipmentcol.ShipmentColumns.BusinessUnitID.EqColumn(
-		shipmentcol.ShipmentMoveColumns.BusinessUnitID)
+		shipmentcol.ShipmentMoveColumns.BusinessUnitID,
+	)
 
 	customerJoin = "LEFT JOIN " + customercol.CustomerTable.As(customercol.CustomerTable.Alias) +
 		" ON " + customercol.CustomerColumns.ID.EqColumn(shipmentcol.ShipmentColumns.CustomerID) +

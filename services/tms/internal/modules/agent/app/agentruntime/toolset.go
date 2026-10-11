@@ -6,12 +6,12 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -468,7 +468,12 @@ func bestMatch(callable, added []agentports.AgentToolDescriptor) string {
 // search again for the lookup it needs next.
 func writeToolLines(b *strings.Builder, descriptors []agentports.AgentToolDescriptor) {
 	for _, descriptor := range descriptors {
-		fmt.Fprintf(b, "- %s: %s\n", descriptor.Name, stringutils.FirstSentence(descriptor.Description))
+		fmt.Fprintf(
+			b,
+			"- %s: %s\n",
+			descriptor.Name,
+			stringutils.FirstSentence(descriptor.Description),
+		)
 		if len(descriptor.Recipe) > 0 {
 			fmt.Fprintf(b, "  In order: %s\n", strings.Join(descriptor.Recipe, " → "))
 		}
@@ -525,7 +530,12 @@ func (s *Service) unheldRefusal(set *toolSet, name string, exists bool) string {
 		b.WriteString(" Tools this agent holds that may do the job, now callable:\n")
 		for _, descriptor := range nearest {
 			s.load(set, descriptor.Name)
-			fmt.Fprintf(&b, "- %s: %s\n", descriptor.Name, stringutils.FirstSentence(descriptor.Description))
+			fmt.Fprintf(
+				&b,
+				"- %s: %s\n",
+				descriptor.Name,
+				stringutils.FirstSentence(descriptor.Description),
+			)
 		}
 		return b.String()
 	}

@@ -64,7 +64,10 @@ func (r *sourceRepository) ListRuns(
 	ctx context.Context,
 	page aiauditports.AIAuditSourcePage,
 ) ([]*agent.AgentRun, error) {
-	ctx = dbscope.WithSystem(ctx, "project agent runs into the AI audit chain across every organization")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"project agent runs into the AI audit chain across every organization",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRun, error) {
 		cols := agentcol.AgentRunColumns
 		rows := make([]*agent.AgentRun, 0, page.Limit)
@@ -86,7 +89,10 @@ func (r *sourceRepository) ListTurns(
 	ctx context.Context,
 	page aiauditports.AIAuditSourcePage,
 ) ([]*conversation.AssistantTurn, error) {
-	ctx = dbscope.WithSystem(ctx, "project assistant turns into the AI audit chain across every organization")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"project assistant turns into the AI audit chain across every organization",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversation.AssistantTurn, error) {
 		cols := conversationcol.AssistantTurnColumns
 		rows := make([]*conversation.AssistantTurn, 0, page.Limit)
@@ -106,7 +112,10 @@ func (r *sourceRepository) ListUsage(
 	ctx context.Context,
 	page aiauditports.AIAuditSourcePage,
 ) ([]*aiusage.AIUsageRecord, error) {
-	ctx = dbscope.WithSystem(ctx, "project AI usage into the AI audit chain across every organization")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"project AI usage into the AI audit chain across every organization",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiusage.AIUsageRecord, error) {
 		cols := aiusagecol.AIUsageRecordColumns
 		rows := make([]*aiusage.AIUsageRecord, 0, page.Limit)
@@ -126,7 +135,10 @@ func (r *sourceRepository) ListSteps(
 	ctx context.Context,
 	page aiauditports.AIAuditSourcePage,
 ) ([]*agent.AgentRunStep, error) {
-	ctx = dbscope.WithSystem(ctx, "project agent steps into the AI audit chain across every organization")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"project agent steps into the AI audit chain across every organization",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunStep, error) {
 		cols := agentcol.AgentRunStepColumns
 		rows := make([]*agent.AgentRunStep, 0, page.Limit)
@@ -146,7 +158,10 @@ func (r *sourceRepository) ListEvents(
 	ctx context.Context,
 	page aiauditports.AIAuditSourcePage,
 ) ([]*agent.AgentRunEvent, error) {
-	ctx = dbscope.WithSystem(ctx, "project agent events into the AI audit chain across every organization")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"project agent events into the AI audit chain across every organization",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunEvent, error) {
 		cols := agentcol.AgentRunEventColumns
 		rows := make([]*agent.AgentRunEvent, 0, page.Limit)
@@ -166,7 +181,10 @@ func (r *sourceRepository) ListProposals(
 	ctx context.Context,
 	page aiauditports.AIAuditSourcePage,
 ) ([]*agent.AgentProposal, error) {
-	ctx = dbscope.WithSystem(ctx, "project proposals into the AI audit chain across every organization")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"project proposals into the AI audit chain across every organization",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
 		cols := agentcol.AgentProposalColumns
 		rows := make([]*agent.AgentProposal, 0, page.Limit)
@@ -186,7 +204,10 @@ func (r *sourceRepository) ListDecisions(
 	ctx context.Context,
 	page aiauditports.AIAuditSourcePage,
 ) ([]*agent.AgentDecision, error) {
-	ctx = dbscope.WithSystem(ctx, "project proposal decisions into the AI audit chain across every organization")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"project proposal decisions into the AI audit chain across every organization",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentDecision, error) {
 		cols := agentcol.AgentDecisionColumns
 		rows := make([]*agent.AgentDecision, 0, page.Limit)
@@ -391,7 +412,10 @@ func (r *sourceRepository) StartedToolSteps(
 	tenantInfo pagination.TenantInfo,
 	ownerIDs []pulid.ID,
 ) ([]*agent.AgentRunStep, error) {
-	ctx = dbscope.WithSystem(ctx, "project started tool steps into the AI audit chain across every organization")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"project started tool steps into the AI audit chain across every organization",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunStep, error) {
 		rows := make([]*agent.AgentRunStep, 0, len(ownerIDs))
 		if len(ownerIDs) == 0 {
@@ -418,43 +442,47 @@ func (r *sourceRepository) ToolStepCalls(
 	tenantInfo pagination.TenantInfo,
 	calls []aiauditports.OwnerCall,
 ) (map[aiauditports.OwnerCall]struct{}, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[aiauditports.OwnerCall]struct{}, error) {
-		found := make(map[aiauditports.OwnerCall]struct{}, len(calls))
-		if len(calls) == 0 {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[aiauditports.OwnerCall]struct{}, error) {
+			found := make(map[aiauditports.OwnerCall]struct{}, len(calls))
+			if len(calls) == 0 {
+				return found, nil
+			}
+
+			owners := make([]pulid.ID, 0, len(calls))
+			callIDs := make([]string, 0, len(calls))
+			for _, call := range calls {
+				owners = append(owners, call.OwnerID)
+				callIDs = append(callIDs, call.CallID)
+			}
+
+			type ownedCall struct {
+				OwnerID pulid.ID `bun:"owner_id"`
+				CallID  string   `bun:"call_id"`
+			}
+			rows := make([]ownedCall, 0, len(calls))
+
+			cols := agentcol.AgentRunStepColumns
+			if err := r.db.DBForContext(ctx).NewSelect().
+				Model((*agent.AgentRunStep)(nil)).
+				Column(cols.OwnerID.String(), cols.CallID.String()).
+				Apply(agentcol.AgentRunStepApplyTenant(tenantInfo)).
+				Where(cols.OwnerID.In(), bun.List(owners)).
+				Where(cols.CallID.In(), bun.List(callIDs)).
+				Where(cols.Kind.Eq(), string(agentports.RunStepTool)).
+				Scan(ctx, &rows); err != nil {
+				return nil, fmt.Errorf("read the tool calls agent run steps claimed: %w", err)
+			}
+
+			for _, row := range rows {
+				found[aiauditports.OwnerCall{OwnerID: row.OwnerID, CallID: row.CallID}] = struct{}{}
+			}
+
 			return found, nil
-		}
-
-		owners := make([]pulid.ID, 0, len(calls))
-		callIDs := make([]string, 0, len(calls))
-		for _, call := range calls {
-			owners = append(owners, call.OwnerID)
-			callIDs = append(callIDs, call.CallID)
-		}
-
-		type ownedCall struct {
-			OwnerID pulid.ID `bun:"owner_id"`
-			CallID  string   `bun:"call_id"`
-		}
-		rows := make([]ownedCall, 0, len(calls))
-
-		cols := agentcol.AgentRunStepColumns
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model((*agent.AgentRunStep)(nil)).
-			Column(cols.OwnerID.String(), cols.CallID.String()).
-			Apply(agentcol.AgentRunStepApplyTenant(tenantInfo)).
-			Where(cols.OwnerID.In(), bun.List(owners)).
-			Where(cols.CallID.In(), bun.List(callIDs)).
-			Where(cols.Kind.Eq(), string(agentports.RunStepTool)).
-			Scan(ctx, &rows); err != nil {
-			return nil, fmt.Errorf("read the tool calls agent run steps claimed: %w", err)
-		}
-
-		for _, row := range rows {
-			found[aiauditports.OwnerCall{OwnerID: row.OwnerID, CallID: row.CallID}] = struct{}{}
-		}
-
-		return found, nil
-	})
+		},
+	)
 }
 
 type namedRow struct {

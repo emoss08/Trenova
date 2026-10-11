@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -541,7 +541,10 @@ func (t *listWorkerPayAssignmentsTool) Query(
 			ID:            assignment.ID.String(),
 			PayProfileID:  assignment.PayProfileID.String(),
 			EffectiveFrom: recordedDate(assignment.EffectiveFrom),
-			EffectiveTo:   expectedDate(typeutils.ValueOrZero(assignment.EffectiveTo), absentOpenEnded),
+			EffectiveTo: expectedDate(
+				typeutils.ValueOrZero(assignment.EffectiveTo),
+				absentOpenEnded,
+			),
 			InForce: assignment.EffectiveFrom <= now &&
 				(assignment.EffectiveTo == nil || *assignment.EffectiveTo > now),
 			Notes: assignment.Notes,
@@ -853,8 +856,11 @@ func (t *listRecurringDeductionsTool) Query(
 			PayCodeID:       deduction.PayCodeID.String(),
 			EscrowAccountID: pointerIDString(deduction.EscrowAccountID),
 			StartDate:       recordedDate(deduction.StartDate),
-			EndDate:         expectedDate(typeutils.ValueOrZero(deduction.EndDate), absentOpenEnded),
-			Currency:        deduction.CurrencyCode,
+			EndDate: expectedDate(
+				typeutils.ValueOrZero(deduction.EndDate),
+				absentOpenEnded,
+			),
+			Currency: deduction.CurrencyCode,
 		}
 		if showAmounts && gate.show(fieldCap, withheldAmounts) &&
 			gate.show(fieldDeducted, withheldAmounts) {

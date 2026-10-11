@@ -109,9 +109,17 @@ func (f *Finding) validate() error {
 	case strings.TrimSpace(f.Problem) == "":
 		return fmt.Errorf("finding %s does not say what the problem is", f.ID)
 	case !slices.Contains([]FindingStatus{FindingOpen, FindingFixed, FindingWontFix}, f.Status):
-		return fmt.Errorf("finding %s: status must be open, fixed or wontfix, not %q", f.ID, f.Status)
+		return fmt.Errorf(
+			"finding %s: status must be open, fixed or wontfix, not %q",
+			f.ID,
+			f.Status,
+		)
 	case !slices.Contains(severityOrder, f.Severity):
-		return fmt.Errorf("finding %s: severity must be critical, high, medium or low, not %q", f.ID, f.Severity)
+		return fmt.Errorf(
+			"finding %s: severity must be critical, high, medium or low, not %q",
+			f.ID,
+			f.Severity,
+		)
 	case f.Status == FindingFixed && strings.TrimSpace(f.Fix) == "":
 		return fmt.Errorf("finding %s is fixed but does not say how", f.ID)
 	}
@@ -156,13 +164,25 @@ func RenderFindingsMarkdown(findings []*Finding) string {
 	for _, finding := range findings {
 		counts[finding.Status]++
 	}
-	fmt.Fprintf(&b, "%d open, %d fixed, %d won't fix.\n\n", counts[FindingOpen], counts[FindingFixed],
-		counts[FindingWontFix])
+	fmt.Fprintf(
+		&b,
+		"%d open, %d fixed, %d won't fix.\n\n",
+		counts[FindingOpen],
+		counts[FindingFixed],
+		counts[FindingWontFix],
+	)
 
 	b.WriteString("| ID | Status | Severity | Area | Title |\n|---|---|---|---|---|\n")
 	for _, finding := range findings {
-		fmt.Fprintf(&b, "| %s | %s | %s | %s | %s |\n", finding.ID, finding.Status, finding.Severity,
-			finding.Area, strings.ReplaceAll(finding.Title, "|", "\\|"))
+		fmt.Fprintf(
+			&b,
+			"| %s | %s | %s | %s | %s |\n",
+			finding.ID,
+			finding.Status,
+			finding.Severity,
+			finding.Area,
+			strings.ReplaceAll(finding.Title, "|", "\\|"),
+		)
 	}
 	b.WriteString("\n")
 
@@ -172,8 +192,13 @@ func RenderFindingsMarkdown(findings []*Finding) string {
 		if finding.FixedIn != "" {
 			fmt.Fprintf(&b, " (%s)", finding.FixedIn)
 		}
-		fmt.Fprintf(&b, "\n- Severity: %s\n- Area: %s\n- Found: %s\n", finding.Severity, finding.Area,
-			finding.Found)
+		fmt.Fprintf(
+			&b,
+			"\n- Severity: %s\n- Area: %s\n- Found: %s\n",
+			finding.Severity,
+			finding.Area,
+			finding.Found,
+		)
 		if len(finding.Models) > 0 {
 			fmt.Fprintf(&b, "- Models: %s\n", strings.Join(finding.Models, ", "))
 		}

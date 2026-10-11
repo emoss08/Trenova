@@ -3,9 +3,9 @@ package tenantsyncrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,7 +36,10 @@ func (r *repository) ListBusinessUnits(
 func (r *repository) ListOrganizations(
 	ctx context.Context,
 ) ([]tenant.SyncOrganization, error) {
-	ctx = dbscope.WithSystem(ctx, "list organizations across every tenant for fan-out and control plane sync")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"list organizations across every tenant for fan-out and control plane sync",
+	)
 	return r.listOrganizations(ctx, nil)
 }
 

@@ -1,10 +1,10 @@
 package agenttoolservice
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateconfirmationservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 // The carrier assignment, tender and rate confirmation services are provided

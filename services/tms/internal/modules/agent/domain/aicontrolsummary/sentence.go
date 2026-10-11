@@ -79,7 +79,9 @@ func overviewSentence(f *Facts) []Segment {
 		out := []Segment{
 			text("Every agent is "),
 			{Text: "paused", Strong: true, Tone: ToneWarn},
-			text(". They keep running and recording what they would do, but nothing is offered or executed"),
+			text(
+				". They keep running and recording what they would do, but nothing is offered or executed",
+			),
 		}
 		if f.Agents.Waiting > 0 {
 			out = append(out,
@@ -94,7 +96,12 @@ func overviewSentence(f *Facts) []Segment {
 	out := []Segment{strong(count(f.Agents.On, "agent", "agents"))}
 	out = append(out, text(" "+isAre(f.Agents.On)+" on"))
 	if f.Agents.Working > 0 {
-		out = append(out, text(", "), strong(strconv.Itoa(f.Agents.Working)), text(" working right now"))
+		out = append(
+			out,
+			text(", "),
+			strong(strconv.Itoa(f.Agents.Working)),
+			text(" working right now"),
+		)
 	}
 	out = append(out, text(". "))
 
@@ -161,10 +168,16 @@ func providersSentence(f *Facts) []Segment {
 	case 0:
 	case 1:
 		out = append(out, failingLink(f)...)
-		out = append(out, text(" is failing to connect, so its tasks fall through to the next in line. "))
+		out = append(
+			out,
+			text(" is failing to connect, so its tasks fall through to the next in line. "),
+		)
 	default:
 		out = append(out, failingLink(f)...)
-		out = append(out, text(" are failing to connect, so their tasks fall through to the next in line. "))
+		out = append(
+			out,
+			text(" are failing to connect, so their tasks fall through to the next in line. "),
+		)
 	}
 	if f.AwaitingKey != nil {
 		out = append(out,
@@ -198,7 +211,9 @@ func failingLink(f *Facts) []Segment {
 			Tone:       ToneDanger,
 		}}
 	default:
-		return []Segment{link(count(len(f.Failing), "provider", "providers"), TargetProviders, ToneDanger)}
+		return []Segment{
+			link(count(len(f.Failing), "provider", "providers"), TargetProviders, ToneDanger),
+		}
 	}
 }
 

@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -184,10 +184,13 @@ func (a *Activities) ListAccountingReferenceConnectionsActivity(
 	ctx context.Context,
 	afterID pulid.ID,
 ) (*ReferenceSweepPage, error) {
-	conns, err := a.connRepo.ListActive(ctx, accountingsyncports.ListActiveAccountingConnectionsRequest{
-		AfterID: afterID,
-		Limit:   referenceSweepPageSize,
-	})
+	conns, err := a.connRepo.ListActive(
+		ctx,
+		accountingsyncports.ListActiveAccountingConnectionsRequest{
+			AfterID: afterID,
+			Limit:   referenceSweepPageSize,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

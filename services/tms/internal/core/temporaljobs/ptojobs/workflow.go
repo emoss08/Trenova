@@ -45,7 +45,8 @@ func PTOAccrualWorkflow(
 
 	var a *Activities
 	var tenants []temporaljobs.TenantWorkItem
-	if err := workflow.ExecuteActivity(ctx, a.ListAccrualTenantsActivity, input).Get(ctx, &tenants); err != nil {
+	if err := workflow.ExecuteActivity(ctx, a.ListAccrualTenantsActivity, input).
+		Get(ctx, &tenants); err != nil {
 		logger.Error("PTO accrual workflow failed to list tenants", "error", err)
 		return nil, err
 	}

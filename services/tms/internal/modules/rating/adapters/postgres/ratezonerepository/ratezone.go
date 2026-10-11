@@ -67,24 +67,28 @@ func (r *repository) List(
 	ctx context.Context,
 	req *ratezoneports.ListRateZoneRequest,
 ) (*pagination.ListResult[*ratezone.RateZone], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratezone.RateZone], error) {
-		log := r.l.With(zap.String("operation", "List"))
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*ratezone.RateZone], error) {
+			log := r.l.With(zap.String("operation", "List"))
 
-		entities := make([]*ratezone.RateZone, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterQuery(sq, req)
-			}).
-			ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count rate zones", zap.Error(err))
-			return nil, err
-		}
+			entities := make([]*ratezone.RateZone, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).
+				ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count rate zones", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*ratezone.RateZone]{Items: entities, Total: total}, nil
-	})
+			return &pagination.ListResult[*ratezone.RateZone]{Items: entities, Total: total}, nil
+		},
+	)
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -124,49 +128,53 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *ratezoneports.ListRateZoneConnectionRequest,
 ) (*pagination.CursorListResult[*ratezone.RateZone], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*ratezone.RateZone], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*ratezone.RateZone], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*ratezone.RateZone)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyTotalCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*ratezone.RateZone)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyTotalCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count rate zones", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*ratezone.RateZone]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(entities *[]*ratezone.RateZone) *bun.SelectQuery {
+					return dba.
+						NewSelect().
+						Model(entities).
+						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+							return applyRateZoneColumns(sq, req.RateZoneColumns)
+						})
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					return r.applyCursorPageFilters(sq, req)
+				},
+			})
 			if err != nil {
-				log.Error("failed to count rate zones", zap.Error(err))
+				log.Error("failed to scan rate zones", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*ratezone.RateZone]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*ratezone.RateZone) *bun.SelectQuery {
-				return dba.
-					NewSelect().
-					Model(entities).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyRateZoneColumns(sq, req.RateZoneColumns)
-					})
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.applyCursorPageFilters(sq, req)
-			},
-		})
-		if err != nil {
-			log.Error("failed to scan rate zones", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -330,7 +338,11 @@ func (r *repository) Update(
 				return uErr
 			}
 
-			if uErr = dberror.CheckRowsAffected(results, "RateZone", entity.ID.String()); uErr != nil {
+			if uErr = dberror.CheckRowsAffected(
+				results,
+				"RateZone",
+				entity.ID.String(),
+			); uErr != nil {
 				return uErr
 			}
 
@@ -395,30 +407,34 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*ratezone.RateZone], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratezone.RateZone], error) {
-		cols := ratezonecol.RateZoneColumns
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*ratezone.RateZone], error) {
+			cols := ratezonecol.RateZoneColumns
 
-		return dbhelper.SelectOptions[*ratezone.RateZone](
-			ctx,
-			r.db.DBForContext(ctx),
-			req,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					cols.ID,
-					cols.Code,
-					cols.Name,
-					cols.Description,
-					cols.Kind,
-					cols.Status,
+			return dbhelper.SelectOptions[*ratezone.RateZone](
+				ctx,
+				r.db.DBForContext(ctx),
+				req,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.Code,
+						cols.Name,
+						cols.Description,
+						cols.Kind,
+						cols.Status,
+					},
+					OrgColumnRef:     &cols.OrganizationID,
+					BuColumnRef:      &cols.BusinessUnitID,
+					SearchColumnRefs: []buncolgen.Column{cols.Code, cols.Name},
+					EntityName:       "RateZone",
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
+					},
 				},
-				OrgColumnRef:     &cols.OrganizationID,
-				BuColumnRef:      &cols.BusinessUnitID,
-				SearchColumnRefs: []buncolgen.Column{cols.Code, cols.Name},
-				EntityName:       "RateZone",
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }

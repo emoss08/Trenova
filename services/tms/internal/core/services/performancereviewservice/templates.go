@@ -226,9 +226,15 @@ func (s *Service) changeTemplateStatus(
 	}
 
 	s.audit(&auditParams{
-		resource: permission.ResourcePerformanceReviewTemplate, resourceID: saved.GetResourceID(),
-		operation: operation, userID: req.UserID, tenant: req.TenantInfo,
-		current: saved, previous: original, comment: fmt.Sprintf("Review template %s", target), log: log,
+		resource:   permission.ResourcePerformanceReviewTemplate,
+		resourceID: saved.GetResourceID(),
+		operation:  operation,
+		userID:     req.UserID,
+		tenant:     req.TenantInfo,
+		current:    saved,
+		previous:   original,
+		comment:    fmt.Sprintf("Review template %s", target),
+		log:        log,
 	})
 	s.publish(ctx, req.TenantInfo, realtimeTemplate, operation, saved.ID, req.UserID)
 	return saved, nil

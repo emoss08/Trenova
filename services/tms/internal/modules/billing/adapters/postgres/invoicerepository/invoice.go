@@ -72,24 +72,28 @@ func (r *repository) List(
 	ctx context.Context,
 	req *invoiceports.ListInvoicesRequest,
 ) (*pagination.ListResult[*invoice.Invoice], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*invoice.Invoice], error) {
-		entities := make([]*invoice.Invoice, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterQuery(sq, req)
-			}).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*invoice.Invoice], error) {
+			entities := make([]*invoice.Invoice, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*invoice.Invoice]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*invoice.Invoice]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -121,53 +125,57 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *invoiceports.ListInvoiceConnectionRequest,
 ) (*pagination.CursorListResult[*invoice.Invoice], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*invoice.Invoice], error) {
-		log := r.l.With(
-			zap.String("operation", "ListConnection"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*invoice.Invoice], error) {
+			log := r.l.With(
+				zap.String("operation", "ListConnection"),
+				zap.Any("request", req),
+			)
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*invoice.Invoice)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyTotalCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*invoice.Invoice)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyTotalCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count invoices", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*invoice.Invoice]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*invoice.Invoice) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							ColumnExpr(invoicecol.InvoiceTable.All()).
+							Relation("Customer")
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return r.applyCursorPageFilters(sq, req)
+					},
+				})
 			if err != nil {
-				log.Error("failed to count invoices", zap.Error(err))
+				log.Error("failed to scan invoices", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*invoice.Invoice]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*invoice.Invoice) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						ColumnExpr(invoicecol.InvoiceTable.All()).
-						Relation("Customer")
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return r.applyCursorPageFilters(sq, req)
-				},
-			})
-		if err != nil {
-			log.Error("failed to scan invoices", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -240,30 +248,34 @@ func (r *repository) ListLineCharges(
 	ctx context.Context,
 	req *invoiceports.ListInvoiceLineChargesRequest,
 ) ([]invoiceports.InvoiceLineCharge, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]invoiceports.InvoiceLineCharge, error) {
-		if req == nil || len(req.InvoiceIDs) == 0 {
-			return []invoiceports.InvoiceLineCharge{}, nil
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]invoiceports.InvoiceLineCharge, error) {
+			if req == nil || len(req.InvoiceIDs) == 0 {
+				return []invoiceports.InvoiceLineCharge{}, nil
+			}
 
-		invl := invoicecol.InvoiceLineColumns
-		charges := make([]invoiceports.InvoiceLineCharge, 0, len(req.InvoiceIDs))
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model((*invoice.InvoiceLine)(nil)).
-			Distinct().
-			Column(invl.AdditionalChargeID.Bare(), invl.ShipmentID.Bare()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return invoicecol.InvoiceLineScopeTenant(sq, req.TenantInfo).
-					Where(invl.InvoiceID.In(), bun.List(req.InvoiceIDs)).
-					Where(invl.AdditionalChargeID.IsNotNull()).
-					Where(invl.ShipmentID.IsNotNull())
-			}).
-			Scan(ctx, &charges); err != nil {
-			r.l.Error("failed to list invoice line charges", zap.Error(err))
-			return nil, fmt.Errorf("list invoice line charges: %w", err)
-		}
+			invl := invoicecol.InvoiceLineColumns
+			charges := make([]invoiceports.InvoiceLineCharge, 0, len(req.InvoiceIDs))
+			if err := r.db.DBForContext(ctx).NewSelect().
+				Model((*invoice.InvoiceLine)(nil)).
+				Distinct().
+				Column(invl.AdditionalChargeID.Bare(), invl.ShipmentID.Bare()).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return invoicecol.InvoiceLineScopeTenant(sq, req.TenantInfo).
+						Where(invl.InvoiceID.In(), bun.List(req.InvoiceIDs)).
+						Where(invl.AdditionalChargeID.IsNotNull()).
+						Where(invl.ShipmentID.IsNotNull())
+				}).
+				Scan(ctx, &charges); err != nil {
+				r.l.Error("failed to list invoice line charges", zap.Error(err))
+				return nil, fmt.Errorf("list invoice line charges: %w", err)
+			}
 
-		return charges, nil
-	})
+			return charges, nil
+		},
+	)
 }
 
 func (r *repository) NetBilledByCharge(
@@ -333,82 +345,86 @@ func (r *repository) ListByShipmentIDs(
 	ctx context.Context,
 	req invoiceports.ListInvoicesByShipmentIDsRequest,
 ) (map[pulid.ID][]*invoice.Invoice, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*invoice.Invoice, error) {
-		result := make(map[pulid.ID][]*invoice.Invoice, len(req.ShipmentIDs))
-		if len(req.ShipmentIDs) == 0 {
-			return result, nil
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID][]*invoice.Invoice, error) {
+			result := make(map[pulid.ID][]*invoice.Invoice, len(req.ShipmentIDs))
+			if len(req.ShipmentIDs) == 0 {
+				return result, nil
+			}
 
-		inv := invoicecol.InvoiceColumns
-		invl := invoicecol.InvoiceLineColumns
-		var pairs []struct {
-			ShipmentID pulid.ID `bun:"shipment_id"`
-			InvoiceID  pulid.ID `bun:"invoice_id"`
-		}
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model((*invoice.InvoiceLine)(nil)).
-			DistinctOn(invl.ShipmentID.Qualified()+", "+invl.InvoiceID.Qualified()).
-			Column(invl.ShipmentID.Bare(), invl.InvoiceID.Bare()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return invoicecol.InvoiceLineScopeTenant(sq, req.TenantInfo).
-					Where(invl.ShipmentID.In(), bun.List(req.ShipmentIDs))
-			}).
-			UnionAll(r.db.DBForContext(ctx).NewSelect().
-				Model((*invoice.Invoice)(nil)).
-				Column(inv.ShipmentID.Bare()).
-				ColumnExpr(inv.ID.As("invoice_id")).
+			inv := invoicecol.InvoiceColumns
+			invl := invoicecol.InvoiceLineColumns
+			var pairs []struct {
+				ShipmentID pulid.ID `bun:"shipment_id"`
+				InvoiceID  pulid.ID `bun:"invoice_id"`
+			}
+			if err := r.db.DBForContext(ctx).NewSelect().
+				Model((*invoice.InvoiceLine)(nil)).
+				DistinctOn(invl.ShipmentID.Qualified()+", "+invl.InvoiceID.Qualified()).
+				Column(invl.ShipmentID.Bare(), invl.InvoiceID.Bare()).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return invoicecol.InvoiceScopeTenant(sq, req.TenantInfo).
-						Where(inv.ShipmentID.In(), bun.List(req.ShipmentIDs))
-				})).
-			Scan(ctx, &pairs); err != nil {
-			r.l.Error("failed to list invoice ids by shipment", zap.Error(err))
-			return nil, fmt.Errorf("list invoices by shipment: %w", err)
-		}
-		if len(pairs) == 0 {
+					return invoicecol.InvoiceLineScopeTenant(sq, req.TenantInfo).
+						Where(invl.ShipmentID.In(), bun.List(req.ShipmentIDs))
+				}).
+				UnionAll(r.db.DBForContext(ctx).NewSelect().
+					Model((*invoice.Invoice)(nil)).
+					Column(inv.ShipmentID.Bare()).
+					ColumnExpr(inv.ID.As("invoice_id")).
+					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return invoicecol.InvoiceScopeTenant(sq, req.TenantInfo).
+							Where(inv.ShipmentID.In(), bun.List(req.ShipmentIDs))
+					})).
+				Scan(ctx, &pairs); err != nil {
+				r.l.Error("failed to list invoice ids by shipment", zap.Error(err))
+				return nil, fmt.Errorf("list invoices by shipment: %w", err)
+			}
+			if len(pairs) == 0 {
+				return result, nil
+			}
+
+			invoiceIDs := make([]pulid.ID, 0, len(pairs))
+			seen := make(map[pulid.ID]struct{}, len(pairs))
+			for _, pair := range pairs {
+				if _, ok := seen[pair.InvoiceID]; ok {
+					continue
+				}
+				seen[pair.InvoiceID] = struct{}{}
+				invoiceIDs = append(invoiceIDs, pair.InvoiceID)
+			}
+
+			invoices, err := r.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
+				TenantInfo: req.TenantInfo,
+				InvoiceIDs: invoiceIDs,
+			})
+			if err != nil {
+				return nil, err
+			}
+			byID := make(map[pulid.ID]*invoice.Invoice, len(invoices))
+			for _, entity := range invoices {
+				byID[entity.ID] = entity
+			}
+
+			linked := make(map[pulid.ID]map[pulid.ID]struct{}, len(req.ShipmentIDs))
+			for _, pair := range pairs {
+				entity, ok := byID[pair.InvoiceID]
+				if !ok {
+					continue
+				}
+				if linked[pair.ShipmentID] == nil {
+					linked[pair.ShipmentID] = make(map[pulid.ID]struct{})
+				}
+				if _, dup := linked[pair.ShipmentID][pair.InvoiceID]; dup {
+					continue
+				}
+				linked[pair.ShipmentID][pair.InvoiceID] = struct{}{}
+				result[pair.ShipmentID] = append(result[pair.ShipmentID], entity)
+			}
+
 			return result, nil
-		}
-
-		invoiceIDs := make([]pulid.ID, 0, len(pairs))
-		seen := make(map[pulid.ID]struct{}, len(pairs))
-		for _, pair := range pairs {
-			if _, ok := seen[pair.InvoiceID]; ok {
-				continue
-			}
-			seen[pair.InvoiceID] = struct{}{}
-			invoiceIDs = append(invoiceIDs, pair.InvoiceID)
-		}
-
-		invoices, err := r.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
-			TenantInfo: req.TenantInfo,
-			InvoiceIDs: invoiceIDs,
-		})
-		if err != nil {
-			return nil, err
-		}
-		byID := make(map[pulid.ID]*invoice.Invoice, len(invoices))
-		for _, entity := range invoices {
-			byID[entity.ID] = entity
-		}
-
-		linked := make(map[pulid.ID]map[pulid.ID]struct{}, len(req.ShipmentIDs))
-		for _, pair := range pairs {
-			entity, ok := byID[pair.InvoiceID]
-			if !ok {
-				continue
-			}
-			if linked[pair.ShipmentID] == nil {
-				linked[pair.ShipmentID] = make(map[pulid.ID]struct{})
-			}
-			if _, dup := linked[pair.ShipmentID][pair.InvoiceID]; dup {
-				continue
-			}
-			linked[pair.ShipmentID][pair.InvoiceID] = struct{}{}
-			result[pair.ShipmentID] = append(result[pair.ShipmentID], entity)
-		}
-
-		return result, nil
-	})
+		},
+	)
 }
 
 // LockForUpdate reads the invoice and its lines under a row lock, so a void or
@@ -575,28 +591,35 @@ func (r *repository) Create(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.Invoice, error) {
 		entity.SyncMinorAmounts()
 
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-			if _, err := r.db.DBForContext(txCtx).NewInsert().Model(entity).Exec(txCtx); err != nil {
-				return fmt.Errorf("insert invoice: %w", err)
-			}
-
-			if len(entity.Lines) > 0 {
-				for _, line := range entity.Lines {
-					line.InvoiceID = entity.ID
-					line.OrganizationID = entity.OrganizationID
-					line.BusinessUnitID = entity.BusinessUnitID
-				}
-
+		err := r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, _ bun.Tx) error {
 				if _, err := r.db.DBForContext(txCtx).
 					NewInsert().
-					Model(&entity.Lines).
+					Model(entity).
 					Exec(txCtx); err != nil {
-					return fmt.Errorf("insert invoice lines: %w", err)
+					return fmt.Errorf("insert invoice: %w", err)
 				}
-			}
 
-			return nil
-		})
+				if len(entity.Lines) > 0 {
+					for _, line := range entity.Lines {
+						line.InvoiceID = entity.ID
+						line.OrganizationID = entity.OrganizationID
+						line.BusinessUnitID = entity.BusinessUnitID
+					}
+
+					if _, err := r.db.DBForContext(txCtx).
+						NewInsert().
+						Model(&entity.Lines).
+						Exec(txCtx); err != nil {
+						return fmt.Errorf("insert invoice lines: %w", err)
+					}
+				}
+
+				return nil
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -681,41 +704,45 @@ func (r *repository) UpsertAttachments(
 	req invoiceports.UpsertInvoiceAttachmentsRequest,
 ) ([]*invoice.Attachment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*invoice.Attachment, error) {
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-			if _, deleteErr := r.db.DBForContext(txCtx).
-				NewDelete().
-				Model((*invoice.Attachment)(nil)).
-				Where("invoice_id = ?", req.InvoiceID).
-				Where("organization_id = ?", req.TenantInfo.OrgID).
-				Where("business_unit_id = ?", req.TenantInfo.BuID).
-				Exec(txCtx); deleteErr != nil {
-				return fmt.Errorf("delete invoice attachments: %w", deleteErr)
-			}
+		err := r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, _ bun.Tx) error {
+				if _, deleteErr := r.db.DBForContext(txCtx).
+					NewDelete().
+					Model((*invoice.Attachment)(nil)).
+					Where("invoice_id = ?", req.InvoiceID).
+					Where("organization_id = ?", req.TenantInfo.OrgID).
+					Where("business_unit_id = ?", req.TenantInfo.BuID).
+					Exec(txCtx); deleteErr != nil {
+					return fmt.Errorf("delete invoice attachments: %w", deleteErr)
+				}
 
-			if len(req.DocumentIDs) == 0 {
+				if len(req.DocumentIDs) == 0 {
+					return nil
+				}
+
+				entities := make([]*invoice.Attachment, 0, len(req.DocumentIDs))
+				for idx, documentID := range req.DocumentIDs {
+					entities = append(entities, &invoice.Attachment{
+						OrganizationID: req.OrganizationID,
+						BusinessUnitID: req.BusinessUnitID,
+						InvoiceID:      req.InvoiceID,
+						DocumentID:     documentID,
+						Selected:       true,
+						SortOrder:      idx + 1,
+					})
+				}
+
+				if _, insertErr := r.db.DBForContext(txCtx).
+					NewInsert().
+					Model(&entities).
+					Exec(txCtx); insertErr != nil {
+					return fmt.Errorf("insert invoice attachments: %w", insertErr)
+				}
 				return nil
-			}
-
-			entities := make([]*invoice.Attachment, 0, len(req.DocumentIDs))
-			for idx, documentID := range req.DocumentIDs {
-				entities = append(entities, &invoice.Attachment{
-					OrganizationID: req.OrganizationID,
-					BusinessUnitID: req.BusinessUnitID,
-					InvoiceID:      req.InvoiceID,
-					DocumentID:     documentID,
-					Selected:       true,
-					SortOrder:      idx + 1,
-				})
-			}
-
-			if _, insertErr := r.db.DBForContext(txCtx).
-				NewInsert().
-				Model(&entities).
-				Exec(txCtx); insertErr != nil {
-				return fmt.Errorf("insert invoice attachments: %w", insertErr)
-			}
-			return nil
-		})
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -755,29 +782,33 @@ func (r *repository) CreateEmailAttempt(
 	attachments []*invoice.EmailAttemptAttachment,
 ) (*invoice.EmailAttempt, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.EmailAttempt, error) {
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-			if _, insertErr := r.db.DBForContext(txCtx).
-				NewInsert().
-				Model(attempt).
-				Exec(txCtx); insertErr != nil {
-				return fmt.Errorf("insert invoice email attempt: %w", insertErr)
-			}
-			if len(attachments) == 0 {
+		err := r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, _ bun.Tx) error {
+				if _, insertErr := r.db.DBForContext(txCtx).
+					NewInsert().
+					Model(attempt).
+					Exec(txCtx); insertErr != nil {
+					return fmt.Errorf("insert invoice email attempt: %w", insertErr)
+				}
+				if len(attachments) == 0 {
+					return nil
+				}
+				for _, attachment := range attachments {
+					attachment.AttemptID = attempt.ID
+					attachment.OrganizationID = attempt.OrganizationID
+					attachment.BusinessUnitID = attempt.BusinessUnitID
+				}
+				if _, insertErr := r.db.DBForContext(txCtx).
+					NewInsert().
+					Model(&attachments).
+					Exec(txCtx); insertErr != nil {
+					return fmt.Errorf("insert invoice email attempt attachments: %w", insertErr)
+				}
 				return nil
-			}
-			for _, attachment := range attachments {
-				attachment.AttemptID = attempt.ID
-				attachment.OrganizationID = attempt.OrganizationID
-				attachment.BusinessUnitID = attempt.BusinessUnitID
-			}
-			if _, insertErr := r.db.DBForContext(txCtx).
-				NewInsert().
-				Model(&attachments).
-				Exec(txCtx); insertErr != nil {
-				return fmt.Errorf("insert invoice email attempt attachments: %w", insertErr)
-			}
-			return nil
-		})
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -806,37 +837,43 @@ func (r *repository) ListEmailAttempts(
 	ctx context.Context,
 	req invoiceports.ListInvoiceEmailAttemptsRequest,
 ) (*pagination.ListResult[*invoice.EmailAttempt], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*invoice.EmailAttempt], error) {
-		limit := pagination.DefaultLimit
-		offset := pagination.DefaultOffset
-		if req.Filter != nil {
-			limit = req.Filter.Pagination.SafeLimit()
-			offset = req.Filter.Pagination.SafeOffset()
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*invoice.EmailAttempt], error) {
+			limit := pagination.DefaultLimit
+			offset := pagination.DefaultOffset
+			if req.Filter != nil {
+				limit = req.Filter.Pagination.SafeLimit()
+				offset = req.Filter.Pagination.SafeOffset()
+			}
 
-		entities := make([]*invoice.EmailAttempt, 0, limit)
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where("inea.invoice_id = ?", req.InvoiceID).
-			Where("inea.organization_id = ?", req.TenantInfo.OrgID).
-			Where("inea.business_unit_id = ?", req.TenantInfo.BuID).
-			Relation("Email").
-			Relation("Attachments", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Order("ineaa.created_at ASC").Relation("Document").Relation("ShareToken")
-			}).
-			Order("inea.created_at DESC").
-			Limit(limit).
-			Offset(offset).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return &pagination.ListResult[*invoice.EmailAttempt]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			entities := make([]*invoice.EmailAttempt, 0, limit)
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Where("inea.invoice_id = ?", req.InvoiceID).
+				Where("inea.organization_id = ?", req.TenantInfo.OrgID).
+				Where("inea.business_unit_id = ?", req.TenantInfo.BuID).
+				Relation("Email").
+				Relation("Attachments", func(q *bun.SelectQuery) *bun.SelectQuery {
+					return q.Order("ineaa.created_at ASC").
+						Relation("Document").
+						Relation("ShareToken")
+				}).
+				Order("inea.created_at DESC").
+				Limit(limit).
+				Offset(offset).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return &pagination.ListResult[*invoice.EmailAttempt]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) SyncEmailAttemptsForMessage(
@@ -877,32 +914,36 @@ func (r *repository) SyncEmailAttemptsForMessage(
 			sentAt = &msg.SentAt
 		}
 
-		return r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-			if _, err := r.db.DBForContext(txCtx).
-				NewUpdate().
-				Model((*invoice.EmailAttempt)(nil)).
-				Set("status = ?", status).
-				Set("provider_message_id = ?", msg.ProviderMessageID).
-				Set("error = ?", errorMessage).
-				Set("sent_at = ?", sentAt).
-				Where("email_message_id = ?", messageID).
-				Where("organization_id = ?", tenantInfo.OrgID).
-				Where("business_unit_id = ?", tenantInfo.BuID).
-				Exec(txCtx); err != nil {
-				return fmt.Errorf("sync invoice email attempts: %w", err)
-			}
-
-			invoiceIDs := make(map[pulid.ID]struct{}, len(attempts))
-			for _, attempt := range attempts {
-				invoiceIDs[attempt.InvoiceID] = struct{}{}
-			}
-			for invoiceID := range invoiceIDs {
-				if err := r.syncInvoiceSendStatus(txCtx, invoiceID, tenantInfo); err != nil {
-					return err
+		return r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, _ bun.Tx) error {
+				if _, err := r.db.DBForContext(txCtx).
+					NewUpdate().
+					Model((*invoice.EmailAttempt)(nil)).
+					Set("status = ?", status).
+					Set("provider_message_id = ?", msg.ProviderMessageID).
+					Set("error = ?", errorMessage).
+					Set("sent_at = ?", sentAt).
+					Where("email_message_id = ?", messageID).
+					Where("organization_id = ?", tenantInfo.OrgID).
+					Where("business_unit_id = ?", tenantInfo.BuID).
+					Exec(txCtx); err != nil {
+					return fmt.Errorf("sync invoice email attempts: %w", err)
 				}
-			}
-			return nil
-		})
+
+				invoiceIDs := make(map[pulid.ID]struct{}, len(attempts))
+				for _, attempt := range attempts {
+					invoiceIDs[attempt.InvoiceID] = struct{}{}
+				}
+				for invoiceID := range invoiceIDs {
+					if err := r.syncInvoiceSendStatus(txCtx, invoiceID, tenantInfo); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+		)
 	})
 }
 
@@ -1025,7 +1066,10 @@ func (r *repository) GetDocumentShareToken(
 	ctx context.Context,
 	req invoiceports.GetInvoiceDocumentShareTokenRequest,
 ) (*invoice.DocumentShareToken, error) {
-	ctx = dbscope.WithSystem(ctx, "resolve a public invoice document link before its tenant is known")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"resolve a public invoice document link before its tenant is known",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoice.DocumentShareToken, error) {
 		entity := new(invoice.DocumentShareToken)
 		err := r.db.DBForContext(ctx).

@@ -57,130 +57,150 @@ func (r *inboundChangeRepository) Create(
 	ctx context.Context,
 	entity *accountingsync.AccountingInboundChange,
 ) (*accountingsync.AccountingInboundChange, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingInboundChange, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("create accounting inbound change: %w", err)
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*accountingsync.AccountingInboundChange, error) {
+			if _, err := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(entity).
+				Returning("*").
+				Exec(ctx); err != nil {
+				return nil, fmt.Errorf("create accounting inbound change: %w", err)
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *inboundChangeRepository) Update(
 	ctx context.Context,
 	entity *accountingsync.AccountingInboundChange,
 ) (*accountingsync.AccountingInboundChange, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingInboundChange, error) {
-		cols := accountingsynccol.AccountingInboundChangeColumns
-		ov := entity.Version
-		entity.Version++
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*accountingsync.AccountingInboundChange, error) {
+			cols := accountingsynccol.AccountingInboundChangeColumns
+			ov := entity.Version
+			entity.Version++
 
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			ExcludeColumn(cols.CreatedAt.Bare()).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			Exec(ctx)
-		if err != nil {
-			entity.Version = ov
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			inboundChangeEntity,
-			entity.ID.String(),
-		); err != nil {
-			entity.Version = ov
-			return nil, err
-		}
+			results, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(entity).
+				ExcludeColumn(cols.CreatedAt.Bare()).
+				WherePK().
+				Where(cols.Version.Eq(), ov).
+				Exec(ctx)
+			if err != nil {
+				entity.Version = ov
+				return nil, err
+			}
+			if err = dberror.CheckRowsAffected(
+				results,
+				inboundChangeEntity,
+				entity.ID.String(),
+			); err != nil {
+				entity.Version = ov
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *inboundChangeRepository) GetByID(
 	ctx context.Context,
 	req accountingsyncports.GetAccountingInboundChangeQuery,
 ) (*accountingsync.AccountingInboundChange, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingInboundChange, error) {
-		entity := new(accountingsync.AccountingInboundChange)
-		cols := accountingsynccol.AccountingInboundChangeColumns
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*accountingsync.AccountingInboundChange, error) {
+			entity := new(accountingsync.AccountingInboundChange)
+			cols := accountingsynccol.AccountingInboundChangeColumns
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
-			Where(cols.ID.Eq(), req.ID)
-		if req.ForUpdate {
-			query = query.For("UPDATE")
-		}
-		if err := query.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, inboundChangeEntity)
-		}
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
+				Where(cols.ID.Eq(), req.ID)
+			if req.ForUpdate {
+				query = query.For("UPDATE")
+			}
+			if err := query.Scan(ctx); err != nil {
+				return nil, dberror.HandleNotFoundError(err, inboundChangeEntity)
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *inboundChangeRepository) ListByExternalIDs(
 	ctx context.Context,
 	req *accountingsyncports.ListAccountingInboundChangesByExternalIDsRequest,
 ) ([]*accountingsync.AccountingInboundChange, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingInboundChange, error) {
-		entities := make([]*accountingsync.AccountingInboundChange, 0, len(req.ExternalIDs))
-		if len(req.ExternalIDs) == 0 {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*accountingsync.AccountingInboundChange, error) {
+			entities := make([]*accountingsync.AccountingInboundChange, 0, len(req.ExternalIDs))
+			if len(req.ExternalIDs) == 0 {
+				return entities, nil
+			}
+
+			cols := accountingsynccol.AccountingInboundChangeColumns
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
+				Where(cols.ConnectionID.Eq(), req.ConnectionID).
+				Where(cols.Kind.Eq(), req.Kind).
+				Where(cols.ExternalID.In(), bun.List(req.ExternalIDs)).
+				Scan(ctx); err != nil {
+				return nil, err
+			}
+
 			return entities, nil
-		}
-
-		cols := accountingsynccol.AccountingInboundChangeColumns
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
-			Where(cols.ConnectionID.Eq(), req.ConnectionID).
-			Where(cols.Kind.Eq(), req.Kind).
-			Where(cols.ExternalID.In(), bun.List(req.ExternalIDs)).
-			Scan(ctx); err != nil {
-			return nil, err
-		}
-
-		return entities, nil
-	})
+		},
+	)
 }
 
 func (r *inboundChangeRepository) ListDetected(
 	ctx context.Context,
 	req *accountingsyncports.ListDetectedAccountingInboundChangesRequest,
 ) ([]*accountingsync.AccountingInboundChange, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingInboundChange, error) {
-		limit := req.Limit
-		if limit <= 0 {
-			limit = defaultInboundBatch
-		}
-		limit = intutils.Clamp(limit, 1, maxInboundBatch)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*accountingsync.AccountingInboundChange, error) {
+			limit := req.Limit
+			if limit <= 0 {
+				limit = defaultInboundBatch
+			}
+			limit = intutils.Clamp(limit, 1, maxInboundBatch)
 
-		cols := accountingsynccol.AccountingInboundChangeColumns
-		entities := make([]*accountingsync.AccountingInboundChange, 0, limit)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
-			Where(cols.ConnectionID.Eq(), req.ConnectionID).
-			Where(cols.Status.Eq(), accountingsync.InboundStatusDetected).
-			Where(cols.DetectedAt.Lte(), req.DetectedBefore).
-			Order(cols.DetectedAt.OrderAsc(), cols.ID.OrderAsc()).
-			Limit(limit).
-			Scan(ctx); err != nil {
-			return nil, err
-		}
+			cols := accountingsynccol.AccountingInboundChangeColumns
+			entities := make([]*accountingsync.AccountingInboundChange, 0, limit)
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
+				Where(cols.ConnectionID.Eq(), req.ConnectionID).
+				Where(cols.Status.Eq(), accountingsync.InboundStatusDetected).
+				Where(cols.DetectedAt.Lte(), req.DetectedBefore).
+				Order(cols.DetectedAt.OrderAsc(), cols.ID.OrderAsc()).
+				Limit(limit).
+				Scan(ctx); err != nil {
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *inboundChangeRepository) applyListFilters(
@@ -216,136 +236,148 @@ func (r *inboundChangeRepository) ListConnection(
 	ctx context.Context,
 	req *accountingsyncports.ListAccountingInboundChangesConnectionRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingInboundChange], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*accountingsync.AccountingInboundChange], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*accountingsync.AccountingInboundChange], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
 
-		if req.Filter != nil && len(req.Filter.Sort) == 0 {
-			req.Filter.Sort = []domaintypes.SortField{
-				{Field: inboundChangeDetectedSort, Direction: dbtype.SortDirectionDesc},
+			if req.Filter != nil && len(req.Filter.Sort) == 0 {
+				req.Filter.Sort = []domaintypes.SortField{
+					{Field: inboundChangeDetectedSort, Direction: dbtype.SortDirectionDesc},
+				}
 			}
-		}
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*accountingsync.AccountingInboundChange)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						accountingsynccol.AccountingInboundChangeTable.Alias,
-						req.Filter,
-						(*accountingsync.AccountingInboundChange)(nil),
-					)
-					return r.applyListFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*accountingsync.AccountingInboundChange)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							accountingsynccol.AccountingInboundChangeTable.Alias,
+							req.Filter,
+							(*accountingsync.AccountingInboundChange)(nil),
+						)
+						return r.applyListFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count accounting inbound changes", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*accountingsync.AccountingInboundChange]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(items *[]*accountingsync.AccountingInboundChange) *bun.SelectQuery {
+						return dba.NewSelect().
+							Model(items).
+							ColumnExpr(accountingsynccol.AccountingInboundChangeTable.All())
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						sq, applyErr := querybuilder.ApplyCursorFilters(
+							sq,
+							accountingsynccol.AccountingInboundChangeTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*accountingsync.AccountingInboundChange)(nil),
+						)
+						if applyErr != nil {
+							return sq, applyErr
+						}
+						return r.applyListFilters(sq, req), nil
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count accounting inbound changes", zap.Error(err))
+				log.Error("failed to list accounting inbound changes", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*accountingsync.AccountingInboundChange]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(items *[]*accountingsync.AccountingInboundChange) *bun.SelectQuery {
-					return dba.NewSelect().
-						Model(items).
-						ColumnExpr(accountingsynccol.AccountingInboundChangeTable.All())
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					sq, applyErr := querybuilder.ApplyCursorFilters(
-						sq,
-						accountingsynccol.AccountingInboundChangeTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*accountingsync.AccountingInboundChange)(nil),
-					)
-					if applyErr != nil {
-						return sq, applyErr
-					}
-					return r.applyListFilters(sq, req), nil
-				},
-			},
-		)
-		if err != nil {
-			log.Error("failed to list accounting inbound changes", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *inboundChangeRepository) Summarize(
 	ctx context.Context,
 	req *accountingsyncports.SummarizeAccountingInboundChangesRequest,
 ) (*accountingsyncports.AccountingInboundSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsyncports.AccountingInboundSummary, error) {
-		cols := accountingsynccol.AccountingInboundChangeColumns
-		summary := new(accountingsyncports.AccountingInboundSummary)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*accountingsyncports.AccountingInboundSummary, error) {
+			cols := accountingsynccol.AccountingInboundChangeColumns
+			summary := new(accountingsyncports.AccountingInboundSummary)
 
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*accountingsync.AccountingInboundChange)(nil)).
-			ColumnExpr(buncolgen.CountFilter("detected", cols.Status.Eq()), accountingsync.InboundStatusDetected).
-			ColumnExpr(buncolgen.CountFilter("proposed", cols.Status.Eq()), accountingsync.InboundStatusProposed).
-			ColumnExpr(
-				buncolgen.CountFilter("applied_since", cols.Status.Eq(), cols.DecidedAt.Gte()),
-				accountingsync.InboundStatusApplied,
-				req.DecidedSince,
-			).
-			ColumnExpr(
-				buncolgen.CountFilter("ignored_since", cols.Status.Eq(), cols.DecidedAt.Gte()),
-				accountingsync.InboundStatusIgnored,
-				req.DecidedSince,
-			).
-			Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
-			Where(cols.ConnectionID.Eq(), req.ConnectionID).
-			Scan(ctx, summary); err != nil {
-			return nil, err
-		}
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*accountingsync.AccountingInboundChange)(nil)).
+				ColumnExpr(buncolgen.CountFilter("detected", cols.Status.Eq()), accountingsync.InboundStatusDetected).
+				ColumnExpr(buncolgen.CountFilter("proposed", cols.Status.Eq()), accountingsync.InboundStatusProposed).
+				ColumnExpr(
+					buncolgen.CountFilter("applied_since", cols.Status.Eq(), cols.DecidedAt.Gte()),
+					accountingsync.InboundStatusApplied,
+					req.DecidedSince,
+				).
+				ColumnExpr(
+					buncolgen.CountFilter("ignored_since", cols.Status.Eq(), cols.DecidedAt.Gte()),
+					accountingsync.InboundStatusIgnored,
+					req.DecidedSince,
+				).
+				Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
+				Where(cols.ConnectionID.Eq(), req.ConnectionID).
+				Scan(ctx, summary); err != nil {
+				return nil, err
+			}
 
-		return summary, nil
-	})
+			return summary, nil
+		},
+	)
 }
 
 func (r *inboundChangeRepository) ListAttention(
 	ctx context.Context,
 	req *accountingsyncports.ListAccountingInboundAttentionRequest,
 ) ([]accountingsyncports.AccountingInboundAttentionGroup, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]accountingsyncports.AccountingInboundAttentionGroup, error) {
-		cols := accountingsynccol.AccountingInboundChangeColumns
-		groups := make(
-			[]accountingsyncports.AccountingInboundAttentionGroup,
-			0,
-			len(accountingsync.AllInboundChangeReasons()),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]accountingsyncports.AccountingInboundAttentionGroup, error) {
+			cols := accountingsynccol.AccountingInboundChangeColumns
+			groups := make(
+				[]accountingsyncports.AccountingInboundAttentionGroup,
+				0,
+				len(accountingsync.AllInboundChangeReasons()),
+			)
 
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*accountingsync.AccountingInboundChange)(nil)).
-			ColumnExpr(cols.Reason.As("reason")).
-			ColumnExpr(buncolgen.Count("count")).
-			ColumnExpr(buncolgen.Min(cols.DetectedAt, "oldest_detected_at")).
-			ColumnExpr(buncolgen.Min(cols.ID, "sample_id")).
-			Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
-			Where(cols.ConnectionID.Eq(), req.ConnectionID).
-			Where(cols.Status.Eq(), accountingsync.InboundStatusProposed).
-			Where(cols.DetectedAt.Lte(), req.DetectedBefore).
-			GroupExpr(cols.Reason.Qualified()).
-			OrderExpr("count DESC").
-			OrderExpr("oldest_detected_at ASC").
-			Scan(ctx, &groups); err != nil {
-			return nil, err
-		}
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*accountingsync.AccountingInboundChange)(nil)).
+				ColumnExpr(cols.Reason.As("reason")).
+				ColumnExpr(buncolgen.Count("count")).
+				ColumnExpr(buncolgen.Min(cols.DetectedAt, "oldest_detected_at")).
+				ColumnExpr(buncolgen.Min(cols.ID, "sample_id")).
+				Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
+				Where(cols.ConnectionID.Eq(), req.ConnectionID).
+				Where(cols.Status.Eq(), accountingsync.InboundStatusProposed).
+				Where(cols.DetectedAt.Lte(), req.DetectedBefore).
+				GroupExpr(cols.Reason.Qualified()).
+				OrderExpr("count DESC").
+				OrderExpr("oldest_detected_at ASC").
+				Scan(ctx, &groups); err != nil {
+				return nil, err
+			}
 
-		return groups, nil
-	})
+			return groups, nil
+		},
+	)
 }

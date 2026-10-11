@@ -159,11 +159,14 @@ func (r *repository) ListForTargets(
 					Where(cols.UserID.Eq(), req.UserID).
 					WhereGroup(" AND ", func(targets *bun.SelectQuery) *bun.SelectQuery {
 						for _, target := range req.Targets {
-							targets = targets.WhereGroup(" OR ", func(one *bun.SelectQuery) *bun.SelectQuery {
-								return one.Where(cols.TargetType.Eq(), target.TargetType).
-									Where(cols.TargetID.Eq(), target.TargetID).
-									Where(cols.TargetPart.Eq(), target.TargetPart)
-							})
+							targets = targets.WhereGroup(
+								" OR ",
+								func(one *bun.SelectQuery) *bun.SelectQuery {
+									return one.Where(cols.TargetType.Eq(), target.TargetType).
+										Where(cols.TargetID.Eq(), target.TargetID).
+										Where(cols.TargetPart.Eq(), target.TargetPart)
+								},
+							)
 						}
 
 						return targets
@@ -212,162 +215,177 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *aifeedbackports.ListAIFeedbackConnectionRequest,
 ) (*pagination.CursorListResult[*aifeedback.Feedback], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*aifeedback.Feedback], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
-		dba := r.db.DBForContext(ctx)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*aifeedback.Feedback], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
+			dba := r.db.DBForContext(ctx)
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*aifeedback.Feedback)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						aifeedbackcol.FeedbackTable.Alias,
-						req.Filter,
-						(*aifeedback.Feedback)(nil),
-					)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*aifeedback.Feedback)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							aifeedbackcol.FeedbackTable.Alias,
+							req.Filter,
+							(*aifeedback.Feedback)(nil),
+						)
 
-					return sq.Apply(aifeedbackcol.FeedbackApplyTenant(req.Filter.TenantInfo))
-				}).
-				Count(ctx)
+						return sq.Apply(aifeedbackcol.FeedbackApplyTenant(req.Filter.TenantInfo))
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count ai feedback", zap.Error(err))
+
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*aifeedback.Feedback]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*aifeedback.Feedback) *bun.SelectQuery {
+						q := dba.NewSelect().Model(entities)
+						if len(req.Columns) > 0 {
+							q = q.Column(req.Columns...)
+						}
+
+						return q
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							aifeedbackcol.FeedbackTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*aifeedback.Feedback)(nil),
+						)
+					},
+				})
 			if err != nil {
-				log.Error("failed to count ai feedback", zap.Error(err))
+				log.Error("failed to list ai feedback", zap.Error(err))
 
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*aifeedback.Feedback]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*aifeedback.Feedback) *bun.SelectQuery {
-					q := dba.NewSelect().Model(entities)
-					if len(req.Columns) > 0 {
-						q = q.Column(req.Columns...)
-					}
-
-					return q
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return querybuilder.ApplyCursorFilters(
-						sq,
-						aifeedbackcol.FeedbackTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*aifeedback.Feedback)(nil),
-					)
-				},
-			})
-		if err != nil {
-			log.Error("failed to list ai feedback", zap.Error(err))
-
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) DailySatisfaction(
 	ctx context.Context,
 	req aifeedbackports.AIFeedbackWindowRequest,
 ) ([]*aifeedbackports.AIFeedbackDay, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aifeedbackports.AIFeedbackDay, error) {
-		cols := aifeedbackcol.FeedbackColumns
-		rows := make([]*aifeedbackports.AIFeedbackDay, 0)
-		day := cols.CreatedAt.Expr("to_char(to_timestamp({}) AT TIME ZONE ?, 'YYYY-MM-DD')")
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*aifeedbackports.AIFeedbackDay, error) {
+			cols := aifeedbackcol.FeedbackColumns
+			rows := make([]*aifeedbackports.AIFeedbackDay, 0)
+			day := cols.CreatedAt.Expr("to_char(to_timestamp({}) AT TIME ZONE ?, 'YYYY-MM-DD')")
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*aifeedback.Feedback)(nil)).
-			ColumnExpr(day+" AS day", timezoneOf(req.Timezone)).
-			ColumnExpr(buncolgen.CountFilter("positive", cols.Rating.Eq()), aifeedback.RatingPositive).
-			ColumnExpr(buncolgen.CountFilter("negative", cols.Rating.Eq()), aifeedback.RatingNegative).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return windowScope(sq, req)
-			}).
-			GroupExpr("day").
-			OrderExpr("day ASC").
-			Scan(ctx, &rows)
-		if err != nil {
-			r.l.Error("failed to read ai feedback satisfaction by day", zap.Error(err))
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*aifeedback.Feedback)(nil)).
+				ColumnExpr(day+" AS day", timezoneOf(req.Timezone)).
+				ColumnExpr(buncolgen.CountFilter("positive", cols.Rating.Eq()), aifeedback.RatingPositive).
+				ColumnExpr(buncolgen.CountFilter("negative", cols.Rating.Eq()), aifeedback.RatingNegative).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return windowScope(sq, req)
+				}).
+				GroupExpr("day").
+				OrderExpr("day ASC").
+				Scan(ctx, &rows)
+			if err != nil {
+				r.l.Error("failed to read ai feedback satisfaction by day", zap.Error(err))
 
-			return nil, fmt.Errorf("ai feedback satisfaction by day: %w", err)
-		}
+				return nil, fmt.Errorf("ai feedback satisfaction by day: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
 func (r *repository) WorstRated(
 	ctx context.Context,
 	req aifeedbackports.AIFeedbackWindowRequest,
 ) ([]*aifeedbackports.AIFeedbackTargetScore, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aifeedbackports.AIFeedbackTargetScore, error) {
-		cols := aifeedbackcol.FeedbackColumns
-		limit := req.Limit
-		if limit <= 0 {
-			limit = defaultWorstLimit
-		}
-		if limit > maxWorstLimit {
-			limit = maxWorstLimit
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*aifeedbackports.AIFeedbackTargetScore, error) {
+			cols := aifeedbackcol.FeedbackColumns
+			limit := req.Limit
+			if limit <= 0 {
+				limit = defaultWorstLimit
+			}
+			if limit > maxWorstLimit {
+				limit = maxWorstLimit
+			}
 
-		countRating := cols.Rating.Expr("COUNT(*) FILTER (WHERE {} = ?)")
-		rows := make([]*aifeedbackports.AIFeedbackTargetScore, 0, limit)
+			countRating := cols.Rating.Expr("COUNT(*) FILTER (WHERE {} = ?)")
+			rows := make([]*aifeedbackports.AIFeedbackTargetScore, 0, limit)
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*aifeedback.Feedback)(nil)).
-			ColumnExpr(cols.TargetType.As("target_type")).
-			ColumnExpr(cols.TargetID.As("target_id")).
-			ColumnExpr(cols.TargetPart.As("target_part")).
-			ColumnExpr(countRating+" AS positive", aifeedback.RatingPositive).
-			ColumnExpr(countRating+" AS negative", aifeedback.RatingNegative).
-			ColumnExpr(buncolgen.Max(cols.CreatedAt, "last_rated_at")).
-			ColumnExpr(buncolgen.Expr(
-				"(ARRAY_AGG({0} ORDER BY {1} ASC, {2} DESC))[1] AS sample_id",
-				cols.ID,
-				cols.Rating,
-				cols.CreatedAt,
-			)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return windowScope(sq, req)
-			}).
-			GroupExpr(cols.TargetType.Qualified()).
-			GroupExpr(cols.TargetID.Qualified()).
-			GroupExpr(cols.TargetPart.Qualified()).
-			Having(countRating+" > 0", aifeedback.RatingNegative).
-			OrderExpr(
-				"("+countRating+" - "+countRating+") DESC",
-				aifeedback.RatingNegative,
-				aifeedback.RatingPositive,
-			).
-			OrderExpr(countRating+" DESC", aifeedback.RatingNegative).
-			OrderExpr(buncolgen.Expr("MAX({}) DESC", cols.CreatedAt)).
-			OrderExpr(cols.TargetType.OrderAsc()).
-			OrderExpr(cols.TargetID.OrderAsc()).
-			OrderExpr(cols.TargetPart.OrderAsc()).
-			Limit(limit).
-			Offset(max(req.Offset, 0)).
-			Scan(ctx, &rows)
-		if err != nil {
-			r.l.Error("failed to read worst-rated ai output", zap.Error(err))
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*aifeedback.Feedback)(nil)).
+				ColumnExpr(cols.TargetType.As("target_type")).
+				ColumnExpr(cols.TargetID.As("target_id")).
+				ColumnExpr(cols.TargetPart.As("target_part")).
+				ColumnExpr(countRating+" AS positive", aifeedback.RatingPositive).
+				ColumnExpr(countRating+" AS negative", aifeedback.RatingNegative).
+				ColumnExpr(buncolgen.Max(cols.CreatedAt, "last_rated_at")).
+				ColumnExpr(buncolgen.Expr(
+					"(ARRAY_AGG({0} ORDER BY {1} ASC, {2} DESC))[1] AS sample_id",
+					cols.ID,
+					cols.Rating,
+					cols.CreatedAt,
+				)).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return windowScope(sq, req)
+				}).
+				GroupExpr(cols.TargetType.Qualified()).
+				GroupExpr(cols.TargetID.Qualified()).
+				GroupExpr(cols.TargetPart.Qualified()).
+				Having(countRating+" > 0", aifeedback.RatingNegative).
+				OrderExpr(
+					"("+countRating+" - "+countRating+") DESC",
+					aifeedback.RatingNegative,
+					aifeedback.RatingPositive,
+				).
+				OrderExpr(countRating+" DESC", aifeedback.RatingNegative).
+				OrderExpr(buncolgen.Expr("MAX({}) DESC", cols.CreatedAt)).
+				OrderExpr(cols.TargetType.OrderAsc()).
+				OrderExpr(cols.TargetID.OrderAsc()).
+				OrderExpr(cols.TargetPart.OrderAsc()).
+				Limit(limit).
+				Offset(max(req.Offset, 0)).
+				Scan(ctx, &rows)
+			if err != nil {
+				r.l.Error("failed to read worst-rated ai output", zap.Error(err))
 
-			return nil, fmt.Errorf("worst-rated ai output: %w", err)
-		}
+				return nil, fmt.Errorf("worst-rated ai output: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
-func windowScope(sq *bun.SelectQuery, req aifeedbackports.AIFeedbackWindowRequest) *bun.SelectQuery {
+func windowScope(
+	sq *bun.SelectQuery,
+	req aifeedbackports.AIFeedbackWindowRequest,
+) *bun.SelectQuery {
 	cols := aifeedbackcol.FeedbackColumns
 
 	sq = aifeedbackcol.FeedbackScopeTenant(sq, req.TenantInfo).
@@ -383,39 +401,43 @@ func (r *repository) TotalsByAgent(
 	ctx context.Context,
 	req aifeedbackports.AIFeedbackAgentTotalsRequest,
 ) ([]*aifeedbackports.AIFeedbackAgentTotals, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aifeedbackports.AIFeedbackAgentTotals, error) {
-		cols := aifeedbackcol.FeedbackColumns
-		rows := make([]*aifeedbackports.AIFeedbackAgentTotals, 0, len(req.AgentDefinitionIDs))
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*aifeedbackports.AIFeedbackAgentTotals, error) {
+			cols := aifeedbackcol.FeedbackColumns
+			rows := make([]*aifeedbackports.AIFeedbackAgentTotals, 0, len(req.AgentDefinitionIDs))
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*aifeedback.Feedback)(nil)).
-			ColumnExpr(cols.AgentDefinitionID.As("agent_definition_id")).
-			ColumnExpr(buncolgen.CountFilter("positive", cols.Rating.Eq()), aifeedback.RatingPositive).
-			ColumnExpr(buncolgen.CountFilter("negative", cols.Rating.Eq()), aifeedback.RatingNegative).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = aifeedbackcol.FeedbackScopeTenant(sq, req.TenantInfo).
-					Where(cols.AgentDefinitionID.IsNotNull()).
-					Where(cols.CreatedAt.Gte(), req.Since)
-				if req.Until > 0 {
-					sq = sq.Where(cols.CreatedAt.Lt(), req.Until)
-				}
-				if len(req.AgentDefinitionIDs) > 0 {
-					sq = sq.Where(cols.AgentDefinitionID.In(), bun.List(req.AgentDefinitionIDs))
-				}
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*aifeedback.Feedback)(nil)).
+				ColumnExpr(cols.AgentDefinitionID.As("agent_definition_id")).
+				ColumnExpr(buncolgen.CountFilter("positive", cols.Rating.Eq()), aifeedback.RatingPositive).
+				ColumnExpr(buncolgen.CountFilter("negative", cols.Rating.Eq()), aifeedback.RatingNegative).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = aifeedbackcol.FeedbackScopeTenant(sq, req.TenantInfo).
+						Where(cols.AgentDefinitionID.IsNotNull()).
+						Where(cols.CreatedAt.Gte(), req.Since)
+					if req.Until > 0 {
+						sq = sq.Where(cols.CreatedAt.Lt(), req.Until)
+					}
+					if len(req.AgentDefinitionIDs) > 0 {
+						sq = sq.Where(cols.AgentDefinitionID.In(), bun.List(req.AgentDefinitionIDs))
+					}
 
-				return sq
-			}).
-			GroupExpr(cols.AgentDefinitionID.Qualified()).
-			Scan(ctx, &rows)
-		if err != nil {
-			r.l.Error("failed to count ai feedback by agent", zap.Error(err))
+					return sq
+				}).
+				GroupExpr(cols.AgentDefinitionID.Qualified()).
+				Scan(ctx, &rows)
+			if err != nil {
+				r.l.Error("failed to count ai feedback by agent", zap.Error(err))
 
-			return nil, fmt.Errorf("ai feedback totals by agent: %w", err)
-		}
+				return nil, fmt.Errorf("ai feedback totals by agent: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
 func timezoneOf(timezone string) string {

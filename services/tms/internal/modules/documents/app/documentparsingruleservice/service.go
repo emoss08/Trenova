@@ -9,12 +9,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documentparsingrule"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentparsingrule"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -287,10 +287,13 @@ func (s *Service) PublishVersion(
 		return nil, errortypes.NewBusinessError("Only draft parsing rule versions can be published")
 	}
 
-	fixtures, err := s.repo.ListFixtures(ctx, documentparsingruleports.ListDocumentParsingRuleFixturesRequest{
-		RuleSetID:  set.ID,
-		TenantInfo: tenantInfo,
-	})
+	fixtures, err := s.repo.ListFixtures(
+		ctx,
+		documentparsingruleports.ListDocumentParsingRuleFixturesRequest{
+			RuleSetID:  set.ID,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -443,10 +446,13 @@ func (s *Service) DeleteFixture(
 	if err != nil {
 		return err
 	}
-	if err = s.repo.DeleteFixture(ctx, documentparsingruleports.GetDocumentParsingRuleFixtureRequest{
-		ID:         id,
-		TenantInfo: tenantInfo,
-	}); err != nil {
+	if err = s.repo.DeleteFixture(
+		ctx,
+		documentparsingruleports.GetDocumentParsingRuleFixtureRequest{
+			ID:         id,
+			TenantInfo: tenantInfo,
+		},
+	); err != nil {
 		return err
 	}
 	s.logAudit(
@@ -707,7 +713,9 @@ func (s *Service) logAudit(
 	}
 }
 
-func fixturePages(fixture *documentparsingrule.Fixture) []documentparsingruleports.DocumentParsingPage {
+func fixturePages(
+	fixture *documentparsingrule.Fixture,
+) []documentparsingruleports.DocumentParsingPage {
 	pages := make([]documentparsingruleports.DocumentParsingPage, 0, len(fixture.PageSnapshots))
 	for _, page := range fixture.PageSnapshots {
 		pages = append(pages, documentparsingruleports.DocumentParsingPage{
@@ -816,7 +824,10 @@ func validateFieldAssertion(
 	}
 }
 
-func analysisHasStopRole(analysis *documentparsingruleports.DocumentParsingAnalysis, role string) bool {
+func analysisHasStopRole(
+	analysis *documentparsingruleports.DocumentParsingAnalysis,
+	role string,
+) bool {
 	for _, stop := range analysis.Stops {
 		if strings.EqualFold(stop.Role, role) {
 			return true

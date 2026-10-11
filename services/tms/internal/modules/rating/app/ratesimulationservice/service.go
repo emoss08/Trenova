@@ -11,15 +11,15 @@ package ratesimulationservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs/ratesimcontract"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/effectiveversioncache"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratesimulation"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/effectiveversioncache"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs/ratesimcontract"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratesimulationports"
@@ -240,7 +240,10 @@ func idOrZero(id *pulid.ID) pulid.ID {
 // purpose quote and none are persisted. A failure part way through leaves the
 // run marked failed with whatever it managed to price, which is more useful
 // than an empty row that says only that something went wrong.
-func (s *Service) Run(ctx context.Context, req *ratesimulationports.RunRateSimulationRequest) error {
+func (s *Service) Run(
+	ctx context.Context,
+	req *ratesimulationports.RunRateSimulationRequest,
+) error {
 	entity, err := s.repo.GetByID(ctx, &ratesimulationports.GetRateSimulationByIDRequest{
 		RateSimulationID: req.RateSimulationID,
 		TenantInfo:       req.TenantInfo,
@@ -305,14 +308,17 @@ func (s *Service) walk(
 	)
 
 	for {
-		page, pageErr := s.repo.ListShipments(ctx, &ratesimulationports.ListSimulationShipmentsRequest{
-			TenantInfo: req.TenantInfo,
-			PartyType:  string(entity.PartyType),
-			From:       entity.SampleFrom,
-			To:         entity.SampleTo,
-			AfterID:    after,
-			Limit:      s.pageSize(entity, done),
-		})
+		page, pageErr := s.repo.ListShipments(
+			ctx,
+			&ratesimulationports.ListSimulationShipmentsRequest{
+				TenantInfo: req.TenantInfo,
+				PartyType:  string(entity.PartyType),
+				From:       entity.SampleFrom,
+				To:         entity.SampleTo,
+				AfterID:    after,
+				Limit:      s.pageSize(entity, done),
+			},
+		)
 		if pageErr != nil {
 			return acc.Summary(), buildCoverage(rules, traces), pageErr
 		}

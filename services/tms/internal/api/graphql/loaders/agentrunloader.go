@@ -118,10 +118,13 @@ func (f *AgentDefinitionByIDLoaderFactory) NewForTenant(
 ) *dataloadgen.Loader[string, *agentdefinition.Definition] {
 	return newLoader(batchByIDFunc(
 		func(ctx context.Context, ids []pulid.ID) ([]*agentdefinition.Definition, error) {
-			return f.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
-				IDs:        ids,
-				TenantInfo: tenantInfo,
-			})
+			return f.definitions.ListByIDs(
+				ctx,
+				agentdefinitionports.ListAgentDefinitionsByIDsRequest{
+					IDs:        ids,
+					TenantInfo: tenantInfo,
+				},
+			)
 		},
 		"Agent definition not found",
 	))

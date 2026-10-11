@@ -4,17 +4,17 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -452,11 +452,14 @@ func (t *getRateAgreementTool) Query(
 		return nil, err
 	}
 
-	versions, err := t.agreements.ListVersions(ctx, &rateagreementports.ListRateAgreementVersionsRequest{
-		TenantInfo:      tenant,
-		RateAgreementID: id,
-		Limit:           1,
-	})
+	versions, err := t.agreements.ListVersions(
+		ctx,
+		&rateagreementports.ListRateAgreementVersionsRequest{
+			TenantInfo:      tenant,
+			RateAgreementID: id,
+			Limit:           1,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -468,10 +471,16 @@ func (t *getRateAgreementTool) Query(
 		BillToCustomerID:  pointerIDString(entity.BillToCustomerID),
 		RenewalNoticeDays: entity.RenewalNoticeDays,
 		RoundingMode:      string(entity.RoundingMode),
-		SubmittedAt:       expectedDate(typeutils.ValueOrZero(entity.SubmittedAt), absentNotSubmitted),
-		ApprovedAt:        expectedDate(typeutils.ValueOrZero(entity.ApprovedAt), absentNotApproved),
-		RuleCount:         len(entity.Rules),
-		AccessorialCount:  len(entity.Accessorials),
+		SubmittedAt: expectedDate(
+			typeutils.ValueOrZero(entity.SubmittedAt),
+			absentNotSubmitted,
+		),
+		ApprovedAt: expectedDate(
+			typeutils.ValueOrZero(entity.ApprovedAt),
+			absentNotApproved,
+		),
+		RuleCount:        len(entity.Rules),
+		AccessorialCount: len(entity.Accessorials),
 	}
 	if entity.ReviewComment != "" && gate.show("reviewComment", "reviewComment") {
 		view.ReviewComment = entity.ReviewComment

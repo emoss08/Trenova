@@ -95,29 +95,37 @@ func (r *repository) List(
 	ctx context.Context,
 	req *tableconfigurationports.ListTableConfigurationsRequest,
 ) (*pagination.ListResult[*tableconfiguration.TableConfiguration], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*tableconfiguration.TableConfiguration], error) {
-		log := r.l.With(
-			zap.String("operation", "List"),
-			zap.Any("request", req),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*tableconfiguration.TableConfiguration], error) {
+			log := r.l.With(
+				zap.String("operation", "List"),
+				zap.Any("request", req),
+			)
 
-		entities := make([]*tableconfiguration.TableConfiguration, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterQuery(sq, req)
-			}).ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count table configurations", zap.Error(err))
-			return nil, err
-		}
+			entities := make(
+				[]*tableconfiguration.TableConfiguration,
+				0,
+				req.Filter.Pagination.SafeLimit(),
+			)
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count table configurations", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*tableconfiguration.TableConfiguration]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*tableconfiguration.TableConfiguration]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) scopeQuery(
@@ -213,130 +221,149 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *tableconfigurationports.ListTableConfigurationConnectionRequest,
 ) (*pagination.CursorListResult[*tableconfiguration.TableConfiguration], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*tableconfiguration.TableConfiguration], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*tableconfiguration.TableConfiguration], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*tableconfiguration.TableConfiguration)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyTotalCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*tableconfiguration.TableConfiguration)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyTotalCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count table configurations", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*tableconfiguration.TableConfiguration]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*tableconfiguration.TableConfiguration) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return applyTableConfigurationColumns(
+									sq,
+									req.TableConfigurationColumns,
+								)
+							})
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return r.applyCursorPageFilters(sq, req)
+					},
+				})
 			if err != nil {
-				log.Error("failed to count table configurations", zap.Error(err))
+				log.Error("failed to scan table configurations", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*tableconfiguration.TableConfiguration]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*tableconfiguration.TableConfiguration) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return applyTableConfigurationColumns(sq, req.TableConfigurationColumns)
-						})
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return r.applyCursorPageFilters(sq, req)
-				},
-			})
-		if err != nil {
-			log.Error("failed to scan table configurations", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) Create(
 	ctx context.Context,
 	entity *tableconfiguration.TableConfiguration,
 ) (*tableconfiguration.TableConfiguration, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tableconfiguration.TableConfiguration, error) {
-		log := r.l.With(
-			zap.String("operation", "Create"),
-			zap.String("name", entity.Name),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*tableconfiguration.TableConfiguration, error) {
+			log := r.l.With(
+				zap.String("operation", "Create"),
+				zap.String("name", entity.Name),
+			)
 
-		_, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx)
-		if err != nil {
-			log.Error("failed to create table configuration", zap.Error(err))
-			return nil, err
-		}
+			_, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx)
+			if err != nil {
+				log.Error("failed to create table configuration", zap.Error(err))
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) Update(
 	ctx context.Context,
 	entity *tableconfiguration.TableConfiguration,
 ) (*tableconfiguration.TableConfiguration, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tableconfiguration.TableConfiguration, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", entity.ID.String()),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*tableconfiguration.TableConfiguration, error) {
+			log := r.l.With(
+				zap.String("operation", "Update"),
+				zap.String("id", entity.ID.String()),
+			)
 
-		ov := entity.Version
-		entity.Version++
+			ov := entity.Version
+			entity.Version++
 
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", ov).
-			OmitZero().
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update table configuration", zap.Error(err))
-			return nil, err
-		}
+			_, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(entity).
+				WherePK().
+				Where("version = ?", ov).
+				OmitZero().
+				Returning("*").
+				Exec(ctx)
+			if err != nil {
+				log.Error("failed to update table configuration", zap.Error(err))
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(
 	ctx context.Context,
 	req tableconfigurationports.GetTableConfigurationByIDRequest,
 ) (*tableconfiguration.TableConfiguration, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tableconfiguration.TableConfiguration, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("configurationID", req.ConfigurationID.String()),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*tableconfiguration.TableConfiguration, error) {
+			log := r.l.With(
+				zap.String("operation", "GetByID"),
+				zap.String("configurationID", req.ConfigurationID.String()),
+			)
 
-		entity := new(tableconfiguration.TableConfiguration)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("tc.id = ?", req.ConfigurationID).
-					Where("tc.organization_id = ?", req.TenantInfo.OrgID).
-					Where("tc.business_unit_id = ?", req.TenantInfo.BuID)
-			}).
-			Scan(ctx)
-		if err != nil {
-			log.Error("failed to get table configuration", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "TableConfiguration")
-		}
+			entity := new(tableconfiguration.TableConfiguration)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.Where("tc.id = ?", req.ConfigurationID).
+						Where("tc.organization_id = ?", req.TenantInfo.OrgID).
+						Where("tc.business_unit_id = ?", req.TenantInfo.BuID)
+				}).
+				Scan(ctx)
+			if err != nil {
+				log.Error("failed to get table configuration", zap.Error(err))
+				return nil, dberror.HandleNotFoundError(err, "TableConfiguration")
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) Delete(
@@ -372,47 +399,51 @@ func (r *repository) GetDefaultForResource(
 	ctx context.Context,
 	req tableconfigurationports.GetDefaultTableConfigurationRequest,
 ) (*tableconfiguration.TableConfiguration, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tableconfiguration.TableConfiguration, error) {
-		log := r.l.With(
-			zap.String("operation", "GetDefaultForResource"),
-			zap.String("resource", req.Resource),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*tableconfiguration.TableConfiguration, error) {
+			log := r.l.With(
+				zap.String("operation", "GetDefaultForResource"),
+				zap.String("resource", req.Resource),
+			)
 
-		entity := new(tableconfiguration.TableConfiguration)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("tc.user_id = ?", req.TenantInfo.UserID).
-					Where("tc.resource = ?", req.Resource).
-					Where("tc.is_default = ?", true).
-					Where("tc.organization_id = ?", req.TenantInfo.OrgID).
-					Where("tc.business_unit_id = ?", req.TenantInfo.BuID)
-			}).
-			Scan(ctx)
-		if err == nil {
-			return entity, nil
-		}
+			entity := new(tableconfiguration.TableConfiguration)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.Where("tc.user_id = ?", req.TenantInfo.UserID).
+						Where("tc.resource = ?", req.Resource).
+						Where("tc.is_default = ?", true).
+						Where("tc.organization_id = ?", req.TenantInfo.OrgID).
+						Where("tc.business_unit_id = ?", req.TenantInfo.BuID)
+				}).
+				Scan(ctx)
+			if err == nil {
+				return entity, nil
+			}
 
-		orgDefault := new(tableconfiguration.TableConfiguration)
-		err = r.db.DBForContext(ctx).
-			NewSelect().
-			Model(orgDefault).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("tc.resource = ?", req.Resource).
-					Where("tc.is_org_default = ?", true).
-					Where("tc.visibility = ?", tableconfiguration.VisibilityPublic).
-					Where("tc.organization_id = ?", req.TenantInfo.OrgID).
-					Where("tc.business_unit_id = ?", req.TenantInfo.BuID)
-			}).
-			Scan(ctx)
-		if err != nil {
-			log.Debug("no default table configuration found", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "TableConfiguration")
-		}
+			orgDefault := new(tableconfiguration.TableConfiguration)
+			err = r.db.DBForContext(ctx).
+				NewSelect().
+				Model(orgDefault).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.Where("tc.resource = ?", req.Resource).
+						Where("tc.is_org_default = ?", true).
+						Where("tc.visibility = ?", tableconfiguration.VisibilityPublic).
+						Where("tc.organization_id = ?", req.TenantInfo.OrgID).
+						Where("tc.business_unit_id = ?", req.TenantInfo.BuID)
+				}).
+				Scan(ctx)
+			if err != nil {
+				log.Debug("no default table configuration found", zap.Error(err))
+				return nil, dberror.HandleNotFoundError(err, "TableConfiguration")
+			}
 
-		return orgDefault, nil
-	})
+			return orgDefault, nil
+		},
+	)
 }
 
 func (r *repository) ClearOrgDefaultForResource(

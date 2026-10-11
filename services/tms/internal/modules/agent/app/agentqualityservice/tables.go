@@ -285,7 +285,11 @@ func (s *Service) fillAgents(
 	return nil
 }
 
-func applyAgentData(node *agentqualityports.AgentQualityAgent, data *agentPageData, parts agentParts) {
+func applyAgentData(
+	node *agentqualityports.AgentQualityAgent,
+	data *agentPageData,
+	parts agentParts,
+) {
 	id := node.AgentDefinitionID
 	if parts.history {
 		node.QualityPoints = qualityPoints(data.history[id])
@@ -322,7 +326,11 @@ type worstRatedRow struct {
 var worstRatedTable = memtable.New(memtable.Config[worstRatedRow]{
 	CursorScope: worstRatedCursorScope,
 	Search: func(row *worstRatedRow) string {
-		return questionOf(row.answer) + "\x00" + commentOf(row.answer) + "\x00" + row.answer.AgentName
+		return questionOf(
+			row.answer,
+		) + "\x00" + commentOf(
+			row.answer,
+		) + "\x00" + row.answer.AgentName
 	},
 	Order: func(a, b *worstRatedRow) int { return cmp.Compare(a.rank, b.rank) },
 	Fields: []memtable.Field[worstRatedRow]{

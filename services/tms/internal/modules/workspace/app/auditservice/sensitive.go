@@ -15,10 +15,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/atomic"

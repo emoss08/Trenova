@@ -4,22 +4,22 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/restx"
@@ -44,7 +44,7 @@ type Params struct {
 	DB             kernelports.DBConnection
 	Integrations   *integrationservice.Service
 	Connectors     []carrierintelports.CarrierIntelConnector `group:"carrierIntelConnectors"`
-	Limiter        restx.Limiter                             `name:"carrierIntelLimiter"`
+	Limiter        restx.Limiter                             `                               name:"carrierIntelLimiter"`
 	ControlRepo    carrierintelports.CarrierIntelControlRepository
 	SnapshotRepo   carrierintelports.CarrierIntelSnapshotRepository
 	RawRepo        carrierintelports.CarrierIntelRawPayloadRepository
@@ -108,7 +108,10 @@ var (
 )
 
 func New(p Params) *Service {
-	connectors := make(map[integration.Type]carrierintelports.CarrierIntelConnector, len(p.Connectors))
+	connectors := make(
+		map[integration.Type]carrierintelports.CarrierIntelConnector,
+		len(p.Connectors),
+	)
 	for _, connector := range p.Connectors {
 		if connector != nil {
 			connectors[connector.IntegrationType()] = connector

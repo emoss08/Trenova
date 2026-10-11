@@ -6,16 +6,16 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -197,12 +197,15 @@ func (s *Service) recordFailure(
 ) {
 	recorded := *conn
 	recorded.RecordDriftFailure(failure.Category, failure.Message)
-	if err := s.connections.SaveDriftCheck(ctx, &accountingsyncports.SaveAccountingDriftCheckRequest{
-		TenantInfo:    tenantOf(conn),
-		ID:            conn.ID,
-		ErrorCategory: recorded.DriftErrorCategory,
-		ErrorMessage:  recorded.DriftErrorMessage,
-	}); err != nil {
+	if err := s.connections.SaveDriftCheck(
+		ctx,
+		&accountingsyncports.SaveAccountingDriftCheckRequest{
+			TenantInfo:    tenantOf(conn),
+			ID:            conn.ID,
+			ErrorCategory: recorded.DriftErrorCategory,
+			ErrorMessage:  recorded.DriftErrorMessage,
+		},
+	); err != nil {
 		s.l.Warn("failed to record a drift check failure",
 			zap.String("connectionId", conn.ID.String()), zap.Error(err))
 	}
@@ -236,11 +239,14 @@ func (s *Service) refreshAttention(ctx context.Context, conn *accountingsync.Acc
 		return
 	}
 	tenant := tenantOf(conn)
-	groups, err := s.findings.ListAttention(ctx, &accountingsyncports.ListAccountingDriftAttentionRequest{
-		TenantInfo:     tenant,
-		ConnectionID:   conn.ID,
-		DetectedBefore: s.now().Add(-watchtowersources.AccountingDriftAfter).Unix(),
-	})
+	groups, err := s.findings.ListAttention(
+		ctx,
+		&accountingsyncports.ListAccountingDriftAttentionRequest{
+			TenantInfo:     tenant,
+			ConnectionID:   conn.ID,
+			DetectedBefore: s.now().Add(-watchtowersources.AccountingDriftAfter).Unix(),
+		},
+	)
 	if err != nil {
 		s.l.Warn("failed to read accounting drift attention", zap.Error(err))
 		return

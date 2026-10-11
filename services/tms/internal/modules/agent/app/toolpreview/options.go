@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 

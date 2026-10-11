@@ -95,4 +95,6 @@ func (r *shipmentImportChatCacheRepository) key(
 	)
 }
 
-var _ shipmentimportchatports.ShipmentImportChatCacheRepository = (*shipmentImportChatCacheRepository)(nil)
+var _ shipmentimportchatports.ShipmentImportChatCacheRepository = (*shipmentImportChatCacheRepository)(
+	nil,
+)

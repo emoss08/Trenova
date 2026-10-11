@@ -3,8 +3,8 @@ package formulatemplateservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/approvalworkflow"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -29,10 +29,13 @@ func (s *Service) ListReviews(
 		return nil, err
 	}
 
-	reviews, err := s.reviewRepo.ListByTemplate(ctx, &formulatemplateports.ListTemplateReviewsRequest{
-		TemplateID: req.TemplateID,
-		TenantInfo: req.TenantInfo,
-	})
+	reviews, err := s.reviewRepo.ListByTemplate(
+		ctx,
+		&formulatemplateports.ListTemplateReviewsRequest{
+			TemplateID: req.TemplateID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -132,10 +135,13 @@ func (s *Service) ExpireStaleSubmissions(
 	}
 	log := s.l.With(zap.String("operation", "ExpireStaleSubmissions"))
 
-	stale, err := s.reviewRepo.ListStaleSubmissions(ctx, &formulatemplateports.ListStaleSubmissionsRequest{
-		SubmittedBefore: now - formulatemplate.SubmissionExpiry,
-		Limit:           req.Limit,
-	})
+	stale, err := s.reviewRepo.ListStaleSubmissions(
+		ctx,
+		&formulatemplateports.ListStaleSubmissionsRequest{
+			SubmittedBefore: now - formulatemplate.SubmissionExpiry,
+			Limit:           req.Limit,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

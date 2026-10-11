@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/services/workeremploymentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/core/services/workeremploymentservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -128,7 +128,13 @@ func (s *Service) IssueAction(
 		return nil, multiErr
 	}
 	if !entity.DocumentID.IsNil() {
-		if err = s.requireWorkerDocument(ctx, req.TenantInfo, req.WorkerID, pulid.Nil, entity.DocumentID); err != nil {
+		if err = s.requireWorkerDocument(
+			ctx,
+			req.TenantInfo,
+			req.WorkerID,
+			pulid.Nil,
+			entity.DocumentID,
+		); err != nil {
 			return nil, err
 		}
 	}
@@ -141,9 +147,14 @@ func (s *Service) IssueAction(
 	result := &IssueActionResult{Action: created}
 
 	s.audit(&auditParams{
-		resource: permission.ResourceWorkerDisciplinaryAction, resourceID: created.GetResourceID(),
-		operation: permission.OpCreate, userID: req.UserID, tenant: req.TenantInfo,
-		current: created, comment: "Disciplinary action issued: " + created.Level.String(), log: log,
+		resource:   permission.ResourceWorkerDisciplinaryAction,
+		resourceID: created.GetResourceID(),
+		operation:  permission.OpCreate,
+		userID:     req.UserID,
+		tenant:     req.TenantInfo,
+		current:    created,
+		comment:    "Disciplinary action issued: " + created.Level.String(),
+		log:        log,
 	})
 	s.publish(ctx, req.TenantInfo, realtimeDiscipline, permission.OpCreate, created.ID, req.UserID)
 	s.refreshRollupQuietly(ctx, req.TenantInfo, created.WorkerID)
@@ -238,9 +249,15 @@ func (s *Service) RescindAction(
 	}
 
 	s.audit(&auditParams{
-		resource: permission.ResourceWorkerDisciplinaryAction, resourceID: saved.GetResourceID(),
-		operation: permission.OpCancel, userID: req.UserID, tenant: req.TenantInfo,
-		current: saved, previous: original, comment: "Disciplinary action rescinded: " + reason, log: log,
+		resource:   permission.ResourceWorkerDisciplinaryAction,
+		resourceID: saved.GetResourceID(),
+		operation:  permission.OpCancel,
+		userID:     req.UserID,
+		tenant:     req.TenantInfo,
+		current:    saved,
+		previous:   original,
+		comment:    "Disciplinary action rescinded: " + reason,
+		log:        log,
 	})
 	s.publish(ctx, req.TenantInfo, realtimeDiscipline, permission.OpCancel, saved.ID, req.UserID)
 	s.refreshRollupQuietly(ctx, req.TenantInfo, saved.WorkerID)

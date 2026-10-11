@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edistarlark"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/stringutils"

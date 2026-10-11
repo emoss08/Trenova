@@ -3,9 +3,9 @@ package editenderchangerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -38,34 +38,38 @@ func (r *repository) ListTenderChanges(
 	ctx context.Context,
 	req *ediports.ListEDITenderChangesRequest,
 ) (*pagination.ListResult[*edi.TenderChange], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.TenderChange], error) {
-		entities := make([]*edi.TenderChange, 0, req.Filter.Pagination.SafeLimit())
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation("Recipient").
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return applyTenderChangeTenantScope(sq, req.Filter.TenantInfo)
-			})
-		if req.RecipientID.IsNotNil() {
-			query = query.Where("etcg.recipient_id = ?", req.RecipientID)
-		}
-		if req.SourceShipmentID.IsNotNil() {
-			query = query.Where("etcg.source_shipment_id = ?", req.SourceShipmentID)
-		}
-		if req.Status != "" {
-			query = query.Where("etcg.status = ?", req.Status)
-		}
-		total, err := querybuilder.ApplyFiltersWithoutTenantScope(query, "etcg", req.Filter, (*edi.TenderChange)(nil)).
-			Order("etcg.created_at DESC").
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return &pagination.ListResult[*edi.TenderChange]{Items: entities, Total: total}, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*edi.TenderChange], error) {
+			entities := make([]*edi.TenderChange, 0, req.Filter.Pagination.SafeLimit())
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Relation("Recipient").
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return applyTenderChangeTenantScope(sq, req.Filter.TenantInfo)
+				})
+			if req.RecipientID.IsNotNil() {
+				query = query.Where("etcg.recipient_id = ?", req.RecipientID)
+			}
+			if req.SourceShipmentID.IsNotNil() {
+				query = query.Where("etcg.source_shipment_id = ?", req.SourceShipmentID)
+			}
+			if req.Status != "" {
+				query = query.Where("etcg.status = ?", req.Status)
+			}
+			total, err := querybuilder.ApplyFiltersWithoutTenantScope(query, "etcg", req.Filter, (*edi.TenderChange)(nil)).
+				Order("etcg.created_at DESC").
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return &pagination.ListResult[*edi.TenderChange]{Items: entities, Total: total}, nil
+		},
+	)
 }
 
 func (r *repository) GetTenderChangeByID(
@@ -116,43 +120,47 @@ func (r *repository) CreateTenderChangeIdempotent(
 	ctx context.Context,
 	entity *edi.TenderChange,
 ) (*ediports.CreateEDITenderChangeIdempotentResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ediports.CreateEDITenderChangeIdempotentResult, error) {
-		results, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			On("CONFLICT (recipient_id, source_shipment_version, new_payload_hash, change_type) DO NOTHING").
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			return nil, err
-		}
-		rowsAffected, err := results.RowsAffected()
-		if err != nil {
-			return nil, err
-		}
-		if rowsAffected > 0 {
-			return &ediports.CreateEDITenderChangeIdempotentResult{
-				TenderChange: entity,
-				Created:      true,
-			}, nil
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*ediports.CreateEDITenderChangeIdempotentResult, error) {
+			results, err := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(entity).
+				On("CONFLICT (recipient_id, source_shipment_version, new_payload_hash, change_type) DO NOTHING").
+				Returning("*").
+				Exec(ctx)
+			if err != nil {
+				return nil, err
+			}
+			rowsAffected, err := results.RowsAffected()
+			if err != nil {
+				return nil, err
+			}
+			if rowsAffected > 0 {
+				return &ediports.CreateEDITenderChangeIdempotentResult{
+					TenderChange: entity,
+					Created:      true,
+				}, nil
+			}
 
-		existing := new(edi.TenderChange)
-		if err = r.db.DBForContext(ctx).
-			NewSelect().
-			Model(existing).
-			Where("recipient_id = ?", entity.RecipientID).
-			Where("source_shipment_version = ?", entity.SourceShipmentVersion).
-			Where("new_payload_hash = ?", entity.NewPayloadHash).
-			Where("change_type = ?", entity.ChangeType).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDITenderChange")
-		}
-		return &ediports.CreateEDITenderChangeIdempotentResult{
-			TenderChange: existing,
-			Created:      false,
-		}, nil
-	})
+			existing := new(edi.TenderChange)
+			if err = r.db.DBForContext(ctx).
+				NewSelect().
+				Model(existing).
+				Where("recipient_id = ?", entity.RecipientID).
+				Where("source_shipment_version = ?", entity.SourceShipmentVersion).
+				Where("new_payload_hash = ?", entity.NewPayloadHash).
+				Where("change_type = ?", entity.ChangeType).
+				Scan(ctx); err != nil {
+				return nil, dberror.HandleNotFoundError(err, "EDITenderChange")
+			}
+			return &ediports.CreateEDITenderChangeIdempotentResult{
+				TenderChange: existing,
+				Created:      false,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) SupersedeActionableTenderChanges(
@@ -198,7 +206,11 @@ func (r *repository) UpdateTenderChange(
 		if err != nil {
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, "EDITenderChange", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"EDITenderChange",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 		return entity, nil

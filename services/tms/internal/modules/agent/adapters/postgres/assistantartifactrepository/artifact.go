@@ -202,7 +202,10 @@ func (r *repository) ListByToolCalls(
 	})
 }
 
-func (r *repository) Delete(ctx context.Context, req *assistantartifactports.DeleteArtifactsRequest) error {
+func (r *repository) Delete(
+	ctx context.Context,
+	req *assistantartifactports.DeleteArtifactsRequest,
+) error {
 	if len(req.IDs) == 0 {
 		return nil
 	}

@@ -79,69 +79,77 @@ func (r *repository) List(
 	ctx context.Context,
 	req *ediports.ListEDIPartnersRequest,
 ) (*pagination.ListResult[*edi.EDIPartner], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartner], error) {
-		entities := make([]*edi.EDIPartner, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterQuery(sq, req)
-			}).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartner], error) {
+			entities := make([]*edi.EDIPartner, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*edi.EDIPartner]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*edi.EDIPartner]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *ediports.EDIPartnerSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIPartner], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartner], error) {
-		col := edicol.EDIPartnerColumns
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartner], error) {
+			col := edicol.EDIPartnerColumns
 
-		return dbhelper.SelectOptions[*edi.EDIPartner](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					col.ID,
-					col.BusinessUnitID,
-					col.OrganizationID,
-					col.Kind,
-					col.Code,
-					col.Name,
-					col.InternalOrganizationID,
-					col.EDIConnectionID,
-					col.DefaultTransportID,
-					col.EnabledForInbound,
-					col.EnabledForOutbound,
+			return dbhelper.SelectOptions[*edi.EDIPartner](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						col.ID,
+						col.BusinessUnitID,
+						col.OrganizationID,
+						col.Kind,
+						col.Code,
+						col.Name,
+						col.InternalOrganizationID,
+						col.EDIConnectionID,
+						col.DefaultTransportID,
+						col.EnabledForInbound,
+						col.EnabledForOutbound,
+					},
+					OrgColumnRef:     &col.OrganizationID,
+					BuColumnRef:      &col.BusinessUnitID,
+					SearchColumnRefs: []buncolgen.Column{col.Name, col.Code},
+					EntityName:       "EDIPartner",
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						if req.Kind != "" {
+							q = q.Where(col.Kind.Eq(), req.Kind)
+						}
+
+						if req.EnabledForOutbound {
+							q = q.Where(col.EnabledForOutbound.IsTrue())
+						}
+
+						return q
+					},
 				},
-				OrgColumnRef:     &col.OrganizationID,
-				BuColumnRef:      &col.BusinessUnitID,
-				SearchColumnRefs: []buncolgen.Column{col.Name, col.Code},
-				EntityName:       "EDIPartner",
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					if req.Kind != "" {
-						q = q.Where(col.Kind.Eq(), req.Kind)
-					}
-
-					if req.EnabledForOutbound {
-						q = q.Where(col.EnabledForOutbound.IsTrue())
-					}
-
-					return q
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -233,45 +241,49 @@ func (r *repository) GetReadiness(
 	ctx context.Context,
 	req *ediports.GetEDIPartnerReadinessRequest,
 ) ([]*ediports.EDIPartnerReadinessRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ediports.EDIPartnerReadinessRow, error) {
-		if len(req.PartnerIDs) == 0 {
-			return []*ediports.EDIPartnerReadinessRow{}, nil
-		}
-		cols := edicol.EDIPartnerColumns
-		rows := make([]*ediports.EDIPartnerReadinessRow, 0, len(req.PartnerIDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*edi.EDIPartner)(nil)).
-			ColumnExpr("ep.id AS partner_id").
-			ColumnExpr("COALESCE(ep.contact_email, '') AS contact_email").
-			ColumnExpr("COALESCE(ep.timezone, '') AS timezone").
-			ColumnExpr("ep.enabled_for_inbound AS enabled_for_inbound").
-			ColumnExpr("ep.enabled_for_outbound AS enabled_for_outbound").
-			ColumnExpr("ep.kind::text AS kind").
-			ColumnExpr(
-				"EXISTS (SELECT 1 FROM edi_communication_profiles ecp WHERE ecp.edi_partner_id = ep.id AND ecp.organization_id = ep.organization_id AND ecp.business_unit_id = ep.business_unit_id AND ecp.status = 'Active') AS has_active_profile",
-			).
-			ColumnExpr(
-				"EXISTS (SELECT 1 FROM edi_mapping_profile_items empi WHERE empi.edi_partner_id = ep.id AND empi.organization_id = ep.organization_id AND empi.business_unit_id = ep.business_unit_id) AS has_mapping_profile",
-			).
-			ColumnExpr(
-				"EXISTS (SELECT 1 FROM edi_partner_document_profiles epdp WHERE epdp.edi_partner_id = ep.id AND epdp.organization_id = ep.organization_id AND epdp.business_unit_id = ep.business_unit_id AND epdp.status = 'Active' AND epdp.direction = 'Inbound') AS has_inbound_doc_profile",
-			).
-			ColumnExpr(
-				"EXISTS (SELECT 1 FROM edi_partner_document_profiles epdp WHERE epdp.edi_partner_id = ep.id AND epdp.organization_id = ep.organization_id AND epdp.business_unit_id = ep.business_unit_id AND epdp.status = 'Active' AND epdp.direction = 'Outbound') AS has_outbound_doc_profile",
-			).
-			ColumnExpr(
-				"EXISTS (SELECT 1 FROM edi_test_cases etc JOIN edi_partner_document_profiles epdp ON epdp.id = etc.partner_document_profile_id AND epdp.organization_id = etc.organization_id AND epdp.business_unit_id = etc.business_unit_id WHERE epdp.edi_partner_id = ep.id AND etc.organization_id = ep.organization_id AND etc.business_unit_id = ep.business_unit_id AND etc.last_run_passed IS TRUE) AS has_passing_test_case",
-			).
-			Where(cols.ID.In(), bun.List(req.PartnerIDs)).
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Scan(ctx, &rows)
-		if err != nil {
-			return nil, err
-		}
-		return rows, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*ediports.EDIPartnerReadinessRow, error) {
+			if len(req.PartnerIDs) == 0 {
+				return []*ediports.EDIPartnerReadinessRow{}, nil
+			}
+			cols := edicol.EDIPartnerColumns
+			rows := make([]*ediports.EDIPartnerReadinessRow, 0, len(req.PartnerIDs))
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*edi.EDIPartner)(nil)).
+				ColumnExpr("ep.id AS partner_id").
+				ColumnExpr("COALESCE(ep.contact_email, '') AS contact_email").
+				ColumnExpr("COALESCE(ep.timezone, '') AS timezone").
+				ColumnExpr("ep.enabled_for_inbound AS enabled_for_inbound").
+				ColumnExpr("ep.enabled_for_outbound AS enabled_for_outbound").
+				ColumnExpr("ep.kind::text AS kind").
+				ColumnExpr(
+					"EXISTS (SELECT 1 FROM edi_communication_profiles ecp WHERE ecp.edi_partner_id = ep.id AND ecp.organization_id = ep.organization_id AND ecp.business_unit_id = ep.business_unit_id AND ecp.status = 'Active') AS has_active_profile",
+				).
+				ColumnExpr(
+					"EXISTS (SELECT 1 FROM edi_mapping_profile_items empi WHERE empi.edi_partner_id = ep.id AND empi.organization_id = ep.organization_id AND empi.business_unit_id = ep.business_unit_id) AS has_mapping_profile",
+				).
+				ColumnExpr(
+					"EXISTS (SELECT 1 FROM edi_partner_document_profiles epdp WHERE epdp.edi_partner_id = ep.id AND epdp.organization_id = ep.organization_id AND epdp.business_unit_id = ep.business_unit_id AND epdp.status = 'Active' AND epdp.direction = 'Inbound') AS has_inbound_doc_profile",
+				).
+				ColumnExpr(
+					"EXISTS (SELECT 1 FROM edi_partner_document_profiles epdp WHERE epdp.edi_partner_id = ep.id AND epdp.organization_id = ep.organization_id AND epdp.business_unit_id = ep.business_unit_id AND epdp.status = 'Active' AND epdp.direction = 'Outbound') AS has_outbound_doc_profile",
+				).
+				ColumnExpr(
+					"EXISTS (SELECT 1 FROM edi_test_cases etc JOIN edi_partner_document_profiles epdp ON epdp.id = etc.partner_document_profile_id AND epdp.organization_id = etc.organization_id AND epdp.business_unit_id = etc.business_unit_id WHERE epdp.edi_partner_id = ep.id AND etc.organization_id = ep.organization_id AND etc.business_unit_id = ep.business_unit_id AND etc.last_run_passed IS TRUE) AS has_passing_test_case",
+				).
+				Where(cols.ID.In(), bun.List(req.PartnerIDs)).
+				Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+				Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+				Scan(ctx, &rows)
+			if err != nil {
+				return nil, err
+			}
+			return rows, nil
+		},
+	)
 }
 
 func (r *repository) Update(ctx context.Context, entity *edi.EDIPartner) (*edi.EDIPartner, error) {
@@ -325,7 +337,10 @@ func (r *repository) GetReciprocalInternalPartner(
 	ctx context.Context,
 	req ediports.GetReciprocalInternalPartnerRequest,
 ) (*edi.EDIPartner, error) {
-	ctx = dbscope.WithSystem(ctx, "read the receiving organization's internal partner record for an internal tender")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"read the receiving organization's internal partner record for an internal tender",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartner, error) {
 		entity := new(edi.EDIPartner)
 		cols := edicol.EDIPartnerColumns
@@ -419,58 +434,62 @@ func (r *repository) ListCursor(
 	ctx context.Context,
 	req *ediports.ListEDIPartnersRequest,
 ) (*pagination.CursorListResult[*edi.EDIPartner], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*edi.EDIPartner], error) {
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*edi.EDIPartner)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*edi.EDIPartner], error) {
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*edi.EDIPartner)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							"ep",
+							req.Filter,
+							(*edi.EDIPartner)(nil),
+						)
+						return applyPartnerListFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDIPartner]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(entities *[]*edi.EDIPartner) *bun.SelectQuery {
+					rel := edicol.EDIPartnerRelations
+					return dba.
+						NewSelect().
+						Model(entities).
+						ColumnExpr(edicol.EDIPartnerTable.All()).
+						Relation(rel.InternalOrganization).
+						Relation(rel.Connection).
+						Relation(rel.DefaultTransport)
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
 						"ep",
 						req.Filter,
+						req.Cursor,
 						(*edi.EDIPartner)(nil),
 					)
-					return applyPartnerListFilters(sq, req)
-				}).
-				Count(ctx)
-			if err != nil {
-				return nil, err
-			}
-			totalCount = &total
-		}
-
-		return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDIPartner]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*edi.EDIPartner) *bun.SelectQuery {
-				rel := edicol.EDIPartnerRelations
-				return dba.
-					NewSelect().
-					Model(entities).
-					ColumnExpr(edicol.EDIPartnerTable.All()).
-					Relation(rel.InternalOrganization).
-					Relation(rel.Connection).
-					Relation(rel.DefaultTransport)
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				sq, applyErr := querybuilder.ApplyCursorFilters(
-					sq,
-					"ep",
-					req.Filter,
-					req.Cursor,
-					(*edi.EDIPartner)(nil),
-				)
-				if applyErr != nil {
-					return sq, applyErr
-				}
-				return applyPartnerListFilters(sq, req), nil
-			},
-		})
-	})
+					if applyErr != nil {
+						return sq, applyErr
+					}
+					return applyPartnerListFilters(sq, req), nil
+				},
+			})
+		},
+	)
 }
 
 func applyPartnerListFilters(

@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
@@ -213,59 +213,63 @@ func (s *Service) AcceptOffer(
 
 	if !resuming {
 		accepted := false
-		err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-			tenderMoved, txErr := s.repo.UpdateTenderStatus(
-				txCtx,
-				&tenderports.UpdateTenderStatusRequest{
-					TenantInfo: tenantInfo,
-					TenderID:   offer.TenderID,
-					FromStatus: []tender.Status{tender.StatusActive},
-					ToStatus:   tender.StatusAccepted,
-				},
-			)
-			if txErr != nil {
-				return txErr
-			}
-			if !tenderMoved {
+		err = s.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, _ bun.Tx) error {
+				tenderMoved, txErr := s.repo.UpdateTenderStatus(
+					txCtx,
+					&tenderports.UpdateTenderStatusRequest{
+						TenantInfo: tenantInfo,
+						TenderID:   offer.TenderID,
+						FromStatus: []tender.Status{tender.StatusActive},
+						ToStatus:   tender.StatusAccepted,
+					},
+				)
+				if txErr != nil {
+					return txErr
+				}
+				if !tenderMoved {
+					return nil
+				}
+
+				offerMoved, txErr := s.repo.UpdateOfferStatus(
+					txCtx,
+					&tenderports.UpdateOfferStatusRequest{
+						TenantInfo:     tenantInfo,
+						OfferID:        offerID,
+						FromStatus:     []tender.OfferStatus{tender.OfferStatusSent},
+						ToStatus:       tender.OfferStatusAccepted,
+						RespondedAt:    &now,
+						ResponseSource: source,
+					},
+				)
+				if txErr != nil {
+					return txErr
+				}
+				if !offerMoved {
+					return errRollbackAccept
+				}
+
+				offerIDCopy := offer.ID
+				if _, txErr = s.repo.UpdateTenderStatus(
+					txCtx,
+					&tenderports.UpdateTenderStatusRequest{
+						TenantInfo:      tenantInfo,
+						TenderID:        offer.TenderID,
+						FromStatus:      []tender.Status{tender.StatusAccepted},
+						ToStatus:        tender.StatusAccepted,
+						AcceptedOfferID: &offerIDCopy,
+						AcceptedAt:      &now,
+					},
+				); txErr != nil {
+					return txErr
+				}
+
+				accepted = true
 				return nil
-			}
-
-			offerMoved, txErr := s.repo.UpdateOfferStatus(
-				txCtx,
-				&tenderports.UpdateOfferStatusRequest{
-					TenantInfo:     tenantInfo,
-					OfferID:        offerID,
-					FromStatus:     []tender.OfferStatus{tender.OfferStatusSent},
-					ToStatus:       tender.OfferStatusAccepted,
-					RespondedAt:    &now,
-					ResponseSource: source,
-				},
-			)
-			if txErr != nil {
-				return txErr
-			}
-			if !offerMoved {
-				return errRollbackAccept
-			}
-
-			offerIDCopy := offer.ID
-			if _, txErr = s.repo.UpdateTenderStatus(
-				txCtx,
-				&tenderports.UpdateTenderStatusRequest{
-					TenantInfo:      tenantInfo,
-					TenderID:        offer.TenderID,
-					FromStatus:      []tender.Status{tender.StatusAccepted},
-					ToStatus:        tender.StatusAccepted,
-					AcceptedOfferID: &offerIDCopy,
-					AcceptedAt:      &now,
-				},
-			); txErr != nil {
-				return txErr
-			}
-
-			accepted = true
-			return nil
-		})
+			},
+		)
 		if err != nil && !errors.Is(err, errRollbackAccept) {
 			return nil, err
 		}

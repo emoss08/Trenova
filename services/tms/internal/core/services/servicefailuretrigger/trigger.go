@@ -32,12 +32,16 @@ func EvaluateShipment(
 	if evaluator == nil || shipmentID.IsNil() {
 		return nil
 	}
-	_, err := evaluator.EvaluateShipment(ctx, &servicefailureports.EvaluateShipmentServiceFailuresRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: tenantInfo.OrgID,
-			BuID:  tenantInfo.BuID,
+	_, err := evaluator.EvaluateShipment(
+		ctx,
+		&servicefailureports.EvaluateShipmentServiceFailuresRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: tenantInfo.OrgID,
+				BuID:  tenantInfo.BuID,
+			},
+			ShipmentID: shipmentID,
 		},
-		ShipmentID: shipmentID,
-	}, actor)
+		actor,
+	)
 	return err
 }

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/services/extractionfailure"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
-	"github.com/emoss08/trenova/internal/core/services/extractionfailure"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -53,7 +53,11 @@ func (s *Service) CheckContinue(
 		return nil, err
 	}
 	if !run.Status.IsActive() {
-		return &extractionevalports.ExtractionEvalDecision{Stop: true, Status: run.Status, Reason: run.StopReason}, nil
+		return &extractionevalports.ExtractionEvalDecision{
+			Stop:   true,
+			Status: run.Status,
+			Reason: run.StopReason,
+		}, nil
 	}
 	if s.budget == nil {
 		return &extractionevalports.ExtractionEvalDecision{}, nil

@@ -90,7 +90,13 @@ func BulkApprovalWorkflow(
 	cancelTimer()
 
 	if undone {
-		return finalize(ctx, payload, billingqueue.ApprovalRunUndone, "", billingqueue.ApprovalFailureUndone)
+		return finalize(
+			ctx,
+			payload,
+			billingqueue.ApprovalRunUndone,
+			"",
+			billingqueue.ApprovalFailureUndone,
+		)
 	}
 
 	startCtx := workflow.WithActivityOptions(ctx, startActivityOptions)
@@ -100,7 +106,13 @@ func BulkApprovalWorkflow(
 		return finalizeFailure(ctx, payload, err)
 	}
 	if !started {
-		return finalize(ctx, payload, billingqueue.ApprovalRunUndone, "", billingqueue.ApprovalFailureUndone)
+		return finalize(
+			ctx,
+			payload,
+			billingqueue.ApprovalRunUndone,
+			"",
+			billingqueue.ApprovalFailureUndone,
+		)
 	}
 
 	var itemIDs []pulid.ID
@@ -138,7 +150,13 @@ func BulkApprovalWorkflow(
 		}
 	}
 
-	return finalize(ctx, payload, billingqueue.ApprovalRunCompleted, "", billingqueue.ApprovalFailureUnexpected)
+	return finalize(
+		ctx,
+		payload,
+		billingqueue.ApprovalRunCompleted,
+		"",
+		billingqueue.ApprovalFailureUnexpected,
+	)
 }
 
 func finalize(

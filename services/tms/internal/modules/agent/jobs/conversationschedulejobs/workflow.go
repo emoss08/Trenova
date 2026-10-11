@@ -77,7 +77,9 @@ func ConversationScheduleRunWorkflow(
 
 // ReconcileConversationSchedulesWorkflow makes every conversation schedule's
 // Temporal schedule match its row. It runs when a worker starts and hourly.
-func ReconcileConversationSchedulesWorkflow(ctx workflow.Context) (*conversationschedulecontract.ReconcileResult, error) {
+func ReconcileConversationSchedulesWorkflow(
+	ctx workflow.Context,
+) (*conversationschedulecontract.ReconcileResult, error) {
 	var a *Activities
 
 	reconcileCtx := workflow.WithActivityOptions(ctx, reconcileOptions)

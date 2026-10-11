@@ -96,7 +96,10 @@ func (s *service) recordEvent(
 	if s.reviewRepo == nil || item == nil {
 		return
 	}
-	if err := s.reviewRepo.CreateEvents(ctx, s.newEvent(ctx, item, kind, text, actor, payload)); err != nil {
+	if err := s.reviewRepo.CreateEvents(
+		ctx,
+		s.newEvent(ctx, item, kind, text, actor, payload),
+	); err != nil {
 		s.l.Warn("failed to record billing queue activity",
 			zap.String("billingQueueItemId", item.ID.String()),
 			zap.String("kind", string(kind)),

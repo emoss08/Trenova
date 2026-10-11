@@ -56,150 +56,158 @@ func (r *repository) ListUnjournaledAdjustmentMemos(
 	ctx context.Context,
 	req *driversettlementports.ListJournalRepairRequest,
 ) ([]*driversettlementports.AdjustmentMemoRepair, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*driversettlementports.AdjustmentMemoRepair, error) {
-		dba := r.db.DBForContext(ctx)
-		cols := invoicecol.InvoiceColumns
-		ledgerCols := customerledgercol.CustomerLedgerEntryColumns
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*driversettlementports.AdjustmentMemoRepair, error) {
+			dba := r.db.DBForContext(ctx)
+			cols := invoicecol.InvoiceColumns
+			ledgerCols := customerledgercol.CustomerLedgerEntryColumns
 
-		ledgerLine := dba.NewSelect().
-			Model((*customerledger.CustomerLedgerEntry)(nil)).
-			ColumnExpr("1").
-			Where(ledgerCols.SourceObjectID.EqColumn(cols.ID)).
-			Where(ledgerCols.OrganizationID.EqColumn(cols.OrganizationID)).
-			Where(ledgerCols.BusinessUnitID.EqColumn(cols.BusinessUnitID))
+			ledgerLine := dba.NewSelect().
+				Model((*customerledger.CustomerLedgerEntry)(nil)).
+				ColumnExpr("1").
+				Where(ledgerCols.SourceObjectID.EqColumn(cols.ID)).
+				Where(ledgerCols.OrganizationID.EqColumn(cols.OrganizationID)).
+				Where(ledgerCols.BusinessUnitID.EqColumn(cols.BusinessUnitID))
 
-		memos := make([]*invoice.Invoice, 0, limitOf(req))
-		q := dba.NewSelect().
-			Model(&memos).
-			Where(cols.IsAdjustmentArtifact.IsTrue()).
-			Where(cols.BillType.Eq(), billingqueue.BillTypeCreditMemo).
-			Where(cols.Status.Eq(), invoice.StatusPosted).
-			Where(cols.SourceInvoiceAdjustmentID.IsNotNull()).
-			Where("NOT EXISTS (?)", ledgerLine).
-			Order(cols.ID.OrderAsc()).
-			Limit(limitOf(req))
-		if req.OrganizationID.IsNotNil() {
-			q = q.Where(cols.OrganizationID.Eq(), req.OrganizationID)
-		}
-		if req.AfterID.IsNotNil() {
-			q = q.Where(cols.ID.Gt(), req.AfterID)
-		}
-		if err := q.Scan(ctx); err != nil {
-			return nil, fmt.Errorf("list unjournaled adjustment credit memos: %w", err)
-		}
-		if len(memos) == 0 {
-			return nil, nil
-		}
-
-		adjustmentIDs := make([]pulid.ID, 0, len(memos))
-		for _, memo := range memos {
-			adjustmentIDs = append(adjustmentIDs, memo.SourceInvoiceAdjustmentID)
-		}
-		adjustments := make([]*invoiceadjustment.InvoiceAdjustment, 0, len(adjustmentIDs))
-		adjCols := invoiceadjustmentcol.InvoiceAdjustmentColumns
-		if err := dba.NewSelect().
-			Model(&adjustments).
-			Column(adjCols.ID.String(), adjCols.OrganizationID.String(), adjCols.BusinessUnitID.String(),
-				adjCols.Kind.String(), adjCols.OriginalInvoiceID.String()).
-			Where(adjCols.ID.In(), bun.List(adjustmentIDs)).
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("read adjustments for credit memos: %w", err)
-		}
-		byID := make(map[pulid.ID]*invoiceadjustment.InvoiceAdjustment, len(adjustments))
-		for _, adjustment := range adjustments {
-			byID[adjustment.ID] = adjustment
-		}
-
-		memoIDs := make([]pulid.ID, 0, len(memos))
-		for _, memo := range memos {
-			memoIDs = append(memoIDs, memo.ID)
-		}
-		journaled, err := existingJournalBatches(ctx, dba, &existingJournalRequest{
-			ObjectType: "Invoice",
-			Event:      tenant.JournalSourceEventCreditMemoPosted,
-			ObjectIDs:  memoIDs,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		repairs := make([]*driversettlementports.AdjustmentMemoRepair, 0, len(memos))
-		for _, memo := range memos {
-			adjustment, ok := byID[memo.SourceInvoiceAdjustmentID]
-			if !ok || adjustment.OrganizationID != memo.OrganizationID ||
-				adjustment.BusinessUnitID != memo.BusinessUnitID {
-				repairs = append(repairs, &driversettlementports.AdjustmentMemoRepair{
-					Memo:          memo,
-					SourceMissing: true,
-				})
-				continue
+			memos := make([]*invoice.Invoice, 0, limitOf(req))
+			q := dba.NewSelect().
+				Model(&memos).
+				Where(cols.IsAdjustmentArtifact.IsTrue()).
+				Where(cols.BillType.Eq(), billingqueue.BillTypeCreditMemo).
+				Where(cols.Status.Eq(), invoice.StatusPosted).
+				Where(cols.SourceInvoiceAdjustmentID.IsNotNull()).
+				Where("NOT EXISTS (?)", ledgerLine).
+				Order(cols.ID.OrderAsc()).
+				Limit(limitOf(req))
+			if req.OrganizationID.IsNotNil() {
+				q = q.Where(cols.OrganizationID.Eq(), req.OrganizationID)
 			}
-			repairs = append(repairs, &driversettlementports.AdjustmentMemoRepair{
-				Memo:            memo,
-				Kind:            adjustment.Kind,
-				SourceInvoiceID: adjustment.OriginalInvoiceID,
-				Journaled:       journaled[journalKey(memo.OrganizationID, memo.BusinessUnitID, memo.ID)].IsNotNil(),
+			if req.AfterID.IsNotNil() {
+				q = q.Where(cols.ID.Gt(), req.AfterID)
+			}
+			if err := q.Scan(ctx); err != nil {
+				return nil, fmt.Errorf("list unjournaled adjustment credit memos: %w", err)
+			}
+			if len(memos) == 0 {
+				return nil, nil
+			}
+
+			adjustmentIDs := make([]pulid.ID, 0, len(memos))
+			for _, memo := range memos {
+				adjustmentIDs = append(adjustmentIDs, memo.SourceInvoiceAdjustmentID)
+			}
+			adjustments := make([]*invoiceadjustment.InvoiceAdjustment, 0, len(adjustmentIDs))
+			adjCols := invoiceadjustmentcol.InvoiceAdjustmentColumns
+			if err := dba.NewSelect().
+				Model(&adjustments).
+				Column(adjCols.ID.String(), adjCols.OrganizationID.String(), adjCols.BusinessUnitID.String(),
+					adjCols.Kind.String(), adjCols.OriginalInvoiceID.String()).
+				Where(adjCols.ID.In(), bun.List(adjustmentIDs)).
+				Scan(ctx); err != nil {
+				return nil, fmt.Errorf("read adjustments for credit memos: %w", err)
+			}
+			byID := make(map[pulid.ID]*invoiceadjustment.InvoiceAdjustment, len(adjustments))
+			for _, adjustment := range adjustments {
+				byID[adjustment.ID] = adjustment
+			}
+
+			memoIDs := make([]pulid.ID, 0, len(memos))
+			for _, memo := range memos {
+				memoIDs = append(memoIDs, memo.ID)
+			}
+			journaled, err := existingJournalBatches(ctx, dba, &existingJournalRequest{
+				ObjectType: "Invoice",
+				Event:      tenant.JournalSourceEventCreditMemoPosted,
+				ObjectIDs:  memoIDs,
 			})
-		}
-		return repairs, nil
-	})
+			if err != nil {
+				return nil, err
+			}
+
+			repairs := make([]*driversettlementports.AdjustmentMemoRepair, 0, len(memos))
+			for _, memo := range memos {
+				adjustment, ok := byID[memo.SourceInvoiceAdjustmentID]
+				if !ok || adjustment.OrganizationID != memo.OrganizationID ||
+					adjustment.BusinessUnitID != memo.BusinessUnitID {
+					repairs = append(repairs, &driversettlementports.AdjustmentMemoRepair{
+						Memo:          memo,
+						SourceMissing: true,
+					})
+					continue
+				}
+				repairs = append(repairs, &driversettlementports.AdjustmentMemoRepair{
+					Memo:            memo,
+					Kind:            adjustment.Kind,
+					SourceInvoiceID: adjustment.OriginalInvoiceID,
+					Journaled:       journaled[journalKey(memo.OrganizationID, memo.BusinessUnitID, memo.ID)].IsNotNil(),
+				})
+			}
+			return repairs, nil
+		},
+	)
 }
 
 func (r *repository) ListUnjournaledDriverPayments(
 	ctx context.Context,
 	req *driversettlementports.ListJournalRepairRequest,
 ) ([]*driversettlementports.DriverPaymentRepair, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*driversettlementports.DriverPaymentRepair, error) {
-		dba := r.db.DBForContext(ctx)
-		cols := driversettlementcol.SettlementColumns
-		settlements := make([]*driversettlement.Settlement, 0, limitOf(req))
-		q := dba.NewSelect().
-			Model(&settlements).
-			Where(cols.Status.Eq(), driversettlement.StatusPaid).
-			Where(cols.NetPayMinor.Ne(), 0).
-			Where(cols.PaidJournalBatchID.IsNull()).
-			Where(cols.PaidAt.IsNotNull()).
-			Order(cols.ID.OrderAsc()).
-			Limit(limitOf(req))
-		if req.OrganizationID.IsNotNil() {
-			q = q.Where(cols.OrganizationID.Eq(), req.OrganizationID)
-		}
-		if req.AfterID.IsNotNil() {
-			q = q.Where(cols.ID.Gt(), req.AfterID)
-		}
-		if err := q.Scan(ctx); err != nil {
-			return nil, fmt.Errorf("list unjournaled driver settlement payments: %w", err)
-		}
-		if len(settlements) == 0 {
-			return nil, nil
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*driversettlementports.DriverPaymentRepair, error) {
+			dba := r.db.DBForContext(ctx)
+			cols := driversettlementcol.SettlementColumns
+			settlements := make([]*driversettlement.Settlement, 0, limitOf(req))
+			q := dba.NewSelect().
+				Model(&settlements).
+				Where(cols.Status.Eq(), driversettlement.StatusPaid).
+				Where(cols.NetPayMinor.Ne(), 0).
+				Where(cols.PaidJournalBatchID.IsNull()).
+				Where(cols.PaidAt.IsNotNull()).
+				Order(cols.ID.OrderAsc()).
+				Limit(limitOf(req))
+			if req.OrganizationID.IsNotNil() {
+				q = q.Where(cols.OrganizationID.Eq(), req.OrganizationID)
+			}
+			if req.AfterID.IsNotNil() {
+				q = q.Where(cols.ID.Gt(), req.AfterID)
+			}
+			if err := q.Scan(ctx); err != nil {
+				return nil, fmt.Errorf("list unjournaled driver settlement payments: %w", err)
+			}
+			if len(settlements) == 0 {
+				return nil, nil
+			}
 
-		settlementIDs := make([]pulid.ID, 0, len(settlements))
-		for _, settlement := range settlements {
-			settlementIDs = append(settlementIDs, settlement.ID)
-		}
-		batches, err := existingJournalBatches(ctx, dba, &existingJournalRequest{
-			ObjectType: "DriverSettlement",
-			Event:      tenant.JournalSourceEventDriverSettlementPaid,
-			ObjectIDs:  settlementIDs,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		repairs := make([]*driversettlementports.DriverPaymentRepair, 0, len(settlements))
-		for _, settlement := range settlements {
-			repairs = append(repairs, &driversettlementports.DriverPaymentRepair{
-				Settlement: settlement,
-				JournalBatchID: batches[journalKey(
-					settlement.OrganizationID,
-					settlement.BusinessUnitID,
-					settlement.ID,
-				)],
+			settlementIDs := make([]pulid.ID, 0, len(settlements))
+			for _, settlement := range settlements {
+				settlementIDs = append(settlementIDs, settlement.ID)
+			}
+			batches, err := existingJournalBatches(ctx, dba, &existingJournalRequest{
+				ObjectType: "DriverSettlement",
+				Event:      tenant.JournalSourceEventDriverSettlementPaid,
+				ObjectIDs:  settlementIDs,
 			})
-		}
-		return repairs, nil
-	})
+			if err != nil {
+				return nil, err
+			}
+
+			repairs := make([]*driversettlementports.DriverPaymentRepair, 0, len(settlements))
+			for _, settlement := range settlements {
+				repairs = append(repairs, &driversettlementports.DriverPaymentRepair{
+					Settlement: settlement,
+					JournalBatchID: batches[journalKey(
+						settlement.OrganizationID,
+						settlement.BusinessUnitID,
+						settlement.ID,
+					)],
+				})
+			}
+			return repairs, nil
+		},
+	)
 }
 
 type existingJournalRequest struct {

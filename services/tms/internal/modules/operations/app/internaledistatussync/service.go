@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/internaledilifecycle"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/modules/operations/app/internaledilifecycle"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -67,7 +67,10 @@ type shipmentRepository interface {
 		ctx context.Context,
 		req *shipmentports.UpdateShipmentStatusRequest,
 	) (*shipment.Shipment, error)
-	Cancel(ctx context.Context, req *shipmentports.CancelShipmentRequest) (*shipment.Shipment, error)
+	Cancel(
+		ctx context.Context,
+		req *shipmentports.CancelShipmentRequest,
+	) (*shipment.Shipment, error)
 }
 
 type shipmentEventRepository interface {

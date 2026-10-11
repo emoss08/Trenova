@@ -63,7 +63,7 @@ type Item struct {
 	Seen bool `json:"seen" bun:"-"`
 	// Inserted is set by an upsert that reports whether the row was created
 	// rather than replaced; it is never selected on its own.
-	Inserted bool `json:"-"    bun:"inserted,scanonly"`
+	Inserted bool `json:"-" bun:"inserted,scanonly"`
 }
 
 func (i *Item) GetID() pulid.ID { return i.ID }

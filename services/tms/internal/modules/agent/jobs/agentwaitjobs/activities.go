@@ -31,7 +31,10 @@ func (a *Activities) ScheduleWaitActivity(
 	return a.worker.Schedule(ctx, payload.Tenant(), payload.WaitID)
 }
 
-func (a *Activities) CheckWaitActivity(ctx context.Context, in *CheckInput) (*agentwaitcontract.Check, error) {
+func (a *Activities) CheckWaitActivity(
+	ctx context.Context,
+	in *CheckInput,
+) (*agentwaitcontract.Check, error) {
 	return a.worker.Check(ctx, in.Payload.Tenant(), in.Payload.WaitID, in.Now)
 }
 
@@ -39,7 +42,10 @@ func (a *Activities) ReconcileOverdueWaitsActivity(ctx context.Context) (int, er
 	return a.worker.ReconcileOverdue(ctx)
 }
 
-func (a *Activities) FinishWaitActivity(ctx context.Context, in *agentwaitcontract.FinishInput) error {
+func (a *Activities) FinishWaitActivity(
+	ctx context.Context,
+	in *agentwaitcontract.FinishInput,
+) error {
 	err := a.worker.Finish(ctx, in)
 	if errors.Is(err, agentwaitcontract.ErrConversationBusy) {
 		return temporal.NewApplicationError(err.Error(), errTypeBusy)

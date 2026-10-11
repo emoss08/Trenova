@@ -59,27 +59,34 @@ func (r *repository) CountStatsByIDs(
 	ctx context.Context,
 	req *formulatemplateports.GetFormulaTemplateStatsRequest,
 ) (map[pulid.ID]formulatemplateports.TemplateStats, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]formulatemplateports.TemplateStats, error) {
-		stats := make(map[pulid.ID]formulatemplateports.TemplateStats, len(req.TemplateIDs))
-		if len(req.TemplateIDs) == 0 {
-			return stats, nil
-		}
-
-		log := r.l.With(zap.String("operation", "CountStatsByIDs"))
-
-		var rows []statsRow
-		if err := statsQuery(r.db.DBForContext(ctx).NewSelect(), req).Scan(ctx, &rows); err != nil {
-			log.Error("failed to count formula template stats", zap.Error(err))
-			return nil, err
-		}
-
-		for _, row := range rows {
-			stats[row.ID] = formulatemplateports.TemplateStats{
-				UsageCount:    row.UsageCount,
-				ScenarioCount: row.ScenarioCount,
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID]formulatemplateports.TemplateStats, error) {
+			stats := make(map[pulid.ID]formulatemplateports.TemplateStats, len(req.TemplateIDs))
+			if len(req.TemplateIDs) == 0 {
+				return stats, nil
 			}
-		}
 
-		return stats, nil
-	})
+			log := r.l.With(zap.String("operation", "CountStatsByIDs"))
+
+			var rows []statsRow
+			if err := statsQuery(
+				r.db.DBForContext(ctx).NewSelect(),
+				req,
+			).Scan(ctx, &rows); err != nil {
+				log.Error("failed to count formula template stats", zap.Error(err))
+				return nil, err
+			}
+
+			for _, row := range rows {
+				stats[row.ID] = formulatemplateports.TemplateStats{
+					UsageCount:    row.UsageCount,
+					ScenarioCount: row.ScenarioCount,
+				}
+			}
+
+			return stats, nil
+		},
+	)
 }

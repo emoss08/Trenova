@@ -47,7 +47,11 @@ func main() {
 
 func run() error {
 	movesPath := flag.String("moves", "docs/modules/moves.tsv", "package moves, old<TAB>new")
-	symbolsPath := flag.String("symbols", "docs/modules/symbol-moves.tsv", "symbol moves, old.Sym<TAB>new.Sym")
+	symbolsPath := flag.String(
+		"symbols",
+		"docs/modules/symbol-moves.tsv",
+		"symbol moves, old.Sym<TAB>new.Sym",
+	)
 	flag.Parse()
 	if flag.NArg() == 0 {
 		return errUsage

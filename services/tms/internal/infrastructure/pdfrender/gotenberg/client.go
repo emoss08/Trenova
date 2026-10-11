@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v5"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -119,7 +119,10 @@ func (c *Client) Healthy(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) Render(ctx context.Context, req *documenttemplateports.PDFRenderRequest) ([]byte, error) {
+func (c *Client) Render(
+	ctx context.Context,
+	req *documenttemplateports.PDFRenderRequest,
+) ([]byte, error) {
 	if !c.Enabled() {
 		return nil, documenttemplateports.ErrPDFRendererUnavailable
 	}

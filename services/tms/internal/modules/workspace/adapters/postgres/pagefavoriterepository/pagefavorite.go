@@ -3,9 +3,9 @@ package pagefavoriterepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagefavorite"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagefavorite"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/pagefavoriteports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -68,34 +68,38 @@ func (r *repository) GetByURL(
 	ctx context.Context,
 	req *pagefavoriteports.GetPageFavoriteByURLRequest,
 ) (*pagefavorite.PageFavorite, bool, error) {
-	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (*pagefavorite.PageFavorite, bool, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByURL"),
-			zap.String("pageURL", req.PageURL),
-			zap.String("userID", req.UserID.String()),
-		)
+	return dbtx.Read2(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagefavorite.PageFavorite, bool, error) {
+			log := r.l.With(
+				zap.String("operation", "GetByURL"),
+				zap.String("pageURL", req.PageURL),
+				zap.String("userID", req.UserID.String()),
+			)
 
-		entity := new(pagefavorite.PageFavorite)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("pf.page_url = ?", req.PageURL).
-					Where("pf.user_id = ?", req.UserID).
-					Where("pf.organization_id = ?", req.TenantInfo.OrgID).
-					Where("pf.business_unit_id = ?", req.TenantInfo.BuID)
-			}).
-			Scan(ctx)
-		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, false, nil
+			entity := new(pagefavorite.PageFavorite)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.Where("pf.page_url = ?", req.PageURL).
+						Where("pf.user_id = ?", req.UserID).
+						Where("pf.organization_id = ?", req.TenantInfo.OrgID).
+						Where("pf.business_unit_id = ?", req.TenantInfo.BuID)
+				}).
+				Scan(ctx)
+			if err != nil {
+				if dberror.IsNotFoundError(err) {
+					return nil, false, nil
+				}
+				log.Error("failed to get page favorite by URL", zap.Error(err))
+				return nil, false, err
 			}
-			log.Error("failed to get page favorite by URL", zap.Error(err))
-			return nil, false, err
-		}
 
-		return entity, true, nil
-	})
+			return entity, true, nil
+		},
+	)
 }
 
 func (r *repository) Create(

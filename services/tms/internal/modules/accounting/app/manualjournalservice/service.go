@@ -4,17 +4,17 @@ package manualjournalservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/services/journalposting"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/core/services/journalposting"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -99,7 +99,10 @@ func (s *Service) Get(
 ) (*manualjournal.Request, error) {
 	return s.repo.GetByID(
 		ctx,
-		manualjournalports.GetManualJournalByIDRequest{ID: req.RequestID, TenantInfo: req.TenantInfo},
+		manualjournalports.GetManualJournalByIDRequest{
+			ID:         req.RequestID,
+			TenantInfo: req.TenantInfo,
+		},
 	)
 }
 
@@ -194,7 +197,10 @@ func (s *Service) PlanUpdateDraft(
 
 	original, err := s.repo.GetByID(
 		ctx,
-		manualjournalports.GetManualJournalByIDRequest{ID: req.RequestID, TenantInfo: req.TenantInfo},
+		manualjournalports.GetManualJournalByIDRequest{
+			ID:         req.RequestID,
+			TenantInfo: req.TenantInfo,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -320,7 +326,10 @@ func (s *Service) Approve(
 
 	entity, err := s.repo.GetByID(
 		ctx,
-		manualjournalports.GetManualJournalByIDRequest{ID: req.RequestID, TenantInfo: req.TenantInfo},
+		manualjournalports.GetManualJournalByIDRequest{
+			ID:         req.RequestID,
+			TenantInfo: req.TenantInfo,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -541,7 +550,10 @@ func (s *Service) Reject(
 
 	entity, err := s.repo.GetByID(
 		ctx,
-		manualjournalports.GetManualJournalByIDRequest{ID: req.RequestID, TenantInfo: req.TenantInfo},
+		manualjournalports.GetManualJournalByIDRequest{
+			ID:         req.RequestID,
+			TenantInfo: req.TenantInfo,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -578,7 +590,10 @@ func (s *Service) PlanCancel(
 
 	entity, err := s.repo.GetByID(
 		ctx,
-		manualjournalports.GetManualJournalByIDRequest{ID: req.RequestID, TenantInfo: req.TenantInfo},
+		manualjournalports.GetManualJournalByIDRequest{
+			ID:         req.RequestID,
+			TenantInfo: req.TenantInfo,
+		},
 	)
 	if err != nil {
 		return nil, err

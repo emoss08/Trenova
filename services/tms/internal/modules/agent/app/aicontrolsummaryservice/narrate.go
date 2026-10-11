@@ -7,9 +7,9 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/trenova/internal/core/services/shipmentnarration"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/services/shipmentnarration"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -223,7 +223,10 @@ func outputSchema() map[string]any {
 					"additionalProperties": false,
 					"required":             []any{"text", "strong", "target", "providerId"},
 					"properties": map[string]any{
-						"text":       map[string]any{"type": "string", "maxLength": maxSegmentTextRune},
+						"text": map[string]any{
+							"type":      "string",
+							"maxLength": maxSegmentTextRune,
+						},
 						"strong":     map[string]any{"type": "boolean"},
 						"target":     map[string]any{"type": "string", "enum": targets},
 						"providerId": map[string]any{"type": "string"},

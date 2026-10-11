@@ -3,12 +3,12 @@ package carrierintelservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -226,10 +226,14 @@ func (s *Service) SyncPlan(
 	if err != nil {
 		return nil, err
 	}
-	snapshot, err := s.snapshotRepo.GetCurrent(ctx, tenantInfo, carrierintelports.CarrierIntelSubjectRef{
-		SubjectType: carrierintel.SubjectTypeCarrier,
-		SubjectID:   carrierID.String(),
-	})
+	snapshot, err := s.snapshotRepo.GetCurrent(
+		ctx,
+		tenantInfo,
+		carrierintelports.CarrierIntelSubjectRef{
+			SubjectType: carrierintel.SubjectTypeCarrier,
+			SubjectID:   carrierID.String(),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

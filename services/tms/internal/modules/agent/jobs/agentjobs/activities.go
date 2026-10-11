@@ -164,10 +164,13 @@ func (a *Activities) PrepareRunActivity(
 ) (*PrepareRunResult, error) {
 	tenant := payload.TenantInfo()
 
-	definition, err := a.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         payload.DefinitionID,
-		TenantInfo: tenant,
-	})
+	definition, err := a.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         payload.DefinitionID,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		return nil, temporal.NewNonRetryableApplicationError(
 			"agent definition unavailable", "DefinitionUnavailable", err,
@@ -619,10 +622,13 @@ func (a *Activities) projectFailedRun(
 
 	name := ""
 	if run.AgentDefinitionID.IsNotNil() {
-		definition, err := a.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-			ID:         run.AgentDefinitionID,
-			TenantInfo: tenant,
-		})
+		definition, err := a.definitions.GetByID(
+			ctx,
+			agentdefinitionports.GetAgentDefinitionByIDRequest{
+				ID:         run.AgentDefinitionID,
+				TenantInfo: tenant,
+			},
+		)
 		if err != nil {
 			a.logger.Warn("failed to name the agent behind a failed run", zap.Error(err))
 		} else {
@@ -697,10 +703,13 @@ func (a *Activities) StartScheduledRunActivity(
 		return &StartScheduledRunResult{Skipped: "plan_restricted"}, nil
 	}
 
-	definition, err := a.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         payload.DefinitionID,
-		TenantInfo: tenant,
-	})
+	definition, err := a.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         payload.DefinitionID,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		return nil, temporal.NewNonRetryableApplicationError(
 			"agent definition unavailable", "DefinitionUnavailable", err,
@@ -864,7 +873,10 @@ func (a *Activities) resumedWait(
 	return wait, nil
 }
 
-func backgroundInput(payload *agentcontract.AgentRunPayload, subject *agentdefinition.RuntimeSubject) string {
+func backgroundInput(
+	payload *agentcontract.AgentRunPayload,
+	subject *agentdefinition.RuntimeSubject,
+) string {
 	return agentdefinition.BackgroundRunInput(payload.Trigger, payload.EventKind, subject)
 }
 

@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -100,14 +100,19 @@ func (h *Handler) list(c *gin.Context) {
 		return
 	}
 	req := pagination.NewQueryOptions(c, authCtx)
-	pagination.List(c, req, h.eh, func() (*pagination.ListResult[apikeyports.APIKeyResponse], error) {
-		return h.apiKeyService.ListAPIKeys(
-			c.Request.Context(),
-			&apikeyports.ListAPIKeysRequest{
-				Filter: req,
-			},
-		)
-	})
+	pagination.List(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[apikeyports.APIKeyResponse], error) {
+			return h.apiKeyService.ListAPIKeys(
+				c.Request.Context(),
+				&apikeyports.ListAPIKeysRequest{
+					Filter: req,
+				},
+			)
+		},
+	)
 }
 
 // @Summary Create an API key

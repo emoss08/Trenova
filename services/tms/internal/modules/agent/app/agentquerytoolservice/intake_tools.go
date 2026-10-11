@@ -6,17 +6,17 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -509,7 +509,11 @@ func (t *quoteShipmentTool) hypotheticalShipment(
 
 		var scheduled int64
 		if strings.TrimSpace(stop.Date) != "" {
-			if scheduled, err = filtercatalog.CoerceDate(fmt.Sprintf("stops[%d].date", idx), stop.Date, clk); err != nil {
+			if scheduled, err = filtercatalog.CoerceDate(
+				fmt.Sprintf("stops[%d].date", idx),
+				stop.Date,
+				clk,
+			); err != nil {
 				return nil, nil, err
 			}
 		}

@@ -3,13 +3,13 @@ package assignmentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/services/capabilityguard"
 	"github.com/emoss08/trenova/internal/core/services/dispatchguard"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -111,7 +111,11 @@ func (s *service) equipmentInUse(
 			EquipmentID:    *id,
 			ShipmentMoveID: conflict.ShipmentMoveID,
 		}
-		if move, moveErr := s.repo.GetMoveByID(ctx, tenantInfo, conflict.ShipmentMoveID); moveErr == nil &&
+		if move, moveErr := s.repo.GetMoveByID(
+			ctx,
+			tenantInfo,
+			conflict.ShipmentMoveID,
+		); moveErr == nil &&
 			move != nil {
 			if other, shipErr := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 				ID:         move.ShipmentID,

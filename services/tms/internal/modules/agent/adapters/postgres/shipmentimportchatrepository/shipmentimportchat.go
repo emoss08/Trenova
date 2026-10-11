@@ -4,9 +4,9 @@ package shipmentimportchatrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentimportchat"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentimportchat"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentimportchatports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -40,79 +40,91 @@ func (r *repository) GetConversationByDocument(
 	ctx context.Context,
 	req shipmentimportchatports.GetShipmentImportConversationRequest,
 ) (*shipmentimportchat.Conversation, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipmentimportchat.Conversation, error) {
-		entity := new(shipmentimportchat.Conversation)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("sicc.document_id = ?", req.DocumentID).
-			Where("sicc.organization_id = ?", req.TenantInfo.OrgID).
-			Where("sicc.business_unit_id = ?", req.TenantInfo.BuID).
-			Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-				if req.Status != "" {
-					return q.Where("sicc.status = ?", req.Status)
-				}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*shipmentimportchat.Conversation, error) {
+			entity := new(shipmentimportchat.Conversation)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				Where("sicc.document_id = ?", req.DocumentID).
+				Where("sicc.organization_id = ?", req.TenantInfo.OrgID).
+				Where("sicc.business_unit_id = ?", req.TenantInfo.BuID).
+				Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
+					if req.Status != "" {
+						return q.Where("sicc.status = ?", req.Status)
+					}
 
-				return q.OrderExpr(
-					"CASE WHEN sicc.status = ? THEN 0 ELSE 1 END, sicc.updated_at DESC",
-					shipmentimportchat.ConversationStatusActive,
-				)
-			}).
-			OrderExpr("sicc.updated_at DESC").
-			Limit(1).
-			Scan(ctx)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "ShipmentImportConversation")
-		}
+					return q.OrderExpr(
+						"CASE WHEN sicc.status = ? THEN 0 ELSE 1 END, sicc.updated_at DESC",
+						shipmentimportchat.ConversationStatusActive,
+					)
+				}).
+				OrderExpr("sicc.updated_at DESC").
+				Limit(1).
+				Scan(ctx)
+			if err != nil {
+				return nil, dberror.HandleNotFoundError(err, "ShipmentImportConversation")
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) CreateConversation(
 	ctx context.Context,
 	entity *shipmentimportchat.Conversation,
 ) (*shipmentimportchat.Conversation, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipmentimportchat.Conversation, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, err
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*shipmentimportchat.Conversation, error) {
+			if _, err := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(entity).
+				Returning("*").
+				Exec(ctx); err != nil {
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) UpdateConversation(
 	ctx context.Context,
 	entity *shipmentimportchat.Conversation,
 ) (*shipmentimportchat.Conversation, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipmentimportchat.Conversation, error) {
-		previousVersion := entity.Version
-		entity.Version++
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", previousVersion).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(
-			result,
-			"ShipmentImportConversation",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*shipmentimportchat.Conversation, error) {
+			previousVersion := entity.Version
+			entity.Version++
+			result, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(entity).
+				WherePK().
+				Where("version = ?", previousVersion).
+				Returning("*").
+				Exec(ctx)
+			if err != nil {
+				return nil, err
+			}
+			if err = dberror.CheckRowsAffected(
+				result,
+				"ShipmentImportConversation",
+				entity.ID.String(),
+			); err != nil {
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) AppendTurn(

@@ -8,8 +8,8 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"

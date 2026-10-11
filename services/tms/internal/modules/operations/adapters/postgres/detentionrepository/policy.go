@@ -77,91 +77,99 @@ func (r *policyRepository) List(
 	ctx context.Context,
 	req *detentionports.ListDetentionPoliciesRequest,
 ) (*pagination.ListResult[*detention.DetentionPolicy], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*detention.DetentionPolicy], error) {
-		log := r.l.With(zap.String("operation", "List"))
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*detention.DetentionPolicy], error) {
+			log := r.l.With(zap.String("operation", "List"))
 
-		entities := make([]*detention.DetentionPolicy, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(detentioncol.DetentionPolicyRelations.Tiers, orderTiers).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterQuery(sq, req)
-			}).ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count detention policies", zap.Error(err))
-			return nil, err
-		}
+			entities := make([]*detention.DetentionPolicy, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Relation(detentioncol.DetentionPolicyRelations.Tiers, orderTiers).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count detention policies", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*detention.DetentionPolicy]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*detention.DetentionPolicy]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *policyRepository) ListConnection(
 	ctx context.Context,
 	req *detentionports.ListDetentionPolicyConnectionRequest,
 ) (*pagination.CursorListResult[*detention.DetentionPolicy], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*detention.DetentionPolicy], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*detention.DetentionPolicy], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*detention.DetentionPolicy)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						detentioncol.DetentionPolicyTable.Alias,
-						req.Filter,
-						(*detention.DetentionPolicy)(nil),
-					)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*detention.DetentionPolicy)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							detentioncol.DetentionPolicyTable.Alias,
+							req.Filter,
+							(*detention.DetentionPolicy)(nil),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count detention policies", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*detention.DetentionPolicy]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*detention.DetentionPolicy) *bun.SelectQuery {
+						q := dba.NewSelect().Model(entities)
+						if len(req.DetentionPolicyColumns) == 0 {
+							q = q.ColumnExpr(detentioncol.DetentionPolicyTable.All())
+						} else {
+							q = q.Column(req.DetentionPolicyColumns...)
+						}
+						return q
+					},
+					Apply: func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							q,
+							detentioncol.DetentionPolicyTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*detention.DetentionPolicy)(nil),
+						)
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count detention policies", zap.Error(err))
+				log.Error("failed to cursor list detention policies", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*detention.DetentionPolicy]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*detention.DetentionPolicy) *bun.SelectQuery {
-					q := dba.NewSelect().Model(entities)
-					if len(req.DetentionPolicyColumns) == 0 {
-						q = q.ColumnExpr(detentioncol.DetentionPolicyTable.All())
-					} else {
-						q = q.Column(req.DetentionPolicyColumns...)
-					}
-					return q
-				},
-				Apply: func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return querybuilder.ApplyCursorFilters(
-						q,
-						detentioncol.DetentionPolicyTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*detention.DetentionPolicy)(nil),
-					)
-				},
-			},
-		)
-		if err != nil {
-			log.Error("failed to cursor list detention policies", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *policyRepository) GetByID(
@@ -351,7 +359,8 @@ func (r *policyRepository) Update(
 					return detentioncol.DetentionPolicyTierScopeTenantDelete(dq, pagination.TenantInfo{
 						OrgID: entity.OrganizationID,
 						BuID:  entity.BusinessUnitID,
-					}).Where(tierCols.DetentionPolicyID.Eq(), entity.ID)
+					}).
+						Where(tierCols.DetentionPolicyID.Eq(), entity.ID)
 				}).
 				Exec(c); dErr != nil {
 				return dErr
@@ -496,34 +505,38 @@ func (r *policyRepository) SelectOptions(
 	ctx context.Context,
 	req *detentionports.DetentionPolicySelectOptionsRequest,
 ) (*pagination.ListResult[*detention.DetentionPolicy], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*detention.DetentionPolicy], error) {
-		cols := detentioncol.DetentionPolicyColumns
-		return dbhelper.SelectOptions[*detention.DetentionPolicy](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					cols.ID,
-					cols.Name,
-					cols.Code,
-					cols.Description,
-					cols.Status,
-					cols.BillingFreeMinutes,
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*detention.DetentionPolicy], error) {
+			cols := detentioncol.DetentionPolicyColumns
+			return dbhelper.SelectOptions[*detention.DetentionPolicy](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.Name,
+						cols.Code,
+						cols.Description,
+						cols.Status,
+						cols.BillingFreeMinutes,
+					},
+					OrgColumnRef: &cols.OrganizationID,
+					BuColumnRef:  &cols.BusinessUnitID,
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						return q.Where(cols.Status.Eq(), detention.PolicyStatusActive).
+							Order(cols.Name.OrderAsc())
+					},
+					EntityName: "DetentionPolicy",
+					SearchColumnRefs: []buncolgen.Column{
+						cols.Name,
+						cols.Code,
+						cols.Description,
+					},
 				},
-				OrgColumnRef: &cols.OrganizationID,
-				BuColumnRef:  &cols.BusinessUnitID,
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Where(cols.Status.Eq(), detention.PolicyStatusActive).
-						Order(cols.Name.OrderAsc())
-				},
-				EntityName: "DetentionPolicy",
-				SearchColumnRefs: []buncolgen.Column{
-					cols.Name,
-					cols.Code,
-					cols.Description,
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }

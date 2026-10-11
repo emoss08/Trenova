@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -66,10 +66,13 @@ func (s *Service) ListByResourceType(
 	resourceType string,
 	tenantInfo pagination.TenantInfo,
 ) ([]*documentpacketrule.DocumentPacketRule, error) {
-	return s.repo.ListByResourceType(ctx, &documentpacketruleports.ListDocumentPacketRulesByResourceRequest{
-		TenantInfo:   tenantInfo,
-		ResourceType: resourceType,
-	})
+	return s.repo.ListByResourceType(
+		ctx,
+		&documentpacketruleports.ListDocumentPacketRulesByResourceRequest{
+			TenantInfo:   tenantInfo,
+			ResourceType: resourceType,
+		},
+	)
 }
 
 func (s *Service) Create(

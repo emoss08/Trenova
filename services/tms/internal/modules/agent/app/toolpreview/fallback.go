@@ -2,8 +2,8 @@ package toolpreview
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
 // Parameters is Describe for a tool whose policy names what it acts on: each

@@ -5,36 +5,36 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
+	"github.com/emoss08/trenova/internal/modules/places/app/locationservice"
 	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
-	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
-	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
-	"github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
-	"github.com/emoss08/trenova/internal/modules/places/app/locationservice"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/reference/app/servicetypeservice"
 	"github.com/emoss08/trenova/internal/modules/reference/app/shipmenttypeservice"
-	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
-	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -354,10 +354,13 @@ func (d *SampleData) flatRateTemplate(
 		}
 	}
 
-	existing, err := d.templateFinder.FindByNames(ctx, formulatemplateports.GetFormulaTemplatesByNamesRequest{
-		TenantInfo: tenantInfo,
-		Names:      []string{flatRateTemplateName},
-	})
+	existing, err := d.templateFinder.FindByNames(
+		ctx,
+		formulatemplateports.GetFormulaTemplatesByNamesRequest{
+			TenantInfo: tenantInfo,
+			Names:      []string{flatRateTemplateName},
+		},
+	)
 	if err != nil {
 		return pulid.Nil, err
 	}
@@ -528,8 +531,22 @@ func (d *SampleData) createShipments(
 		rate     int64
 		dayShift int
 	}{
-		{customer: customers[0], pickup: locations[3], delivery: locations[0], bol: "SAMPLE-BOL-1001", rate: 1850, dayShift: 0},
-		{customer: customers[1], pickup: locations[1], delivery: locations[2], bol: "SAMPLE-BOL-1002", rate: 1275, dayShift: 1},
+		{
+			customer: customers[0],
+			pickup:   locations[3],
+			delivery: locations[0],
+			bol:      "SAMPLE-BOL-1001",
+			rate:     1850,
+			dayShift: 0,
+		},
+		{
+			customer: customers[1],
+			pickup:   locations[1],
+			delivery: locations[2],
+			bol:      "SAMPLE-BOL-1002",
+			rate:     1275,
+			dayShift: 1,
+		},
 	}
 
 	for _, plan := range plans {
@@ -564,8 +581,20 @@ func (d *SampleData) createShipments(
 				Loaded:         true,
 				Sequence:       0,
 				Stops: []*shipment.Stop{
-					sampleStop(req.TenantInfo, plan.pickup.ID, shipment.StopTypePickup, 0, pickupAt),
-					sampleStop(req.TenantInfo, plan.delivery.ID, shipment.StopTypeDelivery, 1, deliveryAt),
+					sampleStop(
+						req.TenantInfo,
+						plan.pickup.ID,
+						shipment.StopTypePickup,
+						0,
+						pickupAt,
+					),
+					sampleStop(
+						req.TenantInfo,
+						plan.delivery.ID,
+						shipment.StopTypeDelivery,
+						1,
+						deliveryAt,
+					),
 				},
 			}},
 		}, req.Actor); err != nil {

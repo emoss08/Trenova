@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -25,11 +25,14 @@ func (s *Service) refreshAttention(ctx context.Context, conn *accountingsync.Acc
 		return
 	}
 	tenant := tenantOf(conn)
-	groups, err := s.records.ListAttention(ctx, accountingsyncports.ListAccountingSyncAttentionRequest{
-		TenantInfo:   tenant,
-		ConnectionID: conn.ID,
-		Limit:        attentionGroups,
-	})
+	groups, err := s.records.ListAttention(
+		ctx,
+		accountingsyncports.ListAccountingSyncAttentionRequest{
+			TenantInfo:   tenant,
+			ConnectionID: conn.ID,
+			Limit:        attentionGroups,
+		},
+	)
 	if err != nil {
 		s.l.Warn("failed to read accounting sync attention", zap.Error(err))
 		return

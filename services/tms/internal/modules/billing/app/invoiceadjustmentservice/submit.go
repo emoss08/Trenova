@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/invoiceadjustmentjobs/invoiceadjustmentcontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -260,10 +260,13 @@ func (s *Service) Submit( //nolint:funlen // legacy workflow
 			}
 
 			if computation.preview.RequiresApproval {
-				result, err = s.repo.GetByID(txCtx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
-					ID:         adjustment.ID,
-					TenantInfo: req.TenantInfo,
-				})
+				result, err = s.repo.GetByID(
+					txCtx,
+					invoiceadjustmentports.GetInvoiceAdjustmentRequest{
+						ID:         adjustment.ID,
+						TenantInfo: req.TenantInfo,
+					},
+				)
 				return err
 			}
 

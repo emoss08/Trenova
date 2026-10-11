@@ -47,33 +47,37 @@ func (r *repository) ListConnections(
 	ctx context.Context,
 	req *ediports.ListEDIConnectionsRequest,
 ) (*pagination.ListResult[*edi.EDIConnection], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIConnection], error) {
-		entities := make([]*edi.EDIConnection, 0, req.Filter.Pagination.SafeLimit())
-		rel := edicol.EDIConnectionRelations
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*edi.EDIConnection], error) {
+			entities := make([]*edi.EDIConnection, 0, req.Filter.Pagination.SafeLimit())
+			rel := edicol.EDIConnectionRelations
 
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(rel.SourceOrganization).
-			Relation(rel.TargetOrganization).
-			Relation(rel.SourcePartner).
-			Relation(rel.TargetPartner).
-			Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
-				return filterConnectionsQuery(query, req)
-			}).
-			Order(edicol.EDIConnectionColumns.CreatedAt.OrderDesc()).
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Relation(rel.SourceOrganization).
+				Relation(rel.TargetOrganization).
+				Relation(rel.SourcePartner).
+				Relation(rel.TargetPartner).
+				Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
+					return filterConnectionsQuery(query, req)
+				}).
+				Order(edicol.EDIConnectionColumns.CreatedAt.OrderDesc()).
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*edi.EDIConnection]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*edi.EDIConnection]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func filterConnectionsQuery(
@@ -101,49 +105,53 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *ediports.EDIConnectionSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIConnection], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIConnection], error) {
-		cols := edicol.EDIConnectionColumns
-		orgCols := tenantcol.OrganizationColumns
-		rel := edicol.EDIConnectionRelations
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*edi.EDIConnection], error) {
+			cols := edicol.EDIConnectionColumns
+			orgCols := tenantcol.OrganizationColumns
+			rel := edicol.EDIConnectionRelations
 
-		return dbhelper.SelectOptions[*edi.EDIConnection](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					cols.ID,
-					cols.Method,
-					cols.SourceOrganizationID,
-					cols.TargetOrganizationID,
-					cols.Status,
-					cols.SourcePartnerID,
-					cols.TargetPartnerID,
-					cols.Version,
-					cols.CreatedAt,
-					cols.UpdatedAt,
+			return dbhelper.SelectOptions[*edi.EDIConnection](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.Method,
+						cols.SourceOrganizationID,
+						cols.TargetOrganizationID,
+						cols.Status,
+						cols.SourcePartnerID,
+						cols.TargetPartnerID,
+						cols.Version,
+						cols.CreatedAt,
+						cols.UpdatedAt,
+					},
+					OrgColumnRef: &cols.SourceOrganizationID,
+					BuColumnRef:  &cols.BusinessUnitID,
+					EntityName:   "EDI Connection",
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						q = q.Relation(rel.SourceOrganization).Relation(rel.TargetOrganization)
+
+						if req.SelectQueryRequest.Query != "" {
+							term := "%" + req.SelectQueryRequest.Query + "%"
+							q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return sq.WhereOr(cols.Method.TextILike(), term).
+									WhereOr(orgCols.Name.WithAlias("source_organization").ILike(), term).
+									WhereOr(orgCols.Name.WithAlias("target_organization").ILike(), term)
+							})
+						}
+
+						return q.Where(cols.Status.Eq(), edi.ConnectionStatusActive).
+							Order(cols.CreatedAt.OrderDesc())
+					},
 				},
-				OrgColumnRef: &cols.SourceOrganizationID,
-				BuColumnRef:  &cols.BusinessUnitID,
-				EntityName:   "EDI Connection",
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					q = q.Relation(rel.SourceOrganization).Relation(rel.TargetOrganization)
-
-					if req.SelectQueryRequest.Query != "" {
-						term := "%" + req.SelectQueryRequest.Query + "%"
-						q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return sq.WhereOr(cols.Method.TextILike(), term).
-								WhereOr(orgCols.Name.WithAlias("source_organization").ILike(), term).
-								WhereOr(orgCols.Name.WithAlias("target_organization").ILike(), term)
-						})
-					}
-
-					return q.Where(cols.Status.Eq(), edi.ConnectionStatusActive).
-						Order(cols.CreatedAt.OrderDesc())
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 func (r *repository) GetConnectionsByIDs(
@@ -308,7 +316,11 @@ func (r *repository) UpdateConnection(
 		if err != nil {
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, "EDIConnection", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"EDIConnection",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -363,7 +375,10 @@ func (r *repository) ensureTargetOrganizationInBusinessUnit(
 	targetOrganizationID pulid.ID,
 	businessUnitID pulid.ID,
 ) error {
-	ctx = dbscope.WithSystem(ctx, "confirm that an organization not yet connected belongs to the caller's business unit")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"confirm that an organization not yet connected belongs to the caller's business unit",
+	)
 	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
 		exists, err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -390,76 +405,83 @@ func (r *repository) AcceptInternalConnection(
 	ctx context.Context,
 	req *ediports.CreateInternalEDIConnectionAcceptanceRequest,
 ) (*edi.EDIConnection, error) {
-	ctx = dbscope.WithSystem(ctx, "create the partner and profile records in both organizations of an internal connection atomically")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"create the partner and profile records in both organizations of an internal connection atomically",
+	)
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIConnection, error) {
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-			if _, err := r.db.DBForContext(txCtx).
-				NewInsert().
-				Model(req.SourcePartner).
-				Returning("*").
-				Exec(txCtx); err != nil {
-				return err
-			}
-			if err := r.ensureMappingProfile(txCtx, req.SourcePartner); err != nil {
-				return err
-			}
+		err := r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, _ bun.Tx) error {
+				if _, err := r.db.DBForContext(txCtx).
+					NewInsert().
+					Model(req.SourcePartner).
+					Returning("*").
+					Exec(txCtx); err != nil {
+					return err
+				}
+				if err := r.ensureMappingProfile(txCtx, req.SourcePartner); err != nil {
+					return err
+				}
 
-			if _, err := r.db.DBForContext(txCtx).
-				NewInsert().
-				Model(req.TargetPartner).
-				Returning("*").
-				Exec(txCtx); err != nil {
-				return err
-			}
-			if err := r.ensureMappingProfile(txCtx, req.TargetPartner); err != nil {
-				return err
-			}
+				if _, err := r.db.DBForContext(txCtx).
+					NewInsert().
+					Model(req.TargetPartner).
+					Returning("*").
+					Exec(txCtx); err != nil {
+					return err
+				}
+				if err := r.ensureMappingProfile(txCtx, req.TargetPartner); err != nil {
+					return err
+				}
 
-			req.SourceProfile.EDIPartnerID = req.SourcePartner.ID
-			req.TargetProfile.EDIPartnerID = req.TargetPartner.ID
-			if _, err := r.db.DBForContext(txCtx).
-				NewInsert().
-				Model(req.SourceProfile).
-				Returning("*").
-				Exec(txCtx); err != nil {
-				return err
-			}
-			if _, err := r.db.DBForContext(txCtx).
-				NewInsert().
-				Model(req.TargetProfile).
-				Returning("*").
-				Exec(txCtx); err != nil {
-				return err
-			}
+				req.SourceProfile.EDIPartnerID = req.SourcePartner.ID
+				req.TargetProfile.EDIPartnerID = req.TargetPartner.ID
+				if _, err := r.db.DBForContext(txCtx).
+					NewInsert().
+					Model(req.SourceProfile).
+					Returning("*").
+					Exec(txCtx); err != nil {
+					return err
+				}
+				if _, err := r.db.DBForContext(txCtx).
+					NewInsert().
+					Model(req.TargetProfile).
+					Returning("*").
+					Exec(txCtx); err != nil {
+					return err
+				}
 
-			req.SourcePartner.DefaultTransportID = req.SourceProfile.ID
-			req.TargetPartner.DefaultTransportID = req.TargetProfile.ID
-			if _, err := r.db.DBForContext(txCtx).
-				NewUpdate().
-				Model(req.SourcePartner).
-				WherePK().
-				Column(edicol.EDIPartnerColumns.DefaultTransportID.Bare()).
-				Exec(txCtx); err != nil {
-				return err
-			}
-			if _, err := r.db.DBForContext(txCtx).
-				NewUpdate().
-				Model(req.TargetPartner).
-				WherePK().
-				Column(edicol.EDIPartnerColumns.DefaultTransportID.Bare()).
-				Exec(txCtx); err != nil {
-				return err
-			}
+				req.SourcePartner.DefaultTransportID = req.SourceProfile.ID
+				req.TargetPartner.DefaultTransportID = req.TargetProfile.ID
+				if _, err := r.db.DBForContext(txCtx).
+					NewUpdate().
+					Model(req.SourcePartner).
+					WherePK().
+					Column(edicol.EDIPartnerColumns.DefaultTransportID.Bare()).
+					Exec(txCtx); err != nil {
+					return err
+				}
+				if _, err := r.db.DBForContext(txCtx).
+					NewUpdate().
+					Model(req.TargetPartner).
+					WherePK().
+					Column(edicol.EDIPartnerColumns.DefaultTransportID.Bare()).
+					Exec(txCtx); err != nil {
+					return err
+				}
 
-			req.Connection.SourcePartnerID = req.SourcePartner.ID
-			req.Connection.TargetPartnerID = req.TargetPartner.ID
-			updated, err := r.UpdateConnection(txCtx, req.Connection)
-			if err != nil {
-				return err
-			}
-			req.Connection = updated
-			return nil
-		})
+				req.Connection.SourcePartnerID = req.SourcePartner.ID
+				req.Connection.TargetPartnerID = req.TargetPartner.ID
+				updated, err := r.UpdateConnection(txCtx, req.Connection)
+				if err != nil {
+					return err
+				}
+				req.Connection = updated
+				return nil
+			},
+		)
 		if err != nil {
 			return nil, err
 		}

@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -91,13 +91,16 @@ func (a *Activities) NotifyUnseenTurnActivity(
 	tenant := payload.TenantInfo()
 	correlation := payload.TurnID.String()
 
-	sent, err := a.notifications.ExistsRecent(ctx, notificationports.ExistsRecentNotificationRequest{
-		OrganizationID: payload.OrganizationID,
-		BusinessUnitID: payload.BusinessUnitID,
-		EventType:      ReplyReadyKind,
-		CorrelationID:  correlation,
-		Since:          payload.Timestamp,
-	})
+	sent, err := a.notifications.ExistsRecent(
+		ctx,
+		notificationports.ExistsRecentNotificationRequest{
+			OrganizationID: payload.OrganizationID,
+			BusinessUnitID: payload.BusinessUnitID,
+			EventType:      ReplyReadyKind,
+			CorrelationID:  correlation,
+			Since:          payload.Timestamp,
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("check whether this reply was already announced: %w", err)
 	}

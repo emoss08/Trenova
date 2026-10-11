@@ -3,8 +3,8 @@ package documentpacketruleservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"

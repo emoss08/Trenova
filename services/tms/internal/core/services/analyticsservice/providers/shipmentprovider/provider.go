@@ -407,9 +407,12 @@ func (p *Provider) getOnTimePercent(
 
 		var target *float64
 		if p.dispatchRepo != nil {
-			control, err := p.dispatchRepo.GetByOrgID(ctx, dispatchcontrolports.GetDispatchControlRequest{
-				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-			})
+			control, err := p.dispatchRepo.GetByOrgID(
+				ctx,
+				dispatchcontrolports.GetDispatchControlRequest{
+					TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+				},
+			)
 			if err != nil {
 				return nil, err
 			}

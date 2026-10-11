@@ -5,11 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalyearservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalyearservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -477,10 +477,14 @@ func (h *Handler) activate(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Activate(c.Request.Context(), fiscalyearports.ActivateFiscalYearRequest{
-		ID:         fiscalYearID,
-		TenantInfo: pagination.FromAuthAsUser(authCtx),
-	}, authCtx.UserID)
+	entity, err := h.service.Activate(
+		c.Request.Context(),
+		fiscalyearports.ActivateFiscalYearRequest{
+			ID:         fiscalYearID,
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+		},
+		authCtx.UserID,
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

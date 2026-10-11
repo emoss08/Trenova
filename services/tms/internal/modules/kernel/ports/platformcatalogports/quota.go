@@ -16,7 +16,11 @@ type QuotaCountRequest struct {
 
 type QuotaCounterRepository interface {
 	Supports(meter platformcatalog.MeterKey) bool
-	Lock(ctx context.Context, tenantInfo pagination.TenantInfo, meter platformcatalog.MeterKey) error
+	Lock(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		meter platformcatalog.MeterKey,
+	) error
 	Count(ctx context.Context, req *QuotaCountRequest) (int64, error)
 	OrganizationTimezone(ctx context.Context, tenantInfo pagination.TenantInfo) (string, error)
 }

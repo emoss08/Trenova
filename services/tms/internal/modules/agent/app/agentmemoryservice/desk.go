@@ -9,8 +9,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -130,7 +130,8 @@ func (s *Service) promptReader(
 ) agent.MemoryReader {
 	reader, err := s.Reader(ctx, tenant, userID)
 	if err != nil {
-		s.l.Warn("agent memory: the person's roles could not be read; reading their own memories only",
+		s.l.Warn(
+			"agent memory: the person's roles could not be read; reading their own memories only",
 			zap.String("user", userID.String()),
 			zap.Error(err),
 		)
@@ -171,7 +172,10 @@ type deskPerson struct {
 	reader agent.MemoryReader
 }
 
-func (s *Service) person(ctx context.Context, actor *agentports.DeskMemoryActor) (*deskPerson, error) {
+func (s *Service) person(
+	ctx context.Context,
+	actor *agentports.DeskMemoryActor,
+) (*deskPerson, error) {
 	if actor == nil || !actor.Actor.IsUser() || actor.Actor.UserID.IsNil() {
 		return nil, errortypes.NewAuthorizationError("Only a person keeps memories on the Desk")
 	}
@@ -264,7 +268,9 @@ func (p *deskPerson) mayKeepFor(scope agent.MemoryScope, roleID pulid.ID) error 
 		return nil
 	default:
 		return errortypes.NewValidationError(
-			"scope", errortypes.ErrInvalid, "Keep a memory for yourself, a role you hold or the organization",
+			"scope",
+			errortypes.ErrInvalid,
+			"Keep a memory for yourself, a role you hold or the organization",
 		)
 	}
 }
@@ -281,7 +287,11 @@ func (p *deskPerson) desk(row *agentports.DeskMemoryRow) *agentports.DeskMemory 
 func checkDeskContent(content string) (string, error) {
 	content = strings.TrimSpace(content)
 	if content == "" {
-		return "", errortypes.NewValidationError("content", errortypes.ErrRequired, "Say what to remember")
+		return "", errortypes.NewValidationError(
+			"content",
+			errortypes.ErrRequired,
+			"Say what to remember",
+		)
 	}
 	if utf8.RuneCountInString(content) > agent.MaxMemoryContentChars {
 		return "", errortypes.NewValidationError(
@@ -304,7 +314,11 @@ func (s *Service) ListDesk(
 	switch req.Scope {
 	case "", agent.MemoryScopeUser, agent.MemoryScopeRole, agent.MemoryScopeOrganization:
 	default:
-		return nil, errortypes.NewValidationError("scope", errortypes.ErrInvalid, "Filter by a scope the Desk lists")
+		return nil, errortypes.NewValidationError(
+			"scope",
+			errortypes.ErrInvalid,
+			"Filter by a scope the Desk lists",
+		)
 	}
 	after, err := decodeDeskCursor(req.After)
 	if err != nil {
@@ -332,7 +346,9 @@ func (s *Service) ListDesk(
 		return nil, err
 	}
 
-	page := &agentports.DeskMemoryPage{Items: make([]*agentports.DeskMemory, 0, min(len(rows), limit))}
+	page := &agentports.DeskMemoryPage{
+		Items: make([]*agentports.DeskMemory, 0, min(len(rows), limit)),
+	}
 	if len(rows) > limit {
 		rows = rows[:limit]
 		last := rows[len(rows)-1].Memory
@@ -653,7 +669,13 @@ func (s *Service) ReviseDesk(
 		return nil, err
 	}
 
-	s.logChange(revised, previous, person.Actor, permission.OpUpdate, "Agent memory changed on the Desk")
+	s.logChange(
+		revised,
+		previous,
+		person.Actor,
+		permission.OpUpdate,
+		"Agent memory changed on the Desk",
+	)
 	s.queueForRetrieval(ctx, revised)
 
 	return s.deskOne(ctx, person, revised.ID)
@@ -883,7 +905,11 @@ func decodeDeskCursor(raw string) (*agentports.DeskMemoryCursor, error) {
 		return nil, nil
 	}
 
-	invalid := errortypes.NewValidationError("after", errortypes.ErrInvalid, "The page cursor is not valid")
+	invalid := errortypes.NewValidationError(
+		"after",
+		errortypes.ErrInvalid,
+		"The page cursor is not valid",
+	)
 	decoded, err := base64.RawURLEncoding.DecodeString(raw)
 	if err != nil {
 		return nil, invalid

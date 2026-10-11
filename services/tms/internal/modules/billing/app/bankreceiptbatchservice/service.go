@@ -7,12 +7,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptbatch"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -149,7 +149,10 @@ func (s *Service) Import(
 	}
 
 	s.logAudit(updatedBatch, nil, actor.UserID, "Bank receipt batch imported")
-	return &bankreceiptbatchports.BankReceiptBatchResult{Batch: updatedBatch, Receipts: receipts}, nil
+	return &bankreceiptbatchports.BankReceiptBatchResult{
+		Batch:    updatedBatch,
+		Receipts: receipts,
+	}, nil
 }
 
 func (s *Service) importBatchWithinTx(

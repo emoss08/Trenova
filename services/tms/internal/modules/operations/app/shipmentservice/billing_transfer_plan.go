@@ -3,13 +3,13 @@ package shipmentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -434,7 +434,9 @@ func primaryPayer(readiness *shipmentports.ShipmentBillingReadiness) string {
 	return ""
 }
 
-func summarize(decisions []shipmentports.BillingTransferDecision) *shipmentports.BillingTransferPlan {
+func summarize(
+	decisions []shipmentports.BillingTransferDecision,
+) *shipmentports.BillingTransferPlan {
 	plan := &shipmentports.BillingTransferPlan{Decisions: decisions}
 	for idx := range decisions {
 		switch outcome := decisions[idx].Outcome; {

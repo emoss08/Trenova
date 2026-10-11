@@ -77,57 +77,65 @@ func (r *repository) ListInbound(
 	ctx context.Context,
 	req *ediports.ListEDITransfersRequest,
 ) (*pagination.ListResult[*edi.EDITransfer], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDITransfer], error) {
-		entities := make([]*edi.EDITransfer, 0, req.Filter.Pagination.SafeLimit())
-		cols := edicol.EDITransferColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*edi.EDITransfer], error) {
+			entities := make([]*edi.EDITransfer, 0, req.Filter.Pagination.SafeLimit())
+			cols := edicol.EDITransferColumns
 
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where(cols.TargetOrganizationID.Eq(), req.Filter.TenantInfo.OrgID).
-			Where(cols.TargetBusinessUnitID.Eq(), req.Filter.TenantInfo.BuID).
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Where(cols.TargetOrganizationID.Eq(), req.Filter.TenantInfo.OrgID).
+				Where(cols.TargetBusinessUnitID.Eq(), req.Filter.TenantInfo.BuID).
+				Order(cols.CreatedAt.OrderDesc()).
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*edi.EDITransfer]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*edi.EDITransfer]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) ListOutbound(
 	ctx context.Context,
 	req *ediports.ListEDITransfersRequest,
 ) (*pagination.ListResult[*edi.EDITransfer], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDITransfer], error) {
-		entities := make([]*edi.EDITransfer, 0, req.Filter.Pagination.SafeLimit())
-		cols := edicol.EDITransferColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*edi.EDITransfer], error) {
+			entities := make([]*edi.EDITransfer, 0, req.Filter.Pagination.SafeLimit())
+			cols := edicol.EDITransferColumns
 
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where(cols.SourceOrganizationID.Eq(), req.Filter.TenantInfo.OrgID).
-			Where(cols.SourceBusinessUnitID.Eq(), req.Filter.TenantInfo.BuID).
-			Where("eltt.inbound_message_id IS NULL").
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Where(cols.SourceOrganizationID.Eq(), req.Filter.TenantInfo.OrgID).
+				Where(cols.SourceBusinessUnitID.Eq(), req.Filter.TenantInfo.BuID).
+				Where("eltt.inbound_message_id IS NULL").
+				Order(cols.CreatedAt.OrderDesc()).
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*edi.EDITransfer]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*edi.EDITransfer]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) GetTransferByID(
@@ -180,40 +188,44 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *ediports.EDITransferSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDITransfer], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDITransfer], error) {
-		entities := make([]*edi.EDITransfer, 0, req.SelectQueryRequest.Pagination.SafeLimit())
-		cols := edicol.EDITransferColumns
-		rel := edicol.EDITransferRelations
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*edi.EDITransfer], error) {
+			entities := make([]*edi.EDITransfer, 0, req.SelectQueryRequest.Pagination.SafeLimit())
+			cols := edicol.EDITransferColumns
+			rel := edicol.EDITransferRelations
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(rel.SourcePartner).
-			Relation(rel.TargetPartner).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return applyTransferTenantFilter(sq, req.SelectQueryRequest.TenantInfo, "")
-			}).
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
-			Offset(req.SelectQueryRequest.Pagination.SafeOffset())
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Relation(rel.SourcePartner).
+				Relation(rel.TargetPartner).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return applyTransferTenantFilter(sq, req.SelectQueryRequest.TenantInfo, "")
+				}).
+				Order(cols.CreatedAt.OrderDesc()).
+				Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
+				Offset(req.SelectQueryRequest.Pagination.SafeOffset())
 
-		if req.SelectQueryRequest.Query != "" {
-			query = query.Where(
-				"eltt.tender_payload->>'bol' ILIKE ?",
-				dbhelper.WrapWildcard(req.SelectQueryRequest.Query),
-			)
-		}
+			if req.SelectQueryRequest.Query != "" {
+				query = query.Where(
+					"eltt.tender_payload->>'bol' ILIKE ?",
+					dbhelper.WrapWildcard(req.SelectQueryRequest.Query),
+				)
+			}
 
-		total, err := query.ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := query.ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*edi.EDITransfer]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*edi.EDITransfer]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) GetTransferForUpdate(
@@ -393,7 +405,11 @@ func (r *repository) SetApprovalWorkflowRunID(
 		if err != nil {
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, "EDITenderTransfer", req.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"EDITenderTransfer",
+			req.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -420,61 +436,65 @@ func (r *repository) listCursor(
 	req *ediports.ListEDITransfersRequest,
 	direction string,
 ) (*pagination.CursorListResult[*edi.EDITransfer], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*edi.EDITransfer], error) {
-		dba := r.db.DBForContext(ctx)
-		scope := func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = applyTransferTenantFilter(sq, req.Filter.TenantInfo, direction)
-			if direction == "outbound" {
-				sq = sq.Where("eltt.inbound_message_id IS NULL")
-			}
-			if req.InboundFileID.IsNotNil() {
-				sq = sq.Where(
-					edicol.EDITransferColumns.InboundMessageID.In(),
-					inboundFileMessages(dba, req.InboundFileID, req.Filter.TenantInfo),
-				)
-			}
-			return sq
-		}
-
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*edi.EDITransfer)(nil)).
-				Apply(scope).
-				Count(ctx)
-			if err != nil {
-				return nil, err
-			}
-			totalCount = &total
-		}
-
-		return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDITransfer]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*edi.EDITransfer) *bun.SelectQuery {
-				rel := edicol.EDITransferRelations
-				return dba.
-					NewSelect().
-					Model(entities).
-					ColumnExpr(edicol.EDITransferTable.All()).
-					Relation(rel.SourcePartner).
-					Relation(rel.TargetPartner)
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				sq, applyErr := querybuilder.ApplyCursorFiltersWithoutTenantScope(
-					sq,
-					"eltt",
-					req.Filter,
-					req.Cursor,
-					(*edi.EDITransfer)(nil),
-				)
-				if applyErr != nil {
-					return sq, applyErr
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*edi.EDITransfer], error) {
+			dba := r.db.DBForContext(ctx)
+			scope := func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = applyTransferTenantFilter(sq, req.Filter.TenantInfo, direction)
+				if direction == "outbound" {
+					sq = sq.Where("eltt.inbound_message_id IS NULL")
 				}
-				return scope(sq), nil
-			},
-		})
-	})
+				if req.InboundFileID.IsNotNil() {
+					sq = sq.Where(
+						edicol.EDITransferColumns.InboundMessageID.In(),
+						inboundFileMessages(dba, req.InboundFileID, req.Filter.TenantInfo),
+					)
+				}
+				return sq
+			}
+
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*edi.EDITransfer)(nil)).
+					Apply(scope).
+					Count(ctx)
+				if err != nil {
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDITransfer]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(entities *[]*edi.EDITransfer) *bun.SelectQuery {
+					rel := edicol.EDITransferRelations
+					return dba.
+						NewSelect().
+						Model(entities).
+						ColumnExpr(edicol.EDITransferTable.All()).
+						Relation(rel.SourcePartner).
+						Relation(rel.TargetPartner)
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					sq, applyErr := querybuilder.ApplyCursorFiltersWithoutTenantScope(
+						sq,
+						"eltt",
+						req.Filter,
+						req.Cursor,
+						(*edi.EDITransfer)(nil),
+					)
+					if applyErr != nil {
+						return sq, applyErr
+					}
+					return scope(sq), nil
+				},
+			})
+		},
+	)
 }

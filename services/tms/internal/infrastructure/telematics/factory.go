@@ -3,10 +3,10 @@ package telematics
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/telematics/samsaraprovider"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"

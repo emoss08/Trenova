@@ -7,10 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -128,10 +128,13 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*servicefailure.ServiceFailure], error) {
-			return h.service.List(c.Request.Context(), &servicefailureports.ListServiceFailuresRequest{
-				Filter:     req,
-				ShipmentID: shipmentID,
-			})
+			return h.service.List(
+				c.Request.Context(),
+				&servicefailureports.ListServiceFailuresRequest{
+					Filter:     req,
+					ShipmentID: shipmentID,
+				},
+			)
 		},
 	)
 }

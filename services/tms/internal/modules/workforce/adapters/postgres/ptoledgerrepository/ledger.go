@@ -183,7 +183,11 @@ func (r *repository) UpdateBalance(
 			r.l.Error("failed to update PTO balance", zap.Error(err))
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(res, "WorkerPTOBalance", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			res,
+			"WorkerPTOBalance",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -239,68 +243,72 @@ func (r *repository) ListEntries(
 	ctx context.Context,
 	req *workerports.ListPTOLedgerRequest,
 ) (*pagination.CursorListResult[*worker.WorkerPTOLedgerEntry], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*worker.WorkerPTOLedgerEntry], error) {
-		log := r.l.With(zap.String("operation", "ListEntries"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*worker.WorkerPTOLedgerEntry], error) {
+			log := r.l.With(zap.String("operation", "ListEntries"))
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*worker.WorkerPTOLedgerEntry)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						workercol.WorkerPTOLedgerEntryTable.Alias,
-						req.Filter,
-						(*worker.WorkerPTOLedgerEntry)(nil),
-					)
-					return r.applyEntryFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*worker.WorkerPTOLedgerEntry)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							workercol.WorkerPTOLedgerEntryTable.Alias,
+							req.Filter,
+							(*worker.WorkerPTOLedgerEntry)(nil),
+						)
+						return r.applyEntryFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count PTO ledger entries", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*worker.WorkerPTOLedgerEntry]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(items *[]*worker.WorkerPTOLedgerEntry) *bun.SelectQuery {
+						q := dba.NewSelect().Model(items).
+							ColumnExpr(workercol.WorkerPTOLedgerEntryTable.All())
+						if req.IncludeWorker {
+							q = q.Relation(workercol.WorkerPTOLedgerEntryRelations.Worker)
+						}
+						return q
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						sq, applyErr := querybuilder.ApplyCursorFilters(
+							sq,
+							workercol.WorkerPTOLedgerEntryTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*worker.WorkerPTOLedgerEntry)(nil),
+						)
+						if applyErr != nil {
+							return sq, applyErr
+						}
+						return r.applyEntryFilters(sq, req), nil
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count PTO ledger entries", zap.Error(err))
+				log.Error("failed to list PTO ledger entries", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*worker.WorkerPTOLedgerEntry]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(items *[]*worker.WorkerPTOLedgerEntry) *bun.SelectQuery {
-					q := dba.NewSelect().Model(items).
-						ColumnExpr(workercol.WorkerPTOLedgerEntryTable.All())
-					if req.IncludeWorker {
-						q = q.Relation(workercol.WorkerPTOLedgerEntryRelations.Worker)
-					}
-					return q
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					sq, applyErr := querybuilder.ApplyCursorFilters(
-						sq,
-						workercol.WorkerPTOLedgerEntryTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*worker.WorkerPTOLedgerEntry)(nil),
-					)
-					if applyErr != nil {
-						return sq, applyErr
-					}
-					return r.applyEntryFilters(sq, req), nil
-				},
-			},
-		)
-		if err != nil {
-			log.Error("failed to list PTO ledger entries", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 type sumRow struct {

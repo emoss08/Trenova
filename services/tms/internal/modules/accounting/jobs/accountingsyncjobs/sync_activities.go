@@ -94,7 +94,10 @@ func (a *Activities) AccountingSafetyNetActivity(
 			tenant := pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
 			found, netErr := a.sync.SafetyNet(
 				dbscope.WithTenant(ctx, tenant.DBTenant()),
-				accountingsyncports.AccountingSyncConnectionRef{TenantInfo: tenant, ConnectionID: conn.ID},
+				accountingsyncports.AccountingSyncConnectionRef{
+					TenantInfo:   tenant,
+					ConnectionID: conn.ID,
+				},
 			)
 			activity.RecordHeartbeat(ctx, result.Connections)
 			if netErr != nil {

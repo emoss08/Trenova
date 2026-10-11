@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 )
 
 // PreviewedReport is the report a preview_report call ran, read again from

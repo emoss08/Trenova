@@ -43,43 +43,47 @@ func (r *repository) List(
 	ctx context.Context,
 	req *customerpaymentports.ListCustomerPaymentsRequest,
 ) (*pagination.ListResult[*customerpayment.Payment], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*customerpayment.Payment], error) {
-		limit := req.Filter.Pagination.SafeLimit()
-		items := make([]*customerpayment.Payment, 0, limit)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*customerpayment.Payment], error) {
+			limit := req.Filter.Pagination.SafeLimit()
+			items := make([]*customerpayment.Payment, 0, limit)
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("cp.organization_id = ?", req.Filter.TenantInfo.OrgID).
-			Where("cp.business_unit_id = ?", req.Filter.TenantInfo.BuID).
-			Relation("Applications", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Order("cpa.line_number ASC")
-			}).
-			Order("cp.created_at DESC").
-			Limit(limit).
-			Offset(req.Filter.Pagination.SafeOffset())
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&items).
+				Where("cp.organization_id = ?", req.Filter.TenantInfo.OrgID).
+				Where("cp.business_unit_id = ?", req.Filter.TenantInfo.BuID).
+				Relation("Applications", func(q *bun.SelectQuery) *bun.SelectQuery {
+					return q.Order("cpa.line_number ASC")
+				}).
+				Order("cp.created_at DESC").
+				Limit(limit).
+				Offset(req.Filter.Pagination.SafeOffset())
 
-		if req.Filter.Query != "" {
-			query = query.Where(
-				"(cp.reference_number ILIKE ? OR cp.memo ILIKE ?)",
-				"%"+req.Filter.Query+"%",
-				"%"+req.Filter.Query+"%",
-			)
-		}
-		if !req.CustomerID.IsNil() {
-			query = query.Where("cp.customer_id = ?", req.CustomerID)
-		}
-		if req.Status != "" {
-			query = query.Where("cp.status = ?", req.Status)
-		}
+			if req.Filter.Query != "" {
+				query = query.Where(
+					"(cp.reference_number ILIKE ? OR cp.memo ILIKE ?)",
+					"%"+req.Filter.Query+"%",
+					"%"+req.Filter.Query+"%",
+				)
+			}
+			if !req.CustomerID.IsNil() {
+				query = query.Where("cp.customer_id = ?", req.CustomerID)
+			}
+			if req.Status != "" {
+				query = query.Where("cp.status = ?", req.Status)
+			}
 
-		total, err := query.ScanAndCount(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("list customer payments: %w", err)
-		}
+			total, err := query.ScanAndCount(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list customer payments: %w", err)
+			}
 
-		return &pagination.ListResult[*customerpayment.Payment]{Items: items, Total: total}, nil
-	})
+			return &pagination.ListResult[*customerpayment.Payment]{Items: items, Total: total}, nil
+		},
+	)
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -111,52 +115,59 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *customerpaymentports.ListCustomerPaymentConnectionRequest,
 ) (*pagination.CursorListResult[*customerpayment.Payment], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*customerpayment.Payment], error) {
-		log := r.l.With(
-			zap.String("operation", "ListConnection"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*customerpayment.Payment], error) {
+			log := r.l.With(
+				zap.String("operation", "ListConnection"),
+				zap.Any("request", req),
+			)
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*customerpayment.Payment)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyTotalCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*customerpayment.Payment)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyTotalCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count customer payments", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*customerpayment.Payment]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*customerpayment.Payment) *bun.SelectQuery {
+						return dba.NewSelect().
+							Model(entities).
+							ColumnExpr(customerpaymentcol.PaymentTable.All()).
+							Relation("Applications", func(q *bun.SelectQuery) *bun.SelectQuery {
+								return q.Order("cpa.line_number ASC")
+							})
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return r.applyCursorPageFilters(sq, req)
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count customer payments", zap.Error(err))
+				log.Error("failed to scan customer payments", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*customerpayment.Payment]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*customerpayment.Payment) *bun.SelectQuery {
-				return dba.NewSelect().
-					Model(entities).
-					ColumnExpr(customerpaymentcol.PaymentTable.All()).
-					Relation("Applications", func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Order("cpa.line_number ASC")
-					})
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.applyCursorPageFilters(sq, req)
-			},
-		})
-		if err != nil {
-			log.Error("failed to scan customer payments", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -358,32 +369,36 @@ func (r *repository) SumReceived(
 	ctx context.Context,
 	req customerpaymentports.SumPaymentsReceivedRequest,
 ) ([]*customerpaymentports.PaymentsReceived, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*customerpaymentports.PaymentsReceived, error) {
-		cols := customerpaymentcol.PaymentColumns
-		rows := make([]*customerpaymentports.PaymentsReceived, 0, 4)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*customerpaymentports.PaymentsReceived, error) {
+			cols := customerpaymentcol.PaymentColumns
+			rows := make([]*customerpaymentports.PaymentsReceived, 0, 4)
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*customerpayment.Payment)(nil)).
-			ColumnExpr(cols.CurrencyCode.Qualified()+" AS currency_code").
-			ColumnExpr("COALESCE(SUM("+cols.AmountMinor.Qualified()+"), 0) AS amount_minor").
-			ColumnExpr("COUNT(*) AS count").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return customerpaymentcol.PaymentScopeTenant(sq, req.TenantInfo).
-					Where(cols.Status.Eq(), customerpayment.StatusPosted).
-					Where(cols.PaymentDate.Gte(), req.From).
-					Where(cols.PaymentDate.Lte(), req.To)
-			}).
-			GroupExpr(cols.CurrencyCode.Qualified()).
-			Scan(ctx, &rows)
-		if err != nil {
-			r.l.Error("failed to sum payments received", zap.Error(err))
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*customerpayment.Payment)(nil)).
+				ColumnExpr(cols.CurrencyCode.Qualified()+" AS currency_code").
+				ColumnExpr("COALESCE(SUM("+cols.AmountMinor.Qualified()+"), 0) AS amount_minor").
+				ColumnExpr("COUNT(*) AS count").
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return customerpaymentcol.PaymentScopeTenant(sq, req.TenantInfo).
+						Where(cols.Status.Eq(), customerpayment.StatusPosted).
+						Where(cols.PaymentDate.Gte(), req.From).
+						Where(cols.PaymentDate.Lte(), req.To)
+				}).
+				GroupExpr(cols.CurrencyCode.Qualified()).
+				Scan(ctx, &rows)
+			if err != nil {
+				r.l.Error("failed to sum payments received", zap.Error(err))
 
-			return nil, fmt.Errorf("sum payments received: %w", err)
-		}
+				return nil, fmt.Errorf("sum payments received: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
 func (r *repository) StampExchangeRate(

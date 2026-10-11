@@ -5,10 +5,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentsearch"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/rankfusion"
 	"go.uber.org/zap"

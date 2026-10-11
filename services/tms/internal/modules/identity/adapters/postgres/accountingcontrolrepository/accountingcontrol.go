@@ -40,108 +40,130 @@ func (r *repository) GetByOrgID(
 	ctx context.Context,
 	orgID pulid.ID,
 ) (*accountingcontrol.AccountingControl, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingcontrol.AccountingControl, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByOrgID"),
-			zap.String("orgID", orgID.String()),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*accountingcontrol.AccountingControl, error) {
+			log := r.l.With(
+				zap.String("operation", "GetByOrgID"),
+				zap.String("orgID", orgID.String()),
+			)
 
-		cols := tenantcol.AccountingControlColumns
+			cols := tenantcol.AccountingControlColumns
 
-		entity := new(accountingcontrol.AccountingControl)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.OrganizationID.Eq(), orgID).
-			Scan(ctx); err != nil {
-			log.Error("failed to get accounting control", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "AccountingControl")
-		}
+			entity := new(accountingcontrol.AccountingControl)
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				Where(cols.OrganizationID.Eq(), orgID).
+				Scan(ctx); err != nil {
+				log.Error("failed to get accounting control", zap.Error(err))
+				return nil, dberror.HandleNotFoundError(err, "AccountingControl")
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) ListAll(
 	ctx context.Context,
 ) ([]*accountingcontrol.AccountingControl, error) {
-	ctx = dbscope.WithSystem(ctx, "list every organization's accounting controls for the fiscal calendar sweep")
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingcontrol.AccountingControl, error) {
-		log := r.l.With(zap.String("operation", "ListAll"))
+	ctx = dbscope.WithSystem(
+		ctx,
+		"list every organization's accounting controls for the fiscal calendar sweep",
+	)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*accountingcontrol.AccountingControl, error) {
+			log := r.l.With(zap.String("operation", "ListAll"))
 
-		entities := make([]*accountingcontrol.AccountingControl, 0)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Scan(ctx); err != nil {
-			log.Error("failed to list accounting controls", zap.Error(err))
-			return nil, err
-		}
+			entities := make([]*accountingcontrol.AccountingControl, 0)
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Scan(ctx); err != nil {
+				log.Error("failed to list accounting controls", zap.Error(err))
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) ListWithScheduledPeriodClose(
 	ctx context.Context,
 ) ([]*accountingcontrol.AccountingControl, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations with scheduled fiscal period close")
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingcontrol.AccountingControl, error) {
-		log := r.l.With(zap.String("operation", "ListWithScheduledPeriodClose"))
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*accountingcontrol.AccountingControl, error) {
+			log := r.l.With(zap.String("operation", "ListWithScheduledPeriodClose"))
 
-		cols := tenantcol.AccountingControlColumns
+			cols := tenantcol.AccountingControlColumns
 
-		entities := make([]*accountingcontrol.AccountingControl, 0)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where(cols.PeriodCloseMode.Eq(), accountingcontrol.PeriodCloseModeSystemScheduled).
-					Where(cols.RequirePeriodCloseApproval.IsFalse())
-			}).
-			Scan(ctx); err != nil {
-			log.Error("failed to list accounting controls with scheduled period close", zap.Error(err))
-			return nil, err
-		}
+			entities := make([]*accountingcontrol.AccountingControl, 0)
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.Where(cols.PeriodCloseMode.Eq(), accountingcontrol.PeriodCloseModeSystemScheduled).
+						Where(cols.RequirePeriodCloseApproval.IsFalse())
+				}).
+				Scan(ctx); err != nil {
+				log.Error(
+					"failed to list accounting controls with scheduled period close",
+					zap.Error(err),
+				)
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) Update(
 	ctx context.Context,
 	entity *accountingcontrol.AccountingControl,
 ) (*accountingcontrol.AccountingControl, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingcontrol.AccountingControl, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("orgID", entity.OrganizationID.String()),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*accountingcontrol.AccountingControl, error) {
+			log := r.l.With(
+				zap.String("operation", "Update"),
+				zap.String("orgID", entity.OrganizationID.String()),
+			)
 
-		ov := entity.Version
-		entity.Version++
+			ov := entity.Version
+			entity.Version++
 
-		cols := tenantcol.AccountingControlColumns
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update accounting control", zap.Error(err))
-			return nil, err
-		}
+			cols := tenantcol.AccountingControlColumns
+			result, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(entity).
+				WherePK().
+				Where(cols.Version.Eq(), ov).
+				Returning("*").
+				Exec(ctx)
+			if err != nil {
+				log.Error("failed to update accounting control", zap.Error(err))
+				return nil, err
+			}
 
-		if err = dberror.CheckRowsAffected(
-			result,
-			"AccountingControl",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
-		}
+			if err = dberror.CheckRowsAffected(
+				result,
+				"AccountingControl",
+				entity.ID.String(),
+			); err != nil {
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }

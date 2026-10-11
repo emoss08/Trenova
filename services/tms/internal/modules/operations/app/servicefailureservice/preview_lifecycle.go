@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -69,7 +69,10 @@ func (s *service) PreviewUpdate(
 		return nil, err
 	}
 
-	return &servicefailureports.ServiceFailureLifecyclePreview{Before: original, After: updated}, nil
+	return &servicefailureports.ServiceFailureLifecyclePreview{
+		Before: original,
+		After:  updated,
+	}, nil
 }
 
 func (s *service) previewLifecycle(
@@ -111,11 +114,14 @@ func (s *service) planLifecycle(
 		)
 	}
 
-	original, err := s.repo.GetByShipment(ctx, &servicefailureports.GetServiceFailureByShipmentRequest{
-		ID:         params.req.ID,
-		ShipmentID: params.req.ShipmentID,
-		TenantInfo: params.req.TenantInfo,
-	})
+	original, err := s.repo.GetByShipment(
+		ctx,
+		&servicefailureports.GetServiceFailureByShipmentRequest{
+			ID:         params.req.ID,
+			ShipmentID: params.req.ShipmentID,
+			TenantInfo: params.req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

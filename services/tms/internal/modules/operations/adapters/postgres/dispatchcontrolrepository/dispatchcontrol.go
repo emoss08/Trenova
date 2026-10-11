@@ -40,83 +40,99 @@ func (r *repository) GetByOrgID(
 	ctx context.Context,
 	req dispatchcontrolports.GetDispatchControlRequest,
 ) (*dispatchcontrol.DispatchControl, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*dispatchcontrol.DispatchControl, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByOrgID"),
-			zap.String("orgId", req.TenantInfo.OrgID.String()),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*dispatchcontrol.DispatchControl, error) {
+			log := r.l.With(
+				zap.String("operation", "GetByOrgID"),
+				zap.String("orgId", req.TenantInfo.OrgID.String()),
+			)
 
-		entity := new(dispatchcontrol.DispatchControl)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("dc.organization_id = ?", req.TenantInfo.OrgID).
-			Where("dc.business_unit_id = ?", req.TenantInfo.BuID).
-			Scan(ctx)
-		if err != nil {
-			log.Error("failed to get dispatch control", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "DispatchControl")
-		}
+			entity := new(dispatchcontrol.DispatchControl)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				Where("dc.organization_id = ?", req.TenantInfo.OrgID).
+				Where("dc.business_unit_id = ?", req.TenantInfo.BuID).
+				Scan(ctx)
+			if err != nil {
+				log.Error("failed to get dispatch control", zap.Error(err))
+				return nil, dberror.HandleNotFoundError(err, "DispatchControl")
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) Create(
 	ctx context.Context,
 	entity *dispatchcontrol.DispatchControl,
 ) (*dispatchcontrol.DispatchControl, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*dispatchcontrol.DispatchControl, error) {
-		log := r.l.With(
-			zap.String("operation", "Create"),
-			zap.String("orgId", entity.OrganizationID.String()),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*dispatchcontrol.DispatchControl, error) {
+			log := r.l.With(
+				zap.String("operation", "Create"),
+				zap.String("orgId", entity.OrganizationID.String()),
+			)
 
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			log.Error("failed to create dispatch control", zap.Error(err))
-			return nil, err
-		}
+			if _, err := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(entity).
+				Returning("*").
+				Exec(ctx); err != nil {
+				log.Error("failed to create dispatch control", zap.Error(err))
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) Update(
 	ctx context.Context,
 	entity *dispatchcontrol.DispatchControl,
 ) (*dispatchcontrol.DispatchControl, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*dispatchcontrol.DispatchControl, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", entity.ID.String()),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*dispatchcontrol.DispatchControl, error) {
+			log := r.l.With(
+				zap.String("operation", "Update"),
+				zap.String("id", entity.ID.String()),
+			)
 
-		ov := entity.Version
-		entity.Version++
+			ov := entity.Version
+			entity.Version++
 
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", ov).
-			OmitZero().
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update dispatch control", zap.Error(err))
-			return nil, err
-		}
+			results, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(entity).
+				WherePK().
+				Where("version = ?", ov).
+				OmitZero().
+				Returning("*").
+				Exec(ctx)
+			if err != nil {
+				log.Error("failed to update dispatch control", zap.Error(err))
+				return nil, err
+			}
 
-		if err = dberror.CheckRowsAffected(results, "DispatchControl", entity.ID.String()); err != nil {
-			return nil, err
-		}
+			if err = dberror.CheckRowsAffected(
+				results,
+				"DispatchControl",
+				entity.ID.String(),
+			); err != nil {
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) GetOrCreate(

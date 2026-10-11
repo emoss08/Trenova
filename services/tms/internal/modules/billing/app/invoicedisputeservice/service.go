@@ -3,16 +3,16 @@ package invoicedisputeservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -241,10 +241,13 @@ func (s *Service) validateResolutionAdjustment(
 		return nil
 	}
 
-	adjustment, err := s.adjustmentRepo.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
-		ID:         req.ResolutionAdjustmentID,
-		TenantInfo: req.TenantInfo,
-	})
+	adjustment, err := s.adjustmentRepo.GetByID(
+		ctx,
+		invoiceadjustmentports.GetInvoiceAdjustmentRequest{
+			ID:         req.ResolutionAdjustmentID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return err
 	}

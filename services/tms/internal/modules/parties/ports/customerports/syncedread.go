@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 )
 
@@ -24,11 +24,17 @@ type CustomerCacheRepository interface {
 }
 
 type ShipmentCacheRepository interface {
-	GetByID(ctx context.Context, req *shipmentports.GetShipmentByIDRequest) (*shipment.Shipment, error)
+	GetByID(
+		ctx context.Context,
+		req *shipmentports.GetShipmentByIDRequest,
+	) (*shipment.Shipment, error)
 }
 
 type DocumentCacheRepository interface {
-	GetByID(ctx context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error)
+	GetByID(
+		ctx context.Context,
+		req documentports.GetDocumentByIDRequest,
+	) (*document.Document, error)
 }
 
 type SearchRepository interface {

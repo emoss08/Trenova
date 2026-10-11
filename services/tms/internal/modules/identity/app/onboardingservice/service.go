@@ -109,7 +109,10 @@ func (s *Service) Get(
 	return stateOf(entity, org), nil
 }
 
-func stateOf(entity *onboarding.Onboarding, org *tenant.Organization) *onboardingports.OnboardingState {
+func stateOf(
+	entity *onboarding.Onboarding,
+	org *tenant.Organization,
+) *onboardingports.OnboardingState {
 	state := &onboardingports.OnboardingState{
 		Required:         !entity.IsCompleted(),
 		Status:           entity.Status,
@@ -125,7 +128,10 @@ func stateOf(entity *onboarding.Onboarding, org *tenant.Organization) *onboardin
 	return state
 }
 
-func organizationOf(org *tenant.Organization, completed bool) *onboardingports.OnboardingOrganization {
+func organizationOf(
+	org *tenant.Organization,
+	completed bool,
+) *onboardingports.OnboardingOrganization {
 	out := &onboardingports.OnboardingOrganization{
 		Name:     org.Name,
 		Timezone: org.Timezone,
@@ -309,7 +315,13 @@ func normalizeRequest(
 	orgErr := multiErr.WithPrefix(organizationPrefix)
 	requireText(orgErr, fieldName, profile.Name, maxNameLength, "Enter your company name")
 	requireText(orgErr, fieldTimezone, profile.Timezone, maxNameLength, "Select a timezone")
-	requireText(orgErr, fieldAddressLine1, profile.AddressLine1, maxAddressLength, "Enter a street address")
+	requireText(
+		orgErr,
+		fieldAddressLine1,
+		profile.AddressLine1,
+		maxAddressLength,
+		"Enter a street address",
+	)
 	requireText(orgErr, fieldCity, profile.City, maxCityLength, "Enter a city")
 	if profile.StateID.IsNil() {
 		orgErr.Add(fieldStateID, errortypes.ErrRequired, "Select a state")

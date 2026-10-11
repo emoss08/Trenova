@@ -58,7 +58,10 @@ func (b *Broker) expiresAt() float64 {
 	return float64(time.Now().Add(b.presenceTTL()).UnixMilli())
 }
 
-func (b *Broker) registerConnection(ctx context.Context, conn *agentports.RealtimeConnection) error {
+func (b *Broker) registerConnection(
+	ctx context.Context,
+	conn *agentports.RealtimeConnection,
+) error {
 	portal := "0"
 	if conn.Portal {
 		portal = "1"

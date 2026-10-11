@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/core/services/extractionfailure"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -91,12 +91,15 @@ func (r *Runner) RunShadow(
 		result.StartedAt = &started
 	}
 
-	prediction, err := r.predictor.PredictShadowDraft(ctx, &extractionshadowports.PredictShadowDraftRequest{
-		TenantInfo:  tenantOf(result),
-		DocumentID:  result.DocumentID,
-		ExtractedAt: result.ExtractedAt,
-		ProviderID:  result.ProviderID,
-	})
+	prediction, err := r.predictor.PredictShadowDraft(
+		ctx,
+		&extractionshadowports.PredictShadowDraftRequest{
+			TenantInfo:  tenantOf(result),
+			DocumentID:  result.DocumentID,
+			ExtractedAt: result.ExtractedAt,
+			ProviderID:  result.ProviderID,
+		},
+	)
 	switch {
 	case err == nil:
 	case errors.Is(err, extractionshadowports.ErrShadowSuperseded):

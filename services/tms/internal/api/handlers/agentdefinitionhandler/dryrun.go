@@ -48,19 +48,26 @@ func (h *Handler) dryRun(c *gin.Context) {
 
 	actor := requestActorFromAuthContext(authCtx)
 	runID := pulid.MustNew(agent.EvaluationIDPrefix)
-	run, err := assistantcontract.StartDryRunWorkflow(ctx, h.workflows, &assistantcontract.AgentDryRunPayload{
-		BasePayload: temporaltype.BasePayload{
-			OrganizationID: tenant.OrgID,
-			BusinessUnitID: tenant.BuID,
-			UserID:         tenant.UserID,
+	run, err := assistantcontract.StartDryRunWorkflow(
+		ctx,
+		h.workflows,
+		&assistantcontract.AgentDryRunPayload{
+			BasePayload: temporaltype.BasePayload{
+				OrganizationID: tenant.OrgID,
+				BusinessUnitID: tenant.BuID,
+				UserID:         tenant.UserID,
+			},
+			RunID:      runID,
+			Actor:      actor,
+			Definition: draft,
+			Prompt:     body.Prompt,
 		},
-		RunID:      runID,
-		Actor:      actor,
-		Definition: draft,
-		Prompt:     body.Prompt,
-	})
+	)
 	if err != nil {
-		h.eh.HandleError(c, errortypes.NewBusinessError("The dry run could not start").WithInternal(err))
+		h.eh.HandleError(
+			c,
+			errortypes.NewBusinessError("The dry run could not start").WithInternal(err),
+		)
 		return
 	}
 

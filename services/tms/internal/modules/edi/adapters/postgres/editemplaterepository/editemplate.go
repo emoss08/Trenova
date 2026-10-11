@@ -48,42 +48,46 @@ func (r *repository) List(
 	ctx context.Context,
 	req *ediports.ListEDITemplatesRequest,
 ) (*pagination.ListResult[*edi.EDITemplate], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDITemplate], error) {
-		log := r.l.With(
-			zap.String("operation", "List"),
-			zap.Any("req", req),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*edi.EDITemplate], error) {
+			log := r.l.With(
+				zap.String("operation", "List"),
+				zap.Any("req", req),
+			)
 
-		entities := make([]*edi.EDITemplate, 0, req.Filter.Pagination.SafeLimit())
-		cols := edicol.EDITemplateColumns
+			entities := make([]*edi.EDITemplate, 0, req.Filter.Pagination.SafeLimit())
+			cols := edicol.EDITemplateColumns
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(edicol.EDITemplateRelations.DocumentType).
-			Apply(edicol.EDITemplateApplyTenant(req.Filter.TenantInfo))
-		if req.TransactionSet != "" {
-			query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
-		}
-		if req.Direction != "" {
-			query = query.Where(cols.Direction.Eq(), req.Direction)
-		}
-		if req.Status != "" {
-			query = query.Where(cols.Status.Eq(), req.Status)
-		}
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Relation(edicol.EDITemplateRelations.DocumentType).
+				Apply(edicol.EDITemplateApplyTenant(req.Filter.TenantInfo))
+			if req.TransactionSet != "" {
+				query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
+			}
+			if req.Direction != "" {
+				query = query.Where(cols.Direction.Eq(), req.Direction)
+			}
+			if req.Status != "" {
+				query = query.Where(cols.Status.Eq(), req.Status)
+			}
 
-		query = applyTemplateSearch(query, req.Filter.Query)
-		total, err := query.
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count edi templates", zap.Error(err))
-			return nil, err
-		}
+			query = applyTemplateSearch(query, req.Filter.Query)
+			total, err := query.
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count edi templates", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*edi.EDITemplate]{Items: entities, Total: total}, nil
-	})
+			return &pagination.ListResult[*edi.EDITemplate]{Items: entities, Total: total}, nil
+		},
+	)
 }
 
 func (r *repository) ListTemplates(
@@ -97,59 +101,65 @@ func (r *repository) ListTemplatesCursor(
 	ctx context.Context,
 	req *ediports.ListEDITemplatesRequest,
 ) (*pagination.CursorListResult[*edi.EDITemplate], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*edi.EDITemplate], error) {
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*edi.EDITemplate)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*edi.EDITemplate], error) {
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*edi.EDITemplate)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							"et",
+							req.Filter,
+							(*edi.EDITemplate)(nil),
+						)
+						return applyTemplateListFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDITemplate]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(entities *[]*edi.EDITemplate) *bun.SelectQuery {
+					rel := edicol.EDITemplateRelations
+					return dba.
+						NewSelect().
+						Model(entities).
+						ColumnExpr(edicol.EDITemplateTable.All()).
+						Relation(rel.DocumentType).
+						Relation(rel.Versions, func(q *bun.SelectQuery) *bun.SelectQuery {
+							return q.Order(
+								edicol.EDITemplateVersionColumns.VersionNumber.OrderDesc(),
+							)
+						})
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
 						"et",
 						req.Filter,
+						req.Cursor,
 						(*edi.EDITemplate)(nil),
 					)
-					return applyTemplateListFilters(sq, req)
-				}).
-				Count(ctx)
-			if err != nil {
-				return nil, err
-			}
-			totalCount = &total
-		}
-
-		return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDITemplate]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*edi.EDITemplate) *bun.SelectQuery {
-				rel := edicol.EDITemplateRelations
-				return dba.
-					NewSelect().
-					Model(entities).
-					ColumnExpr(edicol.EDITemplateTable.All()).
-					Relation(rel.DocumentType).
-					Relation(rel.Versions, func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Order(edicol.EDITemplateVersionColumns.VersionNumber.OrderDesc())
-					})
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				sq, applyErr := querybuilder.ApplyCursorFilters(
-					sq,
-					"et",
-					req.Filter,
-					req.Cursor,
-					(*edi.EDITemplate)(nil),
-				)
-				if applyErr != nil {
-					return sq, applyErr
-				}
-				return applyTemplateListFilters(sq, req), nil
-			},
-		})
-	})
+					if applyErr != nil {
+						return sq, applyErr
+					}
+					return applyTemplateListFilters(sq, req), nil
+				},
+			})
+		},
+	)
 }
 
 func applyTemplateListFilters(
@@ -209,49 +219,53 @@ func (r *repository) SelectTemplateOptions(
 	ctx context.Context,
 	req *ediports.EDITemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDITemplate], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDITemplate], error) {
-		entities := make([]*edi.EDITemplate, 0, req.SelectQueryRequest.Pagination.SafeLimit())
-		cols := edicol.EDITemplateColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*edi.EDITemplate], error) {
+			entities := make([]*edi.EDITemplate, 0, req.SelectQueryRequest.Pagination.SafeLimit())
+			cols := edicol.EDITemplateColumns
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Column(
-				cols.ID.Bare(),
-				cols.BusinessUnitID.Bare(),
-				cols.OrganizationID.Bare(),
-				cols.DocumentTypeID.Bare(),
-				cols.Name.Bare(),
-				cols.Description.Bare(),
-				cols.Direction.Bare(),
-				cols.Standard.Bare(),
-				cols.TransactionSet.Bare(),
-				cols.Status.Bare(),
-			).
-			Relation(edicol.EDITemplateRelations.DocumentType).
-			Apply(edicol.EDITemplateApplyTenant(req.SelectQueryRequest.TenantInfo))
-		if req.TransactionSet != "" {
-			query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
-		}
-		if req.Direction != "" {
-			query = query.Where(cols.Direction.Eq(), req.Direction)
-		}
-		if req.Status != "" {
-			query = query.Where(cols.Status.Eq(), req.Status)
-		}
-		query = applyTemplateSearch(query, req.SelectQueryRequest.Query)
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Column(
+					cols.ID.Bare(),
+					cols.BusinessUnitID.Bare(),
+					cols.OrganizationID.Bare(),
+					cols.DocumentTypeID.Bare(),
+					cols.Name.Bare(),
+					cols.Description.Bare(),
+					cols.Direction.Bare(),
+					cols.Standard.Bare(),
+					cols.TransactionSet.Bare(),
+					cols.Status.Bare(),
+				).
+				Relation(edicol.EDITemplateRelations.DocumentType).
+				Apply(edicol.EDITemplateApplyTenant(req.SelectQueryRequest.TenantInfo))
+			if req.TransactionSet != "" {
+				query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
+			}
+			if req.Direction != "" {
+				query = query.Where(cols.Direction.Eq(), req.Direction)
+			}
+			if req.Status != "" {
+				query = query.Where(cols.Status.Eq(), req.Status)
+			}
+			query = applyTemplateSearch(query, req.SelectQueryRequest.Query)
 
-		total, err := query.
-			Order(cols.Name.OrderAsc()).
-			Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
-			Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := query.
+				Order(cols.Name.OrderAsc()).
+				Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
+				Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*edi.EDITemplate]{Items: entities, Total: total}, nil
-	})
+			return &pagination.ListResult[*edi.EDITemplate]{Items: entities, Total: total}, nil
+		},
+	)
 }
 
 func (r *repository) GetTemplateByID(
@@ -284,51 +298,62 @@ func (r *repository) CreateTemplate(
 	ctx context.Context,
 	req *ediports.CreateEDITemplateRequest,
 ) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
-	return dbtx.Write2(ctx, r.db, func(ctx context.Context) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			if _, err := r.db.DBForContext(c).
-				NewInsert().
-				Model(req.Template).
-				Returning("*").
-				Exec(c); err != nil {
-				return err
+	return dbtx.Write2(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
+			err := r.db.WithTx(
+				ctx,
+				kernelports.TxOptions{},
+				func(c context.Context, _ bun.Tx) error {
+					if _, err := r.db.DBForContext(c).
+						NewInsert().
+						Model(req.Template).
+						Returning("*").
+						Exec(c); err != nil {
+						return err
+					}
+					req.Version.TemplateID = req.Template.ID
+					if _, err := r.db.DBForContext(c).
+						NewInsert().
+						Model(req.Version).
+						Returning("*").
+						Exec(c); err != nil {
+						return err
+					}
+					for _, segment := range req.Segments {
+						segment.TemplateVersionID = req.Version.ID
+						segment.BusinessUnitID = req.Version.BusinessUnitID
+						segment.OrganizationID = req.Version.OrganizationID
+					}
+					if len(req.Segments) > 0 {
+						if _, err := r.db.DBForContext(c).
+							NewInsert().
+							Model(&req.Segments).
+							Exec(c); err != nil {
+							return err
+						}
+					}
+					prepareTemplateScriptLibraries(req.Version, req.ScriptLibraries)
+					if len(req.ScriptLibraries) > 0 {
+						if _, err := r.db.DBForContext(c).
+							NewInsert().
+							Model(&req.ScriptLibraries).
+							Exec(c); err != nil {
+							return err
+						}
+					}
+					req.Version.Segments = req.Segments
+					req.Version.ScriptLibraries = req.ScriptLibraries
+					return nil
+				},
+			)
+			if err != nil {
+				return nil, nil, err
 			}
-			req.Version.TemplateID = req.Template.ID
-			if _, err := r.db.DBForContext(c).
-				NewInsert().
-				Model(req.Version).
-				Returning("*").
-				Exec(c); err != nil {
-				return err
-			}
-			for _, segment := range req.Segments {
-				segment.TemplateVersionID = req.Version.ID
-				segment.BusinessUnitID = req.Version.BusinessUnitID
-				segment.OrganizationID = req.Version.OrganizationID
-			}
-			if len(req.Segments) > 0 {
-				if _, err := r.db.DBForContext(c).NewInsert().Model(&req.Segments).Exec(c); err != nil {
-					return err
-				}
-			}
-			prepareTemplateScriptLibraries(req.Version, req.ScriptLibraries)
-			if len(req.ScriptLibraries) > 0 {
-				if _, err := r.db.DBForContext(c).
-					NewInsert().
-					Model(&req.ScriptLibraries).
-					Exec(c); err != nil {
-					return err
-				}
-			}
-			req.Version.Segments = req.Segments
-			req.Version.ScriptLibraries = req.ScriptLibraries
-			return nil
-		})
-		if err != nil {
-			return nil, nil, err
-		}
-		return req.Template, req.Version, nil
-	})
+			return req.Template, req.Version, nil
+		},
+	)
 }
 
 func (r *repository) UpdateTemplate(
@@ -403,7 +428,9 @@ func (r *repository) GetTemplateVersionByID(
 				return q.Order(edicol.EDITemplateSegmentColumns.Sequence.OrderAsc())
 			}).
 			Relation(rel.ScriptLibraries, func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.OrderExpr(edicol.EDITemplateScriptLibraryColumns.Name.Expr("lower({}) ASC"))
+				return q.OrderExpr(
+					edicol.EDITemplateScriptLibraryColumns.Name.Expr("lower({}) ASC"),
+				)
 			}).
 			Where(cols.ID.Eq(), req.VersionID).
 			Where(cols.TemplateID.Eq(), req.TemplateID).
@@ -432,7 +459,9 @@ func (r *repository) GetActiveTemplateVersion(
 				return q.Order(edicol.EDITemplateSegmentColumns.Sequence.OrderAsc())
 			}).
 			Relation(rel.ScriptLibraries, func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.OrderExpr(edicol.EDITemplateScriptLibraryColumns.Name.Expr("lower({}) ASC"))
+				return q.OrderExpr(
+					edicol.EDITemplateScriptLibraryColumns.Name.Expr("lower({}) ASC"),
+				)
 			}).
 			Where(cols.TemplateID.Eq(), req.TemplateID).
 			Apply(edicol.EDITemplateVersionApplyTenant(req.TenantInfo))
@@ -468,7 +497,10 @@ func (r *repository) CreateTemplateVersion(
 				segment.OrganizationID = version.OrganizationID
 			}
 			if len(req.Segments) > 0 {
-				if _, err := r.db.DBForContext(c).NewInsert().Model(&req.Segments).Exec(c); err != nil {
+				if _, err := r.db.DBForContext(c).
+					NewInsert().
+					Model(&req.Segments).
+					Exec(c); err != nil {
 					return err
 				}
 			}
@@ -579,7 +611,10 @@ func (r *repository) ReplaceTemplateVersionSegments(
 				segment.OrganizationID = req.Version.OrganizationID
 			}
 			if len(req.Segments) > 0 {
-				if _, err := r.db.DBForContext(c).NewInsert().Model(&req.Segments).Exec(c); err != nil {
+				if _, err := r.db.DBForContext(c).
+					NewInsert().
+					Model(&req.Segments).
+					Exec(c); err != nil {
 					return err
 				}
 			}
@@ -891,121 +926,142 @@ func (r *repository) EnsureBaseTemplate(
 	tenantInfo pagination.TenantInfo,
 	transactionSet edi.TransactionSet,
 ) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
-	return dbtx.Write2(ctx, r.db, func(ctx context.Context) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
-		template := new(edi.EDITemplate)
-		version := new(edi.EDITemplateVersion)
-		templateName := fmt.Sprintf("Base X12 %s Outbound", transactionSet)
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			cols := edicol.EDITemplateColumns
+	return dbtx.Write2(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
+			template := new(edi.EDITemplate)
+			version := new(edi.EDITemplateVersion)
+			templateName := fmt.Sprintf("Base X12 %s Outbound", transactionSet)
+			err := r.db.WithTx(
+				ctx,
+				kernelports.TxOptions{},
+				func(c context.Context, _ bun.Tx) error {
+					cols := edicol.EDITemplateColumns
 
-			err := r.db.DBForContext(c).
-				NewSelect().
-				Model(template).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return edicol.EDITemplateScopeTenant(sq, tenantInfo).
-						Where(cols.Standard.Eq(), edi.EDIStandardX12).
-						Where(cols.TransactionSet.Eq(), transactionSet).
-						Where(cols.Direction.Eq(), edi.DocumentDirectionOutbound).
-						Where(cols.Name.Eq(), templateName)
-				}).
-				Limit(1).
-				Scan(c)
-			if err != nil && !dberror.IsNotFoundError(err) {
-				return err
-			}
-			if err == nil {
-				existing, versionErr := r.GetActiveTemplateVersion(
-					c,
-					ediports.GetActiveEDITemplateVersionRequest{
-						TemplateID: template.ID,
-						TenantInfo: tenantInfo,
-					},
-				)
-				if versionErr != nil {
-					return versionErr
-				}
-				*version = *existing
-				return nil
-			}
+					err := r.db.DBForContext(c).
+						NewSelect().
+						Model(template).
+						WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+							return edicol.EDITemplateScopeTenant(sq, tenantInfo).
+								Where(cols.Standard.Eq(), edi.EDIStandardX12).
+								Where(cols.TransactionSet.Eq(), transactionSet).
+								Where(cols.Direction.Eq(), edi.DocumentDirectionOutbound).
+								Where(cols.Name.Eq(), templateName)
+						}).
+						Limit(1).
+						Scan(c)
+					if err != nil && !dberror.IsNotFoundError(err) {
+						return err
+					}
+					if err == nil {
+						existing, versionErr := r.GetActiveTemplateVersion(
+							c,
+							ediports.GetActiveEDITemplateVersionRequest{
+								TemplateID: template.ID,
+								TenantInfo: tenantInfo,
+							},
+						)
+						if versionErr != nil {
+							return versionErr
+						}
+						*version = *existing
+						return nil
+					}
 
-			documentTypes, err := r.listDocumentTypes(c, ediports.ListEDIDocumentTypesRequest{
-				Standard:       edi.EDIStandardX12,
-				TransactionSet: transactionSet,
-				Direction:      edi.DocumentDirectionOutbound,
-			})
+					documentTypes, err := r.listDocumentTypes(
+						c,
+						ediports.ListEDIDocumentTypesRequest{
+							Standard:       edi.EDIStandardX12,
+							TransactionSet: transactionSet,
+							Direction:      edi.DocumentDirectionOutbound,
+						},
+					)
+					if err != nil {
+						return err
+					}
+					if len(documentTypes) == 0 {
+						return fmt.Errorf(
+							"x12 %s outbound document type is not seeded",
+							transactionSet,
+						)
+					}
+
+					template = &edi.EDITemplate{
+						BusinessUnitID: tenantInfo.BuID,
+						OrganizationID: tenantInfo.OrgID,
+						DocumentTypeID: documentTypes[0].ID,
+						Name:           templateName,
+						Description: fmt.Sprintf(
+							"Tenant-scoped base outbound X12 %s template",
+							transactionSet,
+						),
+						Direction:      edi.DocumentDirectionOutbound,
+						Standard:       edi.EDIStandardX12,
+						TransactionSet: transactionSet,
+						Status:         edi.TemplateStatusActive,
+					}
+					if _, err = r.db.DBForContext(c).
+						NewInsert().
+						Model(template).
+						Returning("*").
+						Exec(c); err != nil {
+						return err
+					}
+
+					x12Version := edi.DefaultX12204Version
+					if transactionSet == edi.TransactionSet999 {
+						x12Version = "005010"
+					}
+					activatedAt := timeutils.NowUnix()
+					version = &edi.EDITemplateVersion{
+						BusinessUnitID:    tenantInfo.BuID,
+						OrganizationID:    tenantInfo.OrgID,
+						TemplateID:        template.ID,
+						VersionNumber:     1,
+						X12Version:        x12Version,
+						FunctionalGroupID: edi.FunctionalGroupDefault(transactionSet),
+						Status:            edi.TemplateStatusActive,
+						IsActive:          true,
+						Notes: fmt.Sprintf(
+							"Seeded base %s X12 %s outbound profile",
+							x12Version,
+							transactionSet,
+						),
+						ActivatedAt: &activatedAt,
+					}
+					if _, err = r.db.DBForContext(c).
+						NewInsert().
+						Model(version).
+						Returning("*").
+						Exec(c); err != nil {
+						return err
+					}
+
+					segments, err := editemplates.StarterSegments(
+						tenantInfo,
+						version.ID,
+						transactionSet,
+					)
+					if err != nil {
+						return err
+					}
+					if _, err = r.db.DBForContext(c).
+						NewInsert().
+						Model(&segments).
+						Exec(c); err != nil {
+						return err
+					}
+					version.Segments = segments
+					return nil
+				},
+			)
 			if err != nil {
-				return err
+				return nil, nil, err
 			}
-			if len(documentTypes) == 0 {
-				return fmt.Errorf("x12 %s outbound document type is not seeded", transactionSet)
-			}
-
-			template = &edi.EDITemplate{
-				BusinessUnitID: tenantInfo.BuID,
-				OrganizationID: tenantInfo.OrgID,
-				DocumentTypeID: documentTypes[0].ID,
-				Name:           templateName,
-				Description: fmt.Sprintf(
-					"Tenant-scoped base outbound X12 %s template",
-					transactionSet,
-				),
-				Direction:      edi.DocumentDirectionOutbound,
-				Standard:       edi.EDIStandardX12,
-				TransactionSet: transactionSet,
-				Status:         edi.TemplateStatusActive,
-			}
-			if _, err = r.db.DBForContext(c).
-				NewInsert().
-				Model(template).
-				Returning("*").
-				Exec(c); err != nil {
-				return err
-			}
-
-			x12Version := edi.DefaultX12204Version
-			if transactionSet == edi.TransactionSet999 {
-				x12Version = "005010"
-			}
-			activatedAt := timeutils.NowUnix()
-			version = &edi.EDITemplateVersion{
-				BusinessUnitID:    tenantInfo.BuID,
-				OrganizationID:    tenantInfo.OrgID,
-				TemplateID:        template.ID,
-				VersionNumber:     1,
-				X12Version:        x12Version,
-				FunctionalGroupID: edi.FunctionalGroupDefault(transactionSet),
-				Status:            edi.TemplateStatusActive,
-				IsActive:          true,
-				Notes: fmt.Sprintf(
-					"Seeded base %s X12 %s outbound profile",
-					x12Version,
-					transactionSet,
-				),
-				ActivatedAt: &activatedAt,
-			}
-			if _, err = r.db.DBForContext(c).
-				NewInsert().
-				Model(version).
-				Returning("*").
-				Exec(c); err != nil {
-				return err
-			}
-
-			segments, err := editemplates.StarterSegments(tenantInfo, version.ID, transactionSet)
-			if err != nil {
-				return err
-			}
-			if _, err = r.db.DBForContext(c).NewInsert().Model(&segments).Exec(c); err != nil {
-				return err
-			}
-			version.Segments = segments
-			return nil
-		})
-		if err != nil {
-			return nil, nil, err
-		}
-		return template, version, nil
-	})
+			return template, version, nil
+		},
+	)
 }
 
 func applyTemplateSearch(query *bun.SelectQuery, search string) *bun.SelectQuery {

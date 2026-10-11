@@ -6,18 +6,18 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
@@ -110,7 +110,10 @@ func DescribeInsight(entity *insight.Insight) watchtowerports.WatchtowerItemInpu
 
 // DescribeProposal is a proposal waiting on a person. The agent's name is
 // passed in because the proposal only carries the run.
-func DescribeProposal(entity *agent.AgentProposal, agentName string) watchtowerports.WatchtowerItemInput {
+func DescribeProposal(
+	entity *agent.AgentProposal,
+	agentName string,
+) watchtowerports.WatchtowerItemInput {
 	who := agentName
 	if who == "" {
 		who = "An agent"
@@ -159,7 +162,10 @@ func DescribePlan(entity *agent.AgentPlan, agentName string) watchtowerports.Wat
 
 // DescribeFailedRun is a run that ended in error, so the person who relies
 // on the agent learns it did not do its work.
-func DescribeFailedRun(entity *agent.AgentRun, agentName string) watchtowerports.WatchtowerItemInput {
+func DescribeFailedRun(
+	entity *agent.AgentRun,
+	agentName string,
+) watchtowerports.WatchtowerItemInput {
 	who := agentName
 	if who == "" {
 		who = "An agent"
@@ -212,7 +218,9 @@ func DescribeException(entity *agent.AgentException) watchtowerports.WatchtowerI
 }
 
 // DescribeServiceFailure is a late or missed stop.
-func DescribeServiceFailure(entity *servicefailure.ServiceFailure) watchtowerports.WatchtowerItemInput {
+func DescribeServiceFailure(
+	entity *servicefailure.ServiceFailure,
+) watchtowerports.WatchtowerItemInput {
 	severity := watchtower.SeverityWarning
 	if entity.Type == servicefailure.TypeMissedDelivery ||
 		entity.Type == servicefailure.TypeMissedPickup {
@@ -301,7 +309,9 @@ func HOSViolationSourceID(entity *telematics.WorkerHOSViolation) string {
 }
 
 // DescribeHOSViolation is a driver over their hours.
-func DescribeHOSViolation(entity *telematics.WorkerHOSViolation) watchtowerports.WatchtowerItemInput {
+func DescribeHOSViolation(
+	entity *telematics.WorkerHOSViolation,
+) watchtowerports.WatchtowerItemInput {
 	who := "A driver"
 	if entity.Worker != nil {
 		who = strings.TrimSpace(entity.Worker.FirstName + " " + entity.Worker.LastName)
@@ -389,7 +399,9 @@ func DescribeQuarantinedFile(entity *edi.EDIInboundFile) watchtowerports.Watchto
 
 // DescribeBillingException is a billing queue item that cannot be invoiced
 // as it stands.
-func DescribeBillingException(entity *billingqueue.BillingQueueItem) watchtowerports.WatchtowerItemInput {
+func DescribeBillingException(
+	entity *billingqueue.BillingQueueItem,
+) watchtowerports.WatchtowerItemInput {
 	reason := "Needs review"
 	if entity.ExceptionReasonCode != nil {
 		reason = stringutils.HumanizeSnakeCase(string(*entity.ExceptionReasonCode))
@@ -587,7 +599,9 @@ func DescribeMoveCoverageRisk(entity UncoveredMove) watchtowerports.WatchtowerIt
 // Only a message in a waiting state reaches the tower. A message the desk
 // answered by itself is work that happened, not work owed, and putting it on
 // the feed would bury the ones that are actually waiting.
-func DescribeInboundMessage(entity *inboundmessage.InboundMessage) watchtowerports.WatchtowerItemInput {
+func DescribeInboundMessage(
+	entity *inboundmessage.InboundMessage,
+) watchtowerports.WatchtowerItemInput {
 	severity := watchtower.SeverityWarning
 	if entity.Status == inboundmessage.StatusQuarantined {
 		severity = watchtower.SeverityCritical
@@ -655,7 +669,9 @@ func TelematicsStopVisitSourceID(event *telematics.TelematicsEvent) string {
 	return event.ShipmentMoveID.String() + ":" + target + ":" + string(event.StopVisit)
 }
 
-func DescribeTelematicsStopVisit(review *telematicsports.StopReview) watchtowerports.WatchtowerItemInput {
+func DescribeTelematicsStopVisit(
+	review *telematicsports.StopReview,
+) watchtowerports.WatchtowerItemInput {
 	event := review.Event
 
 	visit := "Arrival"

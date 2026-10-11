@@ -104,67 +104,77 @@ func (r *repository) ListCandidates(
 	ctx context.Context,
 	req *latechargeports.ListLateChargeCandidatesRequest,
 ) ([]*latechargeports.LateChargeCandidate, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*latechargeports.LateChargeCandidate, error) {
-		query := listCandidatesSQL
-		args := []any{req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOfDate}
-		if len(req.CustomerIDs) > 0 {
-			query += "\n\t  AND inv.customer_id IN (?)"
-			args = append(args, bun.In(req.CustomerIDs))
-		}
-		query += "\n\tORDER BY cus.name ASC, inv.due_date ASC, inv.number ASC"
-
-		records := make([]*candidateRecord, 0)
-		if err := r.db.DBForContext(ctx).NewRaw(query, args...).Scan(ctx, &records); err != nil {
-			return nil, fmt.Errorf("list late charge candidates: %w", err)
-		}
-
-		candidates := make([]*latechargeports.LateChargeCandidate, 0, len(records))
-		for _, rec := range records {
-			assessed := make([]int, 0, len(rec.AssessedPeriods))
-			for _, idx := range rec.AssessedPeriods {
-				assessed = append(assessed, int(idx))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*latechargeports.LateChargeCandidate, error) {
+			query := listCandidatesSQL
+			args := []any{req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOfDate}
+			if len(req.CustomerIDs) > 0 {
+				query += "\n\t  AND inv.customer_id IN (?)"
+				args = append(args, bun.In(req.CustomerIDs))
 			}
-			candidates = append(candidates, &latechargeports.LateChargeCandidate{
-				CustomerID:       pulid.ID(rec.CustomerID),
-				CustomerName:     rec.CustomerName,
-				InvoiceID:        pulid.ID(rec.InvoiceID),
-				InvoiceNumber:    rec.InvoiceNumber,
-				CurrencyCode:     rec.CurrencyCode,
-				DueDate:          rec.DueDate,
-				GracePeriodDays:  rec.GracePeriodDays,
-				RatePercent:      rec.RatePercent,
-				OpenBalanceMinor: rec.OpenBalanceMinor,
-				AssessedPeriods:  assessed,
-			})
-		}
+			query += "\n\tORDER BY cus.name ASC, inv.due_date ASC, inv.number ASC"
 
-		return candidates, nil
-	})
+			records := make([]*candidateRecord, 0)
+			if err := r.db.DBForContext(ctx).
+				NewRaw(query, args...).
+				Scan(ctx, &records); err != nil {
+				return nil, fmt.Errorf("list late charge candidates: %w", err)
+			}
+
+			candidates := make([]*latechargeports.LateChargeCandidate, 0, len(records))
+			for _, rec := range records {
+				assessed := make([]int, 0, len(rec.AssessedPeriods))
+				for _, idx := range rec.AssessedPeriods {
+					assessed = append(assessed, int(idx))
+				}
+				candidates = append(candidates, &latechargeports.LateChargeCandidate{
+					CustomerID:       pulid.ID(rec.CustomerID),
+					CustomerName:     rec.CustomerName,
+					InvoiceID:        pulid.ID(rec.InvoiceID),
+					InvoiceNumber:    rec.InvoiceNumber,
+					CurrencyCode:     rec.CurrencyCode,
+					DueDate:          rec.DueDate,
+					GracePeriodDays:  rec.GracePeriodDays,
+					RatePercent:      rec.RatePercent,
+					OpenBalanceMinor: rec.OpenBalanceMinor,
+					AssessedPeriods:  assessed,
+				})
+			}
+
+			return candidates, nil
+		},
+	)
 }
 
 func (r *repository) InsertAssessments(
 	ctx context.Context,
 	assessments []*latecharge.LateChargeAssessment,
 ) ([]*latecharge.LateChargeAssessment, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*latecharge.LateChargeAssessment, error) {
-		if len(assessments) == 0 {
-			return []*latecharge.LateChargeAssessment{}, nil
-		}
-		runKey := assessments[0].RunKey
-		tenantInfo := pagination.TenantInfo{
-			OrgID: assessments[0].OrganizationID,
-			BuID:  assessments[0].BusinessUnitID,
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*latecharge.LateChargeAssessment, error) {
+			if len(assessments) == 0 {
+				return []*latecharge.LateChargeAssessment{}, nil
+			}
+			runKey := assessments[0].RunKey
+			tenantInfo := pagination.TenantInfo{
+				OrgID: assessments[0].OrganizationID,
+				BuID:  assessments[0].BusinessUnitID,
+			}
 
-		if _, err := r.db.DBForContext(ctx).NewInsert().
-			Model(&assessments).
-			On("CONFLICT (organization_id, business_unit_id, source_invoice_id, period_index) DO NOTHING").
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("insert late charge assessments: %w", err)
-		}
+			if _, err := r.db.DBForContext(ctx).NewInsert().
+				Model(&assessments).
+				On("CONFLICT (organization_id, business_unit_id, source_invoice_id, period_index) DO NOTHING").
+				Exec(ctx); err != nil {
+				return nil, fmt.Errorf("insert late charge assessments: %w", err)
+			}
 
-		return r.listByRunKey(ctx, tenantInfo, runKey)
-	})
+			return r.listByRunKey(ctx, tenantInfo, runKey)
+		},
+	)
 }
 
 func (r *repository) listByRunKey(
@@ -172,22 +182,26 @@ func (r *repository) listByRunKey(
 	tenantInfo pagination.TenantInfo,
 	runKey string,
 ) ([]*latecharge.LateChargeAssessment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*latecharge.LateChargeAssessment, error) {
-		cols := latechargecol.LateChargeAssessmentColumns
-		rows := make([]*latecharge.LateChargeAssessment, 0)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(&rows).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return latechargecol.LateChargeAssessmentScopeTenant(sq, tenantInfo).
-					Where(cols.RunKey.Eq(), runKey)
-			}).
-			Order(cols.SourceInvoiceID.OrderAsc(), cols.PeriodIndex.OrderAsc()).
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("list late charge assessments by run: %w", err)
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*latecharge.LateChargeAssessment, error) {
+			cols := latechargecol.LateChargeAssessmentColumns
+			rows := make([]*latecharge.LateChargeAssessment, 0)
+			if err := r.db.DBForContext(ctx).NewSelect().
+				Model(&rows).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return latechargecol.LateChargeAssessmentScopeTenant(sq, tenantInfo).
+						Where(cols.RunKey.Eq(), runKey)
+				}).
+				Order(cols.SourceInvoiceID.OrderAsc(), cols.PeriodIndex.OrderAsc()).
+				Scan(ctx); err != nil {
+				return nil, fmt.Errorf("list late charge assessments by run: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
 func (r *repository) SetDebitMemoLines(
@@ -270,32 +284,36 @@ func (r *repository) listGrouped(
 	column buncolgen.Column,
 	keyOf func(*latecharge.LateChargeAssessment) pulid.ID,
 ) (map[pulid.ID][]*latecharge.LateChargeAssessment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*latecharge.LateChargeAssessment, error) {
-		result := make(map[pulid.ID][]*latecharge.LateChargeAssessment, len(req.InvoiceIDs))
-		if len(req.InvoiceIDs) == 0 {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID][]*latecharge.LateChargeAssessment, error) {
+			result := make(map[pulid.ID][]*latecharge.LateChargeAssessment, len(req.InvoiceIDs))
+			if len(req.InvoiceIDs) == 0 {
+				return result, nil
+			}
+
+			cols := latechargecol.LateChargeAssessmentColumns
+			rows := make([]*latecharge.LateChargeAssessment, 0, len(req.InvoiceIDs))
+			if err := r.db.DBForContext(ctx).NewSelect().
+				Model(&rows).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return latechargecol.LateChargeAssessmentScopeTenant(sq, req.TenantInfo).
+						Where(column.In(), bun.List(req.InvoiceIDs))
+				}).
+				Order(cols.AsOfDate.OrderDesc(), cols.PeriodIndex.OrderAsc()).
+				Scan(ctx); err != nil {
+				return nil, fmt.Errorf("list late charge assessments: %w", err)
+			}
+
+			for _, row := range rows {
+				key := keyOf(row)
+				result[key] = append(result[key], row)
+			}
+
 			return result, nil
-		}
-
-		cols := latechargecol.LateChargeAssessmentColumns
-		rows := make([]*latecharge.LateChargeAssessment, 0, len(req.InvoiceIDs))
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(&rows).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return latechargecol.LateChargeAssessmentScopeTenant(sq, req.TenantInfo).
-					Where(column.In(), bun.List(req.InvoiceIDs))
-			}).
-			Order(cols.AsOfDate.OrderDesc(), cols.PeriodIndex.OrderAsc()).
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("list late charge assessments: %w", err)
-		}
-
-		for _, row := range rows {
-			key := keyOf(row)
-			result[key] = append(result[key], row)
-		}
-
-		return result, nil
-	})
+		},
+	)
 }
 
 func (r *repository) CountBySourceInvoiceID(

@@ -46,7 +46,9 @@ func deliveryWatchToModel(w *shipmentports.ShipmentDeliveryWatch) *gqlmodel.Ship
 	}
 }
 
-func uncoveredWatchToModel(w *shipmentports.ShipmentUncoveredWatch) *gqlmodel.ShipmentUncoveredWatch {
+func uncoveredWatchToModel(
+	w *shipmentports.ShipmentUncoveredWatch,
+) *gqlmodel.ShipmentUncoveredWatch {
 	windows := make([]*gqlmodel.UncoveredWindowSummary, 0, len(w.Windows))
 	for _, window := range w.Windows {
 		windows = append(windows, &gqlmodel.UncoveredWindowSummary{
@@ -75,7 +77,9 @@ func uncoveredWatchToModel(w *shipmentports.ShipmentUncoveredWatch) *gqlmodel.Sh
 	return out
 }
 
-func detentionWatchToModel(w *shipmentports.ShipmentDetentionWatch) *gqlmodel.ShipmentDetentionWatch {
+func detentionWatchToModel(
+	w *shipmentports.ShipmentDetentionWatch,
+) *gqlmodel.ShipmentDetentionWatch {
 	top := make([]*gqlmodel.DetentionAccrual, 0, len(w.Top))
 	for _, item := range w.Top {
 		top = append(top, &gqlmodel.DetentionAccrual{

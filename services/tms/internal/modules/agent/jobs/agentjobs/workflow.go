@@ -173,7 +173,8 @@ func DeleteStaleAskThreadsWorkflow(ctx workflow.Context) (*DeleteStaleAskThreads
 		var batch DeleteStaleAskThreadsResult
 		if err := workflow.ExecuteActivity(deleteCtx, a.DeleteStaleAskThreadsActivity, &DeleteStaleAskThreadsInput{
 			Before: before,
-		}).Get(deleteCtx, &batch); err != nil {
+		}).
+			Get(deleteCtx, &batch); err != nil {
 			return nil, err
 		}
 		result.Deleted += batch.Deleted
@@ -197,7 +198,8 @@ func ExpireStaleProposalsWorkflow(ctx workflow.Context) (*ExpireStaleProposalsRe
 	expireCtx := workflow.WithActivityOptions(ctx, sweepListOptions)
 	if err := workflow.ExecuteActivity(expireCtx, a.ExpireStaleProposalsActivity, &ExpireStaleProposalsInput{
 		Now: now,
-	}).Get(expireCtx, result); err != nil {
+	}).
+		Get(expireCtx, result); err != nil {
 		return nil, err
 	}
 
@@ -208,7 +210,8 @@ func ExpireStaleProposalsWorkflow(ctx workflow.Context) (*ExpireStaleProposalsRe
 	if err := workflow.ExecuteActivity(remindCtx, a.RemindPendingProposalsActivity, &RemindPendingProposalsInput{
 		Now:              now,
 		OlderThanSeconds: int64(reminderAfter.Seconds()),
-	}).Get(remindCtx, &reminded); err != nil {
+	}).
+		Get(remindCtx, &reminded); err != nil {
 		return nil, err
 	}
 	result.Reminded = reminded.Reminded
@@ -235,7 +238,10 @@ func NewWorkflows(runtime *agentruntime.Service) *Workflows {
 // in testdata replay, most of them parked in a day-long wait for a decision.
 // Every run started since runs the loop here, one activity per model call and
 // per tool call.
-func (w *Workflows) AgentRunWorkflow(ctx workflow.Context, payload *agentcontract.AgentRunPayload) error {
+func (w *Workflows) AgentRunWorkflow(
+	ctx workflow.Context,
+	payload *agentcontract.AgentRunPayload,
+) error {
 	if workflow.GetVersion(ctx, agentflowChange, workflow.DefaultVersion, 1) ==
 		workflow.DefaultVersion {
 		return runInOneActivity(ctx, payload)
@@ -533,7 +539,10 @@ func failEvaluation(
 // replayInOneActivity is the replay as it was before the loop moved into
 // workflow code. It runs only evaluations that started on it, and must not
 // change.
-func replayInOneActivity(ctx workflow.Context, payload *agentcontract.AgentEvaluationPayload) error {
+func replayInOneActivity(
+	ctx workflow.Context,
+	payload *agentcontract.AgentEvaluationPayload,
+) error {
 	var a *Activities
 
 	replayCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
@@ -597,7 +606,9 @@ var scheduledStartTime = temporal.NewSearchAttributeKeyTime("TemporalScheduledSt
 
 // ReconcileDefinitionSchedulesWorkflow makes every agent's schedule match the
 // agent. It runs when a worker starts and every quarter hour after.
-func ReconcileDefinitionSchedulesWorkflow(ctx workflow.Context) (*agentcontract.ReconcileResult, error) {
+func ReconcileDefinitionSchedulesWorkflow(
+	ctx workflow.Context,
+) (*agentcontract.ReconcileResult, error) {
 	var a *Activities
 
 	reconcileCtx := workflow.WithActivityOptions(ctx, reconcileOptions)

@@ -10,13 +10,11 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentimportchat"
-	"github.com/emoss08/trenova/internal/modules/places/app/locationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentimportchat"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentimportchatports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -25,6 +23,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/places/app/locationservice"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
@@ -508,37 +508,41 @@ func (s *Service) persistConversationTurn(
 		Actions:     toHistoryActions(actions),
 	}.Encode()
 
-	if err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		conversation.UserID = req.TenantInfo.UserID
-		conversation.ExternalConversationID = responseConversationID
-		conversation.TurnCount++
-		conversation.LastMessageAt = &now
+	if err := s.db.WithTx(
+		ctx,
+		kernelports.TxOptions{},
+		func(txCtx context.Context, _ bun.Tx) error {
+			conversation.UserID = req.TenantInfo.UserID
+			conversation.ExternalConversationID = responseConversationID
+			conversation.TurnCount++
+			conversation.LastMessageAt = &now
 
-		if _, err := s.chatRepo.UpdateConversation(txCtx, conversation); err != nil {
+			if _, err := s.chatRepo.UpdateConversation(txCtx, conversation); err != nil {
+				return err
+			}
+
+			_, err := s.chatRepo.AppendTurn(txCtx, &shipmentimportchat.Turn{
+				ConversationID:         conversation.ID,
+				OrganizationID:         req.TenantInfo.OrgID,
+				BusinessUnitID:         req.TenantInfo.BuID,
+				DocumentID:             conversation.DocumentID,
+				UserID:                 req.TenantInfo.UserID,
+				TurnIndex:              conversation.TurnCount,
+				UserMessage:            req.UserMessage,
+				AssistantMessage:       assistantMessage,
+				RequestConversationID:  req.ConversationID,
+				ResponseConversationID: responseConversationID,
+				Model:                  model,
+				ResultStatus:           resultStatus,
+				ErrorMessage:           errorMessage,
+				ContextJSON:            encodedPayload.ContextJSON,
+				SuggestionsJSON:        encodedPayload.SuggestionsJSON,
+				ToolCallsJSON:          encodedPayload.ToolCallsJSON,
+				ActionsJSON:            encodedPayload.ActionsJSON,
+			})
 			return err
-		}
-
-		_, err := s.chatRepo.AppendTurn(txCtx, &shipmentimportchat.Turn{
-			ConversationID:         conversation.ID,
-			OrganizationID:         req.TenantInfo.OrgID,
-			BusinessUnitID:         req.TenantInfo.BuID,
-			DocumentID:             conversation.DocumentID,
-			UserID:                 req.TenantInfo.UserID,
-			TurnIndex:              conversation.TurnCount,
-			UserMessage:            req.UserMessage,
-			AssistantMessage:       assistantMessage,
-			RequestConversationID:  req.ConversationID,
-			ResponseConversationID: responseConversationID,
-			Model:                  model,
-			ResultStatus:           resultStatus,
-			ErrorMessage:           errorMessage,
-			ContextJSON:            encodedPayload.ContextJSON,
-			SuggestionsJSON:        encodedPayload.SuggestionsJSON,
-			ToolCallsJSON:          encodedPayload.ToolCallsJSON,
-			ActionsJSON:            encodedPayload.ActionsJSON,
-		})
-		return err
-	}); err != nil {
+		},
+	); err != nil {
 		return err
 	}
 
@@ -1123,13 +1127,16 @@ func (s *Service) searchServiceTypes(
 	tenantInfo pagination.TenantInfo,
 	query string,
 ) string {
-	result, err := s.serviceRepo.SelectOptions(ctx, &servicetypeports.ServiceTypeSelectOptionsRequest{
-		SelectQueryRequest: &pagination.SelectQueryRequest{
-			TenantInfo: tenantInfo,
-			Pagination: pagination.Info{Limit: 5},
-			Query:      query,
+	result, err := s.serviceRepo.SelectOptions(
+		ctx,
+		&servicetypeports.ServiceTypeSelectOptionsRequest{
+			SelectQueryRequest: &pagination.SelectQueryRequest{
+				TenantInfo: tenantInfo,
+				Pagination: pagination.Info{Limit: 5},
+				Query:      query,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return `{"error":"search failed"}`
 	}

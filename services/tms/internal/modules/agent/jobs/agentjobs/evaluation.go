@@ -81,10 +81,13 @@ func (a *Activities) openReplay(
 		return nil, nil
 	}
 
-	definition, err := a.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         evaluation.AgentDefinitionID,
-		TenantInfo: tenant,
-	})
+	definition, err := a.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         evaluation.AgentDefinitionID,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		return nil, temporal.NewNonRetryableApplicationError(
 			"agent definition unavailable", "DefinitionUnavailable", err,

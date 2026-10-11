@@ -792,7 +792,12 @@ func isValidSearchTerm(term string) bool {
 func (qb *QueryBuilder) applyWebsearchOnly(searchQuery, tableAlias, vectorCol string) {
 	if !qb.predicatesOnly {
 		qb.query = qb.query.ColumnExpr(
-			fmt.Sprintf("ts_rank(%s%s, %s) AS rank", tableAlias, vectorCol, bothDictionariesWebsearch),
+			fmt.Sprintf(
+				"ts_rank(%s%s, %s) AS rank",
+				tableAlias,
+				vectorCol,
+				bothDictionariesWebsearch,
+			),
 			searchQuery,
 			searchQuery,
 		)

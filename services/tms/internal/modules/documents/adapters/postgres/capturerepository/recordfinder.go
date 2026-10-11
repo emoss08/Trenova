@@ -146,31 +146,35 @@ func (f *recordFinder) Labels(
 	ctx context.Context,
 	req *captureports.ListCaptureRecordLabelsRequest,
 ) ([]*captureports.CaptureRecordLabel, error) {
-	return dbtx.Read(ctx, f.db, func(ctx context.Context) ([]*captureports.CaptureRecordLabel, error) {
-		kind, err := lookupKind(req.ResourceType)
-		if err != nil {
-			return nil, err
-		}
-		if len(req.IDs) == 0 {
-			return []*captureports.CaptureRecordLabel{}, nil
-		}
+	return dbtx.Read(
+		ctx,
+		f.db,
+		func(ctx context.Context) ([]*captureports.CaptureRecordLabel, error) {
+			kind, err := lookupKind(req.ResourceType)
+			if err != nil {
+				return nil, err
+			}
+			if len(req.IDs) == 0 {
+				return []*captureports.CaptureRecordLabel{}, nil
+			}
 
-		labels := make([]*captureports.CaptureRecordLabel, 0, len(req.IDs))
-		if err = f.db.DBForContext(ctx).
-			NewSelect().
-			Model(kind.model()).
-			ColumnExpr(kind.id.As("id")).
-			ColumnExpr(kind.title+" AS title").
-			ColumnExpr(kind.subtitle+" AS subtitle").
-			Apply(kind.tenant(req.TenantInfo)).
-			Where(kind.id.In(), bun.List(req.IDs)).
-			Scan(ctx, &labels); err != nil {
-			return nil, err
-		}
-		for _, label := range labels {
-			label.ResourceType = req.ResourceType
-		}
+			labels := make([]*captureports.CaptureRecordLabel, 0, len(req.IDs))
+			if err = f.db.DBForContext(ctx).
+				NewSelect().
+				Model(kind.model()).
+				ColumnExpr(kind.id.As("id")).
+				ColumnExpr(kind.title+" AS title").
+				ColumnExpr(kind.subtitle+" AS subtitle").
+				Apply(kind.tenant(req.TenantInfo)).
+				Where(kind.id.In(), bun.List(req.IDs)).
+				Scan(ctx, &labels); err != nil {
+				return nil, err
+			}
+			for _, label := range labels {
+				label.ResourceType = req.ResourceType
+			}
 
-		return labels, nil
-	})
+			return labels, nil
+		},
+	)
 }

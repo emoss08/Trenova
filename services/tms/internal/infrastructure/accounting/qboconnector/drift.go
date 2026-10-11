@@ -233,7 +233,9 @@ func changedDocumentTypes(kind quickbooks.TxnKind) []accountingsync.SyncObjectTy
 	}
 }
 
-func changedDocumentOf(doc *quickbooks.ChangedDocument) accountingsyncports.AccountingChangedDocument {
+func changedDocumentOf(
+	doc *quickbooks.ChangedDocument,
+) accountingsyncports.AccountingChangedDocument {
 	return accountingsyncports.AccountingChangedDocument{
 		ObjectTypes: changedDocumentTypes(doc.Kind),
 		ExternalID:  doc.ID,

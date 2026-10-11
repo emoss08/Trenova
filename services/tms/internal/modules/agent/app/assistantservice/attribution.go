@@ -76,10 +76,13 @@ func (s *Service) agentDefinitions(
 		return nil
 	}
 
-	definitions, err := s.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
-		IDs:        ids,
-		TenantInfo: tenant,
-	})
+	definitions, err := s.definitions.ListByIDs(
+		ctx,
+		agentdefinitionports.ListAgentDefinitionsByIDsRequest{
+			IDs:        ids,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		s.logger.Warn("could not read the agents in a conversation", zap.Error(err))
 

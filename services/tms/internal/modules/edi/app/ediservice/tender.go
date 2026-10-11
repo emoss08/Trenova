@@ -3,13 +3,13 @@ package ediservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -206,45 +206,53 @@ func (s *Service) SubmitLoadTender(
 			return nil, err
 		}
 	} else {
-		err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-			lockedShipment, lockErr := s.lockShipment(txCtx, req.SourceShipmentID, req.TenantInfo)
-			if lockErr != nil {
-				return lockErr
-			}
-			if validateErr := validateTenderEligibility(lockedShipment); validateErr != nil {
-				return validateErr
-			}
+		err = s.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, _ bun.Tx) error {
+				lockedShipment, lockErr := s.lockShipment(
+					txCtx,
+					req.SourceShipmentID,
+					req.TenantInfo,
+				)
+				if lockErr != nil {
+					return lockErr
+				}
+				if validateErr := validateTenderEligibility(lockedShipment); validateErr != nil {
+					return validateErr
+				}
 
-			created, err = s.transferRepo.CreateTransfer(txCtx, entity)
-			if err != nil {
-				return err
-			}
-			if err = s.upsertInternalTenderRecipient(
-				txCtx,
-				created,
-				nil,
-				edi.TenderRecipientBaselineStatusSent,
-			); err != nil {
-				return err
-			}
+				created, err = s.transferRepo.CreateTransfer(txCtx, entity)
+				if err != nil {
+					return err
+				}
+				if err = s.upsertInternalTenderRecipient(
+					txCtx,
+					created,
+					nil,
+					edi.TenderRecipientBaselineStatusSent,
+				); err != nil {
+					return err
+				}
 
-			if err = s.setShipmentTenderStatus(
-				txCtx,
-				req.SourceShipmentID,
-				req.TenantInfo,
-				shipment.TenderStatusTendered,
-			); err != nil {
-				return err
-			}
+				if err = s.setShipmentTenderStatus(
+					txCtx,
+					req.SourceShipmentID,
+					req.TenantInfo,
+					shipment.TenderStatusTendered,
+				); err != nil {
+					return err
+				}
 
-			return s.createSystemShipmentComment(
-				txCtx,
-				req.SourceShipmentID,
-				req.TenantInfo,
-				"EDI load tender submitted.",
-				map[string]any{"transferId": created.ID},
-			)
-		})
+				return s.createSystemShipmentComment(
+					txCtx,
+					req.SourceShipmentID,
+					req.TenantInfo,
+					"EDI load tender submitted.",
+					map[string]any{"transferId": created.ID},
+				)
+			},
+		)
 	}
 	if err != nil {
 		return nil, err

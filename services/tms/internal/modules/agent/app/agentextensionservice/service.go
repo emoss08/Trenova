@@ -6,16 +6,16 @@ import (
 	"math"
 	"sort"
 
+	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
-	"github.com/emoss08/trenova/internal/modules/kernel/app/secretconfig"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/secretconfig"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -556,7 +556,11 @@ func (s *Service) runtime(
 			"organization. An administrator can turn it on under AI Control, Extensions."}
 	}
 
-	values, err := s.secrets.ReadAll(record.Configuration, spec.Fields, secretScope(tenantInfo, typ))
+	values, err := s.secrets.ReadAll(
+		record.Configuration,
+		spec.Fields,
+		secretScope(tenantInfo, typ),
+	)
 	if err != nil {
 		return nil, errortypes.NewBusinessError(
 			"failed to read the {0} extension settings", typ.String(),

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
@@ -81,8 +81,11 @@ func oversizedChange(
 		return toolOutcome{}, false
 	}
 
-	reason := fmt.Sprintf("it would change %d records; the most this agent may change at once is %d",
-		size, limit)
+	reason := fmt.Sprintf(
+		"it would change %d records; the most this agent may change at once is %d",
+		size,
+		limit,
+	)
 
 	return refusedOutcome(aitrace.OutcomeOverBudget, reason,
 		"Tool %q was not proposed or run: it would change %d records, and this agent may "+

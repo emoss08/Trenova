@@ -6,9 +6,9 @@ import (
 	"slices"
 	"sort"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -97,13 +97,19 @@ func buildToolCatalog(
 	entries := make([]agentdefinitionports.ToolCatalogEntry, 0, len(queryTools)+len(actionTools))
 
 	for _, tool := range queryTools {
-		if entry, offered := extensions.entry(tool, agentdefinitionports.ToolCatalogKindQuery); offered {
+		if entry, offered := extensions.entry(
+			tool,
+			agentdefinitionports.ToolCatalogKindQuery,
+		); offered {
 			entries = append(entries, entry)
 		}
 	}
 
 	for _, tool := range actionTools {
-		if entry, offered := extensions.entry(tool, agentdefinitionports.ToolCatalogKindAction); offered {
+		if entry, offered := extensions.entry(
+			tool,
+			agentdefinitionports.ToolCatalogKindAction,
+		); offered {
 			entries = append(entries, entry)
 		}
 	}

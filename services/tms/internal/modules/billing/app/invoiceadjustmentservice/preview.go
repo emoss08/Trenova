@@ -5,18 +5,18 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/effectiveversioncache"
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/effectiveversioncache"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
@@ -112,7 +112,10 @@ func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 		return nil, err
 	}
 
-	requestedByLine := make(map[string]*invoiceadjustmentports.InvoiceAdjustmentLineInput, len(req.Lines))
+	requestedByLine := make(
+		map[string]*invoiceadjustmentports.InvoiceAdjustmentLineInput,
+		len(req.Lines),
+	)
 	for _, line := range req.Lines {
 		if line == nil {
 			continue
@@ -549,7 +552,10 @@ func (s *Service) computeRerate( //nolint:gocritic // stable API shape
 	return lines, total, variance, nil
 }
 
-func appendPreviewError(preview *invoiceadjustmentports.InvoiceAdjustmentPreview, field, message string) {
+func appendPreviewError(
+	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
+	field, message string,
+) {
 	preview.Errors[field] = append(preview.Errors[field], message)
 }
 

@@ -85,7 +85,9 @@ func buildRouteContext(req *documentaiextractionports.AIRouteRequest) agentports
 	return agentports.DelimitedContext{Sections: sections}
 }
 
-func buildExtractContext(req *documentaiextractionports.AIExtractRequest) agentports.DelimitedContext {
+func buildExtractContext(
+	req *documentaiextractionports.AIExtractRequest,
+) agentports.DelimitedContext {
 	return agentports.DelimitedContext{
 		Sections: []agentports.ContextSection{
 			section("Filename", strings.TrimSpace(req.FileName)),

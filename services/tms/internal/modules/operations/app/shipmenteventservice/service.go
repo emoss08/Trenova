@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -131,7 +131,9 @@ func (s *service) List(
 	return s.repo.List(ctx, req)
 }
 
-func buildEntity(params *shipmenteventports.RecordShipmentEventParams) (*shipmentevent.Event, error) {
+func buildEntity(
+	params *shipmenteventports.RecordShipmentEventParams,
+) (*shipmentevent.Event, error) {
 	if params.OrganizationID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"organizationId",

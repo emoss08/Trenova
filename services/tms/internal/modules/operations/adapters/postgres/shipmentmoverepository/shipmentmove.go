@@ -490,42 +490,61 @@ func (r *repository) SplitMove(
 	ctx context.Context,
 	req *shipmentports.SplitMoveRequest,
 ) (*shipmentports.SplitMoveResponse, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipmentports.SplitMoveResponse, error) {
-		var response *shipmentports.SplitMoveResponse
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-			originalMove, err := r.GetByID(c, &shipmentports.GetMoveByIDRequest{
-				MoveID:            req.MoveID,
-				TenantInfo:        req.TenantInfo,
-				ExpandMoveDetails: true,
-			})
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*shipmentports.SplitMoveResponse, error) {
+			var response *shipmentports.SplitMoveResponse
+			err := r.db.WithTx(
+				ctx,
+				kernelports.TxOptions{},
+				func(c context.Context, tx bun.Tx) error {
+					originalMove, err := r.GetByID(c, &shipmentports.GetMoveByIDRequest{
+						MoveID:            req.MoveID,
+						TenantInfo:        req.TenantInfo,
+						ExpandMoveDetails: true,
+					})
+					if err != nil {
+						return err
+					}
+
+					split := shipment.PlanMoveSplit(originalMove, req.Spec())
+
+					if err = r.shiftSubsequentMoveSequences(c, tx, originalMove); err != nil {
+						return err
+					}
+
+					if err = r.updateOriginalMoveForSplit(
+						c,
+						tx,
+						originalMove,
+						split.RelayStop,
+					); err != nil {
+						return err
+					}
+
+					newMove, err := r.insertSplitMove(c, tx, split.NewMove)
+					if err != nil {
+						return err
+					}
+
+					response, err = r.loadSplitMoveResponse(
+						c,
+						tx,
+						req.TenantInfo,
+						originalMove.ID,
+						newMove.ID,
+					)
+					return err
+				},
+			)
 			if err != nil {
-				return err
+				return nil, err
 			}
 
-			split := shipment.PlanMoveSplit(originalMove, req.Spec())
-
-			if err = r.shiftSubsequentMoveSequences(c, tx, originalMove); err != nil {
-				return err
-			}
-
-			if err = r.updateOriginalMoveForSplit(c, tx, originalMove, split.RelayStop); err != nil {
-				return err
-			}
-
-			newMove, err := r.insertSplitMove(c, tx, split.NewMove)
-			if err != nil {
-				return err
-			}
-
-			response, err = r.loadSplitMoveResponse(c, tx, req.TenantInfo, originalMove.ID, newMove.ID)
-			return err
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		return response, nil
-	})
+			return response, nil
+		},
+	)
 }
 
 func (r *repository) getExistingMoves(

@@ -143,49 +143,53 @@ func (r *repository) List(
 	ctx context.Context,
 	req *workerports.ListPTORequest,
 ) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
-		log := r.l.With(
-			zap.String("operation", "List"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
+			log := r.l.With(
+				zap.String("operation", "List"),
+				zap.Any("request", req),
+			)
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*worker.WorkerPTO)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyListFiltersWithoutSort(sq, req)
-				}).
-				Count(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := r.db.DBForContext(ctx).
+					NewSelect().
+					Model((*worker.WorkerPTO)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyListFiltersWithoutSort(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count PTO records", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*worker.WorkerPTO]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(items *[]*worker.WorkerPTO) *bun.SelectQuery {
+					return r.db.DBForContext(ctx).
+						NewSelect().
+						Model(items).
+						ColumnExpr(workercol.WorkerPTOTable.All())
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					return r.cursorFilterQuery(sq, req)
+				},
+			})
 			if err != nil {
-				log.Error("failed to count PTO records", zap.Error(err))
+				log.Error("failed to scan PTO records", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*worker.WorkerPTO]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(items *[]*worker.WorkerPTO) *bun.SelectQuery {
-				return r.db.DBForContext(ctx).
-					NewSelect().
-					Model(items).
-					ColumnExpr(workercol.WorkerPTOTable.All())
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.cursorFilterQuery(sq, req)
-			},
-		})
-		if err != nil {
-			log.Error("failed to scan PTO records", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -232,7 +236,11 @@ func (r *repository) Create(
 			zap.String("workerId", entity.WorkerID.String()),
 		)
 
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
 			log.Error("failed to create PTO record", zap.Error(err))
 			return nil, err
 		}
@@ -682,49 +690,61 @@ func (r *repository) ListUpcoming(
 	ctx context.Context,
 	req *workerports.ListUpcomingPTORequest,
 ) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
-		log := r.l.With(
-			zap.String("operation", "ListUpcoming"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
+			log := r.l.With(
+				zap.String("operation", "ListUpcoming"),
+				zap.Any("request", req),
+			)
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*worker.WorkerPTO)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterUpcomingPTOQuery(sq, req)
-				}).
-				Count(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := r.db.DBForContext(ctx).
+					NewSelect().
+					Model((*worker.WorkerPTO)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.filterUpcomingPTOQuery(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error(
+						"failed to count upcoming PTOs",
+						zap.Error(err),
+						zap.Any("request", req),
+					)
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*worker.WorkerPTO]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(items *[]*worker.WorkerPTO) *bun.SelectQuery {
+					return r.db.DBForContext(ctx).
+						NewSelect().
+						Model(items).
+						ColumnExpr(workercol.WorkerPTOTable.All())
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					return r.cursorUpcomingPTOQuery(sq, req)
+				},
+			})
 			if err != nil {
-				log.Error("failed to count upcoming PTOs", zap.Error(err), zap.Any("request", req))
+				log.Error(
+					"failed to scan and count upcoming PTOs",
+					zap.Error(err),
+					zap.Any("request", req),
+				)
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*worker.WorkerPTO]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(items *[]*worker.WorkerPTO) *bun.SelectQuery {
-				return r.db.DBForContext(ctx).
-					NewSelect().
-					Model(items).
-					ColumnExpr(workercol.WorkerPTOTable.All())
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.cursorUpcomingPTOQuery(sq, req)
-			},
-		})
-		if err != nil {
-			log.Error("failed to scan and count upcoming PTOs", zap.Error(err), zap.Any("request", req))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 type ptoAggregateRow struct {
@@ -774,35 +794,39 @@ func (r *repository) GetChartData(
 	ctx context.Context,
 	req *workerports.PTOChartRequest,
 ) ([]*workerports.PTOChartDataPoint, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*workerports.PTOChartDataPoint, error) {
-		log := r.l.With(
-			zap.String("operation", "GetPTOChart"),
-			zap.Any("req", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*workerports.PTOChartDataPoint, error) {
+			log := r.l.With(
+				zap.String("operation", "GetPTOChart"),
+				zap.Any("req", req),
+			)
 
-		db := r.db.DBForContext(ctx)
+			db := r.db.DBForContext(ctx)
 
-		timezone := timeutils.NormalizeTimezone(req.Timezone)
-		fromDayStartUnix, toDayEndUnix, err := r.calculateChartDateBoundaries(req, timezone)
-		if err != nil {
-			log.Error("failed to calculate chart date boundaries", zap.Error(err))
-			return nil, err
-		}
+			timezone := timeutils.NormalizeTimezone(req.Timezone)
+			fromDayStartUnix, toDayEndUnix, err := r.calculateChartDateBoundaries(req, timezone)
+			if err != nil {
+				log.Error("failed to calculate chart date boundaries", zap.Error(err))
+				return nil, err
+			}
 
-		dateSeries, err := r.generateDateSeries(ctx, db, req, timezone, log)
-		if err != nil {
-			return nil, err
-		}
+			dateSeries, err := r.generateDateSeries(ctx, db, req, timezone, log)
+			if err != nil {
+				return nil, err
+			}
 
-		ptoData, err := r.fetchPTOData(ctx, db, req, fromDayStartUnix, toDayEndUnix, log)
-		if err != nil {
-			return nil, err
-		}
+			ptoData, err := r.fetchPTOData(ctx, db, req, fromDayStartUnix, toDayEndUnix, log)
+			if err != nil {
+				return nil, err
+			}
 
-		ptoMap := r.aggregatePTOData(ptoData)
+			ptoMap := r.aggregatePTOData(ptoData)
 
-		return r.buildPTOChartDataQuery(dateSeries, ptoMap, log), nil
-	})
+			return r.buildPTOChartDataQuery(dateSeries, ptoMap, log), nil
+		},
+	)
 }
 
 func (r *repository) generateDateSeries(

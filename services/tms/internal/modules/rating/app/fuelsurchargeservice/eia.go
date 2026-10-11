@@ -13,9 +13,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
@@ -124,11 +124,14 @@ func (s *Service) RefreshEIAPrices(
 
 	allCurrent := true
 	for _, index := range indices {
-		has, hErr := s.priceRepo.HasPriceForDate(ctx, &fuelsurchargeports.HasFuelPriceForDateRequest{
-			FuelIndexID: index.ID,
-			TenantInfo:  tenantInfo,
-			Date:        currentMonday,
-		})
+		has, hErr := s.priceRepo.HasPriceForDate(
+			ctx,
+			&fuelsurchargeports.HasFuelPriceForDateRequest{
+				FuelIndexID: index.ID,
+				TenantInfo:  tenantInfo,
+				Date:        currentMonday,
+			},
+		)
 		if hErr != nil {
 			return nil, hErr
 		}
@@ -343,12 +346,15 @@ func (s *Service) buildPriceUpdateMessage(
 		usIndex = indices[0]
 	}
 
-	prices, err := s.priceRepo.GetLatestOnOrBefore(ctx, &fuelsurchargeports.GetLatestFuelPricesRequest{
-		FuelIndexID: usIndex.ID,
-		TenantInfo:  tenantInfo,
-		Date:        currentMonday,
-		Limit:       2,
-	})
+	prices, err := s.priceRepo.GetLatestOnOrBefore(
+		ctx,
+		&fuelsurchargeports.GetLatestFuelPricesRequest{
+			FuelIndexID: usIndex.ID,
+			TenantInfo:  tenantInfo,
+			Date:        currentMonday,
+			Limit:       2,
+		},
+	)
 	if err != nil || len(prices) == 0 {
 		return title, message
 	}

@@ -71,9 +71,15 @@ func publishArtifactSpec() kernelports.ToolSpec {
 					"items": map[string]any{
 						"type": "object",
 						"properties": map[string]any{
-							"n":     map[string]any{"type": "integer"},
-							"tool":  map[string]any{"type": "string", "description": "The tool that found it."},
-							"label": map[string]any{"type": "string", "description": "What it is, in a few words."},
+							"n": map[string]any{"type": "integer"},
+							"tool": map[string]any{
+								"type":        "string",
+								"description": "The tool that found it.",
+							},
+							"label": map[string]any{
+								"type":        "string",
+								"description": "What it is, in a few words.",
+							},
 							"detail": map[string]any{
 								"type":        "string",
 								"description": "One more line: a time, a scope.",

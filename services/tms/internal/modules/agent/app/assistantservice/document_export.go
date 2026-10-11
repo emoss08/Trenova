@@ -91,7 +91,9 @@ func renderableDocument(version *assistantartifact.Artifact) *docrender.Document
 		docType = "Document"
 	}
 	author := typeutils.StringOfTrimmed(version.Payload[assistantartifact.DocumentAuthor])
-	if editor := typeutils.StringOfTrimmed(version.Payload[assistantartifact.DocumentEditor]); editor != "" {
+	if editor := typeutils.StringOfTrimmed(
+		version.Payload[assistantartifact.DocumentEditor],
+	); editor != "" {
 		author = editor
 	}
 	byline := strings.Join(nonEmpty(
@@ -110,8 +112,13 @@ func renderableDocument(version *assistantartifact.Artifact) *docrender.Document
 	}
 
 	return &docrender.Document{
-		Title:   version.Title,
-		Kicker:  fmt.Sprintf("%s · %d words · %d min read", docType, words, max(1, (words+wordsPerMinute/2)/wordsPerMinute)),
+		Title: version.Title,
+		Kicker: fmt.Sprintf(
+			"%s · %d words · %d min read",
+			docType,
+			words,
+			max(1, (words+wordsPerMinute/2)/wordsPerMinute),
+		),
 		Byline:  byline,
 		Body:    body,
 		Sources: rendered,

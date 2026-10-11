@@ -74,8 +74,16 @@ var stopFieldSpecs = []stopFieldSpec{
 		value:   func(s *StopSnapshot) string { return s.AddressLine1 },
 		compare: compareIdentifier,
 	},
-	{name: "city", value: func(s *StopSnapshot) string { return s.City }, compare: compareIdentifier},
-	{name: "state", value: func(s *StopSnapshot) string { return s.State }, compare: compareIdentifier},
+	{
+		name:    "city",
+		value:   func(s *StopSnapshot) string { return s.City },
+		compare: compareIdentifier,
+	},
+	{
+		name:    "state",
+		value:   func(s *StopSnapshot) string { return s.State },
+		compare: compareIdentifier,
+	},
 	{
 		name:    "postalCode",
 		value:   func(s *StopSnapshot) string { return s.PostalCode },

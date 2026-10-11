@@ -10,13 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -135,10 +135,13 @@ func (s *Service) agentsToPlan(
 		return nil, nil
 	}
 
-	definitions, err := s.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
-		IDs:        ids,
-		TenantInfo: req.TenantInfo,
-	})
+	definitions, err := s.definitions.ListByIDs(
+		ctx,
+		agentdefinitionports.ListAgentDefinitionsByIDsRequest{
+			IDs:        ids,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("read the agents to plan: %w", err)
 	}
@@ -406,10 +409,13 @@ func (s *Service) bySweepKey(
 		return nil, nil
 	}
 
-	existing, err := s.suiteRuns.GetBySweepKey(ctx, agentqualityports.GetAgentSuiteRunBySweepKeyRequest{
-		SweepKey:   sweepKey,
-		TenantInfo: tenant,
-	})
+	existing, err := s.suiteRuns.GetBySweepKey(
+		ctx,
+		agentqualityports.GetAgentSuiteRunBySweepKeyRequest{
+			SweepKey:   sweepKey,
+			TenantInfo: tenant,
+		},
+	)
 	if err == nil {
 		return existing, nil
 	}

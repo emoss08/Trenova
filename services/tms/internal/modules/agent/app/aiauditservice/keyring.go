@@ -3,8 +3,8 @@ package aiauditservice
 import (
 	"sync"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"go.uber.org/zap"
 )

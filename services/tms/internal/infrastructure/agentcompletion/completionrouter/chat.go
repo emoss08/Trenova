@@ -10,10 +10,10 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -180,7 +180,10 @@ func (s *Service) runChat(
 						})
 					}
 					lastErr = attemptErr
-					failures = append(failures, providerFailure(provider, attemptErr, elapsed, streamed.retries+1))
+					failures = append(
+						failures,
+						providerFailure(provider, attemptErr, elapsed, streamed.retries+1),
+					)
 
 					continue
 				}
@@ -201,7 +204,10 @@ func (s *Service) runChat(
 		}
 
 		lastErr = attemptErr
-		failures = append(failures, providerFailure(provider, attemptErr, elapsed, streamed.retries+1))
+		failures = append(
+			failures,
+			providerFailure(provider, attemptErr, elapsed, streamed.retries+1),
+		)
 		s.logger.Warn("chat provider attempt failed, falling through",
 			zap.String("provider", provider.Name),
 			zap.Error(attemptErr),
@@ -265,7 +271,10 @@ func failureDetail(
 	who := vendorName(provider)
 	switch {
 	case status == "Timed out":
-		return fmt.Sprintf("No response after %ds", max(1, int(elapsed.Round(time.Second).Seconds())))
+		return fmt.Sprintf(
+			"No response after %ds",
+			max(1, int(elapsed.Round(time.Second).Seconds())),
+		)
 	case code > 0:
 		return who + " returned " + strconv.Itoa(code) + times(attempts)
 	case status == "Overloaded" || status == "Unavailable":
@@ -535,7 +544,13 @@ func (s *Service) attemptChat(
 		err = s.withKeyFallback(provider, func(apiKey string) error {
 			call.APIKey = apiKey
 			var streamErr error
-			resp, streamed.text, streamErr = s.executeStreamWithRetry(ctx, streamer, call, first, busy)
+			resp, streamed.text, streamErr = s.executeStreamWithRetry(
+				ctx,
+				streamer,
+				call,
+				first,
+				busy,
+			)
 
 			return streamErr
 		})

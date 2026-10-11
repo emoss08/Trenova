@@ -37,56 +37,63 @@ func (r *repository) List(
 	ctx context.Context,
 	req *journalentryports.ListJournalEntriesRequest,
 ) (*pagination.ListResult[*journalentry.JournalEntry], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*journalentry.JournalEntry], error) {
-		limit := req.Filter.Pagination.SafeLimit()
-		entries := make([]*journalentry.JournalEntry, 0, limit)
-		cols := journalentrycol.JournalEntryColumns
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entries).
-			Apply(journalentrycol.JournalEntryApplyTenant(req.Filter.TenantInfo)).
-			Order(cols.AccountingDate.OrderDesc()).
-			Order(cols.EntryNumber.OrderDesc()).
-			Limit(limit).
-			Offset(req.Filter.Pagination.SafeOffset())
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*journalentry.JournalEntry], error) {
+			limit := req.Filter.Pagination.SafeLimit()
+			entries := make([]*journalentry.JournalEntry, 0, limit)
+			cols := journalentrycol.JournalEntryColumns
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entries).
+				Apply(journalentrycol.JournalEntryApplyTenant(req.Filter.TenantInfo)).
+				Order(cols.AccountingDate.OrderDesc()).
+				Order(cols.EntryNumber.OrderDesc()).
+				Limit(limit).
+				Offset(req.Filter.Pagination.SafeOffset())
 
-		if req.Filter.Query != "" {
-			like := "%" + req.Filter.Query + "%"
-			query = query.Where(
-				"("+cols.EntryNumber.ILike()+" OR "+cols.Description.ILike()+
-					" OR "+cols.ReferenceID.ILike()+" OR "+cols.ReferenceType.ILike()+")",
-				like,
-				like,
-				like,
-				like,
-			)
-		}
-		if !req.FiscalYearID.IsNil() {
-			query = query.Where(cols.FiscalYearID.Eq(), req.FiscalYearID)
-		}
-		if !req.FiscalPeriodID.IsNil() {
-			query = query.Where(cols.FiscalPeriodID.Eq(), req.FiscalPeriodID)
-		}
-		if req.ReferenceType != "" {
-			query = query.Where(cols.ReferenceType.Eq(), req.ReferenceType)
-		}
-		if req.Status != "" {
-			query = query.Where(cols.Status.Eq(), req.Status)
-		}
-		if req.AccountingDateStart > 0 {
-			query = query.Where(cols.AccountingDate.Gte(), req.AccountingDateStart)
-		}
-		if req.AccountingDateEnd > 0 {
-			query = query.Where(cols.AccountingDate.Lte(), req.AccountingDateEnd)
-		}
+			if req.Filter.Query != "" {
+				like := "%" + req.Filter.Query + "%"
+				query = query.Where(
+					"("+cols.EntryNumber.ILike()+" OR "+cols.Description.ILike()+
+						" OR "+cols.ReferenceID.ILike()+" OR "+cols.ReferenceType.ILike()+")",
+					like,
+					like,
+					like,
+					like,
+				)
+			}
+			if !req.FiscalYearID.IsNil() {
+				query = query.Where(cols.FiscalYearID.Eq(), req.FiscalYearID)
+			}
+			if !req.FiscalPeriodID.IsNil() {
+				query = query.Where(cols.FiscalPeriodID.Eq(), req.FiscalPeriodID)
+			}
+			if req.ReferenceType != "" {
+				query = query.Where(cols.ReferenceType.Eq(), req.ReferenceType)
+			}
+			if req.Status != "" {
+				query = query.Where(cols.Status.Eq(), req.Status)
+			}
+			if req.AccountingDateStart > 0 {
+				query = query.Where(cols.AccountingDate.Gte(), req.AccountingDateStart)
+			}
+			if req.AccountingDateEnd > 0 {
+				query = query.Where(cols.AccountingDate.Lte(), req.AccountingDateEnd)
+			}
 
-		total, err := query.ScanAndCount(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("list journal entries: %w", err)
-		}
+			total, err := query.ScanAndCount(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list journal entries: %w", err)
+			}
 
-		return &pagination.ListResult[*journalentry.JournalEntry]{Items: entries, Total: total}, nil
-	})
+			return &pagination.ListResult[*journalentry.JournalEntry]{
+				Items: entries,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(

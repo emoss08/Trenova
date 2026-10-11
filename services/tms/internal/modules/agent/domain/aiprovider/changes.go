@@ -14,8 +14,9 @@ import (
 // a version; its prefix, last four and when it was added are.
 var ChangeRules = []editchange.Rule[Provider]{
 	{
-		Field: "name", Label: "Name",
-		Same: func(a, b *Provider) bool { return a.Name == b.Name && a.Description == b.Description },
+		Field: "name",
+		Label: "Name",
+		Same:  func(a, b *Provider) bool { return a.Name == b.Name && a.Description == b.Description },
 	},
 	{
 		Field: "baseUrl", Label: "Connection",

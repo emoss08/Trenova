@@ -61,42 +61,46 @@ func (r *repository) GetCatalogEmbeddings(
 	ctx context.Context,
 	req agentports.GetCatalogEmbeddingsRequest,
 ) ([]*airetrieval.CatalogEmbedding, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*airetrieval.CatalogEmbedding, error) {
-		if err := validateCatalogScope(req.ModelKey, req.Corpus); err != nil {
-			return nil, err
-		}
-		if len(req.Items) > maxCatalogItemsPerCall {
-			return nil, invalid("at most %d catalog items per call", maxCatalogItemsPerCall)
-		}
-		for _, item := range req.Items {
-			if err := validateCatalogRef(item.ItemKey, item.ContentHash); err != nil {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*airetrieval.CatalogEmbedding, error) {
+			if err := validateCatalogScope(req.ModelKey, req.Corpus); err != nil {
 				return nil, err
 			}
-		}
-		if err := r.requireVector(ctx); err != nil {
-			return nil, err
-		}
-		if len(req.Items) == 0 {
-			return []*airetrieval.CatalogEmbedding{}, nil
-		}
+			if len(req.Items) > maxCatalogItemsPerCall {
+				return nil, invalid("at most %d catalog items per call", maxCatalogItemsPerCall)
+			}
+			for _, item := range req.Items {
+				if err := validateCatalogRef(item.ItemKey, item.ContentHash); err != nil {
+					return nil, err
+				}
+			}
+			if err := r.requireVector(ctx); err != nil {
+				return nil, err
+			}
+			if len(req.Items) == 0 {
+				return []*airetrieval.CatalogEmbedding{}, nil
+			}
 
-		cols := airetrievalcol.CatalogEmbeddingColumns
-		entities := make([]*airetrieval.CatalogEmbedding, 0, len(req.Items))
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(catalogScope(req.ModelKey, req.Corpus)).
-			Where(
-				buncolgen.Expr("({0}, {1}) IN ?", cols.ItemKey, cols.ContentHash),
-				bun.Tuple(catalogRefTuples(req.Items)),
-			).
-			OrderExpr(cols.ItemKey.OrderAsc()).
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("read catalog embeddings: %w", err)
-		}
+			cols := airetrievalcol.CatalogEmbeddingColumns
+			entities := make([]*airetrieval.CatalogEmbedding, 0, len(req.Items))
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(catalogScope(req.ModelKey, req.Corpus)).
+				Where(
+					buncolgen.Expr("({0}, {1}) IN ?", cols.ItemKey, cols.ContentHash),
+					bun.Tuple(catalogRefTuples(req.Items)),
+				).
+				OrderExpr(cols.ItemKey.OrderAsc()).
+				Scan(ctx); err != nil {
+				return nil, fmt.Errorf("read catalog embeddings: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) PutCatalogEmbeddings(

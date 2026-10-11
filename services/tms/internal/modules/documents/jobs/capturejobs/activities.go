@@ -3,8 +3,8 @@ package capturejobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.temporal.io/sdk/activity"

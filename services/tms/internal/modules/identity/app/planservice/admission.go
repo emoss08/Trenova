@@ -34,7 +34,11 @@ func Admit(ctx context.Context, plans platformplanports.PlanService, req *Admiss
 
 	planKey := resolved.Key().String()
 	if !resolved.AllowsLogin() && !req.ExpiredOK {
-		return errortypes.NewPlanRestrictionError("", platformplan.ReasonSubscriptionExpired, planKey)
+		return errortypes.NewPlanRestrictionError(
+			"",
+			platformplan.ReasonSubscriptionExpired,
+			planKey,
+		)
 	}
 	if req.APIKey && !resolved.Allows(platformplan.CapabilityAPIKeys) {
 		return errortypes.NewPlanRestrictionError(

@@ -114,7 +114,11 @@ func (r *repository) UpdateControl(
 			r.l.Error("failed to update leave control", zap.Error(err))
 			return nil, fmt.Errorf("update leave control: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(results, "LeaveControl", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"LeaveControl",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -271,7 +275,11 @@ func (r *repository) UpdateCase(
 			r.l.Error("failed to update leave case", zap.Error(err))
 			return nil, fmt.Errorf("update leave case: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(results, "WorkerLeaveCase", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"WorkerLeaveCase",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -319,29 +327,33 @@ func (r *repository) ListEntriesByCaseIDs(
 	ctx context.Context,
 	req *workerports.ListLeaveEntriesByCaseIDsRequest,
 ) (map[pulid.ID][]*worker.WorkerLeaveEntry, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*worker.WorkerLeaveEntry, error) {
-		cols := workercol.WorkerLeaveEntryColumns
-		entities := make([]*worker.WorkerLeaveEntry, 0, len(req.LeaveCaseIDs)*32)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID][]*worker.WorkerLeaveEntry, error) {
+			cols := workercol.WorkerLeaveEntryColumns
+			entities := make([]*worker.WorkerLeaveEntry, 0, len(req.LeaveCaseIDs)*32)
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerLeaveEntryScopeTenant(sq, req.TenantInfo).
-					Where(cols.LeaveCaseID.In(), bun.List(req.LeaveCaseIDs))
-			}).
-			Order(cols.UsedOn.OrderDesc()).
-			Limit(len(req.LeaveCaseIDs) * defaultEntryPageSize).
-			Scan(ctx)
-		if err != nil {
-			r.l.Error("failed to list leave entries by cases", zap.Error(err))
-			return nil, fmt.Errorf("list leave entries by cases: %w", err)
-		}
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return workercol.WorkerLeaveEntryScopeTenant(sq, req.TenantInfo).
+						Where(cols.LeaveCaseID.In(), bun.List(req.LeaveCaseIDs))
+				}).
+				Order(cols.UsedOn.OrderDesc()).
+				Limit(len(req.LeaveCaseIDs) * defaultEntryPageSize).
+				Scan(ctx)
+			if err != nil {
+				r.l.Error("failed to list leave entries by cases", zap.Error(err))
+				return nil, fmt.Errorf("list leave entries by cases: %w", err)
+			}
 
-		return sliceutils.GroupBy(entities, func(e *worker.WorkerLeaveEntry) pulid.ID {
-			return e.LeaveCaseID
-		}), nil
-	})
+			return sliceutils.GroupBy(entities, func(e *worker.WorkerLeaveEntry) pulid.ID {
+				return e.LeaveCaseID
+			}), nil
+		},
+	)
 }
 
 func (r *repository) GetEntryByID(

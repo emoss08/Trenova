@@ -75,15 +75,18 @@ func (m *EntitlementMiddleware) checkFeature(
 ) (*platformcatalogports.FeatureCheckResult, error) {
 	authCtx := authctx.GetAuthContext(c)
 
-	return m.entitlements.CheckFeature(c.Request.Context(), &platformcatalogports.FeatureCheckRequest{
-		OrganizationID: authCtx.OrganizationID,
-		BusinessUnitID: authCtx.BusinessUnitID,
-		PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
-		PrincipalID:    authCtx.PrincipalID,
-		UserID:         authCtx.UserID,
-		APIKeyID:       authCtx.APIKeyID,
-		FeatureKey:     featureKey,
-	})
+	return m.entitlements.CheckFeature(
+		c.Request.Context(),
+		&platformcatalogports.FeatureCheckRequest{
+			OrganizationID: authCtx.OrganizationID,
+			BusinessUnitID: authCtx.BusinessUnitID,
+			PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
+			PrincipalID:    authCtx.PrincipalID,
+			UserID:         authCtx.UserID,
+			APIKeyID:       authCtx.APIKeyID,
+			FeatureKey:     featureKey,
+		},
+	)
 }
 
 func GetFeatureCheckResult(c *gin.Context) *platformcatalogports.FeatureCheckResult {

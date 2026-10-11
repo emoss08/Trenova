@@ -43,49 +43,53 @@ func (r *sourceRepository) GetMessageContext(
 	ctx context.Context,
 	req aifeedbackports.GetAIFeedbackMessageRequest,
 ) (*aifeedbackports.AIFeedbackMessageContext, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aifeedbackports.AIFeedbackMessageContext, error) {
-		dba := r.db.DBForContext(ctx)
-		msgCols := conversationcol.MessageColumns
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*aifeedbackports.AIFeedbackMessageContext, error) {
+			dba := r.db.DBForContext(ctx)
+			msgCols := conversationcol.MessageColumns
 
-		message := new(conversation.Message)
-		if err := dba.NewSelect().
-			Model(message).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return conversationcol.MessageScopeTenant(sq, req.TenantInfo).
-					Where(msgCols.ID.Eq(), req.MessageID)
-			}).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Answer")
-		}
+			message := new(conversation.Message)
+			if err := dba.NewSelect().
+				Model(message).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return conversationcol.MessageScopeTenant(sq, req.TenantInfo).
+						Where(msgCols.ID.Eq(), req.MessageID)
+				}).
+				Scan(ctx); err != nil {
+				return nil, dberror.HandleNotFoundError(err, "Answer")
+			}
 
-		thread := new(conversation.Thread)
-		if err := dba.NewSelect().
-			Model(thread).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return conversationcol.ThreadScopeTenant(sq, req.TenantInfo).
-					Where(conversationcol.ThreadColumns.ID.Eq(), message.ThreadID)
-			}).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Conversation")
-		}
+			thread := new(conversation.Thread)
+			if err := dba.NewSelect().
+				Model(thread).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return conversationcol.ThreadScopeTenant(sq, req.TenantInfo).
+						Where(conversationcol.ThreadColumns.ID.Eq(), message.ThreadID)
+				}).
+				Scan(ctx); err != nil {
+				return nil, dberror.HandleNotFoundError(err, "Conversation")
+			}
 
-		exchange, err := r.exchange(ctx, req, message)
-		if err != nil {
-			return nil, err
-		}
+			exchange, err := r.exchange(ctx, req, message)
+			if err != nil {
+				return nil, err
+			}
 
-		turn, err := r.turn(ctx, req, message)
-		if err != nil {
-			return nil, err
-		}
+			turn, err := r.turn(ctx, req, message)
+			if err != nil {
+				return nil, err
+			}
 
-		return &aifeedbackports.AIFeedbackMessageContext{
-			Message:  message,
-			Thread:   thread,
-			Exchange: exchange,
-			Turn:     turn,
-		}, nil
-	})
+			return &aifeedbackports.AIFeedbackMessageContext{
+				Message:  message,
+				Thread:   thread,
+				Exchange: exchange,
+				Turn:     turn,
+			}, nil
+		},
+	)
 }
 
 func (r *sourceRepository) exchange(

@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalyearservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -198,10 +198,13 @@ func (a *Activities) CheckAndCreateNextFiscalYearActivity(
 
 	result := &AutoCreateFiscalYearResult{}
 
-	currentFY, err := a.fyRepo.GetCurrentFiscalYear(ctx, fiscalyearports.GetCurrentFiscalYearRequest{
-		OrgID: payload.OrganizationID,
-		BuID:  payload.BusinessUnitID,
-	})
+	currentFY, err := a.fyRepo.GetCurrentFiscalYear(
+		ctx,
+		fiscalyearports.GetCurrentFiscalYearRequest{
+			OrgID: payload.OrganizationID,
+			BuID:  payload.BusinessUnitID,
+		},
+	)
 	if err != nil {
 		result.SkipReason = "No current fiscal year found"
 		return result, nil //nolint:nilerr // we want to skip the creation if no current fiscal year is found

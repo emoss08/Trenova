@@ -17,13 +17,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -140,10 +140,13 @@ func (s *Service) readable(
 	agentID pulid.ID,
 	actor *permissionports.RequestActor,
 ) (*agentdefinition.Definition, error) {
-	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         agentID,
-		TenantInfo: tenant,
-	})
+	definition, err := s.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         agentID,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -371,7 +374,10 @@ func (s *Service) prerequisiteReads(definition *agentdefinition.Definition) map[
 	return needed
 }
 
-func checkChange(rows []agentports.AgentCapabilityTool, change agentports.AgentCapabilityToolChange) error {
+func checkChange(
+	rows []agentports.AgentCapabilityTool,
+	change agentports.AgentCapabilityToolChange,
+) error {
 	if !change.Mode.IsValid() {
 		return errortypes.NewValidationError(
 			"tools", errortypes.ErrInvalid, "Mode must be Allowed, AskFirst or Off",
@@ -400,7 +406,10 @@ func checkChange(rows []agentports.AgentCapabilityTool, change agentports.AgentC
 }
 
 // applyUpdate makes the page's changes on a copy of the stored agent.
-func applyUpdate(d *agentdefinition.Definition, req *agentports.UpdateAgentCapabilitiesRequest) error {
+func applyUpdate(
+	d *agentdefinition.Definition,
+	req *agentports.UpdateAgentCapabilitiesRequest,
+) error {
 	if req.Enabled != nil {
 		d.Enabled = *req.Enabled
 	}
@@ -557,10 +566,13 @@ func (s *Service) handoffs(
 		return out, nil
 	}
 
-	delegates, err := s.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
-		IDs:        definition.DelegateIDs,
-		TenantInfo: tenant,
-	})
+	delegates, err := s.definitions.ListByIDs(
+		ctx,
+		agentdefinitionports.ListAgentDefinitionsByIDsRequest{
+			IDs:        definition.DelegateIDs,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

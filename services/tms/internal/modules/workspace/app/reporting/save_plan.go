@@ -1,8 +1,8 @@
 package reporting
 
 import (
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 )
 

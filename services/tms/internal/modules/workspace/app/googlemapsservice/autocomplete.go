@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/google/uuid"
 	"github.com/sourcegraph/conc/pool"
 	"go.uber.org/fx"

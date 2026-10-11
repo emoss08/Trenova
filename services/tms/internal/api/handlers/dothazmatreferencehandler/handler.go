@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/dothazmatreference"
 	"github.com/emoss08/trenova/internal/modules/reference/app/dothazmatreferenceservice"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/dothazmatreference"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/dothazmatreferenceports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -85,9 +85,12 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Get(c.Request.Context(), dothazmatreferenceports.GetDotHazmatReferenceByIDRequest{
-		DotHazmatReferenceID: dotHazmatReferenceID,
-	})
+	entity, err := h.service.Get(
+		c.Request.Context(),
+		dothazmatreferenceports.GetDotHazmatReferenceByIDRequest{
+			DotHazmatReferenceID: dotHazmatReferenceID,
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

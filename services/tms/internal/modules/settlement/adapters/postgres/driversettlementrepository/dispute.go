@@ -103,64 +103,68 @@ func (r *disputeRepository) ListConnection(
 	ctx context.Context,
 	req *driversettlementports.ListSettlementDisputeConnectionRequest,
 ) (*pagination.CursorListResult[*driversettlement.Dispute], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driversettlement.Dispute], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
-		alias := driversettlementcol.DisputeTable.Alias
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*driversettlement.Dispute], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
+			alias := driversettlementcol.DisputeTable.Alias
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*driversettlement.Dispute)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						alias,
-						req.Filter,
-						(*driversettlement.Dispute)(nil),
-					)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*driversettlement.Dispute)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							alias,
+							req.Filter,
+							(*driversettlement.Dispute)(nil),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count settlement disputes", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*driversettlement.Dispute]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*driversettlement.Dispute) *bun.SelectQuery {
+						return dba.NewSelect().
+							Model(entities).
+							ColumnExpr(driversettlementcol.DisputeTable.All()).
+							Relation(driversettlementcol.DisputeRelations.Worker).
+							Relation(driversettlementcol.DisputeRelations.Settlement).
+							Relation(driversettlementcol.DisputeRelations.ResolvedBy)
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							alias,
+							req.Filter,
+							req.Cursor,
+							(*driversettlement.Dispute)(nil),
+						)
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count settlement disputes", zap.Error(err))
+				log.Error("failed to scan settlement disputes", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*driversettlement.Dispute]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*driversettlement.Dispute) *bun.SelectQuery {
-					return dba.NewSelect().
-						Model(entities).
-						ColumnExpr(driversettlementcol.DisputeTable.All()).
-						Relation(driversettlementcol.DisputeRelations.Worker).
-						Relation(driversettlementcol.DisputeRelations.Settlement).
-						Relation(driversettlementcol.DisputeRelations.ResolvedBy)
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return querybuilder.ApplyCursorFilters(
-						sq,
-						alias,
-						req.Filter,
-						req.Cursor,
-						(*driversettlement.Dispute)(nil),
-					)
-				},
-			},
-		)
-		if err != nil {
-			log.Error("failed to scan settlement disputes", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *disputeRepository) ListForWorker(

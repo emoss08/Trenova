@@ -43,29 +43,36 @@ func (r *repository) List(
 	ctx context.Context,
 	req *invoicerunports.ListInvoiceRunsRequest,
 ) (*pagination.ListResult[*invoicerun.InvoiceRun], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*invoicerun.InvoiceRun], error) {
-		entities := make([]*invoicerun.InvoiceRun, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return querybuilder.ApplyFilters(
-					sq,
-					invoiceruncol.InvoiceRunTable.Alias,
-					req.Filter,
-					(*invoicerun.InvoiceRun)(nil),
-				).
-					Limit(req.Filter.Pagination.SafeLimit()).
-					Offset(req.Filter.Pagination.SafeOffset())
-			}).
-			ScanAndCount(ctx)
-		if err != nil {
-			r.l.Error("failed to list invoice runs", zap.Error(err))
-			return nil, fmt.Errorf("list invoice runs: %w", err)
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*invoicerun.InvoiceRun], error) {
+			entities := make([]*invoicerun.InvoiceRun, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return querybuilder.ApplyFilters(
+						sq,
+						invoiceruncol.InvoiceRunTable.Alias,
+						req.Filter,
+						(*invoicerun.InvoiceRun)(nil),
+					).
+						Limit(req.Filter.Pagination.SafeLimit()).
+						Offset(req.Filter.Pagination.SafeOffset())
+				}).
+				ScanAndCount(ctx)
+			if err != nil {
+				r.l.Error("failed to list invoice runs", zap.Error(err))
+				return nil, fmt.Errorf("list invoice runs: %w", err)
+			}
 
-		return &pagination.ListResult[*invoicerun.InvoiceRun]{Items: entities, Total: total}, nil
-	})
+			return &pagination.ListResult[*invoicerun.InvoiceRun]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) ListConnection(
@@ -247,49 +254,53 @@ func (r *repository) ReplaceGroups(
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		grp := invoiceruncol.InvoiceRunGroupColumns
 
-		return r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-			// The item rows cascade from the group delete.
-			if _, err := tx.NewDelete().
-				Model((*invoicerun.InvoiceRunGroup)(nil)).
-				Where(grp.RunID.Eq(), req.RunID).
-				Where(grp.OrganizationID.Eq(), req.TenantInfo.OrgID).
-				Where(grp.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-				Exec(txCtx); err != nil {
-				return fmt.Errorf("clear invoice run groups: %w", err)
-			}
-
-			if len(req.Groups) == 0 {
-				return nil
-			}
-
-			if _, err := tx.NewInsert().Model(&req.Groups).Exec(txCtx); err != nil {
-				return fmt.Errorf("insert invoice run groups: %w", err)
-			}
-
-			items := make([]*invoicerun.InvoiceRunGroupItem, 0, len(req.Groups))
-			for _, group := range req.Groups {
-				for _, item := range group.Items {
-					if item == nil {
-						continue
-					}
-					item.RunID = req.RunID
-					item.GroupID = group.ID
-					item.OrganizationID = group.OrganizationID
-					item.BusinessUnitID = group.BusinessUnitID
-					item.SyncMinorAmount()
-					items = append(items, item)
+		return r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, tx bun.Tx) error {
+				// The item rows cascade from the group delete.
+				if _, err := tx.NewDelete().
+					Model((*invoicerun.InvoiceRunGroup)(nil)).
+					Where(grp.RunID.Eq(), req.RunID).
+					Where(grp.OrganizationID.Eq(), req.TenantInfo.OrgID).
+					Where(grp.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+					Exec(txCtx); err != nil {
+					return fmt.Errorf("clear invoice run groups: %w", err)
 				}
-			}
-			if len(items) == 0 {
+
+				if len(req.Groups) == 0 {
+					return nil
+				}
+
+				if _, err := tx.NewInsert().Model(&req.Groups).Exec(txCtx); err != nil {
+					return fmt.Errorf("insert invoice run groups: %w", err)
+				}
+
+				items := make([]*invoicerun.InvoiceRunGroupItem, 0, len(req.Groups))
+				for _, group := range req.Groups {
+					for _, item := range group.Items {
+						if item == nil {
+							continue
+						}
+						item.RunID = req.RunID
+						item.GroupID = group.ID
+						item.OrganizationID = group.OrganizationID
+						item.BusinessUnitID = group.BusinessUnitID
+						item.SyncMinorAmount()
+						items = append(items, item)
+					}
+				}
+				if len(items) == 0 {
+					return nil
+				}
+
+				if _, err := tx.NewInsert().Model(&items).Exec(txCtx); err != nil {
+					return fmt.Errorf("insert invoice run group items: %w", err)
+				}
+
 				return nil
-			}
-
-			if _, err := tx.NewInsert().Model(&items).Exec(txCtx); err != nil {
-				return fmt.Errorf("insert invoice run group items: %w", err)
-			}
-
-			return nil
-		})
+			},
+		)
 	})
 }
 
@@ -317,7 +328,11 @@ func (r *repository) UpdateGroup(
 			return nil, fmt.Errorf("update invoice run group: %w", err)
 		}
 
-		if err = dberror.CheckRowsAffected(result, "Invoice run group", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			result,
+			"Invoice run group",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 

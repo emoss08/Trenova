@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -75,13 +75,16 @@ func (s *Service) systemAgent(
 	ctx context.Context,
 	req agentdefinitionports.EnsureSystemAgentRequest,
 ) (*agentdefinition.Definition, error) {
-	found, err := s.repo.GetBySystemKey(ctx, agentdefinitionports.GetAgentDefinitionBySystemKeyRequest{
-		SystemKey: req.SystemKey,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: req.TenantInfo.OrgID,
-			BuID:  req.TenantInfo.BuID,
+	found, err := s.repo.GetBySystemKey(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionBySystemKeyRequest{
+			SystemKey: req.SystemKey,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: req.TenantInfo.OrgID,
+				BuID:  req.TenantInfo.BuID,
+			},
 		},
-	})
+	)
 	if err == nil {
 		return found, nil
 	}

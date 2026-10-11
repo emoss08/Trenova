@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/workerdrugalcoholservice"
 	"github.com/emoss08/trenova/internal/core/services/workersafetyservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -201,8 +201,11 @@ func newListWorkerSafetyEventsTool(
 					OutOfService:     event.OutOfService,
 					ShipmentID:       pulidString(event.ShipmentID),
 					Resolution:       gatedText(gate, wfFieldResolution, event.Resolution),
-					ClosedAt:         expectedDate(typeutils.ValueOrZero(event.ClosedAt), absentNotClosed),
-					Violations:       byEvent[event.ID],
+					ClosedAt: expectedDate(
+						typeutils.ValueOrZero(event.ClosedAt),
+						absentNotClosed,
+					),
+					Violations: byEvent[event.ID],
 				})
 			}
 			if access.mayRead(ctx, params, permission.ResourceWorkerRecognition) {
@@ -283,15 +286,18 @@ func newListDOTTestsTool(
 			rows := make([]dotTestRow, 0, len(found))
 			for _, test := range found {
 				rows = append(rows, dotTestRow{
-					ID:             test.ID.String(),
-					WorkerID:       test.WorkerID.String(),
-					Worker:         workerName(test.Worker),
-					TestType:       string(test.TestType),
-					Substance:      string(test.Substance),
-					Status:         string(test.Status),
-					Result:         string(test.Result),
-					IsDOT:          test.IsDOT,
-					ScheduledAt:    expectedDate(typeutils.ValueOrZero(test.ScheduledAt), absentNotScheduled),
+					ID:        test.ID.String(),
+					WorkerID:  test.WorkerID.String(),
+					Worker:    workerName(test.Worker),
+					TestType:  string(test.TestType),
+					Substance: string(test.Substance),
+					Status:    string(test.Status),
+					Result:    string(test.Result),
+					IsDOT:     test.IsDOT,
+					ScheduledAt: expectedDate(
+						typeutils.ValueOrZero(test.ScheduledAt),
+						absentNotScheduled,
+					),
 					CollectedAt:    pointerDate(test.CollectedAt),
 					CollectionSite: test.CollectionSite,
 					Reason:         gatedText(gate, wfFieldReason, test.Reason),
@@ -487,14 +493,17 @@ func newGetDOTRandomDrawTool(
 			}
 			for _, entry := range entries {
 				detail.Selections = append(detail.Selections, randomSelectionRow{
-					ID:           entry.ID.String(),
-					WorkerID:     entry.WorkerID.String(),
-					Worker:       workerName(entry.Worker),
-					Substance:    string(entry.Substance),
-					Rank:         entry.Rank,
-					Status:       string(entry.Status),
-					NotifiedAt:   pointerDate(entry.NotifiedAt),
-					CompletedAt:  expectedDate(typeutils.ValueOrZero(entry.CompletedAt), absentNotCompleted),
+					ID:         entry.ID.String(),
+					WorkerID:   entry.WorkerID.String(),
+					Worker:     workerName(entry.Worker),
+					Substance:  string(entry.Substance),
+					Rank:       entry.Rank,
+					Status:     string(entry.Status),
+					NotifiedAt: pointerDate(entry.NotifiedAt),
+					CompletedAt: expectedDate(
+						typeutils.ValueOrZero(entry.CompletedAt),
+						absentNotCompleted,
+					),
 					TestID:       pulidString(entry.TestID),
 					ExcuseReason: entry.ExcuseReason,
 				})
@@ -546,7 +555,9 @@ func openSafetyEvents(
 		return nil, err
 	}
 
-	record := &workerSafetyRecord{Events: make([]safetyEventRow, 0, min(len(events), maxOpenEvents))}
+	record := &workerSafetyRecord{
+		Events: make([]safetyEventRow, 0, min(len(events), maxOpenEvents)),
+	}
 	for idx, event := range events {
 		if idx == maxOpenEvents {
 			record.Note = fmt.Sprintf("Only the %d newest open events are listed; there are "+

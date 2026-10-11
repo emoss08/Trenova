@@ -2,9 +2,9 @@ package agenttoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 )
 
 func classifyCommentVisibility(params agentports.ToolExecuteParams) agentports.CallPolicy {

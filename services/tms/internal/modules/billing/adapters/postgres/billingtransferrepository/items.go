@@ -61,28 +61,32 @@ func (r *repository) SeedItems(
 		}
 
 		inserted := 0
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-			for start := 0; start < len(rows); start += seedChunkSize {
-				end := min(start+seedChunkSize, len(rows))
+		err := r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, tx bun.Tx) error {
+				for start := 0; start < len(rows); start += seedChunkSize {
+					end := min(start+seedChunkSize, len(rows))
 
-				chunk := rows[start:end]
-				result, execErr := tx.NewInsert().
-					Model(&chunk).
-					On("CONFLICT DO NOTHING").
-					Exec(txCtx)
-				if execErr != nil {
-					return execErr
+					chunk := rows[start:end]
+					result, execErr := tx.NewInsert().
+						Model(&chunk).
+						On("CONFLICT DO NOTHING").
+						Exec(txCtx)
+					if execErr != nil {
+						return execErr
+					}
+
+					affected, raErr := result.RowsAffected()
+					if raErr != nil {
+						return raErr
+					}
+					inserted += int(affected)
 				}
 
-				affected, raErr := result.RowsAffected()
-				if raErr != nil {
-					return raErr
-				}
-				inserted += int(affected)
-			}
-
-			return nil
-		})
+				return nil
+			},
+		)
 		if err != nil {
 			r.l.Error("failed to seed billing transfer run items", zap.Error(err))
 			return 0, err
@@ -102,93 +106,101 @@ func (r *repository) SeedRetryItems(
 	ctx context.Context,
 	req *billingtransferports.SeedBillingTransferRetryItemsRequest,
 ) (*billingtransferports.SeedBillingTransferRetryItemsResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingtransferports.SeedBillingTransferRetryItemsResult, error) {
-		cols := billingtransfercol.BillingTransferRunItemColumns
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*billingtransferports.SeedBillingTransferRetryItemsResult, error) {
+			cols := billingtransfercol.BillingTransferRunItemColumns
 
-		source := make([]*billingtransfer.BillingTransferRunItem, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&source).
-			Apply(billingtransfercol.BillingTransferRunItemApplyTenant(req.TenantInfo)).
-			Where(cols.RunID.Eq(), req.SourceRunID).
-			Order(cols.Sequence.OrderAsc()).
-			Scan(ctx)
-		if err != nil {
-			r.l.Error("failed to read source run items for retry", zap.Error(err))
-			return nil, err
-		}
-
-		out := &billingtransferports.SeedBillingTransferRetryItemsResult{}
-		rows := make([]*billingtransfer.BillingTransferRunItem, 0, len(source))
-		for i, item := range source {
-			row := &billingtransfer.BillingTransferRunItem{
-				BusinessUnitID:      req.TenantInfo.BuID,
-				OrganizationID:      req.TenantInfo.OrgID,
-				RunID:               req.RunID,
-				ShipmentID:          item.ShipmentID,
-				Sequence:            i,
-				ProNumber:           item.ProNumber,
-				MissingRequirements: []billingtransfer.MissingRequirement{},
-				ValidationFailures:  []billingtransfer.ValidationFailure{},
+			source := make([]*billingtransfer.BillingTransferRunItem, 0)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&source).
+				Apply(billingtransfercol.BillingTransferRunItemApplyTenant(req.TenantInfo)).
+				Where(cols.RunID.Eq(), req.SourceRunID).
+				Order(cols.Sequence.OrderAsc()).
+				Scan(ctx)
+			if err != nil {
+				r.l.Error("failed to read source run items for retry", zap.Error(err))
+				return nil, err
 			}
 
-			if retryableItem(item) {
-				row.Status = billingtransfer.ItemStatusPending
-				out.PendingCount++
-			} else {
-				row.Status = item.Status
-				row.FailureCode = item.FailureCode
-				row.ErrorMessage = item.ErrorMessage
-				row.MarkedReadyToInvoice = item.MarkedReadyToInvoice
-				row.BillingQueueItemID = item.BillingQueueItemID
-				row.BillingQueueNumber = item.BillingQueueNumber
-				row.BillingQueueStatus = item.BillingQueueStatus
-				row.MissingRequirements = item.MissingRequirements
-				row.ValidationFailures = item.ValidationFailures
-				row.ProcessedAt = item.ProcessedAt
+			out := &billingtransferports.SeedBillingTransferRetryItemsResult{}
+			rows := make([]*billingtransfer.BillingTransferRunItem, 0, len(source))
+			for i, item := range source {
+				row := &billingtransfer.BillingTransferRunItem{
+					BusinessUnitID:      req.TenantInfo.BuID,
+					OrganizationID:      req.TenantInfo.OrgID,
+					RunID:               req.RunID,
+					ShipmentID:          item.ShipmentID,
+					Sequence:            i,
+					ProNumber:           item.ProNumber,
+					MissingRequirements: []billingtransfer.MissingRequirement{},
+					ValidationFailures:  []billingtransfer.ValidationFailure{},
+				}
 
-				switch item.Status {
-				case billingtransfer.ItemStatusTransferred:
-					out.TransferredCount++
-				case billingtransfer.ItemStatusNotTransferred:
-					out.NotTransferredCount++
-				case billingtransfer.ItemStatusPending, billingtransfer.ItemStatusSkipped:
+				if retryableItem(item) {
+					row.Status = billingtransfer.ItemStatusPending
+					out.PendingCount++
+				} else {
+					row.Status = item.Status
+					row.FailureCode = item.FailureCode
+					row.ErrorMessage = item.ErrorMessage
+					row.MarkedReadyToInvoice = item.MarkedReadyToInvoice
+					row.BillingQueueItemID = item.BillingQueueItemID
+					row.BillingQueueNumber = item.BillingQueueNumber
+					row.BillingQueueStatus = item.BillingQueueStatus
+					row.MissingRequirements = item.MissingRequirements
+					row.ValidationFailures = item.ValidationFailures
+					row.ProcessedAt = item.ProcessedAt
+
+					switch item.Status {
+					case billingtransfer.ItemStatusTransferred:
+						out.TransferredCount++
+					case billingtransfer.ItemStatusNotTransferred:
+						out.NotTransferredCount++
+					case billingtransfer.ItemStatusPending, billingtransfer.ItemStatusSkipped:
+					}
+					if item.MarkedReadyToInvoice {
+						out.MarkedReadyToInvoiceCount++
+					}
 				}
-				if item.MarkedReadyToInvoice {
-					out.MarkedReadyToInvoiceCount++
-				}
+
+				rows = append(rows, row)
 			}
 
-			rows = append(rows, row)
-		}
+			out.TotalCount = len(rows)
+			if len(rows) == 0 {
+				return out, nil
+			}
 
-		out.TotalCount = len(rows)
-		if len(rows) == 0 {
+			err = r.db.WithTx(
+				ctx,
+				kernelports.TxOptions{},
+				func(txCtx context.Context, tx bun.Tx) error {
+					for start := 0; start < len(rows); start += seedChunkSize {
+						end := min(start+seedChunkSize, len(rows))
+
+						chunk := rows[start:end]
+						if _, execErr := tx.NewInsert().
+							Model(&chunk).
+							On("CONFLICT DO NOTHING").
+							Exec(txCtx); execErr != nil {
+							return execErr
+						}
+					}
+
+					return nil
+				},
+			)
+			if err != nil {
+				r.l.Error("failed to seed retry billing transfer run items", zap.Error(err))
+				return nil, err
+			}
+
 			return out, nil
-		}
-
-		err = r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-			for start := 0; start < len(rows); start += seedChunkSize {
-				end := min(start+seedChunkSize, len(rows))
-
-				chunk := rows[start:end]
-				if _, execErr := tx.NewInsert().
-					Model(&chunk).
-					On("CONFLICT DO NOTHING").
-					Exec(txCtx); execErr != nil {
-					return execErr
-				}
-			}
-
-			return nil
-		})
-		if err != nil {
-			r.l.Error("failed to seed retry billing transfer run items", zap.Error(err))
-			return nil, err
-		}
-
-		return out, nil
-	})
+		},
+	)
 }
 
 // retryableItem reports whether a second attempt could answer differently. A
@@ -306,37 +318,48 @@ func (r *repository) RecordItemOutcomes(
 	ctx context.Context,
 	req *billingtransferports.RecordBillingTransferOutcomesRequest,
 ) (*billingtransferports.BillingTransferRunProgress, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingtransferports.BillingTransferRunProgress, error) {
-		cols := billingtransfercol.BillingTransferRunItemColumns
-		now := timeutils.NowUnix()
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*billingtransferports.BillingTransferRunProgress, error) {
+			cols := billingtransfercol.BillingTransferRunItemColumns
+			now := timeutils.NowUnix()
 
-		progress := new(billingtransferports.BillingTransferRunProgress)
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-			for _, outcome := range req.Outcomes {
-				row := outcomeRow(req.TenantInfo, req.RunID, outcome, now)
+			progress := new(billingtransferports.BillingTransferRunProgress)
+			err := r.db.WithTx(
+				ctx,
+				kernelports.TxOptions{},
+				func(txCtx context.Context, tx bun.Tx) error {
+					for _, outcome := range req.Outcomes {
+						row := outcomeRow(req.TenantInfo, req.RunID, outcome, now)
 
-				if _, execErr := tx.NewUpdate().
-					Model(row).
-					Column(outcomeColumns...).
-					Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-						return billingtransfercol.BillingTransferRunItemScopeTenantUpdate(uq, req.TenantInfo)
-					}).
-					Where(cols.RunID.Eq(), req.RunID).
-					Where(cols.ShipmentID.Eq(), outcome.ShipmentID).
-					Exec(txCtx); execErr != nil {
-					return execErr
-				}
+						if _, execErr := tx.NewUpdate().
+							Model(row).
+							Column(outcomeColumns...).
+							Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+								return billingtransfercol.BillingTransferRunItemScopeTenantUpdate(
+									uq,
+									req.TenantInfo,
+								)
+							}).
+							Where(cols.RunID.Eq(), req.RunID).
+							Where(cols.ShipmentID.Eq(), outcome.ShipmentID).
+							Exec(txCtx); execErr != nil {
+							return execErr
+						}
+					}
+
+					return r.refreshRunCounters(txCtx, tx, req.TenantInfo, req.RunID, now, progress)
+				},
+			)
+			if err != nil {
+				r.l.Error("failed to record billing transfer outcomes", zap.Error(err))
+				return nil, err
 			}
 
-			return r.refreshRunCounters(txCtx, tx, req.TenantInfo, req.RunID, now, progress)
-		})
-		if err != nil {
-			r.l.Error("failed to record billing transfer outcomes", zap.Error(err))
-			return nil, err
-		}
-
-		return progress, nil
-	})
+			return progress, nil
+		},
+	)
 }
 
 // Finalize closes the run out. Whatever is still Pending becomes Skipped —
@@ -346,60 +369,78 @@ func (r *repository) Finalize(
 	ctx context.Context,
 	req *billingtransferports.FinalizeBillingTransferRunRequest,
 ) (*billingtransfer.BillingTransferRun, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingtransfer.BillingTransferRun, error) {
-		itemCols := billingtransfercol.BillingTransferRunItemColumns
-		runCols := billingtransfercol.BillingTransferRunColumns
-		now := timeutils.NowUnix()
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*billingtransfer.BillingTransferRun, error) {
+			itemCols := billingtransfercol.BillingTransferRunItemColumns
+			runCols := billingtransfercol.BillingTransferRunColumns
+			now := timeutils.NowUnix()
 
-		entity := new(billingtransfer.BillingTransferRun)
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-			if _, execErr := tx.NewUpdate().
-				Model((*billingtransfer.BillingTransferRunItem)(nil)).
-				Set(itemCols.Status.Set(), billingtransfer.ItemStatusSkipped).
-				Set(itemCols.ProcessedAt.Set(), now).
-				Set(itemCols.UpdatedAt.Set(), now).
-				Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return billingtransfercol.BillingTransferRunItemScopeTenantUpdate(uq, req.TenantInfo)
-				}).
-				Where(itemCols.RunID.Eq(), req.RunID).
-				Where(itemCols.Status.Eq(), billingtransfer.ItemStatusPending).
-				Exec(txCtx); execErr != nil {
-				return execErr
+			entity := new(billingtransfer.BillingTransferRun)
+			err := r.db.WithTx(
+				ctx,
+				kernelports.TxOptions{},
+				func(txCtx context.Context, tx bun.Tx) error {
+					if _, execErr := tx.NewUpdate().
+						Model((*billingtransfer.BillingTransferRunItem)(nil)).
+						Set(itemCols.Status.Set(), billingtransfer.ItemStatusSkipped).
+						Set(itemCols.ProcessedAt.Set(), now).
+						Set(itemCols.UpdatedAt.Set(), now).
+						Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+							return billingtransfercol.BillingTransferRunItemScopeTenantUpdate(
+								uq,
+								req.TenantInfo,
+							)
+						}).
+						Where(itemCols.RunID.Eq(), req.RunID).
+						Where(itemCols.Status.Eq(), billingtransfer.ItemStatusPending).
+						Exec(txCtx); execErr != nil {
+						return execErr
+					}
+
+					progress := new(billingtransferports.BillingTransferRunProgress)
+					if err := r.refreshRunCounters(
+						txCtx, tx, req.TenantInfo, req.RunID, now, progress,
+					); err != nil {
+						return err
+					}
+
+					result, execErr := tx.NewUpdate().
+						Model(entity).
+						Set(runCols.Status.Set(), req.Status).
+						Set(runCols.FailureMessage.Set(), req.FailureMessage).
+						Set(runCols.CompletedAt.SetExpr("COALESCE({}, ?)"), now).
+						Set(runCols.UpdatedAt.Set(), now).
+						Set(runCols.Version.Inc(1)).
+						Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+							return billingtransfercol.BillingTransferRunScopeTenantUpdate(
+								uq,
+								req.TenantInfo,
+							)
+						}).
+						Where(runCols.ID.Eq(), req.RunID).
+						Returning("*").
+						Exec(txCtx)
+					if execErr != nil {
+						return execErr
+					}
+
+					return dberror.CheckRowsAffected(
+						result,
+						"BillingTransferRun",
+						req.RunID.String(),
+					)
+				},
+			)
+			if err != nil {
+				r.l.Error("failed to finalize billing transfer run", zap.Error(err))
+				return nil, err
 			}
 
-			progress := new(billingtransferports.BillingTransferRunProgress)
-			if err := r.refreshRunCounters(
-				txCtx, tx, req.TenantInfo, req.RunID, now, progress,
-			); err != nil {
-				return err
-			}
-
-			result, execErr := tx.NewUpdate().
-				Model(entity).
-				Set(runCols.Status.Set(), req.Status).
-				Set(runCols.FailureMessage.Set(), req.FailureMessage).
-				Set(runCols.CompletedAt.SetExpr("COALESCE({}, ?)"), now).
-				Set(runCols.UpdatedAt.Set(), now).
-				Set(runCols.Version.Inc(1)).
-				Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return billingtransfercol.BillingTransferRunScopeTenantUpdate(uq, req.TenantInfo)
-				}).
-				Where(runCols.ID.Eq(), req.RunID).
-				Returning("*").
-				Exec(txCtx)
-			if execErr != nil {
-				return execErr
-			}
-
-			return dberror.CheckRowsAffected(result, "BillingTransferRun", req.RunID.String())
-		})
-		if err != nil {
-			r.l.Error("failed to finalize billing transfer run", zap.Error(err))
-			return nil, err
-		}
-
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 // refreshRunCounters recomputes every counter from the item rows and writes them

@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -372,7 +372,10 @@ func readRunExclusions(params map[string]any) ([]invoicerunports.ItemExclusion, 
 		if reasonErr != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", paramExclude, idx, reasonErr)
 		}
-		exclusions = append(exclusions, invoicerunports.ItemExclusion{ItemID: itemID, Reason: reason})
+		exclusions = append(
+			exclusions,
+			invoicerunports.ItemExclusion{ItemID: itemID, Reason: reason},
+		)
 	}
 
 	return exclusions, nil
@@ -408,7 +411,10 @@ func commitRunRequest(
 		return nil, err
 	}
 
-	return &invoicerunports.CommitInvoiceRunRequest{TenantInfo: tenantFrom(*params), RunID: runID}, nil
+	return &invoicerunports.CommitInvoiceRunRequest{
+		TenantInfo: tenantFrom(*params),
+		RunID:      runID,
+	}, nil
 }
 
 func newCommitInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {

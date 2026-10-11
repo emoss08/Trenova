@@ -1,8 +1,8 @@
 package retrievaljobs
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/shopspring/decimal"
 )

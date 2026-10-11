@@ -432,29 +432,30 @@ func (r *repository) DeleteThread(
 		Context) error {
 		cols := conversationcol.ThreadColumns
 
-		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-			if _, txErr := tx.NewDelete().
-				Model((*conversation.Message)(nil)).
-				Where(conversationcol.MessageColumns.ThreadID.Eq(), req.ID).
-				Where(conversationcol.MessageColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
-				Where(conversationcol.MessageColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-				Exec(txCtx); txErr != nil {
-				return txErr
-			}
+		err := r.db.DBForContext(ctx).
+			RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
+				if _, txErr := tx.NewDelete().
+					Model((*conversation.Message)(nil)).
+					Where(conversationcol.MessageColumns.ThreadID.Eq(), req.ID).
+					Where(conversationcol.MessageColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
+					Where(conversationcol.MessageColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+					Exec(txCtx); txErr != nil {
+					return txErr
+				}
 
-			res, txErr := tx.NewDelete().
-				Model((*conversation.Thread)(nil)).
-				Where(cols.ID.Eq(), req.ID).
-				Where(cols.UserID.Eq(), req.UserID).
-				Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-				Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-				Exec(txCtx)
-			if txErr != nil {
-				return txErr
-			}
+				res, txErr := tx.NewDelete().
+					Model((*conversation.Thread)(nil)).
+					Where(cols.ID.Eq(), req.ID).
+					Where(cols.UserID.Eq(), req.UserID).
+					Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+					Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+					Exec(txCtx)
+				if txErr != nil {
+					return txErr
+				}
 
-			return dberror.CheckRowsAffected(res, "Thread", req.ID.String())
-		})
+				return dberror.CheckRowsAffected(res, "Thread", req.ID.String())
+			})
 		if err != nil {
 			return err
 		}
@@ -522,7 +523,9 @@ func (r *repository) ListMessages(
 		if req.Limit > 0 {
 			// Taking the newest N and reversing keeps the most recent context rather
 			// than the oldest, which is what a long conversation needs.
-			if err := query.Order(cols.Sequence.OrderDesc()).Limit(req.Limit).Scan(ctx); err != nil {
+			if err := query.Order(cols.Sequence.OrderDesc()).
+				Limit(req.Limit).
+				Scan(ctx); err != nil {
 				return nil, err
 			}
 			reverse(messages)
@@ -586,53 +589,54 @@ func (r *repository) AppendTurn(
 
 		saved := make([]conversation.Message, 0, len(req.Messages))
 
-		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-			cols := conversationcol.MessageColumns
+		err := r.db.DBForContext(ctx).
+			RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
+				cols := conversationcol.MessageColumns
 
-			var maxSequence int
-			err := tx.NewSelect().
-				Model((*conversation.Message)(nil)).
-				ColumnExpr("COALESCE(MAX(?), -1)", bun.Ident(cols.Sequence.Bare())).
-				Where(cols.ThreadID.Eq(), req.ThreadID).
-				Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-				Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-				Scan(txCtx, &maxSequence)
-			if err != nil {
-				return fmt.Errorf("read current sequence: %w", err)
-			}
+				var maxSequence int
+				err := tx.NewSelect().
+					Model((*conversation.Message)(nil)).
+					ColumnExpr("COALESCE(MAX(?), -1)", bun.Ident(cols.Sequence.Bare())).
+					Where(cols.ThreadID.Eq(), req.ThreadID).
+					Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+					Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+					Scan(txCtx, &maxSequence)
+				if err != nil {
+					return fmt.Errorf("read current sequence: %w", err)
+				}
 
-			now := timeutils.NowUnix()
-			batch := make([]conversation.Message, 0, len(req.Messages))
-			for idx := range req.Messages {
-				msg := req.Messages[idx]
-				msg.ThreadID = req.ThreadID
-				msg.OrganizationID = req.TenantInfo.OrgID
-				msg.BusinessUnitID = req.TenantInfo.BuID
-				msg.Sequence = maxSequence + 1 + idx
-				batch = append(batch, msg)
-			}
-			conversation.StampUnstamped(batch, now)
+				now := timeutils.NowUnix()
+				batch := make([]conversation.Message, 0, len(req.Messages))
+				for idx := range req.Messages {
+					msg := req.Messages[idx]
+					msg.ThreadID = req.ThreadID
+					msg.OrganizationID = req.TenantInfo.OrgID
+					msg.BusinessUnitID = req.TenantInfo.BuID
+					msg.Sequence = maxSequence + 1 + idx
+					batch = append(batch, msg)
+				}
+				conversation.StampUnstamped(batch, now)
 
-			if _, err = tx.NewInsert().Model(&batch).Returning("*").Exec(txCtx); err != nil {
-				return fmt.Errorf("insert turn: %w", err)
-			}
+				if _, err = tx.NewInsert().Model(&batch).Returning("*").Exec(txCtx); err != nil {
+					return fmt.Errorf("insert turn: %w", err)
+				}
 
-			threadCols := conversationcol.ThreadColumns
-			if _, err = tx.NewUpdate().
-				Model((*conversation.Thread)(nil)).
-				Where(threadCols.ID.Eq(), req.ThreadID).
-				Where(threadCols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-				Where(threadCols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-				Set(threadCols.LastMessageAt.Set(), now).
-				Set(threadCols.UpdatedAt.Set(), now).
-				Exec(txCtx); err != nil {
-				return fmt.Errorf("touch thread: %w", err)
-			}
+				threadCols := conversationcol.ThreadColumns
+				if _, err = tx.NewUpdate().
+					Model((*conversation.Thread)(nil)).
+					Where(threadCols.ID.Eq(), req.ThreadID).
+					Where(threadCols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+					Where(threadCols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+					Set(threadCols.LastMessageAt.Set(), now).
+					Set(threadCols.UpdatedAt.Set(), now).
+					Exec(txCtx); err != nil {
+					return fmt.Errorf("touch thread: %w", err)
+				}
 
-			saved = batch
+				saved = batch
 
-			return nil
-		})
+				return nil
+			})
 		if err != nil {
 			return nil, err
 		}
@@ -662,52 +666,53 @@ func (r *repository) DeleteStaleThreads(
 		cols := conversationcol.ThreadColumns
 
 		deleted := 0
-		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-			var stale []conversation.Thread
-			q := tx.NewSelect().
-				Model(&stale).
-				Column(cols.ID.Bare(), cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
-				Where(cols.Origin.Eq(), req.Origin).
-				Where(cols.LastMessageAt.Lt(), req.Before).
-				Where(cols.CreatedAt.Lt(), req.Before)
-			if req.SubjectlessOnly {
-				q = q.Where(cols.SubjectID.IsNull())
-			}
-			if err := q.Order(cols.LastMessageAt.OrderAsc()).
-				Limit(limit).
-				Scan(txCtx); err != nil {
-				return err
-			}
-			if len(stale) == 0 {
+		err := r.db.DBForContext(ctx).
+			RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
+				var stale []conversation.Thread
+				q := tx.NewSelect().
+					Model(&stale).
+					Column(cols.ID.Bare(), cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
+					Where(cols.Origin.Eq(), req.Origin).
+					Where(cols.LastMessageAt.Lt(), req.Before).
+					Where(cols.CreatedAt.Lt(), req.Before)
+				if req.SubjectlessOnly {
+					q = q.Where(cols.SubjectID.IsNull())
+				}
+				if err := q.Order(cols.LastMessageAt.OrderAsc()).
+					Limit(limit).
+					Scan(txCtx); err != nil {
+					return err
+				}
+				if len(stale) == 0 {
+					return nil
+				}
+
+				for i := range stale {
+					thread := &stale[i]
+					if _, err := tx.NewDelete().
+						Model((*conversation.Message)(nil)).
+						Where(conversationcol.MessageColumns.ThreadID.Eq(), thread.ID).
+						Where(conversationcol.MessageColumns.OrganizationID.Eq(), thread.OrganizationID).
+						Where(conversationcol.MessageColumns.BusinessUnitID.Eq(), thread.BusinessUnitID).
+						Exec(txCtx); err != nil {
+						return err
+					}
+					res, err := tx.NewDelete().
+						Model((*conversation.Thread)(nil)).
+						Where(cols.ID.Eq(), thread.ID).
+						Where(cols.OrganizationID.Eq(), thread.OrganizationID).
+						Where(cols.BusinessUnitID.Eq(), thread.BusinessUnitID).
+						Exec(txCtx)
+					if err != nil {
+						return err
+					}
+					if affected, _ := res.RowsAffected(); affected > 0 {
+						deleted++
+					}
+				}
+
 				return nil
-			}
-
-			for i := range stale {
-				thread := &stale[i]
-				if _, err := tx.NewDelete().
-					Model((*conversation.Message)(nil)).
-					Where(conversationcol.MessageColumns.ThreadID.Eq(), thread.ID).
-					Where(conversationcol.MessageColumns.OrganizationID.Eq(), thread.OrganizationID).
-					Where(conversationcol.MessageColumns.BusinessUnitID.Eq(), thread.BusinessUnitID).
-					Exec(txCtx); err != nil {
-					return err
-				}
-				res, err := tx.NewDelete().
-					Model((*conversation.Thread)(nil)).
-					Where(cols.ID.Eq(), thread.ID).
-					Where(cols.OrganizationID.Eq(), thread.OrganizationID).
-					Where(cols.BusinessUnitID.Eq(), thread.BusinessUnitID).
-					Exec(txCtx)
-				if err != nil {
-					return err
-				}
-				if affected, _ := res.RowsAffected(); affected > 0 {
-					deleted++
-				}
-			}
-
-			return nil
-		})
+			})
 		if err != nil {
 			r.l.Error("failed to delete stale threads",
 				zap.String("origin", string(req.Origin)),

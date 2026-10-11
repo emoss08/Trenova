@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"

@@ -8,14 +8,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolsimulation"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -188,7 +188,12 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		call.Arguments = resolved
 	}
 	p.call = call
-	if outcome, refused := oversizedChange(req, call.Name, tool.ParamSchema(), call.Arguments); refused {
+	if outcome, refused := oversizedChange(
+		req,
+		call.Name,
+		tool.ParamSchema(),
+		call.Arguments,
+	); refused {
 		return outcome
 	}
 	tierParams := runToolParams(req, call.ID, call.Arguments)
@@ -728,7 +733,10 @@ func heldReason(heldBy []string, egress agent.EgressClass) string {
 		case agenttoolpolicy.HeldByToolTier:
 			reasons = append(reasons, "this tool is set to propose rather than run")
 		case agenttoolpolicy.HeldByAgentCeiling:
-			reasons = append(reasons, "this agent's autonomy ceiling does not let it run writes on its own")
+			reasons = append(
+				reasons,
+				"this agent's autonomy ceiling does not let it run writes on its own",
+			)
 		case agenttoolpolicy.HeldByToolMax:
 			reasons = append(reasons, "this change is always a person's decision")
 		case agenttoolpolicy.HeldByEgressClass:
@@ -907,9 +915,11 @@ func (s *Service) ruled(
 
 	rules, err := s.rules.For(ctx, req.Actor.TenantInfo())
 	if err != nil {
-		s.logger.Error("the organization's tool rules could not be read; holding the tool to a proposal",
+		s.logger.Error(
+			"the organization's tool rules could not be read; holding the tool to a proposal",
 			zap.String("tool", policy.Name),
-			zap.Error(err))
+			zap.Error(err),
+		)
 		return agenttoolpolicy.ApplyOverride(policy, &agent.ToolRuleOverride{
 			ToolName: policy.Name,
 			MaxTier:  agent.TierPropose,

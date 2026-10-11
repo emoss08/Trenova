@@ -385,9 +385,12 @@ func tenderStops(payload *edi.LoadTenderPayload) []tenderStopRow {
 				State:       stop.LocationStateCode,
 				PostalCode:  stop.LocationPostalCode,
 				WindowOpens: recordedDate(stop.ScheduledWindowStart),
-				WindowEnds:  expectedDate(typeutils.ValueOrZero(stop.ScheduledWindowEnd), absentNoWindowEnd),
-				Pieces:      stop.Pieces,
-				Weight:      stop.Weight,
+				WindowEnds: expectedDate(
+					typeutils.ValueOrZero(stop.ScheduledWindowEnd),
+					absentNoWindowEnd,
+				),
+				Pieces: stop.Pieces,
+				Weight: stop.Weight,
 			})
 		}
 	}
@@ -568,9 +571,12 @@ func (t *listEDIMessagesTool) Query(
 			DeliveryStatus:   string(message.DeliveryStatus),
 			DeliveryAttempts: message.DeliveryAttempts,
 			DeliveryError:    message.DeliveryLastError,
-			SentAt:           expectedDate(typeutils.ValueOrZero(message.DeliverySentAt), "not sent"),
-			InterchangeCtrl:  message.InterchangeControlNumber,
-			RawPurged:        message.RawPurgedAt != nil,
+			SentAt: expectedDate(
+				typeutils.ValueOrZero(message.DeliverySentAt),
+				"not sent",
+			),
+			InterchangeCtrl: message.InterchangeControlNumber,
+			RawPurged:       message.RawPurgedAt != nil,
 		}
 		if message.Partner != nil {
 			row.Partner = message.Partner.Name

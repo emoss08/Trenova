@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/services/billingtransfercriteria"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -169,7 +169,10 @@ func (t *listBillingTransferCandidatesTool) completedAlsoWaiting(
 	completed, err := t.shipments.ListBillingTransferCandidates(
 		ctx,
 		&shipmentports.ListBillingTransferCandidatesRequest{
-			Filter:                      selection.QueryOptions(tenantOf(params), pagination.Info{Limit: 1}),
+			Filter: selection.QueryOptions(
+				tenantOf(params),
+				pagination.Info{Limit: 1},
+			),
 			Status:                      selection.Status,
 			MarkCompletedReadyToInvoice: true,
 		},
@@ -185,11 +188,14 @@ func (t *listBillingTransferCandidatesTool) completedAlsoWaiting(
 
 func candidateRow(decision *shipmentports.BillingTransferDecision) billingTransferCandidateRow {
 	row := billingTransferCandidateRow{
-		ID:            decision.ShipmentID.String(),
-		ProNumber:     decision.ProNumber,
-		Status:        string(decision.Status),
-		Customer:      decision.CustomerName,
-		DeliveredAt:   expectedDate(typeutils.ValueOrZero(decision.DeliveredAt), "not delivered yet"),
+		ID:        decision.ShipmentID.String(),
+		ProNumber: decision.ProNumber,
+		Status:    string(decision.Status),
+		Customer:  decision.CustomerName,
+		DeliveredAt: expectedDate(
+			typeutils.ValueOrZero(decision.DeliveredAt),
+			"not delivered yet",
+		),
 		WouldDo:       string(decision.Outcome),
 		CanTransfer:   decision.Outcome.Transfers(),
 		FailureCode:   string(decision.FailureCode),

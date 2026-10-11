@@ -31,28 +31,32 @@ func (r *feedStateRepository) Get(
 	ctx context.Context,
 	key carrierintelports.CarrierIntelFeedStateKey,
 ) (*carrierintel.CarrierIntelFeedState, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrierintel.CarrierIntelFeedState, error) {
-		cols := carrierintelcol.CarrierIntelFeedStateColumns
-		entity := new(carrierintel.CarrierIntelFeedState)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carrierintelcol.CarrierIntelFeedStateScopeTenant(sq, key.TenantInfo).
-					Where(cols.Provider.Eq(), key.Provider).
-					Where(cols.FeedType.Eq(), key.FeedType)
-			}).
-			Scan(ctx)
-		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, nil //nolint:nilnil // nil feed state means the feed has never been polled
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*carrierintel.CarrierIntelFeedState, error) {
+			cols := carrierintelcol.CarrierIntelFeedStateColumns
+			entity := new(carrierintel.CarrierIntelFeedState)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return carrierintelcol.CarrierIntelFeedStateScopeTenant(sq, key.TenantInfo).
+						Where(cols.Provider.Eq(), key.Provider).
+						Where(cols.FeedType.Eq(), key.FeedType)
+				}).
+				Scan(ctx)
+			if err != nil {
+				if dberror.IsNotFoundError(err) {
+					return nil, nil //nolint:nilnil // nil feed state means the feed has never been polled
+				}
+				r.l.Error("failed to get carrier intel feed state", zap.Error(err))
+				return nil, fmt.Errorf("get carrier intel feed state: %w", err)
 			}
-			r.l.Error("failed to get carrier intel feed state", zap.Error(err))
-			return nil, fmt.Errorf("get carrier intel feed state: %w", err)
-		}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *feedStateRepository) Upsert(

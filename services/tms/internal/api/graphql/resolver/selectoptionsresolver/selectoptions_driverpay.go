@@ -76,10 +76,13 @@ func (r *Deps) resolvePayProfileSelectOptions(
 	if len(req.IDs) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.IDs))
 		for _, id := range req.IDs {
-			entity, err := r.DriverPayService.GetProfile(ctx, driverpayports.GetPayProfileByIDRequest{
-				ID:         id,
-				TenantInfo: req.TenantInfo,
-			})
+			entity, err := r.DriverPayService.GetProfile(
+				ctx,
+				driverpayports.GetPayProfileByIDRequest{
+					ID:         id,
+					TenantInfo: req.TenantInfo,
+				},
+			)
 			if err != nil {
 				return nil, err
 			}

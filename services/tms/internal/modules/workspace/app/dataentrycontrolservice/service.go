@@ -3,9 +3,9 @@ package dataentrycontrolservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/dataentrycontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/dataentrycontrol"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/dataentrycontrolports"
 	"github.com/emoss08/trenova/pkg/pagination"

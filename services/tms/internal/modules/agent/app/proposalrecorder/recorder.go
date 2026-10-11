@@ -7,9 +7,9 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -37,7 +37,11 @@ type ProposalStore interface {
 // Transactor runs the run, the plan and its proposals as one write, so a
 // failure part way leaves none of them behind.
 type Transactor interface {
-	WithTx(ctx context.Context, opts kernelports.TxOptions, fn func(context.Context, bun.Tx) error) error
+	WithTx(
+		ctx context.Context,
+		opts kernelports.TxOptions,
+		fn func(context.Context, bun.Tx) error,
+	) error
 }
 
 type Params struct {

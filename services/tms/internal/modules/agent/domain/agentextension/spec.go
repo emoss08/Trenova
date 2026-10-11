@@ -32,7 +32,9 @@ const (
 	MaxExcludedDomains       = 100
 )
 
-var hostnamePattern = regexp.MustCompile(`^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$`)
+var hostnamePattern = regexp.MustCompile(
+	`^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$`,
+)
 
 type Spec struct {
 	Fields                 []configspec.Field

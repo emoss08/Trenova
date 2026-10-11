@@ -214,93 +214,106 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *aicorrectionports.ListAICorrectionConnectionRequest,
 ) (*pagination.CursorListResult[*aicorrection.Correction], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*aicorrection.Correction], error) {
-		dba := r.db.DBForContext(ctx)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*aicorrection.Correction], error) {
+			dba := r.db.DBForContext(ctx)
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.NewSelect().
-				Model((*aicorrection.Correction)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						aicorrectioncol.CorrectionTable.Alias,
-						req.Filter,
-						(*aicorrection.Correction)(nil),
-					)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.NewSelect().
+					Model((*aicorrection.Correction)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							aicorrectioncol.CorrectionTable.Alias,
+							req.Filter,
+							(*aicorrection.Correction)(nil),
+						)
 
-					return sq.Apply(aicorrectioncol.CorrectionApplyTenant(req.Filter.TenantInfo))
-				}).
-				Count(ctx)
+						return sq.Apply(
+							aicorrectioncol.CorrectionApplyTenant(req.Filter.TenantInfo),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					r.l.Error("failed to count ai corrections", zap.Error(err))
+
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*aicorrection.Correction]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*aicorrection.Correction) *bun.SelectQuery {
+						q := dba.NewSelect().Model(entities)
+						if len(req.Columns) > 0 {
+							q = q.Column(req.Columns...)
+						}
+
+						return q
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							aicorrectioncol.CorrectionTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*aicorrection.Correction)(nil),
+						)
+					},
+				},
+			)
 			if err != nil {
-				r.l.Error("failed to count ai corrections", zap.Error(err))
+				r.l.Error("failed to list ai corrections", zap.Error(err))
 
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*aicorrection.Correction]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*aicorrection.Correction) *bun.SelectQuery {
-				q := dba.NewSelect().Model(entities)
-				if len(req.Columns) > 0 {
-					q = q.Column(req.Columns...)
-				}
-
-				return q
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return querybuilder.ApplyCursorFilters(
-					sq,
-					aicorrectioncol.CorrectionTable.Alias,
-					req.Filter,
-					req.Cursor,
-					(*aicorrection.Correction)(nil),
-				)
-			},
-		})
-		if err != nil {
-			r.l.Error("failed to list ai corrections", zap.Error(err))
-
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) TotalsByProvider(
 	ctx context.Context,
 	req *aicorrectionports.TotalAICorrectionsByProviderRequest,
 ) ([]aicorrectionports.AICorrectionProviderTotal, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]aicorrectionports.AICorrectionProviderTotal, error) {
-		cols := aicorrectioncol.CorrectionColumns
-		totals := make([]aicorrectionports.AICorrectionProviderTotal, 0, 2)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*aicorrection.Correction)(nil)).
-			ColumnExpr(cols.ExtractionProviderID.Expr("{} = ? AS candidate"), req.ProviderID).
-			ColumnExpr(cols.ScoredCount.Expr("COALESCE(SUM({}), 0) AS scored")).
-			ColumnExpr(cols.CorrectCount.Expr("COALESCE(SUM({}), 0) AS correct")).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return aicorrectioncol.CorrectionScopeTenant(sq, req.TenantInfo).
-					Where(cols.Task.Eq(), req.Task).
-					Where(cols.CapturedAt.Gte(), req.Since).
-					Where(cols.ExtractionProviderID.IsNotNull())
-			}).
-			GroupExpr("candidate").
-			Scan(ctx, &totals)
-		if err != nil {
-			r.l.Error("failed to total ai corrections by provider", zap.Error(err))
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]aicorrectionports.AICorrectionProviderTotal, error) {
+			cols := aicorrectioncol.CorrectionColumns
+			totals := make([]aicorrectionports.AICorrectionProviderTotal, 0, 2)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*aicorrection.Correction)(nil)).
+				ColumnExpr(cols.ExtractionProviderID.Expr("{} = ? AS candidate"), req.ProviderID).
+				ColumnExpr(cols.ScoredCount.Expr("COALESCE(SUM({}), 0) AS scored")).
+				ColumnExpr(cols.CorrectCount.Expr("COALESCE(SUM({}), 0) AS correct")).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return aicorrectioncol.CorrectionScopeTenant(sq, req.TenantInfo).
+						Where(cols.Task.Eq(), req.Task).
+						Where(cols.CapturedAt.Gte(), req.Since).
+						Where(cols.ExtractionProviderID.IsNotNull())
+				}).
+				GroupExpr("candidate").
+				Scan(ctx, &totals)
+			if err != nil {
+				r.l.Error("failed to total ai corrections by provider", zap.Error(err))
 
-			return nil, fmt.Errorf("total ai corrections by provider: %w", err)
-		}
+				return nil, fmt.Errorf("total ai corrections by provider: %w", err)
+			}
 
-		return totals, nil
-	})
+			return totals, nil
+		},
+	)
 }
 
 const (
@@ -312,18 +325,28 @@ func (r *repository) WeeklyTotalsByProvider(
 	ctx context.Context,
 	req *aicorrectionports.WeeklyAICorrectionTotalsRequest,
 ) ([]aicorrection.WeekTotal, error) {
-	return r.weeklyTotals(ctx, req.Task, req.Since, func(_ context.Context, sq *bun.SelectQuery) *bun.SelectQuery {
-		return aicorrectioncol.CorrectionScopeTenant(sq, req.TenantInfo)
-	})
+	return r.weeklyTotals(
+		ctx,
+		req.Task,
+		req.Since,
+		func(_ context.Context, sq *bun.SelectQuery) *bun.SelectQuery {
+			return aicorrectioncol.CorrectionScopeTenant(sq, req.TenantInfo)
+		},
+	)
 }
 
 func (r *repository) WeeklyTrainableTotalsByProvider(
 	ctx context.Context,
 	req *aicorrectionports.WeeklyTrainableAICorrectionTotalsRequest,
 ) ([]aicorrection.WeekTotal, error) {
-	return r.weeklyTotals(ctx, req.Task, req.Since, func(ctx context.Context, sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where("EXISTS (?)", r.trainingConsent(ctx))
-	})
+	return r.weeklyTotals(
+		ctx,
+		req.Task,
+		req.Since,
+		func(ctx context.Context, sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("EXISTS (?)", r.trainingConsent(ctx))
+		},
+	)
 }
 
 func (r *repository) weeklyTotals(

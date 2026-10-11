@@ -119,7 +119,10 @@ func (r *Repository) perMileRates(
 	return rows, nil
 }
 
-func mergePerformance(offers []offerTotalsRow, rates []rateRow) []*shipmentports.CarrierPerformance {
+func mergePerformance(
+	offers []offerTotalsRow,
+	rates []rateRow,
+) []*shipmentports.CarrierPerformance {
 	byCarrier := make(map[pulid.ID]*shipmentports.CarrierPerformance, len(offers)+len(rates))
 	entry := func(id pulid.ID) *shipmentports.CarrierPerformance {
 		if existing, ok := byCarrier[id]; ok {

@@ -169,7 +169,10 @@ func (r *repository) LastSealBefore(
 	tenantInfo pagination.TenantInfo,
 	sealedBefore int64,
 ) (*aiaudit.AIAuditSeal, error) {
-	ctx = dbscope.WithSystem(ctx, "read an organization's last AI audit seal during the retention sweep")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"read an organization's last AI audit seal during the retention sweep",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aiaudit.AIAuditSeal, error) {
 		cols := aiauditcol.AIAuditSealColumns
 		seal := new(aiaudit.AIAuditSeal)
@@ -198,7 +201,10 @@ func (r *repository) Prune(
 	ctx context.Context,
 	req aiauditports.PruneAIAuditEventsRequest,
 ) (int, error) {
-	ctx = dbscope.WithSystem(ctx, "prune AI audit events past retention behind the projector horizon")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"prune AI audit events past retention behind the projector horizon",
+	)
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		batch := req.BatchSize
 		if batch <= 0 {
@@ -209,41 +215,45 @@ func (r *repository) Prune(
 		total := 0
 		for {
 			deleted := 0
-			err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-				if isPostgres(tx) {
-					if _, err := tx.NewSelect().
-						ColumnExpr("set_config(?, 'on', true)", pruneSetting).
-						Exec(txCtx); err != nil {
-						return fmt.Errorf("admit the AI audit prune: %w", err)
+			err := r.db.WithTx(
+				ctx,
+				kernelports.TxOptions{},
+				func(txCtx context.Context, tx bun.Tx) error {
+					if isPostgres(tx) {
+						if _, err := tx.NewSelect().
+							ColumnExpr("set_config(?, 'on', true)", pruneSetting).
+							Exec(txCtx); err != nil {
+							return fmt.Errorf("admit the AI audit prune: %w", err)
+						}
 					}
-				}
 
-				doomed := tx.NewSelect().
-					Model((*aiaudit.AIAuditEvent)(nil)).
-					Column(cols.ID.String()).
-					Apply(aiauditcol.AIAuditEventApplyTenant(req.TenantInfo)).
-					Where(cols.Seq.Lte(), req.ThroughSeq).
-					Order(cols.Seq.OrderAsc()).
-					Limit(batch)
+					doomed := tx.NewSelect().
+						Model((*aiaudit.AIAuditEvent)(nil)).
+						Column(cols.ID.String()).
+						Apply(aiauditcol.AIAuditEventApplyTenant(req.TenantInfo)).
+						Where(cols.Seq.Lte(), req.ThroughSeq).
+						Order(cols.Seq.OrderAsc()).
+						Limit(batch)
 
-				res, err := tx.NewDelete().
-					Model((*aiaudit.AIAuditEvent)(nil)).
-					WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-						return aiauditcol.AIAuditEventScopeTenantDelete(dq, req.TenantInfo).
-							Where(cols.ID.In(), doomed)
-					}).
-					Exec(txCtx)
-				if err != nil {
-					return fmt.Errorf("prune AI audit events: %w", err)
-				}
-				affected, err := res.RowsAffected()
-				if err != nil {
-					return fmt.Errorf("prune AI audit events: %w", err)
-				}
-				deleted = int(affected)
+					res, err := tx.NewDelete().
+						Model((*aiaudit.AIAuditEvent)(nil)).
+						WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+							return aiauditcol.AIAuditEventScopeTenantDelete(dq, req.TenantInfo).
+								Where(cols.ID.In(), doomed)
+						}).
+						Exec(txCtx)
+					if err != nil {
+						return fmt.Errorf("prune AI audit events: %w", err)
+					}
+					affected, err := res.RowsAffected()
+					if err != nil {
+						return fmt.Errorf("prune AI audit events: %w", err)
+					}
+					deleted = int(affected)
 
-				return nil
-			})
+					return nil
+				},
+			)
 			if err != nil {
 				r.l.Error("failed to prune AI audit events",
 					zap.String("organizationId", req.TenantInfo.OrgID.String()),
@@ -268,19 +278,23 @@ func (r *repository) GetWatermarks(
 	ctx context.Context,
 ) (map[aiaudit.Source]*aiaudit.AIAuditProjectorState, error) {
 	ctx = dbscope.WithSystem(ctx, "read the AI audit projector's watermarks")
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[aiaudit.Source]*aiaudit.AIAuditProjectorState, error) {
-		states := make([]*aiaudit.AIAuditProjectorState, 0, len(aiaudit.AllSources()))
-		if err := r.db.DBForContext(ctx).NewSelect().Model(&states).Scan(ctx); err != nil {
-			return nil, fmt.Errorf("read AI audit projector watermarks: %w", err)
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[aiaudit.Source]*aiaudit.AIAuditProjectorState, error) {
+			states := make([]*aiaudit.AIAuditProjectorState, 0, len(aiaudit.AllSources()))
+			if err := r.db.DBForContext(ctx).NewSelect().Model(&states).Scan(ctx); err != nil {
+				return nil, fmt.Errorf("read AI audit projector watermarks: %w", err)
+			}
 
-		byName := make(map[aiaudit.Source]*aiaudit.AIAuditProjectorState, len(states))
-		for _, state := range states {
-			byName[state.Source] = state
-		}
+			byName := make(map[aiaudit.Source]*aiaudit.AIAuditProjectorState, len(states))
+			for _, state := range states {
+				byName[state.Source] = state
+			}
 
-		return byName, nil
-	})
+			return byName, nil
+		},
+	)
 }
 
 func (r *repository) SaveWatermark(

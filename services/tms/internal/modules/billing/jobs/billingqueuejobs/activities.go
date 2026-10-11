@@ -3,9 +3,9 @@ package billingqueuejobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingqueuejobs/billingqueuecontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -49,12 +49,15 @@ func (a *Activities) StartApprovalRunActivity(
 	payload *billingqueuecontract.ApprovalRunPayload,
 ) (bool, error) {
 	info := activity.GetInfo(ctx)
-	started, err := a.repo.MarkApprovalRunRunning(ctx, &billingqueueports.MarkApprovalRunRunningRequest{
-		TenantInfo:         payload.Tenant(),
-		RunID:              payload.RunID,
-		TemporalWorkflowID: info.WorkflowExecution.ID,
-		TemporalRunID:      info.WorkflowExecution.RunID,
-	})
+	started, err := a.repo.MarkApprovalRunRunning(
+		ctx,
+		&billingqueueports.MarkApprovalRunRunningRequest{
+			TenantInfo:         payload.Tenant(),
+			RunID:              payload.RunID,
+			TemporalWorkflowID: info.WorkflowExecution.ID,
+			TemporalRunID:      info.WorkflowExecution.RunID,
+		},
+	)
 	if err != nil {
 		return false, err
 	}
@@ -193,7 +196,11 @@ func (a *Activities) FinalizeApprovalRunActivity(
 		LeftoverCode:   payload.LeftoverCode,
 	})
 	if err != nil {
-		return nil, temporal.NewApplicationError("the approval run could not be closed", "FINALIZE", err)
+		return nil, temporal.NewApplicationError(
+			"the approval run could not be closed",
+			"FINALIZE",
+			err,
+		)
 	}
 	a.publishRunChanged(ctx, tenant, payload.RunID, payload.UserID)
 
@@ -215,14 +222,17 @@ func (a *Activities) publishRunChanged(
 	if a.realtime == nil {
 		return
 	}
-	if err := a.realtime.PublishResourceInvalidation(ctx, &agentports.PublishResourceInvalidationRequest{
-		OrganizationID: tenant.OrgID,
-		BusinessUnitID: tenant.BuID,
-		Resource:       invalidationResource,
-		Action:         "updated",
-		RecordID:       runID,
-		ActorUserID:    userID,
-	}); err != nil {
+	if err := a.realtime.PublishResourceInvalidation(
+		ctx,
+		&agentports.PublishResourceInvalidationRequest{
+			OrganizationID: tenant.OrgID,
+			BusinessUnitID: tenant.BuID,
+			Resource:       invalidationResource,
+			Action:         "updated",
+			RecordID:       runID,
+			ActorUserID:    userID,
+		},
+	); err != nil {
 		a.l.Warn("failed to publish approval run progress",
 			zap.String("runId", runID.String()), zap.Error(err))
 	}

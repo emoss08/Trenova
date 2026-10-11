@@ -59,34 +59,38 @@ func (r *repository) ListChunkHashes(
 	ctx context.Context,
 	req *agentports.ListEmbeddingChunkHashesRequest,
 ) ([]agentports.EmbeddingChunkHash, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]agentports.EmbeddingChunkHash, error) {
-		if req == nil {
-			return nil, invalid("listing chunk hashes needs a request")
-		}
-		if err := validateSource(&req.Source); err != nil {
-			return nil, err
-		}
-		if err := validateModelKey(req.ModelKey); err != nil {
-			return nil, err
-		}
-		if err := r.requireVector(ctx); err != nil {
-			return nil, err
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]agentports.EmbeddingChunkHash, error) {
+			if req == nil {
+				return nil, invalid("listing chunk hashes needs a request")
+			}
+			if err := validateSource(&req.Source); err != nil {
+				return nil, err
+			}
+			if err := validateModelKey(req.ModelKey); err != nil {
+				return nil, err
+			}
+			if err := r.requireVector(ctx); err != nil {
+				return nil, err
+			}
 
-		cols := airetrievalcol.EmbeddingColumns
-		hashes := make([]agentports.EmbeddingChunkHash, 0)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*airetrieval.Embedding)(nil)).
-			Column(cols.ChunkIndex.String(), cols.ContentHash.String()).
-			Apply(embeddingSourceScope(&req.Source, req.ModelKey)).
-			OrderExpr(cols.ChunkIndex.OrderAsc()).
-			Scan(ctx, &hashes); err != nil {
-			return nil, fmt.Errorf("list embedding chunk hashes: %w", err)
-		}
+			cols := airetrievalcol.EmbeddingColumns
+			hashes := make([]agentports.EmbeddingChunkHash, 0)
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*airetrieval.Embedding)(nil)).
+				Column(cols.ChunkIndex.String(), cols.ContentHash.String()).
+				Apply(embeddingSourceScope(&req.Source, req.ModelKey)).
+				OrderExpr(cols.ChunkIndex.OrderAsc()).
+				Scan(ctx, &hashes); err != nil {
+				return nil, fmt.Errorf("list embedding chunk hashes: %w", err)
+			}
 
-		return hashes, nil
-	})
+			return hashes, nil
+		},
+	)
 }
 
 func validateReplace(req *agentports.ReplaceEmbeddingChunksRequest) error {
@@ -133,45 +137,53 @@ func (r *repository) ReplaceChunks(
 	ctx context.Context,
 	req *agentports.ReplaceEmbeddingChunksRequest,
 ) (agentports.ReplaceEmbeddingChunksResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (agentports.ReplaceEmbeddingChunksResult, error) {
-		var result agentports.ReplaceEmbeddingChunksResult
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (agentports.ReplaceEmbeddingChunksResult, error) {
+			var result agentports.ReplaceEmbeddingChunksResult
 
-		if err := validateReplace(req); err != nil {
-			return result, err
-		}
-		if err := r.requireVector(ctx); err != nil {
-			return result, err
-		}
+			if err := validateReplace(req); err != nil {
+				return result, err
+			}
+			if err := r.requireVector(ctx); err != nil {
+				return result, err
+			}
 
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-			stored, err := r.storedChunks(ctx, tx, req)
+			err := r.db.WithTx(
+				ctx,
+				kernelports.TxOptions{},
+				func(ctx context.Context, tx bun.Tx) error {
+					stored, err := r.storedChunks(ctx, tx, req)
+					if err != nil {
+						return err
+					}
+
+					rows, unchanged, err := planChunkWrites(req, stored, timeutils.NowUnix())
+					if err != nil {
+						return err
+					}
+					result.Unchanged = unchanged
+
+					if result.Removed, err = r.removeChunksNotIn(ctx, tx, req); err != nil {
+						return err
+					}
+
+					if len(rows) == 0 {
+						return nil
+					}
+
+					result.Written, err = r.upsertChunks(ctx, tx, rows)
+					return err
+				},
+			)
 			if err != nil {
-				return err
+				return agentports.ReplaceEmbeddingChunksResult{}, err
 			}
 
-			rows, unchanged, err := planChunkWrites(req, stored, timeutils.NowUnix())
-			if err != nil {
-				return err
-			}
-			result.Unchanged = unchanged
-
-			if result.Removed, err = r.removeChunksNotIn(ctx, tx, req); err != nil {
-				return err
-			}
-
-			if len(rows) == 0 {
-				return nil
-			}
-
-			result.Written, err = r.upsertChunks(ctx, tx, rows)
-			return err
-		})
-		if err != nil {
-			return agentports.ReplaceEmbeddingChunksResult{}, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) storedChunks(
@@ -313,61 +325,69 @@ func (r *repository) DeleteSource(
 	ctx context.Context,
 	source *agentports.AIRetrievalSourceRef,
 ) (agentports.DeleteAIRetrievalSourceResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (agentports.DeleteAIRetrievalSourceResult, error) {
-		var result agentports.DeleteAIRetrievalSourceResult
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (agentports.DeleteAIRetrievalSourceResult, error) {
+			var result agentports.DeleteAIRetrievalSourceResult
 
-		if err := validateSource(source); err != nil {
-			return result, err
-		}
-
-		vectorReady, err := r.vectorReady(ctx)
-		if err != nil {
-			return result, err
-		}
-
-		err = r.db.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-			entries := airetrievalcol.IndexEntryColumns
-			res, txErr := tx.NewDelete().
-				Model((*airetrieval.IndexEntry)(nil)).
-				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return airetrievalcol.IndexEntryScopeTenantDelete(dq, source.TenantInfo).
-						Where(entries.SourceType.Eq(), source.SourceType).
-						Where(entries.SourceID.Eq(), source.SourceID)
-				}).
-				Exec(ctx)
-			if txErr != nil {
-				return fmt.Errorf("delete index entries: %w", txErr)
-			}
-			if result.IndexEntries, txErr = rowsAffected(res); txErr != nil {
-				return txErr
+			if err := validateSource(source); err != nil {
+				return result, err
 			}
 
-			if !vectorReady {
-				return nil
+			vectorReady, err := r.vectorReady(ctx)
+			if err != nil {
+				return result, err
 			}
 
-			embeddings := airetrievalcol.EmbeddingColumns
-			res, txErr = tx.NewDelete().
-				Model((*airetrieval.Embedding)(nil)).
-				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return airetrievalcol.EmbeddingScopeTenantDelete(dq, source.TenantInfo).
-						Where(embeddings.SourceType.Eq(), source.SourceType).
-						Where(embeddings.SourceID.Eq(), source.SourceID)
-				}).
-				Exec(ctx)
-			if txErr != nil {
-				return fmt.Errorf("delete embeddings: %w", txErr)
+			err = r.db.WithTx(
+				ctx,
+				kernelports.TxOptions{},
+				func(ctx context.Context, tx bun.Tx) error {
+					entries := airetrievalcol.IndexEntryColumns
+					res, txErr := tx.NewDelete().
+						Model((*airetrieval.IndexEntry)(nil)).
+						WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+							return airetrievalcol.IndexEntryScopeTenantDelete(dq, source.TenantInfo).
+								Where(entries.SourceType.Eq(), source.SourceType).
+								Where(entries.SourceID.Eq(), source.SourceID)
+						}).
+						Exec(ctx)
+					if txErr != nil {
+						return fmt.Errorf("delete index entries: %w", txErr)
+					}
+					if result.IndexEntries, txErr = rowsAffected(res); txErr != nil {
+						return txErr
+					}
+
+					if !vectorReady {
+						return nil
+					}
+
+					embeddings := airetrievalcol.EmbeddingColumns
+					res, txErr = tx.NewDelete().
+						Model((*airetrieval.Embedding)(nil)).
+						WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+							return airetrievalcol.EmbeddingScopeTenantDelete(dq, source.TenantInfo).
+								Where(embeddings.SourceType.Eq(), source.SourceType).
+								Where(embeddings.SourceID.Eq(), source.SourceID)
+						}).
+						Exec(ctx)
+					if txErr != nil {
+						return fmt.Errorf("delete embeddings: %w", txErr)
+					}
+					result.Embeddings, txErr = rowsAffected(res)
+
+					return txErr
+				},
+			)
+			if err != nil {
+				return agentports.DeleteAIRetrievalSourceResult{}, err
 			}
-			result.Embeddings, txErr = rowsAffected(res)
 
-			return txErr
-		})
-		if err != nil {
-			return agentports.DeleteAIRetrievalSourceResult{}, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 type searchPlan struct {

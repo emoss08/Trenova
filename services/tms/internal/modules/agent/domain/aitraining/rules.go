@@ -69,7 +69,9 @@ var (
 func replaceEmails(p *pseudonymizer, text string) string {
 	return replaceMatches(text, emailPattern, nil, func(match []int) string {
 		key := strings.ToLower(text[match[0]:match[1]])
-		return p.hold(p.surrogate(categoryEmail, key, func() string { return emailSurrogate(p.rng) }))
+		return p.hold(
+			p.surrogate(categoryEmail, key, func() string { return emailSurrogate(p.rng) }),
+		)
 	})
 }
 
@@ -95,7 +97,9 @@ func replaceTaxIDs(p *pseudonymizer, text string) string {
 func replaceCarrierNumbers(p *pseudonymizer, text string) string {
 	return replaceMatches(text, carrierNumberPattern, nil, func(match []int) string {
 		digits := text[match[2]:match[3]]
-		return text[match[0]:match[2]] + p.hold(p.identifier(digits, digits)) + text[match[3]:match[1]]
+		return text[match[0]:match[2]] + p.hold(
+			p.identifier(digits, digits),
+		) + text[match[3]:match[1]]
 	})
 }
 
@@ -103,7 +107,11 @@ func replacePhones(p *pseudonymizer, text string) string {
 	return replaceMatches(text, phonePattern, nil, func(match []int) string {
 		original := text[match[0]:match[1]]
 		key := stringutils.DigitsOnly(original)
-		value := p.surrogate(categoryPhone, key, func() string { return shapeSurrogate(p.rng, key) })
+		value := p.surrogate(
+			categoryPhone,
+			key,
+			func() string { return shapeSurrogate(p.rng, key) },
+		)
 		return p.hold(reshape(original, value))
 	})
 }
@@ -122,7 +130,9 @@ func replaceMoney(p *pseudonymizer, text string) string {
 func replacePOBoxes(p *pseudonymizer, text string) string {
 	return replaceMatches(text, poBoxPattern, nil, func(match []int) string {
 		digits := text[match[2]:match[3]]
-		return text[match[0]:match[2]] + p.hold(p.identifier(digits, digits)) + text[match[3]:match[1]]
+		return text[match[0]:match[2]] + p.hold(
+			p.identifier(digits, digits),
+		) + text[match[3]:match[1]]
 	})
 }
 

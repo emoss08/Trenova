@@ -19,5 +19,8 @@ type SettingVersionRepository interface {
 	Create(ctx context.Context, version *settingversion.SettingVersion) error
 	// LatestAt returns the newest save at or before a version, with its
 	// author, or nil when none was kept.
-	LatestAt(ctx context.Context, req *GetSettingVersionAtRequest) (*settingversion.SettingVersion, error)
+	LatestAt(
+		ctx context.Context,
+		req *GetSettingVersionAtRequest,
+	) (*settingversion.SettingVersion, error)
 }

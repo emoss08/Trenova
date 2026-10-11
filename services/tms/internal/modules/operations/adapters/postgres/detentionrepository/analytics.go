@@ -152,71 +152,75 @@ func (r *analyticsRepository) FacilityStats(
 	ctx context.Context,
 	req *detentionports.DetentionStatsRequest,
 ) ([]*detentionports.FacilityDetentionStat, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detentionports.FacilityDetentionStat, error) {
-		cols := detentioncol.DetentionOccurrenceColumns
-		locCols := locationcol.LocationColumns
-		stats := make([]*detentionports.FacilityDetentionStat, 0, 64)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*detentionports.FacilityDetentionStat, error) {
+			cols := detentioncol.DetentionOccurrenceColumns
+			locCols := locationcol.LocationColumns
+			stats := make([]*detentionports.FacilityDetentionStat, 0, 64)
 
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*detention.DetentionOccurrence)(nil)).
-			ColumnExpr(cols.LocationID.As("location_id")).
-			ColumnExpr(
-				"COALESCE(?, '') AS location_name",
-				bun.Safe(locCols.Name.Qualified()),
-			).
-			Join("LEFT JOIN locations AS loc ON ?", bun.Safe(
-				locCols.ID.EqColumn(cols.LocationID)+
-					" AND "+locCols.OrganizationID.EqColumn(cols.OrganizationID),
-			)).
-			ColumnExpr("COUNT(*) AS stop_count").
-			ColumnExpr("COUNT(*) FILTER (WHERE ? > 0) AS breach_count",
-				bun.Safe(cols.RoundedMinutes.Qualified())).
-			ColumnExpr("COALESCE(ROUND(AVG(?)), 0) AS avg_dwell_minutes",
-				bun.Safe(cols.RawDwellMinutes.Qualified())).
-			ColumnExpr(
-				"COALESCE(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ?), 0) AS median_dwell_minutes",
-				bun.Safe(cols.RawDwellMinutes.Qualified())).
-			ColumnExpr(
-				"COALESCE(PERCENTILE_CONT(0.9) WITHIN GROUP (ORDER BY ?), 0) AS p90_dwell_minutes",
-				bun.Safe(cols.RawDwellMinutes.Qualified())).
-			ColumnExpr("COALESCE(SUM(?), 0) AS billed_amount",
-				bun.Safe(cols.BillableAmount.Qualified())).
-			ColumnExpr("COALESCE(SUM(?), 0) AS driver_pay_amount",
-				bun.Safe(cols.DriverPayAmount.Qualified())).
-			ColumnExpr("COALESCE(SUM(?), 0) AS net_margin",
-				bun.Safe(cols.NetMargin.Qualified())).
-			ColumnExpr("COALESCE(SUM(?), 0) AS waived_amount",
-				bun.Safe(cols.WaivedAmount.Qualified())).
-			ColumnExpr("COUNT(*) FILTER (WHERE ? = 'Disputed') AS dispute_count",
-				bun.Safe(cols.Status.Qualified())).
-			ColumnExpr("COUNT(*) FILTER (WHERE ?) AS suppressed_count",
-				bun.Safe(cols.SuppressedByGate.Qualified())).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return detentioncol.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
-					Where(cols.IsOpen.IsFalse())
-			}).
-			GroupExpr(cols.LocationID.Qualified()).
-			GroupExpr(locCols.Name.Qualified()).
-			OrderExpr("billed_amount DESC")
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*detention.DetentionOccurrence)(nil)).
+				ColumnExpr(cols.LocationID.As("location_id")).
+				ColumnExpr(
+					"COALESCE(?, '') AS location_name",
+					bun.Safe(locCols.Name.Qualified()),
+				).
+				Join("LEFT JOIN locations AS loc ON ?", bun.Safe(
+					locCols.ID.EqColumn(cols.LocationID)+
+						" AND "+locCols.OrganizationID.EqColumn(cols.OrganizationID),
+				)).
+				ColumnExpr("COUNT(*) AS stop_count").
+				ColumnExpr("COUNT(*) FILTER (WHERE ? > 0) AS breach_count",
+					bun.Safe(cols.RoundedMinutes.Qualified())).
+				ColumnExpr("COALESCE(ROUND(AVG(?)), 0) AS avg_dwell_minutes",
+					bun.Safe(cols.RawDwellMinutes.Qualified())).
+				ColumnExpr(
+					"COALESCE(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ?), 0) AS median_dwell_minutes",
+					bun.Safe(cols.RawDwellMinutes.Qualified())).
+				ColumnExpr(
+					"COALESCE(PERCENTILE_CONT(0.9) WITHIN GROUP (ORDER BY ?), 0) AS p90_dwell_minutes",
+					bun.Safe(cols.RawDwellMinutes.Qualified())).
+				ColumnExpr("COALESCE(SUM(?), 0) AS billed_amount",
+					bun.Safe(cols.BillableAmount.Qualified())).
+				ColumnExpr("COALESCE(SUM(?), 0) AS driver_pay_amount",
+					bun.Safe(cols.DriverPayAmount.Qualified())).
+				ColumnExpr("COALESCE(SUM(?), 0) AS net_margin",
+					bun.Safe(cols.NetMargin.Qualified())).
+				ColumnExpr("COALESCE(SUM(?), 0) AS waived_amount",
+					bun.Safe(cols.WaivedAmount.Qualified())).
+				ColumnExpr("COUNT(*) FILTER (WHERE ? = 'Disputed') AS dispute_count",
+					bun.Safe(cols.Status.Qualified())).
+				ColumnExpr("COUNT(*) FILTER (WHERE ?) AS suppressed_count",
+					bun.Safe(cols.SuppressedByGate.Qualified())).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return detentioncol.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
+						Where(cols.IsOpen.IsFalse())
+				}).
+				GroupExpr(cols.LocationID.Qualified()).
+				GroupExpr(locCols.Name.Qualified()).
+				OrderExpr("billed_amount DESC")
 
-		if req.From > 0 {
-			q = q.Where(cols.ClockStartAt.Gte(), req.From)
-		}
-		if req.To > 0 {
-			q = q.Where(cols.ClockStartAt.Lte(), req.To)
-		}
-		if req.Limit > 0 {
-			q = q.Limit(req.Limit)
-		}
+			if req.From > 0 {
+				q = q.Where(cols.ClockStartAt.Gte(), req.From)
+			}
+			if req.To > 0 {
+				q = q.Where(cols.ClockStartAt.Lte(), req.To)
+			}
+			if req.Limit > 0 {
+				q = q.Limit(req.Limit)
+			}
 
-		if err := q.Scan(ctx, &stats); err != nil {
-			r.l.Error("failed to aggregate facility detention stats", zap.Error(err))
-			return nil, err
-		}
+			if err := q.Scan(ctx, &stats); err != nil {
+				r.l.Error("failed to aggregate facility detention stats", zap.Error(err))
+				return nil, err
+			}
 
-		return stats, nil
-	})
+			return stats, nil
+		},
+	)
 }
 
 // CustomerStats aggregates settled detention by customer for margin review and
@@ -225,63 +229,67 @@ func (r *analyticsRepository) CustomerStats(
 	ctx context.Context,
 	req *detentionports.DetentionStatsRequest,
 ) ([]*detentionports.CustomerDetentionStat, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detentionports.CustomerDetentionStat, error) {
-		cols := detentioncol.DetentionOccurrenceColumns
-		cusCols := customercol.CustomerColumns
-		stats := make([]*detentionports.CustomerDetentionStat, 0, 64)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*detentionports.CustomerDetentionStat, error) {
+			cols := detentioncol.DetentionOccurrenceColumns
+			cusCols := customercol.CustomerColumns
+			stats := make([]*detentionports.CustomerDetentionStat, 0, 64)
 
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*detention.DetentionOccurrence)(nil)).
-			ColumnExpr(cols.CustomerID.As("customer_id")).
-			ColumnExpr(
-				"COALESCE(?, '') AS customer_name",
-				bun.Safe(cusCols.Name.Qualified()),
-			).
-			Join("LEFT JOIN customers AS cus ON ?", bun.Safe(
-				cusCols.ID.EqColumn(cols.CustomerID)+
-					" AND "+cusCols.OrganizationID.EqColumn(cols.OrganizationID),
-			)).
-			ColumnExpr("COUNT(*) AS stop_count").
-			ColumnExpr("COUNT(*) FILTER (WHERE ? > 0) AS breach_count",
-				bun.Safe(cols.RoundedMinutes.Qualified())).
-			ColumnExpr("COALESCE(SUM(?), 0) AS billed_amount",
-				bun.Safe(cols.BillableAmount.Qualified())).
-			ColumnExpr("COALESCE(SUM(?), 0) AS driver_pay_amount",
-				bun.Safe(cols.DriverPayAmount.Qualified())).
-			ColumnExpr("COALESCE(SUM(?), 0) AS net_margin",
-				bun.Safe(cols.NetMargin.Qualified())).
-			ColumnExpr("COALESCE(SUM(?), 0) AS waived_amount",
-				bun.Safe(cols.WaivedAmount.Qualified())).
-			ColumnExpr("COUNT(*) FILTER (WHERE ? = 'Disputed') AS dispute_count",
-				bun.Safe(cols.Status.Qualified())).
-			ColumnExpr("COUNT(*) FILTER (WHERE ?) AS suppressed_count",
-				bun.Safe(cols.SuppressedByGate.Qualified())).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return detentioncol.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
-					Where(cols.IsOpen.IsFalse())
-			}).
-			GroupExpr(cols.CustomerID.Qualified()).
-			GroupExpr(cusCols.Name.Qualified()).
-			OrderExpr("billed_amount DESC")
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*detention.DetentionOccurrence)(nil)).
+				ColumnExpr(cols.CustomerID.As("customer_id")).
+				ColumnExpr(
+					"COALESCE(?, '') AS customer_name",
+					bun.Safe(cusCols.Name.Qualified()),
+				).
+				Join("LEFT JOIN customers AS cus ON ?", bun.Safe(
+					cusCols.ID.EqColumn(cols.CustomerID)+
+						" AND "+cusCols.OrganizationID.EqColumn(cols.OrganizationID),
+				)).
+				ColumnExpr("COUNT(*) AS stop_count").
+				ColumnExpr("COUNT(*) FILTER (WHERE ? > 0) AS breach_count",
+					bun.Safe(cols.RoundedMinutes.Qualified())).
+				ColumnExpr("COALESCE(SUM(?), 0) AS billed_amount",
+					bun.Safe(cols.BillableAmount.Qualified())).
+				ColumnExpr("COALESCE(SUM(?), 0) AS driver_pay_amount",
+					bun.Safe(cols.DriverPayAmount.Qualified())).
+				ColumnExpr("COALESCE(SUM(?), 0) AS net_margin",
+					bun.Safe(cols.NetMargin.Qualified())).
+				ColumnExpr("COALESCE(SUM(?), 0) AS waived_amount",
+					bun.Safe(cols.WaivedAmount.Qualified())).
+				ColumnExpr("COUNT(*) FILTER (WHERE ? = 'Disputed') AS dispute_count",
+					bun.Safe(cols.Status.Qualified())).
+				ColumnExpr("COUNT(*) FILTER (WHERE ?) AS suppressed_count",
+					bun.Safe(cols.SuppressedByGate.Qualified())).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return detentioncol.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
+						Where(cols.IsOpen.IsFalse())
+				}).
+				GroupExpr(cols.CustomerID.Qualified()).
+				GroupExpr(cusCols.Name.Qualified()).
+				OrderExpr("billed_amount DESC")
 
-		if req.From > 0 {
-			q = q.Where(cols.ClockStartAt.Gte(), req.From)
-		}
-		if req.To > 0 {
-			q = q.Where(cols.ClockStartAt.Lte(), req.To)
-		}
-		if req.Limit > 0 {
-			q = q.Limit(req.Limit)
-		}
+			if req.From > 0 {
+				q = q.Where(cols.ClockStartAt.Gte(), req.From)
+			}
+			if req.To > 0 {
+				q = q.Where(cols.ClockStartAt.Lte(), req.To)
+			}
+			if req.Limit > 0 {
+				q = q.Limit(req.Limit)
+			}
 
-		if err := q.Scan(ctx, &stats); err != nil {
-			r.l.Error("failed to aggregate customer detention stats", zap.Error(err))
-			return nil, err
-		}
+			if err := q.Scan(ctx, &stats); err != nil {
+				r.l.Error("failed to aggregate customer detention stats", zap.Error(err))
+				return nil, err
+			}
 
-		return stats, nil
-	})
+			return stats, nil
+		},
+	)
 }
 
 // WaiverStats surfaces where discretionary revenue is going: which coded reason,
@@ -290,40 +298,44 @@ func (r *analyticsRepository) WaiverStats(
 	ctx context.Context,
 	req *detentionports.DetentionStatsRequest,
 ) ([]*detentionports.WaiverLeakageStat, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detentionports.WaiverLeakageStat, error) {
-		cols := detentioncol.DetentionOccurrenceColumns
-		stats := make([]*detentionports.WaiverLeakageStat, 0, 16)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*detentionports.WaiverLeakageStat, error) {
+			cols := detentioncol.DetentionOccurrenceColumns
+			stats := make([]*detentionports.WaiverLeakageStat, 0, 16)
 
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*detention.DetentionOccurrence)(nil)).
-			ColumnExpr(cols.WaiverReason.As("reason")).
-			ColumnExpr("COUNT(*) AS waiver_count").
-			ColumnExpr("COUNT(DISTINCT ?) AS approver_count",
-				bun.Safe(cols.WaivedByID.Qualified())).
-			ColumnExpr("COALESCE(SUM(?), 0) AS waived_amount",
-				bun.Safe(cols.WaivedAmount.Qualified())).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return detentioncol.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
-					Where(cols.Status.Eq(), detention.OccurrenceStatusWaived)
-			}).
-			GroupExpr(cols.WaiverReason.Qualified()).
-			OrderExpr("waived_amount DESC")
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*detention.DetentionOccurrence)(nil)).
+				ColumnExpr(cols.WaiverReason.As("reason")).
+				ColumnExpr("COUNT(*) AS waiver_count").
+				ColumnExpr("COUNT(DISTINCT ?) AS approver_count",
+					bun.Safe(cols.WaivedByID.Qualified())).
+				ColumnExpr("COALESCE(SUM(?), 0) AS waived_amount",
+					bun.Safe(cols.WaivedAmount.Qualified())).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return detentioncol.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
+						Where(cols.Status.Eq(), detention.OccurrenceStatusWaived)
+				}).
+				GroupExpr(cols.WaiverReason.Qualified()).
+				OrderExpr("waived_amount DESC")
 
-		if req.From > 0 {
-			q = q.Where(cols.WaivedAt.Gte(), req.From)
-		}
-		if req.To > 0 {
-			q = q.Where(cols.WaivedAt.Lte(), req.To)
-		}
+			if req.From > 0 {
+				q = q.Where(cols.WaivedAt.Gte(), req.From)
+			}
+			if req.To > 0 {
+				q = q.Where(cols.WaivedAt.Lte(), req.To)
+			}
 
-		if err := q.Scan(ctx, &stats); err != nil {
-			r.l.Error("failed to aggregate detention waiver stats", zap.Error(err))
-			return nil, err
-		}
+			if err := q.Scan(ctx, &stats); err != nil {
+				r.l.Error("failed to aggregate detention waiver stats", zap.Error(err))
+				return nil, err
+			}
 
-		return stats, nil
-	})
+			return stats, nil
+		},
+	)
 }
 
 type entityNameRow struct {
@@ -337,60 +349,64 @@ func (r *analyticsRepository) EntityNames(
 	ctx context.Context,
 	req *detentionports.DetentionEntityNamesRequest,
 ) (*detentionports.DetentionEntityNames, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*detentionports.DetentionEntityNames, error) {
-		names := &detentionports.DetentionEntityNames{
-			Locations: make(map[pulid.ID]string, len(req.LocationIDs)),
-			Customers: make(map[pulid.ID]string, len(req.CustomerIDs)),
-		}
-
-		if len(req.LocationIDs) > 0 {
-			locCols := locationcol.LocationColumns
-			rows := make([]entityNameRow, 0, len(req.LocationIDs))
-
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*location.Location)(nil)).
-				ColumnExpr(locCols.ID.As("id")).
-				ColumnExpr(locCols.Name.As("name")).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return locationcol.LocationScopeTenant(sq, req.TenantInfo).
-						Where(locCols.ID.In(), bun.List(req.LocationIDs))
-				}).
-				Scan(ctx, &rows)
-			if err != nil {
-				r.l.Error("failed to resolve location names", zap.Error(err))
-				return nil, err
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*detentionports.DetentionEntityNames, error) {
+			names := &detentionports.DetentionEntityNames{
+				Locations: make(map[pulid.ID]string, len(req.LocationIDs)),
+				Customers: make(map[pulid.ID]string, len(req.CustomerIDs)),
 			}
 
-			for _, row := range rows {
-				names.Locations[row.ID] = row.Name
+			if len(req.LocationIDs) > 0 {
+				locCols := locationcol.LocationColumns
+				rows := make([]entityNameRow, 0, len(req.LocationIDs))
+
+				err := r.db.DBForContext(ctx).
+					NewSelect().
+					Model((*location.Location)(nil)).
+					ColumnExpr(locCols.ID.As("id")).
+					ColumnExpr(locCols.Name.As("name")).
+					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return locationcol.LocationScopeTenant(sq, req.TenantInfo).
+							Where(locCols.ID.In(), bun.List(req.LocationIDs))
+					}).
+					Scan(ctx, &rows)
+				if err != nil {
+					r.l.Error("failed to resolve location names", zap.Error(err))
+					return nil, err
+				}
+
+				for _, row := range rows {
+					names.Locations[row.ID] = row.Name
+				}
 			}
-		}
 
-		if len(req.CustomerIDs) > 0 {
-			cusCols := customercol.CustomerColumns
-			rows := make([]entityNameRow, 0, len(req.CustomerIDs))
+			if len(req.CustomerIDs) > 0 {
+				cusCols := customercol.CustomerColumns
+				rows := make([]entityNameRow, 0, len(req.CustomerIDs))
 
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*customer.Customer)(nil)).
-				ColumnExpr(cusCols.ID.As("id")).
-				ColumnExpr(cusCols.Name.As("name")).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return customercol.CustomerScopeTenant(sq, req.TenantInfo).
-						Where(cusCols.ID.In(), bun.List(req.CustomerIDs))
-				}).
-				Scan(ctx, &rows)
-			if err != nil {
-				r.l.Error("failed to resolve customer names", zap.Error(err))
-				return nil, err
+				err := r.db.DBForContext(ctx).
+					NewSelect().
+					Model((*customer.Customer)(nil)).
+					ColumnExpr(cusCols.ID.As("id")).
+					ColumnExpr(cusCols.Name.As("name")).
+					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return customercol.CustomerScopeTenant(sq, req.TenantInfo).
+							Where(cusCols.ID.In(), bun.List(req.CustomerIDs))
+					}).
+					Scan(ctx, &rows)
+				if err != nil {
+					r.l.Error("failed to resolve customer names", zap.Error(err))
+					return nil, err
+				}
+
+				for _, row := range rows {
+					names.Customers[row.ID] = row.Name
+				}
 			}
 
-			for _, row := range rows {
-				names.Customers[row.ID] = row.Name
-			}
-		}
-
-		return names, nil
-	})
+			return names, nil
+		},
+	)
 }

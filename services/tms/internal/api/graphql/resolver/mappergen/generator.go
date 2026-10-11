@@ -439,7 +439,9 @@ func loadExistingFunctions(resolverDir string) (map[string]struct{}, error) {
 }
 
 func domainBindings(cfg gqlgenConfig, modulePath string) []modelBinding {
-	domainPath := regexp.MustCompile(`^` + regexp.QuoteMeta(modulePath) + `/internal/(?:core|modules/[^/]+)/domain/`)
+	domainPath := regexp.MustCompile(
+		`^` + regexp.QuoteMeta(modulePath) + `/internal/(?:core|modules/[^/]+)/domain/`,
+	)
 	bindings := make([]modelBinding, 0, len(cfg.Models))
 	for gqlName, model := range cfg.Models {
 		if len(model.Model) == 0 {

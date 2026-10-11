@@ -1,15 +1,17 @@
 package accounting
 
 import (
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 )
 
 type registry struct {
 	providers map[integration.Type]accountingsyncports.AccountingProvider
 }
 
-func NewRegistry(providers ...accountingsyncports.AccountingProvider) accountingsyncports.AccountingConnectorRegistry {
+func NewRegistry(
+	providers ...accountingsyncports.AccountingProvider,
+) accountingsyncports.AccountingConnectorRegistry {
 	byType := make(map[integration.Type]accountingsyncports.AccountingProvider, len(providers))
 	for _, provider := range providers {
 		if provider != nil {

@@ -4,17 +4,17 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -161,11 +161,19 @@ func (s *service) UndoIssue(
 	option := issue.Option(*issue.ResolutionKey)
 
 	if option != nil && issue.EffectSnapshot != nil && issue.EffectSnapshot.Charge != nil {
-		restoredID, restoreErr := s.restoreCharge(ctx, item, option.Effect.Kind, issue.EffectSnapshot, actor, req.TenantInfo)
+		restoredID, restoreErr := s.restoreCharge(
+			ctx,
+			item,
+			option.Effect.Kind,
+			issue.EffectSnapshot,
+			actor,
+			req.TenantInfo,
+		)
 		if restoreErr != nil {
 			return nil, restoreErr
 		}
-		if restoredID.IsNotNil() && issue.FlaggedChargeID != nil && restoredID != *issue.FlaggedChargeID {
+		if restoredID.IsNotNil() && issue.FlaggedChargeID != nil &&
+			restoredID != *issue.FlaggedChargeID {
 			// A removed charge comes back as a new row; the issue follows it,
 			// so the next check finds the same issue rather than a new one.
 			issue.FlaggedChargeID = &restoredID
@@ -462,10 +470,13 @@ func (s *service) Post(
 		)
 	}
 
-	inv, err := s.invoiceRepo.GetByBillingQueueItemID(ctx, invoiceports.GetInvoiceByBillingQueueItemIDRequest{
-		BillingQueueItemID: item.ID,
-		TenantInfo:         req.TenantInfo,
-	})
+	inv, err := s.invoiceRepo.GetByBillingQueueItemID(
+		ctx,
+		invoiceports.GetInvoiceByBillingQueueItemIDRequest{
+			BillingQueueItemID: item.ID,
+			TenantInfo:         req.TenantInfo,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, errortypes.NewValidationError(
@@ -581,10 +592,14 @@ func (s *service) ApproveIfReady(
 	result.Approved = true
 
 	if s.invoiceRepo != nil {
-		if inv, invErr := s.invoiceRepo.GetByBillingQueueItemID(ctx, invoiceports.GetInvoiceByBillingQueueItemIDRequest{
-			BillingQueueItemID: approved.ID,
-			TenantInfo:         req.TenantInfo,
-		}); invErr == nil && inv != nil {
+		if inv, invErr := s.invoiceRepo.GetByBillingQueueItemID(
+			ctx,
+			invoiceports.GetInvoiceByBillingQueueItemIDRequest{
+				BillingQueueItemID: approved.ID,
+				TenantInfo:         req.TenantInfo,
+			},
+		); invErr == nil &&
+			inv != nil {
 			id := inv.ID
 			result.InvoiceID = &id
 			result.InvoiceNumber = inv.Number

@@ -4,9 +4,9 @@ import (
 	"context"
 	"html/template"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -128,7 +128,11 @@ func (b *ContextBuilder) resolveLogo(
 		return "", nil
 	}
 
-	return documenttemplateports.ResolveLogoDataURI(ctx, b.inliner, deliveryProfile.Organization.LogoURL)
+	return documenttemplateports.ResolveLogoDataURI(
+		ctx,
+		b.inliner,
+		deliveryProfile.Organization.LogoURL,
+	)
 }
 
 // invoiceContextFromPDFData is the whole mapping between the surviving data

@@ -50,65 +50,69 @@ func (r *indexRepository) ListConnection(
 	ctx context.Context,
 	req *fuelsurchargeports.ListFuelIndexConnectionRequest,
 ) (*pagination.CursorListResult[*fuelsurcharge.FuelIndex], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*fuelsurcharge.FuelIndex], error) {
-		log := r.l.With(
-			zap.String("operation", "ListConnection"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*fuelsurcharge.FuelIndex], error) {
+			log := r.l.With(
+				zap.String("operation", "ListConnection"),
+				zap.Any("request", req),
+			)
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*fuelsurcharge.FuelIndex)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						fuelsurchargecol.FuelIndexTable.Alias,
-						req.Filter,
-						(*fuelsurcharge.FuelIndex)(nil),
-					)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*fuelsurcharge.FuelIndex)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							fuelsurchargecol.FuelIndexTable.Alias,
+							req.Filter,
+							(*fuelsurcharge.FuelIndex)(nil),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count fuel indices", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*fuelsurcharge.FuelIndex]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*fuelsurcharge.FuelIndex) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return applyFuelIndexColumns(sq, req.FuelIndexColumns)
+							})
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							fuelsurchargecol.FuelIndexTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*fuelsurcharge.FuelIndex)(nil),
+						)
+					},
+				})
 			if err != nil {
-				log.Error("failed to count fuel indices", zap.Error(err))
+				log.Error("failed to scan fuel indices", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*fuelsurcharge.FuelIndex]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*fuelsurcharge.FuelIndex) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return applyFuelIndexColumns(sq, req.FuelIndexColumns)
-						})
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return querybuilder.ApplyCursorFilters(
-						sq,
-						fuelsurchargecol.FuelIndexTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*fuelsurcharge.FuelIndex)(nil),
-					)
-				},
-			})
-		if err != nil {
-			log.Error("failed to scan fuel indices", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *indexRepository) listBySource(
@@ -282,35 +286,39 @@ func (r *indexRepository) SelectOptions(
 	ctx context.Context,
 	req *fuelsurchargeports.FuelIndexSelectOptionsRequest,
 ) (*pagination.ListResult[*fuelsurcharge.FuelIndex], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*fuelsurcharge.FuelIndex], error) {
-		cols := fuelsurchargecol.FuelIndexColumns
-		return dbhelper.SelectOptions[*fuelsurcharge.FuelIndex](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					cols.ID,
-					cols.Name,
-					cols.Code,
-					cols.Description,
-					cols.Source,
-					cols.EIASeriesID,
-					cols.IsActive,
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*fuelsurcharge.FuelIndex], error) {
+			cols := fuelsurchargecol.FuelIndexColumns
+			return dbhelper.SelectOptions[*fuelsurcharge.FuelIndex](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.Name,
+						cols.Code,
+						cols.Description,
+						cols.Source,
+						cols.EIASeriesID,
+						cols.IsActive,
+					},
+					OrgColumnRef: &cols.OrganizationID,
+					BuColumnRef:  &cols.BusinessUnitID,
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						return q.Where(cols.IsActive.Eq(), true).
+							Order(cols.Code.OrderAsc())
+					},
+					EntityName: "FuelIndex",
+					SearchColumnRefs: []buncolgen.Column{
+						cols.Name,
+						cols.Code,
+						cols.Description,
+					},
 				},
-				OrgColumnRef: &cols.OrganizationID,
-				BuColumnRef:  &cols.BusinessUnitID,
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Where(cols.IsActive.Eq(), true).
-						Order(cols.Code.OrderAsc())
-				},
-				EntityName: "FuelIndex",
-				SearchColumnRefs: []buncolgen.Column{
-					cols.Name,
-					cols.Code,
-					cols.Description,
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }

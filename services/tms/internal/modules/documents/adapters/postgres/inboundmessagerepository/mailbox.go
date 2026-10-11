@@ -41,26 +41,33 @@ func (r *mailboxRepository) List(
 	ctx context.Context,
 	req *inboundmessageports.ListMailboxesRequest,
 ) (*pagination.ListResult[*inboundmessage.Mailbox], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*inboundmessage.Mailbox], error) {
-		entities := make([]*inboundmessage.Mailbox, 0, req.Filter.Pagination.SafeLimit())
-		cols := inboundmessagecol.MailboxColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*inboundmessage.Mailbox], error) {
+			entities := make([]*inboundmessage.Mailbox, 0, req.Filter.Pagination.SafeLimit())
+			cols := inboundmessagecol.MailboxColumns
 
-		query := r.db.DBForContext(ctx).NewSelect().Model(&entities)
-		if req.Status != "" {
-			query = query.Where(cols.Status.Eq(), req.Status)
-		}
+			query := r.db.DBForContext(ctx).NewSelect().Model(&entities)
+			if req.Status != "" {
+				query = query.Where(cols.Status.Eq(), req.Status)
+			}
 
-		total, err := querybuilder.ApplyFilters(query, "imbx", req.Filter, (*inboundmessage.Mailbox)(nil)).
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := querybuilder.ApplyFilters(query, "imbx", req.Filter, (*inboundmessage.Mailbox)(nil)).
+				Order(cols.CreatedAt.OrderDesc()).
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*inboundmessage.Mailbox]{Items: entities, Total: total}, nil
-	})
+			return &pagination.ListResult[*inboundmessage.Mailbox]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *mailboxRepository) GetByID(
@@ -95,7 +102,10 @@ func (r *mailboxRepository) GetByTokenHash(
 	ctx context.Context,
 	req inboundmessageports.GetMailboxByTokenHashRequest,
 ) (*inboundmessage.Mailbox, error) {
-	ctx = dbscope.WithSystem(ctx, "resolve the inbound mailbox a provider delivered to before its tenant is known")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"resolve the inbound mailbox a provider delivered to before its tenant is known",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*inboundmessage.Mailbox, error) {
 		entity := new(inboundmessage.Mailbox)
 		cols := inboundmessagecol.MailboxColumns

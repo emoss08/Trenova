@@ -8,23 +8,23 @@ import (
 	"slices"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
-	"github.com/emoss08/trenova/internal/modules/kernel/app/usageservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs/documentuploadcontract"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/thumbnailjobs/thumbnailcontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/usageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -117,10 +117,13 @@ func (a *Activities) FinalizeUploadActivity(
 		UserID: payload.UserID,
 	}
 
-	session, err := a.sessionRepo.GetByID(ctx, documentuploadports.GetDocumentUploadSessionByIDRequest{
-		ID:         payload.SessionID,
-		TenantInfo: tenantInfo,
-	})
+	session, err := a.sessionRepo.GetByID(
+		ctx,
+		documentuploadports.GetDocumentUploadSessionByIDRequest{
+			ID:         payload.SessionID,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, temporal.NewNonRetryableApplicationError(
@@ -945,7 +948,9 @@ func (a *Activities) isSessionReadyToFinalize(
 ) (bool, error) {
 	if session.Strategy == documentupload.StrategySingle {
 		if len(session.UploadedParts) > 0 {
-			return kernelports.SumUploadedPartSizes(kernelports.ToDomainParts(session.UploadedParts)) ==
+			return kernelports.SumUploadedPartSizes(
+				kernelports.ToDomainParts(session.UploadedParts),
+			) ==
 				session.FileSize, nil
 		}
 

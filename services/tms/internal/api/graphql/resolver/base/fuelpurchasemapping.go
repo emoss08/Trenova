@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 

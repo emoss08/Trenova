@@ -9,14 +9,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -102,7 +102,10 @@ func New(p Params) auditports.AuditService {
 	return srv
 }
 
-func (s *service) LogAction(params *auditports.LogActionParams, opts ...auditports.LogOption) error {
+func (s *service) LogAction(
+	params *auditports.LogActionParams,
+	opts ...auditports.LogOption,
+) error {
 	if params == nil {
 		return ErrAuditParamsRequired
 	}
@@ -286,7 +289,9 @@ func (s *service) buildBulkAuditEntries(
 	return criticalEntries, nonCriticalEntries, validCount
 }
 
-func resolveAuditPrincipal(params *auditports.LogActionParams) (kernelports.PrincipalType, pulid.ID) {
+func resolveAuditPrincipal(
+	params *auditports.LogActionParams,
+) (kernelports.PrincipalType, pulid.ID) {
 	if params.PrincipalType != "" && params.PrincipalID.IsNotNil() {
 		return params.PrincipalType, params.PrincipalID
 	}

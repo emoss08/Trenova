@@ -21,7 +21,11 @@ func applyCreditMemoRequestFromInput(
 		)
 	}
 
-	applications := make([]*customerpaymentports.CreditMemoApplicationInput, 0, len(input.Applications))
+	applications := make(
+		[]*customerpaymentports.CreditMemoApplicationInput,
+		0,
+		len(input.Applications),
+	)
 	multiErr := errortypes.NewMultiError()
 	for idx, app := range input.Applications {
 		if app == nil {

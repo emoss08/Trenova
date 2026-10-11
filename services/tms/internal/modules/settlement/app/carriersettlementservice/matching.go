@@ -3,17 +3,17 @@ package carriersettlementservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -243,7 +243,10 @@ func (s *Service) AcceptMatch(
 	}
 	match, err := s.invoiceMatchRepo.GetByID(
 		ctx,
-		carriersettlementports.GetCarrierInvoiceMatchByIDRequest{ID: matchID, TenantInfo: tenantInfo},
+		carriersettlementports.GetCarrierInvoiceMatchByIDRequest{
+			ID:         matchID,
+			TenantInfo: tenantInfo,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -281,7 +284,10 @@ func (s *Service) AcceptWithVariance(
 	}
 	match, err := s.invoiceMatchRepo.GetByID(
 		ctx,
-		carriersettlementports.GetCarrierInvoiceMatchByIDRequest{ID: matchID, TenantInfo: tenantInfo},
+		carriersettlementports.GetCarrierInvoiceMatchByIDRequest{
+			ID:         matchID,
+			TenantInfo: tenantInfo,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -362,7 +368,10 @@ func (s *Service) RejectMatch(
 	}
 	match, err := s.invoiceMatchRepo.GetByID(
 		ctx,
-		carriersettlementports.GetCarrierInvoiceMatchByIDRequest{ID: matchID, TenantInfo: tenantInfo},
+		carriersettlementports.GetCarrierInvoiceMatchByIDRequest{
+			ID:         matchID,
+			TenantInfo: tenantInfo,
+		},
 	)
 	if err != nil {
 		return nil, err

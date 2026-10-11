@@ -3,10 +3,10 @@ package shipmentbriefingservice
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -64,7 +64,9 @@ func loads(count int) string {
 	return stringutils.CountNoun(count, "load", "loads")
 }
 
-func joinClauses(clauses [][]shipmentbriefports.ShipmentBriefingSegment) []shipmentbriefports.ShipmentBriefingSegment {
+func joinClauses(
+	clauses [][]shipmentbriefports.ShipmentBriefingSegment,
+) []shipmentbriefports.ShipmentBriefingSegment {
 	segments := make([]shipmentbriefports.ShipmentBriefingSegment, 0, len(clauses)*2+1)
 	for i, clause := range clauses {
 		switch {
@@ -85,7 +87,9 @@ func joinClauses(clauses [][]shipmentbriefports.ShipmentBriefingSegment) []shipm
 func Deterministic(f Facts) []shipmentbriefports.ShipmentBriefingSegment {
 	if f.DeliveringToday == 0 && f.Moving == 0 && f.Late == 0 && f.Uncovered == 0 &&
 		f.Detention == 0 && f.ReadyToBill == 0 {
-		return []shipmentbriefports.ShipmentBriefingSegment{text("Nothing on the board needs you right now.")}
+		return []shipmentbriefports.ShipmentBriefingSegment{
+			text("Nothing on the board needs you right now."),
+		}
 	}
 
 	board := make([][]shipmentbriefports.ShipmentBriefingSegment, 0, 3)

@@ -1,25 +1,25 @@
 package agentquerytoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
-	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
-	"github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"go.uber.org/fx"
 )
 
@@ -203,7 +203,9 @@ func provideDescribeReportTool(reports *reporting.Service) agentports.AgentQuery
 	return newDescribeReportTool(reports)
 }
 
-func provideListReportDatasetsTool(permissions permissionports.PermissionEngine) agentports.AgentQueryTool {
+func provideListReportDatasetsTool(
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListReportDatasetsTool(permissions)
 }
 
@@ -244,7 +246,9 @@ func provideGetWorkerHOSTool(telematics *telematicsservice.Service) agentports.A
 	return newGetWorkerHOSTool(telematics)
 }
 
-func provideGetDispatchBoardTool(board agentports.DispatchConsoleService) agentports.AgentQueryTool {
+func provideGetDispatchBoardTool(
+	board agentports.DispatchConsoleService,
+) agentports.AgentQueryTool {
 	return newGetDispatchBoardTool(board)
 }
 
@@ -264,7 +268,9 @@ func provideListDetentionDeskTool(desk *detentionservice.Service) agentports.Age
 	return newListDetentionDeskTool(desk)
 }
 
-func provideListWeatherAlertsTool(weather weatheralertports.WeatherAlertService) agentports.AgentQueryTool {
+func provideListWeatherAlertsTool(
+	weather weatheralertports.WeatherAlertService,
+) agentports.AgentQueryTool {
 	return newListWeatherAlertsTool(weather)
 }
 
@@ -281,7 +287,9 @@ func provideGetDocumentSummaryTool(
 	return newGetDocumentSummaryTool(documents, content, permissions, threads)
 }
 
-func provideGetShipmentDraftTool(content documentports.DocumentContentService) agentports.AgentQueryTool {
+func provideGetShipmentDraftTool(
+	content documentports.DocumentContentService,
+) agentports.AgentQueryTool {
 	return newGetShipmentDraftTool(content)
 }
 
@@ -305,7 +313,9 @@ func provideRankMoveCandidatesTool(
 	return newRankMoveCandidatesTool(console)
 }
 
-func providePlanDispatchTool(planner agentports.DispatchAutoAssignService) agentports.AgentQueryTool {
+func providePlanDispatchTool(
+	planner agentports.DispatchAutoAssignService,
+) agentports.AgentQueryTool {
 	return newPlanDispatchTool(planner)
 }
 

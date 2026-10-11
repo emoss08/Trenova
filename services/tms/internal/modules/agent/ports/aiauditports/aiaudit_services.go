@@ -125,7 +125,10 @@ type AIAuditService interface {
 		ceilings FieldCeilings,
 	) map[string]any
 	ChainStatus(ctx context.Context, tenantInfo pagination.TenantInfo) (*AIAuditChainStatus, error)
-	RequestVerification(ctx context.Context, actor *permissionports.RequestActor) (*AIAuditChainStatus, error)
+	RequestVerification(
+		ctx context.Context,
+		actor *permissionports.RequestActor,
+	) (*AIAuditChainStatus, error)
 	RequestExport(
 		ctx context.Context,
 		req *RequestAIAuditExportRequest,

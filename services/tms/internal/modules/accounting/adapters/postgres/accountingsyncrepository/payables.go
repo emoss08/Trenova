@@ -66,139 +66,151 @@ func (r *payablesRepository) carrierSettlement(
 	ctx context.Context,
 	req *accountingsyncports.GetPayableSettlementRequest,
 ) (*accountingsyncports.PayableSettlement, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsyncports.PayableSettlement, error) {
-		entity := new(carriersettlement.CarrierSettlement)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation(carriersettlementcol.CarrierSettlementRelations.Carrier).
-			Apply(carriersettlementcol.CarrierSettlementApplyTenant(req.TenantInfo)).
-			Where(carriersettlementcol.CarrierSettlementColumns.ID.Eq(), req.ID).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Carrier settlement")
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*accountingsyncports.PayableSettlement, error) {
+			entity := new(carriersettlement.CarrierSettlement)
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				Relation(carriersettlementcol.CarrierSettlementRelations.Carrier).
+				Apply(carriersettlementcol.CarrierSettlementApplyTenant(req.TenantInfo)).
+				Where(carriersettlementcol.CarrierSettlementColumns.ID.Eq(), req.ID).
+				Scan(ctx); err != nil {
+				return nil, dberror.HandleNotFoundError(err, "Carrier settlement")
+			}
 
-		out := &accountingsyncports.PayableSettlement{
-			Kind:                 accountingsyncports.PayableCarrier,
-			ID:                   entity.ID,
-			Number:               entity.SettlementNumber,
-			PartyID:              entity.CarrierID,
-			PeriodStart:          entity.PeriodStart,
-			PeriodEnd:            entity.PeriodEnd,
-			PayDate:              entity.PayDate,
-			PostedAt:             entity.PostedAt,
-			PaidAt:               entity.PaidAt,
-			Voided:               entity.Status == carriersettlement.StatusVoided,
-			NetMinor:             entity.NetPayableMinor,
-			ShipmentCount:        entity.ShipmentCount,
-			CurrencyCode:         entity.CurrencyCode,
-			ExchangeRate:         entity.ExchangeRate,
-			ExchangeRateDate:     entity.ExchangeRateDate,
-			PaidExchangeRate:     entity.PaidExchangeRate,
-			PaidExchangeRateDate: entity.PaidExchangeRateDate,
-			PaymentMethod:        entity.PaymentMethod,
-			PaymentReference:     entity.PaymentReference,
-			PayableAccountID:     pulid.ConvertFromPtr(entity.PostedAPAccountID),
-		}
-		if entity.Carrier != nil {
-			out.PartyName = entity.Carrier.Name
-		}
+			out := &accountingsyncports.PayableSettlement{
+				Kind:                 accountingsyncports.PayableCarrier,
+				ID:                   entity.ID,
+				Number:               entity.SettlementNumber,
+				PartyID:              entity.CarrierID,
+				PeriodStart:          entity.PeriodStart,
+				PeriodEnd:            entity.PeriodEnd,
+				PayDate:              entity.PayDate,
+				PostedAt:             entity.PostedAt,
+				PaidAt:               entity.PaidAt,
+				Voided:               entity.Status == carriersettlement.StatusVoided,
+				NetMinor:             entity.NetPayableMinor,
+				ShipmentCount:        entity.ShipmentCount,
+				CurrencyCode:         entity.CurrencyCode,
+				ExchangeRate:         entity.ExchangeRate,
+				ExchangeRateDate:     entity.ExchangeRateDate,
+				PaidExchangeRate:     entity.PaidExchangeRate,
+				PaidExchangeRateDate: entity.PaidExchangeRateDate,
+				PaymentMethod:        entity.PaymentMethod,
+				PaymentReference:     entity.PaymentReference,
+				PayableAccountID:     pulid.ConvertFromPtr(entity.PostedAPAccountID),
+			}
+			if entity.Carrier != nil {
+				out.PartyName = entity.Carrier.Name
+			}
 
-		control, err := r.accountingControl(ctx, req.TenantInfo)
-		if err != nil {
-			return nil, err
-		}
-		out.Defaults = defaultAccounts(control)
+			control, err := r.accountingControl(ctx, req.TenantInfo)
+			if err != nil {
+				return nil, err
+			}
+			out.Defaults = defaultAccounts(control)
 
-		if out.Lines, err = r.journalLines(
-			ctx,
-			req.TenantInfo,
-			entity.PostedJournalBatchID,
-		); err != nil {
-			return nil, err
-		}
-		paid, err := r.journalLines(ctx, req.TenantInfo, entity.PaidJournalBatchID)
-		if err != nil {
-			return nil, err
-		}
-		out.BankAccountID = carrierBankAccount(paid, entity, control)
-		if out.InvoiceNumbers, err = r.invoiceNumbers(ctx, req.TenantInfo, entity.ID); err != nil {
-			return nil, err
-		}
-		return out, nil
-	})
+			if out.Lines, err = r.journalLines(
+				ctx,
+				req.TenantInfo,
+				entity.PostedJournalBatchID,
+			); err != nil {
+				return nil, err
+			}
+			paid, err := r.journalLines(ctx, req.TenantInfo, entity.PaidJournalBatchID)
+			if err != nil {
+				return nil, err
+			}
+			out.BankAccountID = carrierBankAccount(paid, entity, control)
+			if out.InvoiceNumbers, err = r.invoiceNumbers(
+				ctx,
+				req.TenantInfo,
+				entity.ID,
+			); err != nil {
+				return nil, err
+			}
+			return out, nil
+		},
+	)
 }
 
 func (r *payablesRepository) driverSettlement(
 	ctx context.Context,
 	req *accountingsyncports.GetPayableSettlementRequest,
 ) (*accountingsyncports.PayableSettlement, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsyncports.PayableSettlement, error) {
-		entity := new(driversettlement.Settlement)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation(driversettlementcol.SettlementRelations.Worker).
-			Apply(driversettlementcol.SettlementApplyTenant(req.TenantInfo)).
-			Where(driversettlementcol.SettlementColumns.ID.Eq(), req.ID).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Driver settlement")
-		}
-
-		control, err := r.accountingControl(ctx, req.TenantInfo)
-		if err != nil {
-			return nil, err
-		}
-
-		out := &accountingsyncports.PayableSettlement{
-			Kind:                 accountingsyncports.PayableDriver,
-			ID:                   entity.ID,
-			Number:               entity.SettlementNumber,
-			PartyID:              entity.WorkerID,
-			OwnerOperator:        entity.Classification == driverpay.PayeeClassificationOwnerOperator,
-			PeriodStart:          entity.PeriodStart,
-			PeriodEnd:            entity.PeriodEnd,
-			PayDate:              entity.PayDate,
-			PostedAt:             entity.PostedAt,
-			PaidAt:               entity.PaidAt,
-			Voided:               entity.Status == driversettlement.StatusVoided,
-			NetMinor:             entity.NetPayMinor,
-			ShipmentCount:        entity.ShipmentCount,
-			CurrencyCode:         entity.CurrencyCode,
-			ExchangeRate:         entity.ExchangeRate,
-			ExchangeRateDate:     entity.ExchangeRateDate,
-			PaidExchangeRate:     entity.PaidExchangeRate,
-			PaidExchangeRateDate: entity.PaidExchangeRateDate,
-			PaymentMethod:        entity.PaymentMethod,
-			PaymentReference:     entity.PaymentReference,
-			PayableAccountID:     pulid.ConvertFromPtr(entity.PostedPayableAccountID),
-		}
-		if entity.Worker != nil {
-			out.PartyName = strings.TrimSpace(
-				strings.TrimSpace(
-					entity.Worker.FirstName,
-				) + " " + strings.TrimSpace(
-					entity.Worker.LastName,
-				),
-			)
-		}
-		out.Defaults = defaultAccounts(control)
-		if control != nil {
-			if out.PayableAccountID.IsNil() {
-				out.PayableAccountID = control.DefaultSettlementsPayableAccountID
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*accountingsyncports.PayableSettlement, error) {
+			entity := new(driversettlement.Settlement)
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				Relation(driversettlementcol.SettlementRelations.Worker).
+				Apply(driversettlementcol.SettlementApplyTenant(req.TenantInfo)).
+				Where(driversettlementcol.SettlementColumns.ID.Eq(), req.ID).
+				Scan(ctx); err != nil {
+				return nil, dberror.HandleNotFoundError(err, "Driver settlement")
 			}
-			out.BankAccountID = control.DefaultCashAccountID
-		}
 
-		if out.Lines, err = r.journalLines(
-			ctx,
-			req.TenantInfo,
-			entity.PostedJournalBatchID,
-		); err != nil {
-			return nil, err
-		}
-		return out, nil
-	})
+			control, err := r.accountingControl(ctx, req.TenantInfo)
+			if err != nil {
+				return nil, err
+			}
+
+			out := &accountingsyncports.PayableSettlement{
+				Kind:                 accountingsyncports.PayableDriver,
+				ID:                   entity.ID,
+				Number:               entity.SettlementNumber,
+				PartyID:              entity.WorkerID,
+				OwnerOperator:        entity.Classification == driverpay.PayeeClassificationOwnerOperator,
+				PeriodStart:          entity.PeriodStart,
+				PeriodEnd:            entity.PeriodEnd,
+				PayDate:              entity.PayDate,
+				PostedAt:             entity.PostedAt,
+				PaidAt:               entity.PaidAt,
+				Voided:               entity.Status == driversettlement.StatusVoided,
+				NetMinor:             entity.NetPayMinor,
+				ShipmentCount:        entity.ShipmentCount,
+				CurrencyCode:         entity.CurrencyCode,
+				ExchangeRate:         entity.ExchangeRate,
+				ExchangeRateDate:     entity.ExchangeRateDate,
+				PaidExchangeRate:     entity.PaidExchangeRate,
+				PaidExchangeRateDate: entity.PaidExchangeRateDate,
+				PaymentMethod:        entity.PaymentMethod,
+				PaymentReference:     entity.PaymentReference,
+				PayableAccountID:     pulid.ConvertFromPtr(entity.PostedPayableAccountID),
+			}
+			if entity.Worker != nil {
+				out.PartyName = strings.TrimSpace(
+					strings.TrimSpace(
+						entity.Worker.FirstName,
+					) + " " + strings.TrimSpace(
+						entity.Worker.LastName,
+					),
+				)
+			}
+			out.Defaults = defaultAccounts(control)
+			if control != nil {
+				if out.PayableAccountID.IsNil() {
+					out.PayableAccountID = control.DefaultSettlementsPayableAccountID
+				}
+				out.BankAccountID = control.DefaultCashAccountID
+			}
+
+			if out.Lines, err = r.journalLines(
+				ctx,
+				req.TenantInfo,
+				entity.PostedJournalBatchID,
+			); err != nil {
+				return nil, err
+			}
+			return out, nil
+		},
+	)
 }
 
 func (r *payablesRepository) accountingControl(
@@ -227,50 +239,54 @@ func (r *payablesRepository) journalLines(
 	tenantInfo pagination.TenantInfo,
 	batchID *pulid.ID,
 ) ([]accountingsyncports.PayableJournalLine, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]accountingsyncports.PayableJournalLine, error) {
-		if batchID == nil || batchID.IsNil() {
-			return nil, nil
-		}
-
-		entries := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*journalentry.JournalEntry)(nil)).
-			ColumnExpr(journalentrycol.JournalEntryColumns.ID.Qualified()).
-			Apply(journalentrycol.JournalEntryApplyTenant(tenantInfo)).
-			Where(journalentrycol.JournalEntryColumns.BatchID.Eq(), *batchID)
-
-		lines := make([]*journalentry.JournalEntryLine, 0, 8)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&lines).
-			Relation(journalentrycol.JournalEntryLineRelations.GLAccount).
-			Apply(journalentrycol.JournalEntryLineApplyTenant(tenantInfo)).
-			Where(buncolgen.Expr("{0} IN (?)", journalentrycol.JournalEntryLineColumns.JournalEntryID), entries).
-			Order(journalentrycol.JournalEntryLineColumns.LineNumber.OrderAsc()).
-			Scan(ctx); err != nil {
-			r.l.Error("failed to load settlement journal lines", zap.Error(err))
-			return nil, fmt.Errorf("load settlement journal lines: %w", err)
-		}
-
-		byAccount := make(map[pulid.ID]int, len(lines))
-		out := make([]accountingsyncports.PayableJournalLine, 0, len(lines))
-		for _, line := range lines {
-			idx, seen := byAccount[line.GLAccountID]
-			if !seen {
-				entry := accountingsyncports.PayableJournalLine{AccountID: line.GLAccountID}
-				if line.GLAccount != nil {
-					entry.AccountCode = line.GLAccount.AccountCode
-					entry.AccountName = line.GLAccount.Name
-				}
-				out = append(out, entry)
-				idx = len(out) - 1
-				byAccount[line.GLAccountID] = idx
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]accountingsyncports.PayableJournalLine, error) {
+			if batchID == nil || batchID.IsNil() {
+				return nil, nil
 			}
-			out[idx].DebitMinor += line.DebitAmount
-			out[idx].CreditMinor += line.CreditAmount
-		}
-		return out, nil
-	})
+
+			entries := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*journalentry.JournalEntry)(nil)).
+				ColumnExpr(journalentrycol.JournalEntryColumns.ID.Qualified()).
+				Apply(journalentrycol.JournalEntryApplyTenant(tenantInfo)).
+				Where(journalentrycol.JournalEntryColumns.BatchID.Eq(), *batchID)
+
+			lines := make([]*journalentry.JournalEntryLine, 0, 8)
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&lines).
+				Relation(journalentrycol.JournalEntryLineRelations.GLAccount).
+				Apply(journalentrycol.JournalEntryLineApplyTenant(tenantInfo)).
+				Where(buncolgen.Expr("{0} IN (?)", journalentrycol.JournalEntryLineColumns.JournalEntryID), entries).
+				Order(journalentrycol.JournalEntryLineColumns.LineNumber.OrderAsc()).
+				Scan(ctx); err != nil {
+				r.l.Error("failed to load settlement journal lines", zap.Error(err))
+				return nil, fmt.Errorf("load settlement journal lines: %w", err)
+			}
+
+			byAccount := make(map[pulid.ID]int, len(lines))
+			out := make([]accountingsyncports.PayableJournalLine, 0, len(lines))
+			for _, line := range lines {
+				idx, seen := byAccount[line.GLAccountID]
+				if !seen {
+					entry := accountingsyncports.PayableJournalLine{AccountID: line.GLAccountID}
+					if line.GLAccount != nil {
+						entry.AccountCode = line.GLAccount.AccountCode
+						entry.AccountName = line.GLAccount.Name
+					}
+					out = append(out, entry)
+					idx = len(out) - 1
+					byAccount[line.GLAccountID] = idx
+				}
+				out[idx].DebitMinor += line.DebitAmount
+				out[idx].CreditMinor += line.CreditAmount
+			}
+			return out, nil
+		},
+	)
 }
 
 func carrierBankAccount(

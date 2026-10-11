@@ -45,138 +45,153 @@ func (r *payProfileRepository) List(
 	ctx context.Context,
 	req *driverpayports.ListPayProfilesRequest,
 ) (*pagination.ListResult[*driverpay.PayProfile], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driverpay.PayProfile], error) {
-		limit := req.Filter.Pagination.SafeLimit()
-		items := make([]*driverpay.PayProfile, 0, limit)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*driverpay.PayProfile], error) {
+			limit := req.Filter.Pagination.SafeLimit()
+			items := make([]*driverpay.PayProfile, 0, limit)
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("dpp.organization_id = ?", req.Filter.TenantInfo.OrgID).
-			Where("dpp.business_unit_id = ?", req.Filter.TenantInfo.BuID).
-			Relation("Components", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Order("dppc.sequence ASC")
-			}).
-			Order("dpp.name ASC").
-			Limit(limit).
-			Offset(req.Filter.Pagination.SafeOffset())
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&items).
+				Where("dpp.organization_id = ?", req.Filter.TenantInfo.OrgID).
+				Where("dpp.business_unit_id = ?", req.Filter.TenantInfo.BuID).
+				Relation("Components", func(q *bun.SelectQuery) *bun.SelectQuery {
+					return q.Order("dppc.sequence ASC")
+				}).
+				Order("dpp.name ASC").
+				Limit(limit).
+				Offset(req.Filter.Pagination.SafeOffset())
 
-		if req.Filter.Query != "" {
-			query = query.Where(
-				"(dpp.name ILIKE ? OR dpp.description ILIKE ?)",
-				"%"+req.Filter.Query+"%",
-				"%"+req.Filter.Query+"%",
-			)
-		}
-		if req.Classification != "" {
-			query = query.Where("dpp.classification = ?", req.Classification)
-		}
+			if req.Filter.Query != "" {
+				query = query.Where(
+					"(dpp.name ILIKE ? OR dpp.description ILIKE ?)",
+					"%"+req.Filter.Query+"%",
+					"%"+req.Filter.Query+"%",
+				)
+			}
+			if req.Classification != "" {
+				query = query.Where("dpp.classification = ?", req.Classification)
+			}
 
-		total, err := query.ScanAndCount(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("list pay profiles: %w", err)
-		}
+			total, err := query.ScanAndCount(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list pay profiles: %w", err)
+			}
 
-		return &pagination.ListResult[*driverpay.PayProfile]{Items: items, Total: total}, nil
-	})
+			return &pagination.ListResult[*driverpay.PayProfile]{Items: items, Total: total}, nil
+		},
+	)
 }
 
 func (r *payProfileRepository) ListConnection(
 	ctx context.Context,
 	req *driverpayports.ListPayProfileConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.PayProfile], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driverpay.PayProfile], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*driverpay.PayProfile], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*driverpay.PayProfile)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						"dpp",
-						req.Filter,
-						(*driverpay.PayProfile)(nil),
-					)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*driverpay.PayProfile)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							"dpp",
+							req.Filter,
+							(*driverpay.PayProfile)(nil),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count pay profiles", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*driverpay.PayProfile]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*driverpay.PayProfile) *bun.SelectQuery {
+						return dba.NewSelect().
+							Model(entities).
+							ColumnExpr(driverpaycol.PayProfileTable.All()).
+							Relation("Components", func(q *bun.SelectQuery) *bun.SelectQuery {
+								return q.Order("dppc.sequence ASC")
+							})
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							"dpp",
+							req.Filter,
+							req.Cursor,
+							(*driverpay.PayProfile)(nil),
+						)
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count pay profiles", zap.Error(err))
+				log.Error("failed to scan pay profiles", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*driverpay.PayProfile]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*driverpay.PayProfile) *bun.SelectQuery {
-				return dba.NewSelect().
-					Model(entities).
-					ColumnExpr(driverpaycol.PayProfileTable.All()).
-					Relation("Components", func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Order("dppc.sequence ASC")
-					})
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return querybuilder.ApplyCursorFilters(
-					sq,
-					"dpp",
-					req.Filter,
-					req.Cursor,
-					(*driverpay.PayProfile)(nil),
-				)
-			},
-		})
-		if err != nil {
-			log.Error("failed to scan pay profiles", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *payProfileRepository) SelectOptions(
 	ctx context.Context,
 	req *driverpayports.PayProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*driverpay.PayProfile], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driverpay.PayProfile], error) {
-		cols := driverpaycol.PayProfileColumns
-		return dbhelper.SelectOptions[*driverpay.PayProfile](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					cols.ID,
-					cols.Name,
-					cols.Description,
-					cols.Classification,
-					cols.CurrencyCode,
-					cols.CreatedAt,
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*driverpay.PayProfile], error) {
+			cols := driverpaycol.PayProfileColumns
+			return dbhelper.SelectOptions[*driverpay.PayProfile](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.Name,
+						cols.Description,
+						cols.Classification,
+						cols.CurrencyCode,
+						cols.CreatedAt,
+					},
+					OrgColumnRef: &cols.OrganizationID,
+					BuColumnRef:  &cols.BusinessUnitID,
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						q = q.Where(cols.Status.Eq(), domaintypes.StatusActive)
+						if req.Classification != "" {
+							q = q.Where(cols.Classification.Eq(), req.Classification)
+						}
+						return q.Order(cols.Name.OrderAsc())
+					},
+					EntityName: "PayProfile",
+					SearchColumnRefs: []buncolgen.Column{
+						cols.Name,
+						cols.Description,
+					},
 				},
-				OrgColumnRef: &cols.OrganizationID,
-				BuColumnRef:  &cols.BusinessUnitID,
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					q = q.Where(cols.Status.Eq(), domaintypes.StatusActive)
-					if req.Classification != "" {
-						q = q.Where(cols.Classification.Eq(), req.Classification)
-					}
-					return q.Order(cols.Name.OrderAsc())
-				},
-				EntityName: "PayProfile",
-				SearchColumnRefs: []buncolgen.Column{
-					cols.Name,
-					cols.Description,
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 func (r *payProfileRepository) GetByID(

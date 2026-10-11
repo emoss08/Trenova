@@ -116,53 +116,57 @@ func (r *repository) List(
 	ctx context.Context,
 	req insightports.ListInsightsQuery,
 ) (*pagination.ListResult[*insight.Insight], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*insight.Insight], error) {
-		log := r.l.With(zap.String("operation", "List"))
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*insight.Insight], error) {
+			log := r.l.With(zap.String("operation", "List"))
 
-		cols := insightcol.InsightColumns
-		limit, offset := pageBounds(req.Limit, req.Offset)
-		entities := make([]*insight.Insight, 0, limit)
+			cols := insightcol.InsightColumns
+			limit, offset := pageBounds(req.Limit, req.Offset)
+			entities := make([]*insight.Insight, 0, limit)
 
-		if len(req.AllowedDetectorKeys) == 0 {
-			return &pagination.ListResult[*insight.Insight]{Items: entities, Total: 0}, nil
-		}
+			if len(req.AllowedDetectorKeys) == 0 {
+				return &pagination.ListResult[*insight.Insight]{Items: entities, Total: 0}, nil
+			}
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(insightcol.InsightApplyTenant(req.TenantInfo)).
-			Where(cols.DetectorKey.In(), bun.In([]string(req.AllowedDetectorKeys)))
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(insightcol.InsightApplyTenant(req.TenantInfo)).
+				Where(cols.DetectorKey.In(), bun.In([]string(req.AllowedDetectorKeys)))
 
-		if len(req.Statuses) > 0 {
-			query = query.Where(cols.Status.In(), bun.In(req.Statuses))
-		} else {
-			// Someone opening the page is asking what needs attention now. Seeing what
-			// was dismissed or has since resolved is a deliberate act, not the default.
-			query = query.Where(cols.Status.Eq(), insight.StatusActive)
-		}
+			if len(req.Statuses) > 0 {
+				query = query.Where(cols.Status.In(), bun.In(req.Statuses))
+			} else {
+				// Someone opening the page is asking what needs attention now. Seeing what
+				// was dismissed or has since resolved is a deliberate act, not the default.
+				query = query.Where(cols.Status.Eq(), insight.StatusActive)
+			}
 
-		if len(req.Categories) > 0 {
-			query = query.Where(cols.Category.In(), bun.In(req.Categories))
-		}
+			if len(req.Categories) > 0 {
+				query = query.Where(cols.Category.In(), bun.In(req.Categories))
+			}
 
-		if len(req.Severities) > 0 {
-			query = query.Where(cols.Severity.In(), bun.In(req.Severities))
-		}
+			if len(req.Severities) > 0 {
+				query = query.Where(cols.Severity.In(), bun.In(req.Severities))
+			}
 
-		total, err := query.
-			OrderExpr(severityOrder).
-			Order(cols.DetectedAt.OrderDesc()).
-			Limit(limit).
-			Offset(offset).
-			ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count insights", zap.Error(err))
+			total, err := query.
+				OrderExpr(severityOrder).
+				Order(cols.DetectedAt.OrderDesc()).
+				Limit(limit).
+				Offset(offset).
+				ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count insights", zap.Error(err))
 
-			return nil, err
-		}
+				return nil, err
+			}
 
-		return &pagination.ListResult[*insight.Insight]{Items: entities, Total: total}, nil
-	})
+			return &pagination.ListResult[*insight.Insight]{Items: entities, Total: total}, nil
+		},
+	)
 }
 
 // pageBounds keeps a caller that asked for nothing, or for everything, inside
@@ -352,49 +356,54 @@ func (r *repository) ReplaceDetectorFindings(
 	ctx context.Context,
 	req insightports.ReplaceDetectorFindingsRequest,
 ) (insightports.ReplaceDetectorFindingsResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (insightports.ReplaceDetectorFindingsResult, error) {
-		log := r.l.With(
-			zap.String("operation", "ReplaceDetectorFindings"),
-			zap.String("detector", req.DetectorKey),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (insightports.ReplaceDetectorFindingsResult, error) {
+			log := r.l.With(
+				zap.String("operation", "ReplaceDetectorFindings"),
+				zap.String("detector", req.DetectorKey),
+			)
 
-		var result insightports.ReplaceDetectorFindingsResult
+			var result insightports.ReplaceDetectorFindingsResult
 
-		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-			suppressed, err := r.suppressedKeys(txCtx, tx, req)
+			err := r.db.DBForContext(ctx).
+				RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
+					suppressed, err := r.suppressedKeys(txCtx, tx, req)
+					if err != nil {
+						return err
+					}
+
+					keep := make([]*insight.Insight, 0, len(req.Insights))
+					for _, entity := range req.Insights {
+						if _, isSuppressed := suppressed[entity.DedupeKey]; isSuppressed {
+							result.Suppressed++
+							continue
+						}
+						keep = append(keep, entity)
+					}
+
+					counts, err := r.applyReplacement(txCtx, tx, req, keep)
+					if err != nil {
+						return err
+					}
+
+					result.Superseded = counts.Superseded
+					result.Resolved = counts.Resolved
+					result.Created = counts.Created
+					result.Detected = counts.Detected
+
+					return nil
+				})
 			if err != nil {
-				return err
+				log.Error("failed to replace detector findings", zap.Error(err))
+
+				return insightports.ReplaceDetectorFindingsResult{}, err
 			}
 
-			keep := make([]*insight.Insight, 0, len(req.Insights))
-			for _, entity := range req.Insights {
-				if _, isSuppressed := suppressed[entity.DedupeKey]; isSuppressed {
-					result.Suppressed++
-					continue
-				}
-				keep = append(keep, entity)
-			}
-
-			counts, err := r.applyReplacement(txCtx, tx, req, keep)
-			if err != nil {
-				return err
-			}
-
-			result.Superseded = counts.Superseded
-			result.Resolved = counts.Resolved
-			result.Created = counts.Created
-			result.Detected = counts.Detected
-
-			return nil
-		})
-		if err != nil {
-			log.Error("failed to replace detector findings", zap.Error(err))
-
-			return insightports.ReplaceDetectorFindingsResult{}, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 // suppressedKeys reads the dedupe keys a person dismissed recently enough that

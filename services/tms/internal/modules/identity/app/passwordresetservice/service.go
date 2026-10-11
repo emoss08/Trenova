@@ -7,20 +7,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -433,23 +433,26 @@ func (s *Service) sendResetEmail(
 		return
 	}
 
-	rendered, renderErr := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
-		TenantInfo: tenantInfo,
-		Kind:       documenttemplate.KindPasswordResetEmail,
-		Data: documenttemplate.PasswordResetContext{
-			FirstName:   stringutils.FirstName(user.Name),
-			FullName:    user.Name,
-			CompanyName: s.companyName(ctx, user),
-			ResetURL: template.URL(
-				resetURL,
-			), //nolint:gosec // built from configured base URL + generated token
-			ExpiresInMinutes: int(ttl.Minutes()),
-			ExpiresAt:        timeutils.FormatStampIn(expiresAt, user.Timezone),
+	rendered, renderErr := s.templates.RenderMessage(
+		ctx,
+		&documenttemplateports.RenderMessageRequest{
+			TenantInfo: tenantInfo,
+			Kind:       documenttemplate.KindPasswordResetEmail,
+			Data: documenttemplate.PasswordResetContext{
+				FirstName:   stringutils.FirstName(user.Name),
+				FullName:    user.Name,
+				CompanyName: s.companyName(ctx, user),
+				ResetURL: template.URL(
+					resetURL,
+				), //nolint:gosec // built from configured base URL + generated token
+				ExpiresInMinutes: int(ttl.Minutes()),
+				ExpiresAt:        timeutils.FormatStampIn(expiresAt, user.Timezone),
+			},
+			ReferenceID:       user.ID,
+			Locale:            i18n.Locale(user.Locale),
+			FallbackToBuiltIn: true,
 		},
-		ReferenceID:       user.ID,
-		Locale:            i18n.Locale(user.Locale),
-		FallbackToBuiltIn: true,
-	})
+	)
 	if renderErr != nil {
 		log.Error("failed to render the password reset email", zap.Error(renderErr))
 		return

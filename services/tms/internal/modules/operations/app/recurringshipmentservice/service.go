@@ -3,13 +3,13 @@ package recurringshipmentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -218,14 +218,17 @@ func (s *Service) Match(
 	// Only hunt for a historical lane pattern when no active series covers the
 	// lane — the pattern hint exists to prompt series creation.
 	if len(matches) == 0 {
-		pattern, patternErr := s.repo.DetectLanePattern(ctx, &recurringshipmentports.DetectLanePatternRequest{
-			TenantInfo:            req.TenantInfo,
-			CustomerID:            req.CustomerID,
-			OriginLocationID:      req.OriginLocationID,
-			DestinationLocationID: req.DestinationLocationID,
-			LookbackDays:          patternLookbackDays,
-			MinShipments:          patternMinShipments,
-		})
+		pattern, patternErr := s.repo.DetectLanePattern(
+			ctx,
+			&recurringshipmentports.DetectLanePatternRequest{
+				TenantInfo:            req.TenantInfo,
+				CustomerID:            req.CustomerID,
+				OriginLocationID:      req.OriginLocationID,
+				DestinationLocationID: req.DestinationLocationID,
+				LookbackDays:          patternLookbackDays,
+				MinShipments:          patternMinShipments,
+			},
+		)
 		if patternErr != nil {
 			s.l.Warn("failed to detect lane pattern", zap.Error(patternErr))
 		} else {

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -203,7 +203,10 @@ type ExtractionEvalRunner interface {
 		req *FinishExtractionEvalRunRequest,
 	) (*extractioneval.ExtractionRun, error)
 	FailRun(ctx context.Context, req GetExtractionEvalRunRequest, message string) error
-	PurgeExpiredRuns(ctx context.Context, req kernelports.PurgeExpiredAICorrectionsRequest) (int64, error)
+	PurgeExpiredRuns(
+		ctx context.Context,
+		req kernelports.PurgeExpiredAICorrectionsRequest,
+	) (int64, error)
 }
 
 type ExtractionPrediction struct {

@@ -18,7 +18,11 @@ func readConfirmation(shp *shipment.Shipment) *aicorrection.Snapshot {
 
 	setField(snapshot.Fields, aicorrection.FieldReference, shp.BOL)
 	if shp.FreightChargeAmount.Valid && !shp.FreightChargeAmount.Decimal.IsZero() {
-		setField(snapshot.Fields, aicorrection.FieldRate, shp.FreightChargeAmount.Decimal.StringFixed(2))
+		setField(
+			snapshot.Fields,
+			aicorrection.FieldRate,
+			shp.FreightChargeAmount.Decimal.StringFixed(2),
+		)
 	}
 	if shp.Weight != nil && *shp.Weight > 0 {
 		setField(snapshot.Fields, aicorrection.FieldWeight, strconv.FormatInt(*shp.Weight, 10))

@@ -5,20 +5,20 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/ptopolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -103,13 +103,17 @@ func (s *Service) updateAndQueueSync(
 		if updated.SamePartyDetails(original) {
 			return nil
 		}
-		return accountingsyncports.EnqueueAccountingSync(txCtx, s.sync, accountingsyncports.VendorSyncRequest(
-			pagination.TenantInfo{OrgID: updated.OrganizationID, BuID: updated.BusinessUnitID},
-			accountingsync.SyncObjectDriverVendor,
-			updated.ID,
-			strings.TrimSpace(updated.FirstName+" "+updated.LastName),
-			updated.Version,
-		))
+		return accountingsyncports.EnqueueAccountingSync(
+			txCtx,
+			s.sync,
+			accountingsyncports.VendorSyncRequest(
+				pagination.TenantInfo{OrgID: updated.OrganizationID, BuID: updated.BusinessUnitID},
+				accountingsync.SyncObjectDriverVendor,
+				updated.ID,
+				strings.TrimSpace(updated.FirstName+" "+updated.LastName),
+				updated.Version,
+			),
+		)
 	})
 	if err != nil {
 		return nil, err

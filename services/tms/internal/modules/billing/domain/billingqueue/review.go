@@ -452,10 +452,13 @@ func defaultCheck(key CheckKey, facts CheckFacts) *Check {
 			contact = terms.Recipients[0]
 		}
 		return &Check{
-			Key:    key,
-			State:  CheckStateOK,
-			Code:   CheckCodeTerms,
-			Detail: strings.TrimPrefix(strings.Join([]string{contact, terms.PaymentTerm}, " · "), " · "),
+			Key:   key,
+			State: CheckStateOK,
+			Code:  CheckCodeTerms,
+			Detail: strings.TrimPrefix(
+				strings.Join([]string{contact, terms.PaymentTerm}, " · "),
+				" · ",
+			),
 			Facts: map[string]any{
 				"contact":     contact,
 				"paymentTerm": terms.PaymentTerm,

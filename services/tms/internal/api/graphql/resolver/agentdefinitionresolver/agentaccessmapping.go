@@ -138,7 +138,9 @@ func accessPreviewToModel(
 	}
 }
 
-func audienceRolesToModel(entries []agentdefinitionports.AgentAudienceRole) []*gqlmodel.AgentAudienceRole {
+func audienceRolesToModel(
+	entries []agentdefinitionports.AgentAudienceRole,
+) []*gqlmodel.AgentAudienceRole {
 	roles := make([]*gqlmodel.AgentAudienceRole, 0, len(entries))
 	for i := range entries {
 		entry := &entries[i]

@@ -4,10 +4,10 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -20,7 +20,10 @@ type toolPolicies interface {
 }
 
 type ruleImpact interface {
-	RuleImpact(ctx context.Context, req *agentports.RuleImpactRequest) ([]agentports.AgentToolRuleImpact, error)
+	RuleImpact(
+		ctx context.Context,
+		req *agentports.RuleImpactRequest,
+	) ([]agentports.AgentToolRuleImpact, error)
 }
 
 type Params struct {
@@ -179,7 +182,10 @@ func (s *Service) declared(toolName string) (agentports.ToolPolicy, error) {
 	return policy, nil
 }
 
-func overrideOf(declared agentports.ToolPolicy, change agentports.ToolRuleChange) *agent.ToolRuleOverride {
+func overrideOf(
+	declared agentports.ToolPolicy,
+	change agentports.ToolRuleChange,
+) *agent.ToolRuleOverride {
 	override := &agent.ToolRuleOverride{ToolName: declared.Name}
 	if change.MaxTier != "" && change.MaxTier != declared.MaxTier {
 		override.MaxTier = change.MaxTier

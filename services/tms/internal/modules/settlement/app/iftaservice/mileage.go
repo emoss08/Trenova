@@ -3,9 +3,9 @@ package iftaservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -56,7 +56,11 @@ func (s *Service) prepareMileageEntry(
 		ID:         entity.TractorID,
 		TenantInfo: tenantInfo,
 	}); err != nil {
-		multiErr.Add("tractorId", errortypes.ErrInvalid, "Tractor was not found in your organization")
+		multiErr.Add(
+			"tractorId",
+			errortypes.ErrInvalid,
+			"Tractor was not found in your organization",
+		)
 	}
 
 	if entity.JurisdictionID.IsNil() {

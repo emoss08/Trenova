@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -25,9 +25,19 @@ func (r *Deps) deskActor(
 	}
 
 	return &agentports.DeskMemoryActor{
-		Actor:           actorutil.FromAuthContext(authCtx),
-		MayCreateShared: r.HasPermission(ctx, authCtx, permission.ResourceAgentMemory, permission.OpCreate),
-		MayUpdateShared: r.HasPermission(ctx, authCtx, permission.ResourceAgentMemory, permission.OpUpdate),
+		Actor: actorutil.FromAuthContext(authCtx),
+		MayCreateShared: r.HasPermission(
+			ctx,
+			authCtx,
+			permission.ResourceAgentMemory,
+			permission.OpCreate,
+		),
+		MayUpdateShared: r.HasPermission(
+			ctx,
+			authCtx,
+			permission.ResourceAgentMemory,
+			permission.OpUpdate,
+		),
 	}, nil
 }
 

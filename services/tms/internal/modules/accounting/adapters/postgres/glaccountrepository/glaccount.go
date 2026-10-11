@@ -3,9 +3,9 @@ package glaccountrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -54,30 +54,34 @@ func (r *repository) List(
 	ctx context.Context,
 	req *glaccountports.ListGLAccountsRequest,
 ) (*pagination.ListResult[*glaccount.GLAccount], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*glaccount.GLAccount], error) {
-		log := r.l.With(
-			zap.String("operation", "List"),
-			zap.Any("request", req),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*glaccount.GLAccount], error) {
+			log := r.l.With(
+				zap.String("operation", "List"),
+				zap.Any("request", req),
+			)
 
-		entities := make([]*glaccount.GLAccount, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation("AccountType").
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterQuery(sq, req)
-			}).ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count gl accounts", zap.Error(err))
-			return nil, err
-		}
+			entities := make([]*glaccount.GLAccount, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Relation("AccountType").
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count gl accounts", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*glaccount.GLAccount]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*glaccount.GLAccount]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -120,7 +124,11 @@ func (r *repository) Create(
 			zap.String("accountCode", entity.AccountCode),
 		)
 
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
 			log.Error("failed to create gl account", zap.Error(err))
 			return nil, err
 		}
@@ -259,28 +267,32 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *glaccountports.GLAccountSelectOptionsRequest,
 ) (*pagination.ListResult[*glaccount.GLAccount], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*glaccount.GLAccount], error) {
-		return dbhelper.SelectOptions[*glaccount.GLAccount](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				Columns: []string{
-					"id",
-					"account_code",
-					"name",
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*glaccount.GLAccount], error) {
+			return dbhelper.SelectOptions[*glaccount.GLAccount](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					Columns: []string{
+						"id",
+						"account_code",
+						"name",
+					},
+					OrgColumn: "gla.organization_id",
+					BuColumn:  "gla.business_unit_id",
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						return q.Where("gla.status = ?", domaintypes.StatusActive)
+					},
+					EntityName: "GLAccount",
+					SearchColumns: []string{
+						"gla.account_code",
+						"gla.name",
+					},
 				},
-				OrgColumn: "gla.organization_id",
-				BuColumn:  "gla.business_unit_id",
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Where("gla.status = ?", domaintypes.StatusActive)
-				},
-				EntityName: "GLAccount",
-				SearchColumns: []string{
-					"gla.account_code",
-					"gla.name",
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }

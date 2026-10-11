@@ -72,10 +72,13 @@ func (h *Handler) openAssistantThread(c *gin.Context) {
 		UserID: authCtx.UserID,
 	}
 	if templateID.IsNotNil() {
-		if _, err := h.service.GetByID(c.Request.Context(), formulatemplateports.GetFormulaTemplateByIDRequest{
-			TemplateID: templateID,
-			TenantInfo: tenant,
-		}); err != nil {
+		if _, err := h.service.GetByID(
+			c.Request.Context(),
+			formulatemplateports.GetFormulaTemplateByIDRequest{
+				TemplateID: templateID,
+				TenantInfo: tenant,
+			},
+		); err != nil {
 			h.eh.HandleError(c, err)
 			return
 		}

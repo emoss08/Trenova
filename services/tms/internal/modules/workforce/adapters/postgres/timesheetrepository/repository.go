@@ -197,7 +197,11 @@ func (r *repository) UpdateEntry(
 			r.l.Error("failed to update time clock entry", zap.Error(err))
 			return nil, fmt.Errorf("update time clock entry: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(results, "TimeClockEntry", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"TimeClockEntry",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -520,7 +524,11 @@ func (r *repository) UpdateExport(
 			r.l.Error("failed to update payroll export", zap.Error(err))
 			return nil, fmt.Errorf("update payroll export: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(results, "PayrollExport", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"PayrollExport",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 

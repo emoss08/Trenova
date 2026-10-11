@@ -54,7 +54,7 @@ type AgentPlan struct {
 	DecidedAt       *int64    `json:"decidedAt"       bun:"decided_at,type:BIGINT,nullzero"`
 	// ExpiresAt is the latest expiry among the plan's steps: while any step
 	// can still be decided, so can the plan.
-	ExpiresAt int64 `json:"expiresAt"       bun:"expires_at,type:BIGINT,nullzero"`
+	ExpiresAt int64 `json:"expiresAt" bun:"expires_at,type:BIGINT,nullzero"`
 	// CommitsAt is when a plan approved from the person's own conversation
 	// starts to run, unless it is undone first; UndoneAt and UndoneByUserID
 	// say it was. Empty for a plan decided anywhere else.

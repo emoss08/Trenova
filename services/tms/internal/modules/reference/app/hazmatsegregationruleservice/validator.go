@@ -3,8 +3,8 @@ package hazmatsegregationruleservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"

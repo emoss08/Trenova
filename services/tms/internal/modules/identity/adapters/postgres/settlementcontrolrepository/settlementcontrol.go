@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -117,7 +117,10 @@ func (r *repository) ListAutoGenerate(
 }
 
 func (r *repository) ListAll(ctx context.Context) ([]*tenant.SettlementControl, error) {
-	ctx = dbscope.WithSystem(ctx, "list every organization's settlement controls for escrow interest")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"list every organization's settlement controls for escrow interest",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tenant.SettlementControl, error) {
 		items := make([]*tenant.SettlementControl, 0)
 		err := r.db.DBForContext(ctx).
@@ -159,7 +162,11 @@ func (r *repository) Update(
 		if err != nil {
 			return nil, fmt.Errorf("update settlement control: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(res, "SettlementControl", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			res,
+			"SettlementControl",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 		return r.GetOrCreate(ctx, pagination.TenantInfo{

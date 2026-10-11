@@ -44,115 +44,126 @@ func (r *settlementRepository) List(
 	ctx context.Context,
 	req *driversettlementports.ListDriverSettlementsRequest,
 ) (*pagination.ListResult[*driversettlement.Settlement], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driversettlement.Settlement], error) {
-		limit := req.Filter.Pagination.SafeLimit()
-		items := make([]*driversettlement.Settlement, 0, limit)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*driversettlement.Settlement], error) {
+			limit := req.Filter.Pagination.SafeLimit()
+			items := make([]*driversettlement.Settlement, 0, limit)
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("dstl.organization_id = ?", req.Filter.TenantInfo.OrgID).
-			Where("dstl.business_unit_id = ?", req.Filter.TenantInfo.BuID).
-			Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
-			Order("dstl.period_end DESC").
-			Order("dstl.created_at DESC").
-			Limit(limit).
-			Offset(req.Filter.Pagination.SafeOffset())
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&items).
+				Where("dstl.organization_id = ?", req.Filter.TenantInfo.OrgID).
+				Where("dstl.business_unit_id = ?", req.Filter.TenantInfo.BuID).
+				Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
+				Order("dstl.period_end DESC").
+				Order("dstl.created_at DESC").
+				Limit(limit).
+				Offset(req.Filter.Pagination.SafeOffset())
 
-		if req.Filter.Query != "" {
-			pattern := "%" + stringutils.EscapeLikePattern(req.Filter.Query) + "%"
-			query = query.Where(
-				"(dstl.settlement_number ILIKE ? OR dstl.pay_profile_name ILIKE ? OR "+
-					"concat_ws(' ', worker.first_name, worker.last_name) ILIKE ?)",
-				pattern,
-				pattern,
-				pattern,
-			)
-		}
-		if !req.WorkerID.IsNil() {
-			query = query.Where("dstl.worker_id = ?", req.WorkerID)
-		}
-		if !req.BatchID.IsNil() {
-			query = query.Where("dstl.batch_id = ?", req.BatchID)
-		}
-		if req.Status != "" {
-			query = query.Where("dstl.status = ?", req.Status)
-		}
-		if len(req.Statuses) > 0 {
-			query = query.Where("dstl.status IN (?)", bun.List(req.Statuses))
-		}
-		if req.HasExceptions != nil {
-			query = query.Where("dstl.has_exceptions = ?", *req.HasExceptions)
-		}
+			if req.Filter.Query != "" {
+				pattern := "%" + stringutils.EscapeLikePattern(req.Filter.Query) + "%"
+				query = query.Where(
+					"(dstl.settlement_number ILIKE ? OR dstl.pay_profile_name ILIKE ? OR "+
+						"concat_ws(' ', worker.first_name, worker.last_name) ILIKE ?)",
+					pattern,
+					pattern,
+					pattern,
+				)
+			}
+			if !req.WorkerID.IsNil() {
+				query = query.Where("dstl.worker_id = ?", req.WorkerID)
+			}
+			if !req.BatchID.IsNil() {
+				query = query.Where("dstl.batch_id = ?", req.BatchID)
+			}
+			if req.Status != "" {
+				query = query.Where("dstl.status = ?", req.Status)
+			}
+			if len(req.Statuses) > 0 {
+				query = query.Where("dstl.status IN (?)", bun.List(req.Statuses))
+			}
+			if req.HasExceptions != nil {
+				query = query.Where("dstl.has_exceptions = ?", *req.HasExceptions)
+			}
 
-		total, err := query.ScanAndCount(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("list driver settlements: %w", err)
-		}
+			total, err := query.ScanAndCount(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list driver settlements: %w", err)
+			}
 
-		return &pagination.ListResult[*driversettlement.Settlement]{Items: items, Total: total}, nil
-	})
+			return &pagination.ListResult[*driversettlement.Settlement]{
+				Items: items,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *settlementRepository) ListConnection(
 	ctx context.Context,
 	req *driversettlementports.ListDriverSettlementConnectionRequest,
 ) (*pagination.CursorListResult[*driversettlement.Settlement], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driversettlement.Settlement], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*driversettlement.Settlement], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*driversettlement.Settlement)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						"dstl",
-						req.Filter,
-						(*driversettlement.Settlement)(nil),
-					)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*driversettlement.Settlement)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							"dstl",
+							req.Filter,
+							(*driversettlement.Settlement)(nil),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count driver settlements", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*driversettlement.Settlement]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*driversettlement.Settlement) *bun.SelectQuery {
+						return dba.NewSelect().
+							Model(entities).
+							ColumnExpr(driversettlementcol.SettlementTable.All()).
+							Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							"dstl",
+							req.Filter,
+							req.Cursor,
+							(*driversettlement.Settlement)(nil),
+						)
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count driver settlements", zap.Error(err))
+				log.Error("failed to scan driver settlements", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*driversettlement.Settlement]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*driversettlement.Settlement) *bun.SelectQuery {
-					return dba.NewSelect().
-						Model(entities).
-						ColumnExpr(driversettlementcol.SettlementTable.All()).
-						Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return querybuilder.ApplyCursorFilters(
-						sq,
-						"dstl",
-						req.Filter,
-						req.Cursor,
-						(*driversettlement.Settlement)(nil),
-					)
-				},
-			},
-		)
-		if err != nil {
-			log.Error("failed to scan driver settlements", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *settlementRepository) GetByID(
@@ -230,38 +241,42 @@ func (r *settlementRepository) GetWorkspaceCounts(
 	ctx context.Context,
 	req *driversettlementports.GetWorkspaceCountsRequest,
 ) (*driversettlementports.SettlementWorkspaceCounts, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driversettlementports.SettlementWorkspaceCounts, error) {
-		counts := new(driversettlementports.SettlementWorkspaceCounts)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*driversettlement.Settlement)(nil)).
-			ColumnExpr("COUNT(*) FILTER (WHERE status = ?) AS draft_count",
-				driversettlement.StatusDraft).
-			ColumnExpr("COUNT(*) FILTER (WHERE status = ?) AS pending_approval_count",
-				driversettlement.StatusPendingApproval).
-			ColumnExpr("COUNT(*) FILTER (WHERE status = ?) AS approved_count",
-				driversettlement.StatusApproved).
-			ColumnExpr("COUNT(*) FILTER (WHERE status = ?) AS posted_count",
-				driversettlement.StatusPosted).
-			ColumnExpr("COUNT(*) FILTER (WHERE status = ?) AS paid_count",
-				driversettlement.StatusPaid).
-			ColumnExpr("COUNT(*) FILTER (WHERE has_exceptions = true AND status NOT IN (?, ?)) "+
-				"AS exception_count",
-				driversettlement.StatusVoided, driversettlement.StatusPaid).
-			ColumnExpr("COALESCE(SUM(net_pay_minor) FILTER (WHERE status != ?), 0) "+
-				"AS total_net_minor", driversettlement.StatusVoided).
-			ColumnExpr("COALESCE(SUM(gross_earnings_minor) FILTER (WHERE status != ?), 0) "+
-				"AS total_gross_minor", driversettlement.StatusVoided).
-			Where("organization_id = ?", req.TenantInfo.OrgID).
-			Where("business_unit_id = ?", req.TenantInfo.BuID).
-			Where("period_start = ?", req.PeriodStart).
-			Where("period_end = ?", req.PeriodEnd).
-			Scan(ctx, counts)
-		if err != nil {
-			return nil, fmt.Errorf("get settlement workspace counts: %w", err)
-		}
-		return counts, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*driversettlementports.SettlementWorkspaceCounts, error) {
+			counts := new(driversettlementports.SettlementWorkspaceCounts)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*driversettlement.Settlement)(nil)).
+				ColumnExpr("COUNT(*) FILTER (WHERE status = ?) AS draft_count",
+					driversettlement.StatusDraft).
+				ColumnExpr("COUNT(*) FILTER (WHERE status = ?) AS pending_approval_count",
+					driversettlement.StatusPendingApproval).
+				ColumnExpr("COUNT(*) FILTER (WHERE status = ?) AS approved_count",
+					driversettlement.StatusApproved).
+				ColumnExpr("COUNT(*) FILTER (WHERE status = ?) AS posted_count",
+					driversettlement.StatusPosted).
+				ColumnExpr("COUNT(*) FILTER (WHERE status = ?) AS paid_count",
+					driversettlement.StatusPaid).
+				ColumnExpr("COUNT(*) FILTER (WHERE has_exceptions = true AND status NOT IN (?, ?)) "+
+					"AS exception_count",
+					driversettlement.StatusVoided, driversettlement.StatusPaid).
+				ColumnExpr("COALESCE(SUM(net_pay_minor) FILTER (WHERE status != ?), 0) "+
+					"AS total_net_minor", driversettlement.StatusVoided).
+				ColumnExpr("COALESCE(SUM(gross_earnings_minor) FILTER (WHERE status != ?), 0) "+
+					"AS total_gross_minor", driversettlement.StatusVoided).
+				Where("organization_id = ?", req.TenantInfo.OrgID).
+				Where("business_unit_id = ?", req.TenantInfo.BuID).
+				Where("period_start = ?", req.PeriodStart).
+				Where("period_end = ?", req.PeriodEnd).
+				Scan(ctx, counts)
+			if err != nil {
+				return nil, fmt.Errorf("get settlement workspace counts: %w", err)
+			}
+			return counts, nil
+		},
+	)
 }
 
 func (r *settlementRepository) ListTrailingNetPay(
@@ -393,7 +408,11 @@ func (r *settlementRepository) Update(
 		if err != nil {
 			return nil, fmt.Errorf("update driver settlement: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(res, "DriverSettlement", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			res,
+			"DriverSettlement",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 		return r.GetByID(ctx, driversettlementports.GetDriverSettlementByIDRequest{

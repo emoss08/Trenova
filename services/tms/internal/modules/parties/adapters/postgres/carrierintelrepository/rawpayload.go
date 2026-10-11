@@ -41,18 +41,22 @@ func (r *rawPayloadRepository) Insert(
 	ctx context.Context,
 	entity *carrierintel.CarrierIntelRawPayload,
 ) (*carrierintel.CarrierIntelRawPayload, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*carrierintel.CarrierIntelRawPayload, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			r.l.Error("failed to insert carrier intel raw payload", zap.Error(err))
-			return nil, fmt.Errorf("insert carrier intel raw payload: %w", err)
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*carrierintel.CarrierIntelRawPayload, error) {
+			if _, err := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(entity).
+				Returning("*").
+				Exec(ctx); err != nil {
+				r.l.Error("failed to insert carrier intel raw payload", zap.Error(err))
+				return nil, fmt.Errorf("insert carrier intel raw payload: %w", err)
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *rawPayloadRepository) GetByID(
@@ -60,22 +64,26 @@ func (r *rawPayloadRepository) GetByID(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*carrierintel.CarrierIntelRawPayload, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrierintel.CarrierIntelRawPayload, error) {
-		entity := new(carrierintel.CarrierIntelRawPayload)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carrierintelcol.CarrierIntelRawPayloadScopeTenant(sq, tenantInfo).
-					Where(carrierintelcol.CarrierIntelRawPayloadColumns.ID.Eq(), id)
-			}).
-			Scan(ctx)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, rawPayloadEntityName)
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*carrierintel.CarrierIntelRawPayload, error) {
+			entity := new(carrierintel.CarrierIntelRawPayload)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return carrierintelcol.CarrierIntelRawPayloadScopeTenant(sq, tenantInfo).
+						Where(carrierintelcol.CarrierIntelRawPayloadColumns.ID.Eq(), id)
+				}).
+				Scan(ctx)
+			if err != nil {
+				return nil, dberror.HandleNotFoundError(err, rawPayloadEntityName)
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *rawPayloadRepository) PurgeExpired(
@@ -83,7 +91,10 @@ func (r *rawPayloadRepository) PurgeExpired(
 	before int64,
 	limit int,
 ) (int, error) {
-	ctx = dbscope.WithSystem(ctx, "purge expired carrier intelligence payloads across every organization")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"purge expired carrier intelligence payloads across every organization",
+	)
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := carrierintelcol.CarrierIntelRawPayloadColumns
 		batch := intutils.Clamp(

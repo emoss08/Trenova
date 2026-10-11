@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/starters"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -159,10 +159,13 @@ func (s *Service) CreateVersion(
 		}
 	}
 
-	created, err := s.versionRepo.Create(ctx, &documenttemplateports.CreateDocumentTemplateVersionRequest{
-		Version:         entity,
-		SourceVersionID: sourceVersionID,
-	})
+	created, err := s.versionRepo.Create(
+		ctx,
+		&documenttemplateports.CreateDocumentTemplateVersionRequest{
+			Version:         entity,
+			SourceVersionID: sourceVersionID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

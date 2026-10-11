@@ -45,30 +45,37 @@ func (r *repository) List(
 	ctx context.Context,
 	req *storedmileageports.ListStoredMileageRequest,
 ) (*pagination.ListResult[*storedmileage.StoredMileage], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*storedmileage.StoredMileage], error) {
-		entities := make([]*storedmileage.StoredMileage, 0, req.Filter.Pagination.SafeLimit())
-		cols := storedmileagecol.StoredMileageColumns
-		total, err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-				q = querybuilder.ApplyFilters(
-					q,
-					storedmileagecol.StoredMileageTable.Alias,
-					req.Filter,
-					(*storedmileage.StoredMileage)(nil),
-				)
-				return q.Apply(storedmileagecol.StoredMileageApplyTenant(req.Filter.TenantInfo)).
-					Limit(req.Filter.Pagination.SafeLimit()).
-					Offset(req.Filter.Pagination.SafeOffset()).
-					Order(cols.LastCalculatedAt.OrderDesc())
-			}).
-			ScanAndCount(ctx)
-		if err != nil {
-			r.l.Error("failed to list stored mileages", zap.Error(err))
-			return nil, err
-		}
-		return &pagination.ListResult[*storedmileage.StoredMileage]{Items: entities, Total: total}, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*storedmileage.StoredMileage], error) {
+			entities := make([]*storedmileage.StoredMileage, 0, req.Filter.Pagination.SafeLimit())
+			cols := storedmileagecol.StoredMileageColumns
+			total, err := r.db.DBForContext(ctx).NewSelect().
+				Model(&entities).
+				Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
+					q = querybuilder.ApplyFilters(
+						q,
+						storedmileagecol.StoredMileageTable.Alias,
+						req.Filter,
+						(*storedmileage.StoredMileage)(nil),
+					)
+					return q.Apply(storedmileagecol.StoredMileageApplyTenant(req.Filter.TenantInfo)).
+						Limit(req.Filter.Pagination.SafeLimit()).
+						Offset(req.Filter.Pagination.SafeOffset()).
+						Order(cols.LastCalculatedAt.OrderDesc())
+				}).
+				ScanAndCount(ctx)
+			if err != nil {
+				r.l.Error("failed to list stored mileages", zap.Error(err))
+				return nil, err
+			}
+			return &pagination.ListResult[*storedmileage.StoredMileage]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -108,54 +115,58 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *storedmileageports.ListStoredMileageConnectionRequest,
 ) (*pagination.CursorListResult[*storedmileage.StoredMileage], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*storedmileage.StoredMileage], error) {
-		log := r.l.With(
-			zap.String("operation", "ListConnection"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*storedmileage.StoredMileage], error) {
+			log := r.l.With(
+				zap.String("operation", "ListConnection"),
+				zap.Any("request", req),
+			)
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*storedmileage.StoredMileage)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyTotalCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*storedmileage.StoredMileage)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyTotalCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count stored mileages", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*storedmileage.StoredMileage]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*storedmileage.StoredMileage) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return applyStoredMileageColumns(sq, req.StoredMileageColumns)
+							})
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return r.applyCursorPageFilters(sq, req)
+					},
+				})
 			if err != nil {
-				log.Error("failed to count stored mileages", zap.Error(err))
+				log.Error("failed to scan stored mileages", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*storedmileage.StoredMileage]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*storedmileage.StoredMileage) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return applyStoredMileageColumns(sq, req.StoredMileageColumns)
-						})
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return r.applyCursorPageFilters(sq, req)
-				},
-			})
-		if err != nil {
-			log.Error("failed to scan stored mileages", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(

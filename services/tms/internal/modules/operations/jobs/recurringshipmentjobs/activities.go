@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -104,12 +104,15 @@ func (a *Activities) dispatchSeries(
 	}
 	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 
-	generation, err := a.repo.Generate(tenantCtx, &recurringshipmentports.GenerateRecurringShipmentRequest{
-		TenantInfo:          tenantInfo,
-		RecurringShipmentID: series.ID,
-		Trigger:             recurringshipment.RunTriggerAuto,
-		RequestedBy:         series.EnteredByID,
-	})
+	generation, err := a.repo.Generate(
+		tenantCtx,
+		&recurringshipmentports.GenerateRecurringShipmentRequest{
+			TenantInfo:          tenantInfo,
+			RecurringShipmentID: series.ID,
+			Trigger:             recurringshipment.RunTriggerAuto,
+			RequestedBy:         series.EnteredByID,
+		},
+	)
 	if err != nil && errortypes.IsPlanRestrictionError(err) {
 		log.Info(
 			"recurring shipment generation skipped: the organization's plan does not allow writes",

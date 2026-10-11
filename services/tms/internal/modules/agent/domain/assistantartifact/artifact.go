@@ -48,12 +48,12 @@ type Artifact struct {
 	ProposalID pulid.ID `json:"proposalId" bun:"proposal_id,type:VARCHAR(100),nullzero"`
 	PlanID     pulid.ID `json:"planId"     bun:"plan_id,type:VARCHAR(100),nullzero"`
 
-	Kind   Kind   `json:"kind"             bun:"kind,type:VARCHAR(40),notnull"`
-	Status Status `json:"status"           bun:"status,type:VARCHAR(20),notnull,default:'Ready'"`
-	Title  string `json:"title"            bun:"title,type:VARCHAR(200),notnull"`
+	Kind   Kind   `json:"kind"   bun:"kind,type:VARCHAR(40),notnull"`
+	Status Status `json:"status" bun:"status,type:VARCHAR(20),notnull,default:'Ready'"`
+	Title  string `json:"title"  bun:"title,type:VARCHAR(200),notnull"`
 	// Payload is kind-specific and bounded; each kind's shape is declared
 	// with the mapper that produces it.
-	Payload map[string]any `json:"payload"          bun:"payload,type:JSONB,notnull,default:'{}'"`
+	Payload map[string]any `json:"payload" bun:"payload,type:JSONB,notnull,default:'{}'"`
 	// SourceToolCallID ties the artifact to the tool call that produced it,
 	// so a retried turn updates the artifact rather than adding a second.
 	SourceToolCallID string `json:"sourceToolCallId" bun:"source_tool_call_id,type:VARCHAR(200),notnull,default:''"`

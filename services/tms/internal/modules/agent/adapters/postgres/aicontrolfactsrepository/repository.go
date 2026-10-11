@@ -121,42 +121,46 @@ func (r *repository) ProviderFailures(
 	ctx context.Context,
 	req *agentrosterports.ProviderFailuresRequest,
 ) ([]agentrosterports.ProviderFailureCount, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentrosterports.ProviderFailureCount, error) {
-		cols := aiusagecol.AIUsageRecordColumns
-		var rows []failureRow
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model((*aiusage.AIUsageRecord)(nil)).
-			ColumnExpr(cols.ProviderID.Qualified()+" AS provider_id").
-			ColumnExpr("COUNT(*) FILTER (WHERE NOT "+cols.Succeeded.Qualified()+") AS failed_calls").
-			ColumnExpr("COALESCE(MAX("+cols.CreatedAt.Qualified()+") FILTER (WHERE NOT "+
-				cols.Succeeded.Qualified()+"), 0) AS last_failure_at").
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return aiusagecol.AIUsageRecordScopeTenant(sq, req.TenantInfo)
-			}).
-			Where(cols.CreatedAt.Gte(), req.Since).
-			Where(cols.ProviderID.IsNotNull()).
-			GroupExpr(cols.ProviderID.Qualified()).
-			Having("COALESCE(MAX("+cols.CreatedAt.Qualified()+") FILTER (WHERE NOT "+cols.Succeeded.Qualified()+"), 0) > "+
-				"COALESCE(MAX("+cols.CreatedAt.Qualified()+") FILTER (WHERE "+cols.Succeeded.Qualified()+"), 0)").
-			Scan(ctx, &rows)
-		if err != nil {
-			return nil, fmt.Errorf("list failing providers: %w", err)
-		}
-
-		out := make([]agentrosterports.ProviderFailureCount, 0, len(rows))
-		for idx := range rows {
-			id, parseErr := pulid.Parse(rows[idx].ProviderID)
-			if parseErr != nil {
-				continue
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]agentrosterports.ProviderFailureCount, error) {
+			cols := aiusagecol.AIUsageRecordColumns
+			var rows []failureRow
+			err := r.db.DBForContext(ctx).NewSelect().
+				Model((*aiusage.AIUsageRecord)(nil)).
+				ColumnExpr(cols.ProviderID.Qualified()+" AS provider_id").
+				ColumnExpr("COUNT(*) FILTER (WHERE NOT "+cols.Succeeded.Qualified()+") AS failed_calls").
+				ColumnExpr("COALESCE(MAX("+cols.CreatedAt.Qualified()+") FILTER (WHERE NOT "+
+					cols.Succeeded.Qualified()+"), 0) AS last_failure_at").
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return aiusagecol.AIUsageRecordScopeTenant(sq, req.TenantInfo)
+				}).
+				Where(cols.CreatedAt.Gte(), req.Since).
+				Where(cols.ProviderID.IsNotNull()).
+				GroupExpr(cols.ProviderID.Qualified()).
+				Having("COALESCE(MAX("+cols.CreatedAt.Qualified()+") FILTER (WHERE NOT "+cols.Succeeded.Qualified()+"), 0) > "+
+					"COALESCE(MAX("+cols.CreatedAt.Qualified()+") FILTER (WHERE "+cols.Succeeded.Qualified()+"), 0)").
+				Scan(ctx, &rows)
+			if err != nil {
+				return nil, fmt.Errorf("list failing providers: %w", err)
 			}
-			out = append(out, agentrosterports.ProviderFailureCount{
-				ProviderID:    id,
-				FailedCalls:   rows[idx].FailedCalls,
-				LastFailureAt: rows[idx].LastFailureAt,
-			})
-		}
-		return out, nil
-	})
+
+			out := make([]agentrosterports.ProviderFailureCount, 0, len(rows))
+			for idx := range rows {
+				id, parseErr := pulid.Parse(rows[idx].ProviderID)
+				if parseErr != nil {
+					continue
+				}
+				out = append(out, agentrosterports.ProviderFailureCount{
+					ProviderID:    id,
+					FailedCalls:   rows[idx].FailedCalls,
+					LastFailureAt: rows[idx].LastFailureAt,
+				})
+			}
+			return out, nil
+		},
+	)
 }
 
 type rosterRunRow struct {

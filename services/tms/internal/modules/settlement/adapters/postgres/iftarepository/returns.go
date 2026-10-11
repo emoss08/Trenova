@@ -47,74 +47,78 @@ func (r *repository) ListReturns(
 	ctx context.Context,
 	req *iftaports.ListReturnsRequest,
 ) (*pagination.CursorListResult[*ifta.Return], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*ifta.Return], error) {
-		dba := r.db.DBForContext(ctx)
-		filter := filterOrEmpty(req.Filter)
-		cols := iftacol.ReturnColumns
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*ifta.Return], error) {
+			dba := r.db.DBForContext(ctx)
+			filter := filterOrEmpty(req.Filter)
+			cols := iftacol.ReturnColumns
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.NewSelect().
-				Model((*ifta.Return)(nil)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return iftacol.ReturnScopeTenant(sq, filter.TenantInfo)
-				}).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.NewSelect().
+					Model((*ifta.Return)(nil)).
+					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return iftacol.ReturnScopeTenant(sq, filter.TenantInfo)
+					}).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							iftacol.ReturnTable.Alias,
+							filter,
+							(*ifta.Return)(nil),
+						)
+						return r.applyReturnFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					r.l.Error("failed to count ifta returns", zap.Error(err))
+					return nil, fmt.Errorf("count ifta returns: %w", err)
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*ifta.Return]{
+				Filter:     filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(items *[]*ifta.Return) *bun.SelectQuery {
+					return dba.NewSelect().
+						Model(items).
+						ColumnExpr(iftacol.ReturnTable.All()).
+						WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+							return iftacol.ReturnScopeTenant(sq, filter.TenantInfo)
+						})
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
 						iftacol.ReturnTable.Alias,
 						filter,
+						req.Cursor,
 						(*ifta.Return)(nil),
 					)
-					return r.applyReturnFilters(sq, req)
-				}).
-				Count(ctx)
+					if applyErr != nil {
+						return sq, applyErr
+					}
+					sq = r.applyReturnFilters(sq, req)
+					if len(filter.Sort) == 0 {
+						sq = sq.Order(cols.Year.OrderDesc()).
+							Order(cols.Quarter.OrderDesc()).
+							Order(cols.AmendmentNumber.OrderDesc())
+					}
+					return sq, nil
+				},
+			})
 			if err != nil {
-				r.l.Error("failed to count ifta returns", zap.Error(err))
-				return nil, fmt.Errorf("count ifta returns: %w", err)
+				r.l.Error("failed to list ifta returns", zap.Error(err))
+				return nil, fmt.Errorf("list ifta returns: %w", err)
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*ifta.Return]{
-			Filter:     filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(items *[]*ifta.Return) *bun.SelectQuery {
-				return dba.NewSelect().
-					Model(items).
-					ColumnExpr(iftacol.ReturnTable.All()).
-					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return iftacol.ReturnScopeTenant(sq, filter.TenantInfo)
-					})
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				sq, applyErr := querybuilder.ApplyCursorFilters(
-					sq,
-					iftacol.ReturnTable.Alias,
-					filter,
-					req.Cursor,
-					(*ifta.Return)(nil),
-				)
-				if applyErr != nil {
-					return sq, applyErr
-				}
-				sq = r.applyReturnFilters(sq, req)
-				if len(filter.Sort) == 0 {
-					sq = sq.Order(cols.Year.OrderDesc()).
-						Order(cols.Quarter.OrderDesc()).
-						Order(cols.AmendmentNumber.OrderDesc())
-				}
-				return sq, nil
-			},
-		})
-		if err != nil {
-			r.l.Error("failed to list ifta returns", zap.Error(err))
-			return nil, fmt.Errorf("list ifta returns: %w", err)
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetReturnByID(
@@ -295,40 +299,47 @@ func (r *repository) ReplaceReturnLines(
 		now := timeutils.NowUnix()
 		ret.ComputedAt = &now
 
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-			if _, dErr := tx.NewDelete().
-				Model((*ifta.ReturnLine)(nil)).
-				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return iftacol.ReturnLineScopeTenantDelete(dq, tenantInfo).
-						Where(lineCols.ReturnID.Eq(), ret.ID)
-				}).
-				Exec(txCtx); dErr != nil {
-				return fmt.Errorf("delete return lines: %w", dErr)
-			}
-
-			if len(lines) > 0 {
-				for i, line := range lines {
-					line.ReturnID = ret.ID
-					line.OrganizationID = ret.OrganizationID
-					line.BusinessUnitID = ret.BusinessUnitID
-					line.SortOrder = i
+		err := r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, tx bun.Tx) error {
+				if _, dErr := tx.NewDelete().
+					Model((*ifta.ReturnLine)(nil)).
+					WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+						return iftacol.ReturnLineScopeTenantDelete(dq, tenantInfo).
+							Where(lineCols.ReturnID.Eq(), ret.ID)
+					}).
+					Exec(txCtx); dErr != nil {
+					return fmt.Errorf("delete return lines: %w", dErr)
 				}
-				if _, iErr := tx.NewInsert().Model(&lines).Returning("*").Exec(txCtx); iErr != nil {
-					return fmt.Errorf("insert return lines: %w", iErr)
-				}
-			}
 
-			results, uErr := tx.NewUpdate().
-				Model(ret).
-				WherePK().
-				Where(iftacol.ReturnColumns.Version.Eq(), ov).
-				Returning("*").
-				Exec(txCtx)
-			if uErr != nil {
-				return fmt.Errorf("update return totals: %w", uErr)
-			}
-			return dberror.CheckRowsAffected(results, "IFTA return", ret.ID.String())
-		})
+				if len(lines) > 0 {
+					for i, line := range lines {
+						line.ReturnID = ret.ID
+						line.OrganizationID = ret.OrganizationID
+						line.BusinessUnitID = ret.BusinessUnitID
+						line.SortOrder = i
+					}
+					if _, iErr := tx.NewInsert().
+						Model(&lines).
+						Returning("*").
+						Exec(txCtx); iErr != nil {
+						return fmt.Errorf("insert return lines: %w", iErr)
+					}
+				}
+
+				results, uErr := tx.NewUpdate().
+					Model(ret).
+					WherePK().
+					Where(iftacol.ReturnColumns.Version.Eq(), ov).
+					Returning("*").
+					Exec(txCtx)
+				if uErr != nil {
+					return fmt.Errorf("update return totals: %w", uErr)
+				}
+				return dberror.CheckRowsAffected(results, "IFTA return", ret.ID.String())
+			},
+		)
 		if err != nil {
 			r.l.Error("failed to replace ifta return lines", zap.Error(err))
 			return nil, err
@@ -351,31 +362,35 @@ func (r *repository) DeleteReturn(
 		cols := iftacol.ReturnColumns
 		lineCols := iftacol.ReturnLineColumns
 
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-			if _, lErr := tx.NewDelete().
-				Model((*ifta.ReturnLine)(nil)).
-				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return iftacol.ReturnLineScopeTenantDelete(dq, req.TenantInfo).
-						Where(lineCols.ReturnID.Eq(), req.ID)
-				}).
-				Exec(txCtx); lErr != nil {
-				return fmt.Errorf("delete ifta return lines: %w", lErr)
-			}
+		err := r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, tx bun.Tx) error {
+				if _, lErr := tx.NewDelete().
+					Model((*ifta.ReturnLine)(nil)).
+					WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+						return iftacol.ReturnLineScopeTenantDelete(dq, req.TenantInfo).
+							Where(lineCols.ReturnID.Eq(), req.ID)
+					}).
+					Exec(txCtx); lErr != nil {
+					return fmt.Errorf("delete ifta return lines: %w", lErr)
+				}
 
-			result, dErr := tx.NewDelete().
-				Model((*ifta.Return)(nil)).
-				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return iftacol.ReturnScopeTenantDelete(dq, req.TenantInfo).
-						Where(cols.ID.Eq(), req.ID).
-						Where(cols.Version.Eq(), req.Version).
-						Where(cols.Status.Eq(), ifta.ReturnStatusDraft)
-				}).
-				Exec(txCtx)
-			if dErr != nil {
-				return fmt.Errorf("delete ifta return: %w", dErr)
-			}
-			return dberror.CheckRowsAffected(result, "IFTA return", req.ID.String())
-		})
+				result, dErr := tx.NewDelete().
+					Model((*ifta.Return)(nil)).
+					WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+						return iftacol.ReturnScopeTenantDelete(dq, req.TenantInfo).
+							Where(cols.ID.Eq(), req.ID).
+							Where(cols.Version.Eq(), req.Version).
+							Where(cols.Status.Eq(), ifta.ReturnStatusDraft)
+					}).
+					Exec(txCtx)
+				if dErr != nil {
+					return fmt.Errorf("delete ifta return: %w", dErr)
+				}
+				return dberror.CheckRowsAffected(result, "IFTA return", req.ID.String())
+			},
+		)
 		if err != nil {
 			r.l.Error("failed to delete ifta return", zap.Error(err))
 			return err

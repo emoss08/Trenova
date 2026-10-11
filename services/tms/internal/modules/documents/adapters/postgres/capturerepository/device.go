@@ -110,41 +110,51 @@ func (r *deviceRepository) List(
 	ctx context.Context,
 	req *captureports.ListCaptureDevicesRequest,
 ) (*pagination.ListResult[*capture.CaptureDevice], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*capture.CaptureDevice], error) {
-		entities := make([]*capture.CaptureDevice, 0, req.Filter.Pagination.SafeLimit())
-		cols := capturecol.CaptureDeviceColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*capture.CaptureDevice], error) {
+			entities := make([]*capture.CaptureDevice, 0, req.Filter.Pagination.SafeLimit())
+			cols := capturecol.CaptureDeviceColumns
 
-		query := r.db.DBForContext(ctx).NewSelect().Model(&entities)
-		if req.UserID.IsNotNil() {
-			query = query.Where(cols.UserID.Eq(), req.UserID)
-		}
-		if req.Status != "" {
-			query = query.Where(cols.Status.Eq(), req.Status)
-		}
+			query := r.db.DBForContext(ctx).NewSelect().Model(&entities)
+			if req.UserID.IsNotNil() {
+				query = query.Where(cols.UserID.Eq(), req.UserID)
+			}
+			if req.Status != "" {
+				query = query.Where(cols.Status.Eq(), req.Status)
+			}
 
-		total, err := querybuilder.ApplyFilters(
-			query,
-			capturecol.CaptureDeviceTable.Alias,
-			req.Filter,
-			(*capture.CaptureDevice)(nil),
-		).
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := querybuilder.ApplyFilters(
+				query,
+				capturecol.CaptureDeviceTable.Alias,
+				req.Filter,
+				(*capture.CaptureDevice)(nil),
+			).
+				Order(cols.CreatedAt.OrderDesc()).
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*capture.CaptureDevice]{Items: entities, Total: total}, nil
-	})
+			return &pagination.ListResult[*capture.CaptureDevice]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *deviceRepository) GetByAccessTokenHash(
 	ctx context.Context,
 	hash string,
 ) (*capture.CaptureDevice, error) {
-	ctx = dbscope.WithSystem(ctx, "resolve a capture device access token before its tenant is known")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"resolve a capture device access token before its tenant is known",
+	)
 	return r.getByTokenColumn(ctx, capturecol.CaptureDeviceColumns.AccessTokenHash, hash)
 }
 
@@ -152,7 +162,10 @@ func (r *deviceRepository) GetByRefreshTokenHash(
 	ctx context.Context,
 	hash string,
 ) (*capture.CaptureDevice, error) {
-	ctx = dbscope.WithSystem(ctx, "resolve a capture device refresh token before its tenant is known")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"resolve a capture device refresh token before its tenant is known",
+	)
 	return r.getByTokenColumn(ctx, capturecol.CaptureDeviceColumns.RefreshTokenHash, hash)
 }
 
@@ -160,7 +173,10 @@ func (r *deviceRepository) GetByPreviousRefreshHash(
 	ctx context.Context,
 	hash string,
 ) (*capture.CaptureDevice, error) {
-	ctx = dbscope.WithSystem(ctx, "detect reuse of a rotated capture device refresh token before its tenant is known")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"detect reuse of a rotated capture device refresh token before its tenant is known",
+	)
 	return r.getByTokenColumn(ctx, capturecol.CaptureDeviceColumns.PreviousRefreshHash, hash)
 }
 

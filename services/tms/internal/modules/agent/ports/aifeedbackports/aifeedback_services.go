@@ -90,7 +90,11 @@ type AIFeedbackService interface {
 		req *SetAIFeedbackRequest,
 		actor *permissionports.RequestActor,
 	) (*aifeedback.Feedback, error)
-	ClearMine(ctx context.Context, req ClearAIFeedbackRequest, actor *permissionports.RequestActor) (bool, error)
+	ClearMine(
+		ctx context.Context,
+		req ClearAIFeedbackRequest,
+		actor *permissionports.RequestActor,
+	) (bool, error)
 	ListMine(
 		ctx context.Context,
 		req ListMyAIFeedbackRequest,

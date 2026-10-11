@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/tablechangealertports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -108,7 +108,10 @@ func newListTableChangeAlertsTool(
 			{Name: "tableName", Kind: filterText},
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
-			result, err := repo.List(ctx, &tablechangealertports.ListTCASubscriptionsRequest{Filter: opts})
+			result, err := repo.List(
+				ctx,
+				&tablechangealertports.ListTCASubscriptionsRequest{Filter: opts},
+			)
 			if err != nil {
 				return nil, err
 			}

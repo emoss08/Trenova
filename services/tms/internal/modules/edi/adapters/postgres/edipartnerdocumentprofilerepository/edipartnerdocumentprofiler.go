@@ -43,112 +43,120 @@ func (r *repository) ListPartnerDocumentProfiles(
 	ctx context.Context,
 	req *ediports.ListEDIPartnerDocumentProfilesRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
-		entities := make([]*edi.EDIPartnerDocumentProfile, 0, req.Filter.Pagination.SafeLimit())
-		cols := edicol.EDIPartnerDocumentProfileColumns
-		rel := edicol.EDIPartnerDocumentProfileRelations
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
+			entities := make([]*edi.EDIPartnerDocumentProfile, 0, req.Filter.Pagination.SafeLimit())
+			cols := edicol.EDIPartnerDocumentProfileColumns
+			rel := edicol.EDIPartnerDocumentProfileRelations
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(rel.Partner).
-			Relation(rel.DocumentType).
-			Relation(rel.Template).
-			Relation(rel.PartnerSettingsSchema).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return edicol.EDIPartnerDocumentProfileScopeTenant(sq, req.Filter.TenantInfo)
-			})
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Relation(rel.Partner).
+				Relation(rel.DocumentType).
+				Relation(rel.Template).
+				Relation(rel.PartnerSettingsSchema).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return edicol.EDIPartnerDocumentProfileScopeTenant(sq, req.Filter.TenantInfo)
+				})
 
-		if req.TransactionSet != "" {
-			query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
-		}
+			if req.TransactionSet != "" {
+				query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
+			}
 
-		if req.Direction != "" {
-			query = query.Where(cols.Direction.Eq(), req.Direction)
-		}
-		if req.Standard != "" {
-			query = query.Where(cols.Standard.Eq(), req.Standard)
-		}
-		if req.Status != "" {
-			query = query.Where(cols.Status.Eq(), req.Status)
-		}
-		if req.PartnerID.IsNotNil() {
-			query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
-		}
-		query = applyPartnerDocumentProfileSearch(query, req.Filter.Query)
+			if req.Direction != "" {
+				query = query.Where(cols.Direction.Eq(), req.Direction)
+			}
+			if req.Standard != "" {
+				query = query.Where(cols.Standard.Eq(), req.Standard)
+			}
+			if req.Status != "" {
+				query = query.Where(cols.Status.Eq(), req.Status)
+			}
+			if req.PartnerID.IsNotNil() {
+				query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
+			}
+			query = applyPartnerDocumentProfileSearch(query, req.Filter.Query)
 
-		total, err := query.
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := query.
+				Order(cols.CreatedAt.OrderDesc()).
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*edi.EDIPartnerDocumentProfile]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*edi.EDIPartnerDocumentProfile]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) SelectPartnerDocumentProfileOptions(
 	ctx context.Context,
 	req *ediports.EDIPartnerDocumentProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
-		entities := make(
-			[]*edi.EDIPartnerDocumentProfile,
-			0,
-			req.SelectQueryRequest.Pagination.SafeLimit(),
-		)
-		cols := edicol.EDIPartnerDocumentProfileColumns
-		rel := edicol.EDIPartnerDocumentProfileRelations
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
+			entities := make(
+				[]*edi.EDIPartnerDocumentProfile,
+				0,
+				req.SelectQueryRequest.Pagination.SafeLimit(),
+			)
+			cols := edicol.EDIPartnerDocumentProfileColumns
+			rel := edicol.EDIPartnerDocumentProfileRelations
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(rel.Partner).
-			Relation(rel.Template).
-			Relation(rel.DocumentType).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return edicol.EDIPartnerDocumentProfileScopeTenant(
-					sq,
-					req.SelectQueryRequest.TenantInfo,
-				)
-			})
-		if req.TransactionSet != "" {
-			query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
-		}
-		if req.Direction != "" {
-			query = query.Where(cols.Direction.Eq(), req.Direction)
-		}
-		if req.Standard != "" {
-			query = query.Where(cols.Standard.Eq(), req.Standard)
-		}
-		if req.Status != "" {
-			query = query.Where(cols.Status.Eq(), req.Status)
-		}
-		if req.PartnerID.IsNotNil() {
-			query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
-		}
-		query = applyPartnerDocumentProfileSearch(query, req.SelectQueryRequest.Query)
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Relation(rel.Partner).
+				Relation(rel.Template).
+				Relation(rel.DocumentType).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return edicol.EDIPartnerDocumentProfileScopeTenant(
+						sq,
+						req.SelectQueryRequest.TenantInfo,
+					)
+				})
+			if req.TransactionSet != "" {
+				query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
+			}
+			if req.Direction != "" {
+				query = query.Where(cols.Direction.Eq(), req.Direction)
+			}
+			if req.Standard != "" {
+				query = query.Where(cols.Standard.Eq(), req.Standard)
+			}
+			if req.Status != "" {
+				query = query.Where(cols.Status.Eq(), req.Status)
+			}
+			if req.PartnerID.IsNotNil() {
+				query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
+			}
+			query = applyPartnerDocumentProfileSearch(query, req.SelectQueryRequest.Query)
 
-		total, err := query.
-			Order(cols.Name.OrderAsc()).
-			Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
-			Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := query.
+				Order(cols.Name.OrderAsc()).
+				Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
+				Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*edi.EDIPartnerDocumentProfile]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*edi.EDIPartnerDocumentProfile]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) GetPartnerDocumentProfileByID(

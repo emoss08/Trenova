@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
 	"go.uber.org/zap"
@@ -50,10 +50,13 @@ func (s *Service) resolveAbilities(
 		permitted[tool] = struct{}{}
 	}
 
-	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         thread.AgentDefinitionID,
-		TenantInfo: req.TenantInfo,
-	})
+	definition, err := s.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         thread.AgentDefinitionID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("read the conversation's agent: %w", err)
 	}

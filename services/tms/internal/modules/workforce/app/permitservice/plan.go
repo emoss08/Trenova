@@ -3,8 +3,8 @@ package permitservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"

@@ -2,17 +2,17 @@ package deskcase
 
 import (
 	"context"
-	"errors"
 	"database/sql/driver"
+	"errors"
 	"fmt"
 	"regexp"
 	"slices"
 	"strings"
 	"unicode/utf8"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
@@ -311,7 +311,11 @@ func (t *ChecklistTemplate) Validate(multiErr *errortypes.MultiError) {
 	for idx, item := range t.Items {
 		field := fmt.Sprintf("items[%d]", idx)
 		if _, dup := seen[item.Key]; dup {
-			multiErr.Add(field+".key", errortypes.ErrDuplicate, "This step is on the checklist twice")
+			multiErr.Add(
+				field+".key",
+				errortypes.ErrDuplicate,
+				"This step is on the checklist twice",
+			)
 			continue
 		}
 		seen[item.Key] = struct{}{}
@@ -329,7 +333,11 @@ func (t *ChecklistTemplate) Validate(multiErr *errortypes.MultiError) {
 		builtin, ok := builtinOf(t.Kind, item.Key)
 		switch {
 		case !ok:
-			multiErr.Add(field+".key", errortypes.ErrInvalid, "This step is not part of this checklist")
+			multiErr.Add(
+				field+".key",
+				errortypes.ErrInvalid,
+				"This step is not part of this checklist",
+			)
 		case builtin.locked && item.Mode != ModeRequired:
 			multiErr.Add(field+".mode", errortypes.ErrInvalid,
 				"This step follows a rule set elsewhere and stays required")
@@ -351,7 +359,12 @@ func (t *ChecklistTemplate) Validate(multiErr *errortypes.MultiError) {
 	}
 }
 
-func validateCustom(kind ChecklistKind, field string, item TemplateItem, multiErr *errortypes.MultiError) {
+func validateCustom(
+	kind ChecklistKind,
+	field string,
+	item TemplateItem,
+	multiErr *errortypes.MultiError,
+) {
 	if !customKeyPattern.MatchString(string(item.Key)) {
 		multiErr.Add(field+".key", errortypes.ErrInvalid, "The step's key is invalid")
 	}

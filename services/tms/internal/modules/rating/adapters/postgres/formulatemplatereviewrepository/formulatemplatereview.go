@@ -130,29 +130,36 @@ func (r *repository) ListStaleSubmissions(
 	ctx context.Context,
 	req *formulatemplateports.ListStaleSubmissionsRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
-	ctx = dbscope.WithSystem(ctx, "list stale formula template submissions across every organization")
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.FormulaTemplate, error) {
-		cols := formulatemplatecol.FormulaTemplateColumns
-		limit := req.Limit
-		if limit <= 0 {
-			limit = defaultStaleLimit
-		}
+	ctx = dbscope.WithSystem(
+		ctx,
+		"list stale formula template submissions across every organization",
+	)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*formulatemplate.FormulaTemplate, error) {
+			cols := formulatemplatecol.FormulaTemplateColumns
+			limit := req.Limit
+			if limit <= 0 {
+				limit = defaultStaleLimit
+			}
 
-		templates := make([]*formulatemplate.FormulaTemplate, 0, 8)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&templates).
-			Where(cols.Status.Eq(), formulatemplate.StatusInReview).
-			Where(cols.SubmittedAt.IsNotNull()).
-			Where(cols.SubmittedAt.Lt(), req.SubmittedBefore).
-			Order(cols.SubmittedAt.OrderAsc()).
-			Limit(limit).
-			Scan(ctx)
-		if err != nil {
-			r.l.Error("failed to list stale formula template submissions", zap.Error(err))
-			return nil, err
-		}
+			templates := make([]*formulatemplate.FormulaTemplate, 0, 8)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&templates).
+				Where(cols.Status.Eq(), formulatemplate.StatusInReview).
+				Where(cols.SubmittedAt.IsNotNull()).
+				Where(cols.SubmittedAt.Lt(), req.SubmittedBefore).
+				Order(cols.SubmittedAt.OrderAsc()).
+				Limit(limit).
+				Scan(ctx)
+			if err != nil {
+				r.l.Error("failed to list stale formula template submissions", zap.Error(err))
+				return nil, err
+			}
 
-		return templates, nil
-	})
+			return templates, nil
+		},
+	)
 }

@@ -87,71 +87,75 @@ func (r *repository) ListPurchases(
 	ctx context.Context,
 	req *fuelpurchaseports.ListFuelPurchasesRequest,
 ) (*pagination.CursorListResult[*fuelpurchase.FuelPurchase], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*fuelpurchase.FuelPurchase], error) {
-		dba := r.db.DBForContext(ctx)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*fuelpurchase.FuelPurchase], error) {
+			dba := r.db.DBForContext(ctx)
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*fuelpurchase.FuelPurchase)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						fuelpurchasecol.FuelPurchaseTable.Alias,
-						req.Filter,
-						(*fuelpurchase.FuelPurchase)(nil),
-					)
-					return r.applyPurchaseFilters(sq, req)
-				}).
-				Count(ctx)
-			if err != nil {
-				r.l.Error("failed to count fuel purchases", zap.Error(err))
-				return nil, fmt.Errorf("count fuel purchases: %w", err)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*fuelpurchase.FuelPurchase)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							fuelpurchasecol.FuelPurchaseTable.Alias,
+							req.Filter,
+							(*fuelpurchase.FuelPurchase)(nil),
+						)
+						return r.applyPurchaseFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					r.l.Error("failed to count fuel purchases", zap.Error(err))
+					return nil, fmt.Errorf("count fuel purchases: %w", err)
+				}
+				totalCount = &total
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*fuelpurchase.FuelPurchase]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(items *[]*fuelpurchase.FuelPurchase) *bun.SelectQuery {
-					q := dba.NewSelect().
-						Model(items).
-						ColumnExpr(fuelpurchasecol.FuelPurchaseTable.All())
-					return applyPurchaseRelations(
-						q,
-						req.IncludeTractor,
-						req.IncludeWorker,
-						req.IncludeJurisdiction,
-						req.IncludeFuelCard,
-					)
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*fuelpurchase.FuelPurchase]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(items *[]*fuelpurchase.FuelPurchase) *bun.SelectQuery {
+						q := dba.NewSelect().
+							Model(items).
+							ColumnExpr(fuelpurchasecol.FuelPurchaseTable.All())
+						return applyPurchaseRelations(
+							q,
+							req.IncludeTractor,
+							req.IncludeWorker,
+							req.IncludeJurisdiction,
+							req.IncludeFuelCard,
+						)
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						sq, applyErr := querybuilder.ApplyCursorFilters(
+							sq,
+							fuelpurchasecol.FuelPurchaseTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*fuelpurchase.FuelPurchase)(nil),
+						)
+						if applyErr != nil {
+							return sq, applyErr
+						}
+						return r.applyPurchaseFilters(sq, req), nil
+					},
 				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					sq, applyErr := querybuilder.ApplyCursorFilters(
-						sq,
-						fuelpurchasecol.FuelPurchaseTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*fuelpurchase.FuelPurchase)(nil),
-					)
-					if applyErr != nil {
-						return sq, applyErr
-					}
-					return r.applyPurchaseFilters(sq, req), nil
-				},
-			},
-		)
-		if err != nil {
-			r.l.Error("failed to list fuel purchases", zap.Error(err))
-			return nil, fmt.Errorf("list fuel purchases: %w", err)
-		}
+			)
+			if err != nil {
+				r.l.Error("failed to list fuel purchases", zap.Error(err))
+				return nil, fmt.Errorf("list fuel purchases: %w", err)
+			}
 
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetPurchaseByID(
@@ -299,7 +303,11 @@ func (r *repository) UpdatePurchase(
 			r.l.Error("failed to update fuel purchase", zap.Error(err))
 			return nil, fmt.Errorf("update fuel purchase: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(results, "FuelPurchase", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"FuelPurchase",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -333,41 +341,45 @@ func (r *repository) AccumulateFuel(
 	ctx context.Context,
 	req *fuelpurchaseports.AccumulateFuelRequest,
 ) ([]*fuelpurchaseports.FuelAccumulationRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fuelpurchaseports.FuelAccumulationRow, error) {
-		cols := fuelpurchasecol.FuelPurchaseColumns
-		rows := make([]*fuelpurchaseports.FuelAccumulationRow, 0, 64)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*fuelpurchaseports.FuelAccumulationRow, error) {
+			cols := fuelpurchasecol.FuelPurchaseColumns
+			rows := make([]*fuelpurchaseports.FuelAccumulationRow, 0, 64)
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*fuelpurchase.FuelPurchase)(nil)).
-			ColumnExpr(cols.TractorID.As("tractor_id")).
-			ColumnExpr(cols.JurisdictionID.As("jurisdiction_id")).
-			ColumnExpr(cols.FuelType.As("fuel_type")).
-			ColumnExpr(buncolgen.Sum(cols.Gallons, "gallons")).
-			ColumnExpr(buncolgen.Expr(
-				"COALESCE(SUM({0}) FILTER (WHERE {1}), 0) AS tax_paid_gallons",
-				cols.Gallons,
-				cols.TaxPaid,
-			)).
-			ColumnExpr(buncolgen.Count("purchase_count")).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return fuelpurchasecol.FuelPurchaseScopeTenant(sq, req.TenantInfo).
-					Where(cols.PurchasedAt.Gte(), req.Start).
-					Where(cols.PurchasedAt.Lt(), req.End).
-					Where(cols.FuelType.In(), bun.In(domaintypes.IFTAFuelTypes()))
-			}).
-			GroupExpr(cols.TractorID.Qualified()).
-			GroupExpr(cols.JurisdictionID.Qualified()).
-			GroupExpr(cols.FuelType.Qualified()).
-			OrderExpr(cols.TractorID.OrderAsc()).
-			OrderExpr(cols.JurisdictionID.OrderAsc()).
-			OrderExpr(cols.FuelType.OrderAsc()).
-			Scan(ctx, &rows)
-		if err != nil {
-			r.l.Error("failed to accumulate fuel purchases", zap.Error(err))
-			return nil, fmt.Errorf("accumulate fuel purchases: %w", err)
-		}
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*fuelpurchase.FuelPurchase)(nil)).
+				ColumnExpr(cols.TractorID.As("tractor_id")).
+				ColumnExpr(cols.JurisdictionID.As("jurisdiction_id")).
+				ColumnExpr(cols.FuelType.As("fuel_type")).
+				ColumnExpr(buncolgen.Sum(cols.Gallons, "gallons")).
+				ColumnExpr(buncolgen.Expr(
+					"COALESCE(SUM({0}) FILTER (WHERE {1}), 0) AS tax_paid_gallons",
+					cols.Gallons,
+					cols.TaxPaid,
+				)).
+				ColumnExpr(buncolgen.Count("purchase_count")).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return fuelpurchasecol.FuelPurchaseScopeTenant(sq, req.TenantInfo).
+						Where(cols.PurchasedAt.Gte(), req.Start).
+						Where(cols.PurchasedAt.Lt(), req.End).
+						Where(cols.FuelType.In(), bun.In(domaintypes.IFTAFuelTypes()))
+				}).
+				GroupExpr(cols.TractorID.Qualified()).
+				GroupExpr(cols.JurisdictionID.Qualified()).
+				GroupExpr(cols.FuelType.Qualified()).
+				OrderExpr(cols.TractorID.OrderAsc()).
+				OrderExpr(cols.JurisdictionID.OrderAsc()).
+				OrderExpr(cols.FuelType.OrderAsc()).
+				Scan(ctx, &rows)
+			if err != nil {
+				r.l.Error("failed to accumulate fuel purchases", zap.Error(err))
+				return nil, fmt.Errorf("accumulate fuel purchases: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }

@@ -61,38 +61,42 @@ func (r *repository) List(
 	ctx context.Context,
 	req *tenderports.ListRoutingGuideRequest,
 ) (*pagination.ListResult[*tender.RoutingGuide], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*tender.RoutingGuide], error) {
-		log := r.l.With(
-			zap.String("operation", "List"),
-			zap.Any("request", req),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*tender.RoutingGuide], error) {
+			log := r.l.With(
+				zap.String("operation", "List"),
+				zap.Any("request", req),
+			)
 
-		entities := make([]*tender.RoutingGuide, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = querybuilder.ApplyFilters(
-					sq,
-					tendercol.RoutingGuideTable.Alias,
-					req.Filter,
-					(*tender.RoutingGuide)(nil),
-				)
-				return r.addOptions(sq, req.RoutingGuideFilterOptions).
-					Limit(req.Filter.Pagination.SafeLimit()).
-					Offset(req.Filter.Pagination.SafeOffset())
-			}).
-			ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count routing guides", zap.Error(err))
-			return nil, err
-		}
+			entities := make([]*tender.RoutingGuide, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = querybuilder.ApplyFilters(
+						sq,
+						tendercol.RoutingGuideTable.Alias,
+						req.Filter,
+						(*tender.RoutingGuide)(nil),
+					)
+					return r.addOptions(sq, req.RoutingGuideFilterOptions).
+						Limit(req.Filter.Pagination.SafeLimit()).
+						Offset(req.Filter.Pagination.SafeOffset())
+				}).
+				ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count routing guides", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*tender.RoutingGuide]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*tender.RoutingGuide]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -132,57 +136,61 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *tenderports.ListRoutingGuideConnectionRequest,
 ) (*pagination.CursorListResult[*tender.RoutingGuide], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*tender.RoutingGuide], error) {
-		log := r.l.With(
-			zap.String("operation", "ListConnection"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*tender.RoutingGuide], error) {
+			log := r.l.With(
+				zap.String("operation", "ListConnection"),
+				zap.Any("request", req),
+			)
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*tender.RoutingGuide)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyTotalCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*tender.RoutingGuide)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyTotalCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count routing guides", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*tender.RoutingGuide]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*tender.RoutingGuide) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return applyRoutingGuideColumns(sq, req.RoutingGuideColumns)
+							}).
+							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return r.addOptions(sq, req.RoutingGuideFilterOptions)
+							})
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return r.applyCursorPageFilters(sq, req)
+					},
+				})
 			if err != nil {
-				log.Error("failed to count routing guides", zap.Error(err))
+				log.Error("failed to scan routing guides", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*tender.RoutingGuide]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*tender.RoutingGuide) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return applyRoutingGuideColumns(sq, req.RoutingGuideColumns)
-						}).
-						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return r.addOptions(sq, req.RoutingGuideFilterOptions)
-						})
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return r.applyCursorPageFilters(sq, req)
-				},
-			})
-		if err != nil {
-			log.Error("failed to scan routing guides", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(

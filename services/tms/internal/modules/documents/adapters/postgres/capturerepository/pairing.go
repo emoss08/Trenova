@@ -33,7 +33,10 @@ func (r *pairingRepository) Create(
 	ctx context.Context,
 	entity *capture.CapturePairing,
 ) (*capture.CapturePairing, error) {
-	ctx = dbscope.WithSystem(ctx, "record a pairing request that belongs to no organization until a person claims it")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"record a pairing request that belongs to no organization until a person claims it",
+	)
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CapturePairing, error) {
 		if _, err := r.db.DBForContext(ctx).
 			NewInsert().
@@ -84,7 +87,10 @@ func (r *pairingRepository) GetByDeviceCodeHash(
 	ctx context.Context,
 	hash string,
 ) (*capture.CapturePairing, error) {
-	ctx = dbscope.WithSystem(ctx, "resolve a pairing device code before it is bound to an organization")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"resolve a pairing device code before it is bound to an organization",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CapturePairing, error) {
 		entity := new(capture.CapturePairing)
 
@@ -104,7 +110,10 @@ func (r *pairingRepository) GetOpenByUserCode(
 	ctx context.Context,
 	userCode string,
 ) (*capture.CapturePairing, error) {
-	ctx = dbscope.WithSystem(ctx, "find an unclaimed pairing by the code a person typed; it has no organization yet")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"find an unclaimed pairing by the code a person typed; it has no organization yet",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CapturePairing, error) {
 		entity := new(capture.CapturePairing)
 		cols := capturecol.CapturePairingColumns

@@ -7,21 +7,21 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	workflowstarterservice "github.com/emoss08/trenova/internal/core/services/workflowstarter"
-	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentintelligencejobs/documentintelligencecontract"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentintelligencejobs/documentintelligencecontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/documentshipmentdraftports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -178,16 +178,19 @@ func (s *Service) Reextract(
 	doc.HasExtractedText = false
 	doc.DetectedKind = ""
 	doc.ShipmentDraftStatus = document.ShipmentDraftStatusUnavailable
-	if err = s.documentRepo.UpdateIntelligence(ctx, &documentports.UpdateDocumentIntelligenceRequest{
-		ID:                  doc.ID,
-		TenantInfo:          tenantInfo,
-		ContentStatus:       doc.ContentStatus,
-		ContentError:        doc.ContentError,
-		DetectedKind:        doc.DetectedKind,
-		HasExtractedText:    doc.HasExtractedText,
-		ShipmentDraftStatus: doc.ShipmentDraftStatus,
-		DocumentTypeID:      doc.DocumentTypeID,
-	}); err != nil {
+	if err = s.documentRepo.UpdateIntelligence(
+		ctx,
+		&documentports.UpdateDocumentIntelligenceRequest{
+			ID:                  doc.ID,
+			TenantInfo:          tenantInfo,
+			ContentStatus:       doc.ContentStatus,
+			ContentError:        doc.ContentError,
+			DetectedKind:        doc.DetectedKind,
+			HasExtractedText:    doc.HasExtractedText,
+			ShipmentDraftStatus: doc.ShipmentDraftStatus,
+			DocumentTypeID:      doc.DocumentTypeID,
+		},
+	); err != nil {
 		return err
 	}
 	if err = s.searchProjection.Upsert(ctx, doc, ""); err != nil {

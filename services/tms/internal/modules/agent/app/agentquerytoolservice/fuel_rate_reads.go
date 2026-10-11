@@ -6,17 +6,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -229,7 +229,10 @@ func newListFuelCardsTool(repo fuelpurchaseports.FuelPurchaseRepository) agentpo
 					Status:           string(item.Status),
 					Unassigned:       item.IsUnassigned(),
 					DiscoveredByFeed: item.WasDiscovered(),
-					ExpiresAt:        expectedDate(typeutils.ValueOrZero(item.ExpiresAt), "no expiry on file"),
+					ExpiresAt: expectedDate(
+						typeutils.ValueOrZero(item.ExpiresAt),
+						"no expiry on file",
+					),
 				}
 				if item.AssignedTractorID != nil {
 					row.AssignedTractorID = pulidString(*item.AssignedTractorID)
@@ -564,8 +567,14 @@ func newListIFTAReturnsTool(repo iftaports.IFTARepository) agentports.AgentQuery
 					CurrencyCode:     item.CurrencyCode,
 					Problems:         len(item.Problems),
 					BlockingProblems: len(item.BlockingProblems()),
-					FinalizedAt:      expectedDate(typeutils.ValueOrZero(item.FinalizedAt), "not finalized"),
-					FiledAt:          expectedDate(typeutils.ValueOrZero(item.FiledAt), "not filed"),
+					FinalizedAt: expectedDate(
+						typeutils.ValueOrZero(item.FinalizedAt),
+						"not finalized",
+					),
+					FiledAt: expectedDate(
+						typeutils.ValueOrZero(item.FiledAt),
+						"not filed",
+					),
 				}
 			}), nil
 		},
@@ -671,7 +680,9 @@ type listRateImportsTool struct {
 	imports rateimportports.RateImportRepository
 }
 
-func newListRateImportsTool(imports rateimportports.RateImportRepository) agentports.AgentQueryTool {
+func newListRateImportsTool(
+	imports rateimportports.RateImportRepository,
+) agentports.AgentQueryTool {
 	return &listRateImportsTool{imports: imports}
 }
 

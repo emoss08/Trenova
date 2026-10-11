@@ -3,14 +3,14 @@ package shipmentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetypes"
@@ -355,13 +355,16 @@ func (s *service) accessorialDescription(
 		return ""
 	}
 
-	charge, err := s.accessorialRepo.GetByID(ctx, accessorialchargeports.GetAccessorialChargeByIDRequest{
-		ID: chargeID,
-		TenantInfo: &pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
+	charge, err := s.accessorialRepo.GetByID(
+		ctx,
+		accessorialchargeports.GetAccessorialChargeByIDRequest{
+			ID: chargeID,
+			TenantInfo: &pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
 		},
-	})
+	)
 	if err != nil || charge == nil {
 		return ""
 	}

@@ -92,7 +92,9 @@ func MeasureContext(req ContextRequest) conversation.ContextUsage {
 // whole. through is the sequence of the last message summarized. older is
 // empty when there is nothing new to summarize: fewer turns than are kept
 // whole, or nothing but the last summary in front of them.
-func SplitForCompaction(history []conversation.Message) (older []conversation.Message, through int) {
+func SplitForCompaction(
+	history []conversation.Message,
+) (older []conversation.Message, through int) {
 	ordered := conversation.ReplayOrder(history)
 	cut := recentTurnStart(ordered, CompactionKeepTurns)
 	if cut <= 0 {

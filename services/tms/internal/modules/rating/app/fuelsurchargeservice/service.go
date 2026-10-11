@@ -5,14 +5,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -371,14 +371,17 @@ func (s *Service) UpdateProgram(
 		return nil, multiErr
 	}
 
-	original, err := s.programRepo.GetByID(ctx, &fuelsurchargeports.GetFuelSurchargeProgramByIDRequest{
-		ProgramID: entity.ID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
+	original, err := s.programRepo.GetByID(
+		ctx,
+		&fuelsurchargeports.GetFuelSurchargeProgramByIDRequest{
+			ProgramID: entity.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+			IncludeRows: true,
 		},
-		IncludeRows: true,
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -446,10 +449,13 @@ func (s *Service) Dashboard(
 		return nil, err
 	}
 
-	pricesByIndex, err := s.priceRepo.LatestPerIndex(ctx, &fuelsurchargeports.LatestPricesPerIndexRequest{
-		TenantInfo: tenantInfo,
-		PerIndex:   2,
-	})
+	pricesByIndex, err := s.priceRepo.LatestPerIndex(
+		ctx,
+		&fuelsurchargeports.LatestPricesPerIndexRequest{
+			TenantInfo: tenantInfo,
+			PerIndex:   2,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

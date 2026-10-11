@@ -117,7 +117,10 @@ func escapeLike(text string) string {
 
 // matching restricts a read to the thread's artifacts that match the search.
 // A lineage matches when any of its versions does.
-func matching(q *bun.SelectQuery, req *assistantartifactports.ListArtifactsRequest) *bun.SelectQuery {
+func matching(
+	q *bun.SelectQuery,
+	req *assistantartifactports.ListArtifactsRequest,
+) *bun.SelectQuery {
 	cols := assistantartifactcol.ArtifactColumns
 
 	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -162,72 +165,78 @@ func (r *repository) ListPage(
 		cursor = &decoded
 	}
 
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*assistantartifactports.ArtifactPage, error) {
-		db := r.db.DBForContext(ctx)
-		page := &assistantartifactports.ArtifactPage{
-			Counts: assistantartifactports.ArtifactCounts{Families: map[assistantartifact.Family]int{}},
-		}
-
-		lineages := lineageQuery(db, &req)
-
-		var counted []lineageRow
-		if err := db.NewSelect().
-			TableExpr("(?) AS lineages", lineages).
-			ColumnExpr("lineages.family, lineages.pinned").
-			ColumnExpr("count(*) AS count").
-			GroupExpr("lineages.family, lineages.pinned").
-			Scan(ctx, &counted); err != nil {
-			return nil, fmt.Errorf("count assistant artifacts: %w", err)
-		}
-		for _, row := range counted {
-			family := assistantartifact.Family(row.Family)
-			page.Counts.All += row.Count
-			page.Counts.Families[family] += row.Count
-			if row.Pinned {
-				page.Counts.Pinned += row.Count
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*assistantartifactports.ArtifactPage, error) {
+			db := r.db.DBForContext(ctx)
+			page := &assistantartifactports.ArtifactPage{
+				Counts: assistantartifactports.ArtifactCounts{
+					Families: map[assistantartifact.Family]int{},
+				},
 			}
-			if (req.Family == "" || req.Family == family) && (!req.PinnedOnly || row.Pinned) {
-				page.Total += row.Count
+
+			lineages := lineageQuery(db, &req)
+
+			var counted []lineageRow
+			if err := db.NewSelect().
+				TableExpr("(?) AS lineages", lineages).
+				ColumnExpr("lineages.family, lineages.pinned").
+				ColumnExpr("count(*) AS count").
+				GroupExpr("lineages.family, lineages.pinned").
+				Scan(ctx, &counted); err != nil {
+				return nil, fmt.Errorf("count assistant artifacts: %w", err)
 			}
-		}
+			for _, row := range counted {
+				family := assistantartifact.Family(row.Family)
+				page.Counts.All += row.Count
+				page.Counts.Families[family] += row.Count
+				if row.Pinned {
+					page.Counts.Pinned += row.Count
+				}
+				if (req.Family == "" || req.Family == family) && (!req.PinnedOnly || row.Pinned) {
+					page.Total += row.Count
+				}
+			}
 
-		var rows []lineageRow
-		if err := pageQuery(db, lineages, &req, cursor, limit).Scan(ctx, &rows); err != nil {
-			r.l.Error("failed to page assistant artifacts",
-				zap.String("threadId", req.ThreadID.String()),
-				zap.Error(err))
+			var rows []lineageRow
+			if err := pageQuery(db, lineages, &req, cursor, limit).Scan(ctx, &rows); err != nil {
+				r.l.Error("failed to page assistant artifacts",
+					zap.String("threadId", req.ThreadID.String()),
+					zap.Error(err))
 
-			return nil, fmt.Errorf("page assistant artifacts: %w", err)
-		}
-		if len(rows) > limit {
-			last := rows[limit-1]
-			page.NextCursor = lineageCursor{
-				pinned: last.Pinned, last: last.Last, root: last.Root,
-			}.encode()
-			rows = rows[:limit]
-		}
-		if len(rows) == 0 {
-			page.Artifacts = []*assistantartifact.Artifact{}
+				return nil, fmt.Errorf("page assistant artifacts: %w", err)
+			}
+			if len(rows) > limit {
+				last := rows[limit-1]
+				page.NextCursor = lineageCursor{
+					pinned: last.Pinned, last: last.Last, root: last.Root,
+				}.encode()
+				rows = rows[:limit]
+			}
+			if len(rows) == 0 {
+				page.Artifacts = []*assistantartifact.Artifact{}
+				return page, nil
+			}
+
+			roots := make([]string, 0, len(rows))
+			for _, row := range rows {
+				roots = append(roots, row.Root)
+			}
+			artifacts, err := r.versionsOf(ctx, versionsRequest{
+				tenant:   req.TenantInfo,
+				threadID: req.ThreadID,
+				roots:    roots,
+				summary:  req.Summary,
+			})
+			if err != nil {
+				return nil, err
+			}
+			page.Artifacts = artifacts
+
 			return page, nil
-		}
-
-		roots := make([]string, 0, len(rows))
-		for _, row := range rows {
-			roots = append(roots, row.Root)
-		}
-		artifacts, err := r.versionsOf(ctx, versionsRequest{
-			tenant:   req.TenantInfo,
-			threadID: req.ThreadID,
-			roots:    roots,
-			summary:  req.Summary,
-		})
-		if err != nil {
-			return nil, err
-		}
-		page.Artifacts = artifacts
-
-		return page, nil
-	})
+		},
+	)
 }
 
 // lineageQuery is one row per lineage that matches the search: its root,

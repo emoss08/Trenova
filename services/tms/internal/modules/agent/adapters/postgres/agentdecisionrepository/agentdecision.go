@@ -69,7 +69,11 @@ func (r *repository) Create(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentDecision, error) {
 		log := r.l.With(zap.String("operation", "Create"))
 
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
 			log.Error("failed to create agent decision", zap.Error(err))
 			return nil, err
 		}

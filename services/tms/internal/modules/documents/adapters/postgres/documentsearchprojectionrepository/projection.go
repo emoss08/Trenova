@@ -40,32 +40,36 @@ func (r *repository) Upsert(
 	ctx context.Context,
 	entity *documentsearchprojection.Projection,
 ) (*documentsearchprojection.Projection, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*documentsearchprojection.Projection, error) {
-		cols := documentsearchprojectioncol.ProjectionColumns
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			On(`CONFLICT ("id", "organization_id", "business_unit_id") DO UPDATE`).
-			Set(cols.ResourceID.SetExcluded()).
-			Set(cols.ResourceType.SetExcluded()).
-			Set(cols.FileName.SetExcluded()).
-			Set(cols.OriginalName.SetExcluded()).
-			Set(cols.Description.SetExcluded()).
-			Set(cols.Tags.SetExcluded()).
-			Set(cols.Status.SetExcluded()).
-			Set(cols.ContentStatus.SetExcluded()).
-			Set(cols.DetectedKind.SetExcluded()).
-			Set(cols.ShipmentDraftStatus.SetExcluded()).
-			Set(cols.ContentText.SetExcluded()).
-			Set(cols.CreatedAt.SetExcluded()).
-			Set(cols.UpdatedAt.SetExcluded()).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Document search projection")
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*documentsearchprojection.Projection, error) {
+			cols := documentsearchprojectioncol.ProjectionColumns
+			if _, err := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(entity).
+				On(`CONFLICT ("id", "organization_id", "business_unit_id") DO UPDATE`).
+				Set(cols.ResourceID.SetExcluded()).
+				Set(cols.ResourceType.SetExcluded()).
+				Set(cols.FileName.SetExcluded()).
+				Set(cols.OriginalName.SetExcluded()).
+				Set(cols.Description.SetExcluded()).
+				Set(cols.Tags.SetExcluded()).
+				Set(cols.Status.SetExcluded()).
+				Set(cols.ContentStatus.SetExcluded()).
+				Set(cols.DetectedKind.SetExcluded()).
+				Set(cols.ShipmentDraftStatus.SetExcluded()).
+				Set(cols.ContentText.SetExcluded()).
+				Set(cols.CreatedAt.SetExcluded()).
+				Set(cols.UpdatedAt.SetExcluded()).
+				Returning("*").
+				Exec(ctx); err != nil {
+				return nil, dberror.HandleNotFoundError(err, "Document search projection")
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) Delete(

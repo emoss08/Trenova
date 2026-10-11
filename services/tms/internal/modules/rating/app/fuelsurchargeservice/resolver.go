@@ -5,10 +5,10 @@ import (
 	"slices"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,12 +41,15 @@ func (s *Service) ResolveShipmentCharge(
 		BuID:  entity.BusinessUnitID,
 	}
 
-	program, err := s.programRepo.GetByID(ctx, &fuelsurchargeports.GetFuelSurchargeProgramByIDRequest{
-		ProgramID:    programID,
-		TenantInfo:   tenantInfo,
-		IncludeRows:  true,
-		IncludeIndex: true,
-	})
+	program, err := s.programRepo.GetByID(
+		ctx,
+		&fuelsurchargeports.GetFuelSurchargeProgramByIDRequest{
+			ProgramID:    programID,
+			TenantInfo:   tenantInfo,
+			IncludeRows:  true,
+			IncludeIndex: true,
+		},
+	)
 	if err != nil {
 		log.Warn("failed to load fuel surcharge program", zap.Error(err))
 		return nil, nil
@@ -66,12 +69,15 @@ func (s *Service) ResolveShipmentCharge(
 		return nil, nil
 	}
 
-	prices, err := s.priceRepo.GetLatestOnOrBefore(ctx, &fuelsurchargeports.GetLatestFuelPricesRequest{
-		FuelIndexID: program.FuelIndexID,
-		TenantInfo:  tenantInfo,
-		Date:        basisDate.Format(fuelsurcharge.PriceDateLayout),
-		Limit:       3,
-	})
+	prices, err := s.priceRepo.GetLatestOnOrBefore(
+		ctx,
+		&fuelsurchargeports.GetLatestFuelPricesRequest{
+			FuelIndexID: program.FuelIndexID,
+			TenantInfo:  tenantInfo,
+			Date:        basisDate.Format(fuelsurcharge.PriceDateLayout),
+			Limit:       3,
+		},
+	)
 	if err != nil {
 		log.Warn("failed to load fuel index prices", zap.Error(err))
 		return nil, nil

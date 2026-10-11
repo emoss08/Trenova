@@ -6,14 +6,14 @@ import (
 	"slices"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentboardbrief"
 	"github.com/emoss08/trenova/internal/core/services/shipmentboardcache"
+	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentboardbrief"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
@@ -171,11 +171,14 @@ func (s *Service) Suggestions(
 	items, narrated := s.applyBriefWording(ctx, req.TenantInfo, req.Timezone, base.Items)
 
 	now := s.now()
-	decided, err := s.decisions.ListSince(ctx, &shipmentsuggestionports.ListSuggestionDecisionsRequest{
-		TenantInfo: req.TenantInfo,
-		UserID:     req.UserID,
-		Since:      now.Add(-shiftWindow).Unix(),
-	})
+	decided, err := s.decisions.ListSince(
+		ctx,
+		&shipmentsuggestionports.ListSuggestionDecisionsRequest{
+			TenantInfo: req.TenantInfo,
+			UserID:     req.UserID,
+			Since:      now.Add(-shiftWindow).Unix(),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -274,7 +277,9 @@ func ApplyWording(
 	return applied
 }
 
-func copyItems(items []*shipmentsuggestionports.ShipmentSuggestion) []*shipmentsuggestionports.ShipmentSuggestion {
+func copyItems(
+	items []*shipmentsuggestionports.ShipmentSuggestion,
+) []*shipmentsuggestionports.ShipmentSuggestion {
 	out := make([]*shipmentsuggestionports.ShipmentSuggestion, 0, len(items))
 	for _, item := range items {
 		copied := *item
@@ -324,7 +329,10 @@ func boolRank(value bool) int {
 	return 0
 }
 
-func (s *Service) Decide(ctx context.Context, req *shipmentsuggestionports.DecideSuggestionRequest) error {
+func (s *Service) Decide(
+	ctx context.Context,
+	req *shipmentsuggestionports.DecideSuggestionRequest,
+) error {
 	if _, err := shipmentsuggestion.ParseKey(req.Key); err != nil {
 		return errortypes.NewValidationError("key", errortypes.ErrInvalid, err.Error())
 	}
@@ -359,17 +367,23 @@ func (s *Service) Decide(ctx context.Context, req *shipmentsuggestionports.Decid
 	return nil
 }
 
-func (s *Service) Undo(ctx context.Context, req *shipmentsuggestionports.UndoSuggestionRequest) error {
+func (s *Service) Undo(
+	ctx context.Context,
+	req *shipmentsuggestionports.UndoSuggestionRequest,
+) error {
 	key, err := shipmentsuggestion.ParseKey(req.Key)
 	if err != nil {
 		return errortypes.NewValidationError("key", errortypes.ErrInvalid, err.Error())
 	}
 
-	removed, err := s.decisions.Delete(ctx, &shipmentsuggestionports.DeleteSuggestionDecisionRequest{
-		TenantInfo: req.TenantInfo,
-		UserID:     req.UserID,
-		Key:        req.Key,
-	})
+	removed, err := s.decisions.Delete(
+		ctx,
+		&shipmentsuggestionports.DeleteSuggestionDecisionRequest{
+			TenantInfo: req.TenantInfo,
+			UserID:     req.UserID,
+			Key:        req.Key,
+		},
+	)
 	if err != nil || removed == nil {
 		return err
 	}

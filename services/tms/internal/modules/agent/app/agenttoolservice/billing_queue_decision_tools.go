@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -347,7 +347,10 @@ func notesProperty(description string) map[string]any {
 
 // fillException reads the reason and notes an exception or a send-back
 // records. The billing queue's own rule decides which need notes.
-func fillException(params map[string]any, req *billingqueueports.UpdateBillingQueueStatusRequest) error {
+func fillException(
+	params map[string]any,
+	req *billingqueueports.UpdateBillingQueueStatusRequest,
+) error {
 	raw, err := requireString(params, paramExceptionReasonCode)
 	if err != nil {
 		return err
@@ -377,13 +380,19 @@ func fillHold(params map[string]any, req *billingqueueports.UpdateBillingQueueSt
 	return nil
 }
 
-func fillApproval(params map[string]any, req *billingqueueports.UpdateBillingQueueStatusRequest) error {
+func fillApproval(
+	params map[string]any,
+	req *billingqueueports.UpdateBillingQueueStatusRequest,
+) error {
 	req.ReviewNotes = strings.TrimSpace(optionalString(params, paramReviewNotes))
 
 	return nil
 }
 
-func fillCancel(params map[string]any, req *billingqueueports.UpdateBillingQueueStatusRequest) error {
+func fillCancel(
+	params map[string]any,
+	req *billingqueueports.UpdateBillingQueueStatusRequest,
+) error {
 	reason, err := requireString(params, paramCancelReason)
 	if err != nil {
 		return err

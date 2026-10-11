@@ -69,7 +69,8 @@ func WatchtowerBackfillWorkflow(
 
 	var a *Activities
 	result := new(WatchtowerSweepResult)
-	if err := workflow.ExecuteActivity(ctx, a.BackfillActivity, input).Get(ctx, result); err != nil {
+	if err := workflow.ExecuteActivity(ctx, a.BackfillActivity, input).
+		Get(ctx, result); err != nil {
 		workflow.GetLogger(ctx).Error("Watchtower backfill workflow failed", "error", err)
 
 		return nil, err
@@ -83,7 +84,8 @@ func WatchtowerRetentionWorkflow(ctx workflow.Context) (*WatchtowerRetentionResu
 
 	var a *Activities
 	result := new(WatchtowerRetentionResult)
-	if err := workflow.ExecuteActivity(ctx, a.WatchtowerRetentionActivity).Get(ctx, result); err != nil {
+	if err := workflow.ExecuteActivity(ctx, a.WatchtowerRetentionActivity).
+		Get(ctx, result); err != nil {
 		workflow.GetLogger(ctx).Error("Watchtower retention workflow failed", "error", err)
 
 		return nil, err

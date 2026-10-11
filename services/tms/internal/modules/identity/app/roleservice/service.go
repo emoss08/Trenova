@@ -378,13 +378,16 @@ func (s *Service) UpsertRoleHierarchyEdge(
 	ctx context.Context,
 	req *UpsertHierarchyEdgeRequest,
 ) error {
-	if err := s.rbacRepo.UpsertRoleHierarchyEdge(ctx, &permissionports.UpsertRoleHierarchyEdgeRequest{
-		ActorID:        req.ActorID,
-		OrganizationID: req.OrganizationID,
-		BusinessUnitID: req.BusinessUnitID,
-		SeniorRoleID:   req.SeniorRoleID,
-		JuniorRoleID:   req.JuniorRoleID,
-	}); err != nil {
+	if err := s.rbacRepo.UpsertRoleHierarchyEdge(
+		ctx,
+		&permissionports.UpsertRoleHierarchyEdgeRequest{
+			ActorID:        req.ActorID,
+			OrganizationID: req.OrganizationID,
+			BusinessUnitID: req.BusinessUnitID,
+			SeniorRoleID:   req.SeniorRoleID,
+			JuniorRoleID:   req.JuniorRoleID,
+		},
+	); err != nil {
 		if errors.Is(err, permissionports.ErrCircularRoleHierarchy) {
 			return ErrCircularInheritance
 		}
@@ -415,10 +418,13 @@ func (s *Service) DeleteRoleHierarchyEdge(
 	orgID pulid.ID,
 	edgeID pulid.ID,
 ) error {
-	if err := s.rbacRepo.DeleteRoleHierarchyEdge(ctx, permissionports.DeleteRoleHierarchyEdgeRequest{
-		OrganizationID: orgID,
-		EdgeID:         edgeID,
-	}); err != nil {
+	if err := s.rbacRepo.DeleteRoleHierarchyEdge(
+		ctx,
+		permissionports.DeleteRoleHierarchyEdgeRequest{
+			OrganizationID: orgID,
+			EdgeID:         edgeID,
+		},
+	); err != nil {
 		return err
 	}
 
@@ -854,10 +860,13 @@ func (s *Service) DeleteResourcePermission(
 		return ErrCannotModifySystemRole
 	}
 
-	if err = s.roleRepo.DeleteResourcePermission(ctx, permissionports.DeleteResourcePermissionRequest{
-		PermissionID: permID,
-		RoleID:       role.ID,
-	}); err != nil {
+	if err = s.roleRepo.DeleteResourcePermission(
+		ctx,
+		permissionports.DeleteResourcePermissionRequest{
+			PermissionID: permID,
+			RoleID:       role.ID,
+		},
+	); err != nil {
 		log.Error("failed to delete resource permission", zap.Error(err))
 		return err
 	}

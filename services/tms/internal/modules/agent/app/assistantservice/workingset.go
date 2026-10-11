@@ -5,10 +5,10 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -158,18 +158,29 @@ func anchorRefs(scope *anchorScope) []agent.EntityRef {
 	}
 	add := func(ref agent.EntityRef) {
 		if ref.ID == "" || ref.ID == subject ||
-			slices.ContainsFunc(refs, func(known agent.EntityRef) bool { return known.ID == ref.ID }) {
+			slices.ContainsFunc(
+				refs,
+				func(known agent.EntityRef) bool { return known.ID == ref.ID },
+			) {
 			return
 		}
 		refs = append(refs, ref)
 	}
 
 	for _, mention := range scope.mentions {
-		add(agent.EntityRef{Type: mention.Type, ID: strings.TrimSpace(mention.ID), Label: mention.Label})
+		add(
+			agent.EntityRef{
+				Type:  mention.Type,
+				ID:    strings.TrimSpace(mention.ID),
+				Label: mention.Label,
+			},
+		)
 	}
 	if scope.page != nil {
 		add(agent.EntityRef{
-			Type: scope.page.EntityType, ID: strings.TrimSpace(scope.page.EntityID), Label: scope.page.Title,
+			Type:  scope.page.EntityType,
+			ID:    strings.TrimSpace(scope.page.EntityID),
+			Label: scope.page.Title,
 		})
 	}
 	for _, record := range scope.thread.WorkingSet {

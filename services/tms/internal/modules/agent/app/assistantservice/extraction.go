@@ -9,8 +9,8 @@ import (
 	"unicode"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -317,7 +317,8 @@ func nonEmpty(parts ...string) []string {
 }
 
 func cityStateGap(stop map[string]any) string {
-	if typeutils.StringOfTrimmed(stop["city"]) != "" && typeutils.StringOfTrimmed(stop["state"]) != "" {
+	if typeutils.StringOfTrimmed(stop["city"]) != "" &&
+		typeutils.StringOfTrimmed(stop["state"]) != "" {
 		return ", "
 	}
 

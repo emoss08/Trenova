@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -86,22 +86,26 @@ func (r *workerPayAssignmentRepository) ListForWorker(
 	ctx context.Context,
 	req driverpayports.ListWorkerPayAssignmentsRequest,
 ) ([]*driverpay.WorkerPayAssignment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.WorkerPayAssignment, error) {
-		items := make([]*driverpay.WorkerPayAssignment, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("wpa.organization_id = ?", req.TenantInfo.OrgID).
-			Where("wpa.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("wpa.worker_id = ?", req.WorkerID).
-			Relation("PayProfile", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
-			Order("wpa.effective_from DESC").
-			Scan(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("list worker pay assignments: %w", err)
-		}
-		return items, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*driverpay.WorkerPayAssignment, error) {
+			items := make([]*driverpay.WorkerPayAssignment, 0)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&items).
+				Where("wpa.organization_id = ?", req.TenantInfo.OrgID).
+				Where("wpa.business_unit_id = ?", req.TenantInfo.BuID).
+				Where("wpa.worker_id = ?", req.WorkerID).
+				Relation("PayProfile", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
+				Order("wpa.effective_from DESC").
+				Scan(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list worker pay assignments: %w", err)
+			}
+			return items, nil
+		},
+	)
 }
 
 func (r *workerPayAssignmentRepository) ListForProfile(
@@ -109,59 +113,67 @@ func (r *workerPayAssignmentRepository) ListForProfile(
 	tenantInfo pagination.TenantInfo,
 	profileID pulid.ID,
 ) ([]*driverpay.WorkerPayAssignment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.WorkerPayAssignment, error) {
-		items := make([]*driverpay.WorkerPayAssignment, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("wpa.organization_id = ?", tenantInfo.OrgID).
-			Where("wpa.business_unit_id = ?", tenantInfo.BuID).
-			Where("wpa.pay_profile_id = ?", profileID).
-			Where(
-				"wpa.effective_to IS NULL OR wpa.effective_to > "+r.db.NowEpoch(),
-			).
-			Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
-			Order("wpa.effective_from DESC").
-			Scan(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("list pay assignments for profile: %w", err)
-		}
-		return items, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*driverpay.WorkerPayAssignment, error) {
+			items := make([]*driverpay.WorkerPayAssignment, 0)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&items).
+				Where("wpa.organization_id = ?", tenantInfo.OrgID).
+				Where("wpa.business_unit_id = ?", tenantInfo.BuID).
+				Where("wpa.pay_profile_id = ?", profileID).
+				Where(
+					"wpa.effective_to IS NULL OR wpa.effective_to > "+r.db.NowEpoch(),
+				).
+				Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
+				Order("wpa.effective_from DESC").
+				Scan(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list pay assignments for profile: %w", err)
+			}
+			return items, nil
+		},
+	)
 }
 
 func (r *workerPayAssignmentRepository) ListOverlapping(
 	ctx context.Context,
 	entity *driverpay.WorkerPayAssignment,
 ) ([]*driverpay.WorkerPayAssignment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.WorkerPayAssignment, error) {
-		items := make([]*driverpay.WorkerPayAssignment, 0)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("wpa.organization_id = ?", entity.OrganizationID).
-			Where("wpa.business_unit_id = ?", entity.BusinessUnitID).
-			Where("wpa.worker_id = ?", entity.WorkerID)
-		if !entity.ID.IsNil() {
-			query = query.Where("wpa.id != ?", entity.ID)
-		}
-		if entity.EffectiveTo != nil {
-			query = query.Where(
-				"wpa.effective_from < ? AND (wpa.effective_to IS NULL OR wpa.effective_to > ?)",
-				*entity.EffectiveTo,
-				entity.EffectiveFrom,
-			)
-		} else {
-			query = query.Where(
-				"wpa.effective_to IS NULL OR wpa.effective_to > ?",
-				entity.EffectiveFrom,
-			)
-		}
-		if err := query.Scan(ctx); err != nil {
-			return nil, fmt.Errorf("list overlapping pay assignments: %w", err)
-		}
-		return items, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*driverpay.WorkerPayAssignment, error) {
+			items := make([]*driverpay.WorkerPayAssignment, 0)
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&items).
+				Where("wpa.organization_id = ?", entity.OrganizationID).
+				Where("wpa.business_unit_id = ?", entity.BusinessUnitID).
+				Where("wpa.worker_id = ?", entity.WorkerID)
+			if !entity.ID.IsNil() {
+				query = query.Where("wpa.id != ?", entity.ID)
+			}
+			if entity.EffectiveTo != nil {
+				query = query.Where(
+					"wpa.effective_from < ? AND (wpa.effective_to IS NULL OR wpa.effective_to > ?)",
+					*entity.EffectiveTo,
+					entity.EffectiveFrom,
+				)
+			} else {
+				query = query.Where(
+					"wpa.effective_to IS NULL OR wpa.effective_to > ?",
+					entity.EffectiveFrom,
+				)
+			}
+			if err := query.Scan(ctx); err != nil {
+				return nil, fmt.Errorf("list overlapping pay assignments: %w", err)
+			}
+			return items, nil
+		},
+	)
 }
 
 func (r *workerPayAssignmentRepository) Create(
@@ -202,7 +214,11 @@ func (r *workerPayAssignmentRepository) Update(
 		if err != nil {
 			return nil, fmt.Errorf("update worker pay assignment: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(res, "WorkerPayAssignment", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			res,
+			"WorkerPayAssignment",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 		return entity, nil

@@ -239,116 +239,124 @@ func (r *suiteRunRepository) List(
 	ctx context.Context,
 	req agentqualityports.ListAgentSuiteRunsRequest,
 ) (*agentqualityports.AgentSuiteRunPage, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentqualityports.AgentSuiteRunPage, error) {
-		cols := agentqualitycol.SuiteRunColumns
-		limit := clampLimit(req.Limit, defaultPageLimit, maxPageLimit-1)
-		dba := r.db.DBForContext(ctx)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*agentqualityports.AgentSuiteRunPage, error) {
+			cols := agentqualitycol.SuiteRunColumns
+			limit := clampLimit(req.Limit, defaultPageLimit, maxPageLimit-1)
+			dba := r.db.DBForContext(ctx)
 
-		scope := func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = agentqualitycol.SuiteRunScopeTenant(sq, req.TenantInfo)
-			if req.AgentDefinitionID.IsNotNil() {
-				sq = sq.Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
+			scope := func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = agentqualitycol.SuiteRunScopeTenant(sq, req.TenantInfo)
+				if req.AgentDefinitionID.IsNotNil() {
+					sq = sq.Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
+				}
+				if len(req.Statuses) > 0 {
+					sq = sq.Where(cols.Status.In(), bun.List(req.Statuses))
+				}
+
+				return sq
 			}
-			if len(req.Statuses) > 0 {
-				sq = sq.Where(cols.Status.In(), bun.List(req.Statuses))
+
+			page := &agentqualityports.AgentSuiteRunPage{}
+			if req.IncludeTotalCount {
+				total, err := dba.NewSelect().
+					Model((*agentquality.SuiteRun)(nil)).
+					WhereGroup(" AND ", scope).
+					Count(ctx)
+				if err != nil {
+					return nil, fmt.Errorf("count agent suite runs: %w", err)
+				}
+				page.TotalCount = &total
 			}
 
-			return sq
-		}
-
-		page := &agentqualityports.AgentSuiteRunPage{}
-		if req.IncludeTotalCount {
-			total, err := dba.NewSelect().
-				Model((*agentquality.SuiteRun)(nil)).
+			items := make([]*agentquality.SuiteRun, 0, limit+1)
+			if err := dba.NewSelect().
+				Model(&items).
 				WhereGroup(" AND ", scope).
-				Count(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("count agent suite runs: %w", err)
+				Order(cols.StartedAt.OrderDesc(), cols.ID.OrderDesc()).
+				Limit(limit + 1).
+				Offset(max(req.Offset, 0)).
+				Scan(ctx); err != nil {
+				return nil, fmt.Errorf("list agent suite runs: %w", err)
 			}
-			page.TotalCount = &total
-		}
 
-		items := make([]*agentquality.SuiteRun, 0, limit+1)
-		if err := dba.NewSelect().
-			Model(&items).
-			WhereGroup(" AND ", scope).
-			Order(cols.StartedAt.OrderDesc(), cols.ID.OrderDesc()).
-			Limit(limit + 1).
-			Offset(max(req.Offset, 0)).
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("list agent suite runs: %w", err)
-		}
+			if len(items) > limit {
+				page.HasNextPage = true
+				items = items[:limit]
+			}
+			page.Items = items
 
-		if len(items) > limit {
-			page.HasNextPage = true
-			items = items[:limit]
-		}
-		page.Items = items
-
-		return page, nil
-	})
+			return page, nil
+		},
+	)
 }
 
 func (r *suiteRunRepository) ListConnection(
 	ctx context.Context,
 	req *agentqualityports.ListAgentSuiteRunConnectionRequest,
 ) (*pagination.CursorListResult[*agentquality.SuiteRun], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*agentquality.SuiteRun], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
-		dba := r.db.DBForContext(ctx)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*agentquality.SuiteRun], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
+			dba := r.db.DBForContext(ctx)
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*agentquality.SuiteRun)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						agentqualitycol.SuiteRunTable.Alias,
-						req.Filter,
-						(*agentquality.SuiteRun)(nil),
-					)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*agentquality.SuiteRun)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							agentqualitycol.SuiteRunTable.Alias,
+							req.Filter,
+							(*agentquality.SuiteRun)(nil),
+						)
 
-					return suiteRunScope(sq, req).
-						Apply(agentqualitycol.SuiteRunApplyTenant(req.Filter.TenantInfo))
-				}).
-				Count(ctx)
+						return suiteRunScope(sq, req).
+							Apply(agentqualitycol.SuiteRunApplyTenant(req.Filter.TenantInfo))
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count agent suite runs", zap.Error(err))
+
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*agentquality.SuiteRun]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*agentquality.SuiteRun) *bun.SelectQuery {
+						return dba.NewSelect().Model(entities)
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							suiteRunScope(sq, req),
+							agentqualitycol.SuiteRunTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*agentquality.SuiteRun)(nil),
+						)
+					},
+				})
 			if err != nil {
-				log.Error("failed to count agent suite runs", zap.Error(err))
+				log.Error("failed to list agent suite runs", zap.Error(err))
 
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*agentquality.SuiteRun]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*agentquality.SuiteRun) *bun.SelectQuery {
-					return dba.NewSelect().Model(entities)
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return querybuilder.ApplyCursorFilters(
-						suiteRunScope(sq, req),
-						agentqualitycol.SuiteRunTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*agentquality.SuiteRun)(nil),
-					)
-				},
-			})
-		if err != nil {
-			log.Error("failed to list agent suite runs", zap.Error(err))
-
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func suiteRunScope(
@@ -453,73 +461,81 @@ func (r *suiteRunRepository) Overview(
 	ctx context.Context,
 	req agentqualityports.AgentSuiteRunOverviewRequest,
 ) (*agentqualityports.AgentSuiteRunOverview, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentqualityports.AgentSuiteRunOverview, error) {
-		cols := agentqualitycol.SuiteRunColumns
-		overview := new(agentqualityports.AgentSuiteRunOverview)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*agentqualityports.AgentSuiteRunOverview, error) {
+			cols := agentqualitycol.SuiteRunColumns
+			overview := new(agentqualityports.AgentSuiteRunOverview)
 
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*agentquality.SuiteRun)(nil)).
-			ColumnExpr(buncolgen.CountFilter("runs", cols.Status.In()), bun.List(scoredStatuses())).
-			ColumnExpr(buncolgen.CountFilter("regressions", cols.Regression.IsTrue())).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentqualitycol.SuiteRunScopeTenant(sq, req.TenantInfo).
-					Where(cols.StartedAt.Gte(), req.Since)
-			}).
-			Scan(ctx, overview); err != nil {
-			return nil, fmt.Errorf("summarize agent suite runs: %w", err)
-		}
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*agentquality.SuiteRun)(nil)).
+				ColumnExpr(buncolgen.CountFilter("runs", cols.Status.In()), bun.List(scoredStatuses())).
+				ColumnExpr(buncolgen.CountFilter("regressions", cols.Regression.IsTrue())).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return agentqualitycol.SuiteRunScopeTenant(sq, req.TenantInfo).
+						Where(cols.StartedAt.Gte(), req.Since)
+				}).
+				Scan(ctx, overview); err != nil {
+				return nil, fmt.Errorf("summarize agent suite runs: %w", err)
+			}
 
-		return overview, nil
-	})
+			return overview, nil
+		},
+	)
 }
 
 func (r *suiteRunRepository) ListAgents(
 	ctx context.Context,
 	req agentqualityports.ListAgentQualityAgentsQuery,
 ) (*agentqualityports.AgentQualityAgentRows, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentqualityports.AgentQualityAgentRows, error) {
-		cols := agentdefinitioncol.DefinitionColumns
-		limit := clampLimit(req.Limit, defaultPageLimit, maxPageLimit-1)
-		dba := r.db.DBForContext(ctx)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*agentqualityports.AgentQualityAgentRows, error) {
+			cols := agentdefinitioncol.DefinitionColumns
+			limit := clampLimit(req.Limit, defaultPageLimit, maxPageLimit-1)
+			dba := r.db.DBForContext(ctx)
 
-		scope := func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo)
-		}
-
-		result := &agentqualityports.AgentQualityAgentRows{}
-		if req.IncludeTotalCount {
-			total, err := dba.NewSelect().
-				Model((*agentdefinition.Definition)(nil)).
-				WhereGroup(" AND ", scope).
-				Count(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("count agents: %w", err)
+			scope := func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo)
 			}
-			result.TotalCount = &total
-		}
 
-		rows := make([]*agentqualityports.AgentQualityAgentRow, 0, limit+1)
-		if err := dba.NewSelect().
-			Model((*agentdefinition.Definition)(nil)).
-			ColumnExpr(cols.ID.As("id")).
-			ColumnExpr(cols.Name.As("name")).
-			ColumnExpr(cols.Enabled.As("enabled")).
-			WhereGroup(" AND ", scope).
-			OrderExpr(cols.Name.OrderAsc()).
-			OrderExpr(cols.ID.OrderAsc()).
-			Limit(limit+1).
-			Offset(max(req.Offset, 0)).
-			Scan(ctx, &rows); err != nil {
-			return nil, fmt.Errorf("list agents for quality: %w", err)
-		}
+			result := &agentqualityports.AgentQualityAgentRows{}
+			if req.IncludeTotalCount {
+				total, err := dba.NewSelect().
+					Model((*agentdefinition.Definition)(nil)).
+					WhereGroup(" AND ", scope).
+					Count(ctx)
+				if err != nil {
+					return nil, fmt.Errorf("count agents: %w", err)
+				}
+				result.TotalCount = &total
+			}
 
-		if len(rows) > limit {
-			result.HasNextPage = true
-			rows = rows[:limit]
-		}
-		result.Items = rows
+			rows := make([]*agentqualityports.AgentQualityAgentRow, 0, limit+1)
+			if err := dba.NewSelect().
+				Model((*agentdefinition.Definition)(nil)).
+				ColumnExpr(cols.ID.As("id")).
+				ColumnExpr(cols.Name.As("name")).
+				ColumnExpr(cols.Enabled.As("enabled")).
+				WhereGroup(" AND ", scope).
+				OrderExpr(cols.Name.OrderAsc()).
+				OrderExpr(cols.ID.OrderAsc()).
+				Limit(limit+1).
+				Offset(max(req.Offset, 0)).
+				Scan(ctx, &rows); err != nil {
+				return nil, fmt.Errorf("list agents for quality: %w", err)
+			}
 
-		return result, nil
-	})
+			if len(rows) > limit {
+				result.HasNextPage = true
+				rows = rows[:limit]
+			}
+			result.Items = rows
+
+			return result, nil
+		},
+	)
 }

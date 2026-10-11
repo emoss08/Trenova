@@ -5,21 +5,21 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -230,8 +230,11 @@ func newListShipmentsTool(repo shipmentports.ShipmentRepository) agentports.Agen
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
 			result, err := repo.List(ctx, &shipmentports.ListShipmentsRequest{
-				Filter:          opts,
-				ShipmentOptions: shipmentports.ShipmentOptions{IncludeCustomer: true, IncludeRoute: true},
+				Filter: opts,
+				ShipmentOptions: shipmentports.ShipmentOptions{
+					IncludeCustomer: true,
+					IncludeRoute:    true,
+				},
 			})
 			if err != nil {
 				return nil, err

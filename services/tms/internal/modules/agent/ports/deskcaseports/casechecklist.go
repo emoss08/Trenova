@@ -78,7 +78,10 @@ type CaseChecklistRepository interface {
 	DeleteTemplate(ctx context.Context, req *GetCaseChecklistTemplateRequest) error
 	// CountDocumentTypes counts how many of the ids are the organization's
 	// document types.
-	CountDocumentTypes(ctx context.Context, req *CountCaseChecklistDocumentTypesRequest) (int, error)
+	CountDocumentTypes(
+		ctx context.Context,
+		req *CountCaseChecklistDocumentTypesRequest,
+	) (int, error)
 	ListTicks(
 		ctx context.Context,
 		req *ListCaseChecklistTicksRequest,

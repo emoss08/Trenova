@@ -108,7 +108,13 @@ type DeleteCaseChecklistTemplateRequest struct {
 
 // CaseChecklistService keeps how case checklists are laid out.
 type CaseChecklistService interface {
-	List(ctx context.Context, req *ListCaseChecklistTemplatesRequest) (*CaseChecklistTemplates, error)
-	Save(ctx context.Context, req *SaveCaseChecklistTemplateRequest) (*deskcase.ChecklistTemplate, error)
+	List(
+		ctx context.Context,
+		req *ListCaseChecklistTemplatesRequest,
+	) (*CaseChecklistTemplates, error)
+	Save(
+		ctx context.Context,
+		req *SaveCaseChecklistTemplateRequest,
+	) (*deskcase.ChecklistTemplate, error)
 	Delete(ctx context.Context, req *DeleteCaseChecklistTemplateRequest) error
 }

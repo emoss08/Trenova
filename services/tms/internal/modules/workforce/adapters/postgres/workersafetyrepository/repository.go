@@ -150,7 +150,11 @@ func (r *repository) UpdateEvent(
 			r.l.Error("failed to update worker safety event", zap.Error(err))
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, "WorkerSafetyEvent", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"WorkerSafetyEvent",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -183,102 +187,122 @@ func (r *repository) ListActions(
 	ctx context.Context,
 	req *workerports.ListWorkerDisciplinaryActionsRequest,
 ) ([]*worker.WorkerDisciplinaryAction, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerDisciplinaryAction, error) {
-		cols := workercol.WorkerDisciplinaryActionColumns
-		entities := make([]*worker.WorkerDisciplinaryAction, 0, 8)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerDisciplinaryActionScopeTenant(sq, req.TenantInfo).
-					Where(cols.WorkerID.Eq(), req.WorkerID)
-			}).
-			Order(cols.IssuedAt.OrderDesc()).
-			Order(cols.CreatedAt.OrderDesc())
-		if req.IncludeEvent {
-			q = q.Relation(workercol.WorkerDisciplinaryActionRelations.SafetyEvent)
-		}
-		if req.IncludeActors {
-			q = q.Relation(workercol.WorkerDisciplinaryActionRelations.IssuedBy)
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*worker.WorkerDisciplinaryAction, error) {
+			cols := workercol.WorkerDisciplinaryActionColumns
+			entities := make([]*worker.WorkerDisciplinaryAction, 0, 8)
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return workercol.WorkerDisciplinaryActionScopeTenant(sq, req.TenantInfo).
+						Where(cols.WorkerID.Eq(), req.WorkerID)
+				}).
+				Order(cols.IssuedAt.OrderDesc()).
+				Order(cols.CreatedAt.OrderDesc())
+			if req.IncludeEvent {
+				q = q.Relation(workercol.WorkerDisciplinaryActionRelations.SafetyEvent)
+			}
+			if req.IncludeActors {
+				q = q.Relation(workercol.WorkerDisciplinaryActionRelations.IssuedBy)
+			}
 
-		if err := q.Scan(ctx); err != nil {
-			r.l.Error("failed to list disciplinary actions", zap.Error(err))
-			return nil, err
-		}
+			if err := q.Scan(ctx); err != nil {
+				r.l.Error("failed to list disciplinary actions", zap.Error(err))
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) GetActionByID(
 	ctx context.Context,
 	req *workerports.GetWorkerDisciplinaryActionByIDRequest,
 ) (*worker.WorkerDisciplinaryAction, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerDisciplinaryAction, error) {
-		entity := new(worker.WorkerDisciplinaryAction)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerDisciplinaryActionScopeTenant(sq, req.TenantInfo).
-					Where(workercol.WorkerDisciplinaryActionColumns.ID.Eq(), req.ID)
-			})
-		if req.IncludeEvent {
-			q = q.Relation(workercol.WorkerDisciplinaryActionRelations.SafetyEvent)
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*worker.WorkerDisciplinaryAction, error) {
+			entity := new(worker.WorkerDisciplinaryAction)
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return workercol.WorkerDisciplinaryActionScopeTenant(sq, req.TenantInfo).
+						Where(workercol.WorkerDisciplinaryActionColumns.ID.Eq(), req.ID)
+				})
+			if req.IncludeEvent {
+				q = q.Relation(workercol.WorkerDisciplinaryActionRelations.SafetyEvent)
+			}
 
-		if err := q.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "WorkerDisciplinaryAction")
-		}
+			if err := q.Scan(ctx); err != nil {
+				return nil, dberror.HandleNotFoundError(err, "WorkerDisciplinaryAction")
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) CreateAction(
 	ctx context.Context,
 	entity *worker.WorkerDisciplinaryAction,
 ) (*worker.WorkerDisciplinaryAction, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerDisciplinaryAction, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			r.l.Error("failed to create disciplinary action", zap.Error(err))
-			return nil, err
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*worker.WorkerDisciplinaryAction, error) {
+			if _, err := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(entity).
+				Returning("*").
+				Exec(ctx); err != nil {
+				r.l.Error("failed to create disciplinary action", zap.Error(err))
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) UpdateAction(
 	ctx context.Context,
 	entity *worker.WorkerDisciplinaryAction,
 ) (*worker.WorkerDisciplinaryAction, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerDisciplinaryAction, error) {
-		ov := entity.Version
-		entity.Version++
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*worker.WorkerDisciplinaryAction, error) {
+			ov := entity.Version
+			entity.Version++
 
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(workercol.WorkerDisciplinaryActionColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			r.l.Error("failed to update disciplinary action", zap.Error(err))
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(results, "WorkerDisciplinaryAction", entity.ID.String()); err != nil {
-			return nil, err
-		}
+			results, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(entity).
+				WherePK().
+				Where(workercol.WorkerDisciplinaryActionColumns.Version.Eq(), ov).
+				Returning("*").
+				Exec(ctx)
+			if err != nil {
+				r.l.Error("failed to update disciplinary action", zap.Error(err))
+				return nil, err
+			}
+			if err = dberror.CheckRowsAffected(
+				results,
+				"WorkerDisciplinaryAction",
+				entity.ID.String(),
+			); err != nil {
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) ListRecognitions(
@@ -382,7 +406,10 @@ func (r *repository) ListWorkersWithLapsedPoints(
 	ctx context.Context,
 	req *workerports.ListWorkersWithLapsedPointsRequest,
 ) ([]workerports.WorkerTenantRef, error) {
-	ctx = dbscope.WithSystem(ctx, "list workers with lapsed safety points across every organization")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"list workers with lapsed safety points across every organization",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.WorkerTenantRef, error) {
 		ecols := workercol.WorkerSafetyEventColumns
 		acols := workercol.WorkerDisciplinaryActionColumns

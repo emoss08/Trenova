@@ -90,7 +90,8 @@ type ExtractionRun struct {
 }
 
 func (r *ExtractionRun) Validate(multiErr *errortypes.MultiError) {
-	multiErr.AddOzzoError(validation.ValidateStruct(r,
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		r,
 		validation.Field(&r.OrganizationID, validation.Required.Error("Organization is required")),
 		validation.Field(&r.BusinessUnitID, validation.Required.Error("Business unit is required")),
 		validation.Field(&r.Task,
@@ -101,7 +102,10 @@ func (r *ExtractionRun) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Status is required"),
 			domainvalidation.ValidEnum[RunStatus]("Status is invalid"),
 		),
-		validation.Field(&r.ProviderID, validation.Required.Error("Choose the AI provider to evaluate")),
+		validation.Field(
+			&r.ProviderID,
+			validation.Required.Error("Choose the AI provider to evaluate"),
+		),
 		validation.Field(&r.ProviderName,
 			validation.Required.Error("Provider name is required"),
 			validation.RuneLength(1, MaxProviderNameRunes).

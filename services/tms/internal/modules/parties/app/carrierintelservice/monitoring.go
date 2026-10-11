@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -91,12 +91,15 @@ func (s *Service) PollChangeFeed(
 		var feed *carrierintelports.CarrierIntelChangeFeedPage
 		listErr := s.withRateLimitWait(ctx, func() error {
 			var callErr error
-			feed, callErr = monitor.ListChanges(ctx, &carrierintelports.CarrierIntelChangeFeedRequest{
-				Since:    since,
-				Until:    now,
-				Page:     page,
-				PageSize: changeFeedPageSize,
-			})
+			feed, callErr = monitor.ListChanges(
+				ctx,
+				&carrierintelports.CarrierIntelChangeFeedRequest{
+					Since:    since,
+					Until:    now,
+					Page:     page,
+					PageSize: changeFeedPageSize,
+				},
+			)
 			return callErr
 		})
 		if listErr != nil {
@@ -171,7 +174,13 @@ func (s *Service) PollChangeFeed(
 		}
 	}
 
-	if err = s.confirmUnchangedEnrollments(ctx, tenantInfo, provider, changedRefs, now); err != nil {
+	if err = s.confirmUnchangedEnrollments(
+		ctx,
+		tenantInfo,
+		provider,
+		changedRefs,
+		now,
+	); err != nil {
 		s.l.Warn("failed to confirm unchanged monitored carriers", zap.Error(err))
 	}
 
@@ -232,13 +241,16 @@ func (s *Service) confirmUnchangedEnrollments(
 ) error {
 	afterID := pulid.Nil
 	for {
-		page, err := s.enrollmentRepo.ListActive(ctx, &carrierintelports.ListActiveEnrollmentsRequest{
-			TenantInfo: tenantInfo,
-			Provider:   provider,
-			Mode:       carrierintel.EnrollmentModeNative,
-			AfterID:    afterID,
-			Limit:      recomputeBatchSize,
-		})
+		page, err := s.enrollmentRepo.ListActive(
+			ctx,
+			&carrierintelports.ListActiveEnrollmentsRequest{
+				TenantInfo: tenantInfo,
+				Provider:   provider,
+				Mode:       carrierintel.EnrollmentModeNative,
+				AfterID:    afterID,
+				Limit:      recomputeBatchSize,
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -272,13 +284,16 @@ func (s *Service) confirmUnchangedEnrollments(
 			if err = s.snapshotRepo.TouchConfirmed(ctx, tenantInfo, snapIDs, now); err != nil {
 				return err
 			}
-			if err = s.enrollmentRepo.TouchConfirmed(ctx, &carrierintelports.TouchEnrollmentsConfirmedRequest{
-				TenantInfo:  tenantInfo,
-				Provider:    provider,
-				Mode:        carrierintel.EnrollmentModeNative,
-				SubjectIDs:  ids,
-				ConfirmedAt: now,
-			}); err != nil {
+			if err = s.enrollmentRepo.TouchConfirmed(
+				ctx,
+				&carrierintelports.TouchEnrollmentsConfirmedRequest{
+					TenantInfo:  tenantInfo,
+					Provider:    provider,
+					Mode:        carrierintel.EnrollmentModeNative,
+					SubjectIDs:  ids,
+					ConfirmedAt: now,
+				},
+			); err != nil {
 				return err
 			}
 		}
@@ -385,13 +400,16 @@ func (s *Service) RefreshDueSnapshots(
 	}
 
 	if len(confirmed) > 0 {
-		if err = s.enrollmentRepo.TouchConfirmed(ctx, &carrierintelports.TouchEnrollmentsConfirmedRequest{
-			TenantInfo:  tenantInfo,
-			Provider:    provider,
-			Mode:        carrierintel.EnrollmentModeSnapshotDiff,
-			SubjectIDs:  confirmed,
-			ConfirmedAt: now,
-		}); err != nil {
+		if err = s.enrollmentRepo.TouchConfirmed(
+			ctx,
+			&carrierintelports.TouchEnrollmentsConfirmedRequest{
+				TenantInfo:  tenantInfo,
+				Provider:    provider,
+				Mode:        carrierintel.EnrollmentModeSnapshotDiff,
+				SubjectIDs:  confirmed,
+				ConfirmedAt: now,
+			},
+		); err != nil {
 			return result, err
 		}
 	}

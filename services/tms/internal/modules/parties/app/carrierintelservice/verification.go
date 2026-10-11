@@ -6,12 +6,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -120,17 +120,23 @@ func (s *Service) runEquipmentLookup(
 	var result *carrierintelports.CarrierIntelEquipmentResult
 	err = s.withRateLimitWait(ctx, func() error {
 		var callErr error
-		result, callErr = lookup.FindByEquipment(ctx, &carrierintelports.CarrierIntelEquipmentRequest{
-			VIN:         entity.VIN,
-			PlateNumber: entity.PlateNumber,
-			PlateState:  entity.PlateState,
-			UnitNumber:  entity.UnitNumber,
-			UnitType:    entity.UnitType,
-		})
+		result, callErr = lookup.FindByEquipment(
+			ctx,
+			&carrierintelports.CarrierIntelEquipmentRequest{
+				VIN:         entity.VIN,
+				PlateNumber: entity.PlateNumber,
+				PlateState:  entity.PlateState,
+				UnitNumber:  entity.UnitNumber,
+				UnitType:    entity.UnitType,
+			},
+		)
 		return callErr
 	})
 	if err != nil {
-		if carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorNotFound) {
+		if carrierintelports.IsCarrierIntelErrorKind(
+			err,
+			carrierintelports.CarrierIntelErrorNotFound,
+		) {
 			entity.Result = carrierintel.VerificationResultNotFound
 			entity.MismatchReason = "No carrier is registered to this equipment"
 			return

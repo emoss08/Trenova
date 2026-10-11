@@ -64,102 +64,113 @@ func (r *repository) Append(
 	ctx context.Context,
 	req *aiauditports.AppendAIAuditEventsRequest,
 ) (*aiauditports.AppendAIAuditEventsResult, error) {
-	ctx = dbscope.WithSystem(ctx, "append projected events to each organization's AI audit chain in one pass")
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiauditports.AppendAIAuditEventsResult, error) {
-		result := &aiauditports.AppendAIAuditEventsResult{}
-		if len(req.Events) == 0 {
-			return result, nil
-		}
-		if req.Sign == nil {
-			return nil, errors.New("an AI audit append needs a signer")
-		}
-
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-			head, err := r.lockHead(txCtx, tx, req.TenantInfo, req.Now)
-			if err != nil {
-				return err
+	ctx = dbscope.WithSystem(
+		ctx,
+		"append projected events to each organization's AI audit chain in one pass",
+	)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*aiauditports.AppendAIAuditEventsResult, error) {
+			result := &aiauditports.AppendAIAuditEventsResult{}
+			if len(req.Events) == 0 {
+				return result, nil
+			}
+			if req.Sign == nil {
+				return nil, errors.New("an AI audit append needs a signer")
 			}
 
-			fresh, err := r.dropExisting(txCtx, tx, req.TenantInfo, req.Events)
-			if err != nil || len(fresh) == 0 {
-				return err
-			}
+			err := r.db.WithTx(
+				ctx,
+				kernelports.TxOptions{},
+				func(txCtx context.Context, tx bun.Tx) error {
+					head, err := r.lockHead(txCtx, tx, req.TenantInfo, req.Now)
+					if err != nil {
+						return err
+					}
 
-			prev := head.LastHash
-			if head.LastSeq == 0 || prev == "" {
-				prev = aiaudit.GenesisHash
-			}
-			seq := head.LastSeq
-			for _, event := range fresh {
-				seq++
-				event.Seq = seq
-				event.OrganizationID = req.TenantInfo.OrgID
-				event.BusinessUnitID = req.TenantInfo.BuID
-				if event.ID.IsNil() {
-					event.ID = pulid.MustNew(aiaudit.EventIDPrefix)
-				}
-				if event.RecordedAt == 0 {
-					event.RecordedAt = req.Now
-				}
-				if err = req.Sign(event, prev); err != nil {
-					return fmt.Errorf("sign AI audit event %s: %w", event.SourceKey, err)
-				}
-				prev = event.Hash
-			}
+					fresh, err := r.dropExisting(txCtx, tx, req.TenantInfo, req.Events)
+					if err != nil || len(fresh) == 0 {
+						return err
+					}
 
-			inserted, err := tx.NewInsert().
-				Model(&fresh).
-				On("CONFLICT DO NOTHING").
-				Exec(txCtx)
-			if err != nil {
-				return fmt.Errorf("insert AI audit events: %w", err)
-			}
-			affected, err := inserted.RowsAffected()
-			if err != nil {
-				return fmt.Errorf("insert AI audit events: %w", err)
-			}
-			if int(affected) != len(fresh) {
-				return ErrChainRace
-			}
+					prev := head.LastHash
+					if head.LastSeq == 0 || prev == "" {
+						prev = aiaudit.GenesisHash
+					}
+					seq := head.LastSeq
+					for _, event := range fresh {
+						seq++
+						event.Seq = seq
+						event.OrganizationID = req.TenantInfo.OrgID
+						event.BusinessUnitID = req.TenantInfo.BuID
+						if event.ID.IsNil() {
+							event.ID = pulid.MustNew(aiaudit.EventIDPrefix)
+						}
+						if event.RecordedAt == 0 {
+							event.RecordedAt = req.Now
+						}
+						if err = req.Sign(event, prev); err != nil {
+							return fmt.Errorf("sign AI audit event %s: %w", event.SourceKey, err)
+						}
+						prev = event.Hash
+					}
 
-			fromSeq := head.LastSeq + 1
-			if err = r.advanceHead(txCtx, tx, head, seq, prev, req.KeyID); err != nil {
-				return err
-			}
+					inserted, err := tx.NewInsert().
+						Model(&fresh).
+						On("CONFLICT DO NOTHING").
+						Exec(txCtx)
+					if err != nil {
+						return fmt.Errorf("insert AI audit events: %w", err)
+					}
+					affected, err := inserted.RowsAffected()
+					if err != nil {
+						return fmt.Errorf("insert AI audit events: %w", err)
+					}
+					if int(affected) != len(fresh) {
+						return ErrChainRace
+					}
 
-			seal := &aiaudit.AIAuditSeal{
-				OrganizationID: req.TenantInfo.OrgID,
-				BusinessUnitID: req.TenantInfo.BuID,
-				FromSeq:        fromSeq,
-				ToSeq:          seq,
-				HeadHash:       prev,
-				HashKeyID:      req.KeyID,
-				RowCount:       len(fresh),
-				SealedAt:       req.Now,
-			}
-			if _, err = tx.NewInsert().Model(seal).Exec(txCtx); err != nil {
-				return fmt.Errorf("seal AI audit batch: %w", err)
-			}
+					fromSeq := head.LastSeq + 1
+					if err = r.advanceHead(txCtx, tx, head, seq, prev, req.KeyID); err != nil {
+						return err
+					}
 
-			result.Inserted = len(fresh)
-			result.FromSeq = fromSeq
-			result.ToSeq = seq
-			result.HeadHash = prev
+					seal := &aiaudit.AIAuditSeal{
+						OrganizationID: req.TenantInfo.OrgID,
+						BusinessUnitID: req.TenantInfo.BuID,
+						FromSeq:        fromSeq,
+						ToSeq:          seq,
+						HeadHash:       prev,
+						HashKeyID:      req.KeyID,
+						RowCount:       len(fresh),
+						SealedAt:       req.Now,
+					}
+					if _, err = tx.NewInsert().Model(seal).Exec(txCtx); err != nil {
+						return fmt.Errorf("seal AI audit batch: %w", err)
+					}
 
-			return nil
-		})
-		if err != nil {
-			r.l.Error("failed to append AI audit events",
-				zap.String("organizationId", req.TenantInfo.OrgID.String()),
-				zap.Int("events", len(req.Events)),
-				zap.Error(err),
+					result.Inserted = len(fresh)
+					result.FromSeq = fromSeq
+					result.ToSeq = seq
+					result.HeadHash = prev
+
+					return nil
+				},
 			)
+			if err != nil {
+				r.l.Error("failed to append AI audit events",
+					zap.String("organizationId", req.TenantInfo.OrgID.String()),
+					zap.Int("events", len(req.Events)),
+					zap.Error(err),
+				)
 
-			return nil, err
-		}
+				return nil, err
+			}
 
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) lockHead(
@@ -307,67 +318,74 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *aiauditports.ListAIAuditEventsQuery,
 ) (*pagination.CursorListResult[*aiaudit.AIAuditEvent], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*aiaudit.AIAuditEvent], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
-		dba := r.db.DBForContext(ctx)
-		if len(req.Filter.Sort) == 0 {
-			req.Filter.Sort = []domaintypes.SortField{{
-				Field:     "occurredAt",
-				Direction: dbtype.SortDirectionDesc,
-			}}
-		}
-
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.NewSelect().
-				Model((*aiaudit.AIAuditEvent)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						aiauditcol.AIAuditEventTable.Alias,
-						req.Filter,
-						(*aiaudit.AIAuditEvent)(nil),
-					)
-				}).
-				Count(ctx)
-			if err != nil {
-				log.Error("failed to count AI audit events", zap.Error(err))
-
-				return nil, fmt.Errorf("count AI audit events: %w", err)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*aiaudit.AIAuditEvent], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
+			dba := r.db.DBForContext(ctx)
+			if len(req.Filter.Sort) == 0 {
+				req.Filter.Sort = []domaintypes.SortField{{
+					Field:     "occurredAt",
+					Direction: dbtype.SortDirectionDesc,
+				}}
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*aiaudit.AIAuditEvent]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*aiaudit.AIAuditEvent) *bun.SelectQuery {
-				q := dba.NewSelect().Model(entities)
-				if len(req.Columns) > 0 {
-					q = q.Column(req.Columns...)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.NewSelect().
+					Model((*aiaudit.AIAuditEvent)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							aiauditcol.AIAuditEventTable.Alias,
+							req.Filter,
+							(*aiaudit.AIAuditEvent)(nil),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count AI audit events", zap.Error(err))
+
+					return nil, fmt.Errorf("count AI audit events: %w", err)
 				}
+				totalCount = &total
+			}
 
-				return q
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return querybuilder.ApplyCursorFilters(
-					sq,
-					aiauditcol.AIAuditEventTable.Alias,
-					req.Filter,
-					req.Cursor,
-					(*aiaudit.AIAuditEvent)(nil),
-				)
-			},
-		})
-		if err != nil {
-			log.Error("failed to list AI audit events", zap.Error(err))
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*aiaudit.AIAuditEvent]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*aiaudit.AIAuditEvent) *bun.SelectQuery {
+						q := dba.NewSelect().Model(entities)
+						if len(req.Columns) > 0 {
+							q = q.Column(req.Columns...)
+						}
 
-			return nil, fmt.Errorf("list AI audit events: %w", err)
-		}
+						return q
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							aiauditcol.AIAuditEventTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*aiaudit.AIAuditEvent)(nil),
+						)
+					},
+				},
+			)
+			if err != nil {
+				log.Error("failed to list AI audit events", zap.Error(err))
 
-		return result, nil
-	})
+				return nil, fmt.Errorf("list AI audit events: %w", err)
+			}
+
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -449,23 +467,27 @@ func (r *repository) Summarize(
 	ctx context.Context,
 	scope *aiauditports.AIAuditEventScope,
 ) (*aiauditports.AIAuditEventSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aiauditports.AIAuditEventSummary, error) {
-		cols := aiauditcol.AIAuditEventColumns
-		summary := new(aiauditports.AIAuditEventSummary)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*aiauditports.AIAuditEventSummary, error) {
+			cols := aiauditcol.AIAuditEventColumns
+			summary := new(aiauditports.AIAuditEventSummary)
 
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model((*aiaudit.AIAuditEvent)(nil)).
-			ColumnExpr(buncolgen.Count("row_count")).
-			ColumnExpr(cols.Seq.Expr("COALESCE(MIN({}), 0) AS first_seq")).
-			ColumnExpr(cols.Seq.Expr("COALESCE(MAX({}), 0) AS last_seq")).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery { return applyScope(sq, scope) }).
-			Scan(ctx, summary)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("summarize AI audit events: %w", err)
-		}
+			err := r.db.DBForContext(ctx).NewSelect().
+				Model((*aiaudit.AIAuditEvent)(nil)).
+				ColumnExpr(buncolgen.Count("row_count")).
+				ColumnExpr(cols.Seq.Expr("COALESCE(MIN({}), 0) AS first_seq")).
+				ColumnExpr(cols.Seq.Expr("COALESCE(MAX({}), 0) AS last_seq")).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery { return applyScope(sq, scope) }).
+				Scan(ctx, summary)
+			if err != nil && !errors.Is(err, sql.ErrNoRows) {
+				return nil, fmt.Errorf("summarize AI audit events: %w", err)
+			}
 
-		return summary, nil
-	})
+			return summary, nil
+		},
+	)
 }
 
 func (r *repository) ListPage(

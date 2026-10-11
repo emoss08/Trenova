@@ -11,9 +11,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -107,11 +107,14 @@ func (s *Service) openSession(
 	}
 
 	return &pushSession{
-		tenant:            tenantInfo,
-		conn:              session.Connection,
-		writer:            writer,
-		journals:          journals,
-		auth:              accountingsyncports.DocumentAuthFor(session.Connection, session.AccessToken),
+		tenant:   tenantInfo,
+		conn:     session.Connection,
+		writer:   writer,
+		journals: journals,
+		auth: accountingsyncports.DocumentAuthFor(
+			session.Connection,
+			session.AccessToken,
+		),
 		loc:               loc,
 		providerName:      accountingsync.ProviderName(conn.IntegrationType),
 		profile:           accountingsync.MustProfile(conn.IntegrationType),
@@ -215,7 +218,10 @@ func (s *Service) Drain(
 	return result, nil
 }
 
-func tally(result *accountingsyncports.AccountingSyncDrainResult, outcome accountingsync.SyncAttemptOutcome) {
+func tally(
+	result *accountingsyncports.AccountingSyncDrainResult,
+	outcome accountingsync.SyncAttemptOutcome,
+) {
 	switch outcome {
 	case accountingsync.SyncAttemptSynced:
 		result.Synced++
@@ -412,12 +418,15 @@ func (s *Service) objectRecords(
 	objectType accountingsync.SyncObjectType,
 	objectID pulid.ID,
 ) ([]*accountingsync.AccountingSyncRecord, error) {
-	return s.records.ListByObjects(ctx, &accountingsyncports.ListAccountingSyncRecordsByObjectsRequest{
-		TenantInfo:   sess.tenant,
-		ConnectionID: sess.conn.ID,
-		ObjectTypes:  []accountingsync.SyncObjectType{objectType},
-		ObjectIDs:    []pulid.ID{objectID},
-	})
+	return s.records.ListByObjects(
+		ctx,
+		&accountingsyncports.ListAccountingSyncRecordsByObjectsRequest{
+			TenantInfo:   sess.tenant,
+			ConnectionID: sess.conn.ID,
+			ObjectTypes:  []accountingsync.SyncObjectType{objectType},
+			ObjectIDs:    []pulid.ID{objectID},
+		},
+	)
 }
 
 func latestOf(

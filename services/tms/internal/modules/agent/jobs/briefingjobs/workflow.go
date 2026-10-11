@@ -180,7 +180,8 @@ func writeInOneActivity(ctx workflow.Context) (*DailyBriefingResult, error) {
 
 	var a *Activities
 	result := new(DailyBriefingResult)
-	if err := workflow.ExecuteActivity(ctx, a.WriteDueBriefingsActivity).Get(ctx, result); err != nil {
+	if err := workflow.ExecuteActivity(ctx, a.WriteDueBriefingsActivity).
+		Get(ctx, result); err != nil {
 		workflow.GetLogger(ctx).Error("Daily briefing workflow failed", "error", err)
 
 		return nil, err
@@ -194,7 +195,8 @@ func BriefingRetentionWorkflow(ctx workflow.Context) (*BriefingRetentionResult, 
 
 	var a *Activities
 	result := new(BriefingRetentionResult)
-	if err := workflow.ExecuteActivity(ctx, a.BriefingRetentionActivity).Get(ctx, result); err != nil {
+	if err := workflow.ExecuteActivity(ctx, a.BriefingRetentionActivity).
+		Get(ctx, result); err != nil {
 		workflow.GetLogger(ctx).Error("Briefing retention workflow failed", "error", err)
 
 		return nil, err

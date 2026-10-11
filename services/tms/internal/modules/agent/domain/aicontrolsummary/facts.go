@@ -67,7 +67,7 @@ type Facts struct {
 	// WeekCalls is the model calls of the last seven days.
 	WeekCalls int `json:"weekCalls"`
 	// AwaitingKey is a provider whose protocol needs a key and that has none.
-	AwaitingKey *ProviderRef `json:"awaitingKey,omitempty"`
+	AwaitingKey *ProviderRef      `json:"awaitingKey,omitempty"`
 	Failing     []ProviderFailure `json:"failing"`
 	// Uncovered is the tasks no enabled provider can take.
 	Uncovered int `json:"uncovered"`
@@ -113,7 +113,10 @@ func (f *Facts) Hash(tab Tab) string {
 		builder.WriteString(f.AwaitingKey.Name)
 	}
 	failing := slices.Clone(f.Failing)
-	slices.SortFunc(failing, func(a, b ProviderFailure) int { return strings.Compare(a.Name, b.Name) })
+	slices.SortFunc(
+		failing,
+		func(a, b ProviderFailure) int { return strings.Compare(a.Name, b.Name) },
+	)
 	for _, failure := range failing {
 		builder.WriteByte('|')
 		builder.WriteString(failure.ProviderID.String())

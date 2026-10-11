@@ -98,8 +98,11 @@ func sanitizeDraft(
 
 	trigger := s.trigger()
 	req := &agentdefinitionports.SaveAgentDefinitionRequest{
-		Name:              s.name(),
-		Description:       stringutils.OneLine(reply.Description, agentdefinition.MaxDescriptionLength),
+		Name: s.name(),
+		Description: stringutils.OneLine(
+			reply.Description,
+			agentdefinition.MaxDescriptionLength,
+		),
 		Instructions:      instructions,
 		Guardrails:        s.guardrails(),
 		ToolNames:         toolNames,
@@ -209,7 +212,11 @@ func (s *sanitizer) tools(
 		entry, ok := offered[name]
 		switch {
 		case !ok:
-			s.drop("toolNames", name, "No tool by this name is offered to this organization's agents.")
+			s.drop(
+				"toolNames",
+				name,
+				"No tool by this name is offered to this organization's agents.",
+			)
 			continue
 		case entry.Core:
 			continue

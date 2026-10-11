@@ -9,15 +9,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -70,7 +70,10 @@ type messageSource interface {
 }
 
 type briefingReader interface {
-	GetByID(ctx context.Context, req briefingports.GetBriefingByIDRequest) (*briefing.Briefing, error)
+	GetByID(
+		ctx context.Context,
+		req briefingports.GetBriefingByIDRequest,
+	) (*briefing.Briefing, error)
 }
 
 type insightReader interface {
@@ -313,7 +316,9 @@ func requirePerson(actor *permissionports.RequestActor) error {
 	return nil
 }
 
-func normalizeTarget(target aifeedbackports.AIFeedbackTargetRef) aifeedbackports.AIFeedbackTargetRef {
+func normalizeTarget(
+	target aifeedbackports.AIFeedbackTargetRef,
+) aifeedbackports.AIFeedbackTargetRef {
 	target.TargetPart = strings.TrimSpace(target.TargetPart)
 
 	return target

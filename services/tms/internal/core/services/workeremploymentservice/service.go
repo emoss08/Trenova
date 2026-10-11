@@ -13,20 +13,20 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
-	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/core/services/ptopolicyservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/fleetcodeports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -335,7 +335,12 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 		return nil, err
 	}
 	if !event.DocumentID.IsNil() {
-		if err = s.requireWorkerDocument(ctx, req.TenantInfo, wrk.ID, event.DocumentID); err != nil {
+		if err = s.requireWorkerDocument(
+			ctx,
+			req.TenantInfo,
+			wrk.ID,
+			event.DocumentID,
+		); err != nil {
 			return nil, err
 		}
 	}
@@ -867,7 +872,12 @@ func (s *Service) Amend(
 	if req.DocumentID != nil {
 		updated.DocumentID = *req.DocumentID
 		if !updated.DocumentID.IsNil() {
-			if err = s.requireWorkerDocument(ctx, req.TenantInfo, original.WorkerID, updated.DocumentID); err != nil {
+			if err = s.requireWorkerDocument(
+				ctx,
+				req.TenantInfo,
+				original.WorkerID,
+				updated.DocumentID,
+			); err != nil {
 				return nil, err
 			}
 		}
@@ -917,7 +927,10 @@ func (s *Service) requireWorkerDocument(
 	return nil
 }
 
-func (s *Service) actor(tenantInfo pagination.TenantInfo, userID pulid.ID) *permissionports.RequestActor {
+func (s *Service) actor(
+	tenantInfo pagination.TenantInfo,
+	userID pulid.ID,
+) *permissionports.RequestActor {
 	return &permissionports.RequestActor{
 		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    userID,

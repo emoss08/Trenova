@@ -72,12 +72,16 @@ func (s *Service) SearchWeb(
 	}
 
 	request := agentextensionports.WebSearchProviderRequest{
-		APIKey:            settings.APIKey,
-		Query:             text,
-		SearchType:        settings.SearchType,
-		NumResults:        numResults,
-		ExcludeDomains:    settings.ExcludedDomains,
-		ExcerptCharacters: intutils.Clamp(searchExcerptBudget/numResults, minExcerptCharacters, maxExcerptCharacters),
+		APIKey:         settings.APIKey,
+		Query:          text,
+		SearchType:     settings.SearchType,
+		NumResults:     numResults,
+		ExcludeDomains: settings.ExcludedDomains,
+		ExcerptCharacters: intutils.Clamp(
+			searchExcerptBudget/numResults,
+			minExcerptCharacters,
+			maxExcerptCharacters,
+		),
 	}
 	now := s.now()
 	if query.PublishedWithinDays > 0 {
@@ -86,7 +90,11 @@ func (s *Service) SearchWeb(
 			AddDate(0, 0, -days).Format(time.RFC3339)
 	}
 
-	call := meteredCall{tenant: tenantInfo, typ: agentextension.TypeExa, limit: settings.DailyRequestLimit}
+	call := meteredCall{
+		tenant: tenantInfo,
+		typ:    agentextension.TypeExa,
+		limit:  settings.DailyRequestLimit,
+	}
 	day, err := s.reserve(ctx, call)
 	if err != nil {
 		return nil, err
@@ -162,7 +170,11 @@ func (s *Service) ReadWebPage(
 		return nil, &ToolError{Message: unknownRefMessage}
 	}
 
-	call := meteredCall{tenant: tenantInfo, typ: agentextension.TypeExa, limit: settings.DailyRequestLimit}
+	call := meteredCall{
+		tenant: tenantInfo,
+		typ:    agentextension.TypeExa,
+		limit:  settings.DailyRequestLimit,
+	}
 	day, err := s.reserve(ctx, call)
 	if err != nil {
 		return nil, err

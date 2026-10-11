@@ -35,99 +35,110 @@ func (r *payAdvanceRepository) List(
 	ctx context.Context,
 	req *driverpayports.ListPayAdvancesRequest,
 ) (*pagination.ListResult[*driverpay.PayAdvance], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driverpay.PayAdvance], error) {
-		limit := req.Filter.Pagination.SafeLimit()
-		items := make([]*driverpay.PayAdvance, 0, limit)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*driverpay.PayAdvance], error) {
+			limit := req.Filter.Pagination.SafeLimit()
+			items := make([]*driverpay.PayAdvance, 0, limit)
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("padv.organization_id = ?", req.Filter.TenantInfo.OrgID).
-			Where("padv.business_unit_id = ?", req.Filter.TenantInfo.BuID).
-			Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
-			Order("padv.issued_date DESC").
-			Limit(limit).
-			Offset(req.Filter.Pagination.SafeOffset())
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&items).
+				Where("padv.organization_id = ?", req.Filter.TenantInfo.OrgID).
+				Where("padv.business_unit_id = ?", req.Filter.TenantInfo.BuID).
+				Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
+				Order("padv.issued_date DESC").
+				Limit(limit).
+				Offset(req.Filter.Pagination.SafeOffset())
 
-		if req.Filter.Query != "" {
-			query = query.Where(
-				"(padv.reference ILIKE ? OR padv.notes ILIKE ?)",
-				"%"+req.Filter.Query+"%",
-				"%"+req.Filter.Query+"%",
-			)
-		}
-		if !req.WorkerID.IsNil() {
-			query = query.Where("padv.worker_id = ?", req.WorkerID)
-		}
-		if req.Status != "" {
-			query = query.Where("padv.status = ?", req.Status)
-		}
+			if req.Filter.Query != "" {
+				query = query.Where(
+					"(padv.reference ILIKE ? OR padv.notes ILIKE ?)",
+					"%"+req.Filter.Query+"%",
+					"%"+req.Filter.Query+"%",
+				)
+			}
+			if !req.WorkerID.IsNil() {
+				query = query.Where("padv.worker_id = ?", req.WorkerID)
+			}
+			if req.Status != "" {
+				query = query.Where("padv.status = ?", req.Status)
+			}
 
-		total, err := query.ScanAndCount(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("list pay advances: %w", err)
-		}
+			total, err := query.ScanAndCount(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list pay advances: %w", err)
+			}
 
-		return &pagination.ListResult[*driverpay.PayAdvance]{Items: items, Total: total}, nil
-	})
+			return &pagination.ListResult[*driverpay.PayAdvance]{Items: items, Total: total}, nil
+		},
+	)
 }
 
 func (r *payAdvanceRepository) ListConnection(
 	ctx context.Context,
 	req *driverpayports.ListPayAdvanceConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.PayAdvance], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driverpay.PayAdvance], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*driverpay.PayAdvance], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*driverpay.PayAdvance)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						"padv",
-						req.Filter,
-						(*driverpay.PayAdvance)(nil),
-					)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*driverpay.PayAdvance)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							"padv",
+							req.Filter,
+							(*driverpay.PayAdvance)(nil),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count pay advances", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*driverpay.PayAdvance]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*driverpay.PayAdvance) *bun.SelectQuery {
+						return dba.NewSelect().
+							Model(entities).
+							ColumnExpr(driverpaycol.PayAdvanceTable.All()).
+							Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							"padv",
+							req.Filter,
+							req.Cursor,
+							(*driverpay.PayAdvance)(nil),
+						)
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count pay advances", zap.Error(err))
+				log.Error("failed to scan pay advances", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*driverpay.PayAdvance]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*driverpay.PayAdvance) *bun.SelectQuery {
-				return dba.NewSelect().
-					Model(entities).
-					ColumnExpr(driverpaycol.PayAdvanceTable.All()).
-					Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return querybuilder.ApplyCursorFilters(
-					sq,
-					"padv",
-					req.Filter,
-					req.Cursor,
-					(*driverpay.PayAdvance)(nil),
-				)
-			},
-		})
-		if err != nil {
-			log.Error("failed to scan pay advances", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *payAdvanceRepository) GetByID(

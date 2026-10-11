@@ -68,7 +68,10 @@ func CallStatus(rawErr, mapped error) int {
 	if status := restx.StatusCode(rawErr); status != 0 {
 		return status
 	}
-	if carrierintelports.IsCarrierIntelErrorKind(mapped, carrierintelports.CarrierIntelErrorNotFound) {
+	if carrierintelports.IsCarrierIntelErrorKind(
+		mapped,
+		carrierintelports.CarrierIntelErrorNotFound,
+	) {
 		return http.StatusOK
 	}
 	return 0

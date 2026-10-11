@@ -65,11 +65,14 @@ func (s *Service) SettleExtraction(
 		)
 	}
 
-	assignment, err := s.assignments.GetByExtraction(ctx, extractionrolloutports.GetRolloutAssignmentRequest{
-		TenantInfo:  req.TenantInfo,
-		DocumentID:  req.DocumentID,
-		ExtractedAt: req.ExtractedAt,
-	})
+	assignment, err := s.assignments.GetByExtraction(
+		ctx,
+		extractionrolloutports.GetRolloutAssignmentRequest{
+			TenantInfo:  req.TenantInfo,
+			DocumentID:  req.DocumentID,
+			ExtractedAt: req.ExtractedAt,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil

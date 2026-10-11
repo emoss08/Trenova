@@ -6,20 +6,20 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -171,12 +171,15 @@ func (s *Service) PromoteCorrection(
 		Title:               caseTitle(req.Title, correction, doc),
 		DocumentKind:        correction.DocumentKind,
 		DocumentFingerprint: correction.DocumentFingerprint,
-		FileName:            stringutils.TruncateRunes(doc.OriginalName, extractioneval.MaxFileNameRunes),
-		Pages:               pages,
-		Expected:            correction.Confirmed,
-		SourceCorrectionID:  &correctionID,
-		SourceDocumentID:    &documentID,
-		CreatedByID:         actorID(actor, req.TenantInfo),
+		FileName: stringutils.TruncateRunes(
+			doc.OriginalName,
+			extractioneval.MaxFileNameRunes,
+		),
+		Pages:              pages,
+		Expected:           correction.Confirmed,
+		SourceCorrectionID: &correctionID,
+		SourceDocumentID:   &documentID,
+		CreatedByID:        actorID(actor, req.TenantInfo),
 	}
 	entity.Normalize()
 
@@ -191,7 +194,13 @@ func (s *Service) PromoteCorrection(
 		return nil, err
 	}
 
-	s.logCase(actor, created, nil, permission.OpCreate, "Extraction evaluation case added from a correction")
+	s.logCase(
+		actor,
+		created,
+		nil,
+		permission.OpCreate,
+		"Extraction evaluation case added from a correction",
+	)
 
 	return created, nil
 }
@@ -232,7 +241,11 @@ func frozenPage(page *documentcontent.Page) extractioneval.Page {
 	}
 }
 
-func caseTitle(requested string, correction *aicorrection.Correction, doc *document.Document) string {
+func caseTitle(
+	requested string,
+	correction *aicorrection.Correction,
+	doc *document.Document,
+) string {
 	title := strings.TrimSpace(requested)
 	if title == "" {
 		parts := stringutils.NonEmptyStrings(

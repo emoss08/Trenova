@@ -50,27 +50,28 @@ func (r *priceRepository) UpsertPrices(
 		)
 
 		inserted := 0
-		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-			for idx := range prices {
-				price := prices[idx]
-				var isInsert bool
-				iErr := tx.NewInsert().
-					Model(price).
-					On("CONFLICT (organization_id, business_unit_id, fuel_index_id, price_date) DO UPDATE").
-					Set("price = EXCLUDED.price").
-					Set("source_raw = EXCLUDED.source_raw").
-					Set("fetched_at = EXCLUDED.fetched_at").
-					Returning("(xmax = 0)").
-					Scan(txCtx, &isInsert)
-				if iErr != nil {
-					return iErr
+		err := r.db.DBForContext(ctx).
+			RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
+				for idx := range prices {
+					price := prices[idx]
+					var isInsert bool
+					iErr := tx.NewInsert().
+						Model(price).
+						On("CONFLICT (organization_id, business_unit_id, fuel_index_id, price_date) DO UPDATE").
+						Set("price = EXCLUDED.price").
+						Set("source_raw = EXCLUDED.source_raw").
+						Set("fetched_at = EXCLUDED.fetched_at").
+						Returning("(xmax = 0)").
+						Scan(txCtx, &isInsert)
+					if iErr != nil {
+						return iErr
+					}
+					if isInsert {
+						inserted++
+					}
 				}
-				if isInsert {
-					inserted++
-				}
-			}
-			return nil
-		})
+				return nil
+			})
 		if err != nil {
 			log.Error("failed to upsert fuel index prices", zap.Error(err))
 			return 0, err
@@ -163,22 +164,25 @@ func (r *priceRepository) LatestPerIndex(
 	ctx context.Context,
 	req *fuelsurchargeports.LatestPricesPerIndexRequest,
 ) (map[pulid.ID][]*fuelsurcharge.FuelIndexPrice, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*fuelsurcharge.FuelIndexPrice, error) {
-		log := r.l.With(zap.String("operation", "LatestPerIndex"))
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID][]*fuelsurcharge.FuelIndexPrice, error) {
+			log := r.l.With(zap.String("operation", "LatestPerIndex"))
 
-		perIndex := req.PerIndex
-		if perIndex <= 0 {
-			perIndex = 2
-		}
+			perIndex := req.PerIndex
+			if perIndex <= 0 {
+				perIndex = 2
+			}
 
-		entities := make([]*fuelsurcharge.FuelIndexPrice, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			ColumnExpr("fip.*").
-			Where("fip.organization_id = ?", req.TenantInfo.OrgID).
-			Where("fip.business_unit_id = ?", req.TenantInfo.BuID).
-			Where(`(
+			entities := make([]*fuelsurcharge.FuelIndexPrice, 0)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				ColumnExpr("fip.*").
+				Where("fip.organization_id = ?", req.TenantInfo.OrgID).
+				Where("fip.business_unit_id = ?", req.TenantInfo.BuID).
+				Where(`(
 			SELECT COUNT(*)
 			FROM fuel_index_prices newer
 			WHERE newer.fuel_index_id = fip.fuel_index_id
@@ -186,20 +190,21 @@ func (r *priceRepository) LatestPerIndex(
 			  AND newer.business_unit_id = fip.business_unit_id
 			  AND newer.price_date > fip.price_date
 		) < ?`, perIndex).
-			Order("fip.fuel_index_id ASC", "fip.price_date DESC").
-			Scan(ctx)
-		if err != nil {
-			log.Error("failed to get latest prices per index", zap.Error(err))
-			return nil, err
-		}
+				Order("fip.fuel_index_id ASC", "fip.price_date DESC").
+				Scan(ctx)
+			if err != nil {
+				log.Error("failed to get latest prices per index", zap.Error(err))
+				return nil, err
+			}
 
-		result := make(map[pulid.ID][]*fuelsurcharge.FuelIndexPrice, len(entities)/perIndex+1)
-		for _, entity := range entities {
-			result[entity.FuelIndexID] = append(result[entity.FuelIndexID], entity)
-		}
+			result := make(map[pulid.ID][]*fuelsurcharge.FuelIndexPrice, len(entities)/perIndex+1)
+			for _, entity := range entities {
+				result[entity.FuelIndexID] = append(result[entity.FuelIndexID], entity)
+			}
 
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *priceRepository) HasPriceForDate(
@@ -268,7 +273,11 @@ func (r *priceRepository) Update(
 			return nil, err
 		}
 
-		if err = dberror.CheckRowsAffected(results, "FuelIndexPrice", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"FuelIndexPrice",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 

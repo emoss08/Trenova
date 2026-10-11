@@ -76,8 +76,12 @@ func raiseToolTiers(in *Inputs, agents map[pulid.ID]*agentdefinition.Definition)
 			continue
 		}
 		out = append(out, &TuneUp{
-			Kind:              KindRaiseToolTier,
-			Fingerprint:       Fingerprint(KindRaiseToolTier, ready.AgentDefinitionID.String(), ready.ToolName),
+			Kind: KindRaiseToolTier,
+			Fingerprint: Fingerprint(
+				KindRaiseToolTier,
+				ready.AgentDefinitionID.String(),
+				ready.ToolName,
+			),
 			AgentDefinitionID: ready.AgentDefinitionID,
 			ToolName:          ready.ToolName,
 			Evidence: Evidence{
@@ -144,8 +148,12 @@ func reorderProviders(in *Inputs) []*TuneUp {
 	out := make([]*TuneUp, 0, len(order))
 	for _, pair := range order {
 		out = append(out, &TuneUp{
-			Kind:            KindReorderProviders,
-			Fingerprint:     Fingerprint(KindReorderProviders, pair.rescuer.String(), pair.failing.String()),
+			Kind: KindReorderProviders,
+			Fingerprint: Fingerprint(
+				KindReorderProviders,
+				pair.rescuer.String(),
+				pair.failing.String(),
+			),
 			ProviderID:      pair.rescuer,
 			OtherProviderID: pair.failing,
 			Evidence:        *evidence[pair],
@@ -169,7 +177,8 @@ func failingBadly(row ProviderTaskUsage) bool {
 }
 
 func rescuingWell(row ProviderTaskUsage) bool {
-	return row.Rescued >= ReorderMinRescues && rate(row.Failed, row.Calls) <= ReorderMaxRescuerFailureRate
+	return row.Rescued >= ReorderMinRescues &&
+		rate(row.Failed, row.Calls) <= ReorderMaxRescuerFailureRate
 }
 
 func rate(part, whole int) float64 {

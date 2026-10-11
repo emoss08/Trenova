@@ -5,15 +5,15 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/formulaassistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/formulaassistantservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -96,7 +96,10 @@ func newListFormulaTemplatesTool(
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
-			result, err := repo.List(ctx, &formulatemplateports.ListFormulaTemplatesRequest{Filter: opts})
+			result, err := repo.List(
+				ctx,
+				&formulatemplateports.ListFormulaTemplatesRequest{Filter: opts},
+			)
 			if err != nil {
 				return nil, err
 			}

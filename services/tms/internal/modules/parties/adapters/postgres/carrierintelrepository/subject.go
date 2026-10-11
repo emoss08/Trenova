@@ -171,38 +171,42 @@ func (r *subjectRepository) ListCarrierSubjects(
 	ctx context.Context,
 	req *carrierintelports.ListCarrierIntelSubjectsRequest,
 ) ([]carrierintelports.CarrierIntelSubject, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]carrierintelports.CarrierIntelSubject, error) {
-		limit := intutils.Clamp(
-			intutils.WithDefault(max(req.Limit, 0), defaultCarrierSubjectLimit),
-			1,
-			maxCarrierSubjectLimit,
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]carrierintelports.CarrierIntelSubject, error) {
+			limit := intutils.Clamp(
+				intutils.WithDefault(max(req.Limit, 0), defaultCarrierSubjectLimit),
+				1,
+				maxCarrierSubjectLimit,
+			)
 
-		rows := make([]carrierSubjectRow, 0, limit)
-		if err := buildCarrierSubjectsQuery(r.db.DBForContext(ctx), req, limit).
-			Scan(ctx, &rows); err != nil {
-			r.l.Error("failed to list carrier intel carrier subjects", zap.Error(err))
-			return nil, fmt.Errorf("list carrier intel carrier subjects: %w", err)
-		}
+			rows := make([]carrierSubjectRow, 0, limit)
+			if err := buildCarrierSubjectsQuery(r.db.DBForContext(ctx), req, limit).
+				Scan(ctx, &rows); err != nil {
+				r.l.Error("failed to list carrier intel carrier subjects", zap.Error(err))
+				return nil, fmt.Errorf("list carrier intel carrier subjects: %w", err)
+			}
 
-		subjects := make([]carrierintelports.CarrierIntelSubject, 0, len(rows))
-		for i := range rows {
-			row := &rows[i]
-			subjects = append(subjects, carrierintelports.CarrierIntelSubject{
-				SubjectType:  carrierintel.SubjectTypeCarrier,
-				SubjectID:    row.ID.String(),
-				CarrierID:    row.ID,
-				Name:         row.Name,
-				DOTNumber:    row.DOTNumber,
-				DocketNumber: row.MCNumber,
-				LastUsedAt:   row.LastUsedAt,
-				Broker:       row.CarrierType == carrier.TypeBroker,
-				Exempt:       row.CarrierType == carrier.TypeExempt,
-			})
-		}
+			subjects := make([]carrierintelports.CarrierIntelSubject, 0, len(rows))
+			for i := range rows {
+				row := &rows[i]
+				subjects = append(subjects, carrierintelports.CarrierIntelSubject{
+					SubjectType:  carrierintel.SubjectTypeCarrier,
+					SubjectID:    row.ID.String(),
+					CarrierID:    row.ID,
+					Name:         row.Name,
+					DOTNumber:    row.DOTNumber,
+					DocketNumber: row.MCNumber,
+					LastUsedAt:   row.LastUsedAt,
+					Broker:       row.CarrierType == carrier.TypeBroker,
+					Exempt:       row.CarrierType == carrier.TypeExempt,
+				})
+			}
 
-		return subjects, nil
-	})
+			return subjects, nil
+		},
+	)
 }
 
 func customerSubject(row *customerSubjectRow) carrierintelports.CarrierIntelSubject {
@@ -230,69 +234,77 @@ func (r *subjectRepository) ListBrokerCustomerSubjects(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]carrierintelports.CarrierIntelSubject, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]carrierintelports.CarrierIntelSubject, error) {
-		cols := customercol.CustomerColumns
-		rows := make([]customerSubjectRow, 0, brokerCustomerCapacity)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*customer.Customer)(nil)).
-			Apply(customerSubjectColumns).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return customercol.CustomerScopeTenant(sq, tenantInfo).
-					Where(cols.BrokerVettingEnabled.IsTrue()).
-					Where(cols.DOTNumber.IsNotNull())
-			}).
-			Order(cols.ID.OrderAsc()).
-			Scan(ctx, &rows)
-		if err != nil {
-			r.l.Error("failed to list carrier intel broker customer subjects", zap.Error(err))
-			return nil, fmt.Errorf("list carrier intel broker customer subjects: %w", err)
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]carrierintelports.CarrierIntelSubject, error) {
+			cols := customercol.CustomerColumns
+			rows := make([]customerSubjectRow, 0, brokerCustomerCapacity)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*customer.Customer)(nil)).
+				Apply(customerSubjectColumns).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return customercol.CustomerScopeTenant(sq, tenantInfo).
+						Where(cols.BrokerVettingEnabled.IsTrue()).
+						Where(cols.DOTNumber.IsNotNull())
+				}).
+				Order(cols.ID.OrderAsc()).
+				Scan(ctx, &rows)
+			if err != nil {
+				r.l.Error("failed to list carrier intel broker customer subjects", zap.Error(err))
+				return nil, fmt.Errorf("list carrier intel broker customer subjects: %w", err)
+			}
 
-		subjects := make([]carrierintelports.CarrierIntelSubject, 0, len(rows))
-		for i := range rows {
-			subjects = append(subjects, customerSubject(&rows[i]))
-		}
+			subjects := make([]carrierintelports.CarrierIntelSubject, 0, len(rows))
+			for i := range rows {
+				subjects = append(subjects, customerSubject(&rows[i]))
+			}
 
-		return subjects, nil
-	})
+			return subjects, nil
+		},
+	)
 }
 
 func (r *subjectRepository) GetOrganizationSubject(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*carrierintelports.CarrierIntelSubject, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrierintelports.CarrierIntelSubject, error) {
-		cols := tenantcol.OrganizationColumns
-		var (
-			name      string
-			dotNumber string
-		)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*tenant.Organization)(nil)).
-			Column(cols.Name.Bare(), cols.DOTNumber.Bare()).
-			Where(cols.ID.Eq(), tenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
-			Scan(ctx, &name, &dotNumber)
-		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, dberror.HandleNotFoundError(err, organizationEntityName)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*carrierintelports.CarrierIntelSubject, error) {
+			cols := tenantcol.OrganizationColumns
+			var (
+				name      string
+				dotNumber string
+			)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*tenant.Organization)(nil)).
+				Column(cols.Name.Bare(), cols.DOTNumber.Bare()).
+				Where(cols.ID.Eq(), tenantInfo.OrgID).
+				Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
+				Scan(ctx, &name, &dotNumber)
+			if err != nil {
+				if dberror.IsNotFoundError(err) {
+					return nil, dberror.HandleNotFoundError(err, organizationEntityName)
+				}
+				r.l.Error("failed to get carrier intel organization subject", zap.Error(err))
+				return nil, fmt.Errorf("get carrier intel organization subject: %w", err)
 			}
-			r.l.Error("failed to get carrier intel organization subject", zap.Error(err))
-			return nil, fmt.Errorf("get carrier intel organization subject: %w", err)
-		}
-		if dotNumber == "" {
-			return nil, nil //nolint:nilnil // an organization without a DOT number cannot be monitored
-		}
+			if dotNumber == "" {
+				return nil, nil //nolint:nilnil // an organization without a DOT number cannot be monitored
+			}
 
-		return &carrierintelports.CarrierIntelSubject{
-			SubjectType: carrierintel.SubjectTypeOrganization,
-			SubjectID:   tenantInfo.OrgID.String(),
-			Name:        name,
-			DOTNumber:   dotNumber,
-		}, nil
-	})
+			return &carrierintelports.CarrierIntelSubject{
+				SubjectType: carrierintel.SubjectTypeOrganization,
+				SubjectID:   tenantInfo.OrgID.String(),
+				Name:        name,
+				DOTNumber:   dotNumber,
+			}, nil
+		},
+	)
 }
 
 func (r *subjectRepository) GetCustomerSubject(
@@ -300,28 +312,32 @@ func (r *subjectRepository) GetCustomerSubject(
 	tenantInfo pagination.TenantInfo,
 	customerID pulid.ID,
 ) (*carrierintelports.CarrierIntelSubject, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrierintelports.CarrierIntelSubject, error) {
-		row := new(customerSubjectRow)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*customer.Customer)(nil)).
-			Apply(customerSubjectColumns).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return customercol.CustomerScopeTenant(sq, tenantInfo).
-					Where(customercol.CustomerColumns.ID.Eq(), customerID)
-			}).
-			Scan(ctx, row)
-		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, dberror.HandleNotFoundError(err, customerEntityName)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*carrierintelports.CarrierIntelSubject, error) {
+			row := new(customerSubjectRow)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*customer.Customer)(nil)).
+				Apply(customerSubjectColumns).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return customercol.CustomerScopeTenant(sq, tenantInfo).
+						Where(customercol.CustomerColumns.ID.Eq(), customerID)
+				}).
+				Scan(ctx, row)
+			if err != nil {
+				if dberror.IsNotFoundError(err) {
+					return nil, dberror.HandleNotFoundError(err, customerEntityName)
+				}
+				r.l.Error("failed to get carrier intel customer subject", zap.Error(err))
+				return nil, fmt.Errorf("get carrier intel customer subject: %w", err)
 			}
-			r.l.Error("failed to get carrier intel customer subject", zap.Error(err))
-			return nil, fmt.Errorf("get carrier intel customer subject: %w", err)
-		}
 
-		subject := customerSubject(row)
-		return &subject, nil
-	})
+			subject := customerSubject(row)
+			return &subject, nil
+		},
+	)
 }
 
 func (r *subjectRepository) ListExistingCarrierDOTs(

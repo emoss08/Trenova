@@ -46,30 +46,34 @@ func (r *runRepository) Create(
 	results []*extractioneval.ExtractionResult,
 ) (*extractioneval.ExtractionRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*extractioneval.ExtractionRun, error) {
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-			if _, err := tx.NewInsert().Model(run).Returning("*").Exec(txCtx); err != nil {
-				if dberror.IsUniqueConstraintViolation(err) {
-					return errortypes.NewBusinessError(
-						"An extraction evaluation is already running; wait for it to finish or cancel it",
-					).WithInternal(err)
+		err := r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, tx bun.Tx) error {
+				if _, err := tx.NewInsert().Model(run).Returning("*").Exec(txCtx); err != nil {
+					if dberror.IsUniqueConstraintViolation(err) {
+						return errortypes.NewBusinessError(
+							"An extraction evaluation is already running; wait for it to finish or cancel it",
+						).WithInternal(err)
+					}
+
+					return fmt.Errorf("create extraction eval run: %w", err)
+				}
+				if len(results) == 0 {
+					return nil
+				}
+				for _, result := range results {
+					result.RunID = run.ID
+					result.OrganizationID = run.OrganizationID
+					result.BusinessUnitID = run.BusinessUnitID
+				}
+				if _, err := tx.NewInsert().Model(&results).Exec(txCtx); err != nil {
+					return fmt.Errorf("create extraction eval results: %w", err)
 				}
 
-				return fmt.Errorf("create extraction eval run: %w", err)
-			}
-			if len(results) == 0 {
 				return nil
-			}
-			for _, result := range results {
-				result.RunID = run.ID
-				result.OrganizationID = run.OrganizationID
-				result.BusinessUnitID = run.BusinessUnitID
-			}
-			if _, err := tx.NewInsert().Model(&results).Exec(txCtx); err != nil {
-				return fmt.Errorf("create extraction eval results: %w", err)
-			}
-
-			return nil
-		})
+			},
+		)
 		if err != nil {
 			r.l.Error("failed to create extraction eval run", zap.Error(err))
 
@@ -148,62 +152,71 @@ func (r *runRepository) ListConnection(
 	ctx context.Context,
 	req *extractionevalports.ListExtractionEvalRunConnectionRequest,
 ) (*pagination.CursorListResult[*extractioneval.ExtractionRun], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*extractioneval.ExtractionRun], error) {
-		dba := r.db.DBForContext(ctx)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*extractioneval.ExtractionRun], error) {
+			dba := r.db.DBForContext(ctx)
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.NewSelect().
-				Model((*extractioneval.ExtractionRun)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						extractionevalcol.ExtractionRunTable.Alias,
-						req.Filter,
-						(*extractioneval.ExtractionRun)(nil),
-					)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.NewSelect().
+					Model((*extractioneval.ExtractionRun)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							extractionevalcol.ExtractionRunTable.Alias,
+							req.Filter,
+							(*extractioneval.ExtractionRun)(nil),
+						)
 
-					return sq.Apply(extractionevalcol.ExtractionRunApplyTenant(req.Filter.TenantInfo))
-				}).
-				Count(ctx)
+						return sq.Apply(
+							extractionevalcol.ExtractionRunApplyTenant(req.Filter.TenantInfo),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					r.l.Error("failed to count extraction eval runs", zap.Error(err))
+
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*extractioneval.ExtractionRun]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*extractioneval.ExtractionRun) *bun.SelectQuery {
+						q := dba.NewSelect().Model(entities)
+						if len(req.Columns) > 0 {
+							q = q.Column(req.Columns...)
+						}
+
+						return q
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							extractionevalcol.ExtractionRunTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*extractioneval.ExtractionRun)(nil),
+						)
+					},
+				},
+			)
 			if err != nil {
-				r.l.Error("failed to count extraction eval runs", zap.Error(err))
+				r.l.Error("failed to list extraction eval runs", zap.Error(err))
 
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*extractioneval.ExtractionRun]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*extractioneval.ExtractionRun) *bun.SelectQuery {
-				q := dba.NewSelect().Model(entities)
-				if len(req.Columns) > 0 {
-					q = q.Column(req.Columns...)
-				}
-
-				return q
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return querybuilder.ApplyCursorFilters(
-					sq,
-					extractionevalcol.ExtractionRunTable.Alias,
-					req.Filter,
-					req.Cursor,
-					(*extractioneval.ExtractionRun)(nil),
-				)
-			},
-		})
-		if err != nil {
-			r.l.Error("failed to list extraction eval runs", zap.Error(err))
-
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *runRepository) ListRecentFinished(

@@ -8,14 +8,14 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -211,12 +211,15 @@ func (s *Service) itemDraft(
 	creator accountingsyncports.AccountingReferenceCreator,
 	createReq *accountingsyncports.AccountingCreateReferenceRequest,
 ) (string, error) {
-	revenue, err := s.mappings.GetByTarget(ctx, &accountingsyncports.GetAccountingMappingByTargetRequest{
-		TenantInfo:   req.TenantInfo,
-		ConnectionID: row.ConnectionID,
-		TargetType:   accountingsync.TargetAccountRole,
-		TrenovaKey:   accountingsync.AccountRoleRevenue,
-	})
+	revenue, err := s.mappings.GetByTarget(
+		ctx,
+		&accountingsyncports.GetAccountingMappingByTargetRequest{
+			TenantInfo:   req.TenantInfo,
+			ConnectionID: row.ConnectionID,
+			TargetType:   accountingsync.TargetAccountRole,
+			TrenovaKey:   accountingsync.AccountRoleRevenue,
+		},
+	)
 	if err != nil && !errortypes.IsNotFoundError(err) {
 		return "", err
 	}
@@ -228,10 +231,13 @@ func (s *Service) itemDraft(
 
 	description, sku := row.TargetLabel, ""
 	if row.TargetType == accountingsync.TargetAccessorialCharge {
-		charge, getErr := s.accessorials.GetByID(ctx, accessorialchargeports.GetAccessorialChargeByIDRequest{
-			ID:         row.TrenovaObjectID,
-			TenantInfo: &req.TenantInfo,
-		})
+		charge, getErr := s.accessorials.GetByID(
+			ctx,
+			accessorialchargeports.GetAccessorialChargeByIDRequest{
+				ID:         row.TrenovaObjectID,
+				TenantInfo: &req.TenantInfo,
+			},
+		)
 		if getErr != nil {
 			return "", getErr
 		}
@@ -497,13 +503,16 @@ func (s *Service) duplicateNameError(
 	name string,
 	cause error,
 ) error {
-	existing, err := s.references.Search(ctx, &accountingsyncports.SearchAccountingReferenceObjectsRequest{
-		TenantInfo:   tenantInfo,
-		ConnectionID: row.ConnectionID,
-		Kind:         row.ProviderKind,
-		Query:        name,
-		Limit:        5,
-	})
+	existing, err := s.references.Search(
+		ctx,
+		&accountingsyncports.SearchAccountingReferenceObjectsRequest{
+			TenantInfo:   tenantInfo,
+			ConnectionID: row.ConnectionID,
+			Kind:         row.ProviderKind,
+			Query:        name,
+			Limit:        5,
+		},
+	)
 	if err == nil {
 		for _, ref := range existing {
 			if stringutils.NormalizeName(ref.Name) == stringutils.NormalizeName(name) {

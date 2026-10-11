@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/app/productguideservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/app/productguideservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/productguide"

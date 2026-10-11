@@ -36,101 +36,112 @@ func (r *costEventRepository) List(
 	ctx context.Context,
 	req *carriersettlementports.ListCarrierCostEventsRequest,
 ) (*pagination.ListResult[*carriersettlement.CostEvent], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*carriersettlement.CostEvent], error) {
-		cols := carriersettlementcol.CostEventColumns
-		limit := req.Filter.Pagination.SafeLimit()
-		items := make([]*carriersettlement.CostEvent, 0, limit)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*carriersettlement.CostEvent], error) {
+			cols := carriersettlementcol.CostEventColumns
+			limit := req.Filter.Pagination.SafeLimit()
+			items := make([]*carriersettlement.CostEvent, 0, limit)
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Apply(carriersettlementcol.CostEventApplyTenant(req.Filter.TenantInfo)).
-			Relation(carriersettlementcol.CostEventRelations.Carrier).
-			Order(cols.EventDate.OrderDesc()).
-			Limit(limit).
-			Offset(req.Filter.Pagination.SafeOffset())
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&items).
+				Apply(carriersettlementcol.CostEventApplyTenant(req.Filter.TenantInfo)).
+				Relation(carriersettlementcol.CostEventRelations.Carrier).
+				Order(cols.EventDate.OrderDesc()).
+				Limit(limit).
+				Offset(req.Filter.Pagination.SafeOffset())
 
-		if req.Filter.Query != "" {
-			query = query.Where(cols.ProNumber.ILike(), "%"+req.Filter.Query+"%")
-		}
-		if !req.CarrierID.IsNil() {
-			query = query.Where(cols.CarrierID.Eq(), req.CarrierID)
-		}
-		if !req.ShipmentID.IsNil() {
-			query = query.Where(cols.ShipmentID.Eq(), req.ShipmentID)
-		}
-		if req.Status != "" {
-			query = query.Where(cols.Status.Eq(), req.Status)
-		}
+			if req.Filter.Query != "" {
+				query = query.Where(cols.ProNumber.ILike(), "%"+req.Filter.Query+"%")
+			}
+			if !req.CarrierID.IsNil() {
+				query = query.Where(cols.CarrierID.Eq(), req.CarrierID)
+			}
+			if !req.ShipmentID.IsNil() {
+				query = query.Where(cols.ShipmentID.Eq(), req.ShipmentID)
+			}
+			if req.Status != "" {
+				query = query.Where(cols.Status.Eq(), req.Status)
+			}
 
-		total, err := query.ScanAndCount(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("list carrier cost events: %w", err)
-		}
+			total, err := query.ScanAndCount(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list carrier cost events: %w", err)
+			}
 
-		return &pagination.ListResult[*carriersettlement.CostEvent]{Items: items, Total: total}, nil
-	})
+			return &pagination.ListResult[*carriersettlement.CostEvent]{
+				Items: items,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *costEventRepository) ListConnection(
 	ctx context.Context,
 	req *carriersettlementports.ListCarrierCostEventConnectionRequest,
 ) (*pagination.CursorListResult[*carriersettlement.CostEvent], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*carriersettlement.CostEvent], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*carriersettlement.CostEvent], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*carriersettlement.CostEvent)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						carriersettlementcol.CostEventTable.Alias,
-						req.Filter,
-						(*carriersettlement.CostEvent)(nil),
-					)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*carriersettlement.CostEvent)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							carriersettlementcol.CostEventTable.Alias,
+							req.Filter,
+							(*carriersettlement.CostEvent)(nil),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count carrier cost events", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*carriersettlement.CostEvent]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*carriersettlement.CostEvent) *bun.SelectQuery {
+						return dba.NewSelect().
+							Model(entities).
+							ColumnExpr(carriersettlementcol.CostEventTable.All()).
+							Relation(carriersettlementcol.CostEventRelations.Carrier)
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							carriersettlementcol.CostEventTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*carriersettlement.CostEvent)(nil),
+						)
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count carrier cost events", zap.Error(err))
+				log.Error("failed to scan carrier cost events", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*carriersettlement.CostEvent]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*carriersettlement.CostEvent) *bun.SelectQuery {
-					return dba.NewSelect().
-						Model(entities).
-						ColumnExpr(carriersettlementcol.CostEventTable.All()).
-						Relation(carriersettlementcol.CostEventRelations.Carrier)
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return querybuilder.ApplyCursorFilters(
-						sq,
-						carriersettlementcol.CostEventTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*carriersettlement.CostEvent)(nil),
-					)
-				},
-			},
-		)
-		if err != nil {
-			log.Error("failed to scan carrier cost events", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *costEventRepository) GetByID(
@@ -373,23 +384,27 @@ func (r *costEventRepository) GetPendingSummary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*carriersettlementports.CarrierCostEventSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlementports.CarrierCostEventSummary, error) {
-		summary := new(carriersettlementports.CarrierCostEventSummary)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*carriersettlement.CostEvent)(nil)).
-			ColumnExpr("COUNT(*) AS pending_count").
-			ColumnExpr("COALESCE(SUM(amount_minor), 0) AS pending_amount_minor").
-			ColumnExpr("COUNT(DISTINCT carrier_id) AS pending_carrier_count").
-			Where("organization_id = ?", tenantInfo.OrgID).
-			Where("business_unit_id = ?", tenantInfo.BuID).
-			Where("status = ?", carriersettlement.CostEventStatusPending).
-			Scan(ctx, summary)
-		if err != nil {
-			return nil, fmt.Errorf("get pending carrier cost event summary: %w", err)
-		}
-		return summary, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*carriersettlementports.CarrierCostEventSummary, error) {
+			summary := new(carriersettlementports.CarrierCostEventSummary)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*carriersettlement.CostEvent)(nil)).
+				ColumnExpr("COUNT(*) AS pending_count").
+				ColumnExpr("COALESCE(SUM(amount_minor), 0) AS pending_amount_minor").
+				ColumnExpr("COUNT(DISTINCT carrier_id) AS pending_carrier_count").
+				Where("organization_id = ?", tenantInfo.OrgID).
+				Where("business_unit_id = ?", tenantInfo.BuID).
+				Where("status = ?", carriersettlement.CostEventStatusPending).
+				Scan(ctx, summary)
+			if err != nil {
+				return nil, fmt.Errorf("get pending carrier cost event summary: %w", err)
+			}
+			return summary, nil
+		},
+	)
 }
 
 func (r *costEventRepository) Create(
@@ -437,7 +452,11 @@ func (r *costEventRepository) Update(
 		if err != nil {
 			return nil, fmt.Errorf("update carrier cost event: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(res, "CarrierCostEvent", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			res,
+			"CarrierCostEvent",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 		return entity, nil

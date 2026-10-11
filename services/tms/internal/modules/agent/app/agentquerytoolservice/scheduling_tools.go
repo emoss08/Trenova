@@ -6,16 +6,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/orgstructureservice"
 	"github.com/emoss08/trenova/internal/core/services/schedulingservice"
 	"github.com/emoss08/trenova/internal/core/services/teamscope"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -71,9 +71,12 @@ func recurringShipmentRowFrom(entity *recurringshipment.RecurringShipment) recur
 		Schedule:         entity.CronExpression,
 		Timezone:         entity.Timezone,
 		AutoGenerate:     entity.AutoGenerate,
-		NextOccurrenceAt: expectedDate(typeutils.ValueOrZero(entity.NextOccurrenceAt), "none scheduled"),
-		GenerationCount:  entity.GenerationCount,
-		LastShipmentID:   pulidString(entity.LastGeneratedShipmentID),
+		NextOccurrenceAt: expectedDate(
+			typeutils.ValueOrZero(entity.NextOccurrenceAt),
+			"none scheduled",
+		),
+		GenerationCount: entity.GenerationCount,
+		LastShipmentID:  pulidString(entity.LastGeneratedShipmentID),
 	}
 	if entity.Customer != nil {
 		row.Customer = entity.Customer.Name
@@ -110,7 +113,10 @@ func newListRecurringShipmentsTool(
 			{Name: fieldCreatedAt, Kind: filterDate, Sortable: true},
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
-			result, err := repo.List(ctx, &recurringshipmentports.ListRecurringShipmentsRequest{Filter: opts})
+			result, err := repo.List(
+				ctx,
+				&recurringshipmentports.ListRecurringShipmentsRequest{Filter: opts},
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -289,9 +295,12 @@ func (t *getWorkerScheduleTool) assignments(
 			ShiftAssignmentID: assignment.ID.String(),
 			ShiftTemplateID:   assignment.ShiftTemplateID.String(),
 			EffectiveFrom:     recordedDate(assignment.EffectiveFrom),
-			EffectiveTo:       expectedDate(typeutils.ValueOrZero(assignment.EffectiveTo), absentOpenEnded),
-			CycleOffsetWeeks:  assignment.CycleOffsetWeeks,
-			Notes:             strings.TrimSpace(assignment.Notes),
+			EffectiveTo: expectedDate(
+				typeutils.ValueOrZero(assignment.EffectiveTo),
+				absentOpenEnded,
+			),
+			CycleOffsetWeeks: assignment.CycleOffsetWeeks,
+			Notes:            strings.TrimSpace(assignment.Notes),
 		}
 		if assignment.ShiftTemplate != nil {
 			row.Shift = assignment.ShiftTemplate.Name

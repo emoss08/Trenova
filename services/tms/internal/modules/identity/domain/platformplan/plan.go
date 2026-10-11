@@ -48,19 +48,58 @@ type Plan struct {
 
 func DefaultFreeDemoLimits() map[platformcatalog.MeterKey]Limit {
 	return map[platformcatalog.MeterKey]Limit{
-		platformcatalog.MeterShipmentsTotal:          {Max: FreeDemoShipments, Window: WindowLifetime},
-		platformcatalog.MeterRecurringShipmentSeries: {Max: FreeDemoRecurringSeries, Window: WindowLifetime},
-		platformcatalog.MeterCustomersTotal:          {Max: FreeDemoCustomers, Window: WindowLifetime},
-		platformcatalog.MeterLocationsTotal:          {Max: FreeDemoLocations, Window: WindowLifetime},
-		platformcatalog.MeterWorkersTotal:            {Max: FreeDemoWorkers, Window: WindowLifetime},
-		platformcatalog.MeterTractorsTotal:           {Max: FreeDemoTractors, Window: WindowLifetime},
-		platformcatalog.MeterTrailersTotal:           {Max: FreeDemoTrailers, Window: WindowLifetime},
-		platformcatalog.MeterUserSeats:               {Max: FreeDemoUserSeats, Window: WindowLifetime},
-		platformcatalog.MeterDocumentUploads:         {Max: FreeDemoDocumentUploads, Window: WindowLifetime},
-		platformcatalog.MeterDocumentStorageBytes:    {Max: FreeDemoDocumentStorage, Window: WindowLifetime},
-		platformcatalog.MeterDocumentFileBytes:       {Max: FreeDemoDocumentFileBytes, Window: WindowPerItem},
-		platformcatalog.MeterAIAssistantMessages:     {Max: FreeDemoAssistantMessages, Window: WindowMonthly},
-		platformcatalog.MeterAISpendCents:            {Max: FreeDemoAISpendCents, Window: WindowMonthly},
+		platformcatalog.MeterShipmentsTotal: {
+			Max:    FreeDemoShipments,
+			Window: WindowLifetime,
+		},
+		platformcatalog.MeterRecurringShipmentSeries: {
+			Max:    FreeDemoRecurringSeries,
+			Window: WindowLifetime,
+		},
+		platformcatalog.MeterCustomersTotal: {
+			Max:    FreeDemoCustomers,
+			Window: WindowLifetime,
+		},
+		platformcatalog.MeterLocationsTotal: {
+			Max:    FreeDemoLocations,
+			Window: WindowLifetime,
+		},
+		platformcatalog.MeterWorkersTotal: {
+			Max:    FreeDemoWorkers,
+			Window: WindowLifetime,
+		},
+		platformcatalog.MeterTractorsTotal: {
+			Max:    FreeDemoTractors,
+			Window: WindowLifetime,
+		},
+		platformcatalog.MeterTrailersTotal: {
+			Max:    FreeDemoTrailers,
+			Window: WindowLifetime,
+		},
+		platformcatalog.MeterUserSeats: {
+			Max:    FreeDemoUserSeats,
+			Window: WindowLifetime,
+		},
+		platformcatalog.MeterDocumentUploads: {
+			Max:    FreeDemoDocumentUploads,
+			Window: WindowLifetime,
+		},
+		platformcatalog.MeterDocumentStorageBytes: {
+			Max:    FreeDemoDocumentStorage,
+			Window: WindowLifetime,
+		},
+		platformcatalog.MeterDocumentFileBytes: {
+			Max:    FreeDemoDocumentFileBytes,
+			Window: WindowPerItem,
+		},
+		platformcatalog.MeterAIAssistantMessages: {
+			Max:    FreeDemoAssistantMessages,
+			Window: WindowMonthly,
+		},
+		platformcatalog.MeterAISpendCents: {
+			Max:    FreeDemoAISpendCents,
+			Window: WindowMonthly,
+		},
 	}
 }
 

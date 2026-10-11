@@ -97,118 +97,129 @@ func (r *repository) ListRolesByAgents(
 	ctx context.Context,
 	req permissionports.ListGrantsByAgentsRequest,
 ) (map[pulid.ID][]*permission.Role, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*permission.Role, error) {
-		out := make(map[pulid.ID][]*permission.Role, len(req.AgentIDs))
-		if len(req.AgentIDs) == 0 {
-			return out, nil
-		}
-
-		grants, err := r.listGrants(
-			ctx,
-			req.TenantInfo,
-			permissioncol.RoleAgentGrantColumns.AgentDefinitionID,
-			req.AgentIDs,
-		)
-		if err != nil {
-			r.l.Error("failed to list grants by agent", zap.Error(err))
-			return nil, err
-		}
-		if len(grants) == 0 {
-			return out, nil
-		}
-
-		roleIDs := make([]pulid.ID, 0, len(grants))
-		for _, grant := range grants {
-			roleIDs = append(roleIDs, grant.RoleID)
-		}
-
-		roleCols := permissioncol.RoleColumns
-		roles := make([]*permission.Role, 0, len(roleIDs))
-		err = r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&roles).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return permissioncol.RoleScopeTenant(sq, req.TenantInfo).
-					Where(roleCols.ID.In(), bun.List(sliceutils.Dedupe(roleIDs)))
-			}).
-			Order(roleCols.Name.OrderAsc()).
-			Scan(ctx)
-		if err != nil {
-			r.l.Error("failed to list granted roles", zap.Error(err))
-			return nil, fmt.Errorf("list roles granted agents: %w", err)
-		}
-
-		byRole := make(map[pulid.ID][]pulid.ID, len(roles))
-		for _, grant := range grants {
-			byRole[grant.RoleID] = append(byRole[grant.RoleID], grant.AgentDefinitionID)
-		}
-		for _, role := range roles {
-			for _, agentID := range byRole[role.ID] {
-				out[agentID] = append(out[agentID], role)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID][]*permission.Role, error) {
+			out := make(map[pulid.ID][]*permission.Role, len(req.AgentIDs))
+			if len(req.AgentIDs) == 0 {
+				return out, nil
 			}
-		}
 
-		return out, nil
-	})
+			grants, err := r.listGrants(
+				ctx,
+				req.TenantInfo,
+				permissioncol.RoleAgentGrantColumns.AgentDefinitionID,
+				req.AgentIDs,
+			)
+			if err != nil {
+				r.l.Error("failed to list grants by agent", zap.Error(err))
+				return nil, err
+			}
+			if len(grants) == 0 {
+				return out, nil
+			}
+
+			roleIDs := make([]pulid.ID, 0, len(grants))
+			for _, grant := range grants {
+				roleIDs = append(roleIDs, grant.RoleID)
+			}
+
+			roleCols := permissioncol.RoleColumns
+			roles := make([]*permission.Role, 0, len(roleIDs))
+			err = r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&roles).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return permissioncol.RoleScopeTenant(sq, req.TenantInfo).
+						Where(roleCols.ID.In(), bun.List(sliceutils.Dedupe(roleIDs)))
+				}).
+				Order(roleCols.Name.OrderAsc()).
+				Scan(ctx)
+			if err != nil {
+				r.l.Error("failed to list granted roles", zap.Error(err))
+				return nil, fmt.Errorf("list roles granted agents: %w", err)
+			}
+
+			byRole := make(map[pulid.ID][]pulid.ID, len(roles))
+			for _, grant := range grants {
+				byRole[grant.RoleID] = append(byRole[grant.RoleID], grant.AgentDefinitionID)
+			}
+			for _, role := range roles {
+				for _, agentID := range byRole[role.ID] {
+					out[agentID] = append(out[agentID], role)
+				}
+			}
+
+			return out, nil
+		},
+	)
 }
 
 func (r *repository) ListAgentsByRoles(
 	ctx context.Context,
 	req permissionports.ListGrantsByRolesRequest,
 ) (map[pulid.ID][]*agentdefinition.Definition, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*agentdefinition.Definition, error) {
-		out := make(map[pulid.ID][]*agentdefinition.Definition, len(req.RoleIDs))
-		if len(req.RoleIDs) == 0 {
-			return out, nil
-		}
-
-		grants, err := r.listGrants(
-			ctx,
-			req.TenantInfo,
-			permissioncol.RoleAgentGrantColumns.RoleID,
-			req.RoleIDs,
-		)
-		if err != nil {
-			r.l.Error("failed to list grants by role", zap.Error(err))
-			return nil, err
-		}
-		if len(grants) == 0 {
-			return out, nil
-		}
-
-		agentIDs := make([]pulid.ID, 0, len(grants))
-		for _, grant := range grants {
-			agentIDs = append(agentIDs, grant.AgentDefinitionID)
-		}
-
-		definitionCols := agentdefinitioncol.DefinitionColumns
-		definitions := make([]*agentdefinition.Definition, 0, len(agentIDs))
-		err = r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&definitions).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo).
-					Where(definitionCols.ID.In(), bun.List(sliceutils.Dedupe(agentIDs)))
-			}).
-			Order(definitionCols.Name.OrderAsc()).
-			Scan(ctx)
-		if err != nil {
-			r.l.Error("failed to list granted agents", zap.Error(err))
-			return nil, fmt.Errorf("list agents granted to roles: %w", err)
-		}
-
-		byAgent := make(map[pulid.ID][]pulid.ID, len(definitions))
-		for _, grant := range grants {
-			byAgent[grant.AgentDefinitionID] = append(byAgent[grant.AgentDefinitionID], grant.RoleID)
-		}
-		for _, definition := range definitions {
-			for _, roleID := range byAgent[definition.ID] {
-				out[roleID] = append(out[roleID], definition)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID][]*agentdefinition.Definition, error) {
+			out := make(map[pulid.ID][]*agentdefinition.Definition, len(req.RoleIDs))
+			if len(req.RoleIDs) == 0 {
+				return out, nil
 			}
-		}
 
-		return out, nil
-	})
+			grants, err := r.listGrants(
+				ctx,
+				req.TenantInfo,
+				permissioncol.RoleAgentGrantColumns.RoleID,
+				req.RoleIDs,
+			)
+			if err != nil {
+				r.l.Error("failed to list grants by role", zap.Error(err))
+				return nil, err
+			}
+			if len(grants) == 0 {
+				return out, nil
+			}
+
+			agentIDs := make([]pulid.ID, 0, len(grants))
+			for _, grant := range grants {
+				agentIDs = append(agentIDs, grant.AgentDefinitionID)
+			}
+
+			definitionCols := agentdefinitioncol.DefinitionColumns
+			definitions := make([]*agentdefinition.Definition, 0, len(agentIDs))
+			err = r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&definitions).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo).
+						Where(definitionCols.ID.In(), bun.List(sliceutils.Dedupe(agentIDs)))
+				}).
+				Order(definitionCols.Name.OrderAsc()).
+				Scan(ctx)
+			if err != nil {
+				r.l.Error("failed to list granted agents", zap.Error(err))
+				return nil, fmt.Errorf("list agents granted to roles: %w", err)
+			}
+
+			byAgent := make(map[pulid.ID][]pulid.ID, len(definitions))
+			for _, grant := range grants {
+				byAgent[grant.AgentDefinitionID] = append(
+					byAgent[grant.AgentDefinitionID],
+					grant.RoleID,
+				)
+			}
+			for _, definition := range definitions {
+				for _, roleID := range byAgent[definition.ID] {
+					out[roleID] = append(out[roleID], definition)
+				}
+			}
+
+			return out, nil
+		},
+	)
 }
 
 func (r *repository) ListGrantableRoles(

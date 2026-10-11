@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -390,7 +390,10 @@ func (s *Service) discoverCards(
 	return created, nil
 }
 
-func discoveredCardLabel(card fuelpurchaseports.ProviderCard, provider fuelpurchase.CardProvider) string {
+func discoveredCardLabel(
+	card fuelpurchaseports.ProviderCard,
+	provider fuelpurchase.CardProvider,
+) string {
 	if label := strings.TrimSpace(card.Label); label != "" {
 		return label
 	}

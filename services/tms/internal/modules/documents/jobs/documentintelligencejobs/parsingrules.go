@@ -20,14 +20,18 @@ func (a *Activities) applyParsingRules(
 		return intelligence
 	}
 
-	result, err := a.parsingRuleRuntime.ApplyPublished(ctx, &documentparsingruleports.DocumentParsingRuntimeInput{
-		TenantInfo:          tenantInfo,
-		DocumentKind:        intelligence.Kind,
-		FileName:            fileName,
-		Text:                extracted.Text,
-		ProviderFingerprint: providerFingerprint,
-		Pages:               toParsingPages(extracted.Pages),
-	}, toParsingAnalysis(intelligence))
+	result, err := a.parsingRuleRuntime.ApplyPublished(
+		ctx,
+		&documentparsingruleports.DocumentParsingRuntimeInput{
+			TenantInfo:          tenantInfo,
+			DocumentKind:        intelligence.Kind,
+			FileName:            fileName,
+			Text:                extracted.Text,
+			ProviderFingerprint: providerFingerprint,
+			Pages:               toParsingPages(extracted.Pages),
+		},
+		toParsingAnalysis(intelligence),
+	)
 	if err != nil {
 		a.logger.Warn("failed to apply document parsing rules", zap.Error(err))
 		return intelligence
@@ -56,7 +60,10 @@ func toParsingAnalysis(
 		return nil
 	}
 
-	fields := make(map[string]documentparsingruleports.DocumentParsingField, len(intelligence.Fields))
+	fields := make(
+		map[string]documentparsingruleports.DocumentParsingField,
+		len(intelligence.Fields),
+	)
 	for key, field := range intelligence.Fields {
 		fields[key] = documentparsingruleports.DocumentParsingField{
 			Key:             key,
@@ -92,7 +99,11 @@ func toParsingAnalysis(
 		})
 	}
 
-	conflicts := make([]documentparsingruleports.DocumentParsingConflict, 0, len(intelligence.Conflicts))
+	conflicts := make(
+		[]documentparsingruleports.DocumentParsingConflict,
+		0,
+		len(intelligence.Conflicts),
+	)
 	for _, conflict := range intelligence.Conflicts {
 		conflicts = append(conflicts, documentparsingruleports.DocumentParsingConflict{
 			Key:             conflict.Key,

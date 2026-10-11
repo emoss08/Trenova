@@ -57,29 +57,33 @@ func (r *repository) List(
 	ctx context.Context,
 	req *shipmenttypeports.ListShipmentTypesRequest,
 ) (*pagination.ListResult[*shipmenttype.ShipmentType], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*shipmenttype.ShipmentType], error) {
-		log := r.l.With(
-			zap.String("operation", "List"),
-			zap.Any("request", req),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*shipmenttype.ShipmentType], error) {
+			log := r.l.With(
+				zap.String("operation", "List"),
+				zap.Any("request", req),
+			)
 
-		entities := make([]*shipmenttype.ShipmentType, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterQuery(sq, req)
-			}).ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count shipment types", zap.Error(err))
-			return nil, err
-		}
+			entities := make([]*shipmenttype.ShipmentType, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count shipment types", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*shipmenttype.ShipmentType]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*shipmenttype.ShipmentType]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -119,54 +123,58 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *shipmenttypeports.ListShipmentTypesConnectionRequest,
 ) (*pagination.CursorListResult[*shipmenttype.ShipmentType], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*shipmenttype.ShipmentType], error) {
-		log := r.l.With(
-			zap.String("operation", "ListConnection"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*shipmenttype.ShipmentType], error) {
+			log := r.l.With(
+				zap.String("operation", "ListConnection"),
+				zap.Any("request", req),
+			)
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*shipmenttype.ShipmentType)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyTotalCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*shipmenttype.ShipmentType)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyTotalCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count shipment types", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*shipmenttype.ShipmentType]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*shipmenttype.ShipmentType) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return applyShipmentTypeColumns(sq, req.ShipmentTypeColumns)
+							})
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return r.applyCursorPageFilters(sq, req)
+					},
+				})
 			if err != nil {
-				log.Error("failed to count shipment types", zap.Error(err))
+				log.Error("failed to scan shipment types", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*shipmenttype.ShipmentType]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*shipmenttype.ShipmentType) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return applyShipmentTypeColumns(sq, req.ShipmentTypeColumns)
-						})
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return r.applyCursorPageFilters(sq, req)
-				},
-			})
-		if err != nil {
-			log.Error("failed to scan shipment types", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) Create(
@@ -179,7 +187,11 @@ func (r *repository) Create(
 			zap.String("code", entity.Code),
 		)
 
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
 			log.Error("failed to create shipment type", zap.Error(err))
 			return nil, err
 		}
@@ -213,7 +225,11 @@ func (r *repository) Update(
 			return nil, err
 		}
 
-		if err = dberror.CheckRowsAffected(results, "ShipmentType", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"ShipmentType",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -281,31 +297,35 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *shipmenttypeports.ShipmentTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*shipmenttype.ShipmentType], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*shipmenttype.ShipmentType], error) {
-		cols := shipmenttypecol.ShipmentTypeColumns
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*shipmenttype.ShipmentType], error) {
+			cols := shipmenttypecol.ShipmentTypeColumns
 
-		return dbhelper.SelectOptions[*shipmenttype.ShipmentType](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					cols.ID,
-					cols.Status,
-					cols.Code,
-					cols.Description,
-					cols.Color,
+			return dbhelper.SelectOptions[*shipmenttype.ShipmentType](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.Status,
+						cols.Code,
+						cols.Description,
+						cols.Color,
+					},
+					OrgColumnRef: &cols.OrganizationID,
+					BuColumnRef:  &cols.BusinessUnitID,
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
+					},
+					EntityName:       "ShipmentType",
+					SearchColumnRefs: []buncolgen.Column{cols.Code, cols.Description},
 				},
-				OrgColumnRef: &cols.OrganizationID,
-				BuColumnRef:  &cols.BusinessUnitID,
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
-				},
-				EntityName:       "ShipmentType",
-				SearchColumnRefs: []buncolgen.Column{cols.Code, cols.Description},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 func (r *repository) BulkUpdateStatus(

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs/documentuploadcontract"
+	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"

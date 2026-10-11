@@ -3,10 +3,10 @@ package distancecalculationrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/places/domain/distancecalculation"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distancecalculation"
 	"github.com/emoss08/trenova/internal/modules/places/ports/distancecalculationports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"go.uber.org/fx"

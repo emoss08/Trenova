@@ -148,23 +148,27 @@ func (r *usageRepository) Summarize(
 	ctx context.Context,
 	params agentextensionports.SummarizeExtensionUsageParams,
 ) (map[agentextension.Type]agentextension.UsageSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[agentextension.Type]agentextension.UsageSummary, error) {
-		rows := make([]usageTotals, 0, len(agentextension.AllTypes()))
-		if err := buildSummarize(r.db.DBForContext(ctx), params).Scan(ctx, &rows); err != nil {
-			r.l.Error("failed to summarize agent extension usage", zap.Error(err))
-			return nil, fmt.Errorf("summarize agent extension usage: %w", err)
-		}
-
-		summaries := make(map[agentextension.Type]agentextension.UsageSummary, len(rows))
-		for idx := range rows {
-			summaries[rows[idx].ExtensionType] = agentextension.UsageSummary{
-				RequestsToday:     rows[idx].RequestsToday,
-				RequestsThisMonth: rows[idx].RequestsThisMonth,
-				FailuresThisMonth: rows[idx].FailuresThisMonth,
-				CostThisMonthUSD:  rows[idx].CostThisMonth,
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[agentextension.Type]agentextension.UsageSummary, error) {
+			rows := make([]usageTotals, 0, len(agentextension.AllTypes()))
+			if err := buildSummarize(r.db.DBForContext(ctx), params).Scan(ctx, &rows); err != nil {
+				r.l.Error("failed to summarize agent extension usage", zap.Error(err))
+				return nil, fmt.Errorf("summarize agent extension usage: %w", err)
 			}
-		}
 
-		return summaries, nil
-	})
+			summaries := make(map[agentextension.Type]agentextension.UsageSummary, len(rows))
+			for idx := range rows {
+				summaries[rows[idx].ExtensionType] = agentextension.UsageSummary{
+					RequestsToday:     rows[idx].RequestsToday,
+					RequestsThisMonth: rows[idx].RequestsThisMonth,
+					FailuresThisMonth: rows[idx].FailuresThisMonth,
+					CostThisMonthUSD:  rows[idx].CostThisMonth,
+				}
+			}
+
+			return summaries, nil
+		},
+	)
 }

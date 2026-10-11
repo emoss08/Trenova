@@ -469,8 +469,18 @@ type AgentActivityPublisher interface {
 		actor kernelports.AuditActor,
 		action string,
 	)
-	PlanChanged(ctx context.Context, plan *agent.AgentPlan, actor kernelports.AuditActor, action string)
-	RunChanged(ctx context.Context, run *agent.AgentRun, actor kernelports.AuditActor, action string)
+	PlanChanged(
+		ctx context.Context,
+		plan *agent.AgentPlan,
+		actor kernelports.AuditActor,
+		action string,
+	)
+	RunChanged(
+		ctx context.Context,
+		run *agent.AgentRun,
+		actor kernelports.AuditActor,
+		action string,
+	)
 	ArtifactChanged(
 		ctx context.Context,
 		artifact *assistantartifact.Artifact,
@@ -568,7 +578,11 @@ type AgentDecisionQueueService interface {
 	ListPending(ctx context.Context, req ListPendingDecisionsRequest) (*PendingDecisionsPage, error)
 	// Count is the size of the queue, for a badge. Usable narrows it to what
 	// the reader's agents raised; nil counts everything.
-	Count(ctx context.Context, tenant pagination.TenantInfo, usable *permissionports.UsableAgents) (int, error)
+	Count(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		usable *permissionports.UsableAgents,
+	) (int, error)
 	Summary(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
@@ -632,6 +646,14 @@ type SettleApprovalRequest struct {
 // takes them back while it is open. Undo after the commit is a conflict.
 type ApprovalCommitter interface {
 	CommitApproval(ctx context.Context, req *CommitApprovalRequest) error
-	UndoOwnApproval(ctx context.Context, req *SettleApprovalRequest, actor *permissionports.RequestActor) error
-	CommitOwnApprovalNow(ctx context.Context, req *SettleApprovalRequest, actor *permissionports.RequestActor) error
+	UndoOwnApproval(
+		ctx context.Context,
+		req *SettleApprovalRequest,
+		actor *permissionports.RequestActor,
+	) error
+	CommitOwnApprovalNow(
+		ctx context.Context,
+		req *SettleApprovalRequest,
+		actor *permissionports.RequestActor,
+	) error
 }

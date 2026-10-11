@@ -116,25 +116,27 @@ func (s *Schedules) sync(ctx context.Context, sched *conversationschedule.Schedu
 		return fmt.Errorf("create schedule %s: %w", options.ID, err)
 	}
 
-	return s.client.ScheduleClient().GetHandle(ctx, options.ID).Update(ctx, client.ScheduleUpdateOptions{
-		DoUpdate: func(input client.ScheduleUpdateInput) (*client.ScheduleUpdate, error) {
-			desired := input.Description.Schedule
-			desired.Spec = &options.Spec
-			desired.Action = options.Action
-			if desired.Policy == nil {
-				desired.Policy = &client.SchedulePolicies{}
-			}
-			desired.Policy.Overlap = options.Overlap
-			desired.Policy.CatchupWindow = options.CatchupWindow
-			if desired.State == nil {
-				desired.State = &client.ScheduleState{}
-			}
-			desired.State.Paused = options.Paused
-			desired.State.Note = options.Note
+	return s.client.ScheduleClient().
+		GetHandle(ctx, options.ID).
+		Update(ctx, client.ScheduleUpdateOptions{
+			DoUpdate: func(input client.ScheduleUpdateInput) (*client.ScheduleUpdate, error) {
+				desired := input.Description.Schedule
+				desired.Spec = &options.Spec
+				desired.Action = options.Action
+				if desired.Policy == nil {
+					desired.Policy = &client.SchedulePolicies{}
+				}
+				desired.Policy.Overlap = options.Overlap
+				desired.Policy.CatchupWindow = options.CatchupWindow
+				if desired.State == nil {
+					desired.State = &client.ScheduleState{}
+				}
+				desired.State.Paused = options.Paused
+				desired.State.Note = options.Note
 
-			return &client.ScheduleUpdate{Schedule: &desired}, nil
-		},
-	})
+				return &client.ScheduleUpdate{Schedule: &desired}, nil
+			},
+		})
 }
 
 func (s *Schedules) remove(ctx context.Context, id string) error {

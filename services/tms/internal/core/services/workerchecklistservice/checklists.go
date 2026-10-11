@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -69,7 +69,12 @@ func (s *Service) Get(
 		return nil, err
 	}
 	if checklist.IsOpen() {
-		if err = s.refreshMany(ctx, tenantInfo, checklist.WorkerID, []*worker.WorkerChecklist{checklist}); err != nil {
+		if err = s.refreshMany(
+			ctx,
+			tenantInfo,
+			checklist.WorkerID,
+			[]*worker.WorkerChecklist{checklist},
+		); err != nil {
 			s.l.Warn("failed to refresh checklist", zap.String("id", id.String()), zap.Error(err))
 		}
 	}
@@ -112,7 +117,12 @@ func (s *Service) Start(ctx context.Context, req *StartRequest) (*worker.WorkerC
 		return nil, err
 	}
 
-	if err = s.refreshMany(ctx, req.TenantInfo, req.WorkerID, []*worker.WorkerChecklist{created}); err != nil {
+	if err = s.refreshMany(
+		ctx,
+		req.TenantInfo,
+		req.WorkerID,
+		[]*worker.WorkerChecklist{created},
+	); err != nil {
 		log.Warn("failed to auto-satisfy new checklist", zap.Error(err))
 	}
 
@@ -462,18 +472,28 @@ func (s *Service) closeIfComplete(
 	saved.Items = items
 
 	if saved.Kind == worker.ChecklistKindOnboarding {
-		if err = s.workerRepo.UpdateProfileQualification(ctx, &workerports.UpdateProfileQualificationRequest{
-			TenantInfo: tenantInfo,
-			WorkerID:   saved.WorkerID,
-			Qualified:  true,
-		}); err != nil {
+		if err = s.workerRepo.UpdateProfileQualification(
+			ctx,
+			&workerports.UpdateProfileQualificationRequest{
+				TenantInfo: tenantInfo,
+				WorkerID:   saved.WorkerID,
+				Qualified:  true,
+			},
+		); err != nil {
 			s.l.Warn(
 				"failed to flag worker as qualified",
 				zap.String("workerId", saved.WorkerID.String()),
 				zap.Error(err),
 			)
 		} else {
-			s.publish(ctx, tenantInfo, realtimeWorkers, permission.OpUpdate, saved.WorkerID, pulid.Nil)
+			s.publish(
+				ctx,
+				tenantInfo,
+				realtimeWorkers,
+				permission.OpUpdate,
+				saved.WorkerID,
+				pulid.Nil,
+			)
 		}
 	}
 	s.publish(ctx, tenantInfo, realtimeResource, permission.OpUpdate, saved.ID, pulid.Nil)

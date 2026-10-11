@@ -170,12 +170,15 @@ func (s *Service) recheckDocuments(
 	if s.drift == nil || len(documents) == 0 {
 		return 0
 	}
-	checked, err := s.drift.RecheckDocuments(ctx, &accountingsyncports.RecheckAccountingDriftRequest{
-		TenantInfo:   sess.tenant,
-		ConnectionID: sess.conn.ID,
-		Documents:    documents,
-		EventBudget:  driftEventsPerPoll,
-	})
+	checked, err := s.drift.RecheckDocuments(
+		ctx,
+		&accountingsyncports.RecheckAccountingDriftRequest{
+			TenantInfo:   sess.tenant,
+			ConnectionID: sess.conn.ID,
+			Documents:    documents,
+			EventBudget:  driftEventsPerPoll,
+		},
+	)
 	if err != nil {
 		s.l.Warn(
 			"failed to compare documents the accounting system changed; the nightly check will",
@@ -196,12 +199,15 @@ func (s *Service) startCursor(ctx context.Context, sess *readSession) (string, e
 		start = time.Unix(*sess.conn.SyncEnabledAt, 0)
 	}
 	cursor := sess.reader.ChangeCursorAt(start)
-	if _, err := s.connections.SaveChangeFeed(ctx, &accountingsyncports.SaveAccountingChangeFeedRequest{
-		TenantInfo:  sess.tenant,
-		ID:          sess.conn.ID,
-		Cursor:      cursor,
-		OnlyIfEmpty: true,
-	}); err != nil {
+	if _, err := s.connections.SaveChangeFeed(
+		ctx,
+		&accountingsyncports.SaveAccountingChangeFeedRequest{
+			TenantInfo:  sess.tenant,
+			ID:          sess.conn.ID,
+			Cursor:      cursor,
+			OnlyIfEmpty: true,
+		},
+	); err != nil {
 		return "", err
 	}
 	current, err := s.connectionByID(ctx, sess.tenant, sess.conn.ID)
@@ -225,12 +231,15 @@ func (s *Service) recordReadFailure(ctx context.Context, sess *readSession, read
 			failure = classified
 		}
 	}
-	if _, err := s.connections.SaveChangeFeed(ctx, &accountingsyncports.SaveAccountingChangeFeedRequest{
-		TenantInfo:    sess.tenant,
-		ID:            sess.conn.ID,
-		ErrorCategory: failure.Category,
-		ErrorMessage:  failure.Message,
-	}); err != nil {
+	if _, err := s.connections.SaveChangeFeed(
+		ctx,
+		&accountingsyncports.SaveAccountingChangeFeedRequest{
+			TenantInfo:    sess.tenant,
+			ID:            sess.conn.ID,
+			ErrorCategory: failure.Category,
+			ErrorMessage:  failure.Message,
+		},
+	); err != nil {
 		s.l.Warn("failed to record an accounting change feed failure", zap.Error(err))
 	}
 }
@@ -493,7 +502,10 @@ func (s *Service) observation(
 	}, nil
 }
 
-func removedResolution(sess *readSession, payment *accountingsyncports.AccountingInboundPayment) string {
+func removedResolution(
+	sess *readSession,
+	payment *accountingsyncports.AccountingInboundPayment,
+) string {
 	provider := accountingsync.ProviderName(sess.conn.IntegrationType)
 	if payment.Operation == accountingsyncports.AccountingChangeDelete {
 		return "Deleted in " + provider + " before it was applied, so there is nothing to apply."

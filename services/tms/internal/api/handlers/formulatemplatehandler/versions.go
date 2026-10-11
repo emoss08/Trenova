@@ -45,10 +45,13 @@ func (h *Handler) listVersions(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*formulatemplate.FormulaTemplateVersion], error) {
-			return h.service.ListVersions(c.Request.Context(), &formulatemplateports.ListVersionsRequest{
-				Filter:     req,
-				TemplateID: templateID,
-			})
+			return h.service.ListVersions(
+				c.Request.Context(),
+				&formulatemplateports.ListVersionsRequest{
+					Filter:     req,
+					TemplateID: templateID,
+				},
+			)
 		},
 	)
 }

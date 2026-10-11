@@ -4,8 +4,8 @@
 package settlementshared
 
 import (
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 )
 
 //nolint:exhaustive // canceled shipments never accrue pay or cost

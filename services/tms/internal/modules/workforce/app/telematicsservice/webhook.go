@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -149,14 +149,16 @@ func (s *Service) dispatchEventSideEffects(
 	event *telematicsports.ProviderWebhookEvent,
 ) {
 	switch event.Kind {
-	case telematicsports.ProviderEventKindGeofenceEntry, telematicsports.ProviderEventKindStopArrival:
+	case telematicsports.ProviderEventKindGeofenceEntry,
+		telematicsports.ProviderEventKindStopArrival:
 		s.applyStopEvent(ctx, &stopEvent{
 			tenantInfo:   tenantInfo,
 			record:       record,
 			visit:        shipment.VisitArrival,
 			providerStop: event.Kind == telematicsports.ProviderEventKindStopArrival,
 		})
-	case telematicsports.ProviderEventKindGeofenceExit, telematicsports.ProviderEventKindStopDeparture:
+	case telematicsports.ProviderEventKindGeofenceExit,
+		telematicsports.ProviderEventKindStopDeparture:
 		s.applyStopEvent(ctx, &stopEvent{
 			tenantInfo:   tenantInfo,
 			record:       record,

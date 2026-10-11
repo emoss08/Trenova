@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -22,5 +22,8 @@ type AICorrectionService interface {
 		ctx context.Context,
 		req *CaptureShipmentDraftCorrectionRequest,
 	) (*aicorrection.Correction, error)
-	PurgeExpired(ctx context.Context, req kernelports.PurgeExpiredAICorrectionsRequest) (int64, error)
+	PurgeExpired(
+		ctx context.Context,
+		req kernelports.PurgeExpiredAICorrectionsRequest,
+	) (int64, error)
 }

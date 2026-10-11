@@ -300,7 +300,12 @@ func (l *Labeler) read(
 ) (map[pulid.ID]string, error) {
 	return dbtx.Read(ctx, l.db, func(ctx context.Context) (map[pulid.ID]string, error) {
 		rows := make([]labelRow, 0, len(ids))
-		if err := labelQuery(l.db.DBForContext(ctx), tenant, src, ids).Scan(ctx, &rows); err != nil {
+		if err := labelQuery(
+			l.db.DBForContext(ctx),
+			tenant,
+			src,
+			ids,
+		).Scan(ctx, &rows); err != nil {
 			return nil, err
 		}
 

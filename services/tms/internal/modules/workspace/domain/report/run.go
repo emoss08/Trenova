@@ -26,25 +26,25 @@ type ReportRun struct {
 	bun.BaseModel             `bun:"table:report_runs,alias:rrun" json:"-"`
 	pagination.CursorValueSet `bun:",embed"                       json:"-"`
 
-	ID             pulid.ID       `json:"id"                 bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID pulid.ID       `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID       `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	DefinitionID   pulid.ID       `json:"definitionId"       bun:"definition_id,type:VARCHAR(100),nullzero"`
-	RevisionID     pulid.ID       `json:"revisionId"         bun:"revision_id,type:VARCHAR(100),nullzero"`
-	CannedKey      string         `json:"cannedKey"          bun:"canned_key,type:VARCHAR(100),nullzero"`
-	CannedVersion  string         `json:"cannedVersion"      bun:"canned_version,type:VARCHAR(20),nullzero"`
-	ScheduleID     pulid.ID       `json:"scheduleId"         bun:"schedule_id,type:VARCHAR(100),nullzero"`
-	RequestedByID  pulid.ID       `json:"requestedById"      bun:"requested_by_id,type:VARCHAR(100),notnull"`
-	Trigger        RunTrigger     `json:"trigger"            bun:"trigger,type:VARCHAR(20),notnull,default:'manual'"`
-	Params         map[string]any `json:"params"             bun:"params,type:JSONB,nullzero"`
-	Format         Format         `json:"format"             bun:"format,type:VARCHAR(10),notnull"`
-	Status         RunStatus      `json:"status"             bun:"status,type:VARCHAR(20),notnull,default:'queued'"`
-	RowCount       int64          `json:"rowCount"           bun:"row_count,type:BIGINT,nullzero"`
-	ByteSize       int64          `json:"byteSize"           bun:"byte_size,type:BIGINT,nullzero"`
-	DurationMs     int64          `json:"durationMs"         bun:"duration_ms,type:BIGINT,nullzero"`
-	Truncated      bool           `json:"truncated"          bun:"truncated,type:BOOLEAN,notnull"`
-	Error          *RunError      `json:"error"              bun:"error,type:JSONB,nullzero"`
-	ArtifactKey    string         `json:"artifactKey"        bun:"artifact_key,type:VARCHAR(512),nullzero"`
+	ID             pulid.ID       `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
+	BusinessUnitID pulid.ID       `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID pulid.ID       `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	DefinitionID   pulid.ID       `json:"definitionId"   bun:"definition_id,type:VARCHAR(100),nullzero"`
+	RevisionID     pulid.ID       `json:"revisionId"     bun:"revision_id,type:VARCHAR(100),nullzero"`
+	CannedKey      string         `json:"cannedKey"      bun:"canned_key,type:VARCHAR(100),nullzero"`
+	CannedVersion  string         `json:"cannedVersion"  bun:"canned_version,type:VARCHAR(20),nullzero"`
+	ScheduleID     pulid.ID       `json:"scheduleId"     bun:"schedule_id,type:VARCHAR(100),nullzero"`
+	RequestedByID  pulid.ID       `json:"requestedById"  bun:"requested_by_id,type:VARCHAR(100),notnull"`
+	Trigger        RunTrigger     `json:"trigger"        bun:"trigger,type:VARCHAR(20),notnull,default:'manual'"`
+	Params         map[string]any `json:"params"         bun:"params,type:JSONB,nullzero"`
+	Format         Format         `json:"format"         bun:"format,type:VARCHAR(10),notnull"`
+	Status         RunStatus      `json:"status"         bun:"status,type:VARCHAR(20),notnull,default:'queued'"`
+	RowCount       int64          `json:"rowCount"       bun:"row_count,type:BIGINT,nullzero"`
+	ByteSize       int64          `json:"byteSize"       bun:"byte_size,type:BIGINT,nullzero"`
+	DurationMs     int64          `json:"durationMs"     bun:"duration_ms,type:BIGINT,nullzero"`
+	Truncated      bool           `json:"truncated"      bun:"truncated,type:BOOLEAN,notnull"`
+	Error          *RunError      `json:"error"          bun:"error,type:JSONB,nullzero"`
+	ArtifactKey    string         `json:"artifactKey"    bun:"artifact_key,type:VARCHAR(512),nullzero"`
 	// RowsKey is the JSON rows sidecar written beside the artifact. Empty means
 	// the run predates the sidecar, which is how a run that can be compared is
 	// told apart from one that cannot.

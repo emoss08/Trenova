@@ -5,10 +5,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -60,53 +60,61 @@ func (r *repository) GetByID(
 	ctx context.Context,
 	req invoiceadjustmentports.GetInvoiceAdjustmentRequest,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustment, error) {
-		entity := new(invoiceadjustment.InvoiceAdjustment)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("ia.id = ?", req.ID).
-			Where("ia.organization_id = ?", req.TenantInfo.OrgID).
-			Where("ia.business_unit_id = ?", req.TenantInfo.BuID).
-			Relation("Lines", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Order("ial.line_number ASC")
-			}).
-			Relation("Snapshots").
-			Relation("ReconciliationExceptions").
-			Relation("DocumentReferences", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Relation("Document").Order("iadr.created_at ASC")
-			}).
-			Scan(ctx)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "InvoiceAdjustment")
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustment, error) {
+			entity := new(invoiceadjustment.InvoiceAdjustment)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				Where("ia.id = ?", req.ID).
+				Where("ia.organization_id = ?", req.TenantInfo.OrgID).
+				Where("ia.business_unit_id = ?", req.TenantInfo.BuID).
+				Relation("Lines", func(q *bun.SelectQuery) *bun.SelectQuery {
+					return q.Order("ial.line_number ASC")
+				}).
+				Relation("Snapshots").
+				Relation("ReconciliationExceptions").
+				Relation("DocumentReferences", func(q *bun.SelectQuery) *bun.SelectQuery {
+					return q.Relation("Document").Order("iadr.created_at ASC")
+				}).
+				Scan(ctx)
+			if err != nil {
+				return nil, dberror.HandleNotFoundError(err, "InvoiceAdjustment")
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) GetByIdempotencyKey(
 	ctx context.Context,
 	req invoiceadjustmentports.GetInvoiceAdjustmentByIdempotencyRequest,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustment, error) {
-		entity := new(invoiceadjustment.InvoiceAdjustment)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("ia.idempotency_key = ?", req.IdempotencyKey).
-			Where("ia.organization_id = ?", req.TenantInfo.OrgID).
-			Where("ia.business_unit_id = ?", req.TenantInfo.BuID).
-			Scan(ctx)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "InvoiceAdjustment")
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustment, error) {
+			entity := new(invoiceadjustment.InvoiceAdjustment)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				Where("ia.idempotency_key = ?", req.IdempotencyKey).
+				Where("ia.organization_id = ?", req.TenantInfo.OrgID).
+				Where("ia.business_unit_id = ?", req.TenantInfo.BuID).
+				Scan(ctx)
+			if err != nil {
+				return nil, dberror.HandleNotFoundError(err, "InvoiceAdjustment")
+			}
 
-		return r.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
-			ID:         entity.ID,
-			TenantInfo: req.TenantInfo,
-		})
-	})
+			return r.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
+				ID:         entity.ID,
+				TenantInfo: req.TenantInfo,
+			})
+		},
+	)
 }
 
 func (r *repository) LockInvoiceForUpdate(
@@ -179,87 +187,103 @@ func (r *repository) GetCorrectionGroup(
 	ctx context.Context,
 	req invoiceadjustmentports.GetCorrectionGroupRequest,
 ) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
-		entity := new(invoiceadjustment.InvoiceAdjustmentCorrectionGroup)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("icg.id = ?", req.ID).
-			Where("icg.organization_id = ?", req.TenantInfo.OrgID).
-			Where("icg.business_unit_id = ?", req.TenantInfo.BuID).
-			Scan(ctx)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "InvoiceCorrectionGroup")
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
+			entity := new(invoiceadjustment.InvoiceAdjustmentCorrectionGroup)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				Where("icg.id = ?", req.ID).
+				Where("icg.organization_id = ?", req.TenantInfo.OrgID).
+				Where("icg.business_unit_id = ?", req.TenantInfo.BuID).
+				Scan(ctx)
+			if err != nil {
+				return nil, dberror.HandleNotFoundError(err, "InvoiceCorrectionGroup")
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) GetCorrectionGroupByRootInvoice(
 	ctx context.Context,
 	req invoiceadjustmentports.GetCorrectionGroupByRootInvoiceRequest,
 ) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
-		entity := new(invoiceadjustment.InvoiceAdjustmentCorrectionGroup)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("icg.root_invoice_id = ?", req.RootInvoiceID).
-			Where("icg.organization_id = ?", req.TenantInfo.OrgID).
-			Where("icg.business_unit_id = ?", req.TenantInfo.BuID).
-			Scan(ctx)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "InvoiceCorrectionGroup")
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
+			entity := new(invoiceadjustment.InvoiceAdjustmentCorrectionGroup)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				Where("icg.root_invoice_id = ?", req.RootInvoiceID).
+				Where("icg.organization_id = ?", req.TenantInfo.OrgID).
+				Where("icg.business_unit_id = ?", req.TenantInfo.BuID).
+				Scan(ctx)
+			if err != nil {
+				return nil, dberror.HandleNotFoundError(err, "InvoiceCorrectionGroup")
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) CreateCorrectionGroup(
 	ctx context.Context,
 	group *invoiceadjustment.InvoiceAdjustmentCorrectionGroup,
 ) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(group).Exec(ctx); err != nil {
-			return nil, fmt.Errorf("create correction group: %w", err)
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
+			if _, err := r.db.DBForContext(ctx).NewInsert().Model(group).Exec(ctx); err != nil {
+				return nil, fmt.Errorf("create correction group: %w", err)
+			}
 
-		return r.GetCorrectionGroup(ctx, invoiceadjustmentports.GetCorrectionGroupRequest{
-			ID: group.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: group.OrganizationID,
-				BuID:  group.BusinessUnitID,
-			},
-		})
-	})
+			return r.GetCorrectionGroup(ctx, invoiceadjustmentports.GetCorrectionGroupRequest{
+				ID: group.ID,
+				TenantInfo: pagination.TenantInfo{
+					OrgID: group.OrganizationID,
+					BuID:  group.BusinessUnitID,
+				},
+			})
+		},
+	)
 }
 
 func (r *repository) UpdateCorrectionGroup(
 	ctx context.Context,
 	group *invoiceadjustment.InvoiceAdjustmentCorrectionGroup,
 ) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(group).
-			Where("id = ?", group.ID).
-			Where("organization_id = ?", group.OrganizationID).
-			Where("business_unit_id = ?", group.BusinessUnitID).
-			Column("current_invoice_id", "metadata", "updated_at").
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("update correction group: %w", err)
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
+			if _, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(group).
+				Where("id = ?", group.ID).
+				Where("organization_id = ?", group.OrganizationID).
+				Where("business_unit_id = ?", group.BusinessUnitID).
+				Column("current_invoice_id", "metadata", "updated_at").
+				Exec(ctx); err != nil {
+				return nil, fmt.Errorf("update correction group: %w", err)
+			}
 
-		return r.GetCorrectionGroup(ctx, invoiceadjustmentports.GetCorrectionGroupRequest{
-			ID: group.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: group.OrganizationID,
-				BuID:  group.BusinessUnitID,
-			},
-		})
-	})
+			return r.GetCorrectionGroup(ctx, invoiceadjustmentports.GetCorrectionGroupRequest{
+				ID: group.ID,
+				TenantInfo: pagination.TenantInfo{
+					OrgID: group.OrganizationID,
+					BuID:  group.BusinessUnitID,
+				},
+			})
+		},
+	)
 }
 
 func (r *repository) CreateAdjustmentArtifacts(
@@ -286,7 +310,10 @@ func (r *repository) CreateAdjustmentArtifacts(
 				line.SyncMinorAmounts()
 			}
 
-			if _, err := r.db.DBForContext(ctx).NewInsert().Model(&params.Lines).Exec(ctx); err != nil {
+			if _, err := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(&params.Lines).
+				Exec(ctx); err != nil {
 				return fmt.Errorf("create adjustment lines: %w", err)
 			}
 		}
@@ -326,68 +353,74 @@ func (r *repository) UpdateAdjustment(
 	ctx context.Context,
 	adjustment *invoiceadjustment.InvoiceAdjustment,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustment, error) {
-		adjustment.SyncMinorAmounts()
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustment, error) {
+			adjustment.SyncMinorAmounts()
 
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(adjustment).
-			Where("id = ?", adjustment.ID).
-			Where("organization_id = ?", adjustment.OrganizationID).
-			Where("business_unit_id = ?", adjustment.BusinessUnitID).
-			Where("version = ?", adjustment.Version).
-			Set("correction_group_id = ?", adjustment.CorrectionGroupID).
-			Set("credit_memo_invoice_id = ?", adjustment.CreditMemoInvoiceID).
-			Set("replacement_invoice_id = ?", adjustment.ReplacementInvoiceID).
-			Set("rebill_queue_item_id = ?", adjustment.RebillQueueItemID).
-			Set("kind = ?", adjustment.Kind).
-			Set("status = ?", adjustment.Status).
-			Set("approval_status = ?", adjustment.ApprovalStatus).
-			Set("replacement_review_status = ?", adjustment.ReplacementReviewStatus).
-			Set("rebill_strategy = ?", adjustment.RebillStrategy).
-			Set("reason = ?", adjustment.Reason).
-			Set("policy_reason = ?", adjustment.PolicyReason).
-			Set("accounting_date = ?", adjustment.AccountingDate).
-			Set("credit_total_amount = ?", adjustment.CreditTotalAmount).
-			Set("credit_total_amount_minor = ?", adjustment.CreditTotalAmountMinor).
-			Set("rebill_total_amount = ?", adjustment.RebillTotalAmount).
-			Set("rebill_total_amount_minor = ?", adjustment.RebillTotalAmountMinor).
-			Set("net_delta_amount = ?", adjustment.NetDeltaAmount).
-			Set("net_delta_amount_minor = ?", adjustment.NetDeltaAmountMinor).
-			Set("rerate_variance_percent = ?", adjustment.RerateVariancePercent).
-			Set("would_create_unapplied_credit = ?", adjustment.WouldCreateUnappliedCredit).
-			Set("requires_reconciliation_exception = ?", adjustment.RequiresReconciliationException).
-			Set("approval_required = ?", adjustment.ApprovalRequired).
-			Set("submitted_by_id = ?", adjustment.SubmittedByID).
-			Set("submitted_at = ?", adjustment.SubmittedAt).
-			Set("approved_by_id = ?", adjustment.ApprovedByID).
-			Set("approved_at = ?", adjustment.ApprovedAt).
-			Set("rejected_by_id = ?", adjustment.RejectedByID).
-			Set("rejected_at = ?", adjustment.RejectedAt).
-			Set("rejection_reason = ?", adjustment.RejectionReason).
-			Set("execution_error = ?", adjustment.ExecutionError).
-			Set("metadata = ?", adjustment.Metadata).
-			Set("version = version + 1").
-			Exec(ctx)
-		if err != nil {
-			return nil, mapInvoiceAdjustmentPersistenceError(fmt.Errorf("update adjustment: %w", err))
-		}
-		if err = dberror.CheckRowsAffected(
-			res,
-			"InvoiceAdjustment",
-			adjustment.ID.String(),
-		); err != nil {
-			return nil, err
-		}
+			res, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(adjustment).
+				Where("id = ?", adjustment.ID).
+				Where("organization_id = ?", adjustment.OrganizationID).
+				Where("business_unit_id = ?", adjustment.BusinessUnitID).
+				Where("version = ?", adjustment.Version).
+				Set("correction_group_id = ?", adjustment.CorrectionGroupID).
+				Set("credit_memo_invoice_id = ?", adjustment.CreditMemoInvoiceID).
+				Set("replacement_invoice_id = ?", adjustment.ReplacementInvoiceID).
+				Set("rebill_queue_item_id = ?", adjustment.RebillQueueItemID).
+				Set("kind = ?", adjustment.Kind).
+				Set("status = ?", adjustment.Status).
+				Set("approval_status = ?", adjustment.ApprovalStatus).
+				Set("replacement_review_status = ?", adjustment.ReplacementReviewStatus).
+				Set("rebill_strategy = ?", adjustment.RebillStrategy).
+				Set("reason = ?", adjustment.Reason).
+				Set("policy_reason = ?", adjustment.PolicyReason).
+				Set("accounting_date = ?", adjustment.AccountingDate).
+				Set("credit_total_amount = ?", adjustment.CreditTotalAmount).
+				Set("credit_total_amount_minor = ?", adjustment.CreditTotalAmountMinor).
+				Set("rebill_total_amount = ?", adjustment.RebillTotalAmount).
+				Set("rebill_total_amount_minor = ?", adjustment.RebillTotalAmountMinor).
+				Set("net_delta_amount = ?", adjustment.NetDeltaAmount).
+				Set("net_delta_amount_minor = ?", adjustment.NetDeltaAmountMinor).
+				Set("rerate_variance_percent = ?", adjustment.RerateVariancePercent).
+				Set("would_create_unapplied_credit = ?", adjustment.WouldCreateUnappliedCredit).
+				Set("requires_reconciliation_exception = ?", adjustment.RequiresReconciliationException).
+				Set("approval_required = ?", adjustment.ApprovalRequired).
+				Set("submitted_by_id = ?", adjustment.SubmittedByID).
+				Set("submitted_at = ?", adjustment.SubmittedAt).
+				Set("approved_by_id = ?", adjustment.ApprovedByID).
+				Set("approved_at = ?", adjustment.ApprovedAt).
+				Set("rejected_by_id = ?", adjustment.RejectedByID).
+				Set("rejected_at = ?", adjustment.RejectedAt).
+				Set("rejection_reason = ?", adjustment.RejectionReason).
+				Set("execution_error = ?", adjustment.ExecutionError).
+				Set("metadata = ?", adjustment.Metadata).
+				Set("version = version + 1").
+				Exec(ctx)
+			if err != nil {
+				return nil, mapInvoiceAdjustmentPersistenceError(
+					fmt.Errorf("update adjustment: %w", err),
+				)
+			}
+			if err = dberror.CheckRowsAffected(
+				res,
+				"InvoiceAdjustment",
+				adjustment.ID.String(),
+			); err != nil {
+				return nil, err
+			}
 
-		return r.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
-			ID: adjustment.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: adjustment.OrganizationID,
-				BuID:  adjustment.BusinessUnitID,
-			},
-		})
-	})
+			return r.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
+				ID: adjustment.ID,
+				TenantInfo: pagination.TenantInfo{
+					OrgID: adjustment.OrganizationID,
+					BuID:  adjustment.BusinessUnitID,
+				},
+			})
+		},
+	)
 }
 
 func (r *repository) GetLineage(
@@ -395,46 +428,53 @@ func (r *repository) GetLineage(
 	correctionGroupID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*invoiceadjustmentports.InvoiceLineageResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoiceadjustmentports.InvoiceLineageResult, error) {
-		group, err := r.GetCorrectionGroup(ctx, invoiceadjustmentports.GetCorrectionGroupRequest{
-			ID:         correctionGroupID,
-			TenantInfo: tenantInfo,
-		})
-		if err != nil {
-			return nil, err
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*invoiceadjustmentports.InvoiceLineageResult, error) {
+			group, err := r.GetCorrectionGroup(
+				ctx,
+				invoiceadjustmentports.GetCorrectionGroupRequest{
+					ID:         correctionGroupID,
+					TenantInfo: tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
 
-		invoices := make([]*invoice.Invoice, 0)
-		if err = r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&invoices).
-			Where("correction_group_id = ?", correctionGroupID).
-			Where("organization_id = ?", tenantInfo.OrgID).
-			Where("business_unit_id = ?", tenantInfo.BuID).
-			Order("created_at ASC").
-			Relation("Lines", func(q *bun.SelectQuery) *bun.SelectQuery { return q.Order("invl.line_number ASC") }).
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("get lineage invoices: %w", err)
-		}
+			invoices := make([]*invoice.Invoice, 0)
+			if err = r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&invoices).
+				Where("correction_group_id = ?", correctionGroupID).
+				Where("organization_id = ?", tenantInfo.OrgID).
+				Where("business_unit_id = ?", tenantInfo.BuID).
+				Order("created_at ASC").
+				Relation("Lines", func(q *bun.SelectQuery) *bun.SelectQuery { return q.Order("invl.line_number ASC") }).
+				Scan(ctx); err != nil {
+				return nil, fmt.Errorf("get lineage invoices: %w", err)
+			}
 
-		adjustments := make([]*invoiceadjustment.InvoiceAdjustment, 0)
-		if err = r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&adjustments).
-			Where("correction_group_id = ?", correctionGroupID).
-			Where("organization_id = ?", tenantInfo.OrgID).
-			Where("business_unit_id = ?", tenantInfo.BuID).
-			Order("created_at ASC").
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("get lineage adjustments: %w", err)
-		}
+			adjustments := make([]*invoiceadjustment.InvoiceAdjustment, 0)
+			if err = r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&adjustments).
+				Where("correction_group_id = ?", correctionGroupID).
+				Where("organization_id = ?", tenantInfo.OrgID).
+				Where("business_unit_id = ?", tenantInfo.BuID).
+				Order("created_at ASC").
+				Scan(ctx); err != nil {
+				return nil, fmt.Errorf("get lineage adjustments: %w", err)
+			}
 
-		return &invoiceadjustmentports.InvoiceLineageResult{
-			CorrectionGroup: group,
-			Invoices:        invoices,
-			Adjustments:     adjustments,
-		}, nil
-	})
+			return &invoiceadjustmentports.InvoiceLineageResult{
+				CorrectionGroup: group,
+				Invoices:        invoices,
+				Adjustments:     adjustments,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) ReplaceAdjustmentLines(
@@ -491,7 +531,10 @@ func (r *repository) ReplaceDocumentReferences(
 			return nil
 		}
 
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(&req.References).Exec(ctx); err != nil {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(&req.References).
+			Exec(ctx); err != nil {
 			return fmt.Errorf("insert document references: %w", err)
 		}
 
@@ -504,221 +547,248 @@ func (r *repository) CreateBatch(
 	batch *invoiceadjustment.InvoiceAdjustmentBatch,
 	items []*invoiceadjustment.InvoiceAdjustmentBatchItem,
 ) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(batch).Exec(ctx); err != nil {
-			return nil, fmt.Errorf("create batch: %w", err)
-		}
-		if len(items) > 0 {
-			if _, err := r.db.DBForContext(ctx).NewInsert().Model(&items).Exec(ctx); err != nil {
-				return nil, fmt.Errorf("create batch items: %w", err)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
+			if _, err := r.db.DBForContext(ctx).NewInsert().Model(batch).Exec(ctx); err != nil {
+				return nil, fmt.Errorf("create batch: %w", err)
 			}
-		}
+			if len(items) > 0 {
+				if _, err := r.db.DBForContext(ctx).
+					NewInsert().
+					Model(&items).
+					Exec(ctx); err != nil {
+					return nil, fmt.Errorf("create batch items: %w", err)
+				}
+			}
 
-		return r.GetBatchByID(ctx, invoiceadjustmentports.GetBatchRequest{
-			ID: batch.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: batch.OrganizationID,
-				BuID:  batch.BusinessUnitID,
-			},
-		})
-	})
+			return r.GetBatchByID(ctx, invoiceadjustmentports.GetBatchRequest{
+				ID: batch.ID,
+				TenantInfo: pagination.TenantInfo{
+					OrgID: batch.OrganizationID,
+					BuID:  batch.BusinessUnitID,
+				},
+			})
+		},
+	)
 }
 
 func (r *repository) GetBatchByID(
 	ctx context.Context,
 	req invoiceadjustmentports.GetBatchRequest,
 ) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
-		entity := new(invoiceadjustment.InvoiceAdjustmentBatch)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("iab.id = ?", req.ID).
-			Where("iab.organization_id = ?", req.TenantInfo.OrgID).
-			Where("iab.business_unit_id = ?", req.TenantInfo.BuID).
-			Relation("Items").
-			Scan(ctx)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "InvoiceAdjustmentBatch")
-		}
-		return entity, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
+			entity := new(invoiceadjustment.InvoiceAdjustmentBatch)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				Where("iab.id = ?", req.ID).
+				Where("iab.organization_id = ?", req.TenantInfo.OrgID).
+				Where("iab.business_unit_id = ?", req.TenantInfo.BuID).
+				Relation("Items").
+				Scan(ctx)
+			if err != nil {
+				return nil, dberror.HandleNotFoundError(err, "InvoiceAdjustmentBatch")
+			}
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) GetBatchByIdempotencyKey(
 	ctx context.Context,
 	req invoiceadjustmentports.GetBatchByIdempotencyRequest,
 ) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
-		entity := new(invoiceadjustment.InvoiceAdjustmentBatch)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("iab.idempotency_key = ?", req.IdempotencyKey).
-			Where("iab.organization_id = ?", req.TenantInfo.OrgID).
-			Where("iab.business_unit_id = ?", req.TenantInfo.BuID).
-			Scan(ctx)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "InvoiceAdjustmentBatch")
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
+			entity := new(invoiceadjustment.InvoiceAdjustmentBatch)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				Where("iab.idempotency_key = ?", req.IdempotencyKey).
+				Where("iab.organization_id = ?", req.TenantInfo.OrgID).
+				Where("iab.business_unit_id = ?", req.TenantInfo.BuID).
+				Scan(ctx)
+			if err != nil {
+				return nil, dberror.HandleNotFoundError(err, "InvoiceAdjustmentBatch")
+			}
 
-		return r.GetBatchByID(ctx, invoiceadjustmentports.GetBatchRequest{
-			ID:         entity.ID,
-			TenantInfo: req.TenantInfo,
-		})
-	})
+			return r.GetBatchByID(ctx, invoiceadjustmentports.GetBatchRequest{
+				ID:         entity.ID,
+				TenantInfo: req.TenantInfo,
+			})
+		},
+	)
 }
 
 func (r *repository) UpdateBatch(
 	ctx context.Context,
 	batch *invoiceadjustment.InvoiceAdjustmentBatch,
 ) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(batch).
-			Where("id = ?", batch.ID).
-			Where("organization_id = ?", batch.OrganizationID).
-			Where("business_unit_id = ?", batch.BusinessUnitID).
-			Where("version = ?", batch.Version).
-			Set("status = ?", batch.Status).
-			Set("total_count = ?", batch.TotalCount).
-			Set("processed_count = ?", batch.ProcessedCount).
-			Set("succeeded_count = ?", batch.SucceededCount).
-			Set("failed_count = ?", batch.FailedCount).
-			Set("submitted_by_id = ?", batch.SubmittedByID).
-			Set("submitted_at = ?", batch.SubmittedAt).
-			Set("metadata = ?", batch.Metadata).
-			Set("version = version + 1").
-			Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("update batch: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(
-			res,
-			"InvoiceAdjustmentBatch",
-			batch.ID.String(),
-		); err != nil {
-			return nil, err
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
+			res, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(batch).
+				Where("id = ?", batch.ID).
+				Where("organization_id = ?", batch.OrganizationID).
+				Where("business_unit_id = ?", batch.BusinessUnitID).
+				Where("version = ?", batch.Version).
+				Set("status = ?", batch.Status).
+				Set("total_count = ?", batch.TotalCount).
+				Set("processed_count = ?", batch.ProcessedCount).
+				Set("succeeded_count = ?", batch.SucceededCount).
+				Set("failed_count = ?", batch.FailedCount).
+				Set("submitted_by_id = ?", batch.SubmittedByID).
+				Set("submitted_at = ?", batch.SubmittedAt).
+				Set("metadata = ?", batch.Metadata).
+				Set("version = version + 1").
+				Exec(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("update batch: %w", err)
+			}
+			if err = dberror.CheckRowsAffected(
+				res,
+				"InvoiceAdjustmentBatch",
+				batch.ID.String(),
+			); err != nil {
+				return nil, err
+			}
 
-		return r.GetBatchByID(ctx, invoiceadjustmentports.GetBatchRequest{
-			ID: batch.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: batch.OrganizationID,
-				BuID:  batch.BusinessUnitID,
-			},
-		})
-	})
+			return r.GetBatchByID(ctx, invoiceadjustmentports.GetBatchRequest{
+				ID: batch.ID,
+				TenantInfo: pagination.TenantInfo{
+					OrgID: batch.OrganizationID,
+					BuID:  batch.BusinessUnitID,
+				},
+			})
+		},
+	)
 }
 
 func (r *repository) UpdateBatchItem(
 	ctx context.Context,
 	item *invoiceadjustment.InvoiceAdjustmentBatchItem,
 ) (*invoiceadjustment.InvoiceAdjustmentBatchItem, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustmentBatchItem, error) {
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(item).
-			Where("id = ?", item.ID).
-			Where("organization_id = ?", item.OrganizationID).
-			Where("business_unit_id = ?", item.BusinessUnitID).
-			Set("adjustment_id = ?", item.AdjustmentID).
-			Set("status = ?", item.Status).
-			Set("error_message = ?", item.ErrorMessage).
-			Set("request_payload = ?", item.RequestPayload).
-			Set("result_payload = ?", item.ResultPayload).
-			Set("updated_at = " + r.db.NowEpoch()).
-			Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("update batch item: %w", err)
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustmentBatchItem, error) {
+			_, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(item).
+				Where("id = ?", item.ID).
+				Where("organization_id = ?", item.OrganizationID).
+				Where("business_unit_id = ?", item.BusinessUnitID).
+				Set("adjustment_id = ?", item.AdjustmentID).
+				Set("status = ?", item.Status).
+				Set("error_message = ?", item.ErrorMessage).
+				Set("request_payload = ?", item.RequestPayload).
+				Set("result_payload = ?", item.ResultPayload).
+				Set("updated_at = " + r.db.NowEpoch()).
+				Exec(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("update batch item: %w", err)
+			}
 
-		entity := new(invoiceadjustment.InvoiceAdjustmentBatchItem)
-		if err = r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("id = ?", item.ID).
-			Where("organization_id = ?", item.OrganizationID).
-			Where("business_unit_id = ?", item.BusinessUnitID).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "InvoiceAdjustmentBatchItem")
-		}
+			entity := new(invoiceadjustment.InvoiceAdjustmentBatchItem)
+			if err = r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				Where("id = ?", item.ID).
+				Where("organization_id = ?", item.OrganizationID).
+				Where("business_unit_id = ?", item.BusinessUnitID).
+				Scan(ctx); err != nil {
+				return nil, dberror.HandleNotFoundError(err, "InvoiceAdjustmentBatchItem")
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) ListApprovalQueue(
 	ctx context.Context,
 	req *invoiceadjustmentports.ListApprovalQueueRequest,
 ) (*pagination.CursorListResult[*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem], error) {
-		if req == nil || req.Filter == nil {
-			return nil, errortypes.NewValidationError(
-				"filter",
-				errortypes.ErrRequired,
-				"Approval queue filter is required",
-			)
-		}
-
-		after, err := approvalQueueAfter(req.Cursor)
-		if err != nil {
-			return nil, err
-		}
-
-		dba := r.db.DBForContext(ctx)
-
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, countErr := dba.
-				NewSelect().
-				TableExpr("invoice_adjustments AS ia").
-				Apply(approvalQueueFilterJoins).
-				Apply(approvalQueueConditions(req.Filter)).
-				Count(ctx)
-			if countErr != nil {
-				return nil, fmt.Errorf("count invoice adjustment approvals: %w", countErr)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem], error) {
+			if req == nil || req.Filter == nil {
+				return nil, errortypes.NewValidationError(
+					"filter",
+					errortypes.ErrRequired,
+					"Approval queue filter is required",
+				)
 			}
-			totalCount = &total
-		}
 
-		return dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(
-					items *[]*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem,
-				) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(items).
-						ModelTableExpr("invoice_adjustments AS ia").
-						Apply(approvalQueueColumns).
-						Apply(approvalQueueFilterJoins).
-						Apply(approvalQueueDetailJoins).
-						Apply(approvalQueueConditions(req.Filter))
+			after, err := approvalQueueAfter(req.Cursor)
+			if err != nil {
+				return nil, err
+			}
+
+			dba := r.db.DBForContext(ctx)
+
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, countErr := dba.
+					NewSelect().
+					TableExpr("invoice_adjustments AS ia").
+					Apply(approvalQueueFilterJoins).
+					Apply(approvalQueueConditions(req.Filter)).
+					Count(ctx)
+				if countErr != nil {
+					return nil, fmt.Errorf("count invoice adjustment approvals: %w", countErr)
+				}
+				totalCount = &total
+			}
+
+			return dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(
+						items *[]*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem,
+					) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(items).
+							ModelTableExpr("invoice_adjustments AS ia").
+							Apply(approvalQueueColumns).
+							Apply(approvalQueueFilterJoins).
+							Apply(approvalQueueDetailJoins).
+							Apply(approvalQueueConditions(req.Filter))
+					},
+					Apply: func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
+						if after != nil {
+							q = q.Where(
+								"(?, ia.id) < (?, ?)",
+								bun.Safe(approvalQueueSortExpr),
+								after.sortAt,
+								after.id,
+							)
+						}
+						req.Filter.CursorSort = approvalQueueCursorSort
+						req.Filter.CursorColumns = approvalQueueCursorColumns
+						return q.
+							OrderExpr(approvalQueueSortExpr + " DESC").
+							OrderExpr("ia.id DESC"), nil
+					},
 				},
-				Apply: func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
-					if after != nil {
-						q = q.Where(
-							"(?, ia.id) < (?, ?)",
-							bun.Safe(approvalQueueSortExpr),
-							after.sortAt,
-							after.id,
-						)
-					}
-					req.Filter.CursorSort = approvalQueueCursorSort
-					req.Filter.CursorColumns = approvalQueueCursorColumns
-					return q.
-						OrderExpr(approvalQueueSortExpr + " DESC").
-						OrderExpr("ia.id DESC"), nil
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 const approvalQueueSortExpr = "COALESCE(ia.submitted_at, ia.created_at)"
@@ -843,96 +913,103 @@ func (r *repository) ListReconciliationQueue(
 	ctx context.Context,
 	req invoiceadjustmentports.ListReconciliationQueueRequest,
 ) (*pagination.ListResult[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem], error) {
-		entities := make(
-			[]*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem,
-			0,
-			req.Filter.Pagination.SafeLimit(),
-		)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			ModelTableExpr("invoice_reconciliation_exceptions AS ire").
-			ColumnExpr("ire.id AS exception_id").
-			ColumnExpr("ire.adjustment_id").
-			ColumnExpr("ia.correction_group_id").
-			ColumnExpr("ire.status").
-			ColumnExpr("ire.reason").
-			ColumnExpr("ire.amount").
-			ColumnExpr("ia.original_invoice_id").
-			ColumnExpr("orig.number AS original_invoice_number").
-			ColumnExpr("orig.status AS original_invoice_status").
-			ColumnExpr("ire.credit_memo_invoice_id").
-			ColumnExpr("COALESCE(cm.number, '') AS credit_memo_invoice_number").
-			ColumnExpr("ia.replacement_invoice_id").
-			ColumnExpr("COALESCE(repl.number, '') AS replacement_invoice_number").
-			ColumnExpr("ia.rebill_queue_item_id").
-			ColumnExpr("COALESCE(rebq.number, '') AS rebill_queue_number").
-			ColumnExpr("orig.bill_to_name AS customer_name").
-			ColumnExpr("ia.kind AS adjustment_kind").
-			ColumnExpr("ia.status AS adjustment_status").
-			ColumnExpr("COALESCE(NULLIF(ia.policy_reason, ''), 'Adjustment-generated reconciliation') AS policy_source").
-			ColumnExpr("ia.submitted_by_id").
-			ColumnExpr("COALESCE(submitter.name, '') AS submitted_by_name").
-			ColumnExpr("ia.submitted_at").
-			ColumnExpr("COALESCE(ire.metadata->>'financeNotes', '') AS finance_notes").
-			ColumnExpr("ire.created_at").
-			ColumnExpr("ire.updated_at").
-			Join("JOIN invoice_adjustments AS ia ON ia.id = ire.adjustment_id AND ia.organization_id = ire.organization_id AND ia.business_unit_id = ire.business_unit_id").
-			Join("JOIN invoices AS orig ON orig.id = ia.original_invoice_id AND orig.organization_id = ia.organization_id AND orig.business_unit_id = ia.business_unit_id").
-			Join("LEFT JOIN invoices AS cm ON cm.id = ire.credit_memo_invoice_id AND cm.organization_id = ire.organization_id AND cm.business_unit_id = ire.business_unit_id").
-			Join("LEFT JOIN invoices AS repl ON repl.id = ia.replacement_invoice_id AND repl.organization_id = ia.organization_id AND repl.business_unit_id = ia.business_unit_id").
-			Join("LEFT JOIN billing_queue_items AS rebq ON rebq.id = ia.rebill_queue_item_id AND rebq.organization_id = ia.organization_id AND rebq.business_unit_id = ia.business_unit_id").
-			Join("LEFT JOIN users AS submitter ON submitter.id = ia.submitted_by_id").
-			Where("ire.organization_id = ?", req.Filter.TenantInfo.OrgID).
-			Where("ire.business_unit_id = ?", req.Filter.TenantInfo.BuID)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem], error) {
+			entities := make(
+				[]*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem,
+				0,
+				req.Filter.Pagination.SafeLimit(),
+			)
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				ModelTableExpr("invoice_reconciliation_exceptions AS ire").
+				ColumnExpr("ire.id AS exception_id").
+				ColumnExpr("ire.adjustment_id").
+				ColumnExpr("ia.correction_group_id").
+				ColumnExpr("ire.status").
+				ColumnExpr("ire.reason").
+				ColumnExpr("ire.amount").
+				ColumnExpr("ia.original_invoice_id").
+				ColumnExpr("orig.number AS original_invoice_number").
+				ColumnExpr("orig.status AS original_invoice_status").
+				ColumnExpr("ire.credit_memo_invoice_id").
+				ColumnExpr("COALESCE(cm.number, '') AS credit_memo_invoice_number").
+				ColumnExpr("ia.replacement_invoice_id").
+				ColumnExpr("COALESCE(repl.number, '') AS replacement_invoice_number").
+				ColumnExpr("ia.rebill_queue_item_id").
+				ColumnExpr("COALESCE(rebq.number, '') AS rebill_queue_number").
+				ColumnExpr("orig.bill_to_name AS customer_name").
+				ColumnExpr("ia.kind AS adjustment_kind").
+				ColumnExpr("ia.status AS adjustment_status").
+				ColumnExpr("COALESCE(NULLIF(ia.policy_reason, ''), 'Adjustment-generated reconciliation') AS policy_source").
+				ColumnExpr("ia.submitted_by_id").
+				ColumnExpr("COALESCE(submitter.name, '') AS submitted_by_name").
+				ColumnExpr("ia.submitted_at").
+				ColumnExpr("COALESCE(ire.metadata->>'financeNotes', '') AS finance_notes").
+				ColumnExpr("ire.created_at").
+				ColumnExpr("ire.updated_at").
+				Join("JOIN invoice_adjustments AS ia ON ia.id = ire.adjustment_id AND ia.organization_id = ire.organization_id AND ia.business_unit_id = ire.business_unit_id").
+				Join("JOIN invoices AS orig ON orig.id = ia.original_invoice_id AND orig.organization_id = ia.organization_id AND orig.business_unit_id = ia.business_unit_id").
+				Join("LEFT JOIN invoices AS cm ON cm.id = ire.credit_memo_invoice_id AND cm.organization_id = ire.organization_id AND cm.business_unit_id = ire.business_unit_id").
+				Join("LEFT JOIN invoices AS repl ON repl.id = ia.replacement_invoice_id AND repl.organization_id = ia.organization_id AND repl.business_unit_id = ia.business_unit_id").
+				Join("LEFT JOIN billing_queue_items AS rebq ON rebq.id = ia.rebill_queue_item_id AND rebq.organization_id = ia.organization_id AND rebq.business_unit_id = ia.business_unit_id").
+				Join("LEFT JOIN users AS submitter ON submitter.id = ia.submitted_by_id").
+				Where("ire.organization_id = ?", req.Filter.TenantInfo.OrgID).
+				Where("ire.business_unit_id = ?", req.Filter.TenantInfo.BuID)
 
-		applyAdjustmentSearch(query, req.Filter.Query)
-		applyReconciliationFilters(query, req.Filter.FieldFilters)
+			applyAdjustmentSearch(query, req.Filter.Query)
+			applyReconciliationFilters(query, req.Filter.FieldFilters)
 
-		total, err := query.
-			OrderExpr("CASE WHEN ire.status = 'Open' THEN 0 ELSE 1 END ASC").
-			OrderExpr("ire.updated_at DESC").
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := query.
+				OrderExpr("CASE WHEN ire.status = 'Open' THEN 0 ELSE 1 END ASC").
+				OrderExpr("ire.updated_at DESC").
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) ListBatchQueue(
 	ctx context.Context,
 	req invoiceadjustmentports.ListBatchQueueRequest,
 ) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error) {
-		entities := make(
-			[]*invoiceadjustment.InvoiceAdjustmentBatch,
-			0,
-			req.Filter.Pagination.SafeLimit(),
-		)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			ModelTableExpr("invoice_adjustment_batches AS iab").
-			ColumnExpr("iab.id").
-			ColumnExpr("iab.idempotency_key").
-			ColumnExpr("iab.status").
-			ColumnExpr("iab.total_count").
-			ColumnExpr("iab.processed_count").
-			ColumnExpr("iab.succeeded_count").
-			ColumnExpr("iab.failed_count").
-			ColumnExpr("GREATEST(iab.total_count - iab.processed_count, 0) AS pending_count").
-			ColumnExpr("iab.submitted_by_id").
-			ColumnExpr("COALESCE(submitter.name, '') AS submitted_by_name").
-			ColumnExpr("iab.submitted_at").
-			ColumnExpr(`COALESCE((
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error) {
+			entities := make(
+				[]*invoiceadjustment.InvoiceAdjustmentBatch,
+				0,
+				req.Filter.Pagination.SafeLimit(),
+			)
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				ModelTableExpr("invoice_adjustment_batches AS iab").
+				ColumnExpr("iab.id").
+				ColumnExpr("iab.idempotency_key").
+				ColumnExpr("iab.status").
+				ColumnExpr("iab.total_count").
+				ColumnExpr("iab.processed_count").
+				ColumnExpr("iab.succeeded_count").
+				ColumnExpr("iab.failed_count").
+				ColumnExpr("GREATEST(iab.total_count - iab.processed_count, 0) AS pending_count").
+				ColumnExpr("iab.submitted_by_id").
+				ColumnExpr("COALESCE(submitter.name, '') AS submitted_by_name").
+				ColumnExpr("iab.submitted_at").
+				ColumnExpr(`COALESCE((
 			SELECT iabi.error_message
 			FROM invoice_adjustment_batch_items AS iabi
 			WHERE iabi.batch_id = iab.id
@@ -943,7 +1020,7 @@ func (r *repository) ListBatchQueue(
 			ORDER BY iabi.updated_at DESC
 			LIMIT 1
 		), '') AS last_failure`).
-			ColumnExpr(`COALESCE((
+				ColumnExpr(`COALESCE((
 			SELECT COUNT(*)
 			FROM invoice_adjustment_batch_items AS iabi
 			WHERE iabi.batch_id = iab.id
@@ -951,29 +1028,30 @@ func (r *repository) ListBatchQueue(
 				AND iabi.business_unit_id = iab.business_unit_id
 				AND iabi.status = ?
 		), 0) AS last_failure_count`, invoiceadjustment.BatchItemStatusFailed).
-			ColumnExpr("iab.created_at").
-			ColumnExpr("iab.updated_at").
-			Join("LEFT JOIN users AS submitter ON submitter.id = iab.submitted_by_id").
-			Where("iab.organization_id = ?", req.Filter.TenantInfo.OrgID).
-			Where("iab.business_unit_id = ?", req.Filter.TenantInfo.BuID)
+				ColumnExpr("iab.created_at").
+				ColumnExpr("iab.updated_at").
+				Join("LEFT JOIN users AS submitter ON submitter.id = iab.submitted_by_id").
+				Where("iab.organization_id = ?", req.Filter.TenantInfo.OrgID).
+				Where("iab.business_unit_id = ?", req.Filter.TenantInfo.BuID)
 
-		applyBatchSearch(query, req.Filter.Query)
-		applyBatchFilters(query, req.Filter.FieldFilters)
+			applyBatchSearch(query, req.Filter.Query)
+			applyBatchFilters(query, req.Filter.FieldFilters)
 
-		total, err := query.
-			OrderExpr("COALESCE(iab.submitted_at, iab.created_at) DESC").
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := query.
+				OrderExpr("COALESCE(iab.submitted_at, iab.created_at) DESC").
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 //nolint:funlen // existing workflow or route registration is intentionally kept together
@@ -981,160 +1059,179 @@ func (r *repository) GetOperationsSummary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary, error) {
-		summary := &invoiceadjustmentports.InvoiceAdjustmentOperationsSummary{
-			AdjustmentsByStatus:         make([]*invoiceadjustmentports.InvoiceAdjustmentSummaryCount, 0),
-			ReasonDistribution:          make([]*invoiceadjustmentports.InvoiceAdjustmentSummaryCount, 0),
-			RepeatedAdjustments:         make([]*invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary, 0),
-			RepeatedCustomerAdjustments: make([]*invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary, 0),
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary, error) {
+			summary := &invoiceadjustmentports.InvoiceAdjustmentOperationsSummary{
+				AdjustmentsByStatus: make(
+					[]*invoiceadjustmentports.InvoiceAdjustmentSummaryCount,
+					0,
+				),
+				ReasonDistribution: make(
+					[]*invoiceadjustmentports.InvoiceAdjustmentSummaryCount,
+					0,
+				),
+				RepeatedAdjustments: make(
+					[]*invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary,
+					0,
+				),
+				RepeatedCustomerAdjustments: make(
+					[]*invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary,
+					0,
+				),
+			}
 
-		type countRow struct {
-			Label string `bun:"label"`
-			Count int    `bun:"count"`
-		}
+			type countRow struct {
+				Label string `bun:"label"`
+				Count int    `bun:"count"`
+			}
 
-		adjustmentCounts := make([]countRow, 0)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			TableExpr("invoice_adjustments AS ia").
-			ColumnExpr("ia.status AS label").
-			ColumnExpr("COUNT(*) AS count").
-			Where("ia.organization_id = ?", tenantInfo.OrgID).
-			Where("ia.business_unit_id = ?", tenantInfo.BuID).
-			Group("ia.status").
-			OrderExpr("COUNT(*) DESC").
-			Scan(ctx, &adjustmentCounts); err != nil {
-			return nil, fmt.Errorf("get adjustment status summary: %w", err)
-		}
-		for _, row := range adjustmentCounts {
-			summary.AdjustmentsByStatus = append(
-				summary.AdjustmentsByStatus,
-				&invoiceadjustmentports.InvoiceAdjustmentSummaryCount{
-					Label: row.Label,
-					Count: row.Count,
-				},
-			)
-		}
+			adjustmentCounts := make([]countRow, 0)
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				TableExpr("invoice_adjustments AS ia").
+				ColumnExpr("ia.status AS label").
+				ColumnExpr("COUNT(*) AS count").
+				Where("ia.organization_id = ?", tenantInfo.OrgID).
+				Where("ia.business_unit_id = ?", tenantInfo.BuID).
+				Group("ia.status").
+				OrderExpr("COUNT(*) DESC").
+				Scan(ctx, &adjustmentCounts); err != nil {
+				return nil, fmt.Errorf("get adjustment status summary: %w", err)
+			}
+			for _, row := range adjustmentCounts {
+				summary.AdjustmentsByStatus = append(
+					summary.AdjustmentsByStatus,
+					&invoiceadjustmentports.InvoiceAdjustmentSummaryCount{
+						Label: row.Label,
+						Count: row.Count,
+					},
+				)
+			}
 
-		var err error
-		if summary.ApprovalsPending, err = r.countAdjustmentsByStatus(
-			ctx,
-			tenantInfo,
-			invoiceadjustment.StatusPendingApproval,
-		); err != nil {
-			return nil, err
-		}
-		if summary.ReconciliationPending, err = r.countReconciliationExceptionsByStatus(
-			ctx,
-			tenantInfo,
-			invoiceadjustment.ExceptionStatusOpen,
-		); err != nil {
-			return nil, err
-		}
-		if summary.WriteOffPending, err = r.countPendingWriteOffs(ctx, tenantInfo); err != nil {
-			return nil, err
-		}
-		if summary.BatchesInFlight, err = r.countBatchesInFlight(ctx, tenantInfo); err != nil {
-			return nil, err
-		}
-		if summary.FailedBatchItems, err = r.countFailedBatchItems(ctx, tenantInfo); err != nil {
-			return nil, err
-		}
+			var err error
+			if summary.ApprovalsPending, err = r.countAdjustmentsByStatus(
+				ctx,
+				tenantInfo,
+				invoiceadjustment.StatusPendingApproval,
+			); err != nil {
+				return nil, err
+			}
+			if summary.ReconciliationPending, err = r.countReconciliationExceptionsByStatus(
+				ctx,
+				tenantInfo,
+				invoiceadjustment.ExceptionStatusOpen,
+			); err != nil {
+				return nil, err
+			}
+			if summary.WriteOffPending, err = r.countPendingWriteOffs(ctx, tenantInfo); err != nil {
+				return nil, err
+			}
+			if summary.BatchesInFlight, err = r.countBatchesInFlight(ctx, tenantInfo); err != nil {
+				return nil, err
+			}
+			if summary.FailedBatchItems, err = r.countFailedBatchItems(
+				ctx,
+				tenantInfo,
+			); err != nil {
+				return nil, err
+			}
 
-		reasonRows := make([]countRow, 0)
-		if err = r.db.DBForContext(ctx).
-			NewSelect().
-			TableExpr("invoice_adjustments AS ia").
-			ColumnExpr("COALESCE(NULLIF(TRIM(ia.reason), ''), 'Unspecified') AS label").
-			ColumnExpr("COUNT(*) AS count").
-			Where("ia.organization_id = ?", tenantInfo.OrgID).
-			Where("ia.business_unit_id = ?", tenantInfo.BuID).
-			GroupExpr("COALESCE(NULLIF(TRIM(ia.reason), ''), 'Unspecified')").
-			OrderExpr("COUNT(*) DESC").
-			Limit(8).
-			Scan(ctx, &reasonRows); err != nil {
-			return nil, fmt.Errorf("get adjustment reason summary: %w", err)
-		}
-		for _, row := range reasonRows {
-			summary.ReasonDistribution = append(
-				summary.ReasonDistribution,
-				&invoiceadjustmentports.InvoiceAdjustmentSummaryCount{
-					Label: row.Label,
-					Count: row.Count,
-				},
-			)
-		}
+			reasonRows := make([]countRow, 0)
+			if err = r.db.DBForContext(ctx).
+				NewSelect().
+				TableExpr("invoice_adjustments AS ia").
+				ColumnExpr("COALESCE(NULLIF(TRIM(ia.reason), ''), 'Unspecified') AS label").
+				ColumnExpr("COUNT(*) AS count").
+				Where("ia.organization_id = ?", tenantInfo.OrgID).
+				Where("ia.business_unit_id = ?", tenantInfo.BuID).
+				GroupExpr("COALESCE(NULLIF(TRIM(ia.reason), ''), 'Unspecified')").
+				OrderExpr("COUNT(*) DESC").
+				Limit(8).
+				Scan(ctx, &reasonRows); err != nil {
+				return nil, fmt.Errorf("get adjustment reason summary: %w", err)
+			}
+			for _, row := range reasonRows {
+				summary.ReasonDistribution = append(
+					summary.ReasonDistribution,
+					&invoiceadjustmentports.InvoiceAdjustmentSummaryCount{
+						Label: row.Label,
+						Count: row.Count,
+					},
+				)
+			}
 
-		type repeatedRow struct {
-			EntityID   pulid.ID `bun:"entity_id"`
-			EntityType string   `bun:"entity_type"`
-			Label      string   `bun:"label"`
-			Count      int      `bun:"count"`
-		}
+			type repeatedRow struct {
+				EntityID   pulid.ID `bun:"entity_id"`
+				EntityType string   `bun:"entity_type"`
+				Label      string   `bun:"label"`
+				Count      int      `bun:"count"`
+			}
 
-		repeatedInvoices := make([]repeatedRow, 0)
-		if err = r.db.DBForContext(ctx).
-			NewSelect().
-			TableExpr("invoice_adjustments AS ia").
-			ColumnExpr("ia.original_invoice_id AS entity_id").
-			ColumnExpr("'invoice' AS entity_type").
-			ColumnExpr("orig.number AS label").
-			ColumnExpr("COUNT(*) AS count").
-			Join("JOIN invoices AS orig ON orig.id = ia.original_invoice_id AND orig.organization_id = ia.organization_id AND orig.business_unit_id = ia.business_unit_id").
-			Where("ia.organization_id = ?", tenantInfo.OrgID).
-			Where("ia.business_unit_id = ?", tenantInfo.BuID).
-			Group("ia.original_invoice_id", "orig.number").
-			Having("COUNT(*) > 1").
-			OrderExpr("COUNT(*) DESC, MAX(ia.created_at) DESC").
-			Limit(5).
-			Scan(ctx, &repeatedInvoices); err != nil {
-			return nil, fmt.Errorf("get repeated invoice adjustments: %w", err)
-		}
-		for _, row := range repeatedInvoices {
-			summary.RepeatedAdjustments = append(
-				summary.RepeatedAdjustments,
-				&invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary{
-					EntityID:   row.EntityID,
-					EntityType: row.EntityType,
-					Label:      row.Label,
-					Count:      row.Count,
-				},
-			)
-		}
+			repeatedInvoices := make([]repeatedRow, 0)
+			if err = r.db.DBForContext(ctx).
+				NewSelect().
+				TableExpr("invoice_adjustments AS ia").
+				ColumnExpr("ia.original_invoice_id AS entity_id").
+				ColumnExpr("'invoice' AS entity_type").
+				ColumnExpr("orig.number AS label").
+				ColumnExpr("COUNT(*) AS count").
+				Join("JOIN invoices AS orig ON orig.id = ia.original_invoice_id AND orig.organization_id = ia.organization_id AND orig.business_unit_id = ia.business_unit_id").
+				Where("ia.organization_id = ?", tenantInfo.OrgID).
+				Where("ia.business_unit_id = ?", tenantInfo.BuID).
+				Group("ia.original_invoice_id", "orig.number").
+				Having("COUNT(*) > 1").
+				OrderExpr("COUNT(*) DESC, MAX(ia.created_at) DESC").
+				Limit(5).
+				Scan(ctx, &repeatedInvoices); err != nil {
+				return nil, fmt.Errorf("get repeated invoice adjustments: %w", err)
+			}
+			for _, row := range repeatedInvoices {
+				summary.RepeatedAdjustments = append(
+					summary.RepeatedAdjustments,
+					&invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary{
+						EntityID:   row.EntityID,
+						EntityType: row.EntityType,
+						Label:      row.Label,
+						Count:      row.Count,
+					},
+				)
+			}
 
-		repeatedCustomers := make([]repeatedRow, 0)
-		if err = r.db.DBForContext(ctx).
-			NewSelect().
-			TableExpr("invoice_adjustments AS ia").
-			ColumnExpr("orig.customer_id AS entity_id").
-			ColumnExpr("'customer' AS entity_type").
-			ColumnExpr("orig.bill_to_name AS label").
-			ColumnExpr("COUNT(*) AS count").
-			Join("JOIN invoices AS orig ON orig.id = ia.original_invoice_id AND orig.organization_id = ia.organization_id AND orig.business_unit_id = ia.business_unit_id").
-			Where("ia.organization_id = ?", tenantInfo.OrgID).
-			Where("ia.business_unit_id = ?", tenantInfo.BuID).
-			Group("orig.customer_id", "orig.bill_to_name").
-			Having("COUNT(*) > 1").
-			OrderExpr("COUNT(*) DESC, MAX(ia.created_at) DESC").
-			Limit(5).
-			Scan(ctx, &repeatedCustomers); err != nil {
-			return nil, fmt.Errorf("get repeated customer adjustments: %w", err)
-		}
-		for _, row := range repeatedCustomers {
-			summary.RepeatedCustomerAdjustments = append(
-				summary.RepeatedCustomerAdjustments,
-				&invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary{
-					EntityID:   row.EntityID,
-					EntityType: row.EntityType,
-					Label:      row.Label,
-					Count:      row.Count,
-				},
-			)
-		}
+			repeatedCustomers := make([]repeatedRow, 0)
+			if err = r.db.DBForContext(ctx).
+				NewSelect().
+				TableExpr("invoice_adjustments AS ia").
+				ColumnExpr("orig.customer_id AS entity_id").
+				ColumnExpr("'customer' AS entity_type").
+				ColumnExpr("orig.bill_to_name AS label").
+				ColumnExpr("COUNT(*) AS count").
+				Join("JOIN invoices AS orig ON orig.id = ia.original_invoice_id AND orig.organization_id = ia.organization_id AND orig.business_unit_id = ia.business_unit_id").
+				Where("ia.organization_id = ?", tenantInfo.OrgID).
+				Where("ia.business_unit_id = ?", tenantInfo.BuID).
+				Group("orig.customer_id", "orig.bill_to_name").
+				Having("COUNT(*) > 1").
+				OrderExpr("COUNT(*) DESC, MAX(ia.created_at) DESC").
+				Limit(5).
+				Scan(ctx, &repeatedCustomers); err != nil {
+				return nil, fmt.Errorf("get repeated customer adjustments: %w", err)
+			}
+			for _, row := range repeatedCustomers {
+				summary.RepeatedCustomerAdjustments = append(
+					summary.RepeatedCustomerAdjustments,
+					&invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary{
+						EntityID:   row.EntityID,
+						EntityType: row.EntityType,
+						Label:      row.Label,
+						Count:      row.Count,
+					},
+				)
+			}
 
-		return summary, nil
-	})
+			return summary, nil
+		},
+	)
 }
 
 func applyAdjustmentSearch(query *bun.SelectQuery, search string) {

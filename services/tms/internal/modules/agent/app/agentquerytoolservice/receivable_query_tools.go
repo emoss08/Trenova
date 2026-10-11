@@ -5,18 +5,18 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicerunservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoicerunservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -293,10 +293,13 @@ func (t *listInvoiceAdjustmentsTool) lineage(
 		return list, nil
 	}
 
-	lineage, err := t.adjustments.GetLineage(ctx, &invoiceadjustmentports.GetInvoiceAdjustmentLineageRequest{
-		CorrectionGroupID: entity.CorrectionGroupID,
-		TenantInfo:        tenantOf(params),
-	})
+	lineage, err := t.adjustments.GetLineage(
+		ctx,
+		&invoiceadjustmentports.GetInvoiceAdjustmentLineageRequest{
+			CorrectionGroupID: entity.CorrectionGroupID,
+			TenantInfo:        tenantOf(params),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -407,10 +410,13 @@ func (t *getInvoiceAdjustmentTool) Query(
 		return nil, err
 	}
 
-	adjustment, err := t.adjustments.GetDetail(ctx, &invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
-		AdjustmentID: id,
-		TenantInfo:   tenantOf(params),
-	})
+	adjustment, err := t.adjustments.GetDetail(
+		ctx,
+		&invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
+			AdjustmentID: id,
+			TenantInfo:   tenantOf(params),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

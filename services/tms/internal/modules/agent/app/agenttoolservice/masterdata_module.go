@@ -1,21 +1,21 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
-	"github.com/emoss08/trenova/internal/modules/parties/app/carriercapacityservice"
-	"github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
-	"github.com/emoss08/trenova/internal/modules/reference/app/commodityservice"
-	"github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
-	"github.com/emoss08/trenova/internal/modules/reference/app/hazardousmaterialservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
-	"github.com/emoss08/trenova/internal/modules/places/app/locationservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
-	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
-	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowerservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carriercapacityservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
+	"github.com/emoss08/trenova/internal/modules/places/app/locationservice"
+	"github.com/emoss08/trenova/internal/modules/reference/app/commodityservice"
+	"github.com/emoss08/trenova/internal/modules/reference/app/hazardousmaterialservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
 )
 
 var (

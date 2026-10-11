@@ -18,8 +18,10 @@ const (
 )
 
 var (
-	ErrQueryTooShort    = errors.New("search query is too short; describe what you are looking for")
-	ErrQueryTooLong     = errors.New("search query is longer than 400 characters; keep it to the question itself")
+	ErrQueryTooShort = errors.New("search query is too short; describe what you are looking for")
+	ErrQueryTooLong  = errors.New(
+		"search query is longer than 400 characters; keep it to the question itself",
+	)
 	ErrQueryHasRecordID = errors.New(
 		"search queries leave Trenova, so they cannot include Trenova record IDs; describe the topic in general terms instead",
 	)
@@ -54,7 +56,8 @@ func CheckSearchQuery(query string) error {
 	}
 
 	for _, candidate := range phonePattern.FindAllString(trimmed, -1) {
-		if len(stringutils.DigitsOnly(candidate)) >= minPhoneDigits && !looksLikeDateRange(candidate) {
+		if len(stringutils.DigitsOnly(candidate)) >= minPhoneDigits &&
+			!looksLikeDateRange(candidate) {
 			return ErrQueryHasPhone
 		}
 	}

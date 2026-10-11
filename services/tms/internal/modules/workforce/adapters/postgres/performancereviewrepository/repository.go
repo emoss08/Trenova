@@ -73,152 +73,168 @@ func (r *repository) ListTemplates(
 	ctx context.Context,
 	req *workerports.ListReviewTemplatesRequest,
 ) (*pagination.CursorListResult[*worker.PerformanceReviewTemplate], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*worker.PerformanceReviewTemplate], error) {
-		log := r.l.With(zap.String("operation", "ListTemplates"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*worker.PerformanceReviewTemplate], error) {
+			log := r.l.With(zap.String("operation", "ListTemplates"))
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*worker.PerformanceReviewTemplate)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						workercol.PerformanceReviewTemplateTable.Alias,
-						req.Filter,
-						(*worker.PerformanceReviewTemplate)(nil),
-					)
-					return r.applyTemplateFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*worker.PerformanceReviewTemplate)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							workercol.PerformanceReviewTemplateTable.Alias,
+							req.Filter,
+							(*worker.PerformanceReviewTemplate)(nil),
+						)
+						return r.applyTemplateFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count review templates", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*worker.PerformanceReviewTemplate]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(items *[]*worker.PerformanceReviewTemplate) *bun.SelectQuery {
+						return dba.NewSelect().
+							Model(items).
+							ColumnExpr(workercol.PerformanceReviewTemplateTable.All())
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						sq, applyErr := querybuilder.ApplyCursorFilters(
+							sq,
+							workercol.PerformanceReviewTemplateTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*worker.PerformanceReviewTemplate)(nil),
+						)
+						if applyErr != nil {
+							return sq, applyErr
+						}
+						return r.applyTemplateFilters(sq, req), nil
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count review templates", zap.Error(err))
+				log.Error("failed to list review templates", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*worker.PerformanceReviewTemplate]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(items *[]*worker.PerformanceReviewTemplate) *bun.SelectQuery {
-					return dba.NewSelect().
-						Model(items).
-						ColumnExpr(workercol.PerformanceReviewTemplateTable.All())
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					sq, applyErr := querybuilder.ApplyCursorFilters(
-						sq,
-						workercol.PerformanceReviewTemplateTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*worker.PerformanceReviewTemplate)(nil),
-					)
-					if applyErr != nil {
-						return sq, applyErr
-					}
-					return r.applyTemplateFilters(sq, req), nil
-				},
-			},
-		)
-		if err != nil {
-			log.Error("failed to list review templates", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) ListActiveTemplates(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*worker.PerformanceReviewTemplate, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.PerformanceReviewTemplate, error) {
-		cols := workercol.PerformanceReviewTemplateColumns
-		entities := make([]*worker.PerformanceReviewTemplate, 0, 8)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.PerformanceReviewTemplateScopeTenant(sq, tenantInfo).
-					Where(cols.Status.Eq(), domaintypes.StatusActive)
-			}).
-			Order(cols.IsDefault.OrderDesc()).
-			Order(cols.Name.OrderAsc()).
-			Scan(ctx)
-		if err != nil {
-			r.l.Error("failed to list active review templates", zap.Error(err))
-			return nil, err
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*worker.PerformanceReviewTemplate, error) {
+			cols := workercol.PerformanceReviewTemplateColumns
+			entities := make([]*worker.PerformanceReviewTemplate, 0, 8)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return workercol.PerformanceReviewTemplateScopeTenant(sq, tenantInfo).
+						Where(cols.Status.Eq(), domaintypes.StatusActive)
+				}).
+				Order(cols.IsDefault.OrderDesc()).
+				Order(cols.Name.OrderAsc()).
+				Scan(ctx)
+			if err != nil {
+				r.l.Error("failed to list active review templates", zap.Error(err))
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) TemplateSelectOptions(
 	ctx context.Context,
 	req *workerports.ReviewTemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*worker.PerformanceReviewTemplate], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*worker.PerformanceReviewTemplate], error) {
-		cols := workercol.PerformanceReviewTemplateColumns
-		return dbhelper.SelectOptions[*worker.PerformanceReviewTemplate](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					cols.ID,
-					cols.Code,
-					cols.Name,
-					cols.Description,
-					cols.IsDefault,
-					cols.CadenceMonths,
-					cols.Items,
-					cols.CreatedAt,
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*worker.PerformanceReviewTemplate], error) {
+			cols := workercol.PerformanceReviewTemplateColumns
+			return dbhelper.SelectOptions[*worker.PerformanceReviewTemplate](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.Code,
+						cols.Name,
+						cols.Description,
+						cols.IsDefault,
+						cols.CadenceMonths,
+						cols.Items,
+						cols.CreatedAt,
+					},
+					OrgColumnRef: &cols.OrganizationID,
+					BuColumnRef:  &cols.BusinessUnitID,
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						return q.Where(cols.Status.Eq(), domaintypes.StatusActive).
+							Order(cols.IsDefault.OrderDesc()).
+							Order(cols.Name.OrderAsc())
+					},
+					EntityName: "PerformanceReviewTemplate",
+					SearchColumnRefs: []buncolgen.Column{
+						cols.Code,
+						cols.Name,
+						cols.Description,
+					},
 				},
-				OrgColumnRef: &cols.OrganizationID,
-				BuColumnRef:  &cols.BusinessUnitID,
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Where(cols.Status.Eq(), domaintypes.StatusActive).
-						Order(cols.IsDefault.OrderDesc()).
-						Order(cols.Name.OrderAsc())
-				},
-				EntityName: "PerformanceReviewTemplate",
-				SearchColumnRefs: []buncolgen.Column{
-					cols.Code,
-					cols.Name,
-					cols.Description,
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 func (r *repository) GetTemplateByID(
 	ctx context.Context,
 	req *workerports.GetReviewTemplateByIDRequest,
 ) (*worker.PerformanceReviewTemplate, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PerformanceReviewTemplate, error) {
-		entity := new(worker.PerformanceReviewTemplate)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.PerformanceReviewTemplateScopeTenant(sq, req.TenantInfo).
-					Where(workercol.PerformanceReviewTemplateColumns.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "PerformanceReviewTemplate")
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*worker.PerformanceReviewTemplate, error) {
+			entity := new(worker.PerformanceReviewTemplate)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return workercol.PerformanceReviewTemplateScopeTenant(sq, req.TenantInfo).
+						Where(workercol.PerformanceReviewTemplateColumns.ID.Eq(), req.ID)
+				}).
+				Scan(ctx)
+			if err != nil {
+				return nil, dberror.HandleNotFoundError(err, "PerformanceReviewTemplate")
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) TemplateCodeExists(
@@ -252,51 +268,63 @@ func (r *repository) CreateTemplate(
 	ctx context.Context,
 	entity *worker.PerformanceReviewTemplate,
 ) (*worker.PerformanceReviewTemplate, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.PerformanceReviewTemplate, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, duplicateCode()
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*worker.PerformanceReviewTemplate, error) {
+			if _, err := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(entity).
+				Returning("*").
+				Exec(ctx); err != nil {
+				if dberror.IsUniqueConstraintViolation(err) {
+					return nil, duplicateCode()
+				}
+				r.l.Error("failed to create review template", zap.Error(err))
+				return nil, err
 			}
-			r.l.Error("failed to create review template", zap.Error(err))
-			return nil, err
-		}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) UpdateTemplate(
 	ctx context.Context,
 	entity *worker.PerformanceReviewTemplate,
 ) (*worker.PerformanceReviewTemplate, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.PerformanceReviewTemplate, error) {
-		ov := entity.Version
-		entity.Version++
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*worker.PerformanceReviewTemplate, error) {
+			ov := entity.Version
+			entity.Version++
 
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(workercol.PerformanceReviewTemplateColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, duplicateCode()
+			results, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(entity).
+				WherePK().
+				Where(workercol.PerformanceReviewTemplateColumns.Version.Eq(), ov).
+				Returning("*").
+				Exec(ctx)
+			if err != nil {
+				if dberror.IsUniqueConstraintViolation(err) {
+					return nil, duplicateCode()
+				}
+				r.l.Error("failed to update review template", zap.Error(err))
+				return nil, err
 			}
-			r.l.Error("failed to update review template", zap.Error(err))
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(results, "PerformanceReviewTemplate", entity.ID.String()); err != nil {
-			return nil, err
-		}
+			if err = dberror.CheckRowsAffected(
+				results,
+				"PerformanceReviewTemplate",
+				entity.ID.String(),
+			); err != nil {
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) ClearDefaultTemplate(
@@ -526,7 +554,11 @@ func (r *repository) UpdateReview(
 			r.l.Error("failed to update performance review", zap.Error(err))
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, "PerformanceReview", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"PerformanceReview",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 

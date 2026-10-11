@@ -47,7 +47,11 @@ func CreateSystemAgentDefinitions(ctx context.Context, tx bun.IDB, scope Scope) 
 		if definition.TriggerMode == agentdefinition.TriggerScheduled {
 			next, err := definition.ComputeNextRun(now)
 			if err != nil {
-				return created, fmt.Errorf("schedule system agent %s: %w", definition.SystemKey, err)
+				return created, fmt.Errorf(
+					"schedule system agent %s: %w",
+					definition.SystemKey,
+					err,
+				)
 			}
 			definition.NextRunAt = &next
 		}

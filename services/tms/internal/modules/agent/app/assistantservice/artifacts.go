@@ -11,15 +11,15 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
@@ -1763,7 +1763,8 @@ func (s *Service) followDecisions(
 				byID[plan.ID] = plan.Status
 			}
 			for _, artifact := range artifacts {
-				if status, ok := byID[artifact.PlanID]; ok && artifact.Kind == assistantartifact.KindPlan {
+				if status, ok := byID[artifact.PlanID]; ok &&
+					artifact.Kind == assistantartifact.KindPlan {
 					artifact.Status = planStatus(status)
 				}
 			}

@@ -42,32 +42,36 @@ func (r *repository) ListPartnerSettingSchemas(
 	ctx context.Context,
 	req *ediports.ListEDIPartnerSettingSchemasRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerSettingSchema], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartnerSettingSchema], error) {
-		entities := make([]*edi.EDIPartnerSettingSchema, 0, req.Filter.Pagination.SafeLimit())
-		cols := edicol.EDIPartnerSettingSchemaColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartnerSettingSchema], error) {
+			entities := make([]*edi.EDIPartnerSettingSchema, 0, req.Filter.Pagination.SafeLimit())
+			cols := edicol.EDIPartnerSettingSchemaColumns
 
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
-				return filterPartnerSettingSchemasQuery(query, req)
-			}).
-			OrderExpr(
-				cols.OrganizationID.IsNotNull() + " DESC, " +
-					cols.SchemaVersion.OrderDesc() + ", " +
-					cols.CreatedAt.OrderDesc(),
-			).
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return &pagination.ListResult[*edi.EDIPartnerSettingSchema]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
+					return filterPartnerSettingSchemasQuery(query, req)
+				}).
+				OrderExpr(
+					cols.OrganizationID.IsNotNull() + " DESC, " +
+						cols.SchemaVersion.OrderDesc() + ", " +
+						cols.CreatedAt.OrderDesc(),
+				).
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return &pagination.ListResult[*edi.EDIPartnerSettingSchema]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) GetPartnerSettingSchema(
@@ -155,29 +159,33 @@ func (r *repository) searchPartnerSettingFields(
 	ctx context.Context,
 	req *ediports.ListEDIPartnerSettingFieldsRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerSettingField], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartnerSettingField], error) {
-		entities := make([]*edi.EDIPartnerSettingField, 0, req.Filter.Pagination.SafeLimit())
-		fieldCols := edicol.EDIPartnerSettingFieldColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartnerSettingField], error) {
+			entities := make([]*edi.EDIPartnerSettingField, 0, req.Filter.Pagination.SafeLimit())
+			fieldCols := edicol.EDIPartnerSettingFieldColumns
 
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Join(partnerSettingSchemaJoin()).
-			Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
-				return filterPartnerSettingFieldsQuery(query, req)
-			}).
-			Order(fieldCols.DisplayOrder.OrderAsc(), fieldCols.Path.OrderAsc()).
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return &pagination.ListResult[*edi.EDIPartnerSettingField]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Join(partnerSettingSchemaJoin()).
+				Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
+					return filterPartnerSettingFieldsQuery(query, req)
+				}).
+				Order(fieldCols.DisplayOrder.OrderAsc(), fieldCols.Path.OrderAsc()).
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return &pagination.ListResult[*edi.EDIPartnerSettingField]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func filterPartnerSettingSchemasQuery(

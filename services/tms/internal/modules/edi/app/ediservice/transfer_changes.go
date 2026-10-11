@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -81,34 +81,38 @@ func (s *Service) reviewTransferChange(
 		ctx,
 		"apply a reviewed transfer change to the linked shipments of both organizations in one transaction",
 	)
-	err = s.db.WithTx(reviewCtx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		if status == edi.TransferChangeStatusApplied {
-			if txErr := s.applyApprovedTransferChange(
-				txCtx,
-				req.TenantInfo,
-				change,
-				actor,
-				now,
-			); txErr != nil {
+	err = s.db.WithTx(
+		reviewCtx,
+		kernelports.TxOptions{},
+		func(txCtx context.Context, _ bun.Tx) error {
+			if status == edi.TransferChangeStatusApplied {
+				if txErr := s.applyApprovedTransferChange(
+					txCtx,
+					req.TenantInfo,
+					change,
+					actor,
+					now,
+				); txErr != nil {
+					return txErr
+				}
+			}
+
+			MarkTransferChangeReviewed(change, &ChangeReviewMark{
+				Applied:    status == edi.TransferChangeStatusApplied,
+				ReviewerID: actor.UserID,
+				Reason:     req.Reason,
+				At:         now,
+			})
+
+			var txErr error
+			updated, txErr = s.transferChangeRepo.UpdateTransferChange(txCtx, change)
+			if txErr != nil {
 				return txErr
 			}
-		}
 
-		MarkTransferChangeReviewed(change, &ChangeReviewMark{
-			Applied:    status == edi.TransferChangeStatusApplied,
-			ReviewerID: actor.UserID,
-			Reason:     req.Reason,
-			At:         now,
-		})
-
-		var txErr error
-		updated, txErr = s.transferChangeRepo.UpdateTransferChange(txCtx, change)
-		if txErr != nil {
-			return txErr
-		}
-
-		return s.commentTransferChangeReview(txCtx, req.TenantInfo, updated)
-	})
+			return s.commentTransferChangeReview(txCtx, req.TenantInfo, updated)
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

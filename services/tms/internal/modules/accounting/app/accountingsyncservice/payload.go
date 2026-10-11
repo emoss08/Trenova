@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -154,11 +154,14 @@ func (s *Service) salesRef(
 		}
 	}
 
-	found, ok, err := sess.writer.FindDocument(ctx, &accountingsyncports.AccountingFindDocumentRequest{
-		Auth:      sess.auth,
-		Kind:      objectType,
-		DocNumber: inv.Number,
-	})
+	found, ok, err := sess.writer.FindDocument(
+		ctx,
+		&accountingsyncports.AccountingFindDocumentRequest{
+			Auth:      sess.auth,
+			Kind:      objectType,
+			DocNumber: inv.Number,
+		},
+	)
 	if err != nil {
 		return "", err
 	}
@@ -228,14 +231,20 @@ func (s *Service) pushSales(
 		doc.Refs = target.ExternalRefs
 		written, err = sess.writer.UpdateSalesDocument(ctx, doc)
 	} else {
-		written, err = s.createAdopting(ctx, sess, record, &accountingsyncports.AccountingFindDocumentRequest{
-			DocNumber:              doc.DocNumber,
-			CounterpartyExternalID: customerID,
-			TxnDate:                doc.TxnDate,
-			Total:                  salesTotal(doc.Lines),
-		}, func() (*accountingsyncports.AccountingDocumentResult, error) {
-			return sess.writer.CreateSalesDocument(ctx, doc)
-		})
+		written, err = s.createAdopting(
+			ctx,
+			sess,
+			record,
+			&accountingsyncports.AccountingFindDocumentRequest{
+				DocNumber:              doc.DocNumber,
+				CounterpartyExternalID: customerID,
+				TxnDate:                doc.TxnDate,
+				Total:                  salesTotal(doc.Lines),
+			},
+			func() (*accountingsyncports.AccountingDocumentResult, error) {
+				return sess.writer.CreateSalesDocument(ctx, doc)
+			},
+		)
 	}
 	if err != nil {
 		return partial(written), err
@@ -406,10 +415,13 @@ func (s *Service) applyReversal(
 	if memo.SourceInvoiceAdjustmentID.IsNil() {
 		return nil
 	}
-	adjustment, err := s.adjustments.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
-		ID:         memo.SourceInvoiceAdjustmentID,
-		TenantInfo: sess.tenant,
-	})
+	adjustment, err := s.adjustments.GetByID(
+		ctx,
+		invoiceadjustmentports.GetInvoiceAdjustmentRequest{
+			ID:         memo.SourceInvoiceAdjustmentID,
+			TenantInfo: sess.tenant,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -639,13 +651,19 @@ func (s *Service) pushPayment(
 	}
 	var written *accountingsyncports.AccountingDocumentResult
 	if doc.ExternalID == "" {
-		written, err = s.createAdopting(ctx, sess, record, &accountingsyncports.AccountingFindDocumentRequest{
-			DocNumber:              doc.ReferenceNumber,
-			CounterpartyExternalID: doc.CustomerExternalID,
-			TxnDate:                doc.TxnDate,
-			Total:                  doc.TotalAmount,
-			AppliesToExternalIDs:   appliedInvoices(doc.Applications),
-		}, save)
+		written, err = s.createAdopting(
+			ctx,
+			sess,
+			record,
+			&accountingsyncports.AccountingFindDocumentRequest{
+				DocNumber:              doc.ReferenceNumber,
+				CounterpartyExternalID: doc.CustomerExternalID,
+				TxnDate:                doc.TxnDate,
+				Total:                  doc.TotalAmount,
+				AppliesToExternalIDs:   appliedInvoices(doc.Applications),
+			},
+			save,
+		)
 	} else {
 		written, err = save()
 	}
@@ -802,14 +820,17 @@ func (s *Service) pushPaymentVoid(
 			return nil, waitFor(other.ID, "Waiting for a change to the payment to finish sending")
 		}
 	}
-	if _, err = s.records.SupersedeOlder(ctx, &accountingsyncports.SupersedeAccountingSyncRecordsRequest{
-		TenantInfo:     record.TenantInfo(),
-		ConnectionID:   record.ConnectionID,
-		ObjectType:     record.ObjectType,
-		ObjectID:       record.ObjectID,
-		Operation:      accountingsync.SyncOperationUpdate,
-		BeforeRevision: maxRevision,
-	}); err != nil {
+	if _, err = s.records.SupersedeOlder(
+		ctx,
+		&accountingsyncports.SupersedeAccountingSyncRecordsRequest{
+			TenantInfo:     record.TenantInfo(),
+			ConnectionID:   record.ConnectionID,
+			ObjectType:     record.ObjectType,
+			ObjectID:       record.ObjectID,
+			Operation:      accountingsync.SyncOperationUpdate,
+			BeforeRevision: maxRevision,
+		},
+	); err != nil {
 		return nil, err
 	}
 
@@ -918,15 +939,21 @@ func (s *Service) pushCreditApplication(
 		PrivateNote: "Applies " + memo.Number + " to " + target.Number +
 			sentDateNote(record, app.AccountingDate, sess.loc),
 	}
-	written, err := s.createAdopting(ctx, sess, record, &accountingsyncports.AccountingFindDocumentRequest{
-		CounterpartyExternalID: customerID,
-		TxnDate:                doc.TxnDate,
-		Total:                  doc.Amount,
-		AppliesToExternalIDs:   []string{invoiceID},
-		CreditExternalID:       memoID,
-	}, func() (*accountingsyncports.AccountingDocumentResult, error) {
-		return sess.writer.CreateCreditApplication(ctx, doc)
-	})
+	written, err := s.createAdopting(
+		ctx,
+		sess,
+		record,
+		&accountingsyncports.AccountingFindDocumentRequest{
+			CounterpartyExternalID: customerID,
+			TxnDate:                doc.TxnDate,
+			Total:                  doc.Amount,
+			AppliesToExternalIDs:   []string{invoiceID},
+			CreditExternalID:       memoID,
+		},
+		func() (*accountingsyncports.AccountingDocumentResult, error) {
+			return sess.writer.CreateCreditApplication(ctx, doc)
+		},
+	)
 	if err != nil {
 		return partial(written), err
 	}

@@ -204,11 +204,14 @@ func (s *Service) ConfirmByToken(
 		})
 	}
 
-	if _, err = s.repo.MarkTokenUsed(ctx, &rateconfirmationports.MarkRateConfirmationTokenUsedRequest{
-		TenantInfo: tenantInfo,
-		TokenID:    token.ID,
-		UsedAt:     timeutils.NowUnix(),
-	}); err != nil {
+	if _, err = s.repo.MarkTokenUsed(
+		ctx,
+		&rateconfirmationports.MarkRateConfirmationTokenUsedRequest{
+			TenantInfo: tenantInfo,
+			TokenID:    token.ID,
+			UsedAt:     timeutils.NowUnix(),
+		},
+	); err != nil {
 		s.l.Warn("failed to mark rate confirmation token used", zap.Error(err))
 	}
 

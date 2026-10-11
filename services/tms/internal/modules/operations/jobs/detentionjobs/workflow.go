@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/operations/jobs/detentionjobs/detentioncontract"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs/documentuploadcontract"
+	"github.com/emoss08/trenova/internal/modules/operations/jobs/detentionjobs/detentioncontract"
 
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs"

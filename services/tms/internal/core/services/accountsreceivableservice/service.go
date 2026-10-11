@@ -40,7 +40,10 @@ func (s *Service) ListCustomerLedger(
 ) ([]*customerledgerports.ARLedgerEntry, error) {
 	return s.repo.ListCustomerLedger(
 		ctx,
-		customerledgerports.ListCustomerLedgerRequest{TenantInfo: tenantInfo, CustomerID: customerID},
+		customerledgerports.ListCustomerLedgerRequest{
+			TenantInfo: tenantInfo,
+			CustomerID: customerID,
+		},
 	)
 }
 
@@ -76,7 +79,10 @@ func (s *Service) GetCustomerStatement(
 
 	customerName, err := s.repo.GetCustomerName(
 		ctx,
-		customerledgerports.GetARCustomerNameRequest{TenantInfo: tenantInfo, CustomerID: customerID},
+		customerledgerports.GetARCustomerNameRequest{
+			TenantInfo: tenantInfo,
+			CustomerID: customerID,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -84,7 +90,10 @@ func (s *Service) GetCustomerStatement(
 
 	ledger, err := s.repo.ListCustomerLedger(
 		ctx,
-		customerledgerports.ListCustomerLedgerRequest{TenantInfo: tenantInfo, CustomerID: customerID},
+		customerledgerports.ListCustomerLedgerRequest{
+			TenantInfo: tenantInfo,
+			CustomerID: customerID,
+		},
 	)
 	if err != nil {
 		return nil, err

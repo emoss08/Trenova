@@ -7,9 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
-	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -49,7 +49,10 @@ func isPolicyReason(reason carrierintel.EnrollmentReason) bool {
 	}
 }
 
-func (s *Service) CarrierSaved(ctx context.Context, event *carrierintelports.CarrierLifecycleEvent) {
+func (s *Service) CarrierSaved(
+	ctx context.Context,
+	event *carrierintelports.CarrierLifecycleEvent,
+) {
 	if event == nil || event.Carrier == nil || event.Carrier.DOTNumber == "" {
 		return
 	}
@@ -738,7 +741,14 @@ func (s *Service) pauseFromError(
 	if reason == carrierintel.FeedPauseReasonNone {
 		return result, cause
 	}
-	if err := s.pauseFeed(ctx, tenantInfo, provider, feedType, reason, errorSummary(cause)); err != nil {
+	if err := s.pauseFeed(
+		ctx,
+		tenantInfo,
+		provider,
+		feedType,
+		reason,
+		errorSummary(cause),
+	); err != nil {
 		return result, err
 	}
 	result.Paused = true
@@ -796,7 +806,9 @@ func (s *Service) pauseFeed(
 	return nil
 }
 
-func newFeedState(key carrierintelports.CarrierIntelFeedStateKey) *carrierintel.CarrierIntelFeedState {
+func newFeedState(
+	key carrierintelports.CarrierIntelFeedStateKey,
+) *carrierintel.CarrierIntelFeedState {
 	return &carrierintel.CarrierIntelFeedState{
 		OrganizationID: key.TenantInfo.OrgID,
 		BusinessUnitID: key.TenantInfo.BuID,

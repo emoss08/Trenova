@@ -4,8 +4,8 @@ import (
 	"slices"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 )
 
 type ProviderProfile struct {

@@ -367,27 +367,31 @@ func (s *Service) ExchangePairing(ctx context.Context, deviceCode string) (*Toke
 		ctx,
 		"exchange an approved pairing, which belongs to no organization until now, for its device",
 	)
-	err = s.db.WithTx(exchangeCtx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		device, issued, issueErr := newDeviceFromPairing(pairing, now)
-		if issueErr != nil {
-			return issueErr
-		}
+	err = s.db.WithTx(
+		exchangeCtx,
+		kernelports.TxOptions{},
+		func(txCtx context.Context, _ bun.Tx) error {
+			device, issued, issueErr := newDeviceFromPairing(pairing, now)
+			if issueErr != nil {
+				return issueErr
+			}
 
-		created, createErr := s.devices.Create(txCtx, device)
-		if createErr != nil {
-			return createErr
-		}
+			created, createErr := s.devices.Create(txCtx, device)
+			if createErr != nil {
+				return createErr
+			}
 
-		pairing.Status = capture.PairingConsumed
-		pairing.DeviceID = &created.ID
-		if _, updateErr := s.pairings.Update(txCtx, pairing); updateErr != nil {
-			return updateErr
-		}
+			pairing.Status = capture.PairingConsumed
+			pairing.DeviceID = &created.ID
+			if _, updateErr := s.pairings.Update(txCtx, pairing); updateErr != nil {
+				return updateErr
+			}
 
-		pair = issued.forDevice(created)
+			pair = issued.forDevice(created)
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		// Two polls exchanging the same approval race here; the loser finds
 		// the grant consumed, which is what a replayed code must see too.

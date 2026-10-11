@@ -81,76 +81,84 @@ func (r *repository) List(
 	ctx context.Context,
 	req *documentports.ListDocumentsRequest,
 ) (*pagination.ListResult[*document.Document], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*document.Document], error) {
-		log := r.l.With(
-			zap.String("operation", "List"),
-			zap.Any("request", req),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*document.Document], error) {
+			log := r.l.With(
+				zap.String("operation", "List"),
+				zap.Any("request", req),
+			)
 
-		entities := make([]*document.Document, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterQuery(sq, req)
-			}).ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count documents", zap.Error(err))
-			return nil, err
-		}
+			entities := make([]*document.Document, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count documents", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*document.Document]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*document.Document]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *documentports.DocumentSelectOptionsRequest,
 ) (*pagination.ListResult[*document.Document], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*document.Document], error) {
-		return dbhelper.SelectOptions[*document.Document](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				Columns: []string{
-					"id",
-					"file_name",
-					"original_name",
-					"status",
-					"resource_id",
-					"resource_type",
-					"document_type_id",
-					"created_at",
-				},
-				OrgColumn: "doc.organization_id",
-				BuColumn:  "doc.business_unit_id",
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					cols := documentcol.DocumentColumns
-					q = q.Where(cols.IsCurrentVersion.Eq(), true).
-						Where(cols.Status.NotEq(), document.StatusArchived)
-					if req.ResourceID != "" {
-						q = q.Where(cols.ResourceID.Eq(), req.ResourceID)
-					}
-					if req.ResourceType != "" {
-						q = q.Where(cols.ResourceType.Eq(), req.ResourceType)
-					}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*document.Document], error) {
+			return dbhelper.SelectOptions[*document.Document](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					Columns: []string{
+						"id",
+						"file_name",
+						"original_name",
+						"status",
+						"resource_id",
+						"resource_type",
+						"document_type_id",
+						"created_at",
+					},
+					OrgColumn: "doc.organization_id",
+					BuColumn:  "doc.business_unit_id",
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						cols := documentcol.DocumentColumns
+						q = q.Where(cols.IsCurrentVersion.Eq(), true).
+							Where(cols.Status.NotEq(), document.StatusArchived)
+						if req.ResourceID != "" {
+							q = q.Where(cols.ResourceID.Eq(), req.ResourceID)
+						}
+						if req.ResourceType != "" {
+							q = q.Where(cols.ResourceType.Eq(), req.ResourceType)
+						}
 
-					return q.Relation(documentcol.DocumentRelations.DocumentType).
-						Order(cols.CreatedAt.OrderDesc())
+						return q.Relation(documentcol.DocumentRelations.DocumentType).
+							Order(cols.CreatedAt.OrderDesc())
+					},
+					EntityName: "Document",
+					SearchColumns: []string{
+						"doc.original_name",
+						"doc.file_name",
+						"doc.description",
+					},
 				},
-				EntityName: "Document",
-				SearchColumns: []string{
-					"doc.original_name",
-					"doc.file_name",
-					"doc.description",
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -170,7 +178,8 @@ func (r *repository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return documentcol.DocumentScopeTenant(sq, req.TenantInfo).Where(cols.ID.Eq(), req.ID)
+				return documentcol.DocumentScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {

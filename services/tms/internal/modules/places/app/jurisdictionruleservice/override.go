@@ -3,12 +3,12 @@ package jurisdictionruleservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

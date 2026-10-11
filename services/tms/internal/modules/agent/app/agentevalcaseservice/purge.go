@@ -70,7 +70,10 @@ func (s *Service) Purge(
 	}
 
 	result.Orphaned, err = drain(limit, func() (int, error) {
-		return s.cases.PurgeOrphaned(ctx, agentqualityports.PurgeOrphanedEvalCasesRequest{Limit: limit})
+		return s.cases.PurgeOrphaned(
+			ctx,
+			agentqualityports.PurgeOrphanedEvalCasesRequest{Limit: limit},
+		)
 	})
 	if err != nil {
 		return result, err

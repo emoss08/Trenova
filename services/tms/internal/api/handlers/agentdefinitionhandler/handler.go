@@ -7,9 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -117,11 +117,14 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*agentdefinition.Definition], error) {
-			return h.service.List(c.Request.Context(), &agentdefinitionports.ListAgentDefinitionRequest{
-				Filter:      req,
-				EnabledOnly: enabledOnly,
-				ChatOnly:    chatOnly,
-			})
+			return h.service.List(
+				c.Request.Context(),
+				&agentdefinitionports.ListAgentDefinitionRequest{
+					Filter:      req,
+					EnabledOnly: enabledOnly,
+					ChatOnly:    chatOnly,
+				},
+			)
 		},
 	)
 }
@@ -414,10 +417,13 @@ func (h *Handler) previewPrompt(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authCtx)
-	prompt, err := h.service.PreviewPrompt(c.Request.Context(), &agentdefinitionports.PreviewPromptRequest{
-		Definition: body.toServiceRequest(pulid.Nil, tenantFromAuthContext(authCtx)),
-		Actor:      &actor,
-	})
+	prompt, err := h.service.PreviewPrompt(
+		c.Request.Context(),
+		&agentdefinitionports.PreviewPromptRequest{
+			Definition: body.toServiceRequest(pulid.Nil, tenantFromAuthContext(authCtx)),
+			Actor:      &actor,
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -436,10 +442,14 @@ func (h *Handler) remove(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authCtx)
-	if err = h.service.Delete(c.Request.Context(), agentdefinitionports.DeleteAgentDefinitionRequest{
-		ID:         agentID,
-		TenantInfo: tenantFromAuthContext(authCtx),
-	}, &actor); err != nil {
+	if err = h.service.Delete(
+		c.Request.Context(),
+		agentdefinitionports.DeleteAgentDefinitionRequest{
+			ID:         agentID,
+			TenantInfo: tenantFromAuthContext(authCtx),
+		},
+		&actor,
+	); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

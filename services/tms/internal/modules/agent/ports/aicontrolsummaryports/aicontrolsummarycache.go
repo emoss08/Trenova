@@ -21,7 +21,12 @@ type AIControlSummaryKey struct {
 // it may be asked.
 type AIControlSummaryCache interface {
 	Get(ctx context.Context, key *AIControlSummaryKey, dest *aicontrolsummary.Summary) (bool, error)
-	Set(ctx context.Context, key *AIControlSummaryKey, value *aicontrolsummary.Summary, ttl time.Duration) error
+	Set(
+		ctx context.Context,
+		key *AIControlSummaryKey,
+		value *aicontrolsummary.Summary,
+		ttl time.Duration,
+	) error
 	// ClaimNarration counts one model rewording of a tab today, and reports
 	// whether it is within the day's allowance.
 	ClaimNarration(ctx context.Context, key *AIControlSummaryKey, perDay int) (bool, error)

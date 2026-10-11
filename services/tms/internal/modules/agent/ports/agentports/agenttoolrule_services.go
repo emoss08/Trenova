@@ -10,7 +10,10 @@ import (
 )
 
 type ToolRuleOverrides interface {
-	For(ctx context.Context, tenantInfo pagination.TenantInfo) (map[string]*agent.ToolRuleOverride, error)
+	For(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) (map[string]*agent.ToolRuleOverride, error)
 }
 
 type ToolRuleChange struct {
@@ -46,7 +49,15 @@ type SaveToolRuleResult struct {
 
 type AgentToolRuleService interface {
 	ToolRuleOverrides
-	Get(ctx context.Context, tenantInfo pagination.TenantInfo, toolName string) (*agent.ToolRuleOverride, error)
+	Get(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		toolName string,
+	) (*agent.ToolRuleOverride, error)
 	Impact(ctx context.Context, req *ToolRuleImpactRequest) ([]AgentToolRuleImpact, error)
-	Save(ctx context.Context, req *SaveToolRuleRequest, actor *permissionports.RequestActor) (*SaveToolRuleResult, error)
+	Save(
+		ctx context.Context,
+		req *SaveToolRuleRequest,
+		actor *permissionports.RequestActor,
+	) (*SaveToolRuleResult, error)
 }

@@ -271,7 +271,10 @@ func (r *repository) GetAcceptedOfferForPartnerReference(
 			Scan(ctx)
 		if err != nil {
 			if !dberror.IsNotFoundError(err) {
-				r.l.Error("failed to get accepted tender offer for partner reference", zap.Error(err))
+				r.l.Error(
+					"failed to get accepted tender offer for partner reference",
+					zap.Error(err),
+				)
 			}
 			return nil, dberror.HandleNotFoundError(err, "Tender offer")
 		}
@@ -314,7 +317,10 @@ func (r *repository) ListForSweep(
 	req tenderports.ListTendersForSweepRequest,
 ) ([]*tender.Tender, error) {
 	if req.TenantInfo == nil {
-		ctx = dbscope.WithSystem(ctx, "list stalled tenders across every organization for the tender sweep")
+		ctx = dbscope.WithSystem(
+			ctx,
+			"list stalled tenders across every organization for the tender sweep",
+		)
 	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tender.Tender, error) {
 		limit := req.Limit
@@ -692,7 +698,10 @@ func (r *repository) ListAcceptedMissingRateConfirmation(
 	ctx context.Context,
 	req tenderports.ListAcceptedMissingRateConfirmationRequest,
 ) ([]*tender.Tender, error) {
-	ctx = dbscope.WithSystem(ctx, "list accepted tenders missing a rate confirmation across every organization")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"list accepted tenders missing a rate confirmation across every organization",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tender.Tender, error) {
 		limit := req.Limit
 		if limit <= 0 {

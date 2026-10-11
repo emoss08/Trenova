@@ -53,7 +53,10 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	}}
 }
 
-func BulkEditWorkflow(ctx workflow.Context, payload *bulkeditcontract.EditPayload) (*EditResult, error) {
+func BulkEditWorkflow(
+	ctx workflow.Context,
+	payload *bulkeditcontract.EditPayload,
+) (*EditResult, error) {
 	var a *Activities
 
 	var prepared *PreparedEdit

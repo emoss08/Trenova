@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -131,12 +131,15 @@ func (s *Service) resolveFuel(
 		return fuel
 	}
 
-	prices, err := s.priceRepo.GetLatestOnOrBefore(ctx, &fuelsurchargeports.GetLatestFuelPricesRequest{
-		FuelIndexID: *control.FuelIndexID,
-		TenantInfo:  tenantInfo,
-		Date:        asOf.Format(fuelsurcharge.PriceDateLayout),
-		Limit:       1,
-	})
+	prices, err := s.priceRepo.GetLatestOnOrBefore(
+		ctx,
+		&fuelsurchargeports.GetLatestFuelPricesRequest{
+			FuelIndexID: *control.FuelIndexID,
+			TenantInfo:  tenantInfo,
+			Date:        asOf.Format(fuelsurcharge.PriceDateLayout),
+			Limit:       1,
+		},
+	)
 	if err != nil {
 		s.l.Warn("failed to load fuel index price for cost profile", zap.Error(err))
 		return fuel
@@ -191,10 +194,13 @@ func (s *Service) EstimateShipments(
 		return nil, err
 	}
 
-	rows, err := s.actualsRepo.ShipmentMilesByIDs(ctx, &costingcontrolports.ShipmentMilesByIDsRequest{
-		TenantInfo:  tenantInfo,
-		ShipmentIDs: shipmentIDs,
-	})
+	rows, err := s.actualsRepo.ShipmentMilesByIDs(
+		ctx,
+		&costingcontrolports.ShipmentMilesByIDsRequest{
+			TenantInfo:  tenantInfo,
+			ShipmentIDs: shipmentIDs,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

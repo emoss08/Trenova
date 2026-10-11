@@ -5,17 +5,17 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
-	"github.com/emoss08/trenova/internal/modules/places/app/locationservice"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/places/app/locationservice"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/bulkeditports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -90,7 +90,10 @@ func (e *statusEditor[S]) Apply(
 		previous, found := current[id]
 		switch {
 		case !found:
-			outcomes = append(outcomes, bulkeditports.BulkEditOutcome{ID: id, Err: ErrRecordNotFound})
+			outcomes = append(
+				outcomes,
+				bulkeditports.BulkEditOutcome{ID: id, Err: ErrRecordNotFound},
+			)
 		case previous == status:
 			outcomes = append(
 				outcomes,
@@ -162,11 +165,14 @@ func NewCustomerEditor(p CustomerEditorParams) EditorResult {
 			ids []pulid.ID,
 			status domaintypes.Status,
 		) error {
-			_, err := p.Service.BulkUpdateStatus(ctx, &customerports.BulkUpdateCustomerStatusRequest{
-				TenantInfo:  tenant,
-				CustomerIDs: ids,
-				Status:      status,
-			})
+			_, err := p.Service.BulkUpdateStatus(
+				ctx,
+				&customerports.BulkUpdateCustomerStatusRequest{
+					TenantInfo:  tenant,
+					CustomerIDs: ids,
+					Status:      status,
+				},
+			)
 			return err
 		},
 	}}
@@ -209,11 +215,14 @@ func NewLocationEditor(p LocationEditorParams) EditorResult {
 			ids []pulid.ID,
 			status domaintypes.Status,
 		) error {
-			_, err := p.Service.BulkUpdateStatus(ctx, &locationports.BulkUpdateLocationStatusRequest{
-				TenantInfo:  tenant,
-				LocationIDs: ids,
-				Status:      status,
-			})
+			_, err := p.Service.BulkUpdateStatus(
+				ctx,
+				&locationports.BulkUpdateLocationStatusRequest{
+					TenantInfo:  tenant,
+					LocationIDs: ids,
+					Status:      status,
+				},
+			)
 			return err
 		},
 	}}
@@ -337,7 +346,10 @@ func (e *shipmentEditor) Apply(
 	for _, id := range req.IDs {
 		entity, ok := byID[id]
 		if !ok {
-			outcomes = append(outcomes, bulkeditports.BulkEditOutcome{ID: id, Err: ErrRecordNotFound})
+			outcomes = append(
+				outcomes,
+				bulkeditports.BulkEditOutcome{ID: id, Err: ErrRecordNotFound},
+			)
 			continue
 		}
 		previous := entity.OwnerID.String()

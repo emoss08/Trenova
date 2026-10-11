@@ -5,9 +5,9 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/trenova/internal/core/services/shipmentnarration"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
-	"github.com/emoss08/trenova/internal/core/services/shipmentnarration"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
@@ -77,7 +77,9 @@ func (s *Service) wordSuggestions(
 	return acceptedWording(items, narration.Draft.Items)
 }
 
-func wordingContext(items []*shipmentsuggestionports.ShipmentSuggestion) agentports.DelimitedContext {
+func wordingContext(
+	items []*shipmentsuggestionports.ShipmentSuggestion,
+) agentports.DelimitedContext {
 	var builder strings.Builder
 	for _, item := range items {
 		builder.WriteString("key: ")

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs/documentuploadcontract"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"

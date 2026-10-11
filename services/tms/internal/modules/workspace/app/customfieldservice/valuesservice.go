@@ -149,9 +149,12 @@ func (s *ValuesService) Delete(
 	resourceType string,
 	resourceID string,
 ) error {
-	return s.valueRepo.DeleteByResource(ctx, &customfieldports.GetCustomFieldValuesByResourceRequest{
-		TenantInfo:   tenantInfo,
-		ResourceType: resourceType,
-		ResourceID:   resourceID,
-	})
+	return s.valueRepo.DeleteByResource(
+		ctx,
+		&customfieldports.GetCustomFieldValuesByResourceRequest{
+			TenantInfo:   tenantInfo,
+			ResourceType: resourceType,
+			ResourceID:   resourceID,
+		},
+	)
 }

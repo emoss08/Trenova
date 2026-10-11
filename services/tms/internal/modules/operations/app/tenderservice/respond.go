@@ -3,8 +3,8 @@ package tenderservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/tenderjobs/tendercontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"

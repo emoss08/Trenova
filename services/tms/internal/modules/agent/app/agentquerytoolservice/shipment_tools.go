@@ -6,12 +6,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
@@ -362,7 +362,13 @@ func (t *searchShipmentsTool) Query(
 		full := len(rows) >= limit
 		var sampled []string
 		if full {
-			if rows, sampled, err = t.withEachStatus(ctx, params, query, statuses, rows); err != nil {
+			if rows, sampled, err = t.withEachStatus(
+				ctx,
+				params,
+				query,
+				statuses,
+				rows,
+			); err != nil {
 				return nil, err
 			}
 		}
@@ -578,7 +584,10 @@ func (t *searchShipmentsTool) addPartyMatches(
 		}
 	} else {
 		if len(parties.customers) > 0 {
-			lookups = append(lookups, shipmentports.ShipmentOptions{CustomerIDs: partyIDs(parties.customers)})
+			lookups = append(
+				lookups,
+				shipmentports.ShipmentOptions{CustomerIDs: partyIDs(parties.customers)},
+			)
 			search.criteria.Field("or customer", partyNames(parties.customers))
 		}
 		if len(parties.locations) > 0 {
@@ -588,7 +597,10 @@ func (t *searchShipmentsTool) addPartyMatches(
 			search.criteria.Field("or a stop at", partyNames(parties.locations))
 		}
 		if len(parties.workers) > 0 {
-			lookups = append(lookups, shipmentports.ShipmentOptions{WorkerIDs: partyIDs(parties.workers)})
+			lookups = append(
+				lookups,
+				shipmentports.ShipmentOptions{WorkerIDs: partyIDs(parties.workers)},
+			)
 			search.criteria.Field("or driven by", partyNames(parties.workers))
 		}
 		if len(parties.commodities) > 0 {

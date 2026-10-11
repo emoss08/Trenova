@@ -47,7 +47,19 @@ type AITuneUpService interface {
 	List(ctx context.Context, tenantInfo pagination.TenantInfo) (*AITuneUpList, error)
 	Get(ctx context.Context, req GetAITuneUpRequest) (*aituneup.TuneUp, error)
 	Compute(ctx context.Context, tenantInfo pagination.TenantInfo) (int, error)
-	Apply(ctx context.Context, req *AITuneUpDecisionRequest, actor *permissionports.RequestActor) (*AITuneUpView, error)
-	Dismiss(ctx context.Context, req *AITuneUpDecisionRequest, actor *permissionports.RequestActor) (*AITuneUpView, error)
-	Restore(ctx context.Context, req *AITuneUpDecisionRequest, actor *permissionports.RequestActor) (*AITuneUpView, error)
+	Apply(
+		ctx context.Context,
+		req *AITuneUpDecisionRequest,
+		actor *permissionports.RequestActor,
+	) (*AITuneUpView, error)
+	Dismiss(
+		ctx context.Context,
+		req *AITuneUpDecisionRequest,
+		actor *permissionports.RequestActor,
+	) (*AITuneUpView, error)
+	Restore(
+		ctx context.Context,
+		req *AITuneUpDecisionRequest,
+		actor *permissionports.RequestActor,
+	) (*AITuneUpView, error)
 }

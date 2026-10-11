@@ -3,9 +3,9 @@ package fiscalperiodservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/uptrace/bun"
@@ -26,7 +26,11 @@ func createDateValidationRule(
 		) error {
 			return db.RunScoped(ctx, true, func(ctx context.Context) error {
 				if entity.EndDate <= entity.StartDate {
-					multiErr.Add("endDate", errortypes.ErrInvalid, "End date must be after start date")
+					multiErr.Add(
+						"endDate",
+						errortypes.ErrInvalid,
+						"End date must be after start date",
+					)
 					return nil
 				}
 

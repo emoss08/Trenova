@@ -4,10 +4,10 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -41,10 +41,13 @@ func (s *Service) PlanStartDisputeReview(
 	if err := requireActor(actor, "Dispute review"); err != nil {
 		return nil, err
 	}
-	original, err := s.disputeRepo.GetByID(ctx, driversettlementports.GetSettlementDisputeByIDRequest{
-		ID:         disputeID,
-		TenantInfo: tenantInfo,
-	})
+	original, err := s.disputeRepo.GetByID(
+		ctx,
+		driversettlementports.GetSettlementDisputeByIDRequest{
+			ID:         disputeID,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -84,10 +87,13 @@ func (s *Service) PlanResolveDispute(
 		)
 	}
 
-	original, err := s.disputeRepo.GetByID(ctx, driversettlementports.GetSettlementDisputeByIDRequest{
-		ID:         req.DisputeID,
-		TenantInfo: req.TenantInfo,
-	})
+	original, err := s.disputeRepo.GetByID(
+		ctx,
+		driversettlementports.GetSettlementDisputeByIDRequest{
+			ID:         req.DisputeID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +136,10 @@ func (s *Service) openDraftFor(
 ) (*driversettlement.Settlement, error) {
 	target, err := s.settlementRepo.GetOpenDraftForWorker(
 		ctx,
-		driversettlementports.GetOpenDraftForWorkerRequest{TenantInfo: tenantInfo, WorkerID: workerID},
+		driversettlementports.GetOpenDraftForWorkerRequest{
+			TenantInfo: tenantInfo,
+			WorkerID:   workerID,
+		},
 	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {

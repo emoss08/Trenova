@@ -34,10 +34,13 @@ func (s *Service) ContextVariables(
 		return map[string]any{}, nil
 	}
 
-	pricesByIndex, err := s.priceRepo.LatestPerIndex(ctx, &fuelsurchargeports.LatestPricesPerIndexRequest{
-		TenantInfo: tenantInfo,
-		PerIndex:   1,
-	})
+	pricesByIndex, err := s.priceRepo.LatestPerIndex(
+		ctx,
+		&fuelsurchargeports.LatestPricesPerIndexRequest{
+			TenantInfo: tenantInfo,
+			PerIndex:   1,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

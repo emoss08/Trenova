@@ -104,80 +104,88 @@ func (r *repository) ListByMoveIDs(
 	ctx context.Context,
 	req shipmentports.ListJurisdictionMilesByMoveIDsRequest,
 ) ([]*shipment.ShipmentMoveJurisdictionMile, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipment.ShipmentMoveJurisdictionMile, error) {
-		entities := make([]*shipment.ShipmentMoveJurisdictionMile, 0, len(req.MoveIDs)*4)
-		if len(req.MoveIDs) == 0 {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*shipment.ShipmentMoveJurisdictionMile, error) {
+			entities := make([]*shipment.ShipmentMoveJurisdictionMile, 0, len(req.MoveIDs)*4)
+			if len(req.MoveIDs) == 0 {
+				return entities, nil
+			}
+			cols := shipmentcol.ShipmentMoveJurisdictionMileColumns
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return shipmentcol.ShipmentMoveJurisdictionMileScopeTenant(sq, req.TenantInfo).
+						Where(cols.ShipmentMoveID.In(), bun.List(req.MoveIDs))
+				}).
+				Order(cols.ShipmentMoveID.OrderAsc()).
+				Order(cols.Sequence.OrderAsc()).
+				Order(cols.JurisdictionCode.OrderAsc()).
+				Scan(ctx); err != nil {
+				r.l.Error("failed to list jurisdiction miles by move", zap.Error(err))
+				return nil, fmt.Errorf("list jurisdiction miles by move: %w", err)
+			}
 			return entities, nil
-		}
-		cols := shipmentcol.ShipmentMoveJurisdictionMileColumns
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.ShipmentMoveJurisdictionMileScopeTenant(sq, req.TenantInfo).
-					Where(cols.ShipmentMoveID.In(), bun.List(req.MoveIDs))
-			}).
-			Order(cols.ShipmentMoveID.OrderAsc()).
-			Order(cols.Sequence.OrderAsc()).
-			Order(cols.JurisdictionCode.OrderAsc()).
-			Scan(ctx); err != nil {
-			r.l.Error("failed to list jurisdiction miles by move", zap.Error(err))
-			return nil, fmt.Errorf("list jurisdiction miles by move: %w", err)
-		}
-		return entities, nil
-	})
+		},
+	)
 }
 
 func (r *repository) ListUnattributedMoves(
 	ctx context.Context,
 	req shipmentports.UnattributedMovesRequest,
 ) (*shipmentports.UnattributedMovesPage, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipmentports.UnattributedMovesPage, error) {
-		if req.Start >= req.End {
-			return nil, errortypes.NewBusinessError("Period start must be before period end")
-		}
-		dba := r.db.DBForContext(ctx)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*shipmentports.UnattributedMovesPage, error) {
+			if req.Start >= req.End {
+				return nil, errortypes.NewBusinessError("Period start must be before period end")
+			}
+			dba := r.db.DBForContext(ctx)
 
-		var totals struct {
-			TotalMoves int             `bun:"total_moves"`
-			TotalMiles decimal.Decimal `bun:"total_miles"`
-		}
-		if err := dba.NewSelect().
-			With(completedMovesCTE, r.completedMovesWithoutBreakdown(dba, req.TenantInfo)).
-			TableExpr(completedMovesCTE).
-			ColumnExpr("COUNT(*) AS total_moves").
-			ColumnExpr("ROUND(COALESCE(SUM("+completedMoveMilesCol+"), 0)::numeric, 2) AS total_miles").
-			Where(completedAtCol+" >= ?", req.Start).
-			Where(completedAtCol+" < ?", req.End).
-			Scan(ctx, &totals); err != nil {
-			r.l.Error("failed to count unattributed moves", zap.Error(err))
-			return nil, fmt.Errorf("count unattributed moves: %w", err)
-		}
+			var totals struct {
+				TotalMoves int             `bun:"total_moves"`
+				TotalMiles decimal.Decimal `bun:"total_miles"`
+			}
+			if err := dba.NewSelect().
+				With(completedMovesCTE, r.completedMovesWithoutBreakdown(dba, req.TenantInfo)).
+				TableExpr(completedMovesCTE).
+				ColumnExpr("COUNT(*) AS total_moves").
+				ColumnExpr("ROUND(COALESCE(SUM("+completedMoveMilesCol+"), 0)::numeric, 2) AS total_miles").
+				Where(completedAtCol+" >= ?", req.Start).
+				Where(completedAtCol+" < ?", req.End).
+				Scan(ctx, &totals); err != nil {
+				r.l.Error("failed to count unattributed moves", zap.Error(err))
+				return nil, fmt.Errorf("count unattributed moves: %w", err)
+			}
 
-		page := &shipmentports.UnattributedMovesPage{
-			MoveIDs:    make([]pulid.ID, 0, req.PageSize()),
-			TotalMoves: totals.TotalMoves,
-			TotalMiles: totals.TotalMiles,
-		}
-		if totals.TotalMoves == 0 || req.Offset >= totals.TotalMoves {
+			page := &shipmentports.UnattributedMovesPage{
+				MoveIDs:    make([]pulid.ID, 0, req.PageSize()),
+				TotalMoves: totals.TotalMoves,
+				TotalMiles: totals.TotalMiles,
+			}
+			if totals.TotalMoves == 0 || req.Offset >= totals.TotalMoves {
+				return page, nil
+			}
+
+			if err := dba.NewSelect().
+				With(completedMovesCTE, r.completedMovesWithoutBreakdown(dba, req.TenantInfo)).
+				TableExpr(completedMovesCTE).
+				ColumnExpr(completedMoveIDCol).
+				Where(completedAtCol+" >= ?", req.Start).
+				Where(completedAtCol+" < ?", req.End).
+				OrderExpr(completedMoveIDCol+" ASC").
+				Limit(req.PageSize()).
+				Offset(req.Offset).
+				Scan(ctx, &page.MoveIDs); err != nil {
+				r.l.Error("failed to list unattributed moves", zap.Error(err))
+				return nil, fmt.Errorf("list unattributed moves: %w", err)
+			}
 			return page, nil
-		}
-
-		if err := dba.NewSelect().
-			With(completedMovesCTE, r.completedMovesWithoutBreakdown(dba, req.TenantInfo)).
-			TableExpr(completedMovesCTE).
-			ColumnExpr(completedMoveIDCol).
-			Where(completedAtCol+" >= ?", req.Start).
-			Where(completedAtCol+" < ?", req.End).
-			OrderExpr(completedMoveIDCol+" ASC").
-			Limit(req.PageSize()).
-			Offset(req.Offset).
-			Scan(ctx, &page.MoveIDs); err != nil {
-			r.l.Error("failed to list unattributed moves", zap.Error(err))
-			return nil, fmt.Errorf("list unattributed moves: %w", err)
-		}
-		return page, nil
-	})
+		},
+	)
 }
 
 func (r *repository) completedMovesWithoutBreakdown(

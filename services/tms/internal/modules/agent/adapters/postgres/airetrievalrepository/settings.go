@@ -85,7 +85,10 @@ func (r *repository) UpdateSettings(
 			return nil, invalid("settings are required")
 		}
 
-		tenantInfo := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
+		tenantInfo := pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		}
 		if err := validateTenant(tenantInfo); err != nil {
 			return nil, err
 		}
@@ -197,30 +200,34 @@ func (r *repository) SetPaused(
 		}
 
 		var updated *airetrieval.Settings
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-			current, found, err := r.findSettings(ctx, tx, req.TenantInfo, true)
-			if err != nil {
+		err := r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(ctx context.Context, tx bun.Tx) error {
+				current, found, err := r.findSettings(ctx, tx, req.TenantInfo, true)
+				if err != nil {
+					return err
+				}
+				if !found {
+					current = airetrieval.DefaultSettings(req.TenantInfo.OrgID, req.TenantInfo.BuID)
+				}
+
+				if current.ID.IsNil() && !req.Paused {
+					updated = current
+					return nil
+				}
+
+				applyPause(current, req, now)
+
+				if current.ID.IsNil() {
+					updated, err = r.insertSettings(ctx, tx, current)
+					return err
+				}
+
+				updated, err = r.writePause(ctx, tx, current)
 				return err
-			}
-			if !found {
-				current = airetrieval.DefaultSettings(req.TenantInfo.OrgID, req.TenantInfo.BuID)
-			}
-
-			if current.ID.IsNil() && !req.Paused {
-				updated = current
-				return nil
-			}
-
-			applyPause(current, req, now)
-
-			if current.ID.IsNil() {
-				updated, err = r.insertSettings(ctx, tx, current)
-				return err
-			}
-
-			updated, err = r.writePause(ctx, tx, current)
-			return err
-		})
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -282,122 +289,143 @@ func (r *repository) SwapModel(
 	ctx context.Context,
 	req agentports.SwapAIRetrievalModelRequest,
 ) (*agentports.SwapAIRetrievalModelResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentports.SwapAIRetrievalModelResult, error) {
-		if err := validateTenant(req.TenantInfo); err != nil {
-			return nil, err
-		}
-		if err := validateModelKey(req.PendingModelKey); err != nil {
-			return nil, err
-		}
-
-		var result *agentports.SwapAIRetrievalModelResult
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-			current, found, err := r.findSettings(ctx, tx, req.TenantInfo, true)
-			switch {
-			case err != nil:
-				return err
-			case !found || !current.HasPendingModel():
-				return airetrieval.ErrNoPendingModel
-			case current.PendingModelKey != req.PendingModelKey:
-				return fmt.Errorf(
-					"%w: %s is pending, not %s",
-					airetrieval.ErrPendingModelMoved,
-					current.PendingModelKey,
-					req.PendingModelKey,
-				)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*agentports.SwapAIRetrievalModelResult, error) {
+			if err := validateTenant(req.TenantInfo); err != nil {
+				return nil, err
+			}
+			if err := validateModelKey(req.PendingModelKey); err != nil {
+				return nil, err
 			}
 
-			retired := current.ActiveModelKey
-			current.ActiveModelKey = current.PendingModelKey
-			current.Dimensions = current.PendingDimensions
-			current.PendingModelKey = ""
-			current.PendingDimensions = 0
-			current.Version++
-			current.UpdatedAt = timeutils.NowUnix()
+			var result *agentports.SwapAIRetrievalModelResult
+			err := r.db.WithTx(
+				ctx,
+				kernelports.TxOptions{},
+				func(ctx context.Context, tx bun.Tx) error {
+					current, found, err := r.findSettings(ctx, tx, req.TenantInfo, true)
+					switch {
+					case err != nil:
+						return err
+					case !found || !current.HasPendingModel():
+						return airetrieval.ErrNoPendingModel
+					case current.PendingModelKey != req.PendingModelKey:
+						return fmt.Errorf(
+							"%w: %s is pending, not %s",
+							airetrieval.ErrPendingModelMoved,
+							current.PendingModelKey,
+							req.PendingModelKey,
+						)
+					}
 
-			cols := airetrievalcol.SettingsColumns
-			if _, err = tx.NewUpdate().
-				Model(current).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return airetrievalcol.SettingsScopeTenantUpdate(uq, req.TenantInfo).
-						Where(cols.ID.Eq(), current.ID)
-				}).
-				Set(cols.ActiveModelKey.Set(), current.ActiveModelKey).
-				Set(cols.Dimensions.Set(), current.Dimensions).
-				Set(cols.PendingModelKey.SetNull()).
-				Set(cols.PendingDimensions.SetNull()).
-				Set(cols.UpdatedAt.Set(), current.UpdatedAt).
-				Set(cols.Version.Set(), current.Version).
-				Exec(ctx); err != nil {
-				return fmt.Errorf("swap retrieval embedding model: %w", err)
+					retired := current.ActiveModelKey
+					current.ActiveModelKey = current.PendingModelKey
+					current.Dimensions = current.PendingDimensions
+					current.PendingModelKey = ""
+					current.PendingDimensions = 0
+					current.Version++
+					current.UpdatedAt = timeutils.NowUnix()
+
+					cols := airetrievalcol.SettingsColumns
+					if _, err = tx.NewUpdate().
+						Model(current).
+						WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+							return airetrievalcol.SettingsScopeTenantUpdate(uq, req.TenantInfo).
+								Where(cols.ID.Eq(), current.ID)
+						}).
+						Set(cols.ActiveModelKey.Set(), current.ActiveModelKey).
+						Set(cols.Dimensions.Set(), current.Dimensions).
+						Set(cols.PendingModelKey.SetNull()).
+						Set(cols.PendingDimensions.SetNull()).
+						Set(cols.UpdatedAt.Set(), current.UpdatedAt).
+						Set(cols.Version.Set(), current.Version).
+						Exec(ctx); err != nil {
+						return fmt.Errorf("swap retrieval embedding model: %w", err)
+					}
+
+					result = &agentports.SwapAIRetrievalModelResult{
+						Settings:        current,
+						RetiredModelKey: retired,
+					}
+
+					return nil
+				},
+			)
+			if err != nil {
+				return nil, err
 			}
 
-			result = &agentports.SwapAIRetrievalModelResult{
-				Settings:        current,
-				RetiredModelKey: retired,
-			}
-
-			return nil
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) PurgeModel(
 	ctx context.Context,
 	req agentports.PurgeAIRetrievalModelRequest,
 ) (agentports.PurgeAIRetrievalModelResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (agentports.PurgeAIRetrievalModelResult, error) {
-		var result agentports.PurgeAIRetrievalModelResult
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (agentports.PurgeAIRetrievalModelResult, error) {
+			var result agentports.PurgeAIRetrievalModelResult
 
-		if err := validateTenant(req.TenantInfo); err != nil {
-			return result, err
-		}
-		if err := validateModelKey(req.ModelKey); err != nil {
-			return result, err
-		}
-
-		batch := req.BatchSize
-		if batch <= 0 {
-			batch = defaultPurgeBatch
-		}
-		batch = intutils.Clamp(batch, 1, maxPurgeBatch)
-
-		vectorReady, err := r.vectorReady(ctx)
-		if err != nil {
-			return result, err
-		}
-
-		err = r.db.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-			current, found, txErr := r.findSettings(ctx, tx, req.TenantInfo, true)
-			if txErr != nil {
-				return txErr
+			if err := validateTenant(req.TenantInfo); err != nil {
+				return result, err
 			}
-			if found &&
-				(current.ActiveModelKey == req.ModelKey || current.PendingModelKey == req.ModelKey) {
-				return fmt.Errorf("%w: %s", airetrieval.ErrModelInUse, req.ModelKey)
+			if err := validateModelKey(req.ModelKey); err != nil {
+				return result, err
 			}
 
-			if result.IndexEntries, txErr = purgeIndexEntries(ctx, tx, req, batch); txErr != nil {
-				return txErr
+			batch := req.BatchSize
+			if batch <= 0 {
+				batch = defaultPurgeBatch
 			}
-			if !vectorReady {
-				return nil
+			batch = intutils.Clamp(batch, 1, maxPurgeBatch)
+
+			vectorReady, err := r.vectorReady(ctx)
+			if err != nil {
+				return result, err
 			}
 
-			result.Embeddings, txErr = purgeEmbeddings(ctx, tx, req, batch)
-			return txErr
-		})
-		if err != nil {
-			return agentports.PurgeAIRetrievalModelResult{}, err
-		}
+			err = r.db.WithTx(
+				ctx,
+				kernelports.TxOptions{},
+				func(ctx context.Context, tx bun.Tx) error {
+					current, found, txErr := r.findSettings(ctx, tx, req.TenantInfo, true)
+					if txErr != nil {
+						return txErr
+					}
+					if found &&
+						(current.ActiveModelKey == req.ModelKey || current.PendingModelKey == req.ModelKey) {
+						return fmt.Errorf("%w: %s", airetrieval.ErrModelInUse, req.ModelKey)
+					}
 
-		return result, nil
-	})
+					if result.IndexEntries, txErr = purgeIndexEntries(
+						ctx,
+						tx,
+						req,
+						batch,
+					); txErr != nil {
+						return txErr
+					}
+					if !vectorReady {
+						return nil
+					}
+
+					result.Embeddings, txErr = purgeEmbeddings(ctx, tx, req, batch)
+					return txErr
+				},
+			)
+			if err != nil {
+				return agentports.PurgeAIRetrievalModelResult{}, err
+			}
+
+			return result, nil
+		},
+	)
 }
 
 func purgeIndexEntries(

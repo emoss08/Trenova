@@ -4,10 +4,10 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -254,10 +254,13 @@ func HydrateAccessorials(
 			definition, ok := resolved[charge.AccessorialChargeID]
 			if !ok {
 				var err error
-				definition, err = repo.GetByID(ctx, accessorialchargeports.GetAccessorialChargeByIDRequest{
-					ID:         charge.AccessorialChargeID,
-					TenantInfo: &tenantInfo,
-				})
+				definition, err = repo.GetByID(
+					ctx,
+					accessorialchargeports.GetAccessorialChargeByIDRequest{
+						ID:         charge.AccessorialChargeID,
+						TenantInfo: &tenantInfo,
+					},
+				)
 				if err != nil {
 					return err
 				}

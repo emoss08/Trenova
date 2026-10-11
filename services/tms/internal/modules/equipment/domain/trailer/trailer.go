@@ -3,12 +3,12 @@ package trailer
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"

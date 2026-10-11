@@ -3,16 +3,16 @@ package servicefailureservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -216,18 +216,21 @@ func (s *service) comment(ctx context.Context, params commentParams) {
 	}
 	params.metadata["serviceFailureNumber"] = params.entity.Number
 	params.metadata["serviceFailureStatus"] = string(params.entity.Status)
-	if _, err := s.commentService.CreateSystem(ctx, &shipmentports.CreateSystemShipmentCommentRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: params.entity.OrganizationID,
-			BuID:  params.entity.BusinessUnitID,
+	if _, err := s.commentService.CreateSystem(
+		ctx,
+		&shipmentports.CreateSystemShipmentCommentRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: params.entity.OrganizationID,
+				BuID:  params.entity.BusinessUnitID,
+			},
+			ShipmentID: params.entity.ShipmentID,
+			Comment:    params.comment,
+			Type:       shipment.CommentTypeException,
+			Visibility: shipment.CommentVisibilityOperations,
+			Priority:   shipment.CommentPriorityHigh,
+			Metadata:   params.metadata,
 		},
-		ShipmentID: params.entity.ShipmentID,
-		Comment:    params.comment,
-		Type:       shipment.CommentTypeException,
-		Visibility: shipment.CommentVisibilityOperations,
-		Priority:   shipment.CommentPriorityHigh,
-		Metadata:   params.metadata,
-	}); err != nil {
+	); err != nil {
 		s.l.Warn("failed to create service failure shipment comment", zap.Error(err))
 	}
 }

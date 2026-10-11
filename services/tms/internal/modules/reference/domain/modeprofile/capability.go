@@ -5,8 +5,8 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 )
 
 var (

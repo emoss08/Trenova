@@ -134,7 +134,9 @@ func (r *repository) ListBoardMoves(
 			ColumnExpr(asnCols.AckStatus.As("assignment_ack_status")).
 			ColumnExpr(buncolgen.Expr(
 				"CASE WHEN {0} IS NULL THEN '' ELSE CONCAT({1}, ' ', {2}) END AS assigned_worker_name",
-				asnWorkerID, asnWorkerFirstName, asnWorkerLastName,
+				asnWorkerID,
+				asnWorkerFirstName,
+				asnWorkerLastName,
 			)).
 			ColumnExpr(asnTractorCode.Expr("COALESCE({}, '') AS assigned_tractor_code")).
 			ColumnExpr(asnTrailerCode.Expr("COALESCE({}, '') AS assigned_trailer_code")).

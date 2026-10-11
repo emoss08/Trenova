@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/exchangerate"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/exchangerate"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -63,26 +63,27 @@ func (r *repository) UpsertRates(
 	req *exchangerateports.UpsertExchangeRatesRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		return r.db.DBForContext(ctx).RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-			for idx := range req.Rates {
-				rate := req.Rates[idx]
-				_, err := tx.NewInsert().
-					Model(rate).
-					On("CONFLICT (organization_id, business_unit_id, provider, from_currency, to_currency, rate_type, date) DO UPDATE").
-					Set("bid = EXCLUDED.bid").
-					Set("ask = EXCLUDED.ask").
-					Set("mid = EXCLUDED.mid").
-					Set("selected_rate = EXCLUDED.selected_rate").
-					Set("source_timestamp = EXCLUDED.source_timestamp").
-					Set("fetched_at = EXCLUDED.fetched_at").
-					Set("settlement_eligible = EXCLUDED.settlement_eligible").
-					Exec(txCtx)
-				if err != nil {
-					return err
+		return r.db.DBForContext(ctx).
+			RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
+				for idx := range req.Rates {
+					rate := req.Rates[idx]
+					_, err := tx.NewInsert().
+						Model(rate).
+						On("CONFLICT (organization_id, business_unit_id, provider, from_currency, to_currency, rate_type, date) DO UPDATE").
+						Set("bid = EXCLUDED.bid").
+						Set("ask = EXCLUDED.ask").
+						Set("mid = EXCLUDED.mid").
+						Set("selected_rate = EXCLUDED.selected_rate").
+						Set("source_timestamp = EXCLUDED.source_timestamp").
+						Set("fetched_at = EXCLUDED.fetched_at").
+						Set("settlement_eligible = EXCLUDED.settlement_eligible").
+						Exec(txCtx)
+					if err != nil {
+						return err
+					}
 				}
-			}
-			return nil
-		})
+				return nil
+			})
 	})
 }
 

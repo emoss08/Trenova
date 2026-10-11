@@ -132,7 +132,8 @@ func (s *loginThrottleStore) RecordFailure(
 }
 
 func (s *loginThrottleStore) Reset(ctx context.Context, account string) error {
-	if err := s.client.Del(ctx, s.accountFailuresKey(account), s.accountLockKey(account)).Err(); err != nil {
+	if err := s.client.Del(ctx, s.accountFailuresKey(account), s.accountLockKey(account)).
+		Err(); err != nil {
 		return fmt.Errorf("reset login throttle: %w", err)
 	}
 

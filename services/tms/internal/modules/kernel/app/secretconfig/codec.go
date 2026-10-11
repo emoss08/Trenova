@@ -3,8 +3,8 @@ package secretconfig
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
@@ -105,7 +105,11 @@ func (c Codec) Merge(
 		}
 
 		if value == "" {
-			merged[field.Key] = c.Rebind(configspec.ReadString(existing, field.Key), field.Key, scope)
+			merged[field.Key] = c.Rebind(
+				configspec.ReadString(existing, field.Key),
+				field.Key,
+				scope,
+			)
 			continue
 		}
 

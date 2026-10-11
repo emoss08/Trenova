@@ -3,9 +3,9 @@ package reflectionjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.temporal.io/sdk/temporal"

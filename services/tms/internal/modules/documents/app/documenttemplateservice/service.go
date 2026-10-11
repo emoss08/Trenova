@@ -58,7 +58,10 @@ var _ documenttemplateports.DocumentTemplateResolver = (*Service)(nil)
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
-	builders := make(map[documenttemplate.Kind]documenttemplateports.ContextBuilder, len(p.ContextBuilders))
+	builders := make(
+		map[documenttemplate.Kind]documenttemplateports.ContextBuilder,
+		len(p.ContextBuilders),
+	)
 	for _, builder := range p.ContextBuilders {
 		if builder == nil {
 			continue

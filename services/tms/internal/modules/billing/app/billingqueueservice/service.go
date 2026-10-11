@@ -3,32 +3,32 @@ package billingqueueservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -140,7 +140,9 @@ func New(p Params) billingqueueports.BillingQueueService {
 
 // NewReview is the same service seen as the review a biller does from one
 // item; it shares every dependency with the queue it reviews.
-func NewReview(svc billingqueueports.BillingQueueService) billingqueueports.BillingQueueReviewService {
+func NewReview(
+	svc billingqueueports.BillingQueueService,
+) billingqueueports.BillingQueueReviewService {
 	return svc.(*service) //nolint:errcheck,forcetypeassert // New always returns *service
 }
 
@@ -489,7 +491,10 @@ func (s *service) shipmentForTransfer(
 
 // shouldAutoApprove reports whether one payer's item may skip review: either the
 // whole transfer was cleared, or this payer is among those who opted in.
-func (s *service) shouldAutoApprove(req *billingqueueports.TransferToBillingRequest, payerID pulid.ID) bool {
+func (s *service) shouldAutoApprove(
+	req *billingqueueports.TransferToBillingRequest,
+	payerID pulid.ID,
+) bool {
 	if req.AutoApprove {
 		return true
 	}
@@ -878,10 +883,13 @@ func (s *service) completeReplacementReview(
 		return nil
 	}
 
-	adjustment, err := s.adjustmentRepo.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
-		ID:         *item.SourceInvoiceAdjustmentID,
-		TenantInfo: req.TenantInfo,
-	})
+	adjustment, err := s.adjustmentRepo.GetByID(
+		ctx,
+		invoiceadjustmentports.GetInvoiceAdjustmentRequest{
+			ID:         *item.SourceInvoiceAdjustmentID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return err
 	}

@@ -74,10 +74,14 @@ func withRoute(q *bun.SelectQuery) *bun.SelectQuery {
 		RelationWithOpts(buncolgen.Rel(moves, shipmentcol.ShipmentMoveRelations.Assignment),
 			bun.RelationOpts{AdditionalJoinOnConditions: activeAssignmentJoin()}).
 		Relation(buncolgen.Rel(
-			moves, shipmentcol.ShipmentMoveRelations.Assignment, shipmentcol.AssignmentRelations.PrimaryWorker,
+			moves,
+			shipmentcol.ShipmentMoveRelations.Assignment,
+			shipmentcol.AssignmentRelations.PrimaryWorker,
 		)).
 		Relation(buncolgen.Rel(
-			moves, shipmentcol.ShipmentMoveRelations.Assignment, shipmentcol.AssignmentRelations.Tractor,
+			moves,
+			shipmentcol.ShipmentMoveRelations.Assignment,
+			shipmentcol.AssignmentRelations.Tractor,
 		)).
 		RelationWithOpts(buncolgen.Rel(moves, shipmentcol.ShipmentMoveRelations.CarrierAssignment),
 			bun.RelationOpts{AdditionalJoinOnConditions: activeCarrierAssignmentJoin()})
@@ -97,7 +101,10 @@ func activeAssignmentJoin() []schema.QueryWithArgs {
 
 func activeCarrierAssignmentJoin() []schema.QueryWithArgs {
 	return []schema.QueryWithArgs{schema.SafeQuery("?.? != ?", []any{
-		bun.Ident("carrier_assignment"), bun.Ident(shipmentcol.CarrierAssignmentColumns.Status.Name),
+		bun.Ident(
+			"carrier_assignment",
+		),
+		bun.Ident(shipmentcol.CarrierAssignmentColumns.Status.Name),
 		shipment.CarrierAssignmentStatusCanceled,
 	})}
 }

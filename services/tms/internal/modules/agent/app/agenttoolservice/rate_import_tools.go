@@ -4,16 +4,16 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/rating/app/rateimportservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/ratesimulationservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateimport"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratesimulation"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/rating/app/rateimportservice"
-	"github.com/emoss08/trenova/internal/modules/rating/app/ratesimulationservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -99,7 +99,10 @@ func newCommitRateImportTool(imports rateImportKeeper) agentports.AgentTool {
 		rationale: "Changes the rates an agreement prices shipments at; only a person applies " +
 			"a rate sheet.",
 		properties: map[string]any{
-			paramRateImportID: agenttoolschema.KindID(rateImportSupplier, permission.KindRateImport),
+			paramRateImportID: agenttoolschema.KindID(
+				rateImportSupplier,
+				permission.KindRateImport,
+			),
 		},
 		required:    []string{paramRateImportID},
 		target:      targetRateImport,
@@ -166,7 +169,10 @@ func newDiscardRateImportTool(imports rateImportKeeper) agentports.AgentTool {
 			"sheet can be uploaded again.",
 		reversible: true,
 		properties: map[string]any{
-			paramRateImportID: agenttoolschema.KindID(rateImportSupplier, permission.KindRateImport),
+			paramRateImportID: agenttoolschema.KindID(
+				rateImportSupplier,
+				permission.KindRateImport,
+			),
 		},
 		required: []string{paramRateImportID},
 		target:   targetRateImport,

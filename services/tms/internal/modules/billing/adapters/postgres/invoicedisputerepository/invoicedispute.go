@@ -42,7 +42,11 @@ func (r *repository) Create(
 ) (*invoice.InvoiceDispute, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.InvoiceDispute, error) {
 		entity.SyncMinor()
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
 			return nil, fmt.Errorf("create invoice dispute: %w", err)
 		}
 
@@ -126,29 +130,33 @@ func (r *repository) ListByInvoiceIDs(
 	ctx context.Context,
 	req *invoiceports.ListInvoiceDisputesByInvoiceIDsRequest,
 ) (map[pulid.ID][]*invoice.InvoiceDispute, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*invoice.InvoiceDispute, error) {
-		result := make(map[pulid.ID][]*invoice.InvoiceDispute, len(req.InvoiceIDs))
-		if len(req.InvoiceIDs) == 0 {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID][]*invoice.InvoiceDispute, error) {
+			result := make(map[pulid.ID][]*invoice.InvoiceDispute, len(req.InvoiceIDs))
+			if len(req.InvoiceIDs) == 0 {
+				return result, nil
+			}
+
+			cols := invoicecol.InvoiceDisputeColumns
+			rows := make([]*invoice.InvoiceDispute, 0, len(req.InvoiceIDs))
+			if err := r.db.DBForContext(ctx).NewSelect().
+				Model(&rows).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return invoicecol.InvoiceDisputeScopeTenant(sq, req.TenantInfo).
+						Where(cols.InvoiceID.In(), bun.List(req.InvoiceIDs))
+				}).
+				Order(cols.OpenedAt.OrderDesc(), cols.ID.OrderDesc()).
+				Scan(ctx); err != nil {
+				return nil, fmt.Errorf("list invoice disputes by invoice: %w", err)
+			}
+
+			for _, row := range rows {
+				result[row.InvoiceID] = append(result[row.InvoiceID], row)
+			}
+
 			return result, nil
-		}
-
-		cols := invoicecol.InvoiceDisputeColumns
-		rows := make([]*invoice.InvoiceDispute, 0, len(req.InvoiceIDs))
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(&rows).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return invoicecol.InvoiceDisputeScopeTenant(sq, req.TenantInfo).
-					Where(cols.InvoiceID.In(), bun.List(req.InvoiceIDs))
-			}).
-			Order(cols.OpenedAt.OrderDesc(), cols.ID.OrderDesc()).
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("list invoice disputes by invoice: %w", err)
-		}
-
-		for _, row := range rows {
-			result[row.InvoiceID] = append(result[row.InvoiceID], row)
-		}
-
-		return result, nil
-	})
+		},
+	)
 }

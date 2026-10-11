@@ -10,23 +10,23 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
-	"github.com/emoss08/trenova/internal/modules/kernel/app/usageservice"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs/documentuploadcontract"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/thumbnailjobs/thumbnailcontract"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/usageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -258,10 +258,13 @@ func (s *Service) GetPartUploadTargets(
 	ctx context.Context,
 	req *documentuploadports.PartRequest,
 ) ([]documentuploadports.PartUploadTarget, error) {
-	session, err := s.sessionRepo.GetByID(ctx, documentuploadports.GetDocumentUploadSessionByIDRequest{
-		ID:         req.SessionID,
-		TenantInfo: req.TenantInfo,
-	})
+	session, err := s.sessionRepo.GetByID(
+		ctx,
+		documentuploadports.GetDocumentUploadSessionByIDRequest{
+			ID:         req.SessionID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -320,10 +323,13 @@ func (s *Service) UploadPart(
 		)
 	}
 
-	session, err := s.sessionRepo.GetByID(ctx, documentuploadports.GetDocumentUploadSessionByIDRequest{
-		ID:         req.SessionID,
-		TenantInfo: req.TenantInfo,
-	})
+	session, err := s.sessionRepo.GetByID(
+		ctx,
+		documentuploadports.GetDocumentUploadSessionByIDRequest{
+			ID:         req.SessionID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -392,10 +398,13 @@ func (s *Service) Complete(
 	ctx context.Context,
 	req *documentuploadports.CompletionRequest,
 ) (*documentupload.DocumentUploadSession, error) {
-	session, err := s.sessionRepo.GetByID(ctx, documentuploadports.GetDocumentUploadSessionByIDRequest{
-		ID:         req.SessionID,
-		TenantInfo: req.TenantInfo,
-	})
+	session, err := s.sessionRepo.GetByID(
+		ctx,
+		documentuploadports.GetDocumentUploadSessionByIDRequest{
+			ID:         req.SessionID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -492,10 +501,13 @@ func (s *Service) Complete(
 }
 
 func (s *Service) Cancel(ctx context.Context, req *documentuploadports.CancelRequest) error {
-	session, err := s.sessionRepo.GetByID(ctx, documentuploadports.GetDocumentUploadSessionByIDRequest{
-		ID:         req.SessionID,
-		TenantInfo: req.TenantInfo,
-	})
+	session, err := s.sessionRepo.GetByID(
+		ctx,
+		documentuploadports.GetDocumentUploadSessionByIDRequest{
+			ID:         req.SessionID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -535,10 +547,13 @@ func (s *Service) getUploadedParts(
 		return s.uploadedPartsFromSingleObject(ctx, session.StoragePath)
 	}
 
-	parts, err := s.storage.ListMultipartUploadParts(ctx, &kernelports.ListMultipartUploadPartsParams{
-		Key:      session.StoragePath,
-		UploadID: session.StorageProviderUploadID,
-	})
+	parts, err := s.storage.ListMultipartUploadParts(
+		ctx,
+		&kernelports.ListMultipartUploadPartsParams{
+			Key:      session.StoragePath,
+			UploadID: session.StorageProviderUploadID,
+		},
+	)
 	if err == nil {
 		return parts, nil
 	}

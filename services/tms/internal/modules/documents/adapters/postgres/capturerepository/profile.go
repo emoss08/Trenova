@@ -33,31 +33,38 @@ func (r *profileRepository) List(
 	ctx context.Context,
 	req *captureports.ListCaptureProfilesRequest,
 ) (*pagination.ListResult[*capture.CaptureProfile], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*capture.CaptureProfile], error) {
-		entities := make([]*capture.CaptureProfile, 0, req.Filter.Pagination.SafeLimit())
-		cols := capturecol.CaptureProfileColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*capture.CaptureProfile], error) {
+			entities := make([]*capture.CaptureProfile, 0, req.Filter.Pagination.SafeLimit())
+			cols := capturecol.CaptureProfileColumns
 
-		query := r.db.DBForContext(ctx).NewSelect().Model(&entities)
-		if req.Status != "" {
-			query = query.Where(cols.Status.Eq(), req.Status)
-		}
+			query := r.db.DBForContext(ctx).NewSelect().Model(&entities)
+			if req.Status != "" {
+				query = query.Where(cols.Status.Eq(), req.Status)
+			}
 
-		total, err := querybuilder.ApplyFilters(
-			query,
-			capturecol.CaptureProfileTable.Alias,
-			req.Filter,
-			(*capture.CaptureProfile)(nil),
-		).
-			Order(cols.IsDefault.OrderDesc(), cols.Name.OrderAsc()).
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := querybuilder.ApplyFilters(
+				query,
+				capturecol.CaptureProfileTable.Alias,
+				req.Filter,
+				(*capture.CaptureProfile)(nil),
+			).
+				Order(cols.IsDefault.OrderDesc(), cols.Name.OrderAsc()).
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*capture.CaptureProfile]{Items: entities, Total: total}, nil
-	})
+			return &pagination.ListResult[*capture.CaptureProfile]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *profileRepository) GetByID(
@@ -107,17 +114,21 @@ func (r *profileRepository) Create(
 	entity *capture.CaptureProfile,
 ) (*capture.CaptureProfile, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CaptureProfile, error) {
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-			if entity.IsDefault {
-				if err := r.clearDefault(txCtx, tx, entity); err != nil {
-					return err
+		err := r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, tx bun.Tx) error {
+				if entity.IsDefault {
+					if err := r.clearDefault(txCtx, tx, entity); err != nil {
+						return err
+					}
 				}
-			}
 
-			_, err := tx.NewInsert().Model(entity).Returning("*").Exec(txCtx)
+				_, err := tx.NewInsert().Model(entity).Returning("*").Exec(txCtx)
 
-			return err
-		})
+				return err
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -133,26 +144,30 @@ func (r *profileRepository) Update(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CaptureProfile, error) {
 		ov := entity.Version
 
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-			if entity.IsDefault {
-				if err := r.clearDefault(txCtx, tx, entity); err != nil {
+		err := r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, tx bun.Tx) error {
+				if entity.IsDefault {
+					if err := r.clearDefault(txCtx, tx, entity); err != nil {
+						return err
+					}
+				}
+
+				entity.Version = ov + 1
+				results, err := tx.NewUpdate().
+					Model(entity).
+					WherePK().
+					Where(capturecol.CaptureProfileColumns.Version.Eq(), ov).
+					Returning("*").
+					Exec(txCtx)
+				if err != nil {
 					return err
 				}
-			}
 
-			entity.Version = ov + 1
-			results, err := tx.NewUpdate().
-				Model(entity).
-				WherePK().
-				Where(capturecol.CaptureProfileColumns.Version.Eq(), ov).
-				Returning("*").
-				Exec(txCtx)
-			if err != nil {
-				return err
-			}
-
-			return dberror.CheckRowsAffected(results, "Capture profile", entity.ID.String())
-		})
+				return dberror.CheckRowsAffected(results, "Capture profile", entity.ID.String())
+			},
+		)
 		if err != nil {
 			entity.Version = ov
 

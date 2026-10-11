@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -200,7 +200,10 @@ func (t *listTimeOffTool) Query(
 // otherRequests names the requests a status or leave-type filter left out, so an empty answer is not read as "nothing pending". A model that fills
 // every parameter sent type: Vacation for a personal-day request, then tried
 // each type in turn.
-func (t *listTimeOffTool) otherRequests(ctx context.Context, request *workerports.ListPTORequest) string {
+func (t *listTimeOffTool) otherRequests(
+	ctx context.Context,
+	request *workerports.ListPTORequest,
+) string {
 	if request.Status == "" && request.Type == "" {
 		return ""
 	}
@@ -232,7 +235,10 @@ func (t *listTimeOffTool) otherRequests(ctx context.Context, request *workerport
 		if row.WorkerName != "" {
 			who = row.WorkerName + ", "
 		}
-		described = append(described, fmt.Sprintf("%s (%s%s, %s)", pto.ID, who, pto.Type, pto.Status))
+		described = append(
+			described,
+			fmt.Sprintf("%s (%s%s, %s)", pto.ID, who, pto.Type, pto.Status),
+		)
 	}
 
 	return fmt.Sprintf("None of %s matched the status or type given. In this window there "+

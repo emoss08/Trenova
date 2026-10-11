@@ -17,7 +17,10 @@ func NewUnlimited() *UnlimitedQuotaGuard {
 	return &UnlimitedQuotaGuard{}
 }
 
-func (g *UnlimitedQuotaGuard) Enforce(_ context.Context, req *platformplanports.QuotaRequest) error {
+func (g *UnlimitedQuotaGuard) Enforce(
+	_ context.Context,
+	req *platformplanports.QuotaRequest,
+) error {
 	if req == nil {
 		return ErrRequestRequired
 	}

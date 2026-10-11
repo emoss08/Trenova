@@ -47,13 +47,16 @@ func (r *resolver) mapping(
 	if cached, ok := r.cache[identity]; ok {
 		return cached, nil
 	}
-	row, err := r.s.mappingService.EnsureMapping(ctx, &accountingsyncports.EnsureAccountingMappingRequest{
-		TenantInfo:   r.sess.tenant,
-		ConnectionID: r.sess.conn.ID,
-		TargetType:   target.TargetType,
-		ObjectID:     target.ObjectID,
-		Key:          target.Key,
-	})
+	row, err := r.s.mappingService.EnsureMapping(
+		ctx,
+		&accountingsyncports.EnsureAccountingMappingRequest{
+			TenantInfo:   r.sess.tenant,
+			ConnectionID: r.sess.conn.ID,
+			TargetType:   target.TargetType,
+			ObjectID:     target.ObjectID,
+			Key:          target.Key,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -3,11 +3,11 @@ package servicefailureservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -163,7 +163,10 @@ func (s *service) planDetected(
 			updated.ReasonCodeID = entity.ReasonCodeID
 			updated.Notes = entity.Notes
 		}
-		return servicefailureports.DetectedServiceFailure{Failure: &updated, Existing: existing}, nil
+		return servicefailureports.DetectedServiceFailure{
+			Failure:  &updated,
+			Existing: existing,
+		}, nil
 	case errortypes.IsNotFoundError(err):
 	default:
 		return servicefailureports.DetectedServiceFailure{}, err

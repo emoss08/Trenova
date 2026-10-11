@@ -5,20 +5,20 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -253,10 +253,13 @@ func (s *Service) resolveDefinition(
 		})
 	}
 	if req.SystemKey != "" {
-		return s.definitions.GetBySystemKey(ctx, agentdefinitionports.GetAgentDefinitionBySystemKeyRequest{
-			SystemKey:  req.SystemKey,
-			TenantInfo: req.TenantInfo,
-		})
+		return s.definitions.GetBySystemKey(
+			ctx,
+			agentdefinitionports.GetAgentDefinitionBySystemKeyRequest{
+				SystemKey:  req.SystemKey,
+				TenantInfo: req.TenantInfo,
+			},
+		)
 	}
 
 	return nil, errortypes.NewValidationError(
@@ -322,7 +325,11 @@ func (s *Service) GetByID(
 	return s.repo.GetByID(ctx, req)
 }
 
-func (s *Service) logStart(run *agent.AgentRun, actor *permissionports.RequestActor, comment string) {
+func (s *Service) logStart(
+	run *agent.AgentRun,
+	actor *permissionports.RequestActor,
+	comment string,
+) {
 	auditActor := actor.AuditActorOrSystem()
 	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAgentRun,
@@ -395,7 +402,10 @@ func agentTypeFor(definition *agentdefinition.Definition) agent.Type {
 	}
 }
 
-func inlineTrigger(requested agent.RunTrigger, actor *permissionports.RequestActor) agent.RunTrigger {
+func inlineTrigger(
+	requested agent.RunTrigger,
+	actor *permissionports.RequestActor,
+) agent.RunTrigger {
 	if requested != "" {
 		return requested
 	}

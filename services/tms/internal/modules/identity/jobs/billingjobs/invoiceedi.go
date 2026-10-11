@@ -5,11 +5,11 @@ import (
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -120,12 +120,15 @@ func (a *Activities) SendInvoiceEDIActivity(
 		if plan != nil && len(plan.Blockers) > 0 {
 			reason = plan.Blockers[0]
 		}
-		if err = a.invoiceRepo.UpdateEDISendStatus(ctx, invoiceports.UpdateInvoiceEDISendStatusRequest{
-			TenantInfo: tenantInfo,
-			InvoiceID:  current.ID,
-			Status:     invoice.EDISendStatusNotConfigured,
-			Error:      reason,
-		}); err != nil {
+		if err = a.invoiceRepo.UpdateEDISendStatus(
+			ctx,
+			invoiceports.UpdateInvoiceEDISendStatusRequest{
+				TenantInfo: tenantInfo,
+				InvoiceID:  current.ID,
+				Status:     invoice.EDISendStatusNotConfigured,
+				Error:      reason,
+			},
+		); err != nil {
 			return nil, err
 		}
 		return &SendInvoiceEDIResult{
@@ -145,12 +148,15 @@ func (a *Activities) SendInvoiceEDIActivity(
 		GeneratedByID:            payload.UserID,
 	})
 	if err != nil {
-		if updateErr := a.invoiceRepo.UpdateEDISendStatus(ctx, invoiceports.UpdateInvoiceEDISendStatusRequest{
-			TenantInfo: tenantInfo,
-			InvoiceID:  current.ID,
-			Status:     invoice.EDISendStatusFailed,
-			Error:      err.Error(),
-		}); updateErr != nil {
+		if updateErr := a.invoiceRepo.UpdateEDISendStatus(
+			ctx,
+			invoiceports.UpdateInvoiceEDISendStatusRequest{
+				TenantInfo: tenantInfo,
+				InvoiceID:  current.ID,
+				Status:     invoice.EDISendStatusFailed,
+				Error:      err.Error(),
+			},
+		); updateErr != nil {
 			a.logger.Warn("failed to record invoice EDI failure", zap.Error(updateErr))
 		}
 		if isInvalidEDIRequest(err) {

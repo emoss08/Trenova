@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
@@ -39,11 +39,14 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
-			return h.service.List(c.Request.Context(), &formulatemplateports.ListFormulaTemplatesRequest{
-				Filter: req,
-				Type:   helpers.QueryString(c, "type"),
-				Status: helpers.QueryString(c, "status"),
-			})
+			return h.service.List(
+				c.Request.Context(),
+				&formulatemplateports.ListFormulaTemplatesRequest{
+					Filter: req,
+					Type:   helpers.QueryString(c, "type"),
+					Status: helpers.QueryString(c, "status"),
+				},
+			)
 		},
 	)
 }

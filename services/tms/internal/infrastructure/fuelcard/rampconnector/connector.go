@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/fuelimport"
 	"github.com/emoss08/trenova/pkg/rateimport"

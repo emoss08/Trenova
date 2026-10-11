@@ -5,8 +5,8 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -124,7 +124,10 @@ func (s *Service) allowed(
 		return false
 	}
 
-	result, err := s.permissions.Check(ctx, actor.PermissionCheck(permission.ResourceAgentMemory, operation))
+	result, err := s.permissions.Check(
+		ctx,
+		actor.PermissionCheck(permission.ResourceAgentMemory, operation),
+	)
 
 	return err == nil && result != nil && result.Allowed
 }

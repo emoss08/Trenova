@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -132,7 +132,11 @@ func Brand(
 
 	out.CompanyName = org.Name
 
-	if dataURI, logoErr := documenttemplateports.ResolveLogoDataURI(ctx, inliner, org.LogoURL); logoErr == nil {
+	if dataURI, logoErr := documenttemplateports.ResolveLogoDataURI(
+		ctx,
+		inliner,
+		org.LogoURL,
+	); logoErr == nil {
 		out.LogoDataURI = dataURI
 	}
 }

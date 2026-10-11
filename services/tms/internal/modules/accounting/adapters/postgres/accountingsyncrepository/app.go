@@ -45,21 +45,25 @@ func (r *appCredentialRepository) GetByType(
 	ctx context.Context,
 	req accountingsyncports.GetAccountingAppCredentialRequest,
 ) (*accountingsync.AccountingAppCredential, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
-		entity := new(accountingsync.AccountingAppCredential)
-		cols := accountingsynccol.AccountingAppCredentialColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
+			entity := new(accountingsync.AccountingAppCredential)
+			cols := accountingsynccol.AccountingAppCredentialColumns
 
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.IntegrationType.Eq(), req.IntegrationType).
-			Apply(accountingsynccol.AccountingAppCredentialApplyTenant(req.TenantInfo)).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, appCredentialEntity)
-		}
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				Where(cols.IntegrationType.Eq(), req.IntegrationType).
+				Apply(accountingsynccol.AccountingAppCredentialApplyTenant(req.TenantInfo)).
+				Scan(ctx); err != nil {
+				return nil, dberror.HandleNotFoundError(err, appCredentialEntity)
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *appCredentialRepository) GetForWebhook(
@@ -67,72 +71,87 @@ func (r *appCredentialRepository) GetForWebhook(
 	id pulid.ID,
 	integrationType integration.Type,
 ) (*accountingsync.AccountingAppCredential, error) {
-	ctx = dbscope.WithSystem(ctx, "load the accounting app whose webhook was called before its tenant is known")
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
-		entity := new(accountingsync.AccountingAppCredential)
-		cols := accountingsynccol.AccountingAppCredentialColumns
+	ctx = dbscope.WithSystem(
+		ctx,
+		"load the accounting app whose webhook was called before its tenant is known",
+	)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
+			entity := new(accountingsync.AccountingAppCredential)
+			cols := accountingsynccol.AccountingAppCredentialColumns
 
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.ID.Eq(), id).
-			Where(cols.IntegrationType.Eq(), integrationType).
-			Limit(1).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, appCredentialEntity)
-		}
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				Where(cols.ID.Eq(), id).
+				Where(cols.IntegrationType.Eq(), integrationType).
+				Limit(1).
+				Scan(ctx); err != nil {
+				return nil, dberror.HandleNotFoundError(err, appCredentialEntity)
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *appCredentialRepository) Create(
 	ctx context.Context,
 	entity *accountingsync.AccountingAppCredential,
 ) (*accountingsync.AccountingAppCredential, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, err
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
+			if _, err := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(entity).
+				Returning("*").
+				Exec(ctx); err != nil {
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *appCredentialRepository) Update(
 	ctx context.Context,
 	entity *accountingsync.AccountingAppCredential,
 ) (*accountingsync.AccountingAppCredential, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
-		cols := accountingsynccol.AccountingAppCredentialColumns
-		ov := entity.Version
-		entity.Version++
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
+			cols := accountingsynccol.AccountingAppCredentialColumns
+			ov := entity.Version
+			entity.Version++
 
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			Exec(ctx)
-		if err != nil {
-			entity.Version = ov
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			appCredentialEntity,
-			entity.ID.String(),
-		); err != nil {
-			entity.Version = ov
-			return nil, err
-		}
+			results, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(entity).
+				WherePK().
+				Where(cols.Version.Eq(), ov).
+				Exec(ctx)
+			if err != nil {
+				entity.Version = ov
+				return nil, err
+			}
+			if err = dberror.CheckRowsAffected(
+				results,
+				appCredentialEntity,
+				entity.ID.String(),
+			); err != nil {
+				entity.Version = ov
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *appCredentialRepository) Delete(

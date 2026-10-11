@@ -226,55 +226,59 @@ func (r *repository) RecentFailures(
 	ctx context.Context,
 	req aiusageports.AIUsageFailuresRequest,
 ) ([]aiusageports.AIUsageFailureRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]aiusageports.AIUsageFailureRow, error) {
-		cols := aiusagecol.AIUsageRecordColumns
-		limit := req.Limit
-		if limit <= 0 {
-			limit = 5
-		}
-
-		var rows []failureRow
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model((*aiusage.AIUsageRecord)(nil)).
-			ColumnExpr("COALESCE(aiu.provider_id, '') AS provider_id").
-			ColumnExpr("COALESCE(aiprv.name, '') AS provider_name").
-			ColumnExpr("aiu.model AS model").
-			ColumnExpr("aiu.task AS task").
-			ColumnExpr("COALESCE(aiu.error_class, '') AS error_class").
-			ColumnExpr("COALESCE(aiu.error_message, '') AS error_message").
-			ColumnExpr("aiu.created_at AS created_at").
-			Join("LEFT JOIN ai_providers AS aiprv ON aiprv.id = aiu.provider_id "+
-				"AND aiprv.organization_id = aiu.organization_id "+
-				"AND aiprv.business_unit_id = aiu.business_unit_id").
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(cols.CreatedAt.Gte(), req.Since).
-			Where(cols.Succeeded.Eq(), false).
-			OrderExpr("aiu.created_at DESC").
-			Limit(limit).
-			Scan(ctx, &rows); err != nil {
-			return nil, fmt.Errorf("list ai usage failures: %w", err)
-		}
-
-		failures := make([]aiusageports.AIUsageFailureRow, 0, len(rows))
-		for i := range rows {
-			row := &rows[i]
-			failure := aiusageports.AIUsageFailureRow{
-				ProviderName: row.ProviderName,
-				Model:        row.Model,
-				Task:         row.Task,
-				ErrorClass:   row.ErrorClass,
-				Message:      row.ErrorMessage,
-				At:           row.CreatedAt,
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]aiusageports.AIUsageFailureRow, error) {
+			cols := aiusagecol.AIUsageRecordColumns
+			limit := req.Limit
+			if limit <= 0 {
+				limit = 5
 			}
-			if row.ProviderID != "" {
-				failure.ProviderID = pulidFrom(row.ProviderID)
-			}
-			failures = append(failures, failure)
-		}
 
-		return failures, nil
-	})
+			var rows []failureRow
+			if err := r.db.DBForContext(ctx).NewSelect().
+				Model((*aiusage.AIUsageRecord)(nil)).
+				ColumnExpr("COALESCE(aiu.provider_id, '') AS provider_id").
+				ColumnExpr("COALESCE(aiprv.name, '') AS provider_name").
+				ColumnExpr("aiu.model AS model").
+				ColumnExpr("aiu.task AS task").
+				ColumnExpr("COALESCE(aiu.error_class, '') AS error_class").
+				ColumnExpr("COALESCE(aiu.error_message, '') AS error_message").
+				ColumnExpr("aiu.created_at AS created_at").
+				Join("LEFT JOIN ai_providers AS aiprv ON aiprv.id = aiu.provider_id "+
+					"AND aiprv.organization_id = aiu.organization_id "+
+					"AND aiprv.business_unit_id = aiu.business_unit_id").
+				Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+				Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+				Where(cols.CreatedAt.Gte(), req.Since).
+				Where(cols.Succeeded.Eq(), false).
+				OrderExpr("aiu.created_at DESC").
+				Limit(limit).
+				Scan(ctx, &rows); err != nil {
+				return nil, fmt.Errorf("list ai usage failures: %w", err)
+			}
+
+			failures := make([]aiusageports.AIUsageFailureRow, 0, len(rows))
+			for i := range rows {
+				row := &rows[i]
+				failure := aiusageports.AIUsageFailureRow{
+					ProviderName: row.ProviderName,
+					Model:        row.Model,
+					Task:         row.Task,
+					ErrorClass:   row.ErrorClass,
+					Message:      row.ErrorMessage,
+					At:           row.CreatedAt,
+				}
+				if row.ProviderID != "" {
+					failure.ProviderID = pulidFrom(row.ProviderID)
+				}
+				failures = append(failures, failure)
+			}
+
+			return failures, nil
+		},
+	)
 }
 
 type failureRow struct {
@@ -406,40 +410,44 @@ func (r *repository) ProviderTaskTotals(
 	ctx context.Context,
 	req aiusageports.AIUsageProviderTaskRequest,
 ) ([]aiusageports.AIUsageProviderTaskTotals, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]aiusageports.AIUsageProviderTaskTotals, error) {
-		cols := aiusagecol.AIUsageRecordColumns
-		var rows []providerTaskRow
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model((*aiusage.AIUsageRecord)(nil)).
-			ColumnExpr(cols.ProviderID.Qualified()+" AS provider_id").
-			ColumnExpr(cols.Task.Qualified()+" AS task").
-			ColumnExpr("COUNT(*) AS calls").
-			ColumnExpr("COUNT(*) FILTER (WHERE NOT "+cols.Succeeded.Qualified()+") AS failed").
-			ColumnExpr("COUNT(*) FILTER (WHERE "+cols.Succeeded.Qualified()+" AND "+
-				cols.Failover.Qualified()+") AS rescued").
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(cols.CreatedAt.Gte(), req.Since).
-			Where(cols.ProviderID.IsNotNull()).
-			GroupExpr(cols.ProviderID.Qualified()).
-			GroupExpr(cols.Task.Qualified()).
-			Scan(ctx, &rows); err != nil {
-			return nil, fmt.Errorf("total ai usage by provider and task: %w", err)
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]aiusageports.AIUsageProviderTaskTotals, error) {
+			cols := aiusagecol.AIUsageRecordColumns
+			var rows []providerTaskRow
+			if err := r.db.DBForContext(ctx).NewSelect().
+				Model((*aiusage.AIUsageRecord)(nil)).
+				ColumnExpr(cols.ProviderID.Qualified()+" AS provider_id").
+				ColumnExpr(cols.Task.Qualified()+" AS task").
+				ColumnExpr("COUNT(*) AS calls").
+				ColumnExpr("COUNT(*) FILTER (WHERE NOT "+cols.Succeeded.Qualified()+") AS failed").
+				ColumnExpr("COUNT(*) FILTER (WHERE "+cols.Succeeded.Qualified()+" AND "+
+					cols.Failover.Qualified()+") AS rescued").
+				Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+				Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+				Where(cols.CreatedAt.Gte(), req.Since).
+				Where(cols.ProviderID.IsNotNull()).
+				GroupExpr(cols.ProviderID.Qualified()).
+				GroupExpr(cols.Task.Qualified()).
+				Scan(ctx, &rows); err != nil {
+				return nil, fmt.Errorf("total ai usage by provider and task: %w", err)
+			}
 
-		totals := make([]aiusageports.AIUsageProviderTaskTotals, 0, len(rows))
-		for i := range rows {
-			row := &rows[i]
-			totals = append(totals, aiusageports.AIUsageProviderTaskTotals{
-				ProviderID: pulidFrom(row.ProviderID),
-				Task:       aiprovider.Task(row.Task),
-				Calls:      row.Calls,
-				Failed:     row.Failed,
-				Rescued:    row.Rescued,
-			})
-		}
-		return totals, nil
-	})
+			totals := make([]aiusageports.AIUsageProviderTaskTotals, 0, len(rows))
+			for i := range rows {
+				row := &rows[i]
+				totals = append(totals, aiusageports.AIUsageProviderTaskTotals{
+					ProviderID: pulidFrom(row.ProviderID),
+					Task:       aiprovider.Task(row.Task),
+					Calls:      row.Calls,
+					Failed:     row.Failed,
+					Rescued:    row.Rescued,
+				})
+			}
+			return totals, nil
+		},
+	)
 }
 
 type providerSpendRow struct {

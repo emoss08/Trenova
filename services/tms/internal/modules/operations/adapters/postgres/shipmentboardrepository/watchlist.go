@@ -128,41 +128,45 @@ func (r *Repository) NextUncoveredPickup(
 	ctx context.Context,
 	req *shipmentports.ShipmentWatchlistRequest,
 ) (*shipmentports.ShipmentPickupRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipmentports.ShipmentPickupRow, error) {
-		dba := r.db.DBForContext(ctx)
-		sp := shipmentcol.ShipmentColumns
-		stp := shipmentcol.StopColumns
-		loc := locationcol.LocationColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*shipmentports.ShipmentPickupRow, error) {
+			dba := r.db.DBForContext(ctx)
+			sp := shipmentcol.ShipmentColumns
+			stp := shipmentcol.StopColumns
+			loc := locationcol.LocationColumns
 
-		pickup := withStopLocation(shipmentrepository.FirstPickupStopQuery(dba)).
-			ColumnExpr(stp.ScheduledWindowStart.As(fpPickupAt.Name)).
-			ColumnExpr(loc.City.As(fpCity.Name))
+			pickup := withStopLocation(shipmentrepository.FirstPickupStopQuery(dba)).
+				ColumnExpr(stp.ScheduledWindowStart.As(fpPickupAt.Name)).
+				ColumnExpr(loc.City.As(fpCity.Name))
 
-		row := new(shipmentports.ShipmentPickupRow)
-		err := dba.NewSelect().
-			Model((*shipment.Shipment)(nil)).
-			ColumnExpr(sp.ID.As("shipment_id")).
-			ColumnExpr(fpPickupAt.As(fpPickupAt.Name)).
-			ColumnExpr(fpCity.Expr("COALESCE({}, '') AS origin_city")).
-			ColumnExpr(ldCity.Expr("COALESCE({}, '') AS destination_city")).
-			Join("JOIN LATERAL (?) AS ? ON TRUE", pickup, bun.Ident(pickupAlias)).
-			Join("LEFT JOIN LATERAL (?) AS ? ON TRUE", lastDeliveryLateral(dba), bun.Ident(deliveryAlias)).
-			Apply(shipmentcol.ShipmentApplyTenant(req.TenantInfo)).
-			Where("?", shipmentrepository.StageCondition(shipment.StageNeedsCoverage)).
-			Where(fpPickupAt.Gte(), req.Basis.Now.Unix()).
-			Order(fpPickupAt.OrderAsc(), sp.ID.OrderAsc()).
-			Limit(1).
-			Scan(ctx, row)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil, nil
+			row := new(shipmentports.ShipmentPickupRow)
+			err := dba.NewSelect().
+				Model((*shipment.Shipment)(nil)).
+				ColumnExpr(sp.ID.As("shipment_id")).
+				ColumnExpr(fpPickupAt.As(fpPickupAt.Name)).
+				ColumnExpr(fpCity.Expr("COALESCE({}, '') AS origin_city")).
+				ColumnExpr(ldCity.Expr("COALESCE({}, '') AS destination_city")).
+				Join("JOIN LATERAL (?) AS ? ON TRUE", pickup, bun.Ident(pickupAlias)).
+				Join("LEFT JOIN LATERAL (?) AS ? ON TRUE", lastDeliveryLateral(dba), bun.Ident(deliveryAlias)).
+				Apply(shipmentcol.ShipmentApplyTenant(req.TenantInfo)).
+				Where("?", shipmentrepository.StageCondition(shipment.StageNeedsCoverage)).
+				Where(fpPickupAt.Gte(), req.Basis.Now.Unix()).
+				Order(fpPickupAt.OrderAsc(), sp.ID.OrderAsc()).
+				Limit(1).
+				Scan(ctx, row)
+			if err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					return nil, nil
+				}
+				r.l.Error("failed to read next uncovered pickup", zap.Error(err))
+				return nil, err
 			}
-			r.l.Error("failed to read next uncovered pickup", zap.Error(err))
-			return nil, err
-		}
 
-		return row, nil
-	})
+			return row, nil
+		},
+	)
 }
 
 func (r *Repository) ListDwellingStops(

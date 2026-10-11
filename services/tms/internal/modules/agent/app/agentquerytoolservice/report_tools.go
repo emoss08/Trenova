@@ -6,15 +6,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/reportrows"
@@ -227,7 +227,8 @@ func everyReport(
 		}
 	}
 	for _, definition := range saved {
-		if definition != nil && (category == "" || strings.EqualFold(definition.Category, category)) {
+		if definition != nil &&
+			(category == "" || strings.EqualFold(definition.Category, category)) {
 			names = append(names, definition.Name)
 		}
 	}

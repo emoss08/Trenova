@@ -78,10 +78,13 @@ func (s *Service) PreviewPolicy(
 		scenario.ScheduleType = shipment.StopScheduleTypeAppointment
 	}
 
-	accessorial, err := s.accessorialRepo.GetByID(ctx, accessorialchargeports.GetAccessorialChargeByIDRequest{
-		ID:         policy.AccessorialChargeID,
-		TenantInfo: &tenantInfo,
-	})
+	accessorial, err := s.accessorialRepo.GetByID(
+		ctx,
+		accessorialchargeports.GetAccessorialChargeByIDRequest{
+			ID:         policy.AccessorialChargeID,
+			TenantInfo: &tenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

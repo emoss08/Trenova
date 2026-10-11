@@ -8,17 +8,17 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -235,10 +235,13 @@ func (s *Service) GetPacketSummary( //nolint:funlen,gocognit // legacy workflow
 
 	typeByID := make(map[string]*documenttype.DocumentType, len(rules))
 	for _, rule := range rules {
-		docType, typeErr := s.documentTypeRepo.GetByID(ctx, documenttypeports.GetDocumentTypeByIDRequest{
-			ID:         rule.DocumentTypeID,
-			TenantInfo: tenantInfo,
-		})
+		docType, typeErr := s.documentTypeRepo.GetByID(
+			ctx,
+			documenttypeports.GetDocumentTypeByIDRequest{
+				ID:         rule.DocumentTypeID,
+				TenantInfo: tenantInfo,
+			},
+		)
 		if typeErr != nil {
 			return nil, typeErr
 		}

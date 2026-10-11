@@ -95,48 +95,52 @@ func (r *repository) PlanSelectOptions(
 	ctx context.Context,
 	req *driverpayports.BenefitPlanSelectOptionsRequest,
 ) (*pagination.ListResult[*driverpay.BenefitPlan], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driverpay.BenefitPlan], error) {
-		cols := driverpaycol.BenefitPlanColumns
-		return dbhelper.SelectOptions[*driverpay.BenefitPlan](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					cols.ID,
-					cols.Code,
-					cols.Name,
-					cols.Description,
-					cols.PlanType,
-					cols.Carrier,
-					cols.PlanYear,
-					cols.EmployeeCostMinor,
-					cols.EmployerCostMinor,
-					cols.CurrencyCode,
-					cols.WaitingPeriodDays,
-					cols.CreatedAt,
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*driverpay.BenefitPlan], error) {
+			cols := driverpaycol.BenefitPlanColumns
+			return dbhelper.SelectOptions[*driverpay.BenefitPlan](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.Code,
+						cols.Name,
+						cols.Description,
+						cols.PlanType,
+						cols.Carrier,
+						cols.PlanYear,
+						cols.EmployeeCostMinor,
+						cols.EmployerCostMinor,
+						cols.CurrencyCode,
+						cols.WaitingPeriodDays,
+						cols.CreatedAt,
+					},
+					OrgColumnRef: &cols.OrganizationID,
+					BuColumnRef:  &cols.BusinessUnitID,
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						q = q.Where(cols.Status.Eq(), domaintypes.StatusActive)
+						if req.PlanYear > 0 {
+							q = q.Where(cols.PlanYear.Eq(), req.PlanYear)
+						}
+						return q.Order(cols.PlanYear.OrderDesc()).
+							Order(cols.PlanType.OrderAsc()).
+							Order(cols.Name.OrderAsc())
+					},
+					EntityName: "BenefitPlan",
+					SearchColumnRefs: []buncolgen.Column{
+						cols.Code,
+						cols.Name,
+						cols.Description,
+						cols.Carrier,
+					},
 				},
-				OrgColumnRef: &cols.OrganizationID,
-				BuColumnRef:  &cols.BusinessUnitID,
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					q = q.Where(cols.Status.Eq(), domaintypes.StatusActive)
-					if req.PlanYear > 0 {
-						q = q.Where(cols.PlanYear.Eq(), req.PlanYear)
-					}
-					return q.Order(cols.PlanYear.OrderDesc()).
-						Order(cols.PlanType.OrderAsc()).
-						Order(cols.Name.OrderAsc())
-				},
-				EntityName: "BenefitPlan",
-				SearchColumnRefs: []buncolgen.Column{
-					cols.Code,
-					cols.Name,
-					cols.Description,
-					cols.Carrier,
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 func (r *repository) GetPlanByID(
@@ -241,123 +245,139 @@ func (r *repository) ListEnrollments(
 	ctx context.Context,
 	req *driverpayports.ListBenefitEnrollmentsRequest,
 ) ([]*driverpay.WorkerBenefitEnrollment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.WorkerBenefitEnrollment, error) {
-		cols := driverpaycol.WorkerBenefitEnrollmentColumns
-		entities := make([]*driverpay.WorkerBenefitEnrollment, 0, 8)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*driverpay.WorkerBenefitEnrollment, error) {
+			cols := driverpaycol.WorkerBenefitEnrollmentColumns
+			entities := make([]*driverpay.WorkerBenefitEnrollment, 0, 8)
 
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = driverpaycol.WorkerBenefitEnrollmentScopeTenant(sq, req.TenantInfo)
-				if !req.WorkerID.IsNil() {
-					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
-				}
-				if !req.PlanID.IsNil() {
-					sq = sq.Where(cols.BenefitPlanID.Eq(), req.PlanID)
-				}
-				if req.OpenOnly {
-					sq = sq.Where(cols.Status.In(), bun.In([]driverpay.BenefitEnrollmentStatus{
-						driverpay.EnrollmentPending,
-						driverpay.EnrollmentActive,
-					}))
-				}
-				if len(req.Statuses) > 0 {
-					sq = sq.Where(cols.Status.In(), bun.In(req.Statuses))
-				}
-				return sq
-			}).
-			Order(cols.EffectiveFrom.OrderDesc()).
-			Limit(limitOr(req.Limit, defaultEnrollmentPageSize))
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = driverpaycol.WorkerBenefitEnrollmentScopeTenant(sq, req.TenantInfo)
+					if !req.WorkerID.IsNil() {
+						sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
+					}
+					if !req.PlanID.IsNil() {
+						sq = sq.Where(cols.BenefitPlanID.Eq(), req.PlanID)
+					}
+					if req.OpenOnly {
+						sq = sq.Where(cols.Status.In(), bun.In([]driverpay.BenefitEnrollmentStatus{
+							driverpay.EnrollmentPending,
+							driverpay.EnrollmentActive,
+						}))
+					}
+					if len(req.Statuses) > 0 {
+						sq = sq.Where(cols.Status.In(), bun.In(req.Statuses))
+					}
+					return sq
+				}).
+				Order(cols.EffectiveFrom.OrderDesc()).
+				Limit(limitOr(req.Limit, defaultEnrollmentPageSize))
 
-		if req.IncludePlan {
-			q = q.Relation(driverpaycol.WorkerBenefitEnrollmentRelations.BenefitPlan)
-		}
-		if req.IncludeWorker {
-			q = q.Relation(driverpaycol.WorkerBenefitEnrollmentRelations.Worker)
-		}
+			if req.IncludePlan {
+				q = q.Relation(driverpaycol.WorkerBenefitEnrollmentRelations.BenefitPlan)
+			}
+			if req.IncludeWorker {
+				q = q.Relation(driverpaycol.WorkerBenefitEnrollmentRelations.Worker)
+			}
 
-		if err := q.Scan(ctx); err != nil {
-			r.l.Error("failed to list benefit enrollments", zap.Error(err))
-			return nil, fmt.Errorf("list benefit enrollments: %w", err)
-		}
+			if err := q.Scan(ctx); err != nil {
+				r.l.Error("failed to list benefit enrollments", zap.Error(err))
+				return nil, fmt.Errorf("list benefit enrollments: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) GetEnrollmentByID(
 	ctx context.Context,
 	req *driverpayports.GetBenefitEnrollmentByIDRequest,
 ) (*driverpay.WorkerBenefitEnrollment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.WorkerBenefitEnrollment, error) {
-		entity := new(driverpay.WorkerBenefitEnrollment)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return driverpaycol.WorkerBenefitEnrollmentScopeTenant(sq, req.TenantInfo).
-					Where(driverpaycol.WorkerBenefitEnrollmentColumns.ID.Eq(), req.ID)
-			})
-		if req.IncludePlan {
-			q = q.Relation(driverpaycol.WorkerBenefitEnrollmentRelations.BenefitPlan)
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*driverpay.WorkerBenefitEnrollment, error) {
+			entity := new(driverpay.WorkerBenefitEnrollment)
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return driverpaycol.WorkerBenefitEnrollmentScopeTenant(sq, req.TenantInfo).
+						Where(driverpaycol.WorkerBenefitEnrollmentColumns.ID.Eq(), req.ID)
+				})
+			if req.IncludePlan {
+				q = q.Relation(driverpaycol.WorkerBenefitEnrollmentRelations.BenefitPlan)
+			}
 
-		if err := q.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "WorkerBenefitEnrollment")
-		}
+			if err := q.Scan(ctx); err != nil {
+				return nil, dberror.HandleNotFoundError(err, "WorkerBenefitEnrollment")
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) CreateEnrollment(
 	ctx context.Context,
 	entity *driverpay.WorkerBenefitEnrollment,
 ) (*driverpay.WorkerBenefitEnrollment, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.WorkerBenefitEnrollment, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			r.l.Error("failed to create benefit enrollment", zap.Error(err))
-			return nil, fmt.Errorf("create benefit enrollment: %w", err)
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*driverpay.WorkerBenefitEnrollment, error) {
+			if _, err := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(entity).
+				Returning("*").
+				Exec(ctx); err != nil {
+				r.l.Error("failed to create benefit enrollment", zap.Error(err))
+				return nil, fmt.Errorf("create benefit enrollment: %w", err)
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) UpdateEnrollment(
 	ctx context.Context,
 	entity *driverpay.WorkerBenefitEnrollment,
 ) (*driverpay.WorkerBenefitEnrollment, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.WorkerBenefitEnrollment, error) {
-		ov := entity.Version
-		entity.Version++
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*driverpay.WorkerBenefitEnrollment, error) {
+			ov := entity.Version
+			entity.Version++
 
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(driverpaycol.WorkerBenefitEnrollmentColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			r.l.Error("failed to update benefit enrollment", zap.Error(err))
-			return nil, fmt.Errorf("update benefit enrollment: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"WorkerBenefitEnrollment",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
-		}
+			results, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(entity).
+				WherePK().
+				Where(driverpaycol.WorkerBenefitEnrollmentColumns.Version.Eq(), ov).
+				Returning("*").
+				Exec(ctx)
+			if err != nil {
+				r.l.Error("failed to update benefit enrollment", zap.Error(err))
+				return nil, fmt.Errorf("update benefit enrollment: %w", err)
+			}
+			if err = dberror.CheckRowsAffected(
+				results,
+				"WorkerBenefitEnrollment",
+				entity.ID.String(),
+			); err != nil {
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 // BenefitCosts is what each plan is costing across the organisation. Grouped

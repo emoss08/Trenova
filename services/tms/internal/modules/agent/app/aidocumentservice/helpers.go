@@ -54,7 +54,9 @@ func convertExtractResponse(parsed *extractResponse) *documentaiextractionports.
 	return result
 }
 
-func derivedStops(stops []*documentaiextractionports.AIDocumentStop) []*documentaiextractionports.AIDocumentStop {
+func derivedStops(
+	stops []*documentaiextractionports.AIDocumentStop,
+) []*documentaiextractionports.AIDocumentStop {
 	derived := make([]*documentaiextractionports.AIDocumentStop, 0, len(stops))
 	for _, stop := range stops {
 		if stop == nil {

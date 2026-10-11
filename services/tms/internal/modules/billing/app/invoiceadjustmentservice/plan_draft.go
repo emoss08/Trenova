@@ -43,15 +43,19 @@ func (s *Service) SaveDraft(
 		}
 
 		var updateErr error
-		saved, updateErr = s.UpdateDraft(txCtx, &invoiceadjustmentports.UpdateDraftInvoiceAdjustmentRequest{
-			AdjustmentID:          adjustmentID,
-			Kind:                  req.Kind,
-			RebillStrategy:        req.RebillStrategy,
-			Reason:                req.Reason,
-			ReferencedDocumentIDs: req.ReferencedDocumentIDs,
-			Lines:                 req.Lines,
-			TenantInfo:            req.TenantInfo,
-		}, actor)
+		saved, updateErr = s.UpdateDraft(
+			txCtx,
+			&invoiceadjustmentports.UpdateDraftInvoiceAdjustmentRequest{
+				AdjustmentID:          adjustmentID,
+				Kind:                  req.Kind,
+				RebillStrategy:        req.RebillStrategy,
+				Reason:                req.Reason,
+				ReferencedDocumentIDs: req.ReferencedDocumentIDs,
+				Lines:                 req.Lines,
+				TenantInfo:            req.TenantInfo,
+			},
+			actor,
+		)
 
 		return updateErr
 	})

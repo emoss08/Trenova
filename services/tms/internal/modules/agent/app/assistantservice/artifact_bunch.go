@@ -45,11 +45,14 @@ func (r *artifactRecorder) bunch(
 	observation *agentports.ToolObservation,
 	card *assistantartifact.Artifact,
 ) (*agentports.ShownArtifact, error) {
-	earlier, err := r.repo.ListByToolCalls(r.ctx, &assistantartifactports.ListArtifactsByToolCallsRequest{
-		ThreadID:   r.thread.ID,
-		TenantInfo: r.tenant,
-		CallIDs:    observation.Earlier,
-	})
+	earlier, err := r.repo.ListByToolCalls(
+		r.ctx,
+		&assistantartifactports.ListArtifactsByToolCallsRequest{
+			ThreadID:   r.thread.ID,
+			TenantInfo: r.tenant,
+			CallIDs:    observation.Earlier,
+		},
+	)
 	if err != nil {
 		r.logger.Warn("the turn's earlier cards could not be read to bunch them",
 			zap.String("thread", r.thread.ID.String()),

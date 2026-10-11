@@ -497,7 +497,10 @@ func (b *Broker) replay(
 		if !accepted {
 			continue
 		}
-		frames = append(frames, agentports.RealtimeFrame{ID: e.cursor, Event: e.event, Data: payload})
+		frames = append(
+			frames,
+			agentports.RealtimeFrame{ID: e.cursor, Event: e.event, Data: payload},
+		)
 	}
 
 	b.metrics.RecordReplay("resumed")
@@ -510,7 +513,10 @@ func (b *Broker) maintain() {
 	ticker := time.NewTicker(b.cfg.GetHeartbeatInterval())
 	defer ticker.Stop()
 
-	heartbeat := agentports.RealtimeFrame{Event: agentports.RealtimeEventHeartbeat, Data: []byte("{}")}
+	heartbeat := agentports.RealtimeFrame{
+		Event: agentports.RealtimeEventHeartbeat,
+		Data:  []byte("{}"),
+	}
 	for {
 		select {
 		case <-b.ctx.Done():

@@ -9,21 +9,21 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/temporaljobs"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -847,7 +847,10 @@ func hashAIExtractionRequest(fileName, text string, pages []*documentcontent.Pag
 	return hex.EncodeToString(sum.Sum(nil))
 }
 
-func toAIDocumentPages(pages []*documentcontent.Page, maxChars int) []documentaiextractionports.AIDocumentPage {
+func toAIDocumentPages(
+	pages []*documentcontent.Page,
+	maxChars int,
+) []documentaiextractionports.AIDocumentPage {
 	out := make([]documentaiextractionports.AIDocumentPage, 0, len(pages))
 	pageLimit := maxChars / max(len(pages), 1)
 	for _, page := range pages {
@@ -996,7 +999,9 @@ func analysisFromMap(data map[string]any) *DocumentIntelligenceAnalysis {
 	return analysis
 }
 
-func parseParsingRuleMetadata(data map[string]any) *documentparsingruleports.DocumentParsingRuleMetadata {
+func parseParsingRuleMetadata(
+	data map[string]any,
+) *documentparsingruleports.DocumentParsingRuleMetadata {
 	ruleSetID, err := pulid.Parse(sliceutils.StringValue(data["ruleSetId"]))
 	if err != nil {
 		return nil

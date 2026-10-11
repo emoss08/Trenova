@@ -31,7 +31,10 @@ func New(p Params) *Service {
 
 // Report sets the writes an agent recorded in shadow over the last days
 // beside what people did to the same records.
-func (s *Service) Report(ctx context.Context, req *agentshadowports.AgentShadowReportRequest) (*agentshadow.Report, error) {
+func (s *Service) Report(
+	ctx context.Context,
+	req *agentshadowports.AgentShadowReportRequest,
+) (*agentshadow.Report, error) {
 	if _, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         req.AgentID,
 		TenantInfo: req.TenantInfo,
@@ -43,12 +46,15 @@ func (s *Service) Report(ctx context.Context, req *agentshadowports.AgentShadowR
 	now := s.now()
 	since := now - int64(days)*24*60*60
 
-	proposals, err := s.shadow.ListShadowProposals(ctx, &agentshadowports.ListShadowProposalsRequest{
-		TenantInfo:        req.TenantInfo,
-		AgentDefinitionID: req.AgentID,
-		Since:             since,
-		Limit:             agentshadow.MaxProposals,
-	})
+	proposals, err := s.shadow.ListShadowProposals(
+		ctx,
+		&agentshadowports.ListShadowProposalsRequest{
+			TenantInfo:        req.TenantInfo,
+			AgentDefinitionID: req.AgentID,
+			Since:             since,
+			Limit:             agentshadow.MaxProposals,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

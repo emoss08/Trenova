@@ -74,7 +74,7 @@ type Provider struct {
 	BaseURL string `json:"baseUrl" bun:"base_url,type:TEXT,nullzero"`
 	// Model is free text on purpose. Self-hosted deployments name models whatever
 	// they like ("llama3.3:70b", "qwen2.5-coder:32b"), so no closed set can hold.
-	Model string `json:"model"   bun:"model,type:VARCHAR(200),notnull"`
+	Model string `json:"model" bun:"model,type:VARCHAR(200),notnull"`
 
 	// APIKey holds the credential encrypted at rest. It is cleared before the
 	// entity leaves the service layer.
@@ -95,7 +95,7 @@ type Provider struct {
 	ContextWindowTokens *int `json:"contextWindow" bun:"context_window,type:INTEGER,nullzero"`
 	// ReasoningEffort asks a model that can think to do so before answering.
 	// Off is the default: the parameter is refused by models without it.
-	ReasoningEffort ReasoningEffort `json:"reasoningEffort"      bun:"reasoning_effort,type:VARCHAR(50),notnull,nullzero,default:'Off'"`
+	ReasoningEffort ReasoningEffort `json:"reasoningEffort" bun:"reasoning_effort,type:VARCHAR(50),notnull,nullzero,default:'Off'"`
 	// ThinkingStyle says how a Claude model behind an id the adapter cannot
 	// read takes thinking. Auto reads the id.
 	ThinkingStyle ThinkingStyle `json:"thinkingStyle" bun:"thinking_style,type:VARCHAR(50),notnull,nullzero,default:'Auto'"`
@@ -880,11 +880,20 @@ func validMonthlyCap(value any) error {
 	case limit == nil:
 		return nil
 	case !limit.IsPositive():
-		return validation.NewError("validation_monthly_cap_positive", "Monthly cap must be more than zero")
+		return validation.NewError(
+			"validation_monthly_cap_positive",
+			"Monthly cap must be more than zero",
+		)
 	case limit.GreaterThan(maxMonthlyCap):
-		return validation.NewError("validation_monthly_cap_max", "Monthly cap is larger than this system can hold")
+		return validation.NewError(
+			"validation_monthly_cap_max",
+			"Monthly cap is larger than this system can hold",
+		)
 	case !limit.Equal(limit.Round(2)):
-		return validation.NewError("validation_monthly_cap_scale", "Monthly cap takes at most two decimal places")
+		return validation.NewError(
+			"validation_monthly_cap_scale",
+			"Monthly cap takes at most two decimal places",
+		)
 	default:
 		return nil
 	}

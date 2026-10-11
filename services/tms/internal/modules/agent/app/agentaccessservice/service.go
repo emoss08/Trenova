@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -104,10 +104,13 @@ func (s *Service) SetAgentAccess(
 
 	var written *accessWrite
 	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		definition, txErr := s.definitions.GetByID(txCtx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-			ID:         req.AgentID,
-			TenantInfo: req.TenantInfo,
-		})
+		definition, txErr := s.definitions.GetByID(
+			txCtx,
+			agentdefinitionports.GetAgentDefinitionByIDRequest{
+				ID:         req.AgentID,
+				TenantInfo: req.TenantInfo,
+			},
+		)
 		if txErr != nil {
 			return txErr
 		}
@@ -237,11 +240,14 @@ func (s *Service) applyAccess(ctx context.Context, req accessChange) (*accessWri
 
 	previousMode := definition.EffectiveAccessMode()
 	if definition.AccessMode != req.mode {
-		if err = s.definitions.SetAccessMode(ctx, agentdefinitionports.SetAgentDefinitionAccessModeRequest{
-			ID:         definition.ID,
-			TenantInfo: req.tenant,
-			Mode:       req.mode,
-		}); err != nil {
+		if err = s.definitions.SetAccessMode(
+			ctx,
+			agentdefinitionports.SetAgentDefinitionAccessModeRequest{
+				ID:         definition.ID,
+				TenantInfo: req.tenant,
+				Mode:       req.mode,
+			},
+		); err != nil {
 			return nil, err
 		}
 	}
@@ -340,10 +346,13 @@ func (s *Service) SetRoleAgents(
 		change permissionports.GrantChange
 	)
 	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		roles, txErr := s.grants.ListGrantableRoles(txCtx, permissionports.ListGrantableRolesRequest{
-			TenantInfo: req.TenantInfo,
-			RoleIDs:    []pulid.ID{req.RoleID},
-		})
+		roles, txErr := s.grants.ListGrantableRoles(
+			txCtx,
+			permissionports.ListGrantableRolesRequest{
+				TenantInfo: req.TenantInfo,
+				RoleIDs:    []pulid.ID{req.RoleID},
+			},
+		)
 		if txErr != nil {
 			return txErr
 		}
@@ -525,10 +534,13 @@ func (s *Service) tenantAgents(
 		return []*agentdefinition.Definition{}, nil
 	}
 
-	agents, err := s.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
-		IDs:        agentIDs,
-		TenantInfo: tenant,
-	})
+	agents, err := s.definitions.ListByIDs(
+		ctx,
+		agentdefinitionports.ListAgentDefinitionsByIDsRequest{
+			IDs:        agentIDs,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

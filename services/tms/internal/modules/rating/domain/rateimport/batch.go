@@ -11,8 +11,8 @@ package rateimport
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	pkgrateimport "github.com/emoss08/trenova/pkg/rateimport"

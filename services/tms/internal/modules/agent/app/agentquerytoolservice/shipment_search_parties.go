@@ -156,7 +156,10 @@ func partyTerms(query string) []string {
 		if _, filler := partyFillerWords[word]; filler {
 			continue
 		}
-		if !slices.ContainsFunc(terms, func(term string) bool { return strings.EqualFold(term, word) }) {
+		if !slices.ContainsFunc(
+			terms,
+			func(term string) bool { return strings.EqualFold(term, word) },
+		) {
 			terms = append(terms, word)
 		}
 	}
@@ -182,7 +185,10 @@ func (t *searchShipmentsTool) resolveParties(
 		}
 
 		if t.parties.customers != nil {
-			found, err := t.parties.customers.List(ctx, &customerports.ListCustomerRequest{Filter: filter})
+			found, err := t.parties.customers.List(
+				ctx,
+				&customerports.ListCustomerRequest{Filter: filter},
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -194,7 +200,10 @@ func (t *searchShipmentsTool) resolveParties(
 		}
 
 		if t.parties.locations != nil {
-			found, err := t.parties.locations.List(ctx, &locationports.ListLocationRequest{Filter: filter})
+			found, err := t.parties.locations.List(
+				ctx,
+				&locationports.ListLocationRequest{Filter: filter},
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -206,7 +215,10 @@ func (t *searchShipmentsTool) resolveParties(
 		}
 
 		if t.parties.workers != nil {
-			found, err := t.parties.workers.List(ctx, &workerports.ListWorkersRequest{Filter: filter})
+			found, err := t.parties.workers.List(
+				ctx,
+				&workerports.ListWorkersRequest{Filter: filter},
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -218,7 +230,10 @@ func (t *searchShipmentsTool) resolveParties(
 		}
 
 		if t.parties.commodities != nil {
-			found, err := t.parties.commodities.List(ctx, &commodityports.ListCommodityRequest{Filter: filter})
+			found, err := t.parties.commodities.List(
+				ctx,
+				&commodityports.ListCommodityRequest{Filter: filter},
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -230,7 +245,10 @@ func (t *searchShipmentsTool) resolveParties(
 		}
 
 		if t.parties.types != nil {
-			found, err := t.parties.types.List(ctx, &shipmenttypeports.ListShipmentTypesRequest{Filter: filter})
+			found, err := t.parties.types.List(
+				ctx,
+				&shipmenttypeports.ListShipmentTypesRequest{Filter: filter},
+			)
 			if err != nil {
 				return nil, err
 			}

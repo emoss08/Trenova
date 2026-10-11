@@ -25,7 +25,11 @@ const (
 
 func (k Kind) IsValid() bool {
 	switch k {
-	case KindRaiseToolTier, KindReorderProviders, KindLeaveShadow, KindAssignTask, KindTurnOffIdleAgent:
+	case KindRaiseToolTier,
+		KindReorderProviders,
+		KindLeaveShadow,
+		KindAssignTask,
+		KindTurnOffIdleAgent:
 		return true
 	default:
 		return false
@@ -82,7 +86,7 @@ type TuneUp struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 
-	Kind              Kind            `json:"kind" bun:"kind,type:VARCHAR(40),notnull"`
+	Kind              Kind            `json:"kind"              bun:"kind,type:VARCHAR(40),notnull"`
 	Fingerprint       string          `json:"fingerprint"       bun:"fingerprint,type:VARCHAR(400),notnull"`
 	AgentDefinitionID pulid.ID        `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),nullzero"`
 	ProviderID        pulid.ID        `json:"providerId"        bun:"provider_id,type:VARCHAR(100),nullzero"`

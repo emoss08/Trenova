@@ -53,12 +53,15 @@ func (s *Service) resolveGLActualRates(
 	}
 	window.FleetMiles = miles.TotalMiles
 
-	sums, err := s.actualsRepo.SumExpenseByAccounts(ctx, &costingcontrolports.SumExpenseByAccountsRequest{
-		TenantInfo:   tenantInfo,
-		GLAccountIDs: accountIDs,
-		FromDate:     window.FromDate,
-		ToDate:       window.ToDate,
-	})
+	sums, err := s.actualsRepo.SumExpenseByAccounts(
+		ctx,
+		&costingcontrolports.SumExpenseByAccountsRequest{
+			TenantInfo:   tenantInfo,
+			GLAccountIDs: accountIDs,
+			FromDate:     window.FromDate,
+			ToDate:       window.ToDate,
+		},
+	)
 	if err != nil {
 		s.l.Error("failed to sum GL expenses for actuals", zap.Error(err))
 		return nil, err

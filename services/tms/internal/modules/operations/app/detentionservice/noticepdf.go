@@ -5,14 +5,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/internal/modules/operations/jobs/detentionjobs/detentioncontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/jobs/detentionjobs/detentioncontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -184,10 +184,13 @@ func (s *Service) uploadNoticePDF(
 	ctx context.Context,
 	f *noticePDFFiling,
 ) (pulid.ID, error) {
-	docType, err := s.documentTypeRepo.GetByCode(ctx, documenttypeports.GetDocumentTypeByCodeRequest{
-		Code:       documenttype.CodeDetentionNotice,
-		TenantInfo: f.TenantInfo,
-	})
+	docType, err := s.documentTypeRepo.GetByCode(
+		ctx,
+		documenttypeports.GetDocumentTypeByCodeRequest{
+			Code:       documenttype.CodeDetentionNotice,
+			TenantInfo: f.TenantInfo,
+		},
+	)
 	if err != nil {
 		return pulid.Nil, err
 	}

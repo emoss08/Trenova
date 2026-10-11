@@ -56,30 +56,34 @@ func (r *repository) List(
 	ctx context.Context,
 	req *permissionports.ListRolesRequest,
 ) (*pagination.ListResult[*permission.Role], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*permission.Role], error) {
-		log := r.l.With(
-			zap.String("operation", "List"),
-			zap.Any("request", req),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*permission.Role], error) {
+			log := r.l.With(
+				zap.String("operation", "List"),
+				zap.Any("request", req),
+			)
 
-		entities := make([]*permission.Role, 0, req.Filter.Pagination.SafeLimit())
+			entities := make([]*permission.Role, 0, req.Filter.Pagination.SafeLimit())
 
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterQuery(sq, req)
-			}).ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count roles", zap.Error(err))
-			return nil, err
-		}
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count roles", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*permission.Role]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*permission.Role]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -111,72 +115,80 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *permissionports.ListRoleConnectionRequest,
 ) (*pagination.CursorListResult[*permission.Role], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*permission.Role], error) {
-		log := r.l.With(
-			zap.String("operation", "ListConnection"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*permission.Role], error) {
+			log := r.l.With(
+				zap.String("operation", "ListConnection"),
+				zap.Any("request", req),
+			)
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*permission.Role)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyTotalCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*permission.Role)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyTotalCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count roles", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*permission.Role]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*permission.Role) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							ColumnExpr("r.*")
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return r.applyCursorPageFilters(sq, req)
+					},
+				})
 			if err != nil {
-				log.Error("failed to count roles", zap.Error(err))
+				log.Error("failed to scan roles", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*permission.Role]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*permission.Role) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						ColumnExpr("r.*")
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return r.applyCursorPageFilters(sq, req)
-				},
-			})
-		if err != nil {
-			log.Error("failed to scan roles", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*permission.Role], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*permission.Role], error) {
-		return dbhelper.SelectOptions[*permission.Role](
-			ctx,
-			r.db.DBForContext(ctx),
-			req,
-			&dbhelper.SelectOptionsConfig{
-				Columns:       []string{"id", "name", "description"},
-				OrgColumn:     "r.organization_id",
-				BuColumn:      "r.business_unit_id",
-				SearchColumns: []string{"r.name", "r.description"},
-				EntityName:    "Role",
-			},
-		)
-	})
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*permission.Role], error) {
+			return dbhelper.SelectOptions[*permission.Role](
+				ctx,
+				r.db.DBForContext(ctx),
+				req,
+				&dbhelper.SelectOptionsConfig{
+					Columns:       []string{"id", "name", "description"},
+					OrgColumn:     "r.organization_id",
+					BuColumn:      "r.business_unit_id",
+					SearchColumns: []string{"r.name", "r.description"},
+					EntityName:    "Role",
+				},
+			)
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -285,28 +297,32 @@ func (r *repository) GetUserRoleAssignments(
 	ctx context.Context,
 	userID, orgID pulid.ID,
 ) ([]*permission.UserRoleAssignment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permission.UserRoleAssignment, error) {
-		log := r.l.With(
-			zap.String("operation", "GetUserRoleAssignments"),
-			zap.String("userId", userID.String()),
-			zap.String("orgId", orgID.String()),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*permission.UserRoleAssignment, error) {
+			log := r.l.With(
+				zap.String("operation", "GetUserRoleAssignments"),
+				zap.String("userId", userID.String()),
+				zap.String("orgId", orgID.String()),
+			)
 
-		assignments := make([]*permission.UserRoleAssignment, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&assignments).
-			Relation("Role").
-			Where("ura.user_id = ?", userID).
-			Where("ura.organization_id = ?", orgID).
-			Scan(ctx)
-		if err != nil {
-			log.Error("failed to get user role assignments", zap.Error(err))
-			return nil, err
-		}
+			assignments := make([]*permission.UserRoleAssignment, 0)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&assignments).
+				Relation("Role").
+				Where("ura.user_id = ?", userID).
+				Where("ura.organization_id = ?", orgID).
+				Scan(ctx)
+			if err != nil {
+				log.Error("failed to get user role assignments", zap.Error(err))
+				return nil, err
+			}
 
-		return assignments, nil
-	})
+			return assignments, nil
+		},
+	)
 }
 
 func (r *repository) Create(ctx context.Context, role *permission.Role) error {
@@ -324,7 +340,11 @@ func (r *repository) Create(ctx context.Context, role *permission.Role) error {
 
 		for _, rp := range role.Permissions {
 			rp.RoleID = role.ID
-			if _, err = r.db.DBForContext(ctx).NewInsert().Model(rp).Returning("*").Exec(ctx); err != nil {
+			if _, err = r.db.DBForContext(ctx).
+				NewInsert().
+				Model(rp).
+				Returning("*").
+				Exec(ctx); err != nil {
 				log.Error("failed to create resource permission", zap.Error(err))
 				return err
 			}
@@ -488,25 +508,29 @@ func (r *repository) GetResourcePermissionsByRoleID(
 	ctx context.Context,
 	roleID pulid.ID,
 ) ([]*permission.ResourcePermission, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permission.ResourcePermission, error) {
-		log := r.l.With(
-			zap.String("operation", "GetResourcePermissionsByRoleID"),
-			zap.String("roleId", roleID.String()),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*permission.ResourcePermission, error) {
+			log := r.l.With(
+				zap.String("operation", "GetResourcePermissionsByRoleID"),
+				zap.String("roleId", roleID.String()),
+			)
 
-		permissions := make([]*permission.ResourcePermission, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&permissions).
-			Where("rp.role_id = ?", roleID).
-			Scan(ctx)
-		if err != nil {
-			log.Error("failed to get resource permissions", zap.Error(err))
-			return nil, err
-		}
+			permissions := make([]*permission.ResourcePermission, 0)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&permissions).
+				Where("rp.role_id = ?", roleID).
+				Scan(ctx)
+			if err != nil {
+				log.Error("failed to get resource permissions", zap.Error(err))
+				return nil, err
+			}
 
-		return permissions, nil
-	})
+			return permissions, nil
+		},
+	)
 }
 
 // usersWithPermissionQuery walks each active assignment up through its role's
@@ -539,28 +563,32 @@ func (r *repository) ListUsersWithPermission(
 	ctx context.Context,
 	req permissionports.ListUsersWithPermissionRequest,
 ) ([]permissionports.PermittedUser, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]permissionports.PermittedUser, error) {
-		log := r.l.With(
-			zap.String("operation", "ListUsersWithPermission"),
-			zap.String("resource", req.Resource.String()),
-			zap.String("permissionOperation", string(req.Operation)),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]permissionports.PermittedUser, error) {
+			log := r.l.With(
+				zap.String("operation", "ListUsersWithPermission"),
+				zap.String("resource", req.Resource.String()),
+				zap.String("permissionOperation", string(req.Operation)),
+			)
 
-		users := make([]permissionports.PermittedUser, 0)
-		if err := r.db.DBForContext(ctx).NewRaw(
-			usersWithPermissionQuery,
-			req.OrganizationID,
-			req.BusinessUnitID,
-			req.Now,
-			req.Resource.String(),
-			string(req.Operation),
-			string(permission.OpManage),
-			domaintypes.StatusActive,
-		).Scan(ctx, &users); err != nil {
-			log.Error("failed to list users with permission", zap.Error(err))
-			return nil, err
-		}
+			users := make([]permissionports.PermittedUser, 0)
+			if err := r.db.DBForContext(ctx).NewRaw(
+				usersWithPermissionQuery,
+				req.OrganizationID,
+				req.BusinessUnitID,
+				req.Now,
+				req.Resource.String(),
+				string(req.Operation),
+				string(permission.OpManage),
+				domaintypes.StatusActive,
+			).Scan(ctx, &users); err != nil {
+				log.Error("failed to list users with permission", zap.Error(err))
+				return nil, err
+			}
 
-		return users, nil
-	})
+			return users, nil
+		},
+	)
 }

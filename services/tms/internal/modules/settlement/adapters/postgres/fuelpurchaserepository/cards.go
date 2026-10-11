@@ -53,66 +53,73 @@ func (r *repository) ListCards(
 	ctx context.Context,
 	req *fuelpurchaseports.ListFuelCardsRequest,
 ) (*pagination.CursorListResult[*fuelpurchase.FuelCard], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*fuelpurchase.FuelCard], error) {
-		dba := r.db.DBForContext(ctx)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*fuelpurchase.FuelCard], error) {
+			dba := r.db.DBForContext(ctx)
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*fuelpurchase.FuelCard)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						fuelpurchasecol.FuelCardTable.Alias,
-						req.Filter,
-						(*fuelpurchase.FuelCard)(nil),
-					)
-					return r.applyCardFilters(sq, req)
-				}).
-				Count(ctx)
-			if err != nil {
-				r.l.Error("failed to count fuel cards", zap.Error(err))
-				return nil, fmt.Errorf("count fuel cards: %w", err)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*fuelpurchase.FuelCard)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							fuelpurchasecol.FuelCardTable.Alias,
+							req.Filter,
+							(*fuelpurchase.FuelCard)(nil),
+						)
+						return r.applyCardFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					r.l.Error("failed to count fuel cards", zap.Error(err))
+					return nil, fmt.Errorf("count fuel cards: %w", err)
+				}
+				totalCount = &total
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*fuelpurchase.FuelCard]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(items *[]*fuelpurchase.FuelCard) *bun.SelectQuery {
-				q := dba.NewSelect().
-					Model(items).
-					ColumnExpr(fuelpurchasecol.FuelCardTable.All())
-				if req.IncludeAssignments {
-					q = q.Relation(fuelpurchasecol.FuelCardRelations.AssignedWorker).
-						Relation(fuelpurchasecol.FuelCardRelations.AssignedTractor)
-				}
-				return q
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				sq, applyErr := querybuilder.ApplyCursorFilters(
-					sq,
-					fuelpurchasecol.FuelCardTable.Alias,
-					req.Filter,
-					req.Cursor,
-					(*fuelpurchase.FuelCard)(nil),
-				)
-				if applyErr != nil {
-					return sq, applyErr
-				}
-				return r.applyCardFilters(sq, req), nil
-			},
-		})
-		if err != nil {
-			r.l.Error("failed to list fuel cards", zap.Error(err))
-			return nil, fmt.Errorf("list fuel cards: %w", err)
-		}
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*fuelpurchase.FuelCard]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(items *[]*fuelpurchase.FuelCard) *bun.SelectQuery {
+						q := dba.NewSelect().
+							Model(items).
+							ColumnExpr(fuelpurchasecol.FuelCardTable.All())
+						if req.IncludeAssignments {
+							q = q.Relation(fuelpurchasecol.FuelCardRelations.AssignedWorker).
+								Relation(fuelpurchasecol.FuelCardRelations.AssignedTractor)
+						}
+						return q
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						sq, applyErr := querybuilder.ApplyCursorFilters(
+							sq,
+							fuelpurchasecol.FuelCardTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*fuelpurchase.FuelCard)(nil),
+						)
+						if applyErr != nil {
+							return sq, applyErr
+						}
+						return r.applyCardFilters(sq, req), nil
+					},
+				},
+			)
+			if err != nil {
+				r.l.Error("failed to list fuel cards", zap.Error(err))
+				return nil, fmt.Errorf("list fuel cards: %w", err)
+			}
 
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetCardByID(
@@ -177,60 +184,64 @@ func (r *repository) FindCardsByLastFour(
 	ctx context.Context,
 	req *fuelpurchaseports.FindFuelCardsByLastFourRequest,
 ) (map[string]*fuelpurchase.FuelCard, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[string]*fuelpurchase.FuelCard, error) {
-		cols := fuelpurchasecol.FuelCardColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[string]*fuelpurchase.FuelCard, error) {
+			cols := fuelpurchasecol.FuelCardColumns
 
-		wanted := make([]string, 0, len(req.LastFours))
-		seen := make(map[string]struct{}, len(req.LastFours))
-		for _, lastFour := range req.LastFours {
-			lastFour = strings.TrimSpace(lastFour)
-			if lastFour == "" {
-				continue
-			}
-			if _, duplicate := seen[lastFour]; duplicate {
-				continue
-			}
-			seen[lastFour] = struct{}{}
-			wanted = append(wanted, lastFour)
-		}
-
-		found := make(map[string]*fuelpurchase.FuelCard, len(wanted))
-		if len(wanted) == 0 {
-			return found, nil
-		}
-
-		entities := make([]*fuelpurchase.FuelCard, 0, len(wanted))
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = fuelpurchasecol.FuelCardScopeTenant(sq, req.TenantInfo).
-					Where(cols.LastFour.In(), bun.List(wanted)).
-					Where(cols.Status.Ne(), fuelpurchase.CardStatusCancelled)
-				if req.Provider != "" {
-					sq = sq.Where(cols.Provider.Eq(), req.Provider)
+			wanted := make([]string, 0, len(req.LastFours))
+			seen := make(map[string]struct{}, len(req.LastFours))
+			for _, lastFour := range req.LastFours {
+				lastFour = strings.TrimSpace(lastFour)
+				if lastFour == "" {
+					continue
 				}
-
-				return sq
-			}).
-			Order(cols.CreatedAt.OrderDesc()).
-			Scan(ctx); err != nil {
-			r.l.Error("failed to find fuel cards by last four", zap.Error(err))
-
-			return nil, fmt.Errorf("find fuel cards by last four: %w", err)
-		}
-
-		// Ordered newest first, so the first row for a last four wins and later
-		// duplicates are ignored, matching what the single-card lookup returns.
-		for _, entity := range entities {
-			if _, taken := found[entity.LastFour]; taken {
-				continue
+				if _, duplicate := seen[lastFour]; duplicate {
+					continue
+				}
+				seen[lastFour] = struct{}{}
+				wanted = append(wanted, lastFour)
 			}
-			found[entity.LastFour] = entity
-		}
 
-		return found, nil
-	})
+			found := make(map[string]*fuelpurchase.FuelCard, len(wanted))
+			if len(wanted) == 0 {
+				return found, nil
+			}
+
+			entities := make([]*fuelpurchase.FuelCard, 0, len(wanted))
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = fuelpurchasecol.FuelCardScopeTenant(sq, req.TenantInfo).
+						Where(cols.LastFour.In(), bun.List(wanted)).
+						Where(cols.Status.Ne(), fuelpurchase.CardStatusCancelled)
+					if req.Provider != "" {
+						sq = sq.Where(cols.Provider.Eq(), req.Provider)
+					}
+
+					return sq
+				}).
+				Order(cols.CreatedAt.OrderDesc()).
+				Scan(ctx); err != nil {
+				r.l.Error("failed to find fuel cards by last four", zap.Error(err))
+
+				return nil, fmt.Errorf("find fuel cards by last four: %w", err)
+			}
+
+			// Ordered newest first, so the first row for a last four wins and later
+			// duplicates are ignored, matching what the single-card lookup returns.
+			for _, entity := range entities {
+				if _, taken := found[entity.LastFour]; taken {
+					continue
+				}
+				found[entity.LastFour] = entity
+			}
+
+			return found, nil
+		},
+	)
 }
 
 func (r *repository) FindCardByLastFour(

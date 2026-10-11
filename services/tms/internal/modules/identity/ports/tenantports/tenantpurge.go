@@ -65,7 +65,10 @@ type DeleteTenantResult struct {
 
 type TenantPurgeRepository interface {
 	ListMembers(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*TenantMember, error)
-	OrganizationProfile(ctx context.Context, tenantInfo pagination.TenantInfo) (*TenantProfile, error)
+	OrganizationProfile(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) (*TenantProfile, error)
 	PurgeRows(ctx context.Context, req *PurgeTenantRowsRequest) (*PurgeTenantRowsResult, error)
 	PurgeUser(ctx context.Context, req *PurgeTenantUserRequest) (*PurgeTenantUserResult, error)
 	DeleteTenant(ctx context.Context, tenantInfo pagination.TenantInfo) (*DeleteTenantResult, error)

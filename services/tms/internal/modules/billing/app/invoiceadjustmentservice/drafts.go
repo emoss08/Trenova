@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -63,10 +63,13 @@ func (s *Service) CreateDraft(
 	}
 
 	lines := s.buildDraftLines(entity, draft.ID, req.TenantInfo)
-	if err = s.repo.CreateAdjustmentArtifacts(ctx, invoiceadjustmentports.CreateAdjustmentArtifactsParams{
-		Adjustment: draft,
-		Lines:      lines,
-	}); err != nil {
+	if err = s.repo.CreateAdjustmentArtifacts(
+		ctx,
+		invoiceadjustmentports.CreateAdjustmentArtifactsParams{
+			Adjustment: draft,
+			Lines:      lines,
+		},
+	); err != nil {
 		return nil, err
 	}
 
@@ -135,11 +138,14 @@ func (s *Service) UpdateDraft(
 		if _, txErr := s.repo.UpdateAdjustment(txCtx, entity); txErr != nil {
 			return txErr
 		}
-		if txErr := s.repo.ReplaceAdjustmentLines(txCtx, invoiceadjustmentports.ReplaceAdjustmentLinesRequest{
-			AdjustmentID: entity.ID,
-			TenantInfo:   req.TenantInfo,
-			Lines:        lines,
-		}); txErr != nil {
+		if txErr := s.repo.ReplaceAdjustmentLines(
+			txCtx,
+			invoiceadjustmentports.ReplaceAdjustmentLinesRequest{
+				AdjustmentID: entity.ID,
+				TenantInfo:   req.TenantInfo,
+				Lines:        lines,
+			},
+		); txErr != nil {
 			return txErr
 		}
 		return s.repo.ReplaceDocumentReferences(

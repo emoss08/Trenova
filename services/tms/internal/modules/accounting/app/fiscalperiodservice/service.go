@@ -6,17 +6,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalcloseblockers"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalcloseblockers"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -281,7 +281,10 @@ func (s *Service) closeTransition() transition {
 		operation: permission.OpClose,
 		comment:   "Fiscal period closed",
 		validate: func(ctx context.Context, state transitionState) error {
-			if multiErr := s.validateCloseWithPeriods(state.period, state.periods); multiErr != nil {
+			if multiErr := s.validateCloseWithPeriods(
+				state.period,
+				state.periods,
+			); multiErr != nil {
 				return multiErr
 			}
 			if err := s.validateCloseControl(ctx, state.period); err != nil {

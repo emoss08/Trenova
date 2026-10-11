@@ -39,41 +39,52 @@ func (r *repository) SelectTransactionSetOptions(
 	ctx context.Context,
 	req *ediports.EDITransactionSetSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDITransactionSet], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDITransactionSet], error) {
-		entities := make([]*edi.EDITransactionSet, 0, req.SelectQueryRequest.Pagination.SafeLimit())
-		cols := edicol.EDITransactionSetColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*edi.EDITransactionSet], error) {
+			entities := make(
+				[]*edi.EDITransactionSet,
+				0,
+				req.SelectQueryRequest.Pagination.SafeLimit(),
+			)
+			cols := edicol.EDITransactionSetColumns
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Column(
-				cols.ID.Bare(),
-				cols.Standard.Bare(),
-				cols.Code.Bare(),
-				cols.Name.Bare(),
-				cols.Description.Bare(),
-				cols.DefaultVersion.Bare(),
-				cols.Status.Bare(),
-				cols.CreatedAt.Bare(),
-			).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return filterTransactionSetsQuery(sq, req)
-			}).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return applyTransactionSetSearch(sq, req.SelectQueryRequest.Query)
-			})
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Column(
+					cols.ID.Bare(),
+					cols.Standard.Bare(),
+					cols.Code.Bare(),
+					cols.Name.Bare(),
+					cols.Description.Bare(),
+					cols.DefaultVersion.Bare(),
+					cols.Status.Bare(),
+					cols.CreatedAt.Bare(),
+				).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return filterTransactionSetsQuery(sq, req)
+				}).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return applyTransactionSetSearch(sq, req.SelectQueryRequest.Query)
+				})
 
-		total, err := query.
-			Order(cols.Code.OrderAsc()).
-			Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
-			Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := query.
+				Order(cols.Code.OrderAsc()).
+				Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
+				Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*edi.EDITransactionSet]{Items: entities, Total: total}, nil
-	})
+			return &pagination.ListResult[*edi.EDITransactionSet]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func filterTransactionSetsQuery(

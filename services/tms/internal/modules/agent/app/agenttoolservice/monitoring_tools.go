@@ -6,23 +6,23 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -198,18 +198,26 @@ func (t *evaluateServiceFailuresTool) Execute(
 
 	switch {
 	case len(scope.shipmentIDs) > 0:
-		_, err = t.failures.BulkEvaluate(ctx, &servicefailureports.BulkEvaluateServiceFailuresRequest{
-			TenantInfo:  scope.tenant,
-			ShipmentIDs: scope.shipmentIDs,
-			Force:       scope.force,
-		}, params.Actor)
+		_, err = t.failures.BulkEvaluate(
+			ctx,
+			&servicefailureports.BulkEvaluateServiceFailuresRequest{
+				TenantInfo:  scope.tenant,
+				ShipmentIDs: scope.shipmentIDs,
+				Force:       scope.force,
+			},
+			params.Actor,
+		)
 	case scope.stopID.IsNotNil():
-		_, err = t.failures.EvaluateStop(ctx, &servicefailureports.EvaluateStopServiceFailuresRequest{
-			TenantInfo: scope.tenant,
-			ShipmentID: scope.shipmentID,
-			StopID:     scope.stopID,
-			Force:      scope.force,
-		}, params.Actor)
+		_, err = t.failures.EvaluateStop(
+			ctx,
+			&servicefailureports.EvaluateStopServiceFailuresRequest{
+				TenantInfo: scope.tenant,
+				ShipmentID: scope.shipmentID,
+				StopID:     scope.stopID,
+				Force:      scope.force,
+			},
+			params.Actor,
+		)
 	default:
 		_, err = t.failures.EvaluateShipment(ctx, scope.shipmentRequest(scope.shipmentID),
 			params.Actor)

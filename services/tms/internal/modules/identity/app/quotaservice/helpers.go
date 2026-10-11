@@ -38,7 +38,11 @@ func DecisionError(decision *platformplanports.QuotaDecision) error {
 	)
 }
 
-func Preflight(ctx context.Context, guard platformplanports.QuotaGuard, req *platformplanports.QuotaRequest) error {
+func Preflight(
+	ctx context.Context,
+	guard platformplanports.QuotaGuard,
+	req *platformplanports.QuotaRequest,
+) error {
 	if !Enforcing(guard) {
 		return nil
 	}
@@ -51,7 +55,11 @@ func Preflight(ctx context.Context, guard platformplanports.QuotaGuard, req *pla
 	return DecisionError(decision)
 }
 
-func EnforceAll(ctx context.Context, guard platformplanports.QuotaGuard, reqs ...platformplanports.QuotaRequest) error {
+func EnforceAll(
+	ctx context.Context,
+	guard platformplanports.QuotaGuard,
+	reqs ...platformplanports.QuotaRequest,
+) error {
 	if !Enforcing(guard) {
 		return nil
 	}

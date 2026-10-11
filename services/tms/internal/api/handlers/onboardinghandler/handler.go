@@ -102,22 +102,25 @@ func (h *Handler) complete(c *gin.Context) {
 	tenantInfo := actorutil.TenantInfoFrom(authCtx)
 	tenantInfo.UserID = authCtx.UserID
 
-	state, err := h.service.Complete(c.Request.Context(), &onboardingports.CompleteOnboardingRequest{
-		TenantInfo: tenantInfo,
-		Actor:      actorutil.FromAuthContext(authCtx),
-		Organization: onboardingports.OnboardingOrganization{
-			Name:         body.Organization.Name,
-			Timezone:     body.Organization.Timezone,
-			AddressLine1: body.Organization.AddressLine1,
-			City:         body.Organization.City,
-			StateID:      body.Organization.StateID,
-			PostalCode:   body.Organization.PostalCode,
-			ScacCode:     body.Organization.ScacCode,
-			DOTNumber:    body.Organization.DOTNumber,
+	state, err := h.service.Complete(
+		c.Request.Context(),
+		&onboardingports.CompleteOnboardingRequest{
+			TenantInfo: tenantInfo,
+			Actor:      actorutil.FromAuthContext(authCtx),
+			Organization: onboardingports.OnboardingOrganization{
+				Name:         body.Organization.Name,
+				Timezone:     body.Organization.Timezone,
+				AddressLine1: body.Organization.AddressLine1,
+				City:         body.Organization.City,
+				StateID:      body.Organization.StateID,
+				PostalCode:   body.Organization.PostalCode,
+				ScacCode:     body.Organization.ScacCode,
+				DOTNumber:    body.Organization.DOTNumber,
+			},
+			OperationType:  body.OperationType,
+			LoadSampleData: body.LoadSampleData,
 		},
-		OperationType:  body.OperationType,
-		LoadSampleData: body.LoadSampleData,
-	})
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

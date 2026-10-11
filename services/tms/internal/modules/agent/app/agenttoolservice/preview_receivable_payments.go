@@ -3,13 +3,13 @@ package agenttoolservice
 import (
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/money"
 )
 
@@ -32,7 +32,9 @@ func paymentRecord(payment *customerpayment.Payment) toolpreview.Record {
 	}
 }
 
-func paymentChange(plan *customerpaymentports.CustomerPaymentChangePreview) (*agent.RecordChange, error) {
+func paymentChange(
+	plan *customerpaymentports.CustomerPaymentChangePreview,
+) (*agent.RecordChange, error) {
 	before, after := plan.PaymentBefore, plan.PaymentAfter
 	change, err := toolpreview.Changed(
 		paymentRecord(before),

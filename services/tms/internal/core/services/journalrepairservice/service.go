@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceledger"
 	"github.com/emoss08/trenova/internal/core/services/journalposting"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceledger"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -319,7 +319,11 @@ func (s *Service) inTx(ctx context.Context, dryRun bool, fn func(context.Context
 	if dryRun {
 		return fn(ctx)
 	}
-	return s.deps.DB.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		return fn(txCtx)
-	})
+	return s.deps.DB.WithTx(
+		ctx,
+		kernelports.TxOptions{},
+		func(txCtx context.Context, _ bun.Tx) error {
+			return fn(txCtx)
+		},
+	)
 }

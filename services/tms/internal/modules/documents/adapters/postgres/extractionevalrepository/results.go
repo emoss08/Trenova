@@ -42,111 +42,123 @@ func (r *resultRepository) GetByID(
 	ctx context.Context,
 	req extractionevalports.GetExtractionEvalResultRequest,
 ) (*extractioneval.ExtractionResult, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*extractioneval.ExtractionResult, error) {
-		entity := new(extractioneval.ExtractionResult)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return extractionevalcol.ExtractionResultScopeTenant(sq, req.TenantInfo).
-					Where(extractionevalcol.ExtractionResultColumns.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, resultEntity)
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*extractioneval.ExtractionResult, error) {
+			entity := new(extractioneval.ExtractionResult)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return extractionevalcol.ExtractionResultScopeTenant(sq, req.TenantInfo).
+						Where(extractionevalcol.ExtractionResultColumns.ID.Eq(), req.ID)
+				}).
+				Scan(ctx)
+			if err != nil {
+				return nil, dberror.HandleNotFoundError(err, resultEntity)
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *resultRepository) Save(
 	ctx context.Context,
 	entity *extractioneval.ExtractionResult,
 ) (*extractioneval.ExtractionResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*extractioneval.ExtractionResult, error) {
-		cols := extractionevalcol.ExtractionResultColumns
-		previous := entity.Version
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*extractioneval.ExtractionResult, error) {
+			cols := extractionevalcol.ExtractionResultColumns
+			previous := entity.Version
 
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return extractionevalcol.ExtractionResultScopeTenantUpdate(uq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
+			res, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(entity).
+				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+					return extractionevalcol.ExtractionResultScopeTenantUpdate(uq, pagination.TenantInfo{
+						OrgID: entity.OrganizationID,
+						BuID:  entity.BusinessUnitID,
+					}).
+						Where(cols.ID.Eq(), entity.ID).
+						Where(cols.Version.Eq(), previous)
 				}).
-					Where(cols.ID.Eq(), entity.ID).
-					Where(cols.Version.Eq(), previous)
-			}).
-			ExcludeColumn(
-				cols.ID.Bare(),
-				cols.OrganizationID.Bare(),
-				cols.BusinessUnitID.Bare(),
-				cols.RunID.Bare(),
-				cols.CaseID.Bare(),
-				cols.Ordinal.Bare(),
-				cols.CreatedAt.Bare(),
-				cols.Version.Bare(),
-			).
-			Set(cols.Version.Inc(1)).
-			Exec(ctx)
-		if err != nil {
-			r.l.Error("failed to save extraction eval result", zap.Error(err))
+				ExcludeColumn(
+					cols.ID.Bare(),
+					cols.OrganizationID.Bare(),
+					cols.BusinessUnitID.Bare(),
+					cols.RunID.Bare(),
+					cols.CaseID.Bare(),
+					cols.Ordinal.Bare(),
+					cols.CreatedAt.Bare(),
+					cols.Version.Bare(),
+				).
+				Set(cols.Version.Inc(1)).
+				Exec(ctx)
+			if err != nil {
+				r.l.Error("failed to save extraction eval result", zap.Error(err))
 
-			return nil, fmt.Errorf("save extraction eval result: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(res, resultEntity, entity.ID.String()); err != nil {
-			return nil, err
-		}
-		entity.Version = previous + 1
+				return nil, fmt.Errorf("save extraction eval result: %w", err)
+			}
+			if err = dberror.CheckRowsAffected(res, resultEntity, entity.ID.String()); err != nil {
+				return nil, err
+			}
+			entity.Version = previous + 1
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *resultRepository) ListPending(
 	ctx context.Context,
 	req extractionevalports.ListPendingExtractionEvalResultsRequest,
 ) ([]*extractioneval.ExtractionResult, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*extractioneval.ExtractionResult, error) {
-		cols := extractionevalcol.ExtractionResultColumns
-		limit := req.Limit
-		if limit <= 0 {
-			limit = defaultPendingLimit
-		}
-		limit = min(limit, maxPendingLimit)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*extractioneval.ExtractionResult, error) {
+			cols := extractionevalcol.ExtractionResultColumns
+			limit := req.Limit
+			if limit <= 0 {
+				limit = defaultPendingLimit
+			}
+			limit = min(limit, maxPendingLimit)
 
-		entities := make([]*extractioneval.ExtractionResult, 0, limit)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Column(
-				cols.ID.Bare(),
-				cols.OrganizationID.Bare(),
-				cols.BusinessUnitID.Bare(),
-				cols.RunID.Bare(),
-				cols.CaseID.Bare(),
-				cols.Ordinal.Bare(),
-				cols.Status.Bare(),
-			).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return extractionevalcol.ExtractionResultScopeTenant(sq, req.TenantInfo).
-					Where(cols.RunID.Eq(), req.RunID).
-					Where(cols.Status.Eq(), extractioneval.ResultStatusPending).
-					Where(cols.Ordinal.Gt(), req.AfterOrdinal)
-			}).
-			Order(cols.Ordinal.OrderAsc()).
-			Limit(limit).
-			Scan(ctx)
-		if err != nil {
-			r.l.Error("failed to list pending extraction eval results", zap.Error(err))
+			entities := make([]*extractioneval.ExtractionResult, 0, limit)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Column(
+					cols.ID.Bare(),
+					cols.OrganizationID.Bare(),
+					cols.BusinessUnitID.Bare(),
+					cols.RunID.Bare(),
+					cols.CaseID.Bare(),
+					cols.Ordinal.Bare(),
+					cols.Status.Bare(),
+				).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return extractionevalcol.ExtractionResultScopeTenant(sq, req.TenantInfo).
+						Where(cols.RunID.Eq(), req.RunID).
+						Where(cols.Status.Eq(), extractioneval.ResultStatusPending).
+						Where(cols.Ordinal.Gt(), req.AfterOrdinal)
+				}).
+				Order(cols.Ordinal.OrderAsc()).
+				Limit(limit).
+				Scan(ctx)
+			if err != nil {
+				r.l.Error("failed to list pending extraction eval results", zap.Error(err))
 
-			return nil, fmt.Errorf("list pending extraction eval results: %w", err)
-		}
+				return nil, fmt.Errorf("list pending extraction eval results: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *resultRepository) ListByRun(
@@ -154,27 +166,31 @@ func (r *resultRepository) ListByRun(
 	tenant pagination.TenantInfo,
 	runID pulid.ID,
 ) ([]*extractioneval.ExtractionResult, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*extractioneval.ExtractionResult, error) {
-		cols := extractionevalcol.ExtractionResultColumns
-		entities := make([]*extractioneval.ExtractionResult, 0, extractioneval.DefaultCaseLimit)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return extractionevalcol.ExtractionResultScopeTenant(sq, tenant).
-					Where(cols.RunID.Eq(), runID)
-			}).
-			Order(cols.Ordinal.OrderAsc()).
-			Limit(extractioneval.MaxCaseLimit).
-			Scan(ctx)
-		if err != nil {
-			r.l.Error("failed to list extraction eval results", zap.Error(err))
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*extractioneval.ExtractionResult, error) {
+			cols := extractionevalcol.ExtractionResultColumns
+			entities := make([]*extractioneval.ExtractionResult, 0, extractioneval.DefaultCaseLimit)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return extractionevalcol.ExtractionResultScopeTenant(sq, tenant).
+						Where(cols.RunID.Eq(), runID)
+				}).
+				Order(cols.Ordinal.OrderAsc()).
+				Limit(extractioneval.MaxCaseLimit).
+				Scan(ctx)
+			if err != nil {
+				r.l.Error("failed to list extraction eval results", zap.Error(err))
 
-			return nil, fmt.Errorf("list extraction eval results: %w", err)
-		}
+				return nil, fmt.Errorf("list extraction eval results: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *resultRepository) SkipPending(
@@ -215,64 +231,77 @@ func (r *resultRepository) ListConnection(
 	ctx context.Context,
 	req *extractionevalports.ListExtractionEvalResultConnectionRequest,
 ) (*pagination.CursorListResult[*extractioneval.ExtractionResult], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*extractioneval.ExtractionResult], error) {
-		dba := r.db.DBForContext(ctx)
-		cols := extractionevalcol.ExtractionResultColumns
-		scope := func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where(cols.RunID.Eq(), req.RunID)
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*extractioneval.ExtractionResult], error) {
+			dba := r.db.DBForContext(ctx)
+			cols := extractionevalcol.ExtractionResultColumns
+			scope := func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where(cols.RunID.Eq(), req.RunID)
+			}
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.NewSelect().
-				Model((*extractioneval.ExtractionResult)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						extractionevalcol.ExtractionResultTable.Alias,
-						req.Filter,
-						(*extractioneval.ExtractionResult)(nil),
-					)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.NewSelect().
+					Model((*extractioneval.ExtractionResult)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							extractionevalcol.ExtractionResultTable.Alias,
+							req.Filter,
+							(*extractioneval.ExtractionResult)(nil),
+						)
 
-					return scope(sq.Apply(extractionevalcol.ExtractionResultApplyTenant(req.Filter.TenantInfo)))
-				}).
-				Count(ctx)
+						return scope(
+							sq.Apply(
+								extractionevalcol.ExtractionResultApplyTenant(
+									req.Filter.TenantInfo,
+								),
+							),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					r.l.Error("failed to count extraction eval results", zap.Error(err))
+
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*extractioneval.ExtractionResult]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*extractioneval.ExtractionResult) *bun.SelectQuery {
+						q := dba.NewSelect().Model(entities)
+						if len(req.Columns) > 0 {
+							q = q.Column(req.Columns...)
+						}
+
+						return scope(q)
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							extractionevalcol.ExtractionResultTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*extractioneval.ExtractionResult)(nil),
+						)
+					},
+				},
+			)
 			if err != nil {
-				r.l.Error("failed to count extraction eval results", zap.Error(err))
+				r.l.Error("failed to list extraction eval results", zap.Error(err))
 
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*extractioneval.ExtractionResult]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*extractioneval.ExtractionResult) *bun.SelectQuery {
-				q := dba.NewSelect().Model(entities)
-				if len(req.Columns) > 0 {
-					q = q.Column(req.Columns...)
-				}
-
-				return scope(q)
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return querybuilder.ApplyCursorFilters(
-					sq,
-					extractionevalcol.ExtractionResultTable.Alias,
-					req.Filter,
-					req.Cursor,
-					(*extractioneval.ExtractionResult)(nil),
-				)
-			},
-		})
-		if err != nil {
-			r.l.Error("failed to list extraction eval results", zap.Error(err))
-
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }

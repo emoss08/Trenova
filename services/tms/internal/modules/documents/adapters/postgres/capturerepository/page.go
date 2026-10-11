@@ -85,7 +85,11 @@ func (r *pageRepository) Update(
 		if err != nil {
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, "Capture page", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"Capture page",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 

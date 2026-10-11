@@ -257,7 +257,8 @@ func AgentSuiteRunWorkflow(
 					},
 					EvaluationID: suiteCase.EvaluationID,
 				},
-			).Get(childCtx, nil); err != nil {
+			).
+				Get(childCtx, nil); err != nil {
 				logger.Warn("a case's replay did not finish; it is recorded as failed",
 					"evaluationId", suiteCase.EvaluationID.String(), "error", err.Error())
 			}

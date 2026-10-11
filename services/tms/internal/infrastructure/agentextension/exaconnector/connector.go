@@ -103,7 +103,10 @@ func (c *Connector) Read(
 
 	cost := resp.TotalCost()
 	if _, failed := resp.Failure(req.URL); failed || len(resp.Results) == 0 {
-		return &agentextensionports.WebPageProviderResponse{URL: req.URL, CostUSD: cost}, exa.ErrContentNotFound
+		return &agentextensionports.WebPageProviderResponse{
+			URL:     req.URL,
+			CostUSD: cost,
+		}, exa.ErrContentNotFound
 	}
 
 	page := &resp.Results[0]

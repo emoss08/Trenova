@@ -513,7 +513,10 @@ func ediTransferRowFrom(transfer *edi.EDITransfer) ediTransferRow {
 		RejectionReason:  transfer.RejectionReason,
 		FailureReason:    transfer.FailureReason,
 		SubmittedAt:      recordedDate(transfer.SubmittedAt),
-		ProcessedAt:      expectedDate(typeutils.ValueOrZero(transfer.ProcessedAt), absentNotProcessed),
+		ProcessedAt: expectedDate(
+			typeutils.ValueOrZero(transfer.ProcessedAt),
+			absentNotProcessed,
+		),
 	}
 	for _, move := range transfer.TenderPayload.Moves {
 		row.StopCount += len(move.Stops)

@@ -1,8 +1,8 @@
 package platformplan
 
 import (
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 

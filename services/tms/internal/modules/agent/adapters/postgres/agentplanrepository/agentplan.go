@@ -46,7 +46,11 @@ func (r *repository) Create(
 	entity *agent.AgentPlan,
 ) (*agent.AgentPlan, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentPlan, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
 			r.l.Error("failed to create agent plan", zap.Error(err))
 
 			return nil, fmt.Errorf("create agent plan: %w", err)
@@ -144,78 +148,82 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *agentports.ListAgentPlanConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentPlan], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*agent.AgentPlan], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*agent.AgentPlan], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*agent.AgentPlan)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						agentcol.AgentPlanTable.Alias,
-						req.Filter,
-						(*agent.AgentPlan)(nil),
-					)
-					sq = sq.Apply(agentcol.AgentPlanApplyTenant(req.Filter.TenantInfo))
-					if req.ExcludeShadowDefinitions {
-						sq = excludeShadowDefinitions(sq)
-					}
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*agent.AgentPlan)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							agentcol.AgentPlanTable.Alias,
+							req.Filter,
+							(*agent.AgentPlan)(nil),
+						)
+						sq = sq.Apply(agentcol.AgentPlanApplyTenant(req.Filter.TenantInfo))
+						if req.ExcludeShadowDefinitions {
+							sq = excludeShadowDefinitions(sq)
+						}
 
-					return sq
-				}).
-				Count(ctx)
+						return sq
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count agent plans", zap.Error(err))
+
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*agent.AgentPlan]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*agent.AgentPlan) *bun.SelectQuery {
+						q := dba.NewSelect().Model(entities)
+						if len(req.Columns) > 0 {
+							q = q.Column(req.Columns...)
+						}
+
+						return q
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						sq, applyErr := querybuilder.ApplyCursorFilters(
+							sq,
+							agentcol.AgentPlanTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*agent.AgentPlan)(nil),
+						)
+						if applyErr != nil {
+							return nil, applyErr
+						}
+						if req.ExcludeShadowDefinitions {
+							sq = excludeShadowDefinitions(sq)
+						}
+
+						return sq, nil
+					},
+				})
 			if err != nil {
-				log.Error("failed to count agent plans", zap.Error(err))
+				log.Error("failed to list agent plans", zap.Error(err))
 
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*agent.AgentPlan]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*agent.AgentPlan) *bun.SelectQuery {
-					q := dba.NewSelect().Model(entities)
-					if len(req.Columns) > 0 {
-						q = q.Column(req.Columns...)
-					}
-
-					return q
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					sq, applyErr := querybuilder.ApplyCursorFilters(
-						sq,
-						agentcol.AgentPlanTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*agent.AgentPlan)(nil),
-					)
-					if applyErr != nil {
-						return nil, applyErr
-					}
-					if req.ExcludeShadowDefinitions {
-						sq = excludeShadowDefinitions(sq)
-					}
-
-					return sq, nil
-				},
-			})
-		if err != nil {
-			log.Error("failed to list agent plans", zap.Error(err))
-
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 // excludeShadowDefinitions hides plans whose agent is in shadow, with the

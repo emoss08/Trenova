@@ -6,9 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/rating/app/ratesimulationservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratesimulation"
-	"github.com/emoss08/trenova/internal/modules/rating/app/ratesimulationservice"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratesimulationports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -86,10 +86,13 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*ratesimulation.RateSimulation], error) {
-			return h.service.List(c.Request.Context(), &ratesimulationports.ListRateSimulationsRequest{
-				Filter:          req,
-				RateAgreementID: agreementID,
-			})
+			return h.service.List(
+				c.Request.Context(),
+				&ratesimulationports.ListRateSimulationsRequest{
+					Filter:          req,
+					RateAgreementID: agreementID,
+				},
+			)
 		},
 	)
 }

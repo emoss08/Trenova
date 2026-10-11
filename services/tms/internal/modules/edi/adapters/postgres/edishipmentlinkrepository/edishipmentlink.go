@@ -41,32 +41,36 @@ func (r *repository) ListShipmentLinks(
 	ctx context.Context,
 	req *ediports.ListEDIShipmentLinksRequest,
 ) (*pagination.ListResult[*edi.ShipmentLink], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.ShipmentLink], error) {
-		entities := make([]*edi.ShipmentLink, 0, req.Filter.Pagination.SafeLimit())
-		cols := edicol.ShipmentLinkColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*edi.ShipmentLink], error) {
+			entities := make([]*edi.ShipmentLink, 0, req.Filter.Pagination.SafeLimit())
+			cols := edicol.ShipmentLinkColumns
 
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
-				return querybuilder.ApplyFiltersWithoutTenantScope(query, "esl", req.Filter, (*edi.ShipmentLink)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyShipmentLinkTenantScope(sq, req.Filter.TenantInfo)
-					})
-			}).
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
+					return querybuilder.ApplyFiltersWithoutTenantScope(query, "esl", req.Filter, (*edi.ShipmentLink)(nil)).
+						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+							return applyShipmentLinkTenantScope(sq, req.Filter.TenantInfo)
+						})
+				}).
+				Order(cols.CreatedAt.OrderDesc()).
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*edi.ShipmentLink]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*edi.ShipmentLink]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) GetShipmentLinkByID(

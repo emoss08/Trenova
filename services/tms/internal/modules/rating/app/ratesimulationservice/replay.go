@@ -1,9 +1,9 @@
 package ratesimulationservice
 
 import (
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratesimulation"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	simmath "github.com/emoss08/trenova/pkg/ratesimulation"
 	"github.com/emoss08/trenova/shared/pulid"

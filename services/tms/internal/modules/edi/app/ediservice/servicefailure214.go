@@ -6,11 +6,11 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -238,10 +238,13 @@ func (s *Service) serviceFailure214Source(
 	failure := req.ServiceFailure
 	if failure == nil {
 		var err error
-		failure, err = s.serviceFailureRepo.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
-			ID:         req.ServiceFailureID,
-			TenantInfo: req.TenantInfo,
-		})
+		failure, err = s.serviceFailureRepo.GetByID(
+			ctx,
+			&servicefailureports.GetServiceFailureByIDRequest{
+				ID:         req.ServiceFailureID,
+				TenantInfo: req.TenantInfo,
+			},
+		)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -557,7 +560,9 @@ func (s serviceFailure214Settings) enabledForTrigger(
 	}
 }
 
-func (s serviceFailure214Settings) mandatory(trigger servicefailureports.ServiceFailureEDITrigger) bool {
+func (s serviceFailure214Settings) mandatory(
+	trigger servicefailureports.ServiceFailureEDITrigger,
+) bool {
 	switch trigger {
 	case servicefailureports.ServiceFailureEDITriggerReviewed:
 		return s.MandatoryOnReviewed

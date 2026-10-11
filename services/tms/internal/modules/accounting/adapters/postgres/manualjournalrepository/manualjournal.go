@@ -40,34 +40,38 @@ func (r *repository) List(
 	ctx context.Context,
 	req *manualjournalports.ListManualJournalRequest,
 ) (*pagination.ListResult[*manualjournal.Request], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*manualjournal.Request], error) {
-		limit := req.Filter.Pagination.SafeLimit()
-		items := make([]*manualjournal.Request, 0, limit)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*manualjournal.Request], error) {
+			limit := req.Filter.Pagination.SafeLimit()
+			items := make([]*manualjournal.Request, 0, limit)
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return querybuilder.ApplyFilters(
-					sq,
-					manualjournalcol.RequestTable.Alias,
-					req.Filter,
-					(*manualjournal.Request)(nil),
-				)
-			}).
-			Limit(limit).
-			Offset(req.Filter.Pagination.SafeOffset())
-		if len(req.Filter.Sort) == 0 {
-			query = query.Order(manualjournalcol.RequestColumns.CreatedAt.OrderDesc())
-		}
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&items).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return querybuilder.ApplyFilters(
+						sq,
+						manualjournalcol.RequestTable.Alias,
+						req.Filter,
+						(*manualjournal.Request)(nil),
+					)
+				}).
+				Limit(limit).
+				Offset(req.Filter.Pagination.SafeOffset())
+			if len(req.Filter.Sort) == 0 {
+				query = query.Order(manualjournalcol.RequestColumns.CreatedAt.OrderDesc())
+			}
 
-		total, err := query.ScanAndCount(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("list manual journals: %w", err)
-		}
+			total, err := query.ScanAndCount(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list manual journals: %w", err)
+			}
 
-		return &pagination.ListResult[*manualjournal.Request]{Items: items, Total: total}, nil
-	})
+			return &pagination.ListResult[*manualjournal.Request]{Items: items, Total: total}, nil
+		},
+	)
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -107,52 +111,59 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *manualjournalports.ListManualJournalConnectionRequest,
 ) (*pagination.CursorListResult[*manualjournal.Request], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*manualjournal.Request], error) {
-		log := r.l.With(
-			zap.String("operation", "ListConnection"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*manualjournal.Request], error) {
+			log := r.l.With(
+				zap.String("operation", "ListConnection"),
+				zap.Any("request", req),
+			)
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*manualjournal.Request)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyTotalCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*manualjournal.Request)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyTotalCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count manual journals", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*manualjournal.Request]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*manualjournal.Request) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return applyManualJournalColumns(sq, req.ManualJournalColumns)
+							})
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return r.applyCursorPageFilters(sq, req)
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count manual journals", zap.Error(err))
+				log.Error("failed to scan manual journals", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*manualjournal.Request]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*manualjournal.Request) *bun.SelectQuery {
-				return dba.
-					NewSelect().
-					Model(entities).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyManualJournalColumns(sq, req.ManualJournalColumns)
-					})
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.applyCursorPageFilters(sq, req)
-			},
-		})
-		if err != nil {
-			log.Error("failed to scan manual journals", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -198,7 +209,10 @@ func (r *repository) Create(
 		}
 
 		if len(entity.Lines) > 0 {
-			if _, err := r.db.DBForContext(ctx).NewInsert().Model(&entity.Lines).Exec(ctx); err != nil {
+			if _, err := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(&entity.Lines).
+				Exec(ctx); err != nil {
 				return nil, fmt.Errorf("create manual journal request lines: %w", err)
 			}
 		}

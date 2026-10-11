@@ -21,15 +21,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -232,14 +232,17 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*CreateResult,
 		return nil, multiErr
 	}
 
-	saved, message, err := s.schedules.Create(ctx, conversationscheduleports.CreateConversationScheduleRequest{
-		Schedule: schedule,
-		Message: conversation.Message{
-			Role:    conversation.RoleUser,
-			Kind:    conversation.MessageKindSchedule,
-			Content: text,
+	saved, message, err := s.schedules.Create(
+		ctx,
+		conversationscheduleports.CreateConversationScheduleRequest{
+			Schedule: schedule,
+			Message: conversation.Message{
+				Role:    conversation.RoleUser,
+				Kind:    conversation.MessageKindSchedule,
+				Content: text,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -257,11 +260,14 @@ func (s *Service) withinLimits(
 	tenant pagination.TenantInfo,
 	userID, threadID pulid.ID,
 ) error {
-	inThread, err := s.schedules.Count(ctx, conversationscheduleports.CountConversationSchedulesRequest{
-		UserID:     userID,
-		ThreadID:   threadID,
-		TenantInfo: tenant,
-	})
+	inThread, err := s.schedules.Count(
+		ctx,
+		conversationscheduleports.CountConversationSchedulesRequest{
+			UserID:     userID,
+			ThreadID:   threadID,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -272,10 +278,13 @@ func (s *Service) withinLimits(
 		)
 	}
 
-	total, err := s.schedules.Count(ctx, conversationscheduleports.CountConversationSchedulesRequest{
-		UserID:     userID,
-		TenantInfo: tenant,
-	})
+	total, err := s.schedules.Count(
+		ctx,
+		conversationscheduleports.CountConversationSchedulesRequest{
+			UserID:     userID,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -460,7 +469,10 @@ func (s *Service) Fire(
 		TenantInfo: req.TenantInfo,
 	})
 	if errortypes.IsNotFoundError(err) {
-		return &conversationscheduleports.FireConversationScheduleResult{Skipped: SkipGone, Gone: true}, nil
+		return &conversationscheduleports.FireConversationScheduleResult{
+			Skipped: SkipGone,
+			Gone:    true,
+		}, nil
 	}
 	if err != nil {
 		return nil, err
@@ -564,13 +576,16 @@ func (s *Service) run(
 
 	now := s.now()
 	next := schedule.Next(now)
-	if err = s.schedules.RecordRun(ctx, conversationscheduleports.RecordConversationScheduleRunRequest{
-		ID:         schedule.ID,
-		TenantInfo: tenant,
-		RunAt:      now,
-		NextRunAt:  next,
-		TurnID:     turn.ID,
-	}); err != nil {
+	if err = s.schedules.RecordRun(
+		ctx,
+		conversationscheduleports.RecordConversationScheduleRunRequest{
+			ID:         schedule.ID,
+			TenantInfo: tenant,
+			RunAt:      now,
+			NextRunAt:  next,
+			TurnID:     turn.ID,
+		},
+	); err != nil {
 		// The turn is under way and answers whatever this says. A schedule
 		// card a run behind is corrected by the next one.
 		s.l.Warn("a scheduled run started but could not be recorded",
@@ -594,10 +609,13 @@ func (s *Service) mayUseAgent(
 	actor *permissionports.RequestActor,
 	tenant pagination.TenantInfo,
 ) (bool, error) {
-	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         thread.AgentDefinitionID,
-		TenantInfo: tenant,
-	})
+	definition, err := s.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         thread.AgentDefinitionID,
+			TenantInfo: tenant,
+		},
+	)
 	if errortypes.IsNotFoundError(err) {
 		return false, nil
 	}

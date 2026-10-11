@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -143,7 +143,11 @@ func (r *repository) Update(
 		if err != nil {
 			return nil, fmt.Errorf("update bank receipt work item: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(res, "BankReceiptWorkItem", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			res,
+			"BankReceiptWorkItem",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 		return r.GetByID(

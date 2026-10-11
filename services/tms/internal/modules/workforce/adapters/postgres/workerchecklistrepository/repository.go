@@ -79,98 +79,106 @@ func (r *repository) ListTemplates(
 	ctx context.Context,
 	req *workerports.ListChecklistTemplatesRequest,
 ) (*pagination.CursorListResult[*worker.WorkerChecklistTemplate], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*worker.WorkerChecklistTemplate], error) {
-		log := r.l.With(zap.String("operation", "ListTemplates"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*worker.WorkerChecklistTemplate], error) {
+			log := r.l.With(zap.String("operation", "ListTemplates"))
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*worker.WorkerChecklistTemplate)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						workercol.WorkerChecklistTemplateTable.Alias,
-						req.Filter,
-						(*worker.WorkerChecklistTemplate)(nil),
-					)
-					return r.applyTemplateFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*worker.WorkerChecklistTemplate)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							workercol.WorkerChecklistTemplateTable.Alias,
+							req.Filter,
+							(*worker.WorkerChecklistTemplate)(nil),
+						)
+						return r.applyTemplateFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count checklist templates", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*worker.WorkerChecklistTemplate]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(items *[]*worker.WorkerChecklistTemplate) *bun.SelectQuery {
+						return dba.NewSelect().
+							Model(items).
+							ColumnExpr(workercol.WorkerChecklistTemplateTable.All())
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						sq, applyErr := querybuilder.ApplyCursorFilters(
+							sq,
+							workercol.WorkerChecklistTemplateTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*worker.WorkerChecklistTemplate)(nil),
+						)
+						if applyErr != nil {
+							return sq, applyErr
+						}
+						sq = r.applyTemplateFilters(sq, req)
+						if req.IncludeItems {
+							sq = sq.Relation(
+								workercol.WorkerChecklistTemplateRelations.Items,
+								orderTemplateItems,
+							)
+						}
+						return sq, nil
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count checklist templates", zap.Error(err))
+				log.Error("failed to list checklist templates", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*worker.WorkerChecklistTemplate]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(items *[]*worker.WorkerChecklistTemplate) *bun.SelectQuery {
-					return dba.NewSelect().
-						Model(items).
-						ColumnExpr(workercol.WorkerChecklistTemplateTable.All())
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					sq, applyErr := querybuilder.ApplyCursorFilters(
-						sq,
-						workercol.WorkerChecklistTemplateTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*worker.WorkerChecklistTemplate)(nil),
-					)
-					if applyErr != nil {
-						return sq, applyErr
-					}
-					sq = r.applyTemplateFilters(sq, req)
-					if req.IncludeItems {
-						sq = sq.Relation(
-							workercol.WorkerChecklistTemplateRelations.Items,
-							orderTemplateItems,
-						)
-					}
-					return sq, nil
-				},
-			},
-		)
-		if err != nil {
-			log.Error("failed to list checklist templates", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) ListActiveTemplates(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*worker.WorkerChecklistTemplate, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerChecklistTemplate, error) {
-		cols := workercol.WorkerChecklistTemplateColumns
-		entities := make([]*worker.WorkerChecklistTemplate, 0, 8)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(workercol.WorkerChecklistTemplateRelations.Items, orderTemplateItems).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerChecklistTemplateScopeTenant(sq, tenantInfo).
-					Where(cols.Status.Eq(), domaintypes.StatusActive)
-			}).
-			Order(cols.Name.OrderAsc()).
-			Scan(ctx)
-		if err != nil {
-			r.l.Error("failed to list active checklist templates", zap.Error(err))
-			return nil, err
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*worker.WorkerChecklistTemplate, error) {
+			cols := workercol.WorkerChecklistTemplateColumns
+			entities := make([]*worker.WorkerChecklistTemplate, 0, 8)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Relation(workercol.WorkerChecklistTemplateRelations.Items, orderTemplateItems).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return workercol.WorkerChecklistTemplateScopeTenant(sq, tenantInfo).
+						Where(cols.Status.Eq(), domaintypes.StatusActive)
+				}).
+				Order(cols.Name.OrderAsc()).
+				Scan(ctx)
+			if err != nil {
+				r.l.Error("failed to list active checklist templates", zap.Error(err))
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) GetTemplateByID(
@@ -288,114 +296,143 @@ func (r *repository) CreateTemplate(
 	ctx context.Context,
 	entity *worker.WorkerChecklistTemplate,
 ) (*worker.WorkerChecklistTemplate, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerChecklistTemplate, error) {
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			if entity.IsDefault {
-				if cErr := r.ClearDefaultTemplate(c, &workerports.ClearDefaultChecklistTemplateRequest{
-					TenantInfo: pagination.TenantInfo{
-						OrgID: entity.OrganizationID,
-						BuID:  entity.BusinessUnitID,
-					},
-					Trigger: entity.Trigger,
-				}); cErr != nil {
-					return cErr
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*worker.WorkerChecklistTemplate, error) {
+			err := r.db.WithTx(
+				ctx,
+				kernelports.TxOptions{},
+				func(c context.Context, _ bun.Tx) error {
+					if entity.IsDefault {
+						if cErr := r.ClearDefaultTemplate(
+							c,
+							&workerports.ClearDefaultChecklistTemplateRequest{
+								TenantInfo: pagination.TenantInfo{
+									OrgID: entity.OrganizationID,
+									BuID:  entity.BusinessUnitID,
+								},
+								Trigger: entity.Trigger,
+							},
+						); cErr != nil {
+							return cErr
+						}
+					}
+					if _, iErr := r.db.DBForContext(c).
+						NewInsert().
+						Model(entity).
+						Returning("*").
+						Exec(c); iErr != nil {
+						return iErr
+					}
+					stampTemplateItems(entity, false)
+					return r.insertTemplateItems(c, entity)
+				},
+			)
+			if err != nil {
+				if dberror.IsUniqueConstraintViolation(err) {
+					return nil, errortypes.NewValidationError(
+						"code",
+						errortypes.ErrDuplicate,
+						"A checklist template with this code already exists",
+					)
 				}
-			}
-			if _, iErr := r.db.DBForContext(c).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(c); iErr != nil {
-				return iErr
-			}
-			stampTemplateItems(entity, false)
-			return r.insertTemplateItems(c, entity)
-		})
-		if err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, errortypes.NewValidationError(
-					"code",
-					errortypes.ErrDuplicate,
-					"A checklist template with this code already exists",
+				r.l.Error("failed to create checklist template", zap.Error(err))
+				return nil, dberror.MapRetryableTransactionError(
+					err,
+					"Checklist template is busy. Retry the request.",
 				)
 			}
-			r.l.Error("failed to create checklist template", zap.Error(err))
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Checklist template is busy. Retry the request.",
-			)
-		}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) UpdateTemplate(
 	ctx context.Context,
 	entity *worker.WorkerChecklistTemplate,
 ) (*worker.WorkerChecklistTemplate, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerChecklistTemplate, error) {
-		ov := entity.Version
-		entity.Version++
-		itemCols := workercol.WorkerChecklistTemplateItemColumns
-		tenant := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*worker.WorkerChecklistTemplate, error) {
+			ov := entity.Version
+			entity.Version++
+			itemCols := workercol.WorkerChecklistTemplateItemColumns
+			tenant := pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			}
 
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			if entity.IsDefault {
-				if cErr := r.ClearDefaultTemplate(c, &workerports.ClearDefaultChecklistTemplateRequest{
-					TenantInfo: tenant,
-					Trigger:    entity.Trigger,
-					ExceptID:   entity.ID,
-				}); cErr != nil {
-					return cErr
+			err := r.db.WithTx(
+				ctx,
+				kernelports.TxOptions{},
+				func(c context.Context, _ bun.Tx) error {
+					if entity.IsDefault {
+						if cErr := r.ClearDefaultTemplate(
+							c,
+							&workerports.ClearDefaultChecklistTemplateRequest{
+								TenantInfo: tenant,
+								Trigger:    entity.Trigger,
+								ExceptID:   entity.ID,
+							},
+						); cErr != nil {
+							return cErr
+						}
+					}
+
+					results, uErr := r.db.DBForContext(c).
+						NewUpdate().
+						Model(entity).
+						WherePK().
+						Where(workercol.WorkerChecklistTemplateColumns.Version.Eq(), ov).
+						Returning("*").
+						Exec(c)
+					if uErr != nil {
+						return uErr
+					}
+					if uErr = dberror.CheckRowsAffected(
+						results,
+						"WorkerChecklistTemplate",
+						entity.ID.String(),
+					); uErr != nil {
+						return uErr
+					}
+
+					if _, dErr := r.db.DBForContext(c).
+						NewDelete().
+						Model((*worker.WorkerChecklistTemplateItem)(nil)).
+						WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+							return workercol.WorkerChecklistTemplateItemScopeTenantDelete(dq, tenant).
+								Where(itemCols.TemplateID.Eq(), entity.ID)
+						}).
+						Exec(c); dErr != nil {
+						return dErr
+					}
+
+					stampTemplateItems(entity, true)
+					return r.insertTemplateItems(c, entity)
+				},
+			)
+			if err != nil {
+				if dberror.IsUniqueConstraintViolation(err) {
+					return nil, errortypes.NewValidationError(
+						"code",
+						errortypes.ErrDuplicate,
+						"A checklist template with this code already exists",
+					)
 				}
-			}
-
-			results, uErr := r.db.DBForContext(c).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where(workercol.WorkerChecklistTemplateColumns.Version.Eq(), ov).
-				Returning("*").
-				Exec(c)
-			if uErr != nil {
-				return uErr
-			}
-			if uErr = dberror.CheckRowsAffected(results, "WorkerChecklistTemplate", entity.ID.String()); uErr != nil {
-				return uErr
-			}
-
-			if _, dErr := r.db.DBForContext(c).
-				NewDelete().
-				Model((*worker.WorkerChecklistTemplateItem)(nil)).
-				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return workercol.WorkerChecklistTemplateItemScopeTenantDelete(dq, tenant).
-						Where(itemCols.TemplateID.Eq(), entity.ID)
-				}).
-				Exec(c); dErr != nil {
-				return dErr
-			}
-
-			stampTemplateItems(entity, true)
-			return r.insertTemplateItems(c, entity)
-		})
-		if err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, errortypes.NewValidationError(
-					"code",
-					errortypes.ErrDuplicate,
-					"A checklist template with this code already exists",
+				r.l.Error("failed to update checklist template", zap.Error(err))
+				return nil, dberror.MapRetryableTransactionError(
+					err,
+					"Checklist template is busy. Retry the request.",
 				)
 			}
-			r.l.Error("failed to update checklist template", zap.Error(err))
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Checklist template is busy. Retry the request.",
-			)
-		}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) ClearDefaultTemplate(
@@ -627,7 +664,11 @@ func (r *repository) Update(
 			r.l.Error("failed to update worker checklist", zap.Error(err))
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, "WorkerChecklist", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"WorkerChecklist",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -654,7 +695,11 @@ func (r *repository) UpdateItems(ctx context.Context, items []*worker.WorkerChec
 				if err != nil {
 					return err
 				}
-				if err = dberror.CheckRowsAffected(results, "WorkerChecklistItem", item.ID.String()); err != nil {
+				if err = dberror.CheckRowsAffected(
+					results,
+					"WorkerChecklistItem",
+					item.ID.String(),
+				); err != nil {
 					return err
 				}
 			}

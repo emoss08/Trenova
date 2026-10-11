@@ -29,7 +29,11 @@ type AgentRunEventRecorder interface {
 
 // RecordTrajectory is nil-safe, because the recorder is an optional dependency
 // and a caller should not have to check before saying what it did.
-func RecordTrajectory(writer AgentRunEventWriter, ctx context.Context, event kernelports.StreamEvent) {
+func RecordTrajectory(
+	writer AgentRunEventWriter,
+	ctx context.Context,
+	event kernelports.StreamEvent,
+) {
 	if writer == nil {
 		return
 	}

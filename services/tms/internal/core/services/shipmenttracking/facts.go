@@ -74,7 +74,12 @@ func (s *Snapshot) Facts() []Fact {
 }
 
 func nextStopText(stop *StopSnapshot) string {
-	text := fmt.Sprintf("%s at %s, due by %s", strings.ToLower(stop.Type), stopPlace(stop), dueText(stop))
+	text := fmt.Sprintf(
+		"%s at %s, due by %s",
+		strings.ToLower(stop.Type),
+		stopPlace(stop),
+		dueText(stop),
+	)
 	switch {
 	case stop.ActualArrival > 0 && stop.ActualDeparture == 0:
 		text += ", arrived " + stop.ActualArrivalText + " and not yet departed"

@@ -43,12 +43,15 @@ func (s *Service) Accuracy(
 
 	task := aicorrection.TaskShipmentDraftExtraction
 	since := s.now() - int64(window)*timeutils.SecondsPerDay
-	corrections, err := s.corrections.ListForAccuracy(ctx, aicorrectionports.ListAICorrectionsForAccuracyRequest{
-		TenantInfo: req.TenantInfo,
-		Task:       task,
-		Since:      since,
-		Limit:      accuracySampleLimit,
-	})
+	corrections, err := s.corrections.ListForAccuracy(
+		ctx,
+		aicorrectionports.ListAICorrectionsForAccuracyRequest{
+			TenantInfo: req.TenantInfo,
+			Task:       task,
+			Since:      since,
+			Limit:      accuracySampleLimit,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

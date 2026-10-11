@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
+	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
-	"github.com/emoss08/trenova/internal/modules/workforce/app/hosprojection"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/hosprojection"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/geoutils"
@@ -148,11 +148,14 @@ func (s *Service) BuildSnapshot(
 		WorkloadByWorker:    make(map[pulid.ID]*shipmentports.WorkerWorkload, len(drivers)),
 		OnTimeByWorker:      make(map[pulid.ID]*shipmentports.WorkerOnTimeStats, len(drivers)),
 		AcceptanceByWorker:  make(map[pulid.ID]*shipmentports.WorkerAcceptanceStats, len(drivers)),
-		ViolationsByWorker:  make(map[pulid.ID]*telematicsports.WorkerHOSViolationStats, len(drivers)),
-		NamesByWorker:       make(map[pulid.ID]string, len(drivers)),
-		LaneExperience:      make(map[laneKey]int, len(drivers)),
-		Control:             req.Control,
-		Now:                 now,
+		ViolationsByWorker: make(
+			map[pulid.ID]*telematicsports.WorkerHOSViolationStats,
+			len(drivers),
+		),
+		NamesByWorker:  make(map[pulid.ID]string, len(drivers)),
+		LaneExperience: make(map[laneKey]int, len(drivers)),
+		Control:        req.Control,
+		Now:            now,
 	}
 
 	active, err := s.telematicsActive(ctx, req.TenantInfo)

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -324,12 +324,15 @@ func (s *Service) CompareVersions(
 		zap.Int64("toVersion", req.ToVersion),
 	)
 
-	versions, err := s.versionRepo.GetVersionRange(ctx, &formulatemplateports.GetVersionRangeRequest{
-		TenantInfo:  req.TenantInfo,
-		TemplateID:  req.TemplateID,
-		FromVersion: req.FromVersion,
-		ToVersion:   req.ToVersion,
-	})
+	versions, err := s.versionRepo.GetVersionRange(
+		ctx,
+		&formulatemplateports.GetVersionRangeRequest{
+			TenantInfo:  req.TenantInfo,
+			TemplateID:  req.TemplateID,
+			FromVersion: req.FromVersion,
+			ToVersion:   req.ToVersion,
+		},
+	)
 	if err != nil {
 		log.Error("failed to get version range", zap.Error(err))
 		return nil, err
@@ -480,11 +483,14 @@ func (s *Service) resolveTemplateSnapshot(
 	tenant pagination.TenantInfo,
 ) (formulatemplate.Seed, int64, error) {
 	if requestedVersion != nil {
-		version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &formulatemplateports.GetVersionRequest{
-			TenantInfo:    tenant,
-			TemplateID:    template.ID,
-			VersionNumber: *requestedVersion,
-		})
+		version, err := s.versionRepo.GetByTemplateAndVersion(
+			ctx,
+			&formulatemplateports.GetVersionRequest{
+				TenantInfo:    tenant,
+				TemplateID:    template.ID,
+				VersionNumber: *requestedVersion,
+			},
+		)
 		if err != nil {
 			return formulatemplate.Seed{}, 0, err
 		}

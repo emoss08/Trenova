@@ -7,13 +7,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
@@ -945,10 +945,13 @@ func (s *Service) resolvePayload(
 				edi.TransactionSet214,
 			)
 		}
-		event, err := s.shipmentEventRepo.GetByID(ctx, shipmenteventports.GetShipmentEventByIDRequest{
-			ID:         req.ShipmentEventID,
-			TenantInfo: req.TenantInfo,
-		})
+		event, err := s.shipmentEventRepo.GetByID(
+			ctx,
+			shipmenteventports.GetShipmentEventByIDRequest{
+				ID:         req.ShipmentEventID,
+				TenantInfo: req.TenantInfo,
+			},
+		)
 		if err != nil {
 			return edi.DocumentPayload{}, err
 		}

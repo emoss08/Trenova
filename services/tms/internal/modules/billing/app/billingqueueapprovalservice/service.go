@@ -60,7 +60,9 @@ func (s *Service) Start(
 	key := strings.TrimSpace(req.IdempotencyKey)
 	if key == "" || len(key) > 100 {
 		return nil, errortypes.NewValidationError(
-			"idempotencyKey", errortypes.ErrInvalid, "An idempotency key of up to 100 characters is required",
+			"idempotencyKey",
+			errortypes.ErrInvalid,
+			"An idempotency key of up to 100 characters is required",
 		)
 	}
 
@@ -72,7 +74,11 @@ func (s *Service) Start(
 
 	itemIDs := sliceutils.Dedupe(req.ItemIDs)
 	if len(itemIDs) == 0 {
-		return nil, errortypes.NewValidationError("itemIds", errortypes.ErrRequired, "Pick at least one item")
+		return nil, errortypes.NewValidationError(
+			"itemIds",
+			errortypes.ErrRequired,
+			"Pick at least one item",
+		)
 	}
 	if len(itemIDs) > billingqueue.MaxApprovalRunItems {
 		return nil, errortypes.NewValidationError(
@@ -136,12 +142,15 @@ func (s *Service) startWorkflow(
 	)
 	if err == nil {
 		if wf != nil {
-			if setErr := s.repo.SetApprovalRunWorkflow(ctx, &billingqueueports.MarkApprovalRunRunningRequest{
-				TenantInfo:         tenantOf(run),
-				RunID:              run.ID,
-				TemporalWorkflowID: wf.GetID(),
-				TemporalRunID:      wf.GetRunID(),
-			}); setErr != nil {
+			if setErr := s.repo.SetApprovalRunWorkflow(
+				ctx,
+				&billingqueueports.MarkApprovalRunRunningRequest{
+					TenantInfo:         tenantOf(run),
+					RunID:              run.ID,
+					TemporalWorkflowID: wf.GetID(),
+					TemporalRunID:      wf.GetRunID(),
+				},
+			); setErr != nil {
 				s.l.Warn("failed to note the approval workflow", zap.Error(setErr))
 			}
 			run.TemporalWorkflowID = wf.GetID()
@@ -191,11 +200,14 @@ func (s *Service) Undo(
 		return nil, errortypes.NewAuthorizationError("Only the person who approved can undo it")
 	}
 
-	stopped, err := s.repo.RequestApprovalRunUndo(ctx, &billingqueueports.RequestApprovalRunUndoRequest{
-		TenantInfo:    req.TenantInfo,
-		RunID:         run.ID,
-		RequestedByID: req.TenantInfo.UserID,
-	})
+	stopped, err := s.repo.RequestApprovalRunUndo(
+		ctx,
+		&billingqueueports.RequestApprovalRunUndoRequest{
+			TenantInfo:    req.TenantInfo,
+			RunID:         run.ID,
+			RequestedByID: req.TenantInfo.UserID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -203,12 +215,18 @@ func (s *Service) Undo(
 		if run.CancelRequestedAt != nil {
 			return run, nil
 		}
-		return nil, errortypes.NewBusinessError("These invoices are already approved — it's too late to undo")
+		return nil, errortypes.NewBusinessError(
+			"These invoices are already approved — it's too late to undo",
+		)
 	}
 
 	if run.TemporalWorkflowID != "" {
 		if sigErr := s.workflows.SignalWorkflow(
-			ctx, run.TemporalWorkflowID, run.TemporalRunID, billingqueuecontract.UndoSignalName, nil,
+			ctx,
+			run.TemporalWorkflowID,
+			run.TemporalRunID,
+			billingqueuecontract.UndoSignalName,
+			nil,
 		); sigErr != nil {
 			s.l.Warn("failed to signal an approval undo",
 				zap.String("runId", run.ID.String()), zap.Error(sigErr))

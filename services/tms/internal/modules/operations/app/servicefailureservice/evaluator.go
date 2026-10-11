@@ -3,10 +3,10 @@ package servicefailureservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -109,11 +109,15 @@ func (s *service) BulkEvaluate(
 			})
 			continue
 		}
-		current, err := s.EvaluateShipment(ctx, &servicefailureports.EvaluateShipmentServiceFailuresRequest{
-			TenantInfo: req.TenantInfo,
-			ShipmentID: shipmentID,
-			Force:      req.Force,
-		}, actor)
+		current, err := s.EvaluateShipment(
+			ctx,
+			&servicefailureports.EvaluateShipmentServiceFailuresRequest{
+				TenantInfo: req.TenantInfo,
+				ShipmentID: shipmentID,
+				Force:      req.Force,
+			},
+			actor,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -247,7 +251,9 @@ func addSkippedEvaluation(params addSkippedEvaluationParams) {
 	params.result.SkippedStops = append(params.result.SkippedStops, skippedStopDetail(params))
 }
 
-func skippedStopDetail(params addSkippedEvaluationParams) servicefailureports.ServiceFailureSkippedStop {
+func skippedStopDetail(
+	params addSkippedEvaluationParams,
+) servicefailureports.ServiceFailureSkippedStop {
 	detail := stopSummaryFromStop(
 		params.shipmentID,
 		params.shipmentMoveID,

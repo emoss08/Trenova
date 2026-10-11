@@ -68,33 +68,37 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*usstate.UsState], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*usstate.UsState], error) {
-		entities := make([]*usstate.UsState, 0, req.Pagination.SafeLimit())
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*usstate.UsState], error) {
+			entities := make([]*usstate.UsState, 0, req.Pagination.SafeLimit())
 
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Column("id", "created_at", "name", "abbreviation", "country_iso3").
-			Limit(req.Pagination.Limit).
-			Offset(req.Pagination.Offset)
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Column("id", "created_at", "name", "abbreviation", "country_iso3").
+				Limit(req.Pagination.Limit).
+				Offset(req.Pagination.Offset)
 
-		if req.Query != "" {
-			q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.WhereOr("LOWER(name) LIKE LOWER(?)", dbhelper.WrapWildcard(req.Query)).
-					WhereOr("LOWER(abbreviation) LIKE LOWER(?)", dbhelper.WrapWildcard(req.Query))
-			})
-		}
+			if req.Query != "" {
+				q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.WhereOr("LOWER(name) LIKE LOWER(?)", dbhelper.WrapWildcard(req.Query)).
+						WhereOr("LOWER(abbreviation) LIKE LOWER(?)", dbhelper.WrapWildcard(req.Query))
+				})
+			}
 
-		total, err := q.ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := q.ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*usstate.UsState]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*usstate.UsState]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) GetByAbbreviation(

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	sharedsamsara "github.com/emoss08/trenova/shared/samsara"
 	"github.com/emoss08/trenova/shared/samsara/assets"
 	"github.com/emoss08/trenova/shared/samsara/compliance"
@@ -203,7 +203,10 @@ func (p *Provider) ListHOSClocks(ctx context.Context) ([]telematicsports.Provide
 	return out, nil
 }
 
-func applyClockDurations(record *telematicsports.ProviderHOSClocks, clocks *compliance.HOSClockSet) {
+func applyClockDurations(
+	record *telematicsports.ProviderHOSClocks,
+	clocks *compliance.HOSClockSet,
+) {
 	if clocks == nil {
 		return
 	}

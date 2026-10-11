@@ -8,12 +8,12 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -36,7 +36,11 @@ type formulaState struct {
 
 var errTemplateNotFound = errors.New("no formula template has that name")
 
-func (s *Session) OpenFormula(ctx context.Context, label string, page *FormulaPage) (*Conversation, error) {
+func (s *Session) OpenFormula(
+	ctx context.Context,
+	label string,
+	page *FormulaPage,
+) (*Conversation, error) {
 	ctx = s.Context(ctx)
 
 	state := &formulaState{draft: pagedraft.Formula{
@@ -75,7 +79,11 @@ func (s *Session) OpenFormula(ctx context.Context, label string, page *FormulaPa
 	}, nil
 }
 
-func (s *Session) loadFormula(ctx context.Context, name string, draft *pagedraft.Formula) (pulid.ID, error) {
+func (s *Session) loadFormula(
+	ctx context.Context,
+	name string,
+	draft *pagedraft.Formula,
+) (pulid.ID, error) {
 	type row struct {
 		id         string
 		kind       string

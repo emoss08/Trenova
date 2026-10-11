@@ -59,7 +59,9 @@ func isDuplicate(sess *pushSession, err error) bool {
 	return classified != nil && classified.Category == accountingsync.SyncErrorDuplicate
 }
 
-func adopted(found *accountingsyncports.AccountingDocumentResult) *accountingsyncports.AccountingDocumentResult {
+func adopted(
+	found *accountingsyncports.AccountingDocumentResult,
+) *accountingsyncports.AccountingDocumentResult {
 	result := &accountingsyncports.AccountingDocumentResult{
 		ExternalID: found.ExternalID,
 		DocNumber:  found.DocNumber,

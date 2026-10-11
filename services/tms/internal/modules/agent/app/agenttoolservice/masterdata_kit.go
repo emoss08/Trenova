@@ -7,13 +7,13 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -226,7 +226,11 @@ func masterText[T any](
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return clearable(update, !required, stringProperty(description+keepSuffix(update, !required), limit))
+			return clearable(
+				update,
+				!required,
+				stringProperty(description+keepSuffix(update, !required), limit),
+			)
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
 			text, err := in.text(key)

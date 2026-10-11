@@ -128,7 +128,10 @@ func NewWithDependencies(d *Dependencies) *Service {
 		readers[permission.RecordKind(permission.ResourceInvoice)] = invoiceReader(d.Invoices)
 	}
 	if d.Tractors != nil {
-		readers[permission.RecordKind(permission.ResourceTractor)] = tractorReader(d.Tractors, d.Telematics)
+		readers[permission.RecordKind(permission.ResourceTractor)] = tractorReader(
+			d.Tractors,
+			d.Telematics,
+		)
 	}
 	if d.Trailers != nil {
 		readers[permission.RecordKind(permission.ResourceTrailer)] = trailerReader(d.Trailers)

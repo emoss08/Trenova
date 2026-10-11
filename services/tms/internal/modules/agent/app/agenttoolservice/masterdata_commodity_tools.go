@@ -3,14 +3,14 @@ package agenttoolservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/hazardousmaterialports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -27,7 +27,10 @@ const (
 var freightClasses = agenttoolschema.Source("commodity.freightClass", commodity.FreightClasses)
 
 type commodityKeeper interface {
-	Get(ctx context.Context, req commodityports.GetCommodityByIDRequest) (*commodity.Commodity, error)
+	Get(
+		ctx context.Context,
+		req commodityports.GetCommodityByIDRequest,
+	) (*commodity.Commodity, error)
 	PlanCreate(ctx context.Context, entity *commodity.Commodity) (*commodity.Commodity, error)
 	Create(
 		ctx context.Context,

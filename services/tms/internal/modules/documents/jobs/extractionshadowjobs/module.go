@@ -1,9 +1,9 @@
 package extractionshadowjobs
 
 import (
-	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentintelligencejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentintelligencejobs"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.uber.org/fx"

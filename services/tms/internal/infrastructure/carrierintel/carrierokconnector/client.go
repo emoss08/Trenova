@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/carrierok"
 )
 
@@ -207,7 +207,9 @@ func (c *Client) Autocomplete(
 	return out, nil
 }
 
-func trimIdentifier(id carrierintelports.CarrierIntelIdentifier) carrierintelports.CarrierIntelIdentifier {
+func trimIdentifier(
+	id carrierintelports.CarrierIntelIdentifier,
+) carrierintelports.CarrierIntelIdentifier {
 	return carrierintelports.CarrierIntelIdentifier{
 		DOTNumber:    strings.TrimSpace(id.DOTNumber),
 		DocketNumber: strings.TrimSpace(id.DocketNumber),

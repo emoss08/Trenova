@@ -88,10 +88,13 @@ func (s *Service) CreateFromProposal(
 		)
 	}
 
-	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         run.AgentDefinitionID,
-		TenantInfo: tenantInfo,
-	})
+	definition, err := s.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         run.AgentDefinitionID,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -247,10 +250,13 @@ func (s *Service) captureMessage(
 		return nil, err
 	}
 
-	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         thread.AgentDefinitionID,
-		TenantInfo: tenantInfo,
-	})
+	definition, err := s.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         thread.AgentDefinitionID,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

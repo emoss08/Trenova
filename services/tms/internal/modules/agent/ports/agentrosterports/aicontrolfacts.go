@@ -38,6 +38,9 @@ type ProviderFailureCount struct {
 // of, each a count rather than rows.
 type AIControlFactsRepository interface {
 	AgentCounts(ctx context.Context, req *AgentCountsRequest) (aicontrolsummary.AgentCounts, error)
-	ProviderFailures(ctx context.Context, req *ProviderFailuresRequest) ([]ProviderFailureCount, error)
+	ProviderFailures(
+		ctx context.Context,
+		req *ProviderFailuresRequest,
+	) ([]ProviderFailureCount, error)
 	AgentRoster(ctx context.Context, req *AgentRosterRequest) ([]*agentroster.Stat, error)
 }

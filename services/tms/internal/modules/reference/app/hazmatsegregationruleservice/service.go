@@ -3,10 +3,10 @@ package hazmatsegregationruleservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/hazmatsegregationruleports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -112,13 +112,16 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, hazmatsegregationruleports.GetHazmatSegregationRuleByIDRequest{
-		ID: entity.GetID(),
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.GetOrganizationID(),
-			BuID:  entity.GetBusinessUnitID(),
+	original, err := s.repo.GetByID(
+		ctx,
+		hazmatsegregationruleports.GetHazmatSegregationRuleByIDRequest{
+			ID: entity.GetID(),
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.GetOrganizationID(),
+				BuID:  entity.GetBusinessUnitID(),
+			},
 		},
-	})
+	)
 	if err != nil {
 		log.Error("failed to get original hazmat segregation rule", zap.Error(err))
 		return nil, err

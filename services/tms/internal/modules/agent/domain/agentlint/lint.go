@@ -48,9 +48,29 @@ type Finding struct {
 // registry knows. They name operations, not capabilities: which record an
 // operation applies to, and whether any tool performs it, is the registry's.
 var operationVerbs = map[permission.Operation][]string{
-	permission.OpRead:    {"check", "look up", "look at", "find", "read", "review", "search", "see", "pull up"},
-	permission.OpCreate:  {"create", "add", "make", "open", "enter", "book", "draft", "build"},
-	permission.OpUpdate:  {"update", "change", "set", "edit", "correct", "fix", "mark", "adjust", "move"},
+	permission.OpRead: {
+		"check",
+		"look up",
+		"look at",
+		"find",
+		"read",
+		"review",
+		"search",
+		"see",
+		"pull up",
+	},
+	permission.OpCreate: {"create", "add", "make", "open", "enter", "book", "draft", "build"},
+	permission.OpUpdate: {
+		"update",
+		"change",
+		"set",
+		"edit",
+		"correct",
+		"fix",
+		"mark",
+		"adjust",
+		"move",
+	},
 	permission.OpDelete:  {"delete", "remove"},
 	permission.OpExport:  {"export", "download"},
 	permission.OpImport:  {"import", "upload"},
@@ -66,7 +86,17 @@ var operationVerbs = map[permission.Operation][]string{
 }
 
 // guardWords open a sentence that says what the agent must not do.
-var guardWords = []string{"never", "not", "don't", "dont", "do not", "avoid", "without", "nor", "no"}
+var guardWords = []string{
+	"never",
+	"not",
+	"don't",
+	"dont",
+	"do not",
+	"avoid",
+	"without",
+	"nor",
+	"no",
+}
 
 type term struct {
 	text     string
@@ -175,7 +205,10 @@ func resourceTerms(registry []Tool) []term {
 				continue
 			}
 			seen[form] = struct{}{}
-			terms = append(terms, term{text: form, resource: tool.Resource, label: tool.ResourceLabel})
+			terms = append(
+				terms,
+				term{text: form, resource: tool.Resource, label: tool.ResourceLabel},
+			)
 		}
 	}
 	sort.SliceStable(terms, func(i, j int) bool { return len(terms[i].text) > len(terms[j].text) })
@@ -186,7 +219,10 @@ func plural(word string) string {
 	switch {
 	case strings.HasSuffix(word, "y") && len(word) > 1 && !strings.ContainsRune("aeiou", rune(word[len(word)-2])):
 		return word[:len(word)-1] + "ies"
-	case strings.HasSuffix(word, "s"), strings.HasSuffix(word, "x"), strings.HasSuffix(word, "ch"), strings.HasSuffix(word, "sh"):
+	case strings.HasSuffix(word, "s"),
+		strings.HasSuffix(word, "x"),
+		strings.HasSuffix(word, "ch"),
+		strings.HasSuffix(word, "sh"):
 		return word + "es"
 	default:
 		return word + "s"

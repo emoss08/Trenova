@@ -110,8 +110,15 @@ func evaluateVersion(
 	input *documentparsingruleports.DocumentParsingRuntimeInput,
 ) (*documentparsingruleports.DocumentParsingAnalysis, error) {
 	sections := extractSections(version.RuleDocument.Sections, input.Pages, input.Text)
-	fields := make(map[string]documentparsingruleports.DocumentParsingField, len(version.RuleDocument.Fields))
-	stops := make([]documentparsingruleports.DocumentParsingStop, 0, len(version.RuleDocument.Stops))
+	fields := make(
+		map[string]documentparsingruleports.DocumentParsingField,
+		len(version.RuleDocument.Fields),
+	)
+	stops := make(
+		[]documentparsingruleports.DocumentParsingStop,
+		0,
+		len(version.RuleDocument.Stops),
+	)
 	missing := make([]string, 0)
 	signals := []string{
 		fmt.Sprintf("rule:%s", set.Name),
@@ -189,7 +196,10 @@ func extractSections( //nolint:gocognit // legacy workflow
 	fallbackText string,
 ) []sectionOccurrence {
 	if len(pages) == 0 && strings.TrimSpace(fallbackText) != "" {
-		pages = append(pages, documentparsingruleports.DocumentParsingPage{PageNumber: 1, Text: fallbackText})
+		pages = append(
+			pages,
+			documentparsingruleports.DocumentParsingPage{PageNumber: 1, Text: fallbackText},
+		)
 	}
 	sections := make([]sectionOccurrence, 0)
 	allAnchors := collectAllSectionAnchors(definitions)
@@ -443,7 +453,12 @@ func findValueByPatterns( //nolint:gocritic // stable API shape
 		if len(matches) > 1 {
 			for _, match := range matches[1:] {
 				if strings.TrimSpace(match) != "" {
-					return strings.TrimSpace(match), stringutils.FirstNonEmptyTrimmed(matches[0], text)
+					return strings.TrimSpace(
+							match,
+						), stringutils.FirstNonEmptyTrimmed(
+							matches[0],
+							text,
+						)
 				}
 			}
 		}
@@ -613,8 +628,10 @@ func mergeAnalyses(
 			map[string]documentparsingruleports.DocumentParsingField,
 			len(baseline.Fields)+len(candidate.Fields),
 		),
-		Stops:         append([]documentparsingruleports.DocumentParsingStop{}, baseline.Stops...),
-		Conflicts:     append([]documentparsingruleports.DocumentParsingConflict{}, baseline.Conflicts...),
+		Stops: append([]documentparsingruleports.DocumentParsingStop{}, baseline.Stops...),
+		Conflicts: append(
+			[]documentparsingruleports.DocumentParsingConflict{},
+			baseline.Conflicts...),
 		MissingFields: []string{},
 		Signals: dedupeStrings(
 			append(append([]string{}, baseline.Signals...), candidate.Signals...),
@@ -629,13 +646,16 @@ func mergeAnalyses(
 		if existing, ok := merged.Fields[key]; ok && strings.TrimSpace(existing.Value) != "" &&
 			strings.TrimSpace(field.Value) != "" &&
 			existing.Value != field.Value {
-			merged.Conflicts = append(merged.Conflicts, documentparsingruleports.DocumentParsingConflict{
-				Key:         key,
-				Label:       field.Label,
-				Values:      dedupeStrings([]string{existing.Value, field.Value}),
-				PageNumbers: dedupeInts([]int{existing.PageNumber, field.PageNumber}),
-				Source:      "parsing_rule_merge",
-			})
+			merged.Conflicts = append(
+				merged.Conflicts,
+				documentparsingruleports.DocumentParsingConflict{
+					Key:         key,
+					Label:       field.Label,
+					Values:      dedupeStrings([]string{existing.Value, field.Value}),
+					PageNumbers: dedupeInts([]int{existing.PageNumber, field.PageNumber}),
+					Source:      "parsing_rule_merge",
+				},
+			)
 		}
 		if shouldReplaceField(merged.Fields[key], field) {
 			merged.Fields[key] = field

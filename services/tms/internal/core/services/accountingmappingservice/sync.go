@@ -25,11 +25,14 @@ func (s *Service) historyUse(
 	if s.syncRecords == nil || row.State != accountingsync.MappingStateConfirmed {
 		return 0, nil
 	}
-	usage, err := s.syncRecords.MappingUsage(ctx, &accountingsyncports.AccountingSyncMappingUsageRequest{
-		TenantInfo:   tenantInfo,
-		ConnectionID: row.ConnectionID,
-		MappingIDs:   []pulid.ID{row.ID},
-	})
+	usage, err := s.syncRecords.MappingUsage(
+		ctx,
+		&accountingsyncports.AccountingSyncMappingUsageRequest{
+			TenantInfo:   tenantInfo,
+			ConnectionID: row.ConnectionID,
+			MappingIDs:   []pulid.ID{row.ID},
+		},
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -174,10 +177,13 @@ func (s *Service) targetFor(
 		return customerTarget(cus), nil
 	case accountingsync.TargetAccessorialCharge:
 		tenantInfo := req.TenantInfo
-		charge, err := s.accessorials.GetByID(ctx, accessorialchargeports.GetAccessorialChargeByIDRequest{
-			ID:         req.ObjectID,
-			TenantInfo: &tenantInfo,
-		})
+		charge, err := s.accessorials.GetByID(
+			ctx,
+			accessorialchargeports.GetAccessorialChargeByIDRequest{
+				ID:         req.ObjectID,
+				TenantInfo: &tenantInfo,
+			},
+		)
 		if err != nil {
 			return nil, err
 		}

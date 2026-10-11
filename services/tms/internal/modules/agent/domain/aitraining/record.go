@@ -46,7 +46,7 @@ func (r *TrainingExportRecord) BeforeAppendModel(_ context.Context, query bun.Qu
 
 type ExportHistoryEntry struct {
 	ExportID           pulid.ID     `json:"exportId"           bun:"export_id"`
-	Status             ExportStatus `json:"status"         bun:"status"`
+	Status             ExportStatus `json:"status"             bun:"status"`
 	Format             string       `json:"format"             bun:"format"`
 	Examples           int          `json:"examples"           bun:"examples"`
 	TrainExamples      int          `json:"trainExamples"      bun:"train_examples"`

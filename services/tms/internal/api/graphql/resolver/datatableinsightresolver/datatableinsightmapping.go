@@ -35,7 +35,10 @@ func decimalString(value *decimal.Decimal) *string {
 	return &text
 }
 
-func facetsToModel(field string, result *permissionports.TableFacetResult) *gqlmodel.DataTableFacets {
+func facetsToModel(
+	field string,
+	result *permissionports.TableFacetResult,
+) *gqlmodel.DataTableFacets {
 	buckets := make([]*gqlmodel.DataTableFacetBucket, 0, len(result.Buckets))
 	for _, bucket := range result.Buckets {
 		buckets = append(buckets, &gqlmodel.DataTableFacetBucket{

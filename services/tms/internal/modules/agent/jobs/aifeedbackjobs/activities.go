@@ -59,10 +59,13 @@ func (a *Activities) MaintainOrganizationAIFeedbackActivity(
 		return nil, fmt.Errorf("purge expired ai feedback: %w", err)
 	}
 
-	suggested, err := a.maintenance.SuggestMemories(ctx, aifeedbackports.SuggestAgentMemoriesRequest{
-		TenantInfo: tenant,
-		Now:        input.Now,
-	})
+	suggested, err := a.maintenance.SuggestMemories(
+		ctx,
+		aifeedbackports.SuggestAgentMemoriesRequest{
+			TenantInfo: tenant,
+			Now:        input.Now,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("suggest agent memories: %w", err)
 	}

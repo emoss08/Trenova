@@ -76,7 +76,10 @@ func (i *Inspector) Inspect(
 
 // InspectImage reads an already rendered page. It is separate so the reading
 // can be tested without a PDF renderer.
-func InspectImage(ctx context.Context, img image.Image) (*captureports.CapturePageInspection, error) {
+func InspectImage(
+	ctx context.Context,
+	img image.Image,
+) (*captureports.CapturePageInspection, error) {
 	bounds := img.Bounds()
 
 	thumbnail, err := encodeThumbnail(img)

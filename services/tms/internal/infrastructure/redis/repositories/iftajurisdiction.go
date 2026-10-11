@@ -47,7 +47,12 @@ func (r *iftaJurisdictionCacheRepository) GetAll(
 	log := r.l.With(zap.String("operation", "GetAll"))
 
 	jurisdictions := make([]*ifta.Jurisdiction, 0, defaultJurisdictionCacheSize)
-	if err := redishelpers.GetJSON(ctx, r.client, jurisdictionKeyPrefix, &jurisdictions); err != nil {
+	if err := redishelpers.GetJSON(
+		ctx,
+		r.client,
+		jurisdictionKeyPrefix,
+		&jurisdictions,
+	); err != nil {
 		if redishelpers.IsRedisNil(err) {
 			return nil, errortypes.NewNotFoundError("ifta jurisdictions not cached")
 		}

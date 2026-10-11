@@ -3,8 +3,8 @@ package agentqualityjobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.temporal.io/sdk/temporal"
 	"go.uber.org/fx"

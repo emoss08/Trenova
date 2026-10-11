@@ -19,11 +19,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
@@ -463,11 +463,14 @@ func (b *Builder) cash(ctx context.Context, req Request, facts *Facts) {
 	// Yesterday, in the organization's own day: a cash line that moved
 	// with the server's midnight would report a different figure to two
 	// offices of the same company.
-	received, err := b.sources.Payments.SumReceived(ctx, customerpaymentports.SumPaymentsReceivedRequest{
-		TenantInfo: req.TenantInfo,
-		From:       req.DayStart - 24*60*60,
-		To:         req.DayStart - 1,
-	})
+	received, err := b.sources.Payments.SumReceived(
+		ctx,
+		customerpaymentports.SumPaymentsReceivedRequest{
+			TenantInfo: req.TenantInfo,
+			From:       req.DayStart - 24*60*60,
+			To:         req.DayStart - 1,
+		},
+	)
 	if err != nil {
 		facts.miss("payments")
 

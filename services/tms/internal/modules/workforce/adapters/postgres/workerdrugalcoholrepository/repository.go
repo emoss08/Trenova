@@ -193,7 +193,11 @@ func (r *repository) UpdateTest(
 			r.l.Error("failed to update dot test", zap.Error(err))
 			return nil, fmt.Errorf("update dot test: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(results, "WorkerDOTTest", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"WorkerDOTTest",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -360,107 +364,123 @@ func (r *repository) ListQueries(
 	ctx context.Context,
 	req *workerports.ListClearinghouseQueriesRequest,
 ) ([]*worker.WorkerClearinghouseQuery, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerClearinghouseQuery, error) {
-		cols := workercol.WorkerClearinghouseQueryColumns
-		entities := make([]*worker.WorkerClearinghouseQuery, 0, 8)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*worker.WorkerClearinghouseQuery, error) {
+			cols := workercol.WorkerClearinghouseQueryColumns
+			entities := make([]*worker.WorkerClearinghouseQuery, 0, 8)
 
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = workercol.WorkerClearinghouseQueryScopeTenant(sq, req.TenantInfo)
-				if !req.WorkerID.IsNil() {
-					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
-				}
-				if req.PendingOnly {
-					sq = sq.Where(cols.Result.Eq(), worker.ClearinghouseResultPending)
-				}
-				return sq
-			}).
-			Order(cols.RequestedAt.OrderDesc())
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = workercol.WorkerClearinghouseQueryScopeTenant(sq, req.TenantInfo)
+					if !req.WorkerID.IsNil() {
+						sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
+					}
+					if req.PendingOnly {
+						sq = sq.Where(cols.Result.Eq(), worker.ClearinghouseResultPending)
+					}
+					return sq
+				}).
+				Order(cols.RequestedAt.OrderDesc())
 
-		if req.IncludeWorker {
-			q = q.Relation(workercol.WorkerClearinghouseQueryRelations.Worker)
-		}
+			if req.IncludeWorker {
+				q = q.Relation(workercol.WorkerClearinghouseQueryRelations.Worker)
+			}
 
-		if err := q.Scan(ctx); err != nil {
-			r.l.Error("failed to list clearinghouse queries", zap.Error(err))
-			return nil, fmt.Errorf("list clearinghouse queries: %w", err)
-		}
+			if err := q.Scan(ctx); err != nil {
+				r.l.Error("failed to list clearinghouse queries", zap.Error(err))
+				return nil, fmt.Errorf("list clearinghouse queries: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) GetQueryByID(
 	ctx context.Context,
 	req *workerports.GetClearinghouseQueryByIDRequest,
 ) (*worker.WorkerClearinghouseQuery, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerClearinghouseQuery, error) {
-		entity := new(worker.WorkerClearinghouseQuery)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerClearinghouseQueryScopeTenant(sq, req.TenantInfo).
-					Where(workercol.WorkerClearinghouseQueryColumns.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "WorkerClearinghouseQuery")
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*worker.WorkerClearinghouseQuery, error) {
+			entity := new(worker.WorkerClearinghouseQuery)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return workercol.WorkerClearinghouseQueryScopeTenant(sq, req.TenantInfo).
+						Where(workercol.WorkerClearinghouseQueryColumns.ID.Eq(), req.ID)
+				}).
+				Scan(ctx)
+			if err != nil {
+				return nil, dberror.HandleNotFoundError(err, "WorkerClearinghouseQuery")
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) CreateQuery(
 	ctx context.Context,
 	entity *worker.WorkerClearinghouseQuery,
 ) (*worker.WorkerClearinghouseQuery, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerClearinghouseQuery, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			r.l.Error("failed to create clearinghouse query", zap.Error(err))
-			return nil, fmt.Errorf("create clearinghouse query: %w", err)
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*worker.WorkerClearinghouseQuery, error) {
+			if _, err := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(entity).
+				Returning("*").
+				Exec(ctx); err != nil {
+				r.l.Error("failed to create clearinghouse query", zap.Error(err))
+				return nil, fmt.Errorf("create clearinghouse query: %w", err)
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) UpdateQuery(
 	ctx context.Context,
 	entity *worker.WorkerClearinghouseQuery,
 ) (*worker.WorkerClearinghouseQuery, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerClearinghouseQuery, error) {
-		ov := entity.Version
-		entity.Version++
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*worker.WorkerClearinghouseQuery, error) {
+			ov := entity.Version
+			entity.Version++
 
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(workercol.WorkerClearinghouseQueryColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			r.l.Error("failed to update clearinghouse query", zap.Error(err))
-			return nil, fmt.Errorf("update clearinghouse query: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"WorkerClearinghouseQuery",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
-		}
+			results, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(entity).
+				WherePK().
+				Where(workercol.WorkerClearinghouseQueryColumns.Version.Eq(), ov).
+				Returning("*").
+				Exec(ctx)
+			if err != nil {
+				r.l.Error("failed to update clearinghouse query", zap.Error(err))
+				return nil, fmt.Errorf("update clearinghouse query: %w", err)
+			}
+			if err = dberror.CheckRowsAffected(
+				results,
+				"WorkerClearinghouseQuery",
+				entity.ID.String(),
+			); err != nil {
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) applyPoolFilters(
@@ -477,61 +497,68 @@ func (r *repository) ListPools(
 	ctx context.Context,
 	req *workerports.ListDOTRandomPoolsRequest,
 ) (*pagination.CursorListResult[*worker.DOTRandomPool], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*worker.DOTRandomPool], error) {
-		dba := r.db.DBForContext(ctx)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*worker.DOTRandomPool], error) {
+			dba := r.db.DBForContext(ctx)
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*worker.DOTRandomPool)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						workercol.DOTRandomPoolTable.Alias,
-						req.Filter,
-						(*worker.DOTRandomPool)(nil),
-					)
-					return r.applyPoolFilters(sq, req)
-				}).
-				Count(ctx)
-			if err != nil {
-				r.l.Error("failed to count random pools", zap.Error(err))
-				return nil, fmt.Errorf("count random pools: %w", err)
-			}
-			totalCount = &total
-		}
-
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*worker.DOTRandomPool]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(items *[]*worker.DOTRandomPool) *bun.SelectQuery {
-				return dba.NewSelect().
-					Model(items).
-					ColumnExpr(workercol.DOTRandomPoolTable.All())
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				sq, applyErr := querybuilder.ApplyCursorFilters(
-					sq,
-					workercol.DOTRandomPoolTable.Alias,
-					req.Filter,
-					req.Cursor,
-					(*worker.DOTRandomPool)(nil),
-				)
-				if applyErr != nil {
-					return sq, applyErr
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*worker.DOTRandomPool)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							workercol.DOTRandomPoolTable.Alias,
+							req.Filter,
+							(*worker.DOTRandomPool)(nil),
+						)
+						return r.applyPoolFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					r.l.Error("failed to count random pools", zap.Error(err))
+					return nil, fmt.Errorf("count random pools: %w", err)
 				}
-				return r.applyPoolFilters(sq, req), nil
-			},
-		})
-		if err != nil {
-			r.l.Error("failed to list random pools", zap.Error(err))
-			return nil, fmt.Errorf("list random pools: %w", err)
-		}
+				totalCount = &total
+			}
 
-		return result, nil
-	})
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*worker.DOTRandomPool]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(items *[]*worker.DOTRandomPool) *bun.SelectQuery {
+						return dba.NewSelect().
+							Model(items).
+							ColumnExpr(workercol.DOTRandomPoolTable.All())
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						sq, applyErr := querybuilder.ApplyCursorFilters(
+							sq,
+							workercol.DOTRandomPoolTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*worker.DOTRandomPool)(nil),
+						)
+						if applyErr != nil {
+							return sq, applyErr
+						}
+						return r.applyPoolFilters(sq, req), nil
+					},
+				},
+			)
+			if err != nil {
+				r.l.Error("failed to list random pools", zap.Error(err))
+				return nil, fmt.Errorf("list random pools: %w", err)
+			}
+
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetPoolByID(
@@ -666,7 +693,11 @@ func (r *repository) UpdatePool(
 			r.l.Error("failed to update random pool", zap.Error(err))
 			return nil, fmt.Errorf("update random pool: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(results, "DOTRandomPool", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"DOTRandomPool",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -819,21 +850,25 @@ func (r *repository) CreateDrawWithEntries(
 	entries []*worker.DOTRandomDrawEntry,
 ) (*worker.DOTRandomDraw, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.DOTRandomDraw, error) {
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-			if _, iErr := tx.NewInsert().Model(draw).Returning("*").Exec(txCtx); iErr != nil {
+		err := r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, tx bun.Tx) error {
+				if _, iErr := tx.NewInsert().Model(draw).Returning("*").Exec(txCtx); iErr != nil {
+					return iErr
+				}
+				if len(entries) == 0 {
+					return nil
+				}
+				for _, entry := range entries {
+					entry.DrawID = draw.ID
+					entry.OrganizationID = draw.OrganizationID
+					entry.BusinessUnitID = draw.BusinessUnitID
+				}
+				_, iErr := tx.NewInsert().Model(&entries).Exec(txCtx)
 				return iErr
-			}
-			if len(entries) == 0 {
-				return nil
-			}
-			for _, entry := range entries {
-				entry.DrawID = draw.ID
-				entry.OrganizationID = draw.OrganizationID
-				entry.BusinessUnitID = draw.BusinessUnitID
-			}
-			_, iErr := tx.NewInsert().Model(&entries).Exec(txCtx)
-			return iErr
-		})
+			},
+		)
 		if err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
 				return nil, errortypes.NewValidationError(
@@ -871,7 +906,11 @@ func (r *repository) UpdateDraw(
 			r.l.Error("failed to update random draw", zap.Error(err))
 			return nil, fmt.Errorf("update random draw: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(results, "DOTRandomDraw", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"DOTRandomDraw",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -1051,7 +1090,10 @@ func (r *repository) ListWorkersWithClearinghouseDue(
 	ctx context.Context,
 	req *workerports.ListWorkersWithClearinghouseDueRequest,
 ) ([]workerports.WorkerTenantRef, error) {
-	ctx = dbscope.WithSystem(ctx, "list workers due a clearinghouse query across every organization")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"list workers due a clearinghouse query across every organization",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.WorkerTenantRef, error) {
 		workerCols := workercol.WorkerColumns
 		profileCols := workercol.WorkerProfileColumns

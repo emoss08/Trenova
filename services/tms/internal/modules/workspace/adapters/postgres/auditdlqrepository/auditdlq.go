@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -66,7 +66,10 @@ func (r *repository) InsertBatch(ctx context.Context, entries []*audit.DLQEntry)
 }
 
 func (r *repository) GetPendingEntries(ctx context.Context, limit int) ([]*audit.DLQEntry, error) {
-	ctx = dbscope.WithSystem(ctx, "retry audit entries that failed to flush, which mix organizations")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"retry audit entries that failed to flush, which mix organizations",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*audit.DLQEntry, error) {
 		entries := make([]*audit.DLQEntry, 0, limit)
 

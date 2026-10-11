@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
@@ -205,7 +205,10 @@ func newPriceIndex(prices map[string]agentports.CachedModelPrice) *priceIndex {
 	return index
 }
 
-func (x *priceIndex) lookup(kind aiprovider.Kind, modelID string) (agentports.ReferencePrice, bool) {
+func (x *priceIndex) lookup(
+	kind aiprovider.Kind,
+	modelID string,
+) (agentports.ReferencePrice, bool) {
 	key := normalizeModelID(modelID)
 	undated := datedSuffix.ReplaceAllString(key, "")
 	vendor := catalogVendor(kind)

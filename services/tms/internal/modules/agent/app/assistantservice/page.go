@@ -7,10 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -70,10 +70,13 @@ func (s *Service) OpenPageThread(
 		return nil, errAgentsWithheld()
 	}
 
-	definition, err := s.systemAgents.EnsureSystem(ctx, agentdefinitionports.EnsureSystemAgentRequest{
-		TenantInfo: req.TenantInfo,
-		SystemKey:  surface.systemKey,
-	})
+	definition, err := s.systemAgents.EnsureSystem(
+		ctx,
+		agentdefinitionports.EnsureSystemAgentRequest{
+			TenantInfo: req.TenantInfo,
+			SystemKey:  surface.systemKey,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

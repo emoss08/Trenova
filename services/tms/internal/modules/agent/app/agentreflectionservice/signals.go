@@ -4,9 +4,9 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 )

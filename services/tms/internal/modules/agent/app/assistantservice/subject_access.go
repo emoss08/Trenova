@@ -3,9 +3,9 @@ package assistantservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/services/subjectaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/services/subjectaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )

@@ -98,30 +98,34 @@ func (r *deviationRepository) List(
 	ctx context.Context,
 	req *modeprofileports.ListDeviationsRequest,
 ) (*pagination.ListResult[*modeprofile.Deviation], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*modeprofile.Deviation], error) {
-		log := r.l.With(zap.String("operation", "List"))
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*modeprofile.Deviation], error) {
+			log := r.l.With(zap.String("operation", "List"))
 
-		entities := make([]*modeprofile.Deviation, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(modeprofilecol.DeviationRelations.Profile).
-			Relation(modeprofilecol.DeviationRelations.AcknowledgedBy).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterQuery(sq, req)
-			}).
-			Order(modeprofilecol.DeviationColumns.OccurredAt.OrderDesc()).
-			ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count deviations", zap.Error(err))
-			return nil, err
-		}
+			entities := make([]*modeprofile.Deviation, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Relation(modeprofilecol.DeviationRelations.Profile).
+				Relation(modeprofilecol.DeviationRelations.AcknowledgedBy).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).
+				Order(modeprofilecol.DeviationColumns.OccurredAt.OrderDesc()).
+				ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count deviations", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*modeprofile.Deviation]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*modeprofile.Deviation]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *deviationRepository) GetByID(
@@ -280,49 +284,53 @@ func (r *deviationRepository) Ledger(
 	ctx context.Context,
 	req *modeprofileports.DeviationLedgerRequest,
 ) ([]*modeprofileports.DeviationLedgerEntry, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*modeprofileports.DeviationLedgerEntry, error) {
-		log := r.l.With(zap.String("operation", "Ledger"))
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*modeprofileports.DeviationLedgerEntry, error) {
+			log := r.l.With(zap.String("operation", "Ledger"))
 
-		cols := modeprofilecol.DeviationColumns
-		entries := make([]*modeprofileports.DeviationLedgerEntry, 0, 16)
+			cols := modeprofilecol.DeviationColumns
+			entries := make([]*modeprofileports.DeviationLedgerEntry, 0, 16)
 
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*modeprofile.Deviation)(nil)).
-			ColumnExpr(cols.RuleKey.As("rule_key")).
-			ColumnExpr(cols.Capability.As("capability")).
-			ColumnExpr(buncolgen.Count("occurrences")).
-			ColumnExpr(
-				buncolgen.CountFilter("open_count", cols.State.Eq()),
-				modeprofile.DeviationStateOpen,
-			).
-			ColumnExpr(buncolgen.Max(cols.OccurredAt, "last_occurred_at")).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return modeprofilecol.DeviationScopeTenant(sq, req.TenantInfo)
-			}).
-			GroupExpr(cols.RuleKey.Qualified()).
-			GroupExpr(cols.Capability.Qualified()).
-			OrderExpr("occurrences DESC")
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*modeprofile.Deviation)(nil)).
+				ColumnExpr(cols.RuleKey.As("rule_key")).
+				ColumnExpr(cols.Capability.As("capability")).
+				ColumnExpr(buncolgen.Count("occurrences")).
+				ColumnExpr(
+					buncolgen.CountFilter("open_count", cols.State.Eq()),
+					modeprofile.DeviationStateOpen,
+				).
+				ColumnExpr(buncolgen.Max(cols.OccurredAt, "last_occurred_at")).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return modeprofilecol.DeviationScopeTenant(sq, req.TenantInfo)
+				}).
+				GroupExpr(cols.RuleKey.Qualified()).
+				GroupExpr(cols.Capability.Qualified()).
+				OrderExpr("occurrences DESC")
 
-		if req.Since > 0 {
-			q = q.Where(cols.OccurredAt.Gte(), req.Since)
-		}
-
-		if err := q.Scan(ctx, &entries); err != nil {
-			log.Error("failed to build deviation ledger", zap.Error(err))
-			return nil, err
-		}
-
-		for _, entry := range entries {
-			if def, err := modeprofile.RuleDefinitionFor(
-				modeprofile.RuleKey(entry.RuleKey),
-			); err == nil {
-				entry.Label = def.Label
-			} else {
-				entry.Label = entry.RuleKey
+			if req.Since > 0 {
+				q = q.Where(cols.OccurredAt.Gte(), req.Since)
 			}
-		}
 
-		return entries, nil
-	})
+			if err := q.Scan(ctx, &entries); err != nil {
+				log.Error("failed to build deviation ledger", zap.Error(err))
+				return nil, err
+			}
+
+			for _, entry := range entries {
+				if def, err := modeprofile.RuleDefinitionFor(
+					modeprofile.RuleKey(entry.RuleKey),
+				); err == nil {
+					entry.Label = def.Label
+				} else {
+					entry.Label = entry.RuleKey
+				}
+			}
+
+			return entries, nil
+		},
+	)
 }

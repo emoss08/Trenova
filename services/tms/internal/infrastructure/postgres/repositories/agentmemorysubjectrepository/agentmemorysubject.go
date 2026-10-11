@@ -152,7 +152,8 @@ func (r *repository) shipmentLinks(
 			ColumnExpr(stp.LocationID.As("linked_id")).
 			Join(joinMove(&stp.ShipmentMoveID, &stp.OrganizationID, &stp.BusinessUnitID)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.StopScopeTenant(sq, tenant).Where(sm.ShipmentID.In(), bun.List(ids))
+				return shipmentcol.StopScopeTenant(sq, tenant).
+					Where(sm.ShipmentID.In(), bun.List(ids))
 			}).
 			OrderExpr(sm.Sequence.OrderAsc()).
 			OrderExpr(stp.Sequence.OrderAsc()).
@@ -220,7 +221,8 @@ func (r *repository) moveLinks(
 			ColumnExpr(sm.ID.As("from_id")).
 			ColumnExpr(sm.ShipmentID.As("linked_id")).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.ShipmentMoveScopeTenant(sq, tenant).Where(sm.ID.In(), bun.List(ids))
+				return shipmentcol.ShipmentMoveScopeTenant(sq, tenant).
+					Where(sm.ID.In(), bun.List(ids))
 			}).
 			Scan(ctx, &rows); err != nil {
 			return nil, fmt.Errorf("move shipments: %w", err)

@@ -6,13 +6,13 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -64,7 +64,10 @@ type accountingSyncReleaser interface {
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
 	) (*accountingsync.AccountingSyncRecord, error)
-	Release(ctx context.Context, req *accountingsyncports.ReleaseAccountingSyncRequest) (int64, error)
+	Release(
+		ctx context.Context,
+		req *accountingsyncports.ReleaseAccountingSyncRequest,
+	) (int64, error)
 }
 
 type accountingBackfillChanger interface {

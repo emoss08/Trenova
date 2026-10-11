@@ -39,22 +39,29 @@ func New(p Params) tenantports.DataRetentionRepository {
 func (r *repository) List(
 	ctx context.Context,
 ) (*pagination.ListResult[*tenant.DataRetention], error) {
-	ctx = dbscope.WithSystem(ctx, "read every organization's retention settings for retention sweeps")
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*tenant.DataRetention], error) {
-		log := r.l.With(zap.String("operation", "List"))
+	ctx = dbscope.WithSystem(
+		ctx,
+		"read every organization's retention settings for retention sweeps",
+	)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*tenant.DataRetention], error) {
+			log := r.l.With(zap.String("operation", "List"))
 
-		entities := make([]*tenant.DataRetention, 0)
-		total, err := r.db.DBForContext(ctx).NewSelect().Model(&entities).ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count data retentions", zap.Error(err))
-			return nil, err
-		}
+			entities := make([]*tenant.DataRetention, 0)
+			total, err := r.db.DBForContext(ctx).NewSelect().Model(&entities).ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count data retentions", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*tenant.DataRetention]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*tenant.DataRetention]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) Get(

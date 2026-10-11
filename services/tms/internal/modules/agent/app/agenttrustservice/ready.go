@@ -71,8 +71,11 @@ func (s *Service) PromoteReady(
 		if !moved {
 			continue
 		}
-		s.logTierChange(change, tool.promotion.To,
-			"Tool promoted when earned autonomy was turned on: its streak had already met the threshold")
+		s.logTierChange(
+			change,
+			tool.promotion.To,
+			"Tool promoted when earned autonomy was turned on: its streak had already met the threshold",
+		)
 		promoted = append(promoted, tool.promotion)
 	}
 
@@ -81,7 +84,10 @@ func (s *Service) PromoteReady(
 
 // ready reads the tools whose streak meets the threshold and that have a
 // tier above them their agent's ceiling and the tool's policy allow.
-func (s *Service) ready(ctx context.Context, req *agentports.PromoteReadyRequest) ([]readyTool, error) {
+func (s *Service) ready(
+	ctx context.Context,
+	req *agentports.PromoteReadyRequest,
+) ([]readyTool, error) {
 	if req.Threshold <= 0 {
 		return []readyTool{}, nil
 	}
@@ -105,10 +111,13 @@ func (s *Service) ready(ctx context.Context, req *agentports.PromoteReadyRequest
 		ids = append(ids, row.AgentDefinitionID)
 	}
 
-	definitions, err := s.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
-		IDs:        ids,
-		TenantInfo: req.TenantInfo,
-	})
+	definitions, err := s.definitions.ListByIDs(
+		ctx,
+		agentdefinitionports.ListAgentDefinitionsByIDsRequest{
+			IDs:        ids,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

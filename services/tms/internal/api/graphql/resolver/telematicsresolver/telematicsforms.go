@@ -2,8 +2,8 @@ package telematicsresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 )
 
 func mapTelematicsFormSubmission(

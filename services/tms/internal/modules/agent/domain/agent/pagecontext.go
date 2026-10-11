@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -213,7 +213,11 @@ func (v *PageView) Validate(prefix string, multiErr *errortypes.MultiError) {
 				multiErr.Add(sortField+".field", errortypes.ErrInvalid, "Sort field is invalid")
 			}
 			if !sort.Direction.IsValid() {
-				multiErr.Add(sortField+".direction", errortypes.ErrInvalid, "Sort direction is invalid")
+				multiErr.Add(
+					sortField+".direction",
+					errortypes.ErrInvalid,
+					"Sort direction is invalid",
+				)
 			}
 		}
 	}
@@ -277,7 +281,11 @@ func (v *PageView) Validate(prefix string, multiErr *errortypes.MultiError) {
 	} else {
 		for i, column := range v.VisibleColumns {
 			if !validFieldName(column) {
-				multiErr.Add(field("visibleColumns")+"["+strconv.Itoa(i)+"]", errortypes.ErrInvalid, "Column name is invalid")
+				multiErr.Add(
+					field("visibleColumns")+"["+strconv.Itoa(i)+"]",
+					errortypes.ErrInvalid,
+					"Column name is invalid",
+				)
 			}
 		}
 	}

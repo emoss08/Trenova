@@ -6,15 +6,15 @@ import (
 	"slices"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -120,7 +120,10 @@ type stopScheduleView struct {
 	WindowEnd   string `json:"windowEnd,omitempty"`
 }
 
-func (t *rescheduleStopTool) Execute(ctx context.Context, params agentports.ToolExecuteParams) error {
+func (t *rescheduleStopTool) Execute(
+	ctx context.Context,
+	params agentports.ToolExecuteParams,
+) error {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
 		return err
@@ -227,7 +230,9 @@ func stopOnShipment(entity *shipment.Shipment, stopID pulid.ID) *shipment.Stop {
 }
 
 func scheduleViewOf(stop *shipment.Stop, zone *time.Location) stopScheduleView {
-	view := stopScheduleView{WindowStart: timeutils.FormatLocalDateTime(stop.ScheduledWindowStart, zone)}
+	view := stopScheduleView{
+		WindowStart: timeutils.FormatLocalDateTime(stop.ScheduledWindowStart, zone),
+	}
 	if stop.ScheduledWindowEnd != nil && *stop.ScheduledWindowEnd > 0 {
 		view.WindowEnd = timeutils.FormatLocalDateTime(*stop.ScheduledWindowEnd, zone)
 	}
@@ -361,7 +366,10 @@ type shipmentChargePlan struct {
 	charge      *shipment.AdditionalCharge
 }
 
-func (t *addShipmentChargeTool) Execute(ctx context.Context, params agentports.ToolExecuteParams) error {
+func (t *addShipmentChargeTool) Execute(
+	ctx context.Context,
+	params agentports.ToolExecuteParams,
+) error {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
 		return err
@@ -397,23 +405,34 @@ func (t *addShipmentChargeTool) plan(
 	}
 
 	units := 1
-	if given, unitErr := optionalIntInRange(params.Params, paramUnits, 1, maxChargeUnits); unitErr != nil {
+	if given, unitErr := optionalIntInRange(
+		params.Params,
+		paramUnits,
+		1,
+		maxChargeUnits,
+	); unitErr != nil {
 		return nil, unitErr
 	} else if given != nil {
 		units = *given
 	}
 
 	tenant := tenantFrom(*params)
-	accessorial, err := t.accessorials.GetByID(ctx, accessorialchargeports.GetAccessorialChargeByIDRequest{
-		ID:         chargeID,
-		TenantInfo: &tenant,
-	})
+	accessorial, err := t.accessorials.GetByID(
+		ctx,
+		accessorialchargeports.GetAccessorialChargeByIDRequest{
+			ID:         chargeID,
+			TenantInfo: &tenant,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 	if accessorial.Status != domaintypes.StatusActive {
-		return nil, errortypes.NewValidationError("accessorialChargeId", errortypes.ErrInvalid,
-			"That accessorial charge is inactive; choose an active one from list_accessorial_charges")
+		return nil, errortypes.NewValidationError(
+			"accessorialChargeId",
+			errortypes.ErrInvalid,
+			"That accessorial charge is inactive; choose an active one from list_accessorial_charges",
+		)
 	}
 
 	amount := accessorial.Amount
@@ -456,7 +475,12 @@ func (t *addShipmentChargeTool) plan(
 	after := shipment.CloneForUpdate(before)
 	after.AdditionalCharges = append(slices.Clone(before.AdditionalCharges), charge)
 
-	return &shipmentChargePlan{before: before, after: after, accessorial: accessorial, charge: charge}, nil
+	return &shipmentChargePlan{
+		before:      before,
+		after:       after,
+		accessorial: accessorial,
+		charge:      charge,
+	}, nil
 }
 
 type shipmentChargeView struct {
@@ -478,7 +502,8 @@ func shipmentChargeViewOf(plan *shipmentChargePlan) *shipmentChargeView {
 	case accessorialcharge.MethodFlat:
 		view.Total = plan.charge.Amount.StringFixed(2)
 	case accessorialcharge.MethodPerUnit:
-		view.Total = plan.charge.Amount.Mul(decimal.NewFromInt(int64(plan.charge.Unit))).StringFixed(2)
+		view.Total = plan.charge.Amount.Mul(decimal.NewFromInt(int64(plan.charge.Unit))).
+			StringFixed(2)
 	case accessorialcharge.MethodPercentage:
 		view.Rate += "%"
 	}

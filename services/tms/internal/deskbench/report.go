@@ -133,10 +133,18 @@ func (r *Report) Write(dir string) error {
 	if err = os.WriteFile(filepath.Join(dir, reportFile), encoded, fileMode); err != nil {
 		return fmt.Errorf("write the report: %w", err)
 	}
-	if err = os.WriteFile(filepath.Join(dir, transcriptFile), []byte(renderTranscript(r)), fileMode); err != nil {
+	if err = os.WriteFile(
+		filepath.Join(dir, transcriptFile),
+		[]byte(renderTranscript(r)),
+		fileMode,
+	); err != nil {
 		return fmt.Errorf("write the transcript: %w", err)
 	}
-	if err = os.WriteFile(filepath.Join(dir, summaryFile), []byte(RenderSummary(r)), fileMode); err != nil {
+	if err = os.WriteFile(
+		filepath.Join(dir, summaryFile),
+		[]byte(RenderSummary(r)),
+		fileMode,
+	); err != nil {
 		return fmt.Errorf("write the summary: %w", err)
 	}
 

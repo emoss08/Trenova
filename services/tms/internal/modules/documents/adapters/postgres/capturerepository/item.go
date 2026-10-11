@@ -66,7 +66,11 @@ func (r *itemRepository) Update(
 
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, "Capture item", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"Capture item",
+			entity.ID.String(),
+		); err != nil {
 			entity.Version = ov
 
 			return nil, err
@@ -125,25 +129,29 @@ func (r *itemRepository) ReplaceOpen(
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := capturecol.CaptureItemColumns
 
-		return r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-			if _, err := tx.NewDelete().
-				Model((*capture.CaptureItem)(nil)).
-				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return capturecol.CaptureItemScopeTenantDelete(dq, req.TenantInfo).
-						Where(cols.BatchID.Eq(), req.BatchID).
-						Where(cols.Status.In(), bun.List(openItemStatuses))
-				}).
-				Exec(txCtx); err != nil {
+		return r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, tx bun.Tx) error {
+				if _, err := tx.NewDelete().
+					Model((*capture.CaptureItem)(nil)).
+					WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+						return capturecol.CaptureItemScopeTenantDelete(dq, req.TenantInfo).
+							Where(cols.BatchID.Eq(), req.BatchID).
+							Where(cols.Status.In(), bun.List(openItemStatuses))
+					}).
+					Exec(txCtx); err != nil {
+					return err
+				}
+
+				if len(req.Items) == 0 {
+					return nil
+				}
+
+				_, err := tx.NewInsert().Model(&req.Items).Returning("*").Exec(txCtx)
+
 				return err
-			}
-
-			if len(req.Items) == 0 {
-				return nil
-			}
-
-			_, err := tx.NewInsert().Model(&req.Items).Returning("*").Exec(txCtx)
-
-			return err
-		})
+			},
+		)
 	})
 }

@@ -53,158 +53,181 @@ func (r *repository) ListVerifications(
 	ctx context.Context,
 	req *workerports.ListEmploymentVerificationsRequest,
 ) ([]*worker.WorkerEmploymentVerification, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerEmploymentVerification, error) {
-		cols := workercol.WorkerEmploymentVerificationColumns
-		entities := make([]*worker.WorkerEmploymentVerification, 0, 8)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*worker.WorkerEmploymentVerification, error) {
+			cols := workercol.WorkerEmploymentVerificationColumns
+			entities := make([]*worker.WorkerEmploymentVerification, 0, 8)
 
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = workercol.WorkerEmploymentVerificationScopeTenant(sq, req.TenantInfo)
-				if !req.WorkerID.IsNil() {
-					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
-				}
-				if req.OutstandingOnly {
-					sq = sq.Where(
-						cols.Status.In(),
-						bun.In([]worker.EmploymentVerificationStatus{
-							worker.VerificationPending,
-							worker.VerificationRequested,
-						}),
-					)
-				}
-				return sq
-			}).
-			OrderExpr(cols.EmployedTo.Qualified() + " DESC NULLS LAST").
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(limitOr(req.Limit, defaultVerificationPageSize))
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = workercol.WorkerEmploymentVerificationScopeTenant(sq, req.TenantInfo)
+					if !req.WorkerID.IsNil() {
+						sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
+					}
+					if req.OutstandingOnly {
+						sq = sq.Where(
+							cols.Status.In(),
+							bun.In([]worker.EmploymentVerificationStatus{
+								worker.VerificationPending,
+								worker.VerificationRequested,
+							}),
+						)
+					}
+					return sq
+				}).
+				OrderExpr(cols.EmployedTo.Qualified() + " DESC NULLS LAST").
+				Order(cols.CreatedAt.OrderDesc()).
+				Limit(limitOr(req.Limit, defaultVerificationPageSize))
 
-		if req.IncludeWorker {
-			q = q.Relation(workercol.WorkerEmploymentVerificationRelations.Worker)
-		}
-		if req.IncludeDocument {
-			q = q.Relation(workercol.WorkerEmploymentVerificationRelations.Document)
-		}
+			if req.IncludeWorker {
+				q = q.Relation(workercol.WorkerEmploymentVerificationRelations.Worker)
+			}
+			if req.IncludeDocument {
+				q = q.Relation(workercol.WorkerEmploymentVerificationRelations.Document)
+			}
 
-		if err := q.Scan(ctx); err != nil {
-			r.l.Error("failed to list employment verifications", zap.Error(err))
-			return nil, fmt.Errorf("list employment verifications: %w", err)
-		}
+			if err := q.Scan(ctx); err != nil {
+				r.l.Error("failed to list employment verifications", zap.Error(err))
+				return nil, fmt.Errorf("list employment verifications: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) ListVerificationsByWorkerIDs(
 	ctx context.Context,
 	req *workerports.ListEmploymentVerificationsByWorkerIDsRequest,
 ) (map[pulid.ID][]*worker.WorkerEmploymentVerification, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*worker.WorkerEmploymentVerification, error) {
-		cols := workercol.WorkerEmploymentVerificationColumns
-		entities := make([]*worker.WorkerEmploymentVerification, 0, len(req.WorkerIDs)*8)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID][]*worker.WorkerEmploymentVerification, error) {
+			cols := workercol.WorkerEmploymentVerificationColumns
+			entities := make([]*worker.WorkerEmploymentVerification, 0, len(req.WorkerIDs)*8)
 
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerEmploymentVerificationScopeTenant(sq, req.TenantInfo).
-					Where(cols.WorkerID.In(), bun.List(req.WorkerIDs))
-			}).
-			OrderExpr(cols.EmployedTo.Qualified() + " DESC NULLS LAST").
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(len(req.WorkerIDs) * defaultVerificationPageSize)
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return workercol.WorkerEmploymentVerificationScopeTenant(sq, req.TenantInfo).
+						Where(cols.WorkerID.In(), bun.List(req.WorkerIDs))
+				}).
+				OrderExpr(cols.EmployedTo.Qualified() + " DESC NULLS LAST").
+				Order(cols.CreatedAt.OrderDesc()).
+				Limit(len(req.WorkerIDs) * defaultVerificationPageSize)
 
-		if req.IncludeWorker {
-			q = q.Relation(workercol.WorkerEmploymentVerificationRelations.Worker)
-		}
-		if req.IncludeDocument {
-			q = q.Relation(workercol.WorkerEmploymentVerificationRelations.Document)
-		}
+			if req.IncludeWorker {
+				q = q.Relation(workercol.WorkerEmploymentVerificationRelations.Worker)
+			}
+			if req.IncludeDocument {
+				q = q.Relation(workercol.WorkerEmploymentVerificationRelations.Document)
+			}
 
-		if err := q.Scan(ctx); err != nil {
-			r.l.Error("failed to list employment verifications by workers", zap.Error(err))
-			return nil, fmt.Errorf("list employment verifications by workers: %w", err)
-		}
+			if err := q.Scan(ctx); err != nil {
+				r.l.Error("failed to list employment verifications by workers", zap.Error(err))
+				return nil, fmt.Errorf("list employment verifications by workers: %w", err)
+			}
 
-		return sliceutils.GroupBy(entities, func(v *worker.WorkerEmploymentVerification) pulid.ID {
-			return v.WorkerID
-		}), nil
-	})
+			return sliceutils.GroupBy(
+				entities,
+				func(v *worker.WorkerEmploymentVerification) pulid.ID {
+					return v.WorkerID
+				},
+			), nil
+		},
+	)
 }
 
 func (r *repository) GetVerificationByID(
 	ctx context.Context,
 	req *workerports.GetEmploymentVerificationByIDRequest,
 ) (*worker.WorkerEmploymentVerification, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerEmploymentVerification, error) {
-		entity := new(worker.WorkerEmploymentVerification)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerEmploymentVerificationScopeTenant(sq, req.TenantInfo).
-					Where(workercol.WorkerEmploymentVerificationColumns.ID.Eq(), req.ID)
-			})
-		if req.IncludeDocument {
-			q = q.Relation(workercol.WorkerEmploymentVerificationRelations.Document)
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*worker.WorkerEmploymentVerification, error) {
+			entity := new(worker.WorkerEmploymentVerification)
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return workercol.WorkerEmploymentVerificationScopeTenant(sq, req.TenantInfo).
+						Where(workercol.WorkerEmploymentVerificationColumns.ID.Eq(), req.ID)
+				})
+			if req.IncludeDocument {
+				q = q.Relation(workercol.WorkerEmploymentVerificationRelations.Document)
+			}
 
-		if err := q.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "WorkerEmploymentVerification")
-		}
+			if err := q.Scan(ctx); err != nil {
+				return nil, dberror.HandleNotFoundError(err, "WorkerEmploymentVerification")
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) CreateVerification(
 	ctx context.Context,
 	entity *worker.WorkerEmploymentVerification,
 ) (*worker.WorkerEmploymentVerification, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerEmploymentVerification, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			r.l.Error("failed to create employment verification", zap.Error(err))
-			return nil, fmt.Errorf("create employment verification: %w", err)
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*worker.WorkerEmploymentVerification, error) {
+			if _, err := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(entity).
+				Returning("*").
+				Exec(ctx); err != nil {
+				r.l.Error("failed to create employment verification", zap.Error(err))
+				return nil, fmt.Errorf("create employment verification: %w", err)
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) UpdateVerification(
 	ctx context.Context,
 	entity *worker.WorkerEmploymentVerification,
 ) (*worker.WorkerEmploymentVerification, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerEmploymentVerification, error) {
-		ov := entity.Version
-		entity.Version++
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*worker.WorkerEmploymentVerification, error) {
+			ov := entity.Version
+			entity.Version++
 
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(workercol.WorkerEmploymentVerificationColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			r.l.Error("failed to update employment verification", zap.Error(err))
-			return nil, fmt.Errorf("update employment verification: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"WorkerEmploymentVerification",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
-		}
+			results, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(entity).
+				WherePK().
+				Where(workercol.WorkerEmploymentVerificationColumns.Version.Eq(), ov).
+				Returning("*").
+				Exec(ctx)
+			if err != nil {
+				r.l.Error("failed to update employment verification", zap.Error(err))
+				return nil, fmt.Errorf("update employment verification: %w", err)
+			}
+			if err = dberror.CheckRowsAffected(
+				results,
+				"WorkerEmploymentVerification",
+				entity.ID.String(),
+			); err != nil {
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) DeleteVerification(
@@ -240,40 +263,44 @@ func (r *repository) ListRetentionCandidates(
 	ctx context.Context,
 	req *workerports.ListDQFRetentionCandidatesRequest,
 ) ([]workerports.DQFRetentionCandidate, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.DQFRetentionCandidate, error) {
-		workerCols := workercol.WorkerColumns
-		profileCols := workercol.WorkerProfileColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]workerports.DQFRetentionCandidate, error) {
+			workerCols := workercol.WorkerColumns
+			profileCols := workercol.WorkerProfileColumns
 
-		candidates := make([]workerports.DQFRetentionCandidate, 0, 32)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.Worker)(nil)).
-			ColumnExpr("wrk.id AS worker_id").
-			ColumnExpr("wrk.organization_id AS organization_id").
-			ColumnExpr("wrk.business_unit_id AS business_unit_id").
-			ColumnExpr("wrk.first_name AS first_name").
-			ColumnExpr("wrk.last_name AS last_name").
-			ColumnExpr("wrkp.termination_date AS termination_date").
-			Join("JOIN worker_profiles AS wrkp ON wrkp.worker_id = wrk.id"+
-				" AND wrkp.organization_id = wrk.organization_id"+
-				" AND wrkp.business_unit_id = wrk.business_unit_id").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerScopeTenant(sq, req.TenantInfo).
-					Where(profileCols.TerminationDate.IsNotNull()).
-					Where(
-						profileCols.TerminationDate.Qualified()+" + ? <= ?",
-						req.RetentionSeconds,
-						req.AsOf,
-					)
-			}).
-			Order(workerCols.ID.OrderAsc()).
-			Limit(limitOr(req.Limit, defaultRetentionPageSize)).
-			Scan(ctx, &candidates)
-		if err != nil {
-			r.l.Error("failed to list dqf retention candidates", zap.Error(err))
-			return nil, fmt.Errorf("list dqf retention candidates: %w", err)
-		}
+			candidates := make([]workerports.DQFRetentionCandidate, 0, 32)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*worker.Worker)(nil)).
+				ColumnExpr("wrk.id AS worker_id").
+				ColumnExpr("wrk.organization_id AS organization_id").
+				ColumnExpr("wrk.business_unit_id AS business_unit_id").
+				ColumnExpr("wrk.first_name AS first_name").
+				ColumnExpr("wrk.last_name AS last_name").
+				ColumnExpr("wrkp.termination_date AS termination_date").
+				Join("JOIN worker_profiles AS wrkp ON wrkp.worker_id = wrk.id"+
+					" AND wrkp.organization_id = wrk.organization_id"+
+					" AND wrkp.business_unit_id = wrk.business_unit_id").
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return workercol.WorkerScopeTenant(sq, req.TenantInfo).
+						Where(profileCols.TerminationDate.IsNotNull()).
+						Where(
+							profileCols.TerminationDate.Qualified()+" + ? <= ?",
+							req.RetentionSeconds,
+							req.AsOf,
+						)
+				}).
+				Order(workerCols.ID.OrderAsc()).
+				Limit(limitOr(req.Limit, defaultRetentionPageSize)).
+				Scan(ctx, &candidates)
+			if err != nil {
+				r.l.Error("failed to list dqf retention candidates", zap.Error(err))
+				return nil, fmt.Errorf("list dqf retention candidates: %w", err)
+			}
 
-		return candidates, nil
-	})
+			return candidates, nil
+		},
+	)
 }

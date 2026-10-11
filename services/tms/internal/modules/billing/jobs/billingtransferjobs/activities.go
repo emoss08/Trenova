@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
-	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingtransferjobs/billingtransfercontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
+	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingtransferjobs/billingtransfercontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -110,11 +110,14 @@ func (a *Activities) PrepareRunActivity(
 			)
 		}
 
-		if _, seedErr := a.runRepo.SeedItems(ctx, &billingtransferports.SeedBillingTransferRunItemsRequest{
-			TenantInfo:  tenant,
-			RunID:       run.ID,
-			ShipmentIDs: candidates.IDs,
-		}); seedErr != nil {
+		if _, seedErr := a.runRepo.SeedItems(
+			ctx,
+			&billingtransferports.SeedBillingTransferRunItemsRequest{
+				TenantInfo:  tenant,
+				RunID:       run.ID,
+				ShipmentIDs: candidates.IDs,
+			},
+		); seedErr != nil {
 			return nil, seedErr
 		}
 
@@ -125,14 +128,17 @@ func (a *Activities) PrepareRunActivity(
 	}
 
 	info := activity.GetInfo(ctx)
-	updated, err := a.runRepo.MarkRunning(ctx, &billingtransferports.MarkBillingTransferRunRunningRequest{
-		TenantInfo:         tenant,
-		RunID:              run.ID,
-		TemporalWorkflowID: info.WorkflowExecution.ID,
-		TemporalRunID:      info.WorkflowExecution.RunID,
-		TotalCount:         totalCount,
-		UnmatchedCount:     unmatchedCount,
-	})
+	updated, err := a.runRepo.MarkRunning(
+		ctx,
+		&billingtransferports.MarkBillingTransferRunRunningRequest{
+			TenantInfo:         tenant,
+			RunID:              run.ID,
+			TemporalWorkflowID: info.WorkflowExecution.ID,
+			TemporalRunID:      info.WorkflowExecution.RunID,
+			TotalCount:         totalCount,
+			UnmatchedCount:     unmatchedCount,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -226,32 +232,36 @@ func (a *Activities) ProcessBatchActivity(
 	}
 
 	var flushErr error
-	_, err = a.shipments.BulkTransferToBilling(ctx, &shipmentports.BulkTransferShipmentToBillingRequest{
-		ShipmentIDs:                    shipmentIDs,
-		BillType:                       run.BillType,
-		MarkCompletedReadyToInvoice:    run.MarkCompletedReadyToInvoice,
-		SuppressExceptionNotifications: true,
-		OnResult: func(outcome shipmentports.BulkTransferToBillingResult) {
-			if flushErr != nil {
-				return
-			}
+	_, err = a.shipments.BulkTransferToBilling(
+		ctx,
+		&shipmentports.BulkTransferShipmentToBillingRequest{
+			ShipmentIDs:                    shipmentIDs,
+			BillType:                       run.BillType,
+			MarkCompletedReadyToInvoice:    run.MarkCompletedReadyToInvoice,
+			SuppressExceptionNotifications: true,
+			OnResult: func(outcome shipmentports.BulkTransferToBillingResult) {
+				if flushErr != nil {
+					return
+				}
 
-			pending = append(pending, itemOutcomeFrom(outcome))
-			done++
-			result.Processed++
-			if outcome.Success {
-				result.Transferred++
-			} else {
-				result.NotTransferred++
-			}
+				pending = append(pending, itemOutcomeFrom(outcome))
+				done++
+				result.Processed++
+				if outcome.Success {
+					result.Transferred++
+				} else {
+					result.NotTransferred++
+				}
 
-			activity.RecordHeartbeat(ctx, done)
+				activity.RecordHeartbeat(ctx, done)
 
-			if len(pending) >= flushEvery {
-				flushErr = flush()
-			}
+				if len(pending) >= flushEvery {
+					flushErr = flush()
+				}
+			},
 		},
-	}, actor)
+		actor,
+	)
 	if flushErr != nil {
 		return nil, flushErr
 	}

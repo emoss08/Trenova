@@ -6,9 +6,9 @@ import (
 	"errors"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -380,30 +380,39 @@ func (r *repository) RunPreflight(
 	ctx context.Context,
 	orgID pulid.ID,
 ) (*permissionports.RBACPreflightReport, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*permissionports.RBACPreflightReport, error) {
-		report := &permissionports.RBACPreflightReport{}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*permissionports.RBACPreflightReport, error) {
+			report := &permissionports.RBACPreflightReport{}
 
-		var assignments []struct {
-			UserID pulid.ID `bun:"user_id"`
-		}
-		if err := r.db.DBForContext(ctx).NewSelect().
-			TableExpr("user_role_assignments").
-			ColumnExpr("DISTINCT user_id").
-			Where("organization_id = ?", orgID).
-			Scan(ctx, &assignments); err != nil {
-			return nil, err
-		}
-
-		for _, assignment := range assignments {
-			violations, err := r.ValidateStaticSeparationOfDuty(ctx, assignment.UserID, orgID, nil)
-			if err != nil {
+			var assignments []struct {
+				UserID pulid.ID `bun:"user_id"`
+			}
+			if err := r.db.DBForContext(ctx).NewSelect().
+				TableExpr("user_role_assignments").
+				ColumnExpr("DISTINCT user_id").
+				Where("organization_id = ?", orgID).
+				Scan(ctx, &assignments); err != nil {
 				return nil, err
 			}
-			report.SSDViolations = append(report.SSDViolations, violations...)
-		}
 
-		return report, nil
-	})
+			for _, assignment := range assignments {
+				violations, err := r.ValidateStaticSeparationOfDuty(
+					ctx,
+					assignment.UserID,
+					orgID,
+					nil,
+				)
+				if err != nil {
+					return nil, err
+				}
+				report.SSDViolations = append(report.SSDViolations, violations...)
+			}
+
+			return report, nil
+		},
+	)
 }
 
 func (r *repository) getInheritedRoleIDs(ctx context.Context, roleID pulid.ID) ([]pulid.ID, error) {

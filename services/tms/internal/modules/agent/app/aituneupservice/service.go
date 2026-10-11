@@ -79,7 +79,10 @@ func New(p Params) *Service {
 	}
 }
 
-func (s *Service) List(ctx context.Context, tenantInfo pagination.TenantInfo) (*aituneupports.AITuneUpList, error) {
+func (s *Service) List(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*aituneupports.AITuneUpList, error) {
 	s.ensureFresh(ctx, tenantInfo)
 
 	stored, err := s.repo.List(ctx, tenantInfo)
@@ -104,17 +107,27 @@ func (s *Service) List(ctx context.Context, tenantInfo pagination.TenantInfo) (*
 	if err != nil {
 		return nil, err
 	}
-	return &aituneupports.AITuneUpList{Items: items, ComputedAt: computedAt, WindowDays: aituneup.WindowDays}, nil
+	return &aituneupports.AITuneUpList{
+		Items:      items,
+		ComputedAt: computedAt,
+		WindowDays: aituneup.WindowDays,
+	}, nil
 }
 
-func (s *Service) Get(ctx context.Context, req aituneupports.GetAITuneUpRequest) (*aituneup.TuneUp, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	req aituneupports.GetAITuneUpRequest,
+) (*aituneup.TuneUp, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) ensureFresh(ctx context.Context, tenantInfo pagination.TenantInfo) {
 	fresh, err := s.freshness.Fresh(ctx, tenantInfo)
 	if err != nil {
-		s.l.Warn("could not read whether tune-ups are fresh; serving what is stored", zap.Error(err))
+		s.l.Warn(
+			"could not read whether tune-ups are fresh; serving what is stored",
+			zap.Error(err),
+		)
 		return
 	}
 	if fresh {
@@ -150,7 +163,12 @@ func (s *Service) Compute(ctx context.Context, tenantInfo pagination.TenantInfo)
 		return 0, err
 	}
 
-	if err = s.freshness.Mark(ctx, tenantInfo, now, aituneup.FreshForSeconds*time.Second); err != nil {
+	if err = s.freshness.Mark(
+		ctx,
+		tenantInfo,
+		now,
+		aituneup.FreshForSeconds*time.Second,
+	); err != nil {
 		s.l.Warn("could not mark tune-ups computed", zap.Error(err))
 	}
 	return len(candidates), nil
@@ -304,10 +322,13 @@ func (s *Service) describe(
 
 	agents := map[pulid.ID]*agentdefinition.Definition{}
 	if len(agentIDs) > 0 {
-		found, err := s.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
-			IDs:        agentIDs,
-			TenantInfo: tenantInfo,
-		})
+		found, err := s.definitions.ListByIDs(
+			ctx,
+			agentdefinitionports.ListAgentDefinitionsByIDsRequest{
+				IDs:        agentIDs,
+				TenantInfo: tenantInfo,
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -373,5 +394,9 @@ func viewOf(
 }
 
 func providerOf(provider *aiprovider.Provider) *aituneupports.AITuneUpProvider {
-	return &aituneupports.AITuneUpProvider{ID: provider.ID, Name: provider.Name, Kind: provider.Kind}
+	return &aituneupports.AITuneUpProvider{
+		ID:   provider.ID,
+		Name: provider.Name,
+		Kind: provider.Kind,
+	}
 }

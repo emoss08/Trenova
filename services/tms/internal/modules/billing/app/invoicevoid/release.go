@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -80,18 +80,24 @@ func Release(ctx context.Context, deps Deps, p Params) ([]pulid.ID, error) {
 	}
 
 	if deps.OrderRepo != nil {
-		if _, err = deps.OrderRepo.ClearChargesInvoice(ctx, &orderports.ClearOrderChargesInvoiceRequest{
-			TenantInfo: tenantInfo,
-			InvoiceID:  entity.ID,
-		}); err != nil {
+		if _, err = deps.OrderRepo.ClearChargesInvoice(
+			ctx,
+			&orderports.ClearOrderChargesInvoiceRequest{
+				TenantInfo: tenantInfo,
+				InvoiceID:  entity.ID,
+			},
+		); err != nil {
 			return nil, err
 		}
 	}
 	if deps.ChargeAllocationRepo != nil {
-		if _, err = deps.ChargeAllocationRepo.ClearInvoice(ctx, &shipmentports.ClearChargeAllocationsInvoiceRequest{
-			TenantInfo: tenantInfo,
-			InvoiceID:  entity.ID,
-		}); err != nil {
+		if _, err = deps.ChargeAllocationRepo.ClearInvoice(
+			ctx,
+			&shipmentports.ClearChargeAllocationsInvoiceRequest{
+				TenantInfo: tenantInfo,
+				InvoiceID:  entity.ID,
+			},
+		); err != nil {
 			return nil, err
 		}
 	}

@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -205,9 +205,12 @@ func priceShipmentClocks(
 	location *time.Location,
 	priced map[pulid.ID]ComputeResult,
 ) {
-	ordered := slices.DeleteFunc(slices.Clone(occurrences), func(o *detention.DetentionOccurrence) bool {
-		return o == nil
-	})
+	ordered := slices.DeleteFunc(
+		slices.Clone(occurrences),
+		func(o *detention.DetentionOccurrence) bool {
+			return o == nil
+		},
+	)
 	slices.SortStableFunc(ordered, func(a, b *detention.DetentionOccurrence) int {
 		return cmp.Compare(a.ClockStartAt, b.ClockStartAt)
 	})

@@ -29,17 +29,25 @@ func (s *Service) ThreadBudget(
 		return nil, err
 	}
 	out := &agentports.ThreadBudget{}
-	if out.Person, err = s.personAllowance(ctx, req.UserID, req.TenantInfo, time.Now().UTC()); err != nil {
+	if out.Person, err = s.personAllowance(
+		ctx,
+		req.UserID,
+		req.TenantInfo,
+		time.Now().UTC(),
+	); err != nil {
 		return nil, err
 	}
 	if s.budgets == nil {
 		return out, nil
 	}
 
-	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         thread.AgentDefinitionID,
-		TenantInfo: req.TenantInfo,
-	})
+	definition, err := s.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         thread.AgentDefinitionID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

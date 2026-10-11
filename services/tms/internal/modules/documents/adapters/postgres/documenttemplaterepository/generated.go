@@ -68,28 +68,36 @@ func (r *generatedRepository) List(
 	ctx context.Context,
 	req *documenttemplateports.ListGeneratedDocumentsRequest,
 ) (*pagination.ListResult[*documenttemplate.GeneratedDocument], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*documenttemplate.GeneratedDocument], error) {
-		log := r.l.With(zap.String("operation", "List"))
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*documenttemplate.GeneratedDocument], error) {
+			log := r.l.With(zap.String("operation", "List"))
 
-		entities := make([]*documenttemplate.GeneratedDocument, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterQuery(sq, req)
-			}).
-			Order(documenttemplatecol.GeneratedDocumentColumns.CreatedAt.OrderDesc()).
-			ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count generated documents", zap.Error(err))
-			return nil, err
-		}
+			entities := make(
+				[]*documenttemplate.GeneratedDocument,
+				0,
+				req.Filter.Pagination.SafeLimit(),
+			)
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).
+				Order(documenttemplatecol.GeneratedDocumentColumns.CreatedAt.OrderDesc()).
+				ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count generated documents", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*documenttemplate.GeneratedDocument]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*documenttemplate.GeneratedDocument]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 // GetByID loads the artifact with the template version that produced it, which is
@@ -98,48 +106,56 @@ func (r *generatedRepository) GetByID(
 	ctx context.Context,
 	req *documenttemplateports.GetGeneratedDocumentByIDRequest,
 ) (*documenttemplate.GeneratedDocument, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documenttemplate.GeneratedDocument, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("id", req.GeneratedDocumentID.String()),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*documenttemplate.GeneratedDocument, error) {
+			log := r.l.With(
+				zap.String("operation", "GetByID"),
+				zap.String("id", req.GeneratedDocumentID.String()),
+			)
 
-		entity := new(documenttemplate.GeneratedDocument)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation(documenttemplatecol.GeneratedDocumentRelations.TemplateVersion).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return documenttemplatecol.GeneratedDocumentScopeTenant(sq, req.TenantInfo).
-					Where(documenttemplatecol.GeneratedDocumentColumns.ID.Eq(), req.GeneratedDocumentID)
-			}).
-			Scan(ctx); err != nil {
-			log.Error("failed to get generated document", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "GeneratedDocument")
-		}
+			entity := new(documenttemplate.GeneratedDocument)
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				Relation(documenttemplatecol.GeneratedDocumentRelations.TemplateVersion).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return documenttemplatecol.GeneratedDocumentScopeTenant(sq, req.TenantInfo).
+						Where(documenttemplatecol.GeneratedDocumentColumns.ID.Eq(), req.GeneratedDocumentID)
+				}).
+				Scan(ctx); err != nil {
+				log.Error("failed to get generated document", zap.Error(err))
+				return nil, dberror.HandleNotFoundError(err, "GeneratedDocument")
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *generatedRepository) Create(
 	ctx context.Context,
 	entity *documenttemplate.GeneratedDocument,
 ) (*documenttemplate.GeneratedDocument, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*documenttemplate.GeneratedDocument, error) {
-		log := r.l.With(zap.String("operation", "Create"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*documenttemplate.GeneratedDocument, error) {
+			log := r.l.With(zap.String("operation", "Create"))
 
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			log.Error("failed to create generated document", zap.Error(err))
-			return nil, err
-		}
+			if _, err := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(entity).
+				Returning("*").
+				Exec(ctx); err != nil {
+				log.Error("failed to create generated document", zap.Error(err))
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 // Update carries a render from Pending to its outcome. It does not use OmitZero:
@@ -149,34 +165,38 @@ func (r *generatedRepository) Update(
 	ctx context.Context,
 	entity *documenttemplate.GeneratedDocument,
 ) (*documenttemplate.GeneratedDocument, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*documenttemplate.GeneratedDocument, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", entity.ID.String()),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*documenttemplate.GeneratedDocument, error) {
+			log := r.l.With(
+				zap.String("operation", "Update"),
+				zap.String("id", entity.ID.String()),
+			)
 
-		cols := documenttemplatecol.GeneratedDocumentColumns
-		ov := entity.Version
-		entity.Version++
+			cols := documenttemplatecol.GeneratedDocumentColumns
+			ov := entity.Version
+			entity.Version++
 
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update generated document", zap.Error(err))
-			return nil, err
-		}
+			results, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(entity).
+				WherePK().
+				Where(cols.Version.Eq(), ov).
+				Returning("*").
+				Exec(ctx)
+			if err != nil {
+				log.Error("failed to update generated document", zap.Error(err))
+				return nil, err
+			}
 
-		if err = dberror.CheckRowsAffected(
-			results, "GeneratedDocument", entity.ID.String(),
-		); err != nil {
-			return nil, err
-		}
+			if err = dberror.CheckRowsAffected(
+				results, "GeneratedDocument", entity.ID.String(),
+			); err != nil {
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }

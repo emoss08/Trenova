@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
@@ -420,12 +420,17 @@ func (a *Activities) StartAutoCompactionActivity(
 	ctx context.Context,
 	payload *assistantcontract.AssistantTurnPayload,
 ) (*StartedCompaction, error) {
-	turn, err := assistantcontract.StartCompaction(ctx, a.turns, a.workflows, assistantcontract.StartCompactionRequest{
-		ThreadID:   payload.ThreadID,
-		TenantInfo: payload.TenantInfo(),
-		Actor:      payload.Actor,
-		Auto:       true,
-	})
+	turn, err := assistantcontract.StartCompaction(
+		ctx,
+		a.turns,
+		a.workflows,
+		assistantcontract.StartCompactionRequest{
+			ThreadID:   payload.ThreadID,
+			TenantInfo: payload.TenantInfo(),
+			Actor:      payload.Actor,
+			Auto:       true,
+		},
+	)
 	if err != nil {
 		if errortypes.IsBusinessError(err) {
 			return &StartedCompaction{}, nil

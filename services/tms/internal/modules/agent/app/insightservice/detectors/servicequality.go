@@ -11,10 +11,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/shopspring/decimal"
 )
 

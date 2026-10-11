@@ -6,17 +6,17 @@ import (
 	"encoding/hex"
 	"sort"
 
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
-	"github.com/emoss08/trenova/internal/modules/kernel/app/secretconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/secretconfig"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -57,7 +57,10 @@ type Service struct {
 }
 
 func New(p Params) *Service {
-	connectors := make(map[integration.Type]fuelpurchaseports.FuelCardProvider, len(p.FuelCardConnectors))
+	connectors := make(
+		map[integration.Type]fuelpurchaseports.FuelCardProvider,
+		len(p.FuelCardConnectors),
+	)
 	for _, connector := range p.FuelCardConnectors {
 		if connector != nil {
 			connectors[connector.IntegrationType()] = connector

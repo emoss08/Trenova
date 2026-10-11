@@ -15,10 +15,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/errors"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/shared/maputils"

@@ -169,7 +169,11 @@ func (t *liveTurn) frame(frame agentports.TurnStreamFrame) {
 	case agentports.AssistantEventToolFinished:
 		var finished agentports.AssistantToolFinishedEvent
 		if sonic.Unmarshal(frame.Data, &finished) == nil {
-			record := ToolCallRecord{Verdict: finished.Verdict, Failed: finished.Failed, Finished: true}
+			record := ToolCallRecord{
+				Verdict:  finished.Verdict,
+				Failed:   finished.Failed,
+				Finished: true,
+			}
 			detail := finished.Summary
 			if record.Refused() {
 				detail = firstLine(finished.Content)
@@ -183,7 +187,11 @@ func (t *liveTurn) frame(frame agentports.TurnStreamFrame) {
 		agentports.AssistantEventArtifact:
 		t.flush()
 	default:
-		t.line("event %s %s", frame.Event, stringutils.Ellipsize(string(frame.Data), liveEventLimit))
+		t.line(
+			"event %s %s",
+			frame.Event,
+			stringutils.Ellipsize(string(frame.Data), liveEventLimit),
+		)
 	}
 }
 

@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
-	"github.com/emoss08/trenova/internal/modules/kernel/app/editconflict"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/editconflict"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,12 +32,15 @@ func (s *Service) save(
 			return txErr
 		}
 		return editconflict.Record(txCtx, s.versions, &editconflict.RecordRequest{
-			TenantInfo: pagination.TenantInfo{OrgID: saved.OrganizationID, BuID: saved.BusinessUnitID},
-			Kind:       settingversion.KindAIProvider,
-			SubjectID:  saved.ID,
-			Version:    saved.Version,
-			Snapshot:   saved.Redacted(),
-			AuthorID:   actor.AuditActor().UserID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: saved.OrganizationID,
+				BuID:  saved.BusinessUnitID,
+			},
+			Kind:      settingversion.KindAIProvider,
+			SubjectID: saved.ID,
+			Version:   saved.Version,
+			Snapshot:  saved.Redacted(),
+			AuthorID:  actor.AuditActor().UserID,
 		})
 	})
 	if err != nil {
@@ -65,15 +68,20 @@ func (s *Service) explainConflict(ctx context.Context, req *conflictRequest) err
 		return req.cause
 	}
 
-	return editconflict.Explain(ctx, s.versions, s.l, &editconflict.ExplainRequest[aiprovider.Provider]{
-		TenantInfo:     req.tenantInfo,
-		Kind:           settingversion.KindAIProvider,
-		SubjectID:      current.ID,
-		Loaded:         req.loaded,
-		Current:        current.Redacted(),
-		CurrentVersion: current.Version,
-		UpdatedAt:      current.UpdatedAt,
-		Rules:          aiprovider.ChangeRules,
-		Cause:          req.cause,
-	})
+	return editconflict.Explain(
+		ctx,
+		s.versions,
+		s.l,
+		&editconflict.ExplainRequest[aiprovider.Provider]{
+			TenantInfo:     req.tenantInfo,
+			Kind:           settingversion.KindAIProvider,
+			SubjectID:      current.ID,
+			Loaded:         req.loaded,
+			Current:        current.Redacted(),
+			CurrentVersion: current.Version,
+			UpdatedAt:      current.UpdatedAt,
+			Rules:          aiprovider.ChangeRules,
+			Cause:          req.cause,
+		},
+	)
 }

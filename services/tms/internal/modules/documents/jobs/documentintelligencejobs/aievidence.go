@@ -71,7 +71,10 @@ func locateEvidence(
 	return 0, ""
 }
 
-func pagesPreferring(pageNumber int, pages []documentaiextractionports.AIDocumentPage) []documentaiextractionports.AIDocumentPage {
+func pagesPreferring(
+	pageNumber int,
+	pages []documentaiextractionports.AIDocumentPage,
+) []documentaiextractionports.AIDocumentPage {
 	if pageNumber <= 0 {
 		return pages
 	}

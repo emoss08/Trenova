@@ -72,20 +72,24 @@ func (r *pushSubscriptionRepository) ListByUser(
 	ctx context.Context,
 	userID pulid.ID,
 ) ([]*notification.PushSubscription, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*notification.PushSubscription, error) {
-		cols := notificationcol.PushSubscriptionColumns
-		items := make([]*notification.PushSubscription, 0, 4)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where(cols.UserID.Eq(), userID).
-			Order(cols.CreatedAt.OrderDesc()).
-			Scan(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("list push subscriptions: %w", err)
-		}
-		return items, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*notification.PushSubscription, error) {
+			cols := notificationcol.PushSubscriptionColumns
+			items := make([]*notification.PushSubscription, 0, 4)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&items).
+				Where(cols.UserID.Eq(), userID).
+				Order(cols.CreatedAt.OrderDesc()).
+				Scan(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list push subscriptions: %w", err)
+			}
+			return items, nil
+		},
+	)
 }
 
 func (r *pushSubscriptionRepository) DeleteByEndpoint(

@@ -395,10 +395,13 @@ func (s *Service) usableAgent(
 		return nil, agent.ReflectionSkipLearningOff, nil
 	}
 
-	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         agentID,
-		TenantInfo: tenant,
-	})
+	definition, err := s.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         agentID,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, agent.ReflectionSkipAgentUnavailable, nil

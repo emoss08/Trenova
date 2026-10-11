@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/core/services/performancereviewservice"
 	"github.com/emoss08/trenova/internal/core/services/workerchecklistservice"
 	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
@@ -14,7 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/workerleaveservice"
 	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -192,17 +192,20 @@ func newListWorkerLeaveCasesTool(
 			rows := make([]leaveCaseRow, 0, len(found))
 			for _, leave := range found {
 				row := leaveCaseRow{
-					ID:                  leave.ID.String(),
-					WorkerID:            leave.WorkerID.String(),
-					Worker:              workerName(leave.Worker),
-					LeaveType:           string(leave.LeaveType),
-					Status:              string(leave.Status),
-					Frequency:           string(leave.Frequency),
-					FMLADesignated:      leave.FMLADesignated,
-					Reason:              gatedText(gate, wfFieldReason, leave.Reason),
-					RequestedAt:         recordedDate(leave.RequestedAt),
-					StartsAt:            recordedDate(leave.StartsAt),
-					EndsAt:              expectedDate(typeutils.ValueOrZero(leave.EndsAt), absentOpenEnded),
+					ID:             leave.ID.String(),
+					WorkerID:       leave.WorkerID.String(),
+					Worker:         workerName(leave.Worker),
+					LeaveType:      string(leave.LeaveType),
+					Status:         string(leave.Status),
+					Frequency:      string(leave.Frequency),
+					FMLADesignated: leave.FMLADesignated,
+					Reason:         gatedText(gate, wfFieldReason, leave.Reason),
+					RequestedAt:    recordedDate(leave.RequestedAt),
+					StartsAt:       recordedDate(leave.StartsAt),
+					EndsAt: expectedDate(
+						typeutils.ValueOrZero(leave.EndsAt),
+						absentOpenEnded,
+					),
 					CertificationStatus: string(leave.CertificationStatus),
 					CertificationDueAt: expectedDate(
 						typeutils.ValueOrZero(leave.CertificationDueAt),
@@ -273,15 +276,21 @@ func newListWorkerTrainingTool(
 			rows := make([]trainingRow, 0, len(records))
 			for _, record := range records {
 				row := trainingRow{
-					ID:          record.ID.String(),
-					CourseID:    record.CourseID.String(),
-					Status:      string(record.Status),
-					AssignedAt:  recordedDate(record.AssignedAt),
-					DueAt:       expectedDate(typeutils.ValueOrZero(record.DueAt), absentNotDue),
-					CompletedAt: expectedDate(typeutils.ValueOrZero(record.CompletedAt), absentNotCompleted),
-					ExpiresAt:   expectedDate(typeutils.ValueOrZero(record.ExpiresAt), absentNotExpiring),
-					Score:       decimalText(record.Score),
-					Passed:      boolRef(record.Passed),
+					ID:         record.ID.String(),
+					CourseID:   record.CourseID.String(),
+					Status:     string(record.Status),
+					AssignedAt: recordedDate(record.AssignedAt),
+					DueAt:      expectedDate(typeutils.ValueOrZero(record.DueAt), absentNotDue),
+					CompletedAt: expectedDate(
+						typeutils.ValueOrZero(record.CompletedAt),
+						absentNotCompleted,
+					),
+					ExpiresAt: expectedDate(
+						typeutils.ValueOrZero(record.ExpiresAt),
+						absentNotExpiring,
+					),
+					Score:  decimalText(record.Score),
+					Passed: boolRef(record.Passed),
 				}
 				if record.Course != nil {
 					row.Course = record.Course.Name
@@ -429,14 +438,17 @@ func newListWorkerChecklistsTool(
 				}
 				for _, item := range checklist.Items {
 					row.Items = append(row.Items, checklistItemRow{
-						ID:          item.ID.String(),
-						Label:       item.Label,
-						Kind:        string(item.Kind),
-						Required:    item.Required,
-						Status:      string(item.Status),
-						DueAt:       expectedDate(typeutils.ValueOrZero(item.DueAt), absentNotDue),
-						CompletedAt: expectedDate(typeutils.ValueOrZero(item.CompletedAt), absentNotCompleted),
-						Note:        gatedText(gate, "note", item.Note),
+						ID:       item.ID.String(),
+						Label:    item.Label,
+						Kind:     string(item.Kind),
+						Required: item.Required,
+						Status:   string(item.Status),
+						DueAt:    expectedDate(typeutils.ValueOrZero(item.DueAt), absentNotDue),
+						CompletedAt: expectedDate(
+							typeutils.ValueOrZero(item.CompletedAt),
+							absentNotCompleted,
+						),
+						Note: gatedText(gate, "note", item.Note),
 					})
 				}
 				result.Checklists = append(result.Checklists, row)

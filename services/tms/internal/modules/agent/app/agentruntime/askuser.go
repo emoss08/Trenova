@@ -68,7 +68,9 @@ func askedQuestions(history []conversation.Message) map[string]struct{} {
 			if call.Name != askUserName {
 				continue
 			}
-			if question := comparableQuestion(stringArg(call.Arguments, "question")); question != "" {
+			if question := comparableQuestion(
+				stringArg(call.Arguments, "question"),
+			); question != "" {
 				asked[question] = struct{}{}
 			}
 		}

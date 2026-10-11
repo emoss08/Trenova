@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -27,16 +27,19 @@ func AdvanceForCompletedMove(
 	}
 
 	if move.Assignment.TractorID != nil {
-		if _, err := continuityRepo.Advance(ctx, equipmentcontinuityports.CreateEquipmentContinuityRequest{
-			TenantInfo:           tenantInfo,
-			EquipmentType:        equipmentcontinuity.EquipmentTypeTractor,
-			EquipmentID:          *move.Assignment.TractorID,
-			CurrentLocationID:    destinationStop.LocationID,
-			SourceType:           equipmentcontinuity.SourceTypeAssignment,
-			SourceShipmentID:     move.ShipmentID,
-			SourceShipmentMoveID: move.ID,
-			SourceAssignmentID:   move.Assignment.ID,
-		}); err != nil {
+		if _, err := continuityRepo.Advance(
+			ctx,
+			equipmentcontinuityports.CreateEquipmentContinuityRequest{
+				TenantInfo:           tenantInfo,
+				EquipmentType:        equipmentcontinuity.EquipmentTypeTractor,
+				EquipmentID:          *move.Assignment.TractorID,
+				CurrentLocationID:    destinationStop.LocationID,
+				SourceType:           equipmentcontinuity.SourceTypeAssignment,
+				SourceShipmentID:     move.ShipmentID,
+				SourceShipmentMoveID: move.ID,
+				SourceAssignmentID:   move.Assignment.ID,
+			},
+		); err != nil {
 			return err
 		}
 	}

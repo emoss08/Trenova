@@ -5,16 +5,16 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -544,11 +544,14 @@ func (s *Service) MySettlement(
 	if err != nil {
 		return nil, err
 	}
-	settlement, err := s.settlementRepo.GetByID(ctx, driversettlementports.GetDriverSettlementByIDRequest{
-		ID:           settlementID,
-		TenantInfo:   tenantInfo,
-		IncludeLines: true,
-	})
+	settlement, err := s.settlementRepo.GetByID(
+		ctx,
+		driversettlementports.GetDriverSettlementByIDRequest{
+			ID:           settlementID,
+			TenantInfo:   tenantInfo,
+			IncludeLines: true,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

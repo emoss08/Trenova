@@ -3,9 +3,9 @@ package billingcontrolrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -80,7 +80,11 @@ func (r *repository) Update(
 			return nil, err
 		}
 
-		if err = dberror.CheckRowsAffected(result, "BillingControl", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			result,
+			"BillingControl",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 

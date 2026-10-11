@@ -5,12 +5,12 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/decisioncommitjobs/decisioncommitcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -431,10 +431,13 @@ func (s *Service) ownWindow(
 		return nil, err
 	}
 
-	decisions, err := s.decisionRepo.ListByProposals(ctx, agentports.ListAgentDecisionsByProposalsRequest{
-		ProposalIDs: []pulid.ID{req.ProposalID},
-		TenantInfo:  req.TenantInfo,
-	})
+	decisions, err := s.decisionRepo.ListByProposals(
+		ctx,
+		agentports.ListAgentDecisionsByProposalsRequest{
+			ProposalIDs: []pulid.ID{req.ProposalID},
+			TenantInfo:  req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -449,7 +452,12 @@ func (s *Service) ownWindow(
 		return nil, errAlreadyCommitted()
 	}
 
-	window, err := s.windowDecisions(ctx, req.TenantInfo, latest.CommitWorkflowID, *latest.CommitsAt)
+	window, err := s.windowDecisions(
+		ctx,
+		req.TenantInfo,
+		latest.CommitWorkflowID,
+		*latest.CommitsAt,
+	)
 	if err != nil {
 		return nil, err
 	}

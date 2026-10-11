@@ -6,10 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -181,10 +181,13 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Get(c.Request.Context(), equipmenttypeports.GetEquipmentTypeByIDRequest{
-		ID:         equipTypeID,
-		TenantInfo: pagination.FromAuth(authCtx),
-	})
+	entity, err := h.service.Get(
+		c.Request.Context(),
+		equipmenttypeports.GetEquipmentTypeByIDRequest{
+			ID:         equipTypeID,
+			TenantInfo: pagination.FromAuth(authCtx),
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

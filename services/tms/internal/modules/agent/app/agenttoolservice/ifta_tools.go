@@ -5,16 +5,16 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -315,7 +315,10 @@ func newRecomputeIFTAReturnTool(returns iftaReturnKeeper) agentports.AgentTool {
 		rationale: "Re-derives a draft return's figures inside Trenova from what is on file; " +
 			"nothing is filed, and running it again gives the same figures.",
 		properties: map[string]any{
-			paramIFTAReturnID: agenttoolschema.KindID(iftaReturnSupplier, permission.KindIFTAReturn),
+			paramIFTAReturnID: agenttoolschema.KindID(
+				iftaReturnSupplier,
+				permission.KindIFTAReturn,
+			),
 		},
 		required: []string{paramIFTAReturnID},
 		target:   targetIFTAReturn,

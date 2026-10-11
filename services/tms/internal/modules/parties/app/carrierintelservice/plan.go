@@ -5,12 +5,12 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -75,10 +75,14 @@ func (s *Service) planFetch(
 		)
 	}
 
-	current, err := s.snapshotRepo.GetCurrent(ctx, tenantInfo, carrierintelports.CarrierIntelSubjectRef{
-		SubjectType: subject.SubjectType,
-		SubjectID:   subject.SubjectID,
-	})
+	current, err := s.snapshotRepo.GetCurrent(
+		ctx,
+		tenantInfo,
+		carrierintelports.CarrierIntelSubjectRef{
+			SubjectType: subject.SubjectType,
+			SubjectID:   subject.SubjectID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -142,12 +146,15 @@ func (s *Service) PlanManualEnrollment(
 	for _, subject := range subjects {
 		ids = append(ids, subject.SubjectID)
 	}
-	rows, err := s.enrollmentRepo.ListBySubjects(ctx, &carrierintelports.ListEnrollmentsBySubjectRequest{
-		TenantInfo:  req.TenantInfo,
-		Provider:    provider,
-		SubjectType: carrierintel.SubjectTypeCarrier,
-		SubjectIDs:  ids,
-	})
+	rows, err := s.enrollmentRepo.ListBySubjects(
+		ctx,
+		&carrierintelports.ListEnrollmentsBySubjectRequest{
+			TenantInfo:  req.TenantInfo,
+			Provider:    provider,
+			SubjectType: carrierintel.SubjectTypeCarrier,
+			SubjectIDs:  ids,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

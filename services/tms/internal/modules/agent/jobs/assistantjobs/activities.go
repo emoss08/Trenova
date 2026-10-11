@@ -751,7 +751,10 @@ func (a *Activities) recordLoopRefusals(ctx context.Context, in *FinishTurnInput
 
 // claimSave reserves saving the turn for this attempt, and reports whether
 // this attempt may save it.
-func (a *Activities) claimSave(ctx context.Context, payload *assistantcontract.AssistantTurnPayload) (bool, error) {
+func (a *Activities) claimSave(
+	ctx context.Context,
+	payload *assistantcontract.AssistantTurnPayload,
+) (bool, error) {
 	tenant := payload.TenantInfo()
 	recorded, err := a.steps.Loaded(ctx, tenant, agentports.RunStepOwner{
 		Kind: agentports.RunStepOwnerAssistantTurn,
@@ -777,7 +780,10 @@ func (a *Activities) claimSave(ctx context.Context, payload *assistantcontract.A
 	return verdict.State == agentports.StepFresh, nil
 }
 
-func saveStep(ctx context.Context, payload *assistantcontract.AssistantTurnPayload) agentports.RunStep {
+func saveStep(
+	ctx context.Context,
+	payload *assistantcontract.AssistantTurnPayload,
+) agentports.RunStep {
 	attempt := int(activity.GetInfo(ctx).Attempt)
 
 	return agentports.RunStep{

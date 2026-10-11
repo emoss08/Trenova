@@ -74,7 +74,10 @@ func (s *Service) offered(
 	ctx context.Context,
 	req *aituneupports.AITuneUpDecisionRequest,
 ) (*aituneup.TuneUp, error) {
-	tuneUp, err := s.repo.GetByID(ctx, aituneupports.GetAITuneUpRequest{TenantInfo: req.TenantInfo, ID: req.ID})
+	tuneUp, err := s.repo.GetByID(
+		ctx,
+		aituneupports.GetAITuneUpRequest{TenantInfo: req.TenantInfo, ID: req.ID},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +111,10 @@ func (s *Service) decide(
 		return decided, err
 	}
 
-	current, getErr := s.repo.GetByID(ctx, aituneupports.GetAITuneUpRequest{TenantInfo: req.TenantInfo, ID: req.ID})
+	current, getErr := s.repo.GetByID(
+		ctx,
+		aituneupports.GetAITuneUpRequest{TenantInfo: req.TenantInfo, ID: req.ID},
+	)
 	if getErr != nil {
 		return nil, getErr
 	}

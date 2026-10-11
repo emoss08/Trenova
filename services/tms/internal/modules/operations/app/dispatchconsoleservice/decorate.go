@@ -1,12 +1,12 @@
 package dispatchconsoleservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 )
 
 func decorateMoves(moves []*shipmentports.BoardMove, now int64) []*BoardMove {

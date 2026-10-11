@@ -75,7 +75,10 @@ func validateEnqueue(req *accountingsyncports.AccountingSyncEnqueueRequest) erro
 	}
 }
 
-func (e *Enqueuer) Enqueue(ctx context.Context, req *accountingsyncports.AccountingSyncEnqueueRequest) error {
+func (e *Enqueuer) Enqueue(
+	ctx context.Context,
+	req *accountingsyncports.AccountingSyncEnqueueRequest,
+) error {
 	if err := validateEnqueue(req); err != nil {
 		return err
 	}
@@ -376,12 +379,15 @@ func (e *Enqueuer) covers(
 		return true, nil
 	}
 
-	mapping, err := e.mappings.GetByTarget(ctx, &accountingsyncports.GetAccountingMappingByTargetRequest{
-		TenantInfo:      req.TenantInfo,
-		ConnectionID:    conn.ID,
-		TargetType:      target,
-		TrenovaObjectID: req.ObjectID,
-	})
+	mapping, err := e.mappings.GetByTarget(
+		ctx,
+		&accountingsyncports.GetAccountingMappingByTargetRequest{
+			TenantInfo:      req.TenantInfo,
+			ConnectionID:    conn.ID,
+			TargetType:      target,
+			TrenovaObjectID: req.ObjectID,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return false, nil

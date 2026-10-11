@@ -9,12 +9,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
-	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -506,10 +506,13 @@ func (s *Service) loadStageContext(
 	}
 
 	if len(references) > 0 {
-		existing, err := s.repo.FindReferences(ctx, &fuelpurchaseports.FindFuelPurchaseReferencesRequest{
-			TenantInfo: tenantInfo,
-			References: references,
-		})
+		existing, err := s.repo.FindReferences(
+			ctx,
+			&fuelpurchaseports.FindFuelPurchaseReferencesRequest{
+				TenantInfo: tenantInfo,
+				References: references,
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -534,11 +537,14 @@ func (s *Service) loadStageContext(
 	}
 
 	for lastFour := range lastFours {
-		card, err := s.repo.FindCardByLastFour(ctx, &fuelpurchaseports.FindFuelCardByLastFourRequest{
-			TenantInfo: tenantInfo,
-			Provider:   batch.Provider,
-			LastFour:   lastFour,
-		})
+		card, err := s.repo.FindCardByLastFour(
+			ctx,
+			&fuelpurchaseports.FindFuelCardByLastFourRequest{
+				TenantInfo: tenantInfo,
+				Provider:   batch.Provider,
+				LastFour:   lastFour,
+			},
+		)
 		if err != nil {
 			return nil, err
 		}

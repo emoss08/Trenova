@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -123,10 +123,13 @@ func (s *Service) start(
 	ctx context.Context,
 	result *extractionshadow.ShadowResult,
 ) (*extractionshadowports.ExtractionShadowDecision, error) {
-	workflowID, err := s.starter.StartExtractionShadow(ctx, &extractionshadowports.ExtractionShadowStart{
-		TenantInfo: tenantOf(result),
-		ResultID:   result.ID,
-	})
+	workflowID, err := s.starter.StartExtractionShadow(
+		ctx,
+		&extractionshadowports.ExtractionShadowStart{
+			TenantInfo: tenantOf(result),
+			ResultID:   result.ID,
+		},
+	)
 	if err != nil {
 		s.l.Error("failed to start a shadow extraction",
 			zap.String("resultId", result.ID.String()),

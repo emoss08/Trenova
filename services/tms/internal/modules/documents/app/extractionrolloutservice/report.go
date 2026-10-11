@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -61,7 +61,9 @@ func (s *Service) Report(
 	return report, nil
 }
 
-func accuracyOf(side extractionrollout.ArmAccuracy) extractionrolloutports.ExtractionRolloutAccuracy {
+func accuracyOf(
+	side extractionrollout.ArmAccuracy,
+) extractionrolloutports.ExtractionRolloutAccuracy {
 	return extractionrolloutports.ExtractionRolloutAccuracy{
 		Scored:   side.Scored,
 		Correct:  side.Correct,

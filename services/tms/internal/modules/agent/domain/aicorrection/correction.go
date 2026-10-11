@@ -101,12 +101,12 @@ type Correction struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 
-	Task         Task        `json:"task"        bun:"task,type:VARCHAR(50),notnull"`
-	SourceType   SourceType  `json:"sourceType"  bun:"source_type,type:VARCHAR(50),notnull"`
-	SourceID     pulid.ID    `json:"sourceId"    bun:"source_id,type:VARCHAR(100),notnull"`
-	DocumentID   *pulid.ID   `json:"documentId"  bun:"document_id,type:VARCHAR(100),nullzero"`
-	SubjectType  SubjectType `json:"subjectType" bun:"subject_type,type:VARCHAR(50),notnull"`
-	SubjectID    pulid.ID    `json:"subjectId"   bun:"subject_id,type:VARCHAR(100),notnull"`
+	Task         Task        `json:"task"         bun:"task,type:VARCHAR(50),notnull"`
+	SourceType   SourceType  `json:"sourceType"   bun:"source_type,type:VARCHAR(50),notnull"`
+	SourceID     pulid.ID    `json:"sourceId"     bun:"source_id,type:VARCHAR(100),notnull"`
+	DocumentID   *pulid.ID   `json:"documentId"   bun:"document_id,type:VARCHAR(100),nullzero"`
+	SubjectType  SubjectType `json:"subjectType"  bun:"subject_type,type:VARCHAR(50),notnull"`
+	SubjectID    pulid.ID    `json:"subjectId"    bun:"subject_id,type:VARCHAR(100),notnull"`
 	CapturedByID pulid.ID    `json:"capturedById" bun:"captured_by_id,type:VARCHAR(100),notnull"`
 
 	DocumentKind         string    `json:"documentKind"         bun:"document_kind,type:VARCHAR(100),nullzero"`

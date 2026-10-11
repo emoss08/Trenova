@@ -76,7 +76,10 @@ func Touch(current []WorkingRecord, touched ...WorkingRecord) []WorkingRecord {
 		if record.ID == "" {
 			continue
 		}
-		idx := slices.IndexFunc(merged, func(known WorkingRecord) bool { return known.ID == record.ID })
+		idx := slices.IndexFunc(
+			merged,
+			func(known WorkingRecord) bool { return known.ID == record.ID },
+		)
 		if idx < 0 {
 			merged = append(merged, record)
 			continue

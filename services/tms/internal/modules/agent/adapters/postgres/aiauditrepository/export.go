@@ -110,53 +110,60 @@ func (r *exportRepository) ListConnection(
 	ctx context.Context,
 	req *aiauditports.ListAIAuditExportsRequest,
 ) (*pagination.CursorListResult[*aiaudit.AIAuditExport], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*aiaudit.AIAuditExport], error) {
-		dba := r.db.DBForContext(ctx)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*aiaudit.AIAuditExport], error) {
+			dba := r.db.DBForContext(ctx)
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.NewSelect().
-				Model((*aiaudit.AIAuditExport)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						aiauditcol.AIAuditExportTable.Alias,
-						req.Filter,
-						(*aiaudit.AIAuditExport)(nil),
-					)
-				}).
-				Count(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("count AI audit exports: %w", err)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.NewSelect().
+					Model((*aiaudit.AIAuditExport)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							aiauditcol.AIAuditExportTable.Alias,
+							req.Filter,
+							(*aiaudit.AIAuditExport)(nil),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					return nil, fmt.Errorf("count AI audit exports: %w", err)
+				}
+				totalCount = &total
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*aiaudit.AIAuditExport]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*aiaudit.AIAuditExport) *bun.SelectQuery {
-				return dba.NewSelect().Model(entities)
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return querybuilder.ApplyCursorFilters(
-					sq,
-					aiauditcol.AIAuditExportTable.Alias,
-					req.Filter,
-					req.Cursor,
-					(*aiaudit.AIAuditExport)(nil),
-				)
-			},
-		})
-		if err != nil {
-			r.l.Error("failed to list AI audit exports", zap.Error(err))
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*aiaudit.AIAuditExport]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*aiaudit.AIAuditExport) *bun.SelectQuery {
+						return dba.NewSelect().Model(entities)
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							aiauditcol.AIAuditExportTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*aiaudit.AIAuditExport)(nil),
+						)
+					},
+				},
+			)
+			if err != nil {
+				r.l.Error("failed to list AI audit exports", zap.Error(err))
 
-			return nil, fmt.Errorf("list AI audit exports: %w", err)
-		}
+				return nil, fmt.Errorf("list AI audit exports: %w", err)
+			}
 
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 // ListExpired finds exports whose files are past their download window.

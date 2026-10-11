@@ -74,7 +74,7 @@ type TrainingExport struct {
 	ValidationExamples      int                    `json:"validationExamples"      bun:"validation_examples,type:INTEGER,notnull,default:0"`
 	Dropped                 map[DropReason]int     `json:"dropped"                 bun:"dropped,type:JSONB,notnull,default:'{}'"`
 	Parts                   []Part                 `json:"parts"                   bun:"parts,type:JSONB,notnull,default:'[]'"`
-	Progress                []OrganizationProgress `json:"progress"            bun:"progress,type:JSONB,notnull,default:'[]'"`
+	Progress                []OrganizationProgress `json:"progress"                bun:"progress,type:JSONB,notnull,default:'[]'"`
 
 	ManifestKey    string `json:"manifestKey"    bun:"manifest_key,type:VARCHAR(512),nullzero"`
 	ManifestSHA256 string `json:"manifestSha256" bun:"manifest_sha256,type:VARCHAR(64),nullzero"`
@@ -88,7 +88,8 @@ type TrainingExport struct {
 }
 
 func (e *TrainingExport) Validate(multiErr *errortypes.MultiError) {
-	multiErr.AddOzzoError(validation.ValidateStruct(e,
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		e,
 		validation.Field(&e.Task,
 			validation.Required.Error("Task is required"),
 			domainvalidation.ValidEnum[aicorrection.Task]("Task is invalid"),
@@ -98,7 +99,10 @@ func (e *TrainingExport) Validate(multiErr *errortypes.MultiError) {
 			domainvalidation.ValidEnum[ExportStatus]("Status is invalid"),
 		),
 		validation.Field(&e.Format, validation.Required.Error("Format is required")),
-		validation.Field(&e.CapturedFrom, validation.Min(int64(0)).Error("The window cannot start before 1970")),
+		validation.Field(
+			&e.CapturedFrom,
+			validation.Min(int64(0)).Error("The window cannot start before 1970"),
+		),
 		validation.Field(&e.CapturedTo, validation.Required.Error("The window must have an end")),
 		validation.Field(&e.MaxPerOrganization,
 			validation.Min(1).Error("Export at least one example per organization"),
@@ -154,7 +158,10 @@ func (e *TrainingExport) RecordProgress(progress OrganizationProgress) {
 	if !replaced {
 		e.Progress = append(e.Progress, progress)
 	}
-	slices.SortFunc(e.Progress, func(a, b OrganizationProgress) int { return a.Ordinal - b.Ordinal })
+	slices.SortFunc(
+		e.Progress,
+		func(a, b OrganizationProgress) int { return a.Ordinal - b.Ordinal },
+	)
 	e.RecomputeProgress()
 }
 

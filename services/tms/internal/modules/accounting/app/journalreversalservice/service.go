@@ -6,14 +6,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -86,7 +86,10 @@ func (s *Service) Get(
 ) (*journalreversal.Reversal, error) {
 	return s.journalReversalRepo.GetByID(
 		ctx,
-		journalreversalports.GetJournalReversalByIDRequest{ID: req.ReversalID, TenantInfo: req.TenantInfo},
+		journalreversalports.GetJournalReversalByIDRequest{
+			ID:         req.ReversalID,
+			TenantInfo: req.TenantInfo,
+		},
 	)
 }
 
@@ -201,7 +204,10 @@ func (s *Service) Approve(
 	}
 	entity, err := s.journalReversalRepo.GetByID(
 		ctx,
-		journalreversalports.GetJournalReversalByIDRequest{ID: req.ReversalID, TenantInfo: req.TenantInfo},
+		journalreversalports.GetJournalReversalByIDRequest{
+			ID:         req.ReversalID,
+			TenantInfo: req.TenantInfo,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -233,7 +239,10 @@ func (s *Service) Reject(
 	}
 	entity, err := s.journalReversalRepo.GetByID(
 		ctx,
-		journalreversalports.GetJournalReversalByIDRequest{ID: req.ReversalID, TenantInfo: req.TenantInfo},
+		journalreversalports.GetJournalReversalByIDRequest{
+			ID:         req.ReversalID,
+			TenantInfo: req.TenantInfo,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -266,7 +275,10 @@ func (s *Service) PlanCancel(
 	}
 	entity, err := s.journalReversalRepo.GetByID(
 		ctx,
-		journalreversalports.GetJournalReversalByIDRequest{ID: req.ReversalID, TenantInfo: req.TenantInfo},
+		journalreversalports.GetJournalReversalByIDRequest{
+			ID:         req.ReversalID,
+			TenantInfo: req.TenantInfo,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -317,7 +329,10 @@ func (s *Service) PlanPost(
 	}
 	entity, err := s.journalReversalRepo.GetByID(
 		ctx,
-		journalreversalports.GetJournalReversalByIDRequest{ID: req.ReversalID, TenantInfo: req.TenantInfo},
+		journalreversalports.GetJournalReversalByIDRequest{
+			ID:         req.ReversalID,
+			TenantInfo: req.TenantInfo,
+		},
 	)
 	if err != nil {
 		return nil, err

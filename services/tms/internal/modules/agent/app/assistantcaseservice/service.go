@@ -5,18 +5,18 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/core/services/subjectaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/internal/core/services/subjectaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -174,7 +174,12 @@ func (s *Service) readyToBill(
 		return nil, err
 	}
 	onFile := facts.DocumentTypesOnFile
-	if facts.Arrangement, err = s.arrangement(ctx, tenant, deskcase.ChecklistReadyToBill, record); err != nil {
+	if facts.Arrangement, err = s.arrangement(
+		ctx,
+		tenant,
+		deskcase.ChecklistReadyToBill,
+		record,
+	); err != nil {
 		return nil, err
 	}
 	facts.DocumentTypesOnFile = onFile
@@ -216,7 +221,12 @@ func (s *Service) readyToClose(
 		return nil, err
 	}
 	facts.Now = s.now()
-	if facts.Arrangement, err = s.arrangement(ctx, tenant, deskcase.ChecklistReadyToClose, record); err != nil {
+	if facts.Arrangement, err = s.arrangement(
+		ctx,
+		tenant,
+		deskcase.ChecklistReadyToClose,
+		record,
+	); err != nil {
 		return nil, err
 	}
 
@@ -263,11 +273,14 @@ func (s *Service) templateFor(
 	kind deskcase.ChecklistKind,
 	record *deskcase.Record,
 ) (deskcase.TemplateItems, error) {
-	template, err := s.checklists.TemplateFor(ctx, &deskcaseports.GetCaseChecklistTemplateForRequest{
-		TenantInfo: tenant,
-		Kind:       kind,
-		CustomerID: record.BillToID,
-	})
+	template, err := s.checklists.TemplateFor(
+		ctx,
+		&deskcaseports.GetCaseChecklistTemplateForRequest{
+			TenantInfo: tenant,
+			Kind:       kind,
+			CustomerID: record.BillToID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

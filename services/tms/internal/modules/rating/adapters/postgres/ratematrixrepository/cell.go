@@ -126,39 +126,43 @@ func (r *repository) ListCells(
 	ctx context.Context,
 	req *ratematrixports.ListRateMatrixCellsRequest,
 ) (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
-		log := r.l.With(
-			zap.String("operation", "ListCells"),
-			zap.String("matrixId", req.RateMatrixID.String()),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
+			log := r.l.With(
+				zap.String("operation", "ListCells"),
+				zap.String("matrixId", req.RateMatrixID.String()),
+			)
 
-		cols := ratematrixcol.RateMatrixCellColumns
-		entities := make([]*ratematrix.RateMatrixCell, 0, req.Filter.Pagination.SafeLimit())
+			cols := ratematrixcol.RateMatrixCellColumns
+			entities := make([]*ratematrix.RateMatrixCell, 0, req.Filter.Pagination.SafeLimit())
 
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return ratematrixcol.RateMatrixCellScopeTenant(sq, req.TenantInfo).
-					Where(cols.RateMatrixID.Eq(), req.RateMatrixID)
-			}).
-			Order(cols.D0Key.OrderAsc()).
-			Order(cols.D1Key.OrderAsc()).
-			Order(cols.D2Min.OrderAsc()).
-			Order(cols.D3Min.OrderAsc()).
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to list rate matrix cells", zap.Error(err))
-			return nil, err
-		}
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return ratematrixcol.RateMatrixCellScopeTenant(sq, req.TenantInfo).
+						Where(cols.RateMatrixID.Eq(), req.RateMatrixID)
+				}).
+				Order(cols.D0Key.OrderAsc()).
+				Order(cols.D1Key.OrderAsc()).
+				Order(cols.D2Min.OrderAsc()).
+				Order(cols.D3Min.OrderAsc()).
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to list rate matrix cells", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*ratematrix.RateMatrixCell]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*ratematrix.RateMatrixCell]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 // ReplaceCells swaps a matrix's entire cell set in one transaction.
@@ -260,74 +264,78 @@ func (r *repository) GetLookupData(
 	ctx context.Context,
 	req *ratematrixports.GetRateMatrixLookupDataRequest,
 ) ([]*ratematrixports.RateMatrixLookupData, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ratematrixports.RateMatrixLookupData, error) {
-		log := r.l.With(zap.String("operation", "GetLookupData"))
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*ratematrixports.RateMatrixLookupData, error) {
+			log := r.l.With(zap.String("operation", "GetLookupData"))
 
-		matrixCols := ratematrixcol.RateMatrixColumns
-		dimCols := ratematrixcol.RateMatrixDimensionColumns
+			matrixCols := ratematrixcol.RateMatrixColumns
+			dimCols := ratematrixcol.RateMatrixDimensionColumns
 
-		matrices := make([]*ratematrix.RateMatrix, 0, 8)
+			matrices := make([]*ratematrix.RateMatrix, 0, 8)
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&matrices).
-			Relation(buncolgen.Rel(ratematrixcol.RateMatrixRelations.Dimensions), orderDimensions).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return ratematrixcol.RateMatrixScopeTenant(sq, req.TenantInfo).
-					Where(matrixCols.Status.Eq(), domaintypes.StatusActive).
-					Where(
-						"(SELECT count(*) FROM rate_matrix_dimensions AS rmd WHERE " +
-							dimCols.RateMatrixID.Qualified() + " = " + matrixCols.ID.Qualified() +
-							" AND " + dimCols.OrganizationID.Qualified() + " = " + matrixCols.OrganizationID.Qualified() +
-							") IN (1, 2)",
-					)
-			}).
-			Scan(ctx)
-		if err != nil {
-			log.Error("failed to load lookup matrices", zap.Error(err))
-			return nil, err
-		}
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&matrices).
+				Relation(buncolgen.Rel(ratematrixcol.RateMatrixRelations.Dimensions), orderDimensions).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return ratematrixcol.RateMatrixScopeTenant(sq, req.TenantInfo).
+						Where(matrixCols.Status.Eq(), domaintypes.StatusActive).
+						Where(
+							"(SELECT count(*) FROM rate_matrix_dimensions AS rmd WHERE " +
+								dimCols.RateMatrixID.Qualified() + " = " + matrixCols.ID.Qualified() +
+								" AND " + dimCols.OrganizationID.Qualified() + " = " + matrixCols.OrganizationID.Qualified() +
+								") IN (1, 2)",
+						)
+				}).
+				Scan(ctx)
+			if err != nil {
+				log.Error("failed to load lookup matrices", zap.Error(err))
+				return nil, err
+			}
 
-		if len(matrices) == 0 {
-			return nil, nil
-		}
+			if len(matrices) == 0 {
+				return nil, nil
+			}
 
-		matrixIDs := make([]pulid.ID, 0, len(matrices))
-		for _, matrix := range matrices {
-			matrixIDs = append(matrixIDs, matrix.ID)
-		}
+			matrixIDs := make([]pulid.ID, 0, len(matrices))
+			for _, matrix := range matrices {
+				matrixIDs = append(matrixIDs, matrix.ID)
+			}
 
-		cellCols := ratematrixcol.RateMatrixCellColumns
-		cells := make([]*ratematrix.RateMatrixCell, 0, len(matrices)*16)
+			cellCols := ratematrixcol.RateMatrixCellColumns
+			cells := make([]*ratematrix.RateMatrixCell, 0, len(matrices)*16)
 
-		err = r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&cells).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return ratematrixcol.RateMatrixCellScopeTenant(sq, req.TenantInfo).
-					Where(cellCols.RateMatrixID.In(), bun.List(matrixIDs))
-			}).
-			Scan(ctx)
-		if err != nil {
-			log.Error("failed to load lookup matrix cells", zap.Error(err))
-			return nil, err
-		}
+			err = r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&cells).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return ratematrixcol.RateMatrixCellScopeTenant(sq, req.TenantInfo).
+						Where(cellCols.RateMatrixID.In(), bun.List(matrixIDs))
+				}).
+				Scan(ctx)
+			if err != nil {
+				log.Error("failed to load lookup matrix cells", zap.Error(err))
+				return nil, err
+			}
 
-		cellsByMatrix := make(map[pulid.ID][]*ratematrix.RateMatrixCell, len(matrices))
-		for _, cell := range cells {
-			cellsByMatrix[cell.RateMatrixID] = append(cellsByMatrix[cell.RateMatrixID], cell)
-		}
+			cellsByMatrix := make(map[pulid.ID][]*ratematrix.RateMatrixCell, len(matrices))
+			for _, cell := range cells {
+				cellsByMatrix[cell.RateMatrixID] = append(cellsByMatrix[cell.RateMatrixID], cell)
+			}
 
-		data := make([]*ratematrixports.RateMatrixLookupData, 0, len(matrices))
-		for _, matrix := range matrices {
-			data = append(data, &ratematrixports.RateMatrixLookupData{
-				Matrix: matrix,
-				Cells:  cellsByMatrix[matrix.ID],
-			})
-		}
+			data := make([]*ratematrixports.RateMatrixLookupData, 0, len(matrices))
+			for _, matrix := range matrices {
+				data = append(data, &ratematrixports.RateMatrixLookupData{
+					Matrix: matrix,
+					Cells:  cellsByMatrix[matrix.ID],
+				})
+			}
 
-		return data, nil
-	})
+			return data, nil
+		},
+	)
 }
 
 // bumpMatrixVersion records that the matrix's content changed even though no

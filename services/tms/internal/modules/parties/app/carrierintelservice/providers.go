@@ -6,12 +6,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -247,7 +247,10 @@ func (s *Service) recordCall(
 	s.breaker.record(key, failed, time.Unix(now, 0))
 }
 
-func isBillable(price carrierintel.EndpointPrice, call carrierintelports.CarrierIntelCall) (bool, int) {
+func isBillable(
+	price carrierintel.EndpointPrice,
+	call carrierintelports.CarrierIntelCall,
+) (bool, int) {
 	if price.Model == carrierintel.BillingModelFree || !price.UnitCost.IsPositive() {
 		return false, 0
 	}
@@ -331,7 +334,8 @@ func retryAfter(err error) (time.Duration, bool) {
 		return limited.RetryAfter, true
 	}
 	var providerErr *carrierintelports.CarrierIntelProviderError
-	if errors.As(err, &providerErr) && providerErr.Kind == carrierintelports.CarrierIntelErrorRateLimited {
+	if errors.As(err, &providerErr) &&
+		providerErr.Kind == carrierintelports.CarrierIntelErrorRateLimited {
 		return providerErr.RetryAfter, true
 	}
 	return 0, false

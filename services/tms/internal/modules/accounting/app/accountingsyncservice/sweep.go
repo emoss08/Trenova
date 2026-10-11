@@ -354,10 +354,13 @@ func (s *Service) ListDueConnections(
 	ctx context.Context,
 	limit int,
 ) ([]accountingsyncports.AccountingSyncDueConnection, error) {
-	return s.records.ListDueConnections(ctx, accountingsyncports.ListDueAccountingSyncConnectionsRequest{
-		Now:   timeutils.NowUnix(),
-		Limit: limit,
-	})
+	return s.records.ListDueConnections(
+		ctx,
+		accountingsyncports.ListDueAccountingSyncConnectionsRequest{
+			Now:   timeutils.NowUnix(),
+			Limit: limit,
+		},
+	)
 }
 
 func (s *Service) skipBackfillType(

@@ -34,12 +34,18 @@ var (
 		" AND " + shipmentcol.ShipmentMoveColumns.BusinessUnitID.EqColumn(
 		shipmentcol.AssignmentColumns.BusinessUnitID)
 
-	fleetCodeJoin = "LEFT JOIN " + fleetcodecol.FleetCodeTable.As(fleetcodecol.FleetCodeTable.Alias) +
-		" ON " + fleetcodecol.FleetCodeColumns.ID.EqColumn(workercol.WorkerColumns.FleetCodeID) +
+	fleetCodeJoin = "LEFT JOIN " + fleetcodecol.FleetCodeTable.As(
+		fleetcodecol.FleetCodeTable.Alias,
+	) +
+		" ON " + fleetcodecol.FleetCodeColumns.ID.EqColumn(
+		workercol.WorkerColumns.FleetCodeID,
+	) +
 		" AND " + fleetcodecol.FleetCodeColumns.OrganizationID.EqColumn(
-		workercol.WorkerColumns.OrganizationID) +
+		workercol.WorkerColumns.OrganizationID,
+	) +
 		" AND " + fleetcodecol.FleetCodeColumns.BusinessUnitID.EqColumn(
-		workercol.WorkerColumns.BusinessUnitID)
+		workercol.WorkerColumns.BusinessUnitID,
+	)
 
 	workerStateJoin = "LEFT JOIN " + usstatecol.UsStateTable.As(usstatecol.UsStateTable.Alias) +
 		" ON " + usstatecol.UsStateColumns.ID.EqColumn(workercol.WorkerColumns.StateID)
@@ -124,16 +130,19 @@ func (r *repository) ListWorkerCommitments(
 	ctx context.Context,
 	req *shipmentports.ListWorkerWindowsRequest,
 ) ([]*shipmentports.WorkerCommitment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipmentports.WorkerCommitment, error) {
-		if len(req.WorkerIDs) == 0 {
-			return []*shipmentports.WorkerCommitment{}, nil
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*shipmentports.WorkerCommitment, error) {
+			if len(req.WorkerIDs) == 0 {
+				return []*shipmentports.WorkerCommitment{}, nil
+			}
 
-		asnCols := shipmentcol.AssignmentColumns
-		moveCols := shipmentcol.ShipmentMoveColumns
-		entities := make([]*shipmentports.WorkerCommitment, 0, len(req.WorkerIDs))
+			asnCols := shipmentcol.AssignmentColumns
+			moveCols := shipmentcol.ShipmentMoveColumns
+			entities := make([]*shipmentports.WorkerCommitment, 0, len(req.WorkerIDs))
 
-		const windowLateral = `JOIN LATERAL (
+			const windowLateral = `JOIN LATERAL (
 		SELECT MIN(stp.scheduled_window_start) AS window_start,
 			MAX(COALESCE(stp.scheduled_window_end, stp.scheduled_window_start)) AS window_end
 		FROM stops AS stp
@@ -143,47 +152,51 @@ func (r *repository) ListWorkerCommitments(
 			AND stp.status <> ?
 	) AS win ON TRUE`
 
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model((*shipment.Assignment)(nil)).
-			ColumnExpr(asnCols.PrimaryWorkerID.As("worker_id")).
-			ColumnExpr(asnCols.ShipmentMoveID.As("move_id")).
-			ColumnExpr(asnCols.TrailerID.Expr("COALESCE({}, '') AS trailer_id")).
-			ColumnExpr(moveCols.ShipmentID.As("shipment_id")).
-			ColumnExpr(moveCols.Status.As("move_status")).
-			ColumnExpr(shipmentcol.ShipmentColumns.ProNumber.Expr("COALESCE({}, '') AS pro_number")).
-			ColumnExpr("COALESCE(win.window_start, 0) AS window_start").
-			ColumnExpr("COALESCE(win.window_end, 0) AS window_end").
-			ColumnExpr("COALESCE(dest.location_id, '') AS destination_id").
-			ColumnExpr("COALESCE(dest.city, '') AS destination_city").
-			ColumnExpr("COALESCE(dest.state_abbr, '') AS destination_st").
-			ColumnExpr("dest.latitude AS dest_latitude").
-			ColumnExpr("dest.longitude AS dest_longitude").
-			Join(moveFromAssignmentJoin).
-			Join("LEFT "+shipmentJoin).
-			Join(windowLateral, shipment.StopStatusCanceled).
-			Join(stopEdgeLateral(destinationAlias, orderDescending), shipment.StopStatusCanceled).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = shipmentcol.AssignmentScopeTenant(sq, req.TenantInfo).
-					Where(asnCols.ArchivedAt.IsNull()).
-					Where(asnCols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs)).
-					Where(moveCols.Status.In(), bun.List(openMoveStatuses))
+			q := r.db.DBForContext(ctx).NewSelect().
+				Model((*shipment.Assignment)(nil)).
+				ColumnExpr(asnCols.PrimaryWorkerID.As("worker_id")).
+				ColumnExpr(asnCols.ShipmentMoveID.As("move_id")).
+				ColumnExpr(asnCols.TrailerID.Expr("COALESCE({}, '') AS trailer_id")).
+				ColumnExpr(moveCols.ShipmentID.As("shipment_id")).
+				ColumnExpr(moveCols.Status.As("move_status")).
+				ColumnExpr(shipmentcol.ShipmentColumns.ProNumber.Expr("COALESCE({}, '') AS pro_number")).
+				ColumnExpr("COALESCE(win.window_start, 0) AS window_start").
+				ColumnExpr("COALESCE(win.window_end, 0) AS window_end").
+				ColumnExpr("COALESCE(dest.location_id, '') AS destination_id").
+				ColumnExpr("COALESCE(dest.city, '') AS destination_city").
+				ColumnExpr("COALESCE(dest.state_abbr, '') AS destination_st").
+				ColumnExpr("dest.latitude AS dest_latitude").
+				ColumnExpr("dest.longitude AS dest_longitude").
+				Join(moveFromAssignmentJoin).
+				Join("LEFT "+shipmentJoin).
+				Join(windowLateral, shipment.StopStatusCanceled).
+				Join(stopEdgeLateral(destinationAlias, orderDescending), shipment.StopStatusCanceled).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = shipmentcol.AssignmentScopeTenant(sq, req.TenantInfo).
+						Where(asnCols.ArchivedAt.IsNull()).
+						Where(asnCols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs)).
+						Where(moveCols.Status.In(), bun.List(openMoveStatuses))
 
-				if req.WindowEnd > 0 {
-					sq = sq.Where("COALESCE(win.window_start, 0) <= ?", req.WindowEnd)
-				}
-				if req.WindowStart > 0 {
-					sq = sq.Where("COALESCE(win.window_end, win.window_start, 0) >= ?", req.WindowStart)
-				}
-				return sq
-			}).
-			Order("win.window_start ASC")
+					if req.WindowEnd > 0 {
+						sq = sq.Where("COALESCE(win.window_start, 0) <= ?", req.WindowEnd)
+					}
+					if req.WindowStart > 0 {
+						sq = sq.Where(
+							"COALESCE(win.window_end, win.window_start, 0) >= ?",
+							req.WindowStart,
+						)
+					}
+					return sq
+				}).
+				Order("win.window_start ASC")
 
-		if err := q.Scan(ctx, &entities); err != nil {
-			return nil, fmt.Errorf("list worker commitments: %w", err)
-		}
+			if err := q.Scan(ctx, &entities); err != nil {
+				return nil, fmt.Errorf("list worker commitments: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) ListWorkerTimeOff(
@@ -297,39 +310,43 @@ func (r *repository) ListWorkerLaneExperience(
 	ctx context.Context,
 	req *shipmentports.ListLaneExperienceRequest,
 ) ([]*shipmentports.WorkerLaneExperience, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipmentports.WorkerLaneExperience, error) {
-		if len(req.WorkerIDs) == 0 || len(req.CustomerIDs) == 0 {
-			return []*shipmentports.WorkerLaneExperience{}, nil
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*shipmentports.WorkerLaneExperience, error) {
+			if len(req.WorkerIDs) == 0 || len(req.CustomerIDs) == 0 {
+				return []*shipmentports.WorkerLaneExperience{}, nil
+			}
 
-		asnCols := shipmentcol.AssignmentColumns
-		shipCols := shipmentcol.ShipmentColumns
-		entities := make([]*shipmentports.WorkerLaneExperience, 0, len(req.WorkerIDs))
+			asnCols := shipmentcol.AssignmentColumns
+			shipCols := shipmentcol.ShipmentColumns
+			entities := make([]*shipmentports.WorkerLaneExperience, 0, len(req.WorkerIDs))
 
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model((*shipment.Assignment)(nil)).
-			ColumnExpr(asnCols.PrimaryWorkerID.As("worker_id")).
-			ColumnExpr(shipCols.CustomerID.As("customer_id")).
-			ColumnExpr("COUNT(*)::int AS move_count").
-			Join(moveFromAssignmentJoin).
-			Join(shipmentJoin).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = shipmentcol.AssignmentScopeTenant(sq, req.TenantInfo).
-					Where(asnCols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs)).
-					Where(shipCols.CustomerID.In(), bun.List(req.CustomerIDs))
-				if req.Since > 0 {
-					sq = sq.Where(asnCols.CreatedAt.Gte(), req.Since)
-				}
-				return sq
-			}).
-			GroupExpr(asnCols.PrimaryWorkerID.Qualified() + ", " + shipCols.CustomerID.Qualified())
+			q := r.db.DBForContext(ctx).NewSelect().
+				Model((*shipment.Assignment)(nil)).
+				ColumnExpr(asnCols.PrimaryWorkerID.As("worker_id")).
+				ColumnExpr(shipCols.CustomerID.As("customer_id")).
+				ColumnExpr("COUNT(*)::int AS move_count").
+				Join(moveFromAssignmentJoin).
+				Join(shipmentJoin).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = shipmentcol.AssignmentScopeTenant(sq, req.TenantInfo).
+						Where(asnCols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs)).
+						Where(shipCols.CustomerID.In(), bun.List(req.CustomerIDs))
+					if req.Since > 0 {
+						sq = sq.Where(asnCols.CreatedAt.Gte(), req.Since)
+					}
+					return sq
+				}).
+				GroupExpr(asnCols.PrimaryWorkerID.Qualified() + ", " + shipCols.CustomerID.Qualified())
 
-		if err := q.Scan(ctx, &entities); err != nil {
-			return nil, fmt.Errorf("list worker lane experience: %w", err)
-		}
+			if err := q.Scan(ctx, &entities); err != nil {
+				return nil, fmt.Errorf("list worker lane experience: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) ListWorkersByIDs(
@@ -365,36 +382,40 @@ func (r *repository) ListEquipmentByIDs(
 	ctx context.Context,
 	req *shipmentports.ListEquipmentByIDsRequest,
 ) ([]*tractor.Tractor, []*trailer.Trailer, error) {
-	return dbtx.Read2(ctx, r.db, func(ctx context.Context) ([]*tractor.Tractor, []*trailer.Trailer, error) {
-		tractors := make([]*tractor.Tractor, 0, len(req.TractorIDs))
-		trailers := make([]*trailer.Trailer, 0, len(req.TrailerIDs))
+	return dbtx.Read2(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*tractor.Tractor, []*trailer.Trailer, error) {
+			tractors := make([]*tractor.Tractor, 0, len(req.TractorIDs))
+			trailers := make([]*trailer.Trailer, 0, len(req.TrailerIDs))
 
-		if len(req.TractorIDs) > 0 {
-			err := r.db.DBForContext(ctx).NewSelect().
-				Model(&tractors).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return tractorcol.TractorScopeTenant(sq, req.TenantInfo).
-						Where(tractorcol.TractorColumns.ID.In(), bun.List(req.TractorIDs))
-				}).
-				Scan(ctx)
-			if err != nil {
-				return nil, nil, fmt.Errorf("list tractors by ids: %w", err)
+			if len(req.TractorIDs) > 0 {
+				err := r.db.DBForContext(ctx).NewSelect().
+					Model(&tractors).
+					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return tractorcol.TractorScopeTenant(sq, req.TenantInfo).
+							Where(tractorcol.TractorColumns.ID.In(), bun.List(req.TractorIDs))
+					}).
+					Scan(ctx)
+				if err != nil {
+					return nil, nil, fmt.Errorf("list tractors by ids: %w", err)
+				}
 			}
-		}
 
-		if len(req.TrailerIDs) > 0 {
-			err := r.db.DBForContext(ctx).NewSelect().
-				Model(&trailers).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return trailercol.TrailerScopeTenant(sq, req.TenantInfo).
-						Where(trailercol.TrailerColumns.ID.In(), bun.List(req.TrailerIDs))
-				}).
-				Scan(ctx)
-			if err != nil {
-				return nil, nil, fmt.Errorf("list trailers by ids: %w", err)
+			if len(req.TrailerIDs) > 0 {
+				err := r.db.DBForContext(ctx).NewSelect().
+					Model(&trailers).
+					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return trailercol.TrailerScopeTenant(sq, req.TenantInfo).
+							Where(trailercol.TrailerColumns.ID.In(), bun.List(req.TrailerIDs))
+					}).
+					Scan(ctx)
+				if err != nil {
+					return nil, nil, fmt.Errorf("list trailers by ids: %w", err)
+				}
 			}
-		}
 
-		return tractors, trailers, nil
-	})
+			return tractors, trailers, nil
+		},
+	)
 }

@@ -11,9 +11,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentsearch"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -353,7 +353,8 @@ func (s *Service) Destination(
 	if canOpen, missing := access.check(page); !canOpen {
 		return nil, errortypes.NewBusinessError(fmt.Sprintf(
 			"%s is not open to this person: it needs %s. Tell them who can grant it rather than sending them there.",
-			page.Name, strings.Join(missing, " and "),
+			page.Name,
+			strings.Join(missing, " and "),
 		))
 	}
 
@@ -438,9 +439,12 @@ func (s *Service) access(
 	if !gated {
 		return result, nil
 	}
-	capabilities, err := s.organizations.GetCapabilities(ctx, tenantports.GetOrganizationCapabilitiesRequest{
-		TenantInfo: tenant,
-	})
+	capabilities, err := s.organizations.GetCapabilities(
+		ctx,
+		tenantports.GetOrganizationCapabilitiesRequest{
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("read what this organization operates: %w", err)
 	}
@@ -512,7 +516,10 @@ func (a *access) check(page *productguide.Page) (bool, []string) {
 			continue
 		}
 		name := requirement.Resource
-		if definition, ok := a.resources.Get(requirement.Resource); ok && definition.DisplayName != "" {
+		if definition, ok := a.resources.Get(
+			requirement.Resource,
+		); ok &&
+			definition.DisplayName != "" {
 			name = definition.DisplayName
 		}
 		missing = append(missing, fmt.Sprintf("%s %s permission", name, requirement.Operation))

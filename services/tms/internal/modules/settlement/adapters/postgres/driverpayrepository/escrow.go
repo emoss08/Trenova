@@ -35,92 +35,103 @@ func (r *escrowAccountRepository) List(
 	ctx context.Context,
 	req *driverpayports.ListEscrowAccountsRequest,
 ) (*pagination.ListResult[*driverpay.EscrowAccount], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driverpay.EscrowAccount], error) {
-		limit := req.Filter.Pagination.SafeLimit()
-		items := make([]*driverpay.EscrowAccount, 0, limit)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*driverpay.EscrowAccount], error) {
+			limit := req.Filter.Pagination.SafeLimit()
+			items := make([]*driverpay.EscrowAccount, 0, limit)
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("escr.organization_id = ?", req.Filter.TenantInfo.OrgID).
-			Where("escr.business_unit_id = ?", req.Filter.TenantInfo.BuID).
-			Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
-			Order("escr.created_at DESC").
-			Limit(limit).
-			Offset(req.Filter.Pagination.SafeOffset())
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&items).
+				Where("escr.organization_id = ?", req.Filter.TenantInfo.OrgID).
+				Where("escr.business_unit_id = ?", req.Filter.TenantInfo.BuID).
+				Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
+				Order("escr.created_at DESC").
+				Limit(limit).
+				Offset(req.Filter.Pagination.SafeOffset())
 
-		if !req.WorkerID.IsNil() {
-			query = query.Where("escr.worker_id = ?", req.WorkerID)
-		}
-		if req.Status != "" {
-			query = query.Where("escr.status = ?", req.Status)
-		}
+			if !req.WorkerID.IsNil() {
+				query = query.Where("escr.worker_id = ?", req.WorkerID)
+			}
+			if req.Status != "" {
+				query = query.Where("escr.status = ?", req.Status)
+			}
 
-		total, err := query.ScanAndCount(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("list escrow accounts: %w", err)
-		}
+			total, err := query.ScanAndCount(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list escrow accounts: %w", err)
+			}
 
-		return &pagination.ListResult[*driverpay.EscrowAccount]{Items: items, Total: total}, nil
-	})
+			return &pagination.ListResult[*driverpay.EscrowAccount]{Items: items, Total: total}, nil
+		},
+	)
 }
 
 func (r *escrowAccountRepository) ListConnection(
 	ctx context.Context,
 	req *driverpayports.ListEscrowAccountConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.EscrowAccount], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driverpay.EscrowAccount], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*driverpay.EscrowAccount], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*driverpay.EscrowAccount)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						"escr",
-						req.Filter,
-						(*driverpay.EscrowAccount)(nil),
-					)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*driverpay.EscrowAccount)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							"escr",
+							req.Filter,
+							(*driverpay.EscrowAccount)(nil),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count escrow accounts", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*driverpay.EscrowAccount]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*driverpay.EscrowAccount) *bun.SelectQuery {
+						return dba.NewSelect().
+							Model(entities).
+							ColumnExpr(driverpaycol.EscrowAccountTable.All()).
+							Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							"escr",
+							req.Filter,
+							req.Cursor,
+							(*driverpay.EscrowAccount)(nil),
+						)
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count escrow accounts", zap.Error(err))
+				log.Error("failed to scan escrow accounts", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*driverpay.EscrowAccount]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*driverpay.EscrowAccount) *bun.SelectQuery {
-				return dba.NewSelect().
-					Model(entities).
-					ColumnExpr(driverpaycol.EscrowAccountTable.All()).
-					Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return querybuilder.ApplyCursorFilters(
-					sq,
-					"escr",
-					req.Filter,
-					req.Cursor,
-					(*driverpay.EscrowAccount)(nil),
-				)
-			},
-		})
-		if err != nil {
-			log.Error("failed to scan escrow accounts", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *escrowAccountRepository) GetByID(

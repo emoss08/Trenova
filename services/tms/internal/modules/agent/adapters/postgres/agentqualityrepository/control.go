@@ -175,29 +175,33 @@ func (r *controlRepository) ScheduleTarget(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*agentqualityports.QualityScheduleTarget, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentqualityports.QualityScheduleTarget, error) {
-		org := tenantcol.OrganizationColumns
-		dba := r.db.DBForContext(ctx)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*agentqualityports.QualityScheduleTarget, error) {
+			org := tenantcol.OrganizationColumns
+			dba := r.db.DBForContext(ctx)
 
-		target := new(agentqualityports.QualityScheduleTarget)
-		if err := r.scheduleTargetQuery(dba).
-			Where(org.ID.Eq(), tenantInfo.OrgID).
-			Where(org.BusinessUnitID.Eq(), tenantInfo.BuID).
-			Limit(1).
-			Scan(ctx, target); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Organization")
-		}
+			target := new(agentqualityports.QualityScheduleTarget)
+			if err := r.scheduleTargetQuery(dba).
+				Where(org.ID.Eq(), tenantInfo.OrgID).
+				Where(org.BusinessUnitID.Eq(), tenantInfo.BuID).
+				Limit(1).
+				Scan(ctx, target); err != nil {
+				return nil, dberror.HandleNotFoundError(err, "Organization")
+			}
 
-		control, err := r.Get(ctx, tenantInfo)
-		switch {
-		case err == nil:
-			target.Control = control
-		case !errortypes.IsNotFoundError(err):
-			return nil, err
-		}
+			control, err := r.Get(ctx, tenantInfo)
+			switch {
+			case err == nil:
+				target.Control = control
+			case !errortypes.IsNotFoundError(err):
+				return nil, err
+			}
 
-		return target, nil
-	})
+			return target, nil
+		},
+	)
 }
 
 func (r *controlRepository) ListScheduleTargets(
@@ -205,48 +209,52 @@ func (r *controlRepository) ListScheduleTargets(
 	req agentqualityports.ListQualityScheduleTargetsRequest,
 ) ([]*agentqualityports.QualityScheduleTarget, error) {
 	ctx = dbscope.WithSystem(ctx, "list agent quality schedules across every organization")
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentqualityports.QualityScheduleTarget, error) {
-		org := tenantcol.OrganizationColumns
-		limit := clampLimit(req.Limit, defaultScheduleTargetCap, maxScheduleTargetCap)
-		dba := r.db.DBForContext(ctx)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*agentqualityports.QualityScheduleTarget, error) {
+			org := tenantcol.OrganizationColumns
+			limit := clampLimit(req.Limit, defaultScheduleTargetCap, maxScheduleTargetCap)
+			dba := r.db.DBForContext(ctx)
 
-		q := r.scheduleTargetQuery(dba)
-		if req.AfterOrganizationID.IsNotNil() {
-			q = q.Where(org.ID.Gt(), req.AfterOrganizationID)
-		}
+			q := r.scheduleTargetQuery(dba)
+			if req.AfterOrganizationID.IsNotNil() {
+				q = q.Where(org.ID.Gt(), req.AfterOrganizationID)
+			}
 
-		targets := make([]*agentqualityports.QualityScheduleTarget, 0, limit)
-		if err := q.OrderExpr(org.ID.OrderAsc()).Limit(limit).Scan(ctx, &targets); err != nil {
-			return nil, fmt.Errorf("list organizations to schedule: %w", err)
-		}
-		if len(targets) == 0 {
+			targets := make([]*agentqualityports.QualityScheduleTarget, 0, limit)
+			if err := q.OrderExpr(org.ID.OrderAsc()).Limit(limit).Scan(ctx, &targets); err != nil {
+				return nil, fmt.Errorf("list organizations to schedule: %w", err)
+			}
+			if len(targets) == 0 {
+				return targets, nil
+			}
+
+			orgIDs := make([]pulid.ID, 0, len(targets))
+			for _, target := range targets {
+				orgIDs = append(orgIDs, target.OrganizationID)
+			}
+
+			controls := make([]*agentquality.Control, 0, len(targets))
+			if err := dba.NewSelect().
+				Model(&controls).
+				Where(agentqualitycol.ControlColumns.OrganizationID.In(), bun.List(orgIDs)).
+				Scan(ctx); err != nil && !errors.Is(err, sql.ErrNoRows) {
+				return nil, fmt.Errorf("read quality controls to schedule: %w", err)
+			}
+
+			byTenant := make(map[pagination.TenantInfo]*agentquality.Control, len(controls))
+			for _, control := range controls {
+				byTenant[pagination.TenantInfo{
+					OrgID: control.OrganizationID,
+					BuID:  control.BusinessUnitID,
+				}] = control
+			}
+			for _, target := range targets {
+				target.Control = byTenant[target.TenantInfo()]
+			}
+
 			return targets, nil
-		}
-
-		orgIDs := make([]pulid.ID, 0, len(targets))
-		for _, target := range targets {
-			orgIDs = append(orgIDs, target.OrganizationID)
-		}
-
-		controls := make([]*agentquality.Control, 0, len(targets))
-		if err := dba.NewSelect().
-			Model(&controls).
-			Where(agentqualitycol.ControlColumns.OrganizationID.In(), bun.List(orgIDs)).
-			Scan(ctx); err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("read quality controls to schedule: %w", err)
-		}
-
-		byTenant := make(map[pagination.TenantInfo]*agentquality.Control, len(controls))
-		for _, control := range controls {
-			byTenant[pagination.TenantInfo{
-				OrgID: control.OrganizationID,
-				BuID:  control.BusinessUnitID,
-			}] = control
-		}
-		for _, target := range targets {
-			target.Control = byTenant[target.TenantInfo()]
-		}
-
-		return targets, nil
-	})
+		},
+	)
 }

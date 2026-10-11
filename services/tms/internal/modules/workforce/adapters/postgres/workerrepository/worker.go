@@ -71,35 +71,38 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *workerports.WorkerSelectOptionsRequest,
 ) (*pagination.ListResult[*worker.Worker], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*worker.Worker], error) {
-		return dbhelper.SelectOptions[*worker.Worker](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					workercol.WorkerColumns.ID,
-					workercol.WorkerColumns.CreatedAt,
-					workercol.WorkerColumns.FirstName,
-					workercol.WorkerColumns.LastName,
-					workercol.WorkerColumns.FleetCodeID,
-					workercol.WorkerColumns.Status,
-				},
-				OrgColumnRef: &workercol.WorkerColumns.OrganizationID,
-				BuColumnRef:  &workercol.WorkerColumns.BusinessUnitID,
-				SearchColumnRefs: []buncolgen.Column{
-					workercol.WorkerColumns.FirstName,
-					workercol.WorkerColumns.LastName,
-				},
-				EntityName: "Worker",
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					q = q.
-						Where(workercol.WorkerColumns.Status.Eq(), domaintypes.StatusActive).
-						Relation(workercol.WorkerRelations.FleetCode)
-					if req.OwnerOperatorsOnly {
-						now := timeutils.NowUnix()
-						q = q.Where(
-							`(wrk.type = ? OR EXISTS (
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*worker.Worker], error) {
+			return dbhelper.SelectOptions[*worker.Worker](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						workercol.WorkerColumns.ID,
+						workercol.WorkerColumns.CreatedAt,
+						workercol.WorkerColumns.FirstName,
+						workercol.WorkerColumns.LastName,
+						workercol.WorkerColumns.FleetCodeID,
+						workercol.WorkerColumns.Status,
+					},
+					OrgColumnRef: &workercol.WorkerColumns.OrganizationID,
+					BuColumnRef:  &workercol.WorkerColumns.BusinessUnitID,
+					SearchColumnRefs: []buncolgen.Column{
+						workercol.WorkerColumns.FirstName,
+						workercol.WorkerColumns.LastName,
+					},
+					EntityName: "Worker",
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						q = q.
+							Where(workercol.WorkerColumns.Status.Eq(), domaintypes.StatusActive).
+							Relation(workercol.WorkerRelations.FleetCode)
+						if req.OwnerOperatorsOnly {
+							now := timeutils.NowUnix()
+							q = q.Where(
+								`(wrk.type = ? OR EXISTS (
 							SELECT 1
 							FROM worker_pay_assignments wpa
 							JOIN driver_pay_profiles dpp
@@ -113,72 +116,77 @@ func (r *repository) SelectOptions(
 								AND (wpa.effective_to IS NULL OR wpa.effective_to > ?)
 								AND dpp.classification = ?
 						))`,
-							worker.WorkerTypeContractor, now, now,
-							driverpay.PayeeClassificationOwnerOperator,
-						)
-					}
-					return q
+								worker.WorkerTypeContractor, now, now,
+								driverpay.PayeeClassificationOwnerOperator,
+							)
+						}
+						return q
+					},
 				},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 func (r *repository) List(
 	ctx context.Context,
 	req *workerports.ListWorkersRequest,
 ) (*pagination.CursorListResult[*worker.Worker], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*worker.Worker], error) {
-		log := r.l.With(
-			zap.String("operation", "List"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*worker.Worker], error) {
+			log := r.l.With(
+				zap.String("operation", "List"),
+				zap.Any("request", req),
+			)
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*worker.Worker)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						workercol.WorkerTable.Alias,
-						req.Filter,
-						(*worker.Worker)(nil),
-					)
-				}).
-				Count(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := r.db.DBForContext(ctx).
+					NewSelect().
+					Model((*worker.Worker)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							workercol.WorkerTable.Alias,
+							req.Filter,
+							(*worker.Worker)(nil),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count workers", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*worker.Worker]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(items *[]*worker.Worker) *bun.SelectQuery {
+					return r.db.DBForContext(ctx).
+						NewSelect().
+						Model(items).
+						ColumnExpr(workercol.WorkerTable.All()).
+						Relation(workercol.WorkerRelations.FleetCode).
+						Relation(workercol.WorkerRelations.State).
+						Relation(workercol.WorkerRelations.Profile)
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					return r.cursorFilterQuery(sq, req)
+				},
+			})
 			if err != nil {
-				log.Error("failed to count workers", zap.Error(err))
+				log.Error("failed to scan workers", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*worker.Worker]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(items *[]*worker.Worker) *bun.SelectQuery {
-				return r.db.DBForContext(ctx).
-					NewSelect().
-					Model(items).
-					ColumnExpr(workercol.WorkerTable.All()).
-					Relation(workercol.WorkerRelations.FleetCode).
-					Relation(workercol.WorkerRelations.State).
-					Relation(workercol.WorkerRelations.Profile)
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.cursorFilterQuery(sq, req)
-			},
-		})
-		if err != nil {
-			log.Error("failed to scan workers", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -266,7 +274,10 @@ func (r *repository) Create(
 			return nil
 		})
 		if err != nil {
-			return nil, dberror.MapRetryableTransactionError(err, "Worker is busy. Retry the request.")
+			return nil, dberror.MapRetryableTransactionError(
+				err,
+				"Worker is busy. Retry the request.",
+			)
 		}
 
 		return entity, nil
@@ -339,7 +350,10 @@ func (r *repository) Update(
 			return nil
 		})
 		if err != nil {
-			return nil, dberror.MapRetryableTransactionError(err, "Worker is busy. Retry the request.")
+			return nil, dberror.MapRetryableTransactionError(
+				err,
+				"Worker is busy. Retry the request.",
+			)
 		}
 
 		return entity, nil
@@ -350,33 +364,37 @@ func (r *repository) GetWorkerSyncReadinessCounts(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*workerports.WorkerSyncReadinessCounts, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerports.WorkerSyncReadinessCounts, error) {
-		counts := new(workerports.WorkerSyncReadinessCounts)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workerports.WorkerSyncReadinessCounts, error) {
+			counts := new(workerports.WorkerSyncReadinessCounts)
 
-		wrk := workercol.WorkerColumns
+			wrk := workercol.WorkerColumns
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.Worker)(nil)).
-			ColumnExpr(buncolgen.Count("total_workers")).
-			ColumnExpr(buncolgen.CountFilter("active_workers", wrk.Status.Eq()),
-				domaintypes.StatusActive,
-			).
-			ColumnExpr(
-				buncolgen.CountFilter("synced_active_workers",
-					wrk.Status.Eq(),
-					wrk.ExternalID.Expr("NULLIF(BTRIM({}), '') IS NOT NULL"),
-				),
-				domaintypes.StatusActive,
-			).
-			Apply(workercol.WorkerApplyTenant(tenantInfo)).
-			Scan(ctx, counts)
-		if err != nil {
-			return nil, err
-		}
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*worker.Worker)(nil)).
+				ColumnExpr(buncolgen.Count("total_workers")).
+				ColumnExpr(buncolgen.CountFilter("active_workers", wrk.Status.Eq()),
+					domaintypes.StatusActive,
+				).
+				ColumnExpr(
+					buncolgen.CountFilter("synced_active_workers",
+						wrk.Status.Eq(),
+						wrk.ExternalID.Expr("NULLIF(BTRIM({}), '') IS NOT NULL"),
+					),
+					domaintypes.StatusActive,
+				).
+				Apply(workercol.WorkerApplyTenant(tenantInfo)).
+				Scan(ctx, counts)
+			if err != nil {
+				return nil, err
+			}
 
-		return counts, nil
-	})
+			return counts, nil
+		},
+	)
 }
 
 func (r *repository) ReplaceWorkerSyncDrifts(
@@ -429,33 +447,37 @@ func (r *repository) ListWorkerSyncDrifts(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]workerports.WorkerSyncDriftRecord, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.WorkerSyncDriftRecord, error) {
-		models := make([]*worker.WorkerSyncDrift, 0)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]workerports.WorkerSyncDriftRecord, error) {
+			models := make([]*worker.WorkerSyncDrift, 0)
 
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(&models).Apply(workercol.WorkerSyncDriftApplyTenant(tenantInfo)).
-			Order(workercol.WorkerSyncDriftColumns.DetectedAt.OrderDesc()).
-			Order(workercol.WorkerSyncDriftColumns.WorkerName.OrderAsc()).
-			Scan(ctx); err != nil {
-			return nil, err
-		}
+			if err := r.db.DBForContext(ctx).NewSelect().
+				Model(&models).Apply(workercol.WorkerSyncDriftApplyTenant(tenantInfo)).
+				Order(workercol.WorkerSyncDriftColumns.DetectedAt.OrderDesc()).
+				Order(workercol.WorkerSyncDriftColumns.WorkerName.OrderAsc()).
+				Scan(ctx); err != nil {
+				return nil, err
+			}
 
-		records := make([]workerports.WorkerSyncDriftRecord, 0, len(models))
-		for idx := range models {
-			model := models[idx]
-			records = append(records, workerports.WorkerSyncDriftRecord{
-				WorkerID:        model.WorkerID,
-				WorkerName:      model.WorkerName,
-				DriftType:       model.DriftType,
-				Message:         model.Message,
-				LocalExternalID: model.LocalExternalID,
-				RemoteDriverID:  model.RemoteDriverID,
-				DetectedAt:      model.DetectedAt,
-			})
-		}
+			records := make([]workerports.WorkerSyncDriftRecord, 0, len(models))
+			for idx := range models {
+				model := models[idx]
+				records = append(records, workerports.WorkerSyncDriftRecord{
+					WorkerID:        model.WorkerID,
+					WorkerName:      model.WorkerName,
+					DriftType:       model.DriftType,
+					Message:         model.Message,
+					LocalExternalID: model.LocalExternalID,
+					RemoteDriverID:  model.RemoteDriverID,
+					DetectedAt:      model.DetectedAt,
+				})
+			}
 
-		return records, nil
-	})
+			return records, nil
+		},
+	)
 }
 
 func (r *repository) PatchProfileCredentialField(

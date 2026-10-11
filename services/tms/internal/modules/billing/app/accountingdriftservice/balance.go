@@ -61,13 +61,16 @@ func (s *Service) ReconcileBalances(
 		limit = defaultCustomers
 	}
 	limit = intutils.Clamp(limit, 1, maxCustomers)
-	lines, err := s.source.ListBalances(ctx, &accountingsyncports.ListAccountingDriftBalancesRequest{
-		TenantInfo:      sess.tenant,
-		ConnectionID:    sess.conn.ID,
-		DatedFrom:       datedFrom,
-		AfterCustomerID: req.AfterCustomerID,
-		Customers:       limit,
-	})
+	lines, err := s.source.ListBalances(
+		ctx,
+		&accountingsyncports.ListAccountingDriftBalancesRequest{
+			TenantInfo:      sess.tenant,
+			ConnectionID:    sess.conn.ID,
+			DatedFrom:       datedFrom,
+			AfterCustomerID: req.AfterCustomerID,
+			Customers:       limit,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

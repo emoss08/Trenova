@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -115,7 +115,11 @@ func controlPatchFromInput(
 		"confirmBlockingChanges", "Confirm blocking changes", input.ConfirmBlockingChanges,
 	)
 	collect(e)
-	patch.OutagePolicy, e = base.RequiredOmittable("outagePolicy", "Outage policy", input.OutagePolicy)
+	patch.OutagePolicy, e = base.RequiredOmittable(
+		"outagePolicy",
+		"Outage policy",
+		input.OutagePolicy,
+	)
 	collect(e)
 	patch.AutoDisqualifyOnBlock, e = base.RequiredOmittable(
 		"autoDisqualifyOnBlock", "Automatic disqualification", input.AutoDisqualifyOnBlock,

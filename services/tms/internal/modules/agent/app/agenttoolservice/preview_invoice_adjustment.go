@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -52,7 +52,9 @@ func adjustmentMoney(
 	), toolpreview.SensitiveAs("totalAmount"))
 }
 
-func outcomeStatus(figures *invoiceadjustmentports.InvoiceAdjustmentPreview) invoiceadjustment.Status {
+func outcomeStatus(
+	figures *invoiceadjustmentports.InvoiceAdjustmentPreview,
+) invoiceadjustment.Status {
 	if figures != nil && figures.RequiresApproval {
 		return invoiceadjustment.StatusPendingApproval
 	}

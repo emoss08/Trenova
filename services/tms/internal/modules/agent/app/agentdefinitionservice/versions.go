@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/kernel/app/editconflict"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/editconflict"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -31,7 +31,10 @@ func (s *Service) versioned(
 		if err != nil {
 			return nil, err
 		}
-		if err = s.versions.Create(ctx, agentdefinition.NewVersion(saved, before, author)); err != nil {
+		if err = s.versions.Create(
+			ctx,
+			agentdefinition.NewVersion(saved, before, author),
+		); err != nil {
 			return nil, err
 		}
 		return saved, nil
@@ -39,7 +42,10 @@ func (s *Service) versioned(
 }
 
 // inTransaction runs a save in a transaction of its own.
-func (s *Service) inTransaction(ctx context.Context, write saveFunc) (*agentdefinition.Definition, error) {
+func (s *Service) inTransaction(
+	ctx context.Context,
+	write saveFunc,
+) (*agentdefinition.Definition, error) {
 	var saved *agentdefinition.Definition
 	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		var txErr error
@@ -78,11 +84,14 @@ func (s *Service) editConflict(ctx context.Context, req *conflictRequest) error 
 
 	detail := &editconflict.Detail{Version: current.Version, UpdatedAt: current.UpdatedAt}
 
-	latest, err := s.versions.LatestAt(ctx, &agentdefinitionports.GetAgentDefinitionVersionAtRequest{
-		TenantInfo:        req.tenantInfo,
-		AgentDefinitionID: req.agentID,
-		Version:           current.Version,
-	})
+	latest, err := s.versions.LatestAt(
+		ctx,
+		&agentdefinitionports.GetAgentDefinitionVersionAtRequest{
+			TenantInfo:        req.tenantInfo,
+			AgentDefinitionID: req.agentID,
+			Version:           current.Version,
+		},
+	)
 	if err != nil {
 		s.l.Warn("could not read who last saved the agent", zap.Error(err))
 	}
@@ -90,11 +99,14 @@ func (s *Service) editConflict(ctx context.Context, req *conflictRequest) error 
 		detail.Author = latest.Author
 	}
 
-	loaded, err := s.versions.LatestAt(ctx, &agentdefinitionports.GetAgentDefinitionVersionAtRequest{
-		TenantInfo:        req.tenantInfo,
-		AgentDefinitionID: req.agentID,
-		Version:           req.loaded,
-	})
+	loaded, err := s.versions.LatestAt(
+		ctx,
+		&agentdefinitionports.GetAgentDefinitionVersionAtRequest{
+			TenantInfo:        req.tenantInfo,
+			AgentDefinitionID: req.agentID,
+			Version:           req.loaded,
+		},
+	)
 	if err != nil {
 		s.l.Warn("could not read the version the person loaded", zap.Error(err))
 	}

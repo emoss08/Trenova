@@ -28,14 +28,17 @@ func (s *Service) ledgerRequirement(
 	if err != nil {
 		return err
 	}
-	mappings, err := s.mappings.ListByConnection(ctx, &accountingsyncports.ListAccountingMappingsQuery{
-		TenantInfo:   tenantInfo,
-		ConnectionID: conn.ID,
-		TargetTypes: []accountingsync.MappingTargetType{
-			accountingsync.TargetGLAccount,
-			accountingsync.TargetAccountRole,
+	mappings, err := s.mappings.ListByConnection(
+		ctx,
+		&accountingsyncports.ListAccountingMappingsQuery{
+			TenantInfo:   tenantInfo,
+			ConnectionID: conn.ID,
+			TargetTypes: []accountingsync.MappingTargetType{
+				accountingsync.TargetGLAccount,
+				accountingsync.TargetAccountRole,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return err
 	}

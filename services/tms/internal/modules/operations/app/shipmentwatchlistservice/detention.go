@@ -5,10 +5,10 @@ import (
 	"context"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -183,10 +183,13 @@ func (s *Service) defaultDetentionRate(
 		return decimal.Zero, nil
 	}
 
-	charge, err := s.accessorials.GetByID(ctx, accessorialchargeports.GetAccessorialChargeByIDRequest{
-		ID:         *control.DetentionChargeID,
-		TenantInfo: &tenantInfo,
-	})
+	charge, err := s.accessorials.GetByID(
+		ctx,
+		accessorialchargeports.GetAccessorialChargeByIDRequest{
+			ID:         *control.DetentionChargeID,
+			TenantInfo: &tenantInfo,
+		},
+	)
 	if err != nil {
 		return decimal.Zero, err
 	}

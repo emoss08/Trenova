@@ -6,20 +6,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -122,16 +122,23 @@ func (s *service) reviewFacts(
 		if facts.invoice != nil {
 			invoiceID = facts.invoice.ID
 		}
-		dups, err := s.reviewRepo.FindDuplicates(ctx, &billingqueueports.FindBillingQueueDuplicatesRequest{
-			TenantInfo:       tenantInfo,
-			ItemID:           item.ID,
-			ShipmentID:       item.ShipmentID,
-			BillToCustomerID: item.BillToCustomerID,
-			BillType:         item.BillType,
-			InvoiceID:        invoiceID,
-		})
+		dups, err := s.reviewRepo.FindDuplicates(
+			ctx,
+			&billingqueueports.FindBillingQueueDuplicatesRequest{
+				TenantInfo:       tenantInfo,
+				ItemID:           item.ID,
+				ShipmentID:       item.ShipmentID,
+				BillToCustomerID: item.BillToCustomerID,
+				BillType:         item.BillType,
+				InvoiceID:        invoiceID,
+			},
+		)
 		if err != nil {
-			s.l.Warn("failed to look for duplicate bills", zap.String("billingQueueItemId", item.ID.String()), zap.Error(err))
+			s.l.Warn(
+				"failed to look for duplicate bills",
+				zap.String("billingQueueItemId", item.ID.String()),
+				zap.Error(err),
+			)
 		}
 		facts.duplicates = dups
 	}
@@ -172,7 +179,11 @@ func (s *service) storedIssues(
 	if !billingqueue.IsReviewable(item.Status) && item.Status != billingqueue.StatusOnHold {
 		issues, err := s.reviewRepo.ListIssues(ctx, tenantInfo, item.ID)
 		if err != nil {
-			s.l.Warn("failed to read billing queue issues", zap.String("billingQueueItemId", item.ID.String()), zap.Error(err))
+			s.l.Warn(
+				"failed to read billing queue issues",
+				zap.String("billingQueueItemId", item.ID.String()),
+				zap.Error(err),
+			)
 			return []*billingqueue.Issue{}
 		}
 		return issues
@@ -184,7 +195,11 @@ func (s *service) storedIssues(
 		Findings:   billingqueue.Findings(facts.findings),
 	})
 	if err != nil {
-		s.l.Warn("failed to sync billing queue issues", zap.String("billingQueueItemId", item.ID.String()), zap.Error(err))
+		s.l.Warn(
+			"failed to sync billing queue issues",
+			zap.String("billingQueueItemId", item.ID.String()),
+			zap.Error(err),
+		)
 		return []*billingqueue.Issue{}
 	}
 
@@ -209,7 +224,11 @@ func (s *service) storedIssues(
 // syncReview reads an item the way the review does, which is what raises its
 // issues. Transfers and charge edits call it so the queue's badges are right
 // before anybody opens the item.
-func (s *service) syncReview(ctx context.Context, itemID pulid.ID, tenantInfo pagination.TenantInfo) {
+func (s *service) syncReview(
+	ctx context.Context,
+	itemID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) {
 	if s.reviewRepo == nil {
 		return
 	}
@@ -218,7 +237,11 @@ func (s *service) syncReview(ctx context.Context, itemID pulid.ID, tenantInfo pa
 		TenantInfo:            tenantInfo,
 		ExpandShipmentDetails: true,
 	}); err != nil {
-		s.l.Warn("failed to check billing queue item", zap.String("billingQueueItemId", itemID.String()), zap.Error(err))
+		s.l.Warn(
+			"failed to check billing queue item",
+			zap.String("billingQueueItemId", itemID.String()),
+			zap.Error(err),
+		)
 	}
 }
 
@@ -253,13 +276,20 @@ func (s *service) shipmentOccurrences(
 	if s.occurrenceRepo == nil || item.ShipmentID.IsNil() {
 		return nil
 	}
-	occurrences, err := s.occurrenceRepo.GetByShipment(ctx, &detentionports.GetOccurrencesByShipmentRequest{
-		ShipmentID:      item.ShipmentID,
-		TenantInfo:      tenantInfo,
-		IncludeEvidence: true,
-	})
+	occurrences, err := s.occurrenceRepo.GetByShipment(
+		ctx,
+		&detentionports.GetOccurrencesByShipmentRequest{
+			ShipmentID:      item.ShipmentID,
+			TenantInfo:      tenantInfo,
+			IncludeEvidence: true,
+		},
+	)
 	if err != nil {
-		s.l.Warn("failed to read detention for billing review", zap.String("billingQueueItemId", item.ID.String()), zap.Error(err))
+		s.l.Warn(
+			"failed to read detention for billing review",
+			zap.String("billingQueueItemId", item.ID.String()),
+			zap.Error(err),
+		)
 		return nil
 	}
 
@@ -382,7 +412,11 @@ func (s *service) ratingAgreement(
 		AsOf:            shp.RatingDetail.RatedAt,
 	})
 	if err != nil {
-		s.l.Warn("failed to read the agreement that rated the shipment", zap.String("shipmentId", shp.ID.String()), zap.Error(err))
+		s.l.Warn(
+			"failed to read the agreement that rated the shipment",
+			zap.String("shipmentId", shp.ID.String()),
+			zap.Error(err),
+		)
 		return nil
 	}
 
@@ -489,7 +523,11 @@ func detentionBasis(occurrence *detention.DetentionOccurrence) string {
 
 func manualBasis(charge *shipment.AdditionalCharge) string {
 	if charge.Unit > 1 {
-		return fmt.Sprintf("%d × %s · added by hand", charge.Unit, billingqueue.FormatMoney(charge.Amount))
+		return fmt.Sprintf(
+			"%d × %s · added by hand",
+			charge.Unit,
+			billingqueue.FormatMoney(charge.Amount),
+		)
 	}
 
 	return "Added by hand"
@@ -545,7 +583,8 @@ func detentionDwells(
 		eldMinutes := int32((departed - arrived) / 60)
 		rate := hourlyRate(occurrence)
 		eldBillable := max(eldMinutes-occurrence.FreeMinutesGranted, 0)
-		if occurrence.PolicySnapshot != nil && occurrence.PolicySnapshot.BillingIncrementMinutes > 0 {
+		if occurrence.PolicySnapshot != nil &&
+			occurrence.PolicySnapshot.BillingIncrementMinutes > 0 {
 			step := int32(occurrence.PolicySnapshot.BillingIncrementMinutes)
 			eldBillable = (eldBillable + step - 1) / step * step
 		}
@@ -598,13 +637,20 @@ func (s *service) invoiceRef(
 	if item.Status != billingqueue.StatusApproved && item.Status != billingqueue.StatusPosted {
 		return nil
 	}
-	inv, err := s.invoiceRepo.GetByBillingQueueItemID(ctx, invoiceports.GetInvoiceByBillingQueueItemIDRequest{
-		BillingQueueItemID: item.ID,
-		TenantInfo:         tenantInfo,
-	})
+	inv, err := s.invoiceRepo.GetByBillingQueueItemID(
+		ctx,
+		invoiceports.GetInvoiceByBillingQueueItemIDRequest{
+			BillingQueueItemID: item.ID,
+			TenantInfo:         tenantInfo,
+		},
+	)
 	if err != nil {
 		if !errortypes.IsNotFoundError(err) {
-			s.l.Warn("failed to read the item's invoice", zap.String("billingQueueItemId", item.ID.String()), zap.Error(err))
+			s.l.Warn(
+				"failed to read the item's invoice",
+				zap.String("billingQueueItemId", item.ID.String()),
+				zap.Error(err),
+			)
 		}
 		return nil
 	}
@@ -677,7 +723,11 @@ func (s *service) shipmentDocuments(
 		IncludeDocumentType: true,
 	})
 	if err != nil {
-		s.l.Warn("failed to read the shipment's documents", zap.String("billingQueueItemId", item.ID.String()), zap.Error(err))
+		s.l.Warn(
+			"failed to read the shipment's documents",
+			zap.String("billingQueueItemId", item.ID.String()),
+			zap.Error(err),
+		)
 		return nil
 	}
 	current := make([]*document.Document, 0, len(docs))
@@ -855,7 +905,8 @@ func markLedger(review *billingqueue.ChargeReview, issues []*billingqueue.Issue)
 		}
 		switch option.Effect.Kind { //nolint:exhaustive // only charge edits show in the ledger
 		case billingqueue.EffectSet:
-			if line == nil && issue.EffectSnapshot != nil && issue.EffectSnapshot.RestoredChargeID.IsNotNil() {
+			if line == nil && issue.EffectSnapshot != nil &&
+				issue.EffectSnapshot.RestoredChargeID.IsNotNil() {
 				line = byCharge[issue.EffectSnapshot.RestoredChargeID]
 			}
 			if line != nil {

@@ -3,15 +3,13 @@ package accountingmappingservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/core/services/accountingconnlookup"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
@@ -19,6 +17,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -173,7 +173,9 @@ func (s *Service) Summary(
 	return summary, nil
 }
 
-func groupCounts(counts []accountingsyncports.AccountingMappingCount) []accountingsyncports.AccountingMappingGroup {
+func groupCounts(
+	counts []accountingsyncports.AccountingMappingCount,
+) []accountingsyncports.AccountingMappingGroup {
 	byType := make(map[accountingsync.MappingTargetType]*accountingsyncports.AccountingMappingGroup)
 	groups := make(
 		[]accountingsyncports.AccountingMappingGroup,
@@ -211,15 +213,18 @@ func (s *Service) ListMappings(
 	if err != nil {
 		return nil, err
 	}
-	return s.mappings.ListConnection(ctx, &accountingsyncports.ListAccountingMappingsConnectionRequest{
-		Filter:       &pagination.QueryOptions{TenantInfo: req.TenantInfo},
-		Cursor:       req.Cursor,
-		ConnectionID: conn.ID,
-		TargetTypes:  req.TargetTypes,
-		States:       req.States,
-		RequiredOnly: req.RequiredOnly,
-		Search:       req.Search,
-	})
+	return s.mappings.ListConnection(
+		ctx,
+		&accountingsyncports.ListAccountingMappingsConnectionRequest{
+			Filter:       &pagination.QueryOptions{TenantInfo: req.TenantInfo},
+			Cursor:       req.Cursor,
+			ConnectionID: conn.ID,
+			TargetTypes:  req.TargetTypes,
+			States:       req.States,
+			RequiredOnly: req.RequiredOnly,
+			Search:       req.Search,
+		},
+	)
 }
 
 func (s *Service) GetMapping(
@@ -296,12 +301,15 @@ func (s *Service) GetReferenceObjects(
 	ctx context.Context,
 	req *accountingsyncports.GetAccountingReferenceObjectsRequest,
 ) ([]*accountingsync.AccountingReferenceObject, error) {
-	return s.references.GetByExternalIDs(ctx, &accountingsyncports.GetAccountingReferenceObjectsRequest{
-		TenantInfo:   req.TenantInfo,
-		ConnectionID: req.ConnectionID,
-		Kind:         req.Kind,
-		ExternalIDs:  req.ExternalIDs,
-	})
+	return s.references.GetByExternalIDs(
+		ctx,
+		&accountingsyncports.GetAccountingReferenceObjectsRequest{
+			TenantInfo:   req.TenantInfo,
+			ConnectionID: req.ConnectionID,
+			Kind:         req.Kind,
+			ExternalIDs:  req.ExternalIDs,
+		},
+	)
 }
 
 func (s *Service) usableReference(

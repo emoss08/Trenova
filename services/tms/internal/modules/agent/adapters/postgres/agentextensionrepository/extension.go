@@ -135,7 +135,11 @@ func (r *repository) Update(
 			r.l.Error("failed to update agent extension", zap.Error(err))
 			return nil, fmt.Errorf("update agent extension: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(result, extensionEntityName, entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			result,
+			extensionEntityName,
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 

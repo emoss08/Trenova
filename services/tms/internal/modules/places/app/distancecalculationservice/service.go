@@ -10,23 +10,23 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distancecalculation"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distancecontrol"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/jobs/iftajobs/iftacontract"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/distancecalculationports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/distancecontrolports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/distanceoverrideports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/distanceprofileports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/storedmileageports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/modules/settlement/jobs/iftajobs/iftacontract"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -394,7 +394,11 @@ func (s *Service) planRecalculateShipment(
 		return nil, err
 	}
 
-	return &shipmentports.ShipmentDistancePreview{Before: before, After: entity, Distance: resp}, nil
+	return &shipmentports.ShipmentDistancePreview{
+		Before:   before,
+		After:    entity,
+		Distance: resp,
+	}, nil
 }
 
 func snapshotMoveDistances(entity *shipment.Shipment) *shipment.Shipment {

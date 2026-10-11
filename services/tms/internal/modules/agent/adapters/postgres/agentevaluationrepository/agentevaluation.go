@@ -47,7 +47,11 @@ func (r *repository) Create(
 	entity *agent.Evaluation,
 ) (*agent.Evaluation, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Evaluation, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
 			r.l.Error("failed to create agent evaluation", zap.Error(err))
 
 			return nil, fmt.Errorf("create agent evaluation: %w", err)
@@ -143,67 +147,71 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *agentports.ListAgentEvaluationConnectionRequest,
 ) (*pagination.CursorListResult[*agent.Evaluation], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*agent.Evaluation], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*agent.Evaluation], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*agent.Evaluation)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						agentcol.EvaluationTable.Alias,
-						req.Filter,
-						(*agent.Evaluation)(nil),
-					)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*agent.Evaluation)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							agentcol.EvaluationTable.Alias,
+							req.Filter,
+							(*agent.Evaluation)(nil),
+						)
 
-					return suiteScope(sq, req.SuiteRunID).
-						Apply(agentcol.EvaluationApplyTenant(req.Filter.TenantInfo))
-				}).
-				Count(ctx)
+						return suiteScope(sq, req.SuiteRunID).
+							Apply(agentcol.EvaluationApplyTenant(req.Filter.TenantInfo))
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count agent evaluations", zap.Error(err))
+
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*agent.Evaluation]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*agent.Evaluation) *bun.SelectQuery {
+						q := dba.NewSelect().Model(entities)
+						if len(req.Columns) > 0 {
+							q = q.Column(req.Columns...)
+						}
+
+						return q
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							suiteScope(sq, req.SuiteRunID),
+							agentcol.EvaluationTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*agent.Evaluation)(nil),
+						)
+					},
+				})
 			if err != nil {
-				log.Error("failed to count agent evaluations", zap.Error(err))
+				log.Error("failed to list agent evaluations", zap.Error(err))
 
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*agent.Evaluation]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*agent.Evaluation) *bun.SelectQuery {
-					q := dba.NewSelect().Model(entities)
-					if len(req.Columns) > 0 {
-						q = q.Column(req.Columns...)
-					}
-
-					return q
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return querybuilder.ApplyCursorFilters(
-						suiteScope(sq, req.SuiteRunID),
-						agentcol.EvaluationTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*agent.Evaluation)(nil),
-					)
-				},
-			})
-		if err != nil {
-			log.Error("failed to list agent evaluations", zap.Error(err))
-
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func suiteScope(sq *bun.SelectQuery, suiteRunID pulid.ID) *bun.SelectQuery {

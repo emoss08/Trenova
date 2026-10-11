@@ -20,7 +20,10 @@ type DeleteFailureDismissalRequest struct {
 }
 
 type AIProviderFailureDismissalRepository interface {
-	List(ctx context.Context, req *ListFailureDismissalsRequest) ([]*aiprovider.FailureDismissal, error)
+	List(
+		ctx context.Context,
+		req *ListFailureDismissalsRequest,
+	) ([]*aiprovider.FailureDismissal, error)
 	// Upsert keeps one dismissal per person and provider, the latest.
 	Upsert(ctx context.Context, dismissal *aiprovider.FailureDismissal) error
 	Delete(ctx context.Context, req *DeleteFailureDismissalRequest) error

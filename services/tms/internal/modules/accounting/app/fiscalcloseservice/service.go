@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
@@ -19,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalsourceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -417,11 +417,14 @@ func (s *Service) resolveCarryforwardTarget(
 // reopened year is closed again with fresh idempotency keys, and the revision is
 // what keeps those keys unique.
 func (s *Service) closeRevision(ctx context.Context, fy *fiscalyear.FiscalYear) (int, error) {
-	sources, err := s.sourceRepo.ListByObject(ctx, journalsourceports.GetJournalSourceByObjectRequest{
-		TenantInfo:       tenantOf(fy),
-		SourceObjectType: sourceObjectType,
-		SourceObjectID:   fy.ID.String(),
-	})
+	sources, err := s.sourceRepo.ListByObject(
+		ctx,
+		journalsourceports.GetJournalSourceByObjectRequest{
+			TenantInfo:       tenantOf(fy),
+			SourceObjectType: sourceObjectType,
+			SourceObjectID:   fy.ID.String(),
+		},
+	)
 	if err != nil {
 		return 0, err
 	}

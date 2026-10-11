@@ -43,32 +43,36 @@ func (r *repository) ListInboundFiles(
 	ctx context.Context,
 	req *ediports.ListEDIInboundFilesRequest,
 ) (*pagination.ListResult[*edi.EDIInboundFile], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIInboundFile], error) {
-		entities := make([]*edi.EDIInboundFile, 0, req.Filter.Pagination.SafeLimit())
-		cols := edicol.EDIInboundFileColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*edi.EDIInboundFile], error) {
+			entities := make([]*edi.EDIInboundFile, 0, req.Filter.Pagination.SafeLimit())
+			cols := edicol.EDIInboundFileColumns
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation("Partner")
-		if req.Status != "" {
-			query = query.Where(cols.Status.Eq(), req.Status)
-		}
-		if req.PartnerID.IsNotNil() {
-			query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
-		}
-		query = query.ExcludeColumn("raw_content")
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Relation("Partner")
+			if req.Status != "" {
+				query = query.Where(cols.Status.Eq(), req.Status)
+			}
+			if req.PartnerID.IsNotNil() {
+				query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
+			}
+			query = query.ExcludeColumn("raw_content")
 
-		total, err := querybuilder.ApplyFilters(query, "eif", req.Filter, (*edi.EDIInboundFile)(nil)).
-			Order(cols.ReceivedAt.OrderDesc()).
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return &pagination.ListResult[*edi.EDIInboundFile]{Items: entities, Total: total}, nil
-	})
+			total, err := querybuilder.ApplyFilters(query, "eif", req.Filter, (*edi.EDIInboundFile)(nil)).
+				Order(cols.ReceivedAt.OrderDesc()).
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return &pagination.ListResult[*edi.EDIInboundFile]{Items: entities, Total: total}, nil
+		},
+	)
 }
 
 func (r *repository) GetInboundFileByID(
@@ -130,7 +134,11 @@ func (r *repository) UpdateInboundFile(
 			entity.Version = ov
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, "EDIInboundFile", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"EDIInboundFile",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 		return entity, nil
@@ -174,7 +182,10 @@ func (r *repository) PurgeRawContentBefore(
 }
 
 func (r *repository) CountQuarantinedSince(ctx context.Context, since int64) (int64, error) {
-	ctx = dbscope.WithSystem(ctx, "count quarantined inbound EDI files instance-wide for the health check")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"count quarantined inbound EDI files instance-wide for the health check",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
 		cols := edicol.EDIInboundFileColumns
 		count, err := r.db.DBForContext(ctx).
@@ -268,64 +279,68 @@ func (r *repository) ListInboundFilesCursor(
 	ctx context.Context,
 	req *ediports.ListEDIInboundFilesRequest,
 ) (*pagination.CursorListResult[*edi.EDIInboundFile], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*edi.EDIInboundFile], error) {
-		dba := r.db.DBForContext(ctx)
-		cols := edicol.EDIInboundFileColumns
-		extraFilters := func(sq *bun.SelectQuery) *bun.SelectQuery {
-			if req.Status != "" {
-				sq = sq.Where(cols.Status.Eq(), req.Status)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*edi.EDIInboundFile], error) {
+			dba := r.db.DBForContext(ctx)
+			cols := edicol.EDIInboundFileColumns
+			extraFilters := func(sq *bun.SelectQuery) *bun.SelectQuery {
+				if req.Status != "" {
+					sq = sq.Where(cols.Status.Eq(), req.Status)
+				}
+				if req.PartnerID.IsNotNil() {
+					sq = sq.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
+				}
+				return sq
 			}
-			if req.PartnerID.IsNotNil() {
-				sq = sq.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
-			}
-			return sq
-		}
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*edi.EDIInboundFile)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*edi.EDIInboundFile)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							"eif",
+							req.Filter,
+							(*edi.EDIInboundFile)(nil),
+						)
+						return extraFilters(sq)
+					}).
+					Count(ctx)
+				if err != nil {
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDIInboundFile]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(entities *[]*edi.EDIInboundFile) *bun.SelectQuery {
+					return dba.
+						NewSelect().
+						Model(entities).
+						ExcludeColumn("raw_content").
+						Relation("Partner")
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
 						"eif",
 						req.Filter,
+						req.Cursor,
 						(*edi.EDIInboundFile)(nil),
 					)
-					return extraFilters(sq)
-				}).
-				Count(ctx)
-			if err != nil {
-				return nil, err
-			}
-			totalCount = &total
-		}
-
-		return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDIInboundFile]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*edi.EDIInboundFile) *bun.SelectQuery {
-				return dba.
-					NewSelect().
-					Model(entities).
-					ExcludeColumn("raw_content").
-					Relation("Partner")
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				sq, applyErr := querybuilder.ApplyCursorFilters(
-					sq,
-					"eif",
-					req.Filter,
-					req.Cursor,
-					(*edi.EDIInboundFile)(nil),
-				)
-				if applyErr != nil {
-					return sq, applyErr
-				}
-				return extraFilters(sq), nil
-			},
-		})
-	})
+					if applyErr != nil {
+						return sq, applyErr
+					}
+					return extraFilters(sq), nil
+				},
+			})
+		},
+	)
 }

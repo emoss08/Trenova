@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagefavorite"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/pagefavoriteservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagefavorite"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/pagefavoriteports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -54,10 +54,13 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 func (h *Handler) list(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	favorites, err := h.service.List(c.Request.Context(), &pagefavoriteports.ListPageFavoritesRequest{
-		UserID:     authCtx.UserID,
-		TenantInfo: pagination.FromAuthAsUser(authCtx),
-	})
+	favorites, err := h.service.List(
+		c.Request.Context(),
+		&pagefavoriteports.ListPageFavoritesRequest{
+			UserID:     authCtx.UserID,
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

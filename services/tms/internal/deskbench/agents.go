@@ -93,7 +93,10 @@ func (s *Session) SyncAgents(ctx context.Context, specs []AgentSpec) (*AgentSync
 	return outcome, nil
 }
 
-func (s *Session) benchAgent(ctx context.Context, name string) (*agentdefinition.Definition, error) {
+func (s *Session) benchAgent(
+	ctx context.Context,
+	name string,
+) (*agentdefinition.Definition, error) {
 	agents, err := s.Agents(ctx)
 	if err != nil {
 		return nil, err
@@ -120,18 +123,22 @@ func (s *Session) syncAgent(ctx context.Context, spec *AgentSpec, outcome *Agent
 	tools := agentdefinition.WithoutCoreTools(spec.Tools)
 
 	if existing == nil {
-		_, err = s.bench.AgentDefinitions.Create(ctx, &agentdefinitionports.SaveAgentDefinitionRequest{
-			Name:            spec.Name,
-			Description:     spec.Description,
-			Template:        agentdefinition.Template(spec.Template),
-			Instructions:    spec.Instructions,
-			ToolNames:       tools,
-			AutonomyCeiling: ceiling,
-			Enabled:         true,
-			TriggerMode:     agentdefinition.TriggerChat,
-			MaxToolCalls:    spec.MaxToolCalls,
-			TenantInfo:      s.Tenant,
-		}, &s.Actor)
+		_, err = s.bench.AgentDefinitions.Create(
+			ctx,
+			&agentdefinitionports.SaveAgentDefinitionRequest{
+				Name:            spec.Name,
+				Description:     spec.Description,
+				Template:        agentdefinition.Template(spec.Template),
+				Instructions:    spec.Instructions,
+				ToolNames:       tools,
+				AutonomyCeiling: ceiling,
+				Enabled:         true,
+				TriggerMode:     agentdefinition.TriggerChat,
+				MaxToolCalls:    spec.MaxToolCalls,
+				TenantInfo:      s.Tenant,
+			},
+			&s.Actor,
+		)
 		if err != nil {
 			return err
 		}

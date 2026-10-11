@@ -48,37 +48,44 @@ func (r *densityScaleRepository) List(
 	ctx context.Context,
 	req *ratematrixports.ListRateMatrixRequest,
 ) (*pagination.ListResult[*ratematrix.DensityScale], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratematrix.DensityScale], error) {
-		log := r.l.With(zap.String("operation", "List"))
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*ratematrix.DensityScale], error) {
+			log := r.l.With(zap.String("operation", "List"))
 
-		cols := ratematrixcol.DensityScaleColumns
-		entities := make([]*ratematrix.DensityScale, 0, req.Filter.Pagination.SafeLimit())
+			cols := ratematrixcol.DensityScaleColumns
+			entities := make([]*ratematrix.DensityScale, 0, req.Filter.Pagination.SafeLimit())
 
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(buncolgen.Rel(ratematrixcol.DensityScaleRelations.Tiers), orderTiers).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = querybuilder.ApplyFilters(
-					sq,
-					ratematrixcol.DensityScaleTable.Alias,
-					req.Filter,
-					(*ratematrix.DensityScale)(nil),
-				)
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Relation(buncolgen.Rel(ratematrixcol.DensityScaleRelations.Tiers), orderTiers).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = querybuilder.ApplyFilters(
+						sq,
+						ratematrixcol.DensityScaleTable.Alias,
+						req.Filter,
+						(*ratematrix.DensityScale)(nil),
+					)
 
-				return sq.Apply(ratematrixcol.DensityScaleApplyTenant(req.Filter.TenantInfo)).
-					Limit(req.Filter.Pagination.SafeLimit()).
-					Offset(req.Filter.Pagination.SafeOffset()).
-					Order(cols.EffectiveFrom.OrderDesc())
-			}).
-			ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count density scales", zap.Error(err))
-			return nil, err
-		}
+					return sq.Apply(ratematrixcol.DensityScaleApplyTenant(req.Filter.TenantInfo)).
+						Limit(req.Filter.Pagination.SafeLimit()).
+						Offset(req.Filter.Pagination.SafeOffset()).
+						Order(cols.EffectiveFrom.OrderDesc())
+				}).
+				ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count density scales", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*ratematrix.DensityScale]{Items: entities, Total: total}, nil
-	})
+			return &pagination.ListResult[*ratematrix.DensityScale]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *densityScaleRepository) GetByID(
@@ -225,7 +232,8 @@ func (r *densityScaleRepository) Update(
 					return ratematrixcol.DensityScaleTierScopeTenantDelete(dq, pagination.TenantInfo{
 						OrgID: entity.OrganizationID,
 						BuID:  entity.BusinessUnitID,
-					}).Where(tierCols.RateDensityScaleID.Eq(), entity.ID)
+					}).
+						Where(tierCols.RateDensityScaleID.Eq(), entity.ID)
 				}).
 				Exec(c); dErr != nil {
 				return dErr

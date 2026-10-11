@@ -40,7 +40,9 @@ func NewShipmentBoardCache(p ShipmentBoardCacheParams) shipmentports.ShipmentBoa
 	return newShipmentBoardCache(p)
 }
 
-func NewShipmentBoardEpochBumper(p ShipmentBoardCacheParams) shipmentports.ShipmentBoardEpochBumper {
+func NewShipmentBoardEpochBumper(
+	p ShipmentBoardCacheParams,
+) shipmentports.ShipmentBoardEpochBumper {
 	return newShipmentBoardCache(p)
 }
 

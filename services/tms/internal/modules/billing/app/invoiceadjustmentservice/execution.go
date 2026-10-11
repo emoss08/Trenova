@@ -5,13 +5,13 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -31,13 +31,16 @@ func (s *Service) ensureCorrectionGroup(
 ) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
 	rootID := entity.ID
 	if entity.CorrectionGroupID.IsNotNil() {
-		group, err := s.repo.GetCorrectionGroup(ctx, invoiceadjustmentports.GetCorrectionGroupRequest{
-			ID: entity.CorrectionGroupID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
+		group, err := s.repo.GetCorrectionGroup(
+			ctx,
+			invoiceadjustmentports.GetCorrectionGroupRequest{
+				ID: entity.CorrectionGroupID,
+				TenantInfo: pagination.TenantInfo{
+					OrgID: entity.OrganizationID,
+					BuID:  entity.BusinessUnitID,
+				},
 			},
-		})
+		)
 		if err == nil && group != nil {
 			return group, nil
 		}

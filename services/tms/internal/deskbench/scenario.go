@@ -138,7 +138,12 @@ func LoadScenarios(paths []string) ([]*Scenario, error) {
 		}
 		for _, scenario := range loaded {
 			if previous, dup := names[scenario.Name]; dup {
-				return nil, fmt.Errorf("scenario %q is defined in %s and %s", scenario.Name, previous, file)
+				return nil, fmt.Errorf(
+					"scenario %q is defined in %s and %s",
+					scenario.Name,
+					previous,
+					file,
+				)
 			}
 			names[scenario.Name] = file
 			scenarios = append(scenarios, scenario)
@@ -246,7 +251,10 @@ func (s *Scenario) Validate() error {
 		hasDecide := step.Decide != ""
 		switch {
 		case hasSay == hasDecide:
-			return fmt.Errorf("%s: a step either says something or decides, not both or neither", where)
+			return fmt.Errorf(
+				"%s: a step either says something or decides, not both or neither",
+				where,
+			)
 		case hasDecide && step.Decide != DecisionApprove && step.Decide != DecisionReject:
 			return fmt.Errorf("%s: decide must be approve or reject, not %q", where, step.Decide)
 		case hasDecide && idx == 0:
@@ -254,7 +262,10 @@ func (s *Scenario) Validate() error {
 		case hasSay && (step.Note != "" || step.Tool != "" || len(step.Modifications) > 0):
 			return fmt.Errorf("%s: note, tool and modifications belong on a decide step", where)
 		case hasDecide && step.Agent != "":
-			return fmt.Errorf("%s: agent belongs on a say step, the one that hands the message over", where)
+			return fmt.Errorf(
+				"%s: agent belongs on a say step, the one that hands the message over",
+				where,
+			)
 		}
 		if hasSay {
 			if _, err := step.Utterance(); err != nil {
@@ -283,7 +294,10 @@ var setupForbidden = []string{"drop ", "alter ", "truncate ", "grant ", "revoke 
 
 func validSetup(statement string) error {
 	text := strings.ToLower(strings.TrimSpace(statement))
-	if !slices.ContainsFunc(setupVerbs, func(verb string) bool { return strings.HasPrefix(text, verb) }) {
+	if !slices.ContainsFunc(
+		setupVerbs,
+		func(verb string) bool { return strings.HasPrefix(text, verb) },
+	) {
 		return fmt.Errorf("setup is an UPDATE, INSERT or DELETE: %q", statement)
 	}
 	if strings.Contains(strings.TrimRight(text, "; \n\t"), ";") {

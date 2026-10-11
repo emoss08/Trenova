@@ -7,10 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
-	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -376,10 +376,13 @@ func (r *QueryResolver) ShipmentBoardGroups(
 		return nil, err
 	}
 
-	groups, err := r.BoardGroups.GroupSummary(ctx, &shipmentports.SummarizeShipmentBoardGroupsRequest{
-		Scope:   scopeRequestFromGraphQL(&input, base.TenantInfo(authCtx)),
-		GroupBy: groupBy,
-	})
+	groups, err := r.BoardGroups.GroupSummary(
+		ctx,
+		&shipmentports.SummarizeShipmentBoardGroupsRequest{
+			Scope:   scopeRequestFromGraphQL(&input, base.TenantInfo(authCtx)),
+			GroupBy: groupBy,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

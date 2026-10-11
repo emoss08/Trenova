@@ -8,16 +8,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -381,10 +381,13 @@ func (s *Service) BuildShipmentStatusPayloadForServiceFailure(
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
-	failure, err := s.serviceFailureRepo.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
-		ID:         req.ServiceFailureID,
-		TenantInfo: req.TenantInfo,
-	})
+	failure, err := s.serviceFailureRepo.GetByID(
+		ctx,
+		&servicefailureports.GetServiceFailureByIDRequest{
+			ID:         req.ServiceFailureID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

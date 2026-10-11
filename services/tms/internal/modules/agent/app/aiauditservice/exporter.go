@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/csvutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -670,7 +670,10 @@ var exportColumns = []exportColumn{
 	{"window_end", func(r *exportRow) string { return integer(r.WindowEnd) }},
 	{"tainted", func(r *exportRow) string { return strconv.FormatBool(r.Tainted) }},
 	{"taint", func(r *exportRow) string { return compact(r.Taint) }},
-	{"external_content", func(r *exportRow) string { return strconv.FormatBool(r.ExternalContent) }},
+	{
+		"external_content",
+		func(r *exportRow) string { return strconv.FormatBool(r.ExternalContent) },
+	},
 	{"simulated", func(r *exportRow) string { return strconv.FormatBool(r.Simulated) }},
 	{"reconstructed", func(r *exportRow) string { return strconv.FormatBool(r.Reconstructed) }},
 	{"source_key", func(r *exportRow) string { return text(r.SourceKey) }},

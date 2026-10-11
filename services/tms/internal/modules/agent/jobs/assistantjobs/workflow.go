@@ -228,7 +228,10 @@ func (w *Workflows) answer(
 		return finish
 	}
 
-	run := agentflow.NewRunContext(plan.RunRequest(&payload.Actor), agentflowcontract.PriorityInteractive)
+	run := agentflow.NewRunContext(
+		plan.RunRequest(&payload.Actor),
+		agentflowcontract.PriorityInteractive,
+	)
 	run.StepOwner = agentports.RunStepOwner{
 		Kind: agentports.RunStepOwnerAssistantTurn,
 		ID:   payload.TurnID,

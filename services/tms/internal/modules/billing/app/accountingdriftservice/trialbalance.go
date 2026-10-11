@@ -9,9 +9,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/money"
@@ -323,14 +323,17 @@ func (s *Service) groupByProviderAccount(
 	control *tenant.AccountingControl,
 	accounts []*trialAccount,
 ) ([]*providerAccount, error) {
-	mappings, err := s.mappings.ListByConnection(ctx, &accountingsyncports.ListAccountingMappingsQuery{
-		TenantInfo:   sess.tenant,
-		ConnectionID: sess.conn.ID,
-		TargetTypes: []accountingsync.MappingTargetType{
-			accountingsync.TargetGLAccount,
-			accountingsync.TargetAccountRole,
+	mappings, err := s.mappings.ListByConnection(
+		ctx,
+		&accountingsyncports.ListAccountingMappingsQuery{
+			TenantInfo:   sess.tenant,
+			ConnectionID: sess.conn.ID,
+			TargetTypes: []accountingsync.MappingTargetType{
+				accountingsync.TargetGLAccount,
+				accountingsync.TargetAccountRole,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}

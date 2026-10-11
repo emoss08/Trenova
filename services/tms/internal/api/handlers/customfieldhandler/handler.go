@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -306,10 +306,14 @@ func (h *Handler) delete(c *gin.Context) {
 		return
 	}
 
-	err = h.service.Delete(c.Request.Context(), customfieldports.GetCustomFieldDefinitionByIDRequest{
-		ID:         definitionID,
-		TenantInfo: pagination.FromAuth(authCtx),
-	}, authCtx.UserID)
+	err = h.service.Delete(
+		c.Request.Context(),
+		customfieldports.GetCustomFieldDefinitionByIDRequest{
+			ID:         definitionID,
+			TenantInfo: pagination.FromAuth(authCtx),
+		},
+		authCtx.UserID,
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

@@ -433,72 +433,80 @@ func (r *repository) ListByShipmentIDs(
 	ctx context.Context,
 	req *shipmentports.ListChargeAllocationsByShipmentIDsRequest,
 ) (map[pulid.ID][]*shipment.ChargeAllocation, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*shipment.ChargeAllocation, error) {
-		result := make(map[pulid.ID][]*shipment.ChargeAllocation, len(req.ShipmentIDs))
-		if len(req.ShipmentIDs) == 0 {
-			return result, nil
-		}
-
-		cols := shipmentcol.ChargeAllocationColumns
-		rows := make([]*shipment.ChargeAllocation, 0, len(req.ShipmentIDs))
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(&rows).
-			Relation(shipmentcol.ChargeAllocationRelations.BillToCustomer).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.ChargeAllocationScopeTenant(sq, req.TenantInfo).
-					Where(cols.ShipmentID.In(), bun.List(req.ShipmentIDs))
-			}).
-			Order(cols.ShipmentID.OrderAsc(), cols.Sequence.OrderAsc(), cols.ID.OrderAsc()).
-			Scan(ctx); err != nil {
-			r.l.Error("failed to list charge allocations by shipment", zap.Error(err))
-			return nil, fmt.Errorf("list charge allocations by shipment: %w", err)
-		}
-
-		for _, row := range rows {
-			if row.ShipmentID == nil {
-				continue
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID][]*shipment.ChargeAllocation, error) {
+			result := make(map[pulid.ID][]*shipment.ChargeAllocation, len(req.ShipmentIDs))
+			if len(req.ShipmentIDs) == 0 {
+				return result, nil
 			}
-			result[*row.ShipmentID] = append(result[*row.ShipmentID], row)
-		}
 
-		return result, nil
-	})
+			cols := shipmentcol.ChargeAllocationColumns
+			rows := make([]*shipment.ChargeAllocation, 0, len(req.ShipmentIDs))
+			if err := r.db.DBForContext(ctx).NewSelect().
+				Model(&rows).
+				Relation(shipmentcol.ChargeAllocationRelations.BillToCustomer).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return shipmentcol.ChargeAllocationScopeTenant(sq, req.TenantInfo).
+						Where(cols.ShipmentID.In(), bun.List(req.ShipmentIDs))
+				}).
+				Order(cols.ShipmentID.OrderAsc(), cols.Sequence.OrderAsc(), cols.ID.OrderAsc()).
+				Scan(ctx); err != nil {
+				r.l.Error("failed to list charge allocations by shipment", zap.Error(err))
+				return nil, fmt.Errorf("list charge allocations by shipment: %w", err)
+			}
+
+			for _, row := range rows {
+				if row.ShipmentID == nil {
+					continue
+				}
+				result[*row.ShipmentID] = append(result[*row.ShipmentID], row)
+			}
+
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) ListByOrderChargeIDs(
 	ctx context.Context,
 	req *shipmentports.ListChargeAllocationsByOrderChargeIDsRequest,
 ) (map[pulid.ID][]*shipment.ChargeAllocation, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*shipment.ChargeAllocation, error) {
-		result := make(map[pulid.ID][]*shipment.ChargeAllocation, len(req.OrderChargeIDs))
-		if len(req.OrderChargeIDs) == 0 {
-			return result, nil
-		}
-
-		cols := shipmentcol.ChargeAllocationColumns
-		rows := make([]*shipment.ChargeAllocation, 0, len(req.OrderChargeIDs))
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(&rows).
-			Relation(shipmentcol.ChargeAllocationRelations.BillToCustomer).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.ChargeAllocationScopeTenant(sq, req.TenantInfo).
-					Where(cols.OrderChargeID.In(), bun.List(req.OrderChargeIDs))
-			}).
-			Order(cols.OrderChargeID.OrderAsc(), cols.Sequence.OrderAsc(), cols.ID.OrderAsc()).
-			Scan(ctx); err != nil {
-			r.l.Error("failed to list charge allocations by order charge", zap.Error(err))
-			return nil, fmt.Errorf("list charge allocations by order charge: %w", err)
-		}
-
-		for _, row := range rows {
-			if row.OrderChargeID == nil {
-				continue
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID][]*shipment.ChargeAllocation, error) {
+			result := make(map[pulid.ID][]*shipment.ChargeAllocation, len(req.OrderChargeIDs))
+			if len(req.OrderChargeIDs) == 0 {
+				return result, nil
 			}
-			result[*row.OrderChargeID] = append(result[*row.OrderChargeID], row)
-		}
 
-		return result, nil
-	})
+			cols := shipmentcol.ChargeAllocationColumns
+			rows := make([]*shipment.ChargeAllocation, 0, len(req.OrderChargeIDs))
+			if err := r.db.DBForContext(ctx).NewSelect().
+				Model(&rows).
+				Relation(shipmentcol.ChargeAllocationRelations.BillToCustomer).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return shipmentcol.ChargeAllocationScopeTenant(sq, req.TenantInfo).
+						Where(cols.OrderChargeID.In(), bun.List(req.OrderChargeIDs))
+				}).
+				Order(cols.OrderChargeID.OrderAsc(), cols.Sequence.OrderAsc(), cols.ID.OrderAsc()).
+				Scan(ctx); err != nil {
+				r.l.Error("failed to list charge allocations by order charge", zap.Error(err))
+				return nil, fmt.Errorf("list charge allocations by order charge: %w", err)
+			}
+
+			for _, row := range rows {
+				if row.OrderChargeID == nil {
+					continue
+				}
+				result[*row.OrderChargeID] = append(result[*row.OrderChargeID], row)
+			}
+
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) MarkInvoiced(

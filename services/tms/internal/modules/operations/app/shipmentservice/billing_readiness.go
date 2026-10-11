@@ -7,22 +7,22 @@ import (
 	"sort"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -203,7 +203,12 @@ func (s *service) markReadyToInvoice(
 	shipmentports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		shipmentports.ShipmentInvalidationForRecord(updatedEntity, p.Actor, "updated", updatedEntity),
+		shipmentports.ShipmentInvalidationForRecord(
+			updatedEntity,
+			p.Actor,
+			"updated",
+			updatedEntity,
+		),
 	)
 
 	if p.RecordStatusEvent {
@@ -591,7 +596,11 @@ func applyPayerReadiness(
 	if readiness == nil || resolution == nil {
 		return
 	}
-	readiness.Payers = make([]shipmentports.ShipmentBillingPayerReadiness, 0, len(resolution.Shares))
+	readiness.Payers = make(
+		[]shipmentports.ShipmentBillingPayerReadiness,
+		0,
+		len(resolution.Shares),
+	)
 
 	requirementIssues := hasShipmentRequirementIssues(readiness)
 	rateIssues := hasRateIssues(readiness)
@@ -987,10 +996,13 @@ func buildDocumentRequirements(
 			continue
 		}
 
-		ineligible[typeID] = append(ineligible[typeID], shipmentports.ShipmentBillingIneligibleDocument{
-			DocumentID: doc.ID.String(),
-			Standing:   standing,
-		})
+		ineligible[typeID] = append(
+			ineligible[typeID],
+			shipmentports.ShipmentBillingIneligibleDocument{
+				DocumentID: doc.ID.String(),
+				Standing:   standing,
+			},
+		)
 	}
 
 	requirements := make([]shipmentports.ShipmentBillingRequirement, 0, len(documentTypes))

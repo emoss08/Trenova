@@ -5,16 +5,16 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -34,7 +34,10 @@ type correctionStore interface {
 }
 
 type shipmentReader interface {
-	GetByID(ctx context.Context, req *shipmentports.GetShipmentByIDRequest) (*shipment.Shipment, error)
+	GetByID(
+		ctx context.Context,
+		req *shipmentports.GetShipmentByIDRequest,
+	) (*shipment.Shipment, error)
 }
 
 type contentReader interface {
@@ -100,7 +103,11 @@ func (s *Service) CaptureShipmentDraft(
 	req *aicorrectionports.CaptureShipmentDraftCorrectionRequest,
 ) (*aicorrection.Correction, error) {
 	if req == nil || req.Draft == nil {
-		return nil, errortypes.NewValidationError("draft", errortypes.ErrRequired, "Draft is required")
+		return nil, errortypes.NewValidationError(
+			"draft",
+			errortypes.ErrRequired,
+			"Draft is required",
+		)
 	}
 	if req.ShipmentID.IsNil() {
 		return nil, errortypes.NewValidationError(
@@ -144,7 +151,10 @@ func (s *Service) CaptureShipmentDraft(
 			stringutils.FirstNonEmpty(req.Draft.DocumentKind, predicted.Kind),
 			aicorrection.MaxDocumentKindLength,
 		),
-		DocumentFingerprint: stringutils.TruncateRunes(predicted.Issuer, aicorrection.MaxFingerprintLength),
+		DocumentFingerprint: stringutils.TruncateRunes(
+			predicted.Issuer,
+			aicorrection.MaxFingerprintLength,
+		),
 		PredictedConfidence: predictedConfidence(req.Draft.Confidence, predicted.Confidence),
 		Predicted:           predicted.Snapshot,
 		Confirmed:           confirmed,
@@ -236,7 +246,10 @@ func (s *Service) attachExtractionModel(
 		return
 	}
 
-	entity.ExtractionModel = stringutils.TruncateRunes(extraction.Model, aicorrection.MaxModelLength)
+	entity.ExtractionModel = stringutils.TruncateRunes(
+		extraction.Model,
+		aicorrection.MaxModelLength,
+	)
 	if extraction.ProviderID.IsNotNil() {
 		providerID := extraction.ProviderID
 		entity.ExtractionProviderID = &providerID

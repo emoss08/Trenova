@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -112,12 +112,15 @@ func (t *emailCustomerTool) compose(
 	}
 	customerupdateservice.Brand(ctx, t.deps.orgRepo, t.deps.inliner, tenant, &composed.data)
 
-	rendered, err := t.deps.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
-		TenantInfo: tenant,
-		Kind:       documenttemplate.KindAgentCustomerUpdateEmail,
-		CustomerID: pulid.PtrOrNil(sp.CustomerID),
-		Data:       composed.data,
-	})
+	rendered, err := t.deps.templates.RenderMessage(
+		ctx,
+		&documenttemplateports.RenderMessageRequest{
+			TenantInfo: tenant,
+			Kind:       documenttemplate.KindAgentCustomerUpdateEmail,
+			CustomerID: pulid.PtrOrNil(sp.CustomerID),
+			Data:       composed.data,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -363,12 +366,15 @@ func (t *replyToInboundMessageTool) compose(
 	t.describeMatch(ctx, reply.message, tenant, &data)
 	customerupdateservice.Brand(ctx, t.deps.orgRepo, t.deps.inliner, tenant, &data)
 
-	rendered, err := t.deps.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
-		TenantInfo: tenant,
-		Kind:       documenttemplate.KindAgentInboundReplyEmail,
-		CustomerID: pulid.PtrOrNil(reply.message.MatchedCustomerID),
-		Data:       data,
-	})
+	rendered, err := t.deps.templates.RenderMessage(
+		ctx,
+		&documenttemplateports.RenderMessageRequest{
+			TenantInfo: tenant,
+			Kind:       documenttemplate.KindAgentInboundReplyEmail,
+			CustomerID: pulid.PtrOrNil(reply.message.MatchedCustomerID),
+			Data:       data,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

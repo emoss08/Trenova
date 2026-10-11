@@ -3,18 +3,18 @@ package agentquerytoolservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/timesheetservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -274,7 +274,10 @@ func newListDriverExpensesTool(
 					IncurredOn: recordedDate(expense.IncurredDate),
 					HasReceipt: expense.ReceiptDocumentID != nil,
 					ReviewNote: gatedText(gate, "reviewNote", expense.ReviewNote),
-					ReviewedAt: expectedDate(typeutils.ValueOrZero(expense.ReviewedAt), absentNotResolved),
+					ReviewedAt: expectedDate(
+						typeutils.ValueOrZero(expense.ReviewedAt),
+						absentNotResolved,
+					),
 				}
 				if description := gatedText(gate, wfFieldDescription,
 					expense.Description); description != "" {
@@ -344,8 +347,11 @@ func newListPayrollExportsTool(
 					OvertimeMinutes:  run.OvertimeMinutes,
 					PaidLeaveMinutes: run.PaidLeaveMinutes,
 					GeneratedAt:      pointerDate(run.GeneratedAt),
-					VoidedAt:         expectedDate(typeutils.ValueOrZero(run.VoidedAt), absentNotVoided),
-					VoidReason:       gatedText(gate, "voidReason", run.VoidReason),
+					VoidedAt: expectedDate(
+						typeutils.ValueOrZero(run.VoidedAt),
+						absentNotVoided,
+					),
+					VoidReason: gatedText(gate, "voidReason", run.VoidReason),
 				})
 			}
 			return newReceivableList(rows, gate), nil

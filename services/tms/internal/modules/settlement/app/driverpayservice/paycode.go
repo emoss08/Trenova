@@ -3,11 +3,11 @@ package driverpayservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -50,7 +50,10 @@ func (s *Service) PayCodeSelectOptions(
 	ctx context.Context,
 	req *driverpayports.PayCodeSelectOptionsRequest,
 ) (*pagination.ListResult[*driverpay.PayCode], error) {
-	if err := s.payCodeRepo.EnsureSystemDefaults(ctx, req.SelectQueryRequest.TenantInfo); err != nil {
+	if err := s.payCodeRepo.EnsureSystemDefaults(
+		ctx,
+		req.SelectQueryRequest.TenantInfo,
+	); err != nil {
 		return nil, err
 	}
 	return s.payCodeRepo.SelectOptions(ctx, req)

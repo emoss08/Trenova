@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
@@ -265,7 +265,10 @@ func (s *Service) lookup(
 		return lookupErr
 	})
 	if err != nil {
-		if carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorNotFound) {
+		if carrierintelports.IsCarrierIntelErrorKind(
+			err,
+			carrierintelports.CarrierIntelErrorNotFound,
+		) {
 			return &carrierintelports.CarrierIntelLookupResult{
 				NotFound: true,
 				Depth:    depth,

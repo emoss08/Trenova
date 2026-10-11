@@ -69,7 +69,10 @@ func (s *Service) GateFor(
 			needsRecompute = append(needsRecompute, snap.CarrierID)
 		}
 	}
-	subjectByCarrier := make(map[pulid.ID]carrierintelports.CarrierIntelSubject, len(needsRecompute))
+	subjectByCarrier := make(
+		map[pulid.ID]carrierintelports.CarrierIntelSubject,
+		len(needsRecompute),
+	)
 	if len(needsRecompute) > 0 {
 		subjects, subjectErr := s.subjectRepo.ListCarrierSubjects(
 			ctx,
@@ -161,7 +164,10 @@ func toGateFindings(findings []carrierintel.Finding) []carrier.IntelFinding {
 	return out
 }
 
-func (s *Service) EnsureFresh(ctx context.Context, req *carrierintelports.CarrierIntelEnsureFreshRequest) {
+func (s *Service) EnsureFresh(
+	ctx context.Context,
+	req *carrierintelports.CarrierIntelEnsureFreshRequest,
+) {
 	if len(req.CarrierIDs) == 0 {
 		return
 	}

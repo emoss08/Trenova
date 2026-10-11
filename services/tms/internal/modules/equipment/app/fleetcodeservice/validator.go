@@ -3,9 +3,9 @@ package fleetcodeservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"

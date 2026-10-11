@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentpacketruleservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -71,9 +71,12 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*documentpacketrule.DocumentPacketRule], error) {
-			return h.service.List(c.Request.Context(), &documentpacketruleports.ListDocumentPacketRulesRequest{
-				Filter: req,
-			})
+			return h.service.List(
+				c.Request.Context(),
+				&documentpacketruleports.ListDocumentPacketRulesRequest{
+					Filter: req,
+				},
+			)
 		},
 	)
 }

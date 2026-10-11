@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/instancebootstrap"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/instancebootstrapports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -46,7 +46,11 @@ var (
 )
 
 type transactor interface {
-	WithTx(ctx context.Context, opts kernelports.TxOptions, fn func(context.Context, bun.Tx) error) error
+	WithTx(
+		ctx context.Context,
+		opts kernelports.TxOptions,
+		fn func(context.Context, bun.Tx) error,
+	) error
 }
 
 type Params struct {
@@ -403,7 +407,9 @@ func validateInputs(inputs *instancebootstrap.Inputs) (instancebootstrap.Inputs,
 	return normalized, nil
 }
 
-func validateRequest(req *instancebootstrapports.InstanceBootstrapRequest) (instancebootstrap.Inputs, error) {
+func validateRequest(
+	req *instancebootstrapports.InstanceBootstrapRequest,
+) (instancebootstrap.Inputs, error) {
 	normalized := req.Inputs.Normalize()
 
 	multiErr := errortypes.NewMultiError()

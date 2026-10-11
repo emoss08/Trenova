@@ -73,7 +73,9 @@ func (c *Connector) appURL(path, externalID string) string {
 	return c.env.AppBaseURL() + path + url.QueryEscape(id)
 }
 
-func (c *Connector) client(auth accountingsyncports.AccountingDocumentAuth) (*quickbooks.Client, error) {
+func (c *Connector) client(
+	auth accountingsyncports.AccountingDocumentAuth,
+) (*quickbooks.Client, error) {
 	return quickbooks.New(c.env, auth.RealmID, auth.AccessToken, c.apiOpts...)
 }
 
@@ -97,7 +99,10 @@ func (c *Connector) UpsertCustomer(
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{ExternalID: saved.ID, DocNumber: saved.Name}, nil
+	return &accountingsyncports.AccountingDocumentResult{
+		ExternalID: saved.ID,
+		DocNumber:  saved.Name,
+	}, nil
 }
 
 func (c *Connector) CreateSalesDocument(

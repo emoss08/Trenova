@@ -19,32 +19,36 @@ func (r *repository) ListApplicationsByInvoiceIDs(
 	ctx context.Context,
 	req *customerpaymentports.ListApplicationsByInvoiceIDsRequest,
 ) (map[pulid.ID][]*customerpayment.Application, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*customerpayment.Application, error) {
-		result := make(map[pulid.ID][]*customerpayment.Application, len(req.InvoiceIDs))
-		if len(req.InvoiceIDs) == 0 {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID][]*customerpayment.Application, error) {
+			result := make(map[pulid.ID][]*customerpayment.Application, len(req.InvoiceIDs))
+			if len(req.InvoiceIDs) == 0 {
+				return result, nil
+			}
+
+			cols := customerpaymentcol.ApplicationColumns
+			rows := make([]*customerpayment.Application, 0, len(req.InvoiceIDs))
+			if err := r.db.DBForContext(ctx).NewSelect().
+				Model(&rows).
+				Relation(customerpaymentcol.ApplicationRelations.Payment).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return customerpaymentcol.ApplicationScopeTenant(sq, req.TenantInfo).
+						Where(cols.InvoiceID.In(), bun.List(req.InvoiceIDs))
+				}).
+				Order(cols.CreatedAt.OrderDesc(), cols.LineNumber.OrderAsc()).
+				Scan(ctx); err != nil {
+				return nil, fmt.Errorf("list customer payment applications by invoice: %w", err)
+			}
+
+			for _, row := range rows {
+				result[row.InvoiceID] = append(result[row.InvoiceID], row)
+			}
+
 			return result, nil
-		}
-
-		cols := customerpaymentcol.ApplicationColumns
-		rows := make([]*customerpayment.Application, 0, len(req.InvoiceIDs))
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(&rows).
-			Relation(customerpaymentcol.ApplicationRelations.Payment).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return customerpaymentcol.ApplicationScopeTenant(sq, req.TenantInfo).
-					Where(cols.InvoiceID.In(), bun.List(req.InvoiceIDs))
-			}).
-			Order(cols.CreatedAt.OrderDesc(), cols.LineNumber.OrderAsc()).
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("list customer payment applications by invoice: %w", err)
-		}
-
-		for _, row := range rows {
-			result[row.InvoiceID] = append(result[row.InvoiceID], row)
-		}
-
-		return result, nil
-	})
+		},
+	)
 }
 
 func (r *repository) CreateCreditMemoApplications(
@@ -67,88 +71,107 @@ func (r *repository) UpdateCreditMemoApplication(
 	ctx context.Context,
 	application *customerpayment.CreditMemoApplication,
 ) (*customerpayment.CreditMemoApplication, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*customerpayment.CreditMemoApplication, error) {
-		cols := customerpaymentcol.CreditMemoApplicationColumns
-		application.UpdatedAt = timeutils.NowUnix()
-		res, err := r.db.DBForContext(ctx).NewUpdate().
-			Model(application).
-			Column(
-				cols.Status.Bare(),
-				cols.UnappliedAt.Bare(),
-				cols.UnappliedByID.Bare(),
-				cols.UnappliedReason.Bare(),
-				cols.UpdatedAt.Bare(),
-			).
-			WherePK().
-			Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("update credit memo application: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(res, "CreditMemoApplication", application.ID.String()); err != nil {
-			return nil, err
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*customerpayment.CreditMemoApplication, error) {
+			cols := customerpaymentcol.CreditMemoApplicationColumns
+			application.UpdatedAt = timeutils.NowUnix()
+			res, err := r.db.DBForContext(ctx).NewUpdate().
+				Model(application).
+				Column(
+					cols.Status.Bare(),
+					cols.UnappliedAt.Bare(),
+					cols.UnappliedByID.Bare(),
+					cols.UnappliedReason.Bare(),
+					cols.UpdatedAt.Bare(),
+				).
+				WherePK().
+				Exec(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("update credit memo application: %w", err)
+			}
+			if err = dberror.CheckRowsAffected(
+				res,
+				"CreditMemoApplication",
+				application.ID.String(),
+			); err != nil {
+				return nil, err
+			}
 
-		return application, nil
-	})
+			return application, nil
+		},
+	)
 }
 
 func (r *repository) GetCreditMemoApplicationByID(
 	ctx context.Context,
 	req customerpaymentports.GetCreditMemoApplicationRequest,
 ) (*customerpayment.CreditMemoApplication, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*customerpayment.CreditMemoApplication, error) {
-		cols := customerpaymentcol.CreditMemoApplicationColumns
-		entity := new(customerpayment.CreditMemoApplication)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return customerpaymentcol.CreditMemoApplicationScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "CreditMemoApplication")
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*customerpayment.CreditMemoApplication, error) {
+			cols := customerpaymentcol.CreditMemoApplicationColumns
+			entity := new(customerpayment.CreditMemoApplication)
+			if err := r.db.DBForContext(ctx).NewSelect().
+				Model(entity).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return customerpaymentcol.CreditMemoApplicationScopeTenant(sq, req.TenantInfo).
+						Where(cols.ID.Eq(), req.ID)
+				}).
+				Scan(ctx); err != nil {
+				return nil, dberror.HandleNotFoundError(err, "CreditMemoApplication")
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) ListCreditMemoApplicationsByInvoiceIDs(
 	ctx context.Context,
 	req *customerpaymentports.ListApplicationsByInvoiceIDsRequest,
 ) (map[pulid.ID][]*customerpayment.CreditMemoApplication, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*customerpayment.CreditMemoApplication, error) {
-		result := make(map[pulid.ID][]*customerpayment.CreditMemoApplication, len(req.InvoiceIDs))
-		if len(req.InvoiceIDs) == 0 {
-			return result, nil
-		}
-
-		cols := customerpaymentcol.CreditMemoApplicationColumns
-		rows := make([]*customerpayment.CreditMemoApplication, 0, len(req.InvoiceIDs))
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(&rows).
-			Relation(customerpaymentcol.CreditMemoApplicationRelations.CreditMemo).
-			Relation(customerpaymentcol.CreditMemoApplicationRelations.Invoice).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return customerpaymentcol.CreditMemoApplicationScopeTenant(sq, req.TenantInfo).
-					WhereGroup(" OR ", func(inner *bun.SelectQuery) *bun.SelectQuery {
-						return inner.
-							Where(cols.InvoiceID.In(), bun.List(req.InvoiceIDs)).
-							WhereOr(cols.CreditMemoInvoiceID.In(), bun.List(req.InvoiceIDs))
-					})
-			}).
-			Order(cols.CreatedAt.OrderDesc(), cols.LineNumber.OrderAsc()).
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("list credit memo applications by invoice: %w", err)
-		}
-
-		for _, row := range rows {
-			result[row.InvoiceID] = append(result[row.InvoiceID], row)
-			if row.CreditMemoInvoiceID != row.InvoiceID {
-				result[row.CreditMemoInvoiceID] = append(result[row.CreditMemoInvoiceID], row)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID][]*customerpayment.CreditMemoApplication, error) {
+			result := make(
+				map[pulid.ID][]*customerpayment.CreditMemoApplication,
+				len(req.InvoiceIDs),
+			)
+			if len(req.InvoiceIDs) == 0 {
+				return result, nil
 			}
-		}
 
-		return result, nil
-	})
+			cols := customerpaymentcol.CreditMemoApplicationColumns
+			rows := make([]*customerpayment.CreditMemoApplication, 0, len(req.InvoiceIDs))
+			if err := r.db.DBForContext(ctx).NewSelect().
+				Model(&rows).
+				Relation(customerpaymentcol.CreditMemoApplicationRelations.CreditMemo).
+				Relation(customerpaymentcol.CreditMemoApplicationRelations.Invoice).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return customerpaymentcol.CreditMemoApplicationScopeTenant(sq, req.TenantInfo).
+						WhereGroup(" OR ", func(inner *bun.SelectQuery) *bun.SelectQuery {
+							return inner.
+								Where(cols.InvoiceID.In(), bun.List(req.InvoiceIDs)).
+								WhereOr(cols.CreditMemoInvoiceID.In(), bun.List(req.InvoiceIDs))
+						})
+				}).
+				Order(cols.CreatedAt.OrderDesc(), cols.LineNumber.OrderAsc()).
+				Scan(ctx); err != nil {
+				return nil, fmt.Errorf("list credit memo applications by invoice: %w", err)
+			}
+
+			for _, row := range rows {
+				result[row.InvoiceID] = append(result[row.InvoiceID], row)
+				if row.CreditMemoInvoiceID != row.InvoiceID {
+					result[row.CreditMemoInvoiceID] = append(result[row.CreditMemoInvoiceID], row)
+				}
+			}
+
+			return result, nil
+		},
+	)
 }

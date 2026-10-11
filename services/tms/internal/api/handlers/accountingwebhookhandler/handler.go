@@ -65,12 +65,15 @@ func (h *Handler) receive(c *gin.Context) {
 		return
 	}
 
-	err = h.service.ReceiveWebhook(c.Request.Context(), &accountingsyncports.ReceiveAccountingWebhookRequest{
-		IntegrationType: typ,
-		AppID:           c.Param("app"),
-		Signature:       c.GetHeader(provider.WebhookSignatureHeader()),
-		Body:            body,
-	})
+	err = h.service.ReceiveWebhook(
+		c.Request.Context(),
+		&accountingsyncports.ReceiveAccountingWebhookRequest{
+			IntegrationType: typ,
+			AppID:           c.Param("app"),
+			Signature:       c.GetHeader(provider.WebhookSignatureHeader()),
+			Body:            body,
+		},
+	)
 	switch {
 	case err == nil:
 		c.Status(http.StatusOK)

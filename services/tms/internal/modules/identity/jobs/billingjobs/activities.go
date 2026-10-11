@@ -5,21 +5,21 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -202,10 +202,13 @@ func (a *Activities) PrepareInvoicePDFUploadActivity(
 	if err != nil {
 		return nil, classifyInvoiceRenderError(err)
 	}
-	docType, err := a.documentTypeRepo.GetByCode(ctx, documenttypeports.GetDocumentTypeByCodeRequest{
-		Code:       "INVOICE",
-		TenantInfo: tenantInfo,
-	})
+	docType, err := a.documentTypeRepo.GetByCode(
+		ctx,
+		documenttypeports.GetDocumentTypeByCodeRequest{
+			Code:       "INVOICE",
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -358,7 +361,9 @@ func (a *Activities) invoicePDFLineageID(
 	return currentPDF.LineageID.String(), nil
 }
 
-func invoicePDFActor(payload *billingcontract.GenerateInvoicePDFPayload) permissionports.RequestActor {
+func invoicePDFActor(
+	payload *billingcontract.GenerateInvoicePDFPayload,
+) permissionports.RequestActor {
 	return permissionports.RequestActor{
 		PrincipalType:  payload.PrincipalType,
 		PrincipalID:    payload.PrincipalID,

@@ -4,10 +4,10 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -66,7 +66,10 @@ func (r *repository) GetEnabledByID(
 	ctx context.Context,
 	providerID pulid.ID,
 ) (*tenant.SSOConfig, error) {
-	ctx = dbscope.WithSystem(ctx, "resolve an SSO provider named in a public URL before its tenant is known")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"resolve an SSO provider named in a public URL before its tenant is known",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.SSOConfig, error) {
 		provider := new(iam.IdentityProvider)
 		if err := r.db.DBForContext(ctx).

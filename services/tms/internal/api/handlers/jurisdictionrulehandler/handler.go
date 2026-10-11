@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -91,13 +91,16 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*jurisdictionrule.JurisdictionRule], error) {
-			return h.service.List(c.Request.Context(), &jurisdictionruleports.ListJurisdictionRulesRequest{
-				Filter: req,
-				VerificationState: jurisdictionrule.VerificationState(
-					helpers.QueryStringTrimmed(c, "verificationState"),
-				),
-				Status: jurisdictionrule.Status(helpers.QueryStringTrimmed(c, "status")),
-			})
+			return h.service.List(
+				c.Request.Context(),
+				&jurisdictionruleports.ListJurisdictionRulesRequest{
+					Filter: req,
+					VerificationState: jurisdictionrule.VerificationState(
+						helpers.QueryStringTrimmed(c, "verificationState"),
+					),
+					Status: jurisdictionrule.Status(helpers.QueryStringTrimmed(c, "status")),
+				},
+			)
 		},
 	)
 }

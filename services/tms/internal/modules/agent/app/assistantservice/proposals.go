@@ -8,15 +8,15 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
-	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
-	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -683,7 +683,10 @@ func planVerdict(
 	return agentshadow.Verdict{}
 }
 
-func toAssistantPlan(plan *agent.AgentPlan, hold *agentports.ProposalHold) agentports.AssistantPlan {
+func toAssistantPlan(
+	plan *agent.AgentPlan,
+	hold *agentports.ProposalHold,
+) agentports.AssistantPlan {
 	decidedBy := pulid.Nil
 	if plan.DecidedByUserID != nil {
 		decidedBy = *plan.DecidedByUserID

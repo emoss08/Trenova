@@ -6,17 +6,17 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -348,7 +348,10 @@ func docketOf(profile *carrierintel.Profile, subject carrierintelports.CarrierIn
 	return subject.DocketNumber
 }
 
-func subjectLabel(subject carrierintelports.CarrierIntelSubject, profile *carrierintel.Profile) string {
+func subjectLabel(
+	subject carrierintelports.CarrierIntelSubject,
+	profile *carrierintel.Profile,
+) string {
 	name := subject.Name
 	if name == "" && profile != nil && profile.Identity != nil {
 		name = profile.Identity.LegalName
@@ -477,13 +480,16 @@ func (s *Service) updateCarrierSummary(
 	if snapshot.RiskLevel == carrierintel.RiskLevelUnknown {
 		risk = ""
 	}
-	return s.snapshotRepo.UpdateCarrierSummary(ctx, &carrierintelports.UpdateCarrierIntelSummaryRequest{
-		TenantInfo:     tenantInfo,
-		CarrierID:      subject.CarrierID,
-		RiskLevel:      risk,
-		ReviewRequired: snapshot.ReviewState == carrierintel.ReviewStateNeedsReview,
-		BlockingCount:  len(snapshot.BlockingCodes),
-	})
+	return s.snapshotRepo.UpdateCarrierSummary(
+		ctx,
+		&carrierintelports.UpdateCarrierIntelSummaryRequest{
+			TenantInfo:     tenantInfo,
+			CarrierID:      subject.CarrierID,
+			RiskLevel:      risk,
+			ReviewRequired: snapshot.ReviewState == carrierintel.ReviewStateNeedsReview,
+			BlockingCount:  len(snapshot.BlockingCodes),
+		},
+	)
 }
 
 func (s *Service) afterIngest(

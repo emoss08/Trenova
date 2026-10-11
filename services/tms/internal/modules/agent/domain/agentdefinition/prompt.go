@@ -1081,7 +1081,9 @@ func buildToolSection(tools []ToolSummary, disclosed bool) string {
 			}
 			builder.WriteString("\n- ")
 			builder.WriteString(tool.Name)
-			if description := strings.TrimSpace(stringutils.FirstSentence(tool.Description)); description != "" {
+			if description := strings.TrimSpace(
+				stringutils.FirstSentence(tool.Description),
+			); description != "" {
 				builder.WriteString(" — ")
 				builder.WriteString(description)
 			}

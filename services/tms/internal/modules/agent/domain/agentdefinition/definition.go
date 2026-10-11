@@ -69,7 +69,7 @@ type Definition struct {
 
 	DataAccessCeiling DataAccessCeiling `json:"dataAccessCeiling" bun:"data_access_ceiling,type:VARCHAR(20),notnull,default:'Internal'"`
 
-	Enabled bool `json:"enabled"                bun:"enabled,type:BOOLEAN,notnull"`
+	Enabled bool `json:"enabled" bun:"enabled,type:BOOLEAN,notnull"`
 	// DisabledAt and DisabledByID say when the agent was last turned off and
 	// by whom; both are cleared when it is turned back on.
 	DisabledAt             *int64    `json:"disabledAt,omitempty"   bun:"disabled_at,type:BIGINT,nullzero"`
@@ -99,8 +99,8 @@ type Definition struct {
 	// SQL NULL for a nil map. Every insert of an agent with no per-tool cap —
 	// which is every system agent — was therefore rejected by the constraint.
 	// Its older sibling tool_tiers is nullable, which is why that one worked.
-	ToolDailyLimits map[string]int `json:"toolDailyLimits"  bun:"tool_daily_limits,type:JSONB,notnull"`
-	SimulationMode  bool           `json:"simulationMode"   bun:"simulation_mode,type:BOOLEAN,notnull"`
+	ToolDailyLimits map[string]int `json:"toolDailyLimits" bun:"tool_daily_limits,type:JSONB,notnull"`
+	SimulationMode  bool           `json:"simulationMode"  bun:"simulation_mode,type:BOOLEAN,notnull"`
 
 	MemoryTokenBudget *int `json:"memoryTokenBudget" bun:"memory_token_budget,type:INTEGER,nullzero"`
 	LearningOff       bool `json:"learningOff"       bun:"learning_off,type:BOOLEAN,notnull,default:false"`
@@ -369,8 +369,11 @@ func (d *Definition) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Autonomy ceiling is required"),
 			domainvalidation.ValidEnum[agent.AutonomyTier]("Autonomy ceiling is invalid"),
 		),
-		validation.Field(&d.DataAccessCeiling,
-			domainvalidation.ValidEnum[DataAccessCeiling]("Data access must be Internal or Restricted"),
+		validation.Field(
+			&d.DataAccessCeiling,
+			domainvalidation.ValidEnum[DataAccessCeiling](
+				"Data access must be Internal or Restricted",
+			),
 		),
 		validation.Field(&d.TriggerMode,
 			validation.Required.Error("Trigger mode is required"),

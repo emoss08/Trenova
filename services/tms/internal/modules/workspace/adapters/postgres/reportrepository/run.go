@@ -144,30 +144,34 @@ func (r *runRepository) CountActive(
 	ctx context.Context,
 	req *reportports.CountActiveReportRunsRequest,
 ) (*reportports.ActiveReportRunCounts, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*reportports.ActiveReportRunCounts, error) {
-		cols := reportcol.ReportRunColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*reportports.ActiveReportRunCounts, error) {
+			cols := reportcol.ReportRunColumns
 
-		var counts reportports.ActiveReportRunCounts
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*report.ReportRun)(nil)).
-			ColumnExpr(
-				buncolgen.CountFilter("running", cols.Status.Eq()),
-				report.RunStatusRunning,
-			).
-			ColumnExpr(
-				buncolgen.CountFilter("queued", cols.Status.Eq()),
-				report.RunStatusQueued,
-			).
-			Apply(reportcol.ReportRunApplyTenant(req.TenantInfo)).
-			Scan(ctx, &counts.Running, &counts.Queued)
-		if err != nil {
-			r.l.Error("failed to count active report runs", zap.Error(err))
-			return nil, err
-		}
+			var counts reportports.ActiveReportRunCounts
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*report.ReportRun)(nil)).
+				ColumnExpr(
+					buncolgen.CountFilter("running", cols.Status.Eq()),
+					report.RunStatusRunning,
+				).
+				ColumnExpr(
+					buncolgen.CountFilter("queued", cols.Status.Eq()),
+					report.RunStatusQueued,
+				).
+				Apply(reportcol.ReportRunApplyTenant(req.TenantInfo)).
+				Scan(ctx, &counts.Running, &counts.Queued)
+			if err != nil {
+				r.l.Error("failed to count active report runs", zap.Error(err))
+				return nil, err
+			}
 
-		return &counts, nil
-	})
+			return &counts, nil
+		},
+	)
 }
 
 func (r *runRepository) ListStale(

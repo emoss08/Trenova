@@ -67,8 +67,14 @@ type AIProviderRepository interface {
 	) ([]*aiprovider.Provider, error)
 	// ListEnabled lists the enabled providers in the order the router tries
 	// them: by priority, then by age.
-	ListEnabled(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*aiprovider.Provider, error)
-	ListOrdered(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*aiprovider.Provider, error)
+	ListEnabled(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) ([]*aiprovider.Provider, error)
+	ListOrdered(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) ([]*aiprovider.Provider, error)
 	SelectOptions(
 		ctx context.Context,
 		req *AIProviderSelectOptionsRequest,

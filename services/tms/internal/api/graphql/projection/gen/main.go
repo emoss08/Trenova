@@ -11,7 +11,11 @@ var (
 	schemaDir    = flag.String("schema", "", "Path to GraphQL schema directory")
 	outputPath   = flag.String("output", "", "Path to generated Go file")
 	gqlgenPath   = flag.String("gqlgen", "", "Path to gqlgen.yml")
-	domainDir    = flag.String("domain", "", "Glob of the domain directories (internal/modules/*/domain)")
+	domainDir    = flag.String(
+		"domain",
+		"",
+		"Glob of the domain directories (internal/modules/*/domain)",
+	)
 	buncolgenDir = flag.String("buncolgen", "", "Path to pkg/buncolgen")
 	goModPath    = flag.String("gomod", "", "Path to go.mod")
 )

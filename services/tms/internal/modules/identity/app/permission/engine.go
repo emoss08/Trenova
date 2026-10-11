@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -369,7 +369,10 @@ func evaluateAccessPolicies(
 	return ""
 }
 
-func accessPolicyMatches(policy *iam.AccessPolicy, req *permissionports.PermissionCheckRequest) bool {
+func accessPolicyMatches(
+	policy *iam.AccessPolicy,
+	req *permissionports.PermissionCheckRequest,
+) bool {
 	if policy == nil || len(policy.Conditions) == 0 {
 		return true
 	}
@@ -427,7 +430,9 @@ func intConditionAtLeast(actual int, expected string) bool {
 	return actual >= expectedValue
 }
 
-func (e *engine) permissionResult(p *permissionResultRequest) *permissionports.PermissionCheckResult {
+func (e *engine) permissionResult(
+	p *permissionResultRequest,
+) *permissionports.PermissionCheckResult {
 	if p.allowed {
 		if result := enforceResourceAttributes(p.req, p.dataScope); result != nil {
 			e.logSlowPermissionCheck(p.log, p.start, p.load, true)

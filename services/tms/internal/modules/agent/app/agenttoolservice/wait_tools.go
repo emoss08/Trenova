@@ -7,13 +7,13 @@ import (
 	"math"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -96,14 +96,18 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 					"meant to.",
 			},
 			"at": agenttoolschema.LocalDateTime("For Time: when to pick the work up."),
-			paramShipmentMoveID: agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
+			paramShipmentMoveID: agenttoolschema.RecordIDText(
+				permission.ResourceShipmentMove,
 				"For StopArrival, StopDeparture and AppointmentNear: the move the stop is on, from "+
-					"get_shipment."),
+					"get_shipment.",
+			),
 			paramStopID: agenttoolschema.RecordIDText(permission.ResourceShipmentStop,
 				"The stop, from get_shipment: required for AppointmentNear; for StopArrival "+
 					"and StopDeparture, leave it out to wait for the move's next one."),
-			fieldShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-				"For Reply: a reply about this shipment, from search_shipments or the run subject."),
+			fieldShipmentID: agenttoolschema.RecordIDText(
+				permission.ResourceShipment,
+				"For Reply: a reply about this shipment, from search_shipments or the run subject.",
+			),
 			paramCarrierID: agenttoolschema.RecordIDText(permission.ResourceCarrier,
 				"For Reply: a reply from this carrier, from list_carriers."),
 			paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,

@@ -7,9 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -61,14 +61,17 @@ func (s *Session) Context(ctx context.Context) context.Context {
 }
 
 func (s *Session) Agents(ctx context.Context) ([]*agentdefinition.Definition, error) {
-	result, err := s.bench.Definitions.List(s.Context(ctx), &agentdefinitionports.ListAgentDefinitionRequest{
-		Filter: &pagination.QueryOptions{
-			TenantInfo: s.Tenant,
-			Pagination: pagination.Info{Limit: pagination.MaxLimit},
+	result, err := s.bench.Definitions.List(
+		s.Context(ctx),
+		&agentdefinitionports.ListAgentDefinitionRequest{
+			Filter: &pagination.QueryOptions{
+				TenantInfo: s.Tenant,
+				Pagination: pagination.Info{Limit: pagination.MaxLimit},
+			},
+			EnabledOnly: true,
+			ChatOnly:    true,
 		},
-		EnabledOnly: true,
-		ChatOnly:    true,
-	})
+	)
 	if err != nil {
 		return nil, fmt.Errorf("list chat agents: %w", err)
 	}

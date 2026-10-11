@@ -360,42 +360,50 @@ func (r *repository) markEntries(
 	req agentports.MarkIndexEntriesRequest,
 	status airetrieval.IndexStatus,
 ) (agentports.MarkIndexEntriesResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (agentports.MarkIndexEntriesResult, error) {
-		var result agentports.MarkIndexEntriesResult
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (agentports.MarkIndexEntriesResult, error) {
+			var result agentports.MarkIndexEntriesResult
 
-		rows, err := outcomeRows(req, status)
-		if err != nil || len(rows) == 0 {
-			return result, err
-		}
-
-		now := req.Now
-		if now == 0 {
-			now = timeutils.NowUnix()
-		}
-
-		err = r.db.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-			res, txErr := applyOutcome(tx, rows, status, now).Exec(ctx)
-			if txErr != nil {
-				return fmt.Errorf("record index outcomes: %w", txErr)
-			}
-			if result.Applied, txErr = rowsAffected(res); txErr != nil {
-				return txErr
+			rows, err := outcomeRows(req, status)
+			if err != nil || len(rows) == 0 {
+				return result, err
 			}
 
-			res, txErr = releaseSuperseded(tx, rows, now).Exec(ctx)
-			if txErr != nil {
-				return fmt.Errorf("release superseded index entries: %w", txErr)
+			now := req.Now
+			if now == 0 {
+				now = timeutils.NowUnix()
 			}
-			result.Superseded, txErr = rowsAffected(res)
 
-			return txErr
-		})
-		if err != nil {
-			return agentports.MarkIndexEntriesResult{}, err
-		}
+			err = r.db.WithTx(
+				ctx,
+				kernelports.TxOptions{},
+				func(ctx context.Context, tx bun.Tx) error {
+					res, txErr := applyOutcome(tx, rows, status, now).Exec(ctx)
+					if txErr != nil {
+						return fmt.Errorf("record index outcomes: %w", txErr)
+					}
+					if result.Applied, txErr = rowsAffected(res); txErr != nil {
+						return txErr
+					}
 
-		return result, nil
-	})
+					res, txErr = releaseSuperseded(tx, rows, now).Exec(ctx)
+					if txErr != nil {
+						return fmt.Errorf("release superseded index entries: %w", txErr)
+					}
+					result.Superseded, txErr = rowsAffected(res)
+
+					return txErr
+				},
+			)
+			if err != nil {
+				return agentports.MarkIndexEntriesResult{}, err
+			}
+
+			return result, nil
+		},
+	)
 }
 
 func applyOutcome(

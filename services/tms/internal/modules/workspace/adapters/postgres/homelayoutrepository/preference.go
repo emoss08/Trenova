@@ -95,7 +95,11 @@ func (r *repository) UpdatePreference(
 			return nil, err
 		}
 
-		if err = dberror.CheckRowsAffected(result, "HomePreference", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			result,
+			"HomePreference",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 

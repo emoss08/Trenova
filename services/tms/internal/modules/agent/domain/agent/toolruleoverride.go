@@ -78,10 +78,18 @@ func (o *ToolRuleOverride) Validate(bounds ToolRuleBounds, multiErr *errortypes.
 		case !o.MaxTier.IsValid():
 			multiErr.Add("maxTier", errortypes.ErrInvalid, "Unknown tier")
 		case !bounds.Changes:
-			multiErr.Add("maxTier", errortypes.ErrInvalid, "Reads never change records, so they always run")
+			multiErr.Add(
+				"maxTier",
+				errortypes.ErrInvalid,
+				"Reads never change records, so they always run",
+			)
 		case o.MaxTier.Above(bounds.MaxTier):
-			multiErr.Add("maxTier", errortypes.ErrInvalid,
-				"The tool's own rule allows at most {0}; a rule here can only hold it lower", bounds.MaxTier.Label())
+			multiErr.Add(
+				"maxTier",
+				errortypes.ErrInvalid,
+				"The tool's own rule allows at most {0}; a rule here can only hold it lower",
+				bounds.MaxTier.Label(),
+			)
 		}
 	}
 	if o.ReadsExternal != "" {
@@ -89,8 +97,11 @@ func (o *ToolRuleOverride) Validate(bounds ToolRuleBounds, multiErr *errortypes.
 		case !o.ReadsExternal.IsValid():
 			multiErr.Add("readsExternal", errortypes.ErrInvalid, "Unknown outside text setting")
 		case ExternalReadRank(o.ReadsExternal) < ExternalReadRank(bounds.ReadsExternal):
-			multiErr.Add("readsExternal", errortypes.ErrInvalid,
-				"The tool's own rule already treats more of what it returns as outside text; a rule here can only treat more")
+			multiErr.Add(
+				"readsExternal",
+				errortypes.ErrInvalid,
+				"The tool's own rule already treats more of what it returns as outside text; a rule here can only treat more",
+			)
 		}
 	}
 	if len(strings.TrimSpace(o.Reason)) > MaxToolRuleReasonLength {

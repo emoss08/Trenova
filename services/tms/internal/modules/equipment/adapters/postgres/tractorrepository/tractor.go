@@ -105,55 +105,62 @@ func (r *repository) List(
 	ctx context.Context,
 	req *tractorports.ListTractorsRequest,
 ) (*pagination.CursorListResult[*tractor.Tractor], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*tractor.Tractor], error) {
-		log := r.l.With(
-			zap.String("operation", "List"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*tractor.Tractor], error) {
+			log := r.l.With(
+				zap.String("operation", "List"),
+				zap.Any("request", req),
+			)
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*tractor.Tractor)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyListCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*tractor.Tractor)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyListCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count tractors", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*tractor.Tractor]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(items *[]*tractor.Tractor) *bun.SelectQuery {
+					return dba.
+						NewSelect().
+						Model(items).
+						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+							return applyTractorColumns(sq, req.TractorRelationIncludes)
+						}).
+						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+							return applyTractorLastKnownLocationJoin(
+								sq,
+								req.TractorRelationIncludes,
+							)
+						})
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					return r.applyListFilters(sq, req)
+				},
+			})
 			if err != nil {
-				log.Error("failed to count tractors", zap.Error(err))
+				log.Error("failed to scan tractors", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*tractor.Tractor]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(items *[]*tractor.Tractor) *bun.SelectQuery {
-				return dba.
-					NewSelect().
-					Model(items).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyTractorColumns(sq, req.TractorRelationIncludes)
-					}).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyTractorLastKnownLocationJoin(sq, req.TractorRelationIncludes)
-					})
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.applyListFilters(sq, req)
-			},
-		})
-		if err != nil {
-			log.Error("failed to scan tractors", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) Create(
@@ -338,38 +345,42 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *tractorports.TractorSelectOptionsRequest,
 ) (*pagination.ListResult[*tractor.Tractor], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*tractor.Tractor], error) {
-		cols := tractorcol.TractorColumns
-		rel := tractorcol.TractorRelations
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*tractor.Tractor], error) {
+			cols := tractorcol.TractorColumns
+			rel := tractorcol.TractorRelations
 
-		return dbhelper.SelectOptions[*tractor.Tractor](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectOptionsRequest,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					cols.ID,
-					cols.CreatedAt,
-					cols.Status,
-					cols.Code,
-					cols.PrimaryWorkerID,
-					cols.SecondaryWorkerID,
+			return dbhelper.SelectOptions[*tractor.Tractor](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectOptionsRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.CreatedAt,
+						cols.Status,
+						cols.Code,
+						cols.PrimaryWorkerID,
+						cols.SecondaryWorkerID,
+					},
+					OrgColumnRef:     &cols.OrganizationID,
+					BuColumnRef:      &cols.BusinessUnitID,
+					SearchColumnRefs: []buncolgen.Column{cols.Code},
+					EntityName:       "Tractor",
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						return q.Where(
+							cols.Status.Eq(),
+							domaintypes.EquipmentStatusAvailable,
+						).
+							Relation(rel.PrimaryWorker).
+							Relation(rel.SecondaryWorker)
+					},
 				},
-				OrgColumnRef:     &cols.OrganizationID,
-				BuColumnRef:      &cols.BusinessUnitID,
-				SearchColumnRefs: []buncolgen.Column{cols.Code},
-				EntityName:       "Tractor",
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Where(
-						cols.Status.Eq(),
-						domaintypes.EquipmentStatusAvailable,
-					).
-						Relation(rel.PrimaryWorker).
-						Relation(rel.SecondaryWorker)
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 func applyTractorRelations(

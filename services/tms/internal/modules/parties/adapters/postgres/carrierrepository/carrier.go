@@ -89,29 +89,33 @@ func (r *repository) List(
 	ctx context.Context,
 	req *carrierports.ListCarrierRequest,
 ) (*pagination.ListResult[*carrier.Carrier], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*carrier.Carrier], error) {
-		log := r.l.With(
-			zap.String("operation", "List"),
-			zap.Any("request", req),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*carrier.Carrier], error) {
+			log := r.l.With(
+				zap.String("operation", "List"),
+				zap.Any("request", req),
+			)
 
-		entities := make([]*carrier.Carrier, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterQuery(sq, req)
-			}).ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count carriers", zap.Error(err))
-			return nil, err
-		}
+			entities := make([]*carrier.Carrier, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count carriers", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*carrier.Carrier]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*carrier.Carrier]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -143,58 +147,62 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *carrierports.ListCarrierConnectionRequest,
 ) (*pagination.CursorListResult[*carrier.Carrier], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*carrier.Carrier], error) {
-		log := r.l.With(
-			zap.String("operation", "ListConnection"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*carrier.Carrier], error) {
+			log := r.l.With(
+				zap.String("operation", "ListConnection"),
+				zap.Any("request", req),
+			)
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*carrier.Carrier)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyTotalCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*carrier.Carrier)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyTotalCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count carriers", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*carrier.Carrier]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*carrier.Carrier) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return applyCarrierColumns(sq, req.CarrierColumns)
+							}).
+							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return r.addOptions(sq, req.CarrierFilterOptions)
+							})
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return r.applyCursorPageFilters(sq, req)
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count carriers", zap.Error(err))
+				log.Error("failed to scan carriers", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*carrier.Carrier]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*carrier.Carrier) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return applyCarrierColumns(sq, req.CarrierColumns)
-						}).
-						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return r.addOptions(sq, req.CarrierFilterOptions)
-						})
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return r.applyCursorPageFilters(sq, req)
-				},
-			},
-		)
-		if err != nil {
-			log.Error("failed to scan carriers", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -308,30 +316,34 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *carrierports.CarrierSelectOptionsRequest,
 ) (*pagination.ListResult[*carrier.Carrier], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*carrier.Carrier], error) {
-		return dbhelper.SelectOptions[*carrier.Carrier](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				Columns: []string{
-					"id",
-					"code",
-					"name",
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*carrier.Carrier], error) {
+			return dbhelper.SelectOptions[*carrier.Carrier](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					Columns: []string{
+						"id",
+						"code",
+						"name",
+					},
+					OrgColumn: "carr.organization_id",
+					BuColumn:  "carr.business_unit_id",
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						return q.Where("carr.status = ?", carrier.StatusActive)
+					},
+					EntityName: "Carrier",
+					SearchColumns: []string{
+						"carr.code",
+						"carr.name",
+					},
 				},
-				OrgColumn: "carr.organization_id",
-				BuColumn:  "carr.business_unit_id",
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Where("carr.status = ?", carrier.StatusActive)
-				},
-				EntityName: "Carrier",
-				SearchColumns: []string{
-					"carr.code",
-					"carr.name",
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 // stampChildren pins every child row to its parent and tenant. IDs are left
@@ -424,7 +436,10 @@ func (r *repository) deleteMissingChildren(ctx context.Context, entity *carrier.
 				dq = carriercol.CarrierInsurancePolicyScopeTenantDelete(dq, tenantInfo).
 					Where(carriercol.CarrierInsurancePolicyColumns.CarrierID.Eq(), entity.ID)
 				if kept := pulid.Keep(entity.InsurancePolicies); len(kept) > 0 {
-					dq = dq.Where(carriercol.CarrierInsurancePolicyColumns.ID.NotIn(), bun.List(kept))
+					dq = dq.Where(
+						carriercol.CarrierInsurancePolicyColumns.ID.NotIn(),
+						bun.List(kept),
+					)
 				}
 				return dq
 			})
@@ -608,7 +623,11 @@ func (r *repository) Update(
 				return uErr
 			}
 
-			if uErr = dberror.CheckRowsAffected(results, "Carrier", entity.ID.String()); uErr != nil {
+			if uErr = dberror.CheckRowsAffected(
+				results,
+				"Carrier",
+				entity.ID.String(),
+			); uErr != nil {
 				return uErr
 			}
 

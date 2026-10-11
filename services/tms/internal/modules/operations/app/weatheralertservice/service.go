@@ -179,10 +179,13 @@ func (s *Service) syncTenant(
 	synced := weatheralertports.WeatherAlertTenantSync{TenantInfo: tenantInfo}
 	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 
-	stored, err := s.repo.ListByNWSIDs(tenantCtx, weatheralertports.ListWeatherAlertsByNWSIDsRequest{
-		TenantInfo: tenantInfo,
-		NWSIDs:     feed.nwsIDs,
-	})
+	stored, err := s.repo.ListByNWSIDs(
+		tenantCtx,
+		weatheralertports.ListWeatherAlertsByNWSIDsRequest{
+			TenantInfo: tenantInfo,
+			NWSIDs:     feed.nwsIDs,
+		},
+	)
 	if err != nil {
 		synced.Err = errortypes.NewBusinessError("failed to read stored weather alerts").
 			WithInternal(err)
@@ -232,7 +235,10 @@ func (s *Service) knownFeedState(
 	return state
 }
 
-func (s *Service) saveFeedState(ctx context.Context, state *weatheralertports.WeatherAlertFeedState) {
+func (s *Service) saveFeedState(
+	ctx context.Context,
+	state *weatheralertports.WeatherAlertFeedState,
+) {
 	if state.ETag == "" && state.LastModified == "" {
 		return
 	}

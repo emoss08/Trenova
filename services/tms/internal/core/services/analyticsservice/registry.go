@@ -24,7 +24,9 @@ func (r *Registry) RegisterProvider(provider kernelports.AnalyticsPageProvider) 
 	r.providers[provider.GetPage()] = provider
 }
 
-func (r *Registry) GetProvider(page kernelports.AnalyticsPage) (kernelports.AnalyticsPageProvider, bool) {
+func (r *Registry) GetProvider(
+	page kernelports.AnalyticsPage,
+) (kernelports.AnalyticsPageProvider, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 

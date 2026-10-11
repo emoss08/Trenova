@@ -320,7 +320,11 @@ type DeskMemoryRef struct {
 }
 
 type AgentMemoryService interface {
-	Remember(ctx context.Context, req *RememberRequest, actor *permissionports.RequestActor) (*agent.Memory, error)
+	Remember(
+		ctx context.Context,
+		req *RememberRequest,
+		actor *permissionports.RequestActor,
+	) (*agent.Memory, error)
 	PreviewRemember(
 		ctx context.Context,
 		req *RememberRequest,
@@ -375,7 +379,11 @@ type AgentMemoryService interface {
 	) (*agent.Memory, error)
 	// Reader is who a person reads memories as: themselves and every role
 	// they hold, inherited ones included.
-	Reader(ctx context.Context, tenant pagination.TenantInfo, userID pulid.ID) (agent.MemoryReader, error)
+	Reader(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		userID pulid.ID,
+	) (agent.MemoryReader, error)
 	// SavingMode is how the person wants what agents pick up kept.
 	SavingMode(
 		ctx context.Context,

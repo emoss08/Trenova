@@ -70,29 +70,33 @@ func (r *repository) List(
 	ctx context.Context,
 	req *orderports.ListOrdersRequest,
 ) (*pagination.ListResult[*order.Order], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*order.Order], error) {
-		log := r.l.With(
-			zap.String("operation", "List"),
-			zap.Any("request", req),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*order.Order], error) {
+			log := r.l.With(
+				zap.String("operation", "List"),
+				zap.Any("request", req),
+			)
 
-		entities := make([]*order.Order, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterQuery(sq, req)
-			}).ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count orders", zap.Error(err))
-			return nil, err
-		}
+			entities := make([]*order.Order, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count orders", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*order.Order]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*order.Order]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -132,54 +136,58 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *orderports.ListOrdersConnectionRequest,
 ) (*pagination.CursorListResult[*order.Order], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*order.Order], error) {
-		log := r.l.With(
-			zap.String("operation", "ListConnection"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*order.Order], error) {
+			log := r.l.With(
+				zap.String("operation", "ListConnection"),
+				zap.Any("request", req),
+			)
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*order.Order)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyTotalCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*order.Order)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyTotalCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count orders", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*order.Order]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*order.Order) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return applyOrderColumns(sq, req.OrderColumns)
+							})
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return r.applyCursorPageFilters(sq, req)
+					},
+				})
 			if err != nil {
-				log.Error("failed to count orders", zap.Error(err))
+				log.Error("failed to scan orders", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*order.Order]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*order.Order) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return applyOrderColumns(sq, req.OrderColumns)
-						})
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return r.applyCursorPageFilters(sq, req)
-				},
-			})
-		if err != nil {
-			log.Error("failed to scan orders", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) Create(
@@ -629,16 +637,19 @@ func (r *repository) ListUninvoicedChargeSharesForPayer(
 					Where(cols.InvoicedAt.IsNull()).
 					WhereGroup(" OR ", func(inner *bun.SelectQuery) *bun.SelectQuery {
 						return inner.
-							WhereGroup(" AND ", func(unallocated *bun.SelectQuery) *bun.SelectQuery {
-								return unallocated.
-									Where(cols.InvoiceID.IsNull()).
-									Where(`NOT EXISTS (
+							WhereGroup(
+								" AND ",
+								func(unallocated *bun.SelectQuery) *bun.SelectQuery {
+									return unallocated.
+										Where(cols.InvoiceID.IsNull()).
+										Where(`NOT EXISTS (
 									SELECT 1 FROM charge_allocations AS chal
 									WHERE chal.order_charge_id = ordchg.id
 									  AND chal.organization_id = ordchg.organization_id
 									  AND chal.business_unit_id = ordchg.business_unit_id
 								)`)
-							}).
+								},
+							).
 							WhereOr(`EXISTS (
 							SELECT 1 FROM charge_allocations AS chal
 							WHERE chal.order_charge_id = ordchg.id
@@ -879,35 +890,39 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *orderports.OrderSelectOptionsRequest,
 ) (*pagination.ListResult[*order.Order], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*order.Order], error) {
-		cols := ordercol.OrderColumns
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*order.Order], error) {
+			cols := ordercol.OrderColumns
 
-		return dbhelper.SelectOptions[*order.Order](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					cols.ID,
-					cols.OrderNumber,
-					cols.Status,
+			return dbhelper.SelectOptions[*order.Order](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.OrderNumber,
+						cols.Status,
+					},
+					OrgColumnRef:     &cols.OrganizationID,
+					BuColumnRef:      &cols.BusinessUnitID,
+					EntityName:       "Order",
+					SearchColumnRefs: []buncolgen.Column{cols.OrderNumber, cols.PONumber, cols.BOL},
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						if req.AttachableOnly {
+							q = q.Where(cols.Status.Ne(), order.StatusBilled).
+								Where(cols.Status.Ne(), order.StatusClosed).
+								Where(cols.Status.Ne(), order.StatusCanceled)
+						}
+						if !req.CustomerID.IsNil() {
+							q = q.Where(cols.CustomerID.Eq(), req.CustomerID)
+						}
+						return q
+					},
 				},
-				OrgColumnRef:     &cols.OrganizationID,
-				BuColumnRef:      &cols.BusinessUnitID,
-				EntityName:       "Order",
-				SearchColumnRefs: []buncolgen.Column{cols.OrderNumber, cols.PONumber, cols.BOL},
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					if req.AttachableOnly {
-						q = q.Where(cols.Status.Ne(), order.StatusBilled).
-							Where(cols.Status.Ne(), order.StatusClosed).
-							Where(cols.Status.Ne(), order.StatusCanceled)
-					}
-					if !req.CustomerID.IsNil() {
-						q = q.Where(cols.CustomerID.Eq(), req.CustomerID)
-					}
-					return q
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }

@@ -57,27 +57,31 @@ func (r *repository) ListByCarrier(
 	ctx context.Context,
 	req *carriersettlementports.ListCarrierLedgerEntriesRequest,
 ) ([]*carriersettlement.LedgerEntry, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carriersettlement.LedgerEntry, error) {
-		cols := carriersettlementcol.LedgerEntryColumns
-		limit := req.Limit
-		if limit <= 0 || limit > 500 {
-			limit = 100
-		}
-		items := make([]*carriersettlement.LedgerEntry, 0, limit)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriersettlementcol.LedgerEntryScopeTenant(sq, req.TenantInfo).
-					Where(cols.CarrierID.Eq(), req.CarrierID)
-			}).
-			Order(cols.TransactionDate.OrderDesc()).
-			Order(cols.LineNumber.OrderAsc()).
-			Limit(limit).
-			Scan(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("list carrier ledger entries: %w", err)
-		}
-		return items, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*carriersettlement.LedgerEntry, error) {
+			cols := carriersettlementcol.LedgerEntryColumns
+			limit := req.Limit
+			if limit <= 0 || limit > 500 {
+				limit = 100
+			}
+			items := make([]*carriersettlement.LedgerEntry, 0, limit)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&items).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return carriersettlementcol.LedgerEntryScopeTenant(sq, req.TenantInfo).
+						Where(cols.CarrierID.Eq(), req.CarrierID)
+				}).
+				Order(cols.TransactionDate.OrderDesc()).
+				Order(cols.LineNumber.OrderAsc()).
+				Limit(limit).
+				Scan(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list carrier ledger entries: %w", err)
+			}
+			return items, nil
+		},
+	)
 }

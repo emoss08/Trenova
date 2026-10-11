@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/services/costingservice"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -131,7 +131,10 @@ func (s *Service) Resolve(
 	return basis, nil
 }
 
-func DetentionBasisOf(usePolicyEngine bool, threshold *int16) *shipmentports.ShipmentDetentionBasis {
+func DetentionBasisOf(
+	usePolicyEngine bool,
+	threshold *int16,
+) *shipmentports.ShipmentDetentionBasis {
 	minutes := shipmentstate.DefaultDelayThresholdMinutes
 	if threshold != nil {
 		minutes = shipmentstate.ResolveDelayThresholdMinutes(*threshold)

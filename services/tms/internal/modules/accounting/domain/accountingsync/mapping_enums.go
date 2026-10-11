@@ -1,9 +1,9 @@
 package accountingsync
 
 import (
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 )
 
 type SetupStep string

@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -182,13 +182,16 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, equipmentmanufacturerports.GetEquipmentManufacturerByIDRequest{
-		ID: entity.GetID(),
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.GetOrganizationID(),
-			BuID:  entity.GetBusinessUnitID(),
+	original, err := s.repo.GetByID(
+		ctx,
+		equipmentmanufacturerports.GetEquipmentManufacturerByIDRequest{
+			ID: entity.GetID(),
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.GetOrganizationID(),
+				BuID:  entity.GetBusinessUnitID(),
+			},
 		},
-	})
+	)
 	if err != nil {
 		log.Error("failed to get original equipment manufacturer", zap.Error(err))
 		return nil, err

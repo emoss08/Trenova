@@ -78,53 +78,57 @@ func (r *repository) Bootstrap(
 
 	ctx = dbscope.WithSystem(ctx, bootstrapScopeReason)
 
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenantports.BootstrapTenantResult, error) {
-		db := r.db.DBForContext(ctx)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*tenantports.BootstrapTenantResult, error) {
+			db := r.db.DBForContext(ctx)
 
-		if req.Organization.StateID.IsNil() {
-			stateID, err := r.resolveState(ctx, req.StateAbbreviation)
+			if req.Organization.StateID.IsNil() {
+				stateID, err := r.resolveState(ctx, req.StateAbbreviation)
+				if err != nil {
+					return nil, err
+				}
+				req.Organization.StateID = stateID
+			}
+
+			code, err := tenantbootstrap.AvailableBusinessUnitCode(ctx, db)
 			if err != nil {
 				return nil, err
 			}
-			req.Organization.StateID = stateID
-		}
 
-		code, err := tenantbootstrap.AvailableBusinessUnitCode(ctx, db)
-		if err != nil {
-			return nil, err
-		}
+			slug, err := tenantbootstrap.AvailableLoginSlug(ctx, db, req.LoginSlugBase)
+			if err != nil {
+				return nil, err
+			}
+			req.Organization.LoginSlug = slug
+			req.Organization.BucketName = tenantbootstrap.BucketNameFor(slug)
 
-		slug, err := tenantbootstrap.AvailableLoginSlug(ctx, db, req.LoginSlugBase)
-		if err != nil {
-			return nil, err
-		}
-		req.Organization.LoginSlug = slug
-		req.Organization.BucketName = tenantbootstrap.BucketNameFor(slug)
+			username, err := tenantbootstrap.AvailableUsername(ctx, db, req.UsernameBase)
+			if err != nil {
+				return nil, err
+			}
+			req.Owner.Username = username
 
-		username, err := tenantbootstrap.AvailableUsername(ctx, db, req.UsernameBase)
-		if err != nil {
-			return nil, err
-		}
-		req.Owner.Username = username
+			result, err := tenantbootstrap.Bootstrap(ctx, db, tenantbootstrap.BootstrapParams{
+				BusinessUnit: &tenant.BusinessUnit{Name: req.BusinessUnitName, Code: code},
+				Organization: req.Organization,
+				Owner:        req.Owner,
+				Now:          req.Now,
+			})
+			if err != nil {
+				r.l.Error("failed to bootstrap tenant", zap.Error(err))
+				return nil, err
+			}
 
-		result, err := tenantbootstrap.Bootstrap(ctx, db, tenantbootstrap.BootstrapParams{
-			BusinessUnit: &tenant.BusinessUnit{Name: req.BusinessUnitName, Code: code},
-			Organization: req.Organization,
-			Owner:        req.Owner,
-			Now:          req.Now,
-		})
-		if err != nil {
-			r.l.Error("failed to bootstrap tenant", zap.Error(err))
-			return nil, err
-		}
-
-		return &tenantports.BootstrapTenantResult{
-			BusinessUnit: result.BusinessUnit,
-			Organization: result.Organization,
-			Owner:        result.Owner,
-			AdminRoleID:  result.AdminRole.ID,
-		}, nil
-	})
+			return &tenantports.BootstrapTenantResult{
+				BusinessUnit: result.BusinessUnit,
+				Organization: result.Organization,
+				Owner:        result.Owner,
+				AdminRoleID:  result.AdminRole.ID,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) resolveState(ctx context.Context, abbreviation string) (pulid.ID, error) {
@@ -138,7 +142,11 @@ func (r *repository) resolveState(ctx context.Context, abbreviation string) (pul
 		Limit(1).
 		Scan(ctx)
 	if err != nil {
-		return "", fmt.Errorf("resolve placeholder state %q: %w", abbreviation, dberror.HandleNotFoundError(err, "State"))
+		return "", fmt.Errorf(
+			"resolve placeholder state %q: %w",
+			abbreviation,
+			dberror.HandleNotFoundError(err, "State"),
+		)
 	}
 
 	return state.ID, nil

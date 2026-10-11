@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/memtable"
@@ -136,7 +136,10 @@ func newAgentToolTable(resources []string) *memtable.Table[agentToolRow] {
 			return cmp.Or(
 				compareFold(a.safety.AgentName, b.safety.AgentName),
 				cmp.Compare(a.safety.AgentID.String(), b.safety.AgentID.String()),
-				cmp.Compare(answerExposure(b.safety.Clean.Answer), answerExposure(a.safety.Clean.Answer)),
+				cmp.Compare(
+					answerExposure(b.safety.Clean.Answer),
+					answerExposure(a.safety.Clean.Answer),
+				),
 				cmp.Compare(a.safety.PolicyName, b.safety.PolicyName),
 			)
 		},
@@ -226,7 +229,10 @@ func answerField(
 		Sortable:   true,
 		Text:       func(row *agentToolRow) string { return autonomy(row).Answer.String() },
 		Compare: func(a, b *agentToolRow) int {
-			return cmp.Compare(answerExposure(autonomy(a).Answer), answerExposure(autonomy(b).Answer))
+			return cmp.Compare(
+				answerExposure(autonomy(a).Answer),
+				answerExposure(autonomy(b).Answer),
+			)
 		},
 	}
 }

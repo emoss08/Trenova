@@ -21,11 +21,14 @@ func (a *Activities) rolloutPreference(
 		return pulid.Nil
 	}
 
-	preferred, err := a.rollout.AssignExtraction(ctx, &extractionrolloutports.AssignExtractionRolloutRequest{
-		TenantInfo:  tenantInfo,
-		DocumentID:  payload.DocumentID,
-		ExtractedAt: payload.ExtractedAt,
-	})
+	preferred, err := a.rollout.AssignExtraction(
+		ctx,
+		&extractionrolloutports.AssignExtractionRolloutRequest{
+			TenantInfo:  tenantInfo,
+			DocumentID:  payload.DocumentID,
+			ExtractedAt: payload.ExtractedAt,
+		},
+	)
 	if err != nil {
 		a.logger.Warn(
 			"could not assign the extraction to a rollout side; using the usual providers",

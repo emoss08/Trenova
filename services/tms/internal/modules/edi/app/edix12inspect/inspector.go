@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 )
 
 const (

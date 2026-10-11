@@ -76,7 +76,11 @@ func groupSummaryQuery(
 
 	switch groupBy {
 	case shipment.BoardGroupingShipDate:
-		return dayGroups(q, shipment.ShipperStopIDSQL(shipmentcol.ShipmentTable.Alias), timezone), nil
+		return dayGroups(
+			q,
+			shipment.ShipperStopIDSQL(shipmentcol.ShipmentTable.Alias),
+			timezone,
+		), nil
 	case shipment.BoardGroupingDeliveryDate:
 		return dayGroups(
 			q,

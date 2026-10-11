@@ -45,7 +45,10 @@ func definitionColumns(
 		agentdefinitioncol.DefinitionColumns.Template.Bare(),
 	)
 
-	return sliceutils.AppendIfMissing(columns, agentdefinitioncol.DefinitionColumns.ToolNames.Bare())
+	return sliceutils.AppendIfMissing(
+		columns,
+		agentdefinitioncol.DefinitionColumns.ToolNames.Bare(),
+	)
 }
 
 func agentDefinitionConnectionToModel(

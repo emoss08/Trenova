@@ -135,7 +135,10 @@ func (r *repository) UpdatePreset(
 	entity *homelayout.Preset,
 ) (*homelayout.Preset, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*homelayout.Preset, error) {
-		log := r.l.With(zap.String("operation", "UpdatePreset"), zap.String("id", entity.ID.String()))
+		log := r.l.With(
+			zap.String("operation", "UpdatePreset"),
+			zap.String("id", entity.ID.String()),
+		)
 
 		ov := entity.Version
 		entity.Version++
@@ -254,32 +257,37 @@ func (r *repository) ListRoleUserAssignments(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]homelayoutports.HomeRoleUserAssignment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]homelayoutports.HomeRoleUserAssignment, error) {
-		log := r.l.With(zap.String("operation", "ListRoleUserAssignments"))
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]homelayoutports.HomeRoleUserAssignment, error) {
+			log := r.l.With(zap.String("operation", "ListRoleUserAssignments"))
 
-		now := timeutils.NowUnix()
-		assignments := make([]homelayoutports.HomeRoleUserAssignment, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*permission.UserRoleAssignment)(nil)).
-			ColumnExpr(permissioncol.UserRoleAssignmentColumns.RoleID.Qualified()+" AS role_id").
-			ColumnExpr(permissioncol.UserRoleAssignmentColumns.UserID.Qualified()+" AS user_id").
-			ColumnExpr(
-				permissioncol.RoleColumns.CoreResponsibility.Qualified()+" AS core_responsibility",
-			).
-			Join("JOIN roles AS r ON "+permissioncol.RoleColumns.ID.Qualified()+" = "+
-				permissioncol.UserRoleAssignmentColumns.RoleID.Qualified()).
-			Where(permissioncol.UserRoleAssignmentColumns.OrganizationID.Eq(), tenantInfo.OrgID).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where(permissioncol.UserRoleAssignmentColumns.ExpiresAt.IsNull()).
-					WhereOr(permissioncol.UserRoleAssignmentColumns.ExpiresAt.Gt(), now)
-			}).
-			Scan(ctx, &assignments)
-		if err != nil {
-			log.Error("failed to list role user assignments", zap.Error(err))
-			return nil, err
-		}
+			now := timeutils.NowUnix()
+			assignments := make([]homelayoutports.HomeRoleUserAssignment, 0)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*permission.UserRoleAssignment)(nil)).
+				ColumnExpr(permissioncol.UserRoleAssignmentColumns.RoleID.Qualified()+" AS role_id").
+				ColumnExpr(permissioncol.UserRoleAssignmentColumns.UserID.Qualified()+" AS user_id").
+				ColumnExpr(
+					permissioncol.RoleColumns.CoreResponsibility.Qualified()+
+						" AS core_responsibility",
+				).
+				Join("JOIN roles AS r ON "+permissioncol.RoleColumns.ID.Qualified()+" = "+
+					permissioncol.UserRoleAssignmentColumns.RoleID.Qualified()).
+				Where(permissioncol.UserRoleAssignmentColumns.OrganizationID.Eq(), tenantInfo.OrgID).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.Where(permissioncol.UserRoleAssignmentColumns.ExpiresAt.IsNull()).
+						WhereOr(permissioncol.UserRoleAssignmentColumns.ExpiresAt.Gt(), now)
+				}).
+				Scan(ctx, &assignments)
+			if err != nil {
+				log.Error("failed to list role user assignments", zap.Error(err))
+				return nil, err
+			}
 
-		return assignments, nil
-	})
+			return assignments, nil
+		},
+	)
 }

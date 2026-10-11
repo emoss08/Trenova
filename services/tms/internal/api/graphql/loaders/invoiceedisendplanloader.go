@@ -81,10 +81,13 @@ func (f *InvoiceEDISendPlanByInvoiceIDLoaderFactory) batchFunc(
 		if err != nil {
 			return failAll(results, errs, err)
 		}
-		plans, err := f.plans.ResolveEDISendPlans(ctx, &invoiceports.ResolveInvoiceEDISendPlansRequest{
-			TenantInfo: tenantInfo,
-			Invoices:   invoices,
-		})
+		plans, err := f.plans.ResolveEDISendPlans(
+			ctx,
+			&invoiceports.ResolveInvoiceEDISendPlansRequest{
+				TenantInfo: tenantInfo,
+				Invoices:   invoices,
+			},
+		)
 		if err != nil {
 			return failAll(results, errs, err)
 		}

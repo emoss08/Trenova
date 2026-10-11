@@ -78,7 +78,9 @@ type purchaseWritten struct {
 	number     string
 }
 
-func (c *Connector) purchaseResult(written *purchaseWritten) *accountingsyncports.AccountingDocumentResult {
+func (c *Connector) purchaseResult(
+	written *purchaseWritten,
+) *accountingsyncports.AccountingDocumentResult {
 	docType := xero.InvoiceTypePayable
 	if written.credit {
 		docType = xero.CreditNoteTypePayable

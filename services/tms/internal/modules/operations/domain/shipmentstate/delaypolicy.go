@@ -3,8 +3,8 @@ package shipmentstate
 import (
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 )
 
 const DefaultDelayThresholdMinutes int16 = 30

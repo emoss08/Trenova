@@ -46,7 +46,12 @@ func (r *Reader) Read(
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			return nil, fmt.Errorf("read %s: %w", format, ctxErr)
 		}
-		return nil, fmt.Errorf("read %s: %w: %w", format, kernelports.ErrOfficeDocumentUnreadable, err)
+		return nil, fmt.Errorf(
+			"read %s: %w: %w",
+			format,
+			kernelports.ErrOfficeDocumentUnreadable,
+			err,
+		)
 	}
 
 	return pages, nil

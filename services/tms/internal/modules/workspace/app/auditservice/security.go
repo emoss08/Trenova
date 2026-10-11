@@ -3,9 +3,9 @@ package auditservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,7 +39,10 @@ func NewSecurityAuditor(p SecurityAuditorParams) permissionports.SecurityAuditor
 	}
 }
 
-func (a *SecurityAuditor) RecordChange(ctx context.Context, change *permissionports.SecurityChange) {
+func (a *SecurityAuditor) RecordChange(
+	ctx context.Context,
+	change *permissionports.SecurityChange,
+) {
 	change = withRequestTenant(ctx, change)
 
 	params := &auditports.LogActionParams{

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -30,10 +30,13 @@ func (s *Service) ListConfiguredTenants(
 	after TenantCursor,
 	limit int,
 ) ([]pagination.TenantInfo, error) {
-	controls, err := s.controlRepo.ListConfigured(ctx, &carrierintelports.ListCarrierIntelTenantsRequest{
-		After: after,
-		Limit: limit,
-	})
+	controls, err := s.controlRepo.ListConfigured(
+		ctx,
+		&carrierintelports.ListCarrierIntelTenantsRequest{
+			After: after,
+			Limit: limit,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -114,11 +117,14 @@ func (s *Service) SendDigest(
 	tenantInfo pagination.TenantInfo,
 ) (*DigestResult, error) {
 	now := s.now()
-	events, err := s.eventRepo.ListForDigest(ctx, &carrierintelports.ListCarrierIntelDigestEventsRequest{
-		TenantInfo: tenantInfo,
-		Since:      now - timeutils.SecondsPerDay,
-		Limit:      digestEventLimit,
-	})
+	events, err := s.eventRepo.ListForDigest(
+		ctx,
+		&carrierintelports.ListCarrierIntelDigestEventsRequest{
+			TenantInfo: tenantInfo,
+			Since:      now - timeutils.SecondsPerDay,
+			Limit:      digestEventLimit,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

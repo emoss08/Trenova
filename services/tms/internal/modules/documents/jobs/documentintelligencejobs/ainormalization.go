@@ -3,9 +3,9 @@ package documentintelligencejobs
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/shared/floatutils"
 )
 
@@ -28,7 +28,9 @@ func mergeAIAnalysis(
 	return merged, true, ""
 }
 
-func analysisFromAIExtract(aiExtract *documentaiextractionports.AIExtractResult) *DocumentIntelligenceAnalysis {
+func analysisFromAIExtract(
+	aiExtract *documentaiextractionports.AIExtractResult,
+) *DocumentIntelligenceAnalysis {
 	aiExtract = normalizeAIExtractResult(aiExtract)
 	if aiExtract == nil {
 		return &DocumentIntelligenceAnalysis{
@@ -101,7 +103,9 @@ func analysisFromAIExtract(aiExtract *documentaiextractionports.AIExtractResult)
 	return analysis
 }
 
-func normalizeAIExtractResult(result *documentaiextractionports.AIExtractResult) *documentaiextractionports.AIExtractResult {
+func normalizeAIExtractResult(
+	result *documentaiextractionports.AIExtractResult,
+) *documentaiextractionports.AIExtractResult {
 	if result == nil {
 		return nil
 	}
@@ -112,9 +116,14 @@ func normalizeAIExtractResult(result *documentaiextractionports.AIExtractResult)
 		ReviewStatus:      normalizeAIReviewStatus(result.ReviewStatus),
 		MissingFields:     append([]string{}, result.MissingFields...),
 		Signals:           append([]string{}, result.Signals...),
-		Fields:            make(map[string]documentaiextractionports.AIDocumentField, len(result.Fields)+3),
-		Stops:             make([]*documentaiextractionports.AIDocumentStop, 0, len(result.Stops)),
-		Conflicts:         append([]*documentaiextractionports.AIDocumentConflict{}, result.Conflicts...),
+		Fields: make(
+			map[string]documentaiextractionports.AIDocumentField,
+			len(result.Fields)+3,
+		),
+		Stops: make([]*documentaiextractionports.AIDocumentStop, 0, len(result.Stops)),
+		Conflicts: append(
+			[]*documentaiextractionports.AIDocumentConflict{},
+			result.Conflicts...),
 	}
 
 	for key, field := range result.Fields {
@@ -194,7 +203,11 @@ func normalizeAIStopRole(role string) string {
 	}
 }
 
-func ensureCanonicalAIField(result *documentaiextractionports.AIExtractResult, key string, aliases []string) {
+func ensureCanonicalAIField(
+	result *documentaiextractionports.AIExtractResult,
+	key string,
+	aliases []string,
+) {
 	if result == nil {
 		return
 	}
@@ -218,7 +231,10 @@ func ensureCanonicalAIField(result *documentaiextractionports.AIExtractResult, k
 	}
 }
 
-func ensureCanonicalAIFieldFromStop(result *documentaiextractionports.AIExtractResult, key, label, role string) {
+func ensureCanonicalAIFieldFromStop(
+	result *documentaiextractionports.AIExtractResult,
+	key, label, role string,
+) {
 	if result == nil {
 		return
 	}
@@ -319,7 +335,9 @@ func normalizeRoutedKind(kind string) string {
 	}
 }
 
-func toAIFingerprintHint(fingerprint *ProviderFingerprint) *documentaiextractionports.AIDocumentFingerprintHint {
+func toAIFingerprintHint(
+	fingerprint *ProviderFingerprint,
+) *documentaiextractionports.AIDocumentFingerprintHint {
 	if fingerprint == nil {
 		return nil
 	}
@@ -459,6 +477,8 @@ func hasMeaningfulField(fields map[string]*ReviewField, key string) bool {
 	return strings.TrimSpace(field.Value) != ""
 }
 
-func ShipmentDraftDataFromAIExtract(aiExtract *documentaiextractionports.AIExtractResult) map[string]any {
+func ShipmentDraftDataFromAIExtract(
+	aiExtract *documentaiextractionports.AIExtractResult,
+) map[string]any {
 	return analysisFromAIExtract(aiExtract).ToMap()
 }

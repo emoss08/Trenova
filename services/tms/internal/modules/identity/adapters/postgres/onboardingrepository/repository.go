@@ -63,7 +63,11 @@ func (r *repository) Create(
 	entity *onboarding.Onboarding,
 ) (*onboarding.Onboarding, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*onboarding.Onboarding, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
 			r.l.Error("failed to create onboarding",
 				zap.String("organizationId", entity.OrganizationID.String()),
 				zap.Error(err),

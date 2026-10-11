@@ -127,59 +127,63 @@ func (r *repository) GetDocuments(
 	ctx context.Context,
 	req *agentports.RetrievalDocumentsRequest,
 ) ([]*agentports.RetrievalDocumentSource, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*agentports.RetrievalDocumentSource, error) {
-		ids, err := sourceIDs(req.TenantInfo, req.IDs)
-		if err != nil || len(ids) == 0 {
-			return []*agentports.RetrievalDocumentSource{}, err
-		}
-
-		dba := r.db.DBForContext(ctx)
-		docs := make([]*document.Document, 0, len(ids))
-		if err = dba.NewSelect().
-			Model(&docs).
-			Apply(documentcol.DocumentApplyTenant(req.TenantInfo)).
-			Where(documentcol.DocumentColumns.ID.In(), bun.List(ids)).
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("read documents: %w", err)
-		}
-		if len(docs) == 0 {
-			return []*agentports.RetrievalDocumentSource{}, nil
-		}
-
-		found := make([]pulid.ID, 0, len(docs))
-		sources := make(map[pulid.ID]*agentports.RetrievalDocumentSource, len(docs))
-		for _, doc := range docs {
-			found = append(found, doc.ID)
-			sources[doc.ID] = &agentports.RetrievalDocumentSource{Document: doc}
-		}
-
-		contents := make([]*documentcontent.Content, 0, len(found))
-		if err = dba.NewSelect().
-			Model(&contents).
-			Apply(documentcontentcol.ContentApplyTenant(req.TenantInfo)).
-			Where(documentcontentcol.ContentColumns.DocumentID.In(), bun.List(found)).
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("read document contents: %w", err)
-		}
-		for _, content := range contents {
-			if source, ok := sources[content.DocumentID]; ok {
-				source.Content = content
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*agentports.RetrievalDocumentSource, error) {
+			ids, err := sourceIDs(req.TenantInfo, req.IDs)
+			if err != nil || len(ids) == 0 {
+				return []*agentports.RetrievalDocumentSource{}, err
 			}
-		}
 
-		if req.IncludePages {
-			if err = r.attachPages(ctx, dba, req.TenantInfo, found, sources); err != nil {
-				return nil, err
+			dba := r.db.DBForContext(ctx)
+			docs := make([]*document.Document, 0, len(ids))
+			if err = dba.NewSelect().
+				Model(&docs).
+				Apply(documentcol.DocumentApplyTenant(req.TenantInfo)).
+				Where(documentcol.DocumentColumns.ID.In(), bun.List(ids)).
+				Scan(ctx); err != nil {
+				return nil, fmt.Errorf("read documents: %w", err)
 			}
-		}
+			if len(docs) == 0 {
+				return []*agentports.RetrievalDocumentSource{}, nil
+			}
 
-		ordered := make([]*agentports.RetrievalDocumentSource, 0, len(docs))
-		for _, doc := range docs {
-			ordered = append(ordered, sources[doc.ID])
-		}
+			found := make([]pulid.ID, 0, len(docs))
+			sources := make(map[pulid.ID]*agentports.RetrievalDocumentSource, len(docs))
+			for _, doc := range docs {
+				found = append(found, doc.ID)
+				sources[doc.ID] = &agentports.RetrievalDocumentSource{Document: doc}
+			}
 
-		return ordered, nil
-	})
+			contents := make([]*documentcontent.Content, 0, len(found))
+			if err = dba.NewSelect().
+				Model(&contents).
+				Apply(documentcontentcol.ContentApplyTenant(req.TenantInfo)).
+				Where(documentcontentcol.ContentColumns.DocumentID.In(), bun.List(found)).
+				Scan(ctx); err != nil {
+				return nil, fmt.Errorf("read document contents: %w", err)
+			}
+			for _, content := range contents {
+				if source, ok := sources[content.DocumentID]; ok {
+					source.Content = content
+				}
+			}
+
+			if req.IncludePages {
+				if err = r.attachPages(ctx, dba, req.TenantInfo, found, sources); err != nil {
+					return nil, err
+				}
+			}
+
+			ordered := make([]*agentports.RetrievalDocumentSource, 0, len(docs))
+			for _, doc := range docs {
+				ordered = append(ordered, sources[doc.ID])
+			}
+
+			return ordered, nil
+		},
+	)
 }
 
 func (r *repository) attachPages(
@@ -219,24 +223,28 @@ func (r *repository) GetInboundMessages(
 	ctx context.Context,
 	req agentports.RetrievalSourcesRequest,
 ) ([]*inboundmessage.InboundMessage, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
-		ids, err := sourceIDs(req.TenantInfo, req.IDs)
-		if err != nil || len(ids) == 0 {
-			return []*inboundmessage.InboundMessage{}, err
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
+			ids, err := sourceIDs(req.TenantInfo, req.IDs)
+			if err != nil || len(ids) == 0 {
+				return []*inboundmessage.InboundMessage{}, err
+			}
 
-		messages := make([]*inboundmessage.InboundMessage, 0, len(ids))
-		if err = r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&messages).
-			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-			Where(inboundmessagecol.InboundMessageColumns.ID.In(), bun.List(ids)).
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("read inbound messages: %w", err)
-		}
+			messages := make([]*inboundmessage.InboundMessage, 0, len(ids))
+			if err = r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&messages).
+				Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
+				Where(inboundmessagecol.InboundMessageColumns.ID.In(), bun.List(ids)).
+				Scan(ctx); err != nil {
+				return nil, fmt.Errorf("read inbound messages: %w", err)
+			}
 
-		return messages, nil
-	})
+			return messages, nil
+		},
+	)
 }
 
 func (r *repository) ListModelKeys(
@@ -402,96 +410,111 @@ func (r *repository) SearchDocuments(
 	ctx context.Context,
 	req agentports.RetrievalKeywordSearchRequest,
 ) ([]agentports.RetrievalKeywordHit, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.RetrievalKeywordHit, error) {
-		plan, ok, err := planKeywordSearch(req)
-		if err != nil || !ok {
-			return []agentports.RetrievalKeywordHit{}, err
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]agentports.RetrievalKeywordHit, error) {
+			plan, ok, err := planKeywordSearch(req)
+			if err != nil || !ok {
+				return []agentports.RetrievalKeywordHit{}, err
+			}
 
-		docs := documentcol.DocumentColumns
-		content := documentcontentcol.ContentColumns
-		dba := r.db.DBForContext(ctx)
+			docs := documentcol.DocumentColumns
+			content := documentcontentcol.ContentColumns
+			dba := r.db.DBForContext(ctx)
 
-		q := dba.NewSelect().
-			Model((*document.Document)(nil)).
-			ColumnExpr(docs.ID.As(sourceIDColumn)).
-			Join("LEFT JOIN "+documentcontentcol.ContentTable.As(documentcontentcol.ContentTable.Alias)).
-			JoinOn(content.DocumentID.EqColumn(docs.ID)).
-			JoinOn(content.OrganizationID.EqColumn(docs.OrganizationID)).
-			JoinOn(content.BusinessUnitID.EqColumn(docs.BusinessUnitID)).
-			Apply(documentcol.DocumentApplyTenant(req.TenantInfo)).
-			Where(docs.IsCurrentVersion.IsTrue()).
-			Where(docs.Status.NotIn(), bun.List(document.UnsearchableStatuses()))
+			q := dba.NewSelect().
+				Model((*document.Document)(nil)).
+				ColumnExpr(docs.ID.As(sourceIDColumn)).
+				Join("LEFT JOIN "+documentcontentcol.ContentTable.As(documentcontentcol.ContentTable.Alias)).
+				JoinOn(content.DocumentID.EqColumn(docs.ID)).
+				JoinOn(content.OrganizationID.EqColumn(docs.OrganizationID)).
+				JoinOn(content.BusinessUnitID.EqColumn(docs.BusinessUnitID)).
+				Apply(documentcol.DocumentApplyTenant(req.TenantInfo)).
+				Where(docs.IsCurrentVersion.IsTrue()).
+				Where(docs.Status.NotIn(), bun.List(document.UnsearchableStatuses()))
 
-		if dbdialect.FromBun(dba).Supports(dbdialect.CapFullTextSearch) {
-			q = q.
-				ColumnExpr(
-					"GREATEST("+rankAnyWord(&docs.SearchVector, "simple")+", COALESCE("+
-						rankAnyWord(&content.SearchVector, "english")+", 0)) AS "+rankColumn,
-					plan.query, plan.query,
-				).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.
-						Where(matchesAnyWord(&docs.SearchVector, "simple"), plan.query).
-						WhereOr(matchesAnyWord(&content.SearchVector, "english"), plan.query)
-				}).
-				OrderExpr(rankColumn + " DESC")
-		} else {
-			clause, args := likeAnyWord(plan.query,
-				&docs.OriginalName, &docs.Description, &content.ContentText)
-			q = q.
-				ColumnExpr("1.0 AS "+rankColumn).
-				Where(clause, args...).
-				OrderExpr(docs.UpdatedAt.OrderDesc())
-		}
+			if dbdialect.FromBun(dba).Supports(dbdialect.CapFullTextSearch) {
+				q = q.
+					ColumnExpr(
+						"GREATEST("+rankAnyWord(&docs.SearchVector, "simple")+", COALESCE("+
+							rankAnyWord(&content.SearchVector, "english")+", 0)) AS "+rankColumn,
+						plan.query, plan.query,
+					).
+					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return sq.
+							Where(matchesAnyWord(&docs.SearchVector, "simple"), plan.query).
+							WhereOr(matchesAnyWord(&content.SearchVector, "english"), plan.query)
+					}).
+					OrderExpr(rankColumn + " DESC")
+			} else {
+				clause, args := likeAnyWord(plan.query,
+					&docs.OriginalName, &docs.Description, &content.ContentText)
+				q = q.
+					ColumnExpr("1.0 AS "+rankColumn).
+					Where(clause, args...).
+					OrderExpr(docs.UpdatedAt.OrderDesc())
+			}
 
-		hits := make([]agentports.RetrievalKeywordHit, 0, plan.limit)
-		if err = q.OrderExpr(docs.ID.OrderAsc()).Limit(plan.limit).Scan(ctx, &hits); err != nil {
-			return nil, fmt.Errorf("search documents by keyword: %w", err)
-		}
+			hits := make([]agentports.RetrievalKeywordHit, 0, plan.limit)
+			if err = q.OrderExpr(docs.ID.OrderAsc()).
+				Limit(plan.limit).
+				Scan(ctx, &hits); err != nil {
+				return nil, fmt.Errorf("search documents by keyword: %w", err)
+			}
 
-		return hits, nil
-	})
+			return hits, nil
+		},
+	)
 }
 
 func (r *repository) SearchInboundMessages(
 	ctx context.Context,
 	req agentports.RetrievalKeywordSearchRequest,
 ) ([]agentports.RetrievalKeywordHit, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.RetrievalKeywordHit, error) {
-		plan, ok, err := planKeywordSearch(req)
-		if err != nil || !ok {
-			return []agentports.RetrievalKeywordHit{}, err
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]agentports.RetrievalKeywordHit, error) {
+			plan, ok, err := planKeywordSearch(req)
+			if err != nil || !ok {
+				return []agentports.RetrievalKeywordHit{}, err
+			}
 
-		cols := inboundmessagecol.InboundMessageColumns
-		dba := r.db.DBForContext(ctx)
+			cols := inboundmessagecol.InboundMessageColumns
+			dba := r.db.DBForContext(ctx)
 
-		q := dba.NewSelect().
-			Model((*inboundmessage.InboundMessage)(nil)).
-			ColumnExpr(cols.ID.As(sourceIDColumn)).
-			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo))
+			q := dba.NewSelect().
+				Model((*inboundmessage.InboundMessage)(nil)).
+				ColumnExpr(cols.ID.As(sourceIDColumn)).
+				Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo))
 
-		if dbdialect.FromBun(dba).Supports(dbdialect.CapFullTextSearch) {
-			q = q.
-				ColumnExpr(rankAnyWord(&cols.SearchVector, "english")+" AS "+rankColumn, plan.query).
-				Where(matchesAnyWord(&cols.SearchVector, "english"), plan.query).
-				OrderExpr(rankColumn + " DESC").
-				OrderExpr(cols.ReceivedAt.OrderDesc())
-		} else {
-			clause, args := likeAnyWord(plan.query,
-				&cols.Subject, &cols.FromName, &cols.FromAddress, &cols.TextBody)
-			q = q.
-				ColumnExpr("1.0 AS "+rankColumn).
-				Where(clause, args...).
-				OrderExpr(cols.ReceivedAt.OrderDesc())
-		}
+			if dbdialect.FromBun(dba).Supports(dbdialect.CapFullTextSearch) {
+				q = q.
+					ColumnExpr(
+						rankAnyWord(&cols.SearchVector, "english")+" AS "+rankColumn,
+						plan.query,
+					).
+					Where(matchesAnyWord(&cols.SearchVector, "english"), plan.query).
+					OrderExpr(rankColumn + " DESC").
+					OrderExpr(cols.ReceivedAt.OrderDesc())
+			} else {
+				clause, args := likeAnyWord(plan.query,
+					&cols.Subject, &cols.FromName, &cols.FromAddress, &cols.TextBody)
+				q = q.
+					ColumnExpr("1.0 AS "+rankColumn).
+					Where(clause, args...).
+					OrderExpr(cols.ReceivedAt.OrderDesc())
+			}
 
-		hits := make([]agentports.RetrievalKeywordHit, 0, plan.limit)
-		if err = q.OrderExpr(cols.ID.OrderAsc()).Limit(plan.limit).Scan(ctx, &hits); err != nil {
-			return nil, fmt.Errorf("search inbound messages by keyword: %w", err)
-		}
+			hits := make([]agentports.RetrievalKeywordHit, 0, plan.limit)
+			if err = q.OrderExpr(cols.ID.OrderAsc()).
+				Limit(plan.limit).
+				Scan(ctx, &hits); err != nil {
+				return nil, fmt.Errorf("search inbound messages by keyword: %w", err)
+			}
 
-		return hits, nil
-	})
+			return hits, nil
+		},
+	)
 }

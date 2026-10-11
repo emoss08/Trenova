@@ -59,131 +59,146 @@ func (r *programRepository) ListConnection(
 	ctx context.Context,
 	req *fuelsurchargeports.ListFuelSurchargeProgramConnectionRequest,
 ) (*pagination.CursorListResult[*fuelsurcharge.FuelSurchargeProgram], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*fuelsurcharge.FuelSurchargeProgram], error) {
-		log := r.l.With(
-			zap.String("operation", "ListConnection"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*fuelsurcharge.FuelSurchargeProgram], error) {
+			log := r.l.With(
+				zap.String("operation", "ListConnection"),
+				zap.Any("request", req),
+			)
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*fuelsurcharge.FuelSurchargeProgram)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						fuelsurchargecol.FuelSurchargeProgramTable.Alias,
-						req.Filter,
-						(*fuelsurcharge.FuelSurchargeProgram)(nil),
-					)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*fuelsurcharge.FuelSurchargeProgram)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							fuelsurchargecol.FuelSurchargeProgramTable.Alias,
+							req.Filter,
+							(*fuelsurcharge.FuelSurchargeProgram)(nil),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count fuel surcharge programs", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*fuelsurcharge.FuelSurchargeProgram]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*fuelsurcharge.FuelSurchargeProgram) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return applyProgramColumns(sq, req.FuelSurchargeProgramColumns)
+							})
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							fuelsurchargecol.FuelSurchargeProgramTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*fuelsurcharge.FuelSurchargeProgram)(nil),
+						)
+					},
+				})
 			if err != nil {
-				log.Error("failed to count fuel surcharge programs", zap.Error(err))
+				log.Error("failed to scan fuel surcharge programs", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*fuelsurcharge.FuelSurchargeProgram]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*fuelsurcharge.FuelSurchargeProgram) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return applyProgramColumns(sq, req.FuelSurchargeProgramColumns)
-						})
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return querybuilder.ApplyCursorFilters(
-						sq,
-						fuelsurchargecol.FuelSurchargeProgramTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*fuelsurcharge.FuelSurchargeProgram)(nil),
-					)
-				},
-			})
-		if err != nil {
-			log.Error("failed to scan fuel surcharge programs", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *programRepository) ListActive(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*fuelsurcharge.FuelSurchargeProgram, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fuelsurcharge.FuelSurchargeProgram, error) {
-		cols := fuelsurchargecol.FuelSurchargeProgramColumns
-		entities := make([]*fuelsurcharge.FuelSurchargeProgram, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(fuelsurchargecol.FuelSurchargeProgramRelations.FuelIndex).
-			Relation(fuelsurchargecol.FuelSurchargeProgramRelations.TableRows, orderTableRows).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return fuelsurchargecol.FuelSurchargeProgramScopeTenant(sq, tenantInfo).
-					Where(cols.Status.Eq(), fuelsurcharge.ProgramStatusActive)
-			}).
-			Order(cols.Name.OrderAsc()).
-			Scan(ctx)
-		if err != nil {
-			r.l.Error("failed to list active fuel surcharge programs", zap.Error(err))
-			return nil, err
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*fuelsurcharge.FuelSurchargeProgram, error) {
+			cols := fuelsurchargecol.FuelSurchargeProgramColumns
+			entities := make([]*fuelsurcharge.FuelSurchargeProgram, 0)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Relation(fuelsurchargecol.FuelSurchargeProgramRelations.FuelIndex).
+				Relation(fuelsurchargecol.FuelSurchargeProgramRelations.TableRows, orderTableRows).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return fuelsurchargecol.FuelSurchargeProgramScopeTenant(sq, tenantInfo).
+						Where(cols.Status.Eq(), fuelsurcharge.ProgramStatusActive)
+				}).
+				Order(cols.Name.OrderAsc()).
+				Scan(ctx)
+			if err != nil {
+				r.l.Error("failed to list active fuel surcharge programs", zap.Error(err))
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *programRepository) GetByID(
 	ctx context.Context,
 	req *fuelsurchargeports.GetFuelSurchargeProgramByIDRequest,
 ) (*fuelsurcharge.FuelSurchargeProgram, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fuelsurcharge.FuelSurchargeProgram, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("id", req.ProgramID.String()),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*fuelsurcharge.FuelSurchargeProgram, error) {
+			log := r.l.With(
+				zap.String("operation", "GetByID"),
+				zap.String("id", req.ProgramID.String()),
+			)
 
-		cols := fuelsurchargecol.FuelSurchargeProgramColumns
-		entity := new(fuelsurcharge.FuelSurchargeProgram)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return fuelsurchargecol.FuelSurchargeProgramScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ProgramID)
-			})
+			cols := fuelsurchargecol.FuelSurchargeProgramColumns
+			entity := new(fuelsurcharge.FuelSurchargeProgram)
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return fuelsurchargecol.FuelSurchargeProgramScopeTenant(sq, req.TenantInfo).
+						Where(cols.ID.Eq(), req.ProgramID)
+				})
 
-		if req.IncludeRows {
-			q = q.Relation(fuelsurchargecol.FuelSurchargeProgramRelations.TableRows, orderTableRows)
-		}
-		if req.IncludeIndex {
-			q = q.Relation(fuelsurchargecol.FuelSurchargeProgramRelations.FuelIndex)
-		}
-		if req.IncludeCharge {
-			q = q.Relation(fuelsurchargecol.FuelSurchargeProgramRelations.AccessorialCharge)
-		}
+			if req.IncludeRows {
+				q = q.Relation(
+					fuelsurchargecol.FuelSurchargeProgramRelations.TableRows,
+					orderTableRows,
+				)
+			}
+			if req.IncludeIndex {
+				q = q.Relation(fuelsurchargecol.FuelSurchargeProgramRelations.FuelIndex)
+			}
+			if req.IncludeCharge {
+				q = q.Relation(fuelsurchargecol.FuelSurchargeProgramRelations.AccessorialCharge)
+			}
 
-		if err := q.Scan(ctx); err != nil {
-			log.Error("failed to get fuel surcharge program", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "FuelSurchargeProgram")
-		}
+			if err := q.Scan(ctx); err != nil {
+				log.Error("failed to get fuel surcharge program", zap.Error(err))
+				return nil, dberror.HandleNotFoundError(err, "FuelSurchargeProgram")
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func stampTableRows(entity *fuelsurcharge.FuelSurchargeProgram, resetIDs bool) {
@@ -225,96 +240,113 @@ func (r *programRepository) Create(
 	ctx context.Context,
 	entity *fuelsurcharge.FuelSurchargeProgram,
 ) (*fuelsurcharge.FuelSurchargeProgram, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fuelsurcharge.FuelSurchargeProgram, error) {
-		log := r.l.With(zap.String("operation", "Create"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*fuelsurcharge.FuelSurchargeProgram, error) {
+			log := r.l.With(zap.String("operation", "Create"))
 
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			if _, iErr := r.db.DBForContext(c).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(c); iErr != nil {
-				return iErr
+			err := r.db.WithTx(
+				ctx,
+				kernelports.TxOptions{},
+				func(c context.Context, _ bun.Tx) error {
+					if _, iErr := r.db.DBForContext(c).
+						NewInsert().
+						Model(entity).
+						Returning("*").
+						Exec(c); iErr != nil {
+						return iErr
+					}
+
+					stampTableRows(entity, false)
+
+					return r.insertTableRows(c, entity)
+				},
+			)
+			if err != nil {
+				log.Error("failed to create fuel surcharge program", zap.Error(err))
+				return nil, dberror.MapRetryableTransactionError(
+					err,
+					"Fuel surcharge program is busy. Retry the request.",
+				)
 			}
 
-			stampTableRows(entity, false)
-
-			return r.insertTableRows(c, entity)
-		})
-		if err != nil {
-			log.Error("failed to create fuel surcharge program", zap.Error(err))
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Fuel surcharge program is busy. Retry the request.",
-			)
-		}
-
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *programRepository) Update(
 	ctx context.Context,
 	entity *fuelsurcharge.FuelSurchargeProgram,
 ) (*fuelsurcharge.FuelSurchargeProgram, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fuelsurcharge.FuelSurchargeProgram, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", entity.ID.String()),
-		)
-
-		ov := entity.Version
-		entity.Version++
-
-		cols := fuelsurchargecol.FuelSurchargeTableRowColumns
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			results, uErr := r.db.DBForContext(c).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where("version = ?", ov).
-				OmitZero().
-				Returning("*").
-				Exec(c)
-			if uErr != nil {
-				return uErr
-			}
-
-			if uErr = dberror.CheckRowsAffected(
-				results,
-				"FuelSurchargeProgram",
-				entity.ID.String(),
-			); uErr != nil {
-				return uErr
-			}
-
-			if _, dErr := r.db.DBForContext(c).
-				NewDelete().
-				Model((*fuelsurcharge.FuelSurchargeTableRow)(nil)).
-				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return fuelsurchargecol.FuelSurchargeTableRowScopeTenantDelete(dq, pagination.TenantInfo{
-						OrgID: entity.OrganizationID,
-						BuID:  entity.BusinessUnitID,
-					}).Where(cols.FuelSurchargeProgramID.Eq(), entity.ID)
-				}).
-				Exec(c); dErr != nil {
-				return dErr
-			}
-
-			stampTableRows(entity, true)
-
-			return r.insertTableRows(c, entity)
-		})
-		if err != nil {
-			log.Error("failed to update fuel surcharge program", zap.Error(err))
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Fuel surcharge program is busy. Retry the request.",
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*fuelsurcharge.FuelSurchargeProgram, error) {
+			log := r.l.With(
+				zap.String("operation", "Update"),
+				zap.String("id", entity.ID.String()),
 			)
-		}
 
-		return entity, nil
-	})
+			ov := entity.Version
+			entity.Version++
+
+			cols := fuelsurchargecol.FuelSurchargeTableRowColumns
+			err := r.db.WithTx(
+				ctx,
+				kernelports.TxOptions{},
+				func(c context.Context, _ bun.Tx) error {
+					results, uErr := r.db.DBForContext(c).
+						NewUpdate().
+						Model(entity).
+						WherePK().
+						Where("version = ?", ov).
+						OmitZero().
+						Returning("*").
+						Exec(c)
+					if uErr != nil {
+						return uErr
+					}
+
+					if uErr = dberror.CheckRowsAffected(
+						results,
+						"FuelSurchargeProgram",
+						entity.ID.String(),
+					); uErr != nil {
+						return uErr
+					}
+
+					if _, dErr := r.db.DBForContext(c).
+						NewDelete().
+						Model((*fuelsurcharge.FuelSurchargeTableRow)(nil)).
+						WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+							return fuelsurchargecol.FuelSurchargeTableRowScopeTenantDelete(dq, pagination.TenantInfo{
+								OrgID: entity.OrganizationID,
+								BuID:  entity.BusinessUnitID,
+							}).
+								Where(cols.FuelSurchargeProgramID.Eq(), entity.ID)
+						}).
+						Exec(c); dErr != nil {
+						return dErr
+					}
+
+					stampTableRows(entity, true)
+
+					return r.insertTableRows(c, entity)
+				},
+			)
+			if err != nil {
+				log.Error("failed to update fuel surcharge program", zap.Error(err))
+				return nil, dberror.MapRetryableTransactionError(
+					err,
+					"Fuel surcharge program is busy. Retry the request.",
+				)
+			}
+
+			return entity, nil
+		},
+	)
 }
 
 func (r *programRepository) Delete(
@@ -385,34 +417,38 @@ func (r *programRepository) SelectOptions(
 	ctx context.Context,
 	req *fuelsurchargeports.FuelSurchargeProgramSelectOptionsRequest,
 ) (*pagination.ListResult[*fuelsurcharge.FuelSurchargeProgram], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*fuelsurcharge.FuelSurchargeProgram], error) {
-		cols := fuelsurchargecol.FuelSurchargeProgramColumns
-		return dbhelper.SelectOptions[*fuelsurcharge.FuelSurchargeProgram](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					cols.ID,
-					cols.Name,
-					cols.Code,
-					cols.Description,
-					cols.Method,
-					cols.Status,
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*fuelsurcharge.FuelSurchargeProgram], error) {
+			cols := fuelsurchargecol.FuelSurchargeProgramColumns
+			return dbhelper.SelectOptions[*fuelsurcharge.FuelSurchargeProgram](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.Name,
+						cols.Code,
+						cols.Description,
+						cols.Method,
+						cols.Status,
+					},
+					OrgColumnRef: &cols.OrganizationID,
+					BuColumnRef:  &cols.BusinessUnitID,
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						return q.Where(cols.Status.Eq(), fuelsurcharge.ProgramStatusActive).
+							Order(cols.Name.OrderAsc())
+					},
+					EntityName: "FuelSurchargeProgram",
+					SearchColumnRefs: []buncolgen.Column{
+						cols.Name,
+						cols.Code,
+						cols.Description,
+					},
 				},
-				OrgColumnRef: &cols.OrganizationID,
-				BuColumnRef:  &cols.BusinessUnitID,
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Where(cols.Status.Eq(), fuelsurcharge.ProgramStatusActive).
-						Order(cols.Name.OrderAsc())
-				},
-				EntityName: "FuelSurchargeProgram",
-				SearchColumnRefs: []buncolgen.Column{
-					cols.Name,
-					cols.Code,
-					cols.Description,
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }

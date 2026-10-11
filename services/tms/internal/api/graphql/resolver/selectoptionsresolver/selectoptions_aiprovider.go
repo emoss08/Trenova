@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -15,7 +15,11 @@ func (r *Deps) resolveAIProviderSelectOptions(
 	ctx context.Context,
 	req *SelectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
-	if _, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpRead); err != nil {
+	if _, err := r.RequirePermission(
+		ctx,
+		permission.ResourceAIProvider,
+		permission.OpRead,
+	); err != nil {
 		return nil, err
 	}
 
@@ -38,10 +42,13 @@ func (r *Deps) resolveAIProviderSelectOptions(
 		return selectOptionConnection(items, len(items), 0)
 	}
 
-	result, err := r.AiProviderService.SelectOptions(ctx, &agentports.AIProviderSelectOptionsRequest{
-		SelectQueryRequest: req.SelectQuery,
-		Task:               aiprovider.TaskAssistantChat,
-	})
+	result, err := r.AiProviderService.SelectOptions(
+		ctx,
+		&agentports.AIProviderSelectOptionsRequest{
+			SelectQueryRequest: req.SelectQuery,
+			Task:               aiprovider.TaskAssistantChat,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

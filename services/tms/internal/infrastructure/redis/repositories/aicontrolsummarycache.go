@@ -33,7 +33,9 @@ type aiControlSummaryCache struct {
 	now    func() time.Time
 }
 
-func NewAIControlSummaryCache(p AIControlSummaryCacheParams) aicontrolsummaryports.AIControlSummaryCache {
+func NewAIControlSummaryCache(
+	p AIControlSummaryCacheParams,
+) aicontrolsummaryports.AIControlSummaryCache {
 	return &aiControlSummaryCache{client: p.Client, now: time.Now}
 }
 

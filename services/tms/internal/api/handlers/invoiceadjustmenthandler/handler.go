@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -407,10 +407,14 @@ func (h *Handler) approve(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	resp, err := h.service.Approve(c.Request.Context(), &invoiceadjustmentports.ApproveInvoiceAdjustmentRequest{
-		AdjustmentID: adjustmentID,
-		TenantInfo:   pagination.FromAuth(authCtx),
-	}, actorutil.FromAuthContext(authCtx))
+	resp, err := h.service.Approve(
+		c.Request.Context(),
+		&invoiceadjustmentports.ApproveInvoiceAdjustmentRequest{
+			AdjustmentID: adjustmentID,
+			TenantInfo:   pagination.FromAuth(authCtx),
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -432,11 +436,15 @@ func (h *Handler) reject(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	resp, err := h.service.Reject(c.Request.Context(), &invoiceadjustmentports.RejectInvoiceAdjustmentRequest{
-		AdjustmentID: adjustmentID,
-		Reason:       body.Reason,
-		TenantInfo:   pagination.FromAuth(authCtx),
-	}, actorutil.FromAuthContext(authCtx))
+	resp, err := h.service.Reject(
+		c.Request.Context(),
+		&invoiceadjustmentports.RejectInvoiceAdjustmentRequest{
+			AdjustmentID: adjustmentID,
+			Reason:       body.Reason,
+			TenantInfo:   pagination.FromAuth(authCtx),
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

@@ -106,7 +106,9 @@ func (b *Bench) evaluate(
 	if expect.MaxFailedCalls != nil {
 		failed := refusedCalls(calls)
 		checks = append(checks, CheckResult{
-			Name:   "at most " + strconv.Itoa(*expect.MaxFailedCalls) + " refused or failed tool calls",
+			Name: "at most " + strconv.Itoa(
+				*expect.MaxFailedCalls,
+			) + " refused or failed tool calls",
 			Passed: len(failed) <= *expect.MaxFailedCalls,
 			Detail: describeCalls(failed),
 		})
@@ -167,7 +169,10 @@ func (b *Bench) evaluate(
 
 func formulaCheck(spec, formula string) CheckResult {
 	options := alternatives(spec)
-	check := CheckResult{Name: "the studio's formula has " + strings.Join(options, " or "), Detail: formula}
+	check := CheckResult{
+		Name:   "the studio's formula has " + strings.Join(options, " or "),
+		Detail: formula,
+	}
 	for _, option := range options {
 		ok, err := replyMatches(option, formula)
 		if err != nil {
@@ -432,14 +437,19 @@ func valueMismatch(path string, expected, actual any) string {
 			return fmt.Sprintf("%s is %v, want %v", path, actual, want)
 		}
 		for idx := range want {
-			if mismatch := valueMismatch(fmt.Sprintf("%s[%d]", path, idx), want[idx], got[idx]); mismatch != "" {
+			if mismatch := valueMismatch(
+				fmt.Sprintf("%s[%d]", path, idx),
+				want[idx],
+				got[idx],
+			); mismatch != "" {
 				return mismatch
 			}
 		}
 
 		return ""
 	case string:
-		if got, ok := actual.(string); ok && strings.EqualFold(strings.TrimSpace(got), strings.TrimSpace(want)) {
+		if got, ok := actual.(string); ok &&
+			strings.EqualFold(strings.TrimSpace(got), strings.TrimSpace(want)) {
 			return ""
 		}
 	case bool:
@@ -507,7 +517,12 @@ func executedCheck(want bool, decisions []*DecisionRecord) CheckResult {
 	return CheckResult{Name: name, Passed: len(problems) == 0, Detail: strings.Join(problems, "; ")}
 }
 
-func (b *Bench) factCheck(ctx context.Context, session *Session, fact *Fact, reply string) CheckResult {
+func (b *Bench) factCheck(
+	ctx context.Context,
+	session *Session,
+	fact *Fact,
+	reply string,
+) CheckResult {
 	name := "states " + fact.Note
 	if fact.Note == "" {
 		name = "states " + firstLine(fact.SQL)
@@ -587,12 +602,19 @@ func replyStates(reply, value string) bool {
 	return folded != "" && strings.Contains(stringutils.NormalizeIdentifier(reply), folded)
 }
 
-func (b *Bench) FactValues(ctx context.Context, session *Session, statement string) ([]string, error) {
+func (b *Bench) FactValues(
+	ctx context.Context,
+	session *Session,
+	statement string,
+) ([]string, error) {
 	ctx = session.Context(ctx)
 
 	return dbtx.Read(ctx, b.DB, func(ctx context.Context) ([]string, error) {
 		db := b.DB.DBForContext(ctx)
-		if _, err := db.ExecContext(ctx, "SET LOCAL statement_timeout = '"+factTimeout+"'"); err != nil {
+		if _, err := db.ExecContext(
+			ctx,
+			"SET LOCAL statement_timeout = '"+factTimeout+"'",
+		); err != nil {
 			return nil, fmt.Errorf("bound the fact query: %w", err)
 		}
 
@@ -677,7 +699,10 @@ func (b *Bench) runStatements(
 
 	return dbtx.WriteErr(ctx, b.DB, func(ctx context.Context) error {
 		db := b.DB.DBForContext(ctx)
-		if _, err := db.ExecContext(ctx, "SET LOCAL statement_timeout = '"+factTimeout+"'"); err != nil {
+		if _, err := db.ExecContext(
+			ctx,
+			"SET LOCAL statement_timeout = '"+factTimeout+"'",
+		); err != nil {
 			return fmt.Errorf("bound the setup: %w", err)
 		}
 		for idx, statement := range build(db) {

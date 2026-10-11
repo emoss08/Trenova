@@ -242,7 +242,11 @@ func (s *Service) RewriteDocument(
 		Context: agentports.DelimitedContext{Sections: []agentports.ContextSection{
 			{Title: "Document title", Trusted: true, Content: latest.Title},
 			{Title: "Passage to rewrite", Content: passage},
-			{Title: "How to rewrite it", Trusted: rewrite.Mode != agentports.DocumentRewriteAsk, Content: instruction},
+			{
+				Title:   "How to rewrite it",
+				Trusted: rewrite.Mode != agentports.DocumentRewriteAsk,
+				Content: instruction,
+			},
 		}},
 		OutputSchema: map[string]any{
 			"type": "object",

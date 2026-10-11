@@ -60,67 +60,75 @@ func (r *repository) List(
 	ctx context.Context,
 	req *fiscalperiodports.ListFiscalPeriodsRequest,
 ) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error) {
-		log := r.l.With(
-			zap.String("operation", "List"),
-			zap.Any("request", req),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error) {
+			log := r.l.With(
+				zap.String("operation", "List"),
+				zap.Any("request", req),
+			)
 
-		entities := make([]*fiscalperiod.FiscalPeriod, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterQuery(sq, req)
-			}).ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count fiscal periods", zap.Error(err))
-			return nil, err
-		}
+			entities := make([]*fiscalperiod.FiscalPeriod, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count fiscal periods", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*fiscalperiod.FiscalPeriod]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*fiscalperiod.FiscalPeriod]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *fiscalperiodports.FiscalPeriodSelectOptionsRequest,
 ) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error) {
-		cols := fiscalperiodcol.FiscalPeriodColumns
-		return dbhelper.SelectOptions[*fiscalperiod.FiscalPeriod](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					cols.ID,
-					cols.FiscalYearID,
-					cols.Name,
-					cols.PeriodNumber,
-					cols.PeriodType,
-					cols.Status,
-					cols.StartDate,
-					cols.EndDate,
-					cols.IsAdjusting,
-					cols.CreatedAt,
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error) {
+			cols := fiscalperiodcol.FiscalPeriodColumns
+			return dbhelper.SelectOptions[*fiscalperiod.FiscalPeriod](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.FiscalYearID,
+						cols.Name,
+						cols.PeriodNumber,
+						cols.PeriodType,
+						cols.Status,
+						cols.StartDate,
+						cols.EndDate,
+						cols.IsAdjusting,
+						cols.CreatedAt,
+					},
+					OrgColumnRef: &cols.OrganizationID,
+					BuColumnRef:  &cols.BusinessUnitID,
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						if !req.FiscalYearID.IsNil() {
+							q = q.Where(cols.FiscalYearID.Eq(), req.FiscalYearID)
+						}
+						return q.Order(cols.PeriodNumber.OrderAsc())
+					},
+					EntityName:       "FiscalPeriod",
+					SearchColumnRefs: []buncolgen.Column{cols.Name},
 				},
-				OrgColumnRef: &cols.OrganizationID,
-				BuColumnRef:  &cols.BusinessUnitID,
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					if !req.FiscalYearID.IsNil() {
-						q = q.Where(cols.FiscalYearID.Eq(), req.FiscalYearID)
-					}
-					return q.Order(cols.PeriodNumber.OrderAsc())
-				},
-				EntityName:       "FiscalPeriod",
-				SearchColumnRefs: []buncolgen.Column{cols.Name},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -257,7 +265,11 @@ func (r *repository) Update(
 			return nil, err
 		}
 
-		if err = dberror.CheckRowsAffected(results, "FiscalPeriod", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"FiscalPeriod",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -523,27 +535,31 @@ func (r *repository) ListByFiscalYearIDs(
 	ctx context.Context,
 	req fiscalperiodports.ListByFiscalYearIDsRequest,
 ) (map[pulid.ID][]*fiscalperiod.FiscalPeriod, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*fiscalperiod.FiscalPeriod, error) {
-		cols := fiscalperiodcol.FiscalPeriodColumns
-		entities := make([]*fiscalperiod.FiscalPeriod, 0, len(req.FiscalYearIDs)*12)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return fiscalperiodcol.FiscalPeriodScopeTenant(sq, req.TenantInfo).
-					Where(cols.FiscalYearID.In(), bun.List(req.FiscalYearIDs))
-			}).
-			Order(cols.PeriodNumber.OrderAsc()).
-			Scan(ctx)
-		if err != nil {
-			r.l.Error("failed to list periods by fiscal years", zap.Error(err))
-			return nil, err
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID][]*fiscalperiod.FiscalPeriod, error) {
+			cols := fiscalperiodcol.FiscalPeriodColumns
+			entities := make([]*fiscalperiod.FiscalPeriod, 0, len(req.FiscalYearIDs)*12)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return fiscalperiodcol.FiscalPeriodScopeTenant(sq, req.TenantInfo).
+						Where(cols.FiscalYearID.In(), bun.List(req.FiscalYearIDs))
+				}).
+				Order(cols.PeriodNumber.OrderAsc()).
+				Scan(ctx)
+			if err != nil {
+				r.l.Error("failed to list periods by fiscal years", zap.Error(err))
+				return nil, err
+			}
 
-		return sliceutils.GroupBy(entities, func(fp *fiscalperiod.FiscalPeriod) pulid.ID {
-			return fp.FiscalYearID
-		}), nil
-	})
+			return sliceutils.GroupBy(entities, func(fp *fiscalperiod.FiscalPeriod) pulid.ID {
+				return fp.FiscalYearID
+			}), nil
+		},
+	)
 }
 
 func (r *repository) GetPeriodByDate(

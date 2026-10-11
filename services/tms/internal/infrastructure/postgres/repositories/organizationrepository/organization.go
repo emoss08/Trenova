@@ -64,7 +64,10 @@ func (r *repository) GetByID(
 				return cachedOrg, nil
 			}
 
-			log.Debug("refreshing organization in cache", zap.String("orgID", cachedOrg.ID.String()))
+			log.Debug(
+				"refreshing organization in cache",
+				zap.String("orgID", cachedOrg.ID.String()),
+			)
 		}
 
 		org := new(tenant.Organization)
@@ -97,7 +100,10 @@ func (r *repository) GetByIDs(
 	ctx context.Context,
 	req tenantports.GetOrganizationsByIDsQuery,
 ) ([]*tenant.Organization, error) {
-	ctx = dbscope.WithSystem(ctx, "load organizations of the caller's business unit, including ones it shares no membership with")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"load organizations of the caller's business unit, including ones it shares no membership with",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tenant.Organization, error) {
 		log := r.l.With(
 			zap.String("operation", "GetByIDs"),
@@ -138,53 +144,67 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *tenantports.SelectOrganizationOptionsRequest,
 ) (*pagination.ListResult[*tenant.Organization], error) {
-	ctx = dbscope.WithSystem(ctx, "list organizations of the caller's business unit to pick a counterparty from")
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*tenant.Organization], error) {
-		entities := make([]*tenant.Organization, 0, req.SelectQueryRequest.Pagination.SafeLimit())
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Column("id", "business_unit_id", "name", "scac_code", "city", "state_id", "logo_url").
-			Where("org.business_unit_id = ?", req.SelectQueryRequest.TenantInfo.BuID)
+	ctx = dbscope.WithSystem(
+		ctx,
+		"list organizations of the caller's business unit to pick a counterparty from",
+	)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*tenant.Organization], error) {
+			entities := make(
+				[]*tenant.Organization,
+				0,
+				req.SelectQueryRequest.Pagination.SafeLimit(),
+			)
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Column("id", "business_unit_id", "name", "scac_code", "city", "state_id", "logo_url").
+				Where("org.business_unit_id = ?", req.SelectQueryRequest.TenantInfo.BuID)
 
-		if req.Scope != "business-unit" {
-			query = query.Where("org.id = ?", req.SelectQueryRequest.TenantInfo.OrgID)
-		}
-		if req.ExcludeCurrent {
-			query = query.Where("org.id <> ?", req.SelectQueryRequest.TenantInfo.OrgID)
-		}
+			if req.Scope != "business-unit" {
+				query = query.Where("org.id = ?", req.SelectQueryRequest.TenantInfo.OrgID)
+			}
+			if req.ExcludeCurrent {
+				query = query.Where("org.id <> ?", req.SelectQueryRequest.TenantInfo.OrgID)
+			}
 
-		search := strings.TrimSpace(req.SelectQueryRequest.Query)
-		if search != "" {
-			term := "%" + strings.ToLower(search) + "%"
-			query = query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.WhereOr("lower(org.name) LIKE ?", term).
-					WhereOr("lower(org.scac_code) LIKE ?", term).
-					WhereOr("lower(org.city) LIKE ?", term)
-			})
-		}
+			search := strings.TrimSpace(req.SelectQueryRequest.Query)
+			if search != "" {
+				term := "%" + strings.ToLower(search) + "%"
+				query = query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.WhereOr("lower(org.name) LIKE ?", term).
+						WhereOr("lower(org.scac_code) LIKE ?", term).
+						WhereOr("lower(org.city) LIKE ?", term)
+				})
+			}
 
-		total, err := query.
-			Order("org.name ASC").
-			Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
-			Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
+			total, err := query.
+				Order("org.name ASC").
+				Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
+				Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return &pagination.ListResult[*tenant.Organization]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*tenant.Organization]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) GetByLoginSlug(
 	ctx context.Context,
 	loginSlug string,
 ) (*tenant.Organization, error) {
-	ctx = dbscope.WithSystem(ctx, "resolve an organization from its public login slug before any tenant is known")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"resolve an organization from its public login slug before any tenant is known",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.Organization, error) {
 		org := new(tenant.Organization)
 		if err := r.db.DBForContext(ctx).

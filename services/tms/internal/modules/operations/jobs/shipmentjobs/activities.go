@@ -3,18 +3,18 @@ package shipmentjobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
-	"github.com/emoss08/trenova/internal/modules/operations/jobs/shipmentjobs/shipmentcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/jobs/shipmentjobs/shipmentcontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -146,7 +146,9 @@ func (a *Activities) BulkDuplicateShipmentsActivity(
 	}, nil
 }
 
-func paginationTenantInfoFromPayload(payload *shipmentcontract.BulkDuplicateShipmentsPayload) pagination.TenantInfo {
+func paginationTenantInfoFromPayload(
+	payload *shipmentcontract.BulkDuplicateShipmentsPayload,
+) pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  payload.OrganizationID,
 		BuID:   payload.BusinessUnitID,
@@ -266,11 +268,15 @@ func (a *Activities) AutoCancelShipmentsActivity(
 
 	if len(canceledShipments) > 0 {
 		for _, tenantInfo := range uniqueShipmentTenants(canceledShipments) {
-			shipmentports.InvalidateShipments(ctx, a.invalidator, &shipmentports.ShipmentInvalidation{
-				OrganizationID: tenantInfo.OrgID,
-				BusinessUnitID: tenantInfo.BuID,
-				Action:         "bulk_canceled",
-			})
+			shipmentports.InvalidateShipments(
+				ctx,
+				a.invalidator,
+				&shipmentports.ShipmentInvalidation{
+					OrganizationID: tenantInfo.OrgID,
+					BusinessUnitID: tenantInfo.BuID,
+					Action:         "bulk_canceled",
+				},
+			)
 		}
 	}
 

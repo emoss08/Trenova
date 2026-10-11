@@ -9,11 +9,40 @@ import (
 
 var (
 	companyAdjectives = []string{
-		"Amber", "Arrow", "Bluestone", "Brightline", "Cascade", "Cedar", "Clearwater", "Copper",
-		"Crescent", "Eastgate", "Evergreen", "Falcon", "Granite", "Harbor", "Highland", "Ironwood",
-		"Juniper", "Keystone", "Lakeside", "Meadow", "Northwind", "Oakridge", "Pinecrest", "Prairie",
-		"Redwood", "Ridgeline", "Riverbend", "Sagebrush", "Silverline", "Stonebridge", "Summit",
-		"Timberline", "Westfield", "Willow",
+		"Amber",
+		"Arrow",
+		"Bluestone",
+		"Brightline",
+		"Cascade",
+		"Cedar",
+		"Clearwater",
+		"Copper",
+		"Crescent",
+		"Eastgate",
+		"Evergreen",
+		"Falcon",
+		"Granite",
+		"Harbor",
+		"Highland",
+		"Ironwood",
+		"Juniper",
+		"Keystone",
+		"Lakeside",
+		"Meadow",
+		"Northwind",
+		"Oakridge",
+		"Pinecrest",
+		"Prairie",
+		"Redwood",
+		"Ridgeline",
+		"Riverbend",
+		"Sagebrush",
+		"Silverline",
+		"Stonebridge",
+		"Summit",
+		"Timberline",
+		"Westfield",
+		"Willow",
 	}
 	companyNouns = []string{
 		"Supply", "Foods", "Logistics", "Freight", "Distribution", "Industries", "Materials",
@@ -59,7 +88,12 @@ func personSurrogate(rng *rand.Rand) string {
 }
 
 func streetSurrogate(rng *rand.Rand) string {
-	return fmt.Sprintf("%d %s %s", 100+rng.IntN(9800), pick(rng, streetNames), pick(rng, streetSuffixes))
+	return fmt.Sprintf(
+		"%d %s %s",
+		100+rng.IntN(9800),
+		pick(rng, streetNames),
+		pick(rng, streetSuffixes),
+	)
 }
 
 func citySurrogate(rng *rand.Rand) string {

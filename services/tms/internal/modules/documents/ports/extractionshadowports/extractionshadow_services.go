@@ -128,7 +128,10 @@ type ExtractionShadowRunner interface {
 }
 
 type ExtractionShadowRetention interface {
-	PurgeExpiredShadows(ctx context.Context, req kernelports.PurgeExpiredAICorrectionsRequest) (int64, error)
+	PurgeExpiredShadows(
+		ctx context.Context,
+		req kernelports.PurgeExpiredAICorrectionsRequest,
+	) (int64, error)
 }
 
 type ExtractionShadowScorer interface {

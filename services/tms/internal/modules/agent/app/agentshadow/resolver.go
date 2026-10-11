@@ -167,10 +167,13 @@ func (r *Resolver) definition(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*agentdefinition.Definition, error) {
-	definition, err := r.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID:         id,
-		TenantInfo: tenantInfo,
-	})
+	definition, err := r.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         id,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil

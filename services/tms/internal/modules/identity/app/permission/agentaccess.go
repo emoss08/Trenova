@@ -28,10 +28,13 @@ func (e *engine) grantedAgentIDs(
 		}
 	}
 
-	granted, err := e.agentGrants.ListGrantedAgentIDs(ctx, permissionports.ListGrantedAgentIDsRequest{
-		OrganizationID: orgID,
-		RoleIDs:        roleIDs,
-	})
+	granted, err := e.agentGrants.ListGrantedAgentIDs(
+		ctx,
+		permissionports.ListGrantedAgentIDsRequest{
+			OrganizationID: orgID,
+			RoleIDs:        roleIDs,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("read the agents granted to the roles: %w", err)
 	}

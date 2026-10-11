@@ -1,20 +1,20 @@
 package invoiceadjustmentservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
-	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
@@ -123,7 +123,9 @@ type previewLineValues struct {
 	payload        map[string]any
 }
 
-func New(p Params) invoiceadjustmentports.InvoiceAdjustmentService { //nolint:gocritic // stable API shape
+func New(
+	p Params,
+) invoiceadjustmentports.InvoiceAdjustmentService { //nolint:gocritic // stable API shape
 	return &Service{
 		l:                  p.Logger.Named("service.invoice-adjustment"),
 		db:                 p.DB,

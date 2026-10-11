@@ -8,8 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -159,7 +159,15 @@ func (s *Service) RunAccrualForWorker(
 		})
 
 		for _, planned := range plan {
-			if postErr := s.postPlanned(ctx, key, resolved, rule, planned, actor, result); postErr != nil {
+			if postErr := s.postPlanned(
+				ctx,
+				key,
+				resolved,
+				rule,
+				planned,
+				actor,
+				result,
+			); postErr != nil {
 				log.Error("failed to post planned PTO entry",
 					zap.String("periodKey", planned.PeriodKey), zap.Error(postErr))
 				return result, postErr

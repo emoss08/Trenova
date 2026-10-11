@@ -105,10 +105,13 @@ func (r *Deps) PreviewFor(
 		versionID = &parsed
 	}
 
-	return r.DocumentTemplateService.PreviewVersion(ctx, &documenttemplateports.PreviewVersionRequest{
-		TenantInfo: base.TenantInfo(authCtx),
-		Kind:       documenttemplate.Kind(input.Kind),
-		VersionID:  versionID,
-		Content:    documentTemplateContentFromInput(input.Content),
-	})
+	return r.DocumentTemplateService.PreviewVersion(
+		ctx,
+		&documenttemplateports.PreviewVersionRequest{
+			TenantInfo: base.TenantInfo(authCtx),
+			Kind:       documenttemplate.Kind(input.Kind),
+			VersionID:  versionID,
+			Content:    documentTemplateContentFromInput(input.Content),
+		},
+	)
 }

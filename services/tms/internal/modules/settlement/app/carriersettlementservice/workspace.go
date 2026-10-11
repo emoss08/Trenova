@@ -75,13 +75,16 @@ func (s *Service) GetWorkspaceSummary(
 		PendingCarrierCount:  pending.PendingCarrierCount,
 	}
 
-	batches, err := s.batchRepo.List(ctx, &carriersettlementports.ListCarrierSettlementBatchesRequest{
-		Filter: &pagination.QueryOptions{
-			TenantInfo: tenantInfo,
-			Pagination: pagination.Info{Limit: 1},
+	batches, err := s.batchRepo.List(
+		ctx,
+		&carriersettlementports.ListCarrierSettlementBatchesRequest{
+			Filter: &pagination.QueryOptions{
+				TenantInfo: tenantInfo,
+				Pagination: pagination.Info{Limit: 1},
+			},
+			Status: carriersettlement.BatchStatusOpen,
 		},
-		Status: carriersettlement.BatchStatusOpen,
-	})
+	)
 	if err == nil && len(batches.Items) > 0 {
 		batchID := batches.Items[0].ID
 		summary.OpenBatchID = &batchID

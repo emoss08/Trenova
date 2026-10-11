@@ -101,7 +101,10 @@ type documentMatch struct {
 	total     decimal.Decimal
 }
 
-func (m *documentMatch) matches(req *accountingsyncports.AccountingFindDocumentRequest, receivable bool) bool {
+func (m *documentMatch) matches(
+	req *accountingsyncports.AccountingFindDocumentRequest,
+	receivable bool,
+) bool {
 	if closedStatus(m.status) {
 		return false
 	}

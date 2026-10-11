@@ -7,9 +7,9 @@ package editconflict
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/editchange"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/settingversionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"

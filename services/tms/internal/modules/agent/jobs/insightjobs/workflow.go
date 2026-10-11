@@ -174,7 +174,8 @@ func refreshInOneActivity(ctx workflow.Context) (*InsightRefreshResult, error) {
 
 	var a *Activities
 	result := new(InsightRefreshResult)
-	if err := workflow.ExecuteActivity(ctx, a.RefreshInsightsActivity).Get(ctx, result); err != nil {
+	if err := workflow.ExecuteActivity(ctx, a.RefreshInsightsActivity).
+		Get(ctx, result); err != nil {
 		workflow.GetLogger(ctx).Error("Insight refresh workflow failed", "error", err)
 
 		return nil, err

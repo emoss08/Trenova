@@ -53,107 +53,120 @@ func (r *repository) List(
 	ctx context.Context,
 	req *agentdefinitionports.ListAgentDefinitionRequest,
 ) (*pagination.ListResult[*agentdefinition.Definition], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*agentdefinition.Definition], error) {
-		cols := agentdefinitioncol.DefinitionColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*agentdefinition.Definition], error) {
+			cols := agentdefinitioncol.DefinitionColumns
 
-		entities := make([]*agentdefinition.Definition, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = querybuilder.ApplyFilters(
-					sq,
-					agentdefinitioncol.DefinitionTable.Alias,
-					req.Filter,
-					(*agentdefinition.Definition)(nil),
-				)
-				sq = applyUsability(
-					sq.Apply(agentdefinitioncol.DefinitionApplyTenant(req.Filter.TenantInfo)),
-					usability{
-						enabledOnly: req.EnabledOnly,
-						chatOnly:    req.ChatOnly,
-						audience:    req.Audience,
-					},
-				)
+			entities := make([]*agentdefinition.Definition, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = querybuilder.ApplyFilters(
+						sq,
+						agentdefinitioncol.DefinitionTable.Alias,
+						req.Filter,
+						(*agentdefinition.Definition)(nil),
+					)
+					sq = applyUsability(
+						sq.Apply(agentdefinitioncol.DefinitionApplyTenant(req.Filter.TenantInfo)),
+						usability{
+							enabledOnly: req.EnabledOnly,
+							chatOnly:    req.ChatOnly,
+							audience:    req.Audience,
+						},
+					)
 
-				return sq.
-					Limit(req.Filter.Pagination.SafeLimit()).
-					Offset(req.Filter.Pagination.SafeOffset()).
-					Order(cols.Name.OrderAsc())
-			}).ScanAndCount(ctx)
-		if err != nil {
-			r.l.Error("failed to list agent definitions", zap.Error(err))
-			return nil, err
-		}
+					return sq.
+						Limit(req.Filter.Pagination.SafeLimit()).
+						Offset(req.Filter.Pagination.SafeOffset()).
+						Order(cols.Name.OrderAsc())
+				}).ScanAndCount(ctx)
+			if err != nil {
+				r.l.Error("failed to list agent definitions", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*agentdefinition.Definition]{Items: entities, Total: total}, nil
-	})
+			return &pagination.ListResult[*agentdefinition.Definition]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *agentdefinitionports.ListAgentDefinitionConnectionRequest,
 ) (*pagination.CursorListResult[*agentdefinition.Definition], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*agentdefinition.Definition], error) {
-		dba := r.db.DBForContext(ctx)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*agentdefinition.Definition], error) {
+			dba := r.db.DBForContext(ctx)
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*agentdefinition.Definition)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						agentdefinitioncol.DefinitionTable.Alias,
-						req.Filter,
-						(*agentdefinition.Definition)(nil),
-					)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*agentdefinition.Definition)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							agentdefinitioncol.DefinitionTable.Alias,
+							req.Filter,
+							(*agentdefinition.Definition)(nil),
+						)
 
-					return applyUsability(
-						sq.Apply(agentdefinitioncol.DefinitionApplyTenant(req.Filter.TenantInfo)),
-						connectionUsability(req),
-					)
-				}).
-				Count(ctx)
+						return applyUsability(
+							sq.Apply(
+								agentdefinitioncol.DefinitionApplyTenant(req.Filter.TenantInfo),
+							),
+							connectionUsability(req),
+						)
+					}).
+					Count(ctx)
+				if err != nil {
+					r.l.Error("failed to count agent definitions", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*agentdefinition.Definition]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*agentdefinition.Definition) *bun.SelectQuery {
+						sq := dba.NewSelect().Model(entities)
+						if len(req.Columns) == 0 {
+							return sq.ColumnExpr(agentdefinitioncol.DefinitionTable.All())
+						}
+
+						return sq.Column(req.Columns...)
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							applyUsability(sq, connectionUsability(req)),
+							agentdefinitioncol.DefinitionTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*agentdefinition.Definition)(nil),
+						)
+					},
+				})
 			if err != nil {
-				r.l.Error("failed to count agent definitions", zap.Error(err))
+				r.l.Error("failed to scan agent definitions", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*agentdefinition.Definition]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*agentdefinition.Definition) *bun.SelectQuery {
-					sq := dba.NewSelect().Model(entities)
-					if len(req.Columns) == 0 {
-						return sq.ColumnExpr(agentdefinitioncol.DefinitionTable.All())
-					}
-
-					return sq.Column(req.Columns...)
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return querybuilder.ApplyCursorFilters(
-						applyUsability(sq, connectionUsability(req)),
-						agentdefinitioncol.DefinitionTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*agentdefinition.Definition)(nil),
-					)
-				},
-			})
-		if err != nil {
-			r.l.Error("failed to scan agent definitions", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 type usability struct {
@@ -675,71 +688,75 @@ func (r *repository) StatsByIDs(
 	tenant pagination.TenantInfo,
 	ids []pulid.ID,
 ) (map[pulid.ID]agentdefinitionports.AgentDefinitionStats, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]agentdefinitionports.AgentDefinitionStats, error) {
-		stats := make(map[pulid.ID]agentdefinitionports.AgentDefinitionStats, len(ids))
-		if len(ids) == 0 {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID]agentdefinitionports.AgentDefinitionStats, error) {
+			stats := make(map[pulid.ID]agentdefinitionports.AgentDefinitionStats, len(ids))
+			if len(ids) == 0 {
+				return stats, nil
+			}
+
+			runCols := agentcol.AgentRunColumns
+			var runRows []agentdefinitionports.AgentDefinitionStats
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*agent.AgentRun)(nil)).
+				ColumnExpr(runCols.AgentDefinitionID.Qualified()+" AS definition_id").
+				ColumnExpr("SUM(CASE WHEN "+runCols.Status.Qualified()+" IN (?) THEN 1 ELSE 0 END) AS open_runs",
+					bun.In([]agent.RunStatus{
+						agent.RunStatusPending,
+						agent.RunStatusGatheringContext,
+						agent.RunStatusDiagnosing,
+						agent.RunStatusAwaitingDecision,
+					})).
+				ColumnExpr("MAX("+runCols.StartedAt.Qualified()+") AS last_run_at").
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return agentcol.AgentRunScopeTenant(sq, tenant).
+						Where(runCols.AgentDefinitionID.In(), bun.In(ids))
+				}).
+				GroupExpr(runCols.AgentDefinitionID.Qualified()).
+				Scan(ctx, &runRows)
+			if err != nil {
+				return nil, fmt.Errorf("agent definition run stats: %w", err)
+			}
+			for _, row := range runRows {
+				stats[row.DefinitionID] = row
+			}
+
+			proposalCols := agentcol.AgentProposalColumns
+			var proposalRows []struct {
+				DefinitionID     pulid.ID `bun:"definition_id"`
+				PendingProposals int      `bun:"pending_proposals"`
+			}
+			err = r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*agent.AgentProposal)(nil)).
+				Join("JOIN agent_runs AS ar ON ar.id = "+proposalCols.RunID.Qualified()+
+					" AND ar.organization_id = "+proposalCols.OrganizationID.Qualified()+
+					" AND ar.business_unit_id = "+proposalCols.BusinessUnitID.Qualified()).
+				ColumnExpr("ar.agent_definition_id AS definition_id").
+				ColumnExpr("COUNT(*) AS pending_proposals").
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return agentcol.AgentProposalScopeTenant(sq, tenant).
+						Where(proposalCols.Status.Eq(), agent.ProposalStatusPending).
+						Where("ar.agent_definition_id IN (?)", bun.In(ids))
+				}).
+				GroupExpr("ar.agent_definition_id").
+				Scan(ctx, &proposalRows)
+			if err != nil {
+				return nil, fmt.Errorf("agent definition proposal stats: %w", err)
+			}
+			for _, row := range proposalRows {
+				entry := stats[row.DefinitionID]
+				entry.DefinitionID = row.DefinitionID
+				entry.PendingProposals = row.PendingProposals
+				stats[row.DefinitionID] = entry
+			}
+
 			return stats, nil
-		}
-
-		runCols := agentcol.AgentRunColumns
-		var runRows []agentdefinitionports.AgentDefinitionStats
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*agent.AgentRun)(nil)).
-			ColumnExpr(runCols.AgentDefinitionID.Qualified()+" AS definition_id").
-			ColumnExpr("SUM(CASE WHEN "+runCols.Status.Qualified()+" IN (?) THEN 1 ELSE 0 END) AS open_runs",
-				bun.In([]agent.RunStatus{
-					agent.RunStatusPending,
-					agent.RunStatusGatheringContext,
-					agent.RunStatusDiagnosing,
-					agent.RunStatusAwaitingDecision,
-				})).
-			ColumnExpr("MAX("+runCols.StartedAt.Qualified()+") AS last_run_at").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.AgentRunScopeTenant(sq, tenant).
-					Where(runCols.AgentDefinitionID.In(), bun.In(ids))
-			}).
-			GroupExpr(runCols.AgentDefinitionID.Qualified()).
-			Scan(ctx, &runRows)
-		if err != nil {
-			return nil, fmt.Errorf("agent definition run stats: %w", err)
-		}
-		for _, row := range runRows {
-			stats[row.DefinitionID] = row
-		}
-
-		proposalCols := agentcol.AgentProposalColumns
-		var proposalRows []struct {
-			DefinitionID     pulid.ID `bun:"definition_id"`
-			PendingProposals int      `bun:"pending_proposals"`
-		}
-		err = r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*agent.AgentProposal)(nil)).
-			Join("JOIN agent_runs AS ar ON ar.id = "+proposalCols.RunID.Qualified()+
-				" AND ar.organization_id = "+proposalCols.OrganizationID.Qualified()+
-				" AND ar.business_unit_id = "+proposalCols.BusinessUnitID.Qualified()).
-			ColumnExpr("ar.agent_definition_id AS definition_id").
-			ColumnExpr("COUNT(*) AS pending_proposals").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.AgentProposalScopeTenant(sq, tenant).
-					Where(proposalCols.Status.Eq(), agent.ProposalStatusPending).
-					Where("ar.agent_definition_id IN (?)", bun.In(ids))
-			}).
-			GroupExpr("ar.agent_definition_id").
-			Scan(ctx, &proposalRows)
-		if err != nil {
-			return nil, fmt.Errorf("agent definition proposal stats: %w", err)
-		}
-		for _, row := range proposalRows {
-			entry := stats[row.DefinitionID]
-			entry.DefinitionID = row.DefinitionID
-			entry.PendingProposals = row.PendingProposals
-			stats[row.DefinitionID] = entry
-		}
-
-		return stats, nil
-	})
+		},
+	)
 }
 
 func duplicateName(name string) error {

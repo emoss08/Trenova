@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/bootstrap"
-	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -156,7 +156,9 @@ func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 		_ = app.Stop(context.Background())
 		_ = sdkLog.Close()
 		live.Close()
-		return nil, errors.New("the bench could not attach to the model router and the workflow starter")
+		return nil, errors.New(
+			"the bench could not attach to the model router and the workflow starter",
+		)
 	}
 	bench.app = app
 

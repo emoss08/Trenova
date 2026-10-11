@@ -428,10 +428,13 @@ func (c *changeCollector) readAccounts(ctx context.Context, since *time.Time) er
 	for idx := range accounts {
 		account := &accounts[idx]
 		c.seen(account.UpdatedAt)
-		c.page.References = append(c.page.References, accountingsyncports.AccountingChangedReference{
-			Object:  accountObjectOf(account),
-			Deleted: strings.EqualFold(account.Status, accountStatusDeleted),
-		})
+		c.page.References = append(
+			c.page.References,
+			accountingsyncports.AccountingChangedReference{
+				Object:  accountObjectOf(account),
+				Deleted: strings.EqualFold(account.Status, accountStatusDeleted),
+			},
+		)
 	}
 	return nil
 }
@@ -484,9 +487,12 @@ func (c *changeCollector) contact(contact *xero.Contact) {
 		if !slices.Contains(c.req.ReferenceKinds, kind) || !contactHolds(contact, kind) {
 			continue
 		}
-		c.page.References = append(c.page.References, accountingsyncports.AccountingChangedReference{
-			Object: contactObjectOf(kind, contact),
-		})
+		c.page.References = append(
+			c.page.References,
+			accountingsyncports.AccountingChangedReference{
+				Object: contactObjectOf(kind, contact),
+			},
+		)
 	}
 }
 
@@ -637,7 +643,9 @@ func (c *changeCollector) foreignCurrencies(
 	return currencies, nil
 }
 
-func (g *inboundGroup) inbound(currencies map[string]string) accountingsyncports.AccountingInboundPayment {
+func (g *inboundGroup) inbound(
+	currencies map[string]string,
+) accountingsyncports.AccountingInboundPayment {
 	first := g.payments[0]
 	externalID := first.PaymentID
 	if first.BatchPaymentID != "" {

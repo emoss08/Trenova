@@ -69,7 +69,10 @@ func deskVisible(sq *bun.SelectQuery, filter *agentports.DeskMemoryFilter) *bun.
 			agent.MemoryStatusPaused,
 		})).
 		WhereGroup(" AND ", func(who *bun.SelectQuery) *bun.SelectQuery {
-			return forPerson(who.Where(cols.Scope.Eq(), agent.MemoryScopeOrganization), filter.Reader)
+			return forPerson(
+				who.Where(cols.Scope.Eq(), agent.MemoryScopeOrganization),
+				filter.Reader,
+			)
 		})
 
 	if text := newTextQuery(filter.Query); !text.empty() {

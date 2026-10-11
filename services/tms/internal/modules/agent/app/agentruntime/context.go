@@ -269,10 +269,13 @@ func (b *ContextBuilder) delegates(
 		return nil
 	}
 
-	found, err := b.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
-		IDs:        definition.DelegateIDs,
-		TenantInfo: req.Actor.TenantInfo(),
-	})
+	found, err := b.definitions.ListByIDs(
+		ctx,
+		agentdefinitionports.ListAgentDefinitionsByIDsRequest{
+			IDs:        definition.DelegateIDs,
+			TenantInfo: req.Actor.TenantInfo(),
+		},
+	)
 	if err != nil {
 		b.logger.Warn("agent context: the agents it may hand work to could not be read",
 			zap.String("agent", definition.ID.String()),

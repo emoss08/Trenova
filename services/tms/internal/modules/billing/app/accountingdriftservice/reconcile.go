@@ -42,13 +42,16 @@ func (s *Service) ReconcileBatch(
 		limit = defaultBatch
 	}
 	limit = intutils.Clamp(limit, 1, maxBatch)
-	records, err := s.source.ListRecords(ctx, &accountingsyncports.ListAccountingDriftRecordsRequest{
-		TenantInfo:   sess.tenant,
-		ConnectionID: sess.conn.ID,
-		DatedFrom:    datedFrom,
-		AfterID:      req.AfterID,
-		Limit:        limit,
-	})
+	records, err := s.source.ListRecords(
+		ctx,
+		&accountingsyncports.ListAccountingDriftRecordsRequest{
+			TenantInfo:   sess.tenant,
+			ConnectionID: sess.conn.ID,
+			DatedFrom:    datedFrom,
+			AfterID:      req.AfterID,
+			Limit:        limit,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -247,11 +250,14 @@ func (s *Service) applyObservations(
 	at int64,
 	tally *compareTally,
 ) error {
-	open, err := s.findings.ListOpen(ctx, &accountingsyncports.ListOpenAccountingDriftFindingsRequest{
-		TenantInfo:   sess.tenant,
-		ConnectionID: sess.conn.ID,
-		ObjectIDs:    objectIDs,
-	})
+	open, err := s.findings.ListOpen(
+		ctx,
+		&accountingsyncports.ListOpenAccountingDriftFindingsRequest{
+			TenantInfo:   sess.tenant,
+			ConnectionID: sess.conn.ID,
+			ObjectIDs:    objectIDs,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -304,12 +310,15 @@ func (s *Service) recordsOf(
 			types = append(types, record.ObjectType)
 		}
 	}
-	return s.records.ListByObjects(ctx, &accountingsyncports.ListAccountingSyncRecordsByObjectsRequest{
-		TenantInfo:   sess.tenant,
-		ConnectionID: sess.conn.ID,
-		ObjectTypes:  types,
-		ObjectIDs:    ids,
-	})
+	return s.records.ListByObjects(
+		ctx,
+		&accountingsyncports.ListAccountingSyncRecordsByObjectsRequest{
+			TenantInfo:   sess.tenant,
+			ConnectionID: sess.conn.ID,
+			ObjectTypes:  types,
+			ObjectIDs:    ids,
+		},
+	)
 }
 
 func (s *Service) busyObjects(
@@ -390,11 +399,14 @@ func (s *Service) readProvider(
 				Refs:       record.ExternalRefs,
 			})
 		}
-		states, err := sess.reader.ReadDocuments(ctx, &accountingsyncports.ReadAccountingDocumentsRequest{
-			Auth:    sess.auth,
-			Kind:    objectType,
-			Targets: targets,
-		})
+		states, err := sess.reader.ReadDocuments(
+			ctx,
+			&accountingsyncports.ReadAccountingDocumentsRequest{
+				Auth:    sess.auth,
+				Kind:    objectType,
+				Targets: targets,
+			},
+		)
 		if err != nil {
 			s.recordFailure(ctx, sess.conn, s.classify(sess, err))
 			return nil, err

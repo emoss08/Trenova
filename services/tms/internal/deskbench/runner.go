@@ -100,7 +100,10 @@ func (b *Bench) Run(ctx context.Context, opts RunOptions) ([]*CaseResult, error)
 				chosen = scenario.Provider
 			}
 			for rep := 1; rep <= repeat; rep++ {
-				planned = append(planned, plannedCase{scenario: scenario, provider: chosen, repeat: rep})
+				planned = append(
+					planned,
+					plannedCase{scenario: scenario, provider: chosen, repeat: rep},
+				)
 			}
 		}
 	}
@@ -185,7 +188,11 @@ func (b *Bench) runCase(ctx context.Context, opts *RunOptions, planned plannedCa
 		return result
 	}
 	if len(scenario.Setup) > 0 {
-		b.live.Line(planned.label(), "setup: %d statement(s) put the data in place", len(scenario.Setup))
+		b.live.Line(
+			planned.label(),
+			"setup: %d statement(s) put the data in place",
+			len(scenario.Setup),
+		)
 	}
 
 	conv, err := b.openCase(ctx, session, opts, planned, provider)
@@ -247,7 +254,10 @@ func (b *Bench) openCase(
 		if err != nil {
 			return nil, err
 		}
-		if definition, agentErr := session.Agent(ctx, conv.Thread.AgentDefinitionID.String()); agentErr == nil {
+		if definition, agentErr := session.Agent(
+			ctx,
+			conv.Thread.AgentDefinitionID.String(),
+		); agentErr == nil {
 			conv.Agent = definition
 		}
 
@@ -339,8 +349,14 @@ func (b *Bench) liveVerdict(label string, result *CaseResult) {
 	if !result.Passed {
 		mark = failMark
 	}
-	b.live.Line(label, "<<< %s in %s · %s", mark,
-		result.FinishedAt.Sub(result.StartedAt).Round(100*time.Millisecond), usageLine(result.Usage))
+	b.live.Line(
+		label,
+		"<<< %s in %s · %s",
+		mark,
+		result.FinishedAt.Sub(result.StartedAt).
+			Round(100*time.Millisecond),
+		usageLine(result.Usage),
+	)
 	if result.Error != "" {
 		b.live.Line(label, "    error: %s", result.Error)
 	}
@@ -350,7 +366,13 @@ func (b *Bench) liveVerdict(label string, result *CaseResult) {
 		}
 		for _, check := range step.Checks {
 			if !check.Passed {
-				b.live.Line(label, "    step %d failed %s — %s", step.Index, check.Name, firstLine(check.Detail))
+				b.live.Line(
+					label,
+					"    step %d failed %s — %s",
+					step.Index,
+					check.Name,
+					firstLine(check.Detail),
+				)
 			}
 		}
 	}

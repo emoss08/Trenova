@@ -5,10 +5,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/fmcsa"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -149,7 +149,10 @@ func (c *Client) Search(
 			continue
 		}
 		ref := profile.Identity.ProviderRef()
-		items = append(items, carrierintelports.CarrierIntelSearchHit{Profile: profile, ProviderRef: ref})
+		items = append(
+			items,
+			carrierintelports.CarrierIntelSearchHit{Profile: profile, ProviderRef: ref},
+		)
 	}
 	return &carrierintelports.CarrierIntelSearchResult{
 		Items: items,

@@ -3,8 +3,8 @@ package formulatemplatejobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )

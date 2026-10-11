@@ -276,87 +276,95 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *journalentryports.ListJournalReviewQuery,
 ) (*pagination.CursorListResult[*journalentry.JournalEntry], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*journalentry.JournalEntry], error) {
-		if req.Filter != nil && len(req.Filter.Sort) == 0 {
-			req.Filter.Sort = []domaintypes.SortField{
-				{Field: reviewAccountingDateSort, Direction: dbtype.SortDirectionAsc},
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*journalentry.JournalEntry], error) {
+			if req.Filter != nil && len(req.Filter.Sort) == 0 {
+				req.Filter.Sort = []domaintypes.SortField{
+					{Field: reviewAccountingDateSort, Direction: dbtype.SortDirectionAsc},
+				}
 			}
-		}
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*journalentry.JournalEntry)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						journalentrycol.JournalEntryTable.Alias,
-						req.Filter,
-						(*journalentry.JournalEntry)(nil),
-					)
-					return r.applyReviewFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*journalentry.JournalEntry)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							journalentrycol.JournalEntryTable.Alias,
+							req.Filter,
+							(*journalentry.JournalEntry)(nil),
+						)
+						return r.applyReviewFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					return nil, fmt.Errorf("count journal entries awaiting review: %w", err)
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*journalentry.JournalEntry]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(items *[]*journalentry.JournalEntry) *bun.SelectQuery {
+						return dba.NewSelect().
+							Model(items).
+							ColumnExpr(journalentrycol.JournalEntryTable.All())
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						sq, applyErr := querybuilder.ApplyCursorFilters(
+							sq,
+							journalentrycol.JournalEntryTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*journalentry.JournalEntry)(nil),
+						)
+						if applyErr != nil {
+							return sq, applyErr
+						}
+						return r.applyReviewFilters(sq, req), nil
+					},
+				},
+			)
 			if err != nil {
-				return nil, fmt.Errorf("count journal entries awaiting review: %w", err)
+				return nil, fmt.Errorf("list journal entries awaiting review: %w", err)
 			}
-			totalCount = &total
-		}
-
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*journalentry.JournalEntry]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(items *[]*journalentry.JournalEntry) *bun.SelectQuery {
-					return dba.NewSelect().
-						Model(items).
-						ColumnExpr(journalentrycol.JournalEntryTable.All())
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					sq, applyErr := querybuilder.ApplyCursorFilters(
-						sq,
-						journalentrycol.JournalEntryTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*journalentry.JournalEntry)(nil),
-					)
-					if applyErr != nil {
-						return sq, applyErr
-					}
-					return r.applyReviewFilters(sq, req), nil
-				},
-			},
-		)
-		if err != nil {
-			return nil, fmt.Errorf("list journal entries awaiting review: %w", err)
-		}
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) Summarize(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*journalentryports.JournalReviewSummaryRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*journalentryports.JournalReviewSummaryRow, error) {
-		cols := journalentrycol.JournalEntryColumns
-		summary := new(journalentryports.JournalReviewSummaryRow)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*journalentry.JournalEntry)(nil)).
-			ColumnExpr(buncolgen.CountFilter("awaiting_approval", cols.Status.Eq()), journalentry.StatusPending).
-			ColumnExpr(buncolgen.CountFilter("ready_to_post", cols.Status.Eq()), journalentry.StatusApproved).
-			ColumnExpr(buncolgen.Min(cols.AccountingDate, "oldest_accounting_date")).
-			Apply(journalentrycol.JournalEntryApplyTenant(tenantInfo)).
-			Where(cols.Status.In(), bun.List(reviewStatuses)).
-			Where(cols.IsPosted.IsFalse()).
-			Scan(ctx, summary); err != nil {
-			return nil, fmt.Errorf("summarize journal entries awaiting review: %w", err)
-		}
-		return summary, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*journalentryports.JournalReviewSummaryRow, error) {
+			cols := journalentrycol.JournalEntryColumns
+			summary := new(journalentryports.JournalReviewSummaryRow)
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*journalentry.JournalEntry)(nil)).
+				ColumnExpr(buncolgen.CountFilter("awaiting_approval", cols.Status.Eq()), journalentry.StatusPending).
+				ColumnExpr(buncolgen.CountFilter("ready_to_post", cols.Status.Eq()), journalentry.StatusApproved).
+				ColumnExpr(buncolgen.Min(cols.AccountingDate, "oldest_accounting_date")).
+				Apply(journalentrycol.JournalEntryApplyTenant(tenantInfo)).
+				Where(cols.Status.In(), bun.List(reviewStatuses)).
+				Where(cols.IsPosted.IsFalse()).
+				Scan(ctx, summary); err != nil {
+				return nil, fmt.Errorf("summarize journal entries awaiting review: %w", err)
+			}
+			return summary, nil
+		},
+	)
 }

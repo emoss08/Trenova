@@ -231,7 +231,9 @@ func readPayments(
 		if len(wanted) == 0 {
 			continue
 		}
-		state := &accountingsyncports.AccountingDocumentState{ExternalID: strings.TrimSpace(target.ExternalID)}
+		state := &accountingsyncports.AccountingDocumentState{
+			ExternalID: strings.TrimSpace(target.ExternalID),
+		}
 		total := decimal.Zero
 		deleted, read := 0, 0
 		for _, paymentID := range wanted {

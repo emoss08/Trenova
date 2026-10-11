@@ -5,14 +5,14 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/bunmarshal"
 	"github.com/emoss08/trenova/pkg/redishelpers"
@@ -88,20 +88,26 @@ func NewWorkerCacheRepository(p WorkerCacheRepositoryParams) customerports.Worke
 	}
 }
 
-func NewCustomerCacheRepository(p CustomerCacheRepositoryParams) customerports.CustomerCacheRepository {
+func NewCustomerCacheRepository(
+	p CustomerCacheRepositoryParams,
+) customerports.CustomerCacheRepository {
 	return &customerCacheRepository{
 		syncedCacheBase: newSyncedCacheBase(p.Client, p.Logger, "customer-cache-repository"),
 		usStateRepo:     p.UsStateRepo,
 	}
 }
 
-func NewShipmentCacheRepository(p ShipmentCacheRepositoryParams) customerports.ShipmentCacheRepository {
+func NewShipmentCacheRepository(
+	p ShipmentCacheRepositoryParams,
+) customerports.ShipmentCacheRepository {
 	return &shipmentCacheRepository{
 		syncedCacheBase: newSyncedCacheBase(p.Client, p.Logger, "shipment-cache-repository"),
 	}
 }
 
-func NewDocumentCacheRepository(p DocumentCacheRepositoryParams) customerports.DocumentCacheRepository {
+func NewDocumentCacheRepository(
+	p DocumentCacheRepositoryParams,
+) customerports.DocumentCacheRepository {
 	return &documentCacheRepository{
 		syncedCacheBase: newSyncedCacheBase(p.Client, p.Logger, "document-cache-repository"),
 	}

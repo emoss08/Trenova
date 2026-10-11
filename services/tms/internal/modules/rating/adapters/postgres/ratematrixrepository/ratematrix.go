@@ -71,24 +71,31 @@ func (r *repository) List(
 	ctx context.Context,
 	req *ratematrixports.ListRateMatrixRequest,
 ) (*pagination.ListResult[*ratematrix.RateMatrix], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratematrix.RateMatrix], error) {
-		log := r.l.With(zap.String("operation", "List"))
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*ratematrix.RateMatrix], error) {
+			log := r.l.With(zap.String("operation", "List"))
 
-		entities := make([]*ratematrix.RateMatrix, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterQuery(sq, req)
-			}).
-			ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count rate matrices", zap.Error(err))
-			return nil, err
-		}
+			entities := make([]*ratematrix.RateMatrix, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).
+				ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count rate matrices", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*ratematrix.RateMatrix]{Items: entities, Total: total}, nil
-	})
+			return &pagination.ListResult[*ratematrix.RateMatrix]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -128,50 +135,57 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *ratematrixports.ListRateMatrixConnectionRequest,
 ) (*pagination.CursorListResult[*ratematrix.RateMatrix], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*ratematrix.RateMatrix], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*ratematrix.RateMatrix], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*ratematrix.RateMatrix)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyTotalCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*ratematrix.RateMatrix)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyTotalCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count rate matrices", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*ratematrix.RateMatrix]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*ratematrix.RateMatrix) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							Relation(buncolgen.Rel(ratematrixcol.RateMatrixRelations.FormulaTemplate)).
+							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return applyRateMatrixColumns(sq, req.RateMatrixColumns)
+							})
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return r.applyCursorPageFilters(sq, req)
+					},
+				},
+			)
 			if err != nil {
-				log.Error("failed to count rate matrices", zap.Error(err))
+				log.Error("failed to scan rate matrices", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*ratematrix.RateMatrix]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*ratematrix.RateMatrix) *bun.SelectQuery {
-				return dba.
-					NewSelect().
-					Model(entities).
-					Relation(buncolgen.Rel(ratematrixcol.RateMatrixRelations.FormulaTemplate)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyRateMatrixColumns(sq, req.RateMatrixColumns)
-					})
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.applyCursorPageFilters(sq, req)
-			},
-		})
-		if err != nil {
-			log.Error("failed to scan rate matrices", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -324,7 +338,8 @@ func (r *repository) Update(
 					return ratematrixcol.RateMatrixDimensionScopeTenantDelete(dq, pagination.TenantInfo{
 						OrgID: entity.OrganizationID,
 						BuID:  entity.BusinessUnitID,
-					}).Where(dimensionCols.RateMatrixID.Eq(), entity.ID)
+					}).
+						Where(dimensionCols.RateMatrixID.Eq(), entity.ID)
 				}).
 				Exec(c); dErr != nil {
 				return dErr
@@ -397,31 +412,35 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*ratematrix.RateMatrix], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratematrix.RateMatrix], error) {
-		cols := ratematrixcol.RateMatrixColumns
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*ratematrix.RateMatrix], error) {
+			cols := ratematrixcol.RateMatrixColumns
 
-		return dbhelper.SelectOptions[*ratematrix.RateMatrix](
-			ctx,
-			r.db.DBForContext(ctx),
-			req,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					cols.ID,
-					cols.Code,
-					cols.Name,
-					cols.Description,
-					cols.FormulaTemplateID,
-					cols.Currency,
-					cols.Status,
+			return dbhelper.SelectOptions[*ratematrix.RateMatrix](
+				ctx,
+				r.db.DBForContext(ctx),
+				req,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.Code,
+						cols.Name,
+						cols.Description,
+						cols.FormulaTemplateID,
+						cols.Currency,
+						cols.Status,
+					},
+					OrgColumnRef:     &cols.OrganizationID,
+					BuColumnRef:      &cols.BusinessUnitID,
+					SearchColumnRefs: []buncolgen.Column{cols.Code, cols.Name},
+					EntityName:       "RateMatrix",
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
+					},
 				},
-				OrgColumnRef:     &cols.OrganizationID,
-				BuColumnRef:      &cols.BusinessUnitID,
-				SearchColumnRefs: []buncolgen.Column{cols.Code, cols.Name},
-				EntityName:       "RateMatrix",
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }

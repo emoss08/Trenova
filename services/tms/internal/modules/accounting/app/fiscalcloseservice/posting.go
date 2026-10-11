@@ -293,11 +293,14 @@ func (s *Service) postedCloseEntries(
 	ctx context.Context,
 	fy *fiscalyear.FiscalYear,
 ) ([]*journalentry.JournalEntry, error) {
-	sources, err := s.sourceRepo.ListByObject(ctx, journalsourceports.GetJournalSourceByObjectRequest{
-		TenantInfo:       tenantOf(fy),
-		SourceObjectType: sourceObjectType,
-		SourceObjectID:   fy.ID.String(),
-	})
+	sources, err := s.sourceRepo.ListByObject(
+		ctx,
+		journalsourceports.GetJournalSourceByObjectRequest{
+			TenantInfo:       tenantOf(fy),
+			SourceObjectType: sourceObjectType,
+			SourceObjectID:   fy.ID.String(),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -317,10 +320,13 @@ func (s *Service) postedCloseEntries(
 		}
 		seen[source.JournalEntryID] = struct{}{}
 
-		entry, entryErr := s.journalEntryRepo.GetByID(ctx, journalentryports.GetJournalEntryByIDRequest{
-			ID:         source.JournalEntryID,
-			TenantInfo: tenantOf(fy),
-		})
+		entry, entryErr := s.journalEntryRepo.GetByID(
+			ctx,
+			journalentryports.GetJournalEntryByIDRequest{
+				ID:         source.JournalEntryID,
+				TenantInfo: tenantOf(fy),
+			},
+		)
 		if entryErr != nil {
 			return nil, entryErr
 		}

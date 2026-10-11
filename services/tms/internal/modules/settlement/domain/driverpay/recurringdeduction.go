@@ -25,20 +25,20 @@ type RecurringDeduction struct {
 	bun.BaseModel             `bun:"table:recurring_deductions,alias:rded" json:"-"`
 	pagination.CursorValueSet `bun:",embed"                                json:"-"`
 
-	ID              pulid.ID        `json:"id"                  bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID  pulid.ID        `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID  pulid.ID        `json:"organizationId"      bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID        pulid.ID        `json:"workerId"            bun:"worker_id,type:VARCHAR(100),notnull"`
-	PayCodeID       pulid.ID        `json:"payCodeId"           bun:"pay_code_id,type:VARCHAR(100),notnull"`
-	EscrowAccountID *pulid.ID       `json:"escrowAccountId"     bun:"escrow_account_id,type:VARCHAR(100),nullzero"`
-	Status          DeductionStatus `json:"status"              bun:"status,type:VARCHAR(50),notnull,default:'Active'"`
-	Kind            DeductionKind   `json:"kind"                bun:"kind,type:VARCHAR(50),notnull,default:'Standard'"`
+	ID              pulid.ID        `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID  pulid.ID        `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID  pulid.ID        `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	WorkerID        pulid.ID        `json:"workerId"        bun:"worker_id,type:VARCHAR(100),notnull"`
+	PayCodeID       pulid.ID        `json:"payCodeId"       bun:"pay_code_id,type:VARCHAR(100),notnull"`
+	EscrowAccountID *pulid.ID       `json:"escrowAccountId" bun:"escrow_account_id,type:VARCHAR(100),nullzero"`
+	Status          DeductionStatus `json:"status"          bun:"status,type:VARCHAR(50),notnull,default:'Active'"`
+	Kind            DeductionKind   `json:"kind"            bun:"kind,type:VARCHAR(50),notnull,default:'Standard'"`
 	// CourtOrderNumber, CaseNumber and IssuingAgency are the paperwork behind a
 	// garnishment. Money taken from somebody's pay without a reference to the
 	// order authorising it cannot be defended.
-	CourtOrderNumber string `json:"courtOrderNumber"    bun:"court_order_number,type:VARCHAR(100),nullzero"`
-	CaseNumber       string `json:"caseNumber"          bun:"case_number,type:VARCHAR(100),nullzero"`
-	IssuingAgency    string `json:"issuingAgency"       bun:"issuing_agency,type:VARCHAR(150),nullzero"`
+	CourtOrderNumber string `json:"courtOrderNumber" bun:"court_order_number,type:VARCHAR(100),nullzero"`
+	CaseNumber       string `json:"caseNumber"       bun:"case_number,type:VARCHAR(100),nullzero"`
+	IssuingAgency    string `json:"issuingAgency"    bun:"issuing_agency,type:VARCHAR(150),nullzero"`
 	// Priority is the order deductions are taken in when pay will not cover
 	// them all. Lower goes first.
 	Priority            int16              `json:"priority"            bun:"priority,type:SMALLINT,notnull,default:100"`

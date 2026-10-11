@@ -1,9 +1,9 @@
 package assistantjobs
 
 import (
+	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/worker"
 	"go.uber.org/fx"
@@ -47,19 +47,23 @@ func NewRegistry(p RegistryParams) *registry.ComposedRegistry {
 		Register: func(w worker.ActivityRegistry) {
 			agentflow.RegisterDynamic(w, p.Flow)
 		},
-		Workflows: []registry.WorkflowDefinition{{
-			Name:        assistantcontract.AssistantTurnWorkflowName,
-			Fn:          p.Workflows.AssistantTurnWorkflow,
-			Description: "Answer one question in a conversation, publishing the reply as it is written",
-		}, {
-			Name:        assistantcontract.AgentDryRunWorkflowName,
-			Fn:          p.Workflows.AgentDryRunWorkflow,
-			Description: "Try a draft agent once against live data with every write simulated, writing nothing",
-		}, {
-			Name:        assistantcontract.CompactionWorkflowName,
-			Fn:          p.Workflows.ConversationCompactionWorkflow,
-			Description: "Summarize the older part of a conversation so it fits its model's window",
-		}},
+		Workflows: []registry.WorkflowDefinition{
+			{
+				Name:        assistantcontract.AssistantTurnWorkflowName,
+				Fn:          p.Workflows.AssistantTurnWorkflow,
+				Description: "Answer one question in a conversation, publishing the reply as it is written",
+			},
+			{
+				Name:        assistantcontract.AgentDryRunWorkflowName,
+				Fn:          p.Workflows.AgentDryRunWorkflow,
+				Description: "Try a draft agent once against live data with every write simulated, writing nothing",
+			},
+			{
+				Name:        assistantcontract.CompactionWorkflowName,
+				Fn:          p.Workflows.ConversationCompactionWorkflow,
+				Description: "Summarize the older part of a conversation so it fits its model's window",
+			},
+		},
 		Logger: p.Logger,
 	})
 }

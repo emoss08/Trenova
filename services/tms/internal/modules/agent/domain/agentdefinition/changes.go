@@ -48,8 +48,9 @@ var changeRules = []editchange.Rule[Definition]{
 		Same: func(a, b *Definition) bool { return maps.Equal(a.ToolTiers, b.ToolTiers) },
 	},
 	{
-		Field: "toolDailyLimits", Label: "Daily limits",
-		Same: func(a, b *Definition) bool { return maps.Equal(a.ToolDailyLimits, b.ToolDailyLimits) },
+		Field: "toolDailyLimits",
+		Label: "Daily limits",
+		Same:  func(a, b *Definition) bool { return maps.Equal(a.ToolDailyLimits, b.ToolDailyLimits) },
 	},
 	{
 		Field: "autonomyCeiling", Label: "Ceiling",

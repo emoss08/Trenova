@@ -63,62 +63,70 @@ func (r *repository) List(
 	ctx context.Context,
 	req *fiscalyearports.ListFiscalYearsRequest,
 ) (*pagination.ListResult[*fiscalyear.FiscalYear], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*fiscalyear.FiscalYear], error) {
-		log := r.l.With(
-			zap.String("operation", "List"),
-			zap.Any("request", req),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*fiscalyear.FiscalYear], error) {
+			log := r.l.With(
+				zap.String("operation", "List"),
+				zap.Any("request", req),
+			)
 
-		entities := make([]*fiscalyear.FiscalYear, 0, req.Filter.Pagination.SafeLimit())
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterQuery(sq, req)
-			}).ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count fiscal years", zap.Error(err))
-			return nil, err
-		}
+			entities := make([]*fiscalyear.FiscalYear, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count fiscal years", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*fiscalyear.FiscalYear]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*fiscalyear.FiscalYear]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *fiscalyearports.FiscalYearSelectOptionsRequest,
 ) (*pagination.ListResult[*fiscalyear.FiscalYear], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*fiscalyear.FiscalYear], error) {
-		cols := fiscalyearcol.FiscalYearColumns
-		return dbhelper.SelectOptions[*fiscalyear.FiscalYear](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					cols.ID,
-					cols.Name,
-					cols.Year,
-					cols.Status,
-					cols.StartDate,
-					cols.EndDate,
-					cols.IsCurrent,
-					cols.CreatedAt,
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*fiscalyear.FiscalYear], error) {
+			cols := fiscalyearcol.FiscalYearColumns
+			return dbhelper.SelectOptions[*fiscalyear.FiscalYear](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.Name,
+						cols.Year,
+						cols.Status,
+						cols.StartDate,
+						cols.EndDate,
+						cols.IsCurrent,
+						cols.CreatedAt,
+					},
+					OrgColumnRef: &cols.OrganizationID,
+					BuColumnRef:  &cols.BusinessUnitID,
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						return q.Order(cols.IsCurrent.OrderDesc(), cols.Year.OrderDesc())
+					},
+					EntityName:       "FiscalYear",
+					SearchColumnRefs: []buncolgen.Column{cols.Name},
 				},
-				OrgColumnRef: &cols.OrganizationID,
-				BuColumnRef:  &cols.BusinessUnitID,
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Order(cols.IsCurrent.OrderDesc(), cols.Year.OrderDesc())
-				},
-				EntityName:       "FiscalYear",
-				SearchColumnRefs: []buncolgen.Column{cols.Name},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -158,54 +166,58 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *fiscalyearports.ListFiscalYearConnectionRequest,
 ) (*pagination.CursorListResult[*fiscalyear.FiscalYear], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*fiscalyear.FiscalYear], error) {
-		log := r.l.With(
-			zap.String("operation", "ListConnection"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*fiscalyear.FiscalYear], error) {
+			log := r.l.With(
+				zap.String("operation", "ListConnection"),
+				zap.Any("request", req),
+			)
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*fiscalyear.FiscalYear)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyTotalCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*fiscalyear.FiscalYear)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyTotalCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count fiscal years", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*fiscalyear.FiscalYear]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*fiscalyear.FiscalYear) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return applyFiscalYearColumns(sq, req.FiscalYearColumns)
+							})
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return r.applyCursorPageFilters(sq, req)
+					},
+				})
 			if err != nil {
-				log.Error("failed to count fiscal years", zap.Error(err))
+				log.Error("failed to scan fiscal years", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*fiscalyear.FiscalYear]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*fiscalyear.FiscalYear) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return applyFiscalYearColumns(sq, req.FiscalYearColumns)
-						})
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return r.applyCursorPageFilters(sq, req)
-				},
-			})
-		if err != nil {
-			log.Error("failed to scan fiscal years", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(

@@ -7,10 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -50,10 +50,13 @@ func (s *Service) StartRun(
 		Task:           aicorrection.TaskShipmentDraftExtraction,
 		Status:         extractioneval.RunStatusQueued,
 		ProviderID:     provider.ID,
-		ProviderName:   stringutils.TruncateRunes(provider.Name, extractioneval.MaxProviderNameRunes),
-		ProviderModel:  stringutils.TruncateRunes(provider.Model, extractioneval.MaxModelRunes),
-		CaseLimit:      limit,
-		RequestedByID:  actorID(actor, req.TenantInfo),
+		ProviderName: stringutils.TruncateRunes(
+			provider.Name,
+			extractioneval.MaxProviderNameRunes,
+		),
+		ProviderModel: stringutils.TruncateRunes(provider.Model, extractioneval.MaxModelRunes),
+		CaseLimit:     limit,
+		RequestedByID: actorID(actor, req.TenantInfo),
 	}
 
 	multiErr := errortypes.NewMultiError()
@@ -92,15 +95,21 @@ func (s *Service) StartRun(
 		return nil, err
 	}
 
-	workflowID, err := s.starter.StartExtractionEvalRun(ctx, &extractionevalports.ExtractionEvalRunStart{
-		TenantInfo: req.TenantInfo,
-		RunID:      created.ID,
-	})
+	workflowID, err := s.starter.StartExtractionEvalRun(
+		ctx,
+		&extractionevalports.ExtractionEvalRunStart{
+			TenantInfo: req.TenantInfo,
+			RunID:      created.ID,
+		},
+	)
 	if err != nil {
 		s.l.Error("failed to start extraction evaluation run", zap.Error(err))
 		if failErr := s.FailRun(
 			ctx,
-			extractionevalports.GetExtractionEvalRunRequest{TenantInfo: req.TenantInfo, ID: created.ID},
+			extractionevalports.GetExtractionEvalRunRequest{
+				TenantInfo: req.TenantInfo,
+				ID:         created.ID,
+			},
 			"The evaluation could not be started",
 		); failErr != nil {
 			s.l.Error("failed to mark unstarted extraction evaluation run", zap.Error(failErr))

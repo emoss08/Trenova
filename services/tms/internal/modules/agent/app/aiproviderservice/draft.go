@@ -117,7 +117,11 @@ func validateDraft(req *agentports.TestAIProviderDraftRequest, multiErr *errorty
 		}
 	}
 	if req.StructuredOutputMode != "" && !req.StructuredOutputMode.IsValid() {
-		multiErr.Add("structuredOutputMode", errortypes.ErrInvalid, "Unknown structured output mode")
+		multiErr.Add(
+			"structuredOutputMode",
+			errortypes.ErrInvalid,
+			"Unknown structured output mode",
+		)
 	}
 	if req.EmbeddingInputStyle != "" && !req.EmbeddingInputStyle.IsValid() {
 		multiErr.Add("embeddingInputStyle", errortypes.ErrInvalid, "Unknown embedding input style")

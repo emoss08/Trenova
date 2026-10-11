@@ -6,11 +6,11 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -358,10 +358,13 @@ func allocate(
 				plan = &creditPlan{memoID: memoID, number: invoices[memoID].Number}
 				byMemo[memoID] = plan
 			}
-			plan.applications = append(plan.applications, &customerpaymentports.CreditMemoApplicationInput{
-				InvoiceID:          inv.ID,
-				AppliedAmountMinor: take,
-			})
+			plan.applications = append(
+				plan.applications,
+				&customerpaymentports.CreditMemoApplicationInput{
+					InvoiceID:          inv.ID,
+					AppliedAmountMinor: take,
+				},
+			)
 		}
 		if due > 0 {
 			if _, seen := cash[inv.ID]; !seen {
@@ -503,11 +506,14 @@ func (s *Service) planSettlement(
 		kind = accountingsyncports.PayableDriver
 		payment = accountingsync.SyncObjectDriverBillPay
 	}
-	settlement, err := s.payables.GetSettlement(ctx, &accountingsyncports.GetPayableSettlementRequest{
-		TenantInfo: p.change.TenantInfo(),
-		Kind:       kind,
-		ID:         id,
-	})
+	settlement, err := s.payables.GetSettlement(
+		ctx,
+		&accountingsyncports.GetPayableSettlementRequest{
+			TenantInfo: p.change.TenantInfo(),
+			Kind:       kind,
+			ID:         id,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			p.block(accountingsync.InboundReasonUnknownDocument, unknownDocumentText(p, 1))

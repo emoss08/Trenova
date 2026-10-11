@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -409,11 +409,15 @@ func (h *Handler) reopen(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Reopen(c.Request.Context(), fiscalperiodports.ReopenFiscalPeriodRequest{
-		ID:           fiscalPeriodID,
-		TenantInfo:   pagination.FromAuthAsUser(authCtx),
-		ReopenReason: payload.ReopenReason,
-	}, authCtx.UserID)
+	entity, err := h.service.Reopen(
+		c.Request.Context(),
+		fiscalperiodports.ReopenFiscalPeriodRequest{
+			ID:           fiscalPeriodID,
+			TenantInfo:   pagination.FromAuthAsUser(authCtx),
+			ReopenReason: payload.ReopenReason,
+		},
+		authCtx.UserID,
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -476,10 +480,14 @@ func (h *Handler) unlock(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Unlock(c.Request.Context(), fiscalperiodports.UnlockFiscalPeriodRequest{
-		ID:         fiscalPeriodID,
-		TenantInfo: pagination.FromAuthAsUser(authCtx),
-	}, authCtx.UserID)
+	entity, err := h.service.Unlock(
+		c.Request.Context(),
+		fiscalperiodports.UnlockFiscalPeriodRequest{
+			ID:         fiscalPeriodID,
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+		},
+		authCtx.UserID,
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -509,10 +517,14 @@ func (h *Handler) activate(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Activate(c.Request.Context(), fiscalperiodports.ActivateFiscalPeriodRequest{
-		ID:         fiscalPeriodID,
-		TenantInfo: pagination.FromAuthAsUser(authCtx),
-	}, authCtx.UserID)
+	entity, err := h.service.Activate(
+		c.Request.Context(),
+		fiscalperiodports.ActivateFiscalPeriodRequest{
+			ID:         fiscalPeriodID,
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+		},
+		authCtx.UserID,
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

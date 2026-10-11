@@ -64,109 +64,117 @@ func (r *repository) List(
 	ctx context.Context,
 	req *workerports.ListPTOPoliciesRequest,
 ) (*pagination.CursorListResult[*worker.PTOPolicy], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*worker.PTOPolicy], error) {
-		log := r.l.With(zap.String("operation", "List"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*worker.PTOPolicy], error) {
+			log := r.l.With(zap.String("operation", "List"))
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*worker.PTOPolicy)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*worker.PTOPolicy)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							workercol.PTOPolicyTable.Alias,
+							req.Filter,
+							(*worker.PTOPolicy)(nil),
+						)
+						cols := workercol.PTOPolicyColumns
+						if req.Status != "" {
+							sq = sq.Where(cols.Status.Eq(), req.Status)
+						}
+						return sq
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count PTO policies", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*worker.PTOPolicy]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(items *[]*worker.PTOPolicy) *bun.SelectQuery {
+					return dba.NewSelect().Model(items).ColumnExpr(workercol.PTOPolicyTable.All())
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
 						workercol.PTOPolicyTable.Alias,
 						req.Filter,
+						req.Cursor,
 						(*worker.PTOPolicy)(nil),
 					)
-					cols := workercol.PTOPolicyColumns
-					if req.Status != "" {
-						sq = sq.Where(cols.Status.Eq(), req.Status)
+					if applyErr != nil {
+						return sq, applyErr
 					}
-					return sq
-				}).
-				Count(ctx)
+					return r.applyListFilters(sq, req), nil
+				},
+			})
 			if err != nil {
-				log.Error("failed to count PTO policies", zap.Error(err))
+				log.Error("failed to list PTO policies", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*worker.PTOPolicy]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(items *[]*worker.PTOPolicy) *bun.SelectQuery {
-				return dba.NewSelect().Model(items).ColumnExpr(workercol.PTOPolicyTable.All())
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				sq, applyErr := querybuilder.ApplyCursorFilters(
-					sq,
-					workercol.PTOPolicyTable.Alias,
-					req.Filter,
-					req.Cursor,
-					(*worker.PTOPolicy)(nil),
-				)
-				if applyErr != nil {
-					return sq, applyErr
-				}
-				return r.applyListFilters(sq, req), nil
-			},
-		})
-		if err != nil {
-			log.Error("failed to list PTO policies", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *workerports.PTOPolicySelectOptionsRequest,
 ) (*pagination.ListResult[*worker.PTOPolicy], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*worker.PTOPolicy], error) {
-		cols := workercol.PTOPolicyColumns
-		return dbhelper.SelectOptions[*worker.PTOPolicy](
-			ctx,
-			r.db.DBForContext(ctx),
-			req.SelectQueryRequest,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					cols.ID,
-					// The tenant keys are selected so Bun can key the Rules
-					// relation; the picker offers a policy's tracked PTO types as
-					// the opening-balance rows to fill in.
-					cols.OrganizationID,
-					cols.BusinessUnitID,
-					cols.Code,
-					cols.Name,
-					cols.Description,
-					cols.IsDefault,
-					cols.YearBasis,
-					cols.RequiresApproval,
-					cols.CreatedAt,
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*worker.PTOPolicy], error) {
+			cols := workercol.PTOPolicyColumns
+			return dbhelper.SelectOptions[*worker.PTOPolicy](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						// The tenant keys are selected so Bun can key the Rules
+						// relation; the picker offers a policy's tracked PTO types as
+						// the opening-balance rows to fill in.
+						cols.OrganizationID,
+						cols.BusinessUnitID,
+						cols.Code,
+						cols.Name,
+						cols.Description,
+						cols.IsDefault,
+						cols.YearBasis,
+						cols.RequiresApproval,
+						cols.CreatedAt,
+					},
+					OrgColumnRef: &cols.OrganizationID,
+					BuColumnRef:  &cols.BusinessUnitID,
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						return q.Where(cols.Status.Eq(), worker.PTOPolicyStatusActive).
+							Relation(workercol.PTOPolicyRelations.Rules, orderRules).
+							Order(cols.IsDefault.OrderDesc()).
+							Order(cols.Name.OrderAsc())
+					},
+					EntityName: "PTOPolicy",
+					SearchColumnRefs: []buncolgen.Column{
+						cols.Code,
+						cols.Name,
+						cols.Description,
+					},
 				},
-				OrgColumnRef: &cols.OrganizationID,
-				BuColumnRef:  &cols.BusinessUnitID,
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Where(cols.Status.Eq(), worker.PTOPolicyStatusActive).
-						Relation(workercol.PTOPolicyRelations.Rules, orderRules).
-						Order(cols.IsDefault.OrderDesc()).
-						Order(cols.Name.OrderAsc())
-				},
-				EntityName: "PTOPolicy",
-				SearchColumnRefs: []buncolgen.Column{
-					cols.Code,
-					cols.Name,
-					cols.Description,
-				},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -361,7 +369,11 @@ func (r *repository) Update(
 			if uErr != nil {
 				return uErr
 			}
-			if uErr = dberror.CheckRowsAffected(results, "PTOPolicy", entity.ID.String()); uErr != nil {
+			if uErr = dberror.CheckRowsAffected(
+				results,
+				"PTOPolicy",
+				entity.ID.String(),
+			); uErr != nil {
 				return uErr
 			}
 

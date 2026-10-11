@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -82,13 +82,16 @@ func (c *agentCredits) nameOf(entry *audit.Entry) string {
 		BusinessUnitID: entry.BusinessUnitID,
 	})
 
-	definition, err := c.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID: entry.PrincipalID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entry.OrganizationID,
-			BuID:  entry.BusinessUnitID,
+	definition, err := c.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID: entry.PrincipalID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entry.OrganizationID,
+				BuID:  entry.BusinessUnitID,
+			},
 		},
-	})
+	)
 	if err != nil {
 		c.logger.Warn("audit entry agent name unavailable",
 			zap.String("agentDefinitionId", entry.PrincipalID.String()),

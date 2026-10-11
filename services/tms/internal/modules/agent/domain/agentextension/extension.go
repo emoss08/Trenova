@@ -62,9 +62,12 @@ func (e *Extension) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Type is required"),
 			domainvalidation.ValidEnum[Type]("Type is not an extension this system supports"),
 		),
-		validation.Field(&e.Availability,
+		validation.Field(
+			&e.Availability,
 			validation.Required.Error("Availability is required"),
-			domainvalidation.ValidEnum[Availability]("Availability must be AllAgents or SelectedAgents"),
+			domainvalidation.ValidEnum[Availability](
+				"Availability must be AllAgents or SelectedAgents",
+			),
 		),
 		validation.Field(&e.EnabledByID,
 			validation.When(

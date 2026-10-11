@@ -43,7 +43,10 @@ type JournalReviewRepository interface {
 		ctx context.Context,
 		req *ListJournalReviewQuery,
 	) (*pagination.CursorListResult[*journalentry.JournalEntry], error)
-	Summarize(ctx context.Context, tenantInfo pagination.TenantInfo) (*JournalReviewSummaryRow, error)
+	Summarize(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) (*JournalReviewSummaryRow, error)
 }
 
 type ListJournalReviewQuery struct {

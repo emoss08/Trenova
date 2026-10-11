@@ -7,22 +7,22 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -174,14 +174,17 @@ func (s *Service) generate(
 		})
 		s.applyLogo(txCtx, tenantInfo, templateContext)
 
-		rendered, txErr = s.templates.RenderDocument(txCtx, &documenttemplateports.RenderDocumentRequest{
-			TenantInfo:  tenantInfo,
-			Kind:        documenttemplate.KindRateConfirmationPDF,
-			Data:        templateContext,
-			ReferenceID: assignment.ID,
-			UserID:      tenantInfo.UserID,
-			Title:       documentTitle(shipmentEntity, revision),
-		})
+		rendered, txErr = s.templates.RenderDocument(
+			txCtx,
+			&documenttemplateports.RenderDocumentRequest{
+				TenantInfo:  tenantInfo,
+				Kind:        documenttemplate.KindRateConfirmationPDF,
+				Data:        templateContext,
+				ReferenceID: assignment.ID,
+				UserID:      tenantInfo.UserID,
+				Title:       documentTitle(shipmentEntity, revision),
+			},
+		)
 		if txErr != nil {
 			return txErr
 		}
@@ -712,10 +715,13 @@ func (s *Service) fileDocument(
 		return
 	}
 
-	docType, err := s.documentTypeRepo.GetByCode(ctx, documenttypeports.GetDocumentTypeByCodeRequest{
-		Code:       documenttype.CodeRateConfirmation,
-		TenantInfo: tenantInfo,
-	})
+	docType, err := s.documentTypeRepo.GetByCode(
+		ctx,
+		documenttypeports.GetDocumentTypeByCodeRequest{
+			Code:       documenttype.CodeRateConfirmation,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err != nil {
 		log.Warn("failed to resolve the rate confirmation document type", zap.Error(err))
 		return
@@ -782,17 +788,20 @@ func (s *Service) fileDocument(
 	provenance := *rendered
 	provenance.PDF = nil
 	provenance.HTML = ""
-	if _, err = s.templates.RecordGeneratedDocument(ctx, &documenttemplateports.RecordGeneratedDocumentRequest{
-		TenantInfo:    tenantInfo,
-		Kind:          documenttemplate.KindRateConfirmationPDF,
-		Rendered:      &provenance,
-		ReferenceType: documentReferenceType,
-		ReferenceID:   entity.CarrierAssignmentID,
-		DocumentID:    completed.DocumentID,
-		FileName:      fileName(entity),
-		FileSize:      int64(len(rendered.PDF)),
-		UserID:        tenantInfo.UserID,
-	}); err != nil {
+	if _, err = s.templates.RecordGeneratedDocument(
+		ctx,
+		&documenttemplateports.RecordGeneratedDocumentRequest{
+			TenantInfo:    tenantInfo,
+			Kind:          documenttemplate.KindRateConfirmationPDF,
+			Rendered:      &provenance,
+			ReferenceType: documentReferenceType,
+			ReferenceID:   entity.CarrierAssignmentID,
+			DocumentID:    completed.DocumentID,
+			FileName:      fileName(entity),
+			FileSize:      int64(len(rendered.PDF)),
+			UserID:        tenantInfo.UserID,
+		},
+	); err != nil {
 		log.Warn("could not record the generated rate confirmation PDF", zap.Error(err))
 	}
 }

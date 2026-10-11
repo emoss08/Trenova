@@ -63,14 +63,16 @@ func schemaView(reference *formulaassistantservice.Reference, query string) *for
 
 	for idx := range reference.Variables {
 		variable := &reference.Variables[idx]
-		if terms != nil && !matchesTerms(terms, variable.Name, variable.Description, variable.Category) {
+		if terms != nil &&
+			!matchesTerms(terms, variable.Name, variable.Description, variable.Category) {
 			continue
 		}
 		view.Variables = append(view.Variables, variableLine(variable, terms != nil))
 	}
 	for idx := range reference.Functions {
 		function := &reference.Functions[idx]
-		if terms != nil && !matchesTerms(terms, function.Name, function.Description, function.Category) {
+		if terms != nil &&
+			!matchesTerms(terms, function.Name, function.Description, function.Category) {
 			continue
 		}
 		line := schemaFunctionLine{Signature: function.Signature}
@@ -111,7 +113,10 @@ func schemaView(reference *formulaassistantservice.Reference, query string) *for
 func variableLine(variable *formulatemplatetypes.SchemaVariableInfo, full bool) schemaVariableLine {
 	description := variable.Description
 	if !full {
-		description = stringutils.Ellipsize(stringutils.FirstSentence(description), maxSchemaLineDescription)
+		description = stringutils.Ellipsize(
+			stringutils.FirstSentence(description),
+			maxSchemaLineDescription,
+		)
 	}
 
 	return schemaVariableLine{

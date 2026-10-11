@@ -9,19 +9,19 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -514,8 +514,10 @@ func (t *getCustomerStatementTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
 			"The customer's id, from list_customers, get_ar_aging or "+onThePage),
-		paramStartDate: agenttoolschema.Date("The first day of the statement period. Omit for the " +
-			"customer's whole history."),
+		paramStartDate: agenttoolschema.Date(
+			"The first day of the statement period. Omit for the " +
+				"customer's whole history.",
+		),
 		paramAsOf: agenttoolschema.Date("The statement date. Defaults to today."),
 	}, paramCustomerID)
 }
@@ -775,17 +777,20 @@ func (t *listCollectionsWorklistTool) Query(
 			continue
 		}
 		row := worklistRow{
-			InvoiceID:       item.InvoiceID.String(),
-			InvoiceNumber:   item.InvoiceNumber,
-			CustomerID:      item.CustomerID.String(),
-			Customer:        item.CustomerName,
-			Severity:        item.Severity,
-			DueDate:         recordedDate(item.DueDate),
-			DaysPastDue:     max(item.DaysPastDue, 0),
-			Disputed:        item.IsDisputed,
-			HasShortPay:     item.HasShortPay,
-			DisputeReason:   item.OpenDisputeReasonCode,
-			DisputeOpenedAt: expectedDate(typeutils.ValueOrZero(item.DisputeOpenedAt), "no open dispute"),
+			InvoiceID:     item.InvoiceID.String(),
+			InvoiceNumber: item.InvoiceNumber,
+			CustomerID:    item.CustomerID.String(),
+			Customer:      item.CustomerName,
+			Severity:      item.Severity,
+			DueDate:       recordedDate(item.DueDate),
+			DaysPastDue:   max(item.DaysPastDue, 0),
+			Disputed:      item.IsDisputed,
+			HasShortPay:   item.HasShortPay,
+			DisputeReason: item.OpenDisputeReasonCode,
+			DisputeOpenedAt: expectedDate(
+				typeutils.ValueOrZero(item.DisputeOpenedAt),
+				"no open dispute",
+			),
 		}
 		if showAmounts {
 			row.Open = minorText(item.OpenAmountMinor)
@@ -1353,7 +1358,10 @@ func newListFiscalPeriodsTool(
 					Adjusting:    item.IsAdjusting,
 					LockedAt:     expectedDate(typeutils.ValueOrZero(item.LockedAt), "not locked"),
 					ClosedAt:     expectedDate(typeutils.ValueOrZero(item.ClosedAt), "not closed"),
-					ReopenedAt:   expectedDate(typeutils.ValueOrZero(item.ReopenedAt), "never reopened"),
+					ReopenedAt: expectedDate(
+						typeutils.ValueOrZero(item.ReopenedAt),
+						"never reopened",
+					),
 				}
 				if item.ReopenReason != "" && gate.show("reopenReason", "reopenReason") {
 					row.ReopenReason = item.ReopenReason

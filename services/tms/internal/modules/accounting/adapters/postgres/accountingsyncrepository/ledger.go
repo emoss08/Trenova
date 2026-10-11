@@ -171,97 +171,109 @@ func (s *ledgerSource) GetJournal(
 	ctx context.Context,
 	req *journalentryports.GetLedgerJournalRequest,
 ) (*journalentryports.LedgerJournal, error) {
-	return dbtx.Write(ctx, s.db, func(ctx context.Context) (*journalentryports.LedgerJournal, error) {
-		cols := journalentrycol.JournalEntryColumns
-		entry := new(journalentry.JournalEntry)
-		if err := s.db.DBForContext(ctx).
-			NewSelect().
-			Model(entry).
-			Apply(journalentrycol.JournalEntryApplyTenant(req.TenantInfo)).
-			Where(cols.ID.Eq(), req.ID).
-			Where(cols.IsPosted.IsTrue()).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, journalEntryEntity)
-		}
+	return dbtx.Write(
+		ctx,
+		s.db,
+		func(ctx context.Context) (*journalentryports.LedgerJournal, error) {
+			cols := journalentrycol.JournalEntryColumns
+			entry := new(journalentry.JournalEntry)
+			if err := s.db.DBForContext(ctx).
+				NewSelect().
+				Model(entry).
+				Apply(journalentrycol.JournalEntryApplyTenant(req.TenantInfo)).
+				Where(cols.ID.Eq(), req.ID).
+				Where(cols.IsPosted.IsTrue()).
+				Scan(ctx); err != nil {
+				return nil, dberror.HandleNotFoundError(err, journalEntryEntity)
+			}
 
-		journals, err := s.assemble(ctx, req.TenantInfo, []*journalentry.JournalEntry{entry})
-		if err != nil {
-			return nil, err
-		}
-		return journals[0], nil
-	})
+			journals, err := s.assemble(ctx, req.TenantInfo, []*journalentry.JournalEntry{entry})
+			if err != nil {
+				return nil, err
+			}
+			return journals[0], nil
+		},
+	)
 }
 
 func (s *ledgerSource) ListJournals(
 	ctx context.Context,
 	req *journalentryports.ListLedgerJournalsRequest,
 ) ([]*journalentryports.LedgerJournal, error) {
-	return dbtx.Write(ctx, s.db, func(ctx context.Context) ([]*journalentryports.LedgerJournal, error) {
-		cols := journalentrycol.JournalEntryColumns
-		entries := make([]*journalentry.JournalEntry, 0, 16)
-		if err := s.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entries).
-			Apply(journalentrycol.JournalEntryApplyTenant(req.TenantInfo)).
-			Where(cols.IsPosted.IsTrue()).
-			Apply(withoutEntryTypes(unsentEntryTypes())).
-			Where(cols.AccountingDate.Gte(), req.From).
-			Where(cols.AccountingDate.Lt(), req.Before).
-			Order(cols.AccountingDate.OrderAsc(), cols.EntryNumber.OrderAsc(), cols.ID.OrderAsc()).
-			Scan(ctx); err != nil {
-			s.l.Error("failed to list posted journals", zap.Error(err))
-			return nil, fmt.Errorf("list posted journals: %w", err)
-		}
-		if len(entries) == 0 {
-			return []*journalentryports.LedgerJournal{}, nil
-		}
-		return s.assemble(ctx, req.TenantInfo, entries)
-	})
+	return dbtx.Write(
+		ctx,
+		s.db,
+		func(ctx context.Context) ([]*journalentryports.LedgerJournal, error) {
+			cols := journalentrycol.JournalEntryColumns
+			entries := make([]*journalentry.JournalEntry, 0, 16)
+			if err := s.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entries).
+				Apply(journalentrycol.JournalEntryApplyTenant(req.TenantInfo)).
+				Where(cols.IsPosted.IsTrue()).
+				Apply(withoutEntryTypes(unsentEntryTypes())).
+				Where(cols.AccountingDate.Gte(), req.From).
+				Where(cols.AccountingDate.Lt(), req.Before).
+				Order(cols.AccountingDate.OrderAsc(), cols.EntryNumber.OrderAsc(), cols.ID.OrderAsc()).
+				Scan(ctx); err != nil {
+				s.l.Error("failed to list posted journals", zap.Error(err))
+				return nil, fmt.Errorf("list posted journals: %w", err)
+			}
+			if len(entries) == 0 {
+				return []*journalentryports.LedgerJournal{}, nil
+			}
+			return s.assemble(ctx, req.TenantInfo, entries)
+		},
+	)
 }
 
 func (s *ledgerSource) SumLines(
 	ctx context.Context,
 	req *journalentryports.SumLedgerRequest,
 ) ([]journalentryports.LedgerAccountBalance, error) {
-	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]journalentryports.LedgerAccountBalance, error) {
-		lines := journalentrycol.JournalEntryLineColumns
-		entries := journalentrycol.JournalEntryColumns
-		query := s.postedLines(ctx, &postedLinesFilter{
-			tenantInfo:     req.TenantInfo,
-			from:           req.From,
-			before:         &req.Before,
-			includeClosing: req.IncludeClosing,
-		}).
-			ColumnExpr(lines.GLAccountID.As(ledgerAccountLabel)).
-			ColumnExpr(buncolgen.Sum(lines.DebitAmount, ledgerDebitLabel)).
-			ColumnExpr(buncolgen.Sum(lines.CreditAmount, ledgerCreditLabel))
-		if len(req.PartyAccountIDs) > 0 {
-			query = query.
-				ColumnExpr(
-					buncolgen.Expr("CASE WHEN {0} IN (?) THEN {1} END AS "+ledgerCustomerLabel,
-						lines.GLAccountID, lines.CustomerID),
-					bun.List(req.PartyAccountIDs),
-				).
-				ColumnExpr(
-					buncolgen.Expr("CASE WHEN {0} IN (?) THEN COALESCE({1}, {2}) END AS "+
-						ledgerSourceEntryLabel, lines.GLAccountID, entries.ReversalOfID, entries.ID),
-					bun.List(req.PartyAccountIDs),
-				).
-				GroupExpr(ledgerAccountLabel + ", " + ledgerCustomerLabel + ", " + ledgerSourceEntryLabel)
-		} else {
-			query = query.GroupExpr(ledgerAccountLabel)
-		}
+	return dbtx.Read(
+		ctx,
+		s.db,
+		func(ctx context.Context) ([]journalentryports.LedgerAccountBalance, error) {
+			lines := journalentrycol.JournalEntryLineColumns
+			entries := journalentrycol.JournalEntryColumns
+			query := s.postedLines(ctx, &postedLinesFilter{
+				tenantInfo:     req.TenantInfo,
+				from:           req.From,
+				before:         &req.Before,
+				includeClosing: req.IncludeClosing,
+			}).
+				ColumnExpr(lines.GLAccountID.As(ledgerAccountLabel)).
+				ColumnExpr(buncolgen.Sum(lines.DebitAmount, ledgerDebitLabel)).
+				ColumnExpr(buncolgen.Sum(lines.CreditAmount, ledgerCreditLabel))
+			if len(req.PartyAccountIDs) > 0 {
+				query = query.
+					ColumnExpr(
+						buncolgen.Expr("CASE WHEN {0} IN (?) THEN {1} END AS "+ledgerCustomerLabel,
+							lines.GLAccountID, lines.CustomerID),
+						bun.List(req.PartyAccountIDs),
+					).
+					ColumnExpr(
+						buncolgen.Expr("CASE WHEN {0} IN (?) THEN COALESCE({1}, {2}) END AS "+
+							ledgerSourceEntryLabel, lines.GLAccountID, entries.ReversalOfID, entries.ID),
+						bun.List(req.PartyAccountIDs),
+					).
+					GroupExpr(ledgerAccountLabel + ", " + ledgerCustomerLabel + ", " + ledgerSourceEntryLabel)
+			} else {
+				query = query.GroupExpr(ledgerAccountLabel)
+			}
 
-		rows := make([]ledgerSumRow, 0, 64)
-		if err := query.Scan(ctx, &rows); err != nil {
-			s.l.Error("failed to sum posted journal lines", zap.Error(err))
-			return nil, fmt.Errorf("sum posted journal lines: %w", err)
-		}
-		if len(rows) == 0 {
-			return []journalentryports.LedgerAccountBalance{}, nil
-		}
-		return s.balancesOf(ctx, req.TenantInfo, rows)
-	})
+			rows := make([]ledgerSumRow, 0, 64)
+			if err := query.Scan(ctx, &rows); err != nil {
+				s.l.Error("failed to sum posted journal lines", zap.Error(err))
+				return nil, fmt.Errorf("sum posted journal lines: %w", err)
+			}
+			if len(rows) == 0 {
+				return []journalentryports.LedgerAccountBalance{}, nil
+			}
+			return s.balancesOf(ctx, req.TenantInfo, rows)
+		},
+	)
 }
 
 func (s *ledgerSource) balancesOf(
@@ -341,33 +353,37 @@ func (s *ledgerSource) ListActiveAccounts(
 	ctx context.Context,
 	req *journalentryports.ListLedgerAccountsRequest,
 ) ([]journalentryports.LedgerAccount, error) {
-	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]journalentryports.LedgerAccount, error) {
-		lines := journalentrycol.JournalEntryLineColumns
-		ids := make([]pulid.ID, 0, 64)
-		if err := s.postedLines(ctx, &postedLinesFilter{tenantInfo: req.TenantInfo, from: req.Since}).
-			Distinct().
-			ColumnExpr(lines.GLAccountID.As(ledgerAccountLabel)).
-			Scan(ctx, &ids); err != nil {
-			s.l.Error("failed to list accounts with posted lines", zap.Error(err))
-			return nil, fmt.Errorf("list accounts with posted lines: %w", err)
-		}
-		if len(ids) == 0 {
-			return []journalentryports.LedgerAccount{}, nil
-		}
+	return dbtx.Read(
+		ctx,
+		s.db,
+		func(ctx context.Context) ([]journalentryports.LedgerAccount, error) {
+			lines := journalentrycol.JournalEntryLineColumns
+			ids := make([]pulid.ID, 0, 64)
+			if err := s.postedLines(ctx, &postedLinesFilter{tenantInfo: req.TenantInfo, from: req.Since}).
+				Distinct().
+				ColumnExpr(lines.GLAccountID.As(ledgerAccountLabel)).
+				Scan(ctx, &ids); err != nil {
+				s.l.Error("failed to list accounts with posted lines", zap.Error(err))
+				return nil, fmt.Errorf("list accounts with posted lines: %w", err)
+			}
+			if len(ids) == 0 {
+				return []journalentryports.LedgerAccount{}, nil
+			}
 
-		accounts, err := s.loadAccounts(ctx, req.TenantInfo, ids)
-		if err != nil {
-			return nil, err
-		}
-		out := make([]journalentryports.LedgerAccount, 0, len(accounts))
-		for _, account := range accounts {
-			out = append(out, account)
-		}
-		slices.SortFunc(out, func(a, b journalentryports.LedgerAccount) int {
-			return cmp.Or(cmp.Compare(a.Code, b.Code), cmp.Compare(a.ID, b.ID))
-		})
-		return out, nil
-	})
+			accounts, err := s.loadAccounts(ctx, req.TenantInfo, ids)
+			if err != nil {
+				return nil, err
+			}
+			out := make([]journalentryports.LedgerAccount, 0, len(accounts))
+			for _, account := range accounts {
+				out = append(out, account)
+			}
+			slices.SortFunc(out, func(a, b journalentryports.LedgerAccount) int {
+				return cmp.Or(cmp.Compare(a.Code, b.Code), cmp.Compare(a.ID, b.ID))
+			})
+			return out, nil
+		},
+	)
 }
 
 type postedLinesFilter struct {
@@ -512,27 +528,31 @@ func (s *ledgerSource) loadLines(
 	tenantInfo pagination.TenantInfo,
 	entryIDs []pulid.ID,
 ) (map[pulid.ID][]*journalentry.JournalEntryLine, error) {
-	return dbtx.Read(ctx, s.db, func(ctx context.Context) (map[pulid.ID][]*journalentry.JournalEntryLine, error) {
-		cols := journalentrycol.JournalEntryLineColumns
-		lines := make([]*journalentry.JournalEntryLine, 0, len(entryIDs)*4)
-		if err := s.db.DBForContext(ctx).
-			NewSelect().
-			Model(&lines).
-			Relation(journalentrycol.JournalEntryLineRelations.GLAccount).
-			Apply(journalentrycol.JournalEntryLineApplyTenant(tenantInfo)).
-			Where(cols.JournalEntryID.In(), bun.List(entryIDs)).
-			Order(cols.JournalEntryID.OrderAsc(), cols.LineNumber.OrderAsc()).
-			Scan(ctx); err != nil {
-			s.l.Error("failed to load journal lines", zap.Error(err))
-			return nil, fmt.Errorf("load journal lines: %w", err)
-		}
+	return dbtx.Read(
+		ctx,
+		s.db,
+		func(ctx context.Context) (map[pulid.ID][]*journalentry.JournalEntryLine, error) {
+			cols := journalentrycol.JournalEntryLineColumns
+			lines := make([]*journalentry.JournalEntryLine, 0, len(entryIDs)*4)
+			if err := s.db.DBForContext(ctx).
+				NewSelect().
+				Model(&lines).
+				Relation(journalentrycol.JournalEntryLineRelations.GLAccount).
+				Apply(journalentrycol.JournalEntryLineApplyTenant(tenantInfo)).
+				Where(cols.JournalEntryID.In(), bun.List(entryIDs)).
+				Order(cols.JournalEntryID.OrderAsc(), cols.LineNumber.OrderAsc()).
+				Scan(ctx); err != nil {
+				s.l.Error("failed to load journal lines", zap.Error(err))
+				return nil, fmt.Errorf("load journal lines: %w", err)
+			}
 
-		out := make(map[pulid.ID][]*journalentry.JournalEntryLine, len(entryIDs))
-		for _, line := range lines {
-			out[line.JournalEntryID] = append(out[line.JournalEntryID], line)
-		}
-		return out, nil
-	})
+			out := make(map[pulid.ID][]*journalentry.JournalEntryLine, len(entryIDs))
+			for _, line := range lines {
+				out[line.JournalEntryID] = append(out[line.JournalEntryID], line)
+			}
+			return out, nil
+		},
+	)
 }
 
 func (s *ledgerSource) reversedEntries(
@@ -540,29 +560,33 @@ func (s *ledgerSource) reversedEntries(
 	tenantInfo pagination.TenantInfo,
 	ids []pulid.ID,
 ) (map[pulid.ID]*journalentry.JournalEntry, error) {
-	return dbtx.Read(ctx, s.db, func(ctx context.Context) (map[pulid.ID]*journalentry.JournalEntry, error) {
-		if len(ids) == 0 {
-			return map[pulid.ID]*journalentry.JournalEntry{}, nil
-		}
-		cols := journalentrycol.JournalEntryColumns
-		entries := make([]*journalentry.JournalEntry, 0, len(ids))
-		if err := s.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entries).
-			Column(cols.ID.Bare(), cols.EntryNumber.Bare(), cols.EntryType.Bare()).
-			Apply(journalentrycol.JournalEntryApplyTenant(tenantInfo)).
-			Where(cols.ID.In(), bun.List(ids)).
-			Scan(ctx); err != nil {
-			s.l.Error("failed to load reversed journal numbers", zap.Error(err))
-			return nil, fmt.Errorf("load reversed journal numbers: %w", err)
-		}
+	return dbtx.Read(
+		ctx,
+		s.db,
+		func(ctx context.Context) (map[pulid.ID]*journalentry.JournalEntry, error) {
+			if len(ids) == 0 {
+				return map[pulid.ID]*journalentry.JournalEntry{}, nil
+			}
+			cols := journalentrycol.JournalEntryColumns
+			entries := make([]*journalentry.JournalEntry, 0, len(ids))
+			if err := s.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entries).
+				Column(cols.ID.Bare(), cols.EntryNumber.Bare(), cols.EntryType.Bare()).
+				Apply(journalentrycol.JournalEntryApplyTenant(tenantInfo)).
+				Where(cols.ID.In(), bun.List(ids)).
+				Scan(ctx); err != nil {
+				s.l.Error("failed to load reversed journal numbers", zap.Error(err))
+				return nil, fmt.Errorf("load reversed journal numbers: %w", err)
+			}
 
-		out := make(map[pulid.ID]*journalentry.JournalEntry, len(entries))
-		for _, entry := range entries {
-			out[entry.ID] = entry
-		}
-		return out, nil
-	})
+			out := make(map[pulid.ID]*journalentry.JournalEntry, len(entries))
+			for _, entry := range entries {
+				out[entry.ID] = entry
+			}
+			return out, nil
+		},
+	)
 }
 
 func (s *ledgerSource) resolveOrigins(
@@ -845,32 +869,36 @@ func (s *ledgerSource) loadAccounts(
 	tenantInfo pagination.TenantInfo,
 	ids []pulid.ID,
 ) (map[pulid.ID]journalentryports.LedgerAccount, error) {
-	return dbtx.Read(ctx, s.db, func(ctx context.Context) (map[pulid.ID]journalentryports.LedgerAccount, error) {
-		cols := glaccountcol.GLAccountColumns
-		accounts := make([]*glaccount.GLAccount, 0, len(ids))
-		if err := s.db.DBForContext(ctx).
-			NewSelect().
-			Model(&accounts).
-			Relation(glaccountcol.GLAccountRelations.AccountType).
-			Apply(glaccountcol.GLAccountApplyTenant(tenantInfo)).
-			Where(cols.ID.In(), bun.List(slices.Compact(slices.Sorted(slices.Values(ids))))).
-			Scan(ctx); err != nil {
-			s.l.Error("failed to load ledger accounts", zap.Error(err))
-			return nil, fmt.Errorf("load ledger accounts: %w", err)
-		}
+	return dbtx.Read(
+		ctx,
+		s.db,
+		func(ctx context.Context) (map[pulid.ID]journalentryports.LedgerAccount, error) {
+			cols := glaccountcol.GLAccountColumns
+			accounts := make([]*glaccount.GLAccount, 0, len(ids))
+			if err := s.db.DBForContext(ctx).
+				NewSelect().
+				Model(&accounts).
+				Relation(glaccountcol.GLAccountRelations.AccountType).
+				Apply(glaccountcol.GLAccountApplyTenant(tenantInfo)).
+				Where(cols.ID.In(), bun.List(slices.Compact(slices.Sorted(slices.Values(ids))))).
+				Scan(ctx); err != nil {
+				s.l.Error("failed to load ledger accounts", zap.Error(err))
+				return nil, fmt.Errorf("load ledger accounts: %w", err)
+			}
 
-		out := make(map[pulid.ID]journalentryports.LedgerAccount, len(accounts))
-		for _, account := range accounts {
-			entry := journalentryports.LedgerAccount{
-				ID:   account.ID,
-				Code: account.AccountCode,
-				Name: account.Name,
+			out := make(map[pulid.ID]journalentryports.LedgerAccount, len(accounts))
+			for _, account := range accounts {
+				entry := journalentryports.LedgerAccount{
+					ID:   account.ID,
+					Code: account.AccountCode,
+					Name: account.Name,
+				}
+				if account.AccountType != nil {
+					entry.Category = string(account.AccountType.Category)
+				}
+				out[account.ID] = entry
 			}
-			if account.AccountType != nil {
-				entry.Category = string(account.AccountType.Category)
-			}
-			out[account.ID] = entry
-		}
-		return out, nil
-	})
+			return out, nil
+		},
+	)
 }

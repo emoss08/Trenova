@@ -4,15 +4,15 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/settingversionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -216,8 +216,11 @@ func (s *Service) Update(
 		// The stored key belongs to the endpoint it was entered for. Kept
 		// across a change of address, the next test or call would send it,
 		// decrypted, to wherever the address now points.
-		multiErr.Add("apiKey", errortypes.ErrRequired,
-			"Enter the API key again: the endpoint changed, and the saved key is not sent to a new one")
+		multiErr.Add(
+			"apiKey",
+			errortypes.ErrRequired,
+			"Enter the API key again: the endpoint changed, and the saved key is not sent to a new one",
+		)
 	}
 	updated.Validate(multiErr)
 	if multiErr.HasErrors() {

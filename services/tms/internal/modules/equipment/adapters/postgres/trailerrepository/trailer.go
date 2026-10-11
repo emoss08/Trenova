@@ -104,55 +104,59 @@ func (r *repository) List(
 	ctx context.Context,
 	req *trailerports.ListTrailersRequest,
 ) (*pagination.CursorListResult[*trailer.Trailer], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*trailer.Trailer], error) {
-		log := r.l.With(
-			zap.String("operation", "List"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*trailer.Trailer], error) {
+			log := r.l.With(
+				zap.String("operation", "List"),
+				zap.Any("request", req),
+			)
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*trailer.Trailer)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyListCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*trailer.Trailer)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyListCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count trailers", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*trailer.Trailer]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(items *[]*trailer.Trailer) *bun.SelectQuery {
+					return dba.
+						NewSelect().
+						Model(items).
+						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+							return applyTrailerColumns(sq, req.TrailerRelationIncludes)
+						}).
+						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+							return applyLastKnownLocationJoin(sq, req.TrailerRelationIncludes)
+						})
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					return r.applyListFilters(sq, req)
+				},
+			})
 			if err != nil {
-				log.Error("failed to count trailers", zap.Error(err))
+				log.Error("failed to scan trailers", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*trailer.Trailer]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(items *[]*trailer.Trailer) *bun.SelectQuery {
-				return dba.
-					NewSelect().
-					Model(items).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyTrailerColumns(sq, req.TrailerRelationIncludes)
-					}).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyLastKnownLocationJoin(sq, req.TrailerRelationIncludes)
-					})
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.applyListFilters(sq, req)
-			},
-		})
-		if err != nil {
-			log.Error("failed to scan trailers", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) Create(
@@ -272,30 +276,34 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*trailer.Trailer], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*trailer.Trailer], error) {
-		cols := trailercol.TrailerColumns
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*trailer.Trailer], error) {
+			cols := trailercol.TrailerColumns
 
-		return dbhelper.SelectOptions[*trailer.Trailer](
-			ctx,
-			r.db.DBForContext(ctx),
-			req,
-			&dbhelper.SelectOptionsConfig{
-				ColumnRefs: []buncolgen.Column{
-					cols.ID,
-					cols.CreatedAt,
-					cols.Status,
-					cols.Code,
+			return dbhelper.SelectOptions[*trailer.Trailer](
+				ctx,
+				r.db.DBForContext(ctx),
+				req,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.CreatedAt,
+						cols.Status,
+						cols.Code,
+					},
+					OrgColumnRef: &cols.OrganizationID,
+					BuColumnRef:  &cols.BusinessUnitID,
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						return q.Where(cols.Status.Eq(), domaintypes.EquipmentStatusAvailable)
+					},
+					EntityName:       "Trailer",
+					SearchColumnRefs: []buncolgen.Column{cols.Code},
 				},
-				OrgColumnRef: &cols.OrganizationID,
-				BuColumnRef:  &cols.BusinessUnitID,
-				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Where(cols.Status.Eq(), domaintypes.EquipmentStatusAvailable)
-				},
-				EntityName:       "Trailer",
-				SearchColumnRefs: []buncolgen.Column{cols.Code},
-			},
-		)
-	})
+			)
+		},
+	)
 }
 
 func (r *repository) GetByIDs(

@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/decisioncommitjobs/decisioncommitcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -132,7 +132,13 @@ func (s *Service) CommitApproval(ctx context.Context, req *agentports.CommitAppr
 		return err
 	}
 
-	if _, err = s.claimAndRun(ctx, decideReq, actor, prepared, agent.PlanStatusApproving); err != nil {
+	if _, err = s.claimAndRun(
+		ctx,
+		decideReq,
+		actor,
+		prepared,
+		agent.PlanStatusApproving,
+	); err != nil {
 		if errortypes.IsVersionMismatchError(err) {
 			// Undone in the moment between the read and the claim.
 			return nil
@@ -164,7 +170,11 @@ func (s *Service) UndoOwnApproval(
 	}
 
 	if err = s.workflows.SignalWorkflow(
-		ctx, decisioncommitcontract.WorkflowID(plan.ID), "", decisioncommitcontract.UndoSignalName, nil,
+		ctx,
+		decisioncommitcontract.WorkflowID(plan.ID),
+		"",
+		decisioncommitcontract.UndoSignalName,
+		nil,
 	); err != nil {
 		s.l.Warn("an undo could not reach its plan's commit workflow",
 			zap.String("plan", plan.ID.String()), zap.Error(err))

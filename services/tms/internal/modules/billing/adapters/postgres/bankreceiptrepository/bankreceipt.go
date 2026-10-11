@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -118,9 +118,12 @@ func (r *repository) GetSummary(
 	ctx context.Context,
 	req bankreceiptports.GetBankReceiptSummaryRequest,
 ) (*bankreceiptports.BankReceiptReconciliationSummary, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*bankreceiptports.BankReceiptReconciliationSummary, error) {
-		rec := new(summaryRecord)
-		err := r.db.DBForContext(ctx).NewRaw(`
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*bankreceiptports.BankReceiptReconciliationSummary, error) {
+			rec := new(summaryRecord)
+			err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT
 			COALESCE(SUM(CASE WHEN br.status = 'Imported' THEN 1 ELSE 0 END), 0) AS imported_count,
 			COALESCE(SUM(CASE WHEN br.status = 'Imported' THEN br.amount_minor ELSE 0 END), 0) AS imported_amount,
@@ -144,32 +147,33 @@ func (r *repository) GetSummary(
 		  AND br.business_unit_id = ?
 		  AND br.receipt_date <= ?
 	`, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOfDate).Scan(ctx, rec)
-		if err != nil {
-			return nil, fmt.Errorf("get bank receipt summary: %w", err)
-		}
-		return &bankreceiptports.BankReceiptReconciliationSummary{
-			AsOfDate:              req.AsOfDate,
-			ImportedCount:         rec.ImportedCount,
-			ImportedAmount:        rec.ImportedAmount,
-			MatchedCount:          rec.MatchedCount,
-			MatchedAmount:         rec.MatchedAmount,
-			ExceptionCount:        rec.ExceptionCount,
-			ExceptionAmount:       rec.ExceptionAmount,
-			ActiveWorkItemCount:   rec.ActiveWorkItemCount,
-			AssignedWorkItemCount: rec.AssignedWorkItemCount,
-			InReviewWorkItemCount: rec.InReviewWorkItemCount,
-			ExceptionAging: bankreceiptports.BankReceiptExceptionAging{
-				CurrentCount:    rec.CurrentCount,
-				CurrentAmount:   rec.CurrentAmount,
-				Days1To3Count:   rec.Days1To3Count,
-				Days1To3Amount:  rec.Days1To3Amount,
-				Days4To7Count:   rec.Days4To7Count,
-				Days4To7Amount:  rec.Days4To7Amount,
-				DaysOver7Count:  rec.DaysOver7Count,
-				DaysOver7Amount: rec.DaysOver7Amount,
-			},
-		}, nil
-	})
+			if err != nil {
+				return nil, fmt.Errorf("get bank receipt summary: %w", err)
+			}
+			return &bankreceiptports.BankReceiptReconciliationSummary{
+				AsOfDate:              req.AsOfDate,
+				ImportedCount:         rec.ImportedCount,
+				ImportedAmount:        rec.ImportedAmount,
+				MatchedCount:          rec.MatchedCount,
+				MatchedAmount:         rec.MatchedAmount,
+				ExceptionCount:        rec.ExceptionCount,
+				ExceptionAmount:       rec.ExceptionAmount,
+				ActiveWorkItemCount:   rec.ActiveWorkItemCount,
+				AssignedWorkItemCount: rec.AssignedWorkItemCount,
+				InReviewWorkItemCount: rec.InReviewWorkItemCount,
+				ExceptionAging: bankreceiptports.BankReceiptExceptionAging{
+					CurrentCount:    rec.CurrentCount,
+					CurrentAmount:   rec.CurrentAmount,
+					Days1To3Count:   rec.Days1To3Count,
+					Days1To3Amount:  rec.Days1To3Amount,
+					Days4To7Count:   rec.Days4To7Count,
+					Days4To7Amount:  rec.Days4To7Amount,
+					DaysOver7Count:  rec.DaysOver7Count,
+					DaysOver7Amount: rec.DaysOver7Amount,
+				},
+			}, nil
+		},
+	)
 }
 
 func (r *repository) Create(

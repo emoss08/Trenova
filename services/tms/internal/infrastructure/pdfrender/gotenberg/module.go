@@ -21,7 +21,11 @@ var Module = fx.Module(
 	fx.Invoke(registerHealthProbe),
 )
 
-func registerHealthProbe(lc fx.Lifecycle, renderer documenttemplateports.PDFRenderer, logger *zap.Logger) {
+func registerHealthProbe(
+	lc fx.Lifecycle,
+	renderer documenttemplateports.PDFRenderer,
+	logger *zap.Logger,
+) {
 	l := logger.Named("pdfrender.gotenberg")
 
 	lc.Append(fx.Hook{

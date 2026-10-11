@@ -79,7 +79,11 @@ func (r *requestRepository) Update(
 
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, "Capture request", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"Capture request",
+			entity.ID.String(),
+		); err != nil {
 			entity.Version = ov
 
 			return nil, err

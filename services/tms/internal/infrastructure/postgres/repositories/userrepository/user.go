@@ -100,32 +100,36 @@ func (ur *repository) List(
 	ctx context.Context,
 	req *tenantports.ListUsersRequest,
 ) (*pagination.ListResult[*tenant.User], error) {
-	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*pagination.ListResult[*tenant.User], error) {
-		log := ur.l.With(
-			zap.String("operation", "List"),
-			zap.Any("request", req),
-		)
+	return dbtx.Read(
+		ctx,
+		ur.db,
+		func(ctx context.Context) (*pagination.ListResult[*tenant.User], error) {
+			log := ur.l.With(
+				zap.String("operation", "List"),
+				zap.Any("request", req),
+			)
 
-		entities := make([]*tenant.User, 0, req.Filter.Pagination.SafeLimit())
+			entities := make([]*tenant.User, 0, req.Filter.Pagination.SafeLimit())
 
-		q := ur.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return ur.filterQuery(sq, req)
-			})
+			q := ur.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return ur.filterQuery(sq, req)
+				})
 
-		total, err := q.ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count users", zap.Error(err))
-			return nil, err
-		}
+			total, err := q.ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count users", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*tenant.User]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*tenant.User]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (ur *repository) scopeUserTenant(
@@ -179,53 +183,57 @@ func (ur *repository) ListConnection(
 	ctx context.Context,
 	req *tenantports.ListUserConnectionRequest,
 ) (*pagination.CursorListResult[*tenant.User], error) {
-	return dbtx.Write(ctx, ur.db, func(ctx context.Context) (*pagination.CursorListResult[*tenant.User], error) {
-		log := ur.l.With(
-			zap.String("operation", "ListConnection"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		ur.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*tenant.User], error) {
+			log := ur.l.With(
+				zap.String("operation", "ListConnection"),
+				zap.Any("request", req),
+			)
 
-		dba := ur.db.DBForContext(ctx)
+			dba := ur.db.DBForContext(ctx)
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			countQuery := dba.NewSelect().Model((*tenant.User)(nil))
-			countQuery, err := ur.applyTotalCountFilters(countQuery, req)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				countQuery := dba.NewSelect().Model((*tenant.User)(nil))
+				countQuery, err := ur.applyTotalCountFilters(countQuery, req)
+				if err != nil {
+					log.Error("failed to build user count query", zap.Error(err))
+					return nil, err
+				}
+				total, err := countQuery.Count(ctx)
+				if err != nil {
+					log.Error("failed to count users", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*tenant.User]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*tenant.User) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							ColumnExpr("usr.*")
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return ur.applyCursorPageFilters(sq, req)
+					},
+				})
 			if err != nil {
-				log.Error("failed to build user count query", zap.Error(err))
+				log.Error("failed to scan users", zap.Error(err))
 				return nil, err
 			}
-			total, err := countQuery.Count(ctx)
-			if err != nil {
-				log.Error("failed to count users", zap.Error(err))
-				return nil, err
-			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*tenant.User]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*tenant.User) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						ColumnExpr("usr.*")
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return ur.applyCursorPageFilters(sq, req)
-				},
-			})
-		if err != nil {
-			log.Error("failed to scan users", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (ur *repository) GetByID(
@@ -265,32 +273,41 @@ func (ur *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*tenant.User], error) {
-	return dbtx.Write(ctx, ur.db, func(ctx context.Context) (*pagination.ListResult[*tenant.User], error) {
-		return dbhelper.SelectOptions[*tenant.User](ctx, ur.db.DBForContext(ctx), req, &dbhelper.SelectOptionsConfig{
-			Columns: []string{
-				"id",
-				"name",
-				"username",
-				"email_address",
-				"status",
-				"is_locked",
-				"profile_pic_url",
-				"thumbnail_url",
-			},
-			OrgColumn: "usr.current_organization_id",
-			BuColumn:  "usr.business_unit_id",
-			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where("usr.status = ?", domaintypes.StatusActive).
-					Where("usr.username != ?", "system")
-			},
-			EntityName: "User",
-			SearchColumns: []string{
-				"usr.username",
-				"usr.name",
-				"usr.email_address",
-			},
-		})
-	})
+	return dbtx.Write(
+		ctx,
+		ur.db,
+		func(ctx context.Context) (*pagination.ListResult[*tenant.User], error) {
+			return dbhelper.SelectOptions[*tenant.User](
+				ctx,
+				ur.db.DBForContext(ctx),
+				req,
+				&dbhelper.SelectOptionsConfig{
+					Columns: []string{
+						"id",
+						"name",
+						"username",
+						"email_address",
+						"status",
+						"is_locked",
+						"profile_pic_url",
+						"thumbnail_url",
+					},
+					OrgColumn: "usr.current_organization_id",
+					BuColumn:  "usr.business_unit_id",
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						return q.Where("usr.status = ?", domaintypes.StatusActive).
+							Where("usr.username != ?", "system")
+					},
+					EntityName: "User",
+					SearchColumns: []string{
+						"usr.username",
+						"usr.name",
+						"usr.email_address",
+					},
+				},
+			)
+		},
+	)
 }
 
 func (ur *repository) FindByEmail(ctx context.Context, emailAddress string) (*tenant.User, error) {
@@ -319,7 +336,10 @@ func (ur *repository) FindByEmail(ctx context.Context, emailAddress string) (*te
 }
 
 func (ur *repository) FindByIDForLogin(ctx context.Context, userID pulid.ID) (*tenant.User, error) {
-	ctx = dbscope.WithSystem(ctx, "load the user an identity provider subject is linked to before a session exists")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"load the user an identity provider subject is linked to before a session exists",
+	)
 	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*tenant.User, error) {
 		user := new(tenant.User)
 
@@ -360,33 +380,37 @@ func (ur *repository) GetOrganizations(
 	ctx context.Context,
 	userID pulid.ID,
 ) ([]*tenant.OrganizationMembership, error) {
-	return dbtx.Read(ctx, ur.db, func(ctx context.Context) ([]*tenant.OrganizationMembership, error) {
-		log := ur.l.With(
-			zap.String("operation", "GetOrganizations"),
-			zap.String("userID", userID.String()),
-		)
+	return dbtx.Read(
+		ctx,
+		ur.db,
+		func(ctx context.Context) ([]*tenant.OrganizationMembership, error) {
+			log := ur.l.With(
+				zap.String("operation", "GetOrganizations"),
+				zap.String("userID", userID.String()),
+			)
 
-		entities := make([]*tenant.OrganizationMembership, 0)
-		err := ur.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation("Organization").
-			Relation("Organization.State").
-			Relation("User").
-			Where("uom.user_id = ?", userID).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("uom.expires_at IS NULL").
-					WhereOr("uom.expires_at > ?", timeutils.NowUnix())
-			}).
-			Order("uom.is_default DESC").
-			Scan(ctx)
-		if err != nil {
-			log.Error("failed to get user organizations", zap.Error(err))
-			return nil, err
-		}
+			entities := make([]*tenant.OrganizationMembership, 0)
+			err := ur.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Relation("Organization").
+				Relation("Organization.State").
+				Relation("User").
+				Where("uom.user_id = ?", userID).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.Where("uom.expires_at IS NULL").
+						WhereOr("uom.expires_at > ?", timeutils.NowUnix())
+				}).
+				Order("uom.is_default DESC").
+				Scan(ctx)
+			if err != nil {
+				log.Error("failed to get user organizations", zap.Error(err))
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (ur *repository) GetOrganizationsByBusinessUnit(
@@ -432,167 +456,191 @@ func (ur *repository) ListOrganizationMemberships(
 	ctx context.Context,
 	userID, businessUnitID pulid.ID,
 ) ([]*tenant.OrganizationMembership, error) {
-	return dbtx.Read(ctx, ur.db, func(ctx context.Context) ([]*tenant.OrganizationMembership, error) {
-		memberships := make([]*tenant.OrganizationMembership, 0)
-		err := ur.db.DBForContext(ctx).
-			NewSelect().
-			Model(&memberships).
-			Relation("Organization").
-			Relation("Organization.State").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("uom.user_id = ?", userID).
-					Where("uom.business_unit_id = ?", businessUnitID)
-			}).
-			Order("uom.is_default DESC, uom.joined_at ASC").
-			Scan(ctx)
-		if err != nil {
-			return nil, err
-		}
+	return dbtx.Read(
+		ctx,
+		ur.db,
+		func(ctx context.Context) ([]*tenant.OrganizationMembership, error) {
+			memberships := make([]*tenant.OrganizationMembership, 0)
+			err := ur.db.DBForContext(ctx).
+				NewSelect().
+				Model(&memberships).
+				Relation("Organization").
+				Relation("Organization.State").
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.Where("uom.user_id = ?", userID).
+						Where("uom.business_unit_id = ?", businessUnitID)
+				}).
+				Order("uom.is_default DESC, uom.joined_at ASC").
+				Scan(ctx)
+			if err != nil {
+				return nil, err
+			}
 
-		return memberships, nil
-	})
+			return memberships, nil
+		},
+	)
 }
 
 func (ur *repository) ReplaceOrganizationMemberships( //nolint:funlen,gocognit // legacy workflow
 	ctx context.Context,
 	req tenantports.ReplaceOrganizationMembershipsRequest,
 ) ([]*tenant.OrganizationMembership, error) {
-	return dbtx.Write(ctx, ur.db, func(ctx context.Context) ([]*tenant.OrganizationMembership, error) {
-		if len(req.OrganizationIDs) == 0 {
-			_, err := ur.db.DBForContext(ctx).
-				NewDelete().
-				Model((*tenant.OrganizationMembership)(nil)).
-				Where("user_id = ?", req.UserID).
-				Where("business_unit_id = ?", req.BusinessUnitID).
-				Exec(ctx)
+	return dbtx.Write(
+		ctx,
+		ur.db,
+		func(ctx context.Context) ([]*tenant.OrganizationMembership, error) {
+			if len(req.OrganizationIDs) == 0 {
+				_, err := ur.db.DBForContext(ctx).
+					NewDelete().
+					Model((*tenant.OrganizationMembership)(nil)).
+					Where("user_id = ?", req.UserID).
+					Where("business_unit_id = ?", req.BusinessUnitID).
+					Exec(ctx)
+				if err != nil {
+					return nil, err
+				}
+
+				return []*tenant.OrganizationMembership{}, nil
+			}
+
+			desiredOrgSet := make(map[pulid.ID]struct{}, len(req.OrganizationIDs))
+			for _, orgID := range req.OrganizationIDs {
+				desiredOrgSet[orgID] = struct{}{}
+			}
+
+			orgCount, err := ur.db.DBForContext(ctx).
+				NewSelect().
+				Model((*tenant.Organization)(nil)).
+				Where("org.id IN (?)", bun.List(req.OrganizationIDs)).
+				Where("org.business_unit_id = ?", req.BusinessUnitID).
+				Count(ctx)
+			if err != nil {
+				return nil, err
+			}
+			if orgCount != len(req.OrganizationIDs) {
+				return nil, errortypes.NewAuthorizationError(
+					"organizations must belong to the current business unit",
+				)
+			}
+
+			currentMemberships, err := ur.ListOrganizationMemberships(
+				ctx,
+				req.UserID,
+				req.BusinessUnitID,
+			)
 			if err != nil {
 				return nil, err
 			}
 
-			return []*tenant.OrganizationMembership{}, nil
-		}
-
-		desiredOrgSet := make(map[pulid.ID]struct{}, len(req.OrganizationIDs))
-		for _, orgID := range req.OrganizationIDs {
-			desiredOrgSet[orgID] = struct{}{}
-		}
-
-		orgCount, err := ur.db.DBForContext(ctx).
-			NewSelect().
-			Model((*tenant.Organization)(nil)).
-			Where("org.id IN (?)", bun.List(req.OrganizationIDs)).
-			Where("org.business_unit_id = ?", req.BusinessUnitID).
-			Count(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if orgCount != len(req.OrganizationIDs) {
-			return nil, errortypes.NewAuthorizationError(
-				"organizations must belong to the current business unit",
+			currentByOrg := make(
+				map[pulid.ID]*tenant.OrganizationMembership,
+				len(currentMemberships),
 			)
-		}
-
-		currentMemberships, err := ur.ListOrganizationMemberships(ctx, req.UserID, req.BusinessUnitID)
-		if err != nil {
-			return nil, err
-		}
-
-		currentByOrg := make(map[pulid.ID]*tenant.OrganizationMembership, len(currentMemberships))
-		var currentDefaultOrgID pulid.ID
-		for _, membership := range currentMemberships {
-			currentByOrg[membership.OrganizationID] = membership
-			if membership.IsDefault {
-				currentDefaultOrgID = membership.OrganizationID
-			}
-		}
-
-		err = ur.db.WithTx(ctx, kernelports.TxOptions{
-			LockTimeout: 250 * time.Millisecond,
-		}, func(txCtx context.Context, tx bun.Tx) error {
-			lockedMemberships := make([]*tenant.OrganizationMembership, 0)
-			if lmErr := tx.NewSelect().
-				Model(&lockedMemberships).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Where("uom.user_id = ?", req.UserID).
-						Where("uom.business_unit_id = ?", req.BusinessUnitID)
-				}).
-				Order("uom.organization_id ASC").
-				For("UPDATE NOWAIT").
-				Scan(txCtx); lmErr != nil {
-				return lmErr
-			}
-
-			currentByOrg = make(map[pulid.ID]*tenant.OrganizationMembership, len(lockedMemberships))
-			currentDefaultOrgID = ""
-			for _, membership := range lockedMemberships {
+			var currentDefaultOrgID pulid.ID
+			for _, membership := range currentMemberships {
 				currentByOrg[membership.OrganizationID] = membership
 				if membership.IsDefault {
 					currentDefaultOrgID = membership.OrganizationID
 				}
 			}
 
-			for orgID, membership := range currentByOrg {
-				if _, ok := desiredOrgSet[orgID]; ok {
-					continue
+			err = ur.db.WithTx(ctx, kernelports.TxOptions{
+				LockTimeout: 250 * time.Millisecond,
+			}, func(txCtx context.Context, tx bun.Tx) error {
+				lockedMemberships := make([]*tenant.OrganizationMembership, 0)
+				if lmErr := tx.NewSelect().
+					Model(&lockedMemberships).
+					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return sq.Where("uom.user_id = ?", req.UserID).
+							Where("uom.business_unit_id = ?", req.BusinessUnitID)
+					}).
+					Order("uom.organization_id ASC").
+					For("UPDATE NOWAIT").
+					Scan(txCtx); lmErr != nil {
+					return lmErr
 				}
-				if _, deleteErr := tx.NewDelete().Model((*tenant.OrganizationMembership)(nil)).
-					Where("id = ?", membership.ID).
-					Exec(txCtx); deleteErr != nil {
-					return deleteErr
+
+				currentByOrg = make(
+					map[pulid.ID]*tenant.OrganizationMembership,
+					len(lockedMemberships),
+				)
+				currentDefaultOrgID = ""
+				for _, membership := range lockedMemberships {
+					currentByOrg[membership.OrganizationID] = membership
+					if membership.IsDefault {
+						currentDefaultOrgID = membership.OrganizationID
+					}
 				}
+
+				for orgID, membership := range currentByOrg {
+					if _, ok := desiredOrgSet[orgID]; ok {
+						continue
+					}
+					if _, deleteErr := tx.NewDelete().Model((*tenant.OrganizationMembership)(nil)).
+						Where("id = ?", membership.ID).
+						Exec(txCtx); deleteErr != nil {
+						return deleteErr
+					}
+				}
+
+				for _, orgID := range req.OrganizationIDs {
+					if _, ok := currentByOrg[orgID]; ok {
+						continue
+					}
+					if quotaErr := quotaservice.EnforceAll(
+						txCtx,
+						ur.quota,
+						platformplanports.QuotaRequest{
+							TenantInfo: pagination.TenantInfo{
+								OrgID: orgID,
+								BuID:  req.BusinessUnitID,
+							},
+							Meter:    platformcatalog.MeterUserSeats,
+							Quantity: 1,
+						},
+					); quotaErr != nil {
+						return quotaErr
+					}
+					newMembership := &tenant.OrganizationMembership{
+						UserID:         req.UserID,
+						BusinessUnitID: req.BusinessUnitID,
+						OrganizationID: orgID,
+						GrantedByID:    req.ActorID,
+						IsDefault:      false,
+					}
+					if _, insertErr := tx.NewInsert().
+						Model(newMembership).
+						Exec(txCtx); insertErr != nil {
+						return insertErr
+					}
+				}
+
+				newDefaultOrgID := currentDefaultOrgID
+				if _, ok := desiredOrgSet[newDefaultOrgID]; !ok {
+					newDefaultOrgID = req.OrganizationIDs[0]
+				}
+
+				if _, updateDefaultErr := tx.NewUpdate().
+					Model((*tenant.OrganizationMembership)(nil)).
+					Set("is_default = (organization_id = ?)", newDefaultOrgID).
+					Where("user_id = ?", req.UserID).
+					Where("business_unit_id = ?", req.BusinessUnitID).
+					Exec(txCtx); updateDefaultErr != nil {
+					return updateDefaultErr
+				}
+
+				return nil
+			})
+			if err != nil {
+				return nil, dberror.MapRetryableTransactionError(
+					err,
+					"The user's organization memberships are busy. Retry the request.",
+				)
 			}
 
-			for _, orgID := range req.OrganizationIDs {
-				if _, ok := currentByOrg[orgID]; ok {
-					continue
-				}
-				if quotaErr := quotaservice.EnforceAll(txCtx, ur.quota, platformplanports.QuotaRequest{
-					TenantInfo: pagination.TenantInfo{
-						OrgID: orgID,
-						BuID:  req.BusinessUnitID,
-					},
-					Meter:    platformcatalog.MeterUserSeats,
-					Quantity: 1,
-				}); quotaErr != nil {
-					return quotaErr
-				}
-				newMembership := &tenant.OrganizationMembership{
-					UserID:         req.UserID,
-					BusinessUnitID: req.BusinessUnitID,
-					OrganizationID: orgID,
-					GrantedByID:    req.ActorID,
-					IsDefault:      false,
-				}
-				if _, insertErr := tx.NewInsert().Model(newMembership).Exec(txCtx); insertErr != nil {
-					return insertErr
-				}
-			}
-
-			newDefaultOrgID := currentDefaultOrgID
-			if _, ok := desiredOrgSet[newDefaultOrgID]; !ok {
-				newDefaultOrgID = req.OrganizationIDs[0]
-			}
-
-			if _, updateDefaultErr := tx.NewUpdate().
-				Model((*tenant.OrganizationMembership)(nil)).
-				Set("is_default = (organization_id = ?)", newDefaultOrgID).
-				Where("user_id = ?", req.UserID).
-				Where("business_unit_id = ?", req.BusinessUnitID).
-				Exec(txCtx); updateDefaultErr != nil {
-				return updateDefaultErr
-			}
-
-			return nil
-		})
-		if err != nil {
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"The user's organization memberships are busy. Retry the request.",
-			)
-		}
-
-		return ur.ListOrganizationMemberships(ctx, req.UserID, req.BusinessUnitID)
-	})
+			return ur.ListOrganizationMemberships(ctx, req.UserID, req.BusinessUnitID)
+		},
+	)
 }
 
 func (ur *repository) UpdateCurrentOrganization(
@@ -785,7 +833,10 @@ func (ur *repository) BulkUpdateStatus(
 }
 
 func (ur *repository) GetSystemUser(ctx context.Context, columns ...string) (*tenant.User, error) {
-	ctx = dbscope.WithSystem(ctx, "resolve the instance system user, which belongs to the default organization, as the actor for any tenant")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"resolve the instance system user, which belongs to the default organization, as the actor for any tenant",
+	)
 	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*tenant.User, error) {
 		user := new(tenant.User)
 

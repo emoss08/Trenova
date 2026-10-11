@@ -13,19 +13,16 @@ import (
 	"time"
 
 	"github.com/disintegration/imaging"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
-	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentintelligencejobs/documentintelligencecontract"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentintelligencejobs/documentintelligencecontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
@@ -33,9 +30,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/documentshipmentdraftports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -311,16 +311,19 @@ func (a *Activities) finalizeProcessDocumentIntelligence(
 	}
 
 	p.Document.ShipmentDraftStatus = draftStatus
-	if err = a.documentRepo.UpdateIntelligence(ctx, &documentports.UpdateDocumentIntelligenceRequest{
-		ID:                  p.Document.ID,
-		TenantInfo:          p.TenantInfo,
-		ContentStatus:       p.Document.ContentStatus,
-		ContentError:        p.Document.ContentError,
-		DetectedKind:        p.Document.DetectedKind,
-		HasExtractedText:    p.Document.HasExtractedText,
-		ShipmentDraftStatus: p.Document.ShipmentDraftStatus,
-		DocumentTypeID:      p.Document.DocumentTypeID,
-	}); err != nil {
+	if err = a.documentRepo.UpdateIntelligence(
+		ctx,
+		&documentports.UpdateDocumentIntelligenceRequest{
+			ID:                  p.Document.ID,
+			TenantInfo:          p.TenantInfo,
+			ContentStatus:       p.Document.ContentStatus,
+			ContentError:        p.Document.ContentError,
+			DetectedKind:        p.Document.DetectedKind,
+			HasExtractedText:    p.Document.HasExtractedText,
+			ShipmentDraftStatus: p.Document.ShipmentDraftStatus,
+			DocumentTypeID:      p.Document.DocumentTypeID,
+		},
+	); err != nil {
 		return err
 	}
 	indexedText := p.Extracted.Text
@@ -1110,27 +1113,30 @@ func (a *Activities) enrichWithAI(
 	var route *documentaiextractionports.AIRouteResult
 	err := a.runWithHeartbeat(ctx, "ai-route", func() error {
 		var routeErr error
-		route, routeErr = a.aiDocumentService.RouteDocument(ctx, &documentaiextractionports.AIRouteRequest{
-			TenantInfo: tenantInfo,
-			DocumentID: payload.Document.ID,
-			FileName:   payload.Document.OriginalName,
-			Text: stringutils.TruncateAndTrim(
-				payload.Extracted.Text,
-				a.cfg.GetMaxInputChars(),
-			),
-			Pages: pages,
-			Features: &documentaiextractionports.AIDocumentFeatureSet{
-				TitleCandidates:  payload.Features.TitleCandidates,
-				SectionLabels:    payload.Features.SectionLabels,
-				PartyLabels:      payload.Features.PartyLabels,
-				ReferenceLabels:  payload.Features.ReferenceLabels,
-				MoneySignals:     payload.Features.MoneySignals,
-				StopSignals:      payload.Features.StopSignals,
-				TermsSignals:     payload.Features.TermsSignals,
-				SignatureSignals: payload.Features.SignatureSignals,
+		route, routeErr = a.aiDocumentService.RouteDocument(
+			ctx,
+			&documentaiextractionports.AIRouteRequest{
+				TenantInfo: tenantInfo,
+				DocumentID: payload.Document.ID,
+				FileName:   payload.Document.OriginalName,
+				Text: stringutils.TruncateAndTrim(
+					payload.Extracted.Text,
+					a.cfg.GetMaxInputChars(),
+				),
+				Pages: pages,
+				Features: &documentaiextractionports.AIDocumentFeatureSet{
+					TitleCandidates:  payload.Features.TitleCandidates,
+					SectionLabels:    payload.Features.SectionLabels,
+					PartyLabels:      payload.Features.PartyLabels,
+					ReferenceLabels:  payload.Features.ReferenceLabels,
+					MoneySignals:     payload.Features.MoneySignals,
+					StopSignals:      payload.Features.StopSignals,
+					TermsSignals:     payload.Features.TermsSignals,
+					SignatureSignals: payload.Features.SignatureSignals,
+				},
+				Fingerprint: toAIFingerprintHint(payload.Fingerprint),
 			},
-			Fingerprint: toAIFingerprintHint(payload.Fingerprint),
-		})
+		)
 		return routeErr
 	})
 	if err != nil {
@@ -1285,10 +1291,13 @@ func (a *Activities) associateDocumentType(
 		return nil
 	}
 
-	existing, err := a.documentTypeRepo.GetByCode(ctx, documenttypeports.GetDocumentTypeByCodeRequest{
-		Code:       inferred.Code,
-		TenantInfo: tenantInfo,
-	})
+	existing, err := a.documentTypeRepo.GetByCode(
+		ctx,
+		documenttypeports.GetDocumentTypeByCodeRequest{
+			Code:       inferred.Code,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err == nil {
 		doc.DocumentTypeID = &existing.ID
 		a.metrics.Document.RecordTypeAssociation("associated_existing_code", kind)
@@ -1299,10 +1308,13 @@ func (a *Activities) associateDocumentType(
 		return err
 	}
 
-	existing, err = a.documentTypeRepo.GetByName(ctx, documenttypeports.GetDocumentTypeByNameRequest{
-		Name:       inferred.Name,
-		TenantInfo: tenantInfo,
-	})
+	existing, err = a.documentTypeRepo.GetByName(
+		ctx,
+		documenttypeports.GetDocumentTypeByNameRequest{
+			Name:       inferred.Name,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err == nil {
 		doc.DocumentTypeID = &existing.ID
 		a.metrics.Document.RecordTypeAssociation("associated_existing_name", kind)
@@ -1330,10 +1342,13 @@ func (a *Activities) associateDocumentType(
 		DocumentClassification: inferred.Classification,
 	})
 	if createErr != nil {
-		existing, err = a.documentTypeRepo.GetByCode(ctx, documenttypeports.GetDocumentTypeByCodeRequest{
-			Code:       inferred.Code,
-			TenantInfo: tenantInfo,
-		})
+		existing, err = a.documentTypeRepo.GetByCode(
+			ctx,
+			documenttypeports.GetDocumentTypeByCodeRequest{
+				Code:       inferred.Code,
+				TenantInfo: tenantInfo,
+			},
+		)
 		if err == nil {
 			doc.DocumentTypeID = &existing.ID
 			a.metrics.Document.RecordTypeAssociation("associated_after_conflict", kind)
@@ -1344,10 +1359,13 @@ func (a *Activities) associateDocumentType(
 			return createErr
 		}
 
-		existing, err = a.documentTypeRepo.GetByName(ctx, documenttypeports.GetDocumentTypeByNameRequest{
-			Name:       inferred.Name,
-			TenantInfo: tenantInfo,
-		})
+		existing, err = a.documentTypeRepo.GetByName(
+			ctx,
+			documenttypeports.GetDocumentTypeByNameRequest{
+				Name:       inferred.Name,
+				TenantInfo: tenantInfo,
+			},
+		)
 		if err != nil {
 			a.metrics.Document.RecordTypeAssociation("create_failed", kind)
 			return createErr

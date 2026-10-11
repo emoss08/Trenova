@@ -72,31 +72,35 @@ func (r *repository) List(
 	ctx context.Context,
 	req *billingqueueports.ListBillingQueueItemsRequest,
 ) (*pagination.ListResult[*billingqueue.BillingQueueItem], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*billingqueue.BillingQueueItem], error) {
-		log := r.l.With(
-			zap.String("operation", "List"),
-			zap.Any("request", req),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*billingqueue.BillingQueueItem], error) {
+			log := r.l.With(
+				zap.String("operation", "List"),
+				zap.Any("request", req),
+			)
 
-		entities := make([]*billingqueue.BillingQueueItem, 0, req.Filter.Pagination.SafeLimit())
+			entities := make([]*billingqueue.BillingQueueItem, 0, req.Filter.Pagination.SafeLimit())
 
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterQuery(sq, req)
-			}).
-			ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count billing queue items", zap.Error(err))
-			return nil, err
-		}
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).
+				ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count billing queue items", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*billingqueue.BillingQueueItem]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*billingqueue.BillingQueueItem]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -380,96 +384,100 @@ func (r *repository) ReleaseForInvoice(
 	ctx context.Context,
 	req *billingqueueports.ReleaseForInvoiceRequest,
 ) ([]*billingqueue.BillingQueueItem, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*billingqueue.BillingQueueItem, error) {
-		if req == nil || req.InvoiceID.IsNil() {
-			return nil, nil
-		}
-
-		bqi := billingqueuecol.BillingQueueItemColumns
-		db := r.db.DBForContext(ctx)
-
-		items := make([]*billingqueue.BillingQueueItem, 0, 1)
-		if err := db.NewSelect().
-			Model(&items).
-			Apply(billingqueuecol.BillingQueueItemApplyTenant(req.TenantInfo)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.WhereGroup(" OR ", func(inner *bun.SelectQuery) *bun.SelectQuery {
-					inner = inner.Where(bqi.InvoiceID.Eq(), req.InvoiceID)
-					if req.AnchorItemID.IsNotNil() {
-						inner = inner.WhereOr(bqi.ID.Eq(), req.AnchorItemID)
-					}
-					return inner
-				})
-			}).
-			Where(bqi.Status.Ne(), billingqueue.StatusCanceled).
-			For("UPDATE").
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("load billing queue items for release: %w", err)
-		}
-
-		released := make([]*billingqueue.BillingQueueItem, 0, len(items))
-		shipmentIDs := make([]pulid.ID, 0, len(items))
-		for _, item := range items {
-			target := billingqueue.StatusCanceled
-			if req.Rebill {
-				target = billingqueue.StatusApproved
-			}
-			if !billingqueue.IsAllowedVoidReleaseTransition(item.Status, target) {
-				return nil, errortypes.NewValidationError(
-					"invoiceId",
-					errortypes.ErrInvalidOperation,
-					"Billing queue item {0} cannot be released from {1}",
-					item.Number,
-					string(item.Status),
-				)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*billingqueue.BillingQueueItem, error) {
+			if req == nil || req.InvoiceID.IsNil() {
+				return nil, nil
 			}
 
-			update := db.NewUpdate().
-				Model((*billingqueue.BillingQueueItem)(nil)).
-				Where(bqi.ID.Eq(), item.ID).
-				Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return billingqueuecol.BillingQueueItemScopeTenantUpdate(uq, req.TenantInfo)
+			bqi := billingqueuecol.BillingQueueItemColumns
+			db := r.db.DBForContext(ctx)
+
+			items := make([]*billingqueue.BillingQueueItem, 0, 1)
+			if err := db.NewSelect().
+				Model(&items).
+				Apply(billingqueuecol.BillingQueueItemApplyTenant(req.TenantInfo)).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.WhereGroup(" OR ", func(inner *bun.SelectQuery) *bun.SelectQuery {
+						inner = inner.Where(bqi.InvoiceID.Eq(), req.InvoiceID)
+						if req.AnchorItemID.IsNotNil() {
+							inner = inner.WhereOr(bqi.ID.Eq(), req.AnchorItemID)
+						}
+						return inner
+					})
 				}).
-				Set(bqi.Status.Set(), target).
-				Set(bqi.InvoiceID.SetNull()).
-				Set(bqi.Version.Inc(1))
-			item.Status = target
-			item.InvoiceID = pulid.Nil
+				Where(bqi.Status.Ne(), billingqueue.StatusCanceled).
+				For("UPDATE").
+				Scan(ctx); err != nil {
+				return nil, fmt.Errorf("load billing queue items for release: %w", err)
+			}
 
-			if req.Rebill {
-				if req.RenumberFn != nil {
-					number, err := req.RenumberFn(ctx, item.BillType)
-					if err != nil {
-						return nil, err
-					}
-					update = update.Set(bqi.Number.Set(), number)
-					item.Number = number
+			released := make([]*billingqueue.BillingQueueItem, 0, len(items))
+			shipmentIDs := make([]pulid.ID, 0, len(items))
+			for _, item := range items {
+				target := billingqueue.StatusCanceled
+				if req.Rebill {
+					target = billingqueue.StatusApproved
 				}
-			} else {
-				update = update.
-					Set(bqi.CanceledByID.Set(), req.CanceledByID).
-					Set(bqi.CanceledAt.Set(), req.CanceledAt).
-					Set(bqi.CancelReason.Set(), req.CancelReason)
-				item.CanceledByID = req.CanceledByID
-				at := req.CanceledAt
-				item.CanceledAt = &at
-				item.CancelReason = req.CancelReason
-			}
-			if _, err := update.Exec(ctx); err != nil {
-				return nil, fmt.Errorf("release billing queue item %s: %w", item.ID, err)
-			}
-			released = append(released, item)
-			if item.ShipmentID.IsNotNil() {
-				shipmentIDs = append(shipmentIDs, item.ShipmentID)
-			}
-		}
+				if !billingqueue.IsAllowedVoidReleaseTransition(item.Status, target) {
+					return nil, errortypes.NewValidationError(
+						"invoiceId",
+						errortypes.ErrInvalidOperation,
+						"Billing queue item {0} cannot be released from {1}",
+						item.Number,
+						string(item.Status),
+					)
+				}
 
-		if err := r.syncShipmentTransferState(ctx, req.TenantInfo, shipmentIDs); err != nil {
-			return nil, err
-		}
+				update := db.NewUpdate().
+					Model((*billingqueue.BillingQueueItem)(nil)).
+					Where(bqi.ID.Eq(), item.ID).
+					Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+						return billingqueuecol.BillingQueueItemScopeTenantUpdate(uq, req.TenantInfo)
+					}).
+					Set(bqi.Status.Set(), target).
+					Set(bqi.InvoiceID.SetNull()).
+					Set(bqi.Version.Inc(1))
+				item.Status = target
+				item.InvoiceID = pulid.Nil
 
-		return released, nil
-	})
+				if req.Rebill {
+					if req.RenumberFn != nil {
+						number, err := req.RenumberFn(ctx, item.BillType)
+						if err != nil {
+							return nil, err
+						}
+						update = update.Set(bqi.Number.Set(), number)
+						item.Number = number
+					}
+				} else {
+					update = update.
+						Set(bqi.CanceledByID.Set(), req.CanceledByID).
+						Set(bqi.CanceledAt.Set(), req.CanceledAt).
+						Set(bqi.CancelReason.Set(), req.CancelReason)
+					item.CanceledByID = req.CanceledByID
+					at := req.CanceledAt
+					item.CanceledAt = &at
+					item.CancelReason = req.CancelReason
+				}
+				if _, err := update.Exec(ctx); err != nil {
+					return nil, fmt.Errorf("release billing queue item %s: %w", item.ID, err)
+				}
+				released = append(released, item)
+				if item.ShipmentID.IsNotNil() {
+					shipmentIDs = append(shipmentIDs, item.ShipmentID)
+				}
+			}
+
+			if err := r.syncShipmentTransferState(ctx, req.TenantInfo, shipmentIDs); err != nil {
+				return nil, err
+			}
+
+			return released, nil
+		},
+	)
 }
 
 func (r *repository) ExistsByShipmentPayerAndType(
@@ -501,34 +509,38 @@ func (r *repository) ListActiveInvoiceItemsByShipmentIDs(
 	ctx context.Context,
 	req *billingqueueports.ListActiveInvoiceItemsRequest,
 ) (map[pulid.ID][]*billingqueue.BillingQueueItem, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*billingqueue.BillingQueueItem, error) {
-		result := make(map[pulid.ID][]*billingqueue.BillingQueueItem, len(req.ShipmentIDs))
-		if len(req.ShipmentIDs) == 0 {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID][]*billingqueue.BillingQueueItem, error) {
+			result := make(map[pulid.ID][]*billingqueue.BillingQueueItem, len(req.ShipmentIDs))
+			if len(req.ShipmentIDs) == 0 {
+				return result, nil
+			}
+
+			bqi := billingqueuecol.BillingQueueItemColumns
+			items := make([]*billingqueue.BillingQueueItem, 0, len(req.ShipmentIDs))
+			if err := r.db.DBForContext(ctx).NewSelect().
+				Model(&items).
+				Where(bqi.ShipmentID.In(), bun.List(req.ShipmentIDs)).
+				Where(bqi.BillType.Eq(), billingqueue.BillTypeInvoice).
+				Where(bqi.Status.NotIn(), bun.List([]billingqueue.Status{
+					billingqueue.StatusPosted,
+					billingqueue.StatusCanceled,
+				})).
+				Apply(billingqueuecol.BillingQueueItemApplyTenant(req.TenantInfo)).
+				Order(bqi.ShipmentID.OrderAsc(), bqi.CreatedAt.OrderAsc()).
+				Scan(ctx); err != nil {
+				return nil, fmt.Errorf("list active billing queue items: %w", err)
+			}
+
+			for _, item := range items {
+				result[item.ShipmentID] = append(result[item.ShipmentID], item)
+			}
+
 			return result, nil
-		}
-
-		bqi := billingqueuecol.BillingQueueItemColumns
-		items := make([]*billingqueue.BillingQueueItem, 0, len(req.ShipmentIDs))
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(&items).
-			Where(bqi.ShipmentID.In(), bun.List(req.ShipmentIDs)).
-			Where(bqi.BillType.Eq(), billingqueue.BillTypeInvoice).
-			Where(bqi.Status.NotIn(), bun.List([]billingqueue.Status{
-				billingqueue.StatusPosted,
-				billingqueue.StatusCanceled,
-			})).
-			Apply(billingqueuecol.BillingQueueItemApplyTenant(req.TenantInfo)).
-			Order(bqi.ShipmentID.OrderAsc(), bqi.CreatedAt.OrderAsc()).
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("list active billing queue items: %w", err)
-		}
-
-		for _, item := range items {
-			result[item.ShipmentID] = append(result[item.ShipmentID], item)
-		}
-
-		return result, nil
-	})
+		},
+	)
 }
 
 func (r *repository) GetStatusCounts(

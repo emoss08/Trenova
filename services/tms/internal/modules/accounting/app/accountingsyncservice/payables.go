@@ -50,13 +50,17 @@ func (s *Service) partyRef(
 	}
 
 	label := partyLabel(objectType) + " " + row.TargetLabel
-	dependency, err := s.enqueueDependency(ctx, sess, &accountingsyncports.AccountingSyncEnqueueRequest{
-		ObjectType:   objectType,
-		ObjectID:     partyID,
-		ObjectNumber: row.TargetLabel,
-		Operation:    accountingsync.SyncOperationCreate,
-		Revision:     1,
-	})
+	dependency, err := s.enqueueDependency(
+		ctx,
+		sess,
+		&accountingsyncports.AccountingSyncEnqueueRequest{
+			ObjectType:   objectType,
+			ObjectID:     partyID,
+			ObjectNumber: row.TargetLabel,
+			Operation:    accountingsync.SyncOperationCreate,
+			Revision:     1,
+		},
+	)
 	if err != nil {
 		return "", err
 	}
@@ -201,11 +205,14 @@ func (s *Service) payableSettlement(
 	sess *pushSession,
 	record *accountingsync.AccountingSyncRecord,
 ) (*accountingsyncports.PayableSettlement, error) {
-	settlement, err := s.payables.GetSettlement(ctx, &accountingsyncports.GetPayableSettlementRequest{
-		TenantInfo: sess.tenant,
-		Kind:       payableKind(record.ObjectType),
-		ID:         record.ObjectID,
-	})
+	settlement, err := s.payables.GetSettlement(
+		ctx,
+		&accountingsyncports.GetPayableSettlementRequest{
+			TenantInfo: sess.tenant,
+			Kind:       payableKind(record.ObjectType),
+			ID:         record.ObjectID,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, blocked(
@@ -293,7 +300,10 @@ func (s *Service) accountRef(
 	return "", res.missing(row, target)
 }
 
-func roleForAccount(accountID pulid.ID, defaults accountingsyncports.PayableDefaultAccounts) string {
+func roleForAccount(
+	accountID pulid.ID,
+	defaults accountingsyncports.PayableDefaultAccounts,
+) string {
 	switch accountID {
 	case defaults.Payable:
 		return accountingsync.AccountRoleAP
@@ -442,15 +452,21 @@ func (s *Service) pushBill(
 
 	var written *accountingsyncports.AccountingDocumentResult
 	if target == nil {
-		written, err = s.createAdopting(ctx, sess, record, &accountingsyncports.AccountingFindDocumentRequest{
-			DocNumber:              doc.DocNumber,
-			CounterpartyExternalID: doc.VendorExternalID,
-			TxnDate:                doc.TxnDate,
-			Total:                  purchaseTotal(doc.Lines),
-			Credit:                 doc.VendorCredit,
-		}, func() (*accountingsyncports.AccountingDocumentResult, error) {
-			return sess.writer.CreatePurchaseDocument(ctx, doc)
-		})
+		written, err = s.createAdopting(
+			ctx,
+			sess,
+			record,
+			&accountingsyncports.AccountingFindDocumentRequest{
+				DocNumber:              doc.DocNumber,
+				CounterpartyExternalID: doc.VendorExternalID,
+				TxnDate:                doc.TxnDate,
+				Total:                  purchaseTotal(doc.Lines),
+				Credit:                 doc.VendorCredit,
+			},
+			func() (*accountingsyncports.AccountingDocumentResult, error) {
+				return sess.writer.CreatePurchaseDocument(ctx, doc)
+			},
+		)
 	} else {
 		written, err = writeBill(ctx, sess, target, doc, label)
 	}
@@ -661,15 +677,21 @@ func (s *Service) pushBillPayment(
 		doc.ExternalID = target.ExternalID
 		written, err = sess.writer.UpdateBillPayment(ctx, doc)
 	} else {
-		written, err = s.createAdopting(ctx, sess, record, &accountingsyncports.AccountingFindDocumentRequest{
-			DocNumber:              doc.DocNumber,
-			CounterpartyExternalID: vendorID,
-			TxnDate:                doc.TxnDate,
-			Total:                  doc.Amount,
-			AppliesToExternalIDs:   []string{billID},
-		}, func() (*accountingsyncports.AccountingDocumentResult, error) {
-			return sess.writer.CreateBillPayment(ctx, doc)
-		})
+		written, err = s.createAdopting(
+			ctx,
+			sess,
+			record,
+			&accountingsyncports.AccountingFindDocumentRequest{
+				DocNumber:              doc.DocNumber,
+				CounterpartyExternalID: vendorID,
+				TxnDate:                doc.TxnDate,
+				Total:                  doc.Amount,
+				AppliesToExternalIDs:   []string{billID},
+			},
+			func() (*accountingsyncports.AccountingDocumentResult, error) {
+				return sess.writer.CreateBillPayment(ctx, doc)
+			},
+		)
 	}
 	if err != nil {
 		return partial(written), err
@@ -695,14 +717,18 @@ func (s *Service) billRef(
 				reason: label + " was posted before the start date, so its payment is not sent either",
 			}
 		}
-		created, err = s.enqueueDependency(ctx, sess, &accountingsyncports.AccountingSyncEnqueueRequest{
-			ObjectType:   billType,
-			ObjectID:     settlement.ID,
-			ObjectNumber: settlement.Number,
-			Operation:    accountingsync.SyncOperationCreate,
-			Revision:     1,
-			DocumentDate: *settlement.PostedAt,
-		})
+		created, err = s.enqueueDependency(
+			ctx,
+			sess,
+			&accountingsyncports.AccountingSyncEnqueueRequest{
+				ObjectType:   billType,
+				ObjectID:     settlement.ID,
+				ObjectNumber: settlement.Number,
+				Operation:    accountingsync.SyncOperationCreate,
+				Revision:     1,
+				DocumentDate: *settlement.PostedAt,
+			},
+		)
 		if err != nil {
 			return "", err
 		}

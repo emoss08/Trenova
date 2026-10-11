@@ -117,11 +117,11 @@ type AssistantTurn struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
 
-	ThreadID pulid.ID `json:"threadId"   bun:"thread_id,type:VARCHAR(100),notnull"`
-	UserID   pulid.ID `json:"userId"     bun:"user_id,type:VARCHAR(100),notnull"`
+	ThreadID pulid.ID `json:"threadId" bun:"thread_id,type:VARCHAR(100),notnull"`
+	UserID   pulid.ID `json:"userId"   bun:"user_id,type:VARCHAR(100),notnull"`
 	// RunID points at the agent run opened for this turn, which happens only
 	// when it proposed a change somebody has to decide on.
-	RunID pulid.ID `json:"runId"      bun:"run_id,type:VARCHAR(100),nullzero"`
+	RunID pulid.ID `json:"runId" bun:"run_id,type:VARCHAR(100),nullzero"`
 	// WorkflowID is the durable execution carrying the turn, empty until its
 	// start is recorded. ExecutionID answers for a turn either way.
 	WorkflowID string `json:"workflowId" bun:"workflow_id,type:VARCHAR(255),nullzero"`

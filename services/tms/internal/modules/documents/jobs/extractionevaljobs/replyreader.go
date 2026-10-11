@@ -2,8 +2,8 @@ package extractionevaljobs
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
-	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentintelligencejobs"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentintelligencejobs"
 )
 
 var _ aicorrectionports.ExtractionReplyReader = ReplyReader{}

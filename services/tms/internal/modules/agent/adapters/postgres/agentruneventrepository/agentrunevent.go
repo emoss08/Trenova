@@ -143,66 +143,70 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *agentports.ListAgentRunEventConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentRunEvent], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*agent.AgentRunEvent], error) {
-		log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*agent.AgentRunEvent], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
 
-		dba := r.db.DBForContext(ctx)
+			dba := r.db.DBForContext(ctx)
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.NewSelect().
-				Model((*agent.AgentRunEvent)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						agentcol.AgentRunEventTable.Alias,
-						req.Filter,
-						(*agent.AgentRunEvent)(nil),
-					)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.NewSelect().
+					Model((*agent.AgentRunEvent)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							agentcol.AgentRunEventTable.Alias,
+							req.Filter,
+							(*agent.AgentRunEvent)(nil),
+						)
 
-					return ownedBy(sq, req.OwnerKind).
-						Apply(agentcol.AgentRunEventApplyTenant(req.Filter.TenantInfo))
-				}).
-				Count(ctx)
-			if err != nil {
-				log.Error("failed to count agent run events", zap.Error(err))
+						return ownedBy(sq, req.OwnerKind).
+							Apply(agentcol.AgentRunEventApplyTenant(req.Filter.TenantInfo))
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count agent run events", zap.Error(err))
 
-				return nil, fmt.Errorf("count agent run events: %w", err)
-			}
-
-			totalCount = &total
-		}
-
-		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*agent.AgentRunEvent]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*agent.AgentRunEvent) *bun.SelectQuery {
-				q := dba.NewSelect().Model(entities)
-				if len(req.Columns) > 0 {
-					q = q.Column(req.Columns...)
+					return nil, fmt.Errorf("count agent run events: %w", err)
 				}
 
-				return q
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return querybuilder.ApplyCursorFilters(
-					ownedBy(sq, req.OwnerKind),
-					agentcol.AgentRunEventTable.Alias,
-					req.Filter,
-					req.Cursor,
-					(*agent.AgentRunEvent)(nil),
-				)
-			},
-		})
-		if err != nil {
-			log.Error("failed to list agent run events", zap.Error(err))
+				totalCount = &total
+			}
 
-			return nil, fmt.Errorf("list agent run events: %w", err)
-		}
+			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*agent.AgentRunEvent]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(entities *[]*agent.AgentRunEvent) *bun.SelectQuery {
+					q := dba.NewSelect().Model(entities)
+					if len(req.Columns) > 0 {
+						q = q.Column(req.Columns...)
+					}
 
-		return result, nil
-	})
+					return q
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					return querybuilder.ApplyCursorFilters(
+						ownedBy(sq, req.OwnerKind),
+						agentcol.AgentRunEventTable.Alias,
+						req.Filter,
+						req.Cursor,
+						(*agent.AgentRunEvent)(nil),
+					)
+				},
+			})
+			if err != nil {
+				log.Error("failed to list agent run events", zap.Error(err))
+
+				return nil, fmt.Errorf("list agent run events: %w", err)
+			}
+
+			return result, nil
+		},
+	)
 }
 
 // ownedBy keeps a list to one kind of owner, when one is named.

@@ -49,7 +49,10 @@ type AssistantCaseRepository interface {
 		ctx context.Context,
 		req *GetShipmentCaseFactsRequest,
 	) (*deskcase.ShipmentFacts, error)
-	InvoiceFacts(ctx context.Context, req *GetInvoiceCaseFactsRequest) (*deskcase.InvoiceFacts, error)
+	InvoiceFacts(
+		ctx context.Context,
+		req *GetInvoiceCaseFactsRequest,
+	) (*deskcase.InvoiceFacts, error)
 	// Parties names the customer and carriers a case can wait on.
 	Parties(ctx context.Context, req *ListCasePartiesRequest) ([]deskcase.Party, error)
 }

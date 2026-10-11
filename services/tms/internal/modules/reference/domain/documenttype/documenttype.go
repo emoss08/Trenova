@@ -42,11 +42,11 @@ type DocumentType struct {
 	// RequiresSignature makes a document of this type count only once it is
 	// signed, the way a proof of delivery is proof only with the receiver's name.
 	RequiresSignature bool   `json:"requiresSignature" bun:"requires_signature,type:BOOLEAN,notnull,default:false"`
-	Version           int64  `json:"version"                bun:"version,type:BIGINT"`
-	CreatedAt         int64  `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt         int64  `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector      string `json:"-"                      bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank              string `json:"-"                      bun:"rank,type:VARCHAR(100),scanonly"`
+	Version           int64  `json:"version"           bun:"version,type:BIGINT"`
+	CreatedAt         int64  `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt         int64  `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	SearchVector      string `json:"-"                 bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank              string `json:"-"                 bun:"rank,type:VARCHAR(100),scanonly"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`

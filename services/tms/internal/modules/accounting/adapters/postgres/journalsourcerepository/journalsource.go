@@ -4,9 +4,9 @@ package journalsourcerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalsourceports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"

@@ -3,8 +3,8 @@ package formulatemplateservice
 import (
 	goErrors "errors"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	formulaerrors "github.com/emoss08/trenova/internal/modules/rating/app/formula/errors"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 )
 
 var versionDiffIgnoreFields = []string{

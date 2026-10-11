@@ -137,7 +137,9 @@ func decisionTaint(taint *agent.RunTaint, external bool) *agent.RunTaint {
 	}
 
 	decided := taint.Clone()
-	decided.Add(agent.TaintMark{Source: agent.TaintSourceWeb, ToolName: agentextension.ToolWebSearch})
+	decided.Add(
+		agent.TaintMark{Source: agent.TaintSourceWeb, ToolName: agentextension.ToolWebSearch},
+	)
 
 	return decided
 }

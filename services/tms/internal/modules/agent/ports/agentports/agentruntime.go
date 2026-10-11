@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -457,7 +457,11 @@ type AgentRuntime interface {
 	ToolSummaries(definition *agentdefinition.Definition) []agentdefinition.ToolSummary
 	// PermittedTools keeps the named tools the actor may use, the check a
 	// turn's own tool set is narrowed by.
-	PermittedTools(ctx context.Context, actor *permissionports.RequestActor, names []string) []string
+	PermittedTools(
+		ctx context.Context,
+		actor *permissionports.RequestActor,
+		names []string,
+	) []string
 }
 
 // AgentSubjectDescriber renders the record a run or a conversation is about

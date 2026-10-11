@@ -5,12 +5,12 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/hostguard"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/fmcsa"
 	"github.com/emoss08/trenova/shared/restx"
 )

@@ -5,11 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -128,7 +128,10 @@ func newListManualJournalsTool(
 			opts *pagination.QueryOptions,
 			gate *fieldGate,
 		) ([]any, error) {
-			result, err := repo.List(ctx, &manualjournalports.ListManualJournalRequest{Filter: opts})
+			result, err := repo.List(
+				ctx,
+				&manualjournalports.ListManualJournalRequest{Filter: opts},
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -303,7 +306,10 @@ func newListJournalReversalsTool(
 			opts *pagination.QueryOptions,
 			gate *fieldGate,
 		) ([]any, error) {
-			result, err := repo.List(ctx, &journalreversalports.ListJournalReversalsRequest{Filter: opts})
+			result, err := repo.List(
+				ctx,
+				&journalreversalports.ListJournalReversalsRequest{Filter: opts},
+			)
 			if err != nil {
 				return nil, err
 			}

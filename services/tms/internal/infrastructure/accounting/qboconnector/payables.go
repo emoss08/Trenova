@@ -35,7 +35,10 @@ func (c *Connector) UpsertVendor(
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{ExternalID: saved.ID, DocNumber: saved.Name}, nil
+	return &accountingsyncports.AccountingDocumentResult{
+		ExternalID: saved.ID,
+		DocNumber:  saved.Name,
+	}, nil
 }
 
 func (c *Connector) CreatePurchaseDocument(
@@ -171,7 +174,9 @@ func (c *Connector) CreateBillPayment(
 	}, nil
 }
 
-func billPaymentTxnOf(doc *accountingsyncports.AccountingBillPaymentDocument) *quickbooks.BillPaymentTxn {
+func billPaymentTxnOf(
+	doc *accountingsyncports.AccountingBillPaymentDocument,
+) *quickbooks.BillPaymentTxn {
 	return &quickbooks.BillPaymentTxn{
 		VendorID:      doc.VendorExternalID,
 		BankAccountID: doc.BankAccountExternalID,

@@ -1,16 +1,16 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
-	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
-	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
-	"github.com/emoss08/trenova/internal/modules/rating/app/rateimportservice"
-	"github.com/emoss08/trenova/internal/modules/rating/app/ratesimulationservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/rateimportservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/ratesimulationservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 )
 
 func ratesToolProviders() []any {

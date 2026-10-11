@@ -10,8 +10,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -239,7 +239,11 @@ func (s *Service) lessonRequest(
 	return req, "", nil
 }
 
-func subjectOf(plan *agentports.ReflectionPlan, in *lesson, req *agentports.RememberRequest) string {
+func subjectOf(
+	plan *agentports.ReflectionPlan,
+	in *lesson,
+	req *agentports.RememberRequest,
+) string {
 	raw := strings.TrimSpace(in.SubjectID)
 	if raw == "" {
 		return ""
@@ -399,21 +403,24 @@ func (s *Service) announce(
 		return
 	}
 
-	if err := s.realtime.PublishResourceInvalidation(ctx, &agentports.PublishResourceInvalidationRequest{
-		OrganizationID: plan.TenantInfo.OrgID,
-		BusinessUnitID: plan.TenantInfo.BuID,
-		AudienceUserID: plan.PersonUserID,
-		Resource:       agentports.AgentMemoryResource,
-		Action:         "learned",
-		RecordID:       reflection.ID,
-		ActorType:      permissionports.PrincipalTypeAgent,
-		ActorID:        plan.AgentDefinitionID,
-		Entity: map[string]any{
-			"id":        reflection.ID,
-			"threadId":  plan.ThreadID,
-			"memoryIds": kept,
+	if err := s.realtime.PublishResourceInvalidation(
+		ctx,
+		&agentports.PublishResourceInvalidationRequest{
+			OrganizationID: plan.TenantInfo.OrgID,
+			BusinessUnitID: plan.TenantInfo.BuID,
+			AudienceUserID: plan.PersonUserID,
+			Resource:       agentports.AgentMemoryResource,
+			Action:         "learned",
+			RecordID:       reflection.ID,
+			ActorType:      permissionports.PrincipalTypeAgent,
+			ActorID:        plan.AgentDefinitionID,
+			Entity: map[string]any{
+				"id":        reflection.ID,
+				"threadId":  plan.ThreadID,
+				"memoryIds": kept,
+			},
 		},
-	}); err != nil {
+	); err != nil {
 		s.l.Warn("agent reflection: the person could not be told what was learned", zap.Error(err))
 	}
 }

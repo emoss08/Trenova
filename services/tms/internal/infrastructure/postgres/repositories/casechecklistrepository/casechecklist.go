@@ -283,7 +283,10 @@ func (r *repository) Tick(ctx context.Context, entity *deskcase.ChecklistTick) e
 	})
 }
 
-func (r *repository) Untick(ctx context.Context, req *deskcaseports.UntickCaseChecklistItemRequest) error {
+func (r *repository) Untick(
+	ctx context.Context,
+	req *deskcaseports.UntickCaseChecklistItemRequest,
+) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := deskcasecol.ChecklistTickColumns
 		_, err := r.db.DBForContext(ctx).
