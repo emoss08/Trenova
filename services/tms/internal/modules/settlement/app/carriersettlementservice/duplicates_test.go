@@ -1,14 +1,15 @@
 package carriersettlementservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/carriersettlementportsmock"
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carriersettlementportsmock"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"

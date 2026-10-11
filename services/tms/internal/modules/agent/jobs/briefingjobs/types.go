@@ -8,7 +8,7 @@
 // written exactly once a day whatever its timezone.
 package briefingjobs
 
-import "github.com/emoss08/trenova/internal/core/temporaljobs"
+import "github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 
 const (
 	// DailyBriefingWorkflowName writes the morning for every organization

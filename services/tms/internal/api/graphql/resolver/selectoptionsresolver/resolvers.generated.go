@@ -4,14 +4,6 @@ package selectoptionsresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	benefitsservice "github.com/emoss08/trenova/internal/core/services/benefitsservice"
-	detentionpolicyservice "github.com/emoss08/trenova/internal/core/services/detentionpolicyservice"
-	performancereviewservice "github.com/emoss08/trenova/internal/core/services/performancereviewservice"
-	ptopolicyservice "github.com/emoss08/trenova/internal/core/services/ptopolicyservice"
-	schedulingservice "github.com/emoss08/trenova/internal/core/services/schedulingservice"
-	selfserviceservice "github.com/emoss08/trenova/internal/core/services/selfserviceservice"
-	workercredentialservice "github.com/emoss08/trenova/internal/core/services/workercredentialservice"
-	workertrainingservice "github.com/emoss08/trenova/internal/core/services/workertrainingservice"
 	accounttypeservice "github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
 	fiscalperiodports "github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	fiscalyearports "github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
@@ -28,6 +20,7 @@ import (
 	userservice "github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	tenantports "github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	usstateservice "github.com/emoss08/trenova/internal/modules/kernel/app/usstateservice"
+	detentionpolicyservice "github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
 	orderservice "github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	servicefailureports "github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -50,7 +43,14 @@ import (
 	driverpayservice "github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
 	fuelpurchaseservice "github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
 	iftaservice "github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
+	benefitsservice "github.com/emoss08/trenova/internal/modules/workforce/app/benefitsservice"
+	performancereviewservice "github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
+	ptopolicyservice "github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
+	schedulingservice "github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
+	selfserviceservice "github.com/emoss08/trenova/internal/modules/workforce/app/selfserviceservice"
+	workercredentialservice "github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	workerservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
+	workertrainingservice "github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	emailservice "github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
 )
 

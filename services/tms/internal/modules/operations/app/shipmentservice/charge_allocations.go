@@ -3,7 +3,7 @@ package shipmentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/allocationcheck"
+	"github.com/emoss08/trenova/internal/modules/operations/app/allocationcheck"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )

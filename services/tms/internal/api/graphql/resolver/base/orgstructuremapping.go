@@ -3,7 +3,7 @@ package base
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/orgstructureservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"

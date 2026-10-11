@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/core/services/journalposting"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"

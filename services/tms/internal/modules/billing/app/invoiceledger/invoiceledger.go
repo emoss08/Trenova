@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/services/journalposting"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"

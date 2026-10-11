@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentintelligencejobs/documentintelligencecontract"

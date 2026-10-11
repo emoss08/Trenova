@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/services/referencedataguard"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/referencedataguard"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"

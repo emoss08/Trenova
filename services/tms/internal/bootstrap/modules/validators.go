@@ -3,8 +3,6 @@ package modules
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/costingservice"
-	"github.com/emoss08/trenova/internal/core/services/detentionpolicyservice"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -63,10 +61,6 @@ var ValidationFrameworkModule = fx.Module(
 
 var ValidatorModule = fx.Module(
 	"validators",
-	fx.Provide(
-		detentionpolicyservice.NewValidator,
-		costingservice.NewValidator,
-	),
 	fx.Options(
 		ValidationFrameworkModule,
 	),

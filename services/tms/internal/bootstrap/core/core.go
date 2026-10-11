@@ -5,11 +5,6 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/infrastructure"
 	"github.com/emoss08/trenova/internal/bootstrap/modules"
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
-	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
-	"github.com/emoss08/trenova/internal/core/services/casechecklistservice"
-	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs/samsaracontract"
 	accountinginfra "github.com/emoss08/trenova/internal/infrastructure/accounting"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionrouter"
 	agentextensioninfra "github.com/emoss08/trenova/internal/infrastructure/agentextension"
@@ -20,6 +15,7 @@ import (
 	reportingrender "github.com/emoss08/trenova/internal/infrastructure/reporting/render"
 	reportingresultcache "github.com/emoss08/trenova/internal/infrastructure/reporting/resultcache"
 	telematicsinfra "github.com/emoss08/trenova/internal/infrastructure/telematics"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/infrastructure/turnstream"
 	"github.com/emoss08/trenova/internal/modules/accounting"
 	"github.com/emoss08/trenova/internal/modules/agent"
@@ -58,20 +54,16 @@ func OptionsFor(e *edition.Edition) fx.Option {
 		modules.ValidatorModule,
 		modules.PostgresRepositoryModule,
 		modules.QueryCacheModule,
-		fx.Provide(encryptionservice.New),
 		fuelcard.Module,
 		carrierintelinfra.Module,
 		accountinginfra.Module,
 		agentextensioninfra.Module,
 		fx.Provide(telematicsinfra.NewFactory),
 		temporaljobs.Module,
-		casechecklistservice.Module,
 		reportingrender.Module,
 		reportingresultcache.Module,
 		fx.Provide(reportingexecutor.New),
-		analyticsservice.Module,
 		ServiceModule,
-		fx.Provide(samsaracontract.NewManager),
 		modulesinfra.StorageModule,
 		modulesinfra.SMSModule,
 		modulesinfra.PDFRenderModule,

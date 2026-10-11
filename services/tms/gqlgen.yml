@@ -288,13 +288,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerCredentialSummary
   CredentialExpiryForecastItem:
     model:
-      - github.com/emoss08/trenova/internal/core/services/workercredentialservice.ExpiryForecastItem
+      - github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice.ExpiryForecastItem
   CredentialExpiryForecast:
     model:
-      - github.com/emoss08/trenova/internal/core/services/workercredentialservice.ExpiryForecast
+      - github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice.ExpiryForecast
   PortalCredential:
     model:
-      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalCredential
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalCredential
     fields:
       id:
         resolver: true
@@ -319,7 +319,7 @@ models:
         resolver: true
   WorkerEmploymentCascade:
     model:
-      - github.com/emoss08/trenova/internal/core/services/workeremploymentservice.CascadeSummary
+      - github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice.CascadeSummary
     fields:
       ptoPaidOutDays:
         resolver: true
@@ -327,7 +327,7 @@ models:
         resolver: true
   RecordWorkerEmploymentEventPayload:
     model:
-      - github.com/emoss08/trenova/internal/core/services/workeremploymentservice.RecordResult
+      - github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice.RecordResult
   WorkerChecklistKind:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ChecklistKind
@@ -484,13 +484,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerTrainingSummary
   BulkAssignTrainingPayload:
     model:
-      - github.com/emoss08/trenova/internal/core/services/workertrainingservice.BulkAssignResult
+      - github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice.BulkAssignResult
   BulkAssignTrainingOutcome:
     model:
-      - github.com/emoss08/trenova/internal/core/services/workertrainingservice.BulkAssignOutcome
+      - github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice.BulkAssignOutcome
   PortalTraining:
     model:
-      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalTraining
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalTraining
     fields:
       id:
         resolver: true
@@ -598,7 +598,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.OSHASummaryTotals
   OSHALog:
     model:
-      - github.com/emoss08/trenova/internal/core/services/workerinjuryservice.OSHALog
+      - github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice.OSHALog
   OSHAAnnualSummary:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.OSHAAnnualSummary
@@ -1236,7 +1236,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PayrollExport
   PayrollExportRow:
     model:
-      - github.com/emoss08/trenova/internal/core/services/timesheetservice.PayrollExportRow
+      - github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice.PayrollExportRow
   PolicyAudience:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PolicyAudience
@@ -1257,19 +1257,19 @@ models:
         resolver: true
   PortalPolicy:
     model:
-      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalPolicy
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalPolicy
   PortalSchedule:
     model:
-      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalSchedule
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalSchedule
   PortalShiftDay:
     model:
-      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalShiftDay
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalShiftDay
   RotaDayState:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.RotaDayState
   PortalShiftSwap:
     model:
-      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalShiftSwap
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalShiftSwap
   BenefitPlan:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.BenefitPlan
@@ -1286,7 +1286,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports.BenefitCostRow
   TotalCompensation:
     model:
-      - github.com/emoss08/trenova/internal/core/services/benefitsservice.TotalCompensation
+      - github.com/emoss08/trenova/internal/modules/workforce/app/benefitsservice.TotalCompensation
   ApprovalScope:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ApprovalScope
@@ -1313,7 +1313,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.HeadcountRow
   Headcount:
     model:
-      - github.com/emoss08/trenova/internal/core/services/orgstructureservice.Headcount
+      - github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice.Headcount
   DriverDigestCadence:
     model:
       - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.DriverDigestCadence
@@ -1434,7 +1434,7 @@ models:
         resolver: true
   IssueDisciplinaryActionPayload:
     model:
-      - github.com/emoss08/trenova/internal/core/services/workersafetyservice.IssueActionResult
+      - github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice.IssueActionResult
   PerformanceReviewStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ReviewStatus
@@ -1569,10 +1569,10 @@ models:
         resolver: true
   AssignWorkerPTOPolicyFailure:
     model:
-      - github.com/emoss08/trenova/internal/core/services/ptopolicyservice.AssignWorkerFailure
+      - github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice.AssignWorkerFailure
   AssignWorkerPTOPolicyPayload:
     model:
-      - github.com/emoss08/trenova/internal/core/services/ptopolicyservice.AssignWorkersResult
+      - github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice.AssignWorkersResult
   WorkerPTOBulkAction:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.PTOBulkActionType
@@ -2756,10 +2756,10 @@ models:
       - github.com/emoss08/trenova/internal/modules/documents/app/captureservice.Access
   CaptureAgentRelease:
     model:
-      - github.com/emoss08/trenova/internal/core/services/capturereleaseservice.Release
+      - github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice.Release
   CaptureAgentInstaller:
     model:
-      - github.com/emoss08/trenova/internal/core/services/capturereleaseservice.Installer
+      - github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice.Installer
     fields:
       url:
         fieldName: URL
@@ -3713,7 +3713,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.BoardGrouping
   EtaVerdict:
     model:
-      - github.com/emoss08/trenova/internal/core/services/shipmenttracking.Verdict
+      - github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking.Verdict
   UncoveredPickupWindow:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.PickupWindow
@@ -4050,10 +4050,10 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PortalInvitation
   WorkerPortalStatus:
     model:
-      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalStatus
   InviteWorkerToPortalResult:
     model:
-      - github.com/emoss08/trenova/internal/core/services/driverportalservice.InviteWorkerResult
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.InviteWorkerResult
   SettlementDisputeStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.DisputeStatus
@@ -4065,25 +4065,25 @@ models:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.Dispute
   PortalLoadScope:
     model:
-      - github.com/emoss08/trenova/internal/core/services/driverportalservice.LoadScope
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.LoadScope
   PortalProfile:
     model:
-      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalProfile
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalProfile
   PortalStop:
     model:
-      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalStop
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalStop
   PortalLoad:
     model:
-      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalLoad
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalLoad
   PortalComment:
     model:
-      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalComment
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalComment
   PortalStopAction:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports.StopActualAction
   PortalComplianceProfile:
     model:
-      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalComplianceProfile
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalComplianceProfile
   PortalPtoStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOStatus
@@ -4107,19 +4107,19 @@ models:
       - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.DashControl
   PortalFeatures:
     model:
-      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalFeatures
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalFeatures
   PortalLeave:
     model:
-      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalLeave
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalLeave
   PortalLeaveCase:
     model:
-      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalLeaveCase
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalLeaveCase
   PortalPeriodSummary:
     model:
-      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalPeriodSummary
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalPeriodSummary
   PortalEscrowSummary:
     model:
-      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalEscrowSummary
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalEscrowSummary
   SettlementLineCategory:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.LineCategory

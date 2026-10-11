@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalyearservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"

@@ -1,7 +1,7 @@
 package assistantjobs
 
 import (
-	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/pkg/temporaltype"

@@ -1,7 +1,7 @@
 package assignmentservice
 
 import (
-	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/errortypes"

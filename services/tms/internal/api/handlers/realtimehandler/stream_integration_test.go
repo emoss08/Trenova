@@ -3,8 +3,6 @@
 package realtimehandler
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"bufio"
 	"bytes"
 	"context"
@@ -14,15 +12,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/services/realtimeservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/realtimebroker"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/realtimeservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"

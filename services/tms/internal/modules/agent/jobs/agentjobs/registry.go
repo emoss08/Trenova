@@ -1,7 +1,7 @@
 package agentjobs
 
 import (
-	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/reflectionjobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"

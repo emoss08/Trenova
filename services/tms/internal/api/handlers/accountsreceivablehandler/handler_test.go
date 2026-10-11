@@ -1,15 +1,16 @@
 package accountsreceivablehandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerledgerportsmock"
 	"net/http"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerledgerportsmock"
 
 	"github.com/emoss08/trenova/internal/api/handlers/accountsreceivablehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/billing/app/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"

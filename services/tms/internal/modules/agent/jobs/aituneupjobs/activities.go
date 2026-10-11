@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"go.uber.org/fx"

@@ -7,12 +7,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
 
-	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"

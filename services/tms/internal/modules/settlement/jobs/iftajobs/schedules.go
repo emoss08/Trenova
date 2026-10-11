@@ -1,6 +1,6 @@
 package iftajobs
 
-import "github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
+import "github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 
 type ScheduleProvider struct{}
 

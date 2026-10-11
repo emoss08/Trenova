@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/assignmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/carrierassignmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/detentionrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/dispatchconsolerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/dispatchcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/documentshipmentdraftrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/orderrepository"
@@ -27,15 +28,27 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/tenderrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/weatheralertrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/app/assignmentservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcontrolservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/globalsearchservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderderivation"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/servicefailurereasoncodeservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/servicefailureservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentboardservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcapacityservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommentservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentetaservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentholdservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentinvalidation"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentmoveservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentquickfilterservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice"
@@ -57,6 +70,28 @@ import (
 func SharedOptions() fx.Option {
 	return fx.Options(
 		fx.Provide(
+			dispatchconsolerepository.New,
+			detentionpolicyservice.NewValidator,
+			shipmentcommercial.New,
+			shipmentinvalidation.New,
+			globalsearchservice.New,
+			dispatchcandidateservice.New,
+			servicefailurereasoncodeservice.New,
+			shipmentcommentservice.New,
+			shipmentholdservice.New,
+			routingguideservice.NewValidator,
+			routingguideservice.New,
+			detentionpolicyservice.New,
+			shipmentboardservice.New,
+			customerupdateservice.New,
+			shipmentcapacityservice.New,
+			shipmentcapacityservice.NewCapacityReader,
+			shipmentcapacityservice.NewCoverageSuggester,
+			shipmentcapacityservice.NewTenderer,
+			func(s *shipmentboardservice.Service) shipmentports.ShipmentBoardCapabilitiesReader { return s },
+			func(s *shipmentboardservice.Service) shipmentports.ShipmentStageSummaryReader { return s },
+			func(s *shipmentboardservice.Service) shipmentports.ShipmentBoardGroupSummarizer { return s },
+			func(s *shipmentboardservice.Service) shipmentports.ShipmentQuickFilterCounter { return s },
 			shipmentrepository.NewInsightSource,
 			weatheralertrepository.New,
 			dispatchcontrolrepository.New,

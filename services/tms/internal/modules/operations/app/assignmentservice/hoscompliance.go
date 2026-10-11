@@ -3,7 +3,7 @@ package assignmentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"

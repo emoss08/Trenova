@@ -3,7 +3,7 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/costingservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/vikstrous/dataloadgen"
 	"go.uber.org/fx"

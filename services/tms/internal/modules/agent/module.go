@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentexceptionrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentextensionrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentmemoryrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentmemorysubjectrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentplanrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentproposalbaselinerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentproposalrepository"
@@ -20,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentrunsteprepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentscorecardrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentshadowrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentsubjectrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agenttoolrulerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agenttooltrustrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentwaitrepository"
@@ -32,12 +34,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/aituneuprepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/aiusagerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/assistantartifactrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/assistantcaserepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/assistantqueuerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/assistantturnrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/briefingrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/casechecklistrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationschedulerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/insightrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/roleagentgrantrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/shipmentbriefrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/shipmentimportchatrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/watchtowerrepository"
@@ -91,6 +96,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/aitraininghistoryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/aituneupservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/aiusageservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/approvalwindow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantcaseservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantfollowupservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistanthandoffservice"
@@ -99,6 +105,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/briefingservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/briefingservice/briefingwriter"
+	"github.com/emoss08/trenova/internal/modules/agent/app/casechecklistservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/conversationscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/dispatchautoassignservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
@@ -134,6 +141,7 @@ import (
 //nolint:funlen // the module's providers are its part of the application graph
 func SharedOptions() fx.Option {
 	return fx.Options(
+		casechecklistservice.Module,
 		agenttoolservice.Module,
 		agentquerytoolservice.Module,
 		agentruntime.Module,
@@ -150,6 +158,12 @@ func SharedOptions() fx.Option {
 			fx.As(new(agentdefinitionports.AgentDefinitionScheduler)),
 		)),
 		fx.Provide(
+			assistantcaserepository.New,
+			casechecklistrepository.New,
+			roleagentgrantrepository.New,
+			agentmemorysubjectrepository.New,
+			agentsubjectrepository.New,
+			approvalwindow.New,
 			assistantcontract.NewTurnCanceller,
 			completioncontract.NewDispatcher,
 			func(d *completioncontract.Dispatcher) agentports.StructuredCompleter { return d },

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/services/extractionfailure"
+	"github.com/emoss08/trenova/internal/modules/agent/app/extractionfailure"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"

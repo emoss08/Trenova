@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/core/services/shipmentnarration"
+	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentnarration"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"

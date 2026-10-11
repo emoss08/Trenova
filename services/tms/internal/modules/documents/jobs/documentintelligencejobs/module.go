@@ -1,8 +1,8 @@
 package documentintelligencejobs
 
 import (
-	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"go.uber.org/fx"
 )

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 
-	"github.com/emoss08/trenova/internal/core/services/benefitsservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/benefitsservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"

@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/core/services/billingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"

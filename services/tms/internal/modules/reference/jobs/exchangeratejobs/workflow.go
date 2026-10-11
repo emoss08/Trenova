@@ -3,7 +3,7 @@ package exchangeratejobs
 import (
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"

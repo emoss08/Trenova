@@ -6,11 +6,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 
-	"github.com/emoss08/trenova/internal/core/services/editioninfo"
-	"github.com/emoss08/trenova/internal/core/services/referencedataguard"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/edi/app/referencedataguard"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/editioninfo"
 	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"

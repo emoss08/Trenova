@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs/samsaracontract"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/samsarasyncservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/jobs/samsarajobs/samsaracontract"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"

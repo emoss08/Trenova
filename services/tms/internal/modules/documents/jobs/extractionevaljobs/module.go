@@ -1,8 +1,8 @@
 package extractionevaljobs
 
 import (
-	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentintelligencejobs"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/pkg/temporaltype"

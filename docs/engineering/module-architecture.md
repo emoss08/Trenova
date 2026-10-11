@@ -108,7 +108,7 @@ Inside a module the layers are ordered too:
 
 `domain` may import `pkg` but not `internal/infrastructure`; every other component may import
 both. `jobs` may also import `internal/core/**`, because the Temporal runtime they register with
-(`internal/core/temporaljobs/registry`, `schedule`, `interceptors`) has not moved yet.
+(`internal/infrastructure/temporaljobs/registry`, `schedule`, `interceptors`) has not moved yet.
 
 `internal/infrastructure` may import every module's `domain`, `ports` and contract packages.
 `internal/bootstrap`, `cmd`, `internal/testutil`, `internal/deskbench`, `scripts` and the
@@ -175,7 +175,7 @@ asks for it without the tag in every graph.
 Temporal client, every module's `SharedOptions()` and the edition's `Options`. `apiapp` adds the
 HTTP server, GraphQL, handlers, middleware, every module's `APIOptions()` and the edition's
 `APIOptions`. `workerapp.Modules()` adds every module's `jobs.WorkerOptions()` and the unmoved
-`internal/core/temporaljobs` job modules; `workerapp.OptionsFor` adds the worker runtime and
+`internal/infrastructure/temporaljobs` job modules; `workerapp.OptionsFor` adds the worker runtime and
 the edition's `WorkerOptions`.
 
 `run-watch-fast` links with `-ldflags='-s -w'`, which shortens the link step on every reload;
@@ -403,11 +403,4 @@ the family's place in `ToolProviders()` (or the family's own provider list, such
 
 ## Not done yet
 
-- 98 packages remain in the `unassigned` list of `module-map.yml` (70 services, 15
-  repositories, 13 jobs packages), each with the reason it could not be placed. They still live
-  in `internal/core/services`, `internal/infrastructure/postgres/repositories` and
-  `internal/core/temporaljobs`, and are registered in `internal/bootstrap/core` (`core.go` and
-  `services.go`), `internal/bootstrap/modules/repositories.go` and `workerapp.Modules()`. In
-  `.go-arch-lint.yml` the services and jobs fall under `legacy-core` and `legacy-contracts`, and
-  the repositories under `infrastructure`. To move one, assign it in the map, move the
-  directory, register it in its module, and append the move to `moves.tsv`.
+- The 319 architecture exceptions in `.go-arch-lint.yml` (`TODO(build-arch)`) record imports that break the module rules today; each needs an inversion port or a decision before it can be removed.

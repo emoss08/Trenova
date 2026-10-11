@@ -3,7 +3,7 @@ package edijobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"

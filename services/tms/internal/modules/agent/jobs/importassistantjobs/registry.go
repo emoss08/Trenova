@@ -1,7 +1,7 @@
 package importassistantjobs
 
 import (
-	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs"
 	"go.uber.org/fx"
 	"go.uber.org/zap"

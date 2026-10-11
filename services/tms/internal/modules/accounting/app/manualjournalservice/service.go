@@ -4,7 +4,7 @@ package manualjournalservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/journalposting"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"

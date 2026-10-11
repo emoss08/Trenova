@@ -3,9 +3,9 @@ package agenttoolstest
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 

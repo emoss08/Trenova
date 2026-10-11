@@ -721,7 +721,7 @@ findings:
       - services/tms/internal/modules/agent/app/assistantservice/workingset.go
       - services/tms/internal/modules/agent/domain/conversation/workingset.go
       - services/tms/internal/modules/agent/domain/agentdefinition/anchors.go
-      - services/tms/internal/core/services/shipmenttracking/facts.go
+      - services/tms/internal/modules/operations/app/shipmenttracking/facts.go
       - docs/engineering/agent-runtime.md
     fixedIn: .deskbench/runs/20261009-195808-run
 
@@ -743,7 +743,7 @@ findings:
       The snapshot takes a move with a driver or carrier assigned as covered whatever the column
       says; both seeds set coverage_type driver; the 23 local rows were corrected.
     files:
-      - services/tms/internal/core/services/shipmenttracking/snapshot.go
+      - services/tms/internal/modules/operations/app/shipmenttracking/snapshot.go
       - services/tms/internal/infrastructure/database/seeds/development/13_detention.go
       - services/tms/internal/infrastructure/database/seeds/development/11_driverpay.go
     fixedIn: this session
@@ -1074,8 +1074,8 @@ findings:
       otherwise says they are unknown, not zero, and to check them before promising the load. To
       verify in a run.
     files:
-      - services/tms/internal/core/services/dispatchcandidateservice/score.go
-      - services/tms/internal/core/services/dispatchcandidateservice/service.go
+      - services/tms/internal/modules/operations/app/dispatchcandidateservice/score.go
+      - services/tms/internal/modules/operations/app/dispatchcandidateservice/service.go
       - services/tms/internal/modules/agent/app/agentquerytoolservice/dispatch_tools.go
     fixedIn: .deskbench/runs/20261009-203702-run
 
@@ -1197,9 +1197,9 @@ findings:
       and put what stands against it beside the proposal; a kind ("a dry van") is chosen, not asked.
     fixedIn: uncommitted; verified by .deskbench/runs/20261009-215410-run (David Park on TRC-001 with a dry van proposed and approved)
     files:
-      - services/tms/internal/core/services/dispatchcandidateservice/service.go
-      - services/tms/internal/core/services/dispatchcandidateservice/score.go
-      - services/tms/internal/core/services/dispatcheligibility/finding.go
+      - services/tms/internal/modules/operations/app/dispatchcandidateservice/service.go
+      - services/tms/internal/modules/operations/app/dispatchcandidateservice/score.go
+      - services/tms/internal/modules/operations/app/dispatcheligibility/finding.go
       - services/tms/internal/modules/agent/app/agentquerytoolservice/dispatch_tools.go
       - services/tms/internal/modules/agent/app/agentquerytoolservice/listcatalog.go
       - services/tms/internal/modules/agent/domain/agentdefinition/prompt.go
@@ -1299,7 +1299,7 @@ findings:
     files:
       - services/tms/internal/modules/operations/app/shipmentetaservice/service.go
       - services/tms/internal/modules/agent/app/agentquerytoolservice/tracking_tools.go
-      - services/tms/internal/core/services/shipmenttracking/facts.go
+      - services/tms/internal/modules/operations/app/shipmenttracking/facts.go
       - services/tms/internal/modules/operations/domain/shipment/enums.go
 
   - id: DB-055
@@ -1459,7 +1459,7 @@ findings:
       The plan takes the lock from its caller: the preview reads without one, the write keeps SHARE.
     fixedIn: uncommitted; unit-tested
     files:
-      - services/tms/internal/core/services/capabilityguard/capabilityguard.go
+      - services/tms/internal/modules/operations/app/capabilityguard/capabilityguard.go
       - services/tms/internal/modules/operations/app/assignmentservice/plan.go
       - services/tms/internal/modules/operations/app/assignmentservice/service.go
 
@@ -2020,8 +2020,8 @@ findings:
     fix: shipmenttracking.Snapshot carries Freight ("38,000 lb, 20 pieces"), listed in Facts() and get_shipment_tracking.
     fixedIn: uncommitted; TestFacts_NameTheFreight
     files:
-      - services/tms/internal/core/services/shipmenttracking/snapshot.go
-      - services/tms/internal/core/services/shipmenttracking/facts.go
+      - services/tms/internal/modules/operations/app/shipmenttracking/snapshot.go
+      - services/tms/internal/modules/operations/app/shipmenttracking/facts.go
 
   - id: DB-090
     title: wait_until read as needing a truck, so an arrival notice on an unassigned load was never set
@@ -2126,7 +2126,7 @@ findings:
     fixedIn: uncommitted; TestListWorkerSafetyEvents_ListsTheFleetsOpenEventsWithNoWorker
     files:
       - services/tms/internal/modules/agent/app/agentquerytoolservice/workforce_safety_reads.go
-      - services/tms/internal/core/services/workersafetyservice/events.go
+      - services/tms/internal/modules/workforce/app/workersafetyservice/events.go
       - services/tms/internal/modules/workforce/adapters/postgres/workersafetyrepository/repository.go
 
   - id: DB-096

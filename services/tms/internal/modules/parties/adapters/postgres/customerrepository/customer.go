@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/m2msync"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/m2msync"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"

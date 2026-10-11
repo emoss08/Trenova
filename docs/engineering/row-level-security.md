@@ -34,7 +34,7 @@ PostgreSQL ──▶ policy: organization_id = (SELECT trenova_rls.org_id())
 | Key install, policy reconcile, role provisioning | `internal/infrastructure/postgres/rlsprovision.go`, `trenova db rls` |
 | Roles, scope schema and every policy | migration `20261231007040_row_level_security` |
 | HTTP binding | `pkg/authctx` (`SetSessionAuthContext`, `SetAPIKeyContext`, `SetCaptureDeviceContext`) |
-| Temporal binding | `internal/core/temporaljobs/interceptors/tenantscope.go` |
+| Temporal binding | `internal/infrastructure/temporaljobs/interceptors/tenantscope.go` |
 | Guards | `schemalint/rls_integration_test.go`, `systemscopelint`, `rlslint` (repository methods run in a scoped transaction), `postgres/rls_integration_test.go` |
 
 ## Roles

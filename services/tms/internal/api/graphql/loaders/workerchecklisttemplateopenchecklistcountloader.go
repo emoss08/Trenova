@@ -3,7 +3,7 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/workerchecklistservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"

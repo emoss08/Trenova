@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
@@ -20,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/app/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"

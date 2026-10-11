@@ -5,8 +5,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/services/ptopolicyservice"
-	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -15,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"

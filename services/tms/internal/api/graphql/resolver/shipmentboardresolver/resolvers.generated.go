@@ -4,8 +4,8 @@ package shipmentboardresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	customerupdateservice "github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	shipmentbriefports "github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
+	customerupdateservice "github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
 	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	shipmentsuggestionports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 )

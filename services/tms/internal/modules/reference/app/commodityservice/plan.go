@@ -3,7 +3,7 @@ package commodityservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/statuschange"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/statuschange"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"

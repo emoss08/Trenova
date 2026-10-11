@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

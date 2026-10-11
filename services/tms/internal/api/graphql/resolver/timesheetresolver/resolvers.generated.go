@@ -4,7 +4,7 @@ package timesheetresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	timesheetservice "github.com/emoss08/trenova/internal/core/services/timesheetservice"
+	timesheetservice "github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice"
 )
 
 type Deps struct {

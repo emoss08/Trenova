@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"strings"
 
-	workflowstarterservice "github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	workflowstarterservice "github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentintelligencejobs/documentintelligencecontract"

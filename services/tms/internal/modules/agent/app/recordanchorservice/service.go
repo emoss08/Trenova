@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
 
-	"github.com/emoss08/trenova/internal/core/services/subjectaccess"
+	"github.com/emoss08/trenova/internal/modules/agent/app/subjectaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"

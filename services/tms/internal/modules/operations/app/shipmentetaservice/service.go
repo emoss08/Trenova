@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
 
-	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"

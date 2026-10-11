@@ -14,6 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/iamrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/invoiceadjustmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/onboardingrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/organizationrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/orgstructurerepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/passwordresetrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/rbacrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/roleassignmentrepository"
@@ -23,7 +25,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/shipmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/ssoconfigrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/ssoidentitylinkrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/tenantbootstraprepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/tenantsyncrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice"
@@ -41,6 +45,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/mfaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/onboardingservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/organizationservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
@@ -66,6 +71,11 @@ import (
 func SharedOptions() fx.Option {
 	return fx.Options(
 		fx.Provide(
+			organizationrepository.New,
+			tenantbootstraprepository.New,
+			userrepository.New,
+			orgstructurerepository.New,
+			orgstructureservice.New,
 			tenantsyncrepository.New,
 			onboardingrepository.New,
 			iamrepository.New,

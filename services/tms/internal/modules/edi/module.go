@@ -21,8 +21,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editransactionsetrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editransferchangerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editransferrepository"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
+	"github.com/emoss08/trenova/internal/modules/edi/app/referencedataguard"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"go.uber.org/fx"
 )
@@ -30,6 +32,8 @@ import (
 func SharedOptions() fx.Option {
 	return fx.Options(
 		fx.Provide(
+			ediinboundservice.New,
+			referencedataguard.New,
 			edipartnerrepository.New,
 			edimappingprofilerepository.New,
 			editransferrepository.New,

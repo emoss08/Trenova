@@ -1,10 +1,6 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
-	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
-	"github.com/emoss08/trenova/internal/core/services/invoiceshareservice"
-	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/alerttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtools"
@@ -28,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicerunservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceshareservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -35,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
@@ -49,6 +47,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"

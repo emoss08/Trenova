@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/core/services/journalposting"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"

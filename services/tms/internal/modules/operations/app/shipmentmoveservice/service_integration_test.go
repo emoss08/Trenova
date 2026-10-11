@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 
-	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -17,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentcommodityrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"

@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/tablelayoutrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/tcaallowlistrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/tcasubscriptionrepository"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/analyticsservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/bulkeditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
@@ -36,6 +37,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/sidebarpreferenceservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tableconfigurationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/tableexportservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tablelayoutservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/webpushservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
@@ -46,7 +48,9 @@ import (
 //nolint:funlen // the module's providers are its part of the application graph
 func SharedOptions() fx.Option {
 	return fx.Options(
+		analyticsservice.Module,
 		fx.Provide(
+			tableexportservice.New,
 			tableconfigurationrepository.New,
 			pagefavoriterepository.New,
 			reportrepository.NewDefinitionRepository,

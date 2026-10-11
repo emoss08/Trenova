@@ -6,11 +6,11 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"

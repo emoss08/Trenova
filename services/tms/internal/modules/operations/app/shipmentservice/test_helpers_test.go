@@ -3,13 +3,13 @@ package shipmentservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
-	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
-	"github.com/emoss08/trenova/internal/core/services/shipmentinvalidation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentinvalidation"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"go.uber.org/zap"
 )

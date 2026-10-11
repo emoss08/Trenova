@@ -12,6 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalreversalrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/manualjournalrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountinginboundservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalcloseservice"
@@ -31,6 +34,12 @@ import (
 func SharedOptions() fx.Option {
 	return fx.Options(
 		fx.Provide(
+			accountingconnectionservice.New,
+			func(s *accountingconnectionservice.Service) accountingsyncports.AccountingConnectionService { return s },
+			accountingmappingservice.New,
+			func(s *accountingmappingservice.Service) accountingsyncports.AccountingMappingService { return s },
+			accountinginboundservice.New,
+			func(s *accountinginboundservice.Service) accountingsyncports.AccountingInboundService { return s },
 			glbalancerepository.New,
 			accountingsyncrepository.NewConnectionRepository,
 			accountingsyncrepository.NewAppCredentialRepository,

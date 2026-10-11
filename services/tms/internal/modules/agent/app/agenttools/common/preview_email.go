@@ -1,9 +1,9 @@
 package common
 
 import (
-	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"

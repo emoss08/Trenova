@@ -1,8 +1,8 @@
 package carriersettlementjobs
 
 import (
-	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"go.uber.org/fx"
 )
 

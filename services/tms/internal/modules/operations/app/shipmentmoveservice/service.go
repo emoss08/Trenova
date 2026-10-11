@@ -3,9 +3,6 @@ package shipmentmoveservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/equipmentcontinuityhelper"
-	"github.com/emoss08/trenova/internal/core/services/servicefailuretrigger"
-	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -13,6 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/equipmentavailabilityhelper"
+	"github.com/emoss08/trenova/internal/modules/operations/app/equipmentcontinuityhelper"
+	"github.com/emoss08/trenova/internal/modules/operations/app/servicefailuretrigger"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"

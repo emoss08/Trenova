@@ -1,7 +1,7 @@
 package edijobs
 
 import (
-	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.uber.org/fx"
 	"go.uber.org/zap"

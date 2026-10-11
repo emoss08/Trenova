@@ -3,6 +3,7 @@ package settlement
 import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/benefitrepository"
+	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/carrierinvoicematchrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/carrierledgerrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/carriersettlementrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/driverpayrepository"
@@ -21,6 +22,7 @@ import (
 func SharedOptions() fx.Option {
 	return fx.Options(
 		fx.Provide(
+			carrierinvoicematchrepository.New,
 			benefitrepository.New,
 			driverpayrepository.NewPayProfile,
 			driverpayrepository.NewWorkerPayAssignment,

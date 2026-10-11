@@ -3,7 +3,7 @@ package shipmenttrackingports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

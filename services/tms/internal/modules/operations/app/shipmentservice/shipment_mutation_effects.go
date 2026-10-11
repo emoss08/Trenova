@@ -3,9 +3,9 @@ package shipmentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/equipmentcontinuityhelper"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/equipmentcontinuityhelper"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"

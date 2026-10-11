@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/pkg/temporaltype"

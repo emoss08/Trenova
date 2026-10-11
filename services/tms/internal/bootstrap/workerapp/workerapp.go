@@ -3,22 +3,17 @@ package workerapp
 import (
 	"context"
 
+	partiesworker "github.com/emoss08/trenova/internal/modules/parties/jobs"
+
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentqualityjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/conversationschedulejobs"
 
 	"github.com/emoss08/trenova/internal/bootstrap/edition"
-	"github.com/emoss08/trenova/internal/core/temporaljobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/carrierintelligencejobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/compliancejobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/fuelpricejobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/ptojobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/settlementjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	accountingworker "github.com/emoss08/trenova/internal/modules/accounting/jobs"
 	agentworker "github.com/emoss08/trenova/internal/modules/agent/jobs"
 	billingworker "github.com/emoss08/trenova/internal/modules/billing/jobs"
@@ -39,6 +34,7 @@ import (
 //nolint:funlen // the module list is the worker-only application graph
 func Modules() fx.Option {
 	return fx.Options(
+		partiesworker.WorkerOptions(),
 		identityworker.WorkerOptions(),
 		workspaceworker.WorkerOptions(),
 		referenceworker.WorkerOptions(),
@@ -53,13 +49,6 @@ func Modules() fx.Option {
 		settlementworker.WorkerOptions(),
 		agentworker.WorkerOptions(),
 		schedule.Module,
-		ptojobs.Module,
-		carrierintelligencejobs.Module,
-		fuelpricejobs.Module,
-		ratesimjobs.Module,
-		samsarajobs.Module,
-		settlementjobs.Module,
-		compliancejobs.Module,
 	)
 }
 

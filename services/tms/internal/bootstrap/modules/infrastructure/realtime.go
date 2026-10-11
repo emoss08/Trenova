@@ -1,9 +1,9 @@
 package infrastructure
 
 import (
-	"github.com/emoss08/trenova/internal/core/services/realtimeservice"
 	"github.com/emoss08/trenova/internal/infrastructure/realtimebroker"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/realtimeservice"
 	"go.uber.org/fx"
 )
 

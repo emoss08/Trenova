@@ -5,9 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/services/shipmentboardcache"
-	"github.com/emoss08/trenova/internal/core/services/shipmentnarration"
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentboardbrief"
+	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentnarration"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -15,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentboardcache"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"

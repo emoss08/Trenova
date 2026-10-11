@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 
-	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
@@ -17,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"

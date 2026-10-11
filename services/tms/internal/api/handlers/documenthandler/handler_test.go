@@ -1,9 +1,6 @@
 package documenthandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
 	"context"
 	"errors"
 	"io"
@@ -12,15 +9,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
+
 	"github.com/emoss08/trenova/internal/api/handlers/documenthandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
-	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
-	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"

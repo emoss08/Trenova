@@ -4,9 +4,9 @@ package driverportalresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	driverportalservice "github.com/emoss08/trenova/internal/core/services/driverportalservice"
 	dashcontrolservice "github.com/emoss08/trenova/internal/modules/identity/app/dashcontrolservice"
 	driversettlementservice "github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	telematicsservice "github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
 	notificationservice "github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 )

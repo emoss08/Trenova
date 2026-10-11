@@ -1,7 +1,7 @@
 package completionjobs
 
 import (
-	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/completionjobs/completioncontract"
 	"go.uber.org/fx"

@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/bootstrap"
 	"github.com/emoss08/trenova/internal/bootstrap/edition"
-	"github.com/emoss08/trenova/internal/core/services/editioninfo"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/editioninfo"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/fx"

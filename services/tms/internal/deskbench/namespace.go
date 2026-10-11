@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/connection"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/connection"
 	namespacepb "go.temporal.io/api/namespace/v1"
 	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/api/workflowservice/v1"

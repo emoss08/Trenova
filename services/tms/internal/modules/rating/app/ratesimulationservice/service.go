@@ -11,7 +11,6 @@ package ratesimulationservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs/ratesimcontract"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -20,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratesimulation"
+	"github.com/emoss08/trenova/internal/modules/rating/jobs/ratesimjobs/ratesimcontract"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratesimulationports"

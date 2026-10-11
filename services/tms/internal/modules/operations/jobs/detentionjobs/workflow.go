@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs/documentuploadcontract"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/detentionjobs/detentioncontract"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"

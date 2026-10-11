@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"slices"
 
-	workflowstarterservice "github.com/emoss08/trenova/internal/core/services/workflowstarter"
+	workflowstarterservice "github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"

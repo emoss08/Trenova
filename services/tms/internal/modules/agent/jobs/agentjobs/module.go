@@ -3,8 +3,8 @@ package agentjobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"

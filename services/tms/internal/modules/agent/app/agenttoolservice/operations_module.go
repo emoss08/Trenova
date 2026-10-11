@@ -1,8 +1,6 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/core/services/orgstructureservice"
-	"github.com/emoss08/trenova/internal/core/services/schedulingservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carriertools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/movetools"
@@ -12,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
@@ -20,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
 )
 
 func operationsToolProviders() []any {

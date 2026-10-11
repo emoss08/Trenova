@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/gin-gonic/gin"
 )
 

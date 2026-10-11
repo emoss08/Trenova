@@ -3,7 +3,7 @@ package jurisdictionruleservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/referencedataguard"
+	"github.com/emoss08/trenova/internal/modules/edi/app/referencedataguard"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"

@@ -1,7 +1,7 @@
 package emailjobs
 
 import (
-	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"go.uber.org/fx"
 )
 

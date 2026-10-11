@@ -441,12 +441,6 @@ components:
   infrastructure:
     in:
       - internal/infrastructure/**
-  legacy-core:
-    in:
-      - internal/core/**
-  legacy-contracts:
-    in:
-      - internal/core/temporaljobs/*/*contract
   deskbench:
     in:
       - internal/deskbench/**
@@ -476,10 +470,10 @@ deps:
       - kernel-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
+      - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in kernel (2 imports)
+      - edi-ports # TODO(build-arch): upward import of edi; needs an inversion port declared in kernel (1 imports)
       - identity-domain # TODO(build-arch): upward import of identity; needs an inversion port declared in kernel (1 imports)
-      - identity-ports # TODO(build-arch): upward import of identity; needs an inversion port declared in kernel (1 imports)
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (1 imports)
+      - identity-ports # TODO(build-arch): upward import of identity; needs an inversion port declared in kernel (2 imports)
   kernel-adapters:
     mayDependOn:
       - kernel-domain
@@ -487,7 +481,6 @@ deps:
       - kernel-adapters
       - pkg
       - infrastructure
-      - legacy-contracts
   kernel-jobs:
     mayDependOn:
       - kernel-domain
@@ -498,8 +491,6 @@ deps:
       - kernel-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core
   kernel-contracts:
     mayDependOn:
       - kernel-domain
@@ -508,7 +499,6 @@ deps:
       - kernel-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
   kernel-module:
     mayDependOn:
       - kernel-domain
@@ -518,7 +508,6 @@ deps:
       - kernel-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
   kernel-test:
     anyProjectDeps: true
   identity-domain:
@@ -534,7 +523,6 @@ deps:
       - kernel-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in identity (2 imports)
   identity-app:
     mayDependOn:
@@ -547,16 +535,16 @@ deps:
       - kernel-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
+      - accounting-app # TODO(build-arch): upward import of accounting; needs an inversion port declared in identity (1 imports)
       - accounting-domain # TODO(build-arch): upward import of accounting; needs an inversion port declared in identity (1 imports)
       - accounting-ports # TODO(build-arch): upward import of accounting; needs an inversion port declared in identity (2 imports)
       - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in identity (1 imports)
-      - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in identity (7 imports)
+      - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in identity (8 imports)
       - documents-domain # TODO(build-arch): upward import of documents; needs an inversion port declared in identity (2 imports)
       - documents-ports # TODO(build-arch): upward import of documents; needs an inversion port declared in identity (1 imports)
       - equipment-app # TODO(build-arch): upward import of equipment; needs an inversion port declared in identity (4 imports)
       - equipment-domain # TODO(build-arch): upward import of equipment; needs an inversion port declared in identity (4 imports)
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (7 imports)
+      - kernel-app # TODO(build-arch): imports app of kernel; use its ports (rule 6) (4 imports)
       - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in identity (1 imports)
       - operations-ports # TODO(build-arch): upward import of operations; needs an inversion port declared in identity (1 imports)
       - parties-app # TODO(build-arch): upward import of parties; needs an inversion port declared in identity (1 imports)
@@ -569,12 +557,13 @@ deps:
       - reference-app # TODO(build-arch): upward import of reference; needs an inversion port declared in identity (2 imports)
       - reference-domain # TODO(build-arch): upward import of reference; needs an inversion port declared in identity (2 imports)
       - reference-ports # TODO(build-arch): upward import of reference; needs an inversion port declared in identity (1 imports)
-      - workforce-app # TODO(build-arch): upward import of workforce; needs an inversion port declared in identity (1 imports)
-      - workforce-domain # TODO(build-arch): upward import of workforce; needs an inversion port declared in identity (11 imports)
-      - workforce-ports # TODO(build-arch): upward import of workforce; needs an inversion port declared in identity (10 imports)
-      - workspace-app # TODO(build-arch): upward import of workspace; needs an inversion port declared in identity (15 imports)
+      - settlement-app # TODO(build-arch): upward import of settlement; needs an inversion port declared in identity (1 imports)
+      - workforce-app # TODO(build-arch): upward import of workforce; needs an inversion port declared in identity (2 imports)
+      - workforce-domain # TODO(build-arch): upward import of workforce; needs an inversion port declared in identity (14 imports)
+      - workforce-ports # TODO(build-arch): upward import of workforce; needs an inversion port declared in identity (13 imports)
+      - workspace-app # TODO(build-arch): upward import of workspace; needs an inversion port declared in identity (16 imports)
       - workspace-domain # TODO(build-arch): upward import of workspace; needs an inversion port declared in identity (5 imports)
-      - workspace-ports # TODO(build-arch): upward import of workspace; needs an inversion port declared in identity (19 imports)
+      - workspace-ports # TODO(build-arch): upward import of workspace; needs an inversion port declared in identity (20 imports)
   identity-adapters:
     mayDependOn:
       - identity-domain
@@ -584,11 +573,12 @@ deps:
       - kernel-ports
       - pkg
       - infrastructure
-      - legacy-contracts
-      - identity-app # TODO(build-arch): layer import inside the module that the layer rules do not allow (1 imports)
-      - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in identity (1 imports)
-      - workforce-domain # TODO(build-arch): upward import of workforce; needs an inversion port declared in identity (1 imports)
-      - workforce-ports # TODO(build-arch): upward import of workforce; needs an inversion port declared in identity (1 imports)
+      - identity-app # TODO(build-arch): layer import inside the module that the layer rules do not allow (2 imports)
+      - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in identity (4 imports)
+      - rating-domain # TODO(build-arch): upward import of rating; needs an inversion port declared in identity (1 imports)
+      - settlement-domain # TODO(build-arch): upward import of settlement; needs an inversion port declared in identity (2 imports)
+      - workforce-domain # TODO(build-arch): upward import of workforce; needs an inversion port declared in identity (5 imports)
+      - workforce-ports # TODO(build-arch): upward import of workforce; needs an inversion port declared in identity (4 imports)
   identity-jobs:
     mayDependOn:
       - identity-domain
@@ -602,8 +592,6 @@ deps:
       - kernel-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core
       - billing-domain # TODO(build-arch): upward import of billing; needs an inversion port declared in identity (2 imports)
       - billing-ports # TODO(build-arch): upward import of billing; needs an inversion port declared in identity (5 imports)
       - documents-contracts # TODO(build-arch): upward import of documents; needs an inversion port declared in identity (1 imports)
@@ -626,7 +614,6 @@ deps:
       - kernel-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
   identity-module:
     mayDependOn:
       - identity-domain
@@ -638,7 +625,6 @@ deps:
       - kernel-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - accounting-ports # TODO(build-arch): upward import of accounting; needs an inversion port declared in identity (1 imports)
       - workforce-app # TODO(build-arch): upward import of workforce; needs an inversion port declared in identity (1 imports)
       - workforce-ports # TODO(build-arch): upward import of workforce; needs an inversion port declared in identity (1 imports)
@@ -661,7 +647,6 @@ deps:
       - identity-ports
       - pkg
       - infrastructure
-      - legacy-contracts
   workspace-app:
     mayDependOn:
       - workspace-domain
@@ -676,16 +661,16 @@ deps:
       - identity-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
       - accounting-domain # TODO(build-arch): upward import of accounting; needs an inversion port declared in workspace (1 imports)
       - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in workspace (1 imports)
       - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in workspace (5 imports)
+      - billing-app # TODO(build-arch): upward import of billing; needs an inversion port declared in workspace (1 imports)
+      - billing-domain # TODO(build-arch): upward import of billing; needs an inversion port declared in workspace (1 imports)
       - billing-ports # TODO(build-arch): upward import of billing; needs an inversion port declared in workspace (1 imports)
       - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (3 imports)
-      - kernel-app # TODO(build-arch): imports app of kernel; use its ports (rule 6) (2 imports)
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (3 imports)
-      - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in workspace (1 imports)
-      - operations-ports # TODO(build-arch): upward import of operations; needs an inversion port declared in workspace (1 imports)
+      - kernel-app # TODO(build-arch): imports app of kernel; use its ports (rule 6) (5 imports)
+      - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in workspace (2 imports)
+      - operations-ports # TODO(build-arch): upward import of operations; needs an inversion port declared in workspace (2 imports)
       - parties-app # TODO(build-arch): upward import of parties; needs an inversion port declared in workspace (2 imports)
       - parties-domain # TODO(build-arch): upward import of parties; needs an inversion port declared in workspace (3 imports)
       - parties-ports # TODO(build-arch): upward import of parties; needs an inversion port declared in workspace (4 imports)
@@ -707,7 +692,6 @@ deps:
       - identity-ports
       - pkg
       - infrastructure
-      - legacy-contracts
   workspace-jobs:
     mayDependOn:
       - workspace-domain
@@ -724,8 +708,6 @@ deps:
       - identity-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core
       - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in workspace (2 imports)
       - documents-domain # TODO(build-arch): upward import of documents; needs an inversion port declared in workspace (4 imports)
       - documents-ports # TODO(build-arch): upward import of documents; needs an inversion port declared in workspace (3 imports)
@@ -744,7 +726,6 @@ deps:
       - identity-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
   workspace-module:
     mayDependOn:
       - workspace-domain
@@ -758,7 +739,6 @@ deps:
       - identity-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - settlement-ports # TODO(build-arch): upward import of settlement; needs an inversion port declared in workspace (1 imports)
   workspace-test:
     anyProjectDeps: true
@@ -781,7 +761,6 @@ deps:
       - workspace-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - accounting-domain # TODO(build-arch): upward import of accounting; needs an inversion port declared in reference (3 imports)
       - equipment-domain # TODO(build-arch): upward import of equipment; needs an inversion port declared in reference (2 imports)
       - parties-domain # TODO(build-arch): upward import of parties; needs an inversion port declared in reference (1 imports)
@@ -803,10 +782,9 @@ deps:
       - workspace-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
       - accounting-domain # TODO(build-arch): upward import of accounting; needs an inversion port declared in reference (3 imports)
       - equipment-domain # TODO(build-arch): upward import of equipment; needs an inversion port declared in reference (2 imports)
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (2 imports)
+      - kernel-app # TODO(build-arch): imports app of kernel; use its ports (rule 6) (2 imports)
       - parties-domain # TODO(build-arch): upward import of parties; needs an inversion port declared in reference (1 imports)
       - places-domain # TODO(build-arch): upward import of places; needs an inversion port declared in reference (1 imports)
       - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (9 imports)
@@ -823,7 +801,6 @@ deps:
       - workspace-ports
       - pkg
       - infrastructure
-      - legacy-contracts
   reference-jobs:
     mayDependOn:
       - reference-domain
@@ -843,8 +820,6 @@ deps:
       - workspace-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core
   reference-contracts:
     mayDependOn:
       - reference-domain
@@ -862,7 +837,6 @@ deps:
       - workspace-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
   reference-module:
     mayDependOn:
       - reference-domain
@@ -878,7 +852,6 @@ deps:
       - workspace-ports
       - pkg
       - infrastructure
-      - legacy-contracts
   reference-test:
     anyProjectDeps: true
   places-domain:
@@ -904,7 +877,6 @@ deps:
       - reference-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in places (1 imports)
   places-app:
     mayDependOn:
@@ -926,8 +898,8 @@ deps:
       - reference-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (2 imports)
+      - edi-app # TODO(build-arch): upward import of edi; needs an inversion port declared in places (1 imports)
+      - kernel-app # TODO(build-arch): imports app of kernel; use its ports (rule 6) (1 imports)
       - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in places (1 imports)
       - operations-ports # TODO(build-arch): upward import of operations; needs an inversion port declared in places (1 imports)
       - settlement-contracts # TODO(build-arch): upward import of settlement; needs an inversion port declared in places (1 imports)
@@ -948,7 +920,6 @@ deps:
       - reference-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (1 imports)
       - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in places (1 imports)
   places-jobs:
@@ -973,8 +944,6 @@ deps:
       - reference-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core
   places-contracts:
     mayDependOn:
       - places-domain
@@ -995,7 +964,6 @@ deps:
       - reference-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
   places-module:
     mayDependOn:
       - places-domain
@@ -1013,7 +981,6 @@ deps:
       - reference-ports
       - pkg
       - infrastructure
-      - legacy-contracts
   places-test:
     anyProjectDeps: true
   equipment-domain:
@@ -1039,7 +1006,6 @@ deps:
       - reference-ports
       - pkg
       - infrastructure
-      - legacy-contracts
   equipment-app:
     mayDependOn:
       - equipment-domain
@@ -1060,10 +1026,8 @@ deps:
       - reference-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
       - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in equipment (2 imports)
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (1 imports)
-      - operations-app # TODO(build-arch): upward import of operations; needs an inversion port declared in equipment (1 imports)
+      - operations-app # TODO(build-arch): upward import of operations; needs an inversion port declared in equipment (2 imports)
       - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in equipment (4 imports)
       - operations-ports # TODO(build-arch): upward import of operations; needs an inversion port declared in equipment (3 imports)
       - places-domain # TODO(build-arch): same-level import of places (rule 2); needs a decision (3 imports)
@@ -1084,7 +1048,6 @@ deps:
       - reference-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in equipment (1 imports)
       - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in equipment (1 imports)
       - billing-domain # TODO(build-arch): upward import of billing; needs an inversion port declared in equipment (3 imports)
@@ -1117,8 +1080,6 @@ deps:
       - reference-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core
   equipment-contracts:
     mayDependOn:
       - equipment-domain
@@ -1139,7 +1100,6 @@ deps:
       - reference-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
   equipment-module:
     mayDependOn:
       - equipment-domain
@@ -1157,7 +1117,6 @@ deps:
       - reference-ports
       - pkg
       - infrastructure
-      - legacy-contracts
   equipment-test:
     anyProjectDeps: true
   parties-domain:
@@ -1188,7 +1147,6 @@ deps:
       - reference-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - documents-domain # TODO(build-arch): upward import of documents; needs an inversion port declared in parties (1 imports)
       - documents-ports # TODO(build-arch): upward import of documents; needs an inversion port declared in parties (1 imports)
       - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in parties (1 imports)
@@ -1215,14 +1173,13 @@ deps:
       - reference-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
       - accounting-domain # TODO(build-arch): upward import of accounting; needs an inversion port declared in parties (1 imports)
       - accounting-ports # TODO(build-arch): upward import of accounting; needs an inversion port declared in parties (2 imports)
       - agent-app # TODO(build-arch): upward import of agent; needs an inversion port declared in parties (1 imports)
       - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in parties (2 imports)
       - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in parties (5 imports)
       - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (2 imports)
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (2 imports)
+      - kernel-app # TODO(build-arch): imports app of kernel; use its ports (rule 6) (2 imports)
       - operations-ports # TODO(build-arch): upward import of operations; needs an inversion port declared in parties (3 imports)
       - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (10 imports)
   parties-adapters:
@@ -1240,7 +1197,6 @@ deps:
       - reference-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (1 imports)
       - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in parties (2 imports)
   parties-jobs:
@@ -1265,8 +1221,6 @@ deps:
       - reference-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core
   parties-contracts:
     mayDependOn:
       - parties-domain
@@ -1287,7 +1241,6 @@ deps:
       - reference-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
   parties-module:
     mayDependOn:
       - parties-domain
@@ -1305,7 +1258,6 @@ deps:
       - reference-ports
       - pkg
       - infrastructure
-      - legacy-contracts
   parties-test:
     anyProjectDeps: true
   workforce-domain:
@@ -1341,7 +1293,6 @@ deps:
       - parties-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in workforce (2 imports)
   workforce-app:
     mayDependOn:
@@ -1372,18 +1323,23 @@ deps:
       - parties-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
       - accounting-domain # TODO(build-arch): upward import of accounting; needs an inversion port declared in workforce (1 imports)
       - accounting-ports # TODO(build-arch): upward import of accounting; needs an inversion port declared in workforce (1 imports)
       - agent-app # TODO(build-arch): upward import of agent; needs an inversion port declared in workforce (1 imports)
       - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in workforce (2 imports)
-      - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in workforce (5 imports)
-      - documents-domain # TODO(build-arch): same-level import of documents (rule 2); needs a decision (1 imports)
-      - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (1 imports)
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (6 imports)
-      - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in workforce (6 imports)
-      - operations-ports # TODO(build-arch): upward import of operations; needs an inversion port declared in workforce (8 imports)
-      - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (7 imports)
+      - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in workforce (17 imports)
+      - documents-app # TODO(build-arch): same-level import of documents (rule 2); needs a decision (4 imports)
+      - documents-domain # TODO(build-arch): same-level import of documents (rule 2); needs a decision (14 imports)
+      - documents-ports # TODO(build-arch): same-level import of documents (rule 2); needs a decision (18 imports)
+      - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (7 imports)
+      - kernel-app # TODO(build-arch): imports app of kernel; use its ports (rule 6) (1 imports)
+      - operations-app # TODO(build-arch): upward import of operations; needs an inversion port declared in workforce (2 imports)
+      - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in workforce (8 imports)
+      - operations-ports # TODO(build-arch): upward import of operations; needs an inversion port declared in workforce (10 imports)
+      - settlement-app # TODO(build-arch): upward import of settlement; needs an inversion port declared in workforce (4 imports)
+      - settlement-domain # TODO(build-arch): upward import of settlement; needs an inversion port declared in workforce (6 imports)
+      - settlement-ports # TODO(build-arch): upward import of settlement; needs an inversion port declared in workforce (8 imports)
+      - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (28 imports)
   workforce-adapters:
     mayDependOn:
       - workforce-domain
@@ -1405,7 +1361,6 @@ deps:
       - parties-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (1 imports)
       - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in workforce (1 imports)
       - settlement-domain # TODO(build-arch): upward import of settlement; needs an inversion port declared in workforce (1 imports)
@@ -1440,9 +1395,13 @@ deps:
       - parties-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core
-      - agent-jobs # TODO(build-arch): upward import of agent; needs an inversion port declared in workforce (1 imports)
+      - agent-app # TODO(build-arch): upward import of agent; needs an inversion port declared in workforce (1 imports)
+      - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in workforce (1 imports)
+      - agent-jobs # TODO(build-arch): upward import of agent; needs an inversion port declared in workforce (2 imports)
+      - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in workforce (2 imports)
+      - documents-domain # TODO(build-arch): same-level import of documents (rule 2); needs a decision (3 imports)
+      - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (1 imports)
+      - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (1 imports)
   workforce-contracts:
     mayDependOn:
       - workforce-domain
@@ -1472,7 +1431,6 @@ deps:
       - parties-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
   workforce-module:
     mayDependOn:
       - workforce-domain
@@ -1496,8 +1454,6 @@ deps:
       - parties-ports
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (1 imports)
   workforce-test:
     anyProjectDeps: true
   documents-domain:
@@ -1533,7 +1489,6 @@ deps:
       - parties-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in documents (4 imports)
       - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in documents (1 imports)
       - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in documents (1 imports)
@@ -1566,13 +1521,11 @@ deps:
       - parties-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - agent-app # TODO(build-arch): upward import of agent; needs an inversion port declared in documents (4 imports)
+      - agent-app # TODO(build-arch): upward import of agent; needs an inversion port declared in documents (6 imports)
       - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in documents (20 imports)
       - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in documents (28 imports)
       - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (1 imports)
-      - kernel-app # TODO(build-arch): imports app of kernel; use its ports (rule 6) (2 imports)
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (15 imports)
+      - kernel-app # TODO(build-arch): imports app of kernel; use its ports (rule 6) (8 imports)
       - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in documents (3 imports)
       - operations-ports # TODO(build-arch): upward import of operations; needs an inversion port declared in documents (4 imports)
       - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (21 imports)
@@ -1597,7 +1550,6 @@ deps:
       - parties-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in documents (5 imports)
       - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in documents (2 imports)
       - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (1 imports)
@@ -1634,13 +1586,11 @@ deps:
       - parties-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core
       - agent-contracts # TODO(build-arch): upward import of agent; needs an inversion port declared in documents (1 imports)
       - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in documents (2 imports)
       - agent-jobs # TODO(build-arch): upward import of agent; needs an inversion port declared in documents (8 imports)
       - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in documents (3 imports)
-      - kernel-app # TODO(build-arch): imports app of kernel; use its ports (rule 6) (1 imports)
+      - kernel-app # TODO(build-arch): imports app of kernel; use its ports (rule 6) (4 imports)
       - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in documents (3 imports)
       - operations-ports # TODO(build-arch): upward import of operations; needs an inversion port declared in documents (2 imports)
       - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (1 imports)
@@ -1673,7 +1623,6 @@ deps:
       - parties-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
       - agent-contracts # TODO(build-arch): upward import of agent; needs an inversion port declared in documents (1 imports)
   documents-module:
     mayDependOn:
@@ -1698,8 +1647,7 @@ deps:
       - parties-ports
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (1 imports)
+      - workforce-app # TODO(build-arch): same-level import of workforce (rule 2); needs a decision (1 imports)
   documents-test:
     anyProjectDeps: true
   rating-domain:
@@ -1740,7 +1688,6 @@ deps:
       - documents-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in rating (3 imports)
       - operations-ports # TODO(build-arch): upward import of operations; needs an inversion port declared in rating (1 imports)
   rating-app:
@@ -1778,10 +1725,8 @@ deps:
       - documents-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
       - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (1 imports)
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (1 imports)
-      - operations-app # TODO(build-arch): upward import of operations; needs an inversion port declared in rating (2 imports)
+      - operations-app # TODO(build-arch): upward import of operations; needs an inversion port declared in rating (3 imports)
       - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in rating (17 imports)
       - operations-ports # TODO(build-arch): upward import of operations; needs an inversion port declared in rating (15 imports)
       - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (11 imports)
@@ -1810,7 +1755,6 @@ deps:
       - documents-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in rating (2 imports)
       - operations-ports # TODO(build-arch): upward import of operations; needs an inversion port declared in rating (1 imports)
   rating-jobs:
@@ -1850,8 +1794,8 @@ deps:
       - documents-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core
+      - operations-app # TODO(build-arch): upward import of operations; needs an inversion port declared in rating (1 imports)
+      - operations-ports # TODO(build-arch): upward import of operations; needs an inversion port declared in rating (1 imports)
   rating-contracts:
     mayDependOn:
       - rating-domain
@@ -1887,7 +1831,6 @@ deps:
       - documents-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
   rating-module:
     mayDependOn:
       - rating-domain
@@ -1915,7 +1858,6 @@ deps:
       - documents-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - operations-ports # TODO(build-arch): upward import of operations; needs an inversion port declared in rating (1 imports)
   rating-test:
     anyProjectDeps: true
@@ -1959,12 +1901,11 @@ deps:
       - rating-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - billing-domain # TODO(build-arch): upward import of billing; needs an inversion port declared in operations (2 imports)
       - billing-ports # TODO(build-arch): upward import of billing; needs an inversion port declared in operations (1 imports)
       - edi-app # TODO(build-arch): upward import of edi; needs an inversion port declared in operations (2 imports)
       - edi-domain # TODO(build-arch): upward import of edi; needs an inversion port declared in operations (1 imports)
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (1 imports)
+      - operations-app # TODO(build-arch): layer import inside the module that the layer rules do not allow (1 imports)
   operations-app:
     mayDependOn:
       - operations-domain
@@ -2003,22 +1944,24 @@ deps:
       - rating-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
       - agent-app # TODO(build-arch): upward import of agent; needs an inversion port declared in operations (3 imports)
-      - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in operations (9 imports)
-      - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in operations (17 imports)
+      - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in operations (10 imports)
+      - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in operations (24 imports)
+      - billing-app # TODO(build-arch): upward import of billing; needs an inversion port declared in operations (1 imports)
       - billing-domain # TODO(build-arch): upward import of billing; needs an inversion port declared in operations (3 imports)
       - billing-ports # TODO(build-arch): upward import of billing; needs an inversion port declared in operations (3 imports)
+      - documents-app # TODO(build-arch): imports app of documents; use its ports (rule 6) (2 imports)
       - edi-app # TODO(build-arch): upward import of edi; needs an inversion port declared in operations (1 imports)
       - edi-domain # TODO(build-arch): upward import of edi; needs an inversion port declared in operations (3 imports)
       - edi-ports # TODO(build-arch): upward import of edi; needs an inversion port declared in operations (3 imports)
       - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (3 imports)
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (26 imports)
+      - rating-app # TODO(build-arch): imports app of rating; use its ports (rule 6) (5 imports)
       - reference-app # TODO(build-arch): imports app of reference; use its ports (rule 6) (1 imports)
       - settlement-domain # TODO(build-arch): upward import of settlement; needs an inversion port declared in operations (1 imports)
       - settlement-ports # TODO(build-arch): upward import of settlement; needs an inversion port declared in operations (1 imports)
-      - workforce-app # TODO(build-arch): imports app of workforce; use its ports (rule 6) (1 imports)
-      - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (14 imports)
+      - testutil # TODO(build-arch): import outside the dependency rules (1 imports)
+      - workforce-app # TODO(build-arch): imports app of workforce; use its ports (rule 6) (6 imports)
+      - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (21 imports)
   operations-adapters:
     mayDependOn:
       - operations-domain
@@ -2046,7 +1989,6 @@ deps:
       - rating-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (3 imports)
   operations-jobs:
     mayDependOn:
@@ -2088,8 +2030,6 @@ deps:
       - rating-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core
       - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in operations (1 imports)
       - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in operations (1 imports)
       - documents-jobs # TODO(build-arch): imports jobs of documents; use its ports (rule 6) (1 imports)
@@ -2132,7 +2072,6 @@ deps:
       - rating-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
   operations-module:
     mayDependOn:
       - operations-domain
@@ -2162,7 +2101,6 @@ deps:
       - rating-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in operations (1 imports)
   operations-test:
     anyProjectDeps: true
@@ -2209,7 +2147,6 @@ deps:
       - operations-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - edi-app # TODO(build-arch): layer import inside the module that the layer rules do not allow (1 imports)
   edi-app:
     mayDependOn:
@@ -2252,11 +2189,13 @@ deps:
       - operations-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
+      - agent-app # TODO(build-arch): upward import of agent; needs an inversion port declared in edi (1 imports)
+      - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in edi (1 imports)
+      - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in edi (2 imports)
       - billing-domain # TODO(build-arch): upward import of billing; needs an inversion port declared in edi (3 imports)
       - billing-ports # TODO(build-arch): upward import of billing; needs an inversion port declared in edi (3 imports)
       - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (1 imports)
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (3 imports)
+      - kernel-app # TODO(build-arch): imports app of kernel; use its ports (rule 6) (3 imports)
       - operations-app # TODO(build-arch): imports app of operations; use its ports (rule 6) (2 imports)
       - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (2 imports)
   edi-adapters:
@@ -2288,7 +2227,6 @@ deps:
       - operations-ports
       - pkg
       - infrastructure
-      - legacy-contracts
   edi-jobs:
     mayDependOn:
       - edi-domain
@@ -2332,8 +2270,6 @@ deps:
       - operations-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core
   edi-contracts:
     mayDependOn:
       - edi-domain
@@ -2375,7 +2311,6 @@ deps:
       - operations-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
   edi-module:
     mayDependOn:
       - edi-domain
@@ -2407,7 +2342,6 @@ deps:
       - operations-ports
       - pkg
       - infrastructure
-      - legacy-contracts
   edi-test:
     anyProjectDeps: true
   accounting-domain:
@@ -2454,7 +2388,6 @@ deps:
       - operations-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - billing-domain # TODO(build-arch): upward import of billing; needs an inversion port declared in accounting (2 imports)
   accounting-app:
     mayDependOn:
@@ -2497,15 +2430,18 @@ deps:
       - operations-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - agent-app # TODO(build-arch): upward import of agent; needs an inversion port declared in accounting (1 imports)
-      - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in accounting (2 imports)
-      - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in accounting (3 imports)
-      - billing-domain # TODO(build-arch): upward import of billing; needs an inversion port declared in accounting (3 imports)
-      - billing-ports # TODO(build-arch): upward import of billing; needs an inversion port declared in accounting (9 imports)
-      - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (3 imports)
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (2 imports)
-      - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (7 imports)
+      - agent-app # TODO(build-arch): upward import of agent; needs an inversion port declared in accounting (3 imports)
+      - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in accounting (8 imports)
+      - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in accounting (11 imports)
+      - billing-app # TODO(build-arch): upward import of billing; needs an inversion port declared in accounting (1 imports)
+      - billing-domain # TODO(build-arch): upward import of billing; needs an inversion port declared in accounting (11 imports)
+      - billing-ports # TODO(build-arch): upward import of billing; needs an inversion port declared in accounting (14 imports)
+      - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (4 imports)
+      - kernel-app # TODO(build-arch): imports app of kernel; use its ports (rule 6) (3 imports)
+      - settlement-app # TODO(build-arch): upward import of settlement; needs an inversion port declared in accounting (1 imports)
+      - settlement-domain # TODO(build-arch): upward import of settlement; needs an inversion port declared in accounting (1 imports)
+      - settlement-ports # TODO(build-arch): upward import of settlement; needs an inversion port declared in accounting (5 imports)
+      - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (11 imports)
   accounting-adapters:
     mayDependOn:
       - accounting-domain
@@ -2535,7 +2471,6 @@ deps:
       - operations-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - billing-domain # TODO(build-arch): upward import of billing; needs an inversion port declared in accounting (8 imports)
       - settlement-domain # TODO(build-arch): upward import of settlement; needs an inversion port declared in accounting (12 imports)
   accounting-jobs:
@@ -2581,8 +2516,6 @@ deps:
       - operations-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core
       - agent-contracts # TODO(build-arch): upward import of agent; needs an inversion port declared in accounting (1 imports)
       - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in accounting (1 imports)
       - agent-jobs # TODO(build-arch): upward import of agent; needs an inversion port declared in accounting (2 imports)
@@ -2629,7 +2562,6 @@ deps:
       - operations-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
   accounting-module:
     mayDependOn:
       - accounting-domain
@@ -2661,7 +2593,6 @@ deps:
       - operations-ports
       - pkg
       - infrastructure
-      - legacy-contracts
   accounting-test:
     anyProjectDeps: true
   billing-domain:
@@ -2713,7 +2644,6 @@ deps:
       - accounting-ports
       - pkg
       - infrastructure
-      - legacy-contracts
   billing-app:
     mayDependOn:
       - billing-domain
@@ -2761,14 +2691,15 @@ deps:
       - accounting-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - agent-app # TODO(build-arch): upward import of agent; needs an inversion port declared in billing (2 imports)
-      - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in billing (5 imports)
-      - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in billing (8 imports)
+      - accounting-app # TODO(build-arch): imports app of accounting; use its ports (rule 6) (5 imports)
+      - agent-app # TODO(build-arch): upward import of agent; needs an inversion port declared in billing (3 imports)
+      - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in billing (6 imports)
+      - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in billing (9 imports)
       - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (10 imports)
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (13 imports)
+      - operations-app # TODO(build-arch): imports app of operations; use its ports (rule 6) (3 imports)
       - rating-app # TODO(build-arch): imports app of rating; use its ports (rule 6) (2 imports)
-      - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (14 imports)
+      - workforce-app # TODO(build-arch): imports app of workforce; use its ports (rule 6) (3 imports)
+      - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (18 imports)
   billing-adapters:
     mayDependOn:
       - billing-domain
@@ -2802,7 +2733,6 @@ deps:
       - accounting-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in billing (2 imports)
       - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in billing (1 imports)
       - edi-adapters # TODO(build-arch): imports adapters of edi; use its ports (rule 6) (3 imports)
@@ -2857,8 +2787,6 @@ deps:
       - accounting-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core
       - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in billing (2 imports)
       - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (1 imports)
   billing-contracts:
@@ -2908,7 +2836,6 @@ deps:
       - accounting-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
   billing-module:
     mayDependOn:
       - billing-domain
@@ -2944,7 +2871,6 @@ deps:
       - accounting-ports
       - pkg
       - infrastructure
-      - legacy-contracts
   billing-test:
     anyProjectDeps: true
   settlement-domain:
@@ -2996,7 +2922,6 @@ deps:
       - accounting-ports
       - pkg
       - infrastructure
-      - legacy-contracts
       - billing-domain # TODO(build-arch): same-level import of billing (rule 2); needs a decision (2 imports)
   settlement-app:
     mayDependOn:
@@ -3045,10 +2970,11 @@ deps:
       - accounting-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
+      - accounting-app # TODO(build-arch): imports app of accounting; use its ports (rule 6) (3 imports)
       - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in settlement (4 imports)
+      - edi-app # TODO(build-arch): imports app of edi; use its ports (rule 6) (1 imports)
       - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (7 imports)
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (24 imports)
+      - workforce-app # TODO(build-arch): imports app of workforce; use its ports (rule 6) (6 imports)
       - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (14 imports)
   settlement-adapters:
     mayDependOn:
@@ -3083,7 +3009,6 @@ deps:
       - accounting-ports
       - pkg
       - infrastructure
-      - legacy-contracts
   settlement-jobs:
     mayDependOn:
       - settlement-domain
@@ -3133,8 +3058,6 @@ deps:
       - accounting-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core
   settlement-contracts:
     mayDependOn:
       - settlement-domain
@@ -3182,7 +3105,6 @@ deps:
       - accounting-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
   settlement-module:
     mayDependOn:
       - settlement-domain
@@ -3218,7 +3140,6 @@ deps:
       - accounting-ports
       - pkg
       - infrastructure
-      - legacy-contracts
   settlement-test:
     anyProjectDeps: true
   agent-domain:
@@ -3276,9 +3197,7 @@ deps:
       - settlement-ports
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (2 imports)
-      - operations-app # TODO(build-arch): imports app of operations; use its ports (rule 6) (1 imports)
+      - operations-app # TODO(build-arch): imports app of operations; use its ports (rule 6) (3 imports)
   agent-app:
     mayDependOn:
       - agent-domain
@@ -3332,24 +3251,23 @@ deps:
       - settlement-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - accounting-app # TODO(build-arch): imports app of accounting; use its ports (rule 6) (6 imports)
+      - accounting-app # TODO(build-arch): imports app of accounting; use its ports (rule 6) (11 imports)
       - agent-test # TODO(build-arch): layer import inside the module that the layer rules do not allow (2 imports)
-      - billing-app # TODO(build-arch): imports app of billing; use its ports (rule 6) (19 imports)
+      - billing-app # TODO(build-arch): imports app of billing; use its ports (rule 6) (24 imports)
       - documents-app # TODO(build-arch): imports app of documents; use its ports (rule 6) (13 imports)
-      - edi-app # TODO(build-arch): imports app of edi; use its ports (rule 6) (12 imports)
+      - edi-app # TODO(build-arch): imports app of edi; use its ports (rule 6) (16 imports)
       - equipment-app # TODO(build-arch): imports app of equipment; use its ports (rule 6) (6 imports)
-      - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (25 imports)
-      - kernel-app # TODO(build-arch): imports app of kernel; use its ports (rule 6) (4 imports)
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (69 imports)
-      - operations-app # TODO(build-arch): imports app of operations; use its ports (rule 6) (27 imports)
+      - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (28 imports)
+      - kernel-app # TODO(build-arch): imports app of kernel; use its ports (rule 6) (6 imports)
+      - operations-app # TODO(build-arch): imports app of operations; use its ports (rule 6) (48 imports)
       - parties-app # TODO(build-arch): imports app of parties; use its ports (rule 6) (8 imports)
       - places-app # TODO(build-arch): imports app of places; use its ports (rule 6) (3 imports)
-      - rating-app # TODO(build-arch): imports app of rating; use its ports (rule 6) (19 imports)
+      - rating-app # TODO(build-arch): imports app of rating; use its ports (rule 6) (23 imports)
       - reference-app # TODO(build-arch): imports app of reference; use its ports (rule 6) (2 imports)
-      - settlement-app # TODO(build-arch): imports app of settlement; use its ports (rule 6) (22 imports)
-      - workforce-app # TODO(build-arch): imports app of workforce; use its ports (rule 6) (4 imports)
-      - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (61 imports)
+      - settlement-app # TODO(build-arch): imports app of settlement; use its ports (rule 6) (35 imports)
+      - testutil # TODO(build-arch): import outside the dependency rules (1 imports)
+      - workforce-app # TODO(build-arch): imports app of workforce; use its ports (rule 6) (45 imports)
+      - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (63 imports)
   agent-adapters:
     mayDependOn:
       - agent-domain
@@ -3387,7 +3305,6 @@ deps:
       - settlement-ports
       - pkg
       - infrastructure
-      - legacy-contracts
   agent-jobs:
     mayDependOn:
       - agent-domain
@@ -3443,8 +3360,6 @@ deps:
       - settlement-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core
       - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (3 imports)
       - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (1 imports)
       - workspace-jobs # TODO(build-arch): imports jobs of workspace; use its ports (rule 6) (1 imports)
@@ -3501,8 +3416,6 @@ deps:
       - settlement-contracts
       - pkg
       - infrastructure
-      - legacy-contracts
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (2 imports)
   agent-module:
     mayDependOn:
       - agent-domain
@@ -3542,7 +3455,6 @@ deps:
       - settlement-ports
       - pkg
       - infrastructure
-      - legacy-contracts
   agent-test:
     anyProjectDeps: true
   api:
@@ -3614,8 +3526,6 @@ deps:
       - api
       - pkg
       - infrastructure
-      - legacy-core
-      - legacy-contracts
       - testutil # TODO(build-arch): import outside the dependency rules (2 imports)
   bootstrap:
     anyProjectDeps: true
@@ -3675,152 +3585,15 @@ deps:
       - agent-contracts
       - infrastructure
       - pkg
-      - legacy-contracts
       - agent-app # TODO(build-arch): infrastructure imports module code beyond domain, ports and contracts (4 imports)
       - bootstrap # TODO(build-arch): infrastructure imports module code beyond domain, ports and contracts (1 imports)
       - documents-app # TODO(build-arch): infrastructure imports module code beyond domain, ports and contracts (1 imports)
-      - identity-app # TODO(build-arch): infrastructure imports module code beyond domain, ports and contracts (4 imports)
-      - legacy-core # TODO(build-arch): depends on a package not yet assigned to a module (2 imports)
+      - identity-app # TODO(build-arch): infrastructure imports module code beyond domain, ports and contracts (3 imports)
+      - kernel-app # TODO(build-arch): infrastructure imports module code beyond domain, ports and contracts (2 imports)
       - operations-app # TODO(build-arch): infrastructure imports module code beyond domain, ports and contracts (1 imports)
       - rating-app # TODO(build-arch): infrastructure imports module code beyond domain, ports and contracts (1 imports)
       - settlement-app # TODO(build-arch): infrastructure imports module code beyond domain, ports and contracts (2 imports)
       - workspace-app # TODO(build-arch): infrastructure imports module code beyond domain, ports and contracts (1 imports)
-  legacy-core:
-    anyProjectDeps: true
-  legacy-contracts:
-    mayDependOn:
-      - kernel-domain
-      - kernel-ports
-      - kernel-app
-      - kernel-adapters
-      - kernel-jobs
-      - kernel-contracts
-      - kernel-module
-      - kernel-test
-      - identity-domain
-      - identity-ports
-      - identity-app
-      - identity-adapters
-      - identity-jobs
-      - identity-contracts
-      - identity-module
-      - identity-test
-      - workspace-domain
-      - workspace-ports
-      - workspace-app
-      - workspace-adapters
-      - workspace-jobs
-      - workspace-contracts
-      - workspace-module
-      - workspace-test
-      - reference-domain
-      - reference-ports
-      - reference-app
-      - reference-adapters
-      - reference-jobs
-      - reference-contracts
-      - reference-module
-      - reference-test
-      - places-domain
-      - places-ports
-      - places-app
-      - places-adapters
-      - places-jobs
-      - places-contracts
-      - places-module
-      - places-test
-      - equipment-domain
-      - equipment-ports
-      - equipment-app
-      - equipment-adapters
-      - equipment-jobs
-      - equipment-contracts
-      - equipment-module
-      - equipment-test
-      - parties-domain
-      - parties-ports
-      - parties-app
-      - parties-adapters
-      - parties-jobs
-      - parties-contracts
-      - parties-module
-      - parties-test
-      - workforce-domain
-      - workforce-ports
-      - workforce-app
-      - workforce-adapters
-      - workforce-jobs
-      - workforce-contracts
-      - workforce-module
-      - workforce-test
-      - documents-domain
-      - documents-ports
-      - documents-app
-      - documents-adapters
-      - documents-jobs
-      - documents-contracts
-      - documents-module
-      - documents-test
-      - rating-domain
-      - rating-ports
-      - rating-app
-      - rating-adapters
-      - rating-jobs
-      - rating-contracts
-      - rating-module
-      - rating-test
-      - operations-domain
-      - operations-ports
-      - operations-app
-      - operations-adapters
-      - operations-jobs
-      - operations-contracts
-      - operations-module
-      - operations-test
-      - edi-domain
-      - edi-ports
-      - edi-app
-      - edi-adapters
-      - edi-jobs
-      - edi-contracts
-      - edi-module
-      - edi-test
-      - accounting-domain
-      - accounting-ports
-      - accounting-app
-      - accounting-adapters
-      - accounting-jobs
-      - accounting-contracts
-      - accounting-module
-      - accounting-test
-      - billing-domain
-      - billing-ports
-      - billing-app
-      - billing-adapters
-      - billing-jobs
-      - billing-contracts
-      - billing-module
-      - billing-test
-      - settlement-domain
-      - settlement-ports
-      - settlement-app
-      - settlement-adapters
-      - settlement-jobs
-      - settlement-contracts
-      - settlement-module
-      - settlement-test
-      - agent-domain
-      - agent-ports
-      - agent-app
-      - agent-adapters
-      - agent-jobs
-      - agent-contracts
-      - agent-module
-      - agent-test
-      - infrastructure
-      - legacy-core
-      - legacy-contracts
-      - pkg
   deskbench:
     anyProjectDeps: true
   scripts:

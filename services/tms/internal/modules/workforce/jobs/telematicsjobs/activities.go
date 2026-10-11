@@ -3,7 +3,7 @@ package telematicsjobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"

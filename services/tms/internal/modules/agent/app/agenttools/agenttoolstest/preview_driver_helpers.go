@@ -3,7 +3,7 @@ package agenttoolstest
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 )

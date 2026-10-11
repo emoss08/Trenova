@@ -1,8 +1,8 @@
 package dispatchconsoleservice
 
 import (
-	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
-	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"

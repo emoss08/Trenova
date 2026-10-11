@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"

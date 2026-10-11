@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -13,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"

@@ -4,8 +4,6 @@ package assignmentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
-	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -16,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -27,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"

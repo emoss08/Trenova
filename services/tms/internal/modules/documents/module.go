@@ -1,7 +1,6 @@
 package documents
 
 import (
-	"github.com/emoss08/trenova/internal/core/services/workerdqfservice"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/capturerepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentaiextractionrepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentcontentrepository"
@@ -16,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/extractionshadowrepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/inboundmessagerepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/retrievalsourcerepository"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentintelligenceservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentoperationsservice"
@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/extractionrolloutservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/extractionshadowservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/extractionevaljobs/extractionevalcontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -36,6 +37,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
 	"go.uber.org/fx"
 )
 
@@ -43,6 +45,8 @@ import (
 func SharedOptions() fx.Option {
 	return fx.Options(
 		fx.Provide(
+			thumbnailservice.NewGenerator,
+			capturereleaseservice.New,
 			documentparsingrulerepository.New,
 			documentpacketrulerepository.New,
 			documenttemplaterepository.NewTemplateRepository,

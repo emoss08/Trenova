@@ -1,20 +1,21 @@
 package authservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
+
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"

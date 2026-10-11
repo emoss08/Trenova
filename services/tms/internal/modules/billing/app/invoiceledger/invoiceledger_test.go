@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 
-	"github.com/emoss08/trenova/internal/core/services/journalposting"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"

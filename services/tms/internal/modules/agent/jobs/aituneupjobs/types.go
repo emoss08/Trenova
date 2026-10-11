@@ -1,6 +1,6 @@
 package aituneupjobs
 
-import "github.com/emoss08/trenova/internal/core/temporaljobs"
+import "github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 
 const ComputeAITuneUpsWorkflowName = "ComputeAITuneUpsWorkflow"
 

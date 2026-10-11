@@ -3,12 +3,12 @@ package documentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
-	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
-	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
+	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"

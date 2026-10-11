@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/replaytest"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/replaytest"
 	"go.temporal.io/sdk/worker"
 	"go.temporal.io/sdk/workflow"
 )

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/core/services/subjectaccess"
+	"github.com/emoss08/trenova/internal/modules/agent/app/subjectaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"

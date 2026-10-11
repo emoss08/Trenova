@@ -3,9 +3,9 @@ package billingtools
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/services/billingtransfercriteria"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransfercriteria"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dbtype"

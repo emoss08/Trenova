@@ -4,8 +4,8 @@ package reportresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	tableexportservice "github.com/emoss08/trenova/internal/core/services/tableexportservice"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	tableexportservice "github.com/emoss08/trenova/internal/modules/workspace/app/tableexportservice"
 )
 
 type Deps struct {

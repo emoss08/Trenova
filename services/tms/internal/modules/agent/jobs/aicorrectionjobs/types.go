@@ -1,7 +1,7 @@
 package aicorrectionjobs
 
 import (
-	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 )
 
 const (

@@ -3,7 +3,6 @@ package workforcetools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -12,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"

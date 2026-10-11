@@ -1,8 +1,8 @@
 package accountingsyncjobs
 
 import (
-	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"go.uber.org/fx"
 )

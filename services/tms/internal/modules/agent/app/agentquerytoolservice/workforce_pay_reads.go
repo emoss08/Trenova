@@ -3,7 +3,6 @@ package agentquerytoolservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/timesheetservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -13,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"

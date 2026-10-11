@@ -1,18 +1,19 @@
 package documentservice_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
 	"context"
 	"errors"
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
-	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
-	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
