@@ -177,7 +177,7 @@ asks for it without the tag in every graph.
 
 | Binary | Graph | Watch task |
 |---|---|---|
-| `cmd/api` | `core.OptionsFor(e)` + `apiapp.OptionsFor(e)` | `task run-watch` (`.air.toml`), `task run-watch-fast` (`.air.fast.toml`, stripped) |
+| `cmd/api` | `core.OptionsFor(e)` + `apiapp.OptionsFor(e)` | `task run-watch` (`.air.toml`) |
 | `cmd/worker` | `core.OptionsFor(e)` + `workerapp.Modules()` + `workerapp.OptionsFor(e)`; `--queues` limits task queues | `task run-worker-watch` |
 | `cmd/cli` | `bootstrap.Options()` (core plus `workerapp.Modules()`), with `apiapp` for `api run` or `workerapp` for `worker run` | none; the production image runs it |
 
@@ -189,9 +189,11 @@ module; `workerapp.OptionsFor` adds the worker runtime (`temporaljobs.WorkerModu
 `internal/infrastructure/temporaljobs`), the agent runtime's worker modules and the edition's
 `WorkerOptions`.
 
-`run-watch-fast` links with `-ldflags='-s -w'`, which shortens the link step on every reload;
-Delve cannot attach to that binary. Both API watch tasks and `run-worker-watch` build with
-`-gcflags='github.com/emoss08/trenova/...=-N -l'`, so do not benchmark against them.
+`run-watch` and `run-worker-watch` build with `-gcflags='github.com/emoss08/trenova/...=-N -l'`
+and link with `-ldflags='-s -w'`. The first keeps a private edit from changing a package's
+export data, so it recompiles only its direct importers; the second leaves out the symbol
+table and DWARF, which only a debugger reads, and shortens the link on every reload. The
+binaries run unoptimised code, so do not benchmark against them.
 
 Each main registers its edition separately; see the Editions section of `CLAUDE.md`.
 
@@ -357,7 +359,6 @@ to a real file, rebuilds, and restores the file byte for byte, once per scenario
 
 ```bash
 task build-bench -- --target api --mode air           # what a run-watch reload costs
-task build-bench -- --target api --mode air --strip   # what a run-watch-fast reload costs
 task build-bench -- --target worker --mode release
 task build-bench -- --target cli --mode release --cold
 task build-bench -- --fanin                           # the 30 most depended-on packages
@@ -367,8 +368,8 @@ task build-bench -- --deps-of api '<regexp>'          # why the API links matchi
 | Option | Effect |
 |---|---|
 | `--target cli\|api\|worker` | the main package to build (`./cmd/<target>`); default `cli` |
-| `--mode release\|air` | `release` is `go build -tags nomsgpack`; `air` adds the watch tasks' `-gcflags=<module>/...=-N -l` |
-| `--strip` | adds `-ldflags=-s -w` |
+| `--mode release\|air` | `release` is `go build -tags nomsgpack`; `air` adds the watch tasks' `-gcflags=<module>/...=-N -l` and `-ldflags=-s -w` |
+| `--strip` | adds `-ldflags=-s -w` to a release build; `air` always has it |
 | `--cold` | empties the benchmark's cache first |
 | `--fanin` | ranks first-party packages by how many first-party packages depend on them, directly or transitively |
 | `--deps-of <target> <regexp>` | lists every first-party package the target links whose import path matches, with the shortest import chain to it |

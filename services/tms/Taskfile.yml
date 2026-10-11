@@ -98,17 +98,12 @@ tasks:
     cmds:
       - ./scripts/buildbench/buildbench.sh {{.CLI_ARGS}}
 
-  run-watch-fast:
-    desc: Run the API server with hot reload and a stripped binary (Delve cannot attach)
-    cmds:
-      - air -c .air.fast.toml {{.AIR_FLAGS}}
-
   run-worker-watch:
     desc: Run the worker service with hot reload
     cmds:
       - >-
         air {{.AIR_FLAGS}}
-        --build.cmd "go build -tags nomsgpack -gcflags='github.com/emoss08/trenova/...=-N -l' -o ./tmp/trenova-worker ./cmd/worker"
+        --build.cmd "go build -tags nomsgpack -gcflags='github.com/emoss08/trenova/...=-N -l' -ldflags='-s -w' -o ./tmp/trenova-worker ./cmd/worker"
         --build.bin "./tmp/trenova-worker"
 
   run-worker:
