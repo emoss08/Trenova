@@ -6,8 +6,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +16,7 @@ import (
 
 type countingLabeler struct {
 	mu      sync.Mutex
-	labels  services.RecordLabels
+	labels  agentports.RecordLabels
 	err     error
 	calls   []map[permission.Resource][]pulid.ID
 	tenants []pagination.TenantInfo
@@ -26,7 +26,7 @@ func (l *countingLabeler) Labels(
 	_ context.Context,
 	tenant pagination.TenantInfo,
 	refs map[permission.Resource][]pulid.ID,
-) (services.RecordLabels, error) {
+) (agentports.RecordLabels, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.calls = append(l.calls, refs)
@@ -35,7 +35,7 @@ func (l *countingLabeler) Labels(
 		return nil, l.err
 	}
 
-	out := make(services.RecordLabels, len(refs))
+	out := make(agentports.RecordLabels, len(refs))
 	for resource, ids := range refs {
 		out[resource] = make(map[pulid.ID]string, len(ids))
 		for _, id := range ids {
@@ -48,7 +48,7 @@ func (l *countingLabeler) Labels(
 	return out, nil
 }
 
-func newSubsetLabels(labeler services.RecordLabeler) *SubsetLabelsLoaderFactory {
+func newSubsetLabels(labeler agentports.RecordLabeler) *SubsetLabelsLoaderFactory {
 	return NewSubsetLabelsLoaderFactory(SubsetLabelsLoaderFactoryParams{Labeler: labeler})
 }
 
@@ -74,12 +74,12 @@ func TestSubsetLabelsLoader_NamesEveryFieldsRecordsInOneRead(t *testing.T) {
 	shipmentA, shipmentB, gone := pulid.MustNew("shp_"), pulid.MustNew("shp_"),
 		pulid.MustNew("shp_")
 	worker := pulid.MustNew("wrk_")
-	labeler := &countingLabeler{labels: services.RecordLabels{
+	labeler := &countingLabeler{labels: agentports.RecordLabels{
 		permission.ResourceShipment: {shipmentA: "PRO-1", shipmentB: "PRO-2"},
 		permission.ResourceWorker:   {worker: "Ada Lovelace"},
 	}}
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	loader := newSubsetLabels(labeler).NewForTenant(tenant)
+	loader := newSubsetLabelsLoader(newSubsetLabels(labeler), tenant)
 
 	first := SubsetLabelsKey(permission.ResourceShipment,
 		[]string{shipmentA.String(), gone.String(), "short"})
@@ -90,7 +90,7 @@ func TestSubsetLabelsLoader_NamesEveryFieldsRecordsInOneRead(t *testing.T) {
 	labels, err := loader.LoadAll(t.Context(), []string{first, second, third})
 	require.NoError(t, err)
 
-	assert.Equal(t, []services.RecordLabels{
+	assert.Equal(t, []agentports.RecordLabels{
 		{permission.ResourceShipment: {shipmentA: "PRO-1"}},
 		{permission.ResourceShipment: {shipmentB: "PRO-2", shipmentA: "PRO-1"}},
 		{permission.ResourceWorker: {worker: "Ada Lovelace"}},
@@ -107,27 +107,27 @@ func TestSubsetLabelsLoader_NamesEveryFieldsRecordsInOneRead(t *testing.T) {
 func TestSubsetLabelsLoader_ReadsNoMoreThanOneReadNamesAtATime(t *testing.T) {
 	t.Parallel()
 
-	ids, texts := manyShipments(services.MaxRecordLabelsPerResource + 3)
+	ids, texts := manyShipments(agentports.MaxRecordLabelsPerResource + 3)
 	named := make(map[pulid.ID]string, len(ids))
 	for _, id := range ids {
 		named[id] = "PRO-" + id.String()
 	}
-	labeler := &countingLabeler{labels: services.RecordLabels{permission.ResourceShipment: named}}
+	labeler := &countingLabeler{labels: agentports.RecordLabels{permission.ResourceShipment: named}}
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_")}
-	loader := newSubsetLabels(labeler).NewForTenant(tenant)
+	loader := newSubsetLabelsLoader(newSubsetLabels(labeler), tenant)
 
 	longest, err := loader.Load(t.Context(), SubsetLabelsKey(permission.ResourceShipment,
-		texts[:services.MaxRecordLabelsPerResource]))
+		texts[:agentports.MaxRecordLabelsPerResource]))
 	require.NoError(t, err)
-	assert.Len(t, longest[permission.ResourceShipment], services.MaxRecordLabelsPerResource)
+	assert.Len(t, longest[permission.ResourceShipment], agentports.MaxRecordLabelsPerResource)
 	require.Len(t, labeler.calls, 1, "the longest subset is one read")
 
-	loader = newSubsetLabels(labeler).NewForTenant(tenant)
+	loader = newSubsetLabelsLoader(newSubsetLabels(labeler), tenant)
 	beyond, err := loader.Load(t.Context(), SubsetLabelsKey(permission.ResourceShipment, texts))
 	require.NoError(t, err)
 	assert.Len(t, beyond[permission.ResourceShipment], len(ids))
 	require.Len(t, labeler.calls, 3)
-	assert.Len(t, labeler.calls[1][permission.ResourceShipment], services.MaxRecordLabelsPerResource)
+	assert.Len(t, labeler.calls[1][permission.ResourceShipment], agentports.MaxRecordLabelsPerResource)
 	assert.Len(t, labeler.calls[2][permission.ResourceShipment], 3)
 }
 
@@ -135,8 +135,7 @@ func TestSubsetLabelsLoader_ReportsAFailedRead(t *testing.T) {
 	t.Parallel()
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_")}
-	loader := newSubsetLabels(&countingLabeler{err: errors.New("database is down")}).
-		NewForTenant(tenant)
+	loader := newSubsetLabelsLoader(newSubsetLabels(&countingLabeler{err: errors.New("database is down")}), tenant)
 
 	_, err := loader.Load(t.Context(), SubsetLabelsKey(permission.ResourceShipment,
 		[]string{pulid.MustNew("shp_").String()}))
@@ -149,7 +148,7 @@ func TestSubsetLabelsLoader_WithoutALabelerNamesNothing(t *testing.T) {
 	t.Parallel()
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_")}
-	loader := newSubsetLabels(nil).NewForTenant(tenant)
+	loader := newSubsetLabelsLoader(newSubsetLabels(nil), tenant)
 
 	labels, err := loader.Load(t.Context(), SubsetLabelsKey(permission.ResourceShipment,
 		[]string{pulid.MustNew("shp_").String()}))

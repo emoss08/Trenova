@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 )
 
 func fetchDriverChunks[T any](
@@ -39,7 +39,7 @@ func fetchDriverChunks[T any](
 	if len(failedIDs) == 0 {
 		return nil
 	}
-	return &services.ProviderDriverBatchError{
+	return &telematicsports.ProviderDriverBatchError{
 		DriverIDs: failedIDs,
 		Err:       errors.Join(errs...),
 	}
@@ -68,6 +68,6 @@ func mergeByDriver[V any](dst, src map[string][]V) {
 }
 
 func isDriverBatchError(err error) bool {
-	_, ok := errors.AsType[*services.ProviderDriverBatchError](err)
+	_, ok := errors.AsType[*telematicsports.ProviderDriverBatchError](err)
 	return ok
 }

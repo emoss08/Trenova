@@ -7,10 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/rateagreementservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -147,7 +147,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*rateagreement.RateAgreement], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListRateAgreementRequest{
+				&rateagreementports.ListRateAgreementRequest{
 					Filter:    req,
 					PartyType: rateagreement.PartyType(helpers.QueryString(c, "partyType")),
 					Status:    rateagreement.Status(helpers.QueryString(c, "status")),
@@ -181,7 +181,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.GetByID(
 		c.Request.Context(),
-		&repositories.GetRateAgreementByIDRequest{
+		&rateagreementports.GetRateAgreementByIDRequest{
 			RateAgreementID: agreementID,
 			TenantInfo:      tenantOf(authCtx),
 			IncludeChildren: helpers.QueryBool(c, "includeChildren", true),
@@ -295,7 +295,7 @@ func (h *Handler) listRules(c *gin.Context) {
 
 	rules, err := h.service.ListRules(
 		c.Request.Context(),
-		&repositories.ListRateAgreementRulesRequest{
+		&rateagreementports.ListRateAgreementRulesRequest{
 			TenantInfo:        tenantOf(authCtx),
 			RateAgreementID:   agreementID,
 			AsOf:              helpers.QueryInt64(c, "asOf", 0),
@@ -350,7 +350,7 @@ func (h *Handler) amendRules(c *gin.Context) {
 
 	amended, err := h.service.AmendRules(
 		c.Request.Context(),
-		&repositories.AmendRateAgreementRulesRequest{
+		&rateagreementports.AmendRateAgreementRulesRequest{
 			TenantInfo:      tenantOf(authCtx),
 			RateAgreementID: agreementID,
 			EffectiveFrom:   body.EffectiveFrom,
@@ -397,7 +397,7 @@ func (h *Handler) listVersions(c *gin.Context) {
 		func() (*pagination.ListResult[*rateagreement.RateAgreementVersion], error) {
 			return h.service.ListVersions(
 				c.Request.Context(),
-				&repositories.ListRateAgreementVersionsRequest{
+				&rateagreementports.ListRateAgreementVersionsRequest{
 					TenantInfo:      tenantOf(authCtx),
 					RateAgreementID: agreementID,
 					Limit:           req.Pagination.Limit,

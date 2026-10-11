@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,7 +36,7 @@ func TestRelevant_KeepsOnlyTenantWideInvalidationsNamingAWatchedRecord(t *testin
 
 	needles := [][]byte{[]byte(feedRecord)}
 	payload := []byte(`{"resource":"audited:shipment","recordId":"` + feedRecord + `"}`)
-	base := entry{tenant: "org:bu", event: services.RealtimeEventInvalidation, payload: payload}
+	base := entry{tenant: "org:bu", event: agentports.RealtimeEventInvalidation, payload: payload}
 
 	assert.True(t, relevant(&base, "org:bu", needles))
 
@@ -49,7 +49,7 @@ func TestRelevant_KeepsOnlyTenantWideInvalidationsNamingAWatchedRecord(t *testin
 	assert.False(t, relevant(&addressed, "org:bu", needles), "an event addressed to one person")
 
 	presence := base
-	presence.event = services.RealtimeEventPresence
+	presence.event = agentports.RealtimeEventPresence
 	assert.False(t, relevant(&presence, "org:bu", needles))
 
 	unrelated := base

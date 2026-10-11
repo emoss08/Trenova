@@ -9,8 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/commodity"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -148,7 +148,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*commodity.Commodity)
 					return gqlexec.Resolver[resolverCommodity](ec, "Commodity").FreightClass(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOFreightClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcommodityᚐFreightClass),
+				Marshal: gqlexec.Marshal(marshalOFreightClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐFreightClass),
 			},
 			{
 				Name:     "loadingInstructions",
@@ -217,7 +217,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*commodity.Commodity)
 					return obj.BusinessUnit, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit),
+				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit),
 			},
 			{
 				Name:      "organization",
@@ -227,7 +227,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*commodity.Commodity)
 					return obj.Organization, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization),
+				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization),
 			},
 		}},
 		{Object: "CommodityConnection", Fields: []*gqlexec.Field{
@@ -273,7 +273,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.CommodityEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCommodity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcommodityᚐCommodity),
+				Marshal: gqlexec.Marshal(marshalNCommodity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐCommodity),
 			},
 			{
 				Name:     "cursor",
@@ -312,7 +312,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").Commodity(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOCommodity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcommodityᚐCommodity),
+				Marshal: gqlexec.Marshal(marshalOCommodity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐCommodity),
 			},
 		}},
 	},
@@ -390,7 +390,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNCommodity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcommodityᚐCommodity(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *commodity.Commodity) graphql.Marshaler {
+func marshalNCommodity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐCommodity(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *commodity.Commodity) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -470,14 +470,14 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
+func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "BusinessUnit", v)
 }
 
-func marshalOCommodity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcommodityᚐCommodity(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *commodity.Commodity) graphql.Marshaler {
+func marshalOCommodity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐCommodity(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *commodity.Commodity) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -492,7 +492,7 @@ func marshalOFloat2ᚖfloat64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sel
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
-func marshalOFreightClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcommodityᚐFreightClass(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *commodity.FreightClass) graphql.Marshaler {
+func marshalOFreightClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋcommodityᚐFreightClass(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *commodity.FreightClass) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -513,7 +513,7 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
+func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

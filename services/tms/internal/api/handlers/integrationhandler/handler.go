@@ -5,12 +5,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/integrationservice"
-	"github.com/emoss08/trenova/internal/core/services/samsarasyncservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/samsarasyncservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/jobs/samsarajobs/samsaracontract"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/gin-gonic/gin"
@@ -22,7 +23,7 @@ type Params struct {
 
 	IntegrationService   *integrationservice.Service
 	SyncService          *samsarasyncservice.Service
-	JobsManager          *samsarajobs.Manager
+	JobsManager          *samsaracontract.Manager
 	PermissionMiddleware *middleware.PermissionMiddleware
 	ErrorHandler         *helpers.ErrorHandler
 }
@@ -30,7 +31,7 @@ type Params struct {
 type Handler struct {
 	integrationService *integrationservice.Service
 	syncService        *samsarasyncservice.Service
-	jobsManager        *samsarajobs.Manager
+	jobsManager        *samsaracontract.Manager
 	pm                 *middleware.PermissionMiddleware
 	eh                 *helpers.ErrorHandler
 }
@@ -164,7 +165,7 @@ func (h *Handler) updateConfig(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	typ := integration.Type(c.Param("type"))
 
-	req := new(services.UpdateConfigRequest)
+	req := new(integrationports.UpdateConfigRequest)
 	req.TenantInfo = pagination.TenantInfo{
 		OrgID:  authCtx.OrganizationID,
 		BuID:   authCtx.BusinessUnitID,
@@ -316,7 +317,7 @@ func (h *Handler) detectWorkerSyncDrift(c *gin.Context) {
 func (h *Handler) repairWorkerSyncDrift(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := services.RepairWorkerSyncDriftRequest{}
+	req := telematicsports.RepairWorkerSyncDriftRequest{}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.eh.HandleError(c, err)
 		return

@@ -157,7 +157,11 @@ func Load(data []byte) (*Catalog, error) {
 	// Longest path first, so a nested page is found before the one it sits
 	// under.
 	sort.SliceStable(catalog.prefixes, func(a, b int) bool {
-		return len(catalog.Pages[catalog.prefixes[a]].Path) > len(catalog.Pages[catalog.prefixes[b]].Path)
+		return len(
+			catalog.Pages[catalog.prefixes[a]].Path,
+		) > len(
+			catalog.Pages[catalog.prefixes[b]].Path,
+		)
 	})
 	for i := range catalog.Pages {
 		page := &catalog.Pages[i]

@@ -5,23 +5,23 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 )
 
 type fakeConn struct {
-	ports.DBConnection
+	kernelports.DBConnection
 	scoped bool
-	opened []ports.TxOptions
+	opened []kernelports.TxOptions
 }
 
 func (f *fakeConn) ScopedTransactions() bool { return f.scoped }
 
 func (f *fakeConn) WithTx(
 	ctx context.Context,
-	opts ports.TxOptions,
+	opts kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	f.opened = append(f.opened, opts)
@@ -64,7 +64,7 @@ func TestHelpersOpenATransactionPerCallWhenScoped(t *testing.T) {
 	_, _, err = Write2(t.Context(), conn, func(context.Context) (int, int, error) { return 0, 0, failure })
 	require.ErrorIs(t, err, failure)
 
-	assert.Equal(t, []ports.TxOptions{
+	assert.Equal(t, []kernelports.TxOptions{
 		{ReadOnly: true},
 		{ReadOnly: false},
 		{ReadOnly: true},
@@ -87,7 +87,7 @@ func TestSavepointRunsDirectlyOutsideATransaction(t *testing.T) {
 }
 
 type outsideTx struct {
-	ports.DBConnection
+	kernelports.DBConnection
 }
 
 func (outsideTx) DBForContext(context.Context) bun.IDB { return (*bun.DB)(nil) }

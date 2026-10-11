@@ -4,7 +4,7 @@ package schedulingresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	schedulingservice "github.com/emoss08/trenova/internal/core/services/schedulingservice"
+	schedulingservice "github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
 )
 
 type Deps struct {

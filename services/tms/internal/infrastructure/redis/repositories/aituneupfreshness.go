@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
@@ -25,7 +25,7 @@ type aiTuneUpFreshness struct {
 	client *redis.Client
 }
 
-func NewAITuneUpFreshness(p AITuneUpFreshnessParams) repositories.AITuneUpFreshness {
+func NewAITuneUpFreshness(p AITuneUpFreshnessParams) aituneupports.AITuneUpFreshness {
 	return &aiTuneUpFreshness{client: p.Client}
 }
 
@@ -37,7 +37,10 @@ func AITuneUpFreshKey(tenantInfo pagination.TenantInfo) string {
 	}, ":")
 }
 
-func (f *aiTuneUpFreshness) Fresh(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
+func (f *aiTuneUpFreshness) Fresh(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (bool, error) {
 	count, err := f.client.Exists(ctx, AITuneUpFreshKey(tenantInfo)).Result()
 	if err != nil {
 		return false, fmt.Errorf("read ai tune-up freshness: %w", err)
@@ -51,7 +54,8 @@ func (f *aiTuneUpFreshness) Mark(
 	computedAt int64,
 	ttl time.Duration,
 ) error {
-	if err := f.client.Set(ctx, AITuneUpFreshKey(tenantInfo), strconv.FormatInt(computedAt, 10), ttl).Err(); err != nil {
+	if err := f.client.Set(ctx, AITuneUpFreshKey(tenantInfo), strconv.FormatInt(computedAt, 10), ttl).
+		Err(); err != nil {
 		return fmt.Errorf("mark ai tune-ups computed: %w", err)
 	}
 	return nil

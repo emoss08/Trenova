@@ -6,10 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -122,7 +122,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListEquipmentManufacturersRequest{
+				&equipmentmanufacturerports.ListEquipmentManufacturersRequest{
 					Filter: req,
 				},
 			)
@@ -152,7 +152,7 @@ func (h *Handler) getOption(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetEquipmentManufacturerByIDRequest{
+		equipmentmanufacturerports.GetEquipmentManufacturerByIDRequest{
 			ID:         equipManufacturerID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -214,7 +214,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetEquipmentManufacturerByIDRequest{
+		equipmentmanufacturerports.GetEquipmentManufacturerByIDRequest{
 			ID:         equipManufacturerID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -328,7 +328,7 @@ func (h *Handler) patch(c *gin.Context) {
 
 	existing, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetEquipmentManufacturerByIDRequest{
+		equipmentmanufacturerports.GetEquipmentManufacturerByIDRequest{
 			ID:         equipManufacturerID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
@@ -363,7 +363,7 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 		return
 	}
 
-	req := new(repositories.BulkUpdateEquipmentManufacturerStatusRequest)
+	req := new(equipmentmanufacturerports.BulkUpdateEquipmentManufacturerStatusRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return

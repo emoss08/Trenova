@@ -9,12 +9,16 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 )
+
+const agentMemoryTaintsSpecial = "taints"
 
 func agentRunColumns(ctx context.Context, nodePathPrefix string) []string {
 	selection := projection.Select(
@@ -29,12 +33,11 @@ func agentRunColumns(ctx context.Context, nodePathPrefix string) []string {
 }
 
 func runTranscript(ctx context.Context, run *agent.AgentRun) (*agent.RunTranscript, error) {
-	l, ok := loaders.FromContext(ctx)
-	if run.Transcript != nil || !ok {
+	if run.Transcript != nil || !loaders.Available(ctx) {
 		return run.Transcript, nil
 	}
 
-	loaded, err := l.AgentRunTranscriptByID.Load(ctx, run.ID.String())
+	loaded, err := loaders.AgentRunTranscriptByID(ctx, run.ID.String())
 	switch {
 	case errortypes.IsNotFoundError(err):
 		return run.Transcript, nil
@@ -59,12 +62,11 @@ func reflectionSignals(reflection *agent.Reflection) []*agent.ReflectionSignal {
 }
 
 func supersededMemory(ctx context.Context, memory *agent.Memory) (*agent.Memory, error) {
-	l, ok := loaders.FromContext(ctx)
-	if !ok || !memory.Replaces() {
+	if !loaders.Available(ctx) || !memory.Replaces() {
 		return nil, nil
 	}
 
-	loaded, err := l.AgentMemoryByID.Load(ctx, memory.SupersedesID.String())
+	loaded, err := loaders.AgentMemoryByID(ctx, memory.SupersedesID.String())
 	switch {
 	case errortypes.IsNotFoundError(err):
 		return nil, nil
@@ -76,12 +78,11 @@ func supersededMemory(ctx context.Context, memory *agent.Memory) (*agent.Memory,
 }
 
 func replacingMemory(ctx context.Context, memory *agent.Memory) (*agent.Memory, error) {
-	l, ok := loaders.FromContext(ctx)
-	if !ok || memory == nil || memory.ID.IsNil() {
+	if !loaders.Available(ctx) || memory == nil || memory.ID.IsNil() {
 		return nil, nil
 	}
 
-	return l.AgentMemoryReplacement.Load(ctx, memory.ID.String())
+	return loaders.AgentMemoryReplacement(ctx, memory.ID.String())
 }
 
 func agentProposalColumns(ctx context.Context, nodePathPrefix string) []string {
@@ -118,15 +119,16 @@ func agentEvaluationConnectionToModel(
 }
 
 func agentMemoryColumns(ctx context.Context, nodePathPrefix string) []string {
-	selection := projection.Select(
-		projection.AgentMemorySpec,
-		func(path string) bool {
-			return graphql.FieldRequested(ctx, path)
-		},
-		projection.SelectOptions{PathPrefix: nodePathPrefix},
-	)
+	selection := base.ProjectedSelection(ctx, projection.AgentMemorySpec, nodePathPrefix)
+	if !selection.HasSpecial(agentMemoryTaintsSpecial) || len(selection.Columns) == 0 {
+		return selection.Columns
+	}
 
-	return selection.Columns
+	cols := agentcol.MemoryColumns
+	columns := sliceutils.AppendIfMissing(selection.Columns, cols.Tainted.Bare())
+	columns = sliceutils.AppendIfMissing(columns, cols.ReviewedByUserID.Bare())
+
+	return sliceutils.AppendIfMissing(columns, cols.ReviewedAt.Bare())
 }
 
 func agentMemoryConnectionToModel(
@@ -331,8 +333,8 @@ func agentExceptionConnectionToModel(
 func settleApprovalRequest(
 	proposalID, planID *string,
 	tenant pagination.TenantInfo,
-) (*services.SettleApprovalRequest, error) {
-	req := &services.SettleApprovalRequest{TenantInfo: tenant}
+) (*agentports.SettleApprovalRequest, error) {
+	req := &agentports.SettleApprovalRequest{TenantInfo: tenant}
 	hasProposal := proposalID != nil && *proposalID != ""
 	hasPlan := planID != nil && *planID != ""
 	if hasProposal == hasPlan {

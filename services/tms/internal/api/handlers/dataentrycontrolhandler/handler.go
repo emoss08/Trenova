@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/dataentrycontrol"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/dataentrycontrolservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/dataentrycontrolservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/dataentrycontrol"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/dataentrycontrolports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/gin-gonic/gin"
@@ -60,9 +60,12 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 func (h *Handler) get(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetDataEntryControlRequest{
-		TenantInfo: pagination.FromAuthAsUser(authCtx),
-	})
+	entity, err := h.service.Get(
+		c.Request.Context(),
+		dataentrycontrolports.GetDataEntryControlRequest{
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

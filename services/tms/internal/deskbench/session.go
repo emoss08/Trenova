@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,7 +28,7 @@ var defaultAgentTemplates = []agentdefinition.Template{
 type Session struct {
 	bench  *Bench
 	User   *tenant.User
-	Actor  serviceports.RequestActor
+	Actor  permissionports.RequestActor
 	Tenant pagination.TenantInfo
 }
 
@@ -50,7 +51,7 @@ func (b *Bench) SessionFor(ctx context.Context, email string) (*Session, error) 
 	return &Session{
 		bench:  b,
 		User:   user,
-		Actor:  *serviceports.UserActor(info),
+		Actor:  *permissionports.UserActor(info),
 		Tenant: info,
 	}, nil
 }
@@ -60,14 +61,17 @@ func (s *Session) Context(ctx context.Context) context.Context {
 }
 
 func (s *Session) Agents(ctx context.Context) ([]*agentdefinition.Definition, error) {
-	result, err := s.bench.Definitions.List(s.Context(ctx), &repositories.ListAgentDefinitionRequest{
-		Filter: &pagination.QueryOptions{
-			TenantInfo: s.Tenant,
-			Pagination: pagination.Info{Limit: pagination.MaxLimit},
+	result, err := s.bench.Definitions.List(
+		s.Context(ctx),
+		&agentdefinitionports.ListAgentDefinitionRequest{
+			Filter: &pagination.QueryOptions{
+				TenantInfo: s.Tenant,
+				Pagination: pagination.Info{Limit: pagination.MaxLimit},
+			},
+			EnabledOnly: true,
+			ChatOnly:    true,
 		},
-		EnabledOnly: true,
-		ChatOnly:    true,
-	})
+	)
 	if err != nil {
 		return nil, fmt.Errorf("list chat agents: %w", err)
 	}
@@ -111,7 +115,7 @@ func (s *Session) Agent(ctx context.Context, ref string) (*agentdefinition.Defin
 func (s *Session) Providers(ctx context.Context) ([]*aiprovider.Provider, error) {
 	providers, err := s.bench.Providers.ListForTask(
 		s.Context(ctx),
-		repositories.ListAIProvidersForTaskRequest{
+		agentports.ListAIProvidersForTaskRequest{
 			Task:       aiprovider.TaskAssistantChat,
 			TenantInfo: s.Tenant,
 		},
@@ -172,7 +176,7 @@ func (s *Session) CleanBenchThreads(ctx context.Context) (int, error) {
 
 	doomed := make([]pulid.ID, 0, cleanPageSize)
 	for cursor := ""; ; {
-		page, err := s.bench.Assistant.ListThreads(ctx, repositories.ListThreadsRequest{
+		page, err := s.bench.Assistant.ListThreads(ctx, agentports.ListThreadsRequest{
 			UserID:          s.User.ID,
 			TenantInfo:      s.Tenant,
 			Limit:           cleanPageSize,

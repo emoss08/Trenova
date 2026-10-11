@@ -5,16 +5,16 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/xero"
 	"github.com/shopspring/decimal"
 )
 
 func (c *Connector) FindDocument(
 	ctx context.Context,
-	req *services.AccountingFindDocumentRequest,
-) (*services.AccountingDocumentResult, bool, error) {
+	req *accountingsyncports.AccountingFindDocumentRequest,
+) (*accountingsyncports.AccountingDocumentResult, bool, error) {
 	switch {
 	case req.Kind.IsSalesDocument(),
 		req.Kind.IsBill(),
@@ -30,7 +30,7 @@ func (c *Connector) FindDocument(
 	}
 
 	var (
-		found *services.AccountingDocumentResult
+		found *accountingsyncports.AccountingDocumentResult
 		ok    bool
 	)
 	switch {
@@ -66,7 +66,7 @@ func (c *Connector) FindDocument(
 }
 
 func documentFilter(
-	req *services.AccountingFindDocumentRequest,
+	req *accountingsyncports.AccountingFindDocumentRequest,
 	kind string,
 ) (xero.InvoiceFilter, error) {
 	filter := xero.InvoiceFilter{Type: kind}
@@ -101,7 +101,10 @@ type documentMatch struct {
 	total     decimal.Decimal
 }
 
-func (m *documentMatch) matches(req *services.AccountingFindDocumentRequest, receivable bool) bool {
+func (m *documentMatch) matches(
+	req *accountingsyncports.AccountingFindDocumentRequest,
+	receivable bool,
+) bool {
 	if closedStatus(m.status) {
 		return false
 	}
@@ -122,9 +125,9 @@ func (m *documentMatch) matches(req *services.AccountingFindDocumentRequest, rec
 func findInvoice(
 	ctx context.Context,
 	client *xero.Client,
-	req *services.AccountingFindDocumentRequest,
+	req *accountingsyncports.AccountingFindDocumentRequest,
 	kind string,
-) (*services.AccountingDocumentResult, bool, error) {
+) (*accountingsyncports.AccountingDocumentResult, bool, error) {
 	filter, err := documentFilter(req, kind)
 	if err != nil {
 		return nil, false, err
@@ -155,9 +158,9 @@ func findInvoice(
 func findCreditNote(
 	ctx context.Context,
 	client *xero.Client,
-	req *services.AccountingFindDocumentRequest,
+	req *accountingsyncports.AccountingFindDocumentRequest,
 	kind string,
-) (*services.AccountingDocumentResult, bool, error) {
+) (*accountingsyncports.AccountingDocumentResult, bool, error) {
 	filter, err := documentFilter(req, kind)
 	if err != nil {
 		return nil, false, err
@@ -185,8 +188,8 @@ func findCreditNote(
 	return nil, false, nil
 }
 
-func documentResult(externalID, number string) *services.AccountingDocumentResult {
-	return &services.AccountingDocumentResult{
+func documentResult(externalID, number string) *accountingsyncports.AccountingDocumentResult {
+	return &accountingsyncports.AccountingDocumentResult{
 		ExternalID: externalID,
 		DocNumber:  number,
 		Refs:       map[string]string{accountingsync.ExternalRefDocument: externalID},
@@ -202,8 +205,8 @@ type paymentGroup struct {
 func findPayment(
 	ctx context.Context,
 	client *xero.Client,
-	req *services.AccountingFindDocumentRequest,
-) (*services.AccountingDocumentResult, bool, error) {
+	req *accountingsyncports.AccountingFindDocumentRequest,
+) (*accountingsyncports.AccountingDocumentResult, bool, error) {
 	requested := make(map[string]struct{}, len(req.AppliesToExternalIDs))
 	for _, id := range req.AppliesToExternalIDs {
 		if trimmed := strings.ToLower(strings.TrimSpace(id)); trimmed != "" {
@@ -257,7 +260,7 @@ func findPayment(
 }
 
 func (g *paymentGroup) fits(
-	req *services.AccountingFindDocumentRequest,
+	req *accountingsyncports.AccountingFindDocumentRequest,
 	requested map[string]struct{},
 	expected string,
 ) bool {
@@ -278,7 +281,7 @@ func (g *paymentGroup) fits(
 	return true
 }
 
-func (g *paymentGroup) result() *services.AccountingDocumentResult {
+func (g *paymentGroup) result() *accountingsyncports.AccountingDocumentResult {
 	result := newResult(nil)
 	if g.batchID == "" {
 		finishPayment(result, g.payments[0])
@@ -298,8 +301,8 @@ func (g *paymentGroup) result() *services.AccountingDocumentResult {
 func findAllocation(
 	ctx context.Context,
 	client *xero.Client,
-	req *services.AccountingFindDocumentRequest,
-) (*services.AccountingDocumentResult, bool, error) {
+	req *accountingsyncports.AccountingFindDocumentRequest,
+) (*accountingsyncports.AccountingDocumentResult, bool, error) {
 	noteID := strings.TrimSpace(req.CreditExternalID)
 	if noteID == "" || len(req.AppliesToExternalIDs) == 0 {
 		return nil, false, nil

@@ -3,7 +3,7 @@ package selectoptionsresolver
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

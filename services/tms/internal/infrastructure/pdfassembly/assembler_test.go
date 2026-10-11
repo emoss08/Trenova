@@ -8,8 +8,8 @@ import (
 	"io"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/pdfassembly"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu"
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
@@ -40,7 +40,7 @@ func TestAssembleSplitRoundTrip(t *testing.T) {
 	t.Parallel()
 
 	assembler := pdfassembly.New()
-	pages := []services.CaptureAssemblyPage{
+	pages := []captureports.CaptureAssemblyPage{
 		{PDF: onePagePDF(t, 250)},
 		{PDF: onePagePDF(t, 200), Rotation: 90},
 		{PDF: onePagePDF(t, 150), Rotation: -90},
@@ -67,7 +67,7 @@ func TestAssembleSinglePageIsUntouched(t *testing.T) {
 	t.Parallel()
 
 	page := onePagePDF(t, 240)
-	joined, err := pdfassembly.New().Assemble(t.Context(), []services.CaptureAssemblyPage{{PDF: page}})
+	joined, err := pdfassembly.New().Assemble(t.Context(), []captureports.CaptureAssemblyPage{{PDF: page}})
 	require.NoError(t, err)
 	assert.Equal(t, page, joined, "an unedited page keeps its original bytes")
 }

@@ -11,11 +11,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -89,7 +89,7 @@ func (r *MutationResolver) DispatchUnassignMoves(ctx context.Context, moveIds []
 
 		unassignErr := r.AssignmentService.Unassign(
 			ctx,
-			&repositories.UnassignShipmentMoveRequest{
+			&shipmentports.UnassignShipmentMoveRequest{
 				TenantInfo:     tenant,
 				ShipmentMoveID: moveID,
 			},
@@ -146,7 +146,7 @@ func (r *MutationResolver) DispatchCancelCarrierAssignment(ctx context.Context, 
 		return false, err
 	}
 
-	if err = r.CarrierAssignmentService.Cancel(ctx, &repositories.CancelCarrierAssignmentRequest{
+	if err = r.CarrierAssignmentService.Cancel(ctx, &shipmentports.CancelCarrierAssignmentRequest{
 		TenantInfo:     base.TenantInfo(authCtx),
 		ShipmentMoveID: parsedMoveID,
 		Reason:         reason,
@@ -167,7 +167,7 @@ func (r *MutationResolver) DispatchPlanAutoAssign(ctx context.Context, input gql
 		return nil, err
 	}
 
-	req := &services.DispatchPlanRequest{
+	req := &agentports.DispatchPlanRequest{
 		TenantInfo:  base.TenantInfo(authCtx),
 		WindowStart: int64(base.IntValue(input.WindowStart)),
 		WindowEnd:   int64(base.IntValue(input.WindowEnd)),

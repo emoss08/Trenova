@@ -9,7 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -343,14 +343,14 @@ func unmarshalInputBillingQueueUpdateStatusInput(ctx context.Context, ec *gqlexe
 		switch k {
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := unmarshalNBillingQueueStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐStatus(ctx, ec, v)
+			data, err := unmarshalNBillingQueueStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐStatus(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.Status = data
 		case "exceptionReasonCode":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exceptionReasonCode"))
-			data, err := unmarshalOBillingQueueExceptionReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐExceptionReasonCode(ctx, ec, v)
+			data, err := unmarshalOBillingQueueExceptionReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐExceptionReasonCode(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -378,7 +378,7 @@ func unmarshalInputBillingQueueUpdateStatusInput(ctx context.Context, ec *gqlexe
 			it.CancelReason = data
 		case "holdReasonCode":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("holdReasonCode"))
-			data, err := unmarshalOBillingQueueHoldReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐHoldReasonCode(ctx, ec, v)
+			data, err := unmarshalOBillingQueueHoldReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐHoldReasonCode(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -393,7 +393,7 @@ func unmarshalNBillingQueueAssignInput2githubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNBillingQueueStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (billingqueue.Status, error) {
+func unmarshalNBillingQueueStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (billingqueue.Status, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := billingqueue.Status(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -414,7 +414,7 @@ func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (stri
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOBillingQueueExceptionReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐExceptionReasonCode(ctx context.Context, ec *gqlexec.Exec, v any) (*billingqueue.ExceptionReasonCode, error) {
+func unmarshalOBillingQueueExceptionReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐExceptionReasonCode(ctx context.Context, ec *gqlexec.Exec, v any) (*billingqueue.ExceptionReasonCode, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -423,7 +423,7 @@ func unmarshalOBillingQueueExceptionReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtreno
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOBillingQueueHoldReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐHoldReasonCode(ctx context.Context, ec *gqlexec.Exec, v any) (*billingqueue.HoldReasonCode, error) {
+func unmarshalOBillingQueueHoldReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐHoldReasonCode(ctx context.Context, ec *gqlexec.Exec, v any) (*billingqueue.HoldReasonCode, error) {
 	if v == nil {
 		return nil, nil
 	}

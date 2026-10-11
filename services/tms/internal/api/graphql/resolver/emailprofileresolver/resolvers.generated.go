@@ -4,7 +4,7 @@ package emailprofileresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	emailservice "github.com/emoss08/trenova/internal/core/services/emailservice"
+	emailservice "github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
 )
 
 type Deps struct {

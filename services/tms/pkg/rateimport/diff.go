@@ -4,7 +4,7 @@ import (
 	"cmp"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )

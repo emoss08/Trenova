@@ -4,12 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
-
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -17,17 +16,17 @@ import (
 )
 
 type delegatePermissions struct {
-	services.PermissionEngine
+	permissionports.PermissionEngine
 
 	granted []pulid.ID
 }
 
 func (p *delegatePermissions) AgentsUsable(
 	context.Context,
-	*services.RequestActor,
+	*permissionports.RequestActor,
 	permission.Operation,
-) (*services.UsableAgents, error) {
-	return &services.UsableAgents{Assistant: true, GrantedIDs: p.granted}, nil
+) (*permissionports.UsableAgents, error) {
+	return &permissionports.UsableAgents{Assistant: true, GrantedIDs: p.granted}, nil
 }
 
 /*
@@ -71,12 +70,10 @@ func TestMyAgentDelegates_ServesOnlyDelegatesTheReaderMayUse(t *testing.T) {
 		Definitions: repo,
 		Permissions: &delegatePermissions{granted: []pulid.ID{payroll.ID}},
 	})
-	ctx := loaders.WithLoaders(t.Context(), &loaders.Loaders{
-		UsableAgentByID: factory.NewForTenant(pagination.TenantInfo{
-			OrgID:  pulid.MustNew("org_"),
-			BuID:   pulid.MustNew("bu_"),
-			UserID: pulid.MustNew("usr_"),
-		}),
+	ctx := factory.Attach(t.Context(), pagination.TenantInfo{
+		OrgID:  pulid.MustNew("org_"),
+		BuID:   pulid.MustNew("bu_"),
+		UserID: pulid.MustNew("usr_"),
 	})
 
 	delegates, err := myAgentDelegates(ctx, primary)

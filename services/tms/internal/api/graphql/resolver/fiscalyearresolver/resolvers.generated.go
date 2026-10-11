@@ -4,7 +4,7 @@ package fiscalyearresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	fiscalyearservice "github.com/emoss08/trenova/internal/core/services/fiscalyearservice"
+	fiscalyearservice "github.com/emoss08/trenova/internal/modules/accounting/app/fiscalyearservice"
 )
 
 type Deps struct {

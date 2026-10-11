@@ -1,0 +1,152 @@
+package integrationrepository
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
+	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/uptrace/bun"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+type Params struct {
+	fx.In
+
+	DB     *postgres.Connection
+	Logger *zap.Logger
+}
+
+type repository struct {
+	db *postgres.Connection
+	l  *zap.Logger
+}
+
+func New(p Params) integrationports.IntegrationRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.integration-repository"),
+	}
+}
+
+func (r *repository) ListByTenant(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) ([]*integration.Integration, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*integration.Integration, error) {
+		entities := make([]*integration.Integration, 0)
+
+		if err := r.db.DBForContext(ctx).NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where("integ.organization_id = ?", tenantInfo.OrgID).
+					Where("integ.business_unit_id = ?", tenantInfo.BuID)
+			}).
+			OrderExpr("integ.type ASC").
+			Scan(ctx); err != nil {
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
+func (r *repository) ListEnabledByType(
+	ctx context.Context,
+	typ integration.Type,
+) ([]*integration.Integration, error) {
+	ctx = dbscope.WithSystem(ctx, "list organizations with an integration type enabled")
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*integration.Integration, error) {
+		entities := make([]*integration.Integration, 0)
+
+		if err := r.db.DBForContext(ctx).NewSelect().
+			Model(&entities).
+			Where("integ.type = ?", typ).
+			Where("integ.enabled = ?", true).
+			Scan(ctx); err != nil {
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
+func (r *repository) GetByType(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	typ integration.Type,
+) (*integration.Integration, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*integration.Integration, error) {
+		entity := new(integration.Integration)
+
+		err := r.db.DBForContext(ctx).NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where("integ.organization_id = ?", tenantInfo.OrgID).
+					Where("integ.business_unit_id = ?", tenantInfo.BuID).
+					Where("integ.type = ?", typ)
+			}).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Integration")
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) Upsert(
+	ctx context.Context,
+	entity *integration.Integration,
+) (*integration.Integration, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*integration.Integration, error) {
+		existing := new(integration.Integration)
+		err := r.db.DBForContext(ctx).NewSelect().
+			Model(existing).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where("integ.organization_id = ?", entity.OrganizationID).
+					Where("integ.business_unit_id = ?", entity.BusinessUnitID).
+					Where("integ.type = ?", entity.Type)
+			}).
+			Scan(ctx)
+		if err != nil {
+			if dberror.IsNotFoundError(err) {
+				if _, insertErr := r.db.DBForContext(ctx).NewInsert().
+					Model(entity).
+					Returning("*").
+					Exec(ctx); insertErr != nil {
+					return nil, insertErr
+				}
+
+				return entity, nil
+			}
+
+			return nil, err
+		}
+
+		entity.ID = existing.ID
+		entity.CreatedAt = existing.CreatedAt
+		entity.Version = existing.Version + 1
+
+		result, err := r.db.DBForContext(ctx).NewUpdate().
+			Model(entity).
+			WherePK().
+			Where("version = ?", existing.Version).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		if err = dberror.CheckRowsAffected(result, "Integration", entity.ID.String()); err != nil {
+			return nil, err
+		}
+
+		return entity, nil
+	})
+}

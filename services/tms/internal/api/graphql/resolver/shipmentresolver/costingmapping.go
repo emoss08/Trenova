@@ -3,7 +3,7 @@ package shipmentresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/services/costingservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 )
 
 func shipmentProfitabilityEstimateToModel(

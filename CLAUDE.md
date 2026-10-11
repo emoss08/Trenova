@@ -81,7 +81,7 @@ Never reach across apps or import an app package from another app.
 ```bash
 # Go
 go test -v -run TestFunctionName ./path/to/package
-go test -v -run TestFunctionName ./internal/core/services/organization/...
+go test -v -run TestFunctionName ./internal/modules/identity/app/organizationservice/...
 
 # Client
 pnpm vitest run src/path/to/file.test.ts
@@ -93,23 +93,26 @@ pnpm vitest run src/path/to/file.test.ts
 
 ```
 services/tms/
-├── cmd/cli/                    # CLI entry point (Cobra)
-│   ├── api/                    # API server command
-│   └── db/                     # Database management commands
+├── cmd/
+│   ├── cli/                    # CLI entry point (Cobra): api run, worker run, db, redis, ...
+│   ├── api/                    # API-only binary
+│   └── worker/                 # Worker-only binary
 ├── internal/
-│   ├── api/                    # HTTP layer (Gin framework)
+│   ├── api/                    # HTTP layer (Gin framework) and GraphQL: inbound adapters
 │   │   ├── handlers/           # Request handlers
 │   │   ├── middleware/         # HTTP middleware
 │   │   └── router.go           # Route registration
-│   ├── bootstrap/              # Uber FX dependency injection modules
-│   ├── core/                   # Business logic (pure domain)
+│   ├── bootstrap/              # Uber FX graphs: core (shared), apiapp, workerapp
+│   ├── modules/<module>/       # One hexagon per business module
 │   │   ├── domain/             # Domain entities and value objects
-│   │   ├── ports/              # Interface definitions
-│   │   │   ├── repositories/   # Data access contracts
-│   │   │   └── services/       # Service port definitions
-│   │   └── services/           # Business logic implementations
-│   └── infrastructure/         # Technical implementations
+│   │   ├── ports/<entity>ports # Repository and service interfaces per entity
+│   │   ├── app/                # Application services
+│   │   ├── adapters/postgres/  # Repositories
+│   │   ├── jobs/               # Temporal workflows and activities; <name>contract packages
+│   │   └── module.go           # The module's fx options
+│   └── infrastructure/         # Cross-cutting technical adapters
 │       ├── postgres/           # PostgreSQL adapters (Bun ORM)
+│       ├── temporaljobs/       # Temporal client, worker runtime, schedules, workflow starter
 │       ├── redis/              # Redis cache adapters
 │       ├── database/           # Migrations and seeding
 │       └── config/             # Configuration management
@@ -189,7 +192,7 @@ Supports nested paths (`user.address.street`) and array indices (`items[0].name`
 - Do not add comments to code
 - Use Bun ORM for database operations
 - Use Ozzo validation for struct validation
-- Follow hexagonal architecture — keep domain logic in `core/`, adapters in `infrastructure/`
+- Follow the modular hexagonal architecture — domain, ports, app, adapters and jobs live in their module under `internal/modules/<module>/` (see "Modules" below)
 - Use `sonic` for JSON — `encoding/json` is forbidden by lint
 - Format with `goimports` and `golines`
 - Use `t.Context()` instead of `context.Background()` in tests (Go 1.25+)
@@ -198,6 +201,7 @@ Supports nested paths (`user.address.street`) and array indices (`items[0].name`
 - Avoid `interface{}` / `any` when a concrete or generic type is possible
 - Use `errors.New` / `fmt.Errorf` with `%w` — never discard errors silently
 - Preallocate slices/maps when the size is known (`make([]T, 0, n)`)
+- Never let an exported type, or the signature of an exported function or method, mention a concrete generic type that has methods (`*validationframework.TenantedValidator[*X]`, `*dataloadgen.Loader[K, V]`). Go compiles that type's methods again in every package that can see it, so hold it behind a generic interface (`validationframework.TenantedEntityValidator[*X]`) or in an unexported type reached only through package-level functions; an unexported field of an exported type still spreads it. See "Generics and build time" in [docs/engineering/module-architecture.md](docs/engineering/module-architecture.md).
 
 ### TypeScript/React
 - Format with OxFmt (`client/.oxfmtrc.json`): double quotes, semicolons, trailing commas, 100 char width
@@ -308,7 +312,7 @@ otherwise. Record links are built from one registry, `client/apps/web/src/config
 - Bind GraphQL enums to their domain type in `gqlgen.yml` (`RotaDayState: model: ...worker.RotaDayState`) when the string values match; that removes the need for a conversion resolver.
 - Every root resolver must reach a permission check or be listed, with a reason, in `internal/api/graphql/authzlint`; self-scoped operations are named `My<Thing>`. `task gqlschema-diff` fails on breaking schema changes; swapping a field between wire-compatible scalars (`Int`↔`Timestamp`, `String`↔`Decimal`) is reported as dangerous, not breaking.
 - Use the semantic scalars from `shared.graphqls`: `Timestamp` for Unix-second instants (never bare `Int` for a `*At`/`*Date` field) and `Decimal` for money and other exact quantities (never `String` or `Float`). Both bind to the same Go types as `Int`/`String`, so no mapper changes are needed.
-- A field resolver that fetches per parent row must go through a per-request dataloader in `internal/api/graphql/loaders` (`batchByIDFunc` for entities, `batchCountFunc` for counts, `batchGroupFunc` for child lists) backed by a `...ByIDs` repository method; never call a single-ID getter from an object-type resolver. Register the factory in `loaders/loaders.go` and `bootstrap/modules/api/graphql.go`.
+- A field resolver that fetches per parent row must go through a per-request dataloader in `internal/api/graphql/loaders` (`batchByIDFunc` for entities, `batchCountFunc` for counts, `batchGroupFunc` for child lists) backed by a `...ByIDs` repository method; never call a single-ID getter from an object-type resolver. Register the factory in `loaders/loaders.go` and `bootstrap/modules/api/graphql.go`, add its field to `set` and its accessor and `Attach` to `loaders/access.go`. Resolvers read loaders only through those accessors (`loaders.Available(ctx)`, `loaders.CustomerByID(ctx, id)`), and tests attach one with the factory's `Attach`. No exported type in `loaders` may have a field or method, even an unexported one, that mentions `dataloadgen.Loader`, and no exported function may take or return one: Go compiles a generic type's methods again in every package that can see the type, and the old exported `Loaders` struct cost about 1,000 compiled functions in each of 40 resolver packages.
 - Connection repositories only run their `COUNT` when `req.Cursor.IncludeTotalCount` is set; the GraphQL layer clears it when `totalCount` is not selected. New `ListConnection` methods must follow that gate.
 - Patch inputs (`*PatchInput`) mark fields `@goField(omittable: true)`: absent leaves the value alone, explicit `null` clears it (or fails validation for fields the entity requires). Generated mappers come from `resolver/mappergen`.
 - Clients send persisted operations by hash only; outside production the server re-reads `persisted-documents.json` on an unknown hash (`security.graphql.persistedDocumentsPath`), so run `pnpm --filter @trenova/graphql codegen` (or `pnpm dev`, which watches) after editing an operation. `/graphql` enforces a body-size limit and a per-user operation-cost budget (`security.graphql.*`).
@@ -321,8 +325,8 @@ HTTP-derived retry mapping, the step ledger that makes a retried write safe, the
 turn stream, per-agent schedules, the one-shot and batch workflows, and the
 `GetVersion` branches waiting on in-flight executions to drain.
 **Read [docs/engineering/agent-runtime.md](docs/engineering/agent-runtime.md)
-before changing anything under `internal/core/services/agentruntime/`,
-`assistantservice/`, or `internal/core/temporaljobs/{agentflow,modelcall,agentjobs,assistantjobs,completionjobs,importassistantjobs}/`.**
+before changing anything under `internal/modules/agent/app/agentruntime/`,
+`assistantservice/`, or `internal/modules/agent/jobs/{agentflow,modelcall,agentjobs,assistantjobs,completionjobs,importassistantjobs}/`.**
 Extensions (web search and anything like it) add agent-only tools that an organization turns
 on with its own vendor account; how they are gated, metered, and why a turn that read outside
 content proposes every later write, is in
@@ -397,8 +401,8 @@ before a tenant is known.**
 ## Security Audit Trail
 
 Sign-ins, SSO callbacks, sign-outs and password resets write `auth_events` through
-`services.AuthEventRecorder`; API key, role, permission, IAM and membership changes write
-critical `audit_entries` through `services.SecurityAuditor`; document downloads and views
+`iamports.AuthEventRecorder`; API key, role, permission, IAM and membership changes write
+critical `audit_entries` through `permissionports.SecurityAuditor`; document downloads and views
 and refused cross-tenant requests (`tenantboundary.Report`) are recorded too, each with the
 request ID, client IP and user agent. Both tables are append-only and only the retention
 sweep may delete from them. **Read [docs/engineering/security-audit.md](docs/engineering/security-audit.md)
@@ -468,6 +472,23 @@ middleware join through the `internal/api/routegroup` value groups, GraphQL exte
 `edition_graphql_extensions`, and `GET /system/public-config` fields through
 `public_config_contributors`. Decide behaviour from an injected port (`PlanService.EnforcesPlans`,
 `EditionInfo.SharedTenancy`, an onboarding row existing), never from `platform.mode`.
+
+**Binaries and edition registration.** Besides `cmd/cli` (the production image's `api run`
+and `worker run`), the service builds `cmd/api` and `cmd/worker`, which link only the API's
+or the worker's graph (`internal/bootstrap/core` plus `apiapp` or `workerapp`). Each main
+registers its edition separately, so an overlay must also add `cmd/api/edition_cloud.go` and
+`cmd/worker/edition_cloud.go`, each calling `edition.Register(cloud.Edition())`; without them
+those two binaries run the self-hosted edition.
+
+## Modules
+
+`services/tms` is split into levelled modules, `internal/modules/<module>/{domain,ports,app,adapters/postgres,jobs}`
+with a `module.go` (`SharedOptions`, `APIOptions`) and a `jobs/jobs.go` (`WorkerOptions`). A module may import only
+the `domain`, `ports` and `<name>contract` packages of strictly lower modules, plus `pkg/*` and `internal/infrastructure/*`;
+an upward need is an inversion port declared low and provided by the higher `module.go`. `go run ./scripts/archlint`
+(`task lint`, CI) enforces it against `.go-arch-lint.yml`. Every package belongs to a module; `internal/core` no longer
+exists, and new code goes in its module.
+**Read [docs/engineering/module-architecture.md](docs/engineering/module-architecture.md) before adding a module, an entity, a port, a service or a job.**
 
 ## Bun ORM
 

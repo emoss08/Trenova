@@ -1,7 +1,7 @@
 # AI tool safety
 
 <!-- Generated from the tool policies in code by running, in services/tms:
-     go generate ./internal/core/services/agenttoolpolicy/safetydoc/...
+     go generate ./internal/modules/agent/app/agenttoolpolicy/safetydoc/...
      Do not edit by hand. -->
 
 What every tool an agent can call may do without a person, read from the

@@ -1,39 +1,43 @@
 package loaders
 
 import (
-	"context"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/services/fieldsensitivity"
-
-	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/core/domain/glaccount"
-	"github.com/emoss08/trenova/internal/core/domain/ifta"
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/domain/latecharge"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-
-	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/domain/order"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/costingservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
 	"github.com/vikstrous/dataloadgen"
@@ -105,7 +109,7 @@ type FactoryParams struct {
 	CarrierMonitoringEnrollmentByCarrierID    *CarrierMonitoringEnrollmentByCarrierIDLoaderFactory
 	AuditEntriesByAIAuditEventID              *AuditEntriesByAIAuditEventIDLoaderFactory
 	SubsetLabels                              *SubsetLabelsLoaderFactory
-	PermissionEngine                          services.PermissionEngine
+	PermissionEngine                          permissionports.PermissionEngine
 }
 
 type Factory struct {
@@ -169,74 +173,74 @@ type Factory struct {
 	carrierMonitoringEnrollmentByCarrierID    *CarrierMonitoringEnrollmentByCarrierIDLoaderFactory
 	auditEntriesByAIAuditEventID              *AuditEntriesByAIAuditEventIDLoaderFactory
 	subsetLabels                              *SubsetLabelsLoaderFactory
-	permissionEngine                          services.PermissionEngine
+	permissionEngine                          permissionports.PermissionEngine
 }
 
-type Loaders struct {
-	OrganizationByID                          *dataloadgen.Loader[string, *tenant.Organization]
-	LocationByID                              *dataloadgen.Loader[string, *location.Location]
-	OrderByID                                 *dataloadgen.Loader[string, *order.Order]
-	ShipmentProfitabilityByID                 *dataloadgen.Loader[string, *costingservice.ShipmentProfitabilityEstimate]
-	ShipmentEtaByID                           *dataloadgen.Loader[string, *services.ShipmentEta]
-	EDIPartnerByCustomerID                    *dataloadgen.Loader[string, *edi.EDIPartner]
-	FormulaTemplateStatsByID                  *dataloadgen.Loader[string, repositories.TemplateStats]
-	AgentDefinitionStatsByID                  *dataloadgen.Loader[string, repositories.AgentDefinitionStats]
-	PayProfileActiveAssignmentCount           *dataloadgen.Loader[string, int]
-	PTOPolicyOpenAssignmentCount              *dataloadgen.Loader[string, int]
-	ShiftTemplateActiveAssignmentCount        *dataloadgen.Loader[string, int]
-	AIProviderMonthSpend                      *dataloadgen.Loader[string, decimal.Decimal]
-	WorkerChecklistTemplateOpenChecklistCount *dataloadgen.Loader[string, int]
-	WorkerCredentialTypeActiveCredentialCount *dataloadgen.Loader[string, int]
-	TrainingCourseOpenRecordCount             *dataloadgen.Loader[string, int]
-	PerformanceReviewTemplateOpenReviewCount  *dataloadgen.Loader[string, int]
-	CustomerByID                              *dataloadgen.Loader[string, *customer.Customer]
-	InvoiceByID                               *dataloadgen.Loader[string, *invoice.Invoice]
-	GLAccountByID                             *dataloadgen.Loader[string, *glaccount.GLAccount]
-	RoutingGuideWithEntriesByID               *dataloadgen.Loader[string, *tender.RoutingGuide]
-	WorkerDQFVerificationsByWorkerID          *dataloadgen.Loader[string, []*worker.WorkerEmploymentVerification]
-	WorkerLeaveEntriesByCaseID                *dataloadgen.Loader[string, []*worker.WorkerLeaveEntry]
-	FiscalPeriodsByFiscalYearID               *dataloadgen.Loader[string, []*fiscalperiod.FiscalPeriod]
-	AgentDecisionsByProposalID                *dataloadgen.Loader[string, []*agent.AgentDecision]
-	AgentRunByID                              *dataloadgen.Loader[string, *agent.AgentRun]
-	AgentRunTranscriptByID                    *dataloadgen.Loader[string, *agent.AgentRun]
-	AgentMemoryByID                           *dataloadgen.Loader[string, *agent.Memory]
-	AgentMemoryReplacement                    *dataloadgen.Loader[string, *agent.Memory]
-	AgentDefinitionByID                       *dataloadgen.Loader[string, *agentdefinition.Definition]
-	ThreadAgentByID                           *dataloadgen.Loader[string, *conversation.Thread]
-	UsableAgentByID                           *dataloadgen.Loader[string, *agentdefinition.Definition]
-	AccessRolesByAgentID                      *dataloadgen.Loader[string, []*permission.Role]
-	AgentsByRoleID                            *dataloadgen.Loader[string, []*agentdefinition.Definition]
-	ToolTrustByAgentID                        *dataloadgen.Loader[string, []*agent.ToolTrust]
-	DocumentTemplateKindByTemplateID          *dataloadgen.Loader[string, documenttemplate.Kind]
-	IFTAJurisdictionByID                      *dataloadgen.Loader[string, *ifta.Jurisdiction]
-	IFTAReturnByID                            *dataloadgen.Loader[string, *ifta.Return]
-	FuelCardByID                              *dataloadgen.Loader[string, *fuelpurchase.FuelCard]
-	TractorByID                               *dataloadgen.Loader[string, *tractor.Tractor]
-	ShipmentMoveJurisdictionMilesByMoveID     *dataloadgen.Loader[string, []*shipment.ShipmentMoveJurisdictionMile]
-	UserByID                                  *dataloadgen.Loader[string, *tenant.User]
-	DocumentByID                              *dataloadgen.Loader[string, *document.Document]
-	UsStateByID                               *dataloadgen.Loader[string, *usstate.UsState]
-	InvoicesByShipmentID                      *dataloadgen.Loader[string, []*invoice.Invoice]
-	ChargeAllocationsByShipmentID             *dataloadgen.Loader[string, []*shipment.ChargeAllocation]
-	ChargeAllocationsByOrderChargeID          *dataloadgen.Loader[string, []*shipment.ChargeAllocation]
-	CustomerPaymentApplicationsByInvoiceID    *dataloadgen.Loader[string, []*customerpayment.Application]
-	CreditMemoApplicationsByInvoiceID         *dataloadgen.Loader[string, []*customerpayment.CreditMemoApplication]
-	InvoiceDisputesByInvoiceID                *dataloadgen.Loader[string, []*invoice.InvoiceDispute]
-	LateChargeAssessmentsByInvoiceID          *dataloadgen.Loader[string, []*latecharge.LateChargeAssessment]
-	InvoiceEDISendPlanByInvoiceID             *dataloadgen.Loader[string, *services.InvoiceEDISendPlan]
-	CarrierIntelSnapshotByCarrierID           *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot]
-	CarrierIntelSnapshotByCustomerID          *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot]
-	CarrierIntelOpenEventCount                *dataloadgen.Loader[string, int]
-	InboundAttachmentCount                    *dataloadgen.Loader[string, int]
-	ShipmentSummaryByID                       *dataloadgen.Loader[string, *repositories.ShipmentSummary]
-	CaptureRecordLabel                        *dataloadgen.Loader[string, *repositories.CaptureRecordLabel]
-	CarrierMonitoringEnrollmentByCarrierID    *dataloadgen.Loader[string, []*carrierintel.CarrierMonitoringEnrollment]
-	AuditEntriesByAIAuditEventID              *dataloadgen.Loader[string, []*audit.Entry]
+type set struct {
+	organizationByID                          *dataloadgen.Loader[string, *tenant.Organization]
+	locationByID                              *dataloadgen.Loader[string, *location.Location]
+	orderByID                                 *dataloadgen.Loader[string, *order.Order]
+	shipmentProfitabilityByID                 *dataloadgen.Loader[string, *costingservice.ShipmentProfitabilityEstimate]
+	shipmentEtaByID                           *dataloadgen.Loader[string, *shipmenttrackingports.ShipmentEta]
+	ediPartnerByCustomerID                    *dataloadgen.Loader[string, *edi.EDIPartner]
+	formulaTemplateStatsByID                  *dataloadgen.Loader[string, formulatemplateports.TemplateStats]
+	agentDefinitionStatsByID                  *dataloadgen.Loader[string, agentdefinitionports.AgentDefinitionStats]
+	payProfileActiveAssignmentCount           *dataloadgen.Loader[string, int]
+	ptoPolicyOpenAssignmentCount              *dataloadgen.Loader[string, int]
+	shiftTemplateActiveAssignmentCount        *dataloadgen.Loader[string, int]
+	aiProviderMonthSpend                      *dataloadgen.Loader[string, decimal.Decimal]
+	workerChecklistTemplateOpenChecklistCount *dataloadgen.Loader[string, int]
+	workerCredentialTypeActiveCredentialCount *dataloadgen.Loader[string, int]
+	trainingCourseOpenRecordCount             *dataloadgen.Loader[string, int]
+	performanceReviewTemplateOpenReviewCount  *dataloadgen.Loader[string, int]
+	customerByID                              *dataloadgen.Loader[string, *customer.Customer]
+	invoiceByID                               *dataloadgen.Loader[string, *invoice.Invoice]
+	glAccountByID                             *dataloadgen.Loader[string, *glaccount.GLAccount]
+	routingGuideWithEntriesByID               *dataloadgen.Loader[string, *tender.RoutingGuide]
+	workerDQFVerificationsByWorkerID          *dataloadgen.Loader[string, []*worker.WorkerEmploymentVerification]
+	workerLeaveEntriesByCaseID                *dataloadgen.Loader[string, []*worker.WorkerLeaveEntry]
+	fiscalPeriodsByFiscalYearID               *dataloadgen.Loader[string, []*fiscalperiod.FiscalPeriod]
+	agentDecisionsByProposalID                *dataloadgen.Loader[string, []*agent.AgentDecision]
+	agentRunByID                              *dataloadgen.Loader[string, *agent.AgentRun]
+	agentRunTranscriptByID                    *dataloadgen.Loader[string, *agent.AgentRun]
+	agentMemoryByID                           *dataloadgen.Loader[string, *agent.Memory]
+	agentMemoryReplacement                    *dataloadgen.Loader[string, *agent.Memory]
+	agentDefinitionByID                       *dataloadgen.Loader[string, *agentdefinition.Definition]
+	threadAgentByID                           *dataloadgen.Loader[string, *conversation.Thread]
+	usableAgentByID                           *dataloadgen.Loader[string, *agentdefinition.Definition]
+	accessRolesByAgentID                      *dataloadgen.Loader[string, []*permission.Role]
+	agentsByRoleID                            *dataloadgen.Loader[string, []*agentdefinition.Definition]
+	toolTrustByAgentID                        *dataloadgen.Loader[string, []*agent.ToolTrust]
+	documentTemplateKindByTemplateID          *dataloadgen.Loader[string, documenttemplate.Kind]
+	iftaJurisdictionByID                      *dataloadgen.Loader[string, *ifta.Jurisdiction]
+	iftaReturnByID                            *dataloadgen.Loader[string, *ifta.Return]
+	fuelCardByID                              *dataloadgen.Loader[string, *fuelpurchase.FuelCard]
+	tractorByID                               *dataloadgen.Loader[string, *tractor.Tractor]
+	shipmentMoveJurisdictionMilesByMoveID     *dataloadgen.Loader[string, []*shipment.ShipmentMoveJurisdictionMile]
+	userByID                                  *dataloadgen.Loader[string, *tenant.User]
+	documentByID                              *dataloadgen.Loader[string, *document.Document]
+	usStateByID                               *dataloadgen.Loader[string, *usstate.UsState]
+	invoicesByShipmentID                      *dataloadgen.Loader[string, []*invoice.Invoice]
+	chargeAllocationsByShipmentID             *dataloadgen.Loader[string, []*shipment.ChargeAllocation]
+	chargeAllocationsByOrderChargeID          *dataloadgen.Loader[string, []*shipment.ChargeAllocation]
+	customerPaymentApplicationsByInvoiceID    *dataloadgen.Loader[string, []*customerpayment.Application]
+	creditMemoApplicationsByInvoiceID         *dataloadgen.Loader[string, []*customerpayment.CreditMemoApplication]
+	invoiceDisputesByInvoiceID                *dataloadgen.Loader[string, []*invoice.InvoiceDispute]
+	lateChargeAssessmentsByInvoiceID          *dataloadgen.Loader[string, []*latecharge.LateChargeAssessment]
+	invoiceEDISendPlanByInvoiceID             *dataloadgen.Loader[string, *invoiceports.InvoiceEDISendPlan]
+	carrierIntelSnapshotByCarrierID           *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot]
+	carrierIntelSnapshotByCustomerID          *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot]
+	carrierIntelOpenEventCount                *dataloadgen.Loader[string, int]
+	inboundAttachmentCount                    *dataloadgen.Loader[string, int]
+	shipmentSummaryByID                       *dataloadgen.Loader[string, *shipmentports.ShipmentSummary]
+	captureRecordLabel                        *dataloadgen.Loader[string, *captureports.CaptureRecordLabel]
+	carrierMonitoringEnrollmentByCarrierID    *dataloadgen.Loader[string, []*carrierintel.CarrierMonitoringEnrollment]
+	auditEntriesByAIAuditEventID              *dataloadgen.Loader[string, []*audit.Entry]
 	// SubsetLabels names the records each record-subset field offers.
-	SubsetLabels *dataloadgen.Loader[string, services.RecordLabels]
+	subsetLabels *dataloadgen.Loader[string, agentports.RecordLabels]
 	// FieldCeilings is the reader's sensitivity ceiling per resource, asked
 	// of the permission engine once per resource per request.
-	FieldCeilings services.FieldCeilings
+	fieldCeilings aiauditports.FieldCeilings
 }
 
 func NewFactory(p FactoryParams) *Factory {
@@ -305,145 +309,164 @@ func NewFactory(p FactoryParams) *Factory {
 	}
 }
 
-func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
-	return &Loaders{
-		OrganizationByID: f.organizationByID.NewForTenant(tenantInfo),
-		LocationByID:     f.locationByID.NewForTenant(tenantInfo),
-		OrderByID:        f.orderByID.NewForTenant(tenantInfo),
-		ShipmentProfitabilityByID: f.shipmentProfitabilityByID.NewForTenant(
+func newSet(f *Factory, tenantInfo pagination.TenantInfo) *set {
+	return &set{
+		organizationByID: newOrganizationByIDLoader(f.organizationByID, tenantInfo),
+		locationByID:     newLocationByIDLoader(f.locationByID, tenantInfo),
+		orderByID:        newOrderByIDLoader(f.orderByID, tenantInfo),
+		shipmentProfitabilityByID: newShipmentProfitabilityLoader(f.shipmentProfitabilityByID,
 			tenantInfo,
 		),
-		ShipmentEtaByID: f.shipmentEtaByID.NewForTenant(tenantInfo),
-		EDIPartnerByCustomerID: f.ediPartnerByCustomerID.NewForTenant(
+		shipmentEtaByID: newShipmentEtaLoader(f.shipmentEtaByID, tenantInfo),
+		ediPartnerByCustomerID: newEDIPartnerByCustomerIDLoader(f.ediPartnerByCustomerID,
 			tenantInfo,
 		),
-		FormulaTemplateStatsByID: f.formulaTemplateStatsByID.NewForTenant(
+		formulaTemplateStatsByID: newFormulaTemplateStatsLoader(f.formulaTemplateStatsByID,
 			tenantInfo,
 		),
-		AgentDefinitionStatsByID: f.agentDefinitionStatsByID.NewForTenant(
+		agentDefinitionStatsByID: newAgentDefinitionStatsLoader(f.agentDefinitionStatsByID,
 			tenantInfo,
 		),
-		PayProfileActiveAssignmentCount: f.payProfileActiveAssignmentCount.NewForTenant(
+		payProfileActiveAssignmentCount: newPayProfileActiveAssignmentCountLoader(
+			f.payProfileActiveAssignmentCount,
 			tenantInfo,
 		),
-		PTOPolicyOpenAssignmentCount: f.pTOPolicyOpenAssignmentCount.NewForTenant(
+		ptoPolicyOpenAssignmentCount: newPTOPolicyOpenAssignmentCountLoader(
+			f.pTOPolicyOpenAssignmentCount,
 			tenantInfo,
 		),
-		ShiftTemplateActiveAssignmentCount: f.shiftTemplateActiveAssignmentCount.NewForTenant(
+		shiftTemplateActiveAssignmentCount: newShiftTemplateActiveAssignmentCountLoader(
+			f.shiftTemplateActiveAssignmentCount,
 			tenantInfo,
 		),
-		AIProviderMonthSpend: f.aiProviderMonthSpend.NewForTenant(tenantInfo),
-		WorkerChecklistTemplateOpenChecklistCount: f.workerChecklistTemplateOpenChecklistCount.NewForTenant(
+		aiProviderMonthSpend: newAIProviderMonthSpendLoader(f.aiProviderMonthSpend, tenantInfo),
+		workerChecklistTemplateOpenChecklistCount: newWorkerChecklistTemplateOpenChecklistCountLoader(
+			f.workerChecklistTemplateOpenChecklistCount,
 			tenantInfo,
 		),
-		WorkerCredentialTypeActiveCredentialCount: f.workerCredentialTypeActiveCredentialCount.NewForTenant(
+		workerCredentialTypeActiveCredentialCount: newWorkerCredentialTypeActiveCredentialCountLoader(
+			f.workerCredentialTypeActiveCredentialCount,
 			tenantInfo,
 		),
-		TrainingCourseOpenRecordCount: f.trainingCourseOpenRecordCount.NewForTenant(
+		trainingCourseOpenRecordCount: newTrainingCourseOpenRecordCountLoader(
+			f.trainingCourseOpenRecordCount,
 			tenantInfo,
 		),
-		PerformanceReviewTemplateOpenReviewCount: f.performanceReviewTemplateOpenReviewCount.NewForTenant(
+		performanceReviewTemplateOpenReviewCount: newPerformanceReviewTemplateOpenReviewCountLoader(
+			f.performanceReviewTemplateOpenReviewCount,
 			tenantInfo,
 		),
-		CustomerByID:  f.customerByID.NewForTenant(tenantInfo),
-		InvoiceByID:   f.invoiceByID.NewForTenant(tenantInfo),
-		GLAccountByID: f.gLAccountByID.NewForTenant(tenantInfo),
-		RoutingGuideWithEntriesByID: f.routingGuideWithEntriesByID.NewForTenant(
+		customerByID:  newCustomerByIDLoader(f.customerByID, tenantInfo),
+		invoiceByID:   newInvoiceByIDLoader(f.invoiceByID, tenantInfo),
+		glAccountByID: newGLAccountByIDLoader(f.gLAccountByID, tenantInfo),
+		routingGuideWithEntriesByID: newRoutingGuideWithEntriesByIDLoader(
+			f.routingGuideWithEntriesByID,
 			tenantInfo,
 		),
-		WorkerDQFVerificationsByWorkerID: f.workerDQFVerificationsByWorkerID.NewForTenant(
+		workerDQFVerificationsByWorkerID: newWorkerDQFVerificationsByWorkerIDLoader(
+			f.workerDQFVerificationsByWorkerID,
 			tenantInfo,
 		),
-		WorkerLeaveEntriesByCaseID: f.workerLeaveEntriesByCaseID.NewForTenant(
+		workerLeaveEntriesByCaseID: newWorkerLeaveEntriesByCaseIDLoader(
+			f.workerLeaveEntriesByCaseID,
 			tenantInfo,
 		),
-		FiscalPeriodsByFiscalYearID: f.fiscalPeriodsByFiscalYearID.NewForTenant(
+		fiscalPeriodsByFiscalYearID: newFiscalPeriodsByFiscalYearIDLoader(
+			f.fiscalPeriodsByFiscalYearID,
 			tenantInfo,
 		),
-		AgentDecisionsByProposalID: f.agentDecisionsByProposalID.NewForTenant(
+		agentDecisionsByProposalID: newAgentDecisionsByProposalIDLoader(
+			f.agentDecisionsByProposalID,
 			tenantInfo,
 		),
-		AgentRunByID:    f.agentRunByID.NewForTenant(tenantInfo),
-		AgentMemoryByID: f.agentMemoryByID.NewForTenant(tenantInfo),
-		AgentMemoryReplacement: f.agentMemoryReplacement.NewForTenant(
+		agentRunByID:    newAgentRunByIDLoader(f.agentRunByID, tenantInfo),
+		agentMemoryByID: newAgentMemoryByIDLoader(f.agentMemoryByID, tenantInfo),
+		agentMemoryReplacement: newAgentMemoryReplacementLoader(f.agentMemoryReplacement,
 			tenantInfo,
 		),
-		AgentRunTranscriptByID: f.agentRunTranscriptByID.NewForTenant(
+		agentRunTranscriptByID: newAgentRunTranscriptByIDLoader(f.agentRunTranscriptByID,
 			tenantInfo,
 		),
-		AgentDefinitionByID:  f.agentDefinitionByID.NewForTenant(tenantInfo),
-		ThreadAgentByID:      f.threadAgentByID.NewForTenant(tenantInfo),
-		UsableAgentByID:      f.usableAgentByID.NewForTenant(tenantInfo),
-		AccessRolesByAgentID: f.accessRolesByAgentID.NewForTenant(tenantInfo),
-		AgentsByRoleID:       f.agentsByRoleID.NewForTenant(tenantInfo),
-		ToolTrustByAgentID:   f.toolTrustByAgentID.NewForTenant(tenantInfo),
-		DocumentTemplateKindByTemplateID: f.documentTemplateKindByTemplateID.NewForTenant(
+		agentDefinitionByID:  newAgentDefinitionByIDLoader(f.agentDefinitionByID, tenantInfo),
+		threadAgentByID:      newThreadAgentByIDLoader(f.threadAgentByID, tenantInfo),
+		usableAgentByID:      newUsableAgentByIDLoader(f.usableAgentByID, tenantInfo),
+		accessRolesByAgentID: newAccessRolesByAgentIDLoader(f.accessRolesByAgentID, tenantInfo),
+		agentsByRoleID:       newAgentsByRoleIDLoader(f.agentsByRoleID, tenantInfo),
+		toolTrustByAgentID:   newToolTrustByAgentIDLoader(f.toolTrustByAgentID, tenantInfo),
+		documentTemplateKindByTemplateID: newDocumentTemplateKindByTemplateIDLoader(
+			f.documentTemplateKindByTemplateID,
 			tenantInfo,
 		),
-		IFTAJurisdictionByID: f.iFTAJurisdictionByID.NewForTenant(tenantInfo),
-		IFTAReturnByID:       f.iFTAReturnByID.NewForTenant(tenantInfo),
-		FuelCardByID:         f.fuelCardByID.NewForTenant(tenantInfo),
-		TractorByID:          f.tractorByID.NewForTenant(tenantInfo),
-		ShipmentMoveJurisdictionMilesByMoveID: f.shipmentMoveJurisdictionMilesByMoveID.NewForTenant(
+		iftaJurisdictionByID: newIFTAJurisdictionByIDLoader(f.iFTAJurisdictionByID, tenantInfo),
+		iftaReturnByID:       newIFTAReturnByIDLoader(f.iFTAReturnByID, tenantInfo),
+		fuelCardByID:         newFuelCardByIDLoader(f.fuelCardByID, tenantInfo),
+		tractorByID:          newTractorByIDLoader(f.tractorByID, tenantInfo),
+		shipmentMoveJurisdictionMilesByMoveID: newShipmentMoveJurisdictionMilesByMoveIDLoader(
+			f.shipmentMoveJurisdictionMilesByMoveID,
 			tenantInfo,
 		),
-		UserByID:             f.userByID.NewForTenant(tenantInfo),
-		DocumentByID:         f.documentByID.NewForTenant(tenantInfo),
-		UsStateByID:          f.usStateByID.NewForTenant(tenantInfo),
-		InvoicesByShipmentID: f.invoicesByShipmentID.NewForTenant(tenantInfo),
-		ChargeAllocationsByShipmentID: f.chargeAllocationsByShipmentID.NewForTenant(
+		userByID:             newUserByIDLoader(f.userByID, tenantInfo),
+		documentByID:         newDocumentByIDLoader(f.documentByID, tenantInfo),
+		usStateByID:          newUsStateByIDLoader(f.usStateByID, tenantInfo),
+		invoicesByShipmentID: newInvoicesByShipmentIDLoader(f.invoicesByShipmentID, tenantInfo),
+		chargeAllocationsByShipmentID: newChargeAllocationsByShipmentIDLoader(
+			f.chargeAllocationsByShipmentID,
 			tenantInfo,
 		),
-		ChargeAllocationsByOrderChargeID: f.chargeAllocationsByOrderChargeID.NewForTenant(
+		chargeAllocationsByOrderChargeID: newChargeAllocationsByOrderChargeIDLoader(
+			f.chargeAllocationsByOrderChargeID,
 			tenantInfo,
 		),
-		CustomerPaymentApplicationsByInvoiceID: f.customerPaymentApplicationsByInvoiceID.NewForTenant(
+		customerPaymentApplicationsByInvoiceID: newCustomerPaymentApplicationsByInvoiceIDLoader(
+			f.customerPaymentApplicationsByInvoiceID,
 			tenantInfo,
 		),
-		CreditMemoApplicationsByInvoiceID: f.creditMemoApplicationsByInvoiceID.NewForTenant(
+		creditMemoApplicationsByInvoiceID: newCreditMemoApplicationsByInvoiceIDLoader(
+			f.creditMemoApplicationsByInvoiceID,
 			tenantInfo,
 		),
-		InvoiceDisputesByInvoiceID: f.invoiceDisputesByInvoiceID.NewForTenant(
+		invoiceDisputesByInvoiceID: newInvoiceDisputesByInvoiceIDLoader(
+			f.invoiceDisputesByInvoiceID,
 			tenantInfo,
 		),
-		LateChargeAssessmentsByInvoiceID: f.lateChargeAssessmentsByInvoiceID.NewForTenant(
+		lateChargeAssessmentsByInvoiceID: newLateChargeAssessmentsByInvoiceIDLoader(
+			f.lateChargeAssessmentsByInvoiceID,
 			tenantInfo,
 		),
-		InvoiceEDISendPlanByInvoiceID: f.invoiceEDISendPlanByInvoiceID.NewForTenant(
+		invoiceEDISendPlanByInvoiceID: newInvoiceEDISendPlanByInvoiceIDLoader(
+			f.invoiceEDISendPlanByInvoiceID,
 			tenantInfo,
 		),
-		CarrierIntelSnapshotByCarrierID: f.carrierIntelSnapshotByCarrierID.NewForTenant(
+		carrierIntelSnapshotByCarrierID: newCarrierIntelSnapshotByCarrierIDLoader(
+			f.carrierIntelSnapshotByCarrierID,
 			tenantInfo,
 		),
-		CarrierIntelSnapshotByCustomerID: f.carrierIntelSnapshotByCustomerID.NewForTenant(
+		carrierIntelSnapshotByCustomerID: newCarrierIntelSnapshotByCustomerIDLoader(
+			f.carrierIntelSnapshotByCustomerID,
 			tenantInfo,
 		),
-		CarrierIntelOpenEventCount: f.carrierIntelOpenEventCount.NewForTenant(
+		carrierIntelOpenEventCount: newCarrierIntelOpenEventCountLoader(
+			f.carrierIntelOpenEventCount,
 			tenantInfo,
 		),
-		InboundAttachmentCount: f.inboundAttachmentCount.NewForTenant(
+		inboundAttachmentCount: newInboundAttachmentCountLoader(f.inboundAttachmentCount,
 			tenantInfo,
 		),
-		ShipmentSummaryByID: f.shipmentSummaryByID.NewForTenant(tenantInfo),
-		CaptureRecordLabel:  f.captureRecordLabel.NewForTenant(tenantInfo),
-		CarrierMonitoringEnrollmentByCarrierID: f.carrierMonitoringEnrollmentByCarrierID.NewForTenant(
+		shipmentSummaryByID: newShipmentSummaryByIDLoader(f.shipmentSummaryByID, tenantInfo),
+		captureRecordLabel:  newCaptureRecordLabelLoader(f.captureRecordLabel, tenantInfo),
+		carrierMonitoringEnrollmentByCarrierID: newCarrierMonitoringEnrollmentByCarrierIDLoader(
+			f.carrierMonitoringEnrollmentByCarrierID,
 			tenantInfo,
 		),
-		AuditEntriesByAIAuditEventID: f.auditEntriesByAIAuditEventID.NewForTenant(tenantInfo),
-		SubsetLabels:                 f.subsetLabels.NewForTenant(tenantInfo),
-		FieldCeilings: fieldsensitivity.NewCeilings(
+		auditEntriesByAIAuditEventID: newAuditEntriesByAIAuditEventIDLoader(
+			f.auditEntriesByAIAuditEventID,
+			tenantInfo,
+		),
+		subsetLabels: newSubsetLabelsLoader(f.subsetLabels, tenantInfo),
+		fieldCeilings: fieldsensitivity.NewCeilings(
 			f.permissionEngine,
 			tenantInfo.UserID,
 			tenantInfo.OrgID,
 		),
 	}
-}
-
-func WithLoaders(ctx context.Context, loaders *Loaders) context.Context {
-	return context.WithValue(ctx, contextKey{}, loaders)
-}
-
-func FromContext(ctx context.Context) (*Loaders, bool) {
-	loaders, ok := ctx.Value(contextKey{}).(*Loaders)
-	return loaders, ok
 }

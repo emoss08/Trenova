@@ -9,9 +9,9 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -115,7 +115,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerpayment.CreditMemoApplication)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCreditMemoApplicationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐCreditApplicationStatus),
+				Marshal: gqlexec.Marshal(marshalNCreditMemoApplicationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐCreditApplicationStatus),
 			},
 			{
 				Name:     "unappliedAt",
@@ -183,7 +183,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerpayment.CreditMemoApplication)
 					return obj.CreditMemo, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInvoice),
+				Marshal: gqlexec.Marshal(marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoice),
 			},
 			{
 				Name:      "invoice",
@@ -193,7 +193,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerpayment.CreditMemoApplication)
 					return obj.Invoice, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInvoice),
+				Marshal: gqlexec.Marshal(marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoice),
 			},
 		}},
 		{Object: "CustomerPayment", Fields: []*gqlexec.Field{
@@ -295,7 +295,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerpayment.Payment)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCustomerPaymentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐStatus),
+				Marshal: gqlexec.Marshal(marshalNCustomerPaymentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐStatus),
 			},
 			{
 				Name:     "paymentMethod",
@@ -305,7 +305,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerpayment.Payment)
 					return obj.PaymentMethod, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCustomerPaymentMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐMethod),
+				Marshal: gqlexec.Marshal(marshalNCustomerPaymentMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐMethod),
 			},
 			{
 				Name:     "referenceNumber",
@@ -462,7 +462,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerpayment.Payment)
 					return gqlexec.Resolver[resolverCustomerPayment](ec, "CustomerPayment").Customer(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐCustomer),
+				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
 			},
 			{
 				Name:      "applications",
@@ -472,7 +472,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerpayment.Payment)
 					return obj.Applications, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOCustomerPaymentApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐApplicationᚄ),
+				Marshal: gqlexec.Marshal(marshalOCustomerPaymentApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐApplicationᚄ),
 			},
 		}},
 		{Object: "CustomerPaymentApplication", Fields: []*gqlexec.Field{
@@ -586,7 +586,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerpayment.Application)
 					return gqlexec.Resolver[resolverCustomerPaymentApplication](ec, "CustomerPaymentApplication").Invoice(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInvoice),
+				Marshal: gqlexec.Marshal(marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoice),
 			},
 			{
 				Name:      "payment",
@@ -596,7 +596,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerpayment.Application)
 					return obj.Payment, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐPayment),
+				Marshal: gqlexec.Marshal(marshalOCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐPayment),
 			},
 		}},
 		{Object: "CustomerPaymentConnection", Fields: []*gqlexec.Field{
@@ -642,7 +642,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.CustomerPaymentEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐPayment),
+				Marshal: gqlexec.Marshal(marshalNCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐPayment),
 			},
 			{
 				Name:     "cursor",
@@ -667,7 +667,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PostAndApplyCustomerPayment(ctx, fc.Args["input"].(gqlmodel.PostCustomerPaymentInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐPayment),
+				Marshal: gqlexec.Marshal(marshalNCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐPayment),
 			},
 			{
 				Name:       "applyUnappliedCustomerPayment",
@@ -680,7 +680,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApplyUnappliedCustomerPayment(ctx, fc.Args["input"].(gqlmodel.ApplyCustomerPaymentInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐPayment),
+				Marshal: gqlexec.Marshal(marshalNCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐPayment),
 			},
 			{
 				Name:       "reverseCustomerPayment",
@@ -693,7 +693,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReverseCustomerPayment(ctx, fc.Args["input"].(gqlmodel.ReverseCustomerPaymentInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐPayment),
+				Marshal: gqlexec.Marshal(marshalNCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐPayment),
 			},
 			{
 				Name:       "applyCreditMemo",
@@ -706,7 +706,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApplyCreditMemo(ctx, fc.Args["input"].(gqlmodel.ApplyCreditMemoInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNCreditMemoApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐCreditMemoApplicationᚄ),
+				Marshal: gqlexec.Marshal(marshalNCreditMemoApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐCreditMemoApplicationᚄ),
 			},
 			{
 				Name:       "unapplyCreditMemoApplication",
@@ -719,7 +719,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UnapplyCreditMemoApplication(ctx, fc.Args["input"].(gqlmodel.UnapplyCreditMemoApplicationInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNCreditMemoApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐCreditMemoApplication),
+				Marshal: gqlexec.Marshal(marshalNCreditMemoApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐCreditMemoApplication),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -748,7 +748,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CustomerPayment(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐPayment),
+				Marshal: gqlexec.Marshal(marshalOCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐPayment),
 			},
 		}},
 	},
@@ -1110,7 +1110,7 @@ func unmarshalInputPostCustomerPaymentInput(ctx context.Context, ec *gqlexec.Exe
 			it.AmountMinor = data
 		case "paymentMethod":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("paymentMethod"))
-			data, err := unmarshalNCustomerPaymentMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐMethod(ctx, ec, v)
+			data, err := unmarshalNCustomerPaymentMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐMethod(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1261,7 +1261,7 @@ func unmarshalNCustomerPaymentApplicationInput2ᚖgithubᚗcomᚋemoss08ᚋtreno
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNCustomerPaymentMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐMethod(ctx context.Context, ec *gqlexec.Exec, v any) (customerpayment.Method, error) {
+func unmarshalNCustomerPaymentMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐMethod(ctx context.Context, ec *gqlexec.Exec, v any) (customerpayment.Method, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := customerpayment.Method(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -1325,15 +1325,15 @@ func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNCreditMemoApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐCreditMemoApplicationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerpayment.CreditMemoApplication) graphql.Marshaler {
+func marshalNCreditMemoApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐCreditMemoApplicationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerpayment.CreditMemoApplication) graphql.Marshaler {
 	return gqlexec.List[*customerpayment.CreditMemoApplication]{
-		Elem:        marshalNCreditMemoApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐCreditMemoApplication,
+		Elem:        marshalNCreditMemoApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐCreditMemoApplication,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCreditMemoApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐCreditMemoApplication(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerpayment.CreditMemoApplication) graphql.Marshaler {
+func marshalNCreditMemoApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐCreditMemoApplication(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerpayment.CreditMemoApplication) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1341,7 +1341,7 @@ func marshalNCreditMemoApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "CreditMemoApplication", v)
 }
 
-func marshalNCreditMemoApplicationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐCreditApplicationStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customerpayment.CreditApplicationStatus) graphql.Marshaler {
+func marshalNCreditMemoApplicationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐCreditApplicationStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customerpayment.CreditApplicationStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1349,7 +1349,7 @@ func marshalNCreditMemoApplicationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return res
 }
 
-func marshalNCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐPayment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerpayment.Payment) graphql.Marshaler {
+func marshalNCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐPayment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerpayment.Payment) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1357,7 +1357,7 @@ func marshalNCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋco
 	return ec.MarshalType(ctx, sel, "CustomerPayment", v)
 }
 
-func marshalNCustomerPaymentApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐApplication(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerpayment.Application) graphql.Marshaler {
+func marshalNCustomerPaymentApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐApplication(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerpayment.Application) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1389,7 +1389,7 @@ func marshalNCustomerPaymentEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "CustomerPaymentEdge", v)
 }
 
-func marshalNCustomerPaymentMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customerpayment.Method) graphql.Marshaler {
+func marshalNCustomerPaymentMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customerpayment.Method) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1397,7 +1397,7 @@ func marshalNCustomerPaymentMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNCustomerPaymentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customerpayment.Status) graphql.Marshaler {
+func marshalNCustomerPaymentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customerpayment.Status) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1453,23 +1453,23 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customer.Customer) graphql.Marshaler {
+func marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customer.Customer) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Customer", v)
 }
 
-func marshalOCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐPayment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerpayment.Payment) graphql.Marshaler {
+func marshalOCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐPayment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerpayment.Payment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "CustomerPayment", v)
 }
 
-func marshalOCustomerPaymentApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐApplicationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerpayment.Application) graphql.Marshaler {
+func marshalOCustomerPaymentApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐApplicationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerpayment.Application) graphql.Marshaler {
 	return gqlexec.List[*customerpayment.Application]{
-		Elem:        marshalNCustomerPaymentApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐApplication,
+		Elem:        marshalNCustomerPaymentApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐApplication,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
@@ -1495,7 +1495,7 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInvoice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoice.Invoice) graphql.Marshaler {
+func marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoice.Invoice) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

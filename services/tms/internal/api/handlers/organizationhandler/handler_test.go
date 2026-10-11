@@ -1,6 +1,7 @@
 package organizationhandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"errors"
 	"net/http"
@@ -10,11 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
-	"github.com/emoss08/trenova/internal/core/services/organizationservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/app/organizationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,48 +29,48 @@ import (
 var errNotFound = errors.New("organization not found")
 
 type mockStorageClient struct {
-	uploadFn             func(ctx context.Context, params *storage.UploadParams) (*storage.FileInfo, error)
-	downloadFn           func(ctx context.Context, key string) (*storage.DownloadResult, error)
+	uploadFn             func(ctx context.Context, params *kernelports.UploadParams) (*kernelports.FileInfo, error)
+	downloadFn           func(ctx context.Context, key string) (*kernelports.DownloadResult, error)
 	deleteFn             func(ctx context.Context, key string) error
-	deleteObjectFn       func(ctx context.Context, params *storage.DeleteObjectParams) error
-	getPresignedFn       func(ctx context.Context, params *storage.PresignedURLParams) (string, error)
+	deleteObjectFn       func(ctx context.Context, params *kernelports.DeleteObjectParams) error
+	getPresignedFn       func(ctx context.Context, params *kernelports.PresignedURLParams) (string, error)
 	getPresignedUploadFn func(
 		ctx context.Context,
-		params *storage.PresignedUploadURLParams,
+		params *kernelports.PresignedUploadURLParams,
 	) (string, error)
 	initiateMultipartFn func(
 		ctx context.Context,
-		params *storage.MultipartUploadParams,
+		params *kernelports.MultipartUploadParams,
 	) (string, error)
 	getMultipartPartFn func(
 		ctx context.Context,
-		params *storage.MultipartUploadPartURLParams,
+		params *kernelports.MultipartUploadPartURLParams,
 	) (string, error)
 	completeMultipartFn func(
 		ctx context.Context,
-		params *storage.CompleteMultipartUploadParams,
+		params *kernelports.CompleteMultipartUploadParams,
 	) error
 	abortMultipartFn func(
 		ctx context.Context,
-		params *storage.AbortMultipartUploadParams,
+		params *kernelports.AbortMultipartUploadParams,
 	) error
 	listMultipartPartsFn func(
 		ctx context.Context,
-		params *storage.ListMultipartUploadPartsParams,
-	) ([]storage.UploadedPart, error)
+		params *kernelports.ListMultipartUploadPartsParams,
+	) ([]kernelports.UploadedPart, error)
 	existsFn      func(ctx context.Context, key string) (bool, error)
-	getFileInfoFn func(ctx context.Context, key string) (*storage.FileInfo, error)
+	getFileInfoFn func(ctx context.Context, key string) (*kernelports.FileInfo, error)
 }
 
 func (m *mockStorageClient) Upload(
 	ctx context.Context,
-	params *storage.UploadParams,
-) (*storage.FileInfo, error) {
+	params *kernelports.UploadParams,
+) (*kernelports.FileInfo, error) {
 	if m.uploadFn != nil {
 		return m.uploadFn(ctx, params)
 	}
 
-	return &storage.FileInfo{
+	return &kernelports.FileInfo{
 		Key:         params.Key,
 		Size:        params.Size,
 		ContentType: params.ContentType,
@@ -79,7 +80,7 @@ func (m *mockStorageClient) Upload(
 func (m *mockStorageClient) Download(
 	ctx context.Context,
 	key string,
-) (*storage.DownloadResult, error) {
+) (*kernelports.DownloadResult, error) {
 	if m.downloadFn != nil {
 		return m.downloadFn(ctx, key)
 	}
@@ -97,7 +98,7 @@ func (m *mockStorageClient) Delete(ctx context.Context, key string) error {
 
 func (m *mockStorageClient) DeleteObject(
 	ctx context.Context,
-	params *storage.DeleteObjectParams,
+	params *kernelports.DeleteObjectParams,
 ) error {
 	if m.deleteObjectFn != nil {
 		return m.deleteObjectFn(ctx, params)
@@ -108,7 +109,7 @@ func (m *mockStorageClient) DeleteObject(
 
 func (m *mockStorageClient) GetPresignedURL(
 	ctx context.Context,
-	params *storage.PresignedURLParams,
+	params *kernelports.PresignedURLParams,
 ) (string, error) {
 	if m.getPresignedFn != nil {
 		return m.getPresignedFn(ctx, params)
@@ -127,7 +128,7 @@ func (m *mockStorageClient) Exists(ctx context.Context, key string) (bool, error
 
 func (m *mockStorageClient) GetPresignedUploadURL(
 	ctx context.Context,
-	params *storage.PresignedUploadURLParams,
+	params *kernelports.PresignedUploadURLParams,
 ) (string, error) {
 	if m.getPresignedUploadFn != nil {
 		return m.getPresignedUploadFn(ctx, params)
@@ -138,7 +139,7 @@ func (m *mockStorageClient) GetPresignedUploadURL(
 
 func (m *mockStorageClient) InitiateMultipartUpload(
 	ctx context.Context,
-	params *storage.MultipartUploadParams,
+	params *kernelports.MultipartUploadParams,
 ) (string, error) {
 	if m.initiateMultipartFn != nil {
 		return m.initiateMultipartFn(ctx, params)
@@ -149,7 +150,7 @@ func (m *mockStorageClient) InitiateMultipartUpload(
 
 func (m *mockStorageClient) GetMultipartUploadPartURL(
 	ctx context.Context,
-	params *storage.MultipartUploadPartURLParams,
+	params *kernelports.MultipartUploadPartURLParams,
 ) (string, error) {
 	if m.getMultipartPartFn != nil {
 		return m.getMultipartPartFn(ctx, params)
@@ -160,7 +161,7 @@ func (m *mockStorageClient) GetMultipartUploadPartURL(
 
 func (m *mockStorageClient) CompleteMultipartUpload(
 	ctx context.Context,
-	params *storage.CompleteMultipartUploadParams,
+	params *kernelports.CompleteMultipartUploadParams,
 ) error {
 	if m.completeMultipartFn != nil {
 		return m.completeMultipartFn(ctx, params)
@@ -171,7 +172,7 @@ func (m *mockStorageClient) CompleteMultipartUpload(
 
 func (m *mockStorageClient) AbortMultipartUpload(
 	ctx context.Context,
-	params *storage.AbortMultipartUploadParams,
+	params *kernelports.AbortMultipartUploadParams,
 ) error {
 	if m.abortMultipartFn != nil {
 		return m.abortMultipartFn(ctx, params)
@@ -182,8 +183,8 @@ func (m *mockStorageClient) AbortMultipartUpload(
 
 func (m *mockStorageClient) ListMultipartUploadParts(
 	ctx context.Context,
-	params *storage.ListMultipartUploadPartsParams,
-) ([]storage.UploadedPart, error) {
+	params *kernelports.ListMultipartUploadPartsParams,
+) ([]kernelports.UploadedPart, error) {
 	if m.listMultipartPartsFn != nil {
 		return m.listMultipartPartsFn(ctx, params)
 	}
@@ -194,18 +195,18 @@ func (m *mockStorageClient) ListMultipartUploadParts(
 func (m *mockStorageClient) GetFileInfo(
 	ctx context.Context,
 	key string,
-) (*storage.FileInfo, error) {
+) (*kernelports.FileInfo, error) {
 	if m.getFileInfoFn != nil {
 		return m.getFileInfoFn(ctx, key)
 	}
 
-	return &storage.FileInfo{Key: key}, nil
+	return &kernelports.FileInfo{Key: key}, nil
 }
 
 func setupOrganizationHandler(
 	t *testing.T,
-	repo *mocks.MockOrganizationRepository,
-	storageClient storage.Client,
+	repo *tenantportsmock.MockOrganizationRepository,
+	storageClient kernelports.Client,
 ) *organizationhandler.Handler {
 	t.Helper()
 
@@ -254,7 +255,7 @@ func TestOrganizationHandler_Get_Success(t *testing.T) {
 	orgID := testutil.TestOrgID
 	stateID := pulid.MustNew("st_")
 
-	repo := mocks.NewMockOrganizationRepository(t)
+	repo := tenantportsmock.NewMockOrganizationRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&tenant.Organization{
 		ID:             orgID,
 		BusinessUnitID: testutil.TestBuID,
@@ -288,7 +289,7 @@ func TestOrganizationHandler_Get_NotFound(t *testing.T) {
 
 	orgID := testutil.TestOrgID
 
-	repo := mocks.NewMockOrganizationRepository(t)
+	repo := tenantportsmock.NewMockOrganizationRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	handler := setupOrganizationHandler(t, repo, &mockStorageClient{})
@@ -307,7 +308,7 @@ func TestOrganizationHandler_Get_NotFound(t *testing.T) {
 func TestOrganizationHandler_Get_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockOrganizationRepository(t)
+	repo := tenantportsmock.NewMockOrganizationRepository(t)
 	handler := setupOrganizationHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
@@ -327,7 +328,7 @@ func TestOrganizationHandler_Update_Success(t *testing.T) {
 	orgID := testutil.TestOrgID
 	stateID := pulid.MustNew("st_")
 
-	repo := mocks.NewMockOrganizationRepository(t)
+	repo := tenantportsmock.NewMockOrganizationRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(&tenant.Organization{
 			ID:                     orgID,
@@ -370,7 +371,7 @@ func TestOrganizationHandler_Update_Success(t *testing.T) {
 func TestOrganizationHandler_Update_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockOrganizationRepository(t)
+	repo := tenantportsmock.NewMockOrganizationRepository(t)
 	handler := setupOrganizationHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
@@ -395,7 +396,7 @@ func TestOrganizationHandler_Update_PreservesOmittedCapabilityFlags(t *testing.T
 
 	var received *tenant.Organization
 
-	repo := mocks.NewMockOrganizationRepository(t)
+	repo := tenantportsmock.NewMockOrganizationRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(&tenant.Organization{
 			ID:                     orgID,
@@ -403,7 +404,7 @@ func TestOrganizationHandler_Update_PreservesOmittedCapabilityFlags(t *testing.T
 			AssetOperationsEnabled: true,
 		}, nil)
 	repo.EXPECT().GetCapabilities(mock.Anything, mock.Anything).
-		Return(&repositories.OrganizationCapabilities{
+		Return(&tenantports.OrganizationCapabilities{
 			BrokerageEnabled:       false,
 			AssetOperationsEnabled: true,
 		}, nil)
@@ -444,7 +445,7 @@ func TestOrganizationHandler_Update_BadJSON(t *testing.T) {
 	t.Parallel()
 
 	orgID := testutil.TestOrgID
-	repo := mocks.NewMockOrganizationRepository(t)
+	repo := tenantportsmock.NewMockOrganizationRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(&tenant.Organization{ID: orgID}, nil)
 	handler := setupOrganizationHandler(t, repo, &mockStorageClient{})
@@ -467,7 +468,7 @@ func TestOrganizationHandler_UploadLogo_Success(t *testing.T) {
 	orgID := testutil.TestOrgID
 	stateID := pulid.MustNew("st_")
 
-	repo := mocks.NewMockOrganizationRepository(t)
+	repo := tenantportsmock.NewMockOrganizationRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&tenant.Organization{
 		ID:             orgID,
 		BusinessUnitID: testutil.TestBuID,
@@ -514,7 +515,7 @@ func TestOrganizationHandler_GetLogoURL_Success(t *testing.T) {
 	orgID := testutil.TestOrgID
 	stateID := pulid.MustNew("st_")
 
-	repo := mocks.NewMockOrganizationRepository(t)
+	repo := tenantportsmock.NewMockOrganizationRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&tenant.Organization{
 		ID:             orgID,
 		BusinessUnitID: testutil.TestBuID,
@@ -554,7 +555,7 @@ func TestOrganizationHandler_DeleteLogo_Success(t *testing.T) {
 	orgID := testutil.TestOrgID
 	stateID := pulid.MustNew("st_")
 
-	repo := mocks.NewMockOrganizationRepository(t)
+	repo := tenantportsmock.NewMockOrganizationRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&tenant.Organization{
 		ID:             orgID,
 		BusinessUnitID: testutil.TestBuID,
@@ -641,7 +642,7 @@ func TestOrganizationHandler_RejectsAnotherOrganizationID(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			repo := mocks.NewMockOrganizationRepository(t)
+			repo := tenantportsmock.NewMockOrganizationRepository(t)
 			handler := setupOrganizationHandler(t, repo, &mockStorageClient{})
 
 			ginCtx := testutil.NewGinTestContext().
@@ -665,7 +666,7 @@ func TestOrganizationHandler_Update_RejectsForeignBusinessUnit(t *testing.T) {
 
 	orgID := testutil.TestOrgID
 
-	repo := mocks.NewMockOrganizationRepository(t)
+	repo := tenantportsmock.NewMockOrganizationRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(&tenant.Organization{ID: orgID, BusinessUnitID: testutil.TestBuID}, nil)
 

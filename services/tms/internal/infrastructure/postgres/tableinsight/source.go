@@ -3,10 +3,10 @@ package tableinsight
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -19,7 +19,7 @@ import (
 type BaseQuery func(
 	ctx context.Context,
 	dba bun.IDB,
-	scope *repositories.TableInsightScope,
+	scope *permissionports.TableInsightScope,
 ) (*bun.SelectQuery, error)
 
 type Config struct {
@@ -33,7 +33,7 @@ type Config struct {
 type Result struct {
 	fx.Out
 
-	Source repositories.TableInsightSource `group:"table_insight_sources"`
+	Source permissionports.TableInsightSource `group:"table_insight_sources"`
 }
 
 type source struct {
@@ -48,7 +48,7 @@ func Filtered[T domaintypes.PostgresSearchable](model T, alias string) BaseQuery
 	return func(
 		_ context.Context,
 		dba bun.IDB,
-		scope *repositories.TableInsightScope,
+		scope *permissionports.TableInsightScope,
 	) (*bun.SelectQuery, error) {
 		if scope.Filter == nil {
 			return nil, errortypes.NewValidationError(
@@ -69,18 +69,18 @@ func (s *source) Resource() permission.Resource {
 	return s.cfg.Resource
 }
 
-func (s *source) InsightFields() []repositories.TableInsightField {
+func (s *source) InsightFields() []permissionports.TableInsightField {
 	return s.cfg.Columns.Fields()
 }
 
 func (s *source) Facet(
 	ctx context.Context,
-	req *repositories.TableFacetRequest,
-) (*repositories.TableFacetResult, error) {
+	req *permissionports.TableFacetRequest,
+) (*permissionports.TableFacetResult, error) {
 	return dbtx.Read(
 		ctx,
 		s.cfg.DB,
-		func(ctx context.Context) (*repositories.TableFacetResult, error) {
+		func(ctx context.Context) (*permissionports.TableFacetResult, error) {
 			base, err := s.cfg.Base(ctx, s.cfg.DB.DBForContext(ctx), &req.Scope)
 			if err != nil {
 				return nil, err
@@ -92,12 +92,12 @@ func (s *source) Facet(
 
 func (s *source) Aggregate(
 	ctx context.Context,
-	req *repositories.TableAggregateRequest,
-) (*repositories.TableAggregateResult, error) {
+	req *permissionports.TableAggregateRequest,
+) (*permissionports.TableAggregateResult, error) {
 	return dbtx.Read(
 		ctx,
 		s.cfg.DB,
-		func(ctx context.Context) (*repositories.TableAggregateResult, error) {
+		func(ctx context.Context) (*permissionports.TableAggregateResult, error) {
 			base, err := s.cfg.Base(ctx, s.cfg.DB.DBForContext(ctx), &req.Scope)
 			if err != nil {
 				return nil, err
@@ -109,12 +109,12 @@ func (s *source) Aggregate(
 
 func (s *source) MatchingIDs(
 	ctx context.Context,
-	req *repositories.TableMatchRequest,
-) (*repositories.TableMatchResult, error) {
+	req *permissionports.TableMatchRequest,
+) (*permissionports.TableMatchResult, error) {
 	return dbtx.Read(
 		ctx,
 		s.cfg.DB,
-		func(ctx context.Context) (*repositories.TableMatchResult, error) {
+		func(ctx context.Context) (*permissionports.TableMatchResult, error) {
 			base, err := s.cfg.Base(ctx, s.cfg.DB.DBForContext(ctx), &req.Scope)
 			if err != nil {
 				return nil, err
@@ -126,12 +126,12 @@ func (s *source) MatchingIDs(
 
 func (s *source) Series(
 	ctx context.Context,
-	req *repositories.TableSeriesRequest,
-) (*repositories.TableSeriesResult, error) {
+	req *permissionports.TableSeriesRequest,
+) (*permissionports.TableSeriesResult, error) {
 	return dbtx.Read(
 		ctx,
 		s.cfg.DB,
-		func(ctx context.Context) (*repositories.TableSeriesResult, error) {
+		func(ctx context.Context) (*permissionports.TableSeriesResult, error) {
 			base, err := s.cfg.Base(ctx, s.cfg.DB.DBForContext(ctx), &req.Scope)
 			if err != nil {
 				return nil, err

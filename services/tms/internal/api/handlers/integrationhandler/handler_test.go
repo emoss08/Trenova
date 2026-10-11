@@ -7,20 +7,15 @@ import (
 	"testing"
 	"time"
 
-	commonpb "go.temporal.io/api/common/v1"
-	enumspb "go.temporal.io/api/enums/v1"
-	workflowpb "go.temporal.io/api/workflow/v1"
-	workflowservicepb "go.temporal.io/api/workflowservice/v1"
-	"go.temporal.io/sdk/client"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 
 	"github.com/emoss08/trenova/internal/api/handlers/integrationhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/samsarasyncservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/samsarasyncservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/jobs/samsarajobs/samsaracontract"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -28,7 +23,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	commonpb "go.temporal.io/api/common/v1"
+	enumspb "go.temporal.io/api/enums/v1"
+	workflowpb "go.temporal.io/api/workflow/v1"
+	workflowservicepb "go.temporal.io/api/workflowservice/v1"
+	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type fakeWorkflowRun struct {
@@ -97,16 +98,16 @@ func (f *fakeTemporalClient) GetWorkflow(
 func setupIntegrationHandler(
 	t *testing.T,
 	temporalClient client.Client,
-) (*integrationhandler.Handler, *mocks.MockWorkerRepository) {
+) (*integrationhandler.Handler, *workerportsmock.MockWorkerRepository) {
 	t.Helper()
 
 	logger := zap.NewNop()
-	repo := mocks.NewMockWorkerRepository(t)
+	repo := workerportsmock.NewMockWorkerRepository(t)
 	syncService := samsarasyncservice.New(samsarasyncservice.Params{
 		Logger: logger,
 		Repo:   repo,
 	})
-	jobsManager := samsarajobs.NewManager(samsarajobs.ManagerParams{
+	jobsManager := samsaracontract.NewManager(samsaracontract.ManagerParams{
 		TemporalClient: temporalClient,
 		SyncService:    syncService,
 	})
@@ -136,12 +137,12 @@ func TestIntegrationHandler_StartWorkerSync_Success(t *testing.T) {
 	h, repo := setupIntegrationHandler(t, &fakeTemporalClient{
 		executeWorkflowFunc: func(_ context.Context, options client.StartWorkflowOptions, workflow any, args ...any) (client.WorkflowRun, error) {
 			assert.Equal(t, temporaltype.IntegrationTaskQueue, options.TaskQueue)
-			assert.Equal(t, samsarajobs.SyncWorkersToSamsaraWorkflowName, workflow)
+			assert.Equal(t, samsaracontract.SyncWorkersToSamsaraWorkflowName, workflow)
 			return &fakeWorkflowRun{workflowID: options.ID, runID: "run-1"}, nil
 		},
 	})
 	repo.On("GetWorkerSyncReadinessCounts", mock.Anything, mock.Anything).Return(
-		&repositories.WorkerSyncReadinessCounts{
+		&workerports.WorkerSyncReadinessCounts{
 			TotalWorkers:        10,
 			ActiveWorkers:       8,
 			SyncedActiveWorkers: 7,
@@ -169,7 +170,7 @@ func TestIntegrationHandler_StartWorkerSync_NotConfigured(t *testing.T) {
 
 	h, repo := setupIntegrationHandler(t, nil)
 	repo.On("GetWorkerSyncReadinessCounts", mock.Anything, mock.Anything).Return(
-		&repositories.WorkerSyncReadinessCounts{
+		&workerports.WorkerSyncReadinessCounts{
 			TotalWorkers:        10,
 			ActiveWorkers:       8,
 			SyncedActiveWorkers: 7,
@@ -229,7 +230,7 @@ func TestIntegrationHandler_GetWorkerSyncReadiness_Success(t *testing.T) {
 
 	h, repo := setupIntegrationHandler(t, &fakeTemporalClient{})
 	repo.On("GetWorkerSyncReadinessCounts", mock.Anything, mock.Anything).Return(
-		&repositories.WorkerSyncReadinessCounts{
+		&workerports.WorkerSyncReadinessCounts{
 			TotalWorkers:        10,
 			ActiveWorkers:       8,
 			SyncedActiveWorkers: 5,
@@ -260,11 +261,11 @@ func TestIntegrationHandler_GetWorkerSyncDrift_Success(t *testing.T) {
 
 	h, repo := setupIntegrationHandler(t, &fakeTemporalClient{})
 	repo.On("ListWorkerSyncDrifts", mock.Anything, mock.Anything).Return(
-		[]repositories.WorkerSyncDriftRecord{
+		[]workerports.WorkerSyncDriftRecord{
 			{
 				WorkerID:   "wrk_1",
 				WorkerName: "Casey Nguyen",
-				DriftType:  repositories.WorkerSyncDriftTypeMissingMapping,
+				DriftType:  workerports.WorkerSyncDriftTypeMissingMapping,
 				Message:    "active worker is missing a Samsara driver mapping",
 				DetectedAt: timeutils.NowUnix(),
 			},

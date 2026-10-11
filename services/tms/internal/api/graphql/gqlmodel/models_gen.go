@@ -9,87 +9,94 @@ import (
 	"strconv"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/domain/accounttype"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/domain/agentquality"
-	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
-	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/domain/aituneup"
-	"github.com/emoss08/trenova/internal/core/domain/apikey"
-	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
-	"github.com/emoss08/trenova/internal/core/domain/briefing"
-	"github.com/emoss08/trenova/internal/core/domain/capture"
-	"github.com/emoss08/trenova/internal/core/domain/carrier"
-	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
-	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/core/domain/commodity"
-	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/core/domain/customfield"
-	"github.com/emoss08/trenova/internal/core/domain/detention"
-	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
-	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
-	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
-	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/domain/documenttype"
-	"github.com/emoss08/trenova/internal/core/domain/driverpay"
-	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/domain/email"
-	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
-	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/core/domain/extractioneval"
-	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
-	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
-	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
-	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
-	"github.com/emoss08/trenova/internal/core/domain/holdreason"
-	"github.com/emoss08/trenova/internal/core/domain/iam"
-	"github.com/emoss08/trenova/internal/core/domain/ifta"
-	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/core/domain/journalentry"
-	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
-	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
-	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
-	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
-	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/domain/order"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
-	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/domain/servicetype"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/core/domain/storedmileage"
-	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
-	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
-	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
-	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
+	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
+	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
 
@@ -274,8 +281,8 @@ type AIRetrievalFailedEntryConnection struct {
 }
 
 type AIRetrievalFailedEntryEdge struct {
-	Node   *services.AIRetrievalFailedEntry `json:"node"`
-	Cursor string                           `json:"cursor"`
+	Node   *agentports.AIRetrievalFailedEntry `json:"node"`
+	Cursor string                             `json:"cursor"`
 }
 
 // Changes only the fields given. Turning paused off also lifts a budget pause;
@@ -290,20 +297,20 @@ type AIRetrievalSettingsPatchInput struct {
 
 // A change to how AI is set up that the last 30 days of runs argue for.
 type AITuneUp struct {
-	ID    string                  `json:"id"`
-	Kind  aituneup.Kind           `json:"kind"`
-	Agent *services.AITuneUpAgent `json:"agent,omitempty"`
+	ID    string                       `json:"id"`
+	Kind  aituneup.Kind                `json:"kind"`
+	Agent *aituneupports.AITuneUpAgent `json:"agent,omitempty"`
 	// The provider the change acts on: the one moved ahead, or the one given the task.
-	Provider *services.AITuneUpProvider `json:"provider,omitempty"`
+	Provider *aituneupports.AITuneUpProvider `json:"provider,omitempty"`
 	// The provider moved behind.
-	OtherProvider  *services.AITuneUpProvider `json:"otherProvider,omitempty"`
-	ToolName       *string                    `json:"toolName,omitempty"`
-	Task           *aiprovider.Task           `json:"task,omitempty"`
-	Evidence       *aituneup.Evidence         `json:"evidence"`
-	Status         aituneup.Status            `json:"status"`
-	DismissedUntil *int                       `json:"dismissedUntil,omitempty"`
-	ComputedAt     int                        `json:"computedAt"`
-	Version        int                        `json:"version"`
+	OtherProvider  *aituneupports.AITuneUpProvider `json:"otherProvider,omitempty"`
+	ToolName       *string                         `json:"toolName,omitempty"`
+	Task           *aiprovider.Task                `json:"task,omitempty"`
+	Evidence       *aituneup.Evidence              `json:"evidence"`
+	Status         aituneup.Status                 `json:"status"`
+	DismissedUntil *int                            `json:"dismissedUntil,omitempty"`
+	ComputedAt     int                             `json:"computedAt"`
+	Version        int                             `json:"version"`
 }
 
 // The tune-ups offered now, worked out nightly.
@@ -324,8 +331,8 @@ type AIUsageFeatureConnection struct {
 }
 
 type AIUsageFeatureEdge struct {
-	Node   *services.AIUsageFeatureSlice `json:"node"`
-	Cursor string                        `json:"cursor"`
+	Node   *aiusageports.AIUsageFeatureSlice `json:"node"`
+	Cursor string                            `json:"cursor"`
 }
 
 type AccessorialChargeConnection struct {
@@ -525,8 +532,8 @@ type AgentAudienceSuggestion struct {
 }
 
 type AgentCapabilityToolInput struct {
-	Key  string                       `json:"key"`
-	Mode services.AgentCapabilityMode `json:"mode"`
+	Key  string                         `json:"key"`
+	Mode agentports.AgentCapabilityMode `json:"mode"`
 }
 
 type AgentControlInput struct {
@@ -747,8 +754,8 @@ type AgentQualityAgentConnection struct {
 }
 
 type AgentQualityAgentEdge struct {
-	Node   *services.AgentQualityAgent `json:"node"`
-	Cursor string                      `json:"cursor"`
+	Node   *agentqualityports.AgentQualityAgent `json:"node"`
+	Cursor string                               `json:"cursor"`
 }
 
 type AgentQualityAgentsInput struct {
@@ -762,8 +769,8 @@ type AgentQualityAgentsInput struct {
 type AgentReach struct {
 	AccessMode agentdefinition.AccessMode `json:"accessMode"`
 	// The roles granted the agent. Empty for a reader who may not read roles.
-	Roles    []*permission.Role            `json:"roles"`
-	Warnings []*services.AgentReachWarning `json:"warnings"`
+	Roles    []*permission.Role              `json:"roles"`
+	Warnings []*agentports.AgentReachWarning `json:"warnings"`
 }
 
 type AgentReflectionConnection struct {
@@ -975,7 +982,7 @@ type AgentToolRuleInput struct {
 type AgentToolRuleSaved struct {
 	Tool *AgentToolPolicy `json:"tool"`
 	// The agents whose answer moved.
-	Affected []*services.AgentToolRuleImpact `json:"affected"`
+	Affected []*agentports.AgentToolRuleImpact `json:"affected"`
 }
 
 type AgentToolSafetyConnection struct {
@@ -986,8 +993,8 @@ type AgentToolSafetyConnection struct {
 }
 
 type AgentToolSafetyEdge struct {
-	Node   *services.AgentToolSafety `json:"node"`
-	Cursor string                    `json:"cursor"`
+	Node   *agentports.AgentToolSafety `json:"node"`
+	Cursor string                      `json:"cursor"`
 }
 
 // What one tool has earned on this agent.
@@ -1018,8 +1025,8 @@ type AgentWorstRatedAnswerConnection struct {
 }
 
 type AgentWorstRatedAnswerEdge struct {
-	Node   *services.AgentWorstRatedAnswer `json:"node"`
-	Cursor string                          `json:"cursor"`
+	Node   *agentqualityports.AgentWorstRatedAnswer `json:"node"`
+	Cursor string                                   `json:"cursor"`
 }
 
 type AgentWorstRatedAnswersInput struct {
@@ -1440,9 +1447,9 @@ type BulkUpdateTrailerStatusInput struct {
 }
 
 type BulkWorkerPTOActionInput struct {
-	PTOIds []string                   `json:"ptoIds"`
-	Action services.PTOBulkActionType `json:"action"`
-	Reason *string                    `json:"reason,omitempty"`
+	PTOIds []string                      `json:"ptoIds"`
+	Action workerports.PTOBulkActionType `json:"action"`
+	Reason *string                       `json:"reason,omitempty"`
 }
 
 type CancelFuelCardInput struct {
@@ -1556,13 +1563,13 @@ type CaptureCoverSheet struct {
 	ID             string                           `json:"id"`
 	TargetType     string                           `json:"targetType"`
 	TargetID       *string                          `json:"targetId,omitempty"`
-	Target         *repositories.CaptureRecordLabel `json:"target,omitempty"`
+	Target         *captureports.CaptureRecordLabel `json:"target,omitempty"`
 	DocumentTypeID *string                          `json:"documentTypeId,omitempty"`
 	Payload        string                           `json:"payload"`
 	// The code to print, drawn from the payload.
-	QRCode    *services.CaptureQRCode `json:"qrCode"`
-	ExpiresAt int                     `json:"expiresAt"`
-	CreatedAt int                     `json:"createdAt"`
+	QRCode    *captureports.CaptureQRCode `json:"qrCode"`
+	ExpiresAt int                         `json:"expiresAt"`
+	CreatedAt int                         `json:"createdAt"`
 }
 
 type CaptureCoverSheetInput struct {
@@ -1908,8 +1915,8 @@ type CategoryCostLine struct {
 }
 
 type ChangeAccountingBackfillInput struct {
-	ID     string                            `json:"id"`
-	Action services.AccountingBackfillAction `json:"action"`
+	ID     string                                       `json:"id"`
+	Action accountingsyncports.AccountingBackfillAction `json:"action"`
 }
 
 type ChargeAllocationInput struct {
@@ -4881,8 +4888,8 @@ type InvoiceAdjustmentApprovalQueueConnection struct {
 }
 
 type InvoiceAdjustmentApprovalQueueEdge struct {
-	Node   *repositories.InvoiceAdjustmentApprovalQueueItem `json:"node"`
-	Cursor string                                           `json:"cursor"`
+	Node   *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem `json:"node"`
+	Cursor string                                                     `json:"cursor"`
 }
 
 // Pages the approval queue newest submission first. query matches the adjustment
@@ -5887,9 +5894,9 @@ type RecordLeaveDayInput struct {
 }
 
 type RecordMyStopActionInput struct {
-	MoveID string                        `json:"moveId"`
-	StopID string                        `json:"stopId"`
-	Action repositories.StopActualAction `json:"action"`
+	MoveID string                         `json:"moveId"`
+	StopID string                         `json:"stopId"`
+	Action shipmentports.StopActualAction `json:"action"`
 }
 
 type RecordSafetyViolationInput struct {

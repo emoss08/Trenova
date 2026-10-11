@@ -6,10 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/llmtokens"
@@ -72,23 +73,23 @@ func batchEmbeddingInputs(inputs []string, limits embeddingBatchLimits) []embedd
 
 func (s *Service) Embed(
 	ctx context.Context,
-	req *serviceports.EmbedRequest,
-) (serviceports.EmbedResult, error) {
+	req *aiusageports.EmbedRequest,
+) (aiusageports.EmbedResult, error) {
 	if !s.ai.AIEnabled() {
-		return serviceports.EmbedResult{}, errortypes.NewBusinessError(aiDisabledMessage)
+		return aiusageports.EmbedResult{}, errortypes.NewBusinessError(aiDisabledMessage)
 	}
 	if req == nil {
-		return serviceports.EmbedResult{}, errortypes.NewValidationError(
+		return aiusageports.EmbedResult{}, errortypes.NewValidationError(
 			"request",
 			errortypes.ErrRequired,
 			"An embedding request is required",
 		)
 	}
 	if err := validateEmbedRequest(req); err != nil {
-		return serviceports.EmbedResult{}, err
+		return aiusageports.EmbedResult{}, err
 	}
 
-	if req.Purpose == serviceports.EmbeddingPurposeQuery {
+	if req.Purpose == aiusageports.EmbeddingPurposeQuery {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, req.ResolvedQueryTimeout())
 		defer cancel()
@@ -96,16 +97,16 @@ func (s *Service) Embed(
 
 	candidates, modelKey, err := s.embeddingCandidates(ctx, req.TenantInfo, req.ModelKey)
 	if err != nil {
-		return serviceports.EmbedResult{}, err
+		return aiusageports.EmbedResult{}, err
 	}
 
 	inputs := req.Inputs
-	if req.Purpose == serviceports.EmbeddingPurposeDocument {
+	if req.Purpose == aiusageports.EmbeddingPurposeDocument {
 		inputs = piiscrub.ScrubAll(req.Inputs)
 	}
 
 	started := time.Now()
-	result := serviceports.EmbedResult{
+	result := aiusageports.EmbedResult{
 		Vectors:    make([][]float32, 0, len(inputs)),
 		ModelKey:   modelKey,
 		Dimensions: candidates[0].ResolvedEmbeddingDimensions(),
@@ -116,7 +117,7 @@ func (s *Service) Embed(
 	for _, batch := range batchEmbeddingInputs(inputs, embeddingLimitsFor(candidates[0])) {
 		served, batchErr := s.embedBatch(ctx, candidates, req, batch)
 		if batchErr != nil {
-			return serviceports.EmbedResult{}, batchErr
+			return aiusageports.EmbedResult{}, batchErr
 		}
 
 		result.Vectors = append(result.Vectors, served.vectors...)
@@ -155,7 +156,7 @@ func (s *Service) ConfiguredModelKey(
 	return usable[0].EmbeddingModelKey(), nil
 }
 
-func validateEmbedRequest(req *serviceports.EmbedRequest) error {
+func validateEmbedRequest(req *aiusageports.EmbedRequest) error {
 	multiErr := errortypes.NewMultiError()
 
 	if !req.Purpose.IsValid() {
@@ -228,7 +229,7 @@ func (s *Service) embeddingCandidates(
 		return nil, "", errortypes.NewBusinessError(
 			"No enabled embedding provider serves {0}. Re-enable it, or re-index with the model now configured",
 			modelKey,
-		).WithInternal(serviceports.ErrNoProviderConfigured)
+		).WithInternal(agentports.ErrNoProviderConfigured)
 	}
 
 	ready, err := s.awake(ctx, sameModel)
@@ -253,7 +254,7 @@ type servedBatch struct {
 func (s *Service) embedBatch(
 	ctx context.Context,
 	candidates []*aiprovider.Provider,
-	req *serviceports.EmbedRequest,
+	req *aiusageports.EmbedRequest,
 	batch embeddingBatch,
 ) (*servedBatch, error) {
 	var lastErr error
@@ -324,7 +325,7 @@ func (s *Service) embedBatch(
 func (s *Service) attemptEmbed(
 	ctx context.Context,
 	provider *aiprovider.Provider,
-	purpose serviceports.EmbeddingPurpose,
+	purpose aiusageports.EmbeddingPurpose,
 	batch embeddingBatch,
 ) (*servedBatch, error) {
 	embedder, err := s.adapters.Embedder(provider.Kind)

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/storedmileage"
-	corerepo "github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
+	"github.com/emoss08/trenova/internal/modules/places/ports/storedmileageports"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -34,7 +34,7 @@ type storedMileageBufferRepository struct {
 
 func NewStoredMileageBufferRepository(
 	p StoredMileageBufferRepositoryParams,
-) corerepo.StoredMileageBufferRepository {
+) storedmileageports.StoredMileageBufferRepository {
 	return &storedMileageBufferRepository{
 		client: p.Client,
 		l:      p.Logger.Named("redis.stored-mileage-buffer-repository"),

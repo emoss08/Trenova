@@ -3,24 +3,31 @@ package selectoptionsresolver
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentmanufacturerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/equipmenttypeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/locationportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ratezoneportsmock"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
-	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/domain/ratezone"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/ediservice"
-	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
-	"github.com/emoss08/trenova/internal/core/services/equipmenttypeservice"
-	"github.com/emoss08/trenova/internal/core/services/locationservice"
-	"github.com/emoss08/trenova/internal/core/services/ratezoneservice"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/places/app/locationservice"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/ratezoneservice"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -85,9 +92,9 @@ func TestSelectOptions_InitialResourcesDoNotRequireResourcePermission(t *testing
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
 	equipmentTypeID := pulid.MustNew("et_")
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	repo.EXPECT().
-		SelectOptions(mock.Anything, mock.MatchedBy(func(req *repositories.EquipmentTypeSelectOptionsRequest) bool {
+		SelectOptions(mock.Anything, mock.MatchedBy(func(req *equipmenttypeports.EquipmentTypeSelectOptionsRequest) bool {
 			return req.SelectQueryRequest.TenantInfo.OrgID == orgID &&
 				req.SelectQueryRequest.TenantInfo.BuID == buID &&
 				req.SelectQueryRequest.TenantInfo.UserID == userID &&
@@ -138,7 +145,7 @@ func TestSelectOptions_EquipmentManufacturerUsesAuthContextOnly(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
 	manufacturerID := pulid.MustNew("em_")
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	repo.EXPECT().
 		SelectOptions(mock.Anything, mock.MatchedBy(func(req *pagination.SelectQueryRequest) bool {
 			return req.TenantInfo.OrgID == orgID &&
@@ -190,9 +197,9 @@ func TestSelectOptions_LocationByIDsResolvesNames(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	firstID := pulid.MustNew("loc_")
 	secondID := pulid.MustNew("loc_")
-	repo := mocks.NewMockLocationRepository(t)
+	repo := locationportsmock.NewMockLocationRepository(t)
 	repo.EXPECT().
-		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetLocationsByIDsRequest) bool {
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req locationports.GetLocationsByIDsRequest) bool {
 			return req.TenantInfo.OrgID == orgID &&
 				req.TenantInfo.BuID == buID &&
 				len(req.LocationIDs) == 2
@@ -236,9 +243,9 @@ func TestSelectOptions_RateZoneByIDsResolvesNames(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
 	zoneID := pulid.MustNew("rzn_")
-	repo := mocks.NewMockRateZoneRepository(t)
+	repo := ratezoneportsmock.NewMockRateZoneRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetRateZoneByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req *ratezoneports.GetRateZoneByIDRequest) bool {
 			return req.RateZoneID == zoneID &&
 				req.TenantInfo.OrgID == orgID &&
 				req.TenantInfo.BuID == buID
@@ -282,9 +289,9 @@ func TestSelectOptions_EDIConnectionByIDsResolvesLabels(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	firstID := pulid.MustNew("edic_")
 	secondID := pulid.MustNew("edic_")
-	repo := mocks.NewMockEDIConnectionRepository(t)
+	repo := ediportsmock.NewMockEDIConnectionRepository(t)
 	repo.EXPECT().
-		GetConnectionsByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetEDIConnectionsByIDsRequest) bool {
+		GetConnectionsByIDs(mock.Anything, mock.MatchedBy(func(req ediports.GetEDIConnectionsByIDsRequest) bool {
 			return req.TenantInfo.OrgID == orgID &&
 				req.TenantInfo.BuID == buID &&
 				len(req.ConnectionIDs) == 2
@@ -342,9 +349,9 @@ func TestSelectOptions_EDIConnectionSelectOptionsFiltersActive(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
-	repo := mocks.NewMockEDIConnectionRepository(t)
+	repo := ediportsmock.NewMockEDIConnectionRepository(t)
 	repo.EXPECT().
-		SelectOptions(mock.Anything, mock.MatchedBy(func(req *repositories.EDIConnectionSelectOptionsRequest) bool {
+		SelectOptions(mock.Anything, mock.MatchedBy(func(req *ediports.EDIConnectionSelectOptionsRequest) bool {
 			return req.SelectQueryRequest.TenantInfo.OrgID == orgID &&
 				req.SelectQueryRequest.TenantInfo.BuID == buID
 		})).
@@ -412,9 +419,9 @@ func TestSelectOptions_EDIDocumentTypeCatalogIDs(t *testing.T) {
 		DefaultVersion: "004010",
 		CreatedAt:      1780415884,
 	}
-	repo := mocks.NewMockEDIDocumentTypeRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentTypeRepository(t)
 	repo.EXPECT().
-		SelectDocumentTypeOptions(mock.Anything, mock.MatchedBy(func(req *repositories.EDIDocumentTypeSelectOptionsRequest) bool {
+		SelectDocumentTypeOptions(mock.Anything, mock.MatchedBy(func(req *ediports.EDIDocumentTypeSelectOptionsRequest) bool {
 			return req.SelectQueryRequest.TenantInfo.OrgID == orgID &&
 				req.SelectQueryRequest.TenantInfo.BuID == buID
 		})).
@@ -472,7 +479,7 @@ func TestSelectOptions_EDIDocumentTypeRejectsBlankID(t *testing.T) {
 		Core: &base.Core{},
 		EdiService: ediservice.New(ediservice.Params{
 			Logger:           zap.NewNop(),
-			DocumentTypeRepo: mocks.NewMockEDIDocumentTypeRepository(t),
+			DocumentTypeRepo: ediportsmock.NewMockEDIDocumentTypeRepository(t),
 		}),
 	}}
 	ctx := gqlctx.WithAuthContext(
@@ -512,9 +519,9 @@ func TestSelectOptions_EDITransactionSetCatalogIDs(t *testing.T) {
 		Status:         edi.DocumentStatusActive,
 		CreatedAt:      1780415884,
 	}
-	repo := mocks.NewMockEDITransactionSetRepository(t)
+	repo := ediportsmock.NewMockEDITransactionSetRepository(t)
 	repo.EXPECT().
-		SelectTransactionSetOptions(mock.Anything, mock.MatchedBy(func(req *repositories.EDITransactionSetSelectOptionsRequest) bool {
+		SelectTransactionSetOptions(mock.Anything, mock.MatchedBy(func(req *ediports.EDITransactionSetSelectOptionsRequest) bool {
 			return req.SelectQueryRequest.TenantInfo.OrgID == orgID &&
 				req.SelectQueryRequest.TenantInfo.BuID == buID &&
 				len(req.IDs) == 0 &&
@@ -527,7 +534,7 @@ func TestSelectOptions_EDITransactionSetCatalogIDs(t *testing.T) {
 		}, nil).
 		Once()
 	repo.EXPECT().
-		SelectTransactionSetOptions(mock.Anything, mock.MatchedBy(func(req *repositories.EDITransactionSetSelectOptionsRequest) bool {
+		SelectTransactionSetOptions(mock.Anything, mock.MatchedBy(func(req *ediports.EDITransactionSetSelectOptionsRequest) bool {
 			return len(req.IDs) == 2 &&
 				req.IDs[0] == response.ID &&
 				req.IDs[1] == tender.ID &&

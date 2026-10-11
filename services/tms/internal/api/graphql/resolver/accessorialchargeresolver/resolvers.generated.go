@@ -4,7 +4,7 @@ package accessorialchargeresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	accessorialchargeservice "github.com/emoss08/trenova/internal/core/services/accessorialchargeservice"
+	accessorialchargeservice "github.com/emoss08/trenova/internal/modules/reference/app/accessorialchargeservice"
 )
 
 type Deps struct {

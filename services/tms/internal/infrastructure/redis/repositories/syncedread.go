@@ -5,11 +5,15 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
-	corerepos "github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/bunmarshal"
 	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/redis/go-redis/v9"
@@ -34,12 +38,12 @@ type WorkerCacheRepositoryParams struct {
 
 	Client      *redis.Client
 	Logger      *zap.Logger
-	UsStateRepo corerepos.UsStateRepository
+	UsStateRepo usstateports.UsStateRepository
 }
 
 type workerCacheRepository struct {
 	*syncedCacheBase
-	usStateRepo corerepos.UsStateRepository
+	usStateRepo usstateports.UsStateRepository
 }
 
 type CustomerCacheRepositoryParams struct {
@@ -47,12 +51,12 @@ type CustomerCacheRepositoryParams struct {
 
 	Client      *redis.Client
 	Logger      *zap.Logger
-	UsStateRepo corerepos.UsStateRepository
+	UsStateRepo usstateports.UsStateRepository
 }
 
 type customerCacheRepository struct {
 	*syncedCacheBase
-	usStateRepo corerepos.UsStateRepository
+	usStateRepo usstateports.UsStateRepository
 }
 
 type ShipmentCacheRepositoryParams struct {
@@ -77,27 +81,33 @@ type documentCacheRepository struct {
 	*syncedCacheBase
 }
 
-func NewWorkerCacheRepository(p WorkerCacheRepositoryParams) corerepos.WorkerCacheRepository {
+func NewWorkerCacheRepository(p WorkerCacheRepositoryParams) customerports.WorkerCacheRepository {
 	return &workerCacheRepository{
 		syncedCacheBase: newSyncedCacheBase(p.Client, p.Logger, "worker-cache-repository"),
 		usStateRepo:     p.UsStateRepo,
 	}
 }
 
-func NewCustomerCacheRepository(p CustomerCacheRepositoryParams) corerepos.CustomerCacheRepository {
+func NewCustomerCacheRepository(
+	p CustomerCacheRepositoryParams,
+) customerports.CustomerCacheRepository {
 	return &customerCacheRepository{
 		syncedCacheBase: newSyncedCacheBase(p.Client, p.Logger, "customer-cache-repository"),
 		usStateRepo:     p.UsStateRepo,
 	}
 }
 
-func NewShipmentCacheRepository(p ShipmentCacheRepositoryParams) corerepos.ShipmentCacheRepository {
+func NewShipmentCacheRepository(
+	p ShipmentCacheRepositoryParams,
+) customerports.ShipmentCacheRepository {
 	return &shipmentCacheRepository{
 		syncedCacheBase: newSyncedCacheBase(p.Client, p.Logger, "shipment-cache-repository"),
 	}
 }
 
-func NewDocumentCacheRepository(p DocumentCacheRepositoryParams) corerepos.DocumentCacheRepository {
+func NewDocumentCacheRepository(
+	p DocumentCacheRepositoryParams,
+) customerports.DocumentCacheRepository {
 	return &documentCacheRepository{
 		syncedCacheBase: newSyncedCacheBase(p.Client, p.Logger, "document-cache-repository"),
 	}
@@ -116,10 +126,10 @@ func newSyncedCacheBase(
 
 func (r *workerCacheRepository) GetByID(
 	ctx context.Context,
-	req corerepos.GetWorkerByIDRequest,
+	req workerports.GetWorkerByIDRequest,
 ) (*worker.Worker, error) {
 	if req.IncludeProfile {
-		return nil, corerepos.ErrCacheMiss
+		return nil, customerports.ErrCacheMiss
 	}
 
 	entity, err := getCachedEntity[worker.Worker](
@@ -137,16 +147,16 @@ func (r *workerCacheRepository) GetByID(
 	}
 	if entity.OrganizationID != req.TenantInfo.OrgID ||
 		entity.BusinessUnitID != req.TenantInfo.BuID {
-		return nil, corerepos.ErrCacheMiss
+		return nil, customerports.ErrCacheMiss
 	}
 
 	if req.IncludeState {
 		state, stateErr := r.usStateRepo.GetByID(
 			ctx,
-			corerepos.GetUsStateByIDRequest{StateID: entity.StateID},
+			usstateports.GetUsStateByIDRequest{StateID: entity.StateID},
 		)
 		if stateErr != nil {
-			return nil, corerepos.ErrCacheMiss
+			return nil, customerports.ErrCacheMiss
 		}
 		entity.State = state
 	}
@@ -156,10 +166,10 @@ func (r *workerCacheRepository) GetByID(
 
 func (r *customerCacheRepository) GetByID(
 	ctx context.Context,
-	req corerepos.GetCustomerByIDRequest,
+	req customerports.GetCustomerByIDRequest,
 ) (*customer.Customer, error) {
 	if req.IncludeBillingProfile || req.IncludeEmailProfile {
-		return nil, corerepos.ErrCacheMiss
+		return nil, customerports.ErrCacheMiss
 	}
 
 	entity, err := getCachedEntity[customer.Customer](
@@ -177,15 +187,15 @@ func (r *customerCacheRepository) GetByID(
 	}
 	if entity.OrganizationID != req.TenantInfo.OrgID ||
 		entity.BusinessUnitID != req.TenantInfo.BuID {
-		return nil, corerepos.ErrCacheMiss
+		return nil, customerports.ErrCacheMiss
 	}
 
 	state, stateErr := r.usStateRepo.GetByID(
 		ctx,
-		corerepos.GetUsStateByIDRequest{StateID: entity.StateID},
+		usstateports.GetUsStateByIDRequest{StateID: entity.StateID},
 	)
 	if stateErr != nil {
-		return nil, corerepos.ErrCacheMiss
+		return nil, customerports.ErrCacheMiss
 	}
 	entity.State = state
 
@@ -194,10 +204,10 @@ func (r *customerCacheRepository) GetByID(
 
 func (r *shipmentCacheRepository) GetByID(
 	ctx context.Context,
-	req *corerepos.GetShipmentByIDRequest,
+	req *shipmentports.GetShipmentByIDRequest,
 ) (*shipment.Shipment, error) {
 	if req.ExpandShipmentDetails {
-		return nil, corerepos.ErrCacheMiss
+		return nil, customerports.ErrCacheMiss
 	}
 
 	entity, err := getCachedEntity[shipment.Shipment](
@@ -215,7 +225,7 @@ func (r *shipmentCacheRepository) GetByID(
 	}
 	if entity.OrganizationID != req.TenantInfo.OrgID ||
 		entity.BusinessUnitID != req.TenantInfo.BuID {
-		return nil, corerepos.ErrCacheMiss
+		return nil, customerports.ErrCacheMiss
 	}
 
 	return entity, nil
@@ -223,7 +233,7 @@ func (r *shipmentCacheRepository) GetByID(
 
 func (r *documentCacheRepository) GetByID(
 	ctx context.Context,
-	req corerepos.GetDocumentByIDRequest,
+	req documentports.GetDocumentByIDRequest,
 ) (*document.Document, error) {
 	entity, err := getCachedEntity[document.Document](
 		ctx,
@@ -240,7 +250,7 @@ func (r *documentCacheRepository) GetByID(
 	}
 	if entity.OrganizationID != req.TenantInfo.OrgID ||
 		entity.BusinessUnitID != req.TenantInfo.BuID {
-		return nil, corerepos.ErrCacheMiss
+		return nil, customerports.ErrCacheMiss
 	}
 
 	return entity, nil
@@ -256,7 +266,7 @@ func getCachedEntity[T any](
 		raw := make(map[string]any)
 		if err := redishelpers.GetJSON(ctx, base.client, key, &raw); err != nil {
 			if errors.Is(err, redis.Nil) || redishelpers.IsRedisNil(err) {
-				lastErr = corerepos.ErrCacheMiss
+				lastErr = customerports.ErrCacheMiss
 				continue
 			}
 			return nil, err
@@ -269,7 +279,7 @@ func getCachedEntity[T any](
 				zap.String("key", key),
 				zap.Error(err),
 			)
-			lastErr = corerepos.ErrCacheMiss
+			lastErr = customerports.ErrCacheMiss
 			continue
 		}
 
@@ -280,7 +290,7 @@ func getCachedEntity[T any](
 		return nil, lastErr
 	}
 
-	return nil, corerepos.ErrCacheMiss
+	return nil, customerports.ErrCacheMiss
 }
 
 func buildScopedKeys(prefix, id, organizationID, businessUnitID string) []string {

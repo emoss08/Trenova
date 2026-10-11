@@ -9,7 +9,7 @@
 -- drives permit thresholds, so a stale envelope can overstate clearance.
 --
 -- Mirrors ComputeEnvelope/ResolvedXFeet/ApplyEnvelope in
--- internal/core/domain/shipment/envelope.go:
+-- internal/modules/operations/domain/shipment/envelope.go:
 --   * each dimension resolves line value, then commodity default, then zero
 --   * envelope takes the maximum across lines, length included
 --   * overall height adds deck height only when cargo height is non-zero

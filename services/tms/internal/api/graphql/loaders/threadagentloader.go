@@ -3,8 +3,8 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -14,14 +14,14 @@ import (
 type threadAgentsByIDsLister interface {
 	ListThreadAgentsByIDs(
 		ctx context.Context,
-		req repositories.ListThreadAgentsByIDsRequest,
+		req agentports.ListThreadAgentsByIDsRequest,
 	) ([]*conversation.Thread, error)
 }
 
 type ThreadAgentByIDLoaderFactoryParams struct {
 	fx.In
 
-	Conversations repositories.ConversationRepository
+	Conversations agentports.ConversationRepository
 }
 
 type ThreadAgentByIDLoaderFactory struct {
@@ -34,12 +34,12 @@ func NewThreadAgentByIDLoaderFactory(
 	return &ThreadAgentByIDLoaderFactory{threads: p.Conversations}
 }
 
-func (f *ThreadAgentByIDLoaderFactory) NewForTenant(
+func newThreadAgentByIDLoader(f *ThreadAgentByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *conversation.Thread] {
 	return newLoader(batchByIDFunc(
 		func(ctx context.Context, ids []pulid.ID) ([]*conversation.Thread, error) {
-			return f.threads.ListThreadAgentsByIDs(ctx, repositories.ListThreadAgentsByIDsRequest{
+			return f.threads.ListThreadAgentsByIDs(ctx, agentports.ListThreadAgentsByIDsRequest{
 				IDs:        ids,
 				TenantInfo: tenantInfo,
 			})

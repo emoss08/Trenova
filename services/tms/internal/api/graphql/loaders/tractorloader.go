@@ -3,9 +3,9 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/tractorservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -15,7 +15,7 @@ import (
 type tractorsByIDsGetter interface {
 	GetByIDs(
 		ctx context.Context,
-		req repositories.GetTractorsByIDsRequest,
+		req tractorports.GetTractorsByIDsRequest,
 	) ([]*tractor.Tractor, error)
 }
 
@@ -37,7 +37,7 @@ func NewTractorByIDLoaderFactory(
 	}
 }
 
-func (f *TractorByIDLoaderFactory) NewForTenant(
+func newTractorByIDLoader(f *TractorByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *tractor.Tractor] {
 	return newLoader(f.batchFunc(tenantInfo))
@@ -47,7 +47,7 @@ func (f *TractorByIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
 ) batchFetchFunc[*tractor.Tractor] {
 	return batchByIDFunc(func(ctx context.Context, ids []pulid.ID) ([]*tractor.Tractor, error) {
-		return f.tractors.GetByIDs(ctx, repositories.GetTractorsByIDsRequest{
+		return f.tractors.GetByIDs(ctx, tractorports.GetTractorsByIDsRequest{
 			TenantInfo: tenantInfo,
 			TractorIDs: ids,
 		})

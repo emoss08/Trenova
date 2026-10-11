@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
@@ -46,7 +46,7 @@ type Service struct {
 	logger *zap.Logger
 }
 
-var _ serviceports.TurnStreamReader = (*Service)(nil)
+var _ agentports.TurnStreamReader = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{client: p.Client, logger: p.Logger.Named("turnstream")}
@@ -60,7 +60,7 @@ type frame struct {
 	Data  sonic.NoCopyRawMessage `json:"data"`
 }
 
-func (s *Service) Read(ctx context.Context, req serviceports.ReadTurnStreamRequest) error {
+func (s *Service) Read(ctx context.Context, req agentports.ReadTurnStreamRequest) error {
 	stream := workflowstreams.NewClient(s.client, req.Ref.WorkflowID, workflowstreams.Options{})
 
 	for item, err := range stream.Subscribe(ctx, subscription(req.Cursor)) {
@@ -80,7 +80,7 @@ func (s *Service) Read(ctx context.Context, req serviceports.ReadTurnStreamReque
 			continue
 		}
 
-		out := serviceports.TurnStreamFrame{
+		out := agentports.TurnStreamFrame{
 			ID:    strconv.FormatInt(item.Offset, 10),
 			Event: decoded.Event,
 			Data:  decoded.Data,

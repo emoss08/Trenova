@@ -4,59 +4,67 @@ package selectoptionsresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	repositories "github.com/emoss08/trenova/internal/core/ports/repositories"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
-	accessorialchargeservice "github.com/emoss08/trenova/internal/core/services/accessorialchargeservice"
-	accounttypeservice "github.com/emoss08/trenova/internal/core/services/accounttypeservice"
-	benefitsservice "github.com/emoss08/trenova/internal/core/services/benefitsservice"
-	captureservice "github.com/emoss08/trenova/internal/core/services/captureservice"
-	commodityservice "github.com/emoss08/trenova/internal/core/services/commodityservice"
-	detentionpolicyservice "github.com/emoss08/trenova/internal/core/services/detentionpolicyservice"
-	distanceprofileservice "github.com/emoss08/trenova/internal/core/services/distanceprofileservice"
-	documenttypeservice "github.com/emoss08/trenova/internal/core/services/documenttypeservice"
-	driverpayservice "github.com/emoss08/trenova/internal/core/services/driverpayservice"
-	ediservice "github.com/emoss08/trenova/internal/core/services/ediservice"
-	emailservice "github.com/emoss08/trenova/internal/core/services/emailservice"
-	equipmentmanufacturerservice "github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
-	equipmenttypeservice "github.com/emoss08/trenova/internal/core/services/equipmenttypeservice"
-	fleetcodeservice "github.com/emoss08/trenova/internal/core/services/fleetcodeservice"
-	formulatemplateservice "github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
-	fuelpurchaseservice "github.com/emoss08/trenova/internal/core/services/fuelpurchaseservice"
-	hazardousmaterialservice "github.com/emoss08/trenova/internal/core/services/hazardousmaterialservice"
-	iftaservice "github.com/emoss08/trenova/internal/core/services/iftaservice"
-	locationcategoryservice "github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
-	locationservice "github.com/emoss08/trenova/internal/core/services/locationservice"
-	orderservice "github.com/emoss08/trenova/internal/core/services/orderservice"
-	performancereviewservice "github.com/emoss08/trenova/internal/core/services/performancereviewservice"
-	ptopolicyservice "github.com/emoss08/trenova/internal/core/services/ptopolicyservice"
-	rateagreementservice "github.com/emoss08/trenova/internal/core/services/rateagreementservice"
-	ratematrixservice "github.com/emoss08/trenova/internal/core/services/ratematrixservice"
-	ratezoneservice "github.com/emoss08/trenova/internal/core/services/ratezoneservice"
-	roleservice "github.com/emoss08/trenova/internal/core/services/roleservice"
-	schedulingservice "github.com/emoss08/trenova/internal/core/services/schedulingservice"
-	selfserviceservice "github.com/emoss08/trenova/internal/core/services/selfserviceservice"
-	servicetypeservice "github.com/emoss08/trenova/internal/core/services/servicetypeservice"
-	shipmenttypeservice "github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
-	tractorservice "github.com/emoss08/trenova/internal/core/services/tractorservice"
-	trailerservice "github.com/emoss08/trenova/internal/core/services/trailerservice"
-	userservice "github.com/emoss08/trenova/internal/core/services/userservice"
-	usstateservice "github.com/emoss08/trenova/internal/core/services/usstateservice"
-	workercredentialservice "github.com/emoss08/trenova/internal/core/services/workercredentialservice"
-	workerservice "github.com/emoss08/trenova/internal/core/services/workerservice"
-	workertrainingservice "github.com/emoss08/trenova/internal/core/services/workertrainingservice"
+	accounttypeservice "github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
+	fiscalperiodports "github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	fiscalyearports "github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
+	glaccountports "github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
+	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	captureservice "github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	ediservice "github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	equipmentmanufacturerservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
+	equipmenttypeservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
+	fleetcodeservice "github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
+	tractorservice "github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
+	trailerservice "github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
+	roleservice "github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
+	userservice "github.com/emoss08/trenova/internal/modules/identity/app/userservice"
+	tenantports "github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	usstateservice "github.com/emoss08/trenova/internal/modules/kernel/app/usstateservice"
+	detentionpolicyservice "github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
+	orderservice "github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
+	servicefailureports "github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	carrierports "github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	customerports "github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	distanceprofileservice "github.com/emoss08/trenova/internal/modules/places/app/distanceprofileservice"
+	locationcategoryservice "github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
+	locationservice "github.com/emoss08/trenova/internal/modules/places/app/locationservice"
+	formulatemplateservice "github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	rateagreementservice "github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
+	ratematrixservice "github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
+	ratezoneservice "github.com/emoss08/trenova/internal/modules/rating/app/ratezoneservice"
+	fuelsurchargeports "github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
+	accessorialchargeservice "github.com/emoss08/trenova/internal/modules/reference/app/accessorialchargeservice"
+	commodityservice "github.com/emoss08/trenova/internal/modules/reference/app/commodityservice"
+	documenttypeservice "github.com/emoss08/trenova/internal/modules/reference/app/documenttypeservice"
+	hazardousmaterialservice "github.com/emoss08/trenova/internal/modules/reference/app/hazardousmaterialservice"
+	servicetypeservice "github.com/emoss08/trenova/internal/modules/reference/app/servicetypeservice"
+	shipmenttypeservice "github.com/emoss08/trenova/internal/modules/reference/app/shipmenttypeservice"
+	driverpayservice "github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
+	fuelpurchaseservice "github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
+	iftaservice "github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
+	benefitsservice "github.com/emoss08/trenova/internal/modules/workforce/app/benefitsservice"
+	performancereviewservice "github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
+	ptopolicyservice "github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
+	schedulingservice "github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
+	selfserviceservice "github.com/emoss08/trenova/internal/modules/workforce/app/selfserviceservice"
+	workercredentialservice "github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
+	workerservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
+	workertrainingservice "github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
+	emailservice "github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
 )
 
 type Deps struct {
 	*base.Core
-	OrganizationService          services.OrganizationService
-	ShipmentService              services.ShipmentService
+	OrganizationService          tenantports.OrganizationService
+	ShipmentService              shipmentports.ShipmentService
 	EdiService                   *ediservice.Service
 	EquipmentTypeService         *equipmenttypeservice.Service
 	AccessorialChargeService     *accessorialchargeservice.Service
 	AccountTypeService           *accounttypeservice.Service
-	CarrierRepo                  repositories.CarrierRepository
-	CustomerRepo                 repositories.CustomerRepository
-	GlAccountRepo                repositories.GLAccountRepository
+	CarrierRepo                  carrierports.CarrierRepository
+	CustomerRepo                 customerports.CustomerRepository
+	GlAccountRepo                glaccountports.GLAccountRepository
 	CommodityService             *commodityservice.Service
 	FleetCodeService             *fleetcodeservice.Service
 	HazardousMaterialService     *hazardousmaterialservice.Service
@@ -83,14 +91,14 @@ type Deps struct {
 	RateAgreementService         *rateagreementservice.Service
 	RateZoneService              *ratezoneservice.Service
 	RateMatrixService            *ratematrixservice.Service
-	FuelIndexRepo                repositories.FuelIndexRepository
-	FuelSurchargeProgramRepo     repositories.FuelSurchargeProgramRepository
-	FiscalYearRepo               repositories.FiscalYearRepository
-	FiscalPeriodRepo             repositories.FiscalPeriodRepository
+	FuelIndexRepo                fuelsurchargeports.FuelIndexRepository
+	FuelSurchargeProgramRepo     fuelsurchargeports.FuelSurchargeProgramRepository
+	FiscalYearRepo               fiscalyearports.FiscalYearRepository
+	FiscalPeriodRepo             fiscalperiodports.FiscalPeriodRepository
 	EmailService                 *emailservice.Service
 	DistanceProfileService       *distanceprofileservice.Service
-	ServiceFailureReasonCodeSvc  services.ServiceFailureReasonCodeService
-	AiProviderService            services.AIProviderService
+	ServiceFailureReasonCodeSvc  servicefailureports.ServiceFailureReasonCodeService
+	AiProviderService            agentports.AIProviderService
 	CaptureService               *captureservice.Service
 	RoleService                  *roleservice.Service
 	UserService                  *userservice.Service

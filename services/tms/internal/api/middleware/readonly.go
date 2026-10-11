@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/gin-gonic/gin"
@@ -72,13 +72,13 @@ var expiredAllowedPaths = map[string]struct{}{
 type ReadOnlyGuardParams struct {
 	fx.In
 
-	Plans        services.PlanService
+	Plans        platformplanports.PlanService
 	ErrorHandler *helpers.ErrorHandler
 	Logger       *zap.Logger
 }
 
 type ReadOnlyGuard struct {
-	plans        services.PlanService
+	plans        platformplanports.PlanService
 	errorHandler *helpers.ErrorHandler
 	l            *zap.Logger
 }

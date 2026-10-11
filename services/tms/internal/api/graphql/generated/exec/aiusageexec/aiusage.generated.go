@@ -9,8 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -33,7 +33,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageDay)
+					obj := o.(*aiusageports.AIUsageDay)
 					return obj.Day, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -43,7 +43,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageDay)
+					obj := o.(*aiusageports.AIUsageDay)
 					return obj.Calls, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -53,7 +53,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageDay)
+					obj := o.(*aiusageports.AIUsageDay)
 					return obj.Failed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -63,7 +63,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageDay)
+					obj := o.(*aiusageports.AIUsageDay)
 					return obj.InputTokens, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -73,7 +73,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageDay)
+					obj := o.(*aiusageports.AIUsageDay)
 					return obj.OutputTokens, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -83,7 +83,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageDay)
+					obj := o.(*aiusageports.AIUsageDay)
 					return obj.CostUSD, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -93,7 +93,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageDay)
+					obj := o.(*aiusageports.AIUsageDay)
 					return obj.PricedCalls, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -103,7 +103,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageDay)
+					obj := o.(*aiusageports.AIUsageDay)
 					return obj.LatencyP50Ms, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -113,7 +113,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageDay)
+					obj := o.(*aiusageports.AIUsageDay)
 					return obj.LatencyP95Ms, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -125,7 +125,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageFailure)
+					obj := o.(*aiusageports.AIUsageFailure)
 					return obj.ProviderID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -135,7 +135,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageFailure)
+					obj := o.(*aiusageports.AIUsageFailure)
 					return obj.ProviderName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -145,7 +145,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageFailure)
+					obj := o.(*aiusageports.AIUsageFailure)
 					return obj.Model, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -155,7 +155,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageFailure)
+					obj := o.(*aiusageports.AIUsageFailure)
 					return obj.Task, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -165,7 +165,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageFailure)
+					obj := o.(*aiusageports.AIUsageFailure)
 					return obj.ErrorClass, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -175,7 +175,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageFailure)
+					obj := o.(*aiusageports.AIUsageFailure)
 					return obj.Message, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -185,7 +185,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageFailure)
+					obj := o.(*aiusageports.AIUsageFailure)
 					return obj.At, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -234,7 +234,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AIUsageFeatureEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIUsageFeatureSlice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFeatureSlice),
+				Marshal: gqlexec.Marshal(marshalNAIUsageFeatureSlice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageFeatureSlice),
 			},
 			{
 				Name:     "cursor",
@@ -252,17 +252,17 @@ var Shard = &gqlexec.Shard{
 				Name:     "feature",
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageFeatureSlice)
+					obj := o.(*aiusageports.AIUsageFeatureSlice)
 					return obj.Feature, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAIUsageFeature2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiusageᚐFeature),
+				Marshal: gqlexec.Marshal(marshalOAIUsageFeature2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiusageᚐFeature),
 			},
 			{
 				Name:     "calls",
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageFeatureSlice)
+					obj := o.(*aiusageports.AIUsageFeatureSlice)
 					return obj.Calls, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -272,7 +272,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageFeatureSlice)
+					obj := o.(*aiusageports.AIUsageFeatureSlice)
 					return obj.Failed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -282,7 +282,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageFeatureSlice)
+					obj := o.(*aiusageports.AIUsageFeatureSlice)
 					return obj.InputTokens, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -292,7 +292,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageFeatureSlice)
+					obj := o.(*aiusageports.AIUsageFeatureSlice)
 					return obj.OutputTokens, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -302,7 +302,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageFeatureSlice)
+					obj := o.(*aiusageports.AIUsageFeatureSlice)
 					return obj.ReasoningTokens, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -312,7 +312,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageFeatureSlice)
+					obj := o.(*aiusageports.AIUsageFeatureSlice)
 					return obj.CostUSD, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -322,7 +322,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageFeatureSlice)
+					obj := o.(*aiusageports.AIUsageFeatureSlice)
 					return obj.PricedCalls, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -332,7 +332,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageFeatureSlice)
+					obj := o.(*aiusageports.AIUsageFeatureSlice)
 					return obj.LatencyP50Ms, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -342,7 +342,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageFeatureSlice)
+					obj := o.(*aiusageports.AIUsageFeatureSlice)
 					return obj.LatencyP95Ms, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -354,7 +354,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageProviderSlice)
+					obj := o.(*aiusageports.AIUsageProviderSlice)
 					return obj.ProviderID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -364,7 +364,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageProviderSlice)
+					obj := o.(*aiusageports.AIUsageProviderSlice)
 					return obj.ProviderName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -374,7 +374,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageProviderSlice)
+					obj := o.(*aiusageports.AIUsageProviderSlice)
 					return obj.Model, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -384,7 +384,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageProviderSlice)
+					obj := o.(*aiusageports.AIUsageProviderSlice)
 					return obj.Calls, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -394,7 +394,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageProviderSlice)
+					obj := o.(*aiusageports.AIUsageProviderSlice)
 					return obj.Failed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -404,7 +404,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageProviderSlice)
+					obj := o.(*aiusageports.AIUsageProviderSlice)
 					return obj.InputTokens, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -414,7 +414,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageProviderSlice)
+					obj := o.(*aiusageports.AIUsageProviderSlice)
 					return obj.OutputTokens, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -424,7 +424,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageProviderSlice)
+					obj := o.(*aiusageports.AIUsageProviderSlice)
 					return obj.ReasoningTokens, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -434,7 +434,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageProviderSlice)
+					obj := o.(*aiusageports.AIUsageProviderSlice)
 					return obj.CostUSD, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -444,7 +444,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageProviderSlice)
+					obj := o.(*aiusageports.AIUsageProviderSlice)
 					return obj.PricedCalls, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -454,7 +454,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageProviderSlice)
+					obj := o.(*aiusageports.AIUsageProviderSlice)
 					return obj.LatencyP50Ms, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -464,7 +464,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageProviderSlice)
+					obj := o.(*aiusageports.AIUsageProviderSlice)
 					return obj.LatencyP95Ms, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -476,7 +476,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageSummary)
+					obj := o.(*aiusageports.AIUsageSummary)
 					return obj.Since, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -486,7 +486,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageSummary)
+					obj := o.(*aiusageports.AIUsageSummary)
 					return obj.Calls, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -496,7 +496,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageSummary)
+					obj := o.(*aiusageports.AIUsageSummary)
 					return obj.Failed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -506,7 +506,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageSummary)
+					obj := o.(*aiusageports.AIUsageSummary)
 					return obj.InputTokens, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -516,7 +516,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageSummary)
+					obj := o.(*aiusageports.AIUsageSummary)
 					return obj.OutputTokens, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -526,7 +526,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageSummary)
+					obj := o.(*aiusageports.AIUsageSummary)
 					return obj.ReasoningTokens, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -536,7 +536,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageSummary)
+					obj := o.(*aiusageports.AIUsageSummary)
 					return obj.CostUSD, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -546,7 +546,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageSummary)
+					obj := o.(*aiusageports.AIUsageSummary)
 					return obj.PricedCalls, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -556,7 +556,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageSummary)
+					obj := o.(*aiusageports.AIUsageSummary)
 					return obj.LatencyP50Ms, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -566,7 +566,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageSummary)
+					obj := o.(*aiusageports.AIUsageSummary)
 					return obj.LatencyP95Ms, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -577,10 +577,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AIUsageProviderSlice",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageSummary)
+					obj := o.(*aiusageports.AIUsageSummary)
 					return obj.ByProvider, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIUsageProviderSlice2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageProviderSliceᚄ),
+				Marshal: gqlexec.Marshal(marshalNAIUsageProviderSlice2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageProviderSliceᚄ),
 			},
 			{
 				Name:      "byFeature",
@@ -588,10 +588,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AIUsageFeatureSlice",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageSummary)
+					obj := o.(*aiusageports.AIUsageSummary)
 					return obj.ByFeature, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIUsageFeatureSlice2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFeatureSliceᚄ),
+				Marshal: gqlexec.Marshal(marshalNAIUsageFeatureSlice2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageFeatureSliceᚄ),
 			},
 			{
 				Name:      "recentFailures",
@@ -599,10 +599,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AIUsageFailure",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIUsageSummary)
+					obj := o.(*aiusageports.AIUsageSummary)
 					return obj.RecentFailures, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIUsageFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFailureᚄ),
+				Marshal: gqlexec.Marshal(marshalNAIUsageFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageFailureᚄ),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -632,7 +632,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AiUsageSummary(ctx, fc.Args["since"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNAIUsageSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageSummary),
+				Marshal: gqlexec.Marshal(marshalNAIUsageSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageSummary),
 			},
 			{
 				Name:       "aiUsageDaily",
@@ -646,7 +646,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AiUsageDaily(ctx, fc.Args["days"].(*int), fc.Args["timezone"].(*string), fc.Args["providerId"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNAIUsageDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageDayᚄ),
+				Marshal: gqlexec.Marshal(marshalNAIUsageDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageDayᚄ),
 			},
 		}},
 	},
@@ -657,8 +657,8 @@ var Shard = &gqlexec.Shard{
 
 type resolverQuery interface {
 	AiUsageFeatures(ctx context.Context, input gqlmodel.DataTableConnectionInput, days *int) (*gqlmodel.AIUsageFeatureConnection, error)
-	AiUsageSummary(ctx context.Context, since *int) (*services.AIUsageSummary, error)
-	AiUsageDaily(ctx context.Context, days *int, timezone *string, providerID *string) ([]*services.AIUsageDay, error)
+	AiUsageSummary(ctx context.Context, since *int) (*aiusageports.AIUsageSummary, error)
+	AiUsageDaily(ctx context.Context, days *int, timezone *string, providerID *string) ([]*aiusageports.AIUsageDay, error)
 }
 
 var (
@@ -774,15 +774,15 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAIUsageDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageDayᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*services.AIUsageDay) graphql.Marshaler {
-	return gqlexec.List[*services.AIUsageDay]{
-		Elem:        marshalNAIUsageDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageDay,
+func marshalNAIUsageDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageDayᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*aiusageports.AIUsageDay) graphql.Marshaler {
+	return gqlexec.List[*aiusageports.AIUsageDay]{
+		Elem:        marshalNAIUsageDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageDay,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAIUsageDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageDay(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AIUsageDay) graphql.Marshaler {
+func marshalNAIUsageDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageDay(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiusageports.AIUsageDay) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -790,13 +790,13 @@ func marshalNAIUsageDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋ
 	return ec.MarshalType(ctx, sel, "AIUsageDay", v)
 }
 
-func marshalNAIUsageFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFailure(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v services.AIUsageFailure) graphql.Marshaler {
+func marshalNAIUsageFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageFailure(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiusageports.AIUsageFailure) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AIUsageFailure", &v)
 }
 
-func marshalNAIUsageFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFailureᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []services.AIUsageFailure) graphql.Marshaler {
-	return gqlexec.List[services.AIUsageFailure]{
-		Elem:        marshalNAIUsageFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFailure,
+func marshalNAIUsageFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageFailureᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aiusageports.AIUsageFailure) graphql.Marshaler {
+	return gqlexec.List[aiusageports.AIUsageFailure]{
+		Elem:        marshalNAIUsageFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageFailure,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
@@ -826,19 +826,19 @@ func marshalNAIUsageFeatureEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "AIUsageFeatureEdge", v)
 }
 
-func marshalNAIUsageFeatureSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFeatureSlice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v services.AIUsageFeatureSlice) graphql.Marshaler {
+func marshalNAIUsageFeatureSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageFeatureSlice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiusageports.AIUsageFeatureSlice) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AIUsageFeatureSlice", &v)
 }
 
-func marshalNAIUsageFeatureSlice2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFeatureSliceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []services.AIUsageFeatureSlice) graphql.Marshaler {
-	return gqlexec.List[services.AIUsageFeatureSlice]{
-		Elem:        marshalNAIUsageFeatureSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFeatureSlice,
+func marshalNAIUsageFeatureSlice2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageFeatureSliceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aiusageports.AIUsageFeatureSlice) graphql.Marshaler {
+	return gqlexec.List[aiusageports.AIUsageFeatureSlice]{
+		Elem:        marshalNAIUsageFeatureSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageFeatureSlice,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAIUsageFeatureSlice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFeatureSlice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AIUsageFeatureSlice) graphql.Marshaler {
+func marshalNAIUsageFeatureSlice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageFeatureSlice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiusageports.AIUsageFeatureSlice) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -846,19 +846,19 @@ func marshalNAIUsageFeatureSlice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "AIUsageFeatureSlice", v)
 }
 
-func marshalNAIUsageProviderSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageProviderSlice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v services.AIUsageProviderSlice) graphql.Marshaler {
+func marshalNAIUsageProviderSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageProviderSlice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiusageports.AIUsageProviderSlice) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AIUsageProviderSlice", &v)
 }
 
-func marshalNAIUsageProviderSlice2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageProviderSliceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []services.AIUsageProviderSlice) graphql.Marshaler {
-	return gqlexec.List[services.AIUsageProviderSlice]{
-		Elem:        marshalNAIUsageProviderSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageProviderSlice,
+func marshalNAIUsageProviderSlice2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageProviderSliceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aiusageports.AIUsageProviderSlice) graphql.Marshaler {
+	return gqlexec.List[aiusageports.AIUsageProviderSlice]{
+		Elem:        marshalNAIUsageProviderSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageProviderSlice,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAIUsageSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AIUsageSummary) graphql.Marshaler {
+func marshalNAIUsageSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiusageports.AIUsageSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -922,7 +922,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOAIUsageFeature2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiusageᚐFeature(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiusage.Feature) graphql.Marshaler {
+func marshalOAIUsageFeature2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiusageᚐFeature(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiusage.Feature) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

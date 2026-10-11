@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -48,19 +48,26 @@ func (h *Handler) dryRun(c *gin.Context) {
 
 	actor := requestActorFromAuthContext(authCtx)
 	runID := pulid.MustNew(agent.EvaluationIDPrefix)
-	run, err := assistantjobs.StartDryRunWorkflow(ctx, h.workflows, &assistantjobs.AgentDryRunPayload{
-		BasePayload: temporaltype.BasePayload{
-			OrganizationID: tenant.OrgID,
-			BusinessUnitID: tenant.BuID,
-			UserID:         tenant.UserID,
+	run, err := assistantcontract.StartDryRunWorkflow(
+		ctx,
+		h.workflows,
+		&assistantcontract.AgentDryRunPayload{
+			BasePayload: temporaltype.BasePayload{
+				OrganizationID: tenant.OrgID,
+				BusinessUnitID: tenant.BuID,
+				UserID:         tenant.UserID,
+			},
+			RunID:      runID,
+			Actor:      actor,
+			Definition: draft,
+			Prompt:     body.Prompt,
 		},
-		RunID:      runID,
-		Actor:      actor,
-		Definition: draft,
-		Prompt:     body.Prompt,
-	})
+	)
 	if err != nil {
-		h.eh.HandleError(c, errortypes.NewBusinessError("The dry run could not start").WithInternal(err))
+		h.eh.HandleError(
+			c,
+			errortypes.NewBusinessError("The dry run could not start").WithInternal(err),
+		)
 		return
 	}
 
@@ -72,13 +79,13 @@ func (h *Handler) dryRun(c *gin.Context) {
 	defer stream.Close()
 
 	sawTerminal := false
-	err = h.streams.Read(ctx, serviceports.ReadTurnStreamRequest{
-		Ref: serviceports.TurnStreamRef{
+	err = h.streams.Read(ctx, agentports.ReadTurnStreamRequest{
+		Ref: agentports.TurnStreamRef{
 			TenantInfo: tenant,
 			TurnID:     runID,
 			WorkflowID: run.GetID(),
 		},
-		OnFrame: func(frame serviceports.TurnStreamFrame) error {
+		OnFrame: func(frame agentports.TurnStreamFrame) error {
 			if frame.Terminal() {
 				sawTerminal = true
 			}
@@ -100,7 +107,7 @@ func (h *Handler) dryRun(c *gin.Context) {
 		if err != nil {
 			h.logger.Warn("dry run stream ended early", zap.Error(err))
 		}
-		_ = stream.Emit(serviceports.AssistantEventError, gin.H{
+		_ = stream.Emit(agentports.AssistantEventError, gin.H{
 			"message": "The dry run stopped before it finished. Try again in a moment.",
 		})
 	}

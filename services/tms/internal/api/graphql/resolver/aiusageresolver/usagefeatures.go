@@ -3,24 +3,24 @@ package aiusageresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 )
 
 // featureTable is what the usage-by-feature table may search, filter and
 // sort on.
-var featureTable = &base.MemoryTable[services.AIUsageFeatureSlice]{
-	Fields: map[string]base.MemoryField[services.AIUsageFeatureSlice]{
-		"feature":      func(s services.AIUsageFeatureSlice) any { return featureName(s) },
-		"calls":        func(s services.AIUsageFeatureSlice) any { return s.Calls },
-		"failed":       func(s services.AIUsageFeatureSlice) any { return s.Failed },
-		"tokens":       func(s services.AIUsageFeatureSlice) any { return s.InputTokens + s.OutputTokens },
-		"costUsd":      func(s services.AIUsageFeatureSlice) any { return s.CostUSD },
-		"latencyP50Ms": func(s services.AIUsageFeatureSlice) any { return s.LatencyP50Ms },
+var featureTable = &base.MemoryTable[aiusageports.AIUsageFeatureSlice]{
+	Fields: map[string]base.MemoryField[aiusageports.AIUsageFeatureSlice]{
+		"feature":      func(s aiusageports.AIUsageFeatureSlice) any { return featureName(s) },
+		"calls":        func(s aiusageports.AIUsageFeatureSlice) any { return s.Calls },
+		"failed":       func(s aiusageports.AIUsageFeatureSlice) any { return s.Failed },
+		"tokens":       func(s aiusageports.AIUsageFeatureSlice) any { return s.InputTokens + s.OutputTokens },
+		"costUsd":      func(s aiusageports.AIUsageFeatureSlice) any { return s.CostUSD },
+		"latencyP50Ms": func(s aiusageports.AIUsageFeatureSlice) any { return s.LatencyP50Ms },
 	},
 	Search: featureName,
 }
 
-func featureName(s services.AIUsageFeatureSlice) string {
+func featureName(s aiusageports.AIUsageFeatureSlice) string {
 	if s.Feature == nil {
 		return ""
 	}
@@ -29,7 +29,7 @@ func featureName(s services.AIUsageFeatureSlice) string {
 
 func featureConnection(
 	input *gqlmodel.DataTableConnectionInput,
-	slices []services.AIUsageFeatureSlice,
+	slices []aiusageports.AIUsageFeatureSlice,
 ) (*gqlmodel.AIUsageFeatureConnection, error) {
 	page, err := featureTable.Page(input, slices)
 	if err != nil {

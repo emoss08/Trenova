@@ -9,11 +9,11 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/carrier"
-	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
-	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -150,7 +150,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carriercapacity.Posting)
 					return obj.RateMethod, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierCapacityRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarriercapacityᚐRateMethod),
+				Marshal: gqlexec.Marshal(marshalNCarrierCapacityRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarriercapacityᚐRateMethod),
 			},
 			{
 				Name:       "rate",
@@ -171,7 +171,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carriercapacity.Posting)
 					return obj.Source, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierCapacitySource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarriercapacityᚐSource),
+				Marshal: gqlexec.Marshal(marshalNCarrierCapacitySource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarriercapacityᚐSource),
 			},
 			{
 				Name:     "notes",
@@ -220,7 +220,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carriercapacity.Posting)
 					return obj.Carrier, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrier),
+				Marshal: gqlexec.Marshal(marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrier),
 			},
 			{
 				Name:      "originLocation",
@@ -230,7 +230,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carriercapacity.Posting)
 					return obj.OriginLocation, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlocationᚐLocation),
+				Marshal: gqlexec.Marshal(marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationᚐLocation),
 			},
 			{
 				Name:      "originState",
@@ -240,7 +240,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carriercapacity.Posting)
 					return obj.OriginState, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋusstateᚐUsState),
+				Marshal: gqlexec.Marshal(marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋusstateᚐUsState),
 			},
 			{
 				Name:      "destinationState",
@@ -250,7 +250,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carriercapacity.Posting)
 					return obj.DestinationState, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋusstateᚐUsState),
+				Marshal: gqlexec.Marshal(marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋusstateᚐUsState),
 			},
 			{
 				Name:      "equipmentType",
@@ -260,7 +260,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carriercapacity.Posting)
 					return obj.EquipmentType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐEquipmentType),
+				Marshal: gqlexec.Marshal(marshalOEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐEquipmentType),
 			},
 		}},
 		{Object: "CarrierCapacityPostingConnection", Fields: []*gqlexec.Field{
@@ -306,7 +306,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.CarrierCapacityPostingEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierCapacityPosting2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarriercapacityᚐPosting),
+				Marshal: gqlexec.Marshal(marshalNCarrierCapacityPosting2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarriercapacityᚐPosting),
 			},
 			{
 				Name:     "cursor",
@@ -331,7 +331,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateCarrierCapacityPosting(ctx, fc.Args["input"].(gqlmodel.CarrierCapacityPostingInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierCapacityPosting2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarriercapacityᚐPosting),
+				Marshal: gqlexec.Marshal(marshalNCarrierCapacityPosting2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarriercapacityᚐPosting),
 			},
 			{
 				Name:       "updateCarrierCapacityPosting",
@@ -344,7 +344,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateCarrierCapacityPosting(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.CarrierCapacityPostingInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierCapacityPosting2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarriercapacityᚐPosting),
+				Marshal: gqlexec.Marshal(marshalNCarrierCapacityPosting2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarriercapacityᚐPosting),
 			},
 			{
 				Name:       "deleteCarrierCapacityPosting",
@@ -385,7 +385,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierCapacityPosting(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOCarrierCapacityPosting2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarriercapacityᚐPosting),
+				Marshal: gqlexec.Marshal(marshalOCarrierCapacityPosting2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarriercapacityᚐPosting),
 			},
 		}},
 	},
@@ -622,7 +622,7 @@ func unmarshalInputCarrierCapacityPostingInput(ctx context.Context, ec *gqlexec.
 			it.TruckCount = data
 		case "rateMethod":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rateMethod"))
-			data, err := unmarshalOCarrierCapacityRateMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarriercapacityᚐRateMethod(ctx, ec, v)
+			data, err := unmarshalOCarrierCapacityRateMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarriercapacityᚐRateMethod(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -636,7 +636,7 @@ func unmarshalInputCarrierCapacityPostingInput(ctx context.Context, ec *gqlexec.
 			it.Rate = data
 		case "source":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
-			data, err := unmarshalOCarrierCapacitySource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarriercapacityᚐSource(ctx, ec, v)
+			data, err := unmarshalOCarrierCapacitySource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarriercapacityᚐSource(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -690,7 +690,7 @@ func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*b
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOCarrierCapacityRateMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarriercapacityᚐRateMethod(ctx context.Context, ec *gqlexec.Exec, v any) (*carriercapacity.RateMethod, error) {
+func unmarshalOCarrierCapacityRateMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarriercapacityᚐRateMethod(ctx context.Context, ec *gqlexec.Exec, v any) (*carriercapacity.RateMethod, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -699,7 +699,7 @@ func unmarshalOCarrierCapacityRateMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOCarrierCapacitySource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarriercapacityᚐSource(ctx context.Context, ec *gqlexec.Exec, v any) (*carriercapacity.Source, error) {
+func unmarshalOCarrierCapacitySource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarriercapacityᚐSource(ctx context.Context, ec *gqlexec.Exec, v any) (*carriercapacity.Source, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -748,7 +748,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNCarrierCapacityPosting2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarriercapacityᚐPosting(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carriercapacity.Posting) graphql.Marshaler {
+func marshalNCarrierCapacityPosting2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarriercapacityᚐPosting(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carriercapacity.Posting) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -780,7 +780,7 @@ func marshalNCarrierCapacityPostingEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return ec.MarshalType(ctx, sel, "CarrierCapacityPostingEdge", v)
 }
 
-func marshalNCarrierCapacityRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarriercapacityᚐRateMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carriercapacity.RateMethod) graphql.Marshaler {
+func marshalNCarrierCapacityRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarriercapacityᚐRateMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carriercapacity.RateMethod) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -788,7 +788,7 @@ func marshalNCarrierCapacityRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return res
 }
 
-func marshalNCarrierCapacitySource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarriercapacityᚐSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carriercapacity.Source) graphql.Marshaler {
+func marshalNCarrierCapacitySource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarriercapacityᚐSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carriercapacity.Source) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -844,14 +844,14 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrier(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrier.Carrier) graphql.Marshaler {
+func marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrier(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrier.Carrier) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Carrier", v)
 }
 
-func marshalOCarrierCapacityPosting2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarriercapacityᚐPosting(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carriercapacity.Posting) graphql.Marshaler {
+func marshalOCarrierCapacityPosting2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarriercapacityᚐPosting(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carriercapacity.Posting) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -866,7 +866,7 @@ func marshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Se
 	return res
 }
 
-func marshalOEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐEquipmentType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *equipmenttype.EquipmentType) graphql.Marshaler {
+func marshalOEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐEquipmentType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *equipmenttype.EquipmentType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -889,7 +889,7 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlocationᚐLocation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *location.Location) graphql.Marshaler {
+func marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationᚐLocation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *location.Location) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -901,7 +901,7 @@ func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
-func marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋusstateᚐUsState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *usstate.UsState) graphql.Marshaler {
+func marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋusstateᚐUsState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *usstate.UsState) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

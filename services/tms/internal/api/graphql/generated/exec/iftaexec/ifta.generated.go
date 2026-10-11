@@ -9,11 +9,11 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/ifta"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -175,7 +175,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*ifta.Jurisdiction)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAJurisdictionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐJurisdictionStatus),
+				Marshal: gqlexec.Marshal(marshalNIFTAJurisdictionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdictionStatus),
 			},
 			{
 				Name:     "createdAt",
@@ -207,7 +207,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*ifta.Jurisdiction)
 					return gqlexec.Resolver[resolverIFTAJurisdiction](ec, "IFTAJurisdiction").UsState(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋusstateᚐUsState),
+				Marshal: gqlexec.Marshal(marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋusstateᚐUsState),
 			},
 		}},
 		{Object: "IFTAJurisdictionMileageEntry", Fields: []*gqlexec.Field{
@@ -321,7 +321,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*ifta.JurisdictionMileageEntry)
 					return obj.Source, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAMileageSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐMileageSource),
+				Marshal: gqlexec.Marshal(marshalNIFTAMileageSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐMileageSource),
 			},
 			{
 				Name:       "shipmentMoveId",
@@ -394,7 +394,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*ifta.JurisdictionMileageEntry)
 					return gqlexec.Resolver[resolverIFTAJurisdictionMileageEntry](ec, "IFTAJurisdictionMileageEntry").Tractor(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtractorᚐTractor),
+				Marshal: gqlexec.Marshal(marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtractorᚐTractor),
 			},
 			{
 				Name:       "jurisdiction",
@@ -407,7 +407,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*ifta.JurisdictionMileageEntry)
 					return gqlexec.Resolver[resolverIFTAJurisdictionMileageEntry](ec, "IFTAJurisdictionMileageEntry").Jurisdiction(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAJurisdiction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐJurisdiction),
+				Marshal: gqlexec.Marshal(marshalNIFTAJurisdiction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdiction),
 			},
 		}},
 		{Object: "IFTAJurisdictionMileageEntryConnection", Fields: []*gqlexec.Field{
@@ -453,7 +453,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.IFTAJurisdictionMileageEntryEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAJurisdictionMileageEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐJurisdictionMileageEntry),
+				Marshal: gqlexec.Marshal(marshalNIFTAJurisdictionMileageEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdictionMileageEntry),
 			},
 			{
 				Name:     "cursor",
@@ -610,7 +610,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*ifta.Return)
 					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").Period(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐPeriod),
+				Marshal: gqlexec.Marshal(marshalNIFTAPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐPeriod),
 			},
 			{
 				Name:     "amendmentNumber",
@@ -643,7 +643,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*ifta.Return)
 					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").AmendsReturn(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturn),
+				Marshal: gqlexec.Marshal(marshalOIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn),
 			},
 			{
 				Name:     "status",
@@ -653,7 +653,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*ifta.Return)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAReturnStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturnStatus),
+				Marshal: gqlexec.Marshal(marshalNIFTAReturnStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturnStatus),
 			},
 			{
 				Name:     "timezone",
@@ -802,7 +802,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*ifta.Return)
 					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").FleetMpgByFuelType(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAFleetMPG2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐFleetMPGᚄ),
+				Marshal: gqlexec.Marshal(marshalNIFTAFleetMPG2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐFleetMPGᚄ),
 			},
 			{
 				Name:       "unattributedMiles",
@@ -859,7 +859,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*ifta.Return)
 					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").Problems(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAReturnProblem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐProblemᚄ),
+				Marshal: gqlexec.Marshal(marshalNIFTAReturnProblem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐProblemᚄ),
 			},
 			{
 				Name:       "computedAt",
@@ -904,7 +904,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*ifta.Return)
 					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").FinalizedBy(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:       "filedAt",
@@ -938,7 +938,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*ifta.Return)
 					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").FiledBy(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:     "filingReference",
@@ -991,7 +991,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*ifta.Return)
 					return gqlexec.Resolver[resolverIFTAReturn](ec, "IFTAReturn").Lines(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAReturnLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturnLineᚄ),
+				Marshal: gqlexec.Marshal(marshalNIFTAReturnLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturnLineᚄ),
 			},
 			{
 				Name:     "version",
@@ -1067,7 +1067,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.IFTAReturnEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturn),
+				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn),
 			},
 			{
 				Name:     "cursor",
@@ -1390,7 +1390,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*ifta.ReturnLine)
 					return gqlexec.Resolver[resolverIFTAReturnLine](ec, "IFTAReturnLine").Jurisdiction(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAJurisdiction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐJurisdiction),
+				Marshal: gqlexec.Marshal(marshalNIFTAJurisdiction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdiction),
 			},
 		}},
 		{Object: "IFTAReturnProblem", Fields: []*gqlexec.Field{
@@ -1402,7 +1402,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*ifta.Problem)
 					return obj.Code, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAProblemCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐProblemCode),
+				Marshal: gqlexec.Marshal(marshalNIFTAProblemCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐProblemCode),
 			},
 			{
 				Name:     "message",
@@ -1579,7 +1579,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*ifta.TaxRate)
 					return gqlexec.Resolver[resolverIFTATaxRate](ec, "IFTATaxRate").Jurisdiction(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAJurisdiction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐJurisdiction),
+				Marshal: gqlexec.Marshal(marshalNIFTAJurisdiction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdiction),
 			},
 		}},
 		{Object: "IFTATaxRateConnection", Fields: []*gqlexec.Field{
@@ -1625,7 +1625,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.IFTATaxRateEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTATaxRate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐTaxRate),
+				Marshal: gqlexec.Marshal(marshalNIFTATaxRate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐTaxRate),
 			},
 			{
 				Name:     "cursor",
@@ -1650,7 +1650,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpsertIFTATaxRates(ctx, fc.Args["input"].([]*gqlmodel.IFTATaxRateInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTATaxRate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐTaxRateᚄ),
+				Marshal: gqlexec.Marshal(marshalNIFTATaxRate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐTaxRateᚄ),
 			},
 			{
 				Name:       "deleteIftaTaxRate",
@@ -1675,7 +1675,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateIFTAMileageEntry(ctx, fc.Args["input"].(gqlmodel.IFTAMileageEntryInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAJurisdictionMileageEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐJurisdictionMileageEntry),
+				Marshal: gqlexec.Marshal(marshalNIFTAJurisdictionMileageEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdictionMileageEntry),
 			},
 			{
 				Name:       "updateIftaMileageEntry",
@@ -1688,7 +1688,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateIFTAMileageEntry(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.IFTAMileageEntryInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAJurisdictionMileageEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐJurisdictionMileageEntry),
+				Marshal: gqlexec.Marshal(marshalNIFTAJurisdictionMileageEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdictionMileageEntry),
 			},
 			{
 				Name:       "deleteIftaMileageEntry",
@@ -1713,7 +1713,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").GenerateIFTAReturn(ctx, fc.Args["period"].(gqlmodel.IFTAPeriodInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturn),
+				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn),
 			},
 			{
 				Name:       "recomputeIftaReturn",
@@ -1726,7 +1726,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecomputeIFTAReturn(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturn),
+				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn),
 			},
 			{
 				Name:       "finalizeIftaReturn",
@@ -1739,7 +1739,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").FinalizeIFTAReturn(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturn),
+				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn),
 			},
 			{
 				Name:       "reopenIftaReturn",
@@ -1752,7 +1752,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReopenIFTAReturn(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["reason"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturn),
+				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn),
 			},
 			{
 				Name:       "markIftaReturnFiled",
@@ -1765,7 +1765,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").MarkIFTAReturnFiled(ctx, fc.Args["input"].(gqlmodel.MarkIFTAReturnFiledInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturn),
+				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn),
 			},
 			{
 				Name:       "amendIftaReturn",
@@ -1778,7 +1778,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AmendIFTAReturn(ctx, fc.Args["id"].(string), fc.Args["reason"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturn),
+				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn),
 			},
 			{
 				Name:       "deleteIftaReturn",
@@ -1803,7 +1803,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecalculateMoveJurisdictionMiles(ctx, fc.Args["shipmentMoveId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNShipmentMoveJurisdictionMile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMileᚄ),
+				Marshal: gqlexec.Marshal(marshalNShipmentMoveJurisdictionMile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMileᚄ),
 			},
 			{
 				Name:       "backfillJurisdictionMiles",
@@ -1832,7 +1832,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").IFTAJurisdictions(ctx, fc.Args["membersOnly"].(*bool))
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAJurisdiction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐJurisdictionᚄ),
+				Marshal: gqlexec.Marshal(marshalNIFTAJurisdiction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdictionᚄ),
 			},
 			{
 				Name:       "iftaTaxRates",
@@ -1874,7 +1874,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").IFTAMileageEntry(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAJurisdictionMileageEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐJurisdictionMileageEntry),
+				Marshal: gqlexec.Marshal(marshalNIFTAJurisdictionMileageEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdictionMileageEntry),
 			},
 			{
 				Name:       "iftaReturns",
@@ -1902,7 +1902,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").IFTAReturn(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturn),
+				Marshal: gqlexec.Marshal(marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn),
 			},
 			{
 				Name:       "iftaReturnForPeriod",
@@ -1915,7 +1915,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").IFTAReturnForPeriod(ctx, fc.Args["period"].(gqlmodel.IFTAPeriodInput))
 				},
-				Marshal: gqlexec.Marshal(marshalOIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturn),
+				Marshal: gqlexec.Marshal(marshalOIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn),
 			},
 			{
 				Name:       "iftaPeriod",
@@ -1929,7 +1929,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").IFTAPeriod(ctx, fc.Args["year"].(int), fc.Args["quarter"].(int))
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐPeriod),
+				Marshal: gqlexec.Marshal(marshalNIFTAPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐPeriod),
 			},
 			{
 				Name:       "iftaCurrentPeriod",
@@ -1941,7 +1941,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").IFTACurrentPeriod(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐPeriod),
+				Marshal: gqlexec.Marshal(marshalNIFTAPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐPeriod),
 			},
 		}},
 	},
@@ -2611,7 +2611,7 @@ func unmarshalInputIFTAMileageEntriesInput(ctx context.Context, ec *gqlexec.Exec
 			it.JurisdictionID = data
 		case "sources":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sources"))
-			data, err := unmarshalOIFTAMileageSource2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐMileageSourceᚄ(ctx, ec, v)
+			data, err := unmarshalOIFTAMileageSource2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐMileageSourceᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -2696,7 +2696,7 @@ func unmarshalInputIFTAMileageEntryInput(ctx context.Context, ec *gqlexec.Exec, 
 			it.Loaded = data
 		case "source":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
-			data, err := unmarshalOIFTAMileageSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐMileageSource(ctx, ec, v)
+			data, err := unmarshalOIFTAMileageSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐMileageSource(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -2829,7 +2829,7 @@ func unmarshalInputIFTAReturnsInput(ctx context.Context, ec *gqlexec.Exec, obj a
 			it.Year = data
 		case "statuses":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statuses"))
-			data, err := unmarshalOIFTAReturnStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturnStatusᚄ(ctx, ec, v)
+			data, err := unmarshalOIFTAReturnStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturnStatusᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3111,7 +3111,7 @@ func unmarshalNIFTAMileageEntryInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNIFTAMileageSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐMileageSource(ctx context.Context, ec *gqlexec.Exec, v any) (ifta.MileageSource, error) {
+func unmarshalNIFTAMileageSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐMileageSource(ctx context.Context, ec *gqlexec.Exec, v any) (ifta.MileageSource, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := ifta.MileageSource(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3122,7 +3122,7 @@ func unmarshalNIFTAPeriodInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNIFTAReturnStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturnStatus(ctx context.Context, ec *gqlexec.Exec, v any) (ifta.ReturnStatus, error) {
+func unmarshalNIFTAReturnStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturnStatus(ctx context.Context, ec *gqlexec.Exec, v any) (ifta.ReturnStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := ifta.ReturnStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3219,14 +3219,14 @@ func unmarshalOIFTAFuelType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomainty
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOIFTAMileageSource2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐMileageSourceᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]ifta.MileageSource, error) {
+func unmarshalOIFTAMileageSource2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐMileageSourceᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]ifta.MileageSource, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNIFTAMileageSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐMileageSource)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNIFTAMileageSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐMileageSource)
 }
 
-func unmarshalOIFTAMileageSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐMileageSource(ctx context.Context, ec *gqlexec.Exec, v any) (*ifta.MileageSource, error) {
+func unmarshalOIFTAMileageSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐMileageSource(ctx context.Context, ec *gqlexec.Exec, v any) (*ifta.MileageSource, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -3243,11 +3243,11 @@ func unmarshalOIFTAPeriodInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOIFTAReturnStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturnStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]ifta.ReturnStatus, error) {
+func unmarshalOIFTAReturnStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturnStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]ifta.ReturnStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNIFTAReturnStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturnStatus)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNIFTAReturnStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturnStatus)
 }
 
 func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
@@ -3305,15 +3305,15 @@ func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx conte
 	return res
 }
 
-func marshalNIFTAFleetMPG2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐFleetMPGᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*ifta.FleetMPG) graphql.Marshaler {
+func marshalNIFTAFleetMPG2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐFleetMPGᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*ifta.FleetMPG) graphql.Marshaler {
 	return gqlexec.List[*ifta.FleetMPG]{
-		Elem:        marshalNIFTAFleetMPG2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐFleetMPG,
+		Elem:        marshalNIFTAFleetMPG2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐFleetMPG,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNIFTAFleetMPG2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐFleetMPG(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ifta.FleetMPG) graphql.Marshaler {
+func marshalNIFTAFleetMPG2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐFleetMPG(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ifta.FleetMPG) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3329,15 +3329,15 @@ func marshalNIFTAFuelType2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypes�
 	return res
 }
 
-func marshalNIFTAJurisdiction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐJurisdictionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*ifta.Jurisdiction) graphql.Marshaler {
+func marshalNIFTAJurisdiction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdictionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*ifta.Jurisdiction) graphql.Marshaler {
 	return gqlexec.List[*ifta.Jurisdiction]{
-		Elem:        marshalNIFTAJurisdiction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐJurisdiction,
+		Elem:        marshalNIFTAJurisdiction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdiction,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNIFTAJurisdiction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐJurisdiction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ifta.Jurisdiction) graphql.Marshaler {
+func marshalNIFTAJurisdiction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdiction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ifta.Jurisdiction) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3345,7 +3345,7 @@ func marshalNIFTAJurisdiction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return ec.MarshalType(ctx, sel, "IFTAJurisdiction", v)
 }
 
-func marshalNIFTAJurisdictionMileageEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐJurisdictionMileageEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ifta.JurisdictionMileageEntry) graphql.Marshaler {
+func marshalNIFTAJurisdictionMileageEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdictionMileageEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ifta.JurisdictionMileageEntry) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3377,7 +3377,7 @@ func marshalNIFTAJurisdictionMileageEntryEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenov
 	return ec.MarshalType(ctx, sel, "IFTAJurisdictionMileageEntryEdge", v)
 }
 
-func marshalNIFTAJurisdictionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐJurisdictionStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v ifta.JurisdictionStatus) graphql.Marshaler {
+func marshalNIFTAJurisdictionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdictionStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v ifta.JurisdictionStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3385,7 +3385,7 @@ func marshalNIFTAJurisdictionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNIFTAMileageSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐMileageSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v ifta.MileageSource) graphql.Marshaler {
+func marshalNIFTAMileageSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐMileageSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v ifta.MileageSource) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3393,7 +3393,7 @@ func marshalNIFTAMileageSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return res
 }
 
-func marshalNIFTAPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐPeriod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ifta.Period) graphql.Marshaler {
+func marshalNIFTAPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐPeriod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ifta.Period) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3401,7 +3401,7 @@ func marshalNIFTAPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋ
 	return ec.MarshalType(ctx, sel, "IFTAPeriod", v)
 }
 
-func marshalNIFTAProblemCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐProblemCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v ifta.ProblemCode) graphql.Marshaler {
+func marshalNIFTAProblemCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐProblemCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v ifta.ProblemCode) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3409,7 +3409,7 @@ func marshalNIFTAProblemCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return res
 }
 
-func marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturn(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ifta.Return) graphql.Marshaler {
+func marshalNIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ifta.Return) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3441,15 +3441,15 @@ func marshalNIFTAReturnEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi
 	return ec.MarshalType(ctx, sel, "IFTAReturnEdge", v)
 }
 
-func marshalNIFTAReturnLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturnLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*ifta.ReturnLine) graphql.Marshaler {
+func marshalNIFTAReturnLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturnLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*ifta.ReturnLine) graphql.Marshaler {
 	return gqlexec.List[*ifta.ReturnLine]{
-		Elem:        marshalNIFTAReturnLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturnLine,
+		Elem:        marshalNIFTAReturnLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturnLine,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNIFTAReturnLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturnLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ifta.ReturnLine) graphql.Marshaler {
+func marshalNIFTAReturnLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturnLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ifta.ReturnLine) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3457,15 +3457,15 @@ func marshalNIFTAReturnLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return ec.MarshalType(ctx, sel, "IFTAReturnLine", v)
 }
 
-func marshalNIFTAReturnProblem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐProblemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*ifta.Problem) graphql.Marshaler {
+func marshalNIFTAReturnProblem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐProblemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*ifta.Problem) graphql.Marshaler {
 	return gqlexec.List[*ifta.Problem]{
-		Elem:        marshalNIFTAReturnProblem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐProblem,
+		Elem:        marshalNIFTAReturnProblem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐProblem,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNIFTAReturnProblem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐProblem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ifta.Problem) graphql.Marshaler {
+func marshalNIFTAReturnProblem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐProblem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ifta.Problem) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3473,7 +3473,7 @@ func marshalNIFTAReturnProblem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "IFTAReturnProblem", v)
 }
 
-func marshalNIFTAReturnStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturnStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v ifta.ReturnStatus) graphql.Marshaler {
+func marshalNIFTAReturnStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturnStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v ifta.ReturnStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3481,15 +3481,15 @@ func marshalNIFTAReturnStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore
 	return res
 }
 
-func marshalNIFTATaxRate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐTaxRateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*ifta.TaxRate) graphql.Marshaler {
+func marshalNIFTATaxRate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐTaxRateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*ifta.TaxRate) graphql.Marshaler {
 	return gqlexec.List[*ifta.TaxRate]{
-		Elem:        marshalNIFTATaxRate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐTaxRate,
+		Elem:        marshalNIFTATaxRate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐTaxRate,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNIFTATaxRate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐTaxRate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ifta.TaxRate) graphql.Marshaler {
+func marshalNIFTATaxRate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐTaxRate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ifta.TaxRate) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3553,15 +3553,15 @@ func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 	return ec.MarshalType(ctx, sel, "PageInfo", v)
 }
 
-func marshalNShipmentMoveJurisdictionMile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMileᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*shipment.ShipmentMoveJurisdictionMile) graphql.Marshaler {
+func marshalNShipmentMoveJurisdictionMile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMileᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*shipment.ShipmentMoveJurisdictionMile) graphql.Marshaler {
 	return gqlexec.List[*shipment.ShipmentMoveJurisdictionMile]{
-		Elem:        marshalNShipmentMoveJurisdictionMile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMile,
+		Elem:        marshalNShipmentMoveJurisdictionMile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMile,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNShipmentMoveJurisdictionMile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *shipment.ShipmentMoveJurisdictionMile) graphql.Marshaler {
+func marshalNShipmentMoveJurisdictionMile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *shipment.ShipmentMoveJurisdictionMile) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3617,7 +3617,7 @@ func marshalOIFTAFuelType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintype
 	return res
 }
 
-func marshalOIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐReturn(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ifta.Return) graphql.Marshaler {
+func marshalOIFTAReturn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐReturn(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ifta.Return) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -3645,21 +3645,21 @@ func marshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Sel
 	return res
 }
 
-func marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtractorᚐTractor(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tractor.Tractor) graphql.Marshaler {
+func marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtractorᚐTractor(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tractor.Tractor) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Tractor", v)
 }
 
-func marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋusstateᚐUsState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *usstate.UsState) graphql.Marshaler {
+func marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋusstateᚐUsState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *usstate.UsState) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "UsState", v)
 }
 
-func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

@@ -2,7 +2,7 @@ package aicontrolresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/agentroster"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentroster"
 )
 
 func rosterModel(stat *agentroster.Stat) *gqlmodel.AIAgentRosterStat {

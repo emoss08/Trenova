@@ -9,8 +9,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/aitraining"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
 func (r *QueryResolver) AiTrainingExportHistory(ctx context.Context) ([]*aitraining.ExportHistoryEntry, error) {

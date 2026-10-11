@@ -1,0 +1,208 @@
+package dispatchconsolerepository
+
+import (
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/servicetypecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/uptrace/bun"
+)
+
+const (
+	originAlias      = "orig"
+	destinationAlias = "dest"
+	orderAscending   = "ASC"
+	orderDescending  = "DESC"
+)
+
+// openBoardStatuses are the moves that still need a dispatcher's attention. They are the
+// board's default status filter, and they are also exempt from the window's lower bound:
+// an overdue move is the most urgent thing on the board, not history to be hidden.
+var openBoardStatuses = []shipment.MoveStatus{
+	shipment.MoveStatusNew,
+	shipment.MoveStatusAssigned,
+	shipment.MoveStatusInTransit,
+}
+
+var openMoveStatuses = []shipment.MoveStatus{
+	shipment.MoveStatusAssigned,
+	shipment.MoveStatusInTransit,
+}
+
+var (
+	shipmentJoin = "JOIN " + shipmentcol.ShipmentTable.As(
+		shipmentcol.ShipmentTable.Alias,
+	) + " ON " +
+		shipmentcol.ShipmentColumns.ID.EqColumn(
+			shipmentcol.ShipmentMoveColumns.ShipmentID,
+		) +
+		" AND " + shipmentcol.ShipmentColumns.OrganizationID.EqColumn(
+		shipmentcol.ShipmentMoveColumns.OrganizationID,
+	) +
+		" AND " + shipmentcol.ShipmentColumns.BusinessUnitID.EqColumn(
+		shipmentcol.ShipmentMoveColumns.BusinessUnitID,
+	)
+
+	customerJoin = "LEFT JOIN " + customercol.CustomerTable.As(customercol.CustomerTable.Alias) +
+		" ON " + customercol.CustomerColumns.ID.EqColumn(shipmentcol.ShipmentColumns.CustomerID) +
+		" AND " + customercol.CustomerColumns.OrganizationID.EqColumn(
+		shipmentcol.ShipmentColumns.OrganizationID) +
+		" AND " + customercol.CustomerColumns.BusinessUnitID.EqColumn(
+		shipmentcol.ShipmentColumns.BusinessUnitID)
+
+	serviceTypeJoin = "LEFT JOIN " + servicetypecol.ServiceTypeTable.As(
+		servicetypecol.ServiceTypeTable.Alias) +
+		" ON " + servicetypecol.ServiceTypeColumns.ID.EqColumn(
+		shipmentcol.ShipmentColumns.ServiceTypeID) +
+		" AND " + servicetypecol.ServiceTypeColumns.OrganizationID.EqColumn(
+		shipmentcol.ShipmentColumns.OrganizationID) +
+		" AND " + servicetypecol.ServiceTypeColumns.BusinessUnitID.EqColumn(
+		shipmentcol.ShipmentColumns.BusinessUnitID)
+
+	assignmentJoin = "LEFT JOIN " + shipmentcol.AssignmentTable.As(
+		shipmentcol.AssignmentTable.Alias) +
+		" ON " + shipmentcol.AssignmentColumns.ShipmentMoveID.EqColumn(
+		shipmentcol.ShipmentMoveColumns.ID) +
+		" AND " + shipmentcol.AssignmentColumns.OrganizationID.EqColumn(
+		shipmentcol.ShipmentMoveColumns.OrganizationID) +
+		" AND " + shipmentcol.AssignmentColumns.BusinessUnitID.EqColumn(
+		shipmentcol.ShipmentMoveColumns.BusinessUnitID) +
+		" AND " + shipmentcol.AssignmentColumns.ArchivedAt.IsNull()
+
+	carrierAssignmentJoin = "LEFT JOIN " + shipmentcol.CarrierAssignmentTable.As(
+		shipmentcol.CarrierAssignmentTable.Alias) +
+		" ON " + shipmentcol.CarrierAssignmentColumns.ShipmentMoveID.EqColumn(
+		shipmentcol.ShipmentMoveColumns.ID) +
+		" AND " + shipmentcol.CarrierAssignmentColumns.OrganizationID.EqColumn(
+		shipmentcol.ShipmentMoveColumns.OrganizationID) +
+		" AND " + shipmentcol.CarrierAssignmentColumns.BusinessUnitID.EqColumn(
+		shipmentcol.ShipmentMoveColumns.BusinessUnitID) +
+		" AND " + shipmentcol.CarrierAssignmentColumns.Status.Qualified() +
+		" <> '" + shipment.CarrierAssignmentStatusCanceled.String() + "'"
+
+	assignedCarrierJoin = "LEFT JOIN " + carriercol.CarrierTable.As(
+		carriercol.CarrierTable.Alias) +
+		" ON " + carriercol.CarrierColumns.ID.EqColumn(
+		shipmentcol.CarrierAssignmentColumns.CarrierID) +
+		" AND " + carriercol.CarrierColumns.OrganizationID.EqColumn(
+		shipmentcol.CarrierAssignmentColumns.OrganizationID) +
+		" AND " + carriercol.CarrierColumns.BusinessUnitID.EqColumn(
+		shipmentcol.CarrierAssignmentColumns.BusinessUnitID)
+)
+
+const openAssignmentLateral = `LEFT JOIN LATERAL (
+	SELECT COUNT(*)::int AS open_assignments
+	FROM assignments AS a
+	JOIN shipment_moves AS sm ON sm.id = a.shipment_move_id
+		AND sm.organization_id = a.organization_id
+		AND sm.business_unit_id = a.business_unit_id
+	WHERE a.primary_worker_id = wrk.id
+		AND a.organization_id = wrk.organization_id
+		AND a.business_unit_id = wrk.business_unit_id
+		AND a.archived_at IS NULL
+		AND sm.status IN (?)
+) AS oa ON TRUE`
+
+func stopEdgeLateral(alias, direction string) string {
+	return `LEFT JOIN LATERAL (
+		SELECT stp.id AS stop_id,
+			stp.location_id,
+			stp.scheduled_window_start AS window_start,
+			stp.scheduled_window_end AS window_end,
+			stp.actual_arrival,
+			loc.name,
+			loc.city,
+			loc.latitude,
+			loc.longitude,
+			ust.abbreviation AS state_abbr
+		FROM stops AS stp
+		LEFT JOIN locations AS loc ON loc.id = stp.location_id
+			AND loc.organization_id = stp.organization_id
+			AND loc.business_unit_id = stp.business_unit_id
+		LEFT JOIN us_states AS ust ON ust.id = loc.state_id
+		WHERE stp.shipment_move_id = sm.id
+			AND stp.organization_id = sm.organization_id
+			AND stp.business_unit_id = sm.business_unit_id
+			AND stp.status <> ?
+		ORDER BY stp.sequence ` + direction + `
+		LIMIT 1
+	) AS ` + alias + ` ON TRUE`
+}
+
+func searchPattern(term string) string {
+	return "%" + stringutils.EscapeLikePattern(term) + "%"
+}
+
+func applyMoveFilters(
+	sq *bun.SelectQuery,
+	filter *shipmentports.DispatchBoardFilter,
+) *bun.SelectQuery {
+	moveCols := shipmentcol.ShipmentMoveColumns
+	shipCols := shipmentcol.ShipmentColumns
+
+	if len(filter.MoveStatuses) > 0 {
+		sq = sq.Where(moveCols.Status.In(), bun.List(filter.MoveStatuses))
+	} else {
+		sq = sq.Where(moveCols.Status.In(), bun.List(openBoardStatuses))
+	}
+
+	if len(filter.MoveIDs) > 0 {
+		sq = sq.Where(moveCols.ID.In(), bun.List(filter.MoveIDs))
+	}
+	if len(filter.CustomerIDs) > 0 {
+		sq = sq.Where(shipCols.CustomerID.In(), bun.List(filter.CustomerIDs))
+	}
+	if len(filter.ServiceTypeIDs) > 0 {
+		sq = sq.Where(shipCols.ServiceTypeID.In(), bun.List(filter.ServiceTypeIDs))
+	}
+	// The lower bound trims work the board has already finished with. Open moves are
+	// exempt: a load whose delivery appointment lapsed two days ago is still uncovered,
+	// still the dispatcher's problem, and would otherwise vanish from the board entirely.
+	if filter.WindowStart > 0 {
+		sq = sq.WhereGroup(" AND ", func(g *bun.SelectQuery) *bun.SelectQuery {
+			return g.Where(
+				"COALESCE(dest.window_end, dest.window_start, orig.window_start) >= ?",
+				filter.WindowStart,
+			).WhereOr(moveCols.Status.In(), bun.List(openBoardStatuses))
+		})
+	}
+	if filter.WindowEnd > 0 {
+		sq = sq.Where("COALESCE(orig.window_start, 0) <= ?", filter.WindowEnd)
+	}
+	if filter.Query != "" {
+		pattern := searchPattern(filter.Query)
+		sq = sq.WhereGroup(" AND ", func(g *bun.SelectQuery) *bun.SelectQuery {
+			return g.Where(shipCols.ProNumber.ILike(), pattern).
+				WhereOr(shipCols.BOL.ILike(), pattern).
+				WhereOr(customercol.CustomerColumns.Name.ILike(), pattern).
+				WhereOr("orig.city ILIKE ?", pattern).
+				WhereOr("dest.city ILIKE ?", pattern)
+		})
+	}
+
+	return sq
+}
+
+func applyDriverFilters(
+	sq *bun.SelectQuery,
+	filter *shipmentports.DispatchBoardFilter,
+) *bun.SelectQuery {
+	cols := workercol.WorkerColumns
+
+	sq = sq.Where(cols.Status.Eq(), domaintypes.StatusActive).
+		Where(cols.CanBeAssigned.IsTrue())
+
+	if len(filter.WorkerIDs) > 0 {
+		sq = sq.Where(cols.ID.In(), bun.List(filter.WorkerIDs))
+	}
+	if len(filter.FleetCodeIDs) > 0 {
+		sq = sq.Where(cols.FleetCodeID.In(), bun.List(filter.FleetCodeIDs))
+	}
+
+	return sq
+}

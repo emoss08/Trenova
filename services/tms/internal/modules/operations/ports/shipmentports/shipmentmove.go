@@ -1,0 +1,335 @@
+package shipmentports
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/uptrace/bun"
+)
+
+type GetMoveByIDRequest struct {
+	MoveID            pulid.ID              `json:"moveId"`
+	TenantInfo        pagination.TenantInfo `json:"-"`
+	ExpandMoveDetails bool                  `json:"expandMoveDetails"`
+	ForUpdate         bool                  `json:"-"`
+}
+
+type GetMovesByShipmentIDRequest struct {
+	ShipmentID        pulid.ID              `json:"shipmentId"`
+	TenantInfo        pagination.TenantInfo `json:"-"`
+	ExpandMoveDetails bool                  `json:"expandMoveDetails"`
+}
+
+type UpdateMoveStatusRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	MoveID     pulid.ID              `json:"moveId"`
+	Status     shipment.MoveStatus   `json:"status"`
+}
+
+func (r *UpdateMoveStatusRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		r,
+		validation.Field(&r.MoveID, validation.Required.Error("Move ID is required")),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
+		validation.Field(
+			&r.Status,
+			validation.Required.Error("Status is required"),
+			validation.In(
+				shipment.MoveStatusNew,
+				shipment.MoveStatusAssigned,
+				shipment.MoveStatusInTransit,
+				shipment.MoveStatusCompleted,
+				shipment.MoveStatusCanceled,
+			).Error("Status must be a valid move status"),
+		),
+	))
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+type StopActualAction string
+
+func (a StopActualAction) IsValid() bool {
+	return a == StopActualActionArrive || a == StopActualActionDepart
+}
+
+const StopActualActionArrive = StopActualAction("Arrive")
+
+const StopActualActionDepart = StopActualAction("Depart")
+
+func StopActualActionValues() []StopActualAction {
+	return []StopActualAction{StopActualActionArrive, StopActualActionDepart}
+}
+
+const StopActualClockSkewSeconds = int64(300)
+
+type RecordStopActualRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	MoveID     pulid.ID              `json:"moveId"`
+	StopID     pulid.ID              `json:"stopId"`
+	Action     StopActualAction      `json:"action"`
+	OccurredAt *int64                `json:"occurredAt,omitempty"`
+	DepartedAt *int64                `json:"departedAt,omitempty"`
+}
+
+func (r *RecordStopActualRequest) Departure() *RecordStopActualRequest {
+	if r == nil || r.DepartedAt == nil {
+		return nil
+	}
+
+	return &RecordStopActualRequest{
+		TenantInfo: r.TenantInfo,
+		MoveID:     r.MoveID,
+		StopID:     r.StopID,
+		Action:     StopActualActionDepart,
+		OccurredAt: r.DepartedAt,
+	}
+}
+
+func (r *RecordStopActualRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+	if r == nil {
+		multiErr.Add("", errortypes.ErrInvalid, "Request is required")
+		return multiErr
+	}
+	if r.TenantInfo.OrgID.IsNil() {
+		multiErr.Add("tenantInfo.orgId", errortypes.ErrRequired, "Organization ID is required")
+	}
+	if r.TenantInfo.BuID.IsNil() {
+		multiErr.Add("tenantInfo.buId", errortypes.ErrRequired, "Business unit ID is required")
+	}
+	if r.MoveID.IsNil() {
+		multiErr.Add("moveId", errortypes.ErrRequired, "Move ID is required")
+	}
+	if r.StopID.IsNil() {
+		multiErr.Add("stopId", errortypes.ErrRequired, "Stop ID is required")
+	}
+	if !r.Action.IsValid() {
+		multiErr.Add("action", errortypes.ErrInvalid, "Action must be Arrive or Depart")
+	}
+	if r.OccurredAt != nil {
+		switch {
+		case *r.OccurredAt <= 0:
+			multiErr.Add(
+				"occurredAt",
+				errortypes.ErrInvalid,
+				"Occurred at must be a valid timestamp",
+			)
+		case *r.OccurredAt > timeutils.NowUnix()+StopActualClockSkewSeconds:
+			multiErr.Add(
+				"occurredAt",
+				errortypes.ErrInvalid,
+				"Occurred at cannot be in the future",
+			)
+		}
+	}
+	r.validateDeparture(multiErr)
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+	return nil
+}
+
+func (r *RecordStopActualRequest) validateDeparture(multiErr *errortypes.MultiError) {
+	if r.DepartedAt == nil {
+		return
+	}
+	switch {
+	case r.Action != StopActualActionArrive:
+		multiErr.Add("departedAt", errortypes.ErrInvalid,
+			"A departure time goes with an arrival; record a departure on its own as Depart")
+	case *r.DepartedAt <= 0:
+		multiErr.Add("departedAt", errortypes.ErrInvalid, "Departed at must be a valid timestamp")
+	case *r.DepartedAt > timeutils.NowUnix()+StopActualClockSkewSeconds:
+		multiErr.Add("departedAt", errortypes.ErrInvalid, "Departed at cannot be in the future")
+	case r.OccurredAt == nil:
+		multiErr.Add("occurredAt", errortypes.ErrRequired,
+			"Give the arrival time when you give the departure time")
+	case *r.DepartedAt < *r.OccurredAt:
+		multiErr.Add("departedAt", errortypes.ErrInvalid, "The departure is before the arrival")
+	}
+}
+
+type BulkUpdateMoveStatusRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	MoveIDs    []pulid.ID            `json:"moveIds"`
+	Status     shipment.MoveStatus   `json:"status"`
+}
+
+func (r *BulkUpdateMoveStatusRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		r,
+		validation.Field(
+			&r.MoveIDs,
+			validation.Required.Error("Move IDs are required"),
+			validation.Length(1, 500),
+		),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
+		validation.Field(
+			&r.Status,
+			validation.Required.Error("Status is required"),
+			validation.In(
+				shipment.MoveStatusNew,
+				shipment.MoveStatusAssigned,
+				shipment.MoveStatusInTransit,
+				shipment.MoveStatusCompleted,
+				shipment.MoveStatusCanceled,
+			).Error("Status must be a valid move status"),
+		),
+	))
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+type SplitStopTimes struct {
+	ScheduledWindowStart int64  `json:"scheduledWindowStart"`
+	ScheduledWindowEnd   *int64 `json:"scheduledWindowEnd"`
+}
+
+type SplitMoveRequest struct {
+	TenantInfo            pagination.TenantInfo `json:"-"`
+	MoveID                pulid.ID              `json:"moveId"`
+	NewDeliveryLocationID pulid.ID              `json:"newDeliveryLocationId"`
+	SplitPickupTimes      SplitStopTimes        `json:"splitPickupTimes"`
+	NewDeliveryTimes      SplitStopTimes        `json:"newDeliveryTimes"`
+	Pieces                *int64                `json:"pieces,omitempty"`
+	Weight                *int64                `json:"weight,omitempty"`
+}
+
+func (r *SplitMoveRequest) Spec() *shipment.MoveSplitSpec {
+	return &shipment.MoveSplitSpec{
+		NewDeliveryLocationID: r.NewDeliveryLocationID,
+		RelayPickupStart:      r.SplitPickupTimes.ScheduledWindowStart,
+		RelayPickupEnd:        r.SplitPickupTimes.ScheduledWindowEnd,
+		NewDeliveryStart:      r.NewDeliveryTimes.ScheduledWindowStart,
+		NewDeliveryEnd:        r.NewDeliveryTimes.ScheduledWindowEnd,
+		Pieces:                r.Pieces,
+		Weight:                r.Weight,
+	}
+}
+
+func (r *SplitMoveRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		r,
+		validation.Field(&r.MoveID, validation.Required.Error("Move ID is required")),
+		validation.Field(
+			&r.NewDeliveryLocationID,
+			validation.Required.Error("New delivery location ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
+		validation.Field(
+			&r.SplitPickupTimes.ScheduledWindowStart,
+			validation.Required.Error("Split pickup scheduled window start is required"),
+		),
+		validation.Field(
+			&r.NewDeliveryTimes.ScheduledWindowStart,
+			validation.Required.Error("New delivery scheduled window start is required"),
+		),
+	))
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	if r.SplitPickupTimes.ScheduledWindowEnd != nil &&
+		*r.SplitPickupTimes.ScheduledWindowEnd < r.SplitPickupTimes.ScheduledWindowStart {
+		multiErr.Add(
+			"splitPickupTimes.scheduledWindowEnd",
+			errortypes.ErrInvalid,
+			"Split pickup scheduled window end must be greater than or equal to the scheduled window start",
+		)
+	}
+
+	if r.NewDeliveryTimes.ScheduledWindowEnd != nil &&
+		*r.NewDeliveryTimes.ScheduledWindowEnd < r.NewDeliveryTimes.ScheduledWindowStart {
+		multiErr.Add(
+			"newDeliveryTimes.scheduledWindowEnd",
+			errortypes.ErrInvalid,
+			"New delivery scheduled window end must be greater than or equal to the scheduled window start",
+		)
+	}
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+type SplitMoveResponse struct {
+	OriginalMove *shipment.ShipmentMove `json:"originalMove,omitempty"`
+	NewMove      *shipment.ShipmentMove `json:"newMove,omitempty"`
+}
+
+type ShipmentMoveRepository interface {
+	SyncForShipment(
+		ctx context.Context,
+		tx bun.IDB,
+		entity *shipment.Shipment,
+	) error
+	GetByID(
+		ctx context.Context,
+		req *GetMoveByIDRequest,
+	) (*shipment.ShipmentMove, error)
+	GetMovesByShipmentID(
+		ctx context.Context,
+		req *GetMovesByShipmentIDRequest,
+	) ([]*shipment.ShipmentMove, error)
+	UpdateStatus(
+		ctx context.Context,
+		req *UpdateMoveStatusRequest,
+	) (*shipment.ShipmentMove, error)
+	UpdateStopActuals(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		stop *shipment.Stop,
+	) (*shipment.Stop, error)
+	BulkUpdateStatus(
+		ctx context.Context,
+		req *BulkUpdateMoveStatusRequest,
+	) ([]*shipment.ShipmentMove, error)
+	SplitMove(
+		ctx context.Context,
+		req *SplitMoveRequest,
+	) (*SplitMoveResponse, error)
+}

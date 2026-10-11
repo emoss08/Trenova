@@ -3,7 +3,7 @@ package dbtx
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 )
 
@@ -24,7 +24,7 @@ type GetOrCreateSpec[T any] struct {
 // report a missing row as sql.ErrNoRows.
 func GetOrCreate[T any](
 	ctx context.Context,
-	conn ports.DBConnection,
+	conn kernelports.DBConnection,
 	spec GetOrCreateSpec[T],
 ) (T, error) {
 	found, err := getOrCreate(ctx, conn, spec)
@@ -38,10 +38,10 @@ func GetOrCreate[T any](
 
 func getOrCreate[T any](
 	ctx context.Context,
-	conn ports.DBConnection,
+	conn kernelports.DBConnection,
 	spec GetOrCreateSpec[T],
 ) (T, error) {
-	if ports.IsReadOnly(ctx) {
+	if kernelports.IsReadOnly(ctx) {
 		return Read(ctx, conn, func(ctx context.Context) (T, error) {
 			found, err := spec.Find(ctx)
 			if dberror.IsNotFoundError(err) {

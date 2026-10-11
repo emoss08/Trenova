@@ -192,7 +192,11 @@ func collect(
 		}
 	case *kind.AdditionalProperties:
 		for _, property := range failure.Properties {
-			multiErr.Add(join(path, property), errortypes.ErrInvalid, "This tool does not take this value")
+			multiErr.Add(
+				join(path, property),
+				errortypes.ErrInvalid,
+				"This tool does not take this value",
+			)
 		}
 	case *kind.Schema:
 		// The root saying "does not validate" restates its causes.

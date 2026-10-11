@@ -314,13 +314,13 @@ operations are in `client/packages/graphql/src/operations/agent/audit.graphql`:
 
 | Piece | Path (under `services/tms`) |
 |-------|------------------------------|
-| Domain, canonical form, hashing | `internal/core/domain/aiaudit/` |
-| Ports | `internal/core/ports/repositories/aiaudit.go`, `internal/core/ports/services/aiaudit.go` |
-| Repositories | `internal/infrastructure/postgres/repositories/aiauditrepository/` |
-| Projector, derivation, redaction, verification, retention, exports | `internal/core/services/aiauditservice/` |
-| Workflows and schedules | `internal/core/temporaljobs/aiauditjobs/` |
+| Domain, canonical form, hashing | `internal/modules/agent/domain/aiaudit/` |
+| Ports | `internal/modules/agent/ports/aiauditports/aiaudit.go`, `internal/modules/agent/ports/aiauditports/aiaudit_services.go` |
+| Repositories | `internal/modules/agent/adapters/postgres/aiauditrepository/` |
+| Projector, derivation, redaction, verification, retention, exports | `internal/modules/agent/app/aiauditservice/` |
+| Workflows and schedules | `internal/modules/agent/jobs/aiauditjobs/` |
 | GraphQL | `internal/api/graphql/schema/aiaudit.graphqls`, `resolver/aiaudit.resolvers.go`, `loaders/aiauditentriesloader.go` |
-| Field sensitivity | `internal/core/services/fieldsensitivity/` |
+| Field sensitivity | `internal/modules/identity/app/fieldsensitivity/` |
 
 ## In the app
 

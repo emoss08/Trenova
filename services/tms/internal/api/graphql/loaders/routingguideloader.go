@@ -3,9 +3,9 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/routingguideservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -15,7 +15,7 @@ import (
 type routingGuidesByIDsGetter interface {
 	GetByIDs(
 		ctx context.Context,
-		req repositories.GetRoutingGuidesByIDsRequest,
+		req tenderports.GetRoutingGuidesByIDsRequest,
 	) ([]*tender.RoutingGuide, error)
 }
 
@@ -37,7 +37,7 @@ func NewRoutingGuideWithEntriesByIDLoaderFactory(
 	}
 }
 
-func (f *RoutingGuideWithEntriesByIDLoaderFactory) NewForTenant(
+func newRoutingGuideWithEntriesByIDLoader(f *RoutingGuideWithEntriesByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *tender.RoutingGuide] {
 	return newLoader(f.batchFunc(tenantInfo))
@@ -47,10 +47,10 @@ func (f *RoutingGuideWithEntriesByIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
 ) batchFetchFunc[*tender.RoutingGuide] {
 	return batchByIDFunc(func(ctx context.Context, ids []pulid.ID) ([]*tender.RoutingGuide, error) {
-		return f.routingGuides.GetByIDs(ctx, repositories.GetRoutingGuidesByIDsRequest{
+		return f.routingGuides.GetByIDs(ctx, tenderports.GetRoutingGuidesByIDsRequest{
 			TenantInfo:      tenantInfo,
 			RoutingGuideIDs: ids,
-			RoutingGuideFilterOptions: repositories.RoutingGuideFilterOptions{
+			RoutingGuideFilterOptions: tenderports.RoutingGuideFilterOptions{
 				IncludeEntries: true,
 			},
 		})

@@ -8,15 +8,14 @@ package aiusageresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/shared/timeutils"
-
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-func (r *QueryResolver) AiUsageSummary(ctx context.Context, since *int) (*services.AIUsageSummary, error) {
+func (r *QueryResolver) AiUsageSummary(ctx context.Context, since *int) (*aiusageports.AIUsageSummary, error) {
 	// Spend and latency are the provider's business, so reading providers is
 	// the permission that reads their usage.
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpRead)
@@ -27,13 +26,13 @@ func (r *QueryResolver) AiUsageSummary(ctx context.Context, since *int) (*servic
 	return r.AiUsageService.Summary(ctx, base.TenantInfo(authCtx), int64(base.DerefInt(since)))
 }
 
-func (r *QueryResolver) AiUsageDaily(ctx context.Context, days *int, timezone *string, providerID *string) ([]*services.AIUsageDay, error) {
+func (r *QueryResolver) AiUsageDaily(ctx context.Context, days *int, timezone *string, providerID *string) ([]*aiusageports.AIUsageDay, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	req := &services.AIUsageDailyRequest{
+	req := &aiusageports.AIUsageDailyRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		Days:       base.DerefInt(days),
 	}
@@ -49,7 +48,7 @@ func (r *QueryResolver) AiUsageDaily(ctx context.Context, days *int, timezone *s
 		return nil, err
 	}
 
-	out := make([]*services.AIUsageDay, len(usage))
+	out := make([]*aiusageports.AIUsageDay, len(usage))
 	for idx := range usage {
 		out[idx] = &usage[idx]
 	}

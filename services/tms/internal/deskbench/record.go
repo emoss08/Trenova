@@ -3,9 +3,9 @@ package deskbench
 import (
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -116,7 +116,7 @@ type TurnRecord struct {
 	Calls        []CallSummary                    `json:"modelCalls"`
 	Messages     []conversation.Message           `json:"messages,omitempty"`
 	Proposals    []*ProposalRecord                `json:"proposals,omitempty"`
-	Artifacts    []serviceports.AssistantArtifact `json:"artifacts,omitempty"`
+	Artifacts    []agentports.AssistantArtifact   `json:"artifacts,omitempty"`
 	Usage        Usage                            `json:"usage"`
 	Models       []string                         `json:"models,omitempty"`
 	Unattributed []CallSummary                    `json:"unattributedModelCalls,omitempty"`
@@ -128,28 +128,28 @@ func (t *TurnRecord) Duration() time.Duration {
 }
 
 type CallSummary struct {
-	Seq             int                               `json:"seq"`
-	Kind            ModelCallKind                     `json:"kind"`
-	File            string                            `json:"file,omitempty"`
-	Model           string                            `json:"model,omitempty"`
-	Provider        string                            `json:"provider,omitempty"`
-	Delegate        string                            `json:"delegateCallId,omitempty"`
-	Messages        int                               `json:"messages"`
-	Tools           int                               `json:"tools"`
-	SystemDigest    string                            `json:"systemDigest,omitempty"`
-	ToolsDigest     string                            `json:"toolsDigest,omitempty"`
-	InputTokens     int                               `json:"inputTokens"`
-	OutputTokens    int                               `json:"outputTokens"`
-	ReasoningTokens int                               `json:"reasoningTokens"`
-	LatencyMs       int64                             `json:"latencyMs"`
-	Truncated       bool                              `json:"truncated,omitempty"`
-	CutOffCall      string                            `json:"cutOffCall,omitempty"`
-	Text            string                            `json:"text,omitempty"`
-	Thinking        string                            `json:"thinking,omitempty"`
-	ToolCalls       []serviceports.ToolCall           `json:"toolCalls,omitempty"`
-	FallbackFrom    *serviceports.ChatProviderFailure `json:"fallbackFrom,omitempty"`
-	Retries         []serviceports.ChatRetryNotice    `json:"retries,omitempty"`
-	Error           string                            `json:"error,omitempty"`
+	Seq             int                             `json:"seq"`
+	Kind            ModelCallKind                   `json:"kind"`
+	File            string                          `json:"file,omitempty"`
+	Model           string                          `json:"model,omitempty"`
+	Provider        string                          `json:"provider,omitempty"`
+	Delegate        string                          `json:"delegateCallId,omitempty"`
+	Messages        int                             `json:"messages"`
+	Tools           int                             `json:"tools"`
+	SystemDigest    string                          `json:"systemDigest,omitempty"`
+	ToolsDigest     string                          `json:"toolsDigest,omitempty"`
+	InputTokens     int                             `json:"inputTokens"`
+	OutputTokens    int                             `json:"outputTokens"`
+	ReasoningTokens int                             `json:"reasoningTokens"`
+	LatencyMs       int64                           `json:"latencyMs"`
+	Truncated       bool                            `json:"truncated,omitempty"`
+	CutOffCall      string                          `json:"cutOffCall,omitempty"`
+	Text            string                          `json:"text,omitempty"`
+	Thinking        string                          `json:"thinking,omitempty"`
+	ToolCalls       []agentports.ToolCall           `json:"toolCalls,omitempty"`
+	FallbackFrom    *agentports.ChatProviderFailure `json:"fallbackFrom,omitempty"`
+	Retries         []agentports.ChatRetryNotice    `json:"retries,omitempty"`
+	Error           string                          `json:"error,omitempty"`
 }
 
 type DecisionRecord struct {

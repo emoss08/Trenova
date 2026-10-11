@@ -8,12 +8,12 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/domain/pagedraft"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -36,7 +36,11 @@ type formulaState struct {
 
 var errTemplateNotFound = errors.New("no formula template has that name")
 
-func (s *Session) OpenFormula(ctx context.Context, label string, page *FormulaPage) (*Conversation, error) {
+func (s *Session) OpenFormula(
+	ctx context.Context,
+	label string,
+	page *FormulaPage,
+) (*Conversation, error) {
 	ctx = s.Context(ctx)
 
 	state := &formulaState{draft: pagedraft.Formula{
@@ -48,7 +52,7 @@ func (s *Session) OpenFormula(ctx context.Context, label string, page *FormulaPa
 		state.draft.TemplateType = page.Type
 	}
 
-	req := &serviceports.OpenPageThreadRequest{
+	req := &agentports.OpenPageThreadRequest{
 		TenantInfo:  s.Tenant,
 		Origin:      conversation.ThreadOriginFormula,
 		SubjectType: agent.SubjectFormulaTemplate,
@@ -75,7 +79,11 @@ func (s *Session) OpenFormula(ctx context.Context, label string, page *FormulaPa
 	}, nil
 }
 
-func (s *Session) loadFormula(ctx context.Context, name string, draft *pagedraft.Formula) (pulid.ID, error) {
+func (s *Session) loadFormula(
+	ctx context.Context,
+	name string,
+	draft *pagedraft.Formula,
+) (pulid.ID, error) {
 	type row struct {
 		id         string
 		kind       string
@@ -133,7 +141,7 @@ func (f *formulaState) page() *agent.PageContext {
 	}
 }
 
-func (f *formulaState) apply(artifacts []serviceports.AssistantArtifact) {
+func (f *formulaState) apply(artifacts []agentports.AssistantArtifact) {
 	for idx := range artifacts {
 		artifact := &artifacts[idx]
 		if artifact.Kind != assistantartifact.KindDraftEdit {

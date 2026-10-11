@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
@@ -17,9 +17,9 @@ import (
 	"go.uber.org/zap"
 )
 
-func recordChanged(t *testing.T, tn tenant, recordID string, audience pulid.ID) *services.RealtimeEnvelope {
+func recordChanged(t *testing.T, tn tenant, recordID string, audience pulid.ID) *agentports.RealtimeEnvelope {
 	t.Helper()
-	payload, err := sonic.Marshal(services.ResourceInvalidationEvent{
+	payload, err := sonic.Marshal(agentports.ResourceInvalidationEvent{
 		Resource:    "audited:shipment",
 		Action:      "updated",
 		RecordID:    recordID,
@@ -30,11 +30,11 @@ func recordChanged(t *testing.T, tn tenant, recordID string, audience pulid.ID) 
 	})
 	require.NoError(t, err)
 
-	return &services.RealtimeEnvelope{
+	return &agentports.RealtimeEnvelope{
 		OrganizationID: tn.org,
 		BusinessUnitID: tn.bu,
 		AudienceUserID: audience,
-		Event:          services.RealtimeEventInvalidation,
+		Event:          agentports.RealtimeEventInvalidation,
 		Payload:        payload,
 	}
 }
@@ -64,9 +64,9 @@ func TestChangeFeed_ReadsWatchedChangesSinceTheCursor(t *testing.T) {
 	require.True(t, pub.Enqueue(recordChanged(t, tn, feedRecord, pulid.MustNew("usr_"))))
 	require.True(t, pub.Enqueue(recordChanged(t, tn, feedRecord, pulid.Nil)))
 
-	var found *services.RecordChanges
+	var found *agentports.RecordChanges
 	require.Eventually(t, func() bool {
-		found, err = feed.Since(t.Context(), &services.RecordChangesRequest{
+		found, err = feed.Since(t.Context(), &agentports.RecordChangesRequest{
 			OrganizationID: tn.org,
 			BusinessUnitID: tn.bu,
 			Cursor:         cursor,
@@ -79,7 +79,7 @@ func TestChangeFeed_ReadsWatchedChangesSinceTheCursor(t *testing.T) {
 	assert.Equal(t, []string{"status"}, found.Changes[0].Fields)
 	assert.NotEqual(t, cursor, found.Cursor)
 
-	again, err := feed.Since(t.Context(), &services.RecordChangesRequest{
+	again, err := feed.Since(t.Context(), &agentports.RecordChangesRequest{
 		OrganizationID: tn.org,
 		BusinessUnitID: tn.bu,
 		Cursor:         found.Cursor,
@@ -95,7 +95,7 @@ func TestChangeFeed_ACursorFromAnotherLayoutStartsAtTheHead(t *testing.T) {
 	feed := NewChangeFeed(ChangeFeedParams{Client: client, Config: cfg})
 	tn := newTenant()
 
-	found, err := feed.Since(t.Context(), &services.RecordChangesRequest{
+	found, err := feed.Since(t.Context(), &agentports.RecordChangesRequest{
 		OrganizationID: tn.org,
 		BusinessUnitID: tn.bu,
 		Cursor:         "not-a-cursor",

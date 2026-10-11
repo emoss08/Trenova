@@ -12,9 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/mappers"
-	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -72,7 +72,7 @@ func (r *MutationResolver) PatchEquipmentManufacturer(ctx context.Context, id st
 		return nil, err
 	}
 
-	existing, err := r.EquipmentManufacturerService.Get(ctx, repositories.GetEquipmentManufacturerByIDRequest{
+	existing, err := r.EquipmentManufacturerService.Get(ctx, equipmentmanufacturerports.GetEquipmentManufacturerByIDRequest{
 		ID:         equipmentManufacturerID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
@@ -105,7 +105,7 @@ func (r *MutationResolver) BulkUpdateEquipmentManufacturerStatus(ctx context.Con
 
 	entities, err := r.EquipmentManufacturerService.BulkUpdateStatus(
 		ctx,
-		&repositories.BulkUpdateEquipmentManufacturerStatusRequest{
+		&equipmentmanufacturerports.BulkUpdateEquipmentManufacturerStatusRequest{
 			TenantInfo:               base.TenantInfo(authCtx),
 			EquipmentManufacturerIDs: equipmentManufacturerIDs,
 			Status:                   input.Status,
@@ -131,7 +131,7 @@ func (r *QueryResolver) EquipmentManufacturers(ctx context.Context, input gqlmod
 
 	result, err := r.EquipmentManufacturerService.ListConnection(
 		ctx,
-		&repositories.ListEquipmentManufacturerConnectionRequest{
+		&equipmentmanufacturerports.ListEquipmentManufacturerConnectionRequest{
 			Filter:                       tableInput.Filter,
 			Cursor:                       tableInput.Cursor,
 			EquipmentManufacturerColumns: equipmentManufacturerColumns(ctx, "edges.node"),
@@ -155,7 +155,7 @@ func (r *QueryResolver) EquipmentManufacturer(ctx context.Context, id string) (*
 		return nil, err
 	}
 
-	return r.EquipmentManufacturerService.Get(ctx, repositories.GetEquipmentManufacturerByIDRequest{
+	return r.EquipmentManufacturerService.Get(ctx, equipmentmanufacturerports.GetEquipmentManufacturerByIDRequest{
 		ID:         equipmentManufacturerID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

@@ -7,9 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,7 +30,7 @@ const (
 type Params struct {
 	fx.In
 
-	Gateway              services.RealtimeGateway
+	Gateway              agentports.RealtimeGateway
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Config               *config.Config
@@ -38,7 +38,7 @@ type Params struct {
 }
 
 type Handler struct {
-	gateway     services.RealtimeGateway
+	gateway     agentports.RealtimeGateway
 	eh          *helpers.ErrorHandler
 	pm          *middleware.PermissionMiddleware
 	maxLifetime time.Duration
@@ -116,12 +116,12 @@ func (h *Handler) stream(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
-	rt, err := h.gateway.Open(ctx, &services.OpenRealtimeStreamRequest{
+	rt, err := h.gateway.Open(ctx, &agentports.OpenRealtimeStreamRequest{
 		OrganizationID: authCtx.OrganizationID,
 		BusinessUnitID: authCtx.BusinessUnitID,
 		UserID:         authCtx.UserID,
 		Portal:         authCtx.IsPortalUser,
-		JoinUsers:      c.Query("presence") == services.RealtimeScopeUsers,
+		JoinUsers:      c.Query("presence") == agentports.RealtimeScopeUsers,
 		LastEventID:    cursorFrom(c),
 	})
 	if err != nil {
@@ -156,7 +156,7 @@ func (h *Handler) stream(c *gin.Context) {
 		case <-ctx.Done():
 			return
 		case <-rotate.C:
-			h.emitClose(stream, services.RealtimeCloseRotate)
+			h.emitClose(stream, agentports.RealtimeCloseRotate)
 			return
 		case frame, ok := <-frames:
 			if !ok {
@@ -169,7 +169,7 @@ func (h *Handler) stream(c *gin.Context) {
 }
 
 func (h *Handler) emitClose(stream *helpers.EventStream, reason string) {
-	if err := stream.Emit(services.RealtimeEventClose, services.RealtimeCloseEvent{
+	if err := stream.Emit(agentports.RealtimeEventClose, agentports.RealtimeCloseEvent{
 		Reason: reason,
 	}); err != nil {
 		h.l.Debug("could not send realtime close notice", zap.Error(err))
@@ -243,7 +243,7 @@ func (h *Handler) typingShipmentComments(c *gin.Context) {
 		return
 	}
 
-	if err := h.gateway.SignalTyping(c.Request.Context(), &services.RealtimeTypingRequest{
+	if err := h.gateway.SignalTyping(c.Request.Context(), &agentports.RealtimeTypingRequest{
 		RealtimeScopeRequest: *scopeRequest(c, body.ConnectionID, scope),
 		Stop:                 body.Stop,
 	}); err != nil {
@@ -383,10 +383,10 @@ func (h *Handler) shipmentCommentsScope(c *gin.Context) (string, bool) {
 	return shipmentCommentsNS + shipmentID, true
 }
 
-func scopeRequest(c *gin.Context, connectionID, scope string) *services.RealtimeScopeRequest {
+func scopeRequest(c *gin.Context, connectionID, scope string) *agentports.RealtimeScopeRequest {
 	authCtx := authctx.GetAuthContext(c)
 
-	return &services.RealtimeScopeRequest{
+	return &agentports.RealtimeScopeRequest{
 		OrganizationID: authCtx.OrganizationID,
 		BusinessUnitID: authCtx.BusinessUnitID,
 		UserID:         authCtx.UserID,

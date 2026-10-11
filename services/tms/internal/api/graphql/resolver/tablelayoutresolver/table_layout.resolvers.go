@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/services/tablelayoutservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/tablelayoutservice"
 )
 
 // This file will be automatically regenerated based on the schema, any resolver

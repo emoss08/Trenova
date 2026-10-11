@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -27,7 +27,7 @@ type modelPriceCacheRepository struct {
 	l      *zap.Logger
 }
 
-func NewModelPriceCacheRepository(p ModelPriceCacheParams) repositories.ModelPriceCacheRepository {
+func NewModelPriceCacheRepository(p ModelPriceCacheParams) agentports.ModelPriceCacheRepository {
 	return &modelPriceCacheRepository{
 		client: p.Client,
 		l:      p.Logger.Named("repository.model-price-cache"),
@@ -41,7 +41,7 @@ func (r *modelPriceCacheRepository) key(source string) string {
 func (r *modelPriceCacheRepository) Get(
 	ctx context.Context,
 	source string,
-) (map[string]repositories.CachedModelPrice, error) {
+) (map[string]agentports.CachedModelPrice, error) {
 	raw, err := r.client.Get(ctx, r.key(source)).Bytes()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
@@ -51,7 +51,7 @@ func (r *modelPriceCacheRepository) Get(
 		return nil, fmt.Errorf("read model prices: %w", err)
 	}
 
-	prices := make(map[string]repositories.CachedModelPrice)
+	prices := make(map[string]agentports.CachedModelPrice)
 	if err = sonic.Unmarshal(raw, &prices); err != nil {
 		r.l.Warn("dropping undecodable model prices", zap.Error(err))
 		_ = r.client.Del(ctx, r.key(source)).Err()
@@ -65,7 +65,7 @@ func (r *modelPriceCacheRepository) Get(
 func (r *modelPriceCacheRepository) Set(
 	ctx context.Context,
 	source string,
-	prices map[string]repositories.CachedModelPrice,
+	prices map[string]agentports.CachedModelPrice,
 	ttl time.Duration,
 ) error {
 	payload, err := sonic.Marshal(prices)

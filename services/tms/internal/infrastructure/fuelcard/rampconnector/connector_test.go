@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/infrastructure/fuelcard/rampconnector"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/fuelimport"
 	"github.com/stretchr/testify/require"
 )
@@ -91,12 +91,12 @@ func fetch(
 	t *testing.T,
 	stub *rampServer,
 	since, until int64,
-) *services.FetchFuelTransactionsResult {
+) *fuelpurchaseports.FetchFuelTransactionsResult {
 	t.Helper()
 
 	result, err := rampconnector.New().FetchTransactions(
 		t.Context(),
-		&services.FetchFuelTransactionsRequest{
+		&fuelpurchaseports.FetchFuelTransactionsRequest{
 			Provider: fuelpurchase.CardProviderRamp,
 			Config:   stub.config(),
 			Since:    since,
@@ -194,7 +194,7 @@ func TestFetchHoldsEveryRowForReview(t *testing.T) {
 	row := result.Staged.Rows[0]
 	require.True(t, row.Failed())
 	require.ErrorContains(t, row.Err, "quantity")
-	require.Equal(t, services.FuelFeedCapabilitySpendOnly, rampconnector.New().Capability())
+	require.Equal(t, fuelpurchaseports.FuelFeedCapabilitySpendOnly, rampconnector.New().Capability())
 }
 
 // Without a fuel type to fall back on, staging rejects the sheet and the entire
@@ -208,7 +208,7 @@ func TestFetchRefusesAConnectionWithoutADefaultFuelType(t *testing.T) {
 
 	_, err := rampconnector.New().FetchTransactions(
 		t.Context(),
-		&services.FetchFuelTransactionsRequest{
+		&fuelpurchaseports.FetchFuelTransactionsRequest{
 			Provider: fuelpurchase.CardProviderRamp,
 			Config:   config,
 		},
@@ -266,7 +266,7 @@ func TestFetchSurfacesAnAuthenticationFailure(t *testing.T) {
 
 	_, err := rampconnector.New().FetchTransactions(
 		t.Context(),
-		&services.FetchFuelTransactionsRequest{
+		&fuelpurchaseports.FetchFuelTransactionsRequest{
 			Provider: fuelpurchase.CardProviderRamp,
 			Config:   stub.config(),
 		},
@@ -279,7 +279,7 @@ func TestFetchRefusesAConnectionWithoutCredentials(t *testing.T) {
 
 	_, err := rampconnector.New().FetchTransactions(
 		t.Context(),
-		&services.FetchFuelTransactionsRequest{
+		&fuelpurchaseports.FetchFuelTransactionsRequest{
 			Provider: fuelpurchase.CardProviderRamp,
 			Config:   map[string]string{integration.ConfigKeyFuelClientID: "client-1"},
 		},

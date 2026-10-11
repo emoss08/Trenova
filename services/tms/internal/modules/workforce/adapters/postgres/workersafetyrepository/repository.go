@@ -1,0 +1,450 @@
+package workersafetyrepository
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
+
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/uptrace/bun"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+type Params struct {
+	fx.In
+
+	DB     *postgres.Connection
+	Logger *zap.Logger
+}
+
+type repository struct {
+	db *postgres.Connection
+	l  *zap.Logger
+}
+
+func New(p Params) workerports.WorkerSafetyRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.worker-safety-repository"),
+	}
+}
+
+func (r *repository) ListEvents(
+	ctx context.Context,
+	req *workerports.ListWorkerSafetyEventsRequest,
+) ([]*worker.WorkerSafetyEvent, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerSafetyEvent, error) {
+		cols := workercol.WorkerSafetyEventColumns
+		entities := make([]*worker.WorkerSafetyEvent, 0, 16)
+		q := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = workercol.WorkerSafetyEventScopeTenant(sq, req.TenantInfo)
+				if req.WorkerID.IsNotNil() {
+					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
+				}
+				if req.OpenOnly {
+					sq = sq.Where(cols.Status.In(), bun.List([]worker.SafetyEventStatus{
+						worker.SafetyEventStatusOpen, worker.SafetyEventStatusUnderReview,
+					}))
+				}
+				if req.Since > 0 {
+					sq = sq.Where(cols.OccurredAt.Gte(), req.Since)
+				}
+				return sq
+			}).
+			Order(cols.OccurredAt.OrderDesc()).
+			Order(cols.CreatedAt.OrderDesc())
+		if req.IncludeDocument {
+			q = q.Relation(workercol.WorkerSafetyEventRelations.Document)
+		}
+		if req.IncludeActors {
+			q = q.Relation(workercol.WorkerSafetyEventRelations.RecordedBy).
+				Relation(workercol.WorkerSafetyEventRelations.ClosedBy)
+		}
+		if req.IncludeWorker {
+			q = q.Relation(workercol.WorkerSafetyEventRelations.Worker)
+		}
+		if req.Limit > 0 {
+			q = q.Limit(req.Limit)
+		}
+
+		if err := q.Scan(ctx); err != nil {
+			r.l.Error("failed to list worker safety events", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
+func (r *repository) GetEventByID(
+	ctx context.Context,
+	req *workerports.GetWorkerSafetyEventByIDRequest,
+) (*worker.WorkerSafetyEvent, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerSafetyEvent, error) {
+		entity := new(worker.WorkerSafetyEvent)
+		q := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return workercol.WorkerSafetyEventScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerSafetyEventColumns.ID.Eq(), req.ID)
+			})
+		if req.IncludeWorker {
+			q = q.Relation(workercol.WorkerSafetyEventRelations.Worker)
+		}
+		if req.IncludeDocument {
+			q = q.Relation(workercol.WorkerSafetyEventRelations.Document)
+		}
+
+		if err := q.Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, "WorkerSafetyEvent")
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) CreateEvent(
+	ctx context.Context,
+	entity *worker.WorkerSafetyEvent,
+) (*worker.WorkerSafetyEvent, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerSafetyEvent, error) {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
+			r.l.Error("failed to create worker safety event", zap.Error(err))
+			return nil, err
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) UpdateEvent(
+	ctx context.Context,
+	entity *worker.WorkerSafetyEvent,
+) (*worker.WorkerSafetyEvent, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerSafetyEvent, error) {
+		ov := entity.Version
+		entity.Version++
+
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WherePK().
+			Where(workercol.WorkerSafetyEventColumns.Version.Eq(), ov).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to update worker safety event", zap.Error(err))
+			return nil, err
+		}
+		if err = dberror.CheckRowsAffected(
+			results,
+			"WorkerSafetyEvent",
+			entity.ID.String(),
+		); err != nil {
+			return nil, err
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) DeleteEvent(
+	ctx context.Context,
+	req *workerports.GetWorkerSafetyEventByIDRequest,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		results, err := r.db.DBForContext(ctx).
+			NewDelete().
+			Model((*worker.WorkerSafetyEvent)(nil)).
+			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+				return workercol.WorkerSafetyEventScopeTenantDelete(dq, req.TenantInfo).
+					Where(workercol.WorkerSafetyEventColumns.ID.Eq(), req.ID)
+			}).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to delete worker safety event", zap.Error(err))
+			return err
+		}
+		return dberror.CheckRowsAffected(results, "WorkerSafetyEvent", req.ID.String())
+	})
+}
+
+func (r *repository) ListActions(
+	ctx context.Context,
+	req *workerports.ListWorkerDisciplinaryActionsRequest,
+) ([]*worker.WorkerDisciplinaryAction, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*worker.WorkerDisciplinaryAction, error) {
+			cols := workercol.WorkerDisciplinaryActionColumns
+			entities := make([]*worker.WorkerDisciplinaryAction, 0, 8)
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return workercol.WorkerDisciplinaryActionScopeTenant(sq, req.TenantInfo).
+						Where(cols.WorkerID.Eq(), req.WorkerID)
+				}).
+				Order(cols.IssuedAt.OrderDesc()).
+				Order(cols.CreatedAt.OrderDesc())
+			if req.IncludeEvent {
+				q = q.Relation(workercol.WorkerDisciplinaryActionRelations.SafetyEvent)
+			}
+			if req.IncludeActors {
+				q = q.Relation(workercol.WorkerDisciplinaryActionRelations.IssuedBy)
+			}
+
+			if err := q.Scan(ctx); err != nil {
+				r.l.Error("failed to list disciplinary actions", zap.Error(err))
+				return nil, err
+			}
+
+			return entities, nil
+		},
+	)
+}
+
+func (r *repository) GetActionByID(
+	ctx context.Context,
+	req *workerports.GetWorkerDisciplinaryActionByIDRequest,
+) (*worker.WorkerDisciplinaryAction, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*worker.WorkerDisciplinaryAction, error) {
+			entity := new(worker.WorkerDisciplinaryAction)
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return workercol.WorkerDisciplinaryActionScopeTenant(sq, req.TenantInfo).
+						Where(workercol.WorkerDisciplinaryActionColumns.ID.Eq(), req.ID)
+				})
+			if req.IncludeEvent {
+				q = q.Relation(workercol.WorkerDisciplinaryActionRelations.SafetyEvent)
+			}
+
+			if err := q.Scan(ctx); err != nil {
+				return nil, dberror.HandleNotFoundError(err, "WorkerDisciplinaryAction")
+			}
+
+			return entity, nil
+		},
+	)
+}
+
+func (r *repository) CreateAction(
+	ctx context.Context,
+	entity *worker.WorkerDisciplinaryAction,
+) (*worker.WorkerDisciplinaryAction, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*worker.WorkerDisciplinaryAction, error) {
+			if _, err := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(entity).
+				Returning("*").
+				Exec(ctx); err != nil {
+				r.l.Error("failed to create disciplinary action", zap.Error(err))
+				return nil, err
+			}
+
+			return entity, nil
+		},
+	)
+}
+
+func (r *repository) UpdateAction(
+	ctx context.Context,
+	entity *worker.WorkerDisciplinaryAction,
+) (*worker.WorkerDisciplinaryAction, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*worker.WorkerDisciplinaryAction, error) {
+			ov := entity.Version
+			entity.Version++
+
+			results, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(entity).
+				WherePK().
+				Where(workercol.WorkerDisciplinaryActionColumns.Version.Eq(), ov).
+				Returning("*").
+				Exec(ctx)
+			if err != nil {
+				r.l.Error("failed to update disciplinary action", zap.Error(err))
+				return nil, err
+			}
+			if err = dberror.CheckRowsAffected(
+				results,
+				"WorkerDisciplinaryAction",
+				entity.ID.String(),
+			); err != nil {
+				return nil, err
+			}
+
+			return entity, nil
+		},
+	)
+}
+
+func (r *repository) ListRecognitions(
+	ctx context.Context,
+	req *workerports.ListWorkerRecognitionsRequest,
+) ([]*worker.WorkerRecognition, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerRecognition, error) {
+		cols := workercol.WorkerRecognitionColumns
+		entities := make([]*worker.WorkerRecognition, 0, 8)
+		q := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = workercol.WorkerRecognitionScopeTenant(sq, req.TenantInfo).
+					Where(cols.WorkerID.Eq(), req.WorkerID)
+				if req.VisibleOnly {
+					sq = sq.Where(cols.VisibleToWorker.Eq(), true)
+				}
+				return sq
+			}).
+			Order(cols.OccurredAt.OrderDesc())
+		if req.IncludeActors {
+			q = q.Relation(workercol.WorkerRecognitionRelations.AwardedBy)
+		}
+
+		if err := q.Scan(ctx); err != nil {
+			r.l.Error("failed to list recognitions", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
+func (r *repository) GetRecognitionByID(
+	ctx context.Context,
+	req *workerports.GetWorkerRecognitionByIDRequest,
+) (*worker.WorkerRecognition, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerRecognition, error) {
+		entity := new(worker.WorkerRecognition)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return workercol.WorkerRecognitionScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerRecognitionColumns.ID.Eq(), req.ID)
+			}).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "WorkerRecognition")
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) CreateRecognition(
+	ctx context.Context,
+	entity *worker.WorkerRecognition,
+) (*worker.WorkerRecognition, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerRecognition, error) {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
+			r.l.Error("failed to create recognition", zap.Error(err))
+			return nil, err
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) DeleteRecognition(
+	ctx context.Context,
+	req *workerports.GetWorkerRecognitionByIDRequest,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		results, err := r.db.DBForContext(ctx).
+			NewDelete().
+			Model((*worker.WorkerRecognition)(nil)).
+			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+				return workercol.WorkerRecognitionScopeTenantDelete(dq, req.TenantInfo).
+					Where(workercol.WorkerRecognitionColumns.ID.Eq(), req.ID)
+			}).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to delete recognition", zap.Error(err))
+			return err
+		}
+		return dberror.CheckRowsAffected(results, "WorkerRecognition", req.ID.String())
+	})
+}
+
+// ListWorkersWithLapsedPoints returns one row per worker whose points expired
+// inside the window, plus anyone whose disciplinary action lapsed there. Both
+// change the scorecard on a date rather than on a write, so the nightly sweep
+// is the only thing that will notice.
+func (r *repository) ListWorkersWithLapsedPoints(
+	ctx context.Context,
+	req *workerports.ListWorkersWithLapsedPointsRequest,
+) ([]workerports.WorkerTenantRef, error) {
+	ctx = dbscope.WithSystem(
+		ctx,
+		"list workers with lapsed safety points across every organization",
+	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.WorkerTenantRef, error) {
+		ecols := workercol.WorkerSafetyEventColumns
+		acols := workercol.WorkerDisciplinaryActionColumns
+
+		events := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*worker.WorkerSafetyEvent)(nil)).
+			ColumnExpr("? AS worker_id", bun.Ident(ecols.WorkerID.String())).
+			ColumnExpr("? AS organization_id", bun.Ident(ecols.OrganizationID.String())).
+			ColumnExpr("? AS business_unit_id", bun.Ident(ecols.BusinessUnitID.String())).
+			Where(ecols.PointsExpireAt.Gte(), req.Since).
+			Where(ecols.PointsExpireAt.Lt(), req.Until)
+
+		actions := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*worker.WorkerDisciplinaryAction)(nil)).
+			ColumnExpr("? AS worker_id", bun.Ident(acols.WorkerID.String())).
+			ColumnExpr("? AS organization_id", bun.Ident(acols.OrganizationID.String())).
+			ColumnExpr("? AS business_unit_id", bun.Ident(acols.BusinessUnitID.String())).
+			Where(acols.ExpiresAt.Gte(), req.Since).
+			Where(acols.ExpiresAt.Lt(), req.Until)
+
+		refs := make([]workerports.WorkerTenantRef, 0, 32)
+		q := r.db.DBForContext(ctx).
+			NewSelect().
+			With("lapsed", events.UnionAll(actions)).
+			Table("lapsed").
+			ColumnExpr("DISTINCT worker_id, organization_id, business_unit_id").
+			OrderExpr("worker_id")
+		if req.Limit > 0 {
+			q = q.Limit(req.Limit)
+		}
+		if err := q.Scan(ctx, &refs); err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Worker")
+		}
+		return refs, nil
+	})
+}

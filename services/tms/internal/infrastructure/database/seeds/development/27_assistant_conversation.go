@@ -4,13 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -69,7 +72,7 @@ func (s *AssistantConversationSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return err
 			}
 
-			cols := buncolgen.ThreadColumns
+			cols := conversationcol.ThreadColumns
 			count, err := tx.NewSelect().
 				Model((*conversation.Thread)(nil)).
 				Where(cols.OrganizationID.Eq(), refs.org.ID).
@@ -112,7 +115,7 @@ func (s *AssistantConversationSeed) loadRefs(
 	refs := &conversationSeedRefs{org: org, admin: admin, now: timeutils.NowUnix()}
 
 	agents := make([]*agentdefinition.Definition, 0, 2)
-	agentCols := buncolgen.DefinitionColumns
+	agentCols := agentdefinitioncol.DefinitionColumns
 	if err = tx.NewSelect().
 		Model(&agents).
 		Where(agentCols.OrganizationID.Eq(), org.ID).
@@ -133,7 +136,7 @@ func (s *AssistantConversationSeed) loadRefs(
 		return nil, fmt.Errorf("seeded agents not found: %w", seedhelpers.ErrEntityNotFound)
 	}
 
-	shipmentCols := buncolgen.ShipmentColumns
+	shipmentCols := shipmentcol.ShipmentColumns
 	refs.shipment = new(shipment.Shipment)
 	if err = tx.NewSelect().
 		Model(refs.shipment).

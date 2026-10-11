@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/client"
 )
@@ -16,7 +16,7 @@ type StartedTurn struct {
 	TurnID   pulid.ID
 	ThreadID pulid.ID
 	Content  string
-	Request  assistantjobs.AssistantTurnRequest
+	Request  assistantcontract.AssistantTurnRequest
 	Run      client.WorkflowRun
 }
 
@@ -70,13 +70,13 @@ func (q *turnQueue) next(ctx context.Context, wait <-chan time.Time) (StartedTur
 }
 
 type TurnWatcher struct {
-	serviceports.WorkflowStarter
+	kernelports.WorkflowStarter
 
 	mu     sync.Mutex
 	queues map[pulid.ID]*turnQueue
 }
 
-func NewTurnWatcher(inner serviceports.WorkflowStarter) *TurnWatcher {
+func NewTurnWatcher(inner kernelports.WorkflowStarter) *TurnWatcher {
 	return &TurnWatcher{
 		WorkflowStarter: inner,
 		queues:          make(map[pulid.ID]*turnQueue),
@@ -95,13 +95,13 @@ func (w *TurnWatcher) StartWorkflow(
 		return run, err
 	}
 
-	if name, ok := workflow.(string); !ok || name != assistantjobs.AssistantTurnWorkflowName {
+	if name, ok := workflow.(string); !ok || name != assistantcontract.AssistantTurnWorkflowName {
 		return run, nil
 	}
 	if len(args) != 1 {
 		return run, nil
 	}
-	payload, ok := args[0].(*assistantjobs.AssistantTurnPayload)
+	payload, ok := args[0].(*assistantcontract.AssistantTurnPayload)
 	if !ok || payload == nil {
 		return run, nil
 	}

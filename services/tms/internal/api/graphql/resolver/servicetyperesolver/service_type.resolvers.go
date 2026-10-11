@@ -10,9 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/servicetype"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/servicetypeports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,7 +29,7 @@ func (r *QueryResolver) ServiceTypes(ctx context.Context, input gqlmodel.DataTab
 
 	result, err := r.ServiceTypeService.ListConnection(
 		ctx,
-		&repositories.ListServiceTypesConnectionRequest{
+		&servicetypeports.ListServiceTypesConnectionRequest{
 			Filter:             tableInput.Filter,
 			Cursor:             tableInput.Cursor,
 			ServiceTypeColumns: serviceTypeColumns(ctx, "edges.node"),
@@ -53,7 +53,7 @@ func (r *QueryResolver) ServiceType(ctx context.Context, id string) (*servicetyp
 		return nil, err
 	}
 
-	return r.ServiceTypeService.Get(ctx, repositories.GetServiceTypeByIDRequest{
+	return r.ServiceTypeService.Get(ctx, servicetypeports.GetServiceTypeByIDRequest{
 		ID:         serviceTypeID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

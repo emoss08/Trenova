@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -150,26 +150,30 @@ func (t *liveTurn) flush() {
 	t.mode = ""
 }
 
-func (t *liveTurn) frame(frame serviceports.TurnStreamFrame) {
+func (t *liveTurn) frame(frame agentports.TurnStreamFrame) {
 	if t == nil {
 		return
 	}
 
 	switch frame.Event {
-	case serviceports.AssistantEventDelta, serviceports.AssistantEventDelegateDelta:
+	case agentports.AssistantEventDelta, agentports.AssistantEventDelegateDelta:
 		t.stream(liveModeText, frameText(frame.Data))
-	case serviceports.AssistantEventReasoning, serviceports.AssistantEventDelegateReasoning:
+	case agentports.AssistantEventReasoning, agentports.AssistantEventDelegateReasoning:
 		t.stream(liveModeThinking, frameText(frame.Data))
-	case serviceports.AssistantEventToolStarted:
-		var started serviceports.AssistantToolStartedEvent
+	case agentports.AssistantEventToolStarted:
+		var started agentports.AssistantToolStartedEvent
 		if sonic.Unmarshal(frame.Data, &started) == nil {
 			t.line("-> %s%s %s", started.Name, delegateTag(started.DelegateCallID),
 				stringutils.Ellipsize(compactJSON(started.Arguments, liveArgsLimit), liveArgsLimit))
 		}
-	case serviceports.AssistantEventToolFinished:
-		var finished serviceports.AssistantToolFinishedEvent
+	case agentports.AssistantEventToolFinished:
+		var finished agentports.AssistantToolFinishedEvent
 		if sonic.Unmarshal(frame.Data, &finished) == nil {
-			record := ToolCallRecord{Verdict: finished.Verdict, Failed: finished.Failed, Finished: true}
+			record := ToolCallRecord{
+				Verdict:  finished.Verdict,
+				Failed:   finished.Failed,
+				Finished: true,
+			}
 			detail := finished.Summary
 			if record.Refused() {
 				detail = firstLine(finished.Content)
@@ -177,13 +181,17 @@ func (t *liveTurn) frame(frame serviceports.TurnStreamFrame) {
 			t.line("<- %s%s %s · %s", finished.Name, delegateTag(finished.DelegateCallID),
 				verdictLabel(&record), stringutils.Ellipsize(detail, liveSummaryLimit))
 		}
-	case serviceports.AssistantEventMessage, serviceports.AssistantEventDone,
-		serviceports.AssistantEventAccepted, serviceports.AssistantEventTurn,
-		serviceports.AssistantEventThread, serviceports.AssistantEventContext,
-		serviceports.AssistantEventArtifact:
+	case agentports.AssistantEventMessage, agentports.AssistantEventDone,
+		agentports.AssistantEventAccepted, agentports.AssistantEventTurn,
+		agentports.AssistantEventThread, agentports.AssistantEventContext,
+		agentports.AssistantEventArtifact:
 		t.flush()
 	default:
-		t.line("event %s %s", frame.Event, stringutils.Ellipsize(string(frame.Data), liveEventLimit))
+		t.line(
+			"event %s %s",
+			frame.Event,
+			stringutils.Ellipsize(string(frame.Data), liveEventLimit),
+		)
 	}
 }
 

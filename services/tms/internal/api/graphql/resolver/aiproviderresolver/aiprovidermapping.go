@@ -3,13 +3,14 @@ package aiproviderresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
+
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/optional"
@@ -29,7 +30,7 @@ func aiProviderColumns(ctx context.Context, nodePathPrefix string) []string {
 	if len(columns) == 0 {
 		return columns
 	}
-	cols := buncolgen.ProviderColumns
+	cols := aiprovidercol.ProviderColumns
 	if graphql.FieldRequested(ctx, nodePathPrefix+".apiKey") {
 		return append(columns,
 			cols.APIKey.Name,
@@ -70,19 +71,21 @@ func aiProviderConnectionToModel(
 	}, nil
 }
 
-func endpointFromInput(input *gqlmodel.AIProviderEndpointInput) (services.AIProviderEndpoint, error) {
+func endpointFromInput(
+	input *gqlmodel.AIProviderEndpointInput,
+) (agentports.AIProviderEndpoint, error) {
 	if input == nil {
-		return services.AIProviderEndpoint{}, errortypes.NewValidationError(
+		return agentports.AIProviderEndpoint{}, errortypes.NewValidationError(
 			"endpoint", errortypes.ErrRequired, "Endpoint is required",
 		)
 	}
 
 	providerID, err := base.OptionalID(input.ProviderID)
 	if err != nil {
-		return services.AIProviderEndpoint{}, err
+		return agentports.AIProviderEndpoint{}, err
 	}
 
-	return services.AIProviderEndpoint{
+	return agentports.AIProviderEndpoint{
 		ProviderID:          providerID,
 		Kind:                input.Kind,
 		BaseURL:             input.BaseURL,
@@ -91,7 +94,9 @@ func endpointFromInput(input *gqlmodel.AIProviderEndpointInput) (services.AIProv
 	}, nil
 }
 
-func patchFromInput(input *gqlmodel.AIProviderPatchInput) (*services.PatchAIProviderRequest, error) {
+func patchFromInput(
+	input *gqlmodel.AIProviderPatchInput,
+) (*agentports.PatchAIProviderRequest, error) {
 	inputCost, err := omittableDecimal("inputCostPerMillion", input.InputCostPerMillion)
 	if err != nil {
 		return nil, err
@@ -112,11 +117,11 @@ func patchFromInput(input *gqlmodel.AIProviderPatchInput) (*services.PatchAIProv
 		return nil, err
 	}
 
-	req := &services.PatchAIProviderRequest{
-		Enabled:              base.NullableOmittable(input.Enabled),
-		Trusted:              base.NullableOmittable(input.Trusted),
-		AllowPrivateNetwork:  base.NullableOmittable(input.AllowPrivateNetwork),
-		APIKey:               base.NullableOmittable(input.APIKey),
+	req := &agentports.PatchAIProviderRequest{
+		Enabled:                  base.NullableOmittable(input.Enabled),
+		Trusted:                  base.NullableOmittable(input.Trusted),
+		AllowPrivateNetwork:      base.NullableOmittable(input.AllowPrivateNetwork),
+		APIKey:                   base.NullableOmittable(input.APIKey),
 		InputCostPerMillion:      inputCost,
 		OutputCostPerMillion:     outputCost,
 		CacheReadCostPerMillion:  cacheReadCost,
@@ -148,7 +153,9 @@ func omittableDecimal(
 	return optional.Some(&parsed.Decimal), nil
 }
 
-func modelOptionsToModel(models []services.AIProviderModelOption) []*gqlmodel.AIProviderModelOption {
+func modelOptionsToModel(
+	models []agentports.AIProviderModelOption,
+) []*gqlmodel.AIProviderModelOption {
 	out := make([]*gqlmodel.AIProviderModelOption, 0, len(models))
 	for idx := range models {
 		model := &models[idx]
@@ -173,7 +180,7 @@ func modelOptionsToModel(models []services.AIProviderModelOption) []*gqlmodel.AI
 	return out
 }
 
-func priceSourceToModel(source services.ModelPriceSource) *gqlmodel.AIModelPriceSource {
+func priceSourceToModel(source agentports.ModelPriceSource) *gqlmodel.AIModelPriceSource {
 	if source == "" {
 		return nil
 	}

@@ -5,12 +5,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/quotaservice"
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/quotatx"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -32,7 +33,7 @@ func (f *fakeConnection) DBForContext(context.Context) bun.IDB { return nil }
 
 func (f *fakeConnection) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	f.transactions++
@@ -45,8 +46,8 @@ func (f *fakeConnection) IsHealthy(context.Context) bool { return true }
 
 func (f *fakeConnection) Close() error { return nil }
 
-func request(meter platformcatalog.MeterKey) services.QuotaRequest {
-	return services.QuotaRequest{
+func request(meter platformcatalog.MeterKey) platformplanports.QuotaRequest {
+	return platformplanports.QuotaRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 		Meter:      meter,
 		Quantity:   1,
@@ -73,7 +74,7 @@ func TestRunEnforcesInsideTheTransactionBeforeWriting(t *testing.T) {
 	t.Parallel()
 
 	conn := &fakeConnection{}
-	guard := mocks.NewMockQuotaGuard(t)
+	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	req := request(platformcatalog.MeterTrailersTotal)
 	guard.EXPECT().
 		Enforce(mock.MatchedBy(func(ctx context.Context) bool {
@@ -98,7 +99,7 @@ func TestRunDoesNotWriteWhenTheQuotaRefuses(t *testing.T) {
 	t.Parallel()
 
 	conn := &fakeConnection{}
-	guard := mocks.NewMockQuotaGuard(t)
+	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	req := request(platformcatalog.MeterLocationsTotal)
 	refusal := errortypes.NewQuotaExceededError(string(req.Meter), 25, 25, "free_demo")
 	guard.EXPECT().Enforce(mock.Anything, &req).Return(refusal).Once()
@@ -115,7 +116,7 @@ func TestRunReturnsTheWriteError(t *testing.T) {
 	t.Parallel()
 
 	conn := &fakeConnection{}
-	guard := mocks.NewMockQuotaGuard(t)
+	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	req := request(platformcatalog.MeterCustomersTotal)
 	boom := errors.New("insert failed")
 	guard.EXPECT().Enforce(mock.Anything, &req).Return(nil).Once()

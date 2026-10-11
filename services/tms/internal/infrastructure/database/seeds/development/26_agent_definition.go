@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds/base"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -58,7 +59,7 @@ func (s *AgentDefinitionSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return err
 			}
 
-			cols := buncolgen.DefinitionColumns
+			cols := agentdefinitioncol.DefinitionColumns
 			count, err := tx.NewSelect().
 				Model((*agentdefinition.Definition)(nil)).
 				Where(cols.OrganizationID.Eq(), org.ID).
@@ -104,7 +105,7 @@ func (s *AgentDefinitionSeed) insertDefinitions(
 ) error {
 	present := make(map[string]struct{})
 	if onlyMissing {
-		cols := buncolgen.DefinitionColumns
+		cols := agentdefinitioncol.DefinitionColumns
 		var names []string
 		if err := tx.NewSelect().
 			Model((*agentdefinition.Definition)(nil)).
@@ -157,7 +158,7 @@ func (s *AgentDefinitionSeed) reconcileToolNames(
 	tx bun.Tx,
 	orgID, buID pulid.ID,
 ) error {
-	cols := buncolgen.DefinitionColumns
+	cols := agentdefinitioncol.DefinitionColumns
 
 	var existing []*agentdefinition.Definition
 	if err := tx.NewSelect().
@@ -455,7 +456,7 @@ func (s *AgentDefinitionSeed) enableSystemAgents(
 	tx bun.Tx,
 	orgID, buID pulid.ID,
 ) error {
-	cols := buncolgen.DefinitionColumns
+	cols := agentdefinitioncol.DefinitionColumns
 	now := timeutils.NowUnix()
 	for _, definition := range base.SystemAgentDefinitions(orgID, buID) {
 		query := tx.NewUpdate().

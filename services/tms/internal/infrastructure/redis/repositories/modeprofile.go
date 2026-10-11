@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/redis/go-redis/v9"
@@ -37,7 +37,7 @@ type modeProfileCacheRepository struct {
 
 func NewModeProfileCacheRepository(
 	p ModeProfileCacheParams,
-) repositories.ModeProfileCacheRepository {
+) modeprofileports.ModeProfileCacheRepository {
 	return &modeProfileCacheRepository{
 		client: p.Client,
 		l:      p.Logger.Named("redis.mode-profile-cache"),

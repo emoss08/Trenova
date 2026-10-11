@@ -12,15 +12,15 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/agentsafetyservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentsafetyservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
-func (r *AgentSafetyResolver) AgentID(ctx context.Context, obj *services.AgentSafetySubject) (string, error) {
+func (r *AgentSafetyResolver) AgentID(ctx context.Context, obj *agentports.AgentSafetySubject) (string, error) {
 	if obj == nil || obj.Agent == nil {
 		return "", nil
 	}
@@ -28,19 +28,19 @@ func (r *AgentSafetyResolver) AgentID(ctx context.Context, obj *services.AgentSa
 	return obj.Agent.ID.String(), nil
 }
 
-func (r *AgentSafetyResolver) OrganizationShadow(ctx context.Context, obj *services.AgentSafetySubject) (bool, error) {
+func (r *AgentSafetyResolver) OrganizationShadow(ctx context.Context, obj *agentports.AgentSafetySubject) (bool, error) {
 	return obj != nil && obj.Control != nil && obj.Control.ShadowMode, nil
 }
 
-func (r *AgentSafetyResolver) Tools(ctx context.Context, obj *services.AgentSafetySubject) ([]*services.AgentToolSafety, error) {
+func (r *AgentSafetyResolver) Tools(ctx context.Context, obj *agentports.AgentSafetySubject) ([]*agentports.AgentToolSafety, error) {
 	return r.AgentSafetyTools(ctx, obj)
 }
 
-func (r *AgentSafetyResolver) Reach(ctx context.Context, obj *services.AgentSafetySubject) (*gqlmodel.AgentReach, error) {
+func (r *AgentSafetyResolver) Reach(ctx context.Context, obj *agentports.AgentSafetySubject) (*gqlmodel.AgentReach, error) {
 	return r.AgentSafetyReach(ctx, obj)
 }
 
-func (r *AgentToolSafetyResolver) ID(ctx context.Context, obj *services.AgentToolSafety) (string, error) {
+func (r *AgentToolSafetyResolver) ID(ctx context.Context, obj *agentports.AgentToolSafety) (string, error) {
 	if obj == nil {
 		return "", nil
 	}
@@ -48,7 +48,7 @@ func (r *AgentToolSafetyResolver) ID(ctx context.Context, obj *services.AgentToo
 	return obj.RowID(), nil
 }
 
-func (r *AgentToolSafetyResolver) Policy(ctx context.Context, obj *services.AgentToolSafety) (*gqlmodel.AgentToolPolicy, error) {
+func (r *AgentToolSafetyResolver) Policy(ctx context.Context, obj *agentports.AgentToolSafety) (*gqlmodel.AgentToolPolicy, error) {
 	return r.AgentToolSafetyPolicy(obj)
 }
 
@@ -69,7 +69,7 @@ func (r *QueryResolver) AgentToolPolicyConnection(ctx context.Context, input gql
 	table := toolPolicyConnectionRequest(&input)
 	table.IncludeTotalCount = base.ConnectionFieldRequested(ctx, base.ConnectionTotalCountField)
 
-	page, err := r.AgentSafetyService.ListToolPolicies(ctx, &services.ListAgentToolPoliciesRequest{
+	page, err := r.AgentSafetyService.ListToolPolicies(ctx, &agentports.ListAgentToolPoliciesRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		Table:      table,
 	})
@@ -86,7 +86,7 @@ func (r *QueryResolver) AgentToolRuleConnection(ctx context.Context, input gqlmo
 		return nil, err
 	}
 
-	page, err := r.AgentSafetyService.ListToolPolicies(ctx, &services.ListAgentToolPoliciesRequest{
+	page, err := r.AgentSafetyService.ListToolPolicies(ctx, &agentports.ListAgentToolPoliciesRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		Table:      base.MemtableRequestFromGraphQL(ctx, &input),
 		WithAttendance: graphql.FieldRequested(
@@ -112,7 +112,7 @@ func (r *QueryResolver) AgentToolSafetyConnection(ctx context.Context, agentIds 
 		return nil, err
 	}
 
-	page, err := r.AgentSafetyService.ListAgentTools(ctx, &services.ListAgentToolSafetyRequest{
+	page, err := r.AgentSafetyService.ListAgentTools(ctx, &agentports.ListAgentToolSafetyRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		AgentIDs:   ids,
 		Table:      base.MemtableRequestFromGraphQL(ctx, &input),
@@ -124,7 +124,7 @@ func (r *QueryResolver) AgentToolSafetyConnection(ctx context.Context, agentIds 
 	return agentToolSafetyPageToModel(page), nil
 }
 
-func (r *QueryResolver) AgentSafetySummary(ctx context.Context) (*services.AgentSafetySummary, error) {
+func (r *QueryResolver) AgentSafetySummary(ctx context.Context) (*agentports.AgentSafetySummary, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -133,7 +133,7 @@ func (r *QueryResolver) AgentSafetySummary(ctx context.Context) (*services.Agent
 	return r.AgentSafetyService.Summary(ctx, base.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) AgentSafety(ctx context.Context, agentIds []string) ([]*services.AgentSafetySubject, error) {
+func (r *QueryResolver) AgentSafety(ctx context.Context, agentIds []string) ([]*agentports.AgentSafetySubject, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -144,21 +144,21 @@ func (r *QueryResolver) AgentSafety(ctx context.Context, agentIds []string) ([]*
 		return nil, err
 	}
 
-	return r.AgentSafetyService.ListSubjects(ctx, &services.ListAgentSafetyRequest{
+	return r.AgentSafetyService.ListSubjects(ctx, &agentports.ListAgentSafetyRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		AgentIDs:   ids,
 	})
 }
 
-func (r *AgentSafetySummaryResolver) OpenSensitiveAgentIds(ctx context.Context, obj *services.AgentSafetySummary) ([]string, error) {
+func (r *AgentSafetySummaryResolver) OpenSensitiveAgentIds(ctx context.Context, obj *agentports.AgentSafetySummary) ([]string, error) {
 	return base.PulidsToStrings(obj.OpenSensitiveAgentIDs), nil
 }
 
-func (r *AgentToolHoldersResolver) AgentIds(ctx context.Context, obj *services.AgentToolHolders) ([]string, error) {
+func (r *AgentToolHoldersResolver) AgentIds(ctx context.Context, obj *agentports.AgentToolHolders) ([]string, error) {
 	return base.PulidsToStrings(obj.AgentIDs), nil
 }
 
-func (r *QueryResolver) AgentToolHolders(ctx context.Context) ([]*services.AgentToolHolders, error) {
+func (r *QueryResolver) AgentToolHolders(ctx context.Context) ([]*agentports.AgentToolHolders, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -169,7 +169,7 @@ func (r *QueryResolver) AgentToolHolders(ctx context.Context) ([]*services.Agent
 		return nil, err
 	}
 
-	out := make([]*services.AgentToolHolders, len(holders))
+	out := make([]*agentports.AgentToolHolders, len(holders))
 	for idx := range holders {
 		out[idx] = &holders[idx]
 	}
@@ -213,7 +213,7 @@ func (r *MutationResolver) SaveAgentToolRule(ctx context.Context, name string, v
 		return nil, errortypes.NewNotFoundError("Tool policy not found")
 	}
 
-	result, err := r.AgentToolRuleService.Save(ctx, &services.SaveToolRuleRequest{
+	result, err := r.AgentToolRuleService.Save(ctx, &agentports.SaveToolRuleRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ToolName:   name,
 		Change:     toolRuleChange(&input),
@@ -232,13 +232,13 @@ func (r *MutationResolver) SaveAgentToolRule(ctx context.Context, name string, v
 	}, nil
 }
 
-func (r *QueryResolver) AgentToolRuleImpact(ctx context.Context, name string, input gqlmodel.AgentToolRuleInput) ([]*services.AgentToolRuleImpact, error) {
+func (r *QueryResolver) AgentToolRuleImpact(ctx context.Context, name string, input gqlmodel.AgentToolRuleInput) ([]*agentports.AgentToolRuleImpact, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentControl, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	impacts, err := r.AgentToolRuleService.Impact(ctx, &services.ToolRuleImpactRequest{
+	impacts, err := r.AgentToolRuleService.Impact(ctx, &agentports.ToolRuleImpactRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ToolName:   name,
 		Change:     toolRuleChange(&input),

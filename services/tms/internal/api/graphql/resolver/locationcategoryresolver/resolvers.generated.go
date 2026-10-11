@@ -4,7 +4,7 @@ package locationcategoryresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	locationcategoryservice "github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
+	locationcategoryservice "github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
 )
 
 type Deps struct {

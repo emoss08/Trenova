@@ -3,7 +3,7 @@ package repositories
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,8 +21,8 @@ func TestShipmentBoardKeys(t *testing.T) {
 		ShipmentBoardEpochKey(org, bu),
 	)
 
-	key := &repositories.ShipmentBoardCacheKey{
-		Section:    repositories.ShipmentBoardSectionBriefing,
+	key := &shipmentports.ShipmentBoardCacheKey{
+		Section:    shipmentports.ShipmentBoardSectionBriefing,
 		TenantInfo: pagination.TenantInfo{OrgID: org, BuID: bu},
 		Timezone:   "America/Chicago",
 		Epoch:      7,

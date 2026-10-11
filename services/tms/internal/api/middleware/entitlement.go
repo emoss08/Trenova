@@ -2,8 +2,9 @@ package middleware
 
 import (
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
@@ -15,12 +16,12 @@ const FeatureCheckResultKey = "feature_check_result"
 type EntitlementMiddlewareParams struct {
 	fx.In
 
-	EntitlementProvider services.EntitlementProvider
+	EntitlementProvider platformcatalogports.EntitlementProvider
 	ErrorHandler        *helpers.ErrorHandler
 }
 
 type EntitlementMiddleware struct {
-	entitlements services.EntitlementProvider
+	entitlements platformcatalogports.EntitlementProvider
 	errorHandler *helpers.ErrorHandler
 }
 
@@ -71,27 +72,30 @@ func (m *EntitlementMiddleware) OptionalFeature(
 func (m *EntitlementMiddleware) checkFeature(
 	c *gin.Context,
 	featureKey platformcatalog.FeatureKey,
-) (*services.FeatureCheckResult, error) {
+) (*platformcatalogports.FeatureCheckResult, error) {
 	authCtx := authctx.GetAuthContext(c)
 
-	return m.entitlements.CheckFeature(c.Request.Context(), &services.FeatureCheckRequest{
-		OrganizationID: authCtx.OrganizationID,
-		BusinessUnitID: authCtx.BusinessUnitID,
-		PrincipalType:  services.PrincipalType(authCtx.PrincipalType),
-		PrincipalID:    authCtx.PrincipalID,
-		UserID:         authCtx.UserID,
-		APIKeyID:       authCtx.APIKeyID,
-		FeatureKey:     featureKey,
-	})
+	return m.entitlements.CheckFeature(
+		c.Request.Context(),
+		&platformcatalogports.FeatureCheckRequest{
+			OrganizationID: authCtx.OrganizationID,
+			BusinessUnitID: authCtx.BusinessUnitID,
+			PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
+			PrincipalID:    authCtx.PrincipalID,
+			UserID:         authCtx.UserID,
+			APIKeyID:       authCtx.APIKeyID,
+			FeatureKey:     featureKey,
+		},
+	)
 }
 
-func GetFeatureCheckResult(c *gin.Context) *services.FeatureCheckResult {
+func GetFeatureCheckResult(c *gin.Context) *platformcatalogports.FeatureCheckResult {
 	result, exists := c.Get(FeatureCheckResultKey)
 	if !exists {
 		return nil
 	}
 
-	checkResult, ok := result.(*services.FeatureCheckResult)
+	checkResult, ok := result.(*platformcatalogports.FeatureCheckResult)
 	if !ok {
 		return nil
 	}

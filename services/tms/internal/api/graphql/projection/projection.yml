@@ -131,9 +131,6 @@ virtuals:
   AccountingReferenceObject:
     - label
     - usable
-  FormSubmissionField:
-    - label
-    - value
   AgentControl:
     - billingAgentEnabled
     - decisionTimeoutSeconds
@@ -145,6 +142,7 @@ virtuals:
   AgentMemory:
     - supersedes
     - replacedBy
+    - taints
   AgentPlan:
     - run
   AgentRun:
@@ -415,11 +413,6 @@ virtuals:
     - payment
 
 specials:
-  AgentMemory:
-    taints:
-      - tainted
-      - reviewedAt
-      - reviewedByUserId
   Tractor:
     lastKnownLocation:
       - lastKnownLocation
@@ -445,16 +438,16 @@ gates:
 
 
 modelOverrides:
-  EdiCarrierInvoiceList: github.com/emoss08/trenova/internal/core/domain/invoiceadjustment.InvoiceAdjustmentBatch
-  CarrierInvoiceMatchList: github.com/emoss08/trenova/internal/core/domain/invoiceadjustment.InvoiceAdjustmentBatch
-  ShipmentLifecycleEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
-  ShipmentOwnershipEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
-  ShipmentMoveEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
-  ShipmentAssignmentEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
-  ShipmentCarrierEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
-  ShipmentTenderEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
-  ShipmentHoldEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
-  ShipmentCommentEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
+  EdiCarrierInvoiceList: github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment.InvoiceAdjustmentBatch
+  CarrierInvoiceMatchList: github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment.InvoiceAdjustmentBatch
+  ShipmentLifecycleEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
+  ShipmentOwnershipEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
+  ShipmentMoveEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
+  ShipmentAssignmentEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
+  ShipmentCarrierEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
+  ShipmentTenderEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
+  ShipmentHoldEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
+  ShipmentCommentEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
 
 always:
   AgentMemory:

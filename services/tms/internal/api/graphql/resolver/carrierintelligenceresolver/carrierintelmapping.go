@@ -10,9 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -115,7 +115,11 @@ func controlPatchFromInput(
 		"confirmBlockingChanges", "Confirm blocking changes", input.ConfirmBlockingChanges,
 	)
 	collect(e)
-	patch.OutagePolicy, e = base.RequiredOmittable("outagePolicy", "Outage policy", input.OutagePolicy)
+	patch.OutagePolicy, e = base.RequiredOmittable(
+		"outagePolicy",
+		"Outage policy",
+		input.OutagePolicy,
+	)
 	collect(e)
 	patch.AutoDisqualifyOnBlock, e = base.RequiredOmittable(
 		"autoDisqualifyOnBlock", "Automatic disqualification", input.AutoDisqualifyOnBlock,
@@ -252,7 +256,7 @@ func jsonValueString(value any) *string {
 }
 
 func eventCountsToModel(
-	counts *repositories.CarrierIntelEventCounts,
+	counts *carrierintelports.CarrierIntelEventCounts,
 ) *gqlmodel.CarrierIntelEventCounts {
 	result := &gqlmodel.CarrierIntelEventCounts{
 		Open:         counts.Open,
@@ -361,7 +365,7 @@ func carrierMonitoringEnrollmentConnectionToModel(
 
 func eventFilterFromInput(
 	filter *gqlmodel.CarrierIntelEventFilterInput,
-	req *repositories.ListCarrierIntelEventsRequest,
+	req *carrierintelports.ListCarrierIntelEventsRequest,
 ) error {
 	if filter == nil {
 		return nil
@@ -402,12 +406,12 @@ func parseCarrierIntelID(raw, field, label string) (pulid.ID, error) {
 func loadCarrierSnapshot(
 	ctx context.Context,
 	fetch func() ([]*carrierintel.CarrierIntelSnapshot, error),
-	loader func(l *loaders.Loaders) ([]*carrierintel.CarrierIntelSnapshot, error),
+	loader func() ([]*carrierintel.CarrierIntelSnapshot, error),
 ) (*carrierintel.CarrierIntelSnapshot, error) {
 	var snapshots []*carrierintel.CarrierIntelSnapshot
 	var err error
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		snapshots, err = loader(l)
+	if loaders.Available(ctx) {
+		snapshots, err = loader()
 	} else {
 		snapshots, err = fetch()
 	}

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/accounttype"
-	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
-	"github.com/emoss08/trenova/internal/core/domain/glaccount"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -38,7 +38,12 @@ func CreateChartOfAccounts(ctx context.Context, db bun.IDB, scope Scope) (int, e
 		return 0, fmt.Errorf("create default chart of accounts: %w", err)
 	}
 
-	if err = applyAccountingDefaults(ctx, db, scope.OrganizationID, scope.BusinessUnitID); err != nil {
+	if err = applyAccountingDefaults(
+		ctx,
+		db,
+		scope.OrganizationID,
+		scope.BusinessUnitID,
+	); err != nil {
 		return 0, fmt.Errorf("apply accounting control defaults: %w", err)
 	}
 

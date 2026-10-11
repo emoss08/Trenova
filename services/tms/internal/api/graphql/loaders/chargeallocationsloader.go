@@ -3,8 +3,8 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -14,18 +14,18 @@ import (
 type chargeAllocationsLister interface {
 	ListByShipmentIDs(
 		ctx context.Context,
-		req *repositories.ListChargeAllocationsByShipmentIDsRequest,
+		req *shipmentports.ListChargeAllocationsByShipmentIDsRequest,
 	) (map[pulid.ID][]*shipment.ChargeAllocation, error)
 	ListByOrderChargeIDs(
 		ctx context.Context,
-		req *repositories.ListChargeAllocationsByOrderChargeIDsRequest,
+		req *shipmentports.ListChargeAllocationsByOrderChargeIDsRequest,
 	) (map[pulid.ID][]*shipment.ChargeAllocation, error)
 }
 
 type ChargeAllocationsByShipmentIDLoaderFactoryParams struct {
 	fx.In
 
-	ChargeAllocationRepo repositories.ChargeAllocationRepository
+	ChargeAllocationRepo shipmentports.ChargeAllocationRepository
 }
 
 type ChargeAllocationsByShipmentIDLoaderFactory struct {
@@ -40,7 +40,7 @@ func NewChargeAllocationsByShipmentIDLoaderFactory(
 	}
 }
 
-func (f *ChargeAllocationsByShipmentIDLoaderFactory) NewForTenant(
+func newChargeAllocationsByShipmentIDLoader(f *ChargeAllocationsByShipmentIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*shipment.ChargeAllocation] {
 	return newLoader(f.batchFunc(tenantInfo))
@@ -53,7 +53,7 @@ func (f *ChargeAllocationsByShipmentIDLoaderFactory) batchFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*shipment.ChargeAllocation, error) {
 			return f.allocations.ListByShipmentIDs(
 				ctx,
-				&repositories.ListChargeAllocationsByShipmentIDsRequest{
+				&shipmentports.ListChargeAllocationsByShipmentIDsRequest{
 					TenantInfo:  tenantInfo,
 					ShipmentIDs: ids,
 				},
@@ -65,7 +65,7 @@ func (f *ChargeAllocationsByShipmentIDLoaderFactory) batchFunc(
 type ChargeAllocationsByOrderChargeIDLoaderFactoryParams struct {
 	fx.In
 
-	ChargeAllocationRepo repositories.ChargeAllocationRepository
+	ChargeAllocationRepo shipmentports.ChargeAllocationRepository
 }
 
 type ChargeAllocationsByOrderChargeIDLoaderFactory struct {
@@ -80,7 +80,7 @@ func NewChargeAllocationsByOrderChargeIDLoaderFactory(
 	}
 }
 
-func (f *ChargeAllocationsByOrderChargeIDLoaderFactory) NewForTenant(
+func newChargeAllocationsByOrderChargeIDLoader(f *ChargeAllocationsByOrderChargeIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*shipment.ChargeAllocation] {
 	return newLoader(f.batchFunc(tenantInfo))
@@ -93,7 +93,7 @@ func (f *ChargeAllocationsByOrderChargeIDLoaderFactory) batchFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*shipment.ChargeAllocation, error) {
 			return f.allocations.ListByOrderChargeIDs(
 				ctx,
-				&repositories.ListChargeAllocationsByOrderChargeIDsRequest{
+				&shipmentports.ListChargeAllocationsByOrderChargeIDsRequest{
 					TenantInfo:     tenantInfo,
 					OrderChargeIDs: ids,
 				},

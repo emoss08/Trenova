@@ -7,14 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -87,7 +86,7 @@ func (s *Session) Open(ctx context.Context, req OpenConversation) (*Conversation
 		if req.Agent == nil {
 			return nil, errors.New("a new conversation needs an agent")
 		}
-		thread, err = s.bench.Assistant.StartThread(ctx, &serviceports.StartThreadRequest{
+		thread, err = s.bench.Assistant.StartThread(ctx, &agentports.StartThreadRequest{
 			AgentDefinitionID: req.Agent.ID,
 			Title:             benchTitlePrefix + strings.TrimSpace(req.Title),
 			TenantInfo:        s.Tenant,
@@ -113,8 +112,8 @@ func (s *Session) Open(ctx context.Context, req OpenConversation) (*Conversation
 	}, nil
 }
 
-func (s *Session) threadRequest(threadID pulid.ID) repositories.GetThreadRequest {
-	return repositories.GetThreadRequest{ID: threadID, UserID: s.User.ID, TenantInfo: s.Tenant}
+func (s *Session) threadRequest(threadID pulid.ID) agentports.GetThreadRequest {
+	return agentports.GetThreadRequest{ID: threadID, UserID: s.User.ID, TenantInfo: s.Tenant}
 }
 
 func (c *Conversation) Turns() []*TurnRecord {
@@ -141,10 +140,10 @@ func (c *Conversation) Say(ctx context.Context, u Utterance) ([]*TurnRecord, err
 		Origin:     conversation.AssistantTurnOriginPerson,
 		Input:      u.Content,
 	}, func(turn *conversation.AssistantTurn) (string, error) {
-		start := assistantjobs.TurnStart{
+		start := assistantcontract.TurnStart{
 			Actor:   c.session.Actor,
 			Content: u.Content,
-			Request: assistantjobs.AssistantTurnRequest{
+			Request: assistantcontract.AssistantTurnRequest{
 				Page:                u.Page,
 				Surface:             surface,
 				Mentions:            u.Mentions,
@@ -156,7 +155,7 @@ func (c *Conversation) Say(ctx context.Context, u Utterance) ([]*TurnRecord, err
 		}
 		var runID string
 		startErr := retryNamespaceLookup(ctx, func() error {
-			run, err := assistantjobs.StartTurnWorkflow(ctx, bench.watcher, turn, start)
+			run, err := assistantcontract.StartTurnWorkflow(ctx, bench.watcher, turn, start)
 			if err != nil {
 				return err
 			}
@@ -174,7 +173,10 @@ func (c *Conversation) Say(ctx context.Context, u Utterance) ([]*TurnRecord, err
 	return c.collect(ctx, firstTurnWithin)
 }
 
-func (c *Conversation) Decide(ctx context.Context, d Decide) ([]*DecisionRecord, []*TurnRecord, error) {
+func (c *Conversation) Decide(
+	ctx context.Context,
+	d Decide,
+) ([]*DecisionRecord, []*TurnRecord, error) {
 	return c.decide(ctx, d, followUpWithin)
 }
 
@@ -298,7 +300,11 @@ func (c *Conversation) capture(ctx context.Context, started StartedTurn) *TurnRe
 	}
 
 	live := bench.live.turn(c.Label)
-	live.line("== turn %s (%s) ==", started.TurnID, stringutils.WithDefault(string(record.Origin), "Person"))
+	live.line(
+		"== turn %s (%s) ==",
+		started.TurnID,
+		stringutils.WithDefault(string(record.Origin), "Person"),
+	)
 	if started.Content != "" {
 		live.line("person: %s", started.Content)
 	}
@@ -316,7 +322,7 @@ func (c *Conversation) capture(ctx context.Context, started StartedTurn) *TurnRe
 	}
 
 	runCtx, cancelRun := context.WithTimeout(ctx, turnTimeout)
-	var outcome assistantjobs.AssistantTurnResult
+	var outcome assistantcontract.AssistantTurnResult
 	runErr := started.Run.Get(runCtx, &outcome)
 	timedOut := errors.Is(runCtx.Err(), context.DeadlineExceeded)
 	cancelRun()
@@ -358,24 +364,35 @@ func (c *Conversation) capture(ctx context.Context, started StartedTurn) *TurnRe
 	record.Usage, record.Models = usageOf(record.ModelCalls)
 	record.Unattributed = summarizeCalls(bench.recorder.Unattributed(from, record.FinishedAt))
 
+	announceTurnEnd(live, record)
+
+	return record
+}
+
+func announceTurnEnd(live *liveTurn, record *TurnRecord) {
 	live.flush()
 	live.line("== %s · %s · %d tool calls · %s ==", record.Status,
 		record.Duration().Round(100*time.Millisecond), len(record.Tools), usageLine(record.Usage))
 	for _, proposal := range record.Proposals {
-		live.line("proposal %s %s (%s)", proposal.Tool,
-			stringutils.Ellipsize(compactJSON(proposal.Arguments, liveArgsLimit), liveArgsLimit), proposal.Status)
+		live.line(
+			"proposal %s %s (%s)",
+			proposal.Tool,
+			stringutils.Ellipsize(
+				compactJSON(proposal.Arguments, liveArgsLimit),
+				liveArgsLimit,
+			),
+			proposal.Status,
+		)
 	}
 	if record.Failure != "" {
 		live.line("failure: %s", record.Failure)
 	}
-
-	return record
 }
 
 func (c *Conversation) fill(
 	ctx context.Context,
 	record *TurnRecord,
-	outcome *assistantjobs.AssistantTurnResult,
+	outcome *assistantcontract.AssistantTurnResult,
 ) {
 	if outcome.Status != "" {
 		record.Status = conversation.AssistantTurnStatus(outcome.Status)
@@ -402,7 +419,7 @@ func (c *Conversation) fill(
 
 func (c *Conversation) describeProposal(
 	ctx context.Context,
-	summary *serviceports.AssistantProposal,
+	summary *agentports.AssistantProposal,
 ) *ProposalRecord {
 	record := &ProposalRecord{
 		ID:        summary.ID,
@@ -429,9 +446,9 @@ func (c *Conversation) describeProposal(
 		return record
 	}
 
-	preview, err := c.session.bench.Previews.ForProposal(ctx, &serviceports.ProposalPreviewRequest{
+	preview, err := c.session.bench.Previews.ForProposal(ctx, &agentports.ProposalPreviewRequest{
 		Proposal: proposal,
-		Viewer:   &serviceports.PreviewViewer{Actor: &c.session.Actor},
+		Viewer:   &agentports.PreviewViewer{Actor: &c.session.Actor},
 	})
 	if err != nil {
 		record.Error = "preview: " + err.Error()
@@ -442,8 +459,11 @@ func (c *Conversation) describeProposal(
 	return record
 }
 
-func (c *Conversation) loadProposal(ctx context.Context, id pulid.ID) (*agent.AgentProposal, error) {
-	return c.session.bench.Proposals.GetByID(ctx, repositories.GetAgentProposalByIDRequest{
+func (c *Conversation) loadProposal(
+	ctx context.Context,
+	id pulid.ID,
+) (*agent.AgentProposal, error) {
+	return c.session.bench.Proposals.GetByID(ctx, agentports.GetAgentProposalByIDRequest{
 		ID:         id,
 		TenantInfo: &c.session.Tenant,
 	})
@@ -501,7 +521,7 @@ func (c *Conversation) decideProposal(
 		Note:       d.Note,
 	}
 
-	req := &serviceports.DecideAgentProposalRequest{
+	req := &agentports.DecideAgentProposalRequest{
 		ProposalID:    proposal.ID,
 		Decision:      decision,
 		Modifications: d.Modifications,
@@ -520,7 +540,7 @@ func (c *Conversation) decideProposal(
 		return record
 	}
 
-	if err := bench.Committer.CommitOwnApprovalNow(ctx, &serviceports.SettleApprovalRequest{
+	if err := bench.Committer.CommitOwnApprovalNow(ctx, &agentports.SettleApprovalRequest{
 		ProposalID: proposal.ID,
 		TenantInfo: c.session.Tenant,
 	}, &c.session.Actor); err != nil {
@@ -547,7 +567,7 @@ func (c *Conversation) decidePlan(
 		Note:     d.Note,
 	}
 
-	if _, err := bench.Plans.DecideOwn(ctx, &serviceports.DecideAgentPlanRequest{
+	if _, err := bench.Plans.DecideOwn(ctx, &agentports.DecideAgentPlanRequest{
 		PlanID:     proposal.PlanID,
 		Decision:   decision,
 		Note:       d.Note,
@@ -560,7 +580,7 @@ func (c *Conversation) decidePlan(
 		return record
 	}
 
-	if err := bench.Committer.CommitOwnApprovalNow(ctx, &serviceports.SettleApprovalRequest{
+	if err := bench.Committer.CommitOwnApprovalNow(ctx, &agentports.SettleApprovalRequest{
 		PlanID:     proposal.PlanID,
 		TenantInfo: c.session.Tenant,
 	}, &c.session.Actor); err != nil {
@@ -616,8 +636,11 @@ func (c *Conversation) settlePlan(ctx context.Context, decision *DecisionRecord)
 	decision.Executed = executed
 }
 
-func (c *Conversation) lookupTurn(ctx context.Context, turnID pulid.ID) (*conversation.AssistantTurn, error) {
-	req := repositories.GetAssistantTurnRequest{
+func (c *Conversation) lookupTurn(
+	ctx context.Context,
+	turnID pulid.ID,
+) (*conversation.AssistantTurn, error) {
+	req := agentports.GetAssistantTurnRequest{
 		ID:         turnID,
 		TenantInfo: c.session.Tenant,
 		UserID:     c.session.User.ID,

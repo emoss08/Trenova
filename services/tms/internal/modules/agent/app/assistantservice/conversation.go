@@ -1,0 +1,465 @@
+package assistantservice
+
+import (
+	"context"
+	"strconv"
+	"strings"
+	"unicode/utf8"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/zap"
+)
+
+const (
+	// historyLimit bounds how much of a long conversation is replayed. The whole
+	// thread would eventually exceed any context window, and the most recent
+	// turns are the ones that carry the thread of the question. Tool results
+	// count toward it, and the runtime cuts the older ones down before the
+	// replay, so the limit is set by how many turns should stay in view
+	// rather than by how much data those turns fetched.
+	historyLimit = 120
+	// defaultPageLimit is how much of a thread the client reads at a time;
+	// maxPageLimit is the most it may ask for in one page.
+	defaultPageLimit = 50
+	maxPageLimit     = 200
+	// maxThreadMessages is where a conversation must be continued in a new
+	// one. Every message past the model's history window is history the
+	// client still has to render.
+	maxThreadMessages = 400
+	// maxTitleRunes bounds a title derived from the first message.
+	maxTitleRunes = 60
+)
+
+func (s *Service) StartThread(
+	ctx context.Context,
+	req *agentports.StartThreadRequest,
+	actor *permissionports.RequestActor,
+) (*conversation.Thread, error) {
+	definition, err := s.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         req.AgentDefinitionID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if !definition.Enabled {
+		return nil, errortypes.NewBusinessError(
+			"Agent {0} is disabled and cannot be used", definition.Name,
+		)
+	}
+	if err = assertChatAgent(definition); err != nil {
+		return nil, err
+	}
+	if err = s.assertMayUseAgent(ctx, actor, definition); err != nil {
+		return nil, err
+	}
+	if req.SubjectID.IsNotNil() {
+		if err = s.assertSubjectReadable(ctx, actor, req.SubjectType); err != nil {
+			return nil, err
+		}
+	}
+
+	origin := req.Origin
+	if origin == "" {
+		origin = conversation.ThreadOriginPanel
+	}
+
+	thread := &conversation.Thread{
+		OrganizationID:     req.TenantInfo.OrgID,
+		BusinessUnitID:     req.TenantInfo.BuID,
+		UserID:             actor.UserID,
+		AgentDefinitionID:  definition.ID,
+		Title:              strings.TrimSpace(req.Title),
+		Status:             conversation.ThreadStatusActive,
+		Origin:             origin,
+		SubjectType:        req.SubjectType,
+		SubjectID:          req.SubjectID,
+		HandedFromThreadID: req.HandedFromThreadID,
+		Taint:              req.Taint,
+		TaintedAt:          req.TaintedAt,
+		PinnedFacts:        conversation.NormalizePinnedFacts(req.PinnedFacts),
+	}
+
+	multiErr := errortypes.NewMultiError()
+	thread.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	created, err := s.conversations.CreateThread(ctx, thread)
+	if err != nil {
+		return nil, err
+	}
+	created.MarkContinuable()
+
+	return created, nil
+}
+
+// assertWithinBudget refuses a turn once the agent's monthly budget is
+// spent. The person asking is told which cap, because the alternative is a
+// conversation that stops answering without saying why.
+func (s *Service) assertWithinBudget(
+	ctx context.Context,
+	definition *agentdefinition.Definition,
+) error {
+	if s.budgets == nil {
+		return nil
+	}
+
+	refusal, err := s.budgets.CheckRun(ctx, definition)
+	if err != nil {
+		return err
+	}
+	if refusal.Refused() {
+		refused := errortypes.NewBusinessError(refusal.Message(definition.Name))
+		// The Desk says which cap, when it lifts and who can raise it, so it
+		// gets the figures as well as the sentence.
+		refused.Params = map[string]string{
+			"code":     "agent_budget",
+			"cap":      refusal.Cap,
+			"spent":    refusal.Spent,
+			"limit":    refusal.Limit,
+			"resetsAt": strconv.FormatInt(refusal.ResetsAt, 10),
+		}
+		return refused
+	}
+
+	return nil
+}
+
+func (s *Service) ListThreads(
+	ctx context.Context,
+	req agentports.ListThreadsRequest,
+) (*agentports.ThreadPage, error) {
+	result, err := s.conversations.ListThreads(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if err = s.markContinuable(
+		ctx,
+		threadReader(req.UserID, req.TenantInfo),
+		result.Items...,
+	); err != nil {
+		return nil, err
+	}
+	if err = s.markAttention(ctx, req.UserID, req.TenantInfo, result.Items); err != nil {
+		return nil, err
+	}
+	if err = s.markCases(ctx, req.UserID, req.TenantInfo, result.Items...); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (s *Service) markAttention(
+	ctx context.Context,
+	userID pulid.ID,
+	tenant pagination.TenantInfo,
+	threads []*conversation.Thread,
+) error {
+	if len(threads) == 0 {
+		return nil
+	}
+
+	ids := make([]pulid.ID, 0, len(threads))
+	for _, thread := range threads {
+		ids = append(ids, thread.ID)
+	}
+
+	rows, err := s.conversations.ListThreadAttention(ctx, agentports.ListThreadAttentionRequest{
+		ThreadIDs:  ids,
+		UserID:     userID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return err
+	}
+
+	runIDs := make([]pulid.ID, 0)
+	for _, row := range rows {
+		runIDs = append(runIDs, row.PendingProposalRuns...)
+	}
+	verdicts, err := s.shadow.ForRuns(ctx, tenant, sliceutils.Dedupe(runIDs))
+	if err != nil {
+		return err
+	}
+
+	for _, thread := range threads {
+		row := rows[thread.ID]
+		pending := row.PendingPlans
+		for _, runID := range row.PendingProposalRuns {
+			if !verdicts[runID].Shadow() {
+				pending++
+			}
+		}
+		thread.ApplyAttention(conversation.ThreadAttentionSignals{
+			PendingDecisions: pending,
+			LastTurnStatus:   row.LastTurnStatus,
+		})
+	}
+
+	return nil
+}
+
+func (s *Service) MarkThreadRead(ctx context.Context, req agentports.GetThreadRequest) error {
+	return s.conversations.MarkThreadRead(ctx, agentports.MarkThreadReadRequest{
+		ThreadID:   req.ID,
+		UserID:     req.UserID,
+		TenantInfo: req.TenantInfo,
+		ReadAt:     timeutils.NowUnix(),
+	})
+}
+
+func (s *Service) GetThread(
+	ctx context.Context,
+	req agentports.GetThreadRequest,
+) (*conversation.Thread, error) {
+	thread, err := s.conversations.GetThread(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if err = s.markContinuable(ctx, threadReader(req.UserID, req.TenantInfo), thread); err != nil {
+		return nil, err
+	}
+	if err = s.markCases(ctx, req.UserID, req.TenantInfo, thread); err != nil {
+		return nil, err
+	}
+
+	return thread, nil
+}
+
+// markCases says where each conversation that is a case stands.
+func (s *Service) markCases(
+	ctx context.Context,
+	userID pulid.ID,
+	tenant pagination.TenantInfo,
+	threads ...*conversation.Thread,
+) error {
+	if s.cases == nil {
+		return nil
+	}
+
+	return s.cases.Attach(ctx, tenant, userID, threads)
+}
+
+func (s *Service) ListMessages(
+	ctx context.Context,
+	req agentports.ListThreadMessagesRequest,
+) (*agentports.ThreadMessagesPage, error) {
+	// Reading the thread first is the authorization check: it is scoped by user,
+	// so a thread belonging to someone else is not found rather than returned.
+	if _, err := s.conversations.GetThread(ctx, req.Thread); err != nil {
+		return nil, err
+	}
+
+	limit := pageLimit(req.Limit)
+
+	// One more than the page says whether there is a page above it without
+	// a second query for the count of what is left.
+	messages, err := s.conversations.ListMessages(ctx, agentports.ListMessagesRequest{
+		ThreadID:       req.Thread.ID,
+		TenantInfo:     req.Thread.TenantInfo,
+		Limit:          limit + 1,
+		BeforeSequence: req.BeforeSequence,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	hasMore := len(messages) > limit
+	if hasMore {
+		messages = messages[len(messages)-limit:]
+	}
+
+	total, err := s.conversations.CountMessages(ctx, agentports.CountMessagesRequest{
+		ThreadID:   req.Thread.ID,
+		TenantInfo: req.Thread.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.runtime.MarkToolEffects(messages)
+	s.nameDelegatedSteps(ctx, req.Thread.TenantInfo, messages)
+	s.describeMemories(ctx, req.Thread.TenantInfo, req.Thread.UserID, messages)
+
+	return &agentports.ThreadMessagesPage{
+		Results: messages,
+		HasMore: hasMore,
+		Total:   total,
+		Limit:   maxThreadMessages,
+	}, nil
+}
+
+func pageLimit(requested int) int {
+	switch {
+	case requested <= 0:
+		return defaultPageLimit
+	case requested > maxPageLimit:
+		return maxPageLimit
+	default:
+		return requested
+	}
+}
+
+// assertRoom refuses a turn on a thread that has reached its length. The
+// thread is what the client renders and what every turn replays a slice of;
+// one that grows without end slows the page it lives on and buries the
+// question under its own history. The limit is generous for a conversation
+// and the refusal says what to do instead.
+func (s *Service) assertRoom(
+	ctx context.Context,
+	thread *conversation.Thread,
+	tenantInfo pagination.TenantInfo,
+) error {
+	count, err := s.conversations.CountMessages(ctx, agentports.CountMessagesRequest{
+		ThreadID:   thread.ID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+	if count < maxThreadMessages {
+		return nil
+	}
+
+	return errortypes.NewBusinessError(
+		"This conversation has reached its limit of {0} messages. Start a new conversation to continue",
+		maxThreadMessages,
+	)
+}
+
+// UpdateThread changes what a person may change about their own
+// conversation. The thread is read under their user id, so someone else's
+// is not found rather than renamed.
+func (s *Service) UpdateThread(
+	ctx context.Context,
+	req *agentports.UpdateThreadRequest,
+	actor *permissionports.RequestActor,
+) (*conversation.Thread, error) {
+	thread, err := s.conversations.GetThread(ctx, agentports.GetThreadRequest{
+		ID:         req.ThreadID,
+		UserID:     actor.UserID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Title != nil {
+		thread.Title = strings.TrimSpace(*req.Title)
+	}
+	if req.Pinned != nil {
+		thread.Pinned = *req.Pinned
+	}
+	if req.PinnedFacts != nil {
+		thread.PinnedFacts = conversation.NormalizePinnedFacts(*req.PinnedFacts)
+	}
+	if req.Keep && thread.Origin.Keepable() {
+		thread.Origin = conversation.ThreadOriginDesk
+	}
+	if req.AutoCompact != nil {
+		thread.AutoCompactOff = !*req.AutoCompact
+	}
+
+	multiErr := errortypes.NewMultiError()
+	thread.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	updated, err := s.conversations.UpdateThread(ctx, thread)
+	if err != nil {
+		return nil, err
+	}
+	if err = s.markContinuable(ctx, actor, updated); err != nil {
+		return nil, err
+	}
+
+	return updated, nil
+}
+
+// DeleteThread removes a conversation and withdraws what its turns proposed
+// and nobody decided. Left pending, those stayed in the decisions inbox, and
+// approving one followed up into a conversation that no longer existed.
+func (s *Service) DeleteThread(
+	ctx context.Context,
+	req agentports.GetThreadRequest,
+) error {
+	if err := s.conversations.DeleteThread(ctx, req); err != nil {
+		return err
+	}
+	s.withdrawPending(ctx, req.ID, req.TenantInfo)
+
+	return nil
+}
+
+// withdrawPending runs after the conversation is gone, so a failure is logged
+// rather than returned: the person's delete went through, and a proposal left
+// waiting still expires on its own deadline.
+func (s *Service) withdrawPending(
+	ctx context.Context,
+	threadID pulid.ID,
+	tenant pagination.TenantInfo,
+) {
+	if s.proposals != nil {
+		if _, err := s.proposals.ExpirePendingByThread(ctx,
+			agentports.ExpireAgentProposalsByThreadRequest{ThreadID: threadID, TenantInfo: tenant},
+		); err != nil {
+			s.logger.Warn("could not withdraw a deleted conversation's proposals",
+				zap.String("thread", threadID.String()), zap.Error(err))
+		}
+	}
+	if s.plans != nil {
+		if _, err := s.plans.ExpirePendingByThread(ctx,
+			agentports.ExpireAgentPlansByThreadRequest{ThreadID: threadID, TenantInfo: tenant},
+		); err != nil {
+			s.logger.Warn("could not withdraw a deleted conversation's plans",
+				zap.String("thread", threadID.String()), zap.Error(err))
+		}
+	}
+}
+
+// titleIfUnnamed names a thread from its first message so the list is readable
+// without asking the model for a summary.
+func (s *Service) titleIfUnnamed(
+	ctx context.Context,
+	thread *conversation.Thread,
+	firstMessage string,
+) {
+	if strings.TrimSpace(thread.Title) != "" {
+		return
+	}
+
+	thread.Title = truncateRunes(firstMessage, maxTitleRunes)
+	if _, err := s.conversations.UpdateThread(ctx, thread); err != nil {
+		// A missing title is cosmetic, so it must not fail a turn that otherwise
+		// succeeded and is already saved.
+		s.logger.Warn("failed to title thread", zap.Error(err))
+	}
+}
+
+func truncateRunes(s string, limit int) string {
+	s = strings.TrimSpace(s)
+	if utf8.RuneCountInString(s) <= limit {
+		return s
+	}
+
+	runes := []rune(s)
+
+	return strings.TrimSpace(string(runes[:limit])) + "…"
+}

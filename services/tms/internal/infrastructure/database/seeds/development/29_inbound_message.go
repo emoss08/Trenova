@@ -5,13 +5,16 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -123,7 +126,7 @@ func (s *InboundMessageSeed) Run(ctx context.Context, tx bun.Tx) error {
 				)
 			}
 
-			cols := buncolgen.MailboxColumns
+			cols := inboundmessagecol.MailboxColumns
 			count, err := tx.NewSelect().
 				Model((*inboundmessage.Mailbox)(nil)).
 				Where(cols.OrganizationID.Eq(), refs.org.ID).
@@ -162,7 +165,7 @@ func (s *InboundMessageSeed) loadRefs(
 
 	refs := &inboundSeedRefs{org: org, admin: admin, now: timeutils.NowUnix()}
 
-	customerCols := buncolgen.CustomerColumns
+	customerCols := customercol.CustomerColumns
 	refs.customers = make([]*customer.Customer, 0, 2)
 	if err = tx.NewSelect().
 		Model(&refs.customers).
@@ -177,7 +180,7 @@ func (s *InboundMessageSeed) loadRefs(
 		return nil, fmt.Errorf("need two seeded customers: %w", seedhelpers.ErrEntityNotFound)
 	}
 
-	shipmentCols := buncolgen.ShipmentColumns
+	shipmentCols := shipmentcol.ShipmentColumns
 	refs.shipments = make([]*shipment.Shipment, 0, 3)
 	if err = tx.NewSelect().
 		Model(&refs.shipments).
@@ -212,7 +215,7 @@ func (s *InboundMessageSeed) backfillSigningSecret(
 		return nil
 	}
 
-	cols := buncolgen.MailboxColumns
+	cols := inboundmessagecol.MailboxColumns
 	if _, err := tx.NewUpdate().
 		Model((*inboundmessage.Mailbox)(nil)).
 		Set(cols.SigningSecret.Set(), secret).

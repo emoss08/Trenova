@@ -4,7 +4,7 @@ package holdreasonresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	holdreasonservice "github.com/emoss08/trenova/internal/core/services/holdreasonservice"
+	holdreasonservice "github.com/emoss08/trenova/internal/modules/reference/app/holdreasonservice"
 )
 
 type Deps struct {

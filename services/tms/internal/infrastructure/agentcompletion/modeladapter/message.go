@@ -1,8 +1,9 @@
 package modeladapter
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 // The conversation primitives live in the ports package because the port
@@ -10,23 +11,23 @@ import (
 // infrastructure. They are aliased here so adapter code reads in its own terms
 // rather than qualifying every message type.
 type (
-	Role     = serviceports.Role
-	Message  = serviceports.Message
-	ToolSpec = serviceports.ToolSpec
-	ToolCall = serviceports.ToolCall
+	Role     = agentports.Role
+	Message  = agentports.Message
+	ToolSpec = kernelports.ToolSpec
+	ToolCall = agentports.ToolCall
 	// ReasoningTrace is the conversation domain's, so what an adapter reads
 	// off the wire is what the message stores and what the next call replays.
 	ReasoningTrace = conversation.ReasoningTrace
-	CutOffToolCall = serviceports.CutOffToolCall
+	CutOffToolCall = agentports.CutOffToolCall
 )
 
 const (
-	RoleUser      = serviceports.RoleUser
-	RoleAssistant = serviceports.RoleAssistant
-	RoleTool      = serviceports.RoleTool
+	RoleUser      = agentports.RoleUser
+	RoleAssistant = agentports.RoleAssistant
+	RoleTool      = agentports.RoleTool
 )
 
 // UserMessage is the common single-turn case.
 func UserMessage(content string) []Message {
-	return serviceports.UserMessage(content)
+	return agentports.UserMessage(content)
 }

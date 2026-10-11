@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 )
@@ -18,7 +19,7 @@ const (
 
 func CreateSystemAgentDefinitions(ctx context.Context, tx bun.IDB, scope Scope) (int, error) {
 	orgID, buID := scope.OrganizationID, scope.BusinessUnitID
-	cols := buncolgen.DefinitionColumns
+	cols := agentdefinitioncol.DefinitionColumns
 	var existing []string
 	if err := tx.NewSelect().
 		Model((*agentdefinition.Definition)(nil)).
@@ -46,7 +47,11 @@ func CreateSystemAgentDefinitions(ctx context.Context, tx bun.IDB, scope Scope) 
 		if definition.TriggerMode == agentdefinition.TriggerScheduled {
 			next, err := definition.ComputeNextRun(now)
 			if err != nil {
-				return created, fmt.Errorf("schedule system agent %s: %w", definition.SystemKey, err)
+				return created, fmt.Errorf(
+					"schedule system agent %s: %w",
+					definition.SystemKey,
+					err,
+				)
 			}
 			definition.NextRunAt = &next
 		}

@@ -10,9 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,7 +29,7 @@ func (r *QueryResolver) RecurringShipments(ctx context.Context, input gqlmodel.D
 
 	result, err := r.RecurringShipmentService.ListConnection(
 		ctx,
-		&repositories.ListRecurringShipmentConnectionRequest{
+		&recurringshipmentports.ListRecurringShipmentConnectionRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
@@ -52,7 +52,7 @@ func (r *QueryResolver) RecurringShipment(ctx context.Context, id string) (*recu
 		return nil, err
 	}
 
-	return r.RecurringShipmentService.Get(ctx, &repositories.GetRecurringShipmentByIDRequest{
+	return r.RecurringShipmentService.Get(ctx, &recurringshipmentports.GetRecurringShipmentByIDRequest{
 		ID:         recurringShipmentID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

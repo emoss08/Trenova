@@ -10,11 +10,17 @@ import (
 var errNotDecimal = errors.New("must be an amount")
 
 func DecimalAtLeast(minimum decimal.Decimal, message string) validation.Rule {
-	return decimalBound(func(amount decimal.Decimal) bool { return amount.GreaterThanOrEqual(minimum) }, message)
+	return decimalBound(
+		func(amount decimal.Decimal) bool { return amount.GreaterThanOrEqual(minimum) },
+		message,
+	)
 }
 
 func DecimalAtMost(maximum decimal.Decimal, message string) validation.Rule {
-	return decimalBound(func(amount decimal.Decimal) bool { return amount.LessThanOrEqual(maximum) }, message)
+	return decimalBound(
+		func(amount decimal.Decimal) bool { return amount.LessThanOrEqual(maximum) },
+		message,
+	)
 }
 
 func decimalBound(within func(decimal.Decimal) bool, message string) validation.Rule {

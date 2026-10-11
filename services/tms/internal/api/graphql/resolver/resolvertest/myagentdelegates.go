@@ -3,13 +3,13 @@ package resolvertest
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type DelegateDefinitionsRepo struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 
 	ByID  map[pulid.ID]*agentdefinition.Definition
 	Reads int
@@ -17,7 +17,7 @@ type DelegateDefinitionsRepo struct {
 
 func (r *DelegateDefinitionsRepo) ListByIDs(
 	_ context.Context,
-	req repositories.ListAgentDefinitionsByIDsRequest,
+	req agentdefinitionports.ListAgentDefinitionsByIDsRequest,
 ) ([]*agentdefinition.Definition, error) {
 	r.Reads++
 	out := make([]*agentdefinition.Definition, 0, len(req.IDs))

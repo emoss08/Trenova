@@ -1,0 +1,339 @@
+package aicontrolsummaryservice
+
+import (
+	"context"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentroster"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+)
+
+type factsRepo struct {
+	counts   aicontrolsummary.AgentCounts
+	failures []agentrosterports.ProviderFailureCount
+}
+
+func (f *factsRepo) AgentCounts(
+	context.Context,
+	*agentrosterports.AgentCountsRequest,
+) (aicontrolsummary.AgentCounts, error) {
+	return f.counts, nil
+}
+
+func (f *factsRepo) AgentRoster(
+	context.Context,
+	*agentrosterports.AgentRosterRequest,
+) ([]*agentroster.Stat, error) {
+	return nil, nil
+}
+
+func (f *factsRepo) ProviderFailures(
+	context.Context,
+	*agentrosterports.ProviderFailuresRequest,
+) ([]agentrosterports.ProviderFailureCount, error) {
+	return f.failures, nil
+}
+
+type providerRepo struct {
+	agentports.AIProviderRepository
+	enabled []*aiprovider.Provider
+	off     []*aiprovider.Provider
+}
+
+func (p *providerRepo) ListEnabled(context.Context, pagination.TenantInfo) ([]*aiprovider.Provider, error) {
+	return p.enabled, nil
+}
+
+func (p *providerRepo) ListOrdered(context.Context, pagination.TenantInfo) ([]*aiprovider.Provider, error) {
+	all := make([]*aiprovider.Provider, 0, len(p.enabled)+len(p.off))
+	for _, provider := range append(append([]*aiprovider.Provider{}, p.enabled...), p.off...) {
+		all = append(all, provider.Redacted())
+	}
+	return all, nil
+}
+
+type usageRepo struct {
+	aiusageports.AIUsageRepository
+	calls int
+	since int64
+}
+
+func (u *usageRepo) Summary(
+	_ context.Context,
+	req aiusageports.AIUsageSummaryRequest,
+) (*aiusageports.AIUsageSummaryRow, error) {
+	u.since = req.Since
+	return &aiusageports.AIUsageSummaryRow{Totals: aiusageports.AIUsageTotals{Calls: u.calls}}, nil
+}
+
+type controlRepo struct {
+	tenantports.AgentControlRepository
+	paused bool
+}
+
+func (c *controlRepo) GetOrCreate(context.Context, pagination.TenantInfo) (*tenant.AgentControl, error) {
+	return &tenant.AgentControl{ShadowMode: c.paused}, nil
+}
+
+type memoryCache struct {
+	mu      sync.Mutex
+	stored  map[string]aicontrolsummary.Summary
+	ttls    map[string]time.Duration
+	claims  int
+	allowed bool
+}
+
+func newMemoryCache() *memoryCache {
+	return &memoryCache{
+		stored:  map[string]aicontrolsummary.Summary{},
+		ttls:    map[string]time.Duration{},
+		allowed: true,
+	}
+}
+
+func (c *memoryCache) Get(
+	_ context.Context,
+	key *aicontrolsummaryports.AIControlSummaryKey,
+	dest *aicontrolsummary.Summary,
+) (bool, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	value, ok := c.stored[key.FactsHash]
+	if ok {
+		*dest = value
+	}
+	return ok, nil
+}
+
+func (c *memoryCache) Set(
+	_ context.Context,
+	key *aicontrolsummaryports.AIControlSummaryKey,
+	value *aicontrolsummary.Summary,
+	ttl time.Duration,
+) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.stored[key.FactsHash] = *value
+	c.ttls[key.FactsHash] = ttl
+	return nil
+}
+
+func (c *memoryCache) ClaimNarration(context.Context, *aicontrolsummaryports.AIControlSummaryKey, int) (bool, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.claims++
+	return c.allowed, nil
+}
+
+type completion struct {
+	agentports.CompletionService
+	reply string
+	calls int
+}
+
+func (c *completion) CompleteStructured(
+	context.Context,
+	*agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
+	c.calls++
+	return &agentports.StructuredCompletionResult{Text: c.reply, ModelIdentifier: "test"}, nil
+}
+
+func newService(cache *memoryCache, model *completion, enabled ...*aiprovider.Provider) *Service {
+	svc := &Service{
+		l:         zap.NewNop(),
+		facts:     &factsRepo{counts: aicontrolsummary.AgentCounts{Total: 3, On: 2, Waiting: 4}},
+		providers: &providerRepo{enabled: enabled},
+		controls:  &controlRepo{},
+		usage:     &usageRepo{calls: 1284},
+		cache:     cache,
+		now:       func() time.Time { return time.Unix(1_800_000_000, 0) },
+		detach:    func(run func()) { run() },
+	}
+	if model != nil {
+		svc.completion = model
+	}
+	return svc
+}
+
+func chatProvider() *aiprovider.Provider {
+	dimensions := 1536
+	return &aiprovider.Provider{
+		EmbeddingDimensions: &dimensions,
+		ID:                  pulid.MustNew("aiprv_"),
+		Name:                "Primary",
+		Enabled:             true,
+		Tasks:               aiprovider.AllTasks(),
+		Trusted:             true,
+		Kind:                aiprovider.KindOpenAIChat,
+	}
+}
+
+const reworded = `{"segments":[
+ {"text":"Two agents are on and ","strong":false,"target":"","providerId":""},
+ {"text":"4 proposals","strong":true,"target":"watchtower","providerId":""},
+ {"text":" are waiting on someone in Watchtower.","strong":false,"target":"","providerId":""}]}`
+
+func request() *aicontrolsummaryports.AIControlSummaryRequest {
+	return &aicontrolsummaryports.AIControlSummaryRequest{Tab: aicontrolsummary.TabOverview}
+}
+
+func TestSummaryRewordsOnceAndThenReadsWhatWasKept(t *testing.T) {
+	t.Parallel()
+
+	cache := newMemoryCache()
+	model := &completion{reply: reworded}
+	svc := newService(cache, model, chatProvider())
+
+	first, err := svc.Summary(t.Context(), request())
+	require.NoError(t, err)
+	assert.True(t, first.Pending, "the first read gets the plain sentence while a model rewords it")
+	assert.False(t, first.Narrated)
+
+	second, err := svc.Summary(t.Context(), request())
+	require.NoError(t, err)
+	assert.True(t, second.Narrated)
+	assert.False(t, second.Pending)
+	assert.Equal(t, "Two agents are on and 4 proposals are waiting on someone in Watchtower.",
+		aicontrolsummary.Text(second.Segments))
+	assert.Equal(t, aicontrolsummary.TonePlain, second.Segments[1].Tone,
+		"the link keeps the plain sentence's tone, not one the model chose")
+
+	_, err = svc.Summary(t.Context(), request())
+	require.NoError(t, err)
+	assert.Equal(t, 1, model.calls, "a read with the same facts never asks the model again")
+	assert.Equal(t, narratedTTL, cache.ttls[first.FactsHash])
+}
+
+func TestSummaryKeepsThePlainSentenceWhenTheModelInventsAFigure(t *testing.T) {
+	t.Parallel()
+
+	cache := newMemoryCache()
+	model := &completion{reply: `{"segments":[
+ {"text":"9 proposals","strong":true,"target":"watchtower","providerId":""},
+ {"text":" wait.","strong":false,"target":"","providerId":""}]}`}
+	svc := newService(cache, model, chatProvider())
+
+	first, err := svc.Summary(t.Context(), request())
+	require.NoError(t, err)
+	second, err := svc.Summary(t.Context(), request())
+	require.NoError(t, err)
+
+	assert.False(t, second.Narrated)
+	assert.Equal(t, aicontrolsummary.Text(first.Segments), aicontrolsummary.Text(second.Segments))
+	assert.Equal(t, plainTTL, cache.ttls[first.FactsHash])
+}
+
+func TestSummaryWithNoProviderNeverAsksAModel(t *testing.T) {
+	t.Parallel()
+
+	cache := newMemoryCache()
+	model := &completion{reply: reworded}
+	svc := newService(cache, model)
+
+	summary, err := svc.Summary(t.Context(), request())
+
+	require.NoError(t, err)
+	assert.False(t, summary.Pending)
+	assert.Zero(t, model.calls)
+	assert.Zero(t, cache.claims)
+}
+
+func TestSummaryPastTheDaysAllowanceStaysPlain(t *testing.T) {
+	t.Parallel()
+
+	cache := newMemoryCache()
+	cache.allowed = false
+	model := &completion{reply: reworded}
+	svc := newService(cache, model, chatProvider())
+
+	summary, err := svc.Summary(t.Context(), request())
+
+	require.NoError(t, err)
+	assert.False(t, summary.Pending)
+	assert.Zero(t, model.calls)
+}
+
+func TestSummaryRefusesAnUnknownTab(t *testing.T) {
+	t.Parallel()
+
+	_, err := newService(newMemoryCache(), nil).Summary(t.Context(), &aicontrolsummaryports.AIControlSummaryRequest{Tab: "Nope"})
+
+	require.Error(t, err)
+}
+
+func TestFactsNameOnlyEnabledProvidersAsFailing(t *testing.T) {
+	t.Parallel()
+
+	on := chatProvider()
+	svc := newService(newMemoryCache(), nil, on)
+	svc.facts = &factsRepo{failures: []agentrosterports.ProviderFailureCount{
+		{ProviderID: on.ID, FailedCalls: 24, LastFailureAt: 10},
+		{ProviderID: pulid.MustNew("aiprv_"), FailedCalls: 3},
+	}}
+
+	facts, err := svc.Facts(t.Context(), pagination.TenantInfo{})
+
+	require.NoError(t, err)
+	require.Len(t, facts.Failing, 1)
+	assert.Equal(t, "Primary", facts.Failing[0].Name)
+	assert.Zero(t, facts.Uncovered)
+}
+
+func TestAcceptRefusesALinkThePlainSentenceDoesNotHave(t *testing.T) {
+	t.Parallel()
+
+	plain := []aicontrolsummary.Segment{{Text: "4 proposals", Target: aicontrolsummary.TargetWatchtower}}
+	facts := &aicontrolsummary.Facts{Agents: aicontrolsummary.AgentCounts{Waiting: 4}}
+
+	_, ok := Accept([]aicontrolsummary.Segment{
+		{Text: "4 proposals", Target: aicontrolsummary.TargetWatchtower},
+		{Text: " and routing", Target: aicontrolsummary.TargetRouting},
+	}, facts, plain)
+
+	assert.False(t, ok)
+}
+
+func TestFactsCountEveryProviderTheWeekAndAKeyStillMissing(t *testing.T) {
+	t.Parallel()
+
+	on := &aiprovider.Provider{
+		ID: pulid.MustNew("aiprv_"), Name: "Local", Kind: aiprovider.KindOllama, Enabled: true,
+		Tasks: []aiprovider.Task{aiprovider.TaskGeneral},
+	}
+	keyed := &aiprovider.Provider{
+		ID: pulid.MustNew("aiprv_"), Name: "OpenAI", Kind: aiprovider.KindOpenAIResponses, APIKey: "sealed",
+	}
+	keyless := &aiprovider.Provider{
+		ID: pulid.MustNew("aiprv_"), Name: "Anthropic", Kind: aiprovider.KindAnthropicMessages,
+	}
+	svc := newService(newMemoryCache(), nil, on)
+	svc.providers = &providerRepo{enabled: []*aiprovider.Provider{on}, off: []*aiprovider.Provider{keyed, keyless}}
+	usage := &usageRepo{calls: 1284}
+	svc.usage = usage
+
+	facts, err := svc.Facts(t.Context(), pagination.TenantInfo{})
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, facts.ProvidersOn)
+	assert.Equal(t, 3, facts.ProvidersTotal)
+	assert.Equal(t, 1284, facts.WeekCalls)
+	assert.Equal(t, int64(1_800_000_000-7*24*60*60), usage.since)
+	require.NotNil(t, facts.AwaitingKey)
+	assert.Equal(t, "Anthropic", facts.AwaitingKey.Name)
+	assert.Equal(t, keyless.ID, facts.AwaitingKey.ProviderID)
+}

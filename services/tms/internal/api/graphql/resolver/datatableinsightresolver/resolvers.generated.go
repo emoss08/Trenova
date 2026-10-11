@@ -4,7 +4,7 @@ package datatableinsightresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	tableinsightservice "github.com/emoss08/trenova/internal/core/services/tableinsightservice"
+	tableinsightservice "github.com/emoss08/trenova/internal/modules/identity/app/tableinsightservice"
 )
 
 type Deps struct {

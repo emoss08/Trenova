@@ -11,10 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -42,7 +41,7 @@ func (r *InvoiceAdjustmentResolver) RerateVariancePercent(ctx context.Context, o
 	return obj.RerateVariancePercent.String(), nil
 }
 
-func (r *InvoiceAdjustmentApprovalQueueItemResolver) RebillStrategy(ctx context.Context, obj *repositories.InvoiceAdjustmentApprovalQueueItem) (*invoiceadjustment.RebillStrategy, error) {
+func (r *InvoiceAdjustmentApprovalQueueItemResolver) RebillStrategy(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (*invoiceadjustment.RebillStrategy, error) {
 	if obj == nil || !obj.RebillStrategy.IsValid() {
 		return nil, nil
 	}
@@ -50,19 +49,19 @@ func (r *InvoiceAdjustmentApprovalQueueItemResolver) RebillStrategy(ctx context.
 	return &obj.RebillStrategy, nil
 }
 
-func (r *InvoiceAdjustmentApprovalQueueItemResolver) CreditTotalAmount(ctx context.Context, obj *repositories.InvoiceAdjustmentApprovalQueueItem) (string, error) {
+func (r *InvoiceAdjustmentApprovalQueueItemResolver) CreditTotalAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error) {
 	return obj.CreditTotalAmount.String(), nil
 }
 
-func (r *InvoiceAdjustmentApprovalQueueItemResolver) RebillTotalAmount(ctx context.Context, obj *repositories.InvoiceAdjustmentApprovalQueueItem) (string, error) {
+func (r *InvoiceAdjustmentApprovalQueueItemResolver) RebillTotalAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error) {
 	return obj.RebillTotalAmount.String(), nil
 }
 
-func (r *InvoiceAdjustmentApprovalQueueItemResolver) NetDeltaAmount(ctx context.Context, obj *repositories.InvoiceAdjustmentApprovalQueueItem) (string, error) {
+func (r *InvoiceAdjustmentApprovalQueueItemResolver) NetDeltaAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error) {
 	return obj.NetDeltaAmount.String(), nil
 }
 
-func (r *InvoiceAdjustmentApprovalQueueItemResolver) RerateVariancePercent(ctx context.Context, obj *repositories.InvoiceAdjustmentApprovalQueueItem) (string, error) {
+func (r *InvoiceAdjustmentApprovalQueueItemResolver) RerateVariancePercent(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error) {
 	return obj.RerateVariancePercent.String(), nil
 }
 
@@ -99,7 +98,7 @@ func (r *MutationResolver) ApproveInvoiceAdjustment(ctx context.Context, adjustm
 
 	return r.InvoiceAdjustmentService.Approve(
 		ctx,
-		&services.ApproveInvoiceAdjustmentRequest{
+		&invoiceadjustmentports.ApproveInvoiceAdjustmentRequest{
 			AdjustmentID: id,
 			TenantInfo:   base.TenantInfo(authCtx),
 		},
@@ -120,7 +119,7 @@ func (r *MutationResolver) RejectInvoiceAdjustment(ctx context.Context, input gq
 
 	return r.InvoiceAdjustmentService.Reject(
 		ctx,
-		&services.RejectInvoiceAdjustmentRequest{
+		&invoiceadjustmentports.RejectInvoiceAdjustmentRequest{
 			AdjustmentID: id,
 			Reason:       stringutils.FromPtr(input.Reason),
 			TenantInfo:   base.TenantInfo(authCtx),
@@ -140,7 +139,7 @@ func (r *QueryResolver) InvoiceAdjustment(ctx context.Context, id string) (*invo
 		return nil, err
 	}
 
-	return r.InvoiceAdjustmentService.GetDetail(ctx, &services.GetInvoiceAdjustmentDetailRequest{
+	return r.InvoiceAdjustmentService.GetDetail(ctx, &invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
 		AdjustmentID: adjustmentID,
 		TenantInfo:   base.TenantInfo(authCtx),
 	})
@@ -165,7 +164,7 @@ func (r *QueryResolver) InvoiceAdjustmentApprovals(ctx context.Context, input gq
 	return invoiceAdjustmentApprovalConnectionToModel(result)
 }
 
-func (r *QueryResolver) InvoiceAdjustmentOperationsSummary(ctx context.Context) (*repositories.InvoiceAdjustmentOperationsSummary, error) {
+func (r *QueryResolver) InvoiceAdjustmentOperationsSummary(ctx context.Context) (*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoice, permission.OpRead)
 	if err != nil {
 		return nil, err

@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -23,8 +23,8 @@ type failingStore struct {
 
 func (s *failingStore) Check(
 	context.Context,
-	[]repositories.RateLimitRequest,
-) ([]repositories.RateLimitDecision, error) {
+	[]kernelports.RateLimitRequest,
+) ([]kernelports.RateLimitDecision, error) {
 	s.calls++
 	return nil, s.err
 }
@@ -33,14 +33,14 @@ type blockingStore struct{}
 
 func (blockingStore) Check(
 	ctx context.Context,
-	_ []repositories.RateLimitRequest,
-) ([]repositories.RateLimitDecision, error) {
+	_ []kernelports.RateLimitRequest,
+) ([]kernelports.RateLimitDecision, error) {
 	<-ctx.Done()
 	return nil, ctx.Err()
 }
 
-func sampleRequests() []repositories.RateLimitRequest {
-	return []repositories.RateLimitRequest{{Key: "k", Policy: policy(60, 1), Cost: 1}}
+func sampleRequests() []kernelports.RateLimitRequest {
+	return []kernelports.RateLimitRequest{{Key: "k", Policy: policy(60, 1), Cost: 1}}
 }
 
 func TestResilientStore_UsesPrimaryWhenHealthy(t *testing.T) {
@@ -116,7 +116,7 @@ func TestResilientStore_ValidationErrorsAreNotFailures(t *testing.T) {
 		Fallback: fallback,
 	})
 
-	_, err := store.Check(t.Context(), []repositories.RateLimitRequest{{Key: ""}})
+	_, err := store.Check(t.Context(), []kernelports.RateLimitRequest{{Key: ""}})
 	assert.ErrorIs(t, err, ErrEmptyKey)
 	assert.Zero(t, fallback.calls)
 }

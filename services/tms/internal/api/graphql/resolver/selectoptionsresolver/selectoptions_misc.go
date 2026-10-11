@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -18,7 +18,7 @@ func (r *Deps) resolveServiceFailureReasonCodeSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.ServiceFailureReasonCodeSvc.Get(
 				ctx,
-				repositories.GetServiceFailureReasonCodeByIDRequest{
+				servicefailureports.GetServiceFailureReasonCodeByIDRequest{
 					ID:         id,
 					TenantInfo: req.TenantInfo,
 				},
@@ -34,7 +34,7 @@ func (r *Deps) resolveServiceFailureReasonCodeSelectOptions(
 
 	result, err := r.ServiceFailureReasonCodeSvc.SelectOptions(
 		ctx,
-		&repositories.ServiceFailureReasonCodeSelectOptionsRequest{
+		&servicefailureports.ServiceFailureReasonCodeSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)

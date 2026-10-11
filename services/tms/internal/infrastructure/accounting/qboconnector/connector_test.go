@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/quickbooks"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/stretchr/testify/assert"
@@ -32,8 +32,8 @@ func newProvider(t *testing.T, qbo config.QuickBooksConfig) *Provider {
 	return provider
 }
 
-func tenantApp(environment accountingsync.AppEnvironment) *services.AccountingApp {
-	return &services.AccountingApp{
+func tenantApp(environment accountingsync.AppEnvironment) *accountingsyncports.AccountingApp {
+	return &accountingsyncports.AccountingApp{
 		Source:               accountingsync.AppSourceTenant,
 		Environment:          environment,
 		ClientID:             "tenant-id",
@@ -204,7 +204,7 @@ func TestVerifyAppRejectsKeysTheProviderRefuses(t *testing.T) {
 	t.Parallel()
 
 	err := verifyAppAgainst(t, http.StatusUnauthorized, `{"error":"invalid_client"}`)
-	require.ErrorIs(t, err, services.ErrAccountingAppRejected)
+	require.ErrorIs(t, err, accountingsyncports.ErrAccountingAppRejected)
 }
 
 func TestVerifyAppPassesOnOtherFailures(t *testing.T) {
@@ -212,7 +212,7 @@ func TestVerifyAppPassesOnOtherFailures(t *testing.T) {
 
 	err := verifyAppAgainst(t, http.StatusBadGateway, `{}`)
 	require.Error(t, err)
-	assert.NotErrorIs(t, err, services.ErrAccountingAppRejected)
+	assert.NotErrorIs(t, err, accountingsyncports.ErrAccountingAppRejected)
 }
 
 func TestVerifyWebhookUsesTheBoundAppsVerifier(t *testing.T) {

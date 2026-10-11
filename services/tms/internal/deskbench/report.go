@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 const (
@@ -131,10 +133,18 @@ func (r *Report) Write(dir string) error {
 	if err = os.WriteFile(filepath.Join(dir, reportFile), encoded, fileMode); err != nil {
 		return fmt.Errorf("write the report: %w", err)
 	}
-	if err = os.WriteFile(filepath.Join(dir, transcriptFile), []byte(renderTranscript(r)), fileMode); err != nil {
+	if err = os.WriteFile(
+		filepath.Join(dir, transcriptFile),
+		[]byte(renderTranscript(r)),
+		fileMode,
+	); err != nil {
 		return fmt.Errorf("write the transcript: %w", err)
 	}
-	if err = os.WriteFile(filepath.Join(dir, summaryFile), []byte(RenderSummary(r)), fileMode); err != nil {
+	if err = os.WriteFile(
+		filepath.Join(dir, summaryFile),
+		[]byte(RenderSummary(r)),
+		fileMode,
+	); err != nil {
 		return fmt.Errorf("write the summary: %w", err)
 	}
 
@@ -166,22 +176,22 @@ type callWriter struct {
 }
 
 type callFile struct {
-	Seq              int                                       `json:"seq"`
-	Kind             ModelCallKind                             `json:"kind"`
-	StartedAt        time.Time                                 `json:"startedAt"`
-	FinishedAt       time.Time                                 `json:"finishedAt"`
-	Attribution      serviceports.AIUsageAttribution           `json:"attribution"`
-	SystemFile       string                                    `json:"systemFile,omitempty"`
-	SystemStable     int                                       `json:"systemStable,omitempty"`
-	ToolsFile        string                                    `json:"toolsFile,omitempty"`
-	ToolNames        []string                                  `json:"toolNames,omitempty"`
-	MaxTokens        int                                       `json:"maxTokens,omitempty"`
-	Messages         []serviceports.Message                    `json:"messages,omitempty"`
-	Structured       *serviceports.StructuredCompletionRequest `json:"structured,omitempty"`
-	ChatResult       *serviceports.ChatCompletionResult        `json:"chatResult,omitempty"`
-	StructuredResult *serviceports.StructuredCompletionResult  `json:"structuredResult,omitempty"`
-	Retries          []serviceports.ChatRetryNotice            `json:"retries,omitempty"`
-	Error            string                                    `json:"error,omitempty"`
+	Seq              int                                     `json:"seq"`
+	Kind             ModelCallKind                           `json:"kind"`
+	StartedAt        time.Time                               `json:"startedAt"`
+	FinishedAt       time.Time                               `json:"finishedAt"`
+	Attribution      aiusageports.AIUsageAttribution         `json:"attribution"`
+	SystemFile       string                                  `json:"systemFile,omitempty"`
+	SystemStable     int                                     `json:"systemStable,omitempty"`
+	ToolsFile        string                                  `json:"toolsFile,omitempty"`
+	ToolNames        []string                                `json:"toolNames,omitempty"`
+	MaxTokens        int                                     `json:"maxTokens,omitempty"`
+	Messages         []agentports.Message                    `json:"messages,omitempty"`
+	Structured       *agentports.StructuredCompletionRequest `json:"structured,omitempty"`
+	ChatResult       *agentports.ChatCompletionResult        `json:"chatResult,omitempty"`
+	StructuredResult *agentports.StructuredCompletionResult  `json:"structuredResult,omitempty"`
+	Retries          []agentports.ChatRetryNotice            `json:"retries,omitempty"`
+	Error            string                                  `json:"error,omitempty"`
 }
 
 func (w *callWriter) writeCase(result *CaseResult) error {
@@ -291,7 +301,7 @@ func (w *callWriter) prompt(system string) (string, error) {
 	return relative, nil
 }
 
-func (w *callWriter) toolSpecs(tools []serviceports.ToolSpec) (string, error) {
+func (w *callWriter) toolSpecs(tools []kernelports.ToolSpec) (string, error) {
 	if len(tools) == 0 {
 		return "", nil
 	}
@@ -316,7 +326,7 @@ func (w *callWriter) toolSpecs(tools []serviceports.ToolSpec) (string, error) {
 	return relative, nil
 }
 
-func toolNames(tools []serviceports.ToolSpec) []string {
+func toolNames(tools []kernelports.ToolSpec) []string {
 	names := make([]string, 0, len(tools))
 	for idx := range tools {
 		names = append(names, tools[idx].Name)

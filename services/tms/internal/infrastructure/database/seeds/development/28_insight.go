@@ -4,16 +4,20 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/domain/insight"
-	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/services/insightservice"
-	"github.com/emoss08/trenova/internal/core/services/insightservice/detector"
-	"github.com/emoss08/trenova/internal/core/services/insightservice/detectors"
+	"github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/insightcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
+	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detectors"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -84,7 +88,7 @@ func (s *InsightSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return err
 			}
 
-			cols := buncolgen.InsightColumns
+			cols := insightcol.InsightColumns
 			count, err := tx.NewSelect().
 				Model((*insight.Insight)(nil)).
 				Where(cols.OrganizationID.Eq(), refs.org.ID).
@@ -124,7 +128,7 @@ func (s *InsightSeed) loadRefs(
 
 	refs := &insightSeedRefs{org: org, admin: admin, now: timeutils.NowUnix()}
 
-	customerCols := buncolgen.CustomerColumns
+	customerCols := customercol.CustomerColumns
 	refs.customers = make([]*customer.Customer, 0, 3)
 	if err = tx.NewSelect().
 		Model(&refs.customers).
@@ -139,7 +143,7 @@ func (s *InsightSeed) loadRefs(
 		return nil, fmt.Errorf("need three seeded customers: %w", seedhelpers.ErrEntityNotFound)
 	}
 
-	locationCols := buncolgen.LocationColumns
+	locationCols := locationcol.LocationColumns
 	refs.locations = make([]*location.Location, 0, 2)
 	if err = tx.NewSelect().
 		Model(&refs.locations).
@@ -154,7 +158,7 @@ func (s *InsightSeed) loadRefs(
 		return nil, fmt.Errorf("need two seeded locations: %w", seedhelpers.ErrEntityNotFound)
 	}
 
-	providerCols := buncolgen.ProviderColumns
+	providerCols := aiprovidercol.ProviderColumns
 	refs.provider = new(aiprovider.Provider)
 	if err = tx.NewSelect().
 		Model(refs.provider).

@@ -1,6 +1,6 @@
 package aiproviderhandler
 
-import "github.com/emoss08/trenova/internal/core/domain/aiprovider"
+import "github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 
 // KindDescriptor describes a wire protocol to the configuration UI.
 type KindDescriptor struct {

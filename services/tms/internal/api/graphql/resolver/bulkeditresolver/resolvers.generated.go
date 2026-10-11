@@ -4,7 +4,7 @@ package bulkeditresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	bulkeditservice "github.com/emoss08/trenova/internal/core/services/bulkeditservice"
+	bulkeditservice "github.com/emoss08/trenova/internal/modules/workspace/app/bulkeditservice"
 )
 
 type Deps struct {

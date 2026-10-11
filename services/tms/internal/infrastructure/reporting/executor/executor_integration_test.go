@@ -10,14 +10,14 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/reporting/compiler"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/compiler"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/reporting/render"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -41,7 +41,7 @@ type pipelineFixture struct {
 	db       *bun.DB
 	tenant   pagination.TenantInfo
 	compiler *compiler.Compiler
-	executor services.ReportDatasetExecutor
+	executor reportports.ReportDatasetExecutor
 }
 
 func setupPipeline(t *testing.T, ctx context.Context, db *bun.DB) *pipelineFixture {
@@ -92,9 +92,9 @@ func setupPipeline(t *testing.T, ctx context.Context, db *bun.DB) *pipelineFixtu
 func (f *pipelineFixture) compile(
 	t *testing.T,
 	def *report.Definition,
-) *services.CompiledReportQuery {
+) *reportports.CompiledReportQuery {
 	t.Helper()
-	compiled, err := f.compiler.Compile(context.Background(), &services.ReportCompileRequest{
+	compiled, err := f.compiler.Compile(context.Background(), &reportports.ReportCompileRequest{
 		Definition:  def,
 		Tenant:      f.tenant,
 		OrgTimezone: "America/Chicago",
@@ -131,8 +131,8 @@ func e2eDefinition() *report.Definition {
 	}
 }
 
-func renderMeta() services.ReportRunMeta {
-	return services.ReportRunMeta{
+func renderMeta() reportports.ReportRunMeta {
+	return reportports.ReportRunMeta{
 		Title:           "E2E Pipeline Report",
 		GeneratedAtUnix: timeutils.NowUnix(),
 		Timezone:        "America/Chicago",
@@ -150,8 +150,8 @@ func TestPipelineCompileExecuteRender(t *testing.T) {
 	f := setupPipeline(t, ctx, db)
 	compiled := f.compile(t, e2eDefinition())
 
-	openDataset := func() services.ReportDatasetReader {
-		reader, err := f.executor.Open(ctx, &services.OpenReportDatasetRequest{
+	openDataset := func() reportports.ReportDatasetReader {
+		reader, err := f.executor.Open(ctx, &reportports.OpenReportDatasetRequest{
 			Compiled: compiled,
 			MaxRows:  1000,
 			Timeout:  time.Minute,
@@ -166,7 +166,7 @@ func TestPipelineCompileExecuteRender(t *testing.T) {
 
 		var buf bytes.Buffer
 		csvRenderer := render.NewCSV(render.CSVParams{Config: &config.Config{}})
-		stats, err := csvRenderer.Render(ctx, &services.ReportRenderRequest{
+		stats, err := csvRenderer.Render(ctx, &reportports.ReportRenderRequest{
 			Dataset: reader,
 			Sink:    &buf,
 			Meta:    renderMeta(),
@@ -187,7 +187,7 @@ func TestPipelineCompileExecuteRender(t *testing.T) {
 		defer reader.Close()
 
 		var buf bytes.Buffer
-		stats, err := render.NewJSON().Render(ctx, &services.ReportRenderRequest{
+		stats, err := render.NewJSON().Render(ctx, &reportports.ReportRenderRequest{
 			Dataset: reader,
 			Sink:    &buf,
 			Meta:    renderMeta(),
@@ -208,7 +208,7 @@ func TestPipelineCompileExecuteRender(t *testing.T) {
 		defer reader.Close()
 
 		var buf bytes.Buffer
-		stats, err := render.NewXLSX().Render(ctx, &services.ReportRenderRequest{
+		stats, err := render.NewXLSX().Render(ctx, &reportports.ReportRenderRequest{
 			Dataset: reader,
 			Sink:    &buf,
 			Meta:    renderMeta(),
@@ -235,7 +235,7 @@ func TestPipelineRowCapTruncates(t *testing.T) {
 	f := setupPipeline(t, ctx, db)
 	compiled := f.compile(t, e2eDefinition())
 
-	reader, err := f.executor.Open(ctx, &services.OpenReportDatasetRequest{
+	reader, err := f.executor.Open(ctx, &reportports.OpenReportDatasetRequest{
 		Compiled: compiled,
 		MaxRows:  1,
 		Timeout:  time.Minute,
@@ -245,7 +245,7 @@ func TestPipelineRowCapTruncates(t *testing.T) {
 
 	var buf bytes.Buffer
 	stats, err := render.NewCSV(render.CSVParams{Config: &config.Config{}}).
-		Render(ctx, &services.ReportRenderRequest{
+		Render(ctx, &reportports.ReportRenderRequest{
 			Dataset: reader,
 			Sink:    &buf,
 			Meta:    renderMeta(),
@@ -289,7 +289,7 @@ func TestPipelineAggregationCorrectness(t *testing.T) {
 		},
 	})
 
-	reader, err := f.executor.Open(ctx, &services.OpenReportDatasetRequest{
+	reader, err := f.executor.Open(ctx, &reportports.OpenReportDatasetRequest{
 		Compiled: compiled,
 		MaxRows:  100,
 		Timeout:  time.Minute,
@@ -298,7 +298,7 @@ func TestPipelineAggregationCorrectness(t *testing.T) {
 	defer reader.Close()
 
 	var buf bytes.Buffer
-	stats, err := render.NewJSON().Render(ctx, &services.ReportRenderRequest{
+	stats, err := render.NewJSON().Render(ctx, &reportports.ReportRenderRequest{
 		Dataset: reader,
 		Sink:    &buf,
 		Meta:    renderMeta(),

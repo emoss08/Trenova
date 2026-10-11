@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -18,12 +18,11 @@ func (r *UserResolver) currentOrganization(
 		return nil, nil
 	}
 
-	loadersForRequest, ok := loaders.FromContext(ctx)
-	if !ok || loadersForRequest == nil {
+	if !loaders.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("Organization loader is not configured")
 	}
 
-	return loadersForRequest.OrganizationByID.Load(ctx, obj.CurrentOrganizationID.String())
+	return loaders.OrganizationByID(ctx, obj.CurrentOrganizationID.String())
 }
 
 func (r *MutationResolver) applyOrganizationCapabilities(
@@ -32,7 +31,7 @@ func (r *MutationResolver) applyOrganizationCapabilities(
 	brokerageEnabled, assetOperationsEnabled *bool,
 ) error {
 	if brokerageEnabled == nil || assetOperationsEnabled == nil {
-		current, err := r.OrganizationService.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+		current, err := r.OrganizationService.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.ID,
 				BuID:  entity.BusinessUnitID,

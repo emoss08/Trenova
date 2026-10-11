@@ -8,23 +8,24 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/domain/instancebootstrap"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/auditservice"
-	"github.com/emoss08/trenova/internal/core/services/instancebootstrapservice"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/auditrepository"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/userrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/app/instancebootstrapservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/instancebootstrap"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditrepository"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -68,10 +69,10 @@ func integrationBootstrapDeps(t *testing.T, conn *postgres.Connection, out *byte
 		auditor: func(
 			_ context.Context,
 			conn *postgres.Connection,
-		) (services.SecurityAuditor, func(), error) {
+		) (permissionports.SecurityAuditor, func(), error) {
 			audits := auditservice.New(auditservice.Params{
 				AuditRepository:       auditrepository.New(auditrepository.Params{DB: conn, Logger: logger}),
-				AuditBufferRepository: mocks.NewMockAuditBufferRepository(t),
+				AuditBufferRepository: auditportsmock.NewMockAuditBufferRepository(t),
 				Logger:                logger,
 				Config:                appCfg,
 				Metrics:               registry,

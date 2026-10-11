@@ -10,20 +10,20 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
-	"github.com/emoss08/trenova/internal/core/domain/carrier"
-	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/domain/holdreason"
-	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/domain/order"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -200,7 +200,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.BillToCustomer, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐCustomer),
+				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
 			},
 			{
 				Name:     "assignedBillerId",
@@ -229,7 +229,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBillingQueueStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐStatus),
+				Marshal: gqlexec.Marshal(marshalNBillingQueueStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐStatus),
 			},
 			{
 				Name:     "billType",
@@ -239,7 +239,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.BillType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐBillType),
+				Marshal: gqlexec.Marshal(marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType),
 			},
 			{
 				Name:     "exceptionReasonCode",
@@ -248,7 +248,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.ExceptionReasonCode, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOBillingQueueExceptionReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐExceptionReasonCode),
+				Marshal: gqlexec.Marshal(marshalOBillingQueueExceptionReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐExceptionReasonCode),
 			},
 			{
 				Name:     "reviewNotes",
@@ -449,7 +449,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.AssignedBiller, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:      "canceledBy",
@@ -459,7 +459,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.BillingQueueItem)
 					return obj.CanceledBy, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 		}},
 		{Object: "CarrierAssignment", Fields: []*gqlexec.Field{
@@ -521,7 +521,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierAssignmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐCarrierAssignmentStatus),
+				Marshal: gqlexec.Marshal(marshalNCarrierAssignmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierAssignmentStatus),
 			},
 			{
 				Name:     "rateMethod",
@@ -531,7 +531,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.RateMethod, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐCarrierRateMethod),
+				Marshal: gqlexec.Marshal(marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierRateMethod),
 			},
 			{
 				Name:       "baseRate",
@@ -722,7 +722,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.Carrier, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrier),
+				Marshal: gqlexec.Marshal(marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrier),
 			},
 			{
 				Name:      "accessorials",
@@ -732,7 +732,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*shipment.CarrierAssignment)
 					return obj.Accessorials, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOCarrierAssignmentAccessorial2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐCarrierAssignmentAccessorialᚄ),
+				Marshal: gqlexec.Marshal(marshalOCarrierAssignmentAccessorial2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierAssignmentAccessorialᚄ),
 			},
 		}},
 		{Object: "CarrierAssignmentAccessorial", Fields: []*gqlexec.Field{
@@ -904,7 +904,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*shipment.ChargeAllocation)
 					return obj.ChargeKind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNChargeAllocationKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐChargeAllocationKind),
+				Marshal: gqlexec.Marshal(marshalNChargeAllocationKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐChargeAllocationKind),
 			},
 			{
 				Name:     "billToCustomerId",
@@ -924,7 +924,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*shipment.ChargeAllocation)
 					return obj.Method, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNChargeAllocationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐChargeAllocationMethod),
+				Marshal: gqlexec.Marshal(marshalNChargeAllocationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐChargeAllocationMethod),
 			},
 			{
 				Name:       "percent",
@@ -1014,7 +1014,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*shipment.ChargeAllocation)
 					return obj.BillToCustomer, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐCustomer),
+				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
 			},
 		}},
 		{Object: "JurisdictionMilesBackfillResult", Fields: []*gqlexec.Field{
@@ -1580,7 +1580,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.Shipment)
 					return obj.Stage, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNShipmentStage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐStage),
+				Marshal: gqlexec.Marshal(marshalNShipmentStage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐStage),
 			},
 			{
 				Name:       "eta",
@@ -1670,7 +1670,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.Shipment)
 					return obj.FreightTerms, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFreightTerms2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐFreightTerms),
+				Marshal: gqlexec.Marshal(marshalNFreightTerms2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐFreightTerms),
 			},
 			{
 				Name:     "tractorTypeId",
@@ -1765,7 +1765,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.Shipment)
 					return gqlexec.Resolver[resolverShipment](ec, "Shipment").OrderStatus(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOOrderStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋorderᚐStatus),
+				Marshal: gqlexec.Marshal(marshalOOrderStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐStatus),
 			},
 			{
 				Name:       "profitabilityEstimate",
@@ -2188,7 +2188,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.Shipment)
 					return obj.Owner, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:      "formulaTemplate",
@@ -2209,7 +2209,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.Shipment)
 					return obj.ChargeAllocations, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNChargeAllocation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐChargeAllocationᚄ),
+				Marshal: gqlexec.Marshal(marshalNChargeAllocation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐChargeAllocationᚄ),
 			},
 			{
 				Name:      "billingSplitSummary",
@@ -2863,7 +2863,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentAssignment)
 					return obj.Tractor, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtractorᚐTractor),
+				Marshal: gqlexec.Marshal(marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtractorᚐTractor),
 			},
 			{
 				Name:      "trailer",
@@ -2873,7 +2873,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentAssignment)
 					return obj.Trailer, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOTrailer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtrailerᚐTrailer),
+				Marshal: gqlexec.Marshal(marshalOTrailer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtrailerᚐTrailer),
 			},
 			{
 				Name:      "primaryWorker",
@@ -2883,7 +2883,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentAssignment)
 					return obj.PrimaryWorker, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorker),
+				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
 			},
 			{
 				Name:      "secondaryWorker",
@@ -2893,7 +2893,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentAssignment)
 					return obj.SecondaryWorker, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorker),
+				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
 			},
 		}},
 		{Object: "ShipmentAssignmentEvent", Fields: []*gqlexec.Field{
@@ -3033,7 +3033,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentAssignmentEvent)
 					return obj.Actor, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:      "shipment",
@@ -3978,7 +3978,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentBulkTransferToBillingResult)
 					return obj.FailureCode, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOShipmentBillingTransferFailureCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐFailureCode),
+				Marshal: gqlexec.Marshal(marshalOShipmentBillingTransferFailureCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐFailureCode),
 			},
 			{
 				Name:     "error",
@@ -4149,7 +4149,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentCarrierEvent)
 					return obj.Actor, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:      "shipment",
@@ -4463,7 +4463,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.User, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:      "pinnedBy",
@@ -4473,7 +4473,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.PinnedBy, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:      "resolvedBy",
@@ -4483,7 +4483,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentComment)
 					return obj.ResolvedBy, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:      "mentionedUsers",
@@ -4565,7 +4565,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentCommentAcknowledgment)
 					return obj.User, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 		}},
 		{Object: "ShipmentCommentAttachment", Fields: []*gqlexec.Field{
@@ -4853,7 +4853,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentCommentEvent)
 					return obj.Actor, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:      "shipment",
@@ -4997,7 +4997,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentCommentMention)
 					return obj.MentionedUser, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 		}},
 		{Object: "ShipmentCommodity", Fields: []*gqlexec.Field{
@@ -5535,7 +5535,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentContractRateAccessorial)
 					return obj.Method, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccessorialMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccessorialchargeᚐMethod),
+				Marshal: gqlexec.Marshal(marshalNAccessorialMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋaccessorialchargeᚐMethod),
 			},
 			{
 				Name:     "amount",
@@ -5787,7 +5787,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentCustomer)
 					return gqlexec.Resolver[resolverShipmentCustomer](ec, "ShipmentCustomer").EDIPartner(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner),
+				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartner),
 			},
 		}},
 		{Object: "ShipmentCustomerMix", Fields: []*gqlexec.Field{
@@ -6671,7 +6671,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.Actor, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:      "shipment",
@@ -6699,7 +6699,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.HoldType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOHoldType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋholdreasonᚐHoldType),
+				Marshal: gqlexec.Marshal(marshalOHoldType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋholdreasonᚐHoldType),
 			},
 			{
 				Name:     "holdSeverity",
@@ -6708,7 +6708,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.HoldSeverity, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOHoldSeverity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋholdreasonᚐHoldSeverity),
+				Marshal: gqlexec.Marshal(marshalOHoldSeverity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋholdreasonᚐHoldSeverity),
 			},
 			{
 				Name:     "holdSource",
@@ -6922,7 +6922,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentLifecycleEvent)
 					return obj.Actor, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:      "shipment",
@@ -7432,7 +7432,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.CoverageType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNMoveCoverageType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐMoveCoverageType),
+				Marshal: gqlexec.Marshal(marshalNMoveCoverageType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐMoveCoverageType),
 			},
 			{
 				Name:     "loaded",
@@ -7594,7 +7594,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.CarrierAssignment, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOCarrierAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐCarrierAssignment),
+				Marshal: gqlexec.Marshal(marshalOCarrierAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierAssignment),
 			},
 			{
 				Name:       "jurisdictionMiles",
@@ -7607,7 +7607,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentMove)
 					return gqlexec.Resolver[resolverShipmentMove](ec, "ShipmentMove").JurisdictionMiles(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNShipmentMoveJurisdictionMile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMileᚄ),
+				Marshal: gqlexec.Marshal(marshalNShipmentMoveJurisdictionMile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMileᚄ),
 			},
 		}},
 		{Object: "ShipmentMoveEvent", Fields: []*gqlexec.Field{
@@ -7747,7 +7747,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentMoveEvent)
 					return obj.Actor, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:      "shipment",
@@ -8148,7 +8148,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentOwnershipEvent)
 					return obj.Actor, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:      "shipment",
@@ -9007,7 +9007,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.Location, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlocationᚐLocation),
+				Marshal: gqlexec.Marshal(marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationᚐLocation),
 			},
 		}},
 		{Object: "ShipmentStopDivider", Fields: []*gqlexec.Field{
@@ -9179,7 +9179,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentTenderEvent)
 					return obj.Actor, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:      "shipment",
@@ -10486,7 +10486,7 @@ func unmarshalInputChargeAllocationInput(ctx context.Context, ec *gqlexec.Exec, 
 			it.BillToCustomerID = data
 		case "method":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("method"))
-			data, err := unmarshalNChargeAllocationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐChargeAllocationMethod(ctx, ec, v)
+			data, err := unmarshalNChargeAllocationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐChargeAllocationMethod(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -10792,7 +10792,7 @@ func unmarshalInputShipmentBulkTransferToBillingInput(ctx context.Context, ec *g
 			it.ShipmentIds = data
 		case "billType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billType"))
-			data, err := unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐBillType(ctx, ec, v)
+			data, err := unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -11484,7 +11484,7 @@ func unmarshalInputShipmentInput(ctx context.Context, ec *gqlexec.Exec, obj any)
 			it.BillToCustomerID = data
 		case "freightTerms":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("freightTerms"))
-			data, err := unmarshalOFreightTerms2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐFreightTerms(ctx, ec, v)
+			data, err := unmarshalOFreightTerms2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐFreightTerms(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -12321,7 +12321,7 @@ func unmarshalInputShipmentTransferToBillingInput(ctx context.Context, ec *gqlex
 			it.ShipmentID = data
 		case "billType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billType"))
-			data, err := unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐBillType(ctx, ec, v)
+			data, err := unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -12485,7 +12485,7 @@ func unmarshalNChargeAllocationInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNChargeAllocationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐChargeAllocationMethod(ctx context.Context, ec *gqlexec.Exec, v any) (shipment.ChargeAllocationMethod, error) {
+func unmarshalNChargeAllocationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐChargeAllocationMethod(ctx context.Context, ec *gqlexec.Exec, v any) (shipment.ChargeAllocationMethod, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := shipment.ChargeAllocationMethod(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -12657,7 +12657,7 @@ func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (stri
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐBillType(ctx context.Context, ec *gqlexec.Exec, v any) (*billingqueue.BillType, error) {
+func unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType(ctx context.Context, ec *gqlexec.Exec, v any) (*billingqueue.BillType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -12711,7 +12711,7 @@ func unmarshalOFloat2ᚖfloat64(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOFreightTerms2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐFreightTerms(ctx context.Context, ec *gqlexec.Exec, v any) (*shipment.FreightTerms, error) {
+func unmarshalOFreightTerms2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐFreightTerms(ctx context.Context, ec *gqlexec.Exec, v any) (*shipment.FreightTerms, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -12943,7 +12943,7 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAccessorialMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccessorialchargeᚐMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accessorialcharge.Method) graphql.Marshaler {
+func marshalNAccessorialMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋaccessorialchargeᚐMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accessorialcharge.Method) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -12955,7 +12955,7 @@ func marshalNAssignmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi�
 	return v
 }
 
-func marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐBillType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingqueue.BillType) graphql.Marshaler {
+func marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingqueue.BillType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -12979,7 +12979,7 @@ func marshalNBillingQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋa
 	return ec.MarshalType(ctx, sel, "BillingQueueItem", v)
 }
 
-func marshalNBillingQueueStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingqueue.Status) graphql.Marshaler {
+func marshalNBillingQueueStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingqueue.Status) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -12995,7 +12995,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNCarrierAssignmentAccessorial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐCarrierAssignmentAccessorial(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *shipment.CarrierAssignmentAccessorial) graphql.Marshaler {
+func marshalNCarrierAssignmentAccessorial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierAssignmentAccessorial(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *shipment.CarrierAssignmentAccessorial) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -13003,7 +13003,7 @@ func marshalNCarrierAssignmentAccessorial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋ
 	return ec.MarshalType(ctx, sel, "CarrierAssignmentAccessorial", v)
 }
 
-func marshalNCarrierAssignmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐCarrierAssignmentStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.CarrierAssignmentStatus) graphql.Marshaler {
+func marshalNCarrierAssignmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierAssignmentStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.CarrierAssignmentStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -13011,7 +13011,7 @@ func marshalNCarrierAssignmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return res
 }
 
-func marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐCarrierRateMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.CarrierRateMethod) graphql.Marshaler {
+func marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierRateMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.CarrierRateMethod) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -13019,15 +13019,15 @@ func marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return res
 }
 
-func marshalNChargeAllocation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐChargeAllocationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*shipment.ChargeAllocation) graphql.Marshaler {
+func marshalNChargeAllocation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐChargeAllocationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*shipment.ChargeAllocation) graphql.Marshaler {
 	return gqlexec.List[*shipment.ChargeAllocation]{
-		Elem:        marshalNChargeAllocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐChargeAllocation,
+		Elem:        marshalNChargeAllocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐChargeAllocation,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNChargeAllocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐChargeAllocation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *shipment.ChargeAllocation) graphql.Marshaler {
+func marshalNChargeAllocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐChargeAllocation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *shipment.ChargeAllocation) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -13035,7 +13035,7 @@ func marshalNChargeAllocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return ec.MarshalType(ctx, sel, "ChargeAllocation", v)
 }
 
-func marshalNChargeAllocationKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐChargeAllocationKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.ChargeAllocationKind) graphql.Marshaler {
+func marshalNChargeAllocationKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐChargeAllocationKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.ChargeAllocationKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -13043,7 +13043,7 @@ func marshalNChargeAllocationKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNChargeAllocationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐChargeAllocationMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.ChargeAllocationMethod) graphql.Marshaler {
+func marshalNChargeAllocationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐChargeAllocationMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.ChargeAllocationMethod) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -13075,7 +13075,7 @@ func marshalNFloat2float64(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
-func marshalNFreightTerms2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐFreightTerms(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.FreightTerms) graphql.Marshaler {
+func marshalNFreightTerms2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐFreightTerms(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.FreightTerms) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -13144,7 +13144,7 @@ func marshalNJSON2map(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSe
 	return res
 }
 
-func marshalNMoveCoverageType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐMoveCoverageType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.MoveCoverageType) graphql.Marshaler {
+func marshalNMoveCoverageType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐMoveCoverageType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.MoveCoverageType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -13728,15 +13728,15 @@ func marshalNShipmentMove2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi�
 	return ec.MarshalType(ctx, sel, "ShipmentMove", v)
 }
 
-func marshalNShipmentMoveJurisdictionMile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMileᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*shipment.ShipmentMoveJurisdictionMile) graphql.Marshaler {
+func marshalNShipmentMoveJurisdictionMile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMileᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*shipment.ShipmentMoveJurisdictionMile) graphql.Marshaler {
 	return gqlexec.List[*shipment.ShipmentMoveJurisdictionMile]{
-		Elem:        marshalNShipmentMoveJurisdictionMile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMile,
+		Elem:        marshalNShipmentMoveJurisdictionMile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMile,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNShipmentMoveJurisdictionMile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *shipment.ShipmentMoveJurisdictionMile) graphql.Marshaler {
+func marshalNShipmentMoveJurisdictionMile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐShipmentMoveJurisdictionMile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *shipment.ShipmentMoveJurisdictionMile) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -13808,7 +13808,7 @@ func marshalNShipmentSparklinePoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return ec.MarshalType(ctx, sel, "ShipmentSparklinePoint", v)
 }
 
-func marshalNShipmentStage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐStage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.Stage) graphql.Marshaler {
+func marshalNShipmentStage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐStage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.Stage) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -13945,7 +13945,7 @@ func marshalOAny2interface(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
-func marshalOBillingQueueExceptionReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐExceptionReasonCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingqueue.ExceptionReasonCode) graphql.Marshaler {
+func marshalOBillingQueueExceptionReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐExceptionReasonCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingqueue.ExceptionReasonCode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -13968,28 +13968,28 @@ func marshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrier(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrier.Carrier) graphql.Marshaler {
+func marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrier(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrier.Carrier) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Carrier", v)
 }
 
-func marshalOCarrierAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐCarrierAssignment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *shipment.CarrierAssignment) graphql.Marshaler {
+func marshalOCarrierAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierAssignment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *shipment.CarrierAssignment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "CarrierAssignment", v)
 }
 
-func marshalOCarrierAssignmentAccessorial2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐCarrierAssignmentAccessorialᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*shipment.CarrierAssignmentAccessorial) graphql.Marshaler {
+func marshalOCarrierAssignmentAccessorial2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierAssignmentAccessorialᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*shipment.CarrierAssignmentAccessorial) graphql.Marshaler {
 	return gqlexec.List[*shipment.CarrierAssignmentAccessorial]{
-		Elem:        marshalNCarrierAssignmentAccessorial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐCarrierAssignmentAccessorial,
+		Elem:        marshalNCarrierAssignmentAccessorial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierAssignmentAccessorial,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customer.Customer) graphql.Marshaler {
+func marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customer.Customer) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -14004,7 +14004,7 @@ func marshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Se
 	return res
 }
 
-func marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDIPartner) graphql.Marshaler {
+func marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartner(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDIPartner) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -14019,7 +14019,7 @@ func marshalOFloat2ᚖfloat64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sel
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
-func marshalOHoldSeverity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋholdreasonᚐHoldSeverity(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *holdreason.HoldSeverity) graphql.Marshaler {
+func marshalOHoldSeverity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋholdreasonᚐHoldSeverity(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *holdreason.HoldSeverity) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -14027,7 +14027,7 @@ func marshalOHoldSeverity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return res
 }
 
-func marshalOHoldType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋholdreasonᚐHoldType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *holdreason.HoldType) graphql.Marshaler {
+func marshalOHoldType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋholdreasonᚐHoldType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *holdreason.HoldType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -14072,14 +14072,14 @@ func marshalOJSON2map(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSe
 	return res
 }
 
-func marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlocationᚐLocation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *location.Location) graphql.Marshaler {
+func marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationᚐLocation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *location.Location) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Location", v)
 }
 
-func marshalOOrderStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋorderᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *order.Status) graphql.Marshaler {
+func marshalOOrderStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *order.Status) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -14129,7 +14129,7 @@ func marshalOShipmentAtRisk2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi
 	return ec.MarshalType(ctx, sel, "ShipmentAtRisk", v)
 }
 
-func marshalOShipmentBillingTransferFailureCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐFailureCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingtransfer.FailureCode) graphql.Marshaler {
+func marshalOShipmentBillingTransferFailureCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐFailureCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingtransfer.FailureCode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -14370,28 +14370,28 @@ func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.S
 	return res
 }
 
-func marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtractorᚐTractor(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tractor.Tractor) graphql.Marshaler {
+func marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtractorᚐTractor(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tractor.Tractor) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Tractor", v)
 }
 
-func marshalOTrailer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtrailerᚐTrailer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *trailer.Trailer) graphql.Marshaler {
+func marshalOTrailer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtrailerᚐTrailer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *trailer.Trailer) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Trailer", v)
 }
 
-func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "User", v)
 }
 
-func marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorker(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.Worker) graphql.Marshaler {
+func marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.Worker) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

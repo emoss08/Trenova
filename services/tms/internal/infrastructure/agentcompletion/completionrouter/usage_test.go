@@ -11,10 +11,9 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -37,9 +36,9 @@ func (f *fakeUsage) Create(_ context.Context, record *aiusage.AIUsageRecord) err
 
 func (f *fakeUsage) Summary(
 	context.Context,
-	repositories.AIUsageSummaryRequest,
-) (*repositories.AIUsageSummary, error) {
-	return &repositories.AIUsageSummary{}, nil
+	aiusageports.AIUsageSummaryRequest,
+) (*aiusageports.AIUsageSummaryRow, error) {
+	return &aiusageports.AIUsageSummaryRow{}, nil
 }
 
 func (f *fakeUsage) recorded(t *testing.T, n int) []*aiusage.AIUsageRecord {
@@ -82,7 +81,7 @@ func TestCompleteStructured_RecordsEveryAttempt(t *testing.T) {
 	svc.usage = usage
 
 	req := generalRequest()
-	req.Attribution = serviceports.AIUsageAttribution{UserID: pulid.MustNew("usr_")}
+	req.Attribution = aiusageports.AIUsageAttribution{UserID: pulid.MustNew("usr_")}
 	result, err := svc.CompleteStructured(t.Context(), req)
 	require.NoError(t, err)
 
@@ -125,7 +124,7 @@ func TestCompleteStructured_RecordsAnEvaluationApartFromTheLiveAgent(t *testing.
 	svc.usage = usage
 
 	req := generalRequest()
-	req.Attribution = serviceports.AIUsageAttribution{
+	req.Attribution = aiusageports.AIUsageAttribution{
 		AgentDefinitionID: pulid.MustNew("agd_"),
 		RunID:             pulid.MustNew("aeval_"),
 	}
@@ -141,9 +140,9 @@ func TestCompleteStructured_RecordsAnEvaluationApartFromTheLiveAgent(t *testing.
 func TestSurfaceFor(t *testing.T) {
 	t.Parallel()
 
-	live := serviceports.AIUsageAttribution{RunID: pulid.MustNew("ar_")}
-	byRun := serviceports.AIUsageAttribution{RunID: pulid.MustNew("aeval_")}
-	byPurpose := serviceports.AIUsageAttribution{Purpose: serviceports.AIUsagePurposeEvaluation}
+	live := aiusageports.AIUsageAttribution{RunID: pulid.MustNew("ar_")}
+	byRun := aiusageports.AIUsageAttribution{RunID: pulid.MustNew("aeval_")}
+	byPurpose := aiusageports.AIUsageAttribution{Purpose: aiusageports.AIUsagePurposeEvaluation}
 
 	assert.Equal(t, aiusage.SurfaceChat, surfaceFor(aiusage.SurfaceChat, live))
 	assert.Equal(t, aiusage.SurfaceStructured, surfaceFor(aiusage.SurfaceStructured, live))
@@ -197,49 +196,49 @@ func TestClassifyError(t *testing.T) {
 
 func (f *fakeUsage) RecentFailures(
 	context.Context,
-	repositories.AIUsageFailuresRequest,
-) ([]repositories.AIUsageFailure, error) {
+	aiusageports.AIUsageFailuresRequest,
+) ([]aiusageports.AIUsageFailureRow, error) {
 	return nil, nil
 }
 
 func (f *fakeUsage) CostByDefinition(
 	context.Context,
-	repositories.AIUsageCostRequest,
-) (*repositories.AIUsageCost, error) {
-	return &repositories.AIUsageCost{}, nil
+	aiusageports.AIUsageCostRequest,
+) (*aiusageports.AIUsageCost, error) {
+	return &aiusageports.AIUsageCost{}, nil
 }
 
 func (f *fakeUsage) Daily(
 	context.Context,
-	repositories.AIUsageDailyRequest,
-) ([]repositories.AIUsageDayTotals, error) {
-	return []repositories.AIUsageDayTotals{}, nil
+	aiusageports.AIUsageDailyQuery,
+) ([]aiusageports.AIUsageDayTotals, error) {
+	return []aiusageports.AIUsageDayTotals{}, nil
 }
 
 func (f *fakeUsage) ProviderTaskTotals(
 	context.Context,
-	repositories.AIUsageProviderTaskRequest,
-) ([]repositories.AIUsageProviderTaskTotals, error) {
-	return []repositories.AIUsageProviderTaskTotals{}, nil
+	aiusageports.AIUsageProviderTaskRequest,
+) ([]aiusageports.AIUsageProviderTaskTotals, error) {
+	return []aiusageports.AIUsageProviderTaskTotals{}, nil
 }
 
 func (f *fakeUsage) SurfaceCost(
 	context.Context,
-	repositories.AIUsageSurfaceCostRequest,
-) (*repositories.AIUsageCost, error) {
-	return &repositories.AIUsageCost{CostUSD: decimal.Zero}, nil
+	aiusageports.AIUsageSurfaceCostRequest,
+) (*aiusageports.AIUsageCost, error) {
+	return &aiusageports.AIUsageCost{CostUSD: decimal.Zero}, nil
 }
 
 func (f *fakeUsage) EvaluationCost(
 	context.Context,
-	repositories.AIUsageEvaluationCostRequest,
-) (*repositories.AIUsageCost, error) {
-	return &repositories.AIUsageCost{CostUSD: decimal.Zero}, nil
+	aiusageports.AIUsageEvaluationCostRequest,
+) (*aiusageports.AIUsageCost, error) {
+	return &aiusageports.AIUsageCost{CostUSD: decimal.Zero}, nil
 }
 
 func (f *fakeUsage) SpendByProvider(
 	context.Context,
-	repositories.AIUsageProviderSpendRequest,
+	aiusageports.AIUsageProviderSpendRequest,
 ) (map[pulid.ID]decimal.Decimal, error) {
 	return map[pulid.ID]decimal.Decimal{}, nil
 }

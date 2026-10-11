@@ -4,7 +4,7 @@ package formulatemplateresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	formulatemplateservice "github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
+	formulatemplateservice "github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 )
 
 type Deps struct {

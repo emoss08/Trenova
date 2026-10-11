@@ -3,9 +3,9 @@ package workerresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -70,13 +70,13 @@ func workerPTOCursorConnectionToModel(
 	}, nil
 }
 
-func ptoBulkActionOperation(action services.PTOBulkActionType) (permission.Operation, error) {
+func ptoBulkActionOperation(action workerports.PTOBulkActionType) (permission.Operation, error) {
 	switch action {
-	case services.PTOBulkActionApprove:
+	case workerports.PTOBulkActionApprove:
 		return permission.OpApprove, nil
-	case services.PTOBulkActionReject:
+	case workerports.PTOBulkActionReject:
 		return permission.OpReject, nil
-	case services.PTOBulkActionCancel:
+	case workerports.PTOBulkActionCancel:
 		return permission.OpCancel, nil
 	default:
 		return "", errortypes.NewValidationError(

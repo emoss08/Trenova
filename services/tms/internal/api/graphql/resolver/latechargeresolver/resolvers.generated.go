@@ -4,12 +4,12 @@ package latechargeresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	latechargeports "github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 )
 
 type Deps struct {
 	*base.Core
-	LateChargeService services.LateChargeService
+	LateChargeService latechargeports.LateChargeService
 }
 
 type InvoiceResolver struct{ *Deps }

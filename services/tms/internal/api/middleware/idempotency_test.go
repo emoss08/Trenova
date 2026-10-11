@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/idempotency"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,7 +24,7 @@ import (
 )
 
 type memoryIdempotencyEntry struct {
-	record repositories.IdempotencyRecord
+	record kernelports.IdempotencyRecord
 	owner  string
 }
 
@@ -41,40 +41,40 @@ func newMemoryIdempotencyStore() *memoryIdempotencyStore {
 
 func (s *memoryIdempotencyStore) Claim(
 	_ context.Context,
-	claim repositories.IdempotencyClaim,
-) (repositories.IdempotencyClaimResult, error) {
+	claim kernelports.IdempotencyClaim,
+) (kernelports.IdempotencyClaimResult, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.claimErr != nil {
-		return repositories.IdempotencyClaimResult{}, s.claimErr
+		return kernelports.IdempotencyClaimResult{}, s.claimErr
 	}
 	s.lockTTLs = append(s.lockTTLs, claim.LockTTL)
 	if entry, ok := s.entries[claim.Key]; ok {
 		record := entry.record
-		return repositories.IdempotencyClaimResult{Existing: &record}, nil
+		return kernelports.IdempotencyClaimResult{Existing: &record}, nil
 	}
 	s.entries[claim.Key] = &memoryIdempotencyEntry{
-		record: repositories.IdempotencyRecord{
-			State:       repositories.IdempotencyStateProcessing,
+		record: kernelports.IdempotencyRecord{
+			State:       kernelports.IdempotencyStateProcessing,
 			Fingerprint: claim.Fingerprint,
 		},
 		owner: claim.Owner,
 	}
-	return repositories.IdempotencyClaimResult{Claimed: true}, nil
+	return kernelports.IdempotencyClaimResult{Claimed: true}, nil
 }
 
 func (s *memoryIdempotencyStore) Complete(
 	_ context.Context,
-	completion *repositories.IdempotencyCompletion,
+	completion *kernelports.IdempotencyCompletion,
 ) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	entry, ok := s.entries[completion.Key]
 	if !ok || entry.owner != completion.Owner {
-		return repositories.ErrIdempotencyClaimLost
+		return kernelports.ErrIdempotencyClaimLost
 	}
 	entry.owner = ""
-	entry.record.State = repositories.IdempotencyStateCompleted
+	entry.record.State = kernelports.IdempotencyStateCompleted
 	entry.record.Status = completion.Status
 	entry.record.ContentType = completion.ContentType
 	entry.record.Body = append([]byte(nil), completion.Body...)

@@ -8,7 +8,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 const (
@@ -192,7 +192,7 @@ func walkPart(ctx context.Context, pkg *archive, pages *pageBuilder, part string
 	return walker.walk(dec)
 }
 
-func readDOCX(ctx context.Context, pkg *archive) ([]services.OfficePage, error) {
+func readDOCX(ctx context.Context, pkg *archive) ([]kernelports.OfficePage, error) {
 	part := pkg.mainPart("/document.xml", "word/document.xml")
 	pages := newPageBuilder()
 
@@ -203,7 +203,7 @@ func readDOCX(ctx context.Context, pkg *archive) ([]services.OfficePage, error) 
 	return pages.result(), nil
 }
 
-func readPPTX(ctx context.Context, pkg *archive) ([]services.OfficePage, error) {
+func readPPTX(ctx context.Context, pkg *archive) ([]kernelports.OfficePage, error) {
 	presentation := pkg.mainPart("/presentation.xml", "ppt/presentation.xml")
 	rels, err := pkg.relationships(presentation)
 	if err != nil {

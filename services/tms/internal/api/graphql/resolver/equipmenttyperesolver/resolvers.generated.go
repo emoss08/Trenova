@@ -4,7 +4,7 @@ package equipmenttyperesolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	equipmenttypeservice "github.com/emoss08/trenova/internal/core/services/equipmenttypeservice"
+	equipmenttypeservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
 )
 
 type Deps struct {

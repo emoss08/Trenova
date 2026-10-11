@@ -4,7 +4,7 @@ package tablelayoutresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	tablelayoutservice "github.com/emoss08/trenova/internal/core/services/tablelayoutservice"
+	tablelayoutservice "github.com/emoss08/trenova/internal/modules/workspace/app/tablelayoutservice"
 )
 
 type Deps struct {

@@ -10,10 +10,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -39,7 +39,7 @@ func (r *QueryResolver) ServiceFailures(ctx context.Context, input gqlmodel.Data
 
 	result, err := r.ServiceFailureSvc.ListConnection(
 		ctx,
-		&repositories.ListServiceFailureConnectionRequest{
+		&servicefailureports.ListServiceFailureConnectionRequest{
 			Filter:     tableInput.Filter,
 			Cursor:     tableInput.Cursor,
 			ShipmentID: shipmentFilter,
@@ -63,7 +63,7 @@ func (r *QueryResolver) ServiceFailure(ctx context.Context, id string) (*service
 		return nil, err
 	}
 
-	return r.ServiceFailureSvc.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
+	return r.ServiceFailureSvc.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
 		ID:         failureID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

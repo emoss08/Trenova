@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	sharedsamsara "github.com/emoss08/trenova/shared/samsara"
 	"github.com/emoss08/trenova/shared/samsara/assets"
 	"github.com/emoss08/trenova/shared/samsara/compliance"
@@ -42,19 +42,19 @@ func (p *Provider) Type() integration.Type {
 	return integration.TypeSamsara
 }
 
-func (p *Provider) ListVehicles(ctx context.Context) ([]services.ProviderVehicle, error) {
+func (p *Provider) ListVehicles(ctx context.Context) ([]telematicsports.ProviderVehicle, error) {
 	return p.listAssets(ctx, assets.TypeVehicle)
 }
 
-func (p *Provider) ListTrailers(ctx context.Context) ([]services.ProviderVehicle, error) {
+func (p *Provider) ListTrailers(ctx context.Context) ([]telematicsports.ProviderVehicle, error) {
 	return p.listAssets(ctx, assets.TypeTrailer)
 }
 
 func (p *Provider) listAssets(
 	ctx context.Context,
 	assetType assets.Type,
-) ([]services.ProviderVehicle, error) {
-	out := make([]services.ProviderVehicle, 0)
+) ([]telematicsports.ProviderVehicle, error) {
+	out := make([]telematicsports.ProviderVehicle, 0)
 	after := ""
 	for {
 		page, err := p.client.Assets.List(ctx, assets.ListParams{
@@ -67,7 +67,7 @@ func (p *Provider) listAssets(
 
 		for i := range page.Data {
 			asset := &page.Data[i]
-			vehicle := services.ProviderVehicle{ID: asset.Id}
+			vehicle := telematicsports.ProviderVehicle{ID: asset.Id}
 			if asset.Name != nil {
 				vehicle.Name = *asset.Name
 			}
@@ -88,7 +88,7 @@ func (p *Provider) listAssets(
 	return out, nil
 }
 
-func (p *Provider) ListPositions(ctx context.Context) ([]services.ProviderPosition, error) {
+func (p *Provider) ListPositions(ctx context.Context) ([]telematicsports.ProviderPosition, error) {
 	var stats, odometers []vehicles.StatsData
 	group, groupCtx := errgroup.WithContext(ctx)
 	group.Go(func() error {
@@ -122,7 +122,7 @@ func (p *Provider) ListPositions(ctx context.Context) ([]services.ProviderPositi
 		}
 	}
 
-	out := make([]services.ProviderPosition, 0, len(stats))
+	out := make([]telematicsports.ProviderPosition, 0, len(stats))
 	for i := range stats {
 		stat := &stats[i]
 		if stat.Gps == nil {
@@ -138,8 +138,8 @@ func (p *Provider) ListPositions(ctx context.Context) ([]services.ProviderPositi
 	return out, nil
 }
 
-func mapPosition(stat *vehicles.StatsData) services.ProviderPosition {
-	position := services.ProviderPosition{
+func mapPosition(stat *vehicles.StatsData) telematicsports.ProviderPosition {
+	position := telematicsports.ProviderPosition{
 		VehicleID:  stat.Id,
 		Latitude:   stat.Gps.Latitude,
 		Longitude:  stat.Gps.Longitude,
@@ -174,7 +174,7 @@ func vehicleOdometerMeters(stat *vehicles.StatsData) (int64, bool) {
 	return 0, false
 }
 
-func (p *Provider) ListHOSClocks(ctx context.Context) ([]services.ProviderHOSClocks, error) {
+func (p *Provider) ListHOSClocks(ctx context.Context) ([]telematicsports.ProviderHOSClocks, error) {
 	clocks, err := p.client.Compliance.HOSClocksAll(ctx, compliance.HOSClocksParams{
 		Limit: pageLimit,
 	})
@@ -182,14 +182,14 @@ func (p *Provider) ListHOSClocks(ctx context.Context) ([]services.ProviderHOSClo
 		return nil, fmt.Errorf("fetch samsara hos clocks: %w", err)
 	}
 
-	out := make([]services.ProviderHOSClocks, 0, len(clocks))
+	out := make([]telematicsports.ProviderHOSClocks, 0, len(clocks))
 	for i := range clocks {
 		clock := &clocks[i]
 		if clock.Driver == nil || clock.Driver.Id == nil {
 			continue
 		}
 
-		record := services.ProviderHOSClocks{DriverID: *clock.Driver.Id}
+		record := telematicsports.ProviderHOSClocks{DriverID: *clock.Driver.Id}
 		if clock.CurrentDutyStatus != nil && clock.CurrentDutyStatus.HosStatusType != nil {
 			record.DutyStatus = telematics.DutyStatus(*clock.CurrentDutyStatus.HosStatusType)
 		}
@@ -203,7 +203,10 @@ func (p *Provider) ListHOSClocks(ctx context.Context) ([]services.ProviderHOSClo
 	return out, nil
 }
 
-func applyClockDurations(record *services.ProviderHOSClocks, clocks *compliance.HOSClockSet) {
+func applyClockDurations(
+	record *telematicsports.ProviderHOSClocks,
+	clocks *compliance.HOSClockSet,
+) {
 	if clocks == nil {
 		return
 	}
@@ -233,7 +236,7 @@ func applyClockDurations(record *services.ProviderHOSClocks, clocks *compliance.
 }
 
 func applyClockViolations(
-	record *services.ProviderHOSClocks,
+	record *telematicsports.ProviderHOSClocks,
 	violations *compliance.HOSClockViolations,
 ) {
 	if violations == nil {
@@ -249,19 +252,19 @@ func applyClockViolations(
 
 func (p *Provider) ListDriverProfiles(
 	ctx context.Context,
-) ([]services.ProviderDriverProfile, error) {
+) ([]telematicsports.ProviderDriverProfile, error) {
 	remoteDrivers, err := p.client.Drivers.ListAll(ctx, drivers.ListParams{Limit: pageLimit})
 	if err != nil {
 		return nil, fmt.Errorf("list samsara drivers: %w", err)
 	}
 
-	out := make([]services.ProviderDriverProfile, 0, len(remoteDrivers))
+	out := make([]telematicsports.ProviderDriverProfile, 0, len(remoteDrivers))
 	for i := range remoteDrivers {
 		driver := &remoteDrivers[i]
 		if driver.Id == nil {
 			continue
 		}
-		profile := services.ProviderDriverProfile{DriverID: *driver.Id}
+		profile := telematicsports.ProviderDriverProfile{DriverID: *driver.Id}
 		if driver.Name != nil {
 			profile.Name = *driver.Name
 		}
@@ -271,13 +274,13 @@ func (p *Provider) ListDriverProfiles(
 	return out, nil
 }
 
-func mapDriverRuleset(driver *drivers.Driver) *services.ProviderRuleset {
+func mapDriverRuleset(driver *drivers.Driver) *telematicsports.ProviderRuleset {
 	if driver.EldSettings == nil || driver.EldSettings.Rulesets == nil ||
 		len(*driver.EldSettings.Rulesets) == 0 {
 		return nil
 	}
 	first := (*driver.EldSettings.Rulesets)[0]
-	ruleset := &services.ProviderRuleset{}
+	ruleset := &telematicsports.ProviderRuleset{}
 	if first.Cycle != nil {
 		ruleset.Cycle = string(*first.Cycle)
 	}
@@ -300,11 +303,11 @@ func (p *Provider) ListHOSViolations(
 	ctx context.Context,
 	startAt int64,
 	endAt int64,
-) ([]services.ProviderViolation, error) {
+) ([]telematicsports.ProviderViolation, error) {
 	startTime := time.Unix(startAt, 0).UTC()
 	endTime := time.Unix(endAt, 0).UTC()
 
-	out := make([]services.ProviderViolation, 0)
+	out := make([]telematicsports.ProviderViolation, 0)
 	after := ""
 	for {
 		page, err := p.client.Compliance.HOSViolations(ctx, compliance.HOSViolationsParams{
@@ -335,17 +338,17 @@ func (p *Provider) ListHOSViolations(
 	return out, nil
 }
 
-func mapViolation(violation *compliance.HOSViolation) (services.ProviderViolation, bool) {
+func mapViolation(violation *compliance.HOSViolation) (telematicsports.ProviderViolation, bool) {
 	violationType := string(violation.Type)
 	if violationType == "" || violationType == "NONE" {
-		return services.ProviderViolation{}, false
+		return telematicsports.ProviderViolation{}, false
 	}
 	startAt := parseTime(violation.ViolationStartTime)
 	if startAt == 0 {
-		return services.ProviderViolation{}, false
+		return telematicsports.ProviderViolation{}, false
 	}
 
-	record := services.ProviderViolation{
+	record := telematicsports.ProviderViolation{
 		DriverID:    violation.Driver.Id,
 		Type:        violationType,
 		Description: violation.Description,
@@ -362,8 +365,8 @@ func mapViolation(violation *compliance.HOSViolation) (services.ProviderViolatio
 }
 
 type (
-	hosLogsByDriver      = map[string][]services.ProviderHOSLogEntry
-	hosDailyLogsByDriver = map[string][]services.ProviderHOSDailyLog
+	hosLogsByDriver      = map[string][]telematicsports.ProviderHOSLogEntry
+	hosDailyLogsByDriver = map[string][]telematicsports.ProviderHOSDailyLog
 )
 
 func (p *Provider) ListHOSLogs(
@@ -371,7 +374,7 @@ func (p *Provider) ListHOSLogs(
 	driverIDs []string,
 	startAt int64,
 	endAt int64,
-) (map[string][]services.ProviderHOSLogEntry, error) {
+) (map[string][]telematicsports.ProviderHOSLogEntry, error) {
 	startTime := time.Unix(startAt, 0).UTC()
 	endTime := time.Unix(endAt, 0).UTC()
 
@@ -422,7 +425,7 @@ func (p *Provider) hosLogsForDrivers(
 			driverID := *driverLogs.Driver.Id
 			entries := byDriver[driverID]
 			if entries == nil {
-				entries = make([]services.ProviderHOSLogEntry, 0, len(logs))
+				entries = make([]telematicsports.ProviderHOSLogEntry, 0, len(logs))
 			}
 			for j := range logs {
 				entries = append(entries, mapLogEntry(&logs[j]))
@@ -438,8 +441,8 @@ func (p *Provider) hosLogsForDrivers(
 	return byDriver, nil
 }
 
-func mapLogEntry(entry *compliance.HOSLogEntry) services.ProviderHOSLogEntry {
-	out := services.ProviderHOSLogEntry{
+func mapLogEntry(entry *compliance.HOSLogEntry) telematicsports.ProviderHOSLogEntry {
+	out := telematicsports.ProviderHOSLogEntry{
 		LogStartAt: parseTime(entry.LogStartTime),
 	}
 	if entry.HosStatusType != nil {
@@ -482,7 +485,7 @@ func (p *Provider) ListHOSDailyLogs(
 	driverIDs []string,
 	startDate string,
 	endDate string,
-) (map[string][]services.ProviderHOSDailyLog, error) {
+) (map[string][]telematicsports.ProviderHOSDailyLog, error) {
 	out := make(hosDailyLogsByDriver, len(driverIDs))
 	err := fetchDriverChunks(
 		ctx,
@@ -536,8 +539,8 @@ func (p *Provider) hosDailyLogsForDrivers(
 	return byDriver, nil
 }
 
-func mapDailyLog(day *compliance.HOSDailyLog) services.ProviderHOSDailyLog {
-	out := services.ProviderHOSDailyLog{
+func mapDailyLog(day *compliance.HOSDailyLog) telematicsports.ProviderHOSDailyLog {
+	out := telematicsports.ProviderHOSDailyLog{
 		StartAt: parseTime(day.StartTime),
 		EndAt:   parseTime(day.EndTime),
 	}
@@ -550,7 +553,7 @@ func mapDailyLog(day *compliance.HOSDailyLog) services.ProviderHOSDailyLog {
 }
 
 func applyDailyDurations(
-	out *services.ProviderHOSDailyLog,
+	out *telematicsports.ProviderHOSDailyLog,
 	durations *compliance.HOSDailyLogDurations,
 ) {
 	if durations == nil {
@@ -566,7 +569,7 @@ func applyDailyDurations(
 }
 
 func applyDailyMetadata(
-	out *services.ProviderHOSDailyLog,
+	out *telematicsports.ProviderHOSDailyLog,
 	metadata *compliance.HOSDailyLogMetadata,
 ) {
 	if metadata == nil {
@@ -596,7 +599,7 @@ func (p *Provider) ListDVIRs(
 	ctx context.Context,
 	startAt int64,
 	endAt int64,
-) ([]services.ProviderDVIR, error) {
+) ([]telematicsports.ProviderDVIR, error) {
 	startTime := time.Unix(startAt, 0).UTC()
 	endTime := time.Unix(endAt, 0).UTC()
 
@@ -609,15 +612,15 @@ func (p *Provider) ListDVIRs(
 		return nil, fmt.Errorf("fetch samsara dvirs: %w", err)
 	}
 
-	out := make([]services.ProviderDVIR, 0, len(records))
+	out := make([]telematicsports.ProviderDVIR, 0, len(records))
 	for i := range records {
 		out = append(out, mapDVIR(&records[i]))
 	}
 	return out, nil
 }
 
-func mapDVIR(record *dvirs.HistoryDVIR) services.ProviderDVIR {
-	out := services.ProviderDVIR{ID: record.Id}
+func mapDVIR(record *dvirs.HistoryDVIR) telematicsports.ProviderDVIR {
+	out := telematicsports.ProviderDVIR{ID: record.Id}
 	if record.Type != nil {
 		out.Type = string(*record.Type)
 	}
@@ -643,7 +646,7 @@ func mapDVIR(record *dvirs.HistoryDVIR) services.ProviderDVIR {
 	return out
 }
 
-func applyDVIRRefs(out *services.ProviderDVIR, record *dvirs.HistoryDVIR) {
+func applyDVIRRefs(out *telematicsports.ProviderDVIR, record *dvirs.HistoryDVIR) {
 	if record.Vehicle != nil && record.Vehicle.Id != nil {
 		out.VehicleID = *record.Vehicle.Id
 	}
@@ -658,7 +661,7 @@ func applyDVIRRefs(out *services.ProviderDVIR, record *dvirs.HistoryDVIR) {
 	}
 }
 
-func applyDVIRSignature(out *services.ProviderDVIR, record *dvirs.HistoryDVIR) {
+func applyDVIRSignature(out *telematicsports.ProviderDVIR, record *dvirs.HistoryDVIR) {
 	signature := record.AuthorSignature
 	if signature == nil {
 		return
@@ -676,7 +679,7 @@ func applyDVIRSignature(out *services.ProviderDVIR, record *dvirs.HistoryDVIR) {
 	}
 }
 
-func mapDVIRDefects(lists ...*[]dvirs.DVIRDefect) []services.ProviderDVIRDefect {
+func mapDVIRDefects(lists ...*[]dvirs.DVIRDefect) []telematicsports.ProviderDVIRDefect {
 	total := 0
 	for _, list := range lists {
 		if list != nil {
@@ -687,7 +690,7 @@ func mapDVIRDefects(lists ...*[]dvirs.DVIRDefect) []services.ProviderDVIRDefect 
 		return nil
 	}
 
-	out := make([]services.ProviderDVIRDefect, 0, total)
+	out := make([]telematicsports.ProviderDVIRDefect, 0, total)
 	for _, list := range lists {
 		if list == nil {
 			continue
@@ -695,7 +698,7 @@ func mapDVIRDefects(lists ...*[]dvirs.DVIRDefect) []services.ProviderDVIRDefect 
 		items := *list
 		for i := range items {
 			item := &items[i]
-			defect := services.ProviderDVIRDefect{
+			defect := telematicsports.ProviderDVIRDefect{
 				ID:       item.Id,
 				Resolved: item.IsResolved,
 			}
@@ -721,7 +724,7 @@ func (p *Provider) ListFormSubmissions(
 	driverIDs []string,
 	startAt int64,
 	endAt int64,
-) ([]services.ProviderFormSubmission, error) {
+) ([]telematicsports.ProviderFormSubmission, error) {
 	startTime := time.Unix(startAt, 0).UTC()
 	endTime := time.Unix(endAt, 0).UTC()
 
@@ -750,7 +753,7 @@ func (p *Provider) ListFormSubmissions(
 		return nil, batchErr
 	}
 	if len(submissions) == 0 {
-		return []services.ProviderFormSubmission{}, batchErr
+		return []telematicsports.ProviderFormSubmission{}, batchErr
 	}
 
 	templateNames, err := p.formTemplateNames(ctx)
@@ -758,7 +761,7 @@ func (p *Provider) ListFormSubmissions(
 		return nil, err
 	}
 
-	out := make([]services.ProviderFormSubmission, 0, len(submissions))
+	out := make([]telematicsports.ProviderFormSubmission, 0, len(submissions))
 	for i := range submissions {
 		out = append(out, mapFormSubmission(&submissions[i], templateNames))
 	}
@@ -788,16 +791,16 @@ func (p *Provider) formTemplateNames(ctx context.Context) (map[string]string, er
 func mapFormSubmission(
 	submission *forms.FormSubmission,
 	templateNames map[string]string,
-) services.ProviderFormSubmission {
+) telematicsports.ProviderFormSubmission {
 	templateID := submission.FormTemplate.Id.String()
-	out := services.ProviderFormSubmission{
+	out := telematicsports.ProviderFormSubmission{
 		ID:           submission.Id,
 		TemplateID:   templateID,
 		TemplateName: templateNames[templateID],
 		DriverID:     submission.SubmittedBy.Id,
 		RouteStopID:  forms.SubmissionRouteStopID(submission),
 		ExternalIDs:  forms.SubmissionExternalIDs(submission),
-		Fields:       make([]services.ProviderFormField, 0, len(submission.Fields)),
+		Fields:       make([]telematicsports.ProviderFormField, 0, len(submission.Fields)),
 	}
 	if !submission.SubmittedAtTime.IsZero() {
 		out.SubmittedAt = submission.SubmittedAtTime.Unix()
@@ -808,7 +811,7 @@ func mapFormSubmission(
 	for i := range submission.Fields {
 		field := &submission.Fields[i]
 		kind, value := forms.FieldTypedValue(field)
-		record := services.ProviderFormField{Type: kind, Value: value}
+		record := telematicsports.ProviderFormField{Type: kind, Value: value}
 		if field.Label != nil {
 			record.Label = *field.Label
 		}
@@ -828,37 +831,37 @@ func (p *Provider) VerifyWebhookSignature(
 	return webhooks.VerifySignatureWithTolerance(secret, timestamp, body, signature, now, maxSkew)
 }
 
-func (p *Provider) ParseWebhookEvent(body []byte) (*services.ProviderWebhookEvent, error) {
+func (p *Provider) ParseWebhookEvent(body []byte) (*telematicsports.ProviderWebhookEvent, error) {
 	event, err := webhooks.ParseEvent(body)
 	if err != nil {
 		return nil, err
 	}
 
-	out := &services.ProviderWebhookEvent{
+	out := &telematicsports.ProviderWebhookEvent{
 		EventID:    event.EventID,
 		EventType:  string(event.EventType),
 		OccurredAt: event.EventTime.Unix(),
 		Payload:    event.Data,
 	}
 
-	out.Kind = services.ProviderEventKindOther
+	out.Kind = telematicsports.ProviderEventKindOther
 
 	switch event.EventType { //nolint:exhaustive // only entity-bearing event types enrich the record
 	case webhooks.EventTypeGeofenceEntry:
-		out.Kind = services.ProviderEventKindGeofenceEntry
+		out.Kind = telematicsports.ProviderEventKindGeofenceEntry
 		enrichGeofence(&event, out)
 	case webhooks.EventTypeGeofenceExit:
-		out.Kind = services.ProviderEventKindGeofenceExit
+		out.Kind = telematicsports.ProviderEventKindGeofenceExit
 		enrichGeofence(&event, out)
 	case webhooks.EventTypeRouteStopArrival:
-		out.Kind = services.ProviderEventKindStopArrival
+		out.Kind = telematicsports.ProviderEventKindStopArrival
 		enrichStop(&event, out)
 	case webhooks.EventTypeRouteStopDeparture:
-		out.Kind = services.ProviderEventKindStopDeparture
+		out.Kind = telematicsports.ProviderEventKindStopDeparture
 		enrichStop(&event, out)
 	case webhooks.EventTypeFormSubmitted, webhooks.EventTypeFormUpdated,
 		webhooks.EventTypeDocumentSubmitted:
-		out.Kind = services.ProviderEventKindFormSubmission
+		out.Kind = telematicsports.ProviderEventKindFormSubmission
 		enrichForm(&event, out)
 	case webhooks.EventTypeVehicleCreated, webhooks.EventTypeVehicleUpdated:
 		if data, dataErr := event.VehicleData(); dataErr == nil {
@@ -874,12 +877,12 @@ func (p *Provider) ParseWebhookEvent(body []byte) (*services.ProviderWebhookEven
 	return out, nil
 }
 
-func enrichGeofence(event *webhooks.Event, out *services.ProviderWebhookEvent) {
+func enrichGeofence(event *webhooks.Event, out *telematicsports.ProviderWebhookEvent) {
 	data, dataErr := event.GeofenceData()
 	if dataErr != nil {
 		return
 	}
-	geofence := &services.ProviderGeofenceEvent{}
+	geofence := &telematicsports.ProviderGeofenceEvent{}
 	if data.Address != nil {
 		geofence.AddressName = data.Address.Name
 		geofence.AddressExternalIDs = data.Address.ExternalIDs
@@ -896,12 +899,12 @@ func enrichGeofence(event *webhooks.Event, out *services.ProviderWebhookEvent) {
 	out.Geofence = geofence
 }
 
-func enrichStop(event *webhooks.Event, out *services.ProviderWebhookEvent) {
+func enrichStop(event *webhooks.Event, out *telematicsports.ProviderWebhookEvent) {
 	data, dataErr := event.RouteStopData()
 	if dataErr != nil {
 		return
 	}
-	stop := &services.ProviderStopEvent{}
+	stop := &telematicsports.ProviderStopEvent{}
 	if data.Vehicle != nil {
 		stop.VehicleID = data.Vehicle.ID
 		stop.VehicleVIN = data.Vehicle.Vin
@@ -926,12 +929,12 @@ func enrichStop(event *webhooks.Event, out *services.ProviderWebhookEvent) {
 	out.Stop = stop
 }
 
-func enrichForm(event *webhooks.Event, out *services.ProviderWebhookEvent) {
+func enrichForm(event *webhooks.Event, out *telematicsports.ProviderWebhookEvent) {
 	data, dataErr := event.FormData()
 	if dataErr != nil {
 		return
 	}
-	form := &services.ProviderFormEvent{
+	form := &telematicsports.ProviderFormEvent{
 		SubmissionID: data.FormID,
 		TemplateID:   data.TemplateID,
 		RouteStopID:  data.AssignedToRouteStopID,
@@ -944,10 +947,10 @@ func enrichForm(event *webhooks.Event, out *services.ProviderWebhookEvent) {
 	if submittedAt := parseTime(data.SubmittedAtTime); submittedAt > 0 {
 		form.SubmittedAt = submittedAt
 	}
-	form.Fields = make([]services.ProviderFormField, 0, len(data.Fields))
+	form.Fields = make([]telematicsports.ProviderFormField, 0, len(data.Fields))
 	for i := range data.Fields {
 		field := &data.Fields[i]
-		form.Fields = append(form.Fields, services.ProviderFormField{
+		form.Fields = append(form.Fields, telematicsports.ProviderFormField{
 			Label: field.Label,
 			Type:  field.Type,
 			Value: field.Value,

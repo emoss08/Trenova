@@ -89,7 +89,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 262 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 32 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 50 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 88 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 89 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 51 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 44 |
@@ -97,23 +97,23 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1036 writes: 539 GraphQL mutations and 497 REST writes, after merging 72 REST routes into the mutation they duplicate.
+1037 writes: 540 GraphQL mutations and 497 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 388 |
-| Exempt | 645 |
+| Exempt | 646 |
 | — Security | 78 |
 | — Configuration | 262 |
 | — User preference | 32 |
 | — Infrastructure | 50 |
-| — Agent administration | 88 |
+| — Agent administration | 89 |
 | — Counterparty | 33 |
 | — Read-only | 51 |
 | — Attestation | 44 |
 | — Duplicate | 7 |
 | **Pending** | **3** |
-| Total | 1036 |
+| Total | 1037 |
 
 Of the 391 writes an agent should be able to make, 388 have a tool (99%).
 
@@ -136,7 +136,7 @@ The writes no tool performs yet, and what the tool would do.
 | accountingsync | 31 | 20 | 11 | 0 |
 | accountingwebhook | 1 | 0 | 1 | 0 |
 | accounttype | 4 | 0 | 4 | 0 |
-| agent | 15 | 2 | 13 | 0 |
+| agent | 16 | 2 | 14 | 0 |
 | agentdefinition | 12 | 0 | 12 | 0 |
 | agentextension | 2 | 0 | 2 | 0 |
 | agentquality | 6 | 0 | 6 | 0 |
@@ -392,6 +392,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation dismissAgentMemorySuggestion` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and forget_memory. |
 | `mutation replayAgentRun` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
 | `mutation resolveAgentException`<br>twin `POST /api/v1/agent-exceptions/:exceptionID/resolve/` | Exempt, agent-administration: An agent exception is an agent handing a case to a person; the person resolves it. |
+| `mutation reviewAgentMemory` | Exempt, agent-administration: A person vouching for what an agent wrote after reading outside content; an agent clearing the taint on what it will read would undo the hold. |
 | `mutation setAgentMemoryStatus` | Tool: `forget_memory` |
 | `mutation undoMyDecision` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation updateAgentControl`<br>twin `PUT /api/v1/agent-controls/` | Exempt, agent-administration: The organization-wide switches and ceilings every agent runs under. |

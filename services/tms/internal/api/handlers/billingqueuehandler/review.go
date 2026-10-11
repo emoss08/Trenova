@@ -6,10 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -69,10 +68,13 @@ func (h *Handler) summaries(c *gin.Context) {
 		ids = append(ids, id)
 	}
 
-	out, err := h.review.Summaries(c.Request.Context(), &repositories.ListBillingQueueSummariesRequest{
-		TenantInfo: pagination.FromAuth(authCtx),
-		ItemIDs:    ids,
-	})
+	out, err := h.review.Summaries(
+		c.Request.Context(),
+		&billingqueueports.ListBillingQueueSummariesRequest{
+			TenantInfo: pagination.FromAuth(authCtx),
+			ItemIDs:    ids,
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -96,11 +98,14 @@ func (h *Handler) neighbors(c *gin.Context) {
 		return
 	}
 
-	out, err := h.review.Neighbors(c.Request.Context(), &repositories.GetBillingQueueNeighborsRequest{
-		ItemID:        itemID,
-		Filter:        pagination.NewQueryOptions(c, authCtx),
-		IncludePosted: helpers.QueryBool(c, "includePosted"),
-	})
+	out, err := h.review.Neighbors(
+		c.Request.Context(),
+		&billingqueueports.GetBillingQueueNeighborsRequest{
+			ItemID:        itemID,
+			Filter:        pagination.NewQueryOptions(c, authCtx),
+			IncludePosted: helpers.QueryBool(c, "includePosted"),
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -125,7 +130,7 @@ func (h *Handler) activity(c *gin.Context) {
 	if !ok {
 		return
 	}
-	req := &services.ListBillingQueueActivityRequest{
+	req := &billingqueueports.ListBillingQueueActivityRequest{
 		ItemID:     itemID,
 		TenantInfo: pagination.FromAuth(authCtx),
 		Limit:      helpers.QueryInt(c, "limit", 30),
@@ -177,12 +182,16 @@ func (h *Handler) resolveIssue(c *gin.Context) {
 		return
 	}
 
-	item, err := h.review.ResolveIssue(c.Request.Context(), &services.ResolveBillingQueueIssueRequest{
-		ItemID:     itemID,
-		IssueID:    issueID,
-		OptionKey:  body.OptionKey,
-		TenantInfo: pagination.FromAuth(authCtx),
-	}, actorutil.FromAuthContext(authCtx))
+	item, err := h.review.ResolveIssue(
+		c.Request.Context(),
+		&billingqueueports.ResolveBillingQueueIssueRequest{
+			ItemID:     itemID,
+			IssueID:    issueID,
+			OptionKey:  body.OptionKey,
+			TenantInfo: pagination.FromAuth(authCtx),
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -209,11 +218,15 @@ func (h *Handler) undoIssue(c *gin.Context) {
 		return
 	}
 
-	item, err := h.review.UndoIssue(c.Request.Context(), &services.UndoBillingQueueIssueRequest{
-		ItemID:     itemID,
-		IssueID:    issueID,
-		TenantInfo: pagination.FromAuth(authCtx),
-	}, actorutil.FromAuthContext(authCtx))
+	item, err := h.review.UndoIssue(
+		c.Request.Context(),
+		&billingqueueports.UndoBillingQueueIssueRequest{
+			ItemID:     itemID,
+			IssueID:    issueID,
+			TenantInfo: pagination.FromAuth(authCtx),
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -235,7 +248,7 @@ func (h *Handler) release(c *gin.Context) {
 		return
 	}
 
-	item, err := h.review.Release(c.Request.Context(), &services.BillingQueueItemRequest{
+	item, err := h.review.Release(c.Request.Context(), &billingqueueports.BillingQueueItemRequest{
 		ItemID:     itemID,
 		TenantInfo: pagination.FromAuth(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
@@ -260,7 +273,7 @@ func (h *Handler) post(c *gin.Context) {
 		return
 	}
 
-	result, err := h.review.Post(c.Request.Context(), &services.BillingQueueItemRequest{
+	result, err := h.review.Post(c.Request.Context(), &billingqueueports.BillingQueueItemRequest{
 		ItemID:     itemID,
 		TenantInfo: pagination.FromAuth(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
@@ -303,12 +316,15 @@ func (h *Handler) startBulkApprove(c *gin.Context) {
 
 	// The run is the person's: it is approved in their name, and an item with
 	// no biller can only be given to them.
-	run, err := h.approval.Start(c.Request.Context(), &services.StartBillingQueueApprovalRequest{
-		TenantInfo:     pagination.FromAuthAsUser(authCtx),
-		ItemIDs:        body.ItemIDs,
-		IdempotencyKey: body.IdempotencyKey,
-		AssignApprover: body.AssignApprover,
-	})
+	run, err := h.approval.Start(
+		c.Request.Context(),
+		&billingqueueports.StartBillingQueueApprovalRequest{
+			TenantInfo:     pagination.FromAuthAsUser(authCtx),
+			ItemIDs:        body.ItemIDs,
+			IdempotencyKey: body.IdempotencyKey,
+			AssignApprover: body.AssignApprover,
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -317,7 +333,9 @@ func (h *Handler) startBulkApprove(c *gin.Context) {
 	c.JSON(http.StatusAccepted, run)
 }
 
-func (h *Handler) runRequest(c *gin.Context) (*services.BillingQueueApprovalRunRequest, bool) {
+func (h *Handler) runRequest(
+	c *gin.Context,
+) (*billingqueueports.BillingQueueApprovalRunRequest, bool) {
 	authCtx := authctx.GetAuthContext(c)
 	runID, err := pulid.MustParse(c.Param("runID"))
 	if err != nil {
@@ -326,7 +344,7 @@ func (h *Handler) runRequest(c *gin.Context) (*services.BillingQueueApprovalRunR
 	}
 
 	// Undo is the approver's alone, so the request says who is asking.
-	return &services.BillingQueueApprovalRunRequest{
+	return &billingqueueports.BillingQueueApprovalRunRequest{
 		TenantInfo: pagination.FromAuthAsUser(authCtx),
 		RunID:      runID,
 	}, true

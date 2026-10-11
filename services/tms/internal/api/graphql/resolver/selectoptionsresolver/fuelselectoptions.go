@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -19,7 +19,7 @@ func (r *Deps) resolveFuelIndexSelectOptions(
 	if len(req.IDs) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.IDs))
 		for _, id := range req.IDs {
-			entity, err := r.FuelIndexRepo.GetByID(ctx, &repositories.GetFuelIndexByIDRequest{
+			entity, err := r.FuelIndexRepo.GetByID(ctx, &fuelsurchargeports.GetFuelIndexByIDRequest{
 				FuelIndexID: id,
 				TenantInfo:  req.TenantInfo,
 			})
@@ -34,7 +34,7 @@ func (r *Deps) resolveFuelIndexSelectOptions(
 
 	result, err := r.FuelIndexRepo.SelectOptions(
 		ctx,
-		&repositories.FuelIndexSelectOptionsRequest{
+		&fuelsurchargeports.FuelIndexSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)
@@ -58,7 +58,7 @@ func (r *Deps) resolveFuelSurchargeProgramSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.FuelSurchargeProgramRepo.GetByID(
 				ctx,
-				&repositories.GetFuelSurchargeProgramByIDRequest{
+				&fuelsurchargeports.GetFuelSurchargeProgramByIDRequest{
 					ProgramID:  id,
 					TenantInfo: req.TenantInfo,
 				},
@@ -74,7 +74,7 @@ func (r *Deps) resolveFuelSurchargeProgramSelectOptions(
 
 	result, err := r.FuelSurchargeProgramRepo.SelectOptions(
 		ctx,
-		&repositories.FuelSurchargeProgramSelectOptionsRequest{
+		&fuelsurchargeports.FuelSurchargeProgramSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)

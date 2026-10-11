@@ -1,17 +1,437 @@
 all: true
-dir: internal/testutil/mocks
-pkgname: mocks
+dir: "internal/testutil/mocks/{{.SrcPackageName}}mock"
+pkgname: "{{.SrcPackageName}}mock"
 structname: "Mock{{.InterfaceName}}"
 filename: "mock_{{.InterfaceName}}.go"
 formatter: goimports
 template: testify
 packages:
-  github.com/emoss08/trenova/internal/core/ports/repositories:
+  github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports:
     config:
       all: true
-  github.com/emoss08/trenova/internal/core/ports/services:
+  github.com/emoss08/trenova/internal/modules/accounting/ports/accounttypeports:
     config:
       all: true
-  github.com/emoss08/trenova/internal/core/ports/storage:
+  github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/accounting/ports/journalsourceports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/aitrainingports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/briefingports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/insightports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/shipmentimportchatports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/billing/ports/billingqueuefilterpresetports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/documents/ports/captureports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/documents/ports/documentports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/edi/ports/ediports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/equipment/ports/fleetcodeports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/identity/ports/iamports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/identity/ports/instancebootstrapports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/identity/ports/onboardingports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/identity/ports/permissionports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/identity/ports/sessionports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/identity/ports/subscriptionports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/identity/ports/tenantports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/kernel/ports/settingversionports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/detentionports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/documentshipmentdraftports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/orderports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/tenderports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/parties/ports/carriercapacityports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/parties/ports/carrierports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/parties/ports/customerports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/places/ports/distancecalculationports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/places/ports/distancecontrolports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/places/ports/distanceoverrideports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/places/ports/distanceprofileports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/places/ports/locationports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/places/ports/storedmileageports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/rating/ports/ratesimulationports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/reference/ports/commodityports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/reference/ports/dothazmatreferenceports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/reference/ports/hazardousmaterialports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/reference/ports/hazmatsegregationruleports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/reference/ports/holdreasonports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/reference/ports/servicetypeports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/reference/ports/shipmenttypeports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/permitports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workforce/ports/workerports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workspace/ports/auditports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workspace/ports/bulkeditports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workspace/ports/dataentrycontrolports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workspace/ports/emailports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workspace/ports/homelayoutports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workspace/ports/pagefavoriteports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workspace/ports/reportports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workspace/ports/sidebarpreferenceports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workspace/ports/tablechangealertports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workspace/ports/tableconfigurationports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/workspace/ports/tablelayoutports:
     config:
       all: true

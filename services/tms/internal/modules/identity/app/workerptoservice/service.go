@@ -1,0 +1,803 @@
+//nolint:gocritic // existing legacy workflow/API shape is intentionally kept stable
+package workerptoservice
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
+	"github.com/emoss08/trenova/internal/modules/identity/jobs/smsjobs/smscontract"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
+	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
+	"github.com/uptrace/bun"
+	"go.temporal.io/sdk/client"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+type Params struct {
+	fx.In
+
+	Logger          *zap.Logger
+	DB              kernelports.DBConnection
+	Repo            workerports.WorkerPTORepository
+	UserRepo        tenantports.UserRepository
+	WorkerRepo      workerports.WorkerRepository
+	Ledger          *ptoledgerservice.Service
+	WorkflowStarter kernelports.WorkflowStarter
+	AuditService    auditports.AuditService
+	DriverNotify    *drivernotificationservice.Service `optional:"true"`
+	Realtime        agentports.RealtimeService         `optional:"true"`
+	Plans           platformplanports.PlanService      `optional:"true"`
+}
+
+type Service struct {
+	l               *zap.Logger
+	db              kernelports.DBConnection
+	repo            workerports.WorkerPTORepository
+	userRepo        tenantports.UserRepository
+	workerRepo      workerports.WorkerRepository
+	ledger          *ptoledgerservice.Service
+	workflowStarter kernelports.WorkflowStarter
+	auditService    auditports.AuditService
+	driverNotify    *drivernotificationservice.Service
+	realtime        agentports.RealtimeService
+	plans           platformplanports.PlanService
+}
+
+const maxPTOChartRangeSeconds int64 = 366 * 24 * 60 * 60
+
+var _ workerports.WorkerPTOService = (*Service)(nil)
+
+func New(p Params) *Service {
+	return &Service{
+		l:               p.Logger.Named("service.workerpto"),
+		db:              p.DB,
+		repo:            p.Repo,
+		userRepo:        p.UserRepo,
+		workerRepo:      p.WorkerRepo,
+		ledger:          p.Ledger,
+		workflowStarter: p.WorkflowStarter,
+		auditService:    p.AuditService,
+		driverNotify:    p.DriverNotify,
+		realtime:        p.Realtime,
+		plans:           p.Plans,
+	}
+}
+
+func (s *Service) List(
+	ctx context.Context,
+	req *workerports.ListPTORequest,
+) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
+	return s.repo.List(ctx, req)
+}
+
+func (s *Service) Get(
+	ctx context.Context,
+	req *workerports.GetPTOByIDRequest,
+) (*worker.WorkerPTO, error) {
+	return s.repo.GetByID(ctx, req)
+}
+
+func (s *Service) Create(
+	ctx context.Context,
+	entity *worker.WorkerPTO,
+	userID pulid.ID,
+) (*worker.WorkerPTO, error) {
+	log := s.l.With(
+		zap.String("operation", "Create"),
+		zap.String("userID", userID.String()),
+		zap.String("ptoID", entity.GetResourceID()),
+	)
+
+	autoApprove, err := s.prepareCreate(ctx, entity, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var createdEntity *worker.WorkerPTO
+	err = s.inTx(ctx, func(txCtx context.Context) error {
+		created, txErr := s.repo.Create(txCtx, entity)
+		if txErr != nil {
+			return txErr
+		}
+		if autoApprove {
+			if txErr = s.bookUsage(txCtx, tenantOf(created), created, userID); txErr != nil {
+				return txErr
+			}
+		}
+		createdEntity = created
+		return nil
+	})
+	if err != nil {
+		log.Error("failed to create PTO", zap.Error(err))
+		return nil, err
+	}
+	s.publishPTOInvalidation(ctx, createdEntity, permission.OpCreate, userID)
+	if autoApprove {
+		s.notifyDriverPTO(ctx, tenantOf(createdEntity), createdEntity, driverPTONotice{
+			eventType: eventPTOReviewed,
+			approved:  true,
+		})
+	}
+
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
+		Resource:       permission.ResourceWorkerPTO,
+		ResourceID:     createdEntity.GetResourceID(),
+		Operation:      permission.OpCreate,
+		UserID:         userID,
+		CurrentState:   jsonutils.MustToJSON(createdEntity),
+		OrganizationID: createdEntity.GetOrganizationID(),
+		BusinessUnitID: createdEntity.GetBusinessUnitID(),
+	}, auditservice.WithComment("PTO created")); err != nil {
+		log.Error("failed to log audit action", zap.Error(err))
+		return nil, err
+	}
+
+	return createdEntity, nil
+}
+
+func (s *Service) Update(
+	ctx context.Context,
+	entity *worker.WorkerPTO,
+	userID pulid.ID,
+) (*worker.WorkerPTO, error) {
+	log := s.l.With(
+		zap.String("operation", "Update"),
+		zap.String("userID", userID.String()),
+		zap.String("ptoID", entity.GetResourceID()),
+	)
+
+	current, err := s.prepareUpdate(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	updated, err := s.repo.Update(ctx, entity)
+	if err != nil {
+		log.Error("failed to update PTO", zap.Error(err))
+		return nil, err
+	}
+	s.publishPTOInvalidation(ctx, updated, permission.OpUpdate, userID)
+
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
+		Resource:       permission.ResourceWorkerPTO,
+		ResourceID:     updated.GetResourceID(),
+		Operation:      permission.OpUpdate,
+		UserID:         userID,
+		PreviousState:  jsonutils.MustToJSON(current),
+		CurrentState:   jsonutils.MustToJSON(updated),
+		OrganizationID: updated.GetOrganizationID(),
+		BusinessUnitID: updated.GetBusinessUnitID(),
+	}, auditservice.WithComment("PTO updated"), auditservice.WithDiff(current, updated)); err != nil {
+		log.Error("failed to log audit action", zap.Error(err))
+	}
+
+	return updated, nil
+}
+
+func (s *Service) Approve(
+	ctx context.Context,
+	req *workerports.UpdatePTOStatusRequest,
+) (*worker.WorkerPTO, error) {
+	return s.transition(ctx, transitionParams{
+		req:          req,
+		target:       worker.PTOStatusApproved,
+		notifyWorker: true,
+	})
+}
+
+func (s *Service) Reject(
+	ctx context.Context,
+	req *workerports.UpdatePTOStatusRequest,
+) (*worker.WorkerPTO, error) {
+	if err := requireRejectionReason(req); err != nil {
+		return nil, err
+	}
+
+	return s.transition(ctx, transitionParams{
+		req:          req,
+		target:       worker.PTOStatusRejected,
+		notifyWorker: true,
+	})
+}
+
+func (s *Service) Cancel(
+	ctx context.Context,
+	req *workerports.UpdatePTOStatusRequest,
+) (*worker.WorkerPTO, error) {
+	return s.transition(ctx, transitionParams{
+		req:          req,
+		target:       worker.PTOStatusCancelled,
+		notifyWorker: true,
+	})
+}
+
+func (s *Service) CancelRequested(
+	ctx context.Context,
+	req *workerports.UpdatePTOStatusRequest,
+) (*worker.WorkerPTO, error) {
+	return s.transition(ctx, transitionParams{
+		req:          req,
+		target:       worker.PTOStatusCancelled,
+		notifyWorker: false,
+	})
+}
+
+func (s *Service) BulkAction(
+	ctx context.Context,
+	req *workerports.PTOBulkActionRequest,
+) (*workerports.PTOBulkActionPayload, error) {
+	if len(req.PTOIDs) == 0 {
+		return nil, errortypes.NewValidationError(
+			"ptoIds",
+			errortypes.ErrRequired,
+			"Select at least one PTO request",
+		)
+	}
+	if !req.Action.IsValid() {
+		return nil, errortypes.NewValidationError(
+			"action",
+			errortypes.ErrInvalid,
+			"Bulk action is invalid",
+		)
+	}
+	if req.Action == workerports.PTOBulkActionReject && strings.TrimSpace(req.Reason) == "" {
+		return nil, errortypes.NewValidationError(
+			"reason",
+			errortypes.ErrRequired,
+			"A reason is required to reject PTO requests",
+		)
+	}
+
+	existing, err := s.repo.GetByIDs(ctx, &workerports.GetPTOsByIDsRequest{
+		IDs:        req.PTOIDs,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	byID := make(map[pulid.ID]*worker.WorkerPTO, len(existing))
+	for _, pto := range existing {
+		byID[pto.ID] = pto
+	}
+
+	payload := &workerports.PTOBulkActionPayload{
+		Results: make([]*workerports.PTOBulkActionResult, 0, len(req.PTOIDs)),
+	}
+	for _, ptoID := range req.PTOIDs {
+		result := &workerports.PTOBulkActionResult{PTOID: ptoID}
+
+		current, found := byID[ptoID]
+		if !found {
+			result.Error = "PTO request not found within your organization"
+			payload.FailureCount++
+			payload.Results = append(payload.Results, result)
+			continue
+		}
+
+		_, actionErr := s.transition(ctx, transitionParams{
+			req: &workerports.UpdatePTOStatusRequest{
+				ID:              ptoID,
+				TenantInfo:      req.TenantInfo,
+				UserID:          req.UserID,
+				Reason:          req.Reason,
+				ExpectedVersion: current.Version,
+			},
+			target:       req.Action.TargetStatus(),
+			notifyWorker: true,
+			current:      current,
+		})
+		if actionErr != nil {
+			result.Error = actionErr.Error()
+			payload.FailureCount++
+		} else {
+			result.Success = true
+			payload.SuccessCount++
+		}
+		payload.Results = append(payload.Results, result)
+	}
+
+	return payload, nil
+}
+
+type transitionParams struct {
+	req          *workerports.UpdatePTOStatusRequest
+	target       worker.PTOStatus
+	notifyWorker bool
+	current      *worker.WorkerPTO
+}
+
+func (s *Service) transition(
+	ctx context.Context,
+	params transitionParams,
+) (*worker.WorkerPTO, error) {
+	req := params.req
+	log := s.l.With(
+		zap.String("operation", "transition"),
+		zap.String("ptoID", req.ID.String()),
+		zap.String("target", string(params.target)),
+	)
+
+	current, err := s.planTransition(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	var updated *worker.WorkerPTO
+	err = s.inTx(ctx, func(txCtx context.Context) error {
+		result, txErr := s.repo.UpdateStatus(txCtx, req)
+		if txErr != nil {
+			return txErr
+		}
+		switch params.target { //nolint:exhaustive // only these targets touch the ledger
+		case worker.PTOStatusApproved:
+			txErr = s.bookUsage(txCtx, req.TenantInfo, result, req.UserID)
+		case worker.PTOStatusCancelled:
+			if current.Status == worker.PTOStatusApproved {
+				txErr = s.releaseUsage(txCtx, req.TenantInfo, result, req.UserID)
+			}
+		}
+		if txErr != nil {
+			return txErr
+		}
+		updated = result
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	operation := transitionOperation(params.target)
+	s.logTransitionAudit(current, updated, operation, req, log)
+	s.publishPTOInvalidation(ctx, updated, operation, req.UserID)
+
+	if params.notifyWorker {
+		s.notifyTransition(ctx, req, updated, params.target, log)
+	}
+
+	return updated, nil
+}
+
+func transitionOperation(target worker.PTOStatus) permission.Operation {
+	switch target { //nolint:exhaustive // Requested is never a transition target
+	case worker.PTOStatusApproved:
+		return permission.OpApprove
+	case worker.PTOStatusRejected:
+		return permission.OpReject
+	case worker.PTOStatusCancelled:
+		return permission.OpCancel
+	default:
+		return permission.OpUpdate
+	}
+}
+
+func (s *Service) logTransitionAudit(
+	previous, updated *worker.WorkerPTO,
+	operation permission.Operation,
+	req *workerports.UpdatePTOStatusRequest,
+	log *zap.Logger,
+) {
+	if s.auditService == nil {
+		return
+	}
+
+	comment := fmt.Sprintf("PTO %s", strings.ToLower(string(updated.Status)))
+	// A decision taken under a delegation has to say so. Otherwise the trail
+	// reads as the delegate's own call, and nobody can tell afterwards which
+	// manager's authority was actually used.
+	if !req.OnBehalfOf.IsNil() {
+		comment = fmt.Sprintf("%s on behalf of %s", comment, req.OnBehalfOf)
+	}
+	if req.Reason != "" {
+		comment = fmt.Sprintf("%s: %s", comment, req.Reason)
+	}
+
+	if err := s.auditService.LogAction(&auditports.LogActionParams{
+		Resource:       permission.ResourceWorkerPTO,
+		ResourceID:     updated.GetResourceID(),
+		Operation:      operation,
+		UserID:         req.UserID,
+		PreviousState:  jsonutils.MustToJSON(previous),
+		CurrentState:   jsonutils.MustToJSON(updated),
+		OrganizationID: updated.GetOrganizationID(),
+		BusinessUnitID: updated.GetBusinessUnitID(),
+	}, auditservice.WithComment(comment), auditservice.WithDiff(previous, updated)); err != nil {
+		log.Error("failed to log audit action", zap.Error(err))
+	}
+}
+
+func (s *Service) notifyTransition(
+	ctx context.Context,
+	req *workerports.UpdatePTOStatusRequest,
+	updated *worker.WorkerPTO,
+	target worker.PTOStatus,
+	log *zap.Logger,
+) {
+	if notice, ok := transitionNotice(target, req.Reason); ok {
+		s.notifyDriverPTO(ctx, req.TenantInfo, updated, notice)
+	}
+
+	s.sendTransitionSMS(ctx, req, updated, target, log)
+}
+
+func (s *Service) sendTransitionSMS(
+	ctx context.Context,
+	req *workerports.UpdatePTOStatusRequest,
+	updated *worker.WorkerPTO,
+	target worker.PTOStatus,
+	log *zap.Logger,
+) {
+	if !s.sendsSMS() {
+		log.Warn("workflow starter disabled; skipping PTO SMS")
+		return
+	}
+	allowed, err := planservice.Allows(ctx, s.plans, req.TenantInfo, platformplan.CapabilitySMS)
+	if err != nil {
+		log.Error("failed to resolve the organization's plan for PTO SMS", zap.Error(err))
+		return
+	}
+	if !allowed {
+		log.Debug("the organization's plan does not include SMS; skipping PTO SMS")
+		return
+	}
+
+	sms, err := s.transitionSMS(ctx, req, updated, target)
+	if err != nil {
+		log.Error("failed to prepare PTO SMS", zap.Error(err))
+		return
+	}
+	if sms == nil {
+		return
+	}
+
+	payload := &smscontract.SendSMSPayload{
+		PhoneNumber:    sms.PhoneNumber,
+		Message:        sms.Message,
+		OrganizationID: req.TenantInfo.OrgID,
+		BusinessUnitID: req.TenantInfo.BuID,
+	}
+
+	if _, err = s.workflowStarter.StartWorkflow(ctx, client.StartWorkflowOptions{
+		ID: fmt.Sprintf(
+			"pto-%s-%s-%d",
+			strings.ToLower(string(target)),
+			updated.ID.String(),
+			timeutils.NowUnix(),
+		),
+		TaskQueue: temporaltype.SMSTaskQueue,
+		StaticSummary: fmt.Sprintf(
+			"Sending SMS to worker %s for %s PTO",
+			updated.WorkerID.String(),
+			strings.ToLower(string(target)),
+		),
+	}, "SendSMSWorkflow", payload); err != nil {
+		log.Error("failed to start PTO SMS workflow", zap.Error(err))
+	}
+}
+
+func transitionSMSMessage(
+	actorName string,
+	pto *worker.WorkerPTO,
+	target worker.PTOStatus,
+	reason string,
+) (string, bool) {
+	dates := fmt.Sprintf(
+		"%s to %s",
+		timeutils.UnixToHumanReadable(pto.StartDate),
+		timeutils.UnixToHumanReadable(pto.EndDate),
+	)
+
+	switch target { //nolint:exhaustive // Requested is never a transition target
+	case worker.PTOStatusApproved:
+		return fmt.Sprintf("%s has approved your PTO request for dates %s.", actorName, dates), true
+	case worker.PTOStatusRejected:
+		return fmt.Sprintf(
+			"%s has rejected your PTO request for dates %s. Reason: %s",
+			actorName,
+			dates,
+			reason,
+		), true
+	case worker.PTOStatusCancelled:
+		if reason == "" {
+			return fmt.Sprintf(
+				"%s has cancelled your PTO request for dates %s.",
+				actorName,
+				dates,
+			), true
+		}
+		return fmt.Sprintf(
+			"%s has cancelled your PTO request for dates %s. Reason: %s",
+			actorName,
+			dates,
+			reason,
+		), true
+	default:
+		return "", false
+	}
+}
+
+func (s *Service) GetChartData(
+	ctx context.Context,
+	req *workerports.PTOChartRequest,
+) ([]*workerports.PTOChartDataPoint, error) {
+	if err := s.validateChartRequest(req); err != nil {
+		return nil, err
+	}
+
+	return s.repo.GetChartData(ctx, req)
+}
+
+func (s *Service) validateChartRequest(req *workerports.PTOChartRequest) error {
+	multiErr := errortypes.NewMultiError()
+
+	if req == nil {
+		multiErr.Add("request", errortypes.ErrRequired, "request is required")
+		return multiErr
+	}
+
+	if req.Filter == nil {
+		multiErr.Add("filter", errortypes.ErrRequired, "filter is required")
+	}
+
+	if req.StartDateFrom <= 0 {
+		multiErr.Add("startDateFrom", errortypes.ErrInvalid, "startDateFrom must be greater than 0")
+	}
+
+	if req.StartDateTo <= 0 {
+		multiErr.Add("startDateTo", errortypes.ErrInvalid, "startDateTo must be greater than 0")
+	}
+
+	if req.StartDateFrom > 0 && req.StartDateTo > 0 {
+		if req.StartDateFrom > req.StartDateTo {
+			multiErr.Add(
+				"dateRange",
+				errortypes.ErrInvalid,
+				"startDateFrom must be less than or equal to startDateTo",
+			)
+		}
+
+		if req.StartDateTo-req.StartDateFrom > maxPTOChartRangeSeconds {
+			multiErr.Add(
+				"dateRange",
+				errortypes.ErrInvalidLength,
+				"date range cannot exceed 366 days",
+			)
+		}
+	}
+
+	if req.Type != "" && !strings.EqualFold(req.Type, "all") {
+		if _, err := worker.PTOTypeFromString(req.Type); err != nil {
+			multiErr.Add(
+				"type",
+				errortypes.ErrInvalid,
+				"type must be one of: all, Personal, Vacation, Sick, Holiday, Bereavement, Maternity, Paternity",
+			)
+		}
+	}
+
+	if req.WorkerID != "" {
+		if _, err := pulid.MustParse(req.WorkerID); err != nil {
+			multiErr.Add("workerId", errortypes.ErrInvalidFormat, "workerId must be a valid ID")
+		}
+	}
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+func (s *Service) ListUpcoming(
+	ctx context.Context,
+	req *workerports.ListUpcomingPTORequest,
+) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
+	return s.repo.ListUpcoming(ctx, req)
+}
+
+func (s *Service) publishPTOInvalidation(
+	ctx context.Context,
+	pto *worker.WorkerPTO,
+	action permission.Operation,
+	userID pulid.ID,
+) {
+	if s.realtime == nil || pto == nil {
+		return
+	}
+	err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
+		OrganizationID: pto.OrganizationID,
+		BusinessUnitID: pto.BusinessUnitID,
+		ActorUserID:    userID,
+		ActorType:      permissionports.PrincipalTypeUser,
+		ActorID:        userID,
+		Resource:       "worker_pto",
+		Action:         string(action),
+		RecordID:       pto.ID,
+	})
+	if err != nil {
+		s.l.Warn("failed to publish PTO invalidation", zap.Error(err))
+	}
+}
+
+type driverPTONotice struct {
+	eventType string
+	approved  bool
+	reason    string
+}
+
+func (s *Service) notifyDriverPTO(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	pto *worker.WorkerPTO,
+	notice driverPTONotice,
+) {
+	if s.driverNotify == nil || pto == nil {
+		return
+	}
+	s.driverNotify.Notify(ctx, ptoDriverNotification(tenantInfo, pto, notice))
+}
+
+func ptoDriverNotification(
+	tenantInfo pagination.TenantInfo,
+	pto *worker.WorkerPTO,
+	notice driverPTONotice,
+) *drivernotificationservice.DriverNotification {
+	return &drivernotificationservice.DriverNotification{
+		TenantInfo: tenantInfo,
+		WorkerID:   pto.WorkerID,
+		EventType:  notice.eventType,
+		Priority:   notification.PriorityHigh,
+		Context: documenttemplate.DriverNotificationContext{
+			Approved: notice.approved,
+			Reason:   notice.reason,
+		},
+		Link: "/dash/profile",
+		RelatedEntities: map[string]any{
+			"ptoId": pto.ID.String(),
+		},
+	}
+}
+
+func tenantOf(pto *worker.WorkerPTO) pagination.TenantInfo {
+	return pagination.TenantInfo{OrgID: pto.OrganizationID, BuID: pto.BusinessUnitID}
+}
+
+func (s *Service) inTx(ctx context.Context, fn func(context.Context) error) error {
+	if s.db == nil {
+		return fn(ctx)
+	}
+	return s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		return fn(txCtx)
+	})
+}
+
+func (s *Service) prepareLedgerFields(
+	ctx context.Context,
+	entity *worker.WorkerPTO,
+	excludeID pulid.ID,
+) (*ptoledgerservice.AvailabilityResult, error) {
+	if s.ledger == nil {
+		entity.Days = worker.ComputePTODays(entity.StartDate, entity.EndDate, nil, true, nil)
+		return nil, nil
+	}
+
+	tenantInfo := tenantOf(entity)
+	resolved, err := s.ledger.ResolvePolicy(ctx, tenantInfo, entity.WorkerID, entity.StartDate)
+	if err != nil {
+		return nil, err
+	}
+	loc, err := s.ledger.OrgLocation(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	countWeekends := true
+	if resolved != nil {
+		countWeekends = resolved.Policy.CountWeekends
+	}
+	holidays, err := s.ledger.HolidayCalendar(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	if blocked := holidays.BlackoutsBetween(entity.StartDate, entity.EndDate, loc); len(
+		blocked,
+	) > 0 {
+		return nil, errortypes.NewValidationError(
+			"startDate",
+			errortypes.ErrInvalid,
+			"These dates fall on a blackout: {0}", blocked[0].Name,
+		)
+	}
+	entity.Days = worker.ComputePTODays(
+		entity.StartDate,
+		entity.EndDate,
+		loc,
+		countWeekends,
+		holidays,
+	)
+
+	availability, err := s.ledger.CheckAvailability(ctx, &ptoledgerservice.AvailabilityRequest{
+		TenantInfo:   tenantInfo,
+		WorkerID:     entity.WorkerID,
+		PTOType:      entity.Type,
+		Days:         entity.Days,
+		StartDate:    entity.StartDate,
+		ExcludePTOID: excludeID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if validationErr := availability.ValidationError(); validationErr != nil {
+		return nil, validationErr
+	}
+	return availability, nil
+}
+
+func (s *Service) requireAvailability(
+	ctx context.Context,
+	pto *worker.WorkerPTO,
+	excludeID pulid.ID,
+) error {
+	availability, err := s.checkAvailability(ctx, pto, excludeID)
+	if err != nil {
+		return err
+	}
+	return availability.ValidationError()
+}
+
+func (s *Service) bookUsage(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	pto *worker.WorkerPTO,
+	userID pulid.ID,
+) error {
+	if s.ledger == nil {
+		return nil
+	}
+	entry, err := s.ledger.PostUsage(ctx, tenantInfo, pto, ptoledgerservice.UserActor(userID))
+	if err != nil || entry == nil {
+		return err
+	}
+	pto.BalanceAfterDays = decimal.NewNullDecimal(entry.BalanceAfterDays)
+	return s.repo.SetBalanceAfter(ctx, &workerports.SetPTOBalanceAfterRequest{
+		ID:               pto.ID,
+		TenantInfo:       tenantInfo,
+		BalanceAfterDays: entry.BalanceAfterDays,
+	})
+}
+
+func (s *Service) releaseUsage(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	pto *worker.WorkerPTO,
+	userID pulid.ID,
+) error {
+	if s.ledger == nil {
+		return nil
+	}
+	_, err := s.ledger.PostReversal(ctx, tenantInfo, pto, ptoledgerservice.UserActor(userID))
+	return err
+}

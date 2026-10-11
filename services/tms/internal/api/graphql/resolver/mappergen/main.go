@@ -12,11 +12,15 @@ var (
 	outputDir    = flag.String("output-dir", "", "Path to generated mapper package directory")
 	gqlgenPath   = flag.String("gqlgen", "", "Path to gqlgen.yml")
 	modelPath    = flag.String("model", "", "Path to gqlmodel models_gen.go")
-	domainDir    = flag.String("domain", "", "Path to internal/core/domain")
-	resolverDir  = flag.String("resolver", "", "Path to resolver package")
-	goModPath    = flag.String("gomod", "", "Path to go.mod")
-	reportPath   = flag.String("report", "", "Path to write the declined-type report")
-	verbose      = flag.Bool(
+	domainDir    = flag.String(
+		"domain",
+		"",
+		"Glob of the domain directories (internal/modules/*/domain)",
+	)
+	resolverDir = flag.String("resolver", "", "Path to resolver package")
+	goModPath   = flag.String("gomod", "", "Path to go.mod")
+	reportPath  = flag.String("report", "", "Path to write the declined-type report")
+	verbose     = flag.Bool(
 		"verbose",
 		false,
 		"Include types that declare no GraphQL input in the declined-type report",

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
@@ -59,7 +59,7 @@ type providerSlotRepository struct {
 	client *redis.Client
 }
 
-func NewProviderSlotRepository(p ProviderSlotParams) repositories.ProviderSlotRepository {
+func NewProviderSlotRepository(p ProviderSlotParams) agentports.ProviderSlotRepository {
 	return &providerSlotRepository{client: p.Client}
 }
 
@@ -69,7 +69,7 @@ func providerSlotKey(providerID pulid.ID) string {
 
 func (r *providerSlotRepository) Acquire(
 	ctx context.Context,
-	req repositories.AcquireProviderSlotRequest,
+	req agentports.AcquireProviderSlotRequest,
 ) (bool, error) {
 	if req.ProviderID.IsNil() || req.Token == "" || req.Limit <= 0 || req.TTL <= 0 {
 		return false, fmt.Errorf("acquire provider slot: %w", errIncompleteSlotRequest)
@@ -92,7 +92,7 @@ func (r *providerSlotRepository) Acquire(
 
 func (r *providerSlotRepository) Refresh(
 	ctx context.Context,
-	req repositories.ProviderSlotRequest,
+	req agentports.ProviderSlotRequest,
 ) (bool, error) {
 	if req.ProviderID.IsNil() || req.Token == "" || req.TTL <= 0 {
 		return false, fmt.Errorf("refresh provider slot: %w", errIncompleteSlotRequest)
@@ -114,7 +114,7 @@ func (r *providerSlotRepository) Refresh(
 
 func (r *providerSlotRepository) Release(
 	ctx context.Context,
-	req repositories.ProviderSlotRequest,
+	req agentports.ProviderSlotRequest,
 ) error {
 	if req.ProviderID.IsNil() || req.Token == "" {
 		return nil

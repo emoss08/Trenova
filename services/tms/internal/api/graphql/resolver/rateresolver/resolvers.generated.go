@@ -4,10 +4,10 @@ package rateresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	rateagreementservice "github.com/emoss08/trenova/internal/core/services/rateagreementservice"
-	ratematrixservice "github.com/emoss08/trenova/internal/core/services/ratematrixservice"
-	ratequoteservice "github.com/emoss08/trenova/internal/core/services/ratequoteservice"
-	ratezoneservice "github.com/emoss08/trenova/internal/core/services/ratezoneservice"
+	rateagreementservice "github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
+	ratematrixservice "github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
+	ratequoteservice "github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
+	ratezoneservice "github.com/emoss08/trenova/internal/modules/rating/app/ratezoneservice"
 )
 
 type Deps struct {

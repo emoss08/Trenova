@@ -1,0 +1,199 @@
+package billingqueueports
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
+)
+
+type ListBillingQueueItemsRequest struct {
+	Filter        *pagination.QueryOptions `json:"filter"`
+	IncludePosted bool                     `json:"includePosted"`
+}
+
+type GetBillingQueueItemByIDRequest struct {
+	TenantInfo            pagination.TenantInfo `json:"-"`
+	ItemID                pulid.ID              `json:"itemId"`
+	ExpandShipmentDetails bool                  `json:"expandShipmentDetails"`
+}
+
+type GetBillingQueueStatsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+}
+
+// MarkPostedForInvoiceRequest sweeps the billing-queue items an invoice actually
+// billed. InvoiceID is the real predicate; OrderID and ShipmentIDs are a fallback for
+// rows written before the invoice back-link existed and which the migration could not
+// link with confidence. Canceled items are never swept.
+type MarkPostedForInvoiceRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"-"`
+	InvoiceID   pulid.ID              `json:"-"`
+	OrderID     pulid.ID              `json:"-"`
+	ShipmentIDs []pulid.ID            `json:"-"`
+	// PayerID narrows the fallback sweep to the invoice's own payer, so posting
+	// one payer's invoice never settles another payer's item on the same legs.
+	PayerID pulid.ID `json:"-"`
+}
+
+// ReleaseForInvoiceRequest hands the items behind a voided invoice back. With
+// Rebill they return to Approved with a fresh number and no invoice link, ready
+// for the next invoice; with DoNotRebill they are canceled.
+type ReleaseForInvoiceRequest struct {
+	TenantInfo   pagination.TenantInfo `json:"-"`
+	InvoiceID    pulid.ID              `json:"-"`
+	AnchorItemID pulid.ID              `json:"-"`
+	Rebill       bool                  `json:"-"`
+	CanceledByID *pulid.ID             `json:"-"`
+	CanceledAt   int64                 `json:"-"`
+	CancelReason string                `json:"-"`
+	// RenumberFn mints a fresh billing number for each released item, since the
+	// voided invoice keeps the old one.
+	RenumberFn func(ctx context.Context, billType billingqueue.BillType) (string, error) `json:"-"`
+}
+
+// ListActiveInvoiceItemsRequest asks which shipments still have an invoice item
+// that has not posted or been canceled, keyed by shipment.
+type ListActiveInvoiceItemsRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"-"`
+	ShipmentIDs []pulid.ID            `json:"-"`
+}
+
+// AttachInvoiceRequest links every billing-queue item an invoice bills back to it, so
+// the posting sweep and the double-bill guard can both work from one exact predicate.
+type AttachInvoiceRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	InvoiceID  pulid.ID              `json:"-"`
+	ItemIDs    []pulid.ID            `json:"-"`
+}
+
+// ListConsolidationCandidatesRequest asks for the approved, unbilled queue items a
+// run may bill, up to the end of a period.
+//
+// There is deliberately no start. Freight is owed however old it is: an item held
+// under a customer's minimum is promised to the next period, and an item approved
+// after its own period closed belongs on the next statement. A lower bound could
+// only ever drop owed freight from billing without a trace.
+type ListConsolidationCandidatesRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"-"`
+	CustomerIDs []pulid.ID            `json:"-"`
+	PeriodEnd   int64                 `json:"-"`
+	Limit       int                   `json:"-"`
+}
+
+// ConsolidationCandidate is one approved billing-queue item flattened with every
+// key a split rule can group on, so grouping needs one query rather than one per
+// shipment.
+//
+// CustomerID is the item's payer and TotalChargeAmount is that payer's share of
+// the shipment: a split-billed shipment yields one candidate per payer, each on
+// its own payer's statement.
+type ConsolidationCandidate struct {
+	BillingQueueItemID pulid.ID            `bun:"billing_queue_item_id"`
+	ShipmentID         pulid.ID            `bun:"shipment_id"`
+	OrderID            pulid.ID            `bun:"order_id"`
+	CustomerID         pulid.ID            `bun:"customer_id"`
+	CustomerName       string              `bun:"customer_name"`
+	ProNumber          string              `bun:"pro_number"`
+	ShipmentBOL        string              `bun:"shipment_bol"`
+	OrderNumber        string              `bun:"order_number"`
+	OrderPONumber      string              `bun:"order_po_number"`
+	ServiceTypeCode    string              `bun:"service_type_code"`
+	OriginKey          string              `bun:"origin_key"`
+	DestinationKey     string              `bun:"destination_key"`
+	ServiceDate        *int64              `bun:"service_date"`
+	TotalChargeAmount  decimal.NullDecimal `bun:"total_charge_amount"`
+	CurrencyCode       string              `bun:"currency_code"`
+
+	// OrderEligibleLegs and OrderTotalLegs decide whether this run may carry the
+	// order's own charges: only when it bills every billable leg of that order.
+	// Otherwise a statement catching two of three legs would bill the order's
+	// customs brokerage a period early, and stamp it so the completing invoice
+	// never sees it.
+	OrderEligibleLegs int `bun:"order_eligible_legs"`
+	OrderTotalLegs    int `bun:"order_total_legs"`
+
+	// The customer's own schedule settings ride along so grouping needs no second
+	// lookup per customer, and so the settings the operator configured are the
+	// ones that actually shape the run.
+	SplitBy                customer.InvoiceSplitKey   `bun:"split_by"`
+	SectionBy              customer.InvoiceSectionKey `bun:"section_by"`
+	InvoiceDetail          customer.InvoiceDetail     `bun:"invoice_detail"`
+	MaxShipmentsPerInvoice int16                      `bun:"max_shipments_per_invoice"`
+	MinConsolidatedAmount  decimal.NullDecimal        `bun:"min_consolidated_amount"`
+	AutoBill               bool                       `bun:"auto_bill"`
+}
+
+// CountHeldForPeriodRequest asks what freight is owed by the end of a period but is
+// still waiting on a biller. It has no start for the same reason
+// ListConsolidationCandidatesRequest has none, so held and accrued freight are
+// always measured over exactly the same span.
+type CountHeldForPeriodRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"-"`
+	CustomerIDs []pulid.ID            `json:"-"`
+	PeriodEnd   int64                 `json:"-"`
+}
+
+// HeldForPeriod is one customer's unreviewed freight for a period.
+type HeldForPeriod struct {
+	CustomerID    pulid.ID        `bun:"customer_id"`
+	ShipmentCount int             `bun:"shipment_count"`
+	TotalAmount   decimal.Decimal `bun:"total_amount"`
+}
+
+type BillingQueueRepository interface {
+	List(
+		ctx context.Context,
+		req *ListBillingQueueItemsRequest,
+	) (*pagination.ListResult[*billingqueue.BillingQueueItem], error)
+	GetByID(
+		ctx context.Context,
+		req *GetBillingQueueItemByIDRequest,
+	) (*billingqueue.BillingQueueItem, error)
+	Create(
+		ctx context.Context,
+		entity *billingqueue.BillingQueueItem,
+	) (*billingqueue.BillingQueueItem, error)
+	Update(
+		ctx context.Context,
+		entity *billingqueue.BillingQueueItem,
+	) (*billingqueue.BillingQueueItem, error)
+	ExistsByShipmentPayerAndType(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		shipmentID pulid.ID,
+		payerID pulid.ID,
+		billType billingqueue.BillType,
+	) (bool, error)
+	ListActiveInvoiceItemsByShipmentIDs(
+		ctx context.Context,
+		req *ListActiveInvoiceItemsRequest,
+	) (map[pulid.ID][]*billingqueue.BillingQueueItem, error)
+	ReleaseForInvoice(
+		ctx context.Context,
+		req *ReleaseForInvoiceRequest,
+	) ([]*billingqueue.BillingQueueItem, error)
+	MarkPostedForInvoice(
+		ctx context.Context,
+		req *MarkPostedForInvoiceRequest,
+	) (int64, error)
+	AttachInvoice(
+		ctx context.Context,
+		req *AttachInvoiceRequest,
+	) (int64, error)
+	ListConsolidationCandidates(
+		ctx context.Context,
+		req *ListConsolidationCandidatesRequest,
+	) ([]*ConsolidationCandidate, error)
+	CountHeldForPeriod(
+		ctx context.Context,
+		req *CountHeldForPeriodRequest,
+	) ([]*HeldForPeriod, error)
+	GetStatusCounts(
+		ctx context.Context,
+		req *GetBillingQueueStatsRequest,
+	) (map[billingqueue.Status]int, error)
+}

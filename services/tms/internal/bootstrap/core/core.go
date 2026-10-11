@@ -1,0 +1,92 @@
+package core
+
+import (
+	"github.com/emoss08/trenova/internal/bootstrap/edition"
+	"github.com/emoss08/trenova/internal/bootstrap/infrastructure"
+	"github.com/emoss08/trenova/internal/bootstrap/modules"
+	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
+	accountinginfra "github.com/emoss08/trenova/internal/infrastructure/accounting"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionrouter"
+	agentextensioninfra "github.com/emoss08/trenova/internal/infrastructure/agentextension"
+	carrierintelinfra "github.com/emoss08/trenova/internal/infrastructure/carrierintel"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/fuelcard"
+	reportingexecutor "github.com/emoss08/trenova/internal/infrastructure/reporting/executor"
+	reportingrender "github.com/emoss08/trenova/internal/infrastructure/reporting/render"
+	reportingresultcache "github.com/emoss08/trenova/internal/infrastructure/reporting/resultcache"
+	telematicsinfra "github.com/emoss08/trenova/internal/infrastructure/telematics"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/infrastructure/turnstream"
+	"github.com/emoss08/trenova/internal/modules/accounting"
+	"github.com/emoss08/trenova/internal/modules/agent"
+	"github.com/emoss08/trenova/internal/modules/billing"
+	"github.com/emoss08/trenova/internal/modules/documents"
+	"github.com/emoss08/trenova/internal/modules/edi"
+	"github.com/emoss08/trenova/internal/modules/equipment"
+	"github.com/emoss08/trenova/internal/modules/identity"
+	"github.com/emoss08/trenova/internal/modules/kernel"
+	"github.com/emoss08/trenova/internal/modules/operations"
+	"github.com/emoss08/trenova/internal/modules/parties"
+	"github.com/emoss08/trenova/internal/modules/places"
+	"github.com/emoss08/trenova/internal/modules/rating"
+	"github.com/emoss08/trenova/internal/modules/reference"
+	"github.com/emoss08/trenova/internal/modules/settlement"
+	"github.com/emoss08/trenova/internal/modules/workforce"
+	"github.com/emoss08/trenova/internal/modules/workspace"
+	"go.uber.org/fx"
+)
+
+func Options() fx.Option {
+	return OptionsFor(edition.Current())
+}
+
+func OptionsFor(e *edition.Edition) fx.Option {
+	return fx.Options(
+		config.SectionsOption(e.ConfigSections...),
+		config.Module,
+		config.Hooks(),
+		infrastructure.ObservabilityModule,
+		infrastructure.RedisModule,
+		infrastructure.RedisRepositoriesModule,
+		infrastructure.RateLimitModule,
+		infrastructure.DatabaseModule,
+		modules.ValidatorModule,
+		modules.PostgresRepositoryModule,
+		modules.QueryCacheModule,
+		fuelcard.Module,
+		carrierintelinfra.Module,
+		accountinginfra.Module,
+		agentextensioninfra.Module,
+		fx.Provide(telematicsinfra.NewFactory),
+		temporaljobs.Module,
+		reportingrender.Module,
+		reportingresultcache.Module,
+		fx.Provide(reportingexecutor.New),
+		ServiceModule,
+		modulesinfra.StorageModule,
+		modulesinfra.SMSModule,
+		modulesinfra.PDFRenderModule,
+		modulesinfra.TemplatingModule,
+		modulesinfra.RealtimePublisherModule,
+		modulesinfra.MeilisearchClientModule,
+		kernel.SharedOptions(),
+		identity.SharedOptions(),
+		workspace.SharedOptions(),
+		reference.SharedOptions(),
+		places.SharedOptions(),
+		equipment.SharedOptions(),
+		parties.SharedOptions(),
+		workforce.SharedOptions(),
+		documents.SharedOptions(),
+		rating.SharedOptions(),
+		operations.SharedOptions(),
+		edi.SharedOptions(),
+		accounting.SharedOptions(),
+		billing.SharedOptions(),
+		settlement.SharedOptions(),
+		agent.SharedOptions(),
+		turnstream.Module,
+		completionrouter.Module,
+		e.Option(),
+	)
+}

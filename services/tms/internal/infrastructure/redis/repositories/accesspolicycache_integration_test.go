@@ -5,8 +5,8 @@ package repositories
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/iam"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
@@ -31,7 +31,7 @@ func TestAccessPolicyCacheRepository_RoundTrip_Integration(t *testing.T) {
 	defer cleanup()
 
 	ctx := t.Context()
-	lookup := repositories.IAMTenantPolicyLookupRequest{
+	lookup := iamports.IAMTenantPolicyLookupRequest{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
@@ -76,7 +76,7 @@ func TestAccessPolicyCacheRepository_CachesEmptyList_Integration(t *testing.T) {
 	defer cleanup()
 
 	ctx := t.Context()
-	lookup := repositories.IAMTenantPolicyLookupRequest{
+	lookup := iamports.IAMTenantPolicyLookupRequest{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
@@ -95,11 +95,11 @@ func TestAccessPolicyCacheRepository_TenantsAreIsolated_Integration(t *testing.T
 
 	ctx := t.Context()
 	orgID := pulid.MustNew("org_")
-	first := repositories.IAMTenantPolicyLookupRequest{
+	first := iamports.IAMTenantPolicyLookupRequest{
 		OrganizationID: orgID,
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
-	second := repositories.IAMTenantPolicyLookupRequest{
+	second := iamports.IAMTenantPolicyLookupRequest{
 		OrganizationID: orgID,
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}

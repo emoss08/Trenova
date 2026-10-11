@@ -6,11 +6,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/session"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,7 +37,7 @@ func newTestAuthConfig() *config.Config {
 	}
 }
 
-func newAuthMiddleware(cfg *config.Config, svc *mocks.MockAuthService) *AuthMiddleware {
+func newAuthMiddleware(cfg *config.Config, svc *tenantportsmock.MockAuthService) *AuthMiddleware {
 	return NewAuthMiddleware(AuthMiddlewareParams{
 		Config:  cfg,
 		Service: svc,
@@ -56,7 +58,7 @@ func TestRequireAuth_ValidSession(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	sessionID := pulid.MustNew("ses_")
 
-	authSvc := mocks.NewMockAuthService(t)
+	authSvc := tenantportsmock.NewMockAuthService(t)
 	authSvc.On("AuthenticateSession", mock.Anything, sessionID.String()).Return(&session.Session{
 		ID:             sessionID,
 		UserID:         userID,
@@ -97,7 +99,7 @@ func TestRequireAuth_NoCookie(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	cfg := newTestAuthConfig()
-	authSvc := mocks.NewMockAuthService(t)
+	authSvc := tenantportsmock.NewMockAuthService(t)
 	am := newAuthMiddleware(cfg, authSvc)
 
 	handlerCalled := false
@@ -121,7 +123,7 @@ func TestRequireAuth_InvalidSessionID(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	cfg := newTestAuthConfig()
-	authSvc := mocks.NewMockAuthService(t)
+	authSvc := tenantportsmock.NewMockAuthService(t)
 	authSvc.On("AuthenticateSession", mock.Anything, "short").
 		Return(nil, errortypes.NewAuthenticationError("Session is invalid. Please login again."))
 	am := newAuthMiddleware(cfg, authSvc)
@@ -150,7 +152,7 @@ func TestRequireAuth_SessionValidationFails(t *testing.T) {
 	cfg := newTestAuthConfig()
 	sessionID := pulid.MustNew("ses_")
 
-	authSvc := mocks.NewMockAuthService(t)
+	authSvc := tenantportsmock.NewMockAuthService(t)
 	authSvc.On("AuthenticateSession", mock.Anything, sessionID.String()).
 		Return(nil, errors.New("session expired"))
 
@@ -182,11 +184,11 @@ func TestRequireAuth_ValidBearerAPIKeyDoesNotSetUserContext(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	orgID := pulid.MustNew("org_")
 
-	authSvc := mocks.NewMockAuthService(t)
+	authSvc := tenantportsmock.NewMockAuthService(t)
 	authSvc.
 		On("AuthenticateAPIKey", mock.Anything, "trv_test.secret", "192.0.2.1", "").
-		Return(&services.AuthenticatedPrincipal{
-			Type:           services.PrincipalTypeAPIKey,
+		Return(&tenantports.AuthenticatedPrincipal{
+			Type:           permissionports.PrincipalTypeAPIKey,
 			PrincipalID:    apiKeyID,
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
@@ -228,11 +230,11 @@ func TestRequireAuth_BearerTakesPrecedenceOverSessionCookie(t *testing.T) {
 	apiKeyID := pulid.MustNew("ak_")
 	sessionID := pulid.MustNew("ses_")
 
-	authSvc := mocks.NewMockAuthService(t)
+	authSvc := tenantportsmock.NewMockAuthService(t)
 	authSvc.
 		On("AuthenticateAPIKey", mock.Anything, "trv_test.secret", "192.0.2.1", "").
-		Return(&services.AuthenticatedPrincipal{
-			Type:           services.PrincipalTypeAPIKey,
+		Return(&tenantports.AuthenticatedPrincipal{
+			Type:           permissionports.PrincipalTypeAPIKey,
 			PrincipalID:    apiKeyID,
 			BusinessUnitID: pulid.MustNew("bu_"),
 			OrganizationID: pulid.MustNew("org_"),

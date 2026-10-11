@@ -11,11 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/driverportalservice"
-	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -287,7 +287,7 @@ func (r *QueryResolver) TrainingCourses(ctx context.Context, input gqlmodel.Trai
 	if input.Status != nil {
 		status = string(*input.Status)
 	}
-	result, err := r.WorkerTrainingService.ListCourses(ctx, &repositories.ListTrainingCoursesRequest{
+	result, err := r.WorkerTrainingService.ListCourses(ctx, &workerports.ListTrainingCoursesRequest{
 		Filter:   connection.Filter,
 		Cursor:   connection.Cursor,
 		Status:   status,
@@ -309,7 +309,7 @@ func (r *QueryResolver) TrainingCourse(ctx context.Context, id string) (*worker.
 	if err != nil {
 		return nil, err
 	}
-	return r.WorkerTrainingService.GetCourse(ctx, &repositories.GetTrainingCourseByIDRequest{
+	return r.WorkerTrainingService.GetCourse(ctx, &workerports.GetTrainingCourseByIDRequest{
 		ID:         courseID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
@@ -379,8 +379,8 @@ func (r *TrainingCourseResolver) PassingScore(ctx context.Context, obj *worker.T
 }
 
 func (r *TrainingCourseResolver) OpenRecordCount(ctx context.Context, obj *worker.TrainingCourse) (int, error) {
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		return l.TrainingCourseOpenRecordCount.Load(ctx, obj.ID.String())
+	if loaders.Available(ctx) {
+		return loaders.TrainingCourseOpenRecordCount(ctx, obj.ID.String())
 	}
 	return r.WorkerTrainingService.CountOpenRecords(ctx, obj)
 }

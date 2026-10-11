@@ -8,9 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/jurisdictionrulehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,15 +25,15 @@ type serviceStub struct {
 	// Embedded so adding a method to the port does not break every test here;
 	// the ones this file drives are implemented below and the rest would panic
 	// if a test ever reached them.
-	services.JurisdictionRuleService
+	jurisdictionruleports.JurisdictionRuleService
 
-	listReq   *services.ListJurisdictionRulesRequest
+	listReq   *jurisdictionruleports.ListJurisdictionRulesRequest
 	updated   *jurisdictionrule.JurisdictionRule
-	verifyReq *services.VerifyJurisdictionRuleRequest
+	verifyReq *jurisdictionruleports.VerifyJurisdictionRuleRequest
 }
 
 func (s *serviceStub) List(
-	_ context.Context, req *services.ListJurisdictionRulesRequest,
+	_ context.Context, req *jurisdictionruleports.ListJurisdictionRulesRequest,
 ) (*pagination.ListResult[*jurisdictionrule.JurisdictionRule], error) {
 	s.listReq = req
 	return &pagination.ListResult[*jurisdictionrule.JurisdictionRule]{
@@ -48,20 +49,20 @@ func (s *serviceStub) GetByID(
 }
 
 func (s *serviceStub) Create(
-	_ context.Context, e *jurisdictionrule.JurisdictionRule, _ *services.RequestActor,
+	_ context.Context, e *jurisdictionrule.JurisdictionRule, _ *permissionports.RequestActor,
 ) (*jurisdictionrule.JurisdictionRule, error) {
 	return e, nil
 }
 
 func (s *serviceStub) Update(
-	_ context.Context, e *jurisdictionrule.JurisdictionRule, _ *services.RequestActor,
+	_ context.Context, e *jurisdictionrule.JurisdictionRule, _ *permissionports.RequestActor,
 ) (*jurisdictionrule.JurisdictionRule, error) {
 	s.updated = e
 	return e, nil
 }
 
 func (s *serviceStub) Verify(
-	_ context.Context, req *services.VerifyJurisdictionRuleRequest,
+	_ context.Context, req *jurisdictionruleports.VerifyJurisdictionRuleRequest,
 ) (*jurisdictionrule.JurisdictionRule, error) {
 	s.verifyReq = req
 	return &jurisdictionrule.JurisdictionRule{}, nil
@@ -69,7 +70,7 @@ func (s *serviceStub) Verify(
 
 func setupHandler(
 	t *testing.T,
-	service services.JurisdictionRuleService,
+	service jurisdictionruleports.JurisdictionRuleService,
 ) *jurisdictionrulehandler.Handler {
 	t.Helper()
 

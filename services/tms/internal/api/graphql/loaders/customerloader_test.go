@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +21,7 @@ func TestCustomerBatchFunc_PreservesOrderAndReportsMissingIDs(t *testing.T) {
 	secondID := pulid.MustNew("cus_")
 	missingID := pulid.MustNew("cus_")
 	getter := &stubCustomersByIDsGetter{
-		getByIDs: func(_ context.Context, req repositories.GetCustomersByIDsRequest) ([]*customer.Customer, error) {
+		getByIDs: func(_ context.Context, req customerports.GetCustomersByIDsRequest) ([]*customer.Customer, error) {
 			assert.Equal(t, []pulid.ID{secondID, firstID, missingID}, req.CustomerIDs)
 			assert.True(t, req.IncludeState)
 			return []*customer.Customer{
@@ -58,7 +58,7 @@ func TestCustomerBatchFunc_RepositoryErrorFillsValidResults(t *testing.T) {
 	customerID := pulid.MustNew("cus_")
 	repoErr := errors.New("repository failed")
 	getter := &stubCustomersByIDsGetter{
-		getByIDs: func(context.Context, repositories.GetCustomersByIDsRequest) ([]*customer.Customer, error) {
+		getByIDs: func(context.Context, customerports.GetCustomersByIDsRequest) ([]*customer.Customer, error) {
 			return nil, repoErr
 		},
 	}
@@ -75,12 +75,12 @@ func TestCustomerBatchFunc_RepositoryErrorFillsValidResults(t *testing.T) {
 }
 
 type stubCustomersByIDsGetter struct {
-	getByIDs func(context.Context, repositories.GetCustomersByIDsRequest) ([]*customer.Customer, error)
+	getByIDs func(context.Context, customerports.GetCustomersByIDsRequest) ([]*customer.Customer, error)
 }
 
 func (s *stubCustomersByIDsGetter) GetByIDs(
 	ctx context.Context,
-	req repositories.GetCustomersByIDsRequest,
+	req customerports.GetCustomersByIDsRequest,
 ) ([]*customer.Customer, error) {
 	return s.getByIDs(ctx, req)
 }

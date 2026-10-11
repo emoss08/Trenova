@@ -6,7 +6,8 @@ import (
 	"sync"
 	"time"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -20,17 +21,17 @@ const (
 )
 
 type ModelCall struct {
-	Seq              int                                       `json:"seq"`
-	Kind             ModelCallKind                             `json:"kind"`
-	StartedAt        time.Time                                 `json:"startedAt"`
-	FinishedAt       time.Time                                 `json:"finishedAt"`
-	Attribution      serviceports.AIUsageAttribution           `json:"attribution"`
-	Chat             *serviceports.ChatCompletionRequest       `json:"chat,omitempty"`
-	Structured       *serviceports.StructuredCompletionRequest `json:"structured,omitempty"`
-	ChatResult       *serviceports.ChatCompletionResult        `json:"chatResult,omitempty"`
-	StructuredResult *serviceports.StructuredCompletionResult  `json:"structuredResult,omitempty"`
-	Retries          []serviceports.ChatRetryNotice            `json:"retries,omitempty"`
-	Error            string                                    `json:"error,omitempty"`
+	Seq              int                                     `json:"seq"`
+	Kind             ModelCallKind                           `json:"kind"`
+	StartedAt        time.Time                               `json:"startedAt"`
+	FinishedAt       time.Time                               `json:"finishedAt"`
+	Attribution      aiusageports.AIUsageAttribution         `json:"attribution"`
+	Chat             *agentports.ChatCompletionRequest       `json:"chat,omitempty"`
+	Structured       *agentports.StructuredCompletionRequest `json:"structured,omitempty"`
+	ChatResult       *agentports.ChatCompletionResult        `json:"chatResult,omitempty"`
+	StructuredResult *agentports.StructuredCompletionResult  `json:"structuredResult,omitempty"`
+	Retries          []agentports.ChatRetryNotice            `json:"retries,omitempty"`
+	Error            string                                  `json:"error,omitempty"`
 }
 
 func (c *ModelCall) Duration() time.Duration {
@@ -46,21 +47,21 @@ func (c *ModelCall) belongsTo(threadID, turnID pulid.ID) bool {
 }
 
 type Recorder struct {
-	serviceports.CompletionService
+	agentports.CompletionService
 
 	mu    sync.Mutex
 	seq   int
 	calls []*ModelCall
 }
 
-func NewRecorder(inner serviceports.CompletionService) *Recorder {
+func NewRecorder(inner agentports.CompletionService) *Recorder {
 	return &Recorder{CompletionService: inner}
 }
 
 func (r *Recorder) CompleteChat(
 	ctx context.Context,
-	req *serviceports.ChatCompletionRequest,
-) (*serviceports.ChatCompletionResult, error) {
+	req *agentports.ChatCompletionRequest,
+) (*agentports.ChatCompletionResult, error) {
 	call := r.openChat(ModelCallChat, req)
 	restore := call.watchRetries(&r.mu, req)
 	defer restore()
@@ -73,9 +74,9 @@ func (r *Recorder) CompleteChat(
 
 func (r *Recorder) StreamChat(
 	ctx context.Context,
-	req *serviceports.ChatCompletionRequest,
-	sink serviceports.ChatStreamSink,
-) (*serviceports.ChatCompletionResult, error) {
+	req *agentports.ChatCompletionRequest,
+	sink agentports.ChatStreamSink,
+) (*agentports.ChatCompletionResult, error) {
 	call := r.openChat(ModelCallStream, req)
 	restore := call.watchRetries(&r.mu, req)
 	defer restore()
@@ -88,8 +89,8 @@ func (r *Recorder) StreamChat(
 
 func (r *Recorder) CompleteStructured(
 	ctx context.Context,
-	req *serviceports.StructuredCompletionRequest,
-) (*serviceports.StructuredCompletionResult, error) {
+	req *agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
 	call := &ModelCall{
 		Kind:        ModelCallStructured,
 		StartedAt:   time.Now(),
@@ -154,7 +155,7 @@ func (r *Recorder) open(call *ModelCall) {
 	r.calls = append(r.calls, call)
 }
 
-func (r *Recorder) openChat(kind ModelCallKind, req *serviceports.ChatCompletionRequest) *ModelCall {
+func (r *Recorder) openChat(kind ModelCallKind, req *agentports.ChatCompletionRequest) *ModelCall {
 	call := &ModelCall{
 		Kind:        kind,
 		StartedAt:   time.Now(),
@@ -168,7 +169,7 @@ func (r *Recorder) openChat(kind ModelCallKind, req *serviceports.ChatCompletion
 
 func (r *Recorder) closeChat(
 	call *ModelCall,
-	result *serviceports.ChatCompletionResult,
+	result *agentports.ChatCompletionResult,
 	err error,
 ) {
 	r.mu.Lock()
@@ -181,9 +182,9 @@ func (r *Recorder) closeChat(
 	}
 }
 
-func (c *ModelCall) watchRetries(mu *sync.Mutex, req *serviceports.ChatCompletionRequest) func() {
+func (c *ModelCall) watchRetries(mu *sync.Mutex, req *agentports.ChatCompletionRequest) func() {
 	original := req.RetrySink
-	req.RetrySink = func(notice serviceports.ChatRetryNotice) {
+	req.RetrySink = func(notice agentports.ChatRetryNotice) {
 		mu.Lock()
 		c.Retries = append(c.Retries, notice)
 		mu.Unlock()

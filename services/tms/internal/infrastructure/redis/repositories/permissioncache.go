@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
@@ -30,7 +30,7 @@ type permissionCacheRepository struct {
 
 func NewPermissionCacheRepository(
 	p PermissionCacheRepositoryParams,
-) repositories.PermissionCacheRepository {
+) permissionports.PermissionCacheRepository {
 	return &permissionCacheRepository{
 		client: p.Client,
 		l:      p.Logger.Named("redis.permission-cache-repository"),
@@ -39,8 +39,8 @@ func NewPermissionCacheRepository(
 
 func (r *permissionCacheRepository) Get(
 	ctx context.Context,
-	key repositories.PermissionCacheKey,
-) (*repositories.CachedPermissions, error) {
+	key permissionports.PermissionCacheKey,
+) (*permissionports.CachedPermissions, error) {
 	log := r.l.With(
 		zap.String("operation", "Get"),
 		zap.String("userID", key.UserID.String()),
@@ -58,7 +58,7 @@ func (r *permissionCacheRepository) Get(
 		return nil, err
 	}
 
-	perms := new(repositories.CachedPermissions)
+	perms := new(permissionports.CachedPermissions)
 	if err = sonic.Unmarshal(raw, perms); err != nil {
 		log.Error("failed to decode cached permissions", zap.Error(err))
 		return nil, err
@@ -69,8 +69,8 @@ func (r *permissionCacheRepository) Get(
 
 func (r *permissionCacheRepository) Set(
 	ctx context.Context,
-	key repositories.PermissionCacheKey,
-	perms *repositories.CachedPermissions,
+	key permissionports.PermissionCacheKey,
+	perms *permissionports.CachedPermissions,
 	ttl time.Duration,
 ) error {
 	log := r.l.With(
@@ -116,7 +116,7 @@ func (r *permissionCacheRepository) Delete(ctx context.Context, userID, orgID pu
 func (r *permissionCacheRepository) InvalidateByRole(
 	ctx context.Context,
 	roleID pulid.ID,
-	roleRepo repositories.RoleRepository,
+	roleRepo permissionports.RoleRepository,
 ) error {
 	log := r.l.With(
 		zap.String("operation", "InvalidateByRole"),

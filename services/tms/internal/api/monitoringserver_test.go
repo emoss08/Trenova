@@ -12,10 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	obsmetrics "github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -37,7 +38,7 @@ func (f *fakeDBConnection) DBForContext(context.Context) bun.IDB {
 
 func (f *fakeDBConnection) WithTx(
 	context.Context,
-	ports.TxOptions,
+	kernelports.TxOptions,
 	func(context.Context, bun.Tx) error,
 ) error {
 	return nil
@@ -167,17 +168,17 @@ func newTestMonitoringServer(
 func withEDIMonitoring(t *testing.T, server *MonitoringServer) {
 	t.Helper()
 
-	ediMessageRepo := mocks.NewMockEDIMessageRepository(t)
+	ediMessageRepo := ediportsmock.NewMockEDIMessageRepository(t)
 	ediMessageRepo.On("CountDeadLetteredSince", mock.Anything, mock.Anything).
 		Return(int64(0), nil).
 		Once()
 
-	ediInboundRepo := mocks.NewMockEDIInboundFileRepository(t)
+	ediInboundRepo := ediportsmock.NewMockEDIInboundFileRepository(t)
 	ediInboundRepo.On("CountQuarantinedSince", mock.Anything, mock.Anything).
 		Return(int64(0), nil).
 		Once()
 
-	ediProfileRepo := mocks.NewMockEDICommunicationProfileRepository(t)
+	ediProfileRepo := ediportsmock.NewMockEDICommunicationProfileRepository(t)
 	ediProfileRepo.On("CountStaleInboundPollingProfiles", mock.Anything, mock.Anything).
 		Return(int64(0), nil).
 		Once()
@@ -262,4 +263,4 @@ func TestMonitoringServer_EDICheckWithoutRepositories(t *testing.T) {
 	assert.Contains(t, check.Message, "EDI monitoring is not configured")
 }
 
-var _ ports.DBConnection = (*fakeDBConnection)(nil)
+var _ kernelports.DBConnection = (*fakeDBConnection)(nil)

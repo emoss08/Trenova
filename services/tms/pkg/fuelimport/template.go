@@ -3,7 +3,7 @@ package fuelimport
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 )
 
 var templateColumns = [...]Field{

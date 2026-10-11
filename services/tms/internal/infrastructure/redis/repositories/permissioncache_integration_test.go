@@ -6,9 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/redis/go-redis/v9"
@@ -18,11 +19,11 @@ import (
 	"go.uber.org/zap"
 )
 
-func cacheKey(userID, orgID pulid.ID) repositories.PermissionCacheKey {
-	return repositories.PermissionCacheKey{
+func cacheKey(userID, orgID pulid.ID) permissionports.PermissionCacheKey {
+	return permissionports.PermissionCacheKey{
 		UserID:  userID,
 		OrgID:   orgID,
-		Variant: repositories.PermissionCacheVariantAllRoles,
+		Variant: permissionports.PermissionCacheVariantAllRoles,
 	}
 }
 
@@ -52,9 +53,9 @@ func TestPermissionCacheRepository_SetAndGet_Integration(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
-	perms := &repositories.CachedPermissions{
+	perms := &permissionports.CachedPermissions{
 		MaxSensitivity: string(permission.SensitivityRestricted),
-		Resources: map[string]*repositories.CachedResourcePermission{
+		Resources: map[string]*permissionports.CachedResourcePermission{
 			"shipment": {
 				Operations: []string{
 					string(permission.OpRead),
@@ -103,8 +104,8 @@ func TestPermissionCacheRepository_Delete_Integration(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
-	perms := &repositories.CachedPermissions{
-		Resources: map[string]*repositories.CachedResourcePermission{},
+	perms := &permissionports.CachedPermissions{
+		Resources: map[string]*permissionports.CachedResourcePermission{},
 	}
 
 	err := repo.Set(ctx, cacheKey(userID, orgID), perms, 5*time.Minute)
@@ -134,8 +135,8 @@ func TestPermissionCacheRepository_InvalidateOrganization_Integration(t *testing
 	user3ID := pulid.MustNew("usr_")
 	otherOrgID := pulid.MustNew("org_")
 
-	perms := &repositories.CachedPermissions{
-		Resources: map[string]*repositories.CachedResourcePermission{},
+	perms := &permissionports.CachedPermissions{
+		Resources: map[string]*permissionports.CachedResourcePermission{},
 	}
 
 	require.NoError(t, repo.Set(ctx, cacheKey(user1ID, orgID), perms, 5*time.Minute))
@@ -170,19 +171,19 @@ func TestPermissionCacheRepository_InvalidateByRole_Integration(t *testing.T) {
 	user2ID := pulid.MustNew("usr_")
 	user3ID := pulid.MustNew("usr_")
 
-	perms := &repositories.CachedPermissions{
-		Resources: map[string]*repositories.CachedResourcePermission{},
+	perms := &permissionports.CachedPermissions{
+		Resources: map[string]*permissionports.CachedResourcePermission{},
 	}
 
 	require.NoError(t, repo.Set(ctx, cacheKey(user1ID, orgID), perms, 5*time.Minute))
 	require.NoError(t, repo.Set(ctx, cacheKey(user2ID, orgID), perms, 5*time.Minute))
 	require.NoError(t, repo.Set(ctx, cacheKey(user3ID, orgID), perms, 5*time.Minute))
 
-	mockRoleRepo := mocks.NewMockRoleRepository(t)
+	mockRoleRepo := permissionportsmock.NewMockRoleRepository(t)
 	mockRoleRepo.EXPECT().
 		GetUsersWithRole(mock.Anything, roleID).
 		Return(
-			[]repositories.ImpactedUser{
+			[]permissionports.ImpactedUser{
 				{UserID: user1ID, OrganizationID: orgID},
 				{UserID: user2ID, OrganizationID: orgID},
 			},
@@ -209,8 +210,8 @@ func TestPermissionCacheRepository_TTL_Integration(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
-	perms := &repositories.CachedPermissions{
-		Resources: map[string]*repositories.CachedResourcePermission{},
+	perms := &permissionports.CachedPermissions{
+		Resources: map[string]*permissionports.CachedResourcePermission{},
 	}
 
 	err := repo.Set(ctx, cacheKey(userID, orgID), perms, 1*time.Second)
@@ -236,19 +237,19 @@ func TestPermissionCacheRepository_VariantsAreIsolated_Integration(t *testing.T)
 	orgID := pulid.MustNew("org_")
 
 	allRoles := cacheKey(userID, orgID)
-	activeSubset := repositories.PermissionCacheKey{
+	activeSubset := permissionports.PermissionCacheKey{
 		UserID:  userID,
 		OrgID:   orgID,
 		Variant: "roles:abc",
 	}
 
-	require.NoError(t, repo.Set(ctx, allRoles, &repositories.CachedPermissions{
+	require.NoError(t, repo.Set(ctx, allRoles, &permissionports.CachedPermissions{
 		MaxSensitivity: string(permission.SensitivityRestricted),
-		Resources:      map[string]*repositories.CachedResourcePermission{},
+		Resources:      map[string]*permissionports.CachedResourcePermission{},
 	}, 5*time.Minute))
-	require.NoError(t, repo.Set(ctx, activeSubset, &repositories.CachedPermissions{
+	require.NoError(t, repo.Set(ctx, activeSubset, &permissionports.CachedPermissions{
 		MaxSensitivity: string(permission.SensitivityPublic),
-		Resources:      map[string]*repositories.CachedResourcePermission{},
+		Resources:      map[string]*permissionports.CachedResourcePermission{},
 	}, 5*time.Minute))
 
 	all, err := repo.Get(ctx, allRoles)
@@ -261,7 +262,7 @@ func TestPermissionCacheRepository_VariantsAreIsolated_Integration(t *testing.T)
 	require.NotNil(t, subset)
 	assert.Equal(t, string(permission.SensitivityPublic), subset.MaxSensitivity)
 
-	missing, err := repo.Get(ctx, repositories.PermissionCacheKey{
+	missing, err := repo.Get(ctx, permissionports.PermissionCacheKey{
 		UserID:  userID,
 		OrgID:   orgID,
 		Variant: "roles:other",

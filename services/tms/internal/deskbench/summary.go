@@ -126,18 +126,38 @@ func RenderSummary(r *Report) string {
 			if entry.Change == changeSame {
 				continue
 			}
-			fmt.Fprintf(&b, "  %-6s %s: pass %.0f%% → %.0f%%, refused calls %d → %d, tokens %d → %d\n",
-				strings.ToUpper(entry.Change), entry.Key, entry.BeforePassRate*100, entry.AfterPassRate*100,
-				entry.BeforeRefused, entry.AfterRefused, entry.BeforeTokens, entry.AfterTokens)
+			fmt.Fprintf(
+				&b,
+				"  %-6s %s: pass %.0f%% → %.0f%%, refused calls %d → %d, tokens %d → %d\n",
+				strings.ToUpper(
+					entry.Change,
+				),
+				entry.Key,
+				entry.BeforePassRate*100,
+				entry.AfterPassRate*100,
+				entry.BeforeRefused,
+				entry.AfterRefused,
+				entry.BeforeTokens,
+				entry.AfterTokens,
+			)
 		}
 	}
 
-	troubled := slices.DeleteFunc(slices.Clone(r.ToolHealth), func(h ToolHealth) bool { return h.Refused == 0 })
+	troubled := slices.DeleteFunc(
+		slices.Clone(r.ToolHealth),
+		func(h ToolHealth) bool { return h.Refused == 0 },
+	)
 	if len(troubled) > 0 {
 		b.WriteString("\nTools the harness refused or that failed:\n")
 		for _, health := range troubled {
-			fmt.Fprintf(&b, "  %s: %d of %d calls (%s)\n", health.Tool, health.Refused, health.Calls,
-				verdictCounts(health.Verdicts))
+			fmt.Fprintf(
+				&b,
+				"  %s: %d of %d calls (%s)\n",
+				health.Tool,
+				health.Refused,
+				health.Calls,
+				verdictCounts(health.Verdicts),
+			)
 			for _, reason := range health.Reasons {
 				fmt.Fprintf(&b, "    - %s\n", reason)
 			}
@@ -155,7 +175,14 @@ func RenderSummary(r *Report) string {
 	if len(summary.Failing) > 0 {
 		b.WriteString("\nFailing checks:\n")
 		for _, failing := range summary.Failing {
-			fmt.Fprintf(&b, "  %s step %d (%s): %s", failing.Case, failing.Step, failing.Label, failing.Check)
+			fmt.Fprintf(
+				&b,
+				"  %s step %d (%s): %s",
+				failing.Case,
+				failing.Step,
+				failing.Label,
+				failing.Check,
+			)
 			if failing.Detail != "" {
 				fmt.Fprintf(&b, " — %s", failing.Detail)
 			}

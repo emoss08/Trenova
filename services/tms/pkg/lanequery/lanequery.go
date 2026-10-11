@@ -1,8 +1,11 @@
 package lanequery
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/usstatecol"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
 )
@@ -35,17 +38,17 @@ type Options struct {
 }
 
 var (
-	shipmentCols = buncolgen.ShipmentColumns
-	moveCols     = buncolgen.ShipmentMoveColumns
-	stopCols     = buncolgen.StopColumns
+	shipmentCols = shipmentcol.ShipmentColumns
+	moveCols     = shipmentcol.ShipmentMoveColumns
+	stopCols     = shipmentcol.StopColumns
 
-	moveFromShipmentJoin = "JOIN " + buncolgen.ShipmentMoveTable.As(
-		buncolgen.ShipmentMoveTable.Alias) +
+	moveFromShipmentJoin = "JOIN " + shipmentcol.ShipmentMoveTable.As(
+		shipmentcol.ShipmentMoveTable.Alias) +
 		" ON " + moveCols.ShipmentID.EqColumn(shipmentCols.ID) +
 		" AND " + moveCols.OrganizationID.EqColumn(shipmentCols.OrganizationID) +
 		" AND " + moveCols.BusinessUnitID.EqColumn(shipmentCols.BusinessUnitID)
 
-	stopFromMoveJoin = "JOIN " + buncolgen.StopTable.As(buncolgen.StopTable.Alias) +
+	stopFromMoveJoin = "JOIN " + shipmentcol.StopTable.As(shipmentcol.StopTable.Alias) +
 		" ON " + stopCols.ShipmentMoveID.EqColumn(moveCols.ID) +
 		" AND " + stopCols.OrganizationID.EqColumn(moveCols.OrganizationID) +
 		" AND " + stopCols.BusinessUnitID.EqColumn(moveCols.BusinessUnitID)
@@ -72,8 +75,8 @@ var (
 	originStateJoin      = stateJoin(originStateAlias, originLocationAlias)
 	destinationStateJoin = stateJoin(destinationStateAlias, destinationLocationAlias)
 
-	originAbbreviation      = buncolgen.UsStateColumns.Abbreviation.WithAlias(originStateAlias)
-	destinationAbbreviation = buncolgen.UsStateColumns.Abbreviation.WithAlias(
+	originAbbreviation      = usstatecol.UsStateColumns.Abbreviation.WithAlias(originStateAlias)
+	destinationAbbreviation = usstatecol.UsStateColumns.Abbreviation.WithAlias(
 		destinationStateAlias,
 	)
 )
@@ -106,7 +109,7 @@ func New(db bun.IDB, opts Options) *bun.SelectQuery {
 		GroupExpr(destinationAbbreviation.Qualified())
 
 	if opts.Tenant != nil {
-		endpoints = endpoints.Apply(buncolgen.ShipmentApplyTenant(*opts.Tenant))
+		endpoints = endpoints.Apply(shipmentcol.ShipmentApplyTenant(*opts.Tenant))
 		lanes = lanes.
 			Join(originTenantLocationJoin, opts.Tenant.OrgID, opts.Tenant.BuID).
 			Join(originStateJoin).
@@ -162,26 +165,26 @@ func stopLocationIDsExpr(label string) string {
 }
 
 func locationJoin(alias, pairLocationID string) string {
-	return "JOIN " + buncolgen.LocationTable.As(alias) +
-		" ON " + buncolgen.LocationColumns.ID.WithAlias(alias).Qualified() +
+	return "JOIN " + locationcol.LocationTable.As(alias) +
+		" ON " + locationcol.LocationColumns.ID.WithAlias(alias).Qualified() +
 		" = " + pairsAlias + "." + pairLocationID
 }
 
 func locationTenantCondition(alias string) string {
-	cols := buncolgen.LocationColumns
+	cols := locationcol.LocationColumns
 	return " AND " + cols.OrganizationID.WithAlias(alias).Eq() +
 		" AND " + cols.BusinessUnitID.WithAlias(alias).Eq()
 }
 
 func locationPairCondition(alias string) string {
-	cols := buncolgen.LocationColumns
+	cols := locationcol.LocationColumns
 	return " AND " + cols.OrganizationID.WithAlias(alias).EqColumn(pairOrganizationID) +
 		" AND " + cols.BusinessUnitID.WithAlias(alias).EqColumn(pairBusinessUnitID)
 }
 
 func stateJoin(stateAlias, locationAlias string) string {
-	return "JOIN " + buncolgen.UsStateTable.As(stateAlias) +
-		" ON " + buncolgen.UsStateColumns.ID.WithAlias(stateAlias).EqColumn(
-		buncolgen.LocationColumns.StateID.WithAlias(locationAlias),
+	return "JOIN " + usstatecol.UsStateTable.As(stateAlias) +
+		" ON " + usstatecol.UsStateColumns.ID.WithAlias(stateAlias).EqColumn(
+		locationcol.LocationColumns.StateID.WithAlias(locationAlias),
 	)
 }

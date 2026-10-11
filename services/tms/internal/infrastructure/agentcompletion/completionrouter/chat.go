@@ -10,12 +10,11 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,8 +29,8 @@ import (
 // would mean executing tools without that check.
 func (s *Service) CompleteChat(
 	ctx context.Context,
-	req *serviceports.ChatCompletionRequest,
-) (*serviceports.ChatCompletionResult, error) {
+	req *agentports.ChatCompletionRequest,
+) (*agentports.ChatCompletionResult, error) {
 	return s.runChat(ctx, req, nil)
 }
 
@@ -44,17 +43,17 @@ func (s *Service) CompleteChat(
 // was shown.
 func (s *Service) StreamChat(
 	ctx context.Context,
-	req *serviceports.ChatCompletionRequest,
-	sink serviceports.ChatStreamSink,
-) (*serviceports.ChatCompletionResult, error) {
+	req *agentports.ChatCompletionRequest,
+	sink agentports.ChatStreamSink,
+) (*agentports.ChatCompletionResult, error) {
 	return s.runChat(ctx, req, sink)
 }
 
 func (s *Service) runChat(
 	ctx context.Context,
-	req *serviceports.ChatCompletionRequest,
-	sink serviceports.ChatStreamSink,
-) (*serviceports.ChatCompletionResult, error) {
+	req *agentports.ChatCompletionRequest,
+	sink agentports.ChatStreamSink,
+) (*agentports.ChatCompletionResult, error) {
 	if !s.ai.AIEnabled() {
 		return nil, errortypes.NewBusinessError(aiDisabledMessage)
 	}
@@ -83,7 +82,7 @@ func (s *Service) runChat(
 	}
 
 	var lastErr error
-	var failures []serviceports.ChatProviderFailure
+	var failures []agentports.ChatProviderFailure
 	queue := append(make([]*aiprovider.Provider, 0, len(usable)+maxMidReplyRetries), usable...)
 	midReplyRetries := 0
 	for idx := 0; idx < len(queue); idx++ {
@@ -172,16 +171,19 @@ func (s *Service) runChat(
 						zap.Error(attemptErr),
 					)
 					if req.RetrySink != nil {
-						req.RetrySink(serviceports.ChatRetryNotice{
+						req.RetrySink(agentports.ChatRetryNotice{
 							Attempt:     midReplyRetries,
 							Provider:    queue[idx+1].Name,
 							Reason:      attemptErr.Error(),
-							Kind:        serviceports.RetryKindRestart,
+							Kind:        agentports.RetryKindRestart,
 							MaxAttempts: maxMidReplyRetries + 1,
 						})
 					}
 					lastErr = attemptErr
-					failures = append(failures, providerFailure(provider, attemptErr, elapsed, streamed.retries+1))
+					failures = append(
+						failures,
+						providerFailure(provider, attemptErr, elapsed, streamed.retries+1),
+					)
 
 					continue
 				}
@@ -202,14 +204,17 @@ func (s *Service) runChat(
 		}
 
 		lastErr = attemptErr
-		failures = append(failures, providerFailure(provider, attemptErr, elapsed, streamed.retries+1))
+		failures = append(
+			failures,
+			providerFailure(provider, attemptErr, elapsed, streamed.retries+1),
+		)
 		s.logger.Warn("chat provider attempt failed, falling through",
 			zap.String("provider", provider.Name),
 			zap.Error(attemptErr),
 		)
 	}
 
-	return nil, &serviceports.ChatProvidersFailedError{
+	return nil, &agentports.ChatProvidersFailedError{
 		Failures: append(distinctFailures(failures), s.notSetUp(ctx, req, usable)...),
 		Err:      lastErr,
 	}
@@ -225,9 +230,9 @@ func providerFailure(
 	err error,
 	elapsed time.Duration,
 	asked int,
-) serviceports.ChatProviderFailure {
+) agentports.ChatProviderFailure {
 	code := 0
-	var answered serviceports.ProviderFailure
+	var answered agentports.ProviderFailure
 	if errors.As(err, &answered) {
 		code = answered.ProviderStatus()
 	}
@@ -244,7 +249,7 @@ func providerFailure(
 		status = "Unavailable"
 	}
 
-	return serviceports.ChatProviderFailure{
+	return agentports.ChatProviderFailure{
 		ProviderID: provider.ID,
 		Name:       provider.Name,
 		Model:      provider.Model,
@@ -266,7 +271,10 @@ func failureDetail(
 	who := vendorName(provider)
 	switch {
 	case status == "Timed out":
-		return fmt.Sprintf("No response after %ds", max(1, int(elapsed.Round(time.Second).Seconds())))
+		return fmt.Sprintf(
+			"No response after %ds",
+			max(1, int(elapsed.Round(time.Second).Seconds())),
+		)
 	case code > 0:
 		return who + " returned " + strconv.Itoa(code) + times(attempts)
 	case status == "Overloaded" || status == "Unavailable":
@@ -316,10 +324,10 @@ func vendorName(provider *aiprovider.Provider) string {
 // model failed is told about these too, since giving one the task is the fix.
 func (s *Service) notSetUp(
 	ctx context.Context,
-	req *serviceports.ChatCompletionRequest,
+	req *agentports.ChatCompletionRequest,
 	asked []*aiprovider.Provider,
-) []serviceports.ChatProviderFailure {
-	all, err := s.repo.List(ctx, &repositories.ListAIProviderRequest{
+) []agentports.ChatProviderFailure {
+	all, err := s.repo.List(ctx, &agentports.ListAIProviderRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: req.TenantInfo,
 			Pagination: pagination.Info{Limit: maxNotSetUp * 4},
@@ -333,7 +341,7 @@ func (s *Service) notSetUp(
 		seen[provider.ID] = true
 	}
 
-	out := make([]serviceports.ChatProviderFailure, 0, maxNotSetUp)
+	out := make([]agentports.ChatProviderFailure, 0, maxNotSetUp)
 	for _, provider := range all.Items {
 		if len(out) == maxNotSetUp {
 			break
@@ -341,7 +349,7 @@ func (s *Service) notSetUp(
 		if seen[provider.ID] || !provider.Enabled {
 			continue
 		}
-		out = append(out, serviceports.ChatProviderFailure{
+		out = append(out, agentports.ChatProviderFailure{
 			ProviderID: provider.ID,
 			Name:       provider.Name,
 			Model:      provider.Model,
@@ -358,7 +366,7 @@ func (s *Service) notSetUp(
 const maxNotSetUp = 3
 
 // retold is a failure's line again once it is known how often it happened.
-func retold(failure serviceports.ChatProviderFailure) string {
+func retold(failure agentports.ChatProviderFailure) string {
 	who := vendorNames[failure.Vendor]
 	if who == "" {
 		who = failure.Name
@@ -375,8 +383,8 @@ func retold(failure serviceports.ChatProviderFailure) string {
 
 // distinctFailures keeps the last word from each provider: one asked twice
 // is listed once, as it ended, and says how many times it was asked.
-func distinctFailures(failures []serviceports.ChatProviderFailure) []serviceports.ChatProviderFailure {
-	out := make([]serviceports.ChatProviderFailure, 0, len(failures))
+func distinctFailures(failures []agentports.ChatProviderFailure) []agentports.ChatProviderFailure {
+	out := make([]agentports.ChatProviderFailure, 0, len(failures))
 	seen := make(map[pulid.ID]int, len(failures))
 	for _, failure := range failures {
 		if at, ok := seen[failure.ProviderID]; ok {
@@ -397,9 +405,9 @@ func distinctFailures(failures []serviceports.ChatProviderFailure) []serviceport
 // firstOtherThan is the first provider that failed before the one that
 // answered, which is the one the reader expected to hear from.
 func firstOtherThan(
-	failures []serviceports.ChatProviderFailure,
+	failures []agentports.ChatProviderFailure,
 	answered pulid.ID,
-) *serviceports.ChatProviderFailure {
+) *agentports.ChatProviderFailure {
 	for idx := range failures {
 		if failures[idx].ProviderID != answered {
 			failure := failures[idx]
@@ -450,9 +458,9 @@ func (c *chatStream) firstToken(started time.Time) time.Duration {
 func (s *Service) attemptChat(
 	ctx context.Context,
 	provider *aiprovider.Provider,
-	req *serviceports.ChatCompletionRequest,
-	sink serviceports.ChatStreamSink,
-) (*serviceports.ChatCompletionResult, chatStream, error) {
+	req *agentports.ChatCompletionRequest,
+	sink agentports.ChatStreamSink,
+) (*agentports.ChatCompletionResult, chatStream, error) {
 	var streamed chatStream
 
 	adapter, err := s.adapters.Get(provider.Kind)
@@ -517,11 +525,11 @@ func (s *Service) attemptChat(
 		if req.RetrySink == nil {
 			return
 		}
-		req.RetrySink(serviceports.ChatRetryNotice{
+		req.RetrySink(agentports.ChatRetryNotice{
 			Attempt:     attempt,
 			Provider:    provider.Name,
 			Reason:      cause.Error(),
-			Kind:        serviceports.RetryKindBusy,
+			Kind:        agentports.RetryKindBusy,
 			WaitSeconds: int(wait.Round(time.Second).Seconds()),
 			MaxAttempts: s.busyAttempts(),
 		})
@@ -536,7 +544,13 @@ func (s *Service) attemptChat(
 		err = s.withKeyFallback(provider, func(apiKey string) error {
 			call.APIKey = apiKey
 			var streamErr error
-			resp, streamed.text, streamErr = s.executeStreamWithRetry(ctx, streamer, call, first, busy)
+			resp, streamed.text, streamErr = s.executeStreamWithRetry(
+				ctx,
+				streamer,
+				call,
+				first,
+				busy,
+			)
 
 			return streamErr
 		})
@@ -573,7 +587,7 @@ func (s *Service) attemptChat(
 	streamed.finishReason = finishReason(resp)
 	streamed.thinkingDropped = resp.ThinkingDropped
 
-	return &serviceports.ChatCompletionResult{
+	return &agentports.ChatCompletionResult{
 		Text:            resp.Text,
 		ToolCalls:       resp.ToolCalls,
 		ModelIdentifier: resp.ModelIdentifier,
@@ -597,12 +611,12 @@ func partialReply(
 	provider *aiprovider.Provider,
 	text string,
 	cause error,
-) *serviceports.ChatCompletionResult {
+) *agentports.ChatCompletionResult {
 	if text == "" {
 		return nil
 	}
 
-	return &serviceports.ChatCompletionResult{
+	return &agentports.ChatCompletionResult{
 		Text:            text,
 		ModelIdentifier: modeladapter.ServedModel(cause, provider.Model),
 		ProviderID:      provider.ID,
@@ -618,7 +632,7 @@ func (s *Service) executeStreamWithRetry(
 	ctx context.Context,
 	streamer modeladapter.Streamer,
 	call *modeladapter.Call,
-	sink serviceports.ChatStreamSink,
+	sink agentports.ChatStreamSink,
 	busy busyNotice,
 ) (*modeladapter.Response, string, error) {
 	// The text is kept as well as the fact of it. A stream that dies partway
@@ -770,7 +784,7 @@ func preferFirst(providers []*aiprovider.Provider, preferred pulid.ID) []*aiprov
 // carries what was counted from its stream.
 func chatOutcome(
 	provider *aiprovider.Provider,
-	result *serviceports.ChatCompletionResult,
+	result *agentports.ChatCompletionResult,
 	streamed chatStream,
 	cause error,
 ) *runOutcome {

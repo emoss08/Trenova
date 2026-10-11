@@ -9,8 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -77,7 +77,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aifeedback.Feedback)
 					return obj.TargetType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIFeedbackTargetType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐTargetType),
+				Marshal: gqlexec.Marshal(marshalNAIFeedbackTargetType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐTargetType),
 			},
 			{
 				Name:     "targetId",
@@ -211,7 +211,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aifeedback.Feedback)
 					return obj.FingerprintSource, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIFeedbackFingerprintSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐFingerprintSource),
+				Marshal: gqlexec.Marshal(marshalNAIFeedbackFingerprintSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐFingerprintSource),
 			},
 			{
 				Name:       "rating",
@@ -233,7 +233,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aifeedback.Feedback)
 					return obj.Reasons, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIFeedbackReason2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐReasonᚄ),
+				Marshal: gqlexec.Marshal(marshalNAIFeedbackReason2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐReasonᚄ),
 			},
 			{
 				Name:     "comment",
@@ -253,7 +253,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aifeedback.Feedback)
 					return obj.TurnSnapshot, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAIFeedbackTurnSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐTurnSnapshot),
+				Marshal: gqlexec.Marshal(marshalOAIFeedbackTurnSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐTurnSnapshot),
 			},
 			{
 				Name:     "patternKey",
@@ -348,7 +348,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AIFeedbackEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIFeedback2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐFeedback),
+				Marshal: gqlexec.Marshal(marshalNAIFeedback2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐFeedback),
 			},
 			{
 				Name:     "cursor",
@@ -423,7 +423,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aifeedback.TurnSnapshot)
 					return obj.Tools, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIFeedbackToolLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐToolLineᚄ),
+				Marshal: gqlexec.Marshal(marshalNAIFeedbackToolLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐToolLineᚄ),
 			},
 			{
 				Name:     "omittedTools",
@@ -452,7 +452,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentFeedbackDay)
+					obj := o.(*aifeedbackports.AgentFeedbackDay)
 					return obj.Day, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -462,7 +462,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentFeedbackDay)
+					obj := o.(*aifeedbackports.AgentFeedbackDay)
 					return obj.Positive, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -472,7 +472,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentFeedbackDay)
+					obj := o.(*aifeedbackports.AgentFeedbackDay)
 					return obj.Negative, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -481,7 +481,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "satisfaction",
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentFeedbackDay)
+					obj := o.(*aifeedbackports.AgentFeedbackDay)
 					return obj.Satisfaction, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
@@ -493,7 +493,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentFeedbackSummary)
+					obj := o.(*aifeedbackports.AgentFeedbackSummary)
 					return obj.AgentDefinitionID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -503,7 +503,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentFeedbackSummary)
+					obj := o.(*aifeedbackports.AgentFeedbackSummary)
 					return obj.WindowDays, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -513,7 +513,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentFeedbackSummary)
+					obj := o.(*aifeedbackports.AgentFeedbackSummary)
 					return obj.Since, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -523,7 +523,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentFeedbackSummary)
+					obj := o.(*aifeedbackports.AgentFeedbackSummary)
 					return obj.Positive, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -533,7 +533,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentFeedbackSummary)
+					obj := o.(*aifeedbackports.AgentFeedbackSummary)
 					return obj.Negative, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -542,7 +542,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "satisfaction",
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentFeedbackSummary)
+					obj := o.(*aifeedbackports.AgentFeedbackSummary)
 					return obj.Satisfaction, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
@@ -553,10 +553,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AgentFeedbackDay",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentFeedbackSummary)
+					obj := o.(*aifeedbackports.AgentFeedbackSummary)
 					return obj.Days, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentFeedbackDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentFeedbackDayᚄ),
+				Marshal: gqlexec.Marshal(marshalNAgentFeedbackDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaifeedbackportsᚐAgentFeedbackDayᚄ),
 			},
 			{
 				Name:      "worstRated",
@@ -564,10 +564,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AgentFeedbackWorstRated",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentFeedbackSummary)
+					obj := o.(*aifeedbackports.AgentFeedbackSummary)
 					return obj.WorstRated, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentFeedbackWorstRated2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentFeedbackWorstRatedᚄ),
+				Marshal: gqlexec.Marshal(marshalNAgentFeedbackWorstRated2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaifeedbackportsᚐAgentFeedbackWorstRatedᚄ),
 			},
 		}},
 		{Object: "AgentFeedbackWorstRated", Fields: []*gqlexec.Field{
@@ -576,17 +576,17 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentFeedbackWorstRated)
+					obj := o.(*aifeedbackports.AgentFeedbackWorstRated)
 					return obj.TargetType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIFeedbackTargetType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐTargetType),
+				Marshal: gqlexec.Marshal(marshalNAIFeedbackTargetType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐTargetType),
 			},
 			{
 				Name:     "targetId",
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentFeedbackWorstRated)
+					obj := o.(*aifeedbackports.AgentFeedbackWorstRated)
 					return obj.TargetID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -596,7 +596,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentFeedbackWorstRated)
+					obj := o.(*aifeedbackports.AgentFeedbackWorstRated)
 					return obj.TargetPart, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -606,7 +606,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentFeedbackWorstRated)
+					obj := o.(*aifeedbackports.AgentFeedbackWorstRated)
 					return obj.Positive, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -616,7 +616,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentFeedbackWorstRated)
+					obj := o.(*aifeedbackports.AgentFeedbackWorstRated)
 					return obj.Negative, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -626,7 +626,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentFeedbackWorstRated)
+					obj := o.(*aifeedbackports.AgentFeedbackWorstRated)
 					return obj.LastRatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -636,10 +636,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AIFeedback",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentFeedbackWorstRated)
+					obj := o.(*aifeedbackports.AgentFeedbackWorstRated)
 					return obj.Sample, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAIFeedback2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐFeedback),
+				Marshal: gqlexec.Marshal(marshalOAIFeedback2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐFeedback),
 			},
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
@@ -654,7 +654,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetMyAIFeedback(ctx, fc.Args["input"].(gqlmodel.SetMyAIFeedbackInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAIFeedback2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐFeedback),
+				Marshal: gqlexec.Marshal(marshalNAIFeedback2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐFeedback),
 			},
 			{
 				Name:       "clearMyAIFeedback",
@@ -682,7 +682,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyAIFeedback(ctx, fc.Args["input"].(gqlmodel.MyAIFeedbackInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAIFeedback2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐFeedbackᚄ),
+				Marshal: gqlexec.Marshal(marshalNAIFeedback2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐFeedbackᚄ),
 			},
 			{
 				Name:       "aiFeedback",
@@ -710,7 +710,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentFeedbackSummary(ctx, fc.Args["agentDefinitionId"].(string), fc.Args["window"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentFeedbackSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentFeedbackSummary),
+				Marshal: gqlexec.Marshal(marshalNAgentFeedbackSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaifeedbackportsᚐAgentFeedbackSummary),
 			},
 		}},
 	},
@@ -738,7 +738,7 @@ type resolverMutation interface {
 type resolverQuery interface {
 	MyAIFeedback(ctx context.Context, input gqlmodel.MyAIFeedbackInput) ([]*aifeedback.Feedback, error)
 	AiFeedback(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIFeedbackConnection, error)
-	AgentFeedbackSummary(ctx context.Context, agentDefinitionID string, window *int) (*services.AgentFeedbackSummary, error)
+	AgentFeedbackSummary(ctx context.Context, agentDefinitionID string, window *int) (*aifeedbackports.AgentFeedbackSummary, error)
 }
 
 var (
@@ -846,7 +846,7 @@ func unmarshalInputAIFeedbackTargetInput(ctx context.Context, ec *gqlexec.Exec, 
 		switch k {
 		case "targetType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetType"))
-			data, err := unmarshalNAIFeedbackTargetType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐTargetType(ctx, ec, v)
+			data, err := unmarshalNAIFeedbackTargetType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐTargetType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -920,7 +920,7 @@ func unmarshalInputSetMyAIFeedbackInput(ctx context.Context, ec *gqlexec.Exec, o
 		switch k {
 		case "targetType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetType"))
-			data, err := unmarshalNAIFeedbackTargetType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐTargetType(ctx, ec, v)
+			data, err := unmarshalNAIFeedbackTargetType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐTargetType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -948,7 +948,7 @@ func unmarshalInputSetMyAIFeedbackInput(ctx context.Context, ec *gqlexec.Exec, o
 			it.Rating = data
 		case "reasons":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reasons"))
-			data, err := unmarshalOAIFeedbackReason2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐReasonᚄ(ctx, ec, v)
+			data, err := unmarshalOAIFeedbackReason2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐReasonᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -969,7 +969,7 @@ func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exe
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
 
-func unmarshalNAIFeedbackReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐReason(ctx context.Context, ec *gqlexec.Exec, v any) (aifeedback.Reason, error) {
+func unmarshalNAIFeedbackReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐReason(ctx context.Context, ec *gqlexec.Exec, v any) (aifeedback.Reason, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := aifeedback.Reason(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -989,7 +989,7 @@ func unmarshalNAIFeedbackTargetInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNAIFeedbackTargetType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐTargetType(ctx context.Context, ec *gqlexec.Exec, v any) (aifeedback.TargetType, error) {
+func unmarshalNAIFeedbackTargetType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐTargetType(ctx context.Context, ec *gqlexec.Exec, v any) (aifeedback.TargetType, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := aifeedback.TargetType(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -1020,11 +1020,11 @@ func unmarshalNSetMyAIFeedbackInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOAIFeedbackReason2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐReasonᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]aifeedback.Reason, error) {
+func unmarshalOAIFeedbackReason2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐReasonᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]aifeedback.Reason, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNAIFeedbackReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐReason)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNAIFeedbackReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐReason)
 }
 
 func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
@@ -1043,15 +1043,15 @@ func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAIFeedback2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐFeedbackᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*aifeedback.Feedback) graphql.Marshaler {
+func marshalNAIFeedback2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐFeedbackᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*aifeedback.Feedback) graphql.Marshaler {
 	return gqlexec.List[*aifeedback.Feedback]{
-		Elem:        marshalNAIFeedback2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐFeedback,
+		Elem:        marshalNAIFeedback2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐFeedback,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAIFeedback2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐFeedback(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aifeedback.Feedback) graphql.Marshaler {
+func marshalNAIFeedback2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐFeedback(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aifeedback.Feedback) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1083,7 +1083,7 @@ func marshalNAIFeedbackEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi
 	return ec.MarshalType(ctx, sel, "AIFeedbackEdge", v)
 }
 
-func marshalNAIFeedbackFingerprintSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐFingerprintSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aifeedback.FingerprintSource) graphql.Marshaler {
+func marshalNAIFeedbackFingerprintSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐFingerprintSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aifeedback.FingerprintSource) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1091,7 +1091,7 @@ func marshalNAIFeedbackFingerprintSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return res
 }
 
-func marshalNAIFeedbackReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aifeedback.Reason) graphql.Marshaler {
+func marshalNAIFeedbackReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aifeedback.Reason) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1099,15 +1099,15 @@ func marshalNAIFeedbackReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore
 	return res
 }
 
-func marshalNAIFeedbackReason2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐReasonᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aifeedback.Reason) graphql.Marshaler {
+func marshalNAIFeedbackReason2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐReasonᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aifeedback.Reason) graphql.Marshaler {
 	return gqlexec.List[aifeedback.Reason]{
-		Elem:        marshalNAIFeedbackReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐReason,
+		Elem:        marshalNAIFeedbackReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐReason,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAIFeedbackTargetType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐTargetType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aifeedback.TargetType) graphql.Marshaler {
+func marshalNAIFeedbackTargetType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐTargetType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aifeedback.TargetType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1115,27 +1115,27 @@ func marshalNAIFeedbackTargetType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNAIFeedbackToolLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐToolLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aifeedback.ToolLine) graphql.Marshaler {
+func marshalNAIFeedbackToolLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐToolLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aifeedback.ToolLine) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AIFeedbackToolLine", &v)
 }
 
-func marshalNAIFeedbackToolLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐToolLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aifeedback.ToolLine) graphql.Marshaler {
+func marshalNAIFeedbackToolLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐToolLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aifeedback.ToolLine) graphql.Marshaler {
 	return gqlexec.List[aifeedback.ToolLine]{
-		Elem:        marshalNAIFeedbackToolLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐToolLine,
+		Elem:        marshalNAIFeedbackToolLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐToolLine,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAgentFeedbackDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentFeedbackDayᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*services.AgentFeedbackDay) graphql.Marshaler {
-	return gqlexec.List[*services.AgentFeedbackDay]{
-		Elem:        marshalNAgentFeedbackDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentFeedbackDay,
+func marshalNAgentFeedbackDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaifeedbackportsᚐAgentFeedbackDayᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*aifeedbackports.AgentFeedbackDay) graphql.Marshaler {
+	return gqlexec.List[*aifeedbackports.AgentFeedbackDay]{
+		Elem:        marshalNAgentFeedbackDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaifeedbackportsᚐAgentFeedbackDay,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAgentFeedbackDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentFeedbackDay(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AgentFeedbackDay) graphql.Marshaler {
+func marshalNAgentFeedbackDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaifeedbackportsᚐAgentFeedbackDay(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aifeedbackports.AgentFeedbackDay) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1143,7 +1143,7 @@ func marshalNAgentFeedbackDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return ec.MarshalType(ctx, sel, "AgentFeedbackDay", v)
 }
 
-func marshalNAgentFeedbackSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentFeedbackSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AgentFeedbackSummary) graphql.Marshaler {
+func marshalNAgentFeedbackSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaifeedbackportsᚐAgentFeedbackSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aifeedbackports.AgentFeedbackSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1151,15 +1151,15 @@ func marshalNAgentFeedbackSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "AgentFeedbackSummary", v)
 }
 
-func marshalNAgentFeedbackWorstRated2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentFeedbackWorstRatedᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*services.AgentFeedbackWorstRated) graphql.Marshaler {
-	return gqlexec.List[*services.AgentFeedbackWorstRated]{
-		Elem:        marshalNAgentFeedbackWorstRated2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentFeedbackWorstRated,
+func marshalNAgentFeedbackWorstRated2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaifeedbackportsᚐAgentFeedbackWorstRatedᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*aifeedbackports.AgentFeedbackWorstRated) graphql.Marshaler {
+	return gqlexec.List[*aifeedbackports.AgentFeedbackWorstRated]{
+		Elem:        marshalNAgentFeedbackWorstRated2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaifeedbackportsᚐAgentFeedbackWorstRated,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAgentFeedbackWorstRated2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentFeedbackWorstRated(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AgentFeedbackWorstRated) graphql.Marshaler {
+func marshalNAgentFeedbackWorstRated2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaifeedbackportsᚐAgentFeedbackWorstRated(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aifeedbackports.AgentFeedbackWorstRated) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1223,14 +1223,14 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOAIFeedback2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐFeedback(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aifeedback.Feedback) graphql.Marshaler {
+func marshalOAIFeedback2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐFeedback(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aifeedback.Feedback) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AIFeedback", v)
 }
 
-func marshalOAIFeedbackTurnSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐTurnSnapshot(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aifeedback.TurnSnapshot) graphql.Marshaler {
+func marshalOAIFeedbackTurnSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaifeedbackᚐTurnSnapshot(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aifeedback.TurnSnapshot) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

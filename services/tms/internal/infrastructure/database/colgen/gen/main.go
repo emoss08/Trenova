@@ -19,10 +19,9 @@ const (
 )
 
 var (
-	domainDir     = flag.String("domain", "", "Path to domain directory containing entity packages")
-	outputDir     = flag.String("output", "", "Output directory for generated column files")
-	outputImport  = flag.String("import", helperImportPath, "Import path of the output directory")
-	outputPackage = flag.String("package", helperPackage, "Package name of the output directory")
+	domainDir    = flag.String("domain", "", "Glob of domain directories containing entity packages")
+	outputDir    = flag.String("output", "", "Output directory for generated column files")
+	outputImport = flag.String("import", helperImportPath, "Import path of the output directory")
 )
 
 var excludedPackages = map[string]struct{}{
@@ -52,23 +51,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	entries, err := os.ReadDir(*domainDir)
+	pkgDirs, err := structparse.PackageDirs(*domainDir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error reading domain directory: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error reading domain directories: %v\n", err)
 		os.Exit(1)
 	}
 
 	var totalModels int
 
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
+	for _, pkgDir := range pkgDirs {
+		entry := dirEntryName(pkgDir)
 		if _, excluded := excludedPackages[entry.Name()]; excluded {
 			continue
 		}
 
-		pkgDir := filepath.Join(*domainDir, entry.Name())
 		result, parseErr := structparse.ParsePackage(pkgDir)
 		if parseErr != nil {
 			fmt.Fprintf(os.Stderr, "Error parsing %s: %v\n", entry.Name(), parseErr)
@@ -109,12 +105,10 @@ func generateColumnsFile(
 	pkgName string,
 ) error {
 	data := columnsTemplateData{
-		Package: *outputPackage,
-		Models:  models,
-	}
-	if *outputImport != helperImportPath {
-		data.Qual = helperPackage + "."
-		data.HelperImport = helperImportPath
+		Package:      columnsPackage(pkgName),
+		Qual:         helperPackage + ".",
+		HelperImport: helperImportPath,
+		Models:       models,
 	}
 
 	var buf bytes.Buffer
@@ -127,15 +121,19 @@ func generateColumnsFile(
 		return fmt.Errorf("formatting generated code for %s: %w", pkgName, err)
 	}
 
-	outputPath := filepath.Join(*outputDir, pkgName+"_gen.go")
-	return os.WriteFile(outputPath, formatted, 0o644)
+	dir := filepath.Join(*outputDir, columnsPackage(pkgName))
+	if err = os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("creating %s: %w", dir, err)
+	}
+
+	return os.WriteFile(filepath.Join(dir, pkgName+"_gen.go"), formatted, 0o644)
 }
 
 func generateBridgeFile(tmpl *template.Template, models []structparse.Model, pkgDir string) error {
 	data := bridgeTemplateData{
 		PackageName:    models[0].PackageName,
-		ColumnsImport:  *outputImport,
-		ColumnsPackage: *outputPackage,
+		ColumnsImport:  *outputImport + "/" + columnsPackage(filepath.Base(pkgDir)),
+		ColumnsPackage: columnsPackage(filepath.Base(pkgDir)),
 		Models:         models,
 	}
 
@@ -151,4 +149,14 @@ func generateBridgeFile(tmpl *template.Template, models []structparse.Model, pkg
 
 	outputPath := filepath.Join(pkgDir, "fieldmap_gen.go")
 	return os.WriteFile(outputPath, formatted, 0o644)
+}
+
+type dirEntryName string
+
+func (d dirEntryName) Name() string {
+	return filepath.Base(string(d))
+}
+
+func columnsPackage(domainPackage string) string {
+	return domainPackage + "col"
 }

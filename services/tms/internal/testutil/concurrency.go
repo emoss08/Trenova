@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 )
@@ -20,7 +20,7 @@ type TxLockHandle struct {
 func HoldTxLock(
 	t *testing.T,
 	conn *postgres.Connection,
-	opts ports.TxOptions,
+	opts kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) *TxLockHandle {
 	t.Helper()

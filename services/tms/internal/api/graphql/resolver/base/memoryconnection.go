@@ -45,7 +45,10 @@ type MemoryPage[T any] struct {
 // (all must hold), then filter groups (each group holds when any of its
 // filters does), then sort, then the page after the cursor. A filter or sort
 // on a field the table does not describe is refused, as it is for a query.
-func (m *MemoryTable[T]) Page(input *gqlmodel.DataTableConnectionInput, rows []T) (*MemoryPage[T], error) {
+func (m *MemoryTable[T]) Page(
+	input *gqlmodel.DataTableConnectionInput,
+	rows []T,
+) (*MemoryPage[T], error) {
 	if input == nil {
 		input = &gqlmodel.DataTableConnectionInput{}
 	}
@@ -91,7 +94,10 @@ func (m *MemoryTable[T]) Page(input *gqlmodel.DataTableConnectionInput, rows []T
 
 func (m *MemoryTable[T]) matches(input *gqlmodel.DataTableConnectionInput, row T) (bool, error) {
 	if input.Query != nil && strings.TrimSpace(*input.Query) != "" && m.Search != nil {
-		if !strings.Contains(strings.ToLower(m.Search(row)), strings.ToLower(strings.TrimSpace(*input.Query))) {
+		if !strings.Contains(
+			strings.ToLower(m.Search(row)),
+			strings.ToLower(strings.TrimSpace(*input.Query)),
+		) {
 			return false, nil
 		}
 	}
@@ -177,7 +183,10 @@ func compareOperator(operator string, value, want any) (bool, error) {
 	case "lte":
 		return compareValues(value, want) <= 0, nil
 	case "contains":
-		return strings.Contains(strings.ToLower(fmt.Sprint(value)), strings.ToLower(fmt.Sprint(want))), nil
+		return strings.Contains(
+			strings.ToLower(fmt.Sprint(value)),
+			strings.ToLower(fmt.Sprint(want)),
+		), nil
 	case "isnull":
 		return value == nil, nil
 	case "isnotnull":

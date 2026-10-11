@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/emoss08/trenova/pkg/buncolgen/aiauditcol"
+
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -21,15 +23,15 @@ import (
 // event is worked out from: the arguments a reader sees are the recorded
 // arguments cut to their sensitivity, and the rest are read by an id.
 var aiAuditEventComputedColumns = map[string][]buncolgen.Column{
-	"onBehalfOf": {buncolgen.AIAuditEventColumns.OnBehalfOfUserID},
-	"decidedBy":  {buncolgen.AIAuditEventColumns.DecidedByUserID},
-	"agent":      {buncolgen.AIAuditEventColumns.AgentDefinitionID},
-	"traceUrl":   {buncolgen.AIAuditEventColumns.TraceID},
+	"onBehalfOf": {aiauditcol.AIAuditEventColumns.OnBehalfOfUserID},
+	"decidedBy":  {aiauditcol.AIAuditEventColumns.DecidedByUserID},
+	"agent":      {aiauditcol.AIAuditEventColumns.AgentDefinitionID},
+	"traceUrl":   {aiauditcol.AIAuditEventColumns.TraceID},
 	"arguments": {
-		buncolgen.AIAuditEventColumns.Arguments,
-		buncolgen.AIAuditEventColumns.ArgumentSensitivity,
+		aiauditcol.AIAuditEventColumns.Arguments,
+		aiauditcol.AIAuditEventColumns.ArgumentSensitivity,
 	},
-	"auditEntries": {buncolgen.AIAuditEventColumns.ID},
+	"auditEntries": {aiauditcol.AIAuditEventColumns.ID},
 }
 
 // aiAuditEventColumns are the columns a trail page selects for the fields

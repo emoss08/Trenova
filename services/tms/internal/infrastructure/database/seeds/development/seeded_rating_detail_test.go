@@ -3,9 +3,9 @@ package development
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/domain/ratequote"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"

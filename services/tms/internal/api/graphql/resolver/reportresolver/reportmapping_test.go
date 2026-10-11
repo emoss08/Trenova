@@ -3,8 +3,8 @@ package reportresolver
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +26,7 @@ func TestCatalogEntityReadsInTheRequestersLanguage(t *testing.T) {
 		}},
 		Edges: []reportcatalog.Edge{{Name: "parent", Label: "Customer"}},
 	}
-	detail := &services.ResourcePermissionDetail{MaxSensitivity: permission.SensitivityConfidential}
+	detail := &permissionports.ResourcePermissionDetail{MaxSensitivity: permission.SensitivityConfidential}
 
 	english := catalogEntityToModel(i18n.EN, entity, detail)
 	spanish := catalogEntityToModel(i18n.ES, entity, detail)

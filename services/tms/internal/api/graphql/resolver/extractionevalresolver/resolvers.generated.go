@@ -4,12 +4,12 @@ package extractionevalresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	extractionevalports "github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 )
 
 type Deps struct {
 	*base.Core
-	ExtractionEvalService services.ExtractionEvalService
+	ExtractionEvalService extractionevalports.ExtractionEvalService
 }
 
 type AICorrectionResolver struct{ *Deps }

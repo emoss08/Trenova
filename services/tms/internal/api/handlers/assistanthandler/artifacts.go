@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -52,14 +52,18 @@ func (h *Handler) listThreadArtifacts(c *gin.Context) {
 		return
 	}
 
-	page, err := h.service.ListThreadArtifacts(c.Request.Context(), req, serviceports.ListArtifactsOptions{
-		Limit:      query.Limit,
-		Cursor:     query.Cursor,
-		Query:      query.Query,
-		Family:     assistantartifact.Family(query.Kind),
-		PinnedOnly: query.Pinned,
-		Summary:    query.Summary,
-	})
+	page, err := h.service.ListThreadArtifacts(
+		c.Request.Context(),
+		req,
+		agentports.ListArtifactsOptions{
+			Limit:      query.Limit,
+			Cursor:     query.Cursor,
+			Query:      query.Query,
+			Family:     assistantartifact.Family(query.Kind),
+			PinnedOnly: query.Pinned,
+			Summary:    query.Summary,
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -134,7 +138,12 @@ func (h *Handler) exportArtifactCSV(c *gin.Context) {
 	c.Header("Content-Disposition", "attachment; filename="+strconv.Quote(name))
 	c.Header("Cache-Control", "no-store")
 	c.Status(http.StatusOK)
-	if err = h.service.ExportArtifactCSV(c.Request.Context(), req, artifactID, c.Writer); err != nil {
+	if err = h.service.ExportArtifactCSV(
+		c.Request.Context(),
+		req,
+		artifactID,
+		c.Writer,
+	); err != nil {
 		// The status is already sent; the file ends short and the log says why.
 		h.logger.Warn("artifact export ended early",
 			zap.String("artifactId", artifactID.String()),
@@ -177,7 +186,7 @@ func (h *Handler) saveDocumentVersion(c *gin.Context) {
 		return
 	}
 
-	var body serviceports.SaveDocumentVersionRequest
+	var body agentports.SaveDocumentVersionRequest
 	if err = c.ShouldBindJSON(&body); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -225,7 +234,7 @@ func (h *Handler) rewriteDocument(c *gin.Context) {
 		return
 	}
 
-	var body serviceports.DocumentRewriteRequest
+	var body agentports.DocumentRewriteRequest
 	if err = c.ShouldBindJSON(&body); err != nil {
 		h.eh.HandleError(c, err)
 		return

@@ -12,10 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -33,12 +33,11 @@ func (r *AgentRunResolver) Definition(ctx context.Context, obj *agent.AgentRun) 
 		return nil, nil
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok {
+	if !loaders.Available(ctx) {
 		return nil, nil
 	}
 
-	definition, err := l.AgentDefinitionByID.Load(ctx, obj.AgentDefinitionID.String())
+	definition, err := loaders.AgentDefinitionByID(ctx, obj.AgentDefinitionID.String())
 	if err != nil {
 		// A run of a retired built-in agent names a definition that is gone;
 		// the run is still worth showing.
@@ -58,12 +57,11 @@ func (r *AgentRunResolver) HandedBy(ctx context.Context, obj *agent.AgentRun) (*
 		return nil, nil
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok {
+	if !loaders.Available(ctx) {
 		return nil, nil
 	}
 
-	thread, err := l.ThreadAgentByID.Load(ctx, obj.SubjectID.String())
+	thread, err := loaders.ThreadAgentByID(ctx, obj.SubjectID.String())
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil
@@ -75,7 +73,7 @@ func (r *AgentRunResolver) HandedBy(ctx context.Context, obj *agent.AgentRun) (*
 		return nil, nil
 	}
 
-	definition, err := l.AgentDefinitionByID.Load(ctx, thread.AgentDefinitionID.String())
+	definition, err := loaders.AgentDefinitionByID(ctx, thread.AgentDefinitionID.String())
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil
@@ -121,7 +119,7 @@ func (r *QueryResolver) PendingDecisions(ctx context.Context, input gqlmodel.Pen
 		return nil, err
 	}
 
-	req := services.ListPendingDecisionsRequest{
+	req := agentports.ListPendingDecisionsRequest{
 		TenantInfo:        base.TenantInfo(authCtx),
 		IncludeTotalCount: base.ConnectionFieldRequested(ctx, base.ConnectionTotalCountField),
 		Usable:            usable,
@@ -237,7 +235,7 @@ func (r *QueryResolver) RecentDecisions(ctx context.Context, since int, first *i
 		return nil, err
 	}
 
-	req := services.ListRecentDecisionsRequest{
+	req := agentports.ListRecentDecisionsRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		Since:      int64(since),
 		Usable:     usable,

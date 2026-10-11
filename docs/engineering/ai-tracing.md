@@ -17,7 +17,7 @@ in workflow code**, and nothing below added, removed or reordered a command.
 | Assistant turn | anchored on the turn id | `invoke_agent {agent}` | `assistantjobs.FinishTurnActivity`; `CloseTurnActivity` when the save failed on every attempt |
 | A delegate's task | anchored on the turn id and the `delegate_task` call id | `invoke_agent {delegate}` | `FinishTurnActivity`, from the delegate's `delegate_started` and `delegate_finished` events |
 | Evaluation replay | anchored on the evaluation id | `invoke_agent`, `trenova.ai.purpose=evaluation` | `FinishReplayActivity`, `FailEvaluationActivity` |
-| One-shot call | a new trace per call | `trenova.ai.job {feature}` | `completionjobs.Dispatcher.await`, synchronously |
+| One-shot call | a new trace per call | `trenova.ai.job {feature}` | `completioncontract.Dispatcher.await`, synchronously |
 | Other AI work (document extraction, inbound classification, accounting mapping, insights, the daily briefing) | the workflow's own trace | none of its own | router spans carry `trenova.ai.feature` |
 | Deciding, running or expiring a proposal | the request's or the sweep's | `trenova.ai.proposal.decide` / `.execute` / `.expire` | `agentdecisionservice`, `proposalexecutor`, the expiry activities |
 
@@ -75,7 +75,7 @@ root and each delegate's root back to the turn's.
 
 `error.type` is how the loop ended when it did not finish: `cancelled`,
 `timeout`, `no_provider`, `providers_resting`, `refused`, `schema_invalid`,
-`http_{status}` or `failed` (`agentflow.FailureKind`).
+`http_{status}` or `failed` (`agentflowcontract.FailureKind`).
 
 Token and cost totals come from the loop, not from a query: the model activity
 returns what every attempt of the call used (`ModelReply.Usage`) and `Drive`

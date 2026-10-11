@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 )
 
 // anthropicModel is what a Claude model takes for thinking. The models differ

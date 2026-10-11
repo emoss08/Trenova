@@ -1,32 +1,33 @@
 package aiproviderhandler
 
 import (
-	"github.com/shopspring/decimal"
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 )
 
 type Params struct {
 	fx.In
 
-	Service              serviceports.AIProviderService
+	Service              agentports.AIProviderService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service serviceports.AIProviderService
+	service agentports.AIProviderService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -52,9 +53,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.POST("/:providerID/test/", h.pm.RequirePermission(resource, permission.OpManage), h.test)
 }
 
-func requestActorFromAuthContext(authCtx *authctx.AuthContext) serviceports.RequestActor {
-	return serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalType(authCtx.PrincipalType),
+func requestActorFromAuthContext(authCtx *authctx.AuthContext) permissionports.RequestActor {
+	return permissionports.RequestActor{
+		PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
 		PrincipalID:    authCtx.PrincipalID,
 		UserID:         authCtx.UserID,
 		APIKeyID:       authCtx.APIKeyID,
@@ -81,7 +82,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*aiprovider.Provider], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListAIProviderRequest{Filter: req},
+				&agentports.ListAIProviderRequest{Filter: req},
 			)
 		},
 	)
@@ -96,7 +97,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	provider, err := h.service.GetByID(c.Request.Context(), repositories.GetAIProviderByIDRequest{
+	provider, err := h.service.GetByID(c.Request.Context(), agentports.GetAIProviderByIDRequest{
 		ID:         providerID,
 		TenantInfo: tenantFromAuthContext(authCtx),
 	})
@@ -146,8 +147,8 @@ type saveProviderRequest struct {
 func (r *saveProviderRequest) toServiceRequest(
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) *serviceports.SaveAIProviderRequest {
-	return &serviceports.SaveAIProviderRequest{
+) *agentports.SaveAIProviderRequest {
+	return &agentports.SaveAIProviderRequest{
 		ID:                       id,
 		Name:                     r.Name,
 		Description:              r.Description,
@@ -244,7 +245,7 @@ func (h *Handler) remove(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authCtx)
-	if err = h.service.Delete(c.Request.Context(), repositories.DeleteAIProviderRequest{
+	if err = h.service.Delete(c.Request.Context(), agentports.DeleteAIProviderRequest{
 		ID:         providerID,
 		TenantInfo: tenantFromAuthContext(authCtx),
 	}, &actor); err != nil {
@@ -264,7 +265,7 @@ func (h *Handler) test(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.Test(c.Request.Context(), repositories.GetAIProviderByIDRequest{
+	result, err := h.service.Test(c.Request.Context(), agentports.GetAIProviderByIDRequest{
 		ID:         providerID,
 		TenantInfo: tenantFromAuthContext(authCtx),
 	})

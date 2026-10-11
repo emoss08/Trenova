@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -72,10 +72,10 @@ func TestCompleteChat_KeepsAskingABusyProviderAndHonoursItsRetryAfter(t *testing
 	service := newTestService(t, provider)
 	waits := recordingPauses(service)
 
-	var notices []serviceports.ChatRetryNotice
+	var notices []agentports.ChatRetryNotice
 	request := chatRequest(provider.ID)
 	request.PinPreferred = true
-	request.RetrySink = func(notice serviceports.ChatRetryNotice) { notices = append(notices, notice) }
+	request.RetrySink = func(notice agentports.ChatRetryNotice) { notices = append(notices, notice) }
 
 	result, err := service.CompleteChat(t.Context(), request)
 
@@ -85,7 +85,7 @@ func TestCompleteChat_KeepsAskingABusyProviderAndHonoursItsRetryAfter(t *testing
 	assert.Equal(t, []time.Duration{2 * time.Second, 2 * time.Second}, *waits,
 		"the provider's Retry-After outranks the shorter backoff")
 	require.Len(t, notices, 2)
-	assert.Equal(t, serviceports.RetryKindBusy, notices[0].Kind)
+	assert.Equal(t, agentports.RetryKindBusy, notices[0].Kind)
 	assert.Equal(t, 2, notices[0].WaitSeconds)
 	assert.Equal(t, "gemini", notices[0].Provider)
 }

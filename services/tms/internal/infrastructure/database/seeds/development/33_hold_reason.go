@@ -6,9 +6,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/holdreason"
+	"github.com/emoss08/trenova/pkg/buncolgen/holdreasoncol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/uptrace/bun"
 )
@@ -121,7 +122,7 @@ func seededHoldReasons() []*holdreason.HoldReason {
 }
 
 func (s *HoldReasonSeed) ensure(ctx context.Context, tx bun.Tx, reason *holdreason.HoldReason) error {
-	cols := buncolgen.HoldReasonColumns
+	cols := holdreasoncol.HoldReasonColumns
 	exists, err := tx.NewSelect().
 		Model((*holdreason.HoldReason)(nil)).
 		Where(cols.OrganizationID.Eq(), reason.OrganizationID).

@@ -3,7 +3,8 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -13,14 +14,14 @@ import (
 type inboundAttachmentCounter interface {
 	CountAttachmentsByMessageIDs(
 		ctx context.Context,
-		req repositories.CountInboundAttachmentsRequest,
+		req inboundmessageports.CountInboundAttachmentsRequest,
 	) (map[pulid.ID]int, error)
 }
 
 type InboundAttachmentCountLoaderFactoryParams struct {
 	fx.In
 
-	MessageRepo repositories.InboundMessageRepository
+	MessageRepo inboundmessageports.InboundMessageRepository
 }
 
 type InboundAttachmentCountLoaderFactory struct {
@@ -33,7 +34,7 @@ func NewInboundAttachmentCountLoaderFactory(
 	return &InboundAttachmentCountLoaderFactory{messages: p.MessageRepo}
 }
 
-func (f *InboundAttachmentCountLoaderFactory) NewForTenant(
+func newInboundAttachmentCountLoader(f *InboundAttachmentCountLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, int] {
 	return newLoader(f.batchFunc(tenantInfo))
@@ -45,7 +46,7 @@ func (f *InboundAttachmentCountLoaderFactory) batchFunc(
 	return batchCountFunc(func(ctx context.Context, ids []pulid.ID) (map[pulid.ID]int, error) {
 		return f.messages.CountAttachmentsByMessageIDs(
 			ctx,
-			repositories.CountInboundAttachmentsRequest{
+			inboundmessageports.CountInboundAttachmentsRequest{
 				TenantInfo: tenantInfo,
 				MessageIDs: ids,
 			},
@@ -56,14 +57,14 @@ func (f *InboundAttachmentCountLoaderFactory) batchFunc(
 type shipmentSummaryLister interface {
 	ListSummariesByIDs(
 		ctx context.Context,
-		req *repositories.ListShipmentSummariesRequest,
-	) ([]*repositories.ShipmentSummary, error)
+		req *shipmentports.ListShipmentSummariesRequest,
+	) ([]*shipmentports.ShipmentSummary, error)
 }
 
 type ShipmentSummaryByIDLoaderFactoryParams struct {
 	fx.In
 
-	ShipmentRepo repositories.ShipmentRepository
+	ShipmentRepo shipmentports.ShipmentRepository
 }
 
 type ShipmentSummaryByIDLoaderFactory struct {
@@ -76,18 +77,18 @@ func NewShipmentSummaryByIDLoaderFactory(
 	return &ShipmentSummaryByIDLoaderFactory{shipments: p.ShipmentRepo}
 }
 
-func (f *ShipmentSummaryByIDLoaderFactory) NewForTenant(
+func newShipmentSummaryByIDLoader(f *ShipmentSummaryByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, *repositories.ShipmentSummary] {
+) *dataloadgen.Loader[string, *shipmentports.ShipmentSummary] {
 	return newLoader(f.batchFunc(tenantInfo))
 }
 
 func (f *ShipmentSummaryByIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
-) batchFetchFunc[*repositories.ShipmentSummary] {
+) batchFetchFunc[*shipmentports.ShipmentSummary] {
 	return batchByIDFunc(
-		func(ctx context.Context, ids []pulid.ID) ([]*repositories.ShipmentSummary, error) {
-			return f.shipments.ListSummariesByIDs(ctx, &repositories.ListShipmentSummariesRequest{
+		func(ctx context.Context, ids []pulid.ID) ([]*shipmentports.ShipmentSummary, error) {
+			return f.shipments.ListSummariesByIDs(ctx, &shipmentports.ListShipmentSummariesRequest{
 				TenantInfo:  tenantInfo,
 				ShipmentIDs: ids,
 			})

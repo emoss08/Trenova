@@ -1,0 +1,67 @@
+package documentservice
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
+	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/uptrace/bun"
+	"go.temporal.io/sdk/client"
+	"go.uber.org/zap"
+)
+
+type noopDBConnection struct{}
+
+func (noopDBConnection) DB() *bun.DB                          { return nil }
+func (noopDBConnection) DBForContext(context.Context) bun.IDB { return nil }
+func (noopDBConnection) HealthCheck(context.Context) error    { return nil }
+func (noopDBConnection) IsHealthy(context.Context) bool       { return true }
+func (noopDBConnection) Close() error                         { return nil }
+func (noopDBConnection) WithTx(
+	ctx context.Context,
+	_ kernelports.TxOptions,
+	fn func(context.Context, bun.Tx) error,
+) error {
+	return fn(ctx, bun.Tx{})
+}
+
+func NewTestService(
+	logger *zap.Logger,
+	repo documentports.DocumentRepository,
+	cacheRepo customerports.DocumentCacheRepository,
+	sessionRepo documentuploadports.DocumentUploadSessionRepository,
+	storageClient kernelports.Client,
+	validator *Validator,
+	auditService auditports.AuditService,
+	cfg *config.StorageConfig,
+	thumbnailGenerator *thumbnailservice.Generator,
+	temporalClient client.Client,
+) *Service {
+	return &Service{
+		l:                    logger.Named("service.document"),
+		db:                   noopDBConnection{},
+		repo:                 repo,
+		cacheRepo:            cacheRepo,
+		sessionRepo:          sessionRepo,
+		storage:              storageClient,
+		validator:            validator,
+		auditService:         auditService,
+		documentIntelligence: noopDocumentContentService{},
+		searchProjection:     noopDocumentSearchProjectionService{},
+		config:               cfg,
+		encryption: encryptionservice.NewWithKeyManager(
+			encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
+		),
+		thumbnailGenerator: thumbnailGenerator,
+		workflowStarter: workflowstarter.New(workflowstarter.Params{
+			TemporalClient: temporalClient,
+		}),
+	}
+}

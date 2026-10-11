@@ -11,9 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 )
 
 func (r *ExtractionRolloutResolver) Serving(ctx context.Context, obj *extractionrollout.ExtractionRollout) (bool, error) {
@@ -39,7 +39,7 @@ func (r *MutationResolver) UpdateExtractionRollout(ctx context.Context, input gq
 		return nil, err
 	}
 
-	return r.ExtractionRolloutService.Update(ctx, &services.UpdateExtractionRolloutRequest{
+	return r.ExtractionRolloutService.Update(ctx, &extractionrolloutports.UpdateExtractionRolloutRequest{
 		TenantInfo:                 base.TenantInfo(authCtx),
 		Enabled:                    input.Enabled,
 		ProviderID:                 providerID,
@@ -59,7 +59,7 @@ func (r *QueryResolver) ExtractionRollout(ctx context.Context) (*extractionrollo
 	return r.ExtractionRolloutService.Get(ctx, base.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) ExtractionRolloutReport(ctx context.Context) (*services.ExtractionRolloutReport, error) {
+func (r *QueryResolver) ExtractionRolloutReport(ctx context.Context) (*extractionrolloutports.ExtractionRolloutReport, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentEvalSuite, permission.OpRead)
 	if err != nil {
 		return nil, err

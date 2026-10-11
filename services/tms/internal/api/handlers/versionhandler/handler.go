@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/services/versionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/versionservice"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )

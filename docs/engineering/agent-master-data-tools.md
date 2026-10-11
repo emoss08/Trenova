@@ -46,7 +46,7 @@ codes are resolved to the state on file, dates are `YYYY-MM-DD`, and every enum 
 source beside its domain type (`carrier.status`, `carrier.type`, `carrier.paymentMethod`,
 `carrier.taxIdType`, `customer.statusUpdatePreference`, `commodity.freightClass`,
 `hazardousMaterial.class`, `hazardousMaterial.packingGroup`, `tableChangeAlert.status`,
-`capture.targetType`). The shared field kit is `agenttoolservice/masterdata_kit.go`, and
+`capture.targetType`). The shared field kit is `agenttools/masterdatatools/masterdata_kit.go`, and
 `statuschange.Plan` is the bulk status plan every status service uses.
 
 A master record read from a document or a message someone outside sent is proposed, whatever

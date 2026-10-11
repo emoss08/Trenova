@@ -216,7 +216,12 @@ func (c *coercer) object(
 				delete(out, key)
 				changed = true
 				c.notes = append(c.notes, Coercion{
-					Path: at, Note: fmt.Sprintf("%s held %q, which names no record, and was left out", at, read),
+					Path: at,
+					Note: fmt.Sprintf(
+						"%s held %q, which names no record, and was left out",
+						at,
+						read,
+					),
 					Omitted: true,
 				})
 

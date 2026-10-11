@@ -4,7 +4,7 @@ package workeremploymentresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	workeremploymentservice "github.com/emoss08/trenova/internal/core/services/workeremploymentservice"
+	workeremploymentservice "github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
 )
 
 type Deps struct {

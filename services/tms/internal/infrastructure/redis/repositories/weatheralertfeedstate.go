@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 )
@@ -26,13 +26,13 @@ type weatherAlertFeedStateStore struct {
 
 func NewWeatherAlertFeedStateStore(
 	p WeatherAlertFeedStateStoreParams,
-) repositories.WeatherAlertFeedStateStore {
+) weatheralertports.WeatherAlertFeedStateStore {
 	return &weatherAlertFeedStateStore{client: p.Client}
 }
 
 func (s *weatherAlertFeedStateStore) Get(
 	ctx context.Context,
-) (*repositories.WeatherAlertFeedState, error) {
+) (*weatheralertports.WeatherAlertFeedState, error) {
 	raw, err := s.client.Get(ctx, weatherAlertFeedStateKey).Bytes()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
@@ -42,7 +42,7 @@ func (s *weatherAlertFeedStateStore) Get(
 		return nil, fmt.Errorf("read weather alert feed state: %w", err)
 	}
 
-	state := new(repositories.WeatherAlertFeedState)
+	state := new(weatheralertports.WeatherAlertFeedState)
 	if err = sonic.Unmarshal(raw, state); err != nil {
 		_ = s.client.Del(ctx, weatherAlertFeedStateKey).Err()
 
@@ -54,7 +54,7 @@ func (s *weatherAlertFeedStateStore) Get(
 
 func (s *weatherAlertFeedStateStore) Save(
 	ctx context.Context,
-	state *repositories.WeatherAlertFeedState,
+	state *weatheralertports.WeatherAlertFeedState,
 	ttl time.Duration,
 ) error {
 	payload, err := sonic.Marshal(state)

@@ -5,47 +5,46 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/agentevalgate"
-	"github.com/emoss08/trenova/internal/core/services/retrievalservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
+	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const (
-	FixturePath    = "internal/core/services/agentevalgate/" + agentevalgate.RetrievalEmbeddingFixturePath
+	FixturePath    = "internal/modules/agent/app/agentevalgate/" + agentevalgate.RetrievalEmbeddingFixturePath
 	ModelKey       = "eval.local/" + agentevalgate.EmbeddingFixtureModel + "@768"
-	DocumentSuite  = "internal/core/services/agentevalgate/evals/documentretrieval.yaml"
-	InboxSuite     = "internal/core/services/agentevalgate/evals/inboxretrieval.yaml"
-	MemorySuite    = "internal/core/services/agentevalgate/evals/memoryretrieval.yaml"
-	DocumentFloors = "internal/core/services/agentevalgate/evals/documentretrieval.floors.json"
-	InboxFloors    = "internal/core/services/agentevalgate/evals/inboxretrieval.floors.json"
-	MemoryFloors   = "internal/core/services/agentevalgate/evals/memoryretrieval.floors.json"
+	DocumentSuite  = "internal/modules/agent/app/agentevalgate/evals/documentretrieval.yaml"
+	InboxSuite     = "internal/modules/agent/app/agentevalgate/evals/inboxretrieval.yaml"
+	MemorySuite    = "internal/modules/agent/app/agentevalgate/evals/memoryretrieval.yaml"
+	DocumentFloors = "internal/modules/agent/app/agentevalgate/evals/documentretrieval.floors.json"
+	InboxFloors    = "internal/modules/agent/app/agentevalgate/evals/inboxretrieval.floors.json"
+	MemoryFloors   = "internal/modules/agent/app/agentevalgate/evals/memoryretrieval.floors.json"
 
 	RecordCommand = "cd services/tms && ollama pull nomic-embed-text && " +
 		agentevalgate.OllamaURLEnv + "=" + agentevalgate.DefaultOllamaURL +
 		" go test -count=1 -run 'TestRecordRetrievalEmbeddingFixture' " +
-		"./internal/core/services/retrievalservice/ -record"
+		"./internal/modules/agent/app/retrievalservice/ -record"
 	FloorsCommand = "cd services/tms && " +
 		"TRENOVA_TEST_POSTGRES_IMAGE=trenova-postgres:local go test -tags integration " +
-		"-count=1 -run 'TestRetrievalAgainstFloors' ./internal/core/services/retrievalservice/ -update"
+		"-count=1 -run 'TestRetrievalAgainstFloors' ./internal/modules/agent/app/retrievalservice/ -update"
 )
 
 func EmbeddingInputs(
 	documents, inbox, memories *agentevalgate.RetrievalSuite,
 ) agentevalgate.EmbeddingInputs {
 	inputs := agentevalgate.EmbeddingInputs{
-		Documents: make([]serviceports.EmbeddingCatalogItem, 0, 64),
+		Documents: make([]agentports.EmbeddingCatalogItem, 0, 64),
 		Queries:   make([]string, 0, 64),
 	}
 
 	add := func(key string, chunks []retrievalservice.Chunk) {
 		for _, chunk := range chunks {
-			inputs.Documents = append(inputs.Documents, serviceports.EmbeddingCatalogItem{
+			inputs.Documents = append(inputs.Documents, agentports.EmbeddingCatalogItem{
 				Key:         key + "#" + strconv.Itoa(chunk.Index),
 				Text:        chunk.Text,
 				ContentHash: chunk.Hash,
@@ -75,19 +74,19 @@ type FixtureVectorizer struct {
 	ModelKey string
 }
 
-var _ serviceports.QueryVectorizer = FixtureVectorizer{}
+var _ agentports.QueryVectorizer = FixtureVectorizer{}
 
 func (v FixtureVectorizer) Vectorize(
 	_ context.Context,
-	req *serviceports.QueryVectorRequest,
-) (serviceports.QueryVector, error) {
+	req *agentports.QueryVectorRequest,
+) (agentports.QueryVector, error) {
 	vector, ok := v.Fixture.Query(req.Text)
 	if !ok {
-		return serviceports.QueryVector{}, fmt.Errorf(
+		return agentports.QueryVector{}, fmt.Errorf(
 			"no recorded vector for query %q; re-record with:\n  %s", req.Text, RecordCommand)
 	}
 
-	return serviceports.QueryVector{
+	return agentports.QueryVector{
 		Available:  true,
 		Vector:     vector,
 		ModelKey:   v.ModelKey,
@@ -108,10 +107,10 @@ type Access struct {
 	Registry   *permission.Registry
 	Tenant     pagination.TenantInfo
 	UserID     pulid.ID
-	Threads    repositories.ThreadOwnerRepository
+	Threads    agentports.ThreadOwnerRepository
 }
 
-var _ serviceports.RetrievalAccess = Access{}
+var _ agentports.RetrievalAccess = Access{}
 
 func (a Access) MayReadResource(_ context.Context, resource permission.Resource) bool {
 	return !a.Unreadable[resource]
@@ -128,7 +127,7 @@ func (a Access) ReadableDocuments(
 	var owners map[pulid.ID]pulid.ID
 	if ids := document.ConversationIDs(docs); len(ids) > 0 && a.Threads != nil &&
 		a.UserID.IsNotNil() {
-		found, err := a.Threads.ThreadOwners(ctx, repositories.ThreadOwnersRequest{
+		found, err := a.Threads.ThreadOwners(ctx, agentports.ThreadOwnersRequest{
 			TenantInfo: a.Tenant,
 			ThreadIDs:  ids,
 		})

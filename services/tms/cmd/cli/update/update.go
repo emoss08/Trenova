@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/spf13/cobra"
 )
 
@@ -295,7 +295,7 @@ func runStatus(_ *cobra.Command, _ []string) error {
 	return nil
 }
 
-func fetchLatestRelease() (*serviceports.ReleaseInfo, error) {
+func fetchLatestRelease() (*kernelports.ReleaseInfo, error) {
 	owner := "emoss08"
 	repo := "trenova"
 	if cfg != nil && cfg.Update.GitHubOwner != "" {
@@ -335,7 +335,7 @@ func fetchLatestRelease() (*serviceports.ReleaseInfo, error) {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	var ghRelease serviceports.GitHubRelease
+	var ghRelease kernelports.GitHubRelease
 	if err := sonic.Unmarshal(body, &ghRelease); err != nil {
 		return nil, err
 	}
@@ -346,7 +346,7 @@ func fetchLatestRelease() (*serviceports.ReleaseInfo, error) {
 
 	publishedAt, _ := time.Parse(time.RFC3339, ghRelease.PublishedAt)
 
-	return &serviceports.ReleaseInfo{
+	return &kernelports.ReleaseInfo{
 		Version:      strings.TrimPrefix(ghRelease.TagName, "v"),
 		TagName:      ghRelease.TagName,
 		PublishedAt:  publishedAt.Unix(),

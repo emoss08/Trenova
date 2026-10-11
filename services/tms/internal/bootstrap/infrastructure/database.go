@@ -1,12 +1,12 @@
 package infrastructure
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"go.uber.org/fx"
 )
 
-func asDBConnection(conn *postgres.Connection) ports.DBConnection {
+func asDBConnection(conn *postgres.Connection) kernelports.DBConnection {
 	return conn
 }
 

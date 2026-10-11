@@ -10,9 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,7 +29,7 @@ func (r *QueryResolver) Locations(ctx context.Context, input gqlmodel.DataTableC
 
 	result, err := r.LocationService.ListConnection(
 		ctx,
-		&repositories.ListLocationConnectionRequest{
+		&locationports.ListLocationConnectionRequest{
 			Filter:          tableInput.Filter,
 			Cursor:          tableInput.Cursor,
 			LocationColumns: locationColumns(ctx, "edges.node"),
@@ -53,7 +53,7 @@ func (r *QueryResolver) Location(ctx context.Context, id string) (*location.Loca
 		return nil, err
 	}
 
-	return r.LocationService.Get(ctx, repositories.GetLocationByIDRequest{
+	return r.LocationService.Get(ctx, locationports.GetLocationByIDRequest{
 		ID:         locationID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

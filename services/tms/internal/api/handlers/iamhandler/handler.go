@@ -6,10 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/iam"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -22,13 +21,13 @@ import (
 type Params struct {
 	fx.In
 
-	Service              services.IAMService
+	Service              iamports.IAMService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service services.IAMService
+	service iamports.IAMService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -167,7 +166,7 @@ func (h *Handler) createIdentityProvider(c *gin.Context) {
 	if !ok {
 		return
 	}
-	req := new(services.IdentityProviderRequest)
+	req := new(iamports.IdentityProviderRequest)
 	if err := authctx.BindJSON(c, authctx.GetAuthContext(c), req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -189,7 +188,7 @@ func (h *Handler) updateIdentityProvider(c *gin.Context) {
 	if !ok {
 		return
 	}
-	req := new(services.IdentityProviderRequest)
+	req := new(iamports.IdentityProviderRequest)
 	if err := authctx.BindJSON(c, authctx.GetAuthContext(c), req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -229,7 +228,7 @@ func (h *Handler) listSCIMDirectories(c *gin.Context) {
 		func() (*pagination.ListResult[*iam.SCIMDirectory], error) {
 			return h.service.ListSCIMDirectories(
 				c.Request.Context(),
-				&repositories.ListSCIMDirectoryRequest{
+				&iamports.ListSCIMDirectoryRequest{
 					Filter: req,
 				},
 			)
@@ -319,7 +318,7 @@ func (h *Handler) createSCIMToken(c *gin.Context) {
 	if !ok {
 		return
 	}
-	req := new(services.SCIMTokenCreateRequest)
+	req := new(iamports.SCIMTokenCreateRequest)
 	if err := authctx.BindJSON(c, authctx.GetAuthContext(c), req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -364,7 +363,7 @@ func (h *Handler) listSCIMGroupRoleMappings(c *gin.Context) {
 		func() (*pagination.ListResult[*iam.SCIMGroupRoleMapping], error) {
 			return h.service.ListSCIMGroupRoleMappings(
 				c.Request.Context(),
-				&repositories.ListSCIMGroupRoleMappingsRequest{
+				&iamports.ListSCIMGroupRoleMappingsRequest{
 					Filter:      req,
 					DirectoryID: directoryID,
 				},

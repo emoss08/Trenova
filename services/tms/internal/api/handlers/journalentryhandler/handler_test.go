@@ -1,6 +1,8 @@
 package journalentryhandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalsourceportsmock"
 	"context"
 	"net/http"
 	"testing"
@@ -8,11 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/journalentryhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/journalentry"
-	"github.com/emoss08/trenova/internal/core/domain/journalsource"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/journalentryservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalsourceports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,12 +29,12 @@ import (
 func TestListEntries(t *testing.T) {
 	t.Parallel()
 
-	entryRepo := mocks.NewMockJournalEntryRepository(t)
-	sourceRepo := mocks.NewMockJournalSourceRepository(t)
+	entryRepo := journalentryportsmock.NewMockJournalEntryRepository(t)
+	sourceRepo := journalsourceportsmock.NewMockJournalSourceRepository(t)
 	entry := &journalentry.JournalEntry{ID: pulid.MustNew("je_"), EntryNumber: "JE-1"}
 	entryRepo.EXPECT().
 		List(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req *repositories.ListJournalEntriesRequest) (*pagination.ListResult[*journalentry.JournalEntry], error) {
+		RunAndReturn(func(_ context.Context, req *journalentryports.ListJournalEntriesRequest) (*pagination.ListResult[*journalentry.JournalEntry], error) {
 			assert.Equal(t, sharedtestutil.TestOrgID, req.Filter.TenantInfo.OrgID)
 			return &pagination.ListResult[*journalentry.JournalEntry]{
 				Items: []*journalentry.JournalEntry{entry},
@@ -58,11 +61,11 @@ func TestListEntries(t *testing.T) {
 func TestGetEntry(t *testing.T) {
 	t.Parallel()
 
-	entryRepo := mocks.NewMockJournalEntryRepository(t)
-	sourceRepo := mocks.NewMockJournalSourceRepository(t)
+	entryRepo := journalentryportsmock.NewMockJournalEntryRepository(t)
+	sourceRepo := journalsourceportsmock.NewMockJournalSourceRepository(t)
 	entryID := pulid.MustNew("je_")
 	entryRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetJournalEntryByIDRequest{ID: entryID, TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID, UserID: sharedtestutil.TestUserID}}).
+		GetByID(mock.Anything, journalentryports.GetJournalEntryByIDRequest{ID: entryID, TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID, UserID: sharedtestutil.TestUserID}}).
 		Return(&journalentry.JournalEntry{ID: entryID}, nil).
 		Once()
 	handler := newJournalEntryHandler(t, entryRepo, sourceRepo)
@@ -80,10 +83,10 @@ func TestGetEntry(t *testing.T) {
 func TestGetSource(t *testing.T) {
 	t.Parallel()
 
-	entryRepo := mocks.NewMockJournalEntryRepository(t)
-	sourceRepo := mocks.NewMockJournalSourceRepository(t)
+	entryRepo := journalentryportsmock.NewMockJournalEntryRepository(t)
+	sourceRepo := journalsourceportsmock.NewMockJournalSourceRepository(t)
 	sourceRepo.EXPECT().
-		GetByObject(mock.Anything, repositories.GetJournalSourceByObjectRequest{TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID, UserID: sharedtestutil.TestUserID}, SourceObjectType: "Invoice", SourceObjectID: "inv_1"}).
+		GetByObject(mock.Anything, journalsourceports.GetJournalSourceByObjectRequest{TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID, UserID: sharedtestutil.TestUserID}, SourceObjectType: "Invoice", SourceObjectID: "inv_1"}).
 		Return(&journalsource.Source{ID: pulid.MustNew("jsrc_")}, nil).
 		Once()
 	handler := newJournalEntryHandler(t, entryRepo, sourceRepo)
@@ -100,8 +103,8 @@ func TestGetSource(t *testing.T) {
 
 func newJournalEntryHandler(
 	t *testing.T,
-	entryRepo *mocks.MockJournalEntryRepository,
-	sourceRepo *mocks.MockJournalSourceRepository,
+	entryRepo *journalentryportsmock.MockJournalEntryRepository,
+	sourceRepo *journalsourceportsmock.MockJournalSourceRepository,
 ) *journalentryhandler.Handler {
 	t.Helper()
 

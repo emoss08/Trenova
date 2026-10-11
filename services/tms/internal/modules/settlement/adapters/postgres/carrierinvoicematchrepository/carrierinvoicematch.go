@@ -1,0 +1,369 @@
+package carrierinvoicematchrepository
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"fmt"
+
+	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
+
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/uptrace/bun"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+type Params struct {
+	fx.In
+
+	DB     *postgres.Connection
+	Logger *zap.Logger
+}
+
+type repository struct {
+	db *postgres.Connection
+	l  *zap.Logger
+}
+
+func New(p Params) carriersettlementports.CarrierInvoiceMatchRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.carrier-invoice-match-repository"),
+	}
+}
+
+func (r *repository) List(
+	ctx context.Context,
+	req *carriersettlementports.ListCarrierInvoiceMatchesRequest,
+) (*pagination.ListResult[*carriersettlement.InvoiceMatch], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*carriersettlement.InvoiceMatch], error) {
+			cols := carriersettlementcol.InvoiceMatchColumns
+			rel := carriersettlementcol.InvoiceMatchRelations
+			limit := req.Filter.Pagination.SafeLimit()
+			items := make([]*carriersettlement.InvoiceMatch, 0, limit)
+
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&items).
+				Apply(carriersettlementcol.InvoiceMatchApplyTenant(req.Filter.TenantInfo)).
+				Relation(rel.Carrier).
+				Relation(rel.CarrierAssignment).
+				Order(cols.CreatedAt.OrderDesc()).
+				Limit(limit).
+				Offset(req.Filter.Pagination.SafeOffset())
+
+			if req.Filter.Query != "" {
+				query = query.Where(cols.InvoiceNumber.ILike(), "%"+req.Filter.Query+"%")
+			}
+			if !req.CarrierID.IsNil() {
+				query = query.Where(cols.CarrierID.Eq(), req.CarrierID)
+			}
+			if req.Status != "" {
+				query = query.Where(cols.Status.Eq(), req.Status)
+			}
+
+			total, err := query.ScanAndCount(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list carrier invoice matches: %w", err)
+			}
+
+			return &pagination.ListResult[*carriersettlement.InvoiceMatch]{
+				Items: items,
+				Total: total,
+			}, nil
+		},
+	)
+}
+
+func (r *repository) GetByID(
+	ctx context.Context,
+	req carriersettlementports.GetCarrierInvoiceMatchByIDRequest,
+) (*carriersettlement.InvoiceMatch, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.InvoiceMatch, error) {
+		cols := carriersettlementcol.InvoiceMatchColumns
+		rel := carriersettlementcol.InvoiceMatchRelations
+		entity := new(carriersettlement.InvoiceMatch)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return carriersettlementcol.InvoiceMatchScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID)
+			}).
+			Relation(rel.Carrier).
+			Relation(rel.CarrierAssignment).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "CarrierInvoiceMatch")
+		}
+		return entity, nil
+	})
+}
+
+func (r *repository) GetOpenByEDIInvoiceID(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	invoiceID pulid.ID,
+) (*carriersettlement.InvoiceMatch, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.InvoiceMatch, error) {
+		cols := carriersettlementcol.InvoiceMatchColumns
+		entity := new(carriersettlement.InvoiceMatch)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return carriersettlementcol.InvoiceMatchScopeTenant(sq, tenantInfo).
+					Where(cols.EDICarrierInvoiceID.Eq(), invoiceID).
+					Where(cols.Status.NotEq(), carriersettlement.InvoiceMatchStatusRejected)
+			}).
+			Order(cols.CreatedAt.OrderDesc()).
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil //nolint:nilnil // nil match represents an optional absence
+			}
+			return nil, fmt.Errorf("get open carrier invoice match: %w", err)
+		}
+		return entity, nil
+	})
+}
+
+func (r *repository) GetLiveByCarrierInvoiceNumber(
+	ctx context.Context,
+	req *carriersettlementports.GetLiveCarrierInvoiceMatchByNumberRequest,
+) (*carriersettlement.InvoiceMatch, error) {
+	key := edi.InvoiceNumberKey(req.InvoiceNumber)
+	if key == "" {
+		return nil, nil //nolint:nilnil // a match without a number never collides
+	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.InvoiceMatch, error) {
+		cols := carriersettlementcol.InvoiceMatchColumns
+		entity := new(carriersettlement.InvoiceMatch)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return carriersettlementcol.InvoiceMatchScopeTenant(sq, req.TenantInfo).
+					Where(cols.CarrierID.Eq(), req.CarrierID).
+					Where(cols.InvoiceNumberKey.Eq(), key).
+					Where(cols.DuplicateOfMatchID.IsNull()).
+					Where(cols.Status.NotEq(), carriersettlement.InvoiceMatchStatusRejected)
+			}).
+			Order(cols.CreatedAt.OrderAsc()).
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil
+			}
+			return nil, fmt.Errorf("get live carrier invoice match by number: %w", err)
+		}
+		return entity, nil
+	})
+}
+
+func (r *repository) ListLiveByAssignment(
+	ctx context.Context,
+	req carriersettlementports.ListLiveCarrierInvoiceMatchesByAssignmentRequest,
+) ([]*carriersettlement.InvoiceMatch, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*carriersettlement.InvoiceMatch, error) {
+			cols := carriersettlementcol.InvoiceMatchColumns
+			entities := make([]*carriersettlement.InvoiceMatch, 0)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return carriersettlementcol.InvoiceMatchScopeTenant(sq, req.TenantInfo).
+						Where(cols.CarrierAssignmentID.Eq(), req.AssignmentID).
+						Where(cols.Status.NotEq(), carriersettlement.InvoiceMatchStatusRejected)
+				}).
+				Order(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
+				Scan(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("list live carrier invoice matches by assignment: %w", err)
+			}
+			return entities, nil
+		},
+	)
+}
+
+func (r *repository) ListResolvedAssignmentIDs(
+	ctx context.Context,
+	req carriersettlementports.ListResolvedMatchAssignmentsRequest,
+) ([]pulid.ID, error) {
+	if len(req.AssignmentIDs) == 0 {
+		return []pulid.ID{}, nil
+	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
+		cols := carriersettlementcol.InvoiceMatchColumns
+		ids := make([]pulid.ID, 0, len(req.AssignmentIDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*carriersettlement.InvoiceMatch)(nil)).
+			Distinct().
+			Column(cols.CarrierAssignmentID.Bare()).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return carriersettlementcol.InvoiceMatchScopeTenant(sq, req.TenantInfo).
+					Where(cols.CarrierAssignmentID.In(), bun.List(req.AssignmentIDs)).
+					Where(cols.Status.Eq(), carriersettlement.InvoiceMatchStatusResolved)
+			}).
+			Scan(ctx, &ids)
+		if err != nil {
+			return nil, fmt.Errorf("list resolved carrier invoice match assignments: %w", err)
+		}
+		return ids, nil
+	})
+}
+
+func (r *repository) GetOpenByExtractionID(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	extractionID pulid.ID,
+) (*carriersettlement.InvoiceMatch, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.InvoiceMatch, error) {
+		cols := carriersettlementcol.InvoiceMatchColumns
+		entity := new(carriersettlement.InvoiceMatch)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return carriersettlementcol.InvoiceMatchScopeTenant(sq, tenantInfo).
+					Where(cols.DocumentAIExtractionID.Eq(), extractionID).
+					Where(cols.Status.NotEq(), carriersettlement.InvoiceMatchStatusRejected)
+			}).
+			Order(cols.CreatedAt.OrderDesc()).
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil //nolint:nilnil // nil match represents an optional absence
+			}
+			return nil, fmt.Errorf("get open carrier invoice match by extraction: %w", err)
+		}
+		return entity, nil
+	})
+}
+
+// UpdateSettlementForAdjustmentEvents stamps the settlement onto every match
+// whose accepted variance adjustment landed in that settlement, closing the
+// invoice → adjustment → settlement audit chain.
+func (r *repository) UpdateSettlementForAdjustmentEvents(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	costEventIDs []pulid.ID,
+	settlementID pulid.ID,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		if len(costEventIDs) == 0 {
+			return nil
+		}
+		cols := carriersettlementcol.InvoiceMatchColumns
+		_, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*carriersettlement.InvoiceMatch)(nil)).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return carriersettlementcol.InvoiceMatchScopeTenantUpdate(uq, tenantInfo).
+					Where(cols.AdjustmentCostEventID.In(), bun.List(costEventIDs)).
+					Where(cols.CarrierSettlementID.IsNull())
+			}).
+			Set(cols.CarrierSettlementID.Set(), settlementID).
+			Set(cols.Version.Inc(1)).
+			Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("update carrier invoice match settlements: %w", err)
+		}
+		return nil
+	})
+}
+
+func (r *repository) Create(
+	ctx context.Context,
+	entity *carriersettlement.InvoiceMatch,
+) (*carriersettlement.InvoiceMatch, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*carriersettlement.InvoiceMatch, error) {
+			if entity.ID.IsNil() {
+				entity.ID = pulid.MustNew("cim_")
+			}
+			if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
+				return nil, fmt.Errorf("create carrier invoice match: %w", err)
+			}
+			return r.GetByID(ctx, carriersettlementports.GetCarrierInvoiceMatchByIDRequest{
+				ID: entity.ID,
+				TenantInfo: pagination.TenantInfo{
+					OrgID: entity.OrganizationID,
+					BuID:  entity.BusinessUnitID,
+				},
+			})
+		},
+	)
+}
+
+func (r *repository) Update(
+	ctx context.Context,
+	entity *carriersettlement.InvoiceMatch,
+) (*carriersettlement.InvoiceMatch, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*carriersettlement.InvoiceMatch, error) {
+			cols := carriersettlementcol.InvoiceMatchColumns
+			res, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(entity).
+				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+					return carriersettlementcol.InvoiceMatchScopeTenantUpdate(uq, pagination.TenantInfo{
+						OrgID: entity.OrganizationID,
+						BuID:  entity.BusinessUnitID,
+					}).
+						Where(cols.ID.Eq(), entity.ID).
+						Where(cols.Version.Eq(), entity.Version)
+				}).
+				Set(cols.Status.Set(), entity.Status).
+				Set(cols.CarrierSettlementID.Set(), entity.CarrierSettlementID).
+				Set(cols.AdjustmentCostEventID.Set(), entity.AdjustmentCostEventID).
+				Set(cols.InvoiceTotalMinor.Set(), entity.InvoiceTotalMinor).
+				Set(cols.ExpectedTotalMinor.Set(), entity.ExpectedTotalMinor).
+				Set(cols.VarianceMinor.Set(), entity.VarianceMinor).
+				Set(cols.ResolutionNote.Set(), entity.ResolutionNote).
+				Set(cols.ResolvedByID.Set(), entity.ResolvedByID).
+				Set(cols.ResolvedAt.Set(), entity.ResolvedAt).
+				Set(cols.Version.Inc(1)).
+				Exec(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("update carrier invoice match: %w", err)
+			}
+			if err = dberror.CheckRowsAffected(
+				res,
+				"CarrierInvoiceMatch",
+				entity.ID.String(),
+			); err != nil {
+				return nil, err
+			}
+			return r.GetByID(ctx, carriersettlementports.GetCarrierInvoiceMatchByIDRequest{
+				ID: entity.ID,
+				TenantInfo: pagination.TenantInfo{
+					OrgID: entity.OrganizationID,
+					BuID:  entity.BusinessUnitID,
+				},
+			})
+		},
+	)
+}

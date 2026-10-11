@@ -4,7 +4,7 @@ package hazardousmaterialresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	hazardousmaterialservice "github.com/emoss08/trenova/internal/core/services/hazardousmaterialservice"
+	hazardousmaterialservice "github.com/emoss08/trenova/internal/modules/reference/app/hazardousmaterialservice"
 )
 
 type Deps struct {

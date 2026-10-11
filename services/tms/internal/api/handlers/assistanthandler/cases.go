@@ -3,11 +3,11 @@ package assistanthandler
 import (
 	"net/http"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/domain/deskcase"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -46,7 +46,7 @@ func (h *Handler) tickCaseItem(c *gin.Context) {
 		return
 	}
 
-	view, err := h.cases.Tick(c.Request.Context(), &serviceports.TickCaseItemRequest{
+	view, err := h.cases.Tick(c.Request.Context(), &deskcaseports.TickCaseItemRequest{
 		CaseThreadRequest: *req,
 		ItemKey:           body.ItemKey,
 		Ticked:            body.Ticked,
@@ -97,14 +97,14 @@ type awaitReplyBody struct {
 	GiveUpAfterHours int                `json:"giveUpAfterHours"`
 }
 
-func caseRequest(c *gin.Context) (*serviceports.CaseThreadRequest, error) {
+func caseRequest(c *gin.Context) (*deskcaseports.CaseThreadRequest, error) {
 	req, err := threadRequest(c)
 	if err != nil {
 		return nil, err
 	}
 	actor := requestActorFromAuthContext(authctx.GetAuthContext(c))
 
-	return &serviceports.CaseThreadRequest{
+	return &deskcaseports.CaseThreadRequest{
 		ThreadID:   req.ID,
 		TenantInfo: req.TenantInfo,
 		Actor:      &actor,
@@ -139,7 +139,7 @@ func (h *Handler) bindCase(c *gin.Context) {
 		return
 	}
 
-	thread, err := h.cases.Bind(c.Request.Context(), &serviceports.BindCaseRequest{
+	thread, err := h.cases.Bind(c.Request.Context(), &deskcaseports.BindCaseRequest{
 		CaseThreadRequest: *req,
 		SubjectType:       body.SubjectType,
 		SubjectID:         body.SubjectID,
@@ -170,7 +170,7 @@ func (h *Handler) snoozeCase(c *gin.Context) {
 		return
 	}
 
-	thread, err := h.cases.Snooze(c.Request.Context(), &serviceports.SnoozeCaseRequest{
+	thread, err := h.cases.Snooze(c.Request.Context(), &deskcaseports.SnoozeCaseRequest{
 		CaseThreadRequest: *req,
 		Anchor:            body.Anchor,
 		Until:             body.Until,
@@ -201,7 +201,7 @@ func (h *Handler) awaitCaseReply(c *gin.Context) {
 		return
 	}
 
-	wait, err := h.cases.AwaitReply(c.Request.Context(), &serviceports.AwaitCaseReplyRequest{
+	wait, err := h.cases.AwaitReply(c.Request.Context(), &deskcaseports.AwaitCaseReplyRequest{
 		CaseThreadRequest: *req,
 		Party:             body.Party,
 		PartyID:           body.PartyID,

@@ -15,28 +15,28 @@ func TestRunGeneratesSafeGlobalMappers(t *testing.T) {
 	writeTestFile(t, root, "gqlgen.yml", `models:
   EquipmentManufacturer:
     model:
-      - example.com/app/internal/core/domain/equipmentmanufacturer.EquipmentManufacturer
+      - example.com/app/internal/modules/equipment/domain/equipmentmanufacturer.EquipmentManufacturer
   Tractor:
     model:
-      - example.com/app/internal/core/domain/tractor.Tractor
+      - example.com/app/internal/modules/equipment/domain/tractor.Tractor
   EquipmentType:
     model:
-      - example.com/app/internal/core/domain/equipmenttype.EquipmentType
+      - example.com/app/internal/modules/equipment/domain/equipmenttype.EquipmentType
   FleetCode:
     model:
-      - example.com/app/internal/core/domain/fleetcode.FleetCode
+      - example.com/app/internal/modules/equipment/domain/fleetcode.FleetCode
   Organization:
     model:
-      - example.com/app/internal/core/domain/tenant.Organization
+      - example.com/app/internal/modules/identity/domain/tenant.Organization
   Worker:
     model:
-      - example.com/app/internal/core/domain/worker.Worker
+      - example.com/app/internal/modules/workforce/domain/worker.Worker
 `)
 	writeTestFile(t, root, "internal/api/graphql/gqlmodel/models_gen.go", `package gqlmodel
 
 import (
 	"github.com/99designs/gqlgen/graphql"
-	"example.com/app/internal/core/domain/worker"
+	"example.com/app/internal/modules/workforce/domain/worker"
 )
 
 type EquipmentManufacturerInput struct {
@@ -88,7 +88,7 @@ type WorkerPatchInput struct {
 	writeTestFile(
 		t,
 		root,
-		"internal/core/domain/equipmentmanufacturer/equipmentmanufacturer.go",
+		"internal/modules/equipment/domain/equipmentmanufacturer/equipmentmanufacturer.go",
 		`package equipmentmanufacturer
 
 import "example.com/app/shared/pulid"
@@ -105,7 +105,7 @@ type EquipmentManufacturer struct {
 }
 `,
 	)
-	writeTestFile(t, root, "internal/core/domain/tractor/tractor.go", `package tractor
+	writeTestFile(t, root, "internal/modules/equipment/domain/tractor/tractor.go", `package tractor
 
 import "example.com/app/shared/pulid"
 
@@ -126,7 +126,7 @@ type Tractor struct {
 	writeTestFile(
 		t,
 		root,
-		"internal/core/domain/equipmenttype/equipmenttype.go",
+		"internal/modules/equipment/domain/equipmenttype/equipmenttype.go",
 		`package equipmenttype
 
 import "example.com/app/shared/pulid"
@@ -139,7 +139,7 @@ type EquipmentType struct {
 }
 `,
 	)
-	writeTestFile(t, root, "internal/core/domain/fleetcode/fleetcode.go", `package fleetcode
+	writeTestFile(t, root, "internal/modules/equipment/domain/fleetcode/fleetcode.go", `package fleetcode
 
 import "example.com/app/shared/pulid"
 
@@ -150,7 +150,7 @@ type FleetCode struct {
 	Description    string   `+"`json:\"description\"`"+`
 }
 `)
-	writeTestFile(t, root, "internal/core/domain/tenant/organization.go", `package tenant
+	writeTestFile(t, root, "internal/modules/identity/domain/tenant/organization.go", `package tenant
 
 import "example.com/app/shared/pulid"
 
@@ -160,7 +160,7 @@ type Organization struct {
 	Name           string   `+"`json:\"name\"`"+`
 }
 `)
-	writeTestFile(t, root, "internal/core/domain/worker/worker.go", `package worker
+	writeTestFile(t, root, "internal/modules/workforce/domain/worker/worker.go", `package worker
 
 import "example.com/app/shared/pulid"
 

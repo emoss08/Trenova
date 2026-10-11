@@ -6,10 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,13 +19,13 @@ import (
 type Params struct {
 	fx.In
 
-	Service              services.InvoiceService
+	Service              invoiceports.InvoiceService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service services.InvoiceService
+	service invoiceports.InvoiceService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -171,7 +170,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*invoice.Invoice], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListInvoicesRequest{
+				&invoiceports.ListInvoicesRequest{
 					Filter: req,
 				},
 			)
@@ -200,7 +199,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.GetByID(c.Request.Context(), repositories.GetInvoiceByIDRequest{
+	entity, err := h.service.GetByID(c.Request.Context(), invoiceports.GetInvoiceByIDRequest{
 		ID:         invoiceID,
 		TenantInfo: pagination.FromAuth(authCtx),
 	})
@@ -222,7 +221,7 @@ func (h *Handler) createFromShipments(c *gin.Context) {
 
 	entity, err := h.service.CreateFromShipments(
 		c.Request.Context(),
-		&services.CreateInvoiceFromShipmentsRequest{
+		&invoiceports.CreateInvoiceFromShipmentsRequest{
 			ShipmentIDs:    req.ShipmentIDs,
 			OffCycleReason: req.OffCycleReason,
 			TenantInfo:     pagination.FromAuth(authCtx),
@@ -247,7 +246,7 @@ func (h *Handler) createFromOrder(c *gin.Context) {
 
 	entity, err := h.service.CreateFromOrder(
 		c.Request.Context(),
-		&services.CreateInvoiceFromOrderRequest{
+		&invoiceports.CreateInvoiceFromOrderRequest{
 			OrderID:        req.OrderID,
 			OffCycleReason: req.OffCycleReason,
 			TenantInfo:     pagination.FromAuth(authCtx),
@@ -277,7 +276,7 @@ func (h *Handler) updateDraft(c *gin.Context) {
 
 	updated, err := h.service.UpdateDraft(
 		c.Request.Context(),
-		&services.UpdateInvoiceDraftRequest{
+		&invoiceports.UpdateInvoiceDraftRequest{
 			InvoiceID:              invoiceID,
 			TenantInfo:             tenantInfo(authCtx),
 			Memo:                   req.Memo,
@@ -307,7 +306,7 @@ func (h *Handler) preview(c *gin.Context) {
 	}
 	result, err := h.service.RenderPreview(
 		c.Request.Context(),
-		&services.InvoicePreviewRequest{InvoiceID: invoiceID, TenantInfo: tenantInfo(authCtx)},
+		&invoiceports.InvoicePreviewRequest{InvoiceID: invoiceID, TenantInfo: tenantInfo(authCtx)},
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -326,7 +325,7 @@ func (h *Handler) generatePDF(c *gin.Context) {
 	}
 	result, err := h.service.GeneratePDF(
 		c.Request.Context(),
-		&services.InvoicePreviewRequest{
+		&invoiceports.InvoicePreviewRequest{
 			InvoiceID:  invoiceID,
 			TenantInfo: tenantInfo(authCtx),
 			BaseURL:    baseURL(c),
@@ -349,7 +348,7 @@ func (h *Handler) sendPlan(c *gin.Context) {
 	}
 	plan, err := h.service.PlanSend(
 		c.Request.Context(),
-		&services.InvoiceSendPlanRequest{
+		&invoiceports.InvoiceSendPlanRequest{
 			InvoiceID:  invoiceID,
 			TenantInfo: tenantInfo(authCtx),
 			BaseURL:    baseURL(c),
@@ -371,7 +370,7 @@ func (h *Handler) send(c *gin.Context) {
 	}
 	result, err := h.service.Send(
 		c.Request.Context(),
-		&services.InvoiceSendRequest{
+		&invoiceports.InvoiceSendRequest{
 			InvoiceID:  invoiceID,
 			TenantInfo: tenantInfo(authCtx),
 			BaseURL:    baseURL(c),
@@ -401,7 +400,7 @@ func (h *Handler) emailAttempts(c *gin.Context) {
 		func() (*pagination.ListResult[*invoice.EmailAttempt], error) {
 			return h.service.ListEmailAttempts(
 				c.Request.Context(),
-				repositories.ListInvoiceEmailAttemptsRequest{
+				invoiceports.ListInvoiceEmailAttemptsRequest{
 					InvoiceID:  invoiceID,
 					TenantInfo: req.TenantInfo,
 					Filter:     req,
@@ -414,7 +413,7 @@ func (h *Handler) emailAttempts(c *gin.Context) {
 func (h *Handler) downloadSharedDocument(c *gin.Context) {
 	result, err := h.service.DownloadSharedDocument(
 		c.Request.Context(),
-		&services.DownloadInvoiceDocumentRequest{Token: c.Param("token")},
+		&invoiceports.DownloadInvoiceDocumentRequest{Token: c.Param("token")},
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -449,7 +448,7 @@ func (h *Handler) post(c *gin.Context) {
 
 	updated, err := h.service.Post(
 		c.Request.Context(),
-		&services.PostInvoiceRequest{
+		&invoiceports.PostInvoiceRequest{
 			InvoiceID:   invoiceID,
 			TenantInfo:  pagination.FromAuth(authCtx),
 			TriggeredBy: "manual",
@@ -510,7 +509,7 @@ func (h *Handler) void(c *gin.Context) {
 
 	result, err := h.service.VoidInvoice(
 		c.Request.Context(),
-		&services.VoidInvoiceRequest{
+		&invoiceports.VoidInvoiceRequest{
 			InvoiceID:   invoiceID,
 			TenantInfo:  tenantInfo(authCtx),
 			Reason:      req.Reason,
@@ -529,7 +528,7 @@ func (h *Handler) void(c *gin.Context) {
 // createMemo raises a standalone credit or debit memo for a customer.
 func (h *Handler) createMemo(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(services.CreateMemoRequest)
+	req := new(invoiceports.CreateMemoRequest)
 	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return

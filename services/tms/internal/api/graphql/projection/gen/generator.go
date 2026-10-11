@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -60,6 +61,8 @@ var nonProjectionObjects = map[string]string{
 	"FormulaTemplateBreakdownDefinition": "GraphQL value object stored as JSONB without Bun projection metadata",
 	"SelectOption":                       "GraphQL select-option DTO",
 	"SidebarPreferences":                 "GraphQL sidebar preferences DTO",
+	"SidebarSectionOption":               "GraphQL sidebar customization catalog DTO",
+	"SidebarAttentionMetricOption":       "GraphQL sidebar customization catalog DTO",
 	"SidebarQuickActionOption":           "GraphQL sidebar quick-action DTO",
 	"HomeWidgetCategory":                 "GraphQL home widget catalog DTO",
 	"HomeWidgetOption":                   "GraphQL home widget catalog DTO",
@@ -77,6 +80,7 @@ var nonProjectionObjects = map[string]string{
 	"DocumentTemplateVariable":           "GraphQL registry catalog DTO, not a table",
 	"DocumentTemplateDiagnostic":         "GraphQL template engine finding DTO",
 	"DocumentTemplatePreview":            "GraphQL template preview DTO",
+	"ShipmentBoardGroup":                 "GraphQL shipment board group DTO built by its resolver",
 	"ShipmentAxleWeight":                 "GraphQL shipment workflow DTO",
 	"ShipmentContractRateAccessorial":    "GraphQL shipment workflow DTO",
 	"ShipmentHazmatZone":                 "GraphQL shipment workflow DTO",
@@ -188,7 +192,7 @@ func resolveOptions(opts generatorOptions) (generatorOptions, error) {
 		resolved.GqlgenPath = filepath.Join(root, "gqlgen.yml")
 	}
 	if resolved.DomainDir == "" {
-		resolved.DomainDir = filepath.Join(root, "internal/core/domain")
+		resolved.DomainDir = filepath.Join(root, "internal", "modules", "*", "domain")
 	}
 	if resolved.BuncolgenDir == "" {
 		resolved.BuncolgenDir = filepath.Join(root, "pkg/buncolgen")
@@ -351,9 +355,15 @@ func generate(data discovery) ([]byte, error) {
 		return nil, fmt.Errorf("executing template: %w", err)
 	}
 
-	formatted, err := format.Source(buf.Bytes())
+	source := bytes.Replace(
+		buf.Bytes(),
+		[]byte(specsImportPlaceholder),
+		[]byte(columnImports(specs)),
+		1,
+	)
+	formatted, err := format.Source(source)
 	if err != nil {
-		return nil, fmt.Errorf("formatting generated specs: %w\n%s", err, buf.String())
+		return nil, fmt.Errorf("formatting generated specs: %w\n%s", err, string(source))
 	}
 
 	return formatted, nil
@@ -614,7 +624,7 @@ func exactStructSelection(typeName string, data discovery) (typeSelection, bool,
 			continue
 		}
 		fieldMap, ok := data.FieldMaps[st.Name]
-		if !ok {
+		if !ok || !fieldMapCoversStruct(&fieldMap, &st) {
 			continue
 		}
 
@@ -655,7 +665,7 @@ func coverageStructSelection(typeName string, data discovery) (typeSelection, er
 	candidates := []candidate{}
 	for _, st := range data.Structs {
 		fieldMap, ok := data.FieldMaps[st.Name]
-		if !ok {
+		if !ok || !fieldMapCoversStruct(&fieldMap, &st) {
 			continue
 		}
 
@@ -1103,80 +1113,121 @@ func namedType(t *gqlast.Type) string {
 	return t.Name()
 }
 
-func loadGoStructs(root string, modulePath string) (map[string]goStruct, error) {
-	structs := map[string]goStruct{}
-	fset := token.NewFileSet()
-
-	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
-		}
-		if entry.IsDir() {
-			return nil
-		}
-		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
-			return nil
-		}
-
-		file, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
-		if err != nil {
-			return fmt.Errorf("parsing %q: %w", path, err)
-		}
-
-		packagePath, err := packagePathForFile(root, modulePath, path)
-		if err != nil {
-			return err
-		}
-
-		for _, decl := range file.Decls {
-			genDecl, ok := decl.(*ast.GenDecl)
-			if !ok || genDecl.Tok != token.TYPE {
-				continue
-			}
-			for _, spec := range genDecl.Specs {
-				typeSpec, ok := spec.(*ast.TypeSpec)
-				if !ok {
-					continue
-				}
-				structType, ok := typeSpec.Type.(*ast.StructType)
-				if !ok {
-					continue
-				}
-
-				st := goStruct{
-					PackagePath: packagePath,
-					PackageName: file.Name.Name,
-					Name:        typeSpec.Name.Name,
-					FullName:    packagePath + "." + typeSpec.Name.Name,
-					Fields:      map[string]goField{},
-				}
-				for _, field := range structType.Fields.List {
-					if len(field.Names) == 0 {
-						if isBunEntityEmbed(field) {
-							st.IsEntity = true
-						}
-						continue
-					}
-					parsed, ok := parseGoStructField(field)
-					if !ok {
-						continue
-					}
-					st.Fields[parsed.JSONName] = parsed
-				}
-				structs[st.FullName] = st
-			}
-		}
-
-		return nil
-	})
+func loadGoStructs(pattern, modulePath string) (map[string]goStruct, error) {
+	roots, err := filepath.Glob(pattern)
 	if err != nil {
-		return nil, fmt.Errorf("walking Go domain structs in %q: %w", root, err)
+		return nil, fmt.Errorf("expanding %q: %w", pattern, err)
+	}
+	if len(roots) == 0 {
+		return nil, fmt.Errorf("no domain directory matches %q", pattern)
+	}
+
+	structs := map[string]goStruct{}
+	for _, root := range roots {
+		if err = loadGoStructsFrom(root, modulePath, structs); err != nil {
+			return nil, err
+		}
 	}
 
 	return structs, nil
 }
 
-func packagePathForFile(root string, modulePath string, path string) (string, error) {
+type goStructLoader struct {
+	fset       *token.FileSet
+	root       string
+	modulePath string
+	structs    map[string]goStruct
+}
+
+func loadGoStructsFrom(root, modulePath string, structs map[string]goStruct) error {
+	loader := goStructLoader{
+		fset:       token.NewFileSet(),
+		root:       root,
+		modulePath: modulePath,
+		structs:    structs,
+	}
+
+	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if entry.IsDir() || !isGoSourceFile(path) {
+			return nil
+		}
+
+		return loader.loadFile(path)
+	})
+	if err != nil {
+		return fmt.Errorf("walking Go domain structs in %q: %w", root, err)
+	}
+
+	return nil
+}
+
+func isGoSourceFile(path string) bool {
+	return strings.HasSuffix(path, ".go") && !strings.HasSuffix(path, "_test.go")
+}
+
+func (l goStructLoader) loadFile(path string) error {
+	file, err := parser.ParseFile(l.fset, path, nil, parser.ParseComments)
+	if err != nil {
+		return fmt.Errorf("parsing %q: %w", path, err)
+	}
+
+	packagePath, err := packagePathForFile(l.root, l.modulePath, path)
+	if err != nil {
+		return err
+	}
+
+	for _, decl := range file.Decls {
+		genDecl, ok := decl.(*ast.GenDecl)
+		if !ok || genDecl.Tok != token.TYPE {
+			continue
+		}
+		for _, spec := range genDecl.Specs {
+			typeSpec, ok := spec.(*ast.TypeSpec)
+			if !ok {
+				continue
+			}
+			structType, ok := typeSpec.Type.(*ast.StructType)
+			if !ok {
+				continue
+			}
+
+			st := buildGoStruct(packagePath, file.Name.Name, typeSpec.Name.Name, structType)
+			l.structs[st.FullName] = st
+		}
+	}
+
+	return nil
+}
+
+func buildGoStruct(packagePath, packageName, name string, structType *ast.StructType) goStruct {
+	st := goStruct{
+		PackagePath: packagePath,
+		PackageName: packageName,
+		Name:        name,
+		FullName:    packagePath + "." + name,
+		Fields:      map[string]goField{},
+	}
+	for _, field := range structType.Fields.List {
+		if len(field.Names) == 0 {
+			if isBunEntityEmbed(field) {
+				st.IsEntity = true
+			}
+			continue
+		}
+		parsed, ok := parseGoStructField(field)
+		if !ok {
+			continue
+		}
+		st.Fields[parsed.JSONName] = parsed
+	}
+
+	return st
+}
+
+func packagePathForFile(root, modulePath, path string) (string, error) {
 	rootAbs, err := filepath.Abs(root)
 	if err != nil {
 		return "", fmt.Errorf("resolving root %q: %w", root, err)
@@ -1191,9 +1242,9 @@ func packagePathForFile(root string, modulePath string, path string) (string, er
 	}
 
 	base := filepath.ToSlash(filepath.Clean(rootAbs))
-	domainIndex := strings.LastIndex(base, "/internal/core/domain")
+	domainIndex := strings.LastIndex(base, "/internal/")
 	if domainIndex == -1 {
-		return "", fmt.Errorf("domain root %q must end with internal/core/domain", root)
+		return "", fmt.Errorf("domain root %q must be inside the module's internal directory", root)
 	}
 	domainImportRoot := strings.TrimSuffix(modulePath+base[domainIndex:], "/")
 	if rel == "." {
@@ -1301,7 +1352,7 @@ func loadFieldMaps(root string) (map[string]fieldMapRegistration, error) {
 	fieldMaps := map[string]fieldMapRegistration{}
 	fset := token.NewFileSet()
 
-	matches, err := filepath.Glob(filepath.Join(root, "*_gen.go"))
+	matches, err := filepath.Glob(filepath.Join(root, "*", "*_gen.go"))
 	if err != nil {
 		return nil, fmt.Errorf("globbing buncolgen files: %w", err)
 	}
@@ -1322,7 +1373,7 @@ func loadFieldMaps(root string) (map[string]fieldMapRegistration, error) {
 				if !ok {
 					continue
 				}
-				parseFieldMapSpec(fieldMaps, valueSpec)
+				parseFieldMapSpec(fieldMaps, valueSpec, file.Name.Name)
 				parseRelationsSpec(fieldMaps, valueSpec)
 			}
 		}
@@ -1331,7 +1382,11 @@ func loadFieldMaps(root string) (map[string]fieldMapRegistration, error) {
 	return fieldMaps, nil
 }
 
-func parseFieldMapSpec(registrations map[string]fieldMapRegistration, spec *ast.ValueSpec) {
+func parseFieldMapSpec(
+	registrations map[string]fieldMapRegistration,
+	spec *ast.ValueSpec,
+	packageName string,
+) {
 	for i, name := range spec.Names {
 		if !strings.HasSuffix(name.Name, "FieldMap") || i >= len(spec.Values) {
 			continue
@@ -1345,7 +1400,7 @@ func parseFieldMapSpec(registrations map[string]fieldMapRegistration, spec *ast.
 		current := registrations[entity]
 		current.EntityName = entity
 		current.Values = values
-		current.GoExpression = "buncolgen." + name.Name
+		current.GoExpression = packageName + "." + name.Name
 		if current.Relations == nil {
 			current.Relations = map[string]string{}
 		}
@@ -1461,4 +1516,38 @@ func isExported(name string) bool {
 
 func quote(value string) string {
 	return fmt.Sprintf("%q", value)
+}
+
+const (
+	specsImportPlaceholder = "import \"github.com/emoss08/trenova/pkg/buncolgen\""
+	columnsImportRoot      = "github.com/emoss08/trenova/pkg/buncolgen/"
+)
+
+var columnsFieldMap = regexp.MustCompile(`^(\w+col)\.\w+FieldMap$`)
+
+func columnImports(specs []generatedSpec) string {
+	packages := map[string]struct{}{}
+	for _, spec := range specs {
+		if match := columnsFieldMap.FindStringSubmatch(spec.FieldMap); match != nil {
+			packages[match[1]] = struct{}{}
+		}
+	}
+	if len(packages) == 0 {
+		return ""
+	}
+
+	names := make([]string, 0, len(packages))
+	for name := range packages {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	var b strings.Builder
+	b.WriteString("import (\n")
+	for _, name := range names {
+		fmt.Fprintf(&b, "\t%q\n", columnsImportRoot+name)
+	}
+	b.WriteString(")")
+
+	return b.String()
 }

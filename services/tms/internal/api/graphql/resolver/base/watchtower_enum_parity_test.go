@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

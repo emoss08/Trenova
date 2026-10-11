@@ -1,6 +1,10 @@
 package workerhandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"context"
 	"errors"
 	"net/http"
@@ -9,12 +13,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/workerhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/customfield"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
-	"github.com/emoss08/trenova/internal/core/services/workerservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,22 +34,22 @@ var errNotFound = errors.New("worker not found")
 
 type handlerDeps struct {
 	handler   *workerhandler.Handler
-	valueRepo *mocks.MockCustomFieldValueRepository
-	defRepo   *mocks.MockCustomFieldDefinitionRepository
-	auditSvc  *mocks.MockAuditService
-	cacheRepo *mocks.MockWorkerCacheRepository
+	valueRepo *customfieldportsmock.MockCustomFieldValueRepository
+	defRepo   *customfieldportsmock.MockCustomFieldDefinitionRepository
+	auditSvc  *auditportsmock.MockAuditService
+	cacheRepo *customerportsmock.MockWorkerCacheRepository
 }
 
 func setupWorkerHandler(
 	t *testing.T,
-	repo *mocks.MockWorkerRepository,
+	repo *workerportsmock.MockWorkerRepository,
 ) *handlerDeps {
 	t.Helper()
 
 	logger := zap.NewNop()
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
-	defRepo := mocks.NewMockCustomFieldDefinitionRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
+	defRepo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 
 	valuesValidator := customfieldservice.NewValuesValidator(
 		customfieldservice.ValuesValidatorParams{
@@ -53,7 +57,7 @@ func setupWorkerHandler(
 			Repo:   defRepo,
 		},
 	)
-	cacheRepo := mocks.NewMockWorkerCacheRepository(t)
+	cacheRepo := customerportsmock.NewMockWorkerCacheRepository(t)
 
 	cfService := customfieldservice.NewValuesService(customfieldservice.ValuesServiceParams{
 		Logger:         logger,
@@ -107,7 +111,7 @@ func TestWorkerHandler_List_Success(t *testing.T) {
 	t.Parallel()
 
 	wkrID := pulid.MustNew("wrk_")
-	repo := mocks.NewMockWorkerRepository(t)
+	repo := workerportsmock.NewMockWorkerRepository(t)
 	total := 42
 	repo.On("List", mock.Anything, mock.Anything).
 		Return(&pagination.CursorListResult[*worker.Worker]{
@@ -150,7 +154,7 @@ func TestWorkerHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
 	wkrID := pulid.MustNew("wrk_")
-	repo := mocks.NewMockWorkerRepository(t)
+	repo := workerportsmock.NewMockWorkerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&worker.Worker{
 		ID:             wkrID,
 		OrganizationID: testutil.TestOrgID,
@@ -162,7 +166,7 @@ func TestWorkerHandler_Get_Success(t *testing.T) {
 
 	deps := setupWorkerHandler(t, repo)
 	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
-		Return(nil, repositories.ErrCacheMiss)
+		Return(nil, customerports.ErrCacheMiss)
 	deps.valueRepo.On("GetByResource", mock.Anything, mock.Anything).
 		Return([]*customfield.CustomFieldValue{}, nil)
 
@@ -184,7 +188,7 @@ func TestWorkerHandler_Get_Success(t *testing.T) {
 func TestWorkerHandler_Get_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockWorkerRepository(t)
+	repo := workerportsmock.NewMockWorkerRepository(t)
 	deps := setupWorkerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -202,12 +206,12 @@ func TestWorkerHandler_Get_NotFound(t *testing.T) {
 	t.Parallel()
 
 	wkrID := pulid.MustNew("wrk_")
-	repo := mocks.NewMockWorkerRepository(t)
+	repo := workerportsmock.NewMockWorkerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	deps := setupWorkerHandler(t, repo)
 	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
-		Return(nil, repositories.ErrCacheMiss)
+		Return(nil, customerports.ErrCacheMiss)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -224,7 +228,7 @@ func TestWorkerHandler_Create_Success(t *testing.T) {
 	t.Parallel()
 
 	stateID := pulid.MustNew("uss_")
-	repo := mocks.NewMockWorkerRepository(t)
+	repo := workerportsmock.NewMockWorkerRepository(t)
 	repo.On("Create", mock.Anything, mock.Anything).
 		Return(func(_ context.Context, entity *worker.Worker) *worker.Worker {
 			entity.ID = pulid.MustNew("wrk_")
@@ -272,7 +276,7 @@ func TestWorkerHandler_Create_Success(t *testing.T) {
 func TestWorkerHandler_Create_BadJSON(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockWorkerRepository(t)
+	repo := workerportsmock.NewMockWorkerRepository(t)
 	deps := setupWorkerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -292,7 +296,7 @@ func TestWorkerHandler_Update_Success(t *testing.T) {
 
 	wkrID := pulid.MustNew("wrk_")
 	stateID := pulid.MustNew("uss_")
-	repo := mocks.NewMockWorkerRepository(t)
+	repo := workerportsmock.NewMockWorkerRepository(t)
 	// A persisted worker always carries a status, and the edit form refuses to
 	// move it — employment state only changes through a timeline event.
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&worker.Worker{
@@ -347,7 +351,7 @@ func TestWorkerHandler_Update_Success(t *testing.T) {
 func TestWorkerHandler_Update_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockWorkerRepository(t)
+	repo := workerportsmock.NewMockWorkerRepository(t)
 	deps := setupWorkerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -370,7 +374,7 @@ func TestWorkerHandler_Patch_Success(t *testing.T) {
 
 	wkrID := pulid.MustNew("wrk_")
 	stateID := pulid.MustNew("uss_")
-	repo := mocks.NewMockWorkerRepository(t)
+	repo := workerportsmock.NewMockWorkerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&worker.Worker{
 		ID:             wkrID,
 		OrganizationID: testutil.TestOrgID,
@@ -401,7 +405,7 @@ func TestWorkerHandler_Patch_Success(t *testing.T) {
 
 	deps := setupWorkerHandler(t, repo)
 	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
-		Return(nil, repositories.ErrCacheMiss)
+		Return(nil, customerports.ErrCacheMiss)
 	deps.valueRepo.On("GetByResource", mock.Anything, mock.Anything).
 		Return([]*customfield.CustomFieldValue{}, nil)
 	deps.defRepo.On("GetActiveByResourceType", mock.Anything, mock.Anything).
@@ -430,7 +434,7 @@ func TestWorkerHandler_Patch_Success(t *testing.T) {
 func TestWorkerHandler_Patch_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockWorkerRepository(t)
+	repo := workerportsmock.NewMockWorkerRepository(t)
 	deps := setupWorkerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -451,7 +455,7 @@ func TestWorkerHandler_Create_ServiceError(t *testing.T) {
 	t.Parallel()
 
 	stateID := pulid.MustNew("uss_")
-	repo := mocks.NewMockWorkerRepository(t)
+	repo := workerportsmock.NewMockWorkerRepository(t)
 	repo.On("Create", mock.Anything, mock.Anything).Return(nil, errors.New("service error"))
 
 	deps := setupWorkerHandler(t, repo)
@@ -492,7 +496,7 @@ func TestWorkerHandler_Update_ServiceError(t *testing.T) {
 
 	wkrID := pulid.MustNew("wrk_")
 	stateID := pulid.MustNew("uss_")
-	repo := mocks.NewMockWorkerRepository(t)
+	repo := workerportsmock.NewMockWorkerRepository(t)
 	// A persisted worker always carries a status, and the edit form refuses to
 	// move it — employment state only changes through a timeline event.
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&worker.Worker{
@@ -540,7 +544,7 @@ func TestWorkerHandler_Update_BadJSON(t *testing.T) {
 	t.Parallel()
 
 	wkrID := pulid.MustNew("wrk_")
-	repo := mocks.NewMockWorkerRepository(t)
+	repo := workerportsmock.NewMockWorkerRepository(t)
 	deps := setupWorkerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -559,12 +563,12 @@ func TestWorkerHandler_Patch_NotFound(t *testing.T) {
 	t.Parallel()
 
 	wkrID := pulid.MustNew("wrk_")
-	repo := mocks.NewMockWorkerRepository(t)
+	repo := workerportsmock.NewMockWorkerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	deps := setupWorkerHandler(t, repo)
 	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
-		Return(nil, repositories.ErrCacheMiss)
+		Return(nil, customerports.ErrCacheMiss)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPatch).

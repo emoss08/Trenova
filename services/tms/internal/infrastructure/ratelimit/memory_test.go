@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +15,7 @@ func TestMemoryStore_CommitsOnlyWhenEveryScopeAllows(t *testing.T) {
 	current := time.Unix(1_700_000_000, 0)
 	store := NewMemoryStore(MemoryStoreOptions{Now: func() time.Time { return current }})
 
-	requests := []repositories.RateLimitRequest{
+	requests := []kernelports.RateLimitRequest{
 		{Key: "principal", Policy: policy(60, 10), Cost: 1},
 		{Key: "tenant", Policy: policy(60, 1), Cost: 1},
 	}
@@ -43,7 +43,7 @@ func TestMemoryStore_RefillsOverTime(t *testing.T) {
 
 	current := time.Unix(1_700_000_000, 0)
 	store := NewMemoryStore(MemoryStoreOptions{Now: func() time.Time { return current }})
-	requests := []repositories.RateLimitRequest{{Key: "k", Policy: policy(60, 1), Cost: 1}}
+	requests := []kernelports.RateLimitRequest{{Key: "k", Policy: policy(60, 1), Cost: 1}}
 
 	first, err := store.Check(t.Context(), requests)
 	require.NoError(t, err)
@@ -68,14 +68,14 @@ func TestMemoryStore_SweepsFullBuckets(t *testing.T) {
 		Now:             func() time.Time { return current },
 	})
 
-	_, err := store.Check(t.Context(), []repositories.RateLimitRequest{
+	_, err := store.Check(t.Context(), []kernelports.RateLimitRequest{
 		{Key: "a", Policy: policy(60, 1), Cost: 1},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, 1, store.Len())
 
 	current = current.Add(2 * time.Second)
-	_, err = store.Check(t.Context(), []repositories.RateLimitRequest{
+	_, err = store.Check(t.Context(), []kernelports.RateLimitRequest{
 		{Key: "b", Policy: policy(60, 1), Cost: 1},
 	})
 	require.NoError(t, err)
@@ -86,6 +86,6 @@ func TestMemoryStore_RejectsInvalidRequests(t *testing.T) {
 	t.Parallel()
 
 	store := NewMemoryStore(MemoryStoreOptions{})
-	_, err := store.Check(t.Context(), []repositories.RateLimitRequest{{Key: ""}})
+	_, err := store.Check(t.Context(), []kernelports.RateLimitRequest{{Key: ""}})
 	assert.ErrorIs(t, err, ErrEmptyKey)
 }

@@ -4,7 +4,7 @@ package notificationresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	notificationservice "github.com/emoss08/trenova/internal/core/services/notificationservice"
+	notificationservice "github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 )
 
 type Deps struct {

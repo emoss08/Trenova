@@ -4,8 +4,8 @@ package ediresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	ediinboundservice "github.com/emoss08/trenova/internal/core/services/ediinboundservice"
-	ediservice "github.com/emoss08/trenova/internal/core/services/ediservice"
+	ediinboundservice "github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
+	ediservice "github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 )
 
 type Deps struct {

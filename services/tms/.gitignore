@@ -9,3 +9,4 @@ config/*
 *.db-wal
 *.db-journal
 .deskbench/
+scripts/buildbench/results/

@@ -3,17 +3,17 @@ package rbactest
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type Repository struct {
 	AuthorizedRoles       []*permission.Role
 	AuthorizedRolesErr    error
-	StaticViolations      []repositories.ConstraintViolation
+	StaticViolations      []permissionports.ConstraintViolation
 	StaticErr             error
-	DynamicViolations     []repositories.ConstraintViolation
+	DynamicViolations     []permissionports.ConstraintViolation
 	DynamicErr            error
 	RoleHierarchyEdges    []*permission.RoleHierarchyEdge
 	RoleHierarchyEdgesErr error
@@ -27,7 +27,7 @@ type Repository struct {
 	DeleteConstraintErr   error
 	UpsertHierarchyErr    error
 	DeleteHierarchyErr    error
-	PreflightReport       *repositories.RBACPreflightReport
+	PreflightReport       *permissionports.RBACPreflightReport
 	PreflightErr          error
 	RolePermissionCounts  map[pulid.ID]int
 	RolePermissionCntErr  error
@@ -48,14 +48,14 @@ func (r *Repository) ListRoleHierarchyEdges(
 
 func (r *Repository) UpsertRoleHierarchyEdge(
 	context.Context,
-	*repositories.UpsertRoleHierarchyEdgeRequest,
+	*permissionports.UpsertRoleHierarchyEdgeRequest,
 ) error {
 	return r.UpsertHierarchyErr
 }
 
 func (r *Repository) DeleteRoleHierarchyEdge(
 	context.Context,
-	repositories.DeleteRoleHierarchyEdgeRequest,
+	permissionports.DeleteRoleHierarchyEdgeRequest,
 ) error {
 	return r.DeleteHierarchyErr
 }
@@ -99,7 +99,7 @@ func (r *Repository) CountRolePermissions(
 
 func (r *Repository) ListRoleConstraints(
 	context.Context,
-	repositories.ListRoleConstraintsRequest,
+	permissionports.ListRoleConstraintsRequest,
 ) ([]*permission.RoleConstraint, error) {
 	if r.RoleConstraintsErr != nil {
 		return nil, r.RoleConstraintsErr
@@ -126,7 +126,7 @@ func (r *Repository) GetRoleConstraint(
 
 func (r *Repository) SaveRoleConstraint(
 	context.Context,
-	*repositories.SaveRoleConstraintRequest,
+	*permissionports.SaveRoleConstraintRequest,
 ) error {
 	return r.SaveConstraintErr
 }
@@ -140,12 +140,12 @@ func (r *Repository) ValidateStaticSeparationOfDuty(
 	pulid.ID,
 	pulid.ID,
 	[]pulid.ID,
-) ([]repositories.ConstraintViolation, error) {
+) ([]permissionports.ConstraintViolation, error) {
 	if r.StaticErr != nil {
 		return nil, r.StaticErr
 	}
 	if r.StaticViolations == nil {
-		return []repositories.ConstraintViolation{}, nil
+		return []permissionports.ConstraintViolation{}, nil
 	}
 	return r.StaticViolations, nil
 }
@@ -154,12 +154,12 @@ func (r *Repository) ValidateDynamicSeparationOfDuty(
 	context.Context,
 	pulid.ID,
 	[]pulid.ID,
-) ([]repositories.ConstraintViolation, error) {
+) ([]permissionports.ConstraintViolation, error) {
 	if r.DynamicErr != nil {
 		return nil, r.DynamicErr
 	}
 	if r.DynamicViolations == nil {
-		return []repositories.ConstraintViolation{}, nil
+		return []permissionports.ConstraintViolation{}, nil
 	}
 	return r.DynamicViolations, nil
 }
@@ -167,12 +167,12 @@ func (r *Repository) ValidateDynamicSeparationOfDuty(
 func (r *Repository) RunPreflight(
 	context.Context,
 	pulid.ID,
-) (*repositories.RBACPreflightReport, error) {
+) (*permissionports.RBACPreflightReport, error) {
 	if r.PreflightErr != nil {
 		return nil, r.PreflightErr
 	}
 	if r.PreflightReport == nil {
-		return &repositories.RBACPreflightReport{}, nil
+		return &permissionports.RBACPreflightReport{}, nil
 	}
 	return r.PreflightReport, nil
 }

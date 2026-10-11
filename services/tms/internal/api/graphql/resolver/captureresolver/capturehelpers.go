@@ -3,13 +3,12 @@ package captureresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/core/domain/capture"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/captureservice"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,7 +22,7 @@ func (r *Deps) CaptureRecord(
 	ctx context.Context,
 	resourceType string,
 	id *pulid.ID,
-) (*repositories.CaptureRecordLabel, error) {
+) (*captureports.CaptureRecordLabel, error) {
 	if resourceType == "" || id == nil || id.IsNil() ||
 		!capture.IsFileableResource(resourceType) {
 		return nil, nil //nolint:nilnil // no record is a valid answer
@@ -37,13 +36,12 @@ func (r *Deps) CaptureRecord(
 		return nil, nil //nolint:nilnil // a record out of reach is left absent
 	}
 
-	l, err := base.RequestLoaders(ctx)
-	if err != nil {
+	if err = base.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
 	return base.OptionalMatch(
-		l.CaptureRecordLabel.Load(ctx, loaders.CaptureRecordKey(resourceType, *id)),
+		loaders.CaptureRecordLabel(ctx, loaders.CaptureRecordKey(resourceType, *id)),
 	)
 }
 

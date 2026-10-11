@@ -4,14 +4,15 @@ package agentqualityresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	agentqualityports "github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 )
 
 type Deps struct {
 	*base.Core
-	AgentEvaluationService services.AgentEvaluationService
-	AgentEvalCaseService   services.AgentEvalCaseService
-	AgentQualityService    services.AgentQualityService
+	AgentEvaluationService agentports.AgentEvaluationService
+	AgentEvalCaseService   agentports.AgentEvalCaseService
+	AgentQualityService    agentqualityports.AgentQualityService
 }
 
 type AgentEvalCaseResolver struct{ *Deps }

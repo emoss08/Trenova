@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -126,7 +126,7 @@ func inArrivalOrder(call *EmbedCall, items []openAIEmbeddingItem) ([][]float32, 
 				call.Provider.Name,
 			).WithInternal(fmt.Errorf(
 				"embedding indexes are neither ordered nor unique: %w",
-				serviceports.ErrEmbeddingResponseInvalid,
+				aiusageports.ErrEmbeddingResponseInvalid,
 			))
 		}
 		vectors[idx] = item.Embedding

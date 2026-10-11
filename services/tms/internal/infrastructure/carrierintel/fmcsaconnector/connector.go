@@ -5,12 +5,12 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/hostguard"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/fmcsa"
 	"github.com/emoss08/trenova/shared/restx"
 )
@@ -26,7 +26,7 @@ const (
 )
 
 var (
-	_ services.CarrierIntelConnector = (*Connector)(nil)
+	_ carrierintelports.CarrierIntelConnector = (*Connector)(nil)
 
 	errorMapper = intelkit.ErrorMapper{
 		Provider:     integration.TypeFMCSAQCMobile,
@@ -101,8 +101,8 @@ func (c *Connector) TestConnection(ctx context.Context, cfg map[string]string) e
 }
 
 func (c *Connector) Bind(
-	params *services.CarrierIntelBindParams,
-) (services.CarrierIntelClient, error) {
+	params *carrierintelports.CarrierIntelBindParams,
+) (carrierintelports.CarrierIntelClient, error) {
 	if params == nil {
 		return nil, intelkit.NewUserError(messageWebKeyRequired, nil)
 	}

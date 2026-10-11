@@ -11,11 +11,12 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/bootstrap"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	temporallog "go.temporal.io/sdk/log"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
@@ -41,19 +42,19 @@ type deps struct {
 
 	Config           *config.Config
 	Logger           *zap.Logger
-	DB               ports.DBConnection
-	Assistant        serviceports.AssistantService
-	Pages            serviceports.PageAssistant
-	AgentDefinitions serviceports.AgentDefinitionService
+	DB               kernelports.DBConnection
+	Assistant        agentports.AssistantService
+	Pages            agentports.PageAssistant
+	AgentDefinitions agentdefinitionports.AgentDefinitionService
 	Turns            *assistantturnservice.Service
-	Users            repositories.UserRepository
-	Definitions      repositories.AgentDefinitionRepository
-	Providers        repositories.AIProviderRepository
-	Proposals        repositories.AgentProposalRepository
-	Previews         serviceports.ProposalPreviewService
-	Decisions        serviceports.AgentDecisionService
-	Plans            serviceports.AgentPlanService
-	Committer        serviceports.ApprovalCommitter
+	Users            tenantports.UserRepository
+	Definitions      agentdefinitionports.AgentDefinitionRepository
+	Providers        agentports.AIProviderRepository
+	Proposals        agentports.AgentProposalRepository
+	Previews         agentports.ProposalPreviewService
+	Decisions        agentports.AgentDecisionService
+	Plans            agentports.AgentPlanService
+	Committer        agentports.ApprovalCommitter
 }
 
 type Bench struct {
@@ -119,17 +120,17 @@ func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 		fx.Decorate(func(cfg *config.Config) *config.Config {
 			return isolate(cfg, opts.Namespace, bench.logPath)
 		}),
-		fx.Decorate(func(inner serviceports.CompletionService) serviceports.CompletionService {
+		fx.Decorate(func(inner agentports.CompletionService) agentports.CompletionService {
 			bench.recorder = NewRecorder(inner)
 			return bench.recorder
 		}),
-		fx.Decorate(func(serviceports.AgentReflectionScheduler) serviceports.AgentReflectionScheduler {
+		fx.Decorate(func(agentports.AgentReflectionScheduler) agentports.AgentReflectionScheduler {
 			return unlearned{}
 		}),
-		fx.Decorate(func(inner serviceports.AgentTrustService) serviceports.AgentTrustService {
+		fx.Decorate(func(inner agentports.AgentTrustService) agentports.AgentTrustService {
 			return untrusted{AgentTrustService: inner}
 		}),
-		fx.Decorate(func(inner serviceports.WorkflowStarter) serviceports.WorkflowStarter {
+		fx.Decorate(func(inner kernelports.WorkflowStarter) kernelports.WorkflowStarter {
 			bench.watcher = NewTurnWatcher(inner)
 			return bench.watcher
 		}),
@@ -155,7 +156,9 @@ func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 		_ = app.Stop(context.Background())
 		_ = sdkLog.Close()
 		live.Close()
-		return nil, errors.New("the bench could not attach to the model router and the workflow starter")
+		return nil, errors.New(
+			"the bench could not attach to the model router and the workflow starter",
+		)
 	}
 	bench.app = app
 

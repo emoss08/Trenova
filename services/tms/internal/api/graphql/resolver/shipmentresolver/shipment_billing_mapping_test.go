@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -34,34 +34,34 @@ func TestBulkTransferToBillingToModel(t *testing.T) {
 		`pq: duplicate key value violates unique constraint "billing_queue_items_pkey"`,
 	)
 
-	model, err := bulkTransferToBillingToModel(t.Context(), &services.BulkTransferToBillingResponse{
+	model, err := bulkTransferToBillingToModel(t.Context(), &shipmentports.BulkTransferToBillingResponse{
 		TotalCount:   3,
 		SuccessCount: 1,
 		ErrorCount:   2,
-		Results: []services.BulkTransferToBillingResult{
+		Results: []shipmentports.BulkTransferToBillingResult{
 			{
 				ShipmentID:           transferredID,
 				ProNumber:            "PRO-100",
 				Success:              true,
 				MarkedReadyToInvoice: true,
 				Item:                 item,
-				MissingRequirements:  []services.ShipmentBillingRequirement{},
-				ValidationFailures:   []services.ShipmentBillingValidation{},
+				MissingRequirements:  []shipmentports.ShipmentBillingRequirement{},
+				ValidationFailures:   []shipmentports.ShipmentBillingValidation{},
 			},
 			{
 				ShipmentID:  blockedID,
 				ProNumber:   "PRO-200",
-				FailureCode: services.BillingTransferFailureRequirementsUnmet,
+				FailureCode: shipmentports.BillingTransferFailureRequirementsUnmet,
 				Error:       policyErr.Error(),
 				Err:         policyErr,
-				MissingRequirements: []services.ShipmentBillingRequirement{
+				MissingRequirements: []shipmentports.ShipmentBillingRequirement{
 					{
 						DocumentTypeID:   "dt_1",
 						DocumentTypeCode: "POD",
 						DocumentTypeName: "Proof of Delivery",
 					},
 				},
-				ValidationFailures: []services.ShipmentBillingValidation{
+				ValidationFailures: []shipmentports.ShipmentBillingValidation{
 					{
 						Field:   "bol",
 						Code:    "missing_bol",
@@ -71,11 +71,11 @@ func TestBulkTransferToBillingToModel(t *testing.T) {
 			},
 			{
 				ShipmentID:          brokenID,
-				FailureCode:         services.BillingTransferFailureUnexpected,
+				FailureCode:         shipmentports.BillingTransferFailureUnexpected,
 				Error:               "The shipment could not be transferred to billing because of an unexpected error",
 				Err:                 internalErr,
-				MissingRequirements: []services.ShipmentBillingRequirement{},
-				ValidationFailures:  []services.ShipmentBillingValidation{},
+				MissingRequirements: []shipmentports.ShipmentBillingRequirement{},
+				ValidationFailures:  []shipmentports.ShipmentBillingValidation{},
 			},
 		},
 	})
@@ -105,7 +105,7 @@ func TestBulkTransferToBillingToModel(t *testing.T) {
 	assert.False(t, blocked.Success)
 	assert.Nil(t, blocked.BillingQueueItem)
 	require.NotNil(t, blocked.FailureCode)
-	assert.Equal(t, services.BillingTransferFailureRequirementsUnmet, *blocked.FailureCode)
+	assert.Equal(t, shipmentports.BillingTransferFailureRequirementsUnmet, *blocked.FailureCode)
 	require.NotNil(t, blocked.Error)
 	assert.Equal(
 		t,
@@ -120,7 +120,7 @@ func TestBulkTransferToBillingToModel(t *testing.T) {
 	broken := model.Results[2]
 	assert.Nil(t, broken.ProNumber)
 	require.NotNil(t, broken.FailureCode)
-	assert.Equal(t, services.BillingTransferFailureUnexpected, *broken.FailureCode)
+	assert.Equal(t, shipmentports.BillingTransferFailureUnexpected, *broken.FailureCode)
 	require.NotNil(t, broken.Error)
 	assert.NotContains(t, *broken.Error, "pq:")
 	assert.NotContains(t, *broken.Error, "billing_queue_items_pkey")

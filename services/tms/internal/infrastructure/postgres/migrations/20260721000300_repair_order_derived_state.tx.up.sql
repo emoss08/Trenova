@@ -6,7 +6,7 @@
 -- One-shot repair of order derived state. The original backfill hardcoded every
 -- order to 'Confirmed' and summed canceled legs into total_amount, and until the
 -- derivation hooks landed most leg transitions never re-derived the parent order.
--- This mirrors order.Derive (internal/core/domain/order/status.go): canceled legs
+-- This mirrors order.Derive (internal/modules/operations/domain/order/status.go): canceled legs
 -- are excluded; all-invoiced → Billed; all-delivered → Completed; all-new →
 -- Confirmed; otherwise InProgress; all-canceled → Canceled; no legs → Draft.
 -- Closed is terminal and is never overwritten.

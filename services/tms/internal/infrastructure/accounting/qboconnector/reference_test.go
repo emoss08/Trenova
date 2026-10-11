@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/quickbooks"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/stretchr/testify/assert"
@@ -44,7 +44,7 @@ func TestListReferenceTranslatesTermsIntoDomainObjects(t *testing.T) {
 	conn := newConnector(t, config.QuickBooksConfig{})
 	conn.apiOpts = []quickbooks.Option{quickbooks.WithBaseURL(server.URL)}
 
-	page, err := conn.ListReference(t.Context(), &services.AccountingReferencePageRequest{
+	page, err := conn.ListReference(t.Context(), &accountingsyncports.AccountingReferencePageRequest{
 		RealmID:       "123",
 		AccessToken:   "token",
 		Kind:          accountingsync.ReferenceKindTerm,
@@ -82,12 +82,12 @@ func TestCreateReferenceCreatesAVendorWithTheRequestID(t *testing.T) {
 	conn := newConnector(t, config.QuickBooksConfig{})
 	conn.apiOpts = []quickbooks.Option{quickbooks.WithBaseURL(server.URL)}
 
-	vendor, err := conn.CreateReference(t.Context(), &services.AccountingCreateReferenceRequest{
+	vendor, err := conn.CreateReference(t.Context(), &accountingsyncports.AccountingCreateReferenceRequest{
 		RealmID:     "123",
 		AccessToken: "token",
 		RequestID:   "req-9",
 		Kind:        accountingsync.ReferenceKindVendor,
-		Party:       &services.AccountingPartyDraft{DisplayName: "Swift Haul", Is1099: true},
+		Party:       &accountingsyncports.AccountingPartyDraft{DisplayName: "Swift Haul", Is1099: true},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, accountingsync.ReferenceKindVendor, vendor.Kind)
@@ -105,7 +105,7 @@ func TestCreateReferenceRefusesKindsTheBookkeeperOwns(t *testing.T) {
 		accountingsync.ReferenceKindTerm,
 		accountingsync.ReferenceKindPaymentMethod,
 	} {
-		_, err := conn.CreateReference(t.Context(), &services.AccountingCreateReferenceRequest{
+		_, err := conn.CreateReference(t.Context(), &accountingsyncports.AccountingCreateReferenceRequest{
 			RealmID:     "123",
 			AccessToken: "token",
 			RequestID:   "req",
@@ -131,7 +131,7 @@ func TestConnectorRatesEveryAPICallPerRealm(t *testing.T) {
 	require.NoError(t, err)
 	conn.apiOpts = append(conn.apiOpts, quickbooks.WithBaseURL(server.URL))
 
-	_, err = conn.ListReference(t.Context(), &services.AccountingReferencePageRequest{
+	_, err = conn.ListReference(t.Context(), &accountingsyncports.AccountingReferencePageRequest{
 		RealmID:       "555",
 		AccessToken:   "token",
 		Kind:          accountingsync.ReferenceKindAccount,

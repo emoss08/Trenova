@@ -3,7 +3,7 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -14,11 +14,11 @@ import (
 type AIProviderMonthSpendLoaderFactoryParams struct {
 	fx.In
 
-	Spend services.AIProviderSpendService
+	Spend agentports.AIProviderSpendService
 }
 
 type AIProviderMonthSpendLoaderFactory struct {
-	spend services.AIProviderSpendService
+	spend agentports.AIProviderSpendService
 }
 
 func NewAIProviderMonthSpendLoaderFactory(
@@ -27,7 +27,7 @@ func NewAIProviderMonthSpendLoaderFactory(
 	return &AIProviderMonthSpendLoaderFactory{spend: p.Spend}
 }
 
-func (f *AIProviderMonthSpendLoaderFactory) NewForTenant(
+func newAIProviderMonthSpendLoader(f *AIProviderMonthSpendLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, decimal.Decimal] {
 	return newLoader(batchValueFunc(

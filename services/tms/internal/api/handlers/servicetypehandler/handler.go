@@ -6,10 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/servicetype"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/servicetypeservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/reference/app/servicetypeservice"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/servicetypeports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -104,7 +104,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*servicetype.ServiceType], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListServiceTypesRequest{
+				&servicetypeports.ListServiceTypesRequest{
 					Filter: req,
 				},
 			)
@@ -135,7 +135,7 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 		return
 	}
 
-	req := new(repositories.BulkUpdateServiceTypeStatusRequest)
+	req := new(servicetypeports.BulkUpdateServiceTypeStatusRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -177,7 +177,7 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetServiceTypeByIDRequest{
+	entity, err := h.service.Get(c.Request.Context(), servicetypeports.GetServiceTypeByIDRequest{
 		ID:         serviceTypeID,
 		TenantInfo: pagination.FromAuth(authCtx),
 	})
@@ -212,7 +212,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*servicetype.ServiceType], error) {
 			return h.service.SelectOptions(
 				c.Request.Context(),
-				&repositories.ServiceTypeSelectOptionsRequest{
+				&servicetypeports.ServiceTypeSelectOptionsRequest{
 					SelectQueryRequest: req,
 					Classes:            helpers.QuerySlice(c, "classes", []string{}),
 				},
@@ -244,7 +244,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetServiceTypeByIDRequest{
+		servicetypeports.GetServiceTypeByIDRequest{
 			ID:         serviceTypeID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -317,7 +317,7 @@ func (h *Handler) patch(c *gin.Context) {
 
 	existing, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetServiceTypeByIDRequest{
+		servicetypeports.GetServiceTypeByIDRequest{
 			ID:         serviceTypeID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},

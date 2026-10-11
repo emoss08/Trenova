@@ -5,10 +5,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/fmcsa"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -21,8 +21,8 @@ const (
 )
 
 var (
-	_ services.CarrierIntelClient   = (*Client)(nil)
-	_ services.CarrierIntelSearcher = (*Client)(nil)
+	_ carrierintelports.CarrierIntelClient   = (*Client)(nil)
+	_ carrierintelports.CarrierIntelSearcher = (*Client)(nil)
 )
 
 type Client struct {
@@ -40,8 +40,8 @@ func (c *Client) IsSandbox() bool {
 
 func (c *Client) Lookup(
 	ctx context.Context,
-	req *services.CarrierIntelLookupRequest,
-) (*services.CarrierIntelLookupResult, error) {
+	req *carrierintelports.CarrierIntelLookupRequest,
+) (*carrierintelports.CarrierIntelLookupResult, error) {
 	if req == nil {
 		return nil, errorMapper.InvalidRequest(messageLookupIdentifier)
 	}
@@ -79,7 +79,7 @@ func (c *Client) Lookup(
 	if ref == "" {
 		ref = outcome.DOTNumber
 	}
-	return &services.CarrierIntelLookupResult{
+	return &carrierintelports.CarrierIntelLookupResult{
 		Profile:     profile,
 		Raw:         composite.Raw,
 		Endpoint:    carrierintel.EndpointComposite,
@@ -113,8 +113,8 @@ func (c *Client) composite(
 
 func (c *Client) Search(
 	ctx context.Context,
-	req *services.CarrierIntelSearchRequest,
-) (*services.CarrierIntelSearchResult, error) {
+	req *carrierintelports.CarrierIntelSearchRequest,
+) (*carrierintelports.CarrierIntelSearchResult, error) {
 	if req == nil {
 		return nil, errorMapper.InvalidRequest(messageSearchName)
 	}
@@ -142,16 +142,19 @@ func (c *Client) Search(
 	}
 
 	state := strings.ToUpper(strings.TrimSpace(req.State))
-	items := make([]services.CarrierIntelSearchHit, 0, len(carriers))
+	items := make([]carrierintelports.CarrierIntelSearchHit, 0, len(carriers))
 	for idx := range carriers {
 		profile := normalizeCarrier(&carriers[idx])
 		if state != "" && !inState(profile, state) {
 			continue
 		}
 		ref := profile.Identity.ProviderRef()
-		items = append(items, services.CarrierIntelSearchHit{Profile: profile, ProviderRef: ref})
+		items = append(
+			items,
+			carrierintelports.CarrierIntelSearchHit{Profile: profile, ProviderRef: ref},
+		)
 	}
-	return &services.CarrierIntelSearchResult{
+	return &carrierintelports.CarrierIntelSearchResult{
 		Items: items,
 		Total: offset + len(items),
 	}, nil
@@ -161,7 +164,7 @@ func (c *Client) Autocomplete(
 	ctx context.Context,
 	query string,
 	limit int,
-) ([]services.CarrierIntelSuggestion, error) {
+) ([]carrierintelports.CarrierIntelSuggestion, error) {
 	term := strings.TrimSpace(query)
 	if len([]rune(term)) < minAutocompleteLength {
 		return nil, errorMapper.InvalidRequest(messageAutocompleteTerm)
@@ -172,10 +175,10 @@ func (c *Client) Autocomplete(
 		return nil, err
 	}
 
-	suggestions := make([]services.CarrierIntelSuggestion, 0, len(carriers))
+	suggestions := make([]carrierintelports.CarrierIntelSuggestion, 0, len(carriers))
 	for idx := range carriers {
 		carrier := &carriers[idx]
-		suggestions = append(suggestions, services.CarrierIntelSuggestion{
+		suggestions = append(suggestions, carrierintelports.CarrierIntelSuggestion{
 			DOTNumber: intelkit.Text(carrier.DOTNumber),
 			LegalName: intelkit.Text(carrier.LegalName),
 			DBAName:   intelkit.Text(carrier.DBAName),

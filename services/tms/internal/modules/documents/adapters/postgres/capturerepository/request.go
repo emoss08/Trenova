@@ -1,0 +1,198 @@
+//nolint:gocritic // Repository request structs follow the existing value-parameter port contracts.
+package capturerepository
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/pkg/buncolgen/capturecol"
+
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/uptrace/bun"
+	"go.uber.org/zap"
+)
+
+const maxRequestsForTarget = 50
+
+type requestRepository struct {
+	db *postgres.Connection
+	l  *zap.Logger
+}
+
+func NewRequestRepository(p Params) captureports.CaptureRequestRepository {
+	return &requestRepository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.capture-request-repository"),
+	}
+}
+
+var (
+	openRequestStatuses = []capture.RequestStatus{
+		capture.RequestPending,
+		capture.RequestDelivered,
+		capture.RequestInProgress,
+	}
+	waitingRequestStatuses = []capture.RequestStatus{
+		capture.RequestPending,
+		capture.RequestDelivered,
+	}
+)
+
+func (r *requestRepository) Create(
+	ctx context.Context,
+	entity *capture.CaptureRequest,
+) (*capture.CaptureRequest, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CaptureRequest, error) {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
+			return nil, err
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *requestRepository) Update(
+	ctx context.Context,
+	entity *capture.CaptureRequest,
+) (*capture.CaptureRequest, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CaptureRequest, error) {
+		ov := entity.Version
+		entity.Version++
+
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WherePK().
+			Where(capturecol.CaptureRequestColumns.Version.Eq(), ov).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			entity.Version = ov
+
+			return nil, err
+		}
+		if err = dberror.CheckRowsAffected(
+			results,
+			"Capture request",
+			entity.ID.String(),
+		); err != nil {
+			entity.Version = ov
+
+			return nil, err
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *requestRepository) GetByID(
+	ctx context.Context,
+	req captureports.GetCaptureRequestByIDRequest,
+) (*capture.CaptureRequest, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureRequest, error) {
+		entity := new(capture.CaptureRequest)
+
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Relation(capturecol.CaptureRequestRelations.CaptureProfile).
+			Where(capturecol.CaptureRequestColumns.ID.Eq(), req.ID).
+			Apply(capturecol.CaptureRequestApplyTenant(req.TenantInfo)).
+			Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Capture request")
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *requestRepository) ListOpen(
+	ctx context.Context,
+	req captureports.ListOpenCaptureRequestsRequest,
+) ([]*capture.CaptureRequest, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureRequest, error) {
+		entities := make([]*capture.CaptureRequest, 0)
+		cols := capturecol.CaptureRequestColumns
+
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Relation(capturecol.CaptureRequestRelations.CaptureProfile).
+			Apply(capturecol.CaptureRequestApplyTenant(req.TenantInfo)).
+			Where(cols.DeviceID.Eq(), req.DeviceID).
+			Where(cols.Status.In(), bun.List(openRequestStatuses)).
+			Order(cols.CreatedAt.OrderAsc()).
+			Scan(ctx); err != nil {
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
+func (r *requestRepository) ListForTarget(
+	ctx context.Context,
+	req captureports.ListCaptureRequestsForTargetRequest,
+) ([]*capture.CaptureRequest, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureRequest, error) {
+		limit := req.Limit
+		if limit <= 0 || limit > maxRequestsForTarget {
+			limit = maxRequestsForTarget
+		}
+
+		entities := make([]*capture.CaptureRequest, 0)
+		cols := capturecol.CaptureRequestColumns
+
+		query := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(capturecol.CaptureRequestApplyTenant(req.TenantInfo)).
+			Where(cols.TargetType.Eq(), req.TargetType).
+			Where(cols.TargetID.Eq(), req.TargetID)
+		if req.UserID.IsNotNil() {
+			query = query.Where(cols.UserID.Eq(), req.UserID)
+		}
+
+		if err := query.
+			Order(cols.CreatedAt.OrderDesc()).
+			Limit(limit).
+			Scan(ctx); err != nil {
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
+func (r *requestRepository) ListExpired(
+	ctx context.Context,
+	now int64,
+	limit int,
+) ([]*capture.CaptureRequest, error) {
+	ctx = dbscope.WithSystem(ctx, "list expired capture requests across every organization")
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureRequest, error) {
+		entities := make([]*capture.CaptureRequest, 0)
+		cols := capturecol.CaptureRequestColumns
+
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Where(cols.Status.In(), bun.List(waitingRequestStatuses)).
+			Where(cols.ExpiresAt.Lte(), now).
+			Order(cols.ExpiresAt.OrderAsc()).
+			Limit(limit).
+			Scan(ctx); err != nil {
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}

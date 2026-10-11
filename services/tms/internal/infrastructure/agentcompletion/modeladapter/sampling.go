@@ -1,6 +1,6 @@
 package modeladapter
 
-import "github.com/emoss08/trenova/internal/core/domain/aiprovider"
+import "github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 
 // Sampling is how adventurously a model picks its next token.
 //

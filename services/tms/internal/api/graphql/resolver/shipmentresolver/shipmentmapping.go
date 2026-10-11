@@ -6,16 +6,18 @@ import (
 	"math"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
+
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/core/domain/order"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	shipmentdomain "github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
+	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -460,7 +462,7 @@ func shipmentCommoditiesFromInput(
 // contractRateToModel renders what the rate agreements charged, for both the
 // preview the billing panel shows and the account the re-rate dialog reads out.
 func contractRateToModel(
-	application *services.ContractRateApplication,
+	application *shipmentports.ContractRateApplication,
 ) *gqlmodel.ShipmentContractRate {
 	if application == nil {
 		return nil
@@ -601,8 +603,8 @@ func (r *MutationResolver) toggleShipmentComment(
 	op permission.Operation,
 	action func(
 		ctx context.Context,
-		req *services.ToggleShipmentCommentRequest,
-		actor *services.RequestActor,
+		req *shipmentports.ToggleShipmentCommentRequest,
+		actor *permissionports.RequestActor,
 	) (*shipmentdomain.ShipmentComment, error),
 ) (*gqlmodel.ShipmentComment, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipmentComment, op)
@@ -619,7 +621,7 @@ func (r *MutationResolver) toggleShipmentComment(
 		return nil, err
 	}
 
-	entity, err := action(ctx, &services.ToggleShipmentCommentRequest{
+	entity, err := action(ctx, &shipmentports.ToggleShipmentCommentRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ShipmentID: parsedShipmentID,
 		CommentID:  parsedCommentID,
@@ -633,8 +635,8 @@ func (r *MutationResolver) toggleShipmentComment(
 
 func shipmentCommentFiltersFromGraphQL(
 	filter *gqlmodel.ShipmentCommentsFilterInput,
-) (repositories.ShipmentCommentListFilters, error) {
-	filters := repositories.ShipmentCommentListFilters{}
+) (shipmentports.ShipmentCommentListFilters, error) {
+	filters := shipmentports.ShipmentCommentListFilters{}
 	if filter == nil {
 		return filters, nil
 	}
@@ -675,7 +677,7 @@ func shipmentCommentFiltersFromGraphQL(
 }
 
 func shipmentDistanceToModel(
-	response *services.DistanceCalculationResponse,
+	response *shipmentports.DistanceCalculationResponse,
 ) *gqlmodel.ShipmentDistanceResponse {
 	moves := make([]*gqlmodel.ShipmentDistanceMoveResult, 0, len(response.Moves))
 	for _, move := range response.Moves {
@@ -702,7 +704,7 @@ func shipmentDistanceToModel(
 }
 
 func shipmentTotalsToModel(
-	response *repositories.ShipmentTotalsResponse,
+	response *shipmentports.ShipmentTotalsResponse,
 ) *gqlmodel.ShipmentTotalsResponse {
 	return &gqlmodel.ShipmentTotalsResponse{
 		FreightChargeAmount: response.FreightChargeAmount.String(),
@@ -713,7 +715,7 @@ func shipmentTotalsToModel(
 }
 
 func previousRatesToModel(
-	result *pagination.ListResult[*repositories.PreviousRateSummary],
+	result *pagination.ListResult[*shipmentports.PreviousRateSummary],
 ) *gqlmodel.ShipmentPreviousRatesResponse {
 	items := make([]*gqlmodel.ShipmentPreviousRateSummary, 0, len(result.Items))
 	for _, item := range result.Items {
@@ -742,8 +744,8 @@ func previousRatesToModel(
 func loadingOptimizationRequestFromInput(
 	input gqlmodel.ShipmentLoadingOptimizationInput,
 	authCtx *authctx.AuthContext,
-) (*repositories.LoadingOptimizationRequest, error) {
-	commodities := make([]repositories.LoadingCommodityInput, 0, len(input.Commodities))
+) (*shipmentports.LoadingOptimizationRequest, error) {
+	commodities := make([]shipmentports.LoadingCommodityInput, 0, len(input.Commodities))
 	for _, commodity := range input.Commodities {
 		if commodity == nil {
 			continue
@@ -752,7 +754,7 @@ func loadingOptimizationRequestFromInput(
 		if err != nil {
 			return nil, err
 		}
-		commodities = append(commodities, repositories.LoadingCommodityInput{
+		commodities = append(commodities, shipmentports.LoadingCommodityInput{
 			CommodityID: commodityID,
 			Pieces:      int64(commodity.Pieces),
 			Weight:      int64(commodity.Weight),
@@ -766,18 +768,18 @@ func loadingOptimizationRequestFromInput(
 		}
 		equipmentTypeID = &parsed
 	}
-	stops := make([]repositories.StopInfo, 0, len(input.Stops))
+	stops := make([]shipmentports.StopInfo, 0, len(input.Stops))
 	for _, stop := range input.Stops {
 		if stop == nil {
 			continue
 		}
-		stops = append(stops, repositories.StopInfo{
+		stops = append(stops, shipmentports.StopInfo{
 			Sequence:     stop.Sequence,
 			LocationName: stop.LocationName,
 			LocationCity: stop.LocationCity,
 		})
 	}
-	return &repositories.LoadingOptimizationRequest{
+	return &shipmentports.LoadingOptimizationRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  authCtx.OrganizationID,
 			BuID:   authCtx.BusinessUnitID,
@@ -790,7 +792,7 @@ func loadingOptimizationRequestFromInput(
 }
 
 func loadingOptimizationToModel(
-	result *repositories.LoadingOptimizationResult,
+	result *shipmentports.LoadingOptimizationResult,
 ) *gqlmodel.ShipmentLoadingOptimizationResponse {
 	placements := make([]*gqlmodel.ShipmentLoadingCommodity, 0, len(result.Placements))
 	for _, item := range result.Placements {
@@ -954,12 +956,11 @@ func (r *ShipmentResolver) loadShipmentOrder(
 		return nil, nil
 	}
 
-	loadersForRequest, ok := loaders.FromContext(ctx)
-	if !ok || loadersForRequest == nil {
+	if !loaders.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("Order loader is not configured")
 	}
 
-	parent, err := loadersForRequest.OrderByID.Load(ctx, *obj.OrderID)
+	parent, err := loaders.OrderByID(ctx, *obj.OrderID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil
@@ -969,7 +970,7 @@ func (r *ShipmentResolver) loadShipmentOrder(
 	return parent, nil
 }
 
-func shipmentEtaToModel(eta *services.ShipmentEta) *gqlmodel.ShipmentEta {
+func shipmentEtaToModel(eta *shipmenttrackingports.ShipmentEta) *gqlmodel.ShipmentEta {
 	if eta == nil {
 		return nil
 	}

@@ -10,9 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/apikey"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -37,7 +37,7 @@ func (r *QueryResolver) APIKeys(ctx context.Context, input gqlmodel.DataTableCon
 
 	result, err := r.APIKeyService.ListConnection(
 		ctx,
-		&repositories.ListAPIKeyConnectionRequest{
+		&apikeyports.ListAPIKeyConnectionRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},

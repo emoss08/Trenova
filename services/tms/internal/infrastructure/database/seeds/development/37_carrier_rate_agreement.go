@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/carrier"
-	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/domain/rategeo"
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -61,7 +63,7 @@ func (s *CarrierRateAgreementSeed) Run(ctx context.Context, tx bun.Tx) error {
 			}
 
 			var carriers []*carrier.Carrier
-			cols := buncolgen.CarrierColumns
+			cols := carriercol.CarrierColumns
 			if err = tx.NewSelect().
 				Model(&carriers).
 				Where(cols.OrganizationID.Eq(), org.ID).
@@ -126,7 +128,7 @@ func (s *CarrierRateAgreementSeed) ensure(
 	sc *seedhelpers.SeedContext,
 	spec *carrierAgreementSpec,
 ) error {
-	cols := buncolgen.RateAgreementColumns
+	cols := rateagreementcol.RateAgreementColumns
 	carrierID := spec.carrier.ID
 	exists, err := tx.NewSelect().
 		Model((*rateagreement.RateAgreement)(nil)).

@@ -9,8 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/accounttype"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -102,7 +102,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*accounttype.AccountType)
 					return obj.Category, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccounttypeᚐCategory),
+				Marshal: gqlexec.Marshal(marshalNAccountCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐCategory),
 			},
 			{
 				Name:     "color",
@@ -161,7 +161,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*accounttype.AccountType)
 					return obj.BusinessUnit, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit),
+				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit),
 			},
 			{
 				Name:      "organization",
@@ -171,7 +171,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*accounttype.AccountType)
 					return obj.Organization, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization),
+				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization),
 			},
 		}},
 		{Object: "AccountTypeConnection", Fields: []*gqlexec.Field{
@@ -217,7 +217,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AccountTypeEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccounttypeᚐAccountType),
+				Marshal: gqlexec.Marshal(marshalNAccountType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐAccountType),
 			},
 			{
 				Name:     "cursor",
@@ -256,7 +256,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AccountType(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOAccountType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccounttypeᚐAccountType),
+				Marshal: gqlexec.Marshal(marshalOAccountType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐAccountType),
 			},
 		}},
 	},
@@ -320,7 +320,7 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAccountCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccounttypeᚐCategory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accounttype.Category) graphql.Marshaler {
+func marshalNAccountCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐCategory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accounttype.Category) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -328,7 +328,7 @@ func marshalNAccountCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return res
 }
 
-func marshalNAccountType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccounttypeᚐAccountType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accounttype.AccountType) graphql.Marshaler {
+func marshalNAccountType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐAccountType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accounttype.AccountType) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -416,14 +416,14 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOAccountType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccounttypeᚐAccountType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accounttype.AccountType) graphql.Marshaler {
+func marshalOAccountType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐAccountType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accounttype.AccountType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AccountType", v)
 }
 
-func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
+func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -438,7 +438,7 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
+func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

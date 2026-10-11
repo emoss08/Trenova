@@ -1,0 +1,238 @@
+package integration
+
+import "github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
+
+type ConfigFieldType = configspec.FieldType
+
+const (
+	ConfigFieldTypeString   = configspec.FieldTypeString
+	ConfigFieldTypeURL      = configspec.FieldTypeURL
+	ConfigFieldTypePassword = configspec.FieldTypePassword
+	ConfigFieldTypeSelect   = configspec.FieldTypeSelect
+	ConfigFieldTypeBoolean  = configspec.FieldTypeBoolean
+	ConfigFieldTypeNumber   = configspec.FieldTypeNumber
+	ConfigFieldTypeMulti    = configspec.FieldTypeMulti
+)
+
+type ConfigFieldSpec = configspec.Field
+
+type IntegrationSpec struct {
+	Fields              []ConfigFieldSpec `json:"fields"`
+	SupportsTestConnect bool              `json:"supportsTestConnect"`
+	BindSecretsToTenant bool              `json:"-"`
+}
+
+var ConfigSpecs = map[Type]IntegrationSpec{
+	TypeGoogleMaps: {
+		Fields: []ConfigFieldSpec{
+			{
+				Key:       "apiKey",
+				Label:     "API Key",
+				Type:      ConfigFieldTypePassword,
+				Required:  true,
+				Sensitive: true,
+			},
+		},
+	},
+	TypeSamsara: {
+		Fields: []ConfigFieldSpec{
+			{
+				Key:       "token",
+				Label:     "API Token",
+				Type:      ConfigFieldTypePassword,
+				Required:  true,
+				Sensitive: true,
+			},
+			{
+				Key:     "baseUrl",
+				Label:   "Base URL",
+				Type:    ConfigFieldTypeURL,
+				Default: "https://api.samsara.com",
+			},
+			{
+				Key:       "webhookSecret",
+				Label:     "Webhook Secret",
+				Type:      ConfigFieldTypePassword,
+				Sensitive: true,
+				HelpText:  "Base64 signing secret from the Samsara webhook configuration, used to verify X-Samsara-Signature on inbound events.",
+			},
+			{
+				Key:       "webhookToken",
+				Label:     "Webhook Token",
+				Type:      ConfigFieldTypeString,
+				Sensitive: false,
+			},
+		},
+		SupportsTestConnect: true,
+	},
+	TypeHERE: {
+		Fields: []ConfigFieldSpec{
+			{
+				Key:       "apiKey",
+				Label:     "API Key",
+				Type:      ConfigFieldTypePassword,
+				Required:  true,
+				Sensitive: true,
+			},
+		},
+	},
+	TypeOpenWeatherMap: {
+		Fields: []ConfigFieldSpec{
+			{
+				Key:       "apiKey",
+				Label:     "API Key",
+				Type:      ConfigFieldTypePassword,
+				Required:  true,
+				Sensitive: true,
+				HelpText:  "Free tier includes 1,000 API calls/day for weather map tiles.",
+			},
+		},
+	},
+	TypeOANDAExchangeRates: {
+		Fields: []ConfigFieldSpec{
+			{
+				Key:       "apiKey",
+				Label:     "API Key",
+				Type:      ConfigFieldTypePassword,
+				Required:  true,
+				Sensitive: true,
+				HelpText:  "OANDA FX Data Services API key. The key is sent with Bearer authorization and never exposed to browsers.",
+			},
+			{
+				Key:         "baseUrl",
+				Label:       "Base URL",
+				Type:        ConfigFieldTypeURL,
+				Default:     "https://exchange-rates-api.oanda.com",
+				Placeholder: "https://exchange-rates-api.oanda.com",
+			},
+			{
+				Key:      "defaultRateType",
+				Label:    "Default Rate Type",
+				Type:     ConfigFieldTypeSelect,
+				Default:  "mid",
+				Options:  []string{"mid", "bid", "ask"},
+				HelpText: "Midpoint is the default settlement policy for FX quotes.",
+			},
+		},
+		SupportsTestConnect: true,
+	},
+	TypeEIAFuelPrices: {
+		Fields: []ConfigFieldSpec{
+			{
+				Key:       "apiKey",
+				Label:     "API Key",
+				Type:      ConfigFieldTypePassword,
+				Required:  true,
+				Sensitive: true,
+				HelpText:  "Free EIA Open Data API key from eia.gov/opendata. The key is sent as a query parameter to the EIA API only and never exposed to browsers.",
+			},
+			{
+				Key:         "baseUrl",
+				Label:       "Base URL",
+				Type:        ConfigFieldTypeURL,
+				Default:     "https://api.eia.gov/v2",
+				Placeholder: "https://api.eia.gov/v2",
+			},
+		},
+		SupportsTestConnect: true,
+	},
+	TypePCMiler: {
+		Fields: []ConfigFieldSpec{
+			{
+				Key:       "apiKey",
+				Label:     "API Key",
+				Type:      ConfigFieldTypePassword,
+				Required:  true,
+				Sensitive: true,
+				HelpText:  "Trimble Maps API key. The key is used only by the server and is never exposed to browsers.",
+			},
+			{
+				Key:         "baseUrl",
+				Label:       "Base URL",
+				Type:        ConfigFieldTypeURL,
+				Default:     "https://pcmiler.alk.com/apis/rest/v1.0/Service.svc",
+				Placeholder: "https://pcmiler.alk.com/apis/rest/v1.0/Service.svc",
+			},
+		},
+		SupportsTestConnect: true,
+	},
+	TypeResend: {
+		Fields: []ConfigFieldSpec{
+			{
+				Key:       "apiKey",
+				Label:     "API Key",
+				Type:      ConfigFieldTypePassword,
+				Required:  true,
+				Sensitive: true,
+				HelpText:  "Resend API key used by Trenova for transactional email sends.",
+			},
+			{
+				Key:         "baseUrl",
+				Label:       "Base URL",
+				Type:        ConfigFieldTypeURL,
+				Default:     "https://api.resend.com",
+				Placeholder: "https://api.resend.com",
+			},
+			{
+				Key:       "webhookSigningSecret",
+				Label:     "Webhook Signing Secret",
+				Type:      ConfigFieldTypePassword,
+				Sensitive: true,
+				HelpText:  "Svix signing secret from the Resend webhook endpoint.",
+			},
+			{
+				Key:       "webhookToken",
+				Label:     "Webhook Token",
+				Type:      ConfigFieldTypeString,
+				Sensitive: false,
+			},
+		},
+		SupportsTestConnect: true,
+	},
+	TypePostmark: {
+		Fields: []ConfigFieldSpec{
+			{
+				Key:       "serverToken",
+				Label:     "Server Token",
+				Type:      ConfigFieldTypePassword,
+				Required:  true,
+				Sensitive: true,
+				HelpText:  "Postmark server token used by Trenova for transactional email sends.",
+			},
+			{
+				Key:         "baseUrl",
+				Label:       "Base URL",
+				Type:        ConfigFieldTypeURL,
+				Default:     "https://api.postmarkapp.com",
+				Placeholder: "https://api.postmarkapp.com",
+			},
+			{
+				Key:         "messageStream",
+				Label:       "Message Stream",
+				Type:        ConfigFieldTypeString,
+				Default:     "outbound",
+				Placeholder: "outbound",
+			},
+			{
+				Key:       "webhookToken",
+				Label:     "Webhook Token",
+				Type:      ConfigFieldTypeString,
+				Sensitive: false,
+			},
+		},
+		SupportsTestConnect: true,
+	},
+	TypeWEXFuel:       wexFuelSpec(),
+	TypeComdataFuel:   comdataFuelSpec(),
+	TypeRampFuel:      rampFuelSpec(),
+	TypeCarrierOK:     carrierOKSpec(),
+	TypeFMCSAQCMobile: fmcsaQCMobileSpec(),
+}
+
+func HasRequiredConfiguration(configuration map[string]any, spec IntegrationSpec) bool {
+	return configspec.HasRequired(configuration, spec.Fields)
+}
+
+func ReadConfigString(configuration map[string]any, key string) string {
+	return configspec.ReadString(configuration, key)
+}

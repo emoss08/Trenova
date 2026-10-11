@@ -10,9 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -70,7 +70,7 @@ func (r *MutationResolver) DeleteDetentionPolicy(ctx context.Context, id string)
 		return false, err
 	}
 
-	if err = r.DetentionPolicyService.Delete(ctx, &repositories.GetDetentionPolicyByIDRequest{
+	if err = r.DetentionPolicyService.Delete(ctx, &detentionports.GetDetentionPolicyByIDRequest{
 		DetentionPolicyID: policyID,
 		TenantInfo:        base.TenantInfo(authCtx),
 	}, authCtx.UserID); err != nil {
@@ -221,7 +221,7 @@ func (r *QueryResolver) DetentionPolicies(ctx context.Context, input gqlmodel.Da
 
 	result, err := r.DetentionPolicyService.ListConnection(
 		ctx,
-		&repositories.ListDetentionPolicyConnectionRequest{
+		&detentionports.ListDetentionPolicyConnectionRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
@@ -244,7 +244,7 @@ func (r *QueryResolver) DetentionPolicy(ctx context.Context, id string) (*gqlmod
 		return nil, err
 	}
 
-	entity, err := r.DetentionPolicyService.GetByID(ctx, &repositories.GetDetentionPolicyByIDRequest{
+	entity, err := r.DetentionPolicyService.GetByID(ctx, &detentionports.GetDetentionPolicyByIDRequest{
 		DetentionPolicyID: policyID,
 		TenantInfo:        base.TenantInfo(authCtx),
 		IncludeTiers:      true,
@@ -291,7 +291,7 @@ func (r *QueryResolver) DetentionOccurrence(ctx context.Context, id string) (*gq
 
 	detail, err := r.DetentionService.GetOccurrenceDetail(
 		ctx,
-		&repositories.GetDetentionOccurrenceByIDRequest{
+		&detentionports.GetDetentionOccurrenceByIDRequest{
 			OccurrenceID: occurrenceID,
 			TenantInfo:   base.TenantInfo(authCtx),
 		},
@@ -316,7 +316,7 @@ func (r *QueryResolver) ShipmentDetention(ctx context.Context, shipmentID string
 
 	occurrences, err := r.DetentionService.ListByShipment(
 		ctx,
-		&repositories.GetOccurrencesByShipmentRequest{
+		&detentionports.GetOccurrencesByShipmentRequest{
 			ShipmentID: id,
 			TenantInfo: base.TenantInfo(authCtx),
 		},

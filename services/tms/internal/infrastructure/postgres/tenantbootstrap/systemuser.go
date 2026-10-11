@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
+
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,7 +35,7 @@ func EnsureSystemUser(
 	db bun.IDB,
 	params SystemUserParams,
 ) (pulid.ID, bool, error) {
-	cols := buncolgen.UserColumns
+	cols := tenantcol.UserColumns
 	existing := new(tenant.User)
 	err := db.NewSelect().
 		Model(existing).

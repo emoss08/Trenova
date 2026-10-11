@@ -60,9 +60,15 @@ func renderCase(b *strings.Builder, result *CaseResult) {
 	if result.Scenario.Description != "" {
 		fmt.Fprintf(b, "%s\n\n", strings.TrimSpace(result.Scenario.Description))
 	}
-	fmt.Fprintf(b, "- Agent: %s\n- Thread: `%s`\n- Took: %s\n- %s\n",
-		result.Agent, result.ThreadID,
-		result.FinishedAt.Sub(result.StartedAt).Round(100*time.Millisecond), usageLine(result.Usage))
+	fmt.Fprintf(
+		b,
+		"- Agent: %s\n- Thread: `%s`\n- Took: %s\n- %s\n",
+		result.Agent,
+		result.ThreadID,
+		result.FinishedAt.Sub(result.StartedAt).
+			Round(100*time.Millisecond),
+		usageLine(result.Usage),
+	)
 	if result.Scenario.Source != "" {
 		fmt.Fprintf(b, "- Scenario: `%s`\n", result.Scenario.Source)
 	}
@@ -249,7 +255,13 @@ func renderCall(b *strings.Builder, call *CallSummary) {
 	if call.ReasoningTokens > 0 {
 		fmt.Fprintf(b, " (%d thinking)", call.ReasoningTokens)
 	}
-	fmt.Fprintf(b, " · %dms · %d messages, %d tools offered", call.LatencyMs, call.Messages, call.Tools)
+	fmt.Fprintf(
+		b,
+		" · %dms · %d messages, %d tools offered",
+		call.LatencyMs,
+		call.Messages,
+		call.Tools,
+	)
 	if call.Delegate != "" {
 		fmt.Fprintf(b, " · delegate `%s`", call.Delegate)
 	}
@@ -299,7 +311,15 @@ func renderTool(b *strings.Builder, tool *ToolCallRecord) {
 	if tool.Refused() {
 		flag = " **REFUSED/FAILED**"
 	}
-	fmt.Fprintf(b, "**Tool `%s`** · %s%s%s%s\n\n", tool.Name, verdictLabel(tool), elapsed, who, flag)
+	fmt.Fprintf(
+		b,
+		"**Tool `%s`** · %s%s%s%s\n\n",
+		tool.Name,
+		verdictLabel(tool),
+		elapsed,
+		who,
+		flag,
+	)
 	if tool.Summary != "" {
 		fmt.Fprintf(b, "%s\n\n", tool.Summary)
 	}

@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/makiuchi-d/gozxing"
 	"github.com/makiuchi-d/gozxing/qrcode/decoder"
 	"github.com/makiuchi-d/gozxing/qrcode/encoder"
@@ -24,13 +24,13 @@ var ErrPayloadInvalid = errors.New("a cover sheet payload must be 1 to 256 chara
 
 type Encoder struct{}
 
-func New() services.CaptureQREncoder {
+func New() captureports.CaptureQREncoder {
 	return &Encoder{}
 }
 
 // Encode draws the payload at error correction level Q, which survives about
 // a quarter of the code being lost: a staple, a coffee ring, a fax's streaks.
-func (e *Encoder) Encode(payload string) (*services.CaptureQRCode, error) {
+func (e *Encoder) Encode(payload string) (*captureports.CaptureQRCode, error) {
 	if payload == "" || len(payload) > maxPayloadLength {
 		return nil, ErrPayloadInvalid
 	}
@@ -61,5 +61,5 @@ func (e *Encoder) Encode(payload string) (*services.CaptureQRCode, error) {
 		rows = append(rows, row.String())
 	}
 
-	return &services.CaptureQRCode{Size: size, Modules: rows}, nil
+	return &captureports.CaptureQRCode{Size: size, Modules: rows}, nil
 }

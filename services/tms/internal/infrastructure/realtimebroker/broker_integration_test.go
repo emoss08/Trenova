@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/redis/go-redis/v9"
@@ -59,8 +59,8 @@ func newTenant() tenant {
 	return tenant{org: pulid.MustNew("org_"), bu: pulid.MustNew("bu_")}
 }
 
-func (tn tenant) conn(userID pulid.ID, portal bool) *services.RealtimeConnection {
-	return &services.RealtimeConnection{
+func (tn tenant) conn(userID pulid.ID, portal bool) *agentports.RealtimeConnection {
+	return &agentports.RealtimeConnection{
 		ConnectionID:   pulid.MustNew("rtc_").String(),
 		OrganizationID: tn.org,
 		BusinessUnitID: tn.bu,
@@ -73,12 +73,12 @@ func (tn tenant) conn(userID pulid.ID, portal bool) *services.RealtimeConnection
 func subscribe(
 	t *testing.T,
 	b *Broker,
-	conn *services.RealtimeConnection,
+	conn *agentports.RealtimeConnection,
 	joinUsers bool,
 	lastEventID string,
-) services.RealtimeStream {
+) agentports.RealtimeStream {
 	t.Helper()
-	stream, err := b.Subscribe(t.Context(), &services.RealtimeSubscribeRequest{
+	stream, err := b.Subscribe(t.Context(), &agentports.RealtimeSubscribeRequest{
 		Connection:  conn,
 		JoinUsers:   joinUsers,
 		LastEventID: lastEventID,
@@ -88,18 +88,18 @@ func subscribe(
 	return stream
 }
 
-func invalidation(tn tenant, resource string, audience pulid.ID) *services.RealtimeEnvelope {
-	return &services.RealtimeEnvelope{
+func invalidation(tn tenant, resource string, audience pulid.ID) *agentports.RealtimeEnvelope {
+	return &agentports.RealtimeEnvelope{
 		OrganizationID: tn.org,
 		BusinessUnitID: tn.bu,
 		AudienceUserID: audience,
-		Event:          services.RealtimeEventInvalidation,
+		Event:          agentports.RealtimeEventInvalidation,
 		Payload:        []byte(`{"resource":"` + resource + `","entity":{"secret":true}}`),
 		PortalPayload:  []byte(`{"resource":"` + resource + `"}`),
 	}
 }
 
-func next(t *testing.T, stream services.RealtimeStream) services.RealtimeFrame {
+func next(t *testing.T, stream agentports.RealtimeStream) agentports.RealtimeFrame {
 	t.Helper()
 	select {
 	case frame, ok := <-stream.Frames():
@@ -107,11 +107,11 @@ func next(t *testing.T, stream services.RealtimeStream) services.RealtimeFrame {
 		return frame
 	case <-time.After(waitFor):
 		t.Fatal("timed out waiting for a frame")
-		return services.RealtimeFrame{}
+		return agentports.RealtimeFrame{}
 	}
 }
 
-func nextOf(t *testing.T, stream services.RealtimeStream, event string) services.RealtimeFrame {
+func nextOf(t *testing.T, stream agentports.RealtimeStream, event string) agentports.RealtimeFrame {
 	t.Helper()
 	deadline := time.After(waitFor)
 	for {
@@ -127,7 +127,7 @@ func nextOf(t *testing.T, stream services.RealtimeStream, event string) services
 	}
 }
 
-func silent(t *testing.T, stream services.RealtimeStream, event string) {
+func silent(t *testing.T, stream agentports.RealtimeStream, event string) {
 	t.Helper()
 	deadline := time.After(300 * time.Millisecond)
 	for {
@@ -153,12 +153,12 @@ func TestBroker_DeliversOnlyWithinTheTenant(t *testing.T) {
 	require.True(t, b.Enqueue(invalidation(a, "shipments", pulid.Nil)))
 
 	frame := next(t, mine)
-	assert.Equal(t, services.RealtimeEventInvalidation, frame.Event)
+	assert.Equal(t, agentports.RealtimeEventInvalidation, frame.Event)
 	assert.Contains(t, string(frame.Data), `"secret":true`)
 	_, ok := parseCursor(frame.ID)
 	assert.True(t, ok, "frame carries a resumable cursor: %q", frame.ID)
 
-	silent(t, theirs, services.RealtimeEventInvalidation)
+	silent(t, theirs, agentports.RealtimeEventInvalidation)
 }
 
 func TestBroker_AudienceReachesOnlyThatUser(t *testing.T) {
@@ -172,7 +172,7 @@ func TestBroker_AudienceReachesOnlyThatUser(t *testing.T) {
 	require.True(t, b.Enqueue(invalidation(tn, "notifications", target)))
 
 	assert.Contains(t, string(next(t, targetStream).Data), "notifications")
-	silent(t, bystanderStream, services.RealtimeEventInvalidation)
+	silent(t, bystanderStream, agentports.RealtimeEventInvalidation)
 }
 
 func TestBroker_PortalReadersGetTheRedactedPayload(t *testing.T) {
@@ -192,7 +192,7 @@ func TestBroker_PortalReadersGetTheRedactedPayload(t *testing.T) {
 	internalOnly := invalidation(tn, "shipments", pulid.Nil)
 	internalOnly.PortalPayload = nil
 	require.True(t, b.Enqueue(internalOnly))
-	silent(t, portal, services.RealtimeEventInvalidation)
+	silent(t, portal, agentports.RealtimeEventInvalidation)
 }
 
 func TestBroker_ResumesFromLastEventIDWithoutDuplicates(t *testing.T) {
@@ -213,14 +213,14 @@ func TestBroker_ResumesFromLastEventIDWithoutDuplicates(t *testing.T) {
 	prelude := resumed.Prelude()
 	require.GreaterOrEqual(t, len(prelude), 3)
 
-	var ready services.RealtimeReadyEvent
-	require.Equal(t, services.RealtimeEventReady, prelude[0].Event)
+	var ready agentports.RealtimeReadyEvent
+	require.Equal(t, agentports.RealtimeEventReady, prelude[0].Event)
 	require.NoError(t, sonic.Unmarshal(prelude[0].Data, &ready))
 	assert.True(t, ready.Resumed)
 
 	replayed := make([]string, 0, 2)
 	for _, frame := range prelude[1:] {
-		require.NotEqual(t, services.RealtimeEventReset, frame.Event)
+		require.NotEqual(t, agentports.RealtimeEventReset, frame.Event)
 		replayed = append(replayed, string(frame.Data))
 	}
 	require.Len(t, replayed, 2)
@@ -239,8 +239,8 @@ func TestBroker_UnknownCursorAsksForReset(t *testing.T) {
 	stream := subscribe(t, b, tn.conn(pulid.MustNew("usr_"), false), false, "not-a-cursor")
 	prelude := stream.Prelude()
 	require.Len(t, prelude, 2)
-	assert.Equal(t, services.RealtimeEventReady, prelude[0].Event)
-	assert.Equal(t, services.RealtimeEventReset, prelude[1].Event)
+	assert.Equal(t, agentports.RealtimeEventReady, prelude[0].Event)
+	assert.Equal(t, agentports.RealtimeEventReset, prelude[1].Event)
 }
 
 func TestBroker_TrimmedCursorAsksForReset(t *testing.T) {
@@ -258,7 +258,7 @@ func TestBroker_TrimmedCursorAsksForReset(t *testing.T) {
 	stream := subscribe(t, b, tn.conn(pulid.MustNew("usr_"), false), false, stale)
 	prelude := stream.Prelude()
 	require.Len(t, prelude, 2)
-	assert.Equal(t, services.RealtimeEventReset, prelude[1].Event)
+	assert.Equal(t, agentports.RealtimeEventReset, prelude[1].Event)
 }
 
 func TestBroker_UserPresenceSnapshotAndTransitions(t *testing.T) {
@@ -269,37 +269,37 @@ func TestBroker_UserPresenceSnapshotAndTransitions(t *testing.T) {
 	alice := subscribe(t, b, aliceConn, true, "")
 
 	prelude := alice.Prelude()
-	var snapshot services.RealtimePresenceSnapshot
+	var snapshot agentports.RealtimePresenceSnapshot
 	found := false
 	for _, frame := range prelude {
-		if frame.Event == services.RealtimeEventPresenceState {
+		if frame.Event == agentports.RealtimeEventPresenceState {
 			require.NoError(t, sonic.Unmarshal(frame.Data, &snapshot))
 			found = true
 		}
 	}
 	require.True(t, found)
-	assert.Equal(t, services.RealtimeScopeUsers, snapshot.Scope)
+	assert.Equal(t, agentports.RealtimeScopeUsers, snapshot.Scope)
 	require.Len(t, snapshot.Members, 1)
 	assert.Equal(t, aliceConn.ConnectionID, snapshot.Members[0].ConnectionID)
 
 	bobConn := tn.conn(pulid.MustNew("usr_"), false)
 	bob := subscribe(t, b, bobConn, true, "")
 
-	var entered services.RealtimePresenceEvent
+	var entered agentports.RealtimePresenceEvent
 	for {
-		require.NoError(t, sonic.Unmarshal(nextOf(t, alice, services.RealtimeEventPresence).Data, &entered))
+		require.NoError(t, sonic.Unmarshal(nextOf(t, alice, agentports.RealtimeEventPresence).Data, &entered))
 		if entered.ConnectionID == bobConn.ConnectionID {
 			break
 		}
 	}
-	assert.Equal(t, services.RealtimePresenceEnter, entered.Action)
+	assert.Equal(t, agentports.RealtimePresenceEnter, entered.Action)
 	assert.Equal(t, bobConn.UserID.String(), entered.UserID)
 
 	bob.Close()
-	var left services.RealtimePresenceEvent
+	var left agentports.RealtimePresenceEvent
 	for {
-		require.NoError(t, sonic.Unmarshal(nextOf(t, alice, services.RealtimeEventPresence).Data, &left))
-		if left.ConnectionID == bobConn.ConnectionID && left.Action == services.RealtimePresenceLeave {
+		require.NoError(t, sonic.Unmarshal(nextOf(t, alice, agentports.RealtimeEventPresence).Data, &left))
+		if left.ConnectionID == bobConn.ConnectionID && left.Action == agentports.RealtimePresenceLeave {
 			break
 		}
 	}
@@ -317,25 +317,25 @@ func TestBroker_ScopedEventsReachOnlyJoinedConnections(t *testing.T) {
 	snapshot, err := b.JoinPresence(t.Context(), viewerConn, scope)
 	require.NoError(t, err)
 	require.Len(t, snapshot.Members, 1)
-	nextOf(t, viewer, services.RealtimeEventPresence)
+	nextOf(t, viewer, agentports.RealtimeEventPresence)
 
 	typistConn := tn.conn(pulid.MustNew("usr_"), false)
 	_ = subscribe(t, b, typistConn, false, "")
 	_, err = b.JoinPresence(t.Context(), typistConn, scope)
 	require.NoError(t, err)
 
-	b.Enqueue(&services.RealtimeEnvelope{
+	b.Enqueue(&agentports.RealtimeEnvelope{
 		OrganizationID: tn.org,
 		BusinessUnitID: tn.bu,
-		Event:          services.RealtimeEventTyping,
+		Event:          agentports.RealtimeEventTyping,
 		Scope:          scope,
 		Payload:        []byte(`{"scope":"` + scope + `"}`),
 		Ephemeral:      true,
 	})
 
-	nextOf(t, viewer, services.RealtimeEventTyping)
-	silent(t, outsider, services.RealtimeEventTyping)
-	silent(t, outsider, services.RealtimeEventPresence)
+	nextOf(t, viewer, agentports.RealtimeEventTyping)
+	silent(t, outsider, agentports.RealtimeEventTyping)
+	silent(t, outsider, agentports.RealtimeEventPresence)
 
 	require.NoError(t, b.LeavePresence(t.Context(), viewerConn, scope))
 	require.Eventually(t, func() bool {
@@ -352,26 +352,26 @@ func TestBroker_SweepAnnouncesDeadMembers(t *testing.T) {
 	ghost := pulid.MustNew("rtc_").String()
 	tenant := tenantKey(tn.org, tn.bu)
 	ctx := context.Background()
-	require.NoError(t, client.ZAdd(ctx, presenceExpiryKey(tenant, services.RealtimeScopeUsers), redis.Z{
+	require.NoError(t, client.ZAdd(ctx, presenceExpiryKey(tenant, agentports.RealtimeScopeUsers), redis.Z{
 		Score:  float64(time.Now().Add(-time.Minute).UnixMilli()),
 		Member: ghost,
 	}).Err())
-	require.NoError(t, client.HSet(ctx, presenceDataKey(tenant, services.RealtimeScopeUsers),
+	require.NoError(t, client.HSet(ctx, presenceDataKey(tenant, agentports.RealtimeScopeUsers),
 		ghost, `{"u":"usr_ghost","n":"Ghost"}`).Err())
 
 	b.sweep()
 
-	var left services.RealtimePresenceEvent
+	var left agentports.RealtimePresenceEvent
 	for {
-		require.NoError(t, sonic.Unmarshal(nextOf(t, watcher, services.RealtimeEventPresence).Data, &left))
+		require.NoError(t, sonic.Unmarshal(nextOf(t, watcher, agentports.RealtimeEventPresence).Data, &left))
 		if left.ConnectionID == ghost {
 			break
 		}
 	}
-	assert.Equal(t, services.RealtimePresenceLeave, left.Action)
+	assert.Equal(t, agentports.RealtimePresenceLeave, left.Action)
 	assert.Equal(t, "usr_ghost", left.UserID)
 
-	members, err := b.members(ctx, tenant, services.RealtimeScopeUsers)
+	members, err := b.members(ctx, tenant, agentports.RealtimeScopeUsers)
 	require.NoError(t, err)
 	for _, member := range members.Members {
 		assert.NotEqual(t, ghost, member.ConnectionID)
@@ -388,7 +388,7 @@ func TestBroker_SlowReaderIsClosedWithOverflow(t *testing.T) {
 	}
 
 	require.Eventually(t, func() bool {
-		return stream.Reason() == services.RealtimeCloseOverflow
+		return stream.Reason() == agentports.RealtimeCloseOverflow
 	}, waitFor, 20*time.Millisecond)
 }
 
@@ -398,7 +398,7 @@ func TestBroker_PerUserConnectionLimit(t *testing.T) {
 	user := pulid.MustNew("usr_")
 
 	first := subscribe(t, b, tn.conn(user, false), false, "")
-	_, err := b.Subscribe(t.Context(), &services.RealtimeSubscribeRequest{
+	_, err := b.Subscribe(t.Context(), &agentports.RealtimeSubscribeRequest{
 		Connection: tn.conn(user, false),
 	})
 	require.Error(t, err)
@@ -420,9 +420,9 @@ func TestBroker_DrainClosesStreamsWithShutdown(t *testing.T) {
 	case <-time.After(waitFor):
 		t.Fatal("stream was not closed")
 	}
-	assert.Equal(t, services.RealtimeCloseShutdown, stream.Reason())
+	assert.Equal(t, agentports.RealtimeCloseShutdown, stream.Reason())
 
-	_, err := b.Subscribe(t.Context(), &services.RealtimeSubscribeRequest{
+	_, err := b.Subscribe(t.Context(), &agentports.RealtimeSubscribeRequest{
 		Connection: tn.conn(pulid.MustNew("usr_"), false),
 	})
 	require.Error(t, err)
@@ -437,7 +437,7 @@ func TestBroker_FreshStreamsCarryAResumableCursor(t *testing.T) {
 	time.Sleep(200 * time.Millisecond)
 
 	quiet := subscribe(t, b, tn.conn(user, false), false, "")
-	var ready services.RealtimeReadyEvent
+	var ready agentports.RealtimeReadyEvent
 	require.NoError(t, sonic.Unmarshal(quiet.Prelude()[0].Data, &ready))
 	assert.False(t, ready.Resumed)
 	_, ok := parseCursor(ready.Cursor)

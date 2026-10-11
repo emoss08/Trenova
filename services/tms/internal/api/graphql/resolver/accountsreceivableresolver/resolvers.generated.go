@@ -4,7 +4,7 @@ package accountsreceivableresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	accountsreceivableservice "github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
+	accountsreceivableservice "github.com/emoss08/trenova/internal/modules/billing/app/accountsreceivableservice"
 )
 
 type Deps struct {

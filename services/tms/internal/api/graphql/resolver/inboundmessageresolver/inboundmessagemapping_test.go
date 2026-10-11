@@ -3,7 +3,7 @@ package inboundmessageresolver
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"

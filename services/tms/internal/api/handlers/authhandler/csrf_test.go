@@ -7,9 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+
 	"github.com/emoss08/trenova/internal/api/csrf"
-	"github.com/emoss08/trenova/internal/core/domain/session"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -26,7 +27,7 @@ func decodeCSRF(t *testing.T, w *httptest.ResponseRecorder) map[string]string {
 func TestCSRFTokenWithoutSessionAnswersAnEmptyToken(t *testing.T) {
 	t.Parallel()
 
-	svc := mocks.NewMockAuthService(t)
+	svc := tenantportsmock.NewMockAuthService(t)
 	_, router := newTestHandler(svc)
 
 	w := httptest.NewRecorder()
@@ -42,7 +43,7 @@ func TestCSRFTokenWithoutSessionAnswersAnEmptyToken(t *testing.T) {
 func TestCSRFTokenWithAStaleSessionAnswersAnEmptyToken(t *testing.T) {
 	t.Parallel()
 
-	svc := mocks.NewMockAuthService(t)
+	svc := tenantportsmock.NewMockAuthService(t)
 	svc.EXPECT().AuthenticateSession(mock.Anything, "stale").Return(nil, errors.New("expired"))
 	_, router := newTestHandler(svc)
 
@@ -59,7 +60,7 @@ func TestCSRFTokenWithASessionIsBoundToIt(t *testing.T) {
 	t.Parallel()
 
 	sessionID := pulid.MustNew("ses_")
-	svc := mocks.NewMockAuthService(t)
+	svc := tenantportsmock.NewMockAuthService(t)
 	svc.EXPECT().AuthenticateSession(mock.Anything, "live").Return(&session.Session{ID: sessionID}, nil)
 	_, router := newTestHandler(svc)
 

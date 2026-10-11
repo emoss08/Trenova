@@ -4,7 +4,7 @@ package routingguideresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	routingguideservice "github.com/emoss08/trenova/internal/core/services/routingguideservice"
+	routingguideservice "github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
 )
 
 type Deps struct {

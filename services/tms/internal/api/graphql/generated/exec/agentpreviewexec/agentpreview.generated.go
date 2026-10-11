@@ -9,7 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -43,7 +43,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agent.AgentDecision)
 					return gqlexec.Resolver[resolverAgentDecision](ec, "AgentDecision").Preview(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentProposalPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐProposalPreview),
+				Marshal: gqlexec.Marshal(marshalOAgentProposalPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐProposalPreview),
 			},
 			{
 				Name:     "previewDigest",
@@ -86,7 +86,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agent.PlanPreview)
 					return obj.Steps, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentPlanStepPreview2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPlanStepPreviewᚄ),
+				Marshal: gqlexec.Marshal(marshalNAgentPlanStepPreview2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPlanStepPreviewᚄ),
 			},
 			{
 				Name:     "digest",
@@ -159,7 +159,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agent.PlanStepPreview)
 					return obj.Preview, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentProposalPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐProposalPreview),
+				Marshal: gqlexec.Marshal(marshalNAgentProposalPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐProposalPreview),
 			},
 		}},
 		{Object: "AgentPreviewFieldChange", Fields: []*gqlexec.Field{
@@ -221,7 +221,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agent.PreviewFieldChange)
 					return obj.BeforeRef, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentPreviewRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewRef),
+				Marshal: gqlexec.Marshal(marshalOAgentPreviewRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewRef),
 			},
 			{
 				Name:      "afterRef",
@@ -231,7 +231,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agent.PreviewFieldChange)
 					return obj.AfterRef, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentPreviewRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewRef),
+				Marshal: gqlexec.Marshal(marshalOAgentPreviewRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewRef),
 			},
 			{
 				Name:     "withheld",
@@ -302,7 +302,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agent.MessagePreview)
 					return obj.Channel, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentPreviewMessageChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMessageChannel),
+				Marshal: gqlexec.Marshal(marshalNAgentPreviewMessageChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMessageChannel),
 			},
 			{
 				Name:     "from",
@@ -436,7 +436,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agent.MoneyPreview)
 					return obj.Lines, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentPreviewMoneyLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMoneyLineᚄ),
+				Marshal: gqlexec.Marshal(marshalNAgentPreviewMoneyLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMoneyLineᚄ),
 			},
 			{
 				Name:       "totalBefore",
@@ -579,7 +579,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agent.RecordChange)
 					return obj.Record, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentPreviewRecordLink2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐRecordRef),
+				Marshal: gqlexec.Marshal(marshalOAgentPreviewRecordLink2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐRecordRef),
 			},
 			{
 				Name:       "entityId",
@@ -610,7 +610,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agent.RecordChange)
 					return obj.Operation, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentPreviewOperation2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewOperation),
+				Marshal: gqlexec.Marshal(marshalNAgentPreviewOperation2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewOperation),
 			},
 			{
 				Name:     "version",
@@ -650,7 +650,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agent.RecordChange)
 					return obj.Fields, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentPreviewFieldChange2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewFieldChangeᚄ),
+				Marshal: gqlexec.Marshal(marshalNAgentPreviewFieldChange2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewFieldChangeᚄ),
 			},
 			{
 				Name:     "omittedFields",
@@ -670,7 +670,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agent.RecordChange)
 					return obj.Message, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentPreviewMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMessagePreview),
+				Marshal: gqlexec.Marshal(marshalOAgentPreviewMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMessagePreview),
 			},
 			{
 				Name:      "money",
@@ -680,7 +680,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agent.RecordChange)
 					return obj.Money, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentPreviewMoney2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMoneyPreview),
+				Marshal: gqlexec.Marshal(marshalOAgentPreviewMoney2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMoneyPreview),
 			},
 		}},
 		{Object: "AgentPreviewRecordLink", Fields: []*gqlexec.Field{
@@ -745,7 +745,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agent.PreviewRef)
 					return obj.Record, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentPreviewRecordLink2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐRecordRef),
+				Marshal: gqlexec.Marshal(marshalOAgentPreviewRecordLink2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐRecordRef),
 			},
 			{
 				Name:     "withheld",
@@ -842,7 +842,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agent.PreviewWarning)
 					return obj.Reasons, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentPreviewReason2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewReasonᚄ),
+				Marshal: gqlexec.Marshal(marshalNAgentPreviewReason2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewReasonᚄ),
 			},
 		}},
 		{Object: "AgentProposalPreview", Fields: []*gqlexec.Field{
@@ -884,7 +884,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agent.ProposalPreview)
 					return obj.Coverage, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentPreviewCoverage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewCoverage),
+				Marshal: gqlexec.Marshal(marshalNAgentPreviewCoverage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewCoverage),
 			},
 			{
 				Name:      "changes",
@@ -895,7 +895,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agent.ProposalPreview)
 					return obj.Changes, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentPreviewRecordChange2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐRecordChangeᚄ),
+				Marshal: gqlexec.Marshal(marshalNAgentPreviewRecordChange2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐRecordChangeᚄ),
 			},
 			{
 				Name:      "warnings",
@@ -906,7 +906,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agent.ProposalPreview)
 					return obj.Warnings, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentPreviewWarning2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewWarningᚄ),
+				Marshal: gqlexec.Marshal(marshalNAgentPreviewWarning2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewWarningᚄ),
 			},
 			{
 				Name:     "stale",
@@ -927,7 +927,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agent.ProposalPreview)
 					return obj.Staleness, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentPreviewStaleness2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewStaleness),
+				Marshal: gqlexec.Marshal(marshalOAgentPreviewStaleness2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewStaleness),
 			},
 			{
 				Name:     "targetVersion",
@@ -1002,7 +1002,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentProposalPreview(ctx, fc.Args["id"].(string), fc.Args["modifications"].(map[string]any))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentProposalPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐProposalPreview),
+				Marshal: gqlexec.Marshal(marshalNAgentProposalPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐProposalPreview),
 			},
 			{
 				Name:       "agentPlanPreview",
@@ -1016,7 +1016,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentPlanPreview(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentPlanPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPlanPreview),
+				Marshal: gqlexec.Marshal(marshalNAgentPlanPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPlanPreview),
 			},
 			{
 				Name:       "myProposalPreview",
@@ -1030,7 +1030,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyProposalPreview(ctx, fc.Args["id"].(string), fc.Args["modifications"].(map[string]any))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentProposalPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐProposalPreview),
+				Marshal: gqlexec.Marshal(marshalNAgentProposalPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐProposalPreview),
 			},
 			{
 				Name:       "myPlanPreview",
@@ -1044,7 +1044,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyPlanPreview(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentPlanPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPlanPreview),
+				Marshal: gqlexec.Marshal(marshalNAgentPlanPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPlanPreview),
 			},
 		}},
 	},
@@ -1243,7 +1243,7 @@ func unmarshalOJSON2map(ctx context.Context, ec *gqlexec.Exec, v any) (map[strin
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAgentPlanPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPlanPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.PlanPreview) graphql.Marshaler {
+func marshalNAgentPlanPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPlanPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.PlanPreview) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1251,19 +1251,19 @@ func marshalNAgentPlanPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return ec.MarshalType(ctx, sel, "AgentPlanPreview", v)
 }
 
-func marshalNAgentPlanStepPreview2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPlanStepPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.PlanStepPreview) graphql.Marshaler {
+func marshalNAgentPlanStepPreview2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPlanStepPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.PlanStepPreview) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AgentPlanStepPreview", &v)
 }
 
-func marshalNAgentPlanStepPreview2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPlanStepPreviewᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agent.PlanStepPreview) graphql.Marshaler {
+func marshalNAgentPlanStepPreview2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPlanStepPreviewᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agent.PlanStepPreview) graphql.Marshaler {
 	return gqlexec.List[agent.PlanStepPreview]{
-		Elem:        marshalNAgentPlanStepPreview2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPlanStepPreview,
+		Elem:        marshalNAgentPlanStepPreview2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPlanStepPreview,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAgentPreviewCoverage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewCoverage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.PreviewCoverage) graphql.Marshaler {
+func marshalNAgentPreviewCoverage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewCoverage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.PreviewCoverage) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1271,19 +1271,19 @@ func marshalNAgentPreviewCoverage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNAgentPreviewFieldChange2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewFieldChange(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.PreviewFieldChange) graphql.Marshaler {
+func marshalNAgentPreviewFieldChange2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewFieldChange(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.PreviewFieldChange) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AgentPreviewFieldChange", &v)
 }
 
-func marshalNAgentPreviewFieldChange2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewFieldChangeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agent.PreviewFieldChange) graphql.Marshaler {
+func marshalNAgentPreviewFieldChange2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewFieldChangeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agent.PreviewFieldChange) graphql.Marshaler {
 	return gqlexec.List[agent.PreviewFieldChange]{
-		Elem:        marshalNAgentPreviewFieldChange2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewFieldChange,
+		Elem:        marshalNAgentPreviewFieldChange2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewFieldChange,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAgentPreviewMessageChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMessageChannel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.MessageChannel) graphql.Marshaler {
+func marshalNAgentPreviewMessageChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMessageChannel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.MessageChannel) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1291,19 +1291,19 @@ func marshalNAgentPreviewMessageChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res
 }
 
-func marshalNAgentPreviewMoneyLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMoneyLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.MoneyLine) graphql.Marshaler {
+func marshalNAgentPreviewMoneyLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMoneyLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.MoneyLine) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AgentPreviewMoneyLine", &v)
 }
 
-func marshalNAgentPreviewMoneyLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMoneyLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agent.MoneyLine) graphql.Marshaler {
+func marshalNAgentPreviewMoneyLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMoneyLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agent.MoneyLine) graphql.Marshaler {
 	return gqlexec.List[agent.MoneyLine]{
-		Elem:        marshalNAgentPreviewMoneyLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMoneyLine,
+		Elem:        marshalNAgentPreviewMoneyLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMoneyLine,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAgentPreviewOperation2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewOperation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.PreviewOperation) graphql.Marshaler {
+func marshalNAgentPreviewOperation2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewOperation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.PreviewOperation) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1311,43 +1311,43 @@ func marshalNAgentPreviewOperation2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNAgentPreviewReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.PreviewReason) graphql.Marshaler {
+func marshalNAgentPreviewReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.PreviewReason) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AgentPreviewReason", &v)
 }
 
-func marshalNAgentPreviewReason2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewReasonᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agent.PreviewReason) graphql.Marshaler {
+func marshalNAgentPreviewReason2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewReasonᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agent.PreviewReason) graphql.Marshaler {
 	return gqlexec.List[agent.PreviewReason]{
-		Elem:        marshalNAgentPreviewReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewReason,
+		Elem:        marshalNAgentPreviewReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewReason,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAgentPreviewRecordChange2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐRecordChange(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.RecordChange) graphql.Marshaler {
+func marshalNAgentPreviewRecordChange2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐRecordChange(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.RecordChange) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AgentPreviewRecordChange", &v)
 }
 
-func marshalNAgentPreviewRecordChange2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐRecordChangeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agent.RecordChange) graphql.Marshaler {
+func marshalNAgentPreviewRecordChange2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐRecordChangeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agent.RecordChange) graphql.Marshaler {
 	return gqlexec.List[agent.RecordChange]{
-		Elem:        marshalNAgentPreviewRecordChange2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐRecordChange,
+		Elem:        marshalNAgentPreviewRecordChange2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐRecordChange,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAgentPreviewWarning2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewWarning(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.PreviewWarning) graphql.Marshaler {
+func marshalNAgentPreviewWarning2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewWarning(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.PreviewWarning) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AgentPreviewWarning", &v)
 }
 
-func marshalNAgentPreviewWarning2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewWarningᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agent.PreviewWarning) graphql.Marshaler {
+func marshalNAgentPreviewWarning2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewWarningᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agent.PreviewWarning) graphql.Marshaler {
 	return gqlexec.List[agent.PreviewWarning]{
-		Elem:        marshalNAgentPreviewWarning2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewWarning,
+		Elem:        marshalNAgentPreviewWarning2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewWarning,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAgentProposalPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐProposalPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.ProposalPreview) graphql.Marshaler {
+func marshalNAgentProposalPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐProposalPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.ProposalPreview) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1412,42 +1412,42 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOAgentPreviewMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMessagePreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.MessagePreview) graphql.Marshaler {
+func marshalOAgentPreviewMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMessagePreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.MessagePreview) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AgentPreviewMessage", v)
 }
 
-func marshalOAgentPreviewMoney2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMoneyPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.MoneyPreview) graphql.Marshaler {
+func marshalOAgentPreviewMoney2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMoneyPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.MoneyPreview) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AgentPreviewMoney", v)
 }
 
-func marshalOAgentPreviewRecordLink2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐRecordRef(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.RecordRef) graphql.Marshaler {
+func marshalOAgentPreviewRecordLink2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐRecordRef(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.RecordRef) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AgentPreviewRecordLink", v)
 }
 
-func marshalOAgentPreviewRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewRef(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.PreviewRef) graphql.Marshaler {
+func marshalOAgentPreviewRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewRef(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.PreviewRef) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AgentPreviewRef", v)
 }
 
-func marshalOAgentPreviewStaleness2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewStaleness(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.PreviewStaleness) graphql.Marshaler {
+func marshalOAgentPreviewStaleness2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPreviewStaleness(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.PreviewStaleness) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AgentPreviewStaleness", v)
 }
 
-func marshalOAgentProposalPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐProposalPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.ProposalPreview) graphql.Marshaler {
+func marshalOAgentProposalPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐProposalPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.ProposalPreview) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

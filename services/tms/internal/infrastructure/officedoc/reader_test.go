@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/officedoc"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xuri/excelize/v2"
@@ -67,7 +67,7 @@ func docxPackage(t *testing.T, body string) []byte {
 	})
 }
 
-func read(t *testing.T, data []byte, format services.OfficeFormat) []services.OfficePage {
+func read(t *testing.T, data []byte, format kernelports.OfficeFormat) []kernelports.OfficePage {
 	t.Helper()
 	pages, err := officedoc.New().Read(t.Context(), data, format)
 	require.NoError(t, err)
@@ -91,7 +91,7 @@ func TestReadDOCXSplitsPagesAndKeepsStructure(t *testing.T) {
 		`<w:p><w:pPr><w:pageBreakBefore/></w:pPr><w:r><w:t>Third page</w:t></w:r></w:p>` +
 		`<w:p><w:r><w:del><w:delText>gone</w:delText></w:del></w:r></w:p>`
 
-	pages := read(t, docxPackage(t, body), services.OfficeFormatDOCX)
+	pages := read(t, docxPackage(t, body), kernelports.OfficeFormatDOCX)
 
 	require.Len(t, pages, 3)
 	assert.Equal(t, "Rate\t$1,359.56\nPO\n77812\nOrigin\tDestination", pages[0].Text)
@@ -136,7 +136,7 @@ func TestReadPPTXFollowsSlideOrder(t *testing.T) {
 		"ppt/media/image1.png":             pngBytes(t),
 	})
 
-	pages := read(t, data, services.OfficeFormatPPTX)
+	pages := read(t, data, kernelports.OfficeFormatPPTX)
 
 	require.Len(t, pages, 2)
 	assert.Equal(t, "First slide\nline two", pages[0].Text)
@@ -163,7 +163,7 @@ func TestReadXLSXReadsEverySheet(t *testing.T) {
 	require.NoError(t, book.Write(&buf))
 	require.NoError(t, book.Close())
 
-	pages := read(t, buf.Bytes(), services.OfficeFormatXLSX)
+	pages := read(t, buf.Bytes(), kernelports.OfficeFormatXLSX)
 
 	require.Len(t, pages, 2)
 	assert.Equal(t, "Lane\tRate\nATL-DAL\t1359.56", pages[0].Text)
@@ -194,7 +194,7 @@ func TestReadEPUBReadsTheSpine(t *testing.T) {
 		"OEBPS/images/sig.png": pngBytes(t),
 	})
 
-	pages := read(t, data, services.OfficeFormatEPUB)
+	pages := read(t, data, kernelports.OfficeFormatEPUB)
 
 	require.Len(t, pages, 2)
 	assert.Equal(t, "Bill of lading\nShipper: Acme Freight & Co\nPieces\t12", pages[0].Text)
@@ -208,29 +208,29 @@ func TestReadRejectsUnreadableInput(t *testing.T) {
 
 	reader := officedoc.New()
 
-	for _, format := range []services.OfficeFormat{
-		services.OfficeFormatDOCX,
-		services.OfficeFormatXLSX,
-		services.OfficeFormatPPTX,
-		services.OfficeFormatEPUB,
+	for _, format := range []kernelports.OfficeFormat{
+		kernelports.OfficeFormatDOCX,
+		kernelports.OfficeFormatXLSX,
+		kernelports.OfficeFormatPPTX,
+		kernelports.OfficeFormatEPUB,
 	} {
 		_, err := reader.Read(t.Context(), []byte("not a zip"), format)
-		require.ErrorIs(t, err, services.ErrOfficeDocumentUnreadable, format)
+		require.ErrorIs(t, err, kernelports.ErrOfficeDocumentUnreadable, format)
 	}
 
-	_, err := reader.Read(t.Context(), zipFiles(t, map[string][]byte{"x": nil}), services.OfficeFormatDOCX)
-	require.ErrorIs(t, err, services.ErrOfficeDocumentUnreadable)
+	_, err := reader.Read(t.Context(), zipFiles(t, map[string][]byte{"x": nil}), kernelports.OfficeFormatDOCX)
+	require.ErrorIs(t, err, kernelports.ErrOfficeDocumentUnreadable)
 
 	_, err = reader.Read(t.Context(), zipFiles(t, map[string][]byte{"x": nil}), "odt")
-	require.ErrorIs(t, err, services.ErrOfficeDocumentUnreadable)
+	require.ErrorIs(t, err, kernelports.ErrOfficeDocumentUnreadable)
 }
 
 func TestReadRefusesOversizedParts(t *testing.T) {
 	t.Parallel()
 
 	huge := `<w:p><w:r><w:t>` + strings.Repeat("a", 65<<20) + `</w:t></w:r></w:p>`
-	_, err := officedoc.New().Read(t.Context(), docxPackage(t, huge), services.OfficeFormatDOCX)
-	require.ErrorIs(t, err, services.ErrOfficeDocumentUnreadable)
+	_, err := officedoc.New().Read(t.Context(), docxPackage(t, huge), kernelports.OfficeFormatDOCX)
+	require.ErrorIs(t, err, kernelports.ErrOfficeDocumentUnreadable)
 }
 
 func TestReadStopsWhenCancelled(t *testing.T) {
@@ -240,25 +240,25 @@ func TestReadStopsWhenCancelled(t *testing.T) {
 	cancel()
 
 	body := strings.Repeat(`<w:p><w:r><w:t>row</w:t></w:r></w:p>`, 2000)
-	_, err := officedoc.New().Read(ctx, docxPackage(t, body), services.OfficeFormatDOCX)
+	_, err := officedoc.New().Read(ctx, docxPackage(t, body), kernelports.OfficeFormatDOCX)
 	require.ErrorIs(t, err, context.Canceled)
 }
 
 func TestOfficeFormatOf(t *testing.T) {
 	t.Parallel()
 
-	format, ok := services.OfficeFormatOf(
+	format, ok := kernelports.OfficeFormatOf(
 		"application/vnd.openxmlformats-officedocument.wordprocessingml.document; charset=binary", "x.bin",
 	)
 	assert.True(t, ok)
-	assert.Equal(t, services.OfficeFormatDOCX, format)
+	assert.Equal(t, kernelports.OfficeFormatDOCX, format)
 
-	format, ok = services.OfficeFormatOf("application/octet-stream", "Rates.XLSX")
+	format, ok = kernelports.OfficeFormatOf("application/octet-stream", "Rates.XLSX")
 	assert.True(t, ok)
-	assert.Equal(t, services.OfficeFormatXLSX, format)
+	assert.Equal(t, kernelports.OfficeFormatXLSX, format)
 
-	_, ok = services.OfficeFormatOf("application/pdf", "x.pdf")
+	_, ok = kernelports.OfficeFormatOf("application/pdf", "x.pdf")
 	assert.False(t, ok)
-	_, ok = services.OfficeFormatOf("application/msword", "x.doc")
+	_, ok = kernelports.OfficeFormatOf("application/msword", "x.doc")
 	assert.False(t, ok)
 }

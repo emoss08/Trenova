@@ -5,8 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
+
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/uptrace/bun"
@@ -20,7 +21,7 @@ func TestTemplateCursorSQLIncludesBaseColumns(t *testing.T) {
 
 	q := db.NewSelect().
 		Model(&entities).
-		ColumnExpr(buncolgen.EDITemplateTable.All())
+		ColumnExpr(edicol.EDITemplateTable.All())
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
 		"et",

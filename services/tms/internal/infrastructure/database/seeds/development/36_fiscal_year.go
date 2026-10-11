@@ -8,9 +8,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
+	"github.com/emoss08/trenova/pkg/buncolgen/fiscalyearcol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -67,7 +68,7 @@ func (s *FiscalYearSeed) Run(ctx context.Context, tx bun.Tx) error {
 }
 
 func (s *FiscalYearSeed) ensure(ctx context.Context, tx bun.Tx, fy *fiscalyear.FiscalYear) error {
-	cols := buncolgen.FiscalYearColumns
+	cols := fiscalyearcol.FiscalYearColumns
 	exists, err := tx.NewSelect().
 		Model((*fiscalyear.FiscalYear)(nil)).
 		Where(cols.OrganizationID.Eq(), fy.OrganizationID).

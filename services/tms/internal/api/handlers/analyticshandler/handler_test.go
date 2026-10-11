@@ -3,15 +3,15 @@ package analyticshandler
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/require"
 )
 
 func TestValidateAnalyticsRequest_AllowsTomorrowsPickupsInclude(t *testing.T) {
 	t.Parallel()
 
-	req := &services.AnaltyicsRequest{
-		Page:    services.ShipmentAnalyticsPage,
+	req := &kernelports.AnaltyicsRequest{
+		Page:    kernelports.ShipmentAnalyticsPage,
 		Include: includeTomorrowsPickups,
 	}
 
@@ -21,8 +21,8 @@ func TestValidateAnalyticsRequest_AllowsTomorrowsPickupsInclude(t *testing.T) {
 func TestValidateAnalyticsRequest_RejectsUnsupportedInclude(t *testing.T) {
 	t.Parallel()
 
-	req := &services.AnaltyicsRequest{
-		Page:    services.ShipmentAnalyticsPage,
+	req := &kernelports.AnaltyicsRequest{
+		Page:    kernelports.ShipmentAnalyticsPage,
 		Include: "unsupported",
 	}
 

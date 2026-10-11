@@ -3,9 +3,9 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/customerservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -15,7 +15,7 @@ import (
 type customersByIDsGetter interface {
 	GetByIDs(
 		ctx context.Context,
-		req repositories.GetCustomersByIDsRequest,
+		req customerports.GetCustomersByIDsRequest,
 	) ([]*customer.Customer, error)
 }
 
@@ -37,7 +37,7 @@ func NewCustomerByIDLoaderFactory(
 	}
 }
 
-func (f *CustomerByIDLoaderFactory) NewForTenant(
+func newCustomerByIDLoader(f *CustomerByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *customer.Customer] {
 	return newLoader(f.batchFunc(tenantInfo))
@@ -47,10 +47,10 @@ func (f *CustomerByIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
 ) batchFetchFunc[*customer.Customer] {
 	return batchByIDFunc(func(ctx context.Context, ids []pulid.ID) ([]*customer.Customer, error) {
-		return f.customers.GetByIDs(ctx, repositories.GetCustomersByIDsRequest{
+		return f.customers.GetByIDs(ctx, customerports.GetCustomersByIDsRequest{
 			TenantInfo:  tenantInfo,
 			CustomerIDs: ids,
-			CustomerFilterOptions: repositories.CustomerFilterOptions{
+			CustomerFilterOptions: customerports.CustomerFilterOptions{
 				IncludeState: true,
 			},
 		})

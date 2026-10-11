@@ -3,8 +3,8 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -18,7 +18,7 @@ type usStatesByIDsGetter interface {
 type UsStateByIDLoaderFactoryParams struct {
 	fx.In
 
-	Repo repositories.UsStateRepository
+	Repo usstateports.UsStateRepository
 }
 
 type UsStateByIDLoaderFactory struct {
@@ -31,7 +31,7 @@ func NewUsStateByIDLoaderFactory(p UsStateByIDLoaderFactoryParams) *UsStateByIDL
 	}
 }
 
-func (f *UsStateByIDLoaderFactory) NewForTenant(
+func newUsStateByIDLoader(f *UsStateByIDLoaderFactory,
 	_ pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *usstate.UsState] {
 	return newLoader(f.batchFunc())

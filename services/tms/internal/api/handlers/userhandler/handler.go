@@ -6,14 +6,15 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/passwordresetservice"
-	"github.com/emoss08/trenova/internal/core/services/roleservice"
-	"github.com/emoss08/trenova/internal/core/services/userservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,8 +30,8 @@ type Params struct {
 	RoleService          *roleservice.Service
 	PasswordReset        *passwordresetservice.Service
 	Config               *config.Config
-	PermissionEngine     services.PermissionEngine
-	MFA                  services.MFAService
+	PermissionEngine     permissionports.PermissionEngine
+	MFA                  sessionports.MFAService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
@@ -40,8 +41,8 @@ type Handler struct {
 	roleService   *roleservice.Service
 	passwordReset *passwordresetservice.Service
 	cfg           *config.Config
-	permEngine    services.PermissionEngine
-	mfa           services.MFAService
+	permEngine    permissionports.PermissionEngine
+	mfa           sessionports.MFAService
 	eh            *helpers.ErrorHandler
 	pm            *middleware.PermissionMiddleware
 }
@@ -165,7 +166,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*tenant.User], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListUsersRequest{
+				&tenantports.ListUsersRequest{
 					Filter:             req,
 					IncludeMemberships: helpers.QueryBool(c, "includeMemberships", false),
 				},
@@ -190,7 +191,7 @@ func (h *Handler) list(c *gin.Context) {
 func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := new(repositories.BulkUpdateUserStatusRequest)
+	req := new(tenantports.BulkUpdateUserStatusRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -232,7 +233,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.GetByID(c.Request.Context(), repositories.GetUserByIDRequest{
+	entity, err := h.service.GetByID(c.Request.Context(), tenantports.GetUserByIDRequest{
 		TenantInfo:         pagination.FromAuthAsUser(authCtx),
 		LookupUserID:       userID,
 		IncludeMemberships: helpers.QueryBool(c, "includeMemberships", false),
@@ -257,7 +258,7 @@ func (h *Handler) get(c *gin.Context) {
 func (h *Handler) me(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	entity, err := h.service.GetByID(c.Request.Context(), repositories.GetUserByIDRequest{
+	entity, err := h.service.GetByID(c.Request.Context(), tenantports.GetUserByIDRequest{
 		TenantInfo:         pagination.FromAuthAsUser(authCtx),
 		IncludeMemberships: true,
 	})
@@ -288,7 +289,7 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.GetByID(c.Request.Context(), repositories.GetUserByIDRequest{
+	entity, err := h.service.GetByID(c.Request.Context(), tenantports.GetUserByIDRequest{
 		TenantInfo:   pagination.FromAuthAsUser(authCtx),
 		LookupUserID: userID,
 	})
@@ -418,7 +419,7 @@ func (h *Handler) simulatePermissions(c *gin.Context) {
 
 	perms, err := h.permEngine.SimulatePermissions(
 		c.Request.Context(),
-		&services.SimulatePermissionsRequest{
+		&permissionports.SimulatePermissionsRequest{
 			UserID:         userID,
 			OrganizationID: authCtx.OrganizationID,
 			AddRoleIDs:     req.AddRoleIDs,
@@ -804,7 +805,7 @@ func (h *Handler) switchOrganization(c *gin.Context) {
 
 	resp, err := h.service.SwitchOrganization(
 		c.Request.Context(),
-		repositories.SwitchOrganizationRequest{
+		tenantports.SwitchOrganizationRequest{
 			SessionID:      sessionID,
 			OrganizationID: orgID,
 		},
@@ -840,7 +841,7 @@ func (h *Handler) patch(c *gin.Context) {
 		return
 	}
 
-	existing, err := h.service.GetByID(c.Request.Context(), repositories.GetUserByIDRequest{
+	existing, err := h.service.GetByID(c.Request.Context(), tenantports.GetUserByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			UserID: userID,
 			OrgID:  authCtx.OrganizationID,

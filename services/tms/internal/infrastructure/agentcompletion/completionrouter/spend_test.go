@@ -3,10 +3,12 @@ package completionrouter
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
+
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -14,15 +16,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func spentGuard(t *testing.T, tenant pagination.TenantInfo) *mocks.MockQuotaGuard {
+func spentGuard(t *testing.T, tenant pagination.TenantInfo) *platformplanportsmock.MockQuotaGuard {
 	t.Helper()
 
-	guard := mocks.NewMockQuotaGuard(t)
-	guard.EXPECT().Check(mock.Anything, &serviceports.QuotaRequest{
+	guard := platformplanportsmock.NewMockQuotaGuard(t)
+	guard.EXPECT().Check(mock.Anything, &platformplanports.QuotaRequest{
 		TenantInfo: tenant,
 		Meter:      platformcatalog.MeterAISpendCents,
 		Quantity:   1,
-	}).Return(&serviceports.QuotaDecision{
+	}).Return(&platformplanports.QuotaDecision{
 		Meter:   platformcatalog.MeterAISpendCents,
 		Plan:    platformplan.PlanKeyFreeDemo,
 		Limit:   150,
@@ -40,13 +42,13 @@ func TestEveryModelEntryRefusesOnceTheMonthsSpendIsGone(t *testing.T) {
 	svc := newTestService(t)
 	svc.quota = spentGuard(t, tenant)
 
-	_, err := svc.CompleteStructured(t.Context(), &serviceports.StructuredCompletionRequest{TenantInfo: tenant})
+	_, err := svc.CompleteStructured(t.Context(), &agentports.StructuredCompletionRequest{TenantInfo: tenant})
 	require.True(t, errortypes.IsQuotaExceededError(err))
 
-	_, err = svc.CompleteChat(t.Context(), &serviceports.ChatCompletionRequest{TenantInfo: tenant})
+	_, err = svc.CompleteChat(t.Context(), &agentports.ChatCompletionRequest{TenantInfo: tenant})
 	require.True(t, errortypes.IsQuotaExceededError(err))
 
-	_, err = svc.SubmitBackground(t.Context(), &serviceports.StructuredCompletionRequest{TenantInfo: tenant})
+	_, err = svc.SubmitBackground(t.Context(), &agentports.StructuredCompletionRequest{TenantInfo: tenant})
 	require.True(t, errortypes.IsQuotaExceededError(err))
 }
 
@@ -54,7 +56,7 @@ func TestAssertWithinSpendSkipsCallsWithoutATenant(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(t)
-	svc.quota = mocks.NewMockQuotaGuard(t)
+	svc.quota = platformplanportsmock.NewMockQuotaGuard(t)
 
 	require.NoError(t, svc.assertWithinSpend(t.Context(), pagination.TenantInfo{}))
 }

@@ -4,7 +4,7 @@ package apikeyresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	apikeyservice "github.com/emoss08/trenova/internal/core/services/apikeyservice"
+	apikeyservice "github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice"
 )
 
 type Deps struct {

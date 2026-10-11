@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/tableinsightservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/tableinsightservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/shopspring/decimal"
 )
@@ -18,13 +18,13 @@ func insightScope(
 	authCtx *authctx.AuthContext,
 	filter *gqlmodel.DataTableConnectionInput,
 	options map[string]any,
-) (repositories.TableInsightScope, error) {
+) (permissionports.TableInsightScope, error) {
 	connection, err := base.DataTableConnectionFromGraphQL(ctx, filter, base.TenantInfo(authCtx))
 	if err != nil {
-		return repositories.TableInsightScope{}, err
+		return permissionports.TableInsightScope{}, err
 	}
 
-	return repositories.TableInsightScope{Filter: connection.Filter, Options: options}, nil
+	return permissionports.TableInsightScope{Filter: connection.Filter, Options: options}, nil
 }
 
 func decimalString(value *decimal.Decimal) *string {
@@ -35,7 +35,10 @@ func decimalString(value *decimal.Decimal) *string {
 	return &text
 }
 
-func facetsToModel(field string, result *repositories.TableFacetResult) *gqlmodel.DataTableFacets {
+func facetsToModel(
+	field string,
+	result *permissionports.TableFacetResult,
+) *gqlmodel.DataTableFacets {
 	buckets := make([]*gqlmodel.DataTableFacetBucket, 0, len(result.Buckets))
 	for _, bucket := range result.Buckets {
 		buckets = append(buckets, &gqlmodel.DataTableFacetBucket{
@@ -46,7 +49,7 @@ func facetsToModel(field string, result *repositories.TableFacetResult) *gqlmode
 	return &gqlmodel.DataTableFacets{Field: field, Buckets: buckets, Total: result.Total}
 }
 
-func aggregatesToModel(result *repositories.TableAggregateResult) *gqlmodel.DataTableAggregates {
+func aggregatesToModel(result *permissionports.TableAggregateResult) *gqlmodel.DataTableAggregates {
 	values := make([]*gqlmodel.DataTableAggregateValue, 0, len(result.Values))
 	for _, value := range result.Values {
 		values = append(values, &gqlmodel.DataTableAggregateValue{
@@ -60,7 +63,7 @@ func aggregatesToModel(result *repositories.TableAggregateResult) *gqlmodel.Data
 	return &gqlmodel.DataTableAggregates{Count: result.Count, Values: values}
 }
 
-func fieldsToModel(fields []repositories.TableInsightField) []*gqlmodel.DataTableInsightField {
+func fieldsToModel(fields []permissionports.TableInsightField) []*gqlmodel.DataTableInsightField {
 	models := make([]*gqlmodel.DataTableInsightField, 0, len(fields))
 	for _, field := range fields {
 		models = append(models, &gqlmodel.DataTableInsightField{
@@ -75,7 +78,7 @@ func fieldsToModel(fields []repositories.TableInsightField) []*gqlmodel.DataTabl
 
 func seriesRequest(
 	input *gqlmodel.DataTableSeriesInput,
-	scope repositories.TableInsightScope,
+	scope permissionports.TableInsightScope,
 ) *tableinsightservice.SeriesRequest {
 	req := &tableinsightservice.SeriesRequest{
 		Scope:       scope,

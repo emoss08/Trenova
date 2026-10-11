@@ -91,7 +91,20 @@ tasks:
   run-watch:
     desc: Run the API server with hot reload
     cmds:
-      - air {{.AIR_FLAGS}} api run
+      - air {{.AIR_FLAGS}}
+
+  build-bench:
+    desc: "Measure rebuild times after representative edits (task build-bench -- --target cli --mode air)"
+    cmds:
+      - ./scripts/buildbench/buildbench.sh {{.CLI_ARGS}}
+
+  run-worker-watch:
+    desc: Run the worker service with hot reload
+    cmds:
+      - >-
+        air {{.AIR_FLAGS}}
+        --build.cmd "go build -tags nomsgpack -gcflags='github.com/emoss08/trenova/...=-N -l' -ldflags='-s -w' -o ./tmp/trenova-worker ./cmd/worker"
+        --build.bin "./tmp/trenova-worker"
 
   run-worker:
     desc: Run the worker service
@@ -218,6 +231,7 @@ tasks:
     desc: Run linter
     cmds:
       - golangci-lint run{{if .GO_JOBS}} --concurrency={{.GO_JOBS}}{{end}} ./...
+      - go run ./scripts/archlint
 
   fmt:
     desc: Format code
@@ -531,7 +545,7 @@ tasks:
   watch:
     desc: Run API with hot reload
     cmds:
-      - air {{.AIR_FLAGS}} api run
+      - air {{.AIR_FLAGS}}
 
   watch-ui:
     desc: Run frontend with hot reload

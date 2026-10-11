@@ -4,10 +4,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -70,17 +72,20 @@ func (h *Handler) openAssistantThread(c *gin.Context) {
 		UserID: authCtx.UserID,
 	}
 	if templateID.IsNotNil() {
-		if _, err := h.service.GetByID(c.Request.Context(), repositories.GetFormulaTemplateByIDRequest{
-			TemplateID: templateID,
-			TenantInfo: tenant,
-		}); err != nil {
+		if _, err := h.service.GetByID(
+			c.Request.Context(),
+			formulatemplateports.GetFormulaTemplateByIDRequest{
+				TemplateID: templateID,
+				TenantInfo: tenant,
+			},
+		); err != nil {
 			h.eh.HandleError(c, err)
 			return
 		}
 	}
 
-	actor := services.RequestActor{
-		PrincipalType:  services.PrincipalType(authCtx.PrincipalType),
+	actor := permissionports.RequestActor{
+		PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
 		PrincipalID:    authCtx.PrincipalID,
 		UserID:         authCtx.UserID,
 		APIKeyID:       authCtx.APIKeyID,
@@ -89,7 +94,7 @@ func (h *Handler) openAssistantThread(c *gin.Context) {
 	}
 	opened, err := h.pageAssistant.OpenPageThread(
 		c.Request.Context(),
-		&services.OpenPageThreadRequest{
+		&agentports.OpenPageThreadRequest{
 			TenantInfo:  tenant,
 			Origin:      conversation.ThreadOriginFormula,
 			SubjectType: agent.SubjectFormulaTemplate,

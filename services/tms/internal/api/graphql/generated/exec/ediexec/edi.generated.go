@@ -9,8 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -113,7 +113,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDICommunicationProfile)
 					return obj.Method, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiConnectionMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐConnectionMethod),
+				Marshal: gqlexec.Marshal(marshalNEdiConnectionMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐConnectionMethod),
 			},
 			{
 				Name:     "status",
@@ -162,7 +162,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDICommunicationProfile)
 					return obj.SecretState, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiCommunicationProfileSecretState2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐCommunicationProfileSecretStateᚄ),
+				Marshal: gqlexec.Marshal(marshalOEdiCommunicationProfileSecretState2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐCommunicationProfileSecretStateᚄ),
 			},
 			{
 				Name:     "version",
@@ -202,7 +202,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDICommunicationProfile)
 					return obj.Partner, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner),
+				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartner),
 			},
 		}},
 		{Object: "EdiCommunicationProfileConnection", Fields: []*gqlexec.Field{
@@ -248,7 +248,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDICommunicationProfileEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiCommunicationProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDICommunicationProfile),
+				Marshal: gqlexec.Marshal(marshalNEdiCommunicationProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDICommunicationProfile),
 			},
 			{
 				Name:     "cursor",
@@ -292,7 +292,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDIConnection)
 					return obj.Method, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiConnectionMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐConnectionMethod),
+				Marshal: gqlexec.Marshal(marshalNEdiConnectionMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐConnectionMethod),
 			},
 			{
 				Name:     "status",
@@ -302,7 +302,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDIConnection)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiConnectionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐConnectionStatus),
+				Marshal: gqlexec.Marshal(marshalNEdiConnectionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐConnectionStatus),
 			},
 		}},
 		{Object: "EdiInboundFile", Fields: []*gqlexec.Field{
@@ -363,7 +363,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDIInboundFile)
 					return obj.Method, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiConnectionMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐConnectionMethod),
+				Marshal: gqlexec.Marshal(marshalNEdiConnectionMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐConnectionMethod),
 			},
 			{
 				Name:     "remotePath",
@@ -458,7 +458,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDIInboundFile)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiInboundFileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐInboundFileStatus),
+				Marshal: gqlexec.Marshal(marshalNEdiInboundFileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐInboundFileStatus),
 			},
 			{
 				Name:     "failureReason",
@@ -536,7 +536,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDIInboundFile)
 					return obj.Partner, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner),
+				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartner),
 			},
 		}},
 		{Object: "EdiInboundFileConnection", Fields: []*gqlexec.Field{
@@ -582,7 +582,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDIInboundFileEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiInboundFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIInboundFile),
+				Marshal: gqlexec.Marshal(marshalNEdiInboundFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIInboundFile),
 			},
 			{
 				Name:     "cursor",
@@ -693,7 +693,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDIMappingProfile)
 					return obj.Partner, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner),
+				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartner),
 			},
 			{
 				Name:      "entries",
@@ -703,7 +703,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDIMappingProfile)
 					return obj.Entries, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiMappingProfileItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIMappingProfileItemᚄ),
+				Marshal: gqlexec.Marshal(marshalOEdiMappingProfileItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIMappingProfileItemᚄ),
 			},
 		}},
 		{Object: "EdiMappingProfileConnection", Fields: []*gqlexec.Field{
@@ -749,7 +749,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDIMappingProfileEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiMappingProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIMappingProfile),
+				Marshal: gqlexec.Marshal(marshalNEdiMappingProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIMappingProfile),
 			},
 			{
 				Name:     "cursor",
@@ -821,7 +821,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDIMappingProfileItem)
 					return obj.EntityType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiMappingEntityType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐMappingEntityType),
+				Marshal: gqlexec.Marshal(marshalNEdiMappingEntityType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐMappingEntityType),
 			},
 			{
 				Name:     "sourceId",
@@ -1005,7 +1005,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDIMessage)
 					return obj.Direction, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐDocumentDirection),
+				Marshal: gqlexec.Marshal(marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐDocumentDirection),
 			},
 			{
 				Name:       "transactionSet",
@@ -1037,7 +1037,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDIMessage)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐMessageStatus),
+				Marshal: gqlexec.Marshal(marshalNEdiMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐMessageStatus),
 			},
 			{
 				Name:     "interchangeControlNumber",
@@ -1086,7 +1086,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDIMessage)
 					return obj.DeliveryStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiMessageDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐMessageDeliveryStatus),
+				Marshal: gqlexec.Marshal(marshalOEdiMessageDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐMessageDeliveryStatus),
 			},
 			{
 				Name:     "deliveryRemotePath",
@@ -1141,7 +1141,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDIMessage)
 					return obj.AckStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiMessageAckStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐMessageAcknowledgmentStatus),
+				Marshal: gqlexec.Marshal(marshalOEdiMessageAckStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐMessageAcknowledgmentStatus),
 			},
 			{
 				Name:     "ackMessageId",
@@ -1218,7 +1218,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDIMessage)
 					return obj.Partner, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner),
+				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartner),
 			},
 		}},
 		{Object: "EdiMessageConnection", Fields: []*gqlexec.Field{
@@ -1264,7 +1264,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDIMessageEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIMessage),
+				Marshal: gqlexec.Marshal(marshalNEdiMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIMessage),
 			},
 			{
 				Name:     "cursor",
@@ -1316,7 +1316,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDIPartner)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiPartnerKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐPartnerKind),
+				Marshal: gqlexec.Marshal(marshalNEdiPartnerKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐPartnerKind),
 			},
 			{
 				Name:     "status",
@@ -1497,7 +1497,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDIPartner)
 					return obj.InternalOrganization, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization),
+				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization),
 			},
 			{
 				Name:      "connection",
@@ -1507,7 +1507,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDIPartner)
 					return obj.Connection, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIConnection),
+				Marshal: gqlexec.Marshal(marshalOEdiConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIConnection),
 			},
 			{
 				Name:      "defaultTransport",
@@ -1517,7 +1517,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDIPartner)
 					return obj.DefaultTransport, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiCommunicationProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDICommunicationProfile),
+				Marshal: gqlexec.Marshal(marshalOEdiCommunicationProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDICommunicationProfile),
 			},
 		}},
 		{Object: "EdiPartnerConnection", Fields: []*gqlexec.Field{
@@ -1592,7 +1592,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDIPartnerDocumentProfile)
 					return obj.Direction, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐDocumentDirection),
+				Marshal: gqlexec.Marshal(marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐDocumentDirection),
 			},
 			{
 				Name:       "transactionSet",
@@ -1614,7 +1614,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDIPartnerDocumentProfile)
 					return obj.Partner, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner),
+				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartner),
 			},
 		}},
 		{Object: "EdiPartnerEdge", Fields: []*gqlexec.Field{
@@ -1627,7 +1627,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDIPartnerEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner),
+				Marshal: gqlexec.Marshal(marshalNEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartner),
 			},
 			{
 				Name:     "cursor",
@@ -2064,7 +2064,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDITemplate)
 					return obj.Direction, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐDocumentDirection),
+				Marshal: gqlexec.Marshal(marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐDocumentDirection),
 			},
 			{
 				Name:     "standard",
@@ -2074,7 +2074,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDITemplate)
 					return obj.Standard, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiStandard2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIStandard),
+				Marshal: gqlexec.Marshal(marshalNEdiStandard2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIStandard),
 			},
 			{
 				Name:       "transactionSet",
@@ -2096,7 +2096,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDITemplate)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐTemplateStatus),
+				Marshal: gqlexec.Marshal(marshalNEdiTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐTemplateStatus),
 			},
 			{
 				Name:     "version",
@@ -2136,7 +2136,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDITemplate)
 					return obj.ActiveVersion, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITemplateVersion),
+				Marshal: gqlexec.Marshal(marshalOEdiTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDITemplateVersion),
 			},
 			{
 				Name:      "versions",
@@ -2146,7 +2146,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDITemplate)
 					return obj.Versions, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiTemplateVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITemplateVersionᚄ),
+				Marshal: gqlexec.Marshal(marshalOEdiTemplateVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDITemplateVersionᚄ),
 			},
 		}},
 		{Object: "EdiTemplateConnection", Fields: []*gqlexec.Field{
@@ -2192,7 +2192,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDITemplateEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITemplate),
+				Marshal: gqlexec.Marshal(marshalNEdiTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDITemplate),
 			},
 			{
 				Name:     "cursor",
@@ -2293,7 +2293,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDITemplateVersion)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐTemplateStatus),
+				Marshal: gqlexec.Marshal(marshalNEdiTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐTemplateStatus),
 			},
 			{
 				Name:     "isActive",
@@ -2553,7 +2553,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDITestCase)
 					return obj.DocumentProfile, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiPartnerDocumentProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartnerDocumentProfile),
+				Marshal: gqlexec.Marshal(marshalOEdiPartnerDocumentProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartnerDocumentProfile),
 			},
 		}},
 		{Object: "EdiTestCaseConnection", Fields: []*gqlexec.Field{
@@ -2599,7 +2599,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDITestCaseEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiTestCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITestCase),
+				Marshal: gqlexec.Marshal(marshalNEdiTestCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDITestCase),
 			},
 			{
 				Name:     "cursor",
@@ -2718,7 +2718,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDITransfer)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiTransferStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐTransferStatus),
+				Marshal: gqlexec.Marshal(marshalNEdiTransferStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐTransferStatus),
 			},
 			{
 				Name:       "tenderPayload",
@@ -2819,7 +2819,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDITransfer)
 					return obj.SourcePartner, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner),
+				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartner),
 			},
 			{
 				Name:      "targetPartner",
@@ -2829,7 +2829,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*edi.EDITransfer)
 					return obj.TargetPartner, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner),
+				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartner),
 			},
 		}},
 		{Object: "EdiTransferConnection", Fields: []*gqlexec.Field{
@@ -2875,7 +2875,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDITransferEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiTransfer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITransfer),
+				Marshal: gqlexec.Marshal(marshalNEdiTransfer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDITransfer),
 			},
 			{
 				Name:     "cursor",
@@ -3254,7 +3254,7 @@ func field_Query_ediMessages_args(ctx context.Context, ec *gqlexec.Exec, rawArgs
 	args["transactionSet"] = arg1
 	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "direction",
 		func(ctx context.Context, v any) (*edi.DocumentDirection, error) {
-			return unmarshalOEdiDocumentDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐDocumentDirection(ctx, ec, v)
+			return unmarshalOEdiDocumentDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐDocumentDirection(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -3283,7 +3283,7 @@ func field_Query_ediInboundFiles_args(ctx context.Context, ec *gqlexec.Exec, raw
 	args["input"] = arg0
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "status",
 		func(ctx context.Context, v any) (*edi.InboundFileStatus, error) {
-			return unmarshalOEdiInboundFileStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐInboundFileStatus(ctx, ec, v)
+			return unmarshalOEdiInboundFileStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐInboundFileStatus(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -3312,7 +3312,7 @@ func field_Query_ediTemplates_args(ctx context.Context, ec *gqlexec.Exec, rawArg
 	args["input"] = arg0
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "status",
 		func(ctx context.Context, v any) (*edi.TemplateStatus, error) {
-			return unmarshalOEdiTemplateStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐTemplateStatus(ctx, ec, v)
+			return unmarshalOEdiTemplateStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐTemplateStatus(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -3328,7 +3328,7 @@ func field_Query_ediTemplates_args(ctx context.Context, ec *gqlexec.Exec, rawArg
 	args["transactionSet"] = arg2
 	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "direction",
 		func(ctx context.Context, v any) (*edi.DocumentDirection, error) {
-			return unmarshalOEdiDocumentDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐDocumentDirection(ctx, ec, v)
+			return unmarshalOEdiDocumentDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐDocumentDirection(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -3455,7 +3455,7 @@ func unmarshalNID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
 }
 
-func unmarshalOEdiDocumentDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐDocumentDirection(ctx context.Context, ec *gqlexec.Exec, v any) (*edi.DocumentDirection, error) {
+func unmarshalOEdiDocumentDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐDocumentDirection(ctx context.Context, ec *gqlexec.Exec, v any) (*edi.DocumentDirection, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -3464,7 +3464,7 @@ func unmarshalOEdiDocumentDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOEdiInboundFileStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐInboundFileStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*edi.InboundFileStatus, error) {
+func unmarshalOEdiInboundFileStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐInboundFileStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*edi.InboundFileStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -3473,7 +3473,7 @@ func unmarshalOEdiInboundFileStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOEdiTemplateStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐTemplateStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*edi.TemplateStatus, error) {
+func unmarshalOEdiTemplateStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐTemplateStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*edi.TemplateStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -3526,7 +3526,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNEdiCommunicationProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDICommunicationProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDICommunicationProfile) graphql.Marshaler {
+func marshalNEdiCommunicationProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDICommunicationProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDICommunicationProfile) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3558,11 +3558,11 @@ func marshalNEdiCommunicationProfileEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return ec.MarshalType(ctx, sel, "EdiCommunicationProfileEdge", v)
 }
 
-func marshalNEdiCommunicationProfileSecretState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐCommunicationProfileSecretState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.CommunicationProfileSecretState) graphql.Marshaler {
+func marshalNEdiCommunicationProfileSecretState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐCommunicationProfileSecretState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.CommunicationProfileSecretState) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "EdiCommunicationProfileSecretState", &v)
 }
 
-func marshalNEdiConnectionMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐConnectionMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.ConnectionMethod) graphql.Marshaler {
+func marshalNEdiConnectionMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐConnectionMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.ConnectionMethod) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3570,7 +3570,7 @@ func marshalNEdiConnectionMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return res
 }
 
-func marshalNEdiConnectionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐConnectionStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.ConnectionStatus) graphql.Marshaler {
+func marshalNEdiConnectionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐConnectionStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.ConnectionStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3578,7 +3578,7 @@ func marshalNEdiConnectionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return res
 }
 
-func marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐDocumentDirection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.DocumentDirection) graphql.Marshaler {
+func marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐDocumentDirection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.DocumentDirection) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3586,7 +3586,7 @@ func marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNEdiInboundFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIInboundFile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDIInboundFile) graphql.Marshaler {
+func marshalNEdiInboundFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIInboundFile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDIInboundFile) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3618,7 +3618,7 @@ func marshalNEdiInboundFileEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "EdiInboundFileEdge", v)
 }
 
-func marshalNEdiInboundFileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐInboundFileStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.InboundFileStatus) graphql.Marshaler {
+func marshalNEdiInboundFileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐInboundFileStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.InboundFileStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3626,7 +3626,7 @@ func marshalNEdiInboundFileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNEdiMappingEntityType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐMappingEntityType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.MappingEntityType) graphql.Marshaler {
+func marshalNEdiMappingEntityType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐMappingEntityType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.MappingEntityType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3634,7 +3634,7 @@ func marshalNEdiMappingEntityType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNEdiMappingProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIMappingProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDIMappingProfile) graphql.Marshaler {
+func marshalNEdiMappingProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIMappingProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDIMappingProfile) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3666,7 +3666,7 @@ func marshalNEdiMappingProfileEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "EdiMappingProfileEdge", v)
 }
 
-func marshalNEdiMappingProfileItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIMappingProfileItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDIMappingProfileItem) graphql.Marshaler {
+func marshalNEdiMappingProfileItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIMappingProfileItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDIMappingProfileItem) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3674,7 +3674,7 @@ func marshalNEdiMappingProfileItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "EdiMappingProfileItem", v)
 }
 
-func marshalNEdiMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIMessage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDIMessage) graphql.Marshaler {
+func marshalNEdiMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIMessage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDIMessage) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3706,7 +3706,7 @@ func marshalNEdiMessageEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi
 	return ec.MarshalType(ctx, sel, "EdiMessageEdge", v)
 }
 
-func marshalNEdiMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐMessageStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.MessageStatus) graphql.Marshaler {
+func marshalNEdiMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐMessageStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.MessageStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3714,7 +3714,7 @@ func marshalNEdiMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore
 	return res
 }
 
-func marshalNEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDIPartner) graphql.Marshaler {
+func marshalNEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartner(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDIPartner) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3746,7 +3746,7 @@ func marshalNEdiPartnerEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi
 	return ec.MarshalType(ctx, sel, "EdiPartnerEdge", v)
 }
 
-func marshalNEdiPartnerKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐPartnerKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.PartnerKind) graphql.Marshaler {
+func marshalNEdiPartnerKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐPartnerKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.PartnerKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3786,7 +3786,7 @@ func marshalNEdiPartnerScorecard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "EdiPartnerScorecard", v)
 }
 
-func marshalNEdiStandard2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIStandard(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.EDIStandard) graphql.Marshaler {
+func marshalNEdiStandard2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIStandard(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.EDIStandard) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3838,7 +3838,7 @@ func marshalNEdiSummaryStatusCount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "EdiSummaryStatusCount", v)
 }
 
-func marshalNEdiTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDITemplate) graphql.Marshaler {
+func marshalNEdiTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDITemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDITemplate) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3870,7 +3870,7 @@ func marshalNEdiTemplateEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋap
 	return ec.MarshalType(ctx, sel, "EdiTemplateEdge", v)
 }
 
-func marshalNEdiTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐTemplateStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.TemplateStatus) graphql.Marshaler {
+func marshalNEdiTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐTemplateStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.TemplateStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3878,7 +3878,7 @@ func marshalNEdiTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return res
 }
 
-func marshalNEdiTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITemplateVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDITemplateVersion) graphql.Marshaler {
+func marshalNEdiTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDITemplateVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDITemplateVersion) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3886,7 +3886,7 @@ func marshalNEdiTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "EdiTemplateVersion", v)
 }
 
-func marshalNEdiTestCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITestCase(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDITestCase) graphql.Marshaler {
+func marshalNEdiTestCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDITestCase(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDITestCase) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3918,7 +3918,7 @@ func marshalNEdiTestCaseEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋap
 	return ec.MarshalType(ctx, sel, "EdiTestCaseEdge", v)
 }
 
-func marshalNEdiTransfer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITransfer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDITransfer) graphql.Marshaler {
+func marshalNEdiTransfer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDITransfer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDITransfer) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3950,7 +3950,7 @@ func marshalNEdiTransferEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋap
 	return ec.MarshalType(ctx, sel, "EdiTransferEdge", v)
 }
 
-func marshalNEdiTransferStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐTransferStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.TransferStatus) graphql.Marshaler {
+func marshalNEdiTransferStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐTransferStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.TransferStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4058,66 +4058,66 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOEdiCommunicationProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDICommunicationProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDICommunicationProfile) graphql.Marshaler {
+func marshalOEdiCommunicationProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDICommunicationProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDICommunicationProfile) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "EdiCommunicationProfile", v)
 }
 
-func marshalOEdiCommunicationProfileSecretState2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐCommunicationProfileSecretStateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []edi.CommunicationProfileSecretState) graphql.Marshaler {
+func marshalOEdiCommunicationProfileSecretState2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐCommunicationProfileSecretStateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []edi.CommunicationProfileSecretState) graphql.Marshaler {
 	return gqlexec.List[edi.CommunicationProfileSecretState]{
-		Elem:        marshalNEdiCommunicationProfileSecretState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐCommunicationProfileSecretState,
+		Elem:        marshalNEdiCommunicationProfileSecretState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐCommunicationProfileSecretState,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalOEdiConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDIConnection) graphql.Marshaler {
+func marshalOEdiConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDIConnection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "EdiConnection", v)
 }
 
-func marshalOEdiMappingProfileItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIMappingProfileItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*edi.EDIMappingProfileItem) graphql.Marshaler {
+func marshalOEdiMappingProfileItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIMappingProfileItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*edi.EDIMappingProfileItem) graphql.Marshaler {
 	return gqlexec.List[*edi.EDIMappingProfileItem]{
-		Elem:        marshalNEdiMappingProfileItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIMappingProfileItem,
+		Elem:        marshalNEdiMappingProfileItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIMappingProfileItem,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalOEdiMessageAckStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐMessageAcknowledgmentStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.MessageAcknowledgmentStatus) graphql.Marshaler {
+func marshalOEdiMessageAckStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐMessageAcknowledgmentStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.MessageAcknowledgmentStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	return res
 }
 
-func marshalOEdiMessageDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐMessageDeliveryStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.MessageDeliveryStatus) graphql.Marshaler {
+func marshalOEdiMessageDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐMessageDeliveryStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.MessageDeliveryStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	return res
 }
 
-func marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDIPartner) graphql.Marshaler {
+func marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartner(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDIPartner) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "EdiPartner", v)
 }
 
-func marshalOEdiPartnerDocumentProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartnerDocumentProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDIPartnerDocumentProfile) graphql.Marshaler {
+func marshalOEdiPartnerDocumentProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartnerDocumentProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDIPartnerDocumentProfile) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "EdiPartnerDocumentProfile", v)
 }
 
-func marshalOEdiTemplateVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITemplateVersionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*edi.EDITemplateVersion) graphql.Marshaler {
+func marshalOEdiTemplateVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDITemplateVersionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*edi.EDITemplateVersion) graphql.Marshaler {
 	return gqlexec.List[*edi.EDITemplateVersion]{
-		Elem:        marshalNEdiTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITemplateVersion,
+		Elem:        marshalNEdiTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDITemplateVersion,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalOEdiTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITemplateVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDITemplateVersion) graphql.Marshaler {
+func marshalOEdiTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDITemplateVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDITemplateVersion) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -4153,7 +4153,7 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
+func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

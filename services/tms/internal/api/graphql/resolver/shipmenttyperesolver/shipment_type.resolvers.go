@@ -10,9 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/shipmenttypeports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,7 +29,7 @@ func (r *QueryResolver) ShipmentTypes(ctx context.Context, input gqlmodel.DataTa
 
 	result, err := r.ShipmentTypeService.ListConnection(
 		ctx,
-		&repositories.ListShipmentTypesConnectionRequest{
+		&shipmenttypeports.ListShipmentTypesConnectionRequest{
 			Filter:              tableInput.Filter,
 			Cursor:              tableInput.Cursor,
 			ShipmentTypeColumns: shipmentTypeColumns(ctx, "edges.node"),
@@ -53,7 +53,7 @@ func (r *QueryResolver) ShipmentType(ctx context.Context, id string) (*shipmentt
 		return nil, err
 	}
 
-	return r.ShipmentTypeService.Get(ctx, repositories.GetShipmentTypeByIDRequest{
+	return r.ShipmentTypeService.Get(ctx, shipmenttypeports.GetShipmentTypeByIDRequest{
 		ID:         shipmentTypeID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

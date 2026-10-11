@@ -1,25 +1,26 @@
 package completionrouter
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 )
 
-var _ serviceports.StructuredPromptRenderer = PromptRenderer{}
+var _ aicorrectionports.StructuredPromptRenderer = PromptRenderer{}
 
 type PromptRenderer struct{}
 
-func NewPromptRenderer() serviceports.StructuredPromptRenderer { return PromptRenderer{} }
+func NewPromptRenderer() aicorrectionports.StructuredPromptRenderer { return PromptRenderer{} }
 
 func (PromptRenderer) RenderStructuredPrompt(
-	req *serviceports.StructuredCompletionRequest,
+	req *agentports.StructuredCompletionRequest,
 	mode aiprovider.StructuredOutputMode,
-) serviceports.RenderedPrompt {
+) aicorrectionports.RenderedPrompt {
 	run := structuredRun(req)
 	sampling := modeladapter.SamplingForTask(run.Task)
 
-	return serviceports.RenderedPrompt{
+	return aicorrectionports.RenderedPrompt{
 		System:      structuredSystem(run, mode),
 		User:        run.UserContent,
 		Temperature: sampling.Temperature,
@@ -27,7 +28,7 @@ func (PromptRenderer) RenderStructuredPrompt(
 	}
 }
 
-func structuredRun(req *serviceports.StructuredCompletionRequest) *runRequest {
+func structuredRun(req *agentports.StructuredCompletionRequest) *runRequest {
 	task := req.Task
 	if task == "" {
 		task = aiprovider.TaskGeneral

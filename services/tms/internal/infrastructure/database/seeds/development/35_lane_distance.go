@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
-	"github.com/emoss08/trenova/internal/core/domain/location"
+	"github.com/emoss08/trenova/pkg/buncolgen/distanceoverridecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/geoutils"
 	"github.com/uptrace/bun"
@@ -44,7 +46,7 @@ func (s *LaneDistanceSeed) Run(ctx context.Context, tx bun.Tx) error {
 			}
 
 			locations := make([]*location.Location, 0, 16)
-			cols := buncolgen.LocationColumns
+			cols := locationcol.LocationColumns
 			if err = tx.NewSelect().
 				Model(&locations).
 				Where(cols.OrganizationID.Eq(), org.ID).
@@ -93,7 +95,7 @@ func (s *LaneDistanceSeed) ensure(
 	tx bun.Tx,
 	override *distanceoverride.DistanceOverride,
 ) error {
-	cols := buncolgen.DistanceOverrideColumns
+	cols := distanceoverridecol.DistanceOverrideColumns
 	exists, err := tx.NewSelect().
 		Model((*distanceoverride.DistanceOverride)(nil)).
 		Where(cols.OrganizationID.Eq(), override.OrganizationID).

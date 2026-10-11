@@ -4,7 +4,7 @@ package metrics
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

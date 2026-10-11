@@ -1,6 +1,6 @@
 # buncolgen — Type-Safe Column Helpers for Bun ORM
 
-`services/tms/pkg/buncolgen/` contains **generated** type-safe helpers for every domain entity: column references, table metadata, relation names, tenant scoping, filter builders, and field maps. **All repository code must use these helpers instead of hand-written column strings.** Raw string literals like `"wrk.status = ?"` or `.Relation("PrimaryWorker")` are forbidden in new code.
+`services/tms/pkg/buncolgen/` holds the shared machinery (`Column`, `TableInfo`, aggregates) and one **generated** package per domain package, `pkg/buncolgen/<domain>col` (`shipmentcol`, `workercol`), with type-safe helpers for every entity in it: column references, table metadata, relation names, tenant scoping, filter builders, and field maps. A repository imports only the packages of the tables it queries, so adding a column recompiles that table's users rather than every repository. **All repository code must use these helpers instead of hand-written column strings.** Raw string literals like `"wrk.status = ?"` or `.Relation("PrimaryWorker")` are forbidden in new code.
 
 ## Why
 
@@ -11,7 +11,7 @@
 
 ## Regenerating
 
-The generator lives at `internal/infrastructure/database/colgen/gen` and scans `internal/core/domain/`:
+The generator lives at `internal/infrastructure/database/colgen/gen` and scans every module's domain directory (`internal/modules/*/domain/`):
 
 ```bash
 cd services/tms && task generate-columns
@@ -22,7 +22,7 @@ Run this after **any** domain model change (new entity, added/renamed/removed fi
 
 The `email` domain package is intentionally excluded (`excludedPackages` in `gen/main.go`) due to unqualified model-name collisions.
 
-## Generated Artifacts (per entity `Worker` → `worker_gen.go`)
+## Generated Artifacts (per entity `Worker` → `workercol/worker_gen.go`)
 
 | Artifact | Type | Purpose |
 |---|---|---|
@@ -68,8 +68,8 @@ These are the canonical patterns — follow them exactly. Real examples: `tracto
 When a function uses several helpers from the same entity, bind them once:
 
 ```go
-cols := buncolgen.TractorColumns
-rel := buncolgen.TractorRelations
+cols := tractorcol.TractorColumns
+rel := tractorcol.TractorRelations
 ```
 
 ### Get by ID (tenant-scoped)
@@ -79,8 +79,8 @@ entity := new(tractor.Tractor)
 err := dba.NewSelect().
     Model(entity).
     WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-        return buncolgen.TractorScopeTenant(sq, req.TenantInfo).
-            Where(buncolgen.TractorColumns.ID.Eq(), req.ID)
+        return tractorcol.TractorScopeTenant(sq, req.TenantInfo).
+            Where(tractorcol.TractorColumns.ID.Eq(), req.ID)
     }).
     Scan(ctx)
 ```
@@ -88,13 +88,13 @@ err := dba.NewSelect().
 ### List by IDs
 
 ```go
-Where(buncolgen.TractorColumns.ID.In(), bun.List(req.TractorIDs))
+Where(tractorcol.TractorColumns.ID.In(), bun.List(req.TractorIDs))
 ```
 
 ### Tenant scoping via Apply
 
 ```go
-q.Apply(buncolgen.TractorApplyTenant(req.TenantInfo))
+q.Apply(tractorcol.TractorApplyTenant(req.TenantInfo))
 ```
 
 ### Bulk update with tenant scope
@@ -103,10 +103,10 @@ q.Apply(buncolgen.TractorApplyTenant(req.TenantInfo))
 _, err := dba.NewUpdate().
     Model((*tractor.Tractor)(nil)).
     WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-        return buncolgen.TractorScopeTenantUpdate(uq, req.TenantInfo).
-            Where(buncolgen.TractorColumns.ID.In(), bun.List(req.TractorIDs))
+        return tractorcol.TractorScopeTenantUpdate(uq, req.TenantInfo).
+            Where(tractorcol.TractorColumns.ID.In(), bun.List(req.TractorIDs))
     }).
-    Set(buncolgen.TractorColumns.Status.Set(), req.Status).
+    Set(tractorcol.TractorColumns.Status.Set(), req.Status).
     Exec(ctx)
 ```
 
@@ -118,7 +118,7 @@ entity.Version++
 results, err := dba.NewUpdate().
     Model(entity).
     WherePK().
-    Where(buncolgen.TractorColumns.Version.Eq(), ov).
+    Where(tractorcol.TractorColumns.Version.Eq(), ov).
     OmitZero().
     Returning("*").
     Exec(ctx)
@@ -129,7 +129,7 @@ results, err := dba.NewUpdate().
 ```go
 func applyTractorColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
     if len(columns) == 0 {
-        return q.ColumnExpr(buncolgen.TractorTable.All()) // "tr.*"
+        return q.ColumnExpr(tractorcol.TractorTable.All()) // "tr.*"
     }
     return q.Column(columns...)
 }
@@ -139,14 +139,14 @@ func applyTractorColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery 
 
 ```go
 q.Relation(rel.PrimaryWorker)
-q.Relation(buncolgen.Rel(rel.PrimaryWorker, buncolgen.WorkerRelations.FleetCode))
+q.Relation(buncolgen.Rel(rel.PrimaryWorker, workercol.WorkerRelations.FleetCode))
 // → "PrimaryWorker.FleetCode"
 ```
 
 ### Ordering
 
 ```go
-q.Order(buncolgen.TractorColumns.CreatedAt.OrderDesc())
+q.Order(tractorcol.TractorColumns.CreatedAt.OrderDesc())
 ```
 
 ### QueryBuilder filters (list endpoints)
@@ -154,15 +154,15 @@ q.Order(buncolgen.TractorColumns.CreatedAt.OrderDesc())
 Pass the generated alias, never a hardcoded string:
 
 ```go
-querybuilder.ApplyFilters(q, buncolgen.TractorTable.Alias, req.Filter, (*tractor.Tractor)(nil))
-querybuilder.ApplyCursorFilters(q, buncolgen.TractorTable.Alias, req.Filter, req.Cursor, (*tractor.Tractor)(nil))
+querybuilder.ApplyFilters(q, tractorcol.TractorTable.Alias, req.Filter, (*tractor.Tractor)(nil))
+querybuilder.ApplyCursorFilters(q, tractorcol.TractorTable.Alias, req.Filter, req.Cursor, (*tractor.Tractor)(nil))
 ```
 
 Programmatic filters use the generated builders so JSON names stay in sync:
 
 ```go
 req.Filter.FieldFilters = append(req.Filter.FieldFilters,
-    buncolgen.WorkerFilter.Status(dbtype.OpEq, domaintypes.StatusActive))
+    workercol.WorkerFilter.Status(dbtype.OpEq, domaintypes.StatusActive))
 ```
 
 ### SelectOptions (typed config)
@@ -188,7 +188,7 @@ dbhelper.SelectOptions[*tractor.Tractor](ctx, r.db.DB(), req.SelectOptionsReques
 ```go
 q.ColumnExpr(buncolgen.Count("total"))
 q.ColumnExpr(buncolgen.CountFilter("active", cols.Status.Eq()), domaintypes.StatusActive)
-q.ColumnExpr(buncolgen.Sum(buncolgen.ShipmentColumns.Weight, "total_weight"))
+q.ColumnExpr(buncolgen.Sum(shipmentcol.ShipmentColumns.Weight, "total_weight"))
 ```
 
 ### SQL expression templates

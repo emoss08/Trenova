@@ -434,9 +434,9 @@ const (
 )
 
 type EncryptionConfig struct {
-	Mode                             string       `mapstructure:"mode"                              validate:"omitempty,oneof=envelope disabled"`
-	KeyManager                       string       `mapstructure:"keyManager"                        validate:"omitempty,oneof=local gcp-autokey disabled"`
-	Key                              string       `mapstructure:"key"                               validate:"omitempty,min=32"`
+	Mode                             string       `mapstructure:"mode"                             validate:"omitempty,oneof=envelope disabled"`
+	KeyManager                       string       `mapstructure:"keyManager"                       validate:"omitempty,oneof=local gcp-autokey disabled"`
+	Key                              string       `mapstructure:"key"                              validate:"omitempty,min=32"`
 	AllowLocalKeyManagerInProduction bool         `mapstructure:"allowLocalKeyManagerInProduction"`
 	GCPKMS                           GCPKMSConfig `mapstructure:"gcpKms"`
 }

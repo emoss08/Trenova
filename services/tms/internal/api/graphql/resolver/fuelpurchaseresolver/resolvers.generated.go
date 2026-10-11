@@ -4,7 +4,7 @@ package fuelpurchaseresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	fuelpurchaseservice "github.com/emoss08/trenova/internal/core/services/fuelpurchaseservice"
+	fuelpurchaseservice "github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
 )
 
 type Deps struct {

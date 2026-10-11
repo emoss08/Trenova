@@ -7,10 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	tenantdomain "github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	tenantdomain "github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -152,19 +152,21 @@ func carrierSettlementControlFromInput(
 		)
 	}
 	return &tenantdomain.CarrierSettlementControl{
-		OrganizationID:                          tenantInfo.OrgID,
-		BusinessUnitID:                          tenantInfo.BuID,
-		Version:                                 int64(input.Version),
-		PayTrigger:                              input.PayTrigger,
-		PayPeriodFrequency:                      input.PayPeriodFrequency,
-		PeriodEndDayOfWeek:                      input.PeriodEndDayOfWeek,
-		PayDelayDays:                            input.PayDelayDays,
-		AutoGenerateBatches:                     input.AutoGenerateBatches,
-		AutoPostOnApprove:                       input.AutoPostOnApprove,
-		VarianceToleranceMinor:                  int64(input.VarianceToleranceMinor),
-		AutoMatchInboundInvoices:                input.AutoMatchInboundInvoices,
-		AutoAcceptWithinTolerance:               input.AutoAcceptWithinTolerance,
-		HoldUntilInvoiceMatched:                 typeutils.ValueOrZero(input.HoldUntilInvoiceMatched),
+		OrganizationID:            tenantInfo.OrgID,
+		BusinessUnitID:            tenantInfo.BuID,
+		Version:                   int64(input.Version),
+		PayTrigger:                input.PayTrigger,
+		PayPeriodFrequency:        input.PayPeriodFrequency,
+		PeriodEndDayOfWeek:        input.PeriodEndDayOfWeek,
+		PayDelayDays:              input.PayDelayDays,
+		AutoGenerateBatches:       input.AutoGenerateBatches,
+		AutoPostOnApprove:         input.AutoPostOnApprove,
+		VarianceToleranceMinor:    int64(input.VarianceToleranceMinor),
+		AutoMatchInboundInvoices:  input.AutoMatchInboundInvoices,
+		AutoAcceptWithinTolerance: input.AutoAcceptWithinTolerance,
+		HoldUntilInvoiceMatched: typeutils.ValueOrZero(
+			input.HoldUntilInvoiceMatched,
+		),
 		DefaultAPAccountID:                      apAccountID,
 		DefaultPurchasedTransportationAccountID: expenseAccountID,
 	}, nil

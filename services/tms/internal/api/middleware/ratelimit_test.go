@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -21,15 +21,15 @@ import (
 )
 
 type recordingStore struct {
-	inner    repositories.RateLimitStore
-	requests [][]repositories.RateLimitRequest
+	inner    kernelports.RateLimitStore
+	requests [][]kernelports.RateLimitRequest
 	err      error
 }
 
 func (s *recordingStore) Check(
 	ctx context.Context,
-	requests []repositories.RateLimitRequest,
-) ([]repositories.RateLimitDecision, error) {
+	requests []kernelports.RateLimitRequest,
+) ([]kernelports.RateLimitDecision, error) {
 	s.requests = append(s.requests, requests)
 	if s.err != nil {
 		return nil, s.err
@@ -39,7 +39,7 @@ func (s *recordingStore) Check(
 
 func newTestRateLimiter(
 	rateLimitCfg config.RateLimitConfig,
-	store repositories.RateLimitStore,
+	store kernelports.RateLimitStore,
 ) *RateLimiter {
 	cfg := &config.Config{
 		App: config.AppConfig{Debug: true},

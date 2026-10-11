@@ -6,16 +6,16 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"go.uber.org/zap"
 )
 
 const storeErrorLogInterval = 30 * time.Second
 
 type ResilientStoreOptions struct {
-	Primary     repositories.RateLimitStore
-	Fallback    repositories.RateLimitStore
+	Primary     kernelports.RateLimitStore
+	Fallback    kernelports.RateLimitStore
 	FailureMode string
 	Timeout     time.Duration
 	Logger      *zap.Logger
@@ -24,8 +24,8 @@ type ResilientStoreOptions struct {
 }
 
 type ResilientStore struct {
-	primary     repositories.RateLimitStore
-	fallback    repositories.RateLimitStore
+	primary     kernelports.RateLimitStore
+	fallback    kernelports.RateLimitStore
 	failureMode string
 	timeout     time.Duration
 	logger      *zap.Logger
@@ -60,8 +60,8 @@ func NewResilientStore(opts ResilientStoreOptions) *ResilientStore {
 
 func (s *ResilientStore) Check(
 	ctx context.Context,
-	requests []repositories.RateLimitRequest,
-) ([]repositories.RateLimitDecision, error) {
+	requests []kernelports.RateLimitRequest,
+) ([]kernelports.RateLimitDecision, error) {
 	checkCtx := ctx
 	if s.timeout > 0 {
 		var cancel context.CancelFunc
@@ -114,10 +114,10 @@ func (s *ResilientStore) reportFailure(err error) {
 	}
 }
 
-func allowAll(requests []repositories.RateLimitRequest) []repositories.RateLimitDecision {
-	decisions := make([]repositories.RateLimitDecision, len(requests))
+func allowAll(requests []kernelports.RateLimitRequest) []kernelports.RateLimitDecision {
+	decisions := make([]kernelports.RateLimitDecision, len(requests))
 	for i := range requests {
-		decisions[i] = repositories.RateLimitDecision{
+		decisions[i] = kernelports.RateLimitDecision{
 			Allowed:   true,
 			Limit:     requests[i].Policy.Burst,
 			Remaining: requests[i].Policy.Burst,

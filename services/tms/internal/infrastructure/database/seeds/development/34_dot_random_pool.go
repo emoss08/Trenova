@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/uptrace/bun"
@@ -47,7 +48,7 @@ func (s *DOTRandomPoolSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return err
 			}
 
-			cols := buncolgen.DOTRandomPoolColumns
+			cols := workercol.DOTRandomPoolColumns
 			exists, err := tx.NewSelect().
 				Model((*worker.DOTRandomPool)(nil)).
 				Where(cols.OrganizationID.Eq(), org.ID).

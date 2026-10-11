@@ -3,7 +3,7 @@ package dbtest
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/uptrace/bun"
 )
 
@@ -17,7 +17,7 @@ func (NopConnection) Close() error                         { return nil }
 
 func (NopConnection) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	return fn(ctx, bun.Tx{})
