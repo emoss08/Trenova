@@ -59,8 +59,8 @@ func (r *settlementRepository) List(
 				Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
 				Order("dstl.period_end DESC").
 				Order("dstl.created_at DESC").
-				Limit(limit).
-				Offset(req.Filter.Pagination.SafeOffset())
+				Limit(int64(limit)).
+				Offset(int64(req.Filter.Pagination.SafeOffset()))
 
 			if req.Filter.Query != "" {
 				pattern := "%" + stringutils.EscapeLikePattern(req.Filter.Query) + "%"
@@ -95,7 +95,7 @@ func (r *settlementRepository) List(
 
 			return &pagination.ListResult[*driversettlement.Settlement]{
 				Items: items,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -130,7 +130,7 @@ func (r *settlementRepository) ListConnection(
 					log.Error("failed to count driver settlements", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -295,7 +295,7 @@ func (r *settlementRepository) ListTrailingNetPay(
 			Where("status != ?", driversettlement.StatusVoided).
 			Where("period_end < ?", req.BeforeDate).
 			Order("period_end DESC").
-			Limit(req.Limit).
+			Limit(int64(req.Limit)).
 			Scan(ctx, &nets)
 		if err != nil {
 			return nil, fmt.Errorf("list trailing net pay: %w", err)

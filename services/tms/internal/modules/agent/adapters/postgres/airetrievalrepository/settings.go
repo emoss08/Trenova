@@ -440,7 +440,7 @@ func purgeIndexEntries(
 		Column(airetrievalcol.IndexEntryTable.PrimaryKey...).
 		Apply(airetrievalcol.IndexEntryApplyTenant(req.TenantInfo)).
 		Where(cols.ModelKey.Eq(), req.ModelKey).
-		Limit(batch)
+		Limit(int64(batch))
 
 	res, err := tx.NewDelete().
 		Model((*airetrieval.IndexEntry)(nil)).
@@ -468,7 +468,7 @@ func purgeEmbeddings(
 		Column(airetrievalcol.EmbeddingTable.PrimaryKey...).
 		Apply(airetrievalcol.EmbeddingApplyTenant(req.TenantInfo)).
 		Where(cols.ModelKey.Eq(), req.ModelKey).
-		Limit(batch)
+		Limit(int64(batch))
 
 	res, err := tx.NewDelete().
 		Model((*airetrieval.Embedding)(nil)).
@@ -517,7 +517,7 @@ func (r *repository) ListIndexedTenants(
 			Column(cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
 			Where(cols.ActiveModelKey.Ne(), "").
 			Order(cols.OrganizationID.OrderAsc(), cols.BusinessUnitID.OrderAsc()).
-			Limit(limit)
+			Limit(int64(limit))
 		if req.After != nil {
 			q = q.Where(
 				buncolgen.Expr("({0}, {1}) > (?, ?)", cols.OrganizationID, cols.BusinessUnitID),

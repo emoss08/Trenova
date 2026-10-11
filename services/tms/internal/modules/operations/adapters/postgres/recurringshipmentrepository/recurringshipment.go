@@ -61,7 +61,8 @@ func (r *repository) filterQuery(
 		(*recurringshipment.RecurringShipment)(nil),
 	)
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *repository) List(
@@ -95,7 +96,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*recurringshipment.RecurringShipment]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -158,7 +159,7 @@ func (r *repository) ListConnection(
 					log.Error("failed to count recurring shipments", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -543,7 +544,7 @@ func (r *repository) ListDue(
 				Order(rsh.NextOccurrenceAt.OrderAsc())
 
 			if req.Limit > 0 {
-				q = q.Limit(req.Limit)
+				q = q.Limit(int64(req.Limit))
 			}
 
 			if err := q.Scan(ctx); err != nil {
@@ -581,8 +582,8 @@ func (r *repository) ListRuns(
 				Relation(recurringshipmentcol.RecurringShipmentRunRelations.GeneratedShipment).
 				Relation(recurringshipmentcol.RecurringShipmentRunRelations.TriggeredBy).
 				Order(rsr.OccurrenceAt.OrderDesc()).
-				Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset()).
+				Limit(int64(req.Filter.Pagination.SafeLimit())).
+				Offset(int64(req.Filter.Pagination.SafeOffset())).
 				ScanAndCount(ctx)
 			if err != nil {
 				log.Error("failed to list recurring shipment runs", zap.Error(err))
@@ -591,7 +592,7 @@ func (r *repository) ListRuns(
 
 			return &pagination.ListResult[*recurringshipment.RecurringShipmentRun]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

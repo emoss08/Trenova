@@ -52,8 +52,8 @@ func (r *profileRepository) List(
 				(*capture.CaptureProfile)(nil),
 			).
 				Order(cols.IsDefault.OrderDesc(), cols.Name.OrderAsc()).
-				Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset()).
+				Limit(int64(req.Filter.Pagination.SafeLimit())).
+				Offset(int64(req.Filter.Pagination.SafeOffset())).
 				ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
@@ -61,7 +61,7 @@ func (r *profileRepository) List(
 
 			return &pagination.ListResult[*capture.CaptureProfile]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

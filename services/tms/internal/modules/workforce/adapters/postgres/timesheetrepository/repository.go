@@ -90,7 +90,7 @@ func (r *repository) ListEntries(
 				return sq
 			}).
 			Order(cols.ClockedInAt.OrderAsc()).
-			Limit(limitOr(req.Limit, defaultEntryPageSize))
+			Limit(int64(limitOr(req.Limit, defaultEntryPageSize)))
 
 		if req.IncludeWorker {
 			q = q.
@@ -277,7 +277,7 @@ func (r *repository) ListTimesheets(
 				return sq
 			}).
 			Order(cols.PeriodStart.OrderDesc()).
-			Limit(limitOr(req.Limit, defaultTimesheetPageSize))
+			Limit(int64(limitOr(req.Limit, defaultTimesheetPageSize)))
 
 		if req.IncludeWorker {
 			q = q.Relation(workercol.TimesheetRelations.Worker)
@@ -456,7 +456,7 @@ func (r *repository) ListExports(
 				return workercol.PayrollExportScopeTenant(sq, req.TenantInfo)
 			}).
 			Order(workercol.PayrollExportColumns.PeriodStart.OrderDesc()).
-			Limit(limitOr(req.Limit, defaultExportPageSize)).
+			Limit(int64(limitOr(req.Limit, defaultExportPageSize))).
 			Scan(ctx); err != nil {
 			r.l.Error("failed to list payroll exports", zap.Error(err))
 			return nil, fmt.Errorf("list payroll exports: %w", err)

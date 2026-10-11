@@ -51,8 +51,8 @@ func (r *payCodeRepository) List(
 				Where("payc.business_unit_id = ?", req.Filter.TenantInfo.BuID).
 				Relation("GLAccount", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
 				Order("payc.direction ASC", "payc.code ASC").
-				Limit(limit).
-				Offset(req.Filter.Pagination.SafeOffset())
+				Limit(int64(limit)).
+				Offset(int64(req.Filter.Pagination.SafeOffset()))
 
 			if req.Filter.Query != "" {
 				term := "%" + req.Filter.Query + "%"
@@ -67,7 +67,7 @@ func (r *payCodeRepository) List(
 				return nil, fmt.Errorf("list pay codes: %w", err)
 			}
 
-			return &pagination.ListResult[*driverpay.PayCode]{Items: items, Total: total}, nil
+			return &pagination.ListResult[*driverpay.PayCode]{Items: items, Total: int(total)}, nil
 		},
 	)
 }
@@ -101,7 +101,7 @@ func (r *payCodeRepository) ListConnection(
 					log.Error("failed to count pay codes", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

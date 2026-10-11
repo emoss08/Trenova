@@ -254,7 +254,7 @@ func (r *repository) RecentFailures(
 				Where(cols.CreatedAt.Gte(), req.Since).
 				Where(cols.Succeeded.Eq(), false).
 				OrderExpr("aiu.created_at DESC").
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx, &rows); err != nil {
 				return nil, fmt.Errorf("list ai usage failures: %w", err)
 			}

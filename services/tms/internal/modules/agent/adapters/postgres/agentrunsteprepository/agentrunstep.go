@@ -199,7 +199,7 @@ func (r *repository) Prune(
 			Model((*agent.AgentRunStep)(nil)).
 			Column(cols.ID.String()).
 			Where(cols.CreatedAt.Lt(), req.Before).
-			Limit(req.Limit)
+			Limit(int64(req.Limit))
 
 		result, err := dba.NewDelete().
 			Model((*agent.AgentRunStep)(nil)).

@@ -821,7 +821,7 @@ func (r *portalAccessRepository) ListWorkerLoads(
 			Relation(arel.Tractor).
 			Relation(arel.Trailer).
 			Order(acols.CreatedAt.OrderDesc()).
-			Limit(limit)
+			Limit(int64(limit))
 
 		if len(req.Statuses) > 0 {
 			query = query.Where(moveStatus.In(), bun.List(req.Statuses))

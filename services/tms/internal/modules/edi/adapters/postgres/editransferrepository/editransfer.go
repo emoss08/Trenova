@@ -90,8 +90,8 @@ func (r *repository) ListInbound(
 				Where(cols.TargetOrganizationID.Eq(), req.Filter.TenantInfo.OrgID).
 				Where(cols.TargetBusinessUnitID.Eq(), req.Filter.TenantInfo.BuID).
 				Order(cols.CreatedAt.OrderDesc()).
-				Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset()).
+				Limit(int64(req.Filter.Pagination.SafeLimit())).
+				Offset(int64(req.Filter.Pagination.SafeOffset())).
 				ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
@@ -99,7 +99,7 @@ func (r *repository) ListInbound(
 
 			return &pagination.ListResult[*edi.EDITransfer]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -123,8 +123,8 @@ func (r *repository) ListOutbound(
 				Where(cols.SourceBusinessUnitID.Eq(), req.Filter.TenantInfo.BuID).
 				Where("eltt.inbound_message_id IS NULL").
 				Order(cols.CreatedAt.OrderDesc()).
-				Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset()).
+				Limit(int64(req.Filter.Pagination.SafeLimit())).
+				Offset(int64(req.Filter.Pagination.SafeOffset())).
 				ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
@@ -132,7 +132,7 @@ func (r *repository) ListOutbound(
 
 			return &pagination.ListResult[*edi.EDITransfer]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -205,8 +205,8 @@ func (r *repository) SelectOptions(
 					return applyTransferTenantFilter(sq, req.SelectQueryRequest.TenantInfo, "")
 				}).
 				Order(cols.CreatedAt.OrderDesc()).
-				Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
-				Offset(req.SelectQueryRequest.Pagination.SafeOffset())
+				Limit(int64(req.SelectQueryRequest.Pagination.SafeLimit())).
+				Offset(int64(req.SelectQueryRequest.Pagination.SafeOffset()))
 
 			if req.SelectQueryRequest.Query != "" {
 				query = query.Where(
@@ -222,7 +222,7 @@ func (r *repository) SelectOptions(
 
 			return &pagination.ListResult[*edi.EDITransfer]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -465,7 +465,7 @@ func (r *repository) listCursor(
 				if err != nil {
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDITransfer]{

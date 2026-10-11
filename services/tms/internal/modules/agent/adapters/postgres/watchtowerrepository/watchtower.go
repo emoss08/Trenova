@@ -259,7 +259,7 @@ func (r *repository) List(
 				return sq
 			}).
 			Order(cols.OccurredAt.OrderDesc(), cols.ID.OrderDesc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list watchtower items", zap.Error(err))
@@ -416,7 +416,7 @@ func (r *repository) DeleteResolvedBefore(
 			Column(cols.ID.Bare()).
 			Where(cols.ResolvedAt.IsNotNull()).
 			Where(cols.ResolvedAt.Lt(), req.Before).
-			Limit(limit)
+			Limit(int64(limit))
 
 		res, err := r.db.DBForContext(ctx).
 			NewDelete().

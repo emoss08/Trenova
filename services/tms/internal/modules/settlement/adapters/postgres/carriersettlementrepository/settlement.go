@@ -59,8 +59,8 @@ func (r *settlementRepository) List(
 				Relation(rel.Carrier).
 				Order(cols.PeriodEnd.OrderDesc()).
 				Order(cols.CreatedAt.OrderDesc()).
-				Limit(limit).
-				Offset(req.Filter.Pagination.SafeOffset())
+				Limit(int64(limit)).
+				Offset(int64(req.Filter.Pagination.SafeOffset()))
 
 			if req.Filter.Query != "" {
 				query = query.Where(cols.SettlementNumber.ILike(), "%"+req.Filter.Query+"%")
@@ -85,7 +85,7 @@ func (r *settlementRepository) List(
 
 			return &pagination.ListResult[*carriersettlement.CarrierSettlement]{
 				Items: items,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -120,7 +120,7 @@ func (r *settlementRepository) ListConnection(
 					log.Error("failed to count carrier settlements", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

@@ -68,8 +68,8 @@ func (r *repository) List(
 					if req.ShipmentID.IsNotNil() {
 						q = q.Where("sf.shipment_id = ?", req.ShipmentID)
 					}
-					return q.Limit(req.Filter.Pagination.SafeLimit()).
-						Offset(req.Filter.Pagination.SafeOffset())
+					return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+						Offset(int64(req.Filter.Pagination.SafeOffset()))
 				}).
 				Relation("ReasonCode").
 				Relation("Shipment").
@@ -84,7 +84,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*servicefailure.ServiceFailure]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -157,7 +157,7 @@ func (r *repository) ListConnection(
 					log.Error("failed to count service failures", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -456,7 +456,7 @@ func (r *repository) CountUnresolvedByShipment(
 			return 0, fmt.Errorf("count unresolved service failures: %w", err)
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }
 
@@ -476,7 +476,7 @@ func (r *repository) CountUnresolved(
 			return 0, fmt.Errorf("count unresolved service failures for tenant: %w", err)
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }
 

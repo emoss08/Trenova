@@ -263,7 +263,7 @@ func (r *repository) ListConnection(
 
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -355,7 +355,7 @@ func (r *repository) ListActive(
 			OrderExpr(kindOrder()).
 			OrderExpr(cols.CreatedAt.OrderDesc()).
 			OrderExpr(cols.ID.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list active agent memories", zap.Error(err))
@@ -446,7 +446,7 @@ func (r *repository) search(
 			OrderExpr(kindOrder()).
 			OrderExpr(cols.CreatedAt.OrderDesc()).
 			OrderExpr(cols.ID.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to search agent memories", zap.Error(err))
@@ -538,7 +538,7 @@ func (r *repository) CountActive(
 			return 0, fmt.Errorf("count active agent memories: %w", err)
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }
 
@@ -691,7 +691,7 @@ func (r *repository) ListSuggestionContext(
 					})
 			}).
 			OrderExpr(cols.CreatedAt.OrderDesc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list agent memory suggestion context", zap.Error(err))

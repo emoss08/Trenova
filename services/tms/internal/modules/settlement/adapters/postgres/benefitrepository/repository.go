@@ -76,7 +76,7 @@ func (r *repository) ListPlans(
 			Order(cols.PlanYear.OrderDesc()).
 			Order(cols.PlanType.OrderAsc()).
 			Order(cols.Name.OrderAsc()).
-			Limit(limitOr(req.Limit, defaultPlanPageSize))
+			Limit(int64(limitOr(req.Limit, defaultPlanPageSize)))
 
 		if req.IncludePayCode {
 			q = q.Relation(driverpaycol.BenefitPlanRelations.PayCode)
@@ -237,7 +237,7 @@ func (r *repository) CountPlanEnrollments(
 			return 0, fmt.Errorf("count plan enrollments: %w", err)
 		}
 
-		return total, nil
+		return int(total), nil
 	})
 }
 
@@ -275,7 +275,7 @@ func (r *repository) ListEnrollments(
 					return sq
 				}).
 				Order(cols.EffectiveFrom.OrderDesc()).
-				Limit(limitOr(req.Limit, defaultEnrollmentPageSize))
+				Limit(int64(limitOr(req.Limit, defaultEnrollmentPageSize)))
 
 			if req.IncludePlan {
 				q = q.Relation(driverpaycol.WorkerBenefitEnrollmentRelations.BenefitPlan)

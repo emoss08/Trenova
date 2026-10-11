@@ -165,7 +165,7 @@ func TestBootstrapCreatesAnAdministratorWhoCanSignIn(t *testing.T) {
 		Where("organization_id = ?", org.ID).
 		Count(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 1, memberships)
+	assert.Equal(t, int64(1), memberships)
 
 	systemUser, err := users.GetSystemUser(ctx)
 	require.NoError(t, err)
@@ -207,7 +207,7 @@ func TestBootstrapCreatesAnAdministratorWhoCanSignIn(t *testing.T) {
 
 	finalUsers, err := db.NewSelect().Model((*tenant.User)(nil)).Count(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 2, finalUsers)
+	assert.Equal(t, int64(2), finalUsers)
 
 	runProductionSeeds(t, ctx, db)
 }
@@ -234,7 +234,7 @@ func TestBootstrapRefusesADatabaseThatAlreadyHasUsers(t *testing.T) {
 
 	organizations, err := db.NewSelect().Model((*tenant.Organization)(nil)).Count(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 1, organizations)
+	assert.Equal(t, int64(1), organizations)
 }
 
 func TestBootstrapDryRunChangesNothing(t *testing.T) {

@@ -157,7 +157,7 @@ func (s *driftSource) ListRecords(
 			}
 			if err := query.
 				Order(records.ID.OrderAsc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx); err != nil {
 				return nil, fmt.Errorf("list records to compare: %w", err)
 			}
@@ -469,7 +469,7 @@ func (s *driftSource) ListBalances(
 			}
 			if err := page.
 				OrderExpr(inv.CustomerID.Qualified()+" ASC").
-				Limit(customers).
+				Limit(int64(customers)).
 				Scan(ctx, &ids); err != nil {
 				return nil, fmt.Errorf("list customers to balance: %w", err)
 			}

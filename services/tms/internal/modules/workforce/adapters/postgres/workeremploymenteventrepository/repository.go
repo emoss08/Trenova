@@ -59,7 +59,7 @@ func (r *repository) List(
 				}
 				return sq
 			}).
-			Limit(limit)
+			Limit(int64(limit))
 		if req.Ascending {
 			q = q.Order(cols.EffectiveAt.OrderAsc()).Order(cols.CreatedAt.OrderAsc())
 		} else {

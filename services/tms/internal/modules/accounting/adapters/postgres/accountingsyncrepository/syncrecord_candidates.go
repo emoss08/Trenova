@@ -246,7 +246,7 @@ func (s *candidateSource) query(
 
 	return q.
 		Order(s.at.OrderAsc(), s.id.OrderAsc()).
-		Limit(limit)
+		Limit(int64(limit))
 }
 
 func journalSource(

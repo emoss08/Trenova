@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
@@ -32,6 +33,8 @@ type Page struct {
 }
 
 func (p *Page) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	p.ExtractedText = stringutils.StripNUL(p.ExtractedText)
+
 	now := timeutils.NowUnix()
 
 	switch query.(type) {

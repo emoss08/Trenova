@@ -87,7 +87,7 @@ func (r *programRepository) ListConnection(
 					log.Error("failed to count fuel surcharge programs", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -402,7 +402,7 @@ func (r *programRepository) ListFallbackShipmentIDs(
 				shipment.StatusInvoiced,
 				shipment.StatusCanceled,
 			})).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx, &ids)
 		if err != nil {
 			r.l.Error("failed to list fuel surcharge fallback shipments", zap.Error(err))

@@ -51,8 +51,8 @@ func (r *repository) filterQuery(
 	)
 
 	return q.Apply(agentcol.AgentRunApplyTenant(req.Filter.TenantInfo)).
-		Limit(req.Filter.Pagination.SafeLimit()).
-		Offset(req.Filter.Pagination.SafeOffset()).
+		Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset())).
 		Order(cols.CreatedAt.OrderDesc())
 }
 
@@ -79,7 +79,7 @@ func (r *repository) List(
 				return nil, err
 			}
 
-			return &pagination.ListResult[*agent.AgentRun]{Items: entities, Total: total}, nil
+			return &pagination.ListResult[*agent.AgentRun]{Items: entities, Total: int(total)}, nil
 		},
 	)
 }
@@ -147,7 +147,7 @@ func (r *repository) ListConnection(
 					log.Error("failed to count agent runs", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -351,7 +351,7 @@ func (r *repository) CountOpen(
 			return 0, err
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }
 
@@ -377,6 +377,6 @@ func (r *repository) CountSince(
 			return 0, fmt.Errorf("count agent runs since: %w", err)
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }

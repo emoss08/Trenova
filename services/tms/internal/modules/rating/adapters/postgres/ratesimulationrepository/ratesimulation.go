@@ -101,8 +101,8 @@ func (r *repository) List(
 			// Newest first: a simulation is looked at while it is fresh, and the older
 			// ones are history.
 			q = q.Order(cols.CreatedAt.OrderDesc()).
-				Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset())
+				Limit(int64(req.Filter.Pagination.SafeLimit())).
+				Offset(int64(req.Filter.Pagination.SafeOffset()))
 
 			total, err := q.ScanAndCount(ctx)
 			if err != nil {
@@ -112,7 +112,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*ratesimulation.RateSimulation]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -144,8 +144,8 @@ func (r *repository) ListResults(
 			q = q.Order(cols.Delta.OrderDesc())
 
 			if req.Filter != nil {
-				q = q.Limit(req.Filter.Pagination.SafeLimit()).
-					Offset(req.Filter.Pagination.SafeOffset())
+				q = q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+					Offset(int64(req.Filter.Pagination.SafeOffset()))
 			}
 
 			total, err := q.ScanAndCount(ctx)
@@ -156,7 +156,7 @@ func (r *repository) ListResults(
 
 			return &pagination.ListResult[*ratesimulation.RateSimulationResult]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -287,7 +287,7 @@ func (r *repository) ListShipments(
 					return sq
 				}).
 				Order(cols.ID.OrderAsc()).
-				Limit(req.Limit)
+				Limit(int64(req.Limit))
 
 			if err := q.Scan(ctx); err != nil {
 				r.l.Error("failed to list shipments for a simulation", zap.Error(err))

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -115,10 +116,9 @@ func (r *repository) CountSince(
 	since int64,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		return r.db.DBForContext(ctx).NewSelect().
+		return dbhelper.Count(ctx, r.db.DBForContext(ctx).NewSelect().
 			Model((*tenant.PasswordResetToken)(nil)).
 			Where("prt.user_id = ?", userID).
-			Where("prt.created_at >= ?", since).
-			Count(ctx)
+			Where("prt.created_at >= ?", since))
 	})
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
@@ -53,6 +54,9 @@ type Content struct {
 }
 
 func (c *Content) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	c.ContentText = stringutils.StripNUL(c.ContentText)
+	c.FailureMessage = stringutils.StripNUL(c.FailureMessage)
+
 	now := timeutils.NowUnix()
 
 	switch query.(type) {

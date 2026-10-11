@@ -192,7 +192,7 @@ func (r *repository) ListImportRows(
 					r.l.Error("failed to count fuel purchase import rows", zap.Error(err))
 					return nil, fmt.Errorf("count fuel purchase import rows: %w", err)
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			cursor, err := importRowCursor(req.Cursor)
@@ -229,7 +229,7 @@ func (r *repository) ListImportRows(
 
 			err = q.Order(cols.RowNumber.OrderAsc()).
 				Order(cols.ID.OrderAsc()).
-				Limit(limit + 1).
+				Limit(int64(limit + 1)).
 				Scan(ctx)
 			if err != nil {
 				r.l.Error("failed to list fuel purchase import rows", zap.Error(err))
@@ -452,7 +452,7 @@ func (r *repository) ListImportBatches(
 					r.l.Error("failed to count fuel purchase imports", zap.Error(err))
 					return nil, fmt.Errorf("count fuel purchase imports: %w", err)
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

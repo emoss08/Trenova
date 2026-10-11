@@ -53,8 +53,8 @@ func (r *repository) ListBillingTransferCandidateIDs(
 			}
 
 			result := &shipmentports.BillingTransferCandidateIDsResult{
-				IDs:        make([]pulid.ID, 0, min(total, req.Limit)),
-				TotalCount: total,
+				IDs:        make([]pulid.ID, 0, min(int(total), req.Limit)),
+				TotalCount: int(total),
 			}
 			if total == 0 || req.Limit <= 0 {
 				return result, nil
@@ -70,7 +70,7 @@ func (r *repository) ListBillingTransferCandidateIDs(
 				TableExpr("(?) AS ?", matched, bun.Ident(billingTransferCandidateAlias)).
 				ColumnExpr(candidate.Qualified()).
 				Order(candidateCreatedAt.OrderAsc(), candidate.OrderAsc()).
-				Limit(req.Limit).
+				Limit(int64(req.Limit)).
 				Scan(ctx, &result.IDs); err != nil {
 				return nil, err
 			}

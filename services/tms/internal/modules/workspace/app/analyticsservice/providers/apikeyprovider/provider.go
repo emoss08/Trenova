@@ -122,8 +122,8 @@ func (p *Provider) getTotalKeys(
 		}
 
 		return &TotalKeysCard{
-			Count:        total,
-			NewThisMonth: newThisMonth,
+			Count:        int(total),
+			NewThisMonth: int(newThisMonth),
 		}, nil
 	})
 }
@@ -153,7 +153,7 @@ func (p *Provider) getActiveKeys(
 		}
 
 		return &ActiveKeysCard{
-			Count:          count,
+			Count:          int(count),
 			PercentOfTotal: pct,
 		}, nil
 	})
@@ -184,7 +184,7 @@ func (p *Provider) getRevokedKeys(
 		}
 
 		return &RevokedKeysCard{
-			Count:          count,
+			Count:          int(count),
 			PercentOfTotal: pct,
 		}, nil
 	})

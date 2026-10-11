@@ -290,7 +290,7 @@ func (r *enrollmentRepository) ListNeedingSync(
 						})
 				}).
 				Order(cols.UpdatedAt.OrderAsc(), cols.ID.OrderAsc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx)
 			if err != nil {
 				r.l.Error(
@@ -331,7 +331,7 @@ func (r *enrollmentRepository) ListActive(
 						Where(cols.VendorState.Eq(), carrierintel.VendorStateActive)
 				}).
 				Order(cols.ID.OrderAsc()).
-				Limit(limit)
+				Limit(int64(limit))
 			if req.Mode != "" {
 				q = q.Where(cols.Mode.Eq(), req.Mode)
 			}
@@ -445,7 +445,7 @@ func (r *enrollmentRepository) ListConnection(
 					log.Error("failed to count carrier monitoring enrollments", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

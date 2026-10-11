@@ -50,8 +50,8 @@ func (r *recurringEarningRepository) List(
 				Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
 				Relation("PayCode", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
 				Order("rern.created_at DESC").
-				Limit(limit).
-				Offset(req.Filter.Pagination.SafeOffset())
+				Limit(int64(limit)).
+				Offset(int64(req.Filter.Pagination.SafeOffset()))
 
 			if req.Filter.Query != "" {
 				query = query.Where("rern.description ILIKE ?", "%"+req.Filter.Query+"%")
@@ -70,7 +70,7 @@ func (r *recurringEarningRepository) List(
 
 			return &pagination.ListResult[*driverpay.RecurringEarning]{
 				Items: items,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -105,7 +105,7 @@ func (r *recurringEarningRepository) ListConnection(
 					log.Error("failed to count recurring earnings", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

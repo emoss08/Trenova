@@ -105,7 +105,7 @@ func (r *repository) ListTemplates(
 					log.Error("failed to count checklist templates", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -489,7 +489,7 @@ func (r *repository) CountOpenChecklists(
 			return 0, err
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }
 

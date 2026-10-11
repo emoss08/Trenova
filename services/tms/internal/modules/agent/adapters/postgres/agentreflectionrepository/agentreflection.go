@@ -229,7 +229,7 @@ func (r *repository) ListConnection(
 				if err != nil {
 					return nil, fmt.Errorf("count agent reflections: %w", err)
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

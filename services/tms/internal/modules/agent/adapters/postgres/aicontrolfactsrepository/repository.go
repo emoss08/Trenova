@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
 	"github.com/emoss08/trenova/pkg/buncolgen/aiusagecol"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -63,37 +64,37 @@ func (r *repository) AgentCounts(
 		}
 
 		var err error
-		if counts.Total, err = definitions().Count(ctx); err != nil {
+		if counts.Total, err = dbhelper.Count(ctx, definitions()); err != nil {
 			return counts, fmt.Errorf("count agents: %w", err)
 		}
-		if counts.On, err = definitions().Where(defCols.Enabled.IsTrue()).Count(ctx); err != nil {
+		if counts.On, err = dbhelper.Count(
+			ctx,
+			definitions().Where(defCols.Enabled.IsTrue()),
+		); err != nil {
 			return counts, fmt.Errorf("count agents on: %w", err)
 		}
-		if counts.Shadow, err = definitions().
+		if counts.Shadow, err = dbhelper.Count(ctx, definitions().
 			Where(defCols.Enabled.IsTrue()).
-			Where(defCols.ShadowMode.IsTrue()).
-			Count(ctx); err != nil {
+			Where(defCols.ShadowMode.IsTrue())); err != nil {
 			return counts, fmt.Errorf("count agents in shadow: %w", err)
 		}
-		if counts.Working, err = db.NewSelect().
+		if counts.Working, err = dbhelper.Count(ctx, db.NewSelect().
 			Model((*agent.AgentRun)(nil)).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return agentcol.AgentRunScopeTenant(sq, req.TenantInfo)
 			}).
-			Where(runCols.Status.In(), bun.List(workingStatuses)).
-			Count(ctx); err != nil {
+			Where(runCols.Status.In(), bun.List(workingStatuses))); err != nil {
 			return counts, fmt.Errorf("count working runs: %w", err)
 		}
-		if counts.Waiting, err = db.NewSelect().
+		if counts.Waiting, err = dbhelper.Count(ctx, db.NewSelect().
 			Model((*agent.AgentProposal)(nil)).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return agentcol.AgentProposalScopeTenant(sq, req.TenantInfo)
 			}).
-			Where(propCols.Status.Eq(), agent.ProposalStatusPending).
-			Count(ctx); err != nil {
+			Where(propCols.Status.Eq(), agent.ProposalStatusPending)); err != nil {
 			return counts, fmt.Errorf("count waiting proposals: %w", err)
 		}
-		if counts.ShadowRecorded, err = db.NewSelect().
+		if counts.ShadowRecorded, err = dbhelper.Count(ctx, db.NewSelect().
 			Model((*agent.AgentProposal)(nil)).
 			Join("JOIN agent_runs AS ar ON "+runCols.ID.Qualified()+" = "+propCols.RunID.Qualified()+
 				" AND "+runCols.OrganizationID.Qualified()+" = "+propCols.OrganizationID.Qualified()+
@@ -102,8 +103,7 @@ func (r *repository) AgentCounts(
 				return agentcol.AgentProposalScopeTenant(sq, req.TenantInfo)
 			}).
 			Where(runCols.Status.Eq(), agent.RunStatusShadowCompleted).
-			Where(runCols.CreatedAt.Gte(), req.ShadowSince).
-			Count(ctx); err != nil {
+			Where(runCols.CreatedAt.Gte(), req.ShadowSince)); err != nil {
 			return counts, fmt.Errorf("count shadow recordings: %w", err)
 		}
 

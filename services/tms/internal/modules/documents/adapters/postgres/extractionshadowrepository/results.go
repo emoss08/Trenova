@@ -212,7 +212,7 @@ func (r *resultRepository) CountCreatedSince(
 			return 0, fmt.Errorf("count extraction shadow results: %w", err)
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }
 
@@ -264,7 +264,7 @@ func (r *resultRepository) ListScored(
 					return sq
 				}).
 				Order(cols.ScoredAt.OrderDesc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx)
 			if err != nil {
 				r.l.Error("failed to list scored extraction shadow results", zap.Error(err))
@@ -353,7 +353,7 @@ func (r *resultRepository) ListConnection(
 
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -413,7 +413,7 @@ func (r *resultRepository) PurgeBefore(
 					Where(cols.CreatedAt.Lt(), req.Before)
 			}).
 			OrderExpr(cols.CreatedAt.OrderAsc()).
-			Limit(limit)
+			Limit(int64(limit))
 
 		res, err := dba.NewDelete().
 			Model((*extractionshadow.ShadowResult)(nil)).

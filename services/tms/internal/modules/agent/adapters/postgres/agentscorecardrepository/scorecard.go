@@ -350,7 +350,7 @@ func (r *repository) exceptions(
 			return fmt.Errorf("count agent exceptions: %w", err)
 		}
 
-		totals.Exceptions = count
+		totals.Exceptions = int(count)
 
 		return nil
 	})

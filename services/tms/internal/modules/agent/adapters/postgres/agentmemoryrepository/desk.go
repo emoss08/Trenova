@@ -119,7 +119,7 @@ func (r *repository) ListDesk(
 			}).
 			OrderExpr(cols.CreatedAt.OrderDesc()).
 			OrderExpr(cols.ID.OrderDesc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("list desk memories: %w", err)

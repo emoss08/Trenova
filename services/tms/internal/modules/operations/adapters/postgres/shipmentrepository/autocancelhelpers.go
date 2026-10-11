@@ -172,7 +172,7 @@ func (r *repository) ListAutoCancelShipmentTenants(
 			Where(cols.AutoCancelShipments.Eq(), true).
 			Order(cols.OrganizationID.OrderAsc()).
 			Order(cols.BusinessUnitID.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx, &rows)
 		if err != nil {
 			return nil, err
@@ -277,7 +277,7 @@ func (r *repository) getAutoCancelableShipments(
 		Where(cols.Status.Eq(), shipment.StatusNew).
 		Where(cols.CreatedAt.Lte(), currentTime-thresholdSeconds).
 		Order(cols.ID.OrderAsc()).
-		Limit(limit).
+		Limit(int64(limit)).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -312,7 +312,7 @@ func (r *repository) getAutoCancelableShipmentsForTenant(
 			shipmentstate.DefaultAutoCancelThresholdDays,
 		).
 		OrderExpr("sp.id ASC").
-		Limit(limit)
+		Limit(int64(limit))
 
 	err := dba.NewSelect().
 		Model(&entities).

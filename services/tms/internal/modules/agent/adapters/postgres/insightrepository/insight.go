@@ -95,7 +95,7 @@ func (r *repository) ListActive(
 		if err := query.
 			OrderExpr(severityOrder).
 			Order(cols.DetectedAt.OrderDesc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx); err != nil {
 			log.Error("failed to list active insights", zap.Error(err))
 
@@ -155,8 +155,8 @@ func (r *repository) List(
 			total, err := query.
 				OrderExpr(severityOrder).
 				Order(cols.DetectedAt.OrderDesc()).
-				Limit(limit).
-				Offset(offset).
+				Limit(int64(limit)).
+				Offset(int64(offset)).
 				ScanAndCount(ctx)
 			if err != nil {
 				log.Error("failed to scan and count insights", zap.Error(err))
@@ -164,7 +164,7 @@ func (r *repository) List(
 				return nil, err
 			}
 
-			return &pagination.ListResult[*insight.Insight]{Items: entities, Total: total}, nil
+			return &pagination.ListResult[*insight.Insight]{Items: entities, Total: int(total)}, nil
 		},
 	)
 }
@@ -242,7 +242,7 @@ func (r *repository) ListHistory(
 
 		if err := query.
 			Order(cols.DetectedAt.OrderDesc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx); err != nil {
 			log.Error("failed to list insight history", zap.Error(err))
 

@@ -177,8 +177,8 @@ func (r *repository) ListUnattributedMoves(
 				Where(completedAtCol+" >= ?", req.Start).
 				Where(completedAtCol+" < ?", req.End).
 				OrderExpr(completedMoveIDCol+" ASC").
-				Limit(req.PageSize()).
-				Offset(req.Offset).
+				Limit(int64(req.PageSize())).
+				Offset(int64(req.Offset)).
 				Scan(ctx, &page.MoveIDs); err != nil {
 				r.l.Error("failed to list unattributed moves", zap.Error(err))
 				return nil, fmt.Errorf("list unattributed moves: %w", err)

@@ -72,8 +72,8 @@ func (r *repository) SelectTransactionSetOptions(
 
 			total, err := query.
 				Order(cols.Code.OrderAsc()).
-				Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
-				Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
+				Limit(int64(req.SelectQueryRequest.Pagination.SafeLimit())).
+				Offset(int64(req.SelectQueryRequest.Pagination.SafeOffset())).
 				ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
@@ -81,7 +81,7 @@ func (r *repository) SelectTransactionSetOptions(
 
 			return &pagination.ListResult[*edi.EDITransactionSet]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

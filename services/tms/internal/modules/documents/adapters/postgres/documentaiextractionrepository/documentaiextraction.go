@@ -158,7 +158,7 @@ func (r *repository) ListPollable(
 				Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
 				OrderExpr("COALESCE(dae.last_polled_at, 0) ASC").
 				Order(cols.CreatedAt.OrderAsc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx)
 			return items, err
 		},
@@ -191,7 +191,7 @@ func (r *repository) ListPollableTenants(
 			Group(cols.OrganizationID.Name, cols.BusinessUnitID.Name).
 			Order(cols.OrganizationID.OrderAsc()).
 			Order(cols.BusinessUnitID.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx, &rows)
 		if err != nil {
 			return nil, err

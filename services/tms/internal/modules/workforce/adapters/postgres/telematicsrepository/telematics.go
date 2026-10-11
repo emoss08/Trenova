@@ -179,7 +179,7 @@ func (r *repository) ListWorkerHOSStates(
 			q = q.Relation(telematicscol.WorkerHOSStateRelations.Worker)
 		}
 		if req.Limit > 0 {
-			q = q.Limit(req.Limit)
+			q = q.Limit(int64(req.Limit))
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -261,7 +261,7 @@ func (r *repository) ListWorkerHOSViolations(
 				Order(cols.ViolationStartAt.OrderDesc())
 
 			if req.Limit > 0 {
-				q = q.Limit(req.Limit)
+				q = q.Limit(int64(req.Limit))
 			}
 
 			if err := q.Scan(ctx); err != nil {
@@ -451,7 +451,7 @@ func (r *repository) ListVehicleInspections(
 			Order(cols.StartedAt.OrderDesc())
 
 		if req.Limit > 0 {
-			q = q.Limit(req.Limit)
+			q = q.Limit(int64(req.Limit))
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -575,7 +575,7 @@ func (r *repository) ListOpenStopReviews(
 			}).
 			Order(cols.OccurredAt.OrderDesc())
 		if req.Limit > 0 {
-			q = q.Limit(req.Limit)
+			q = q.Limit(int64(req.Limit))
 		}
 		if err := q.Scan(ctx); err != nil {
 			return nil, fmt.Errorf("list open telematics stop reviews: %w", err)

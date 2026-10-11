@@ -58,7 +58,7 @@ func (r *repository) ListIdentityProviders(
 			Where("idp.business_unit_id = ?", req.TenantInfo.BuID).
 			Where("idp.protocol = ?", iam.IdentityProviderProtocolOIDC).
 			Order("idp.name ASC").
-			Limit(safeLimit(req.Limit)).
+			Limit(int64(safeLimit(req.Limit))).
 			Scan(ctx)
 		return entities, err
 	})
@@ -174,13 +174,13 @@ func (r *repository) ListSCIMDirectories(
 					return iamcol.SCIMDirectoryApplyTenant(req.Filter.TenantInfo)(sq)
 				}).
 				Order(cols.CreatedAt.OrderDesc()).
-				Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset()).
+				Limit(int64(req.Filter.Pagination.SafeLimit())).
+				Offset(int64(req.Filter.Pagination.SafeOffset())).
 				ScanAndCount(ctx)
 
 			return &pagination.ListResult[*iam.SCIMDirectory]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, err
 		},
 	)
@@ -327,7 +327,7 @@ func (r *repository) ListProvisioningAuditRecords(
 			Model(&entities).
 			Where("par.organization_id = ?", orgID).
 			Order("par.created_at DESC").
-			Limit(safeLimit(limit))
+			Limit(int64(safeLimit(limit)))
 		if directoryID.IsNotNil() {
 			query = query.Where("par.directory_id = ?", directoryID)
 		}
@@ -347,7 +347,7 @@ func (r *repository) ListAccessPolicies(
 			Where("ap.organization_id = ?", req.TenantInfo.OrgID).
 			Where("ap.business_unit_id = ?", req.TenantInfo.BuID).
 			Order("ap.priority DESC", "ap.created_at DESC").
-			Limit(safeLimit(req.Limit)).
+			Limit(int64(safeLimit(req.Limit))).
 			Scan(ctx)
 		return entities, err
 	})
@@ -476,7 +476,7 @@ func (r *repository) ListAuthEvents(
 			Model(&entities).
 			Where("ae.organization_id = ?", orgID).
 			Order("ae.occurred_at DESC").
-			Limit(safeLimit(limit)).
+			Limit(int64(safeLimit(limit))).
 			Scan(ctx)
 		return entities, err
 	})
@@ -493,7 +493,7 @@ func (r *repository) ListRiskDecisions(
 			Model(&entities).
 			Where("rd.organization_id = ?", orgID).
 			Order("rd.created_at DESC").
-			Limit(safeLimit(limit)).
+			Limit(int64(safeLimit(limit))).
 			Scan(ctx)
 		return entities, err
 	})
@@ -510,7 +510,7 @@ func (r *repository) ListExternalIdentities(
 			Where("extid.organization_id = ?", req.TenantInfo.OrgID).
 			Where("extid.business_unit_id = ?", req.TenantInfo.BuID).
 			Order("extid.updated_at DESC").
-			Limit(safeLimit(req.Limit)).
+			Limit(int64(safeLimit(req.Limit))).
 			Scan(ctx)
 		return entities, err
 	})
@@ -527,7 +527,7 @@ func (r *repository) ListMFAAuthenticators(
 			Model(&entities).
 			Where("mfa.organization_id = ?", orgID).
 			Order("mfa.updated_at DESC").
-			Limit(safeLimit(limit)).
+			Limit(int64(safeLimit(limit))).
 			Scan(ctx)
 		return entities, err
 	})

@@ -65,8 +65,8 @@ func (r *repository) ListConnections(
 					return filterConnectionsQuery(query, req)
 				}).
 				Order(edicol.EDIConnectionColumns.CreatedAt.OrderDesc()).
-				Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset()).
+				Limit(int64(req.Filter.Pagination.SafeLimit())).
+				Offset(int64(req.Filter.Pagination.SafeOffset())).
 				ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
@@ -74,7 +74,7 @@ func (r *repository) ListConnections(
 
 			return &pagination.ListResult[*edi.EDIConnection]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

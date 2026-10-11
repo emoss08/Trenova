@@ -261,6 +261,6 @@ func (r *mfaRepository) CountUnusedRecoveryCodes(
 			return 0, fmt.Errorf("count recovery codes: %w", err)
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }

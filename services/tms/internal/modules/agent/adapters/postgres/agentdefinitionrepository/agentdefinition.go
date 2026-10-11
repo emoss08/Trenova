@@ -80,8 +80,8 @@ func (r *repository) List(
 					)
 
 					return sq.
-						Limit(req.Filter.Pagination.SafeLimit()).
-						Offset(req.Filter.Pagination.SafeOffset()).
+						Limit(int64(req.Filter.Pagination.SafeLimit())).
+						Offset(int64(req.Filter.Pagination.SafeOffset())).
 						Order(cols.Name.OrderAsc())
 				}).ScanAndCount(ctx)
 			if err != nil {
@@ -91,7 +91,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*agentdefinition.Definition]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -132,7 +132,7 @@ func (r *repository) ListConnection(
 					r.l.Error("failed to count agent definitions", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -337,7 +337,7 @@ func (r *repository) ListScheduledAcrossTenants(
 			query = query.Where(cols.ID.Gt(), req.AfterID)
 		}
 
-		if err := query.Order(cols.ID.OrderAsc()).Limit(limit).Scan(ctx); err != nil {
+		if err := query.Order(cols.ID.OrderAsc()).Limit(int64(limit)).Scan(ctx); err != nil {
 			return nil, fmt.Errorf("list scheduled agent definitions across tenants: %w", err)
 		}
 
@@ -375,7 +375,7 @@ func (r *repository) ListDue(
 					})
 			}).
 			Order(cols.NextRunAt.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("list due agent definitions: %w", err)

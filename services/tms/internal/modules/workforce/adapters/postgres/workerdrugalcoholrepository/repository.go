@@ -94,7 +94,7 @@ func (r *repository) ListTests(
 			}).
 			OrderExpr(cols.CollectedAt.Qualified() + " DESC NULLS LAST").
 			Order(cols.CreatedAt.OrderDesc()).
-			Limit(limitOr(req.Limit, defaultTestPageSize))
+			Limit(int64(limitOr(req.Limit, defaultTestPageSize)))
 
 		if req.IncludeWorker {
 			q = q.Relation(workercol.WorkerDOTTestRelations.Worker)
@@ -522,7 +522,7 @@ func (r *repository) ListPools(
 					r.l.Error("failed to count random pools", zap.Error(err))
 					return nil, fmt.Errorf("count random pools: %w", err)
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -754,7 +754,7 @@ func (r *repository) ListDraws(
 				return sq
 			}).
 			Order(cols.DrawnAt.OrderDesc()).
-			Limit(limitOr(req.Limit, defaultDrawPageSize))
+			Limit(int64(limitOr(req.Limit, defaultDrawPageSize)))
 
 		if req.IncludePool {
 			q = q.Relation(workercol.DOTRandomDrawRelations.Pool)
@@ -1115,7 +1115,7 @@ func (r *repository) ListWorkersWithClearinghouseDue(
 					WhereOr(profileCols.NextClearinghouseQueryDue.IsNull())
 			}).
 			Order(workerCols.ID.OrderAsc()).
-			Limit(limitOr(req.Limit, defaultSweepPageSize)).
+			Limit(int64(limitOr(req.Limit, defaultSweepPageSize))).
 			Scan(ctx, &refs)
 		if err != nil {
 			r.l.Error("failed to list workers with clearinghouse due", zap.Error(err))

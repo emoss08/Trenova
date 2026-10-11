@@ -68,6 +68,7 @@ type txContextKey struct{}
 type txBinding struct {
 	tx    bun.Tx
 	scope dbscope.Scope
+	ready bool
 }
 
 type detachedFromTx struct{}
@@ -402,8 +403,8 @@ func (c *Connection) DBForContext(ctx context.Context) bun.IDB {
 }
 
 func (c *Connection) txForContext(ctx context.Context) (bun.Tx, bool) {
-	binding, ok := ctx.Value(txContextKey{}).(txBinding)
-	if !ok {
+	binding, ok := ctx.Value(txContextKey{}).(*txBinding)
+	if !ok || !binding.ready {
 		return bun.Tx{}, false
 	}
 
@@ -448,10 +449,19 @@ func (c *Connection) WithTx(
 		return fn(ctx, existingTx)
 	}
 
-	tx, err := c.poolForContext(ctx).BeginTx(ctx, c.txOptions(opts))
+	binding := &txBinding{scope: dbscope.From(ctx)}
+	baseCtx := context.WithValue(ctx, txContextKey{}, binding)
+	if opts.ReadOnly {
+		baseCtx = kernelports.WithReadOnly(baseCtx)
+	}
+	txCtx, hooks := kernelports.WithAfterCommitHooks(baseCtx)
+
+	tx, err := c.poolForContext(ctx).BeginTx(txCtx, c.txOptions(opts))
 	if err != nil {
 		return err
 	}
+	binding.tx = tx
+	binding.ready = true
 
 	committed := false
 	defer func() {
@@ -465,12 +475,6 @@ func (c *Connection) WithTx(
 			return err
 		}
 	}
-
-	baseCtx := context.WithValue(ctx, txContextKey{}, txBinding{tx: tx, scope: dbscope.From(ctx)})
-	if opts.ReadOnly {
-		baseCtx = kernelports.WithReadOnly(baseCtx)
-	}
-	txCtx, hooks := kernelports.WithAfterCommitHooks(baseCtx)
 
 	if err = fn(txCtx, tx); err != nil {
 		return err

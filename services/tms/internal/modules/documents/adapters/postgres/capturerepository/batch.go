@@ -197,7 +197,7 @@ func (r *batchRepository) ListCursor(
 				if err != nil {
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*capture.CaptureBatch]{
@@ -380,7 +380,7 @@ func (r *batchRepository) ListStale(
 			Where(cols.Status.In(), bun.List(req.Statuses)).
 			Where(cols.UpdatedAt.Lt(), req.UpdatedBefore).
 			Order(cols.UpdatedAt.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx); err != nil {
 			return nil, err
 		}
@@ -405,7 +405,7 @@ func (r *batchRepository) ListRetentionDue(
 			Where(cols.Status.NotIn(), bun.List(inFlightBatchStatuses)).
 			Where(cols.RetainUntil.Lte(), req.Now).
 			Order(cols.RetainUntil.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx); err != nil {
 			return nil, err
 		}
@@ -435,7 +435,7 @@ func (r *batchRepository) ListRetentionReminders(
 			Where(cols.RetainUntil.Gt(), req.From).
 			Where(cols.RetainUntil.Lte(), req.Until).
 			Order(cols.RetainUntil.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx); err != nil {
 			return nil, err
 		}

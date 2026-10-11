@@ -297,7 +297,7 @@ func (r *repository) ListStale(
 				Order(cols.UpdatedAt.OrderAsc())
 
 			if req.Limit > 0 {
-				q = q.Limit(req.Limit)
+				q = q.Limit(int64(req.Limit))
 			}
 
 			if err := q.Scan(ctx); err != nil {

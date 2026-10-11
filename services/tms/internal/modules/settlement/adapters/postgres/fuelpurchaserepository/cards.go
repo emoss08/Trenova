@@ -78,7 +78,7 @@ func (r *repository) ListCards(
 					r.l.Error("failed to count fuel cards", zap.Error(err))
 					return nil, fmt.Errorf("count fuel cards: %w", err)
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -310,7 +310,7 @@ func (r *repository) ListActiveCards(
 			}).
 			Order(cols.Label.OrderAsc()).
 			Order(cols.LastFour.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list active fuel cards", zap.Error(err))

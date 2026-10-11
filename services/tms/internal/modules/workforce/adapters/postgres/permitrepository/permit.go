@@ -440,8 +440,8 @@ func (r *jurisdictionRepository) List(
 						sq = sq.Where(cols.Status.Eq(), req.Status)
 					}
 					return sq.
-						Limit(req.Filter.Pagination.SafeLimit()).
-						Offset(req.Filter.Pagination.SafeOffset())
+						Limit(int64(req.Filter.Pagination.SafeLimit())).
+						Offset(int64(req.Filter.Pagination.SafeOffset()))
 				}).
 				ScanAndCount(ctx)
 			if err != nil {
@@ -451,7 +451,7 @@ func (r *jurisdictionRepository) List(
 
 			return &pagination.ListResult[*jurisdictionrule.JurisdictionRule]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -617,7 +617,7 @@ func (r *jurisdictionRepository) ListConnection(
 					r.l.Error("failed to count jurisdiction rules", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -670,7 +670,7 @@ func (r *jurisdictionRepository) ListOverridesConnection(
 					r.l.Error("failed to count jurisdiction overrides", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

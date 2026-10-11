@@ -58,7 +58,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*tenant.DataRetention]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

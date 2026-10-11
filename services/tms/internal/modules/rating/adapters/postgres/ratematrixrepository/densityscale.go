@@ -70,8 +70,8 @@ func (r *densityScaleRepository) List(
 					)
 
 					return sq.Apply(ratematrixcol.DensityScaleApplyTenant(req.Filter.TenantInfo)).
-						Limit(req.Filter.Pagination.SafeLimit()).
-						Offset(req.Filter.Pagination.SafeOffset()).
+						Limit(int64(req.Filter.Pagination.SafeLimit())).
+						Offset(int64(req.Filter.Pagination.SafeOffset())).
 						Order(cols.EffectiveFrom.OrderDesc())
 				}).
 				ScanAndCount(ctx)
@@ -82,7 +82,7 @@ func (r *densityScaleRepository) List(
 
 			return &pagination.ListResult[*ratematrix.DensityScale]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

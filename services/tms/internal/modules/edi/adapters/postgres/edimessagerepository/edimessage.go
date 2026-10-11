@@ -95,13 +95,13 @@ func (r *repository) ListMessages(
 			query = applyMessageArchiveSearch(query, req.Query)
 			total, err := query.
 				Order(cols.GeneratedAt.OrderDesc()).
-				Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset()).
+				Limit(int64(req.Filter.Pagination.SafeLimit())).
+				Offset(int64(req.Filter.Pagination.SafeOffset())).
 				ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
 			}
-			return &pagination.ListResult[*edi.EDIMessage]{Items: entities, Total: total}, nil
+			return &pagination.ListResult[*edi.EDIMessage]{Items: entities, Total: int(total)}, nil
 		},
 	)
 }
@@ -566,13 +566,12 @@ func (r *repository) GetOverdueAckCount(
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := edicol.EDIMessageColumns
-		return r.db.DBForContext(ctx).
+		return dbhelper.Count(ctx, r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*edi.EDIMessage)(nil)).
 			Where(cols.AckStatus.Eq(), edi.MessageAcknowledgmentStatusPending).
 			Where(cols.GeneratedAt.Lt(), req.PendingSince).
-			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
-			Count(ctx)
+			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)))
 	})
 }
 
@@ -595,7 +594,7 @@ func (r *repository) ListRecentDeadLettered(
 			Where(cols.DeliveryStatus.Eq(), edi.MessageDeliveryStatusDeadLettered).
 			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
 			Order(cols.UpdatedAt.OrderDesc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx); err != nil {
 			return nil, err
 		}
@@ -622,7 +621,7 @@ func (r *repository) PurgeRawX12Before(
 					Where(cols.Direction.Eq(), edi.DocumentDirectionInbound).
 					WhereOr(cols.DeliveryStatus.Eq(), edi.MessageDeliveryStatusSent)
 			}).
-			Limit(req.Limit)
+			Limit(int64(req.Limit))
 
 		result, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -776,7 +775,7 @@ func (r *repository) ListMessagesCursor(
 				if err != nil {
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDIMessage]{

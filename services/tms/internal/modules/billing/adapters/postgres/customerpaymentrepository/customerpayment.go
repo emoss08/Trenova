@@ -59,8 +59,8 @@ func (r *repository) List(
 					return q.Order("cpa.line_number ASC")
 				}).
 				Order("cp.created_at DESC").
-				Limit(limit).
-				Offset(req.Filter.Pagination.SafeOffset())
+				Limit(int64(limit)).
+				Offset(int64(req.Filter.Pagination.SafeOffset()))
 
 			if req.Filter.Query != "" {
 				query = query.Where(
@@ -81,7 +81,10 @@ func (r *repository) List(
 				return nil, fmt.Errorf("list customer payments: %w", err)
 			}
 
-			return &pagination.ListResult[*customerpayment.Payment]{Items: items, Total: total}, nil
+			return &pagination.ListResult[*customerpayment.Payment]{
+				Items: items,
+				Total: int(total),
+			}, nil
 		},
 	)
 }
@@ -138,7 +141,7 @@ func (r *repository) ListConnection(
 					log.Error("failed to count customer payments", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

@@ -70,7 +70,7 @@ func (r *testPromptRepository) Count(
 		if err != nil {
 			return 0, fmt.Errorf("count agent test prompts: %w", err)
 		}
-		return count, nil
+		return int(count), nil
 	})
 }
 

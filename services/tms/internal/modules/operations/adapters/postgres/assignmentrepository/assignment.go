@@ -59,8 +59,8 @@ func (r *repository) List(
 				Relation("PrimaryWorker").
 				Relation("SecondaryWorker").
 				Order("a.created_at DESC").
-				Limit(req.Filter.Pagination.Limit).
-				Offset(req.Filter.Pagination.Offset).
+				Limit(int64(req.Filter.Pagination.Limit)).
+				Offset(int64(req.Filter.Pagination.Offset)).
 				ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
@@ -68,7 +68,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*shipment.Assignment]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

@@ -120,7 +120,7 @@ func (r *testRepository) List(
 		Order("r.name ASC")
 
 	if req.Filter != nil && req.Filter.Pagination.Limit > 0 {
-		q = q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+		q = q.Limit(int64(req.Filter.Pagination.SafeLimit())).Offset(int64(req.Filter.Pagination.SafeOffset()))
 	}
 
 	total, err := q.ScanAndCount(ctx)
@@ -130,7 +130,7 @@ func (r *testRepository) List(
 
 	return &pagination.ListResult[*permission.Role]{
 		Items: roles,
-		Total: total,
+		Total: int(total),
 	}, nil
 }
 

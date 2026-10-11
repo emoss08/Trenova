@@ -143,7 +143,7 @@ func purgeQuery(db bun.IDB, before int64, limit int) *bun.DeleteQuery {
 		Where(cols.CreatedAt.Lt(), before).
 		Where("NOT EXISTS (?)", filed).
 		OrderExpr(cols.CreatedAt.OrderAsc()).
-		Limit(limit)
+		Limit(int64(limit))
 
 	return db.NewDelete().
 		Model((*agent.ProposalBaseline)(nil)).

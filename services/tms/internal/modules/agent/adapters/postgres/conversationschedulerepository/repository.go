@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/conversationschedulecol"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -165,8 +166,8 @@ func (r *repository) List(
 				return r.scoped(sq, req.TenantInfo, req.UserID, req.ThreadID)
 			}).
 			Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderDesc()).
-			Limit(limit).
-			Offset(max(req.Offset, 0)).
+			Limit(int64(limit)).
+			Offset(int64(max(req.Offset, 0))).
 			ScanAndCount(ctx)
 		if err != nil {
 			r.l.Error("failed to list conversation schedules", zap.Error(err))
@@ -175,7 +176,7 @@ func (r *repository) List(
 
 		return &pagination.ListResult[*conversationschedule.Schedule]{
 			Items: entities,
-			Total: total,
+			Total: int(total),
 		}, nil
 	})
 }
@@ -185,13 +186,12 @@ func (r *repository) Count(
 	req conversationscheduleports.CountConversationSchedulesRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		return r.db.DBForContext(ctx).
+		return dbhelper.Count(ctx, r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*conversationschedule.Schedule)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return r.scoped(sq, req.TenantInfo, req.UserID, req.ThreadID)
-			}).
-			Count(ctx)
+			}))
 	})
 }
 
@@ -236,7 +236,7 @@ func (r *repository) ListAcrossTenants(
 				NewSelect().
 				Model(&entities).
 				Order(cols.ID.OrderAsc()).
-				Limit(limit)
+				Limit(int64(limit))
 			if req.AfterID.IsNotNil() {
 				query = query.Where(cols.ID.Gt(), req.AfterID)
 			}

@@ -95,7 +95,7 @@ func TestRoleRepository_DeletesAndUpdatesStayInsideTheTenant(t *testing.T) {
 			Where("id = ?", fixtureB.assignment.ID).
 			Count(ctx)
 		require.NoError(t, err)
-		assert.Equal(t, 1, count)
+		assert.Equal(t, int64(1), count)
 	})
 
 	t.Run("a permission cannot be deleted through another tenant's role", func(t *testing.T) {
@@ -111,7 +111,7 @@ func TestRoleRepository_DeletesAndUpdatesStayInsideTheTenant(t *testing.T) {
 			Where("id = ?", fixtureB.permission.ID).
 			Count(ctx)
 		require.NoError(t, err)
-		assert.Equal(t, 1, count)
+		assert.Equal(t, int64(1), count)
 	})
 
 	t.Run("a permission cannot be rewritten through another tenant's role", func(t *testing.T) {

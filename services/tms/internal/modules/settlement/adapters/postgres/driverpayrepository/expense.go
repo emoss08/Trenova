@@ -126,7 +126,7 @@ func (r *driverExpenseRepository) ListConnection(
 					log.Error("failed to count driver expenses", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -188,7 +188,7 @@ func (r *driverExpenseRepository) ListForWorker(
 			}).
 			Relation(driverpaycol.ExpenseRelations.PayCode).
 			Order(cols.CreatedAt.OrderDesc()).
-			Limit(limit)
+			Limit(int64(limit))
 		if err := query.Scan(ctx); err != nil {
 			return nil, fmt.Errorf("list driver expenses for worker: %w", err)
 		}
@@ -239,6 +239,6 @@ func (r *driverExpenseRepository) CountPending(
 		if err != nil {
 			return 0, fmt.Errorf("count pending driver expenses: %w", err)
 		}
-		return count, nil
+		return int(count), nil
 	})
 }

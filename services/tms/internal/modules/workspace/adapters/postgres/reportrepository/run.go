@@ -125,10 +125,10 @@ func (r *runRepository) List(
 			q = q.Where(cols.Status.In(), bun.List(req.Statuses))
 		}
 		if req.Limit > 0 {
-			q = q.Limit(req.Limit)
+			q = q.Limit(int64(req.Limit))
 		}
 		if req.Offset > 0 {
-			q = q.Offset(req.Offset)
+			q = q.Offset(int64(req.Offset))
 		}
 
 		if err := q.Order(cols.CreatedAt.OrderDesc()).Scan(ctx); err != nil {
@@ -191,7 +191,7 @@ func (r *runRepository) ListStale(
 			Order(cols.UpdatedAt.OrderAsc())
 
 		if req.Limit > 0 {
-			q = q.Limit(req.Limit)
+			q = q.Limit(int64(req.Limit))
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -221,7 +221,7 @@ func (r *runRepository) ListExpired(
 			Order(cols.ArtifactExpiresAt.OrderAsc())
 
 		if req.Limit > 0 {
-			q = q.Limit(req.Limit)
+			q = q.Limit(int64(req.Limit))
 		}
 
 		if err := q.Scan(ctx); err != nil {

@@ -91,7 +91,8 @@ func (r *deviationRepository) filterQuery(
 		q = q.Where(cols.State.Eq(), req.State)
 	}
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *deviationRepository) List(
@@ -122,7 +123,7 @@ func (r *deviationRepository) List(
 
 			return &pagination.ListResult[*modeprofile.Deviation]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

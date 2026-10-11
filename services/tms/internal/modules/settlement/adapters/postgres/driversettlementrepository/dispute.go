@@ -129,7 +129,7 @@ func (r *disputeRepository) ListConnection(
 					log.Error("failed to count settlement disputes", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -193,7 +193,7 @@ func (r *disputeRepository) ListForWorker(
 			Relation(driversettlementcol.DisputeRelations.Settlement).
 			Relation(driversettlementcol.DisputeRelations.SettlementLine).
 			Order(cols.CreatedAt.OrderDesc()).
-			Limit(limit)
+			Limit(int64(limit))
 		if err := query.Scan(ctx); err != nil {
 			return nil, fmt.Errorf("list settlement disputes for worker: %w", err)
 		}
@@ -224,6 +224,6 @@ func (r *disputeRepository) CountOpen(
 		if err != nil {
 			return 0, fmt.Errorf("count open settlement disputes: %w", err)
 		}
-		return count, nil
+		return int(count), nil
 	})
 }

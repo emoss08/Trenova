@@ -80,8 +80,8 @@ func (r *repository) SelectOptions(
 				NewSelect().
 				Model(&entities).
 				Column("id", "un_number", "proper_shipping_name", "hazard_class", "subsidiary_hazard", "packing_group", "special_provisions", "erg_guide", "symbols").
-				Limit(req.Pagination.Limit).
-				Offset(req.Pagination.Offset)
+				Limit(int64(req.Pagination.Limit)).
+				Offset(int64(req.Pagination.Offset))
 
 			if req.Query != "" {
 				q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -97,7 +97,7 @@ func (r *repository) SelectOptions(
 
 			return &pagination.ListResult[*dothazmatreference.DotHazmatReference]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

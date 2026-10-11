@@ -148,7 +148,7 @@ func (r *resultRepository) ListPending(
 						Where(cols.Ordinal.Gt(), req.AfterOrdinal)
 				}).
 				Order(cols.Ordinal.OrderAsc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx)
 			if err != nil {
 				r.l.Error("failed to list pending extraction eval results", zap.Error(err))
@@ -267,7 +267,7 @@ func (r *resultRepository) ListConnection(
 
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

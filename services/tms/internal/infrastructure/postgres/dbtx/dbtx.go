@@ -140,7 +140,7 @@ func Savepoint(
 		return fn(ctx)
 	}
 
-	return tx.RunInTx(ctx, nil, func(ctx context.Context, _ bun.Tx) error {
+	return tx.RunInTx(ctx, nil, func(context.Context, bun.Tx) error {
 		return fn(ctx)
 	})
 }

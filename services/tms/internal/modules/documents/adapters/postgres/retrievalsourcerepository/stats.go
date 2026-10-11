@@ -88,7 +88,7 @@ func (r *repository) CountSources(
 			return 0, fmt.Errorf("count %s sources: %w", req.SourceType, err)
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }
 
@@ -128,7 +128,7 @@ func (r *repository) AverageSourceChars(
 			Apply(chars).
 			Apply(table.applyTenant(req.TenantInfo)).
 			OrderExpr(table.id.OrderDesc()).
-			Limit(sample)
+			Limit(int64(sample))
 
 		if err = dba.NewSelect().
 			TableExpr("(?) AS "+charsSampleAlias, newest).

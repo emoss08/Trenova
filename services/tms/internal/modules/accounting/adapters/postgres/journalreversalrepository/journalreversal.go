@@ -86,8 +86,8 @@ func (r *repository) List(
 						(*journalreversal.Reversal)(nil),
 					)
 				}).
-				Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset())
+				Limit(int64(req.Filter.Pagination.SafeLimit())).
+				Offset(int64(req.Filter.Pagination.SafeOffset()))
 			if len(req.Filter.Sort) == 0 {
 				query = query.Order(journalreversalcol.ReversalColumns.CreatedAt.OrderDesc())
 			}
@@ -101,7 +101,7 @@ func (r *repository) List(
 			}
 			return &pagination.ListResult[*journalreversal.Reversal]{
 				Items: items,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -159,7 +159,7 @@ func (r *repository) ListConnection(
 					log.Error("failed to count journal reversals", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

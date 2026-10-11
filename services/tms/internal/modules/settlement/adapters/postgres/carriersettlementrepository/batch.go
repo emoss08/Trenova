@@ -51,8 +51,8 @@ func (r *batchRepository) List(
 				Model(&items).
 				Apply(carriersettlementcol.CarrierSettlementBatchApplyTenant(req.Filter.TenantInfo)).
 				Order(cols.PeriodEnd.OrderDesc()).
-				Limit(limit).
-				Offset(req.Filter.Pagination.SafeOffset())
+				Limit(int64(limit)).
+				Offset(int64(req.Filter.Pagination.SafeOffset()))
 
 			if req.Filter.Query != "" {
 				query = query.Where(cols.Name.ILike(), "%"+req.Filter.Query+"%")
@@ -68,7 +68,7 @@ func (r *batchRepository) List(
 
 			return &pagination.ListResult[*carriersettlement.CarrierSettlementBatch]{
 				Items: items,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -103,7 +103,7 @@ func (r *batchRepository) ListConnection(
 					log.Error("failed to count carrier settlement batches", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

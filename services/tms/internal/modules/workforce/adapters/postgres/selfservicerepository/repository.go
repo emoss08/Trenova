@@ -74,7 +74,7 @@ func (r *repository) ListPolicies(
 				return sq
 			}).
 			Order(cols.Title.OrderAsc()).
-			Limit(limitOr(req.Limit, defaultPolicyPageSize)).
+			Limit(int64(limitOr(req.Limit, defaultPolicyPageSize))).
 			Scan(ctx); err != nil {
 			r.l.Error("failed to list worker policies", zap.Error(err))
 			return nil, fmt.Errorf("list worker policies: %w", err)
@@ -182,7 +182,7 @@ func (r *repository) ListAcknowledgements(
 					return sq
 				}).
 				Order(cols.AcknowledgedAt.OrderDesc()).
-				Limit(limitOr(req.Limit, defaultAckPageSize))
+				Limit(int64(limitOr(req.Limit, defaultAckPageSize)))
 
 			if req.IncludeWorker {
 				q = q.Relation(workercol.WorkerPolicyAcknowledgementRelations.Worker)
@@ -242,7 +242,7 @@ func (r *repository) CountAcknowledgements(
 			return 0, fmt.Errorf("count policy acknowledgements: %w", err)
 		}
 
-		return total, nil
+		return int(total), nil
 	})
 }
 
@@ -280,7 +280,7 @@ func (r *repository) PolicyCompliance(
 				ColumnExpr("COALESCE(" + ack.AcknowledgedAt.Qualified() + ", 0) AS acknowledged_at").
 				ColumnExpr("COALESCE(" + ack.SignatureName.Qualified() + ", '') AS signature_name").
 				OrderExpr(wrk.LastName.Qualified() + ", " + wrk.FirstName.Qualified()).
-				Limit(limitOr(req.Limit, defaultCompliancePageSize))
+				Limit(int64(limitOr(req.Limit, defaultCompliancePageSize)))
 
 			switch req.AppliesTo {
 			case worker.PolicyAudienceEmployees:
@@ -338,7 +338,7 @@ func (r *repository) ListChangeRequests(
 					return sq
 				}).
 				Order(cols.SubmittedAt.OrderDesc()).
-				Limit(limitOr(req.Limit, defaultChangePageSize))
+				Limit(int64(limitOr(req.Limit, defaultChangePageSize)))
 
 			if req.IncludeWorker {
 				q = q.Relation(workercol.WorkerProfileChangeRequestRelations.Worker)

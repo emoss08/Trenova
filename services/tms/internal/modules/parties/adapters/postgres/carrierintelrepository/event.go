@@ -169,7 +169,7 @@ func (r *eventRepository) ListConnection(
 					log.Error("failed to count carrier intel events", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -426,7 +426,7 @@ func (r *eventRepository) ListForDigest(
 				}).
 				OrderExpr(eventSeverityRankExpr, severityRank...).
 				Order(cols.DetectedAt.OrderDesc(), cols.ID.OrderDesc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx)
 			if err != nil {
 				r.l.Error("failed to list carrier intel digest events", zap.Error(err))

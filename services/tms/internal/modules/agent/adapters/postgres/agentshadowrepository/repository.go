@@ -65,7 +65,7 @@ func (r *repository) ListShadowProposals(
 			Where(runCols.Status.Eq(), agent.RunStatusShadowCompleted).
 			Where(runCols.CreatedAt.Gte(), req.Since).
 			OrderExpr(cols.CreatedAt.OrderDesc()).
-			Limit(req.Limit).
+			Limit(int64(req.Limit)).
 			Scan(ctx, &rows)
 		if err != nil {
 			return nil, fmt.Errorf("list shadow proposals: %w", err)

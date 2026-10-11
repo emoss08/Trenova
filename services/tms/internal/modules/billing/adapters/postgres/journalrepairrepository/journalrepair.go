@@ -80,7 +80,7 @@ func (r *repository) ListUnjournaledAdjustmentMemos(
 				Where(cols.SourceInvoiceAdjustmentID.IsNotNull()).
 				Where("NOT EXISTS (?)", ledgerLine).
 				Order(cols.ID.OrderAsc()).
-				Limit(limitOf(req))
+				Limit(int64(limitOf(req)))
 			if req.OrganizationID.IsNotNil() {
 				q = q.Where(cols.OrganizationID.Eq(), req.OrganizationID)
 			}
@@ -167,7 +167,7 @@ func (r *repository) ListUnjournaledDriverPayments(
 				Where(cols.PaidJournalBatchID.IsNull()).
 				Where(cols.PaidAt.IsNotNull()).
 				Order(cols.ID.OrderAsc()).
-				Limit(limitOf(req))
+				Limit(int64(limitOf(req)))
 			if req.OrganizationID.IsNotNil() {
 				q = q.Where(cols.OrganizationID.Eq(), req.OrganizationID)
 			}

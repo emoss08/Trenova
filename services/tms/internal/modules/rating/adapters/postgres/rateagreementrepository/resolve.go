@@ -212,7 +212,7 @@ func (r *repository) resolveKeyedRules(
 	err := r.baseCandidateQuery(ctx, req, &entities).
 		Where(cols.LaneKey.In(), bun.List(req.LaneKeys)).
 		Apply(candidateOrder).
-		Limit(limit + 1).
+		Limit(int64(limit + 1)).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -260,7 +260,7 @@ func (r *repository) resolveRadiusRules(
 				)
 		}).
 		Apply(candidateOrder).
-		Limit(limit + 1).
+		Limit(int64(limit + 1)).
 		Scan(ctx)
 	if err != nil {
 		return nil, err

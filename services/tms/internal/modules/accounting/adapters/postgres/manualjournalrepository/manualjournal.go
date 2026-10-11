@@ -58,8 +58,8 @@ func (r *repository) List(
 						(*manualjournal.Request)(nil),
 					)
 				}).
-				Limit(limit).
-				Offset(req.Filter.Pagination.SafeOffset())
+				Limit(int64(limit)).
+				Offset(int64(req.Filter.Pagination.SafeOffset()))
 			if len(req.Filter.Sort) == 0 {
 				query = query.Order(manualjournalcol.RequestColumns.CreatedAt.OrderDesc())
 			}
@@ -69,7 +69,10 @@ func (r *repository) List(
 				return nil, fmt.Errorf("list manual journals: %w", err)
 			}
 
-			return &pagination.ListResult[*manualjournal.Request]{Items: items, Total: total}, nil
+			return &pagination.ListResult[*manualjournal.Request]{
+				Items: items,
+				Total: int(total),
+			}, nil
 		},
 	)
 }
@@ -134,7 +137,7 @@ func (r *repository) ListConnection(
 					log.Error("failed to count manual journals", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

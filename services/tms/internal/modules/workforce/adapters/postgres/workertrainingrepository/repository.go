@@ -115,7 +115,7 @@ func (r *repository) ListCourses(
 					log.Error("failed to count training courses", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -354,7 +354,7 @@ func (r *repository) CountRecordsByCourse(
 			return 0, err
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }
 
@@ -546,7 +546,7 @@ func (r *repository) reminderQuery(
 		Where(workercol.WorkerColumns.Status.WithAlias("worker").Eq(), domaintypes.StatusActive).
 		Where(workercol.TrainingCourseColumns.Status.WithAlias("course").Eq(), domaintypes.StatusActive).
 		Order(cols.ID.OrderAsc()).
-		Limit(limit)
+		Limit(int64(limit))
 	if !req.TenantInfo.OrgID.IsNil() {
 		q = q.Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID)
 	}

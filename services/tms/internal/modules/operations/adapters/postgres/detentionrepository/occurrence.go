@@ -105,7 +105,8 @@ func (r *occurrenceRepository) filterQuery(
 		q = q.Where(cols.IsOpen.IsTrue())
 	}
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *occurrenceRepository) List(
@@ -133,7 +134,7 @@ func (r *occurrenceRepository) List(
 
 			return &pagination.ListResult[*detention.DetentionOccurrence]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

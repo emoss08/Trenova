@@ -193,7 +193,7 @@ func (r *inboundChangeRepository) ListDetected(
 				Where(cols.Status.Eq(), accountingsync.InboundStatusDetected).
 				Where(cols.DetectedAt.Lte(), req.DetectedBefore).
 				Order(cols.DetectedAt.OrderAsc(), cols.ID.OrderAsc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx); err != nil {
 				return nil, err
 			}
@@ -268,7 +268,7 @@ func (r *inboundChangeRepository) ListConnection(
 					log.Error("failed to count accounting inbound changes", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

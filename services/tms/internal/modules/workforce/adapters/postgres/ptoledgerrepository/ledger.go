@@ -269,7 +269,7 @@ func (r *repository) ListEntries(
 					log.Error("failed to count PTO ledger entries", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

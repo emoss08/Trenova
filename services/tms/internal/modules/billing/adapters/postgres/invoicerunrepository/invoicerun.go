@@ -58,8 +58,8 @@ func (r *repository) List(
 						req.Filter,
 						(*invoicerun.InvoiceRun)(nil),
 					).
-						Limit(req.Filter.Pagination.SafeLimit()).
-						Offset(req.Filter.Pagination.SafeOffset())
+						Limit(int64(req.Filter.Pagination.SafeLimit())).
+						Offset(int64(req.Filter.Pagination.SafeOffset()))
 				}).
 				ScanAndCount(ctx)
 			if err != nil {
@@ -69,7 +69,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*invoicerun.InvoiceRun]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -103,7 +103,7 @@ func (r *repository) ListConnection(
 				r.l.Error("failed to count invoice runs", zap.Error(err))
 				return nil, fmt.Errorf("count invoice runs: %w", err)
 			}
-			totalCount = &total
+			totalCount = new(int(total))
 		}
 
 		result, err := dbhelper.CursorList(

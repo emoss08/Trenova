@@ -70,8 +70,8 @@ func (r *repository) filterQuery(
 		Relation(rel.InternalOrganization).
 		Relation(rel.Connection).
 		Relation(rel.DefaultTransport).
-		Limit(req.Filter.Pagination.SafeLimit()).
-		Offset(req.Filter.Pagination.SafeOffset()).
+		Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset())).
 		Order(cols.CreatedAt.OrderDesc())
 }
 
@@ -97,7 +97,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*edi.EDIPartner]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -457,7 +457,7 @@ func (r *repository) ListCursor(
 				if err != nil {
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDIPartner]{

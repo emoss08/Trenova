@@ -78,7 +78,7 @@ func (r *indexRepository) ListConnection(
 					log.Error("failed to count fuel indices", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

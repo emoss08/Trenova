@@ -116,7 +116,8 @@ func (r *repository) filterQuery(
 	q = q.Where(formulatemplatecol.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
 		Relation("CreatedBy")
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *repository) List(
@@ -152,7 +153,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*formulatemplate.FormulaTemplateVersion]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

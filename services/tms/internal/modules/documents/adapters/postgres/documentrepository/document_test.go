@@ -57,7 +57,7 @@ func (r *testRepository) filterQuery(
 		q = q.Where("doc.status = ?", req.Status)
 	}
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *testRepository) List(
@@ -77,7 +77,7 @@ func (r *testRepository) List(
 
 	return &pagination.ListResult[*document.Document]{
 		Items: entities,
-		Total: total,
+		Total: int(total),
 	}, nil
 }
 

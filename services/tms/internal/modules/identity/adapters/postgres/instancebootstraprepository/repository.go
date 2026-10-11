@@ -74,7 +74,7 @@ func (r *repository) GetState(
 			if err != nil {
 				return nil, fmt.Errorf("count users: %w", err)
 			}
-			state.UserCount = count
+			state.UserCount = int(count)
 
 			return state, nil
 		},

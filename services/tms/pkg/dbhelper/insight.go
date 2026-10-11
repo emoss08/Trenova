@@ -83,7 +83,7 @@ func Facet(
 		ColumnExpr("(sum(count(*)) OVER ())::bigint AS total").
 		GroupExpr(expr).
 		OrderExpr("count DESC, value ASC NULLS LAST").
-		Limit(limit).
+		Limit(int64(limit)).
 		Scan(ctx, &rows)
 	if err != nil {
 		return nil, err
@@ -352,7 +352,7 @@ func MatchingIDs(
 		ColumnExpr(expr+"::text AS id").
 		ColumnExpr("(count(*) OVER ())::bigint AS total").
 		OrderExpr(expr+" ASC").
-		Limit(limit).
+		Limit(int64(limit)).
 		Scan(ctx, &rows)
 	if err != nil {
 		return nil, err

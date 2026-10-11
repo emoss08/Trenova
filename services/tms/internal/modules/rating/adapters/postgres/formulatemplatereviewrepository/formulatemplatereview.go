@@ -82,7 +82,7 @@ func (r *repository) ListByTemplate(
 					Where(cols.TemplateID.Eq(), req.TemplateID)
 			}).
 			Order(cols.CreatedAt.OrderDesc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list formula template reviews", zap.Error(err))
@@ -152,7 +152,7 @@ func (r *repository) ListStaleSubmissions(
 				Where(cols.SubmittedAt.IsNotNull()).
 				Where(cols.SubmittedAt.Lt(), req.SubmittedBefore).
 				Order(cols.SubmittedAt.OrderAsc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx)
 			if err != nil {
 				r.l.Error("failed to list stale formula template submissions", zap.Error(err))

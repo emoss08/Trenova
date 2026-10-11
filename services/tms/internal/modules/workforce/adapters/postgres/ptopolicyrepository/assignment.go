@@ -213,7 +213,7 @@ func (r *repository) ListOpenAssignments(
 					return sq
 				}).
 				Order(cols.ID.OrderAsc()).
-				Limit(limit)
+				Limit(int64(limit))
 			if req.IncludePolicy {
 				q = q.Relation(workercol.WorkerPTOPolicyAssignmentRelations.Policy, policyWithRules)
 			}

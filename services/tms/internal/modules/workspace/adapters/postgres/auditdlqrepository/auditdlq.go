@@ -79,7 +79,7 @@ func (r *repository) GetPendingEntries(ctx context.Context, limit int) ([]*audit
 			Where("status IN (?, ?)", audit.DLQStatusPending, audit.DLQStatusRetrying).
 			Where("next_retry_at IS NULL OR next_retry_at <= ?", now).
 			OrderExpr("created_at ASC").
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to get pending DLQ entries",

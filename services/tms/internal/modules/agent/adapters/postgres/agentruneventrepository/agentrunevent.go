@@ -123,7 +123,7 @@ func (r *repository) List(
 		}
 
 		if req.Limit > 0 {
-			q = q.Limit(req.Limit)
+			q = q.Limit(int64(req.Limit))
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -173,7 +173,7 @@ func (r *repository) ListConnection(
 					return nil, fmt.Errorf("count agent run events: %w", err)
 				}
 
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*agent.AgentRunEvent]{
@@ -232,7 +232,7 @@ func (r *repository) Prune(
 			Model((*agent.AgentRunEvent)(nil)).
 			Column(cols.ID.String()).
 			Where(cols.CreatedAt.Lt(), req.Before).
-			Limit(req.Limit)
+			Limit(int64(req.Limit))
 
 		result, err := dba.NewDelete().
 			Model((*agent.AgentRunEvent)(nil)).

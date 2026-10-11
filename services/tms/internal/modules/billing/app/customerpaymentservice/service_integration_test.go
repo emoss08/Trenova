@@ -7,28 +7,29 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
-	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerpaymentrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalyearrepository"
-	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerpaymentrepository"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -299,10 +300,9 @@ func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *test
 	assert.Equal(t, invoice.SettlementStatusPaid, updatedInvoice.SettlementStatus)
 
 	var applicationCount int
-	applicationCount, err = db.NewSelect().
+	applicationCount, err = dbhelper.Count(ctx, db.NewSelect().
 		Table("customer_payment_applications").
-		Where("customer_payment_id = ?", payment.ID).
-		Count(ctx)
+		Where("customer_payment_id = ?", payment.ID))
 	require.NoError(t, err)
 	assert.Equal(t, 1, applicationCount)
 
@@ -325,10 +325,9 @@ func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *test
 	assert.Equal(t, int64(10000), entry.TotalCredit)
 
 	var sourceCount int
-	sourceCount, err = db.NewSelect().
+	sourceCount, err = dbhelper.Count(ctx, db.NewSelect().
 		Table("journal_sources").
-		Where("source_object_id = ?", payment.ID.String()).
-		Count(ctx)
+		Where("source_object_id = ?", payment.ID.String()))
 	require.NoError(t, err)
 	assert.Equal(t, 1, sourceCount)
 }
@@ -570,10 +569,9 @@ func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
 	assert.Equal(t, invoice.SettlementStatusPaid, updatedInvoice.SettlementStatus)
 
 	var lineCount int
-	lineCount, err = db.NewSelect().
+	lineCount, err = dbhelper.Count(ctx, db.NewSelect().
 		Table("journal_entry_lines").
-		Where("journal_entry_id = (SELECT id FROM journal_entries WHERE reference_id = ? LIMIT 1)", payment.ID.String()).
-		Count(ctx)
+		Where("journal_entry_id = (SELECT id FROM journal_entries WHERE reference_id = ? LIMIT 1)", payment.ID.String()))
 	require.NoError(t, err)
 	assert.Equal(t, 3, lineCount)
 
@@ -897,11 +895,10 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 	assert.Equal(t, invoice.SettlementStatusPaid, updatedInvoice2.SettlementStatus)
 
 	var appliedEntryCount int
-	appliedEntryCount, err = db.NewSelect().
+	appliedEntryCount, err = dbhelper.Count(ctx, db.NewSelect().
 		Table("journal_entries").
 		Where("reference_type = ?", "CustomerPaymentApplied").
-		Where("reference_id = ?", payment.ID.String()).
-		Count(ctx)
+		Where("reference_id = ?", payment.ID.String()))
 	require.NoError(t, err)
 	assert.Equal(t, 1, appliedEntryCount)
 
@@ -1173,11 +1170,10 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 	assert.Equal(t, invoice.SettlementStatusUnpaid, updatedInvoice.SettlementStatus)
 
 	var reversalEntryCount int
-	reversalEntryCount, err = db.NewSelect().
+	reversalEntryCount, err = dbhelper.Count(ctx, db.NewSelect().
 		Table("journal_entries").
 		Where("reference_type = ?", tenant.JournalSourceEventCustomerPaymentReversed.String()).
-		Where("reference_id = ?", payment.ID.String()).
-		Count(ctx)
+		Where("reference_id = ?", payment.ID.String()))
 	require.NoError(t, err)
 	assert.Equal(t, 1, reversalEntryCount)
 

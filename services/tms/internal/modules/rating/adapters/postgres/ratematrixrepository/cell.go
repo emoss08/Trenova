@@ -149,8 +149,8 @@ func (r *repository) ListCells(
 				Order(cols.D1Key.OrderAsc()).
 				Order(cols.D2Min.OrderAsc()).
 				Order(cols.D3Min.OrderAsc()).
-				Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset()).
+				Limit(int64(req.Filter.Pagination.SafeLimit())).
+				Offset(int64(req.Filter.Pagination.SafeOffset())).
 				ScanAndCount(ctx)
 			if err != nil {
 				log.Error("failed to list rate matrix cells", zap.Error(err))
@@ -159,7 +159,7 @@ func (r *repository) ListCells(
 
 			return &pagination.ListResult[*ratematrix.RateMatrixCell]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

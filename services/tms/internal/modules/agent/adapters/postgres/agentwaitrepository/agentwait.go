@@ -151,7 +151,7 @@ func (r *repository) ListByThread(
 					Where(cols.UserID.Eq(), req.UserID)
 			}).
 			Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderDesc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list a conversation's waits",
@@ -216,7 +216,7 @@ func (r *repository) ListOpenOfKinds(
 					Where(cols.Kind.In(), bun.List(req.Kinds))
 			}).
 			Order(cols.CreatedAt.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("read the open waits of these kinds: %w", err)
@@ -255,7 +255,7 @@ func (r *repository) ListOpenByThreads(
 					Where(cols.ThreadID.In(), bun.List(req.ThreadIDs))
 			}).
 			Order(cols.CreatedAt.OrderAsc()).
-			Limit(len(req.ThreadIDs) * agentwait.MaxOpenPerOwner).
+			Limit(int64(len(req.ThreadIDs) * agentwait.MaxOpenPerOwner)).
 			Scan(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("read the conversations' open waits: %w", err)
@@ -288,7 +288,7 @@ func (r *repository) ListOverdueAcrossTenants(
 			Where(cols.Status.Eq(), agentwait.StatusWaiting).
 			Where(cols.ExpiresAt.Lt(), req.ExpiredBefore).
 			Order(cols.ExpiresAt.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("read the overdue waits: %w", err)

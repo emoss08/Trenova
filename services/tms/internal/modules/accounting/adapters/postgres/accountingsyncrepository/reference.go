@@ -215,7 +215,7 @@ func (r *referenceRepository) Search(
 				Apply(accountingsynccol.AccountingReferenceObjectApplyTenant(req.TenantInfo)).
 				Where(cols.ConnectionID.Eq(), req.ConnectionID).
 				Where(cols.Kind.Eq(), req.Kind).
-				Limit(limit)
+				Limit(int64(limit))
 			if req.UsableOnly {
 				query = applyUsable(query)
 			}

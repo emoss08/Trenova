@@ -356,7 +356,7 @@ func (r *repository) ListForSweep(
 					req.ExpiredBy,
 				)
 			}).
-			Limit(limit)
+			Limit(int64(limit))
 
 		if req.TenantInfo != nil {
 			q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -748,7 +748,7 @@ func (r *repository) ListAcceptedMissingRateConfirmation(
 			Where(tenderCols.AcceptedAt.Lte(), req.AcceptedBefore).
 			Where("EXISTS (?)", coveringAssignment).
 			Order(tenderCols.AcceptedAt.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list accepted tenders missing a rate confirmation", zap.Error(err))
@@ -784,7 +784,7 @@ func (r *repository) PurgeDeadOfferTokens(
 			Model((*tender.TenderOfferToken)(nil)).
 			Column(cols.ID.Bare()).
 			Where(deadAt+" < ?", req.DeadBefore).
-			Limit(limit)
+			Limit(int64(limit))
 
 		result, err := dba.NewDelete().
 			Model((*tender.TenderOfferToken)(nil)).

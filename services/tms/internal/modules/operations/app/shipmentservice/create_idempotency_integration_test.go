@@ -56,7 +56,7 @@ func TestCreateIntegration_IdempotencyKeyBooksOneShipment(t *testing.T) {
 		Where("bol = ?", "BOL-IDEMPOTENT-1").
 		Count(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 1, count)
+	assert.Equal(t, int64(1), count)
 
 	created.BOL = "BOL-IDEMPOTENT-EDITED"
 	created.IdempotencyKey = ""

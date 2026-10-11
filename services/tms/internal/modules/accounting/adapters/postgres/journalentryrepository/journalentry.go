@@ -50,8 +50,8 @@ func (r *repository) List(
 				Apply(journalentrycol.JournalEntryApplyTenant(req.Filter.TenantInfo)).
 				Order(cols.AccountingDate.OrderDesc()).
 				Order(cols.EntryNumber.OrderDesc()).
-				Limit(limit).
-				Offset(req.Filter.Pagination.SafeOffset())
+				Limit(int64(limit)).
+				Offset(int64(req.Filter.Pagination.SafeOffset()))
 
 			if req.Filter.Query != "" {
 				like := "%" + req.Filter.Query + "%"
@@ -90,7 +90,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*journalentry.JournalEntry]{
 				Items: entries,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

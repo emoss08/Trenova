@@ -86,8 +86,8 @@ func (r *repository) List(
 						(*carriercapacity.Posting)(nil),
 					)
 					return applyListOptions(sq, req).
-						Limit(req.Filter.Pagination.SafeLimit()).
-						Offset(req.Filter.Pagination.SafeOffset()).
+						Limit(int64(req.Filter.Pagination.SafeLimit())).
+						Offset(int64(req.Filter.Pagination.SafeOffset())).
 						Order(cols.AvailableFrom.OrderAsc(), cols.ID.OrderAsc())
 				}).
 				ScanAndCount(ctx)
@@ -98,7 +98,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*carriercapacity.Posting]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -131,7 +131,7 @@ func (r *repository) ListConnection(
 					r.l.Error("failed to count carrier capacity postings", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -287,7 +287,7 @@ func (r *repository) ListOpen(
 			Where(cols.AvailableTo.Gte(), req.OpenAt).
 			Where(cols.AvailableFrom.Lte(), through).
 			Order(cols.AvailableFrom.OrderAsc(), cols.ID.OrderAsc()).
-			Limit(limit)
+			Limit(int64(limit))
 		if len(req.CarrierIDs) > 0 {
 			q = q.Where(cols.CarrierID.In(), bun.List(req.CarrierIDs))
 		}

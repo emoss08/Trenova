@@ -72,7 +72,8 @@ func (r *profileRepository) filterQuery(
 		q = q.Where(modeprofilecol.ProfileColumns.Status.Eq(), req.Status)
 	}
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *profileRepository) List(
@@ -100,7 +101,7 @@ func (r *profileRepository) List(
 
 			return &pagination.ListResult[*modeprofile.Profile]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

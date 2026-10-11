@@ -27,7 +27,7 @@ func (r *repository) countDependencies(ctx context.Context, deps []dependencyCou
 				return fmt.Errorf("count %s: %w", dep.label, err)
 			}
 
-			*dep.target = total
+			*dep.target = int(total)
 		}
 
 		return nil

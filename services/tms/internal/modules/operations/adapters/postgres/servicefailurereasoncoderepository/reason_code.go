@@ -60,8 +60,8 @@ func (r *repository) List(
 				Model(&entities).
 				Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
 					return querybuilder.ApplyFilters(q, "sfrc", req.Filter, (*servicefailure.ReasonCode)(nil)).
-						Limit(req.Filter.Pagination.SafeLimit()).
-						Offset(req.Filter.Pagination.SafeOffset())
+						Limit(int64(req.Filter.Pagination.SafeLimit())).
+						Offset(int64(req.Filter.Pagination.SafeOffset()))
 				}).
 				Order("sfrc.sort_order ASC", "sfrc.code ASC").
 				ScanAndCount(ctx)
@@ -71,7 +71,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*servicefailure.ReasonCode]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -137,7 +137,7 @@ func (r *repository) ListConnection(
 					log.Error("failed to count service failure reason codes", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

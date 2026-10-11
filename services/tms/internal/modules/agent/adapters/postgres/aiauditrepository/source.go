@@ -57,7 +57,7 @@ func keyset(
 		Where(buncolgen.Expr("({0}, {1}) > (?, ?)", *ts, *id), page.AfterTS, page.AfterID).
 		Where(ts.Lte(), page.UntilTS).
 		Order(ts.OrderAsc(), id.OrderAsc()).
-		Limit(page.Limit)
+		Limit(int64(page.Limit))
 }
 
 func (r *sourceRepository) ListRuns(

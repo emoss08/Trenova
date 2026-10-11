@@ -170,7 +170,7 @@ func (r *repository) ListCases(
 			Model(&entities).
 			WhereGroup(" AND ", caseFilter(req)).
 			Order(cols.StartsAt.OrderDesc()).
-			Limit(limitOr(req.Limit, defaultCasePageSize))
+			Limit(int64(limitOr(req.Limit, defaultCasePageSize)))
 
 		if req.IncludeWorker {
 			q = q.Relation(workercol.WorkerLeaveCaseRelations.Worker)
@@ -206,7 +206,7 @@ func (r *repository) CountCases(
 			return 0, fmt.Errorf("count leave cases: %w", err)
 		}
 
-		return total, nil
+		return int(total), nil
 	})
 }
 
@@ -312,7 +312,7 @@ func (r *repository) ListEntries(
 				return sq
 			}).
 			Order(cols.UsedOn.OrderDesc()).
-			Limit(limitOr(req.Limit, defaultEntryPageSize)).
+			Limit(int64(limitOr(req.Limit, defaultEntryPageSize))).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list leave entries", zap.Error(err))
@@ -342,7 +342,7 @@ func (r *repository) ListEntriesByCaseIDs(
 						Where(cols.LeaveCaseID.In(), bun.List(req.LeaveCaseIDs))
 				}).
 				Order(cols.UsedOn.OrderDesc()).
-				Limit(len(req.LeaveCaseIDs) * defaultEntryPageSize).
+				Limit(int64(len(req.LeaveCaseIDs) * defaultEntryPageSize)).
 				Scan(ctx)
 			if err != nil {
 				r.l.Error("failed to list leave entries by cases", zap.Error(err))

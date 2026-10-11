@@ -76,7 +76,7 @@ func (r *repository) ListByCarrier(
 				}).
 				Order(cols.TransactionDate.OrderDesc()).
 				Order(cols.LineNumber.OrderAsc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx)
 			if err != nil {
 				return nil, fmt.Errorf("list carrier ledger entries: %w", err)

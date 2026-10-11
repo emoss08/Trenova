@@ -150,7 +150,7 @@ func (r *backfillRepository) ListByConnection(
 				Apply(accountingsynccol.AccountingBackfillApplyTenant(req.TenantInfo)).
 				Where(cols.ConnectionID.Eq(), req.ConnectionID).
 				Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderDesc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx); err != nil {
 				return nil, err
 			}

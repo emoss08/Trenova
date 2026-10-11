@@ -176,7 +176,7 @@ func (r *repository) ListConnection(
 
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -259,7 +259,7 @@ func (r *repository) ListBySuiteRun(
 					Where(cols.SuiteOrdinal.Gt(), req.AfterOrdinal)
 			}).
 			Order(cols.SuiteOrdinal.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("list suite evaluations: %w", err)
 		}

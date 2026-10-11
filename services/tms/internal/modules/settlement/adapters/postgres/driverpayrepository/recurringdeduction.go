@@ -50,8 +50,8 @@ func (r *recurringDeductionRepository) List(
 				Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
 				Relation("PayCode", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
 				Order("rded.created_at DESC").
-				Limit(limit).
-				Offset(req.Filter.Pagination.SafeOffset())
+				Limit(int64(limit)).
+				Offset(int64(req.Filter.Pagination.SafeOffset()))
 
 			if req.Filter.Query != "" {
 				query = query.Where("rded.description ILIKE ?", "%"+req.Filter.Query+"%")
@@ -70,7 +70,7 @@ func (r *recurringDeductionRepository) List(
 
 			return &pagination.ListResult[*driverpay.RecurringDeduction]{
 				Items: items,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -105,7 +105,7 @@ func (r *recurringDeductionRepository) ListConnection(
 					log.Error("failed to count recurring deductions", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

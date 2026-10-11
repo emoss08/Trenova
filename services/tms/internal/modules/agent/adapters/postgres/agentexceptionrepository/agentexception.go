@@ -52,8 +52,8 @@ func (r *repository) filterQuery(
 	)
 
 	return q.Apply(agentcol.AgentExceptionApplyTenant(req.Filter.TenantInfo)).
-		Limit(req.Filter.Pagination.SafeLimit()).
-		Offset(req.Filter.Pagination.SafeOffset()).
+		Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset())).
 		Order(cols.CreatedAt.OrderDesc())
 }
 
@@ -79,7 +79,10 @@ func (r *repository) List(
 				return nil, err
 			}
 
-			return &pagination.ListResult[*agent.AgentException]{Items: entities, Total: total}, nil
+			return &pagination.ListResult[*agent.AgentException]{
+				Items: entities,
+				Total: int(total),
+			}, nil
 		},
 	)
 }
@@ -172,7 +175,7 @@ func (r *repository) ListConnection(
 					log.Error("failed to count agent exceptions", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

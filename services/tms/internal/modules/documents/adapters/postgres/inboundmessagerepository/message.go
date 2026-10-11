@@ -87,8 +87,8 @@ func (r *repository) List(
 				query, "imsg", req.Filter, (*inboundmessage.InboundMessage)(nil),
 			).
 				Order(cols.ReceivedAt.OrderDesc()).
-				Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset()).
+				Limit(int64(req.Filter.Pagination.SafeLimit())).
+				Offset(int64(req.Filter.Pagination.SafeOffset())).
 				ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
@@ -96,7 +96,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*inboundmessage.InboundMessage]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -126,7 +126,7 @@ func (r *repository) ListCursor(
 				if err != nil {
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			return dbhelper.CursorList(
@@ -458,7 +458,7 @@ func (r *repository) ListRecentForReview(
 				})).
 				Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
 				Order(cols.ReceivedAt.OrderDesc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx); err != nil {
 				return nil, err
 			}
@@ -490,7 +490,7 @@ func (r *repository) DeleteBefore(
 				inboundmessage.StatusQuarantined,
 			})).
 			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-			Limit(req.Limit)
+			Limit(int64(req.Limit))
 
 		results, err := r.db.DBForContext(ctx).
 			NewDelete().
@@ -551,7 +551,7 @@ func settledBeforeQuery(
 		})).
 		Where(cols.ReceivedAt.Lt(), req.Before).
 		Order(cols.ReceivedAt.OrderAsc()).
-		Limit(req.Limit)
+		Limit(int64(req.Limit))
 }
 
 // DeleteByIDs removes messages inside one tenant. Their attachment rows go

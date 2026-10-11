@@ -99,7 +99,7 @@ func (r *repository) ListTemplates(
 					log.Error("failed to count review templates", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -379,7 +379,7 @@ func (r *repository) CountReviewsByTemplate(
 			return 0, err
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }
 
@@ -440,7 +440,7 @@ func (r *repository) CountReviews(
 			r.l.Error("failed to count performance reviews", zap.Error(err))
 			return 0, fmt.Errorf("count performance reviews: %w", err)
 		}
-		return count, nil
+		return int(count), nil
 	})
 }
 

@@ -61,8 +61,8 @@ func (r *payProfileRepository) List(
 					return q.Order("dppc.sequence ASC")
 				}).
 				Order("dpp.name ASC").
-				Limit(limit).
-				Offset(req.Filter.Pagination.SafeOffset())
+				Limit(int64(limit)).
+				Offset(int64(req.Filter.Pagination.SafeOffset()))
 
 			if req.Filter.Query != "" {
 				query = query.Where(
@@ -80,7 +80,10 @@ func (r *payProfileRepository) List(
 				return nil, fmt.Errorf("list pay profiles: %w", err)
 			}
 
-			return &pagination.ListResult[*driverpay.PayProfile]{Items: items, Total: total}, nil
+			return &pagination.ListResult[*driverpay.PayProfile]{
+				Items: items,
+				Total: int(total),
+			}, nil
 		},
 	)
 }
@@ -114,7 +117,7 @@ func (r *payProfileRepository) ListConnection(
 					log.Error("failed to count pay profiles", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -325,7 +328,7 @@ func (r *payProfileRepository) CountActiveAssignments(
 		if err != nil {
 			return 0, fmt.Errorf("count active pay assignments: %w", err)
 		}
-		return count, nil
+		return int(count), nil
 	})
 }
 

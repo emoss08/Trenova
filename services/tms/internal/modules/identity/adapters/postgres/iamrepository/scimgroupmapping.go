@@ -28,7 +28,8 @@ func (r *repository) filterSCIMGroupRoleMappings(
 		(*iam.SCIMGroupRoleMapping)(nil),
 	)
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *repository) ListSCIMGroupRoleMappings(
@@ -65,7 +66,7 @@ func (r *repository) ListSCIMGroupRoleMappings(
 
 			return &pagination.ListResult[*iam.SCIMGroupRoleMapping]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -128,7 +129,7 @@ func (r *repository) ListSCIMGroupRoleMappingsConnection(
 					log.Error("failed to count scim group role mappings", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

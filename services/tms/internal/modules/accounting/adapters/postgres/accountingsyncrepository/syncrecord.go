@@ -269,7 +269,7 @@ func (r *syncRecordRepository) ListConnection(
 					log.Error("failed to count accounting sync records", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -391,7 +391,7 @@ func (r *syncRecordRepository) CountInFlight(
 		if len(req.ObjectTypes) > 0 {
 			query = query.Where(cols.ObjectType.In(), bun.List(req.ObjectTypes))
 		}
-		return query.Count(ctx)
+		return dbhelper.Count(ctx, query)
 	})
 }
 
@@ -436,7 +436,7 @@ func (r *syncRecordRepository) Claim(
 				WhereGroup(" AND ", dueGroup(now)).
 				OrderExpr(rankOrder, rankArgs...).
 				Order(cols.QueuedAt.OrderAsc(), cols.ID.OrderAsc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				For("UPDATE SKIP LOCKED")
 
 			entities := make([]*accountingsync.AccountingSyncRecord, 0, limit)
@@ -634,7 +634,7 @@ func (r *syncRecordRepository) ListAttention(
 				GroupExpr(cols.Resolution.Expr("COALESCE({}, '')")).
 				OrderExpr("count DESC").
 				OrderExpr("oldest_queued_at ASC").
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx, &groups); err != nil {
 				return nil, err
 			}
@@ -880,7 +880,7 @@ func (r *syncRecordRepository) ListDueConnections(
 				Where(conn.PausedAt.IsNull()).
 				WhereGroup(" AND ", dueGroup(now)).
 				Order(cols.ConnectionID.OrderAsc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx, &due); err != nil {
 				return nil, fmt.Errorf("list due accounting sync connections: %w", err)
 			}
@@ -918,7 +918,7 @@ func (r *syncRecordRepository) PurgeHistory(
 					Where(cols.Status.Eq(), accountingsync.SyncStatusSynced).
 					Where(cols.SyncedAt.Lt(), req.PayloadsSyncedBefore).
 					Where(cols.Payload.IsNotNull()).
-					Limit(limit)
+					Limit(int64(limit))
 				results, err := dba.NewUpdate().
 					Model((*accountingsync.AccountingSyncRecord)(nil)).
 					Set(cols.Payload.SetNull()).
@@ -938,7 +938,7 @@ func (r *syncRecordRepository) PurgeHistory(
 					Model((*accountingsync.AccountingSyncAttempt)(nil)).
 					Column(accountingsynccol.AccountingSyncAttemptTable.PrimaryKey...).
 					Where(attemptCols.CreatedAt.Lt(), req.AttemptsBefore).
-					Limit(limit)
+					Limit(int64(limit))
 				results, err := dba.NewDelete().
 					Model((*accountingsync.AccountingSyncAttempt)(nil)).
 					Where(buncolgen.Expr("({0}, {1}, {2})",
@@ -982,7 +982,7 @@ func (r *syncRecordRepository) ListAttempts(
 				Apply(accountingsynccol.AccountingSyncAttemptApplyTenant(req.TenantInfo)).
 				Where(cols.SyncRecordID.Eq(), req.SyncRecordID).
 				Order(cols.AttemptNumber.OrderDesc(), cols.CreatedAt.OrderDesc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx); err != nil {
 				return nil, err
 			}

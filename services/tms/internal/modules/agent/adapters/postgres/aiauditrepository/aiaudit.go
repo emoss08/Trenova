@@ -349,7 +349,7 @@ func (r *repository) ListConnection(
 
 					return nil, fmt.Errorf("count AI audit events: %w", err)
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -511,7 +511,7 @@ func (r *repository) ListPage(
 
 		if err := q.
 			Order(cols.OccurredAt.OrderAsc(), cols.ID.OrderAsc()).
-			Limit(req.Limit).
+			Limit(int64(req.Limit)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("list AI audit event page: %w", err)
 		}
@@ -533,7 +533,7 @@ func (r *repository) ListChainRange(
 			Apply(aiauditcol.AIAuditEventApplyTenant(req.TenantInfo)).
 			Where(cols.Seq.Gt(), req.AfterSeq).
 			Order(cols.Seq.OrderAsc()).
-			Limit(req.Limit).
+			Limit(int64(req.Limit)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("list AI audit chain range: %w", err)
 		}

@@ -100,7 +100,7 @@ func (r *repository) ListTypes(
 					log.Error("failed to count credential types", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -385,7 +385,7 @@ func (r *repository) CountCredentialsByType(
 			return 0, err
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }
 
@@ -627,7 +627,7 @@ func (r *repository) ListExpiring(
 			Where(workercol.WorkerColumns.Status.WithAlias(workerAlias).Eq(), domaintypes.StatusActive).
 			Where(workercol.WorkerCredentialTypeColumns.Status.WithAlias(typeAlias).Eq(), domaintypes.StatusActive).
 			Order(cols.ID.OrderAsc()).
-			Limit(limit)
+			Limit(int64(limit))
 		if !req.TenantInfo.OrgID.IsNil() {
 			q = q.Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID)
 		}

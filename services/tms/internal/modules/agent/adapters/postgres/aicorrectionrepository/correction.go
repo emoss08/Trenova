@@ -138,7 +138,7 @@ func (r *repository) PurgeBefore(
 					Where(cols.CreatedAt.Lt(), req.Before)
 			}).
 			OrderExpr(cols.CreatedAt.OrderAsc()).
-			Limit(limit)
+			Limit(int64(limit))
 
 		res, err := dba.NewDelete().
 			Model((*aicorrection.Correction)(nil)).
@@ -242,7 +242,7 @@ func (r *repository) ListConnection(
 
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -500,7 +500,7 @@ func (r *repository) ListForAccuracy(
 					Where(cols.CapturedAt.Gte(), req.Since)
 			}).
 			Order(cols.CapturedAt.OrderDesc(), cols.ID.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list ai corrections for accuracy", zap.Error(err))
@@ -547,7 +547,7 @@ func (r *repository) ListForTraining(
 				return sq
 			}).
 			Order(cols.CapturedAt.OrderDesc(), cols.ID.OrderDesc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list ai corrections for training", zap.Error(err))

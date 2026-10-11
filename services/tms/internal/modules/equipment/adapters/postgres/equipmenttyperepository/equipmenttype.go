@@ -121,7 +121,7 @@ func (r *repository) List(
 					log.Error("failed to count equipment types", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

@@ -49,8 +49,8 @@ func (r *payAdvanceRepository) List(
 				Where("padv.business_unit_id = ?", req.Filter.TenantInfo.BuID).
 				Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
 				Order("padv.issued_date DESC").
-				Limit(limit).
-				Offset(req.Filter.Pagination.SafeOffset())
+				Limit(int64(limit)).
+				Offset(int64(req.Filter.Pagination.SafeOffset()))
 
 			if req.Filter.Query != "" {
 				query = query.Where(
@@ -71,7 +71,10 @@ func (r *payAdvanceRepository) List(
 				return nil, fmt.Errorf("list pay advances: %w", err)
 			}
 
-			return &pagination.ListResult[*driverpay.PayAdvance]{Items: items, Total: total}, nil
+			return &pagination.ListResult[*driverpay.PayAdvance]{
+				Items: items,
+				Total: int(total),
+			}, nil
 		},
 	)
 }
@@ -105,7 +108,7 @@ func (r *payAdvanceRepository) ListConnection(
 					log.Error("failed to count pay advances", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

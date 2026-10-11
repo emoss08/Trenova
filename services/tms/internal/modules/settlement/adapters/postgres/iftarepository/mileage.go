@@ -75,7 +75,7 @@ func (r *repository) ListMileageEntries(
 					r.l.Error("failed to count ifta mileage entries", zap.Error(err))
 					return nil, fmt.Errorf("count ifta mileage entries: %w", err)
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

@@ -70,7 +70,8 @@ func (r *policyRepository) filterQuery(
 		q = q.Where(cols.LocationID.Eq(), *req.LocationID)
 	}
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *policyRepository) List(
@@ -98,7 +99,7 @@ func (r *policyRepository) List(
 
 			return &pagination.ListResult[*detention.DetentionPolicy]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -133,7 +134,7 @@ func (r *policyRepository) ListConnection(
 					log.Error("failed to count detention policies", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

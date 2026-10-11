@@ -181,7 +181,7 @@ func (r *repository) List(
 				return scopeReader(sq, req.UserID)
 			}).
 			Order(cols.BriefingDate.OrderDesc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("list briefings: %w", err)

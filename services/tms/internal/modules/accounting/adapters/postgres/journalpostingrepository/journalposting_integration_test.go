@@ -156,7 +156,7 @@ func TestCreateManualJournalPostingPersistsPostedRecords(t *testing.T) {
 		Where("journal_entry_id = (SELECT id FROM journal_entries WHERE entry_number = ? LIMIT 1)", "JE-1").
 		Count(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 2, lineCount)
+	assert.Equal(t, int64(2), lineCount)
 
 	var source struct {
 		Status string `bun:"status"`
@@ -177,7 +177,7 @@ func TestCreateManualJournalPostingPersistsPostedRecords(t *testing.T) {
 		Where("journal_entry_id = (SELECT id FROM journal_entries WHERE entry_number = ? LIMIT 1)", "JE-1").
 		Count(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 1, linkCount)
+	assert.Equal(t, int64(1), linkCount)
 
 	var balance struct {
 		PeriodDebitMinor  int64 `bun:"period_debit_minor"`
@@ -338,7 +338,7 @@ func TestCreateManualJournalPostingPersistsPendingRecordsWithoutPostedAudit(t *t
 		Where("fiscal_period_id = ?", periodID).
 		Count(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 0, balanceCount)
+	assert.Equal(t, int64(0), balanceCount)
 }
 
 func setupPostingFixture(

@@ -81,7 +81,7 @@ func (r *repository) ListVerifications(
 				}).
 				OrderExpr(cols.EmployedTo.Qualified() + " DESC NULLS LAST").
 				Order(cols.CreatedAt.OrderDesc()).
-				Limit(limitOr(req.Limit, defaultVerificationPageSize))
+				Limit(int64(limitOr(req.Limit, defaultVerificationPageSize)))
 
 			if req.IncludeWorker {
 				q = q.Relation(workercol.WorkerEmploymentVerificationRelations.Worker)
@@ -120,7 +120,7 @@ func (r *repository) ListVerificationsByWorkerIDs(
 				}).
 				OrderExpr(cols.EmployedTo.Qualified() + " DESC NULLS LAST").
 				Order(cols.CreatedAt.OrderDesc()).
-				Limit(len(req.WorkerIDs) * defaultVerificationPageSize)
+				Limit(int64(len(req.WorkerIDs) * defaultVerificationPageSize))
 
 			if req.IncludeWorker {
 				q = q.Relation(workercol.WorkerEmploymentVerificationRelations.Worker)
@@ -293,7 +293,7 @@ func (r *repository) ListRetentionCandidates(
 						)
 				}).
 				Order(workerCols.ID.OrderAsc()).
-				Limit(limitOr(req.Limit, defaultRetentionPageSize)).
+				Limit(int64(limitOr(req.Limit, defaultRetentionPageSize))).
 				Scan(ctx, &candidates)
 			if err != nil {
 				r.l.Error("failed to list dqf retention candidates", zap.Error(err))

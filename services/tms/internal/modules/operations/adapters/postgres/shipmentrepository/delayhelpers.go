@@ -141,7 +141,7 @@ func (r *repository) ListAutoDelayShipmentTenants(
 			Where(cols.AutoDelayShipments.Eq(), true).
 			Order(cols.OrganizationID.OrderAsc()).
 			Order(cols.BusinessUnitID.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx, &rows)
 		if err != nil {
 			return nil, err
@@ -230,7 +230,7 @@ func (r *repository) getDelayedShipments(
 		Where("sp.business_unit_id = ?", tenantInfo.BuID).
 		Where("sp.status NOT IN (?)", bun.List(shipmentstate.DelayedExcludedShipmentStatuses())).
 		Order(shipmentcol.ShipmentColumns.ID.OrderAsc()).
-		Limit(limit).
+		Limit(int64(limit)).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -254,7 +254,7 @@ func (r *repository) getAutoDelayedShipmentsForTenant(
 	delayedCte := buildAutoDelayedShipmentCTE(dba, currentTime).
 		Where("sp.organization_id = ?", tenantInfo.OrgID).
 		Where("sp.business_unit_id = ?", tenantInfo.BuID).
-		Limit(limit)
+		Limit(int64(limit))
 
 	err := dba.NewSelect().
 		Model(&entities).

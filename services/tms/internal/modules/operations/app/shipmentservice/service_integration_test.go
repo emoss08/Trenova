@@ -669,7 +669,7 @@ func TestCreateIntegration_RejectsHazmatSegregationConflicts(t *testing.T) {
 		Where("bol = ?", entity.BOL).
 		Count(ctx)
 	require.NoError(t, getErr)
-	assert.Equal(t, 0, count)
+	assert.Equal(t, int64(0), count)
 }
 
 func TestUpdateIntegration_ReconcilesDetentionCharge(t *testing.T) {

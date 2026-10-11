@@ -167,7 +167,7 @@ func (r *repository) TeamMembers(
 			ColumnExpr("wrkp.hire_date AS hire_date").
 			ColumnExpr("wrkp.termination_date AS termination_date").
 			OrderExpr("direct DESC, wrk.last_name, wrk.first_name").
-			Limit(limitOr(req.Limit, defaultTeamPageSize))
+			Limit(int64(limitOr(req.Limit, defaultTeamPageSize)))
 
 		if !req.IncludeInactive {
 			q = q.Where("wrk.status = 'Active'")

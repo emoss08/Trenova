@@ -87,7 +87,7 @@ func (r *repository) ListInjuries(
 			}).
 			Order(cols.CaseYear.OrderDesc()).
 			Order(cols.CaseNumber.OrderDesc()).
-			Limit(limitOr(req.Limit, defaultInjuryPageSize))
+			Limit(int64(limitOr(req.Limit, defaultInjuryPageSize)))
 
 		if req.IncludeWorker {
 			q = q.Relation(workercol.WorkerInjuryRelations.Worker)
@@ -291,7 +291,7 @@ func (r *repository) ListSummaries(
 				return workercol.OSHAAnnualSummaryScopeTenant(sq, req.TenantInfo)
 			}).
 			Order(workercol.OSHAAnnualSummaryColumns.Year.OrderDesc()).
-			Limit(limitOr(req.Limit, defaultSummaryPageSize)).
+			Limit(int64(limitOr(req.Limit, defaultSummaryPageSize))).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list osha summaries", zap.Error(err))

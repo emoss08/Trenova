@@ -152,7 +152,7 @@ func (r *repository) ListSeals(
 			Apply(aiauditcol.AIAuditSealApplyTenant(req.TenantInfo)).
 			Where(cols.ToSeq.Gte(), req.FromSeq).
 			Order(cols.ToSeq.OrderAsc()).
-			Limit(req.Limit).
+			Limit(int64(req.Limit)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("list AI audit seals: %w", err)
 		}
@@ -233,7 +233,7 @@ func (r *repository) Prune(
 						Apply(aiauditcol.AIAuditEventApplyTenant(req.TenantInfo)).
 						Where(cols.Seq.Lte(), req.ThroughSeq).
 						Order(cols.Seq.OrderAsc()).
-						Limit(batch)
+						Limit(int64(batch))
 
 					res, err := tx.NewDelete().
 						Model((*aiaudit.AIAuditEvent)(nil)).

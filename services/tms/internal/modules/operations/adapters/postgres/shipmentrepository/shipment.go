@@ -101,7 +101,7 @@ func (r *repository) List(
 				if cErr != nil {
 					return nil, cErr
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*shipment.Shipment]{
@@ -247,7 +247,7 @@ func (r *repository) ListRatedByFormulaTemplate(
 				},
 			}).
 			Order(sp.CreatedAt.OrderDesc()).
-			Limit(req.Limit).
+			Limit(int64(req.Limit)).
 			Scan(ctx)
 		if err != nil {
 			return nil, err
@@ -336,7 +336,7 @@ func (r *repository) GetUnassigned(
 				if err != nil {
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*shipment.Shipment]{

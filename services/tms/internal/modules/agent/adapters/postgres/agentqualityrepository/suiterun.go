@@ -268,7 +268,7 @@ func (r *suiteRunRepository) List(
 				if err != nil {
 					return nil, fmt.Errorf("count agent suite runs: %w", err)
 				}
-				page.TotalCount = &total
+				page.TotalCount = new(int(total))
 			}
 
 			items := make([]*agentquality.SuiteRun, 0, limit+1)
@@ -276,8 +276,8 @@ func (r *suiteRunRepository) List(
 				Model(&items).
 				WhereGroup(" AND ", scope).
 				Order(cols.StartedAt.OrderDesc(), cols.ID.OrderDesc()).
-				Limit(limit + 1).
-				Offset(max(req.Offset, 0)).
+				Limit(int64(limit + 1)).
+				Offset(int64(max(req.Offset, 0))).
 				Scan(ctx); err != nil {
 				return nil, fmt.Errorf("list agent suite runs: %w", err)
 			}
@@ -326,7 +326,7 @@ func (r *suiteRunRepository) ListConnection(
 
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -448,7 +448,7 @@ func (r *suiteRunRepository) Latest(
 				return sq
 			}).
 			Order(cols.AgentDefinitionID.OrderAsc(), cols.StartedAt.OrderDesc(), cols.ID.OrderDesc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("read each agent's latest suite run: %w", err)
 		}
@@ -511,7 +511,7 @@ func (r *suiteRunRepository) ListAgents(
 				if err != nil {
 					return nil, fmt.Errorf("count agents: %w", err)
 				}
-				result.TotalCount = &total
+				result.TotalCount = new(int(total))
 			}
 
 			rows := make([]*agentqualityports.AgentQualityAgentRow, 0, limit+1)
@@ -523,8 +523,8 @@ func (r *suiteRunRepository) ListAgents(
 				WhereGroup(" AND ", scope).
 				OrderExpr(cols.Name.OrderAsc()).
 				OrderExpr(cols.ID.OrderAsc()).
-				Limit(limit+1).
-				Offset(max(req.Offset, 0)).
+				Limit(int64(limit+1)).
+				Offset(int64(max(req.Offset, 0))).
 				Scan(ctx, &rows); err != nil {
 				return nil, fmt.Errorf("list agents for quality: %w", err)
 			}

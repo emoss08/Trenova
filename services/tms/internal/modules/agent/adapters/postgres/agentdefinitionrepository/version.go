@@ -74,7 +74,7 @@ func (r *versionRepository) List(
 						Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
 				}).
 				Order(cols.Version.OrderDesc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx)
 			if err != nil {
 				return nil, fmt.Errorf("list agent versions: %w", err)

@@ -61,8 +61,8 @@ func (r *repository) filterQuery(
 	)
 
 	return q.Apply(ordercol.OrderApplyTenant(req.Filter.TenantInfo)).
-		Limit(req.Filter.Pagination.SafeLimit()).
-		Offset(req.Filter.Pagination.SafeOffset()).
+		Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset())).
 		Order(cols.CreatedAt.OrderDesc())
 }
 
@@ -93,7 +93,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*order.Order]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -159,7 +159,7 @@ func (r *repository) ListConnection(
 					log.Error("failed to count orders", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

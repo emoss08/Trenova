@@ -60,7 +60,7 @@ func (r *definitionRepository) ListConnection(
 					log.Error("failed to count report definitions", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -147,7 +147,7 @@ func (r *runRepository) ListConnection(
 					log.Error("failed to count report runs", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

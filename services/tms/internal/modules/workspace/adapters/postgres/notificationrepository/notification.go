@@ -143,8 +143,8 @@ func (r *repository) List(
 			q = q.Where(cols.OrganizationID.Eq(), req.Filter.TenantInfo.OrgID)
 			q = r.scopeFilter(q, req.Filter.TenantInfo, false)
 			q = q.Order(cols.CreatedAt.OrderDesc())
-			q = q.Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset())
+			q = q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+				Offset(int64(req.Filter.Pagination.SafeOffset()))
 
 			total, err := q.ScanAndCount(ctx)
 			if err != nil {
@@ -154,7 +154,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*notification.Notification]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -245,7 +245,7 @@ func (r *repository) ListConnection(
 					log.Error("failed to count notifications", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

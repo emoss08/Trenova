@@ -305,7 +305,7 @@ func (r *repository) ListConnection(
 				if err != nil {
 					return nil, fmt.Errorf("count journal entries awaiting review: %w", err)
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

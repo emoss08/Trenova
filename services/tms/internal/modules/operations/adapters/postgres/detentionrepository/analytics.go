@@ -99,7 +99,7 @@ func (r *analyticsRepository) ListStopFacts(
 			q = q.Where(stopCols.LocationID.Eq(), *req.LocationID)
 		}
 		if req.Limit > 0 {
-			q = q.Limit(req.Limit)
+			q = q.Limit(int64(req.Limit))
 		}
 
 		if err := q.Scan(ctx, &facts); err != nil {
@@ -210,7 +210,7 @@ func (r *analyticsRepository) FacilityStats(
 				q = q.Where(cols.ClockStartAt.Lte(), req.To)
 			}
 			if req.Limit > 0 {
-				q = q.Limit(req.Limit)
+				q = q.Limit(int64(req.Limit))
 			}
 
 			if err := q.Scan(ctx, &stats); err != nil {
@@ -279,7 +279,7 @@ func (r *analyticsRepository) CustomerStats(
 				q = q.Where(cols.ClockStartAt.Lte(), req.To)
 			}
 			if req.Limit > 0 {
-				q = q.Limit(req.Limit)
+				q = q.Limit(int64(req.Limit))
 			}
 
 			if err := q.Scan(ctx, &stats); err != nil {

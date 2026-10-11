@@ -280,7 +280,7 @@ func pageQuery(
 
 	return window.
 		OrderExpr("lineages.pinned DESC, lineages.last DESC, lineages.root DESC").
-		Limit(limit + 1)
+		Limit(int64(limit + 1))
 }
 
 func boolInt(value bool) int {

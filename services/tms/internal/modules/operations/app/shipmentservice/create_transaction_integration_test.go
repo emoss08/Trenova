@@ -7,11 +7,12 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -71,11 +72,10 @@ func TestCreateIntegration_RollsBackEverythingWhenALaterStepFails(t *testing.T) 
 	assert.Zero(t, shipmentCount, "the shipment row is rolled back with the rest")
 
 	var orphanOrders int
-	orphanOrders, err = db.NewSelect().
+	orphanOrders, err = dbhelper.Count(ctx, db.NewSelect().
 		TableExpr("orders AS o").
 		Where("o.organization_id = ?", tenantInfo.OrgID).
-		Where("NOT EXISTS (SELECT 1 FROM shipments AS s WHERE s.order_id = o.id)").
-		Count(ctx)
+		Where("NOT EXISTS (SELECT 1 FROM shipments AS s WHERE s.order_id = o.id)"))
 	require.NoError(t, err)
 	assert.Zero(t, orphanOrders, "the auto-created order is rolled back too")
 }

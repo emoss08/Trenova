@@ -54,7 +54,7 @@ func (r *repository) filterQuery(
 	q = q.Relation("User")
 	q = q.Relation("APIKey")
 
-	return q.Limit(req.Pagination.SafeLimit()).Offset(req.Pagination.SafeOffset())
+	return q.Limit(int64(req.Pagination.SafeLimit())).Offset(int64(req.Pagination.SafeOffset()))
 }
 
 func (r *repository) List(
@@ -82,7 +82,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*audit.Entry]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -154,7 +154,7 @@ func (r *repository) ListConnection(
 					log.Error("failed to count audit entries", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*audit.Entry]{
@@ -245,7 +245,7 @@ func (r *repository) ListByResourceID(
 
 			return &pagination.ListResult[*audit.Entry]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -291,7 +291,7 @@ func (r *repository) GetByResourceAndOperation(
 			Relation("APIKey")
 
 		if req.Limit > 0 {
-			q = q.Limit(req.Limit)
+			q = q.Limit(int64(req.Limit))
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -323,7 +323,7 @@ func (r *repository) GetRecentEntries(
 			Relation("APIKey")
 
 		if req.Limit > 0 {
-			q = q.Limit(req.Limit)
+			q = q.Limit(int64(req.Limit))
 		}
 
 		if err := q.Scan(ctx); err != nil {

@@ -181,7 +181,7 @@ func (r *repository) ClaimIndexEntries(
 			}).
 			OrderExpr(cols.UpdatedAt.OrderAsc()).
 			OrderExpr(cols.SourceID.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			For("UPDATE SKIP LOCKED")
 		if len(req.SourceTypes) > 0 {
 			picked = picked.Where(cols.SourceType.In(), bun.List(req.SourceTypes))
@@ -595,7 +595,7 @@ func (r *repository) FindStaleSources(
 					)
 			}).
 			OrderExpr(table.id.OrderAsc()).
-			Limit(limit)
+			Limit(int64(limit))
 		if req.AfterID.IsNotNil() {
 			q = q.Where(table.id.Gt(), req.AfterID)
 		}
@@ -705,7 +705,7 @@ func (r *repository) ListErroredIndexEntries(
 			OrderExpr(cols.SourceType.OrderAsc()).
 			OrderExpr(cols.SourceID.OrderAsc()).
 			OrderExpr(cols.ModelKey.OrderAsc()).
-			Limit(limit)
+			Limit(int64(limit))
 		if req.SourceType != "" {
 			q = q.Where(cols.SourceType.Eq(), req.SourceType)
 		}

@@ -221,7 +221,7 @@ func (r *snapshotRepository) ListHistory(
 						Where(cols.SubjectID.Eq(), req.SubjectID)
 				}).
 				Order(cols.FetchedAt.OrderDesc(), cols.ID.OrderDesc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx)
 			if err != nil {
 				r.l.Error("failed to list carrier intel snapshot history", zap.Error(err))
@@ -420,7 +420,7 @@ func (r *snapshotRepository) ListForRecompute(
 						Where(versionPredicate, req.BelowVersion)
 				}).
 				Order(cols.ID.OrderAsc()).
-				Limit(limit)
+				Limit(int64(limit))
 			if !req.AfterID.IsNil() {
 				q = q.Where(cols.ID.Gt(), req.AfterID)
 			}
@@ -460,7 +460,7 @@ func (r *snapshotRepository) ListReviewQueue(
 						Where(cols.ReviewState.Eq(), carrierintel.ReviewStateNeedsReview)
 				}).
 				Order(cols.FetchedAt.OrderDesc(), cols.ID.OrderDesc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx)
 			if err != nil {
 				r.l.Error("failed to list carrier intel review queue", zap.Error(err))

@@ -235,7 +235,7 @@ func (r *driftFindingRepository) ListConnection(
 					log.Error("failed to count accounting drift findings", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

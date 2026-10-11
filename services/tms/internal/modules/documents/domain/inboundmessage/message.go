@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
@@ -130,6 +131,13 @@ func (m *InboundMessage) NeedsReview() bool {
 }
 
 func (m *InboundMessage) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	m.MessageID = stringutils.StripNUL(m.MessageID)
+	m.InReplyTo = stringutils.StripNUL(m.InReplyTo)
+	m.FromName = stringutils.StripNUL(m.FromName)
+	m.Subject = stringutils.StripNUL(m.Subject)
+	m.TextBody = stringutils.StripNUL(m.TextBody)
+	m.FailureText = stringutils.StripNUL(m.FailureText)
+
 	now := timeutils.NowUnix()
 
 	switch query.(type) {

@@ -163,7 +163,7 @@ func (r *requestRepository) ListForTarget(
 
 		if err := query.
 			Order(cols.CreatedAt.OrderDesc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx); err != nil {
 			return nil, err
 		}
@@ -188,7 +188,7 @@ func (r *requestRepository) ListExpired(
 			Where(cols.Status.In(), bun.List(waitingRequestStatuses)).
 			Where(cols.ExpiresAt.Lte(), now).
 			Order(cols.ExpiresAt.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx); err != nil {
 			return nil, err
 		}

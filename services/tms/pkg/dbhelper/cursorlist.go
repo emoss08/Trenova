@@ -46,7 +46,7 @@ func CursorList[T any](
 	cursorColumns := cursorListColumns(params.Filter)
 	query = selectWithCursorColumns(query, cursorColumns)
 
-	if err := query.Limit(limit + 1).Scan(ctx); err != nil {
+	if err := query.Limit(int64(limit + 1)).Scan(ctx); err != nil {
 		return nil, err
 	}
 

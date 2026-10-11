@@ -65,7 +65,8 @@ func (r *repository) filterQuery(
 
 	q = q.Relation("Customer").Relation("Shipment")
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *repository) List(
@@ -90,7 +91,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*invoice.Invoice]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -148,7 +149,7 @@ func (r *repository) ListConnection(
 					log.Error("failed to count invoices", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -517,7 +518,7 @@ func (r *repository) CountPostedReconciliationDiscrepancies(
 	req invoiceports.CountPostedInvoiceReconciliationDiscrepanciesRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		return r.db.DBForContext(ctx).
+		return dbhelper.Count(ctx, r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*invoice.Invoice)(nil)).
 			Where("inv.organization_id = ?", req.OrgID).
@@ -579,8 +580,7 @@ func (r *repository) CountPostedReconciliationDiscrepancies(
 			) > ?`,
 				billingqueue.BillTypeCreditMemo,
 				req.ToleranceAmount,
-			).
-			Count(ctx)
+			))
 	})
 }
 
@@ -862,15 +862,15 @@ func (r *repository) ListEmailAttempts(
 						Relation("ShareToken")
 				}).
 				Order("inea.created_at DESC").
-				Limit(limit).
-				Offset(offset).
+				Limit(int64(limit)).
+				Offset(int64(offset)).
 				ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
 			}
 			return &pagination.ListResult[*invoice.EmailAttempt]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

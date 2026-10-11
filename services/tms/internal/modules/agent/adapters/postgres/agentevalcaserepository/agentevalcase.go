@@ -230,7 +230,7 @@ func (r *repository) ListConnection(
 
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -313,7 +313,7 @@ func (r *repository) ListByAgent(
 				return sq
 			}).
 			Order(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("list agent eval cases: %w", err)
 		}
@@ -373,7 +373,7 @@ func (r *repository) ListCaptureCandidates(
 				Where(run.AgentDefinitionID.IsNotNull()).
 				Where("NOT EXISTS (?)", captured).
 				Order(decision.CreatedAt.OrderAsc(), decision.ID.OrderAsc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx, &rows); err != nil {
 				return nil, fmt.Errorf("list eval case capture candidates: %w", err)
 			}
@@ -416,7 +416,7 @@ func (r *repository) PurgeExpired(
 				})
 			}).
 			Order(cols.CreatedAt.OrderAsc()).
-			Limit(limit)
+			Limit(int64(limit))
 
 		return r.deleteKeys(ctx, due)
 	})
@@ -446,7 +446,7 @@ func (r *repository) PurgeOrphaned(
 			Where(cols.SourceThreadID.IsNotNull()).
 			Where("NOT EXISTS (?)", live).
 			Order(cols.CreatedAt.OrderAsc()).
-			Limit(limit)
+			Limit(int64(limit))
 
 		return r.deleteKeys(ctx, orphaned)
 	})

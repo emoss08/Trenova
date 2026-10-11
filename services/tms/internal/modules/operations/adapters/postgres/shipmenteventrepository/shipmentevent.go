@@ -88,7 +88,7 @@ func (r *repository) List(
 			Where("se.organization_id = ?", req.TenantInfo.OrgID).
 			Where("se.business_unit_id = ?", req.TenantInfo.BuID).
 			Order("se.occurred_at DESC").
-			Limit(limit).
+			Limit(int64(limit)).
 			Relation("Actor").
 			Relation("Shipment")
 

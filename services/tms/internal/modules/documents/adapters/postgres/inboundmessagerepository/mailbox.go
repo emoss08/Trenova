@@ -55,8 +55,8 @@ func (r *mailboxRepository) List(
 
 			total, err := querybuilder.ApplyFilters(query, "imbx", req.Filter, (*inboundmessage.Mailbox)(nil)).
 				Order(cols.CreatedAt.OrderDesc()).
-				Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset()).
+				Limit(int64(req.Filter.Pagination.SafeLimit())).
+				Offset(int64(req.Filter.Pagination.SafeOffset())).
 				ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
@@ -64,7 +64,7 @@ func (r *mailboxRepository) List(
 
 			return &pagination.ListResult[*inboundmessage.Mailbox]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

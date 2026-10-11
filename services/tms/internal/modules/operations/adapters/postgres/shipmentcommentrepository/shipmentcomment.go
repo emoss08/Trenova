@@ -87,7 +87,7 @@ func (r *repository) ListByShipmentID(
 				if err != nil {
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -278,13 +278,12 @@ func (r *repository) GetCountByShipmentID(
 		sc := shipmentcol.ShipmentCommentColumns
 		db := r.db.DBForContext(ctx)
 
-		return db.NewSelect().
+		return dbhelper.Count(ctx, db.NewSelect().
 			Model((*shipment.ShipmentComment)(nil)).
 			Where(sc.ShipmentID.Eq(), req.ShipmentID).
 			Where(sc.OrganizationID.Eq(), req.TenantInfo.OrgID).
 			Where(sc.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(sc.DeletedAt.IsNull()).
-			Count(ctx)
+			Where(sc.DeletedAt.IsNull()))
 	})
 }
 
@@ -640,12 +639,11 @@ func (r *repository) CountReplies(
 		sc := shipmentcol.ShipmentCommentColumns
 		db := r.db.DBForContext(ctx)
 
-		return db.NewSelect().
+		return dbhelper.Count(ctx, db.NewSelect().
 			Model((*shipment.ShipmentComment)(nil)).
 			Where(sc.ParentCommentID.Eq(), req.CommentID).
 			Where(sc.ShipmentID.Eq(), req.ShipmentID).
-			Apply(shipmentcol.ShipmentCommentApplyTenant(req.TenantInfo)).
-			Count(ctx)
+			Apply(shipmentcol.ShipmentCommentApplyTenant(req.TenantInfo)))
 	})
 }
 
@@ -657,13 +655,12 @@ func (r *repository) CountPinnedByShipmentID(
 		sc := shipmentcol.ShipmentCommentColumns
 		db := r.db.DBForContext(ctx)
 
-		return db.NewSelect().
+		return dbhelper.Count(ctx, db.NewSelect().
 			Model((*shipment.ShipmentComment)(nil)).
 			Where(sc.ShipmentID.Eq(), req.ShipmentID).
 			Where(sc.PinnedAt.IsNotNull()).
 			Where(sc.DeletedAt.IsNull()).
-			Apply(shipmentcol.ShipmentCommentApplyTenant(req.TenantInfo)).
-			Count(ctx)
+			Apply(shipmentcol.ShipmentCommentApplyTenant(req.TenantInfo)))
 	})
 }
 

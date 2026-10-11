@@ -223,7 +223,9 @@ func (r *controlRepository) ListScheduleTargets(
 			}
 
 			targets := make([]*agentqualityports.QualityScheduleTarget, 0, limit)
-			if err := q.OrderExpr(org.ID.OrderAsc()).Limit(limit).Scan(ctx, &targets); err != nil {
+			if err := q.OrderExpr(org.ID.OrderAsc()).
+				Limit(int64(limit)).
+				Scan(ctx, &targets); err != nil {
 				return nil, fmt.Errorf("list organizations to schedule: %w", err)
 			}
 			if len(targets) == 0 {

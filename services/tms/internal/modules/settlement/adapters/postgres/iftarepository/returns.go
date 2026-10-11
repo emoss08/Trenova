@@ -76,7 +76,7 @@ func (r *repository) ListReturns(
 					r.l.Error("failed to count ifta returns", zap.Error(err))
 					return nil, fmt.Errorf("count ifta returns: %w", err)
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*ifta.Return]{

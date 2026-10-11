@@ -307,7 +307,7 @@ func TestRollbackHelpers_Integration(t *testing.T) {
 			Where("id = ?", bu.ID).
 			Count(ctx)
 		require.NoError(t, err)
-		assert.Equal(t, 0, count)
+		assert.Equal(t, int64(0), count)
 	})
 
 	t.Run("VerifyEntityExists", func(t *testing.T) {
@@ -351,7 +351,7 @@ func TestRollbackHelpers_Integration(t *testing.T) {
 			Where("id IN (?)", ids).
 			Count(ctx)
 		require.NoError(t, err)
-		assert.Equal(t, 0, count)
+		assert.Equal(t, int64(0), count)
 	})
 }
 

@@ -243,7 +243,7 @@ func (r *repository) ListConnection(
 
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -368,8 +368,8 @@ func (r *repository) WorstRated(
 				OrderExpr(cols.TargetType.OrderAsc()).
 				OrderExpr(cols.TargetID.OrderAsc()).
 				OrderExpr(cols.TargetPart.OrderAsc()).
-				Limit(limit).
-				Offset(max(req.Offset, 0)).
+				Limit(int64(limit)).
+				Offset(int64(max(req.Offset, 0))).
 				Scan(ctx, &rows)
 			if err != nil {
 				r.l.Error("failed to read worst-rated ai output", zap.Error(err))
@@ -489,7 +489,7 @@ func (r *repository) ListNegativeSince(
 					Where(cols.CreatedAt.Gte(), req.Since)
 			}).
 			OrderExpr(cols.CreatedAt.OrderDesc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list negative ai feedback", zap.Error(err))
@@ -524,7 +524,7 @@ func (r *repository) PurgeBefore(
 					Where(cols.CreatedAt.Lt(), req.Before)
 			}).
 			OrderExpr(cols.CreatedAt.OrderAsc()).
-			Limit(limit)
+			Limit(int64(limit))
 
 		res, err := dba.NewDelete().
 			Model((*aifeedback.Feedback)(nil)).

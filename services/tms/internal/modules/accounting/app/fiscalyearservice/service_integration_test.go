@@ -126,7 +126,7 @@ func TestActivateReturnsConflictWhenCurrentFiscalYearIsLocked(t *testing.T) {
 		Where("is_current = ?", true).
 		Count(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 1, count)
+	assert.Equal(t, int64(1), count)
 }
 
 func TestGetCloseBlockersReturnsOpenPeriodBlocker(t *testing.T) {

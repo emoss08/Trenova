@@ -200,7 +200,7 @@ func (r *repository) ListForReconciliation(
 				Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
 				Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
 				Order(cols.LastActivityAt.OrderAsc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx)
 			if err != nil {
 				return nil, err
@@ -258,7 +258,7 @@ func (r *repository) ListReconciliationTenants(
 			Group(cols.OrganizationID.Name, cols.BusinessUnitID.Name).
 			Order(cols.OrganizationID.OrderAsc()).
 			Order(cols.BusinessUnitID.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx, &rows)
 		if err != nil {
 			return nil, err

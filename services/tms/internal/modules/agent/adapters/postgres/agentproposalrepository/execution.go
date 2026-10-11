@@ -195,6 +195,6 @@ func (r *repository) CountExecutedTool(
 			return 0, fmt.Errorf("count executed tool proposals: %w", err)
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }

@@ -82,7 +82,8 @@ func (r *repository) filterQuery(
 		return r.addOptions(sq, req.CarrierFilterOptions)
 	})
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *repository) List(
@@ -112,7 +113,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*carrier.Carrier]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -170,7 +171,7 @@ func (r *repository) ListConnection(
 					log.Error("failed to count carriers", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

@@ -93,7 +93,8 @@ func (ur *repository) filterQuery(
 		q = q.Relation("Memberships").Relation("Memberships.Organization")
 	}
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (ur *repository) List(
@@ -126,7 +127,7 @@ func (ur *repository) List(
 
 			return &pagination.ListResult[*tenant.User]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -207,7 +208,7 @@ func (ur *repository) ListConnection(
 					log.Error("failed to count users", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -517,7 +518,7 @@ func (ur *repository) ReplaceOrganizationMemberships( //nolint:funlen,gocognit /
 			if err != nil {
 				return nil, err
 			}
-			if orgCount != len(req.OrganizationIDs) {
+			if int(orgCount) != len(req.OrganizationIDs) {
 				return nil, errortypes.NewAuthorizationError(
 					"organizations must belong to the current business unit",
 				)

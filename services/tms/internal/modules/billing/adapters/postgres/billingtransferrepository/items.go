@@ -238,7 +238,7 @@ func (r *repository) NextPendingShipmentIDs(
 			Where(cols.RunID.Eq(), req.RunID).
 			Where(cols.Status.Eq(), billingtransfer.ItemStatusPending).
 			Order(cols.Sequence.OrderAsc()).
-			Limit(req.Limit).
+			Limit(int64(req.Limit)).
 			Scan(ctx, &ids)
 		if err != nil {
 			r.l.Error("failed to claim next billing transfer batch", zap.Error(err))

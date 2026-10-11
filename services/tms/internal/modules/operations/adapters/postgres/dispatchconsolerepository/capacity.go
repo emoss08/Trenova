@@ -116,7 +116,7 @@ func (r *repository) ListBoardDrivers(
 			Order(cols.LastName.OrderAsc()).
 			Order(cols.FirstName.OrderAsc()).
 			Order(cols.ID.OrderAsc()).
-			Limit(boardLimit(filter.Limit))
+			Limit(int64(boardLimit(filter.Limit)))
 
 		if err := q.Scan(ctx, &entities); err != nil {
 			return nil, fmt.Errorf("list dispatch board drivers: %w", err)

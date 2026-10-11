@@ -92,7 +92,7 @@ func (r *repository) ListTaxRates(
 					r.l.Error("failed to count ifta tax rates", zap.Error(err))
 					return nil, fmt.Errorf("count ifta tax rates: %w", err)
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*ifta.TaxRate]{

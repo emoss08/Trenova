@@ -160,7 +160,7 @@ func (r *controlRepository) ListConfigured(
 				Model(&entities).
 				Where(cols.PrimaryProvider.IsNotNull()).
 				Order(cols.OrganizationID.OrderAsc(), cols.BusinessUnitID.OrderAsc()).
-				Limit(limit)
+				Limit(int64(limit))
 			if !req.After.OrganizationID.IsNil() {
 				q = q.Where(
 					buncolgen.Expr("({0}, {1}) > (?, ?)", cols.OrganizationID, cols.BusinessUnitID),

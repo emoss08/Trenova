@@ -73,7 +73,7 @@ func (r *repository) ListEvents(
 			q = q.Relation(workercol.WorkerSafetyEventRelations.Worker)
 		}
 		if req.Limit > 0 {
-			q = q.Limit(req.Limit)
+			q = q.Limit(int64(req.Limit))
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -440,7 +440,7 @@ func (r *repository) ListWorkersWithLapsedPoints(
 			ColumnExpr("DISTINCT worker_id, organization_id, business_unit_id").
 			OrderExpr("worker_id")
 		if req.Limit > 0 {
-			q = q.Limit(req.Limit)
+			q = q.Limit(int64(req.Limit))
 		}
 		if err := q.Scan(ctx, &refs); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Worker")

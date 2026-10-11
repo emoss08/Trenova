@@ -58,8 +58,8 @@ func (r *repository) filterQuery(
 		q = excludeShadowDefinitions(q)
 	}
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).
-		Offset(req.Filter.Pagination.SafeOffset()).
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset())).
 		Order(cols.CreatedAt.OrderDesc())
 }
 
@@ -85,7 +85,10 @@ func (r *repository) List(
 				return nil, err
 			}
 
-			return &pagination.ListResult[*agent.AgentProposal]{Items: entities, Total: total}, nil
+			return &pagination.ListResult[*agent.AgentProposal]{
+				Items: entities,
+				Total: int(total),
+			}, nil
 		},
 	)
 }
@@ -190,7 +193,7 @@ func (r *repository) ListConnection(
 					log.Error("failed to count agent proposals", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -513,7 +516,7 @@ func (r *repository) ListPendingForReminder(
 					WhereOr(cols.ExpiresAt.Gt(), req.Now)
 			}).
 			Order(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
-			Limit(req.Limit).
+			Limit(int64(req.Limit)).
 			Scan(ctx)
 		if err != nil {
 			log.Error("failed to list pending agent proposals for reminder", zap.Error(err))

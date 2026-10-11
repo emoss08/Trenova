@@ -74,7 +74,8 @@ func (r *repository) filterQuery(
 		q = q.Where(cols.Status.Eq(), req.Status)
 	}
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *repository) List(
@@ -104,7 +105,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*document.Document]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -312,7 +313,7 @@ func (r *repository) ListPendingPreviewReconciliation(
 			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
 			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
 			Order(cols.UpdatedAt.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list documents pending preview reconciliation", zap.Error(err))
@@ -350,7 +351,7 @@ func (r *repository) ListPendingPreviewReconciliationTenants(
 			Group(cols.OrganizationID.Name, cols.BusinessUnitID.Name).
 			Order(cols.OrganizationID.OrderAsc()).
 			Order(cols.BusinessUnitID.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx, &rows)
 		if err != nil {
 			r.l.Error("failed to list document preview reconciliation tenants", zap.Error(err))

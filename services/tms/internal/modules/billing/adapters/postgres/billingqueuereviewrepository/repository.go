@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -236,12 +237,11 @@ func (r *repository) CountOpenIssues(
 	itemID pulid.ID,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		return r.db.DBForContext(ctx).NewSelect().
+		return dbhelper.Count(ctx, r.db.DBForContext(ctx).NewSelect().
 			Model((*billingqueue.Issue)(nil)).
 			Apply(tenantWhere("bqis", ti)).
 			Where("bqis.item_id = ?", itemID).
-			Where("bqis.resolution_key IS NULL").
-			Count(ctx)
+			Where("bqis.resolution_key IS NULL"))
 	})
 }
 
@@ -290,11 +290,13 @@ func (r *repository) ListEvents(
 			if req.BeforeAt > 0 {
 				q = q.Where("(bqe.at, bqe.id) < (?, ?)", req.BeforeAt, req.BeforeID)
 			}
-			if err = q.Order("bqe.at DESC", "bqe.id DESC").Limit(limit + 1).Scan(ctx); err != nil {
+			if err = q.Order("bqe.at DESC", "bqe.id DESC").
+				Limit(int64(limit + 1)).
+				Scan(ctx); err != nil {
 				return nil, fmt.Errorf("list billing queue activity: %w", err)
 			}
 
-			page := &billingqueueports.BillingQueueEventPage{Total: total}
+			page := &billingqueueports.BillingQueueEventPage{Total: int(total)}
 			if len(events) > limit {
 				page.HasMore = true
 				events = events[:limit]
@@ -361,9 +363,9 @@ func (r *repository) GetNeighbors(
 				return nil, fmt.Errorf("find item in billing queue: %w", err)
 			}
 
-			out := &billingqueueports.BillingQueueNeighbors{Total: total}
+			out := &billingqueueports.BillingQueueNeighbors{Total: int(total)}
 			if member {
-				out.Position = before + 1
+				out.Position = int(before + 1)
 			}
 
 			var prev, next []pulid.ID

@@ -120,7 +120,7 @@ func (r *repository) ListForUser(
 				return sq
 			}).
 			Order(cols.CreatedAt.OrderDesc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list bulk edits", zap.Error(err))

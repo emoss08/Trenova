@@ -132,7 +132,7 @@ func buildCarrierSubjectsQuery(
 				Where(cols.DOTNumber.IsNotNull())
 		}).
 		Order(cols.ID.OrderAsc()).
-		Limit(limit)
+		Limit(int64(limit))
 
 	if req.ActiveOnly {
 		q = q.Where(cols.Status.Eq(), carrier.StatusActive)

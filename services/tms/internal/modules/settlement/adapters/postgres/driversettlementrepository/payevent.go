@@ -49,8 +49,8 @@ func (r *payEventRepository) List(
 				Where("dpe.business_unit_id = ?", req.Filter.TenantInfo.BuID).
 				Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
 				Order("dpe.event_date DESC").
-				Limit(limit).
-				Offset(req.Filter.Pagination.SafeOffset())
+				Limit(int64(limit)).
+				Offset(int64(req.Filter.Pagination.SafeOffset()))
 
 			if req.Filter.Query != "" {
 				query = query.Where("dpe.pro_number ILIKE ?", "%"+req.Filter.Query+"%")
@@ -72,7 +72,7 @@ func (r *payEventRepository) List(
 
 			return &pagination.ListResult[*driversettlement.PayEvent]{
 				Items: items,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -107,7 +107,7 @@ func (r *payEventRepository) ListConnection(
 					log.Error("failed to count pay events", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

@@ -61,15 +61,15 @@ func (r *repository) ListSourceContextSchemas(
 						cols.SchemaVersion.OrderDesc() + ", " +
 						cols.CreatedAt.OrderDesc(),
 				).
-				Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset()).
+				Limit(int64(req.Filter.Pagination.SafeLimit())).
+				Offset(int64(req.Filter.Pagination.SafeOffset())).
 				ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
 			}
 			return &pagination.ListResult[*edi.EDISourceContextSchema]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -171,15 +171,15 @@ func (r *repository) searchSourceContextFields(
 					return filterSourceContextFieldsQuery(query, req)
 				}).
 				Order(fieldCols.Path.OrderAsc(), fieldCols.RepeatPath.OrderAsc()).
-				Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset()).
+				Limit(int64(req.Filter.Pagination.SafeLimit())).
+				Offset(int64(req.Filter.Pagination.SafeOffset())).
 				ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
 			}
 			return &pagination.ListResult[*edi.EDISourceContextField]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

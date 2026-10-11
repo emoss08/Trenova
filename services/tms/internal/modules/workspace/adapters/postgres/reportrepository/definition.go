@@ -206,10 +206,10 @@ func (r *definitionRepository) List(
 			q = q.Where(cols.OwnerID.Eq(), req.OwnerID)
 		}
 		if req.Limit > 0 {
-			q = q.Limit(req.Limit)
+			q = q.Limit(int64(req.Limit))
 		}
 		if req.Offset > 0 {
-			q = q.Offset(req.Offset)
+			q = q.Offset(int64(req.Offset))
 		}
 
 		if err := q.Order(cols.UpdatedAt.OrderDesc()).Scan(ctx); err != nil {
@@ -288,7 +288,7 @@ func (r *definitionRepository) ListRevisions(
 				Order(cols.RevisionNumber.OrderDesc())
 
 			if req.Limit > 0 {
-				q = q.Limit(req.Limit)
+				q = q.Limit(int64(req.Limit))
 			}
 
 			if err := q.Scan(ctx); err != nil {

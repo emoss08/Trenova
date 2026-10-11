@@ -146,7 +146,7 @@ func (r *repository) ListConsolidationCandidates(
 				// a window that let it age out silently dropped it from billing for good.
 				Where("COALESCE(sp.actual_delivery_date, bqi.created_at) < ?", req.PeriodEnd).
 				OrderExpr("bqi.bill_to_customer_id ASC, sp.actual_delivery_date ASC NULLS LAST, sp.pro_number ASC").
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx, &candidates)
 			if err != nil {
 				r.l.Error("failed to list consolidation candidates", zap.Error(err))

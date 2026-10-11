@@ -61,7 +61,8 @@ func (r *templateRepository) filterQuery(
 		q = q.Where(documenttemplatecol.DocumentTemplateColumns.Kind.Eq(), req.Kind)
 	}
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *templateRepository) List(
@@ -94,7 +95,7 @@ func (r *templateRepository) List(
 
 			return &pagination.ListResult[*documenttemplate.DocumentTemplate]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -129,7 +130,7 @@ func (r *templateRepository) ListConnection(
 					log.Error("failed to count document templates", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

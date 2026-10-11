@@ -109,7 +109,7 @@ func (r *rawPayloadRepository) PurgeExpired(
 			Column(cols.ID.Bare()).
 			Where(cols.ExpiresAt.Lt(), before).
 			Order(cols.ExpiresAt.OrderAsc()).
-			Limit(batch)
+			Limit(int64(batch))
 
 		result, err := dba.NewDelete().
 			Model((*carrierintel.CarrierIntelRawPayload)(nil)).

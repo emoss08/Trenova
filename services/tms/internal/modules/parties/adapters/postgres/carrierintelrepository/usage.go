@@ -140,7 +140,7 @@ func (r *usageRepository) CountBillableSince(
 			return 0, fmt.Errorf("count billable carrier intel usage: %w", err)
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }
 
@@ -297,7 +297,7 @@ func (r *usageRepository) DeleteOlderThan(
 			Column(cols.ID.Bare()).
 			Where(cols.CreatedAt.Lt(), before).
 			Order(cols.CreatedAt.OrderAsc()).
-			Limit(batch)
+			Limit(int64(batch))
 
 		result, err := dba.NewDelete().
 			Model((*carrierintel.CarrierIntelUsageRecord)(nil)).

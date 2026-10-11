@@ -97,7 +97,7 @@ func (r *repository) RotaWorkers(
 			ColumnExpr("COALESCE(wsa.shift_template_id, '') AS shift_template_id").
 			ColumnExpr("COALESCE(wsa.cycle_offset_weeks, 0) AS cycle_offset_weeks").
 			OrderExpr("wrk.last_name, wrk.first_name").
-			Limit(limitOr(req.Limit, defaultRotaPageSize)).
+			Limit(int64(limitOr(req.Limit, defaultRotaPageSize))).
 			Scan(ctx, &rows); err != nil {
 			r.l.Error("failed to read rota workers", zap.Error(err))
 			return nil, fmt.Errorf("read rota workers: %w", err)

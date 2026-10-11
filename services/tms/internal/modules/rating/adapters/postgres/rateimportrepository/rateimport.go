@@ -98,8 +98,8 @@ func (r *repository) List(
 
 			// Newest first: an import is reviewed while it is fresh.
 			q = q.Order(cols.CreatedAt.OrderDesc()).
-				Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset())
+				Limit(int64(req.Filter.Pagination.SafeLimit())).
+				Offset(int64(req.Filter.Pagination.SafeOffset()))
 
 			total, err := q.ScanAndCount(ctx)
 			if err != nil {
@@ -109,7 +109,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*rateimport.RateImportBatch]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -143,8 +143,8 @@ func (r *repository) ListRows(
 			q = q.Order(cols.RowNumber.OrderAsc())
 
 			if req.Filter != nil {
-				q = q.Limit(req.Filter.Pagination.SafeLimit()).
-					Offset(req.Filter.Pagination.SafeOffset())
+				q = q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+					Offset(int64(req.Filter.Pagination.SafeOffset()))
 			}
 
 			total, err := q.ScanAndCount(ctx)
@@ -155,7 +155,7 @@ func (r *repository) ListRows(
 
 			return &pagination.ListResult[*rateimport.RateImportRow]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

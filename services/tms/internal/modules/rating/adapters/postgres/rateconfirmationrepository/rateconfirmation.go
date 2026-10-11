@@ -367,7 +367,7 @@ func (r *repository) PurgeDeadSignTokens(
 			Model((*rateconfirmation.RateConfirmationToken)(nil)).
 			Column(cols.ID.Bare()).
 			Where(deadAt+" < ?", req.DeadBefore).
-			Limit(limit)
+			Limit(int64(limit))
 
 		result, err := dba.NewDelete().
 			Model((*rateconfirmation.RateConfirmationToken)(nil)).

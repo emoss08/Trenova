@@ -248,7 +248,7 @@ func (r *assignmentRepository) PurgeBefore(
 					Where(cols.CreatedAt.Lt(), req.Before)
 			}).
 			OrderExpr(cols.CreatedAt.OrderAsc()).
-			Limit(limit)
+			Limit(int64(limit))
 
 		res, err := dba.NewDelete().
 			Model((*extractionrollout.RolloutAssignment)(nil)).

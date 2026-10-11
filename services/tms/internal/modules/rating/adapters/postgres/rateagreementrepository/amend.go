@@ -219,7 +219,7 @@ func (r *repository) ListVersions(
 				Order(cols.VersionNumber.OrderDesc())
 
 			if req.Limit > 0 {
-				q = q.Limit(req.Limit).Offset(req.Offset)
+				q = q.Limit(int64(req.Limit)).Offset(int64(req.Offset))
 			}
 
 			total, err := q.ScanAndCount(ctx)
@@ -235,7 +235,7 @@ func (r *repository) ListVersions(
 
 			return &pagination.ListResult[*rateagreement.RateAgreementVersion]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

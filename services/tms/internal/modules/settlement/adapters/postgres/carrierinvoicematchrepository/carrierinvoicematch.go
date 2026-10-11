@@ -60,8 +60,8 @@ func (r *repository) List(
 				Relation(rel.Carrier).
 				Relation(rel.CarrierAssignment).
 				Order(cols.CreatedAt.OrderDesc()).
-				Limit(limit).
-				Offset(req.Filter.Pagination.SafeOffset())
+				Limit(int64(limit)).
+				Offset(int64(req.Filter.Pagination.SafeOffset()))
 
 			if req.Filter.Query != "" {
 				query = query.Where(cols.InvoiceNumber.ILike(), "%"+req.Filter.Query+"%")
@@ -80,7 +80,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*carriersettlement.InvoiceMatch]{
 				Items: items,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

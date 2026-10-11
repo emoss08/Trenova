@@ -53,7 +53,8 @@ func (r *repository) filterQuery(
 		(*fiscalperiod.FiscalPeriod)(nil),
 	)
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *repository) List(
@@ -83,7 +84,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*fiscalperiod.FiscalPeriod]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -475,7 +476,7 @@ func (r *repository) CountUnclosedPeriodsByFiscalYear(
 			return 0, err
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }
 

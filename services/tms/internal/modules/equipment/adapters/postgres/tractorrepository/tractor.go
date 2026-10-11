@@ -128,7 +128,7 @@ func (r *repository) List(
 					log.Error("failed to count tractors", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*tractor.Tractor]{

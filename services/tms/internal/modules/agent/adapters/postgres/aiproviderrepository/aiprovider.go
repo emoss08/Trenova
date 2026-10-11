@@ -56,8 +56,8 @@ func (r *repository) filterQuery(
 	)
 
 	return q.Apply(aiprovidercol.ProviderApplyTenant(req.Filter.TenantInfo)).
-		Limit(req.Filter.Pagination.SafeLimit()).
-		Offset(req.Filter.Pagination.SafeOffset()).
+		Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset())).
 		Order(cols.Priority.OrderAsc(), cols.Name.OrderAsc())
 }
 
@@ -83,7 +83,10 @@ func (r *repository) List(
 				return nil, err
 			}
 
-			return &pagination.ListResult[*aiprovider.Provider]{Items: entities, Total: total}, nil
+			return &pagination.ListResult[*aiprovider.Provider]{
+				Items: entities,
+				Total: int(total),
+			}, nil
 		},
 	)
 }
@@ -118,7 +121,7 @@ func (r *repository) ListConnection(
 					r.l.Error("failed to count ai providers", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

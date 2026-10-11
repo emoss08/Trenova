@@ -749,7 +749,7 @@ func (r *repository) ListApprovalQueue(
 				if countErr != nil {
 					return nil, fmt.Errorf("count invoice adjustment approvals: %w", countErr)
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			return dbhelper.CursorList(
@@ -966,8 +966,8 @@ func (r *repository) ListReconciliationQueue(
 			total, err := query.
 				OrderExpr("CASE WHEN ire.status = 'Open' THEN 0 ELSE 1 END ASC").
 				OrderExpr("ire.updated_at DESC").
-				Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset()).
+				Limit(int64(req.Filter.Pagination.SafeLimit())).
+				Offset(int64(req.Filter.Pagination.SafeOffset())).
 				ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
@@ -975,7 +975,7 @@ func (r *repository) ListReconciliationQueue(
 
 			return &pagination.ListResult[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -1039,8 +1039,8 @@ func (r *repository) ListBatchQueue(
 
 			total, err := query.
 				OrderExpr("COALESCE(iab.submitted_at, iab.created_at) DESC").
-				Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset()).
+				Limit(int64(req.Filter.Pagination.SafeLimit())).
+				Offset(int64(req.Filter.Pagination.SafeOffset())).
 				ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
@@ -1048,7 +1048,7 @@ func (r *repository) ListBatchQueue(
 
 			return &pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -1311,7 +1311,7 @@ func (r *repository) countAdjustmentsByStatus(
 		if err != nil {
 			return 0, fmt.Errorf("count invoice adjustments by status: %w", err)
 		}
-		return count, nil
+		return int(count), nil
 	})
 }
 
@@ -1331,7 +1331,7 @@ func (r *repository) countReconciliationExceptionsByStatus(
 		if err != nil {
 			return 0, fmt.Errorf("count reconciliation exceptions by status: %w", err)
 		}
-		return count, nil
+		return int(count), nil
 	})
 }
 
@@ -1357,7 +1357,7 @@ func (r *repository) countPendingWriteOffs(
 		if err != nil {
 			return 0, fmt.Errorf("count pending write-offs: %w", err)
 		}
-		return count, nil
+		return int(count), nil
 	})
 }
 
@@ -1381,7 +1381,7 @@ func (r *repository) countBatchesInFlight(
 		if err != nil {
 			return 0, fmt.Errorf("count in-flight adjustment batches: %w", err)
 		}
-		return count, nil
+		return int(count), nil
 	})
 }
 
@@ -1400,6 +1400,6 @@ func (r *repository) countFailedBatchItems(
 		if err != nil {
 			return 0, fmt.Errorf("count failed adjustment batch items: %w", err)
 		}
-		return count, nil
+		return int(count), nil
 	})
 }

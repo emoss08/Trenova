@@ -132,7 +132,7 @@ func (r *exportRepository) ListConnection(
 				if err != nil {
 					return nil, fmt.Errorf("count AI audit exports: %w", err)
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -184,7 +184,7 @@ func (r *exportRepository) ListExpired(
 			Where(cols.ArtifactExpiresAt.Lte(), before).
 			Where(cols.Status.Eq(), aiaudit.ExportStatusSucceeded).
 			Order(cols.ArtifactExpiresAt.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("list expired AI audit exports: %w", err)
 		}
@@ -213,7 +213,7 @@ func (r *exportRepository) ListStale(
 			})).
 			Where(cols.UpdatedAt.Lt(), updatedBefore).
 			Order(cols.UpdatedAt.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("list stale AI audit exports: %w", err)
 		}

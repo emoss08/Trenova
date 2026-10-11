@@ -112,7 +112,7 @@ func (r *repository) ListPurchases(
 					r.l.Error("failed to count fuel purchases", zap.Error(err))
 					return nil, fmt.Errorf("count fuel purchases: %w", err)
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

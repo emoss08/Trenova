@@ -94,14 +94,17 @@ func (r *repository) SelectDocumentTypeOptions(
 
 			total, err := query.
 				Order(cols.Code.OrderAsc()).
-				Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
-				Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
+				Limit(int64(req.SelectQueryRequest.Pagination.SafeLimit())).
+				Offset(int64(req.SelectQueryRequest.Pagination.SafeOffset())).
 				ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
 			}
 
-			return &pagination.ListResult[*edi.EDIDocumentType]{Items: entities, Total: total}, nil
+			return &pagination.ListResult[*edi.EDIDocumentType]{
+				Items: entities,
+				Total: int(total),
+			}, nil
 		},
 	)
 }

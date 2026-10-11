@@ -52,7 +52,8 @@ func (r *repository) filterQuery(
 		q = q.Where("cfd.resource_type = ?", req.ResourceType)
 	}
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *repository) List(
@@ -88,7 +89,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*customfield.CustomFieldDefinition]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -157,7 +158,7 @@ func (r *repository) ListConnection(
 					log.Error("failed to count custom field definitions", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -383,6 +384,6 @@ func (r *repository) CountByResourceType(
 			return 0, err
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }

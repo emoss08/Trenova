@@ -397,7 +397,7 @@ func TestService_DocumentVersioningLifecycle_Integration(t *testing.T) {
 		Where("business_unit_id = ?", h.tenantInfo.BuID).
 		Count(h.ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 0, lineageCount)
+	assert.Equal(t, int64(0), lineageCount)
 
 	firstExists, err := h.storage.Exists(h.ctx, firstStoragePath)
 	require.NoError(t, err)
@@ -469,7 +469,7 @@ func TestService_BulkDeleteDeletesLineages_Integration(t *testing.T) {
 			Where("business_unit_id = ?", h.tenantInfo.BuID).
 			Count(h.ctx)
 		require.NoError(t, countErr)
-		assert.Equal(t, 0, count)
+		assert.Equal(t, int64(0), count)
 	}
 }
 

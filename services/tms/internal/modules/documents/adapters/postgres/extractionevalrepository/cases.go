@@ -214,7 +214,7 @@ func (r *caseRepository) ListConnection(
 
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -279,7 +279,7 @@ func (r *caseRepository) ListActive(
 						Where(cols.Status.Eq(), extractioneval.CaseStatusActive)
 				}).
 				Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderAsc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx)
 			if err != nil {
 				r.l.Error("failed to list active extraction eval cases", zap.Error(err))

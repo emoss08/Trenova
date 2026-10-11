@@ -180,7 +180,7 @@ func (r *runRepository) ListConnection(
 
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -246,7 +246,7 @@ func (r *runRepository) ListRecentFinished(
 					Where(cols.CasesCompleted.Gt(), 0)
 			}).
 			Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list recent extraction eval runs", zap.Error(err))
@@ -283,7 +283,7 @@ func (r *runRepository) PurgeBefore(
 					}))
 			}).
 			OrderExpr(cols.CreatedAt.OrderAsc()).
-			Limit(limit)
+			Limit(int64(limit))
 
 		res, err := dba.NewDelete().
 			Model((*extractioneval.ExtractionRun)(nil)).

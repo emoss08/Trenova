@@ -194,7 +194,7 @@ func (r *repository) ListBoardMoves(
 			OrderExpr("COALESCE(orig.window_start, 0) ASC").
 			Order(moveCols.Sequence.OrderAsc()).
 			Order(moveCols.ID.OrderAsc()).
-			Limit(boardLimit(filter.Limit))
+			Limit(int64(boardLimit(filter.Limit)))
 
 		if err := q.Scan(ctx, &entities); err != nil {
 			return nil, fmt.Errorf("list dispatch board moves: %w", err)

@@ -325,7 +325,7 @@ func (r *repository) FleetRanking(
 					}
 					return sq.OrderExpr("score ASC, active_points DESC, last_name ASC")
 				}).
-				Limit(req.RankLimit).
+				Limit(int64(req.RankLimit)).
 				Scan(ctx, &rows); err != nil {
 				r.l.Error("failed to rank fleet safety", zap.Error(err))
 				return nil, fmt.Errorf("rank fleet safety: %w", err)

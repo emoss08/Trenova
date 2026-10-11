@@ -62,8 +62,8 @@ func (r *repository) List(
 						req.Filter,
 						(*distanceprofile.DistanceProfile)(nil),
 					)
-					return q.Limit(req.Filter.Pagination.SafeLimit()).
-						Offset(req.Filter.Pagination.SafeOffset())
+					return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+						Offset(int64(req.Filter.Pagination.SafeOffset()))
 				}).
 				ScanAndCount(ctx)
 			if err != nil {
@@ -73,7 +73,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*distanceprofile.DistanceProfile]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -139,7 +139,7 @@ func (r *repository) ListConnection(
 					log.Error("failed to count distance profiles", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

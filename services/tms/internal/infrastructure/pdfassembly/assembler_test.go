@@ -31,7 +31,7 @@ func onePagePDF(t *testing.T, shade uint8) []byte {
 
 	out := new(bytes.Buffer)
 	imp := pdfcpu.DefaultImportConfig()
-	require.NoError(t, api.ImportImages(nil, out, []io.Reader{encoded}, imp, model.NewDefaultConfiguration()))
+	require.NoError(t, api.ImportImages(t.Context(), nil, out, []io.Reader{encoded}, imp, model.NewDefaultConfiguration()))
 
 	return out.Bytes()
 }

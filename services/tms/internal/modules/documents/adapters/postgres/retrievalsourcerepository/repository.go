@@ -337,7 +337,7 @@ func (r *repository) ListSourceIDs(
 			ColumnExpr(table.id.Qualified()).
 			Apply(table.applyTenant(req.TenantInfo)).
 			OrderExpr(table.id.OrderAsc()).
-			Limit(limit)
+			Limit(int64(limit))
 		if req.AfterID.IsNotNil() {
 			q = q.Where(table.id.Gt(), req.AfterID)
 		}
@@ -458,7 +458,7 @@ func (r *repository) SearchDocuments(
 
 			hits := make([]agentports.RetrievalKeywordHit, 0, plan.limit)
 			if err = q.OrderExpr(docs.ID.OrderAsc()).
-				Limit(plan.limit).
+				Limit(int64(plan.limit)).
 				Scan(ctx, &hits); err != nil {
 				return nil, fmt.Errorf("search documents by keyword: %w", err)
 			}
@@ -509,7 +509,7 @@ func (r *repository) SearchInboundMessages(
 
 			hits := make([]agentports.RetrievalKeywordHit, 0, plan.limit)
 			if err = q.OrderExpr(cols.ID.OrderAsc()).
-				Limit(plan.limit).
+				Limit(int64(plan.limit)).
 				Scan(ctx, &hits); err != nil {
 				return nil, fmt.Errorf("search inbound messages by keyword: %w", err)
 			}

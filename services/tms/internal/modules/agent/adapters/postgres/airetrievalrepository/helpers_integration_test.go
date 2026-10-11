@@ -168,7 +168,7 @@ func (h *harness) countEmbeddings(t *testing.T, sourceID pulid.ID, modelKey stri
 	count, err := q.Count(h.ctx)
 	require.NoError(t, err)
 
-	return count
+	return int(count)
 }
 
 func (h *harness) countIndexEntries(t *testing.T, sourceID pulid.ID, modelKey string) int {
@@ -185,5 +185,5 @@ func (h *harness) countIndexEntries(t *testing.T, sourceID pulid.ID, modelKey st
 	count, err := q.Count(h.ctx)
 	require.NoError(t, err)
 
-	return count
+	return int(count)
 }

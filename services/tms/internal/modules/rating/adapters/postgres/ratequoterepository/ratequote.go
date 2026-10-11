@@ -58,8 +58,8 @@ func (r *repository) filterQuery(
 	)
 
 	return q.Apply(ratequotecol.RateQuoteApplyTenant(req.Filter.TenantInfo)).
-		Limit(req.Filter.Pagination.SafeLimit()).
-		Offset(req.Filter.Pagination.SafeOffset()).
+		Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset())).
 		Order(cols.RatedAt.OrderDesc())
 }
 
@@ -86,7 +86,10 @@ func (r *repository) List(
 				return nil, err
 			}
 
-			return &pagination.ListResult[*ratequote.RateQuote]{Items: entities, Total: total}, nil
+			return &pagination.ListResult[*ratequote.RateQuote]{
+				Items: entities,
+				Total: int(total),
+			}, nil
 		},
 	)
 }
@@ -140,7 +143,7 @@ func (r *repository) ListConnection(
 					log.Error("failed to count rate quotes", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*ratequote.RateQuote]{
@@ -262,7 +265,7 @@ func (r *repository) ListForShipment(
 			}).
 			Order(cols.RatedAt.OrderDesc()).
 			Order(cols.ID.OrderDesc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			log.Error("failed to list shipment rate quotes", zap.Error(err))

@@ -65,7 +65,8 @@ func (r *repository) filterQuery(
 		Relation(billingqueuecol.BillingQueueItemRelations.AssignedBiller).
 		Relation(billingqueuecol.BillingQueueItemRelations.CanceledBy)
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *repository) List(
@@ -97,7 +98,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*billingqueue.BillingQueueItem]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

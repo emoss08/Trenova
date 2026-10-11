@@ -72,7 +72,7 @@ func (r *repository) ListFormSubmissions(
 			Order(cols.SubmittedAt.OrderDesc())
 
 		if req.Limit > 0 {
-			q = q.Limit(req.Limit)
+			q = q.Limit(int64(req.Limit))
 		}
 
 		if err := q.Scan(ctx); err != nil {

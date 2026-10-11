@@ -57,13 +57,13 @@ func (r *repository) ListTestCases(
 		}
 		total, err := query.
 			Order(cols.CreatedAt.OrderDesc()).
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset()).
+			Limit(int64(req.Filter.Pagination.SafeLimit())).
+			Offset(int64(req.Filter.Pagination.SafeOffset())).
 			ScanAndCount(ctx)
 		if err != nil {
 			return nil, err
 		}
-		return &pagination.ListResult[*edi.EDITestCase]{Items: entities, Total: total}, nil
+		return &pagination.ListResult[*edi.EDITestCase]{Items: entities, Total: int(total)}, nil
 	})
 }
 
@@ -202,7 +202,7 @@ func (r *repository) ListTestCasesCursor(
 			if err != nil {
 				return nil, err
 			}
-			totalCount = &total
+			totalCount = new(int(total))
 		}
 
 		return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDITestCase]{

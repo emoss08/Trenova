@@ -73,15 +73,15 @@ func (r *repository) ListProfiles(
 				Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
 					q = applyTenant(q, "ep", req.Filter.TenantInfo)
 					q = querybuilder.ApplyFilters(q, "ep", req.Filter, (*email.Profile)(nil))
-					return q.Limit(req.Filter.Pagination.SafeLimit()).
-						Offset(req.Filter.Pagination.SafeOffset())
+					return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+						Offset(int64(req.Filter.Pagination.SafeOffset()))
 				}).
 				OrderExpr("ep.created_at DESC").
 				ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
 			}
-			return &pagination.ListResult[*email.Profile]{Items: entities, Total: total}, nil
+			return &pagination.ListResult[*email.Profile]{Items: entities, Total: int(total)}, nil
 		},
 	)
 }
@@ -146,7 +146,7 @@ func (r *repository) ListProfilesConnection(
 					log.Error("failed to count email profiles", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -581,15 +581,15 @@ func (r *repository) ListMessages(
 				Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
 					q = applyTenant(q, "em", req.Filter.TenantInfo)
 					q = querybuilder.ApplyFilters(q, "em", req.Filter, (*email.Message)(nil))
-					return q.Limit(req.Filter.Pagination.SafeLimit()).
-						Offset(req.Filter.Pagination.SafeOffset())
+					return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+						Offset(int64(req.Filter.Pagination.SafeOffset()))
 				}).
 				OrderExpr("em.created_at DESC").
 				ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
 			}
-			return &pagination.ListResult[*email.Message]{Items: entities, Total: total}, nil
+			return &pagination.ListResult[*email.Message]{Items: entities, Total: int(total)}, nil
 		},
 	)
 }
@@ -621,15 +621,18 @@ func (r *repository) ListSuppressions(
 				Model(&entities).
 				Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
 					return applyTenant(q, "es", req.Filter.TenantInfo).
-						Limit(req.Filter.Pagination.SafeLimit()).
-						Offset(req.Filter.Pagination.SafeOffset())
+						Limit(int64(req.Filter.Pagination.SafeLimit())).
+						Offset(int64(req.Filter.Pagination.SafeOffset()))
 				}).
 				OrderExpr("es.created_at DESC").
 				ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
 			}
-			return &pagination.ListResult[*email.Suppression]{Items: entities, Total: total}, nil
+			return &pagination.ListResult[*email.Suppression]{
+				Items: entities,
+				Total: int(total),
+			}, nil
 		},
 	)
 }

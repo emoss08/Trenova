@@ -209,7 +209,7 @@ func (r *connectionRepository) ListDueForHealthCheck(
 				}).
 				OrderExpr(cols.LastCheckedAt.Expr("{} ASC NULLS FIRST")).
 				Order(cols.ID.OrderAsc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx); err != nil {
 				return nil, err
 			}
@@ -518,7 +518,7 @@ func (r *connectionRepository) ListActive(
 				ExcludeColumn(tokenColumns()...).
 				Where(cols.Status.In(), bun.List(activeStatuses())).
 				Order(cols.ID.OrderAsc()).
-				Limit(limit)
+				Limit(int64(limit))
 			if !req.AfterID.IsNil() {
 				query = query.Where(cols.ID.Gt(), req.AfterID)
 			}

@@ -248,7 +248,7 @@ func (r *repository) ListReady(
 					Where(cols.Streak.Gte(), max(req.MinStreak, 1))
 			}).
 			OrderExpr(cols.Streak.OrderDesc()).
-			Limit(req.Limit).
+			Limit(int64(req.Limit)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("list tools ready for promotion: %w", err)
 		}

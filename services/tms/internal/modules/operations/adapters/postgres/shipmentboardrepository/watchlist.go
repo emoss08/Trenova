@@ -251,7 +251,7 @@ func (r *Repository) ListReadyToBillCustomers(
 				GroupExpr(cus.Name.Qualified()).
 				OrderExpr("total DESC").
 				OrderExpr(sp.CustomerID.OrderAsc()).
-				Limit(limit).
+				Limit(int64(limit)).
 				Scan(ctx, &rows)
 			if err != nil {
 				r.l.Error("failed to list ready to bill customers", zap.Error(err))

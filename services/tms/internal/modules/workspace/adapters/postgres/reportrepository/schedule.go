@@ -125,10 +125,10 @@ func (r *scheduleRepository) List(
 			q = q.Where(cols.Enabled.IsTrue())
 		}
 		if req.Limit > 0 {
-			q = q.Limit(req.Limit)
+			q = q.Limit(int64(req.Limit))
 		}
 		if req.Offset > 0 {
-			q = q.Offset(req.Offset)
+			q = q.Offset(int64(req.Offset))
 		}
 
 		if err := q.Order(cols.CreatedAt.OrderDesc()).Scan(ctx); err != nil {
@@ -201,7 +201,7 @@ func (r *scheduleRepository) ListDue(
 			Order(cols.NextRunAt.OrderAsc())
 
 		if limit > 0 {
-			q = q.Limit(limit)
+			q = q.Limit(int64(limit))
 		}
 
 		if err := q.Scan(ctx); err != nil {

@@ -60,7 +60,8 @@ func (r *assignmentRepository) filterQuery(
 		q = q.Where(cols.CustomerID.Eq(), *req.CustomerID)
 	}
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *assignmentRepository) List(
@@ -96,7 +97,7 @@ func (r *assignmentRepository) List(
 
 			return &pagination.ListResult[*documenttemplate.DocumentTemplateAssignment]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -131,7 +132,7 @@ func (r *assignmentRepository) ListConnection(
 					log.Error("failed to count document template assignments", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

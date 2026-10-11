@@ -47,7 +47,7 @@ func (a *Assembler) PageCount(ctx context.Context, pdf []byte) (int, error) {
 		return 0, err
 	}
 
-	count, err := api.PageCount(bytes.NewReader(pdf), configuration())
+	count, err := api.PageCount(ctx, bytes.NewReader(pdf), configuration())
 	if err != nil {
 		return 0, fmt.Errorf("%w: %w", ErrUnreadable, err)
 	}
@@ -73,7 +73,7 @@ func (a *Assembler) Assemble(
 			return nil, err
 		}
 
-		rotated, err := rotate(page)
+		rotated, err := rotate(ctx, page)
 		if err != nil {
 			return nil, fmt.Errorf("page %d: %w", i+1, err)
 		}
@@ -85,14 +85,14 @@ func (a *Assembler) Assemble(
 	}
 
 	out := new(bytes.Buffer)
-	if err := api.MergeRaw(readers, out, false, configuration()); err != nil {
+	if err := api.MergeRaw(ctx, readers, out, false, configuration()); err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrUnreadable, err)
 	}
 
 	return out.Bytes(), nil
 }
 
-func rotate(page captureports.CaptureAssemblyPage) ([]byte, error) {
+func rotate(ctx context.Context, page captureports.CaptureAssemblyPage) ([]byte, error) {
 	rotation := capture.NormalizeRotation(page.Rotation)
 	if rotation == 0 {
 		return page.PDF, nil
@@ -100,6 +100,7 @@ func rotate(page captureports.CaptureAssemblyPage) ([]byte, error) {
 
 	out := new(bytes.Buffer)
 	if err := api.Rotate(
+		ctx,
 		bytes.NewReader(page.PDF),
 		out,
 		rotation,
@@ -124,7 +125,7 @@ func (a *Assembler) Split(ctx context.Context, pdf []byte) ([][]byte, error) {
 		return [][]byte{pdf}, nil
 	}
 
-	spans, err := api.SplitRaw(bytes.NewReader(pdf), 1, configuration())
+	spans, err := api.SplitRaw(ctx, bytes.NewReader(pdf), 1, configuration())
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrUnreadable, err)
 	}

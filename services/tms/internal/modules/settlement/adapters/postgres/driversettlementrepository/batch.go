@@ -50,8 +50,8 @@ func (r *batchRepository) List(
 				Where("dstlb.organization_id = ?", req.Filter.TenantInfo.OrgID).
 				Where("dstlb.business_unit_id = ?", req.Filter.TenantInfo.BuID).
 				Order("dstlb.period_end DESC").
-				Limit(limit).
-				Offset(req.Filter.Pagination.SafeOffset())
+				Limit(int64(limit)).
+				Offset(int64(req.Filter.Pagination.SafeOffset()))
 
 			if req.Filter.Query != "" {
 				query = query.Where("dstlb.name ILIKE ?", "%"+req.Filter.Query+"%")
@@ -67,7 +67,7 @@ func (r *batchRepository) List(
 
 			return &pagination.ListResult[*driversettlement.SettlementBatch]{
 				Items: items,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -102,7 +102,7 @@ func (r *batchRepository) ListConnection(
 					log.Error("failed to count settlement batches", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

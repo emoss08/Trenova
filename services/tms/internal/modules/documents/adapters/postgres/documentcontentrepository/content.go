@@ -187,7 +187,7 @@ func (r *repository) ListPendingExtraction(
 			Where(docCols.OrganizationID.Eq(), req.TenantInfo.OrgID).
 			Where(docCols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
 			Order(docCols.UpdatedAt.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			return nil, err
@@ -230,7 +230,7 @@ func (r *repository) ListPendingExtractionTenants(
 			GroupExpr(docCols.BusinessUnitID.Qualified()).
 			Order(docCols.OrganizationID.OrderAsc()).
 			Order(docCols.BusinessUnitID.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx, &rows)
 		if err != nil {
 			return nil, err
@@ -330,7 +330,7 @@ func (r *repository) SearchByResource(
 		}
 
 		if req.Limit > 0 {
-			selectQuery = selectQuery.Limit(req.Limit)
+			selectQuery = selectQuery.Limit(int64(req.Limit))
 		}
 
 		if err := selectQuery.Scan(ctx); err != nil {

@@ -50,8 +50,8 @@ func (r *costEventRepository) List(
 				Apply(carriersettlementcol.CostEventApplyTenant(req.Filter.TenantInfo)).
 				Relation(carriersettlementcol.CostEventRelations.Carrier).
 				Order(cols.EventDate.OrderDesc()).
-				Limit(limit).
-				Offset(req.Filter.Pagination.SafeOffset())
+				Limit(int64(limit)).
+				Offset(int64(req.Filter.Pagination.SafeOffset()))
 
 			if req.Filter.Query != "" {
 				query = query.Where(cols.ProNumber.ILike(), "%"+req.Filter.Query+"%")
@@ -73,7 +73,7 @@ func (r *costEventRepository) List(
 
 			return &pagination.ListResult[*carriersettlement.CostEvent]{
 				Items: items,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -108,7 +108,7 @@ func (r *costEventRepository) ListConnection(
 					log.Error("failed to count carrier cost events", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

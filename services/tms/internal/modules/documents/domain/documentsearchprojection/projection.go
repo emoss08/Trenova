@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
@@ -62,6 +63,11 @@ func Build(doc *document.Document, contentText string) *Projection {
 }
 
 func (p *Projection) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	p.FileName = stringutils.StripNUL(p.FileName)
+	p.OriginalName = stringutils.StripNUL(p.OriginalName)
+	p.Description = stringutils.StripNUL(p.Description)
+	p.ContentText = stringutils.StripNUL(p.ContentText)
+
 	now := timeutils.NowUnix()
 
 	switch query.(type) {

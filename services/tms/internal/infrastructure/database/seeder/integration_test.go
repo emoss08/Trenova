@@ -68,13 +68,13 @@ func TestSeeder_Integration_CompleteWorkflow(t *testing.T) {
 				Model((*tenant.Organization)(nil)).
 				Count(ctx)
 			require.NoError(t, err)
-			assert.Greater(t, orgCount, 0, "should have organizations")
+			assert.Greater(t, orgCount, int64(0), "should have organizations")
 
 			templateCount, err := db.NewSelect().
 				Model((*formulatemplate.FormulaTemplate)(nil)).
 				Count(ctx)
 			require.NoError(t, err)
-			assert.Greater(t, templateCount, 0, "should have formula templates")
+			assert.Greater(t, templateCount, int64(0), "should have formula templates")
 		})
 
 		t.Run("Verify seed history tracking", func(t *testing.T) {
@@ -83,7 +83,7 @@ func TestSeeder_Integration_CompleteWorkflow(t *testing.T) {
 				Where("status = ?", "Active").
 				Count(ctx)
 			require.NoError(t, err)
-			assert.Greater(t, historyCount, 0, "should have seed history entries")
+			assert.Greater(t, historyCount, int64(0), "should have seed history entries")
 		})
 	})
 }

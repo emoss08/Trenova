@@ -125,7 +125,7 @@ func TestGetOrCreateConcurrentCreatesSingleTenantControl(t *testing.T) {
 		Where("business_unit_id = ?", data.BusinessUnit.ID).
 		Count(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 1, count)
+	assert.Equal(t, int64(1), count)
 }
 
 func TestListHorizonPlanningTenantsReturnsHorizonTenants(t *testing.T) {

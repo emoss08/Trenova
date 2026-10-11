@@ -1055,7 +1055,7 @@ func pdfPage(t *testing.T, shade uint8) []byte {
 	require.NoError(t, png.Encode(encoded, img))
 
 	out := new(bytes.Buffer)
-	require.NoError(t, api.ImportImages(nil, out, []io.Reader{encoded}, pdfcpu.DefaultImportConfig(),
+	require.NoError(t, api.ImportImages(t.Context(), nil, out, []io.Reader{encoded}, pdfcpu.DefaultImportConfig(),
 		model.NewDefaultConfiguration()))
 
 	return out.Bytes()

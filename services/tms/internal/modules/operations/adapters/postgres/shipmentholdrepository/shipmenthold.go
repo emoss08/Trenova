@@ -63,8 +63,8 @@ func (r *repository) ListByShipmentID(
 				OrderExpr(shh.ReleasedAt.Expr("{} IS NULL DESC")).
 				Order(shh.StartedAt.OrderDesc()).
 				OrderExpr(shh.ReleasedAt.Expr("COALESCE({}, 0) DESC")).
-				Limit(req.Filter.Pagination.Limit).
-				Offset(req.Filter.Pagination.Offset).
+				Limit(int64(req.Filter.Pagination.Limit)).
+				Offset(int64(req.Filter.Pagination.Offset)).
 				ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
@@ -72,7 +72,7 @@ func (r *repository) ListByShipmentID(
 
 			return &pagination.ListResult[*shipment.ShipmentHold]{
 				Items: holds,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

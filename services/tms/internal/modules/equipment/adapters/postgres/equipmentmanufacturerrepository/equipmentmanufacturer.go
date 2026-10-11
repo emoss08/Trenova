@@ -54,7 +54,8 @@ func (r *repository) filterQuery(
 	q = q.Apply(equipmentmanufacturercol.EquipmentManufacturerApplyTenant(req.Filter.TenantInfo)).
 		Order(cols.CreatedAt.OrderDesc())
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *repository) List(
@@ -88,7 +89,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -157,7 +158,7 @@ func (r *repository) ListConnection(
 					log.Error("failed to count equipment manufacturers", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

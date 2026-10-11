@@ -48,7 +48,8 @@ func (r *repository) filterQuery(
 		(*holdreason.HoldReason)(nil),
 	)
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *repository) List(
@@ -78,7 +79,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*holdreason.HoldReason]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -144,7 +145,7 @@ func (r *repository) ListConnection(
 					log.Error("failed to count hold reasons", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

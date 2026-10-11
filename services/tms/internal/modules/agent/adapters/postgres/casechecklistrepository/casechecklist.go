@@ -233,7 +233,7 @@ func (r *repository) CountDocumentTypes(
 			return 0, fmt.Errorf("count document types: %w", err)
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }
 

@@ -47,7 +47,8 @@ func (r *repository) filterQuery(
 
 	q = q.Relation("Permissions")
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *repository) List(
@@ -78,7 +79,7 @@ func (r *repository) List(
 
 			return &pagination.ListResult[*apikey.Key]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)
@@ -136,7 +137,7 @@ func (r *repository) ListConnection(
 					log.Error("failed to count api keys", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(
@@ -283,14 +284,13 @@ func (r *repository) CountActiveByCreator(
 	userID pulid.ID,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		return r.db.DBForContext(ctx).
+		return dbhelper.Count(ctx, r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*apikey.Key)(nil)).
 			Where("ak.organization_id = ?", tenantInfo.OrgID).
 			Where("ak.business_unit_id = ?", tenantInfo.BuID).
 			Where("ak.created_by_id = ?", userID).
-			Where("ak.status = ?", apikey.StatusActive).
-			Count(ctx)
+			Where("ak.status = ?", apikey.StatusActive))
 	})
 }
 

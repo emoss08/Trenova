@@ -78,8 +78,8 @@ func (r *repository) SelectOptions(
 				NewSelect().
 				Model(&entities).
 				Column("id", "created_at", "name", "abbreviation", "country_iso3").
-				Limit(req.Pagination.Limit).
-				Offset(req.Pagination.Offset)
+				Limit(int64(req.Pagination.Limit)).
+				Offset(int64(req.Pagination.Offset))
 
 			if req.Query != "" {
 				q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -95,7 +95,7 @@ func (r *repository) SelectOptions(
 
 			return &pagination.ListResult[*usstate.UsState]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

@@ -61,7 +61,8 @@ func (r *generatedRepository) filterQuery(
 		q = q.Where(cols.ReferenceID.Eq(), *req.ReferenceID)
 	}
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *generatedRepository) List(
@@ -94,7 +95,7 @@ func (r *generatedRepository) List(
 
 			return &pagination.ListResult[*documenttemplate.GeneratedDocument]{
 				Items: entities,
-				Total: total,
+				Total: int(total),
 			}, nil
 		},
 	)

@@ -259,7 +259,7 @@ func threadPageQuery(
 			cols.CreatedAt.OrderDesc(),
 			cols.ID.OrderDesc(),
 		).
-		Limit(window.limit + 1)
+		Limit(int64(window.limit + 1))
 }
 
 func (r *repository) UpdateThread(
@@ -524,7 +524,7 @@ func (r *repository) ListMessages(
 			// Taking the newest N and reversing keeps the most recent context rather
 			// than the oldest, which is what a long conversation needs.
 			if err := query.Order(cols.Sequence.OrderDesc()).
-				Limit(req.Limit).
+				Limit(int64(req.Limit)).
 				Scan(ctx); err != nil {
 				return nil, err
 			}
@@ -560,7 +560,7 @@ func (r *repository) CountMessages(
 			return 0, fmt.Errorf("count messages: %w", err)
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }
 
@@ -679,7 +679,7 @@ func (r *repository) DeleteStaleThreads(
 					q = q.Where(cols.SubjectID.IsNull())
 				}
 				if err := q.Order(cols.LastMessageAt.OrderAsc()).
-					Limit(limit).
+					Limit(int64(limit)).
 					Scan(txCtx); err != nil {
 					return err
 				}

@@ -61,7 +61,7 @@ func (r *repository) ListItems(
 					log.Error("failed to count billing transfer run items", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(

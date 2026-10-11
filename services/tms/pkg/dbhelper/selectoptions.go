@@ -90,8 +90,8 @@ func SelectOptions[T any](
 			return sq.Where(cfg.orgColumn()+" = ?", req.TenantInfo.OrgID).
 				Where(cfg.buColumn()+" = ?", req.TenantInfo.BuID)
 		}).
-		Limit(req.Pagination.SafeLimit()).
-		Offset(req.Pagination.SafeOffset())
+		Limit(int64(req.Pagination.SafeLimit())).
+		Offset(int64(req.Pagination.SafeOffset()))
 
 	searchColumns := cfg.searchColumns()
 	if req.Query != "" && len(searchColumns) > 0 {
@@ -114,6 +114,6 @@ func SelectOptions[T any](
 
 	return &pagination.ListResult[T]{
 		Items: entities,
-		Total: total,
+		Total: int(total),
 	}, nil
 }

@@ -71,7 +71,7 @@ func (r *repository) ListCorrelatedAuditEntries(
 				return q
 			}).
 			Order(cols.Timestamp.OrderAsc(), cols.ID.OrderAsc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("list audit entries correlated with the AI audit trail: %w", err)

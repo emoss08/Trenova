@@ -252,7 +252,7 @@ func (r *repository) CountByDefinition(
 			return 0, err
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }
 

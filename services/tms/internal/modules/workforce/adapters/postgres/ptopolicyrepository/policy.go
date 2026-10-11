@@ -94,7 +94,7 @@ func (r *repository) List(
 					log.Error("failed to count PTO policies", zap.Error(err))
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*worker.PTOPolicy]{
@@ -450,7 +450,7 @@ func (r *repository) CountOpenAssignments(
 			return 0, err
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }
 

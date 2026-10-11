@@ -209,7 +209,7 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 		Where("id = ?", posted.PostedBatchID).
 		Count(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 1, batchCount)
+	assert.Equal(t, int64(1), batchCount)
 
 	var entry struct {
 		ID            pulid.ID `bun:"id"`
@@ -241,7 +241,7 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 		Where("journal_entry_id = ?", entry.ID).
 		Count(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 2, lineCount)
+	assert.Equal(t, int64(2), lineCount)
 
 	var source struct {
 		SourceObjectType string `bun:"source_object_type"`

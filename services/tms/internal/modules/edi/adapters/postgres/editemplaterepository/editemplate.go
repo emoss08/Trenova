@@ -77,15 +77,15 @@ func (r *repository) List(
 
 			query = applyTemplateSearch(query, req.Filter.Query)
 			total, err := query.
-				Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset()).
+				Limit(int64(req.Filter.Pagination.SafeLimit())).
+				Offset(int64(req.Filter.Pagination.SafeOffset())).
 				ScanAndCount(ctx)
 			if err != nil {
 				log.Error("failed to scan and count edi templates", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*edi.EDITemplate]{Items: entities, Total: total}, nil
+			return &pagination.ListResult[*edi.EDITemplate]{Items: entities, Total: int(total)}, nil
 		},
 	)
 }
@@ -124,7 +124,7 @@ func (r *repository) ListTemplatesCursor(
 				if err != nil {
 					return nil, err
 				}
-				totalCount = &total
+				totalCount = new(int(total))
 			}
 
 			return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDITemplate]{
@@ -256,14 +256,14 @@ func (r *repository) SelectTemplateOptions(
 
 			total, err := query.
 				Order(cols.Name.OrderAsc()).
-				Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
-				Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
+				Limit(int64(req.SelectQueryRequest.Pagination.SafeLimit())).
+				Offset(int64(req.SelectQueryRequest.Pagination.SafeOffset())).
 				ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
 			}
 
-			return &pagination.ListResult[*edi.EDITemplate]{Items: entities, Total: total}, nil
+			return &pagination.ListResult[*edi.EDITemplate]{Items: entities, Total: int(total)}, nil
 		},
 	)
 }

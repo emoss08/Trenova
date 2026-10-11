@@ -72,7 +72,7 @@ func (r *repository) ListTemplates(
 				return sq
 			}).
 			Order(cols.Name.OrderAsc()).
-			Limit(limitOr(req.Limit, defaultTemplatePageSize)).
+			Limit(int64(limitOr(req.Limit, defaultTemplatePageSize))).
 			Scan(ctx); err != nil {
 			r.l.Error("failed to list shift templates", zap.Error(err))
 			return nil, fmt.Errorf("list shift templates: %w", err)
@@ -173,7 +173,7 @@ func (r *repository) CountTemplateAssignments(
 			return 0, fmt.Errorf("count template assignments: %w", err)
 		}
 
-		return total, nil
+		return int(total), nil
 	})
 }
 
@@ -234,7 +234,7 @@ func (r *repository) ListAssignments(
 				return sq
 			}).
 			Order(cols.EffectiveFrom.OrderDesc()).
-			Limit(limitOr(req.Limit, defaultAssignmentPageSize))
+			Limit(int64(limitOr(req.Limit, defaultAssignmentPageSize)))
 
 		if req.IncludeTemplate {
 			q = q.Relation(workercol.WorkerShiftAssignmentRelations.ShiftTemplate)
@@ -416,7 +416,7 @@ func (r *repository) ListSwaps(
 				return sq
 			}).
 			Order(cols.ShiftDate.OrderAsc()).
-			Limit(limitOr(req.Limit, defaultSwapPageSize))
+			Limit(int64(limitOr(req.Limit, defaultSwapPageSize)))
 
 		if req.IncludeWorkers {
 			q = q.Relation(workercol.ShiftSwapRequestRelations.RequestingWorker).

@@ -110,7 +110,7 @@ func (r *priceRepository) ListByIndex(
 			Order(cols.PriceDate.OrderDesc())
 
 		if req.Limit > 0 {
-			q = q.Limit(req.Limit)
+			q = q.Limit(int64(req.Limit))
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -149,7 +149,7 @@ func (r *priceRepository) GetLatestOnOrBefore(
 					Where(cols.PriceDate.Lte(), req.Date)
 			}).
 			Order(cols.PriceDate.OrderDesc()).
-			Limit(limit).
+			Limit(int64(limit)).
 			Scan(ctx)
 		if err != nil {
 			log.Error("failed to get latest fuel index prices", zap.Error(err))

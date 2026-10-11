@@ -77,7 +77,7 @@ func (r *repository) ListPositions(
 			}).
 			Order(cols.Department.OrderAsc()).
 			Order(cols.Title.OrderAsc()).
-			Limit(limitOr(req.Limit, defaultPositionPageSize))
+			Limit(int64(limitOr(req.Limit, defaultPositionPageSize)))
 
 		if req.IncludeReportsTo {
 			q = q.Relation(workercol.JobPositionRelations.ReportsTo)
@@ -194,7 +194,7 @@ func (r *repository) CountPositionHolders(
 			return 0, fmt.Errorf("count staff in position: %w", err)
 		}
 
-		return workers + staff, nil
+		return int(workers + staff), nil
 	})
 }
 
@@ -234,7 +234,7 @@ func (r *repository) ListDelegations(
 				return sq
 			}).
 			Order(cols.StartsAt.OrderDesc()).
-			Limit(limitOr(req.Limit, defaultDelegationPageSize))
+			Limit(int64(limitOr(req.Limit, defaultDelegationPageSize)))
 
 		if req.IncludeUsers {
 			q = q.Relation(workercol.ApprovalDelegationRelations.Delegator).

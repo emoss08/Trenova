@@ -506,7 +506,7 @@ func searchQuery(
 		Where(cols.ModelKey.Eq(), req.ModelKey).
 		Where(cols.Dimensions.Expr("{} = "+plan.dimensions)).
 		OrderExpr(distance, query).
-		Limit(plan.candidates)
+		Limit(int64(plan.candidates))
 
 	candidate := candidateColumns
 	best := tx.NewSelect().
@@ -530,7 +530,7 @@ func searchQuery(
 		ColumnExpr(similarity + " AS similarity").
 		OrderExpr(top.Distance + " ASC").
 		OrderExpr(top.SourceID.OrderAsc()).
-		Limit(plan.limit)
+		Limit(int64(plan.limit))
 
 	if req.MinSimilarity != 0 {
 		outer = outer.Where(similarity+" >= ?", req.MinSimilarity)
