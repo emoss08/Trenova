@@ -38,7 +38,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordWorkerEmploymentEvent(ctx, fc.Args["input"].(gqlmodel.RecordWorkerEmploymentEventInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNRecordWorkerEmploymentEventPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkeremploymentserviceᚐRecordResult),
+				Marshal: gqlexec.Marshal(marshalNRecordWorkerEmploymentEventPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeremploymentserviceᚐRecordResult),
 			},
 			{
 				Name:       "amendWorkerEmploymentEvent",
@@ -105,7 +105,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workeremploymentservice.RecordResult)
 					return obj.Cascade, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentCascade2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkeremploymentserviceᚐCascadeSummary),
+				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentCascade2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeremploymentserviceᚐCascadeSummary),
 			},
 		}},
 		{Object: "WorkerEmploymentCascade", Fields: []*gqlexec.Field{
@@ -892,7 +892,7 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNRecordWorkerEmploymentEventPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkeremploymentserviceᚐRecordResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workeremploymentservice.RecordResult) graphql.Marshaler {
+func marshalNRecordWorkerEmploymentEventPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeremploymentserviceᚐRecordResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workeremploymentservice.RecordResult) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -916,7 +916,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalNWorkerEmploymentCascade2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkeremploymentserviceᚐCascadeSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workeremploymentservice.CascadeSummary) graphql.Marshaler {
+func marshalNWorkerEmploymentCascade2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeremploymentserviceᚐCascadeSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workeremploymentservice.CascadeSummary) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "WorkerEmploymentCascade", &v)
 }
 

@@ -682,7 +682,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").Headcount(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNHeadcount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋorgstructureserviceᚐHeadcount),
+				Marshal: gqlexec.Marshal(marshalNHeadcount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋorgstructureserviceᚐHeadcount),
 			},
 			{
 				Name:       "jobPositionHolders",
@@ -1479,7 +1479,7 @@ func marshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypes�
 	return res
 }
 
-func marshalNHeadcount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋorgstructureserviceᚐHeadcount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *orgstructureservice.Headcount) graphql.Marshaler {
+func marshalNHeadcount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋorgstructureserviceᚐHeadcount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *orgstructureservice.Headcount) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

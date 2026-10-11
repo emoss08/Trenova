@@ -72,7 +72,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workercredentialservice.ExpiryForecast)
 					return obj.Items, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCredentialExpiryForecastItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkercredentialserviceᚐExpiryForecastItemᚄ),
+				Marshal: gqlexec.Marshal(marshalNCredentialExpiryForecastItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkercredentialserviceᚐExpiryForecastItemᚄ),
 			},
 		}},
 		{Object: "CredentialExpiryForecastItem", Fields: []*gqlexec.Field{
@@ -322,7 +322,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CredentialExpiryForecast(ctx, fc.Args["days"].(*int), fc.Args["limit"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNCredentialExpiryForecast2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkercredentialserviceᚐExpiryForecast),
+				Marshal: gqlexec.Marshal(marshalNCredentialExpiryForecast2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkercredentialserviceᚐExpiryForecast),
 			},
 		}},
 		{Object: "WorkerCredential", Fields: []*gqlexec.Field{
@@ -1999,7 +1999,7 @@ func marshalNComplianceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodu
 	return res
 }
 
-func marshalNCredentialExpiryForecast2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkercredentialserviceᚐExpiryForecast(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workercredentialservice.ExpiryForecast) graphql.Marshaler {
+func marshalNCredentialExpiryForecast2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkercredentialserviceᚐExpiryForecast(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workercredentialservice.ExpiryForecast) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2007,15 +2007,15 @@ func marshalNCredentialExpiryForecast2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "CredentialExpiryForecast", v)
 }
 
-func marshalNCredentialExpiryForecastItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkercredentialserviceᚐExpiryForecastItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workercredentialservice.ExpiryForecastItem) graphql.Marshaler {
+func marshalNCredentialExpiryForecastItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkercredentialserviceᚐExpiryForecastItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workercredentialservice.ExpiryForecastItem) graphql.Marshaler {
 	return gqlexec.List[*workercredentialservice.ExpiryForecastItem]{
-		Elem:        marshalNCredentialExpiryForecastItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkercredentialserviceᚐExpiryForecastItem,
+		Elem:        marshalNCredentialExpiryForecastItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkercredentialserviceᚐExpiryForecastItem,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCredentialExpiryForecastItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkercredentialserviceᚐExpiryForecastItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workercredentialservice.ExpiryForecastItem) graphql.Marshaler {
+func marshalNCredentialExpiryForecastItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkercredentialserviceᚐExpiryForecastItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workercredentialservice.ExpiryForecastItem) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

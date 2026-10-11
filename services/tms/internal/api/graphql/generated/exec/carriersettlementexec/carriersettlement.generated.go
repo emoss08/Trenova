@@ -2487,7 +2487,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CurrentCarrierSettlementPeriod(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierSettlementPeriodBounds2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋsettlementsharedᚐPeriodBounds),
+				Marshal: gqlexec.Marshal(marshalNCarrierSettlementPeriodBounds2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋsettlementsharedᚐPeriodBounds),
 			},
 			{
 				Name:       "carrierSettlementWorkspaceSummary",
@@ -3859,7 +3859,7 @@ func marshalNCarrierSettlementLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "CarrierSettlementLine", v)
 }
 
-func marshalNCarrierSettlementPeriodBounds2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋsettlementsharedᚐPeriodBounds(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *settlementshared.PeriodBounds) graphql.Marshaler {
+func marshalNCarrierSettlementPeriodBounds2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋsettlementsharedᚐPeriodBounds(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *settlementshared.PeriodBounds) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

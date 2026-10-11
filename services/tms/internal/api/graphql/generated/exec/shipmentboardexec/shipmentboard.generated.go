@@ -1425,7 +1425,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentEta)
 					return obj.Verdict, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEtaVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋshipmenttrackingᚐVerdict),
+				Marshal: gqlexec.Marshal(marshalNEtaVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋappᚋshipmenttrackingᚐVerdict),
 			},
 			{
 				Name:     "reason",
@@ -2705,7 +2705,7 @@ func marshalNDriverCoverageSuggestion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "DriverCoverageSuggestion", v)
 }
 
-func marshalNEtaVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋshipmenttrackingᚐVerdict(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipmenttracking.Verdict) graphql.Marshaler {
+func marshalNEtaVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋappᚋshipmenttrackingᚐVerdict(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipmenttracking.Verdict) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

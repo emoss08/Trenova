@@ -435,7 +435,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerTotalCompensation(ctx, fc.Args["workerId"].(string), fc.Args["planYear"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNTotalCompensation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋbenefitsserviceᚐTotalCompensation),
+				Marshal: gqlexec.Marshal(marshalNTotalCompensation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋbenefitsserviceᚐTotalCompensation),
 			},
 			{
 				Name:       "myTotalCompensation",
@@ -449,7 +449,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyTotalCompensation(ctx, fc.Args["planYear"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNTotalCompensation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋbenefitsserviceᚐTotalCompensation),
+				Marshal: gqlexec.Marshal(marshalNTotalCompensation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋbenefitsserviceᚐTotalCompensation),
 			},
 		}},
 		{Object: "TotalCompensation", Fields: []*gqlexec.Field{
@@ -1525,7 +1525,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalNTotalCompensation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋbenefitsserviceᚐTotalCompensation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *benefitsservice.TotalCompensation) graphql.Marshaler {
+func marshalNTotalCompensation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋbenefitsserviceᚐTotalCompensation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *benefitsservice.TotalCompensation) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

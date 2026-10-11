@@ -15,7 +15,6 @@ import (
 
 const (
 	maxCallDepth   = 4
-	corePackages   = "/internal/core/"
 	modulePackages = "/internal/modules/"
 	moduleAdapters = "adapters"
 )
@@ -216,9 +215,6 @@ func (x *receiverIndex) walk(
 }
 
 func isServiceType(key string) bool {
-	if strings.Contains(key, corePackages) {
-		return true
-	}
 	_, module, found := strings.Cut(key, modulePackages)
 	if !found {
 		return false

@@ -455,7 +455,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").PayrollExportRows(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNPayrollExportRow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋtimesheetserviceᚐPayrollExportRowᚄ),
+				Marshal: gqlexec.Marshal(marshalNPayrollExportRow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋtimesheetserviceᚐPayrollExportRowᚄ),
 			},
 		}},
 		{Object: "TimeClockEntry", Fields: []*gqlexec.Field{
@@ -1632,15 +1632,15 @@ func marshalNPayrollExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodu
 	return ec.MarshalType(ctx, sel, "PayrollExport", v)
 }
 
-func marshalNPayrollExportRow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋtimesheetserviceᚐPayrollExportRowᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*timesheetservice.PayrollExportRow) graphql.Marshaler {
+func marshalNPayrollExportRow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋtimesheetserviceᚐPayrollExportRowᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*timesheetservice.PayrollExportRow) graphql.Marshaler {
 	return gqlexec.List[*timesheetservice.PayrollExportRow]{
-		Elem:        marshalNPayrollExportRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋtimesheetserviceᚐPayrollExportRow,
+		Elem:        marshalNPayrollExportRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋtimesheetserviceᚐPayrollExportRow,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPayrollExportRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋtimesheetserviceᚐPayrollExportRow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *timesheetservice.PayrollExportRow) graphql.Marshaler {
+func marshalNPayrollExportRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋtimesheetserviceᚐPayrollExportRow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *timesheetservice.PayrollExportRow) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

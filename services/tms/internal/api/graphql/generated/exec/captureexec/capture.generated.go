@@ -146,7 +146,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capturereleaseservice.Release)
 					return obj.Installer, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureAgentInstaller2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcapturereleaseserviceᚐInstaller),
+				Marshal: gqlexec.Marshal(marshalNCaptureAgentInstaller2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturereleaseserviceᚐInstaller),
 			},
 			{
 				Name:     "notes",
@@ -2357,7 +2357,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CaptureAgentRelease(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalOCaptureAgentRelease2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcapturereleaseserviceᚐRelease),
+				Marshal: gqlexec.Marshal(marshalOCaptureAgentRelease2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturereleaseserviceᚐRelease),
 			},
 			{
 				Name:       "captureBatches",
@@ -3790,7 +3790,7 @@ func marshalNCaptureAccess2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodu
 	return ec.MarshalType(ctx, sel, "CaptureAccess", v)
 }
 
-func marshalNCaptureAgentInstaller2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcapturereleaseserviceᚐInstaller(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capturereleaseservice.Installer) graphql.Marshaler {
+func marshalNCaptureAgentInstaller2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturereleaseserviceᚐInstaller(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capturereleaseservice.Installer) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "CaptureAgentInstaller", &v)
 }
 
@@ -4169,7 +4169,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOCaptureAgentRelease2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcapturereleaseserviceᚐRelease(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capturereleaseservice.Release) graphql.Marshaler {
+func marshalOCaptureAgentRelease2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturereleaseserviceᚐRelease(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capturereleaseservice.Release) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

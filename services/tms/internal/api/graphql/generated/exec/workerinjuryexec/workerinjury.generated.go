@@ -542,7 +542,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").OshaLog(ctx, fc.Args["year"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNOSHALog2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkerinjuryserviceᚐOSHALog),
+				Marshal: gqlexec.Marshal(marshalNOSHALog2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkerinjuryserviceᚐOSHALog),
 			},
 			{
 				Name:       "oshaSummaries",
@@ -1772,7 +1772,7 @@ func marshalNOSHAIllnessType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return res
 }
 
-func marshalNOSHALog2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkerinjuryserviceᚐOSHALog(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerinjuryservice.OSHALog) graphql.Marshaler {
+func marshalNOSHALog2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkerinjuryserviceᚐOSHALog(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerinjuryservice.OSHALog) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

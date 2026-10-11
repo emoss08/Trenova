@@ -102,11 +102,11 @@ linters:
               desc: test helper packages are linked into the binary; import them only from _test.go files
             - pkg: github.com/emoss08/trenova/internal/modules/rating/ratingtest
               desc: test helper packages are linked into the binary; import them only from _test.go files
-            - pkg: github.com/emoss08/trenova/internal/core/services/shipmentcommercial/shipmentcommercialtest
+            - pkg: github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial/shipmentcommercialtest
               desc: test helper packages are linked into the binary; import them only from _test.go files
             - pkg: github.com/emoss08/trenova/internal/modules/operations/operationstest
               desc: test helper packages are linked into the binary; import them only from _test.go files
-            - pkg: github.com/emoss08/trenova/internal/core/temporaljobs/replaytest
+            - pkg: github.com/emoss08/trenova/internal/infrastructure/temporaljobs/replaytest
               desc: test helper packages are linked into the binary; import them only from _test.go files
             - pkg: github.com/emoss08/trenova/internal/infrastructure/config/configtest
               desc: test helper packages are linked into the binary; import them only from _test.go files

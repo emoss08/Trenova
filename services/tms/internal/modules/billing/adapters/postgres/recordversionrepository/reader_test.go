@@ -35,23 +35,21 @@ the one nobody remembered to list anywhere.
 func TestEveryResourceAToolTargetsHasAVersionLookup(t *testing.T) {
 	t.Parallel()
 
-	dir := filepath.Join("..", "..", "..", "..", "agent", "app", "agenttoolservice")
-	entries, err := os.ReadDir(dir)
-	require.NoError(t, err)
+	files := toolSourceFiles(t,
+		filepath.Join("..", "..", "..", "..", "agent", "app", "agenttoolservice"),
+		filepath.Join("..", "..", "..", "..", "agent", "app", "agenttools"),
+	)
 
 	target := regexp.MustCompile(
-		`(?:targetOf\([^)]*|ToolTarget\{Resource:\s*)(?:permission|serviceports)\.((?:Resource|Record)\w+)`,
+		`(?:(?:common\.)?[Tt]argetOf\([^)]*|ToolTarget\{Resource:\s*)(?:permission|\w+ports)\.((?:Resource|Record)\w+)`,
 	)
 	resources := resourceNames(t)
 
 	missing := make(map[string]struct{})
 	found := 0
-	for _, entry := range entries {
-		name := entry.Name()
-		if entry.IsDir() || filepath.Ext(name) != ".go" || strings.HasSuffix(name, "_test.go") {
-			continue
-		}
-		source, readErr := os.ReadFile(filepath.Join(dir, name))
+	for _, path := range files {
+		name := filepath.Base(path)
+		source, readErr := os.ReadFile(path)
 		require.NoError(t, readErr)
 
 		for _, match := range target.FindAllStringSubmatch(string(source), -1) {
@@ -170,4 +168,25 @@ func TestRecordsSharingAResourceAreToldApartByTheirIDs(t *testing.T) {
 		require.NotEmpty(t, lookup.idEq, name)
 		require.NotNil(t, lookup.version, name)
 	}
+}
+
+func toolSourceFiles(t *testing.T, roots ...string) []string {
+	t.Helper()
+
+	files := make([]string, 0, 512)
+	for _, root := range roots {
+		err := filepath.WalkDir(root, func(path string, d os.DirEntry, walkErr error) error {
+			if walkErr != nil {
+				return walkErr
+			}
+			if d.IsDir() || filepath.Ext(path) != ".go" || strings.HasSuffix(path, "_test.go") {
+				return nil
+			}
+			files = append(files, path)
+			return nil
+		})
+		require.NoError(t, err)
+	}
+
+	return files
 }

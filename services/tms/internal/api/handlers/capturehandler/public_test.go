@@ -49,7 +49,7 @@ func releaseHandler(t *testing.T, source string) *gin.Engine {
 func TestLatestReleaseServesTheSignedManifestUnchanged(t *testing.T) {
 	t.Parallel()
 
-	fixture, err := os.ReadFile("../../../core/services/capturereleaseservice/testdata/signed.json")
+	fixture, err := os.ReadFile("../../../modules/documents/app/capturereleaseservice/testdata/signed.json")
 	require.NoError(t, err)
 	source := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write(fixture)

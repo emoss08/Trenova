@@ -624,7 +624,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").InviteWorkerToPortal(ctx, fc.Args["input"].(gqlmodel.InviteWorkerToPortalInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNInviteWorkerToPortalResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐInviteWorkerResult),
+				Marshal: gqlexec.Marshal(marshalNInviteWorkerToPortalResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐInviteWorkerResult),
 			},
 			{
 				Name:       "revokeWorkerPortalAccess",
@@ -649,7 +649,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateMyContactInfo(ctx, fc.Args["input"].(gqlmodel.UpdateMyContactInfoInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalComplianceProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalComplianceProfile),
+				Marshal: gqlexec.Marshal(marshalNPortalComplianceProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalComplianceProfile),
 			},
 			{
 				Name:       "createMyLoadComment",
@@ -662,7 +662,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateMyLoadComment(ctx, fc.Args["input"].(gqlmodel.CreateMyLoadCommentInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalComment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalComment),
+				Marshal: gqlexec.Marshal(marshalNPortalComment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalComment),
 			},
 			{
 				Name:       "recordMyStopAction",
@@ -1834,7 +1834,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*driverportalservice.PortalLeave)
 					return obj.Cases, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalLeaveCase2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalLeaveCaseᚄ),
+				Marshal: gqlexec.Marshal(marshalNPortalLeaveCase2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalLeaveCaseᚄ),
 			},
 		}},
 		{Object: "PortalLeaveCase", Fields: []*gqlexec.Field{
@@ -2141,7 +2141,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*driverportalservice.PortalLoad)
 					return obj.Stops, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalStop2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalStopᚄ),
+				Marshal: gqlexec.Marshal(marshalNPortalStop2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalStopᚄ),
 			},
 		}},
 		{Object: "PortalPayEstimate", Fields: []*gqlexec.Field{
@@ -2567,7 +2567,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*driverportalservice.PortalSchedule)
 					return obj.Days, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalShiftDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalShiftDayᚄ),
+				Marshal: gqlexec.Marshal(marshalNPortalShiftDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalShiftDayᚄ),
 			},
 		}},
 		{Object: "PortalShiftDay", Fields: []*gqlexec.Field{
@@ -2849,7 +2849,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPortalStatus(ctx, fc.Args["workerId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerPortalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalStatus),
+				Marshal: gqlexec.Marshal(marshalNWorkerPortalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalStatus),
 			},
 			{
 				Name:       "settlementDisputes",
@@ -2900,7 +2900,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyPortalProfile(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalProfile),
+				Marshal: gqlexec.Marshal(marshalNPortalProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalProfile),
 			},
 			{
 				Name:       "myLoads",
@@ -2914,7 +2914,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyLoads(ctx, fc.Args["scope"].(driverportalservice.LoadScope), fc.Args["limit"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalLoad2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalLoadᚄ),
+				Marshal: gqlexec.Marshal(marshalNPortalLoad2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalLoadᚄ),
 			},
 			{
 				Name:       "myComplianceProfile",
@@ -2926,7 +2926,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyComplianceProfile(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalComplianceProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalComplianceProfile),
+				Marshal: gqlexec.Marshal(marshalNPortalComplianceProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalComplianceProfile),
 			},
 			{
 				Name:       "myCredentials",
@@ -2938,7 +2938,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyCredentials(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalCredential2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalCredentialᚄ),
+				Marshal: gqlexec.Marshal(marshalNPortalCredential2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalCredentialᚄ),
 			},
 			{
 				Name:       "myLoadComments",
@@ -2952,7 +2952,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyLoadComments(ctx, fc.Args["shipmentId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalComment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalCommentᚄ),
+				Marshal: gqlexec.Marshal(marshalNPortalComment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalCommentᚄ),
 			},
 			{
 				Name:       "myPeriodSummary",
@@ -2964,7 +2964,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyPeriodSummary(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalPeriodSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalPeriodSummary),
+				Marshal: gqlexec.Marshal(marshalNPortalPeriodSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalPeriodSummary),
 			},
 			{
 				Name:       "myRecentPayEvents",
@@ -3018,7 +3018,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyEscrow(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalEscrowSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalEscrowSummary),
+				Marshal: gqlexec.Marshal(marshalNPortalEscrowSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalEscrowSummary),
 			},
 			{
 				Name:       "myAdvances",
@@ -3054,7 +3054,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyPortalFeatures(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalFeatures2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalFeatures),
+				Marshal: gqlexec.Marshal(marshalNPortalFeatures2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalFeatures),
 			},
 			{
 				Name:       "myPolicies",
@@ -3066,7 +3066,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyPolicies(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalPolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalPolicyᚄ),
+				Marshal: gqlexec.Marshal(marshalNPortalPolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalPolicyᚄ),
 			},
 			{
 				Name:       "myPolicyDocumentUrl",
@@ -3105,7 +3105,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MySchedule(ctx, fc.Args["at"].(*int), fc.Args["weeks"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalSchedule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalSchedule),
+				Marshal: gqlexec.Marshal(marshalNPortalSchedule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalSchedule),
 			},
 			{
 				Name:       "myAvailability",
@@ -3129,7 +3129,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyShiftSwaps(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalShiftSwap2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalShiftSwapᚄ),
+				Marshal: gqlexec.Marshal(marshalNPortalShiftSwap2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalShiftSwapᚄ),
 			},
 			{
 				Name:       "myPto",
@@ -3165,7 +3165,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyLeave(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalLeave2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalLeave),
+				Marshal: gqlexec.Marshal(marshalNPortalLeave2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalLeave),
 			},
 			{
 				Name:       "myExpenses",
@@ -4135,7 +4135,7 @@ func field_Query_myLoads_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map
 	args := make(map[string]any, 2)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "scope",
 		func(ctx context.Context, v any) (driverportalservice.LoadScope, error) {
-			return unmarshalNPortalLoadScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐLoadScope(ctx, ec, v)
+			return unmarshalNPortalLoadScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐLoadScope(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -5297,7 +5297,7 @@ func unmarshalNMyShiftSwapResponse2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNPortalLoadScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐLoadScope(ctx context.Context, ec *gqlexec.Exec, v any) (driverportalservice.LoadScope, error) {
+func unmarshalNPortalLoadScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐLoadScope(ctx context.Context, ec *gqlexec.Exec, v any) (driverportalservice.LoadScope, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := driverportalservice.LoadScope(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5611,7 +5611,7 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNInviteWorkerToPortalResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐInviteWorkerResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.InviteWorkerResult) graphql.Marshaler {
+func marshalNInviteWorkerToPortalResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐInviteWorkerResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.InviteWorkerResult) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5711,15 +5711,15 @@ func marshalNPayAdvance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules
 	return ec.MarshalType(ctx, sel, "PayAdvance", v)
 }
 
-func marshalNPortalComment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalCommentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalComment) graphql.Marshaler {
+func marshalNPortalComment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalCommentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalComment) graphql.Marshaler {
 	return gqlexec.List[*driverportalservice.PortalComment]{
-		Elem:        marshalNPortalComment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalComment,
+		Elem:        marshalNPortalComment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalComment,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPortalComment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalComment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalComment) graphql.Marshaler {
+func marshalNPortalComment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalComment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalComment) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5727,7 +5727,7 @@ func marshalNPortalComment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore
 	return ec.MarshalType(ctx, sel, "PortalComment", v)
 }
 
-func marshalNPortalComplianceProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalComplianceProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalComplianceProfile) graphql.Marshaler {
+func marshalNPortalComplianceProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalComplianceProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalComplianceProfile) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5735,15 +5735,15 @@ func marshalNPortalComplianceProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "PortalComplianceProfile", v)
 }
 
-func marshalNPortalCredential2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalCredentialᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalCredential) graphql.Marshaler {
+func marshalNPortalCredential2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalCredentialᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalCredential) graphql.Marshaler {
 	return gqlexec.List[*driverportalservice.PortalCredential]{
-		Elem:        marshalNPortalCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalCredential,
+		Elem:        marshalNPortalCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalCredential,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPortalCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalCredential(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalCredential) graphql.Marshaler {
+func marshalNPortalCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalCredential(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalCredential) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5751,7 +5751,7 @@ func marshalNPortalCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return ec.MarshalType(ctx, sel, "PortalCredential", v)
 }
 
-func marshalNPortalEscrowSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalEscrowSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalEscrowSummary) graphql.Marshaler {
+func marshalNPortalEscrowSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalEscrowSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalEscrowSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5759,7 +5759,7 @@ func marshalNPortalEscrowSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "PortalEscrowSummary", v)
 }
 
-func marshalNPortalFeatures2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalFeatures(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalFeatures) graphql.Marshaler {
+func marshalNPortalFeatures2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalFeatures(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalFeatures) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5791,7 +5791,7 @@ func marshalNPortalInvitationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNPortalLeave2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalLeave(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalLeave) graphql.Marshaler {
+func marshalNPortalLeave2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalLeave(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalLeave) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5799,15 +5799,15 @@ func marshalNPortalLeave2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return ec.MarshalType(ctx, sel, "PortalLeave", v)
 }
 
-func marshalNPortalLeaveCase2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalLeaveCaseᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalLeaveCase) graphql.Marshaler {
+func marshalNPortalLeaveCase2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalLeaveCaseᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalLeaveCase) graphql.Marshaler {
 	return gqlexec.List[*driverportalservice.PortalLeaveCase]{
-		Elem:        marshalNPortalLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalLeaveCase,
+		Elem:        marshalNPortalLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalLeaveCase,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPortalLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalLeaveCase(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalLeaveCase) graphql.Marshaler {
+func marshalNPortalLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalLeaveCase(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalLeaveCase) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5815,15 +5815,15 @@ func marshalNPortalLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋco
 	return ec.MarshalType(ctx, sel, "PortalLeaveCase", v)
 }
 
-func marshalNPortalLoad2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalLoadᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalLoad) graphql.Marshaler {
+func marshalNPortalLoad2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalLoadᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalLoad) graphql.Marshaler {
 	return gqlexec.List[*driverportalservice.PortalLoad]{
-		Elem:        marshalNPortalLoad2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalLoad,
+		Elem:        marshalNPortalLoad2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalLoad,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPortalLoad2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalLoad(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalLoad) graphql.Marshaler {
+func marshalNPortalLoad2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalLoad(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalLoad) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5839,7 +5839,7 @@ func marshalNPortalPayEstimate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "PortalPayEstimate", v)
 }
 
-func marshalNPortalPeriodSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalPeriodSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalPeriodSummary) graphql.Marshaler {
+func marshalNPortalPeriodSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalPeriodSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalPeriodSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5847,15 +5847,15 @@ func marshalNPortalPeriodSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "PortalPeriodSummary", v)
 }
 
-func marshalNPortalPolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalPolicyᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalPolicy) graphql.Marshaler {
+func marshalNPortalPolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalPolicyᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalPolicy) graphql.Marshaler {
 	return gqlexec.List[*driverportalservice.PortalPolicy]{
-		Elem:        marshalNPortalPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalPolicy,
+		Elem:        marshalNPortalPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalPolicy,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPortalPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalPolicy) graphql.Marshaler {
+func marshalNPortalPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalPolicy) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5863,7 +5863,7 @@ func marshalNPortalPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return ec.MarshalType(ctx, sel, "PortalPolicy", v)
 }
 
-func marshalNPortalProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalProfile) graphql.Marshaler {
+func marshalNPortalProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalProfile) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5903,7 +5903,7 @@ func marshalNPortalPtoType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules
 	return res
 }
 
-func marshalNPortalSchedule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalSchedule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalSchedule) graphql.Marshaler {
+func marshalNPortalSchedule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalSchedule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalSchedule) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5911,15 +5911,15 @@ func marshalNPortalSchedule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return ec.MarshalType(ctx, sel, "PortalSchedule", v)
 }
 
-func marshalNPortalShiftDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalShiftDayᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalShiftDay) graphql.Marshaler {
+func marshalNPortalShiftDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalShiftDayᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalShiftDay) graphql.Marshaler {
 	return gqlexec.List[*driverportalservice.PortalShiftDay]{
-		Elem:        marshalNPortalShiftDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalShiftDay,
+		Elem:        marshalNPortalShiftDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalShiftDay,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPortalShiftDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalShiftDay(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalShiftDay) graphql.Marshaler {
+func marshalNPortalShiftDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalShiftDay(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalShiftDay) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5927,15 +5927,15 @@ func marshalNPortalShiftDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return ec.MarshalType(ctx, sel, "PortalShiftDay", v)
 }
 
-func marshalNPortalShiftSwap2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalShiftSwapᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalShiftSwap) graphql.Marshaler {
+func marshalNPortalShiftSwap2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalShiftSwapᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalShiftSwap) graphql.Marshaler {
 	return gqlexec.List[*driverportalservice.PortalShiftSwap]{
-		Elem:        marshalNPortalShiftSwap2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalShiftSwap,
+		Elem:        marshalNPortalShiftSwap2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalShiftSwap,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPortalShiftSwap2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalShiftSwap(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalShiftSwap) graphql.Marshaler {
+func marshalNPortalShiftSwap2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalShiftSwap(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalShiftSwap) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5943,15 +5943,15 @@ func marshalNPortalShiftSwap2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋco
 	return ec.MarshalType(ctx, sel, "PortalShiftSwap", v)
 }
 
-func marshalNPortalStop2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalStopᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalStop) graphql.Marshaler {
+func marshalNPortalStop2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalStopᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalStop) graphql.Marshaler {
 	return gqlexec.List[*driverportalservice.PortalStop]{
-		Elem:        marshalNPortalStop2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalStop,
+		Elem:        marshalNPortalStop2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalStop,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPortalStop2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalStop(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalStop) graphql.Marshaler {
+func marshalNPortalStop2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalStop(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalStop) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -6135,7 +6135,7 @@ func marshalNWorkerPolicyAcknowledgement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return ec.MarshalType(ctx, sel, "WorkerPolicyAcknowledgement", v)
 }
 
-func marshalNWorkerPortalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalStatus) graphql.Marshaler {
+func marshalNWorkerPortalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalStatus) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

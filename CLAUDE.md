@@ -110,9 +110,9 @@ services/tms/
 │   │   ├── adapters/postgres/  # Repositories
 │   │   ├── jobs/               # Temporal workflows and activities; <name>contract packages
 │   │   └── module.go           # The module's fx options
-│   ├── core/                   # Packages not yet assigned to a module
 │   └── infrastructure/         # Cross-cutting technical adapters
 │       ├── postgres/           # PostgreSQL adapters (Bun ORM)
+│       ├── temporaljobs/       # Temporal client, worker runtime, schedules, workflow starter
 │       ├── redis/              # Redis cache adapters
 │       ├── database/           # Migrations and seeding
 │       └── config/             # Configuration management
@@ -484,8 +484,9 @@ those two binaries run the self-hosted edition.
 `services/tms` is split into levelled modules, `internal/modules/<module>/{domain,ports,app,adapters/postgres,jobs}`
 with a `module.go` (`SharedOptions`, `APIOptions`) and a `jobs/jobs.go` (`WorkerOptions`). A module may import only
 the `domain`, `ports` and `<name>contract` packages of strictly lower modules, plus `pkg/*` and `internal/infrastructure/*`;
-an upward need is an inversion port declared low and provided by the higher `module.go`. `go tool go-arch-lint check`
-(`task lint`) enforces it against `.go-arch-lint.yml`. New code goes in its module, never in `internal/core`.
+an upward need is an inversion port declared low and provided by the higher `module.go`. `go run ./scripts/archlint`
+(`task lint`, CI) enforces it against `.go-arch-lint.yml`. Every package belongs to a module; `internal/core` no longer
+exists, and new code goes in its module.
 **Read [docs/engineering/module-architecture.md](docs/engineering/module-architecture.md) before adding a module, an entity, a port, a service or a job.**
 
 ## Bun ORM

@@ -68,7 +68,6 @@ func TestRepositoryMethodsRunInScopedTransactions(t *testing.T) {
 	root := serviceRoot(t)
 	dirs, err := filepath.Glob(filepath.Join(root, "internal", "modules", "*", "adapters", "postgres"))
 	require.NoError(t, err)
-	dirs = append(dirs, filepath.Join(root, "internal", "infrastructure", "postgres", "repositories"))
 
 	violations := make([]TxViolation, 0)
 	for _, dir := range dirs {

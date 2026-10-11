@@ -94,7 +94,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workertrainingservice.BulkAssignResult)
 					return obj.Outcomes, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBulkAssignTrainingOutcome2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkertrainingserviceᚐBulkAssignOutcomeᚄ),
+				Marshal: gqlexec.Marshal(marshalNBulkAssignTrainingOutcome2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkertrainingserviceᚐBulkAssignOutcomeᚄ),
 			},
 			{
 				Name:     "assignedCount",
@@ -269,7 +269,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").StartMyTraining(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalTraining2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalTraining),
+				Marshal: gqlexec.Marshal(marshalNPortalTraining2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalTraining),
 			},
 			{
 				Name:       "acknowledgeMyTraining",
@@ -282,7 +282,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AcknowledgeMyTraining(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalTraining2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalTraining),
+				Marshal: gqlexec.Marshal(marshalNPortalTraining2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalTraining),
 			},
 			{
 				Name:       "bulkAssignTraining",
@@ -295,7 +295,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkAssignTraining(ctx, fc.Args["input"].(gqlmodel.BulkAssignTrainingInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNBulkAssignTrainingPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkertrainingserviceᚐBulkAssignResult),
+				Marshal: gqlexec.Marshal(marshalNBulkAssignTrainingPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkertrainingserviceᚐBulkAssignResult),
 			},
 		}},
 		{Object: "PortalTraining", Fields: []*gqlexec.Field{
@@ -597,7 +597,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyTraining(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalTraining2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalTrainingᚄ),
+				Marshal: gqlexec.Marshal(marshalNPortalTraining2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalTrainingᚄ),
 			},
 		}},
 		{Object: "TrainingCourse", Fields: []*gqlexec.Field{
@@ -2449,19 +2449,19 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNBulkAssignTrainingOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkertrainingserviceᚐBulkAssignOutcome(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workertrainingservice.BulkAssignOutcome) graphql.Marshaler {
+func marshalNBulkAssignTrainingOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkertrainingserviceᚐBulkAssignOutcome(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workertrainingservice.BulkAssignOutcome) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "BulkAssignTrainingOutcome", &v)
 }
 
-func marshalNBulkAssignTrainingOutcome2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkertrainingserviceᚐBulkAssignOutcomeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []workertrainingservice.BulkAssignOutcome) graphql.Marshaler {
+func marshalNBulkAssignTrainingOutcome2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkertrainingserviceᚐBulkAssignOutcomeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []workertrainingservice.BulkAssignOutcome) graphql.Marshaler {
 	return gqlexec.List[workertrainingservice.BulkAssignOutcome]{
-		Elem:        marshalNBulkAssignTrainingOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkertrainingserviceᚐBulkAssignOutcome,
+		Elem:        marshalNBulkAssignTrainingOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkertrainingserviceᚐBulkAssignOutcome,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNBulkAssignTrainingPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkertrainingserviceᚐBulkAssignResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workertrainingservice.BulkAssignResult) graphql.Marshaler {
+func marshalNBulkAssignTrainingPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkertrainingserviceᚐBulkAssignResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workertrainingservice.BulkAssignResult) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2533,15 +2533,15 @@ func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 	return ec.MarshalType(ctx, sel, "PageInfo", v)
 }
 
-func marshalNPortalTraining2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalTrainingᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalTraining) graphql.Marshaler {
+func marshalNPortalTraining2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalTrainingᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalTraining) graphql.Marshaler {
 	return gqlexec.List[*driverportalservice.PortalTraining]{
-		Elem:        marshalNPortalTraining2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalTraining,
+		Elem:        marshalNPortalTraining2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalTraining,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPortalTraining2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriverportalserviceᚐPortalTraining(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalTraining) graphql.Marshaler {
+func marshalNPortalTraining2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalTraining(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalTraining) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

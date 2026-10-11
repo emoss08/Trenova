@@ -184,7 +184,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").IssueDisciplinaryAction(ctx, fc.Args["input"].(gqlmodel.IssueDisciplinaryActionInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNIssueDisciplinaryActionPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkersafetyserviceᚐIssueActionResult),
+				Marshal: gqlexec.Marshal(marshalNIssueDisciplinaryActionPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkersafetyserviceᚐIssueActionResult),
 			},
 			{
 				Name:       "rescindDisciplinaryAction",
@@ -2450,7 +2450,7 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNIssueDisciplinaryActionPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkersafetyserviceᚐIssueActionResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workersafetyservice.IssueActionResult) graphql.Marshaler {
+func marshalNIssueDisciplinaryActionPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkersafetyserviceᚐIssueActionResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workersafetyservice.IssueActionResult) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

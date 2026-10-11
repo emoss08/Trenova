@@ -83,7 +83,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*ptopolicyservice.AssignWorkersResult)
 					return obj.Failures, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAssignWorkerPTOPolicyFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋptopolicyserviceᚐAssignWorkerFailureᚄ),
+				Marshal: gqlexec.Marshal(marshalNAssignWorkerPTOPolicyFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋptopolicyserviceᚐAssignWorkerFailureᚄ),
 			},
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
@@ -150,7 +150,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AssignWorkerPTOPolicy(ctx, fc.Args["input"].(gqlmodel.AssignWorkerPTOPolicyInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAssignWorkerPTOPolicyPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋptopolicyserviceᚐAssignWorkersResult),
+				Marshal: gqlexec.Marshal(marshalNAssignWorkerPTOPolicyPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋptopolicyserviceᚐAssignWorkersResult),
 			},
 			{
 				Name:       "endWorkerPtoPolicyAssignment",
@@ -3067,19 +3067,19 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAssignWorkerPTOPolicyFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋptopolicyserviceᚐAssignWorkerFailure(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v ptopolicyservice.AssignWorkerFailure) graphql.Marshaler {
+func marshalNAssignWorkerPTOPolicyFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋptopolicyserviceᚐAssignWorkerFailure(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v ptopolicyservice.AssignWorkerFailure) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AssignWorkerPTOPolicyFailure", &v)
 }
 
-func marshalNAssignWorkerPTOPolicyFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋptopolicyserviceᚐAssignWorkerFailureᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []ptopolicyservice.AssignWorkerFailure) graphql.Marshaler {
+func marshalNAssignWorkerPTOPolicyFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋptopolicyserviceᚐAssignWorkerFailureᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []ptopolicyservice.AssignWorkerFailure) graphql.Marshaler {
 	return gqlexec.List[ptopolicyservice.AssignWorkerFailure]{
-		Elem:        marshalNAssignWorkerPTOPolicyFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋptopolicyserviceᚐAssignWorkerFailure,
+		Elem:        marshalNAssignWorkerPTOPolicyFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋptopolicyserviceᚐAssignWorkerFailure,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAssignWorkerPTOPolicyPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋptopolicyserviceᚐAssignWorkersResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ptopolicyservice.AssignWorkersResult) graphql.Marshaler {
+func marshalNAssignWorkerPTOPolicyPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋptopolicyserviceᚐAssignWorkersResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ptopolicyservice.AssignWorkersResult) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

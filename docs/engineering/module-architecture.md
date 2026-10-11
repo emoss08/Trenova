@@ -32,7 +32,7 @@ internal/modules/<module>/
 | Piece | Where |
 |---|---|
 | Module levels and package assignments | `services/tms/docs/modules/module-map.yml` |
-| Dependency rules | `services/tms/.go-arch-lint.yml`, checked by `go tool go-arch-lint check` |
+| Dependency rules | `services/tms/.go-arch-lint.yml`, checked by `go run ./scripts/archlint` |
 | Shared, domain-free port types (`WorkflowStarter`, `AfterCommit`, storage, search, actors) | `internal/modules/kernel/ports/kernelports` |
 | Mocks | `internal/testutil/mocks/<entity>portsmock`, configured in `.mockery.yaml` |
 | Column helpers | `pkg/buncolgen` (shared `Column` and `TableInfo`) and `pkg/buncolgen/<domain>col` |
@@ -72,9 +72,9 @@ levels are a topological order of the module DAG.
 | 9 | `settlement` | driver and carrier settlement, driver pay, fuel purchases, IFTA |
 | 10 | `agent` | agents, conversations, AI audit, corrections and usage, watchtower, briefings |
 
-`module-map.yml` lists every package each module owns, and why it was assigned there
-(`assignment_reasons`). Its `unassigned` list holds the packages that could not be placed by
-rule and still live in their old directories; see [Not done yet](#not-done-yet).
+`module-map.yml` lists every package each module owns. It was regenerated from the tree once
+every package had a module, so its `unassigned` list is empty; keep it in step with the tree
+when you add or move a package.
 
 ## Dependency rules
 
@@ -107,23 +107,33 @@ Inside a module the layers are ordered too:
 | `<module>test` | anything | anything |
 
 `domain` may import `pkg` but not `internal/infrastructure`; every other component may import
-both. `jobs` may also import `internal/core/**`, because the Temporal runtime they register with
-(`internal/infrastructure/temporaljobs/registry`, `schedule`, `interceptors`) has not moved yet.
+both. The Temporal runtime is infrastructure: the client and its connection settings, the
+worker manager, registry, schedules, interceptors, health check and replay test helpers are in
+`internal/infrastructure/temporaljobs`, and the workflow starter is in
+`internal/infrastructure/temporaljobs/workflowstarter`. A module's `jobs` reach them through the
+general rule that every component except `domain` may import infrastructure.
 
 `internal/infrastructure` may import every module's `domain`, `ports` and contract packages.
-`internal/bootstrap`, `cmd`, `internal/testutil`, `internal/deskbench`, `scripts` and the
-unmoved `internal/core/**` may import anything.
+`internal/bootstrap`, `cmd`, `internal/testutil`, `internal/deskbench` and `scripts` may import
+anything.
 
 ### Enforcement
 
 `.go-arch-lint.yml` declares one component per module layer (`operations-domain`,
 `operations-ports`, `operations-app`, `operations-adapters`, `operations-jobs`,
 `operations-contracts`, `operations-module`, `operations-test`) plus `api`, `bootstrap`, `cmd`,
-`testutil`, `infrastructure`, `legacy-core`, `legacy-contracts`, `deskbench`, `scripts` and
-`pkg`, and lists for each what it may depend on. `_test.go` files are excluded. `task lint` runs
-`go tool go-arch-lint check` after golangci-lint. No generator for the file is checked in, so
-edit it directly. Its header requires any exception to carry a `TODO(build-arch)` reason, and
-the number of exceptions must not grow.
+`testutil`, `infrastructure`, `deskbench`, `scripts` and `pkg`, and lists for each what it may
+depend on. `_test.go` files are excluded. No generator for the file is checked in, so edit it
+directly. Its header requires any exception to carry a `TODO(build-arch)` reason, and the number
+of exceptions must not grow.
+
+Run the check with `go run ./scripts/archlint` from `services/tms`; `task lint` runs it after
+golangci-lint, and CI runs it in `test-tms.yml`. The script runs `go tool go-arch-lint check
+--json` and fails on any dependency, unmatched-file, deep-scan or configuration warning, except
+imports of the sibling `shared` module (`github.com/emoss08/trenova/shared/...`). go-arch-lint
+treats every import under the module path as project code and cannot map `shared` to a
+component, so it would report every such import as a violation. Running `go tool go-arch-lint
+check` directly therefore prints those false reports.
 
 Test helpers have a second guard. The depguard rule `testcode` in the repository's
 `.golangci.yml` forbids non-test files from importing `internal/testutil`, testify's `mock`,
@@ -174,9 +184,10 @@ asks for it without the tag in every graph.
 `internal/bootstrap/core` holds what every process needs: configuration, infrastructure, the
 Temporal client, every module's `SharedOptions()` and the edition's `Options`. `apiapp` adds the
 HTTP server, GraphQL, handlers, middleware, every module's `APIOptions()` and the edition's
-`APIOptions`. `workerapp.Modules()` adds every module's `jobs.WorkerOptions()` and the unmoved
-`internal/infrastructure/temporaljobs` job modules; `workerapp.OptionsFor` adds the worker runtime and
-the edition's `WorkerOptions`.
+`APIOptions`. `workerapp.Modules()` adds every module's `jobs.WorkerOptions()` and the schedule
+module; `workerapp.OptionsFor` adds the worker runtime (`temporaljobs.WorkerModule` from
+`internal/infrastructure/temporaljobs`), the agent runtime's worker modules and the edition's
+`WorkerOptions`.
 
 `run-watch-fast` links with `-ldflags='-s -w'`, which shortens the link step on every reload;
 Delve cannot attach to that binary. Both API watch tasks and `run-worker-watch` build with
@@ -213,9 +224,9 @@ linked into the API and a leak to fix.
 
 ## Adding code
 
-New code goes in a module. Do not add packages under `internal/core`, and do not add
-repositories under `internal/infrastructure/postgres/repositories`; both hold only the
-unassigned packages waiting to move.
+New code goes in its module. `internal/core` and `internal/infrastructure/postgres/repositories`
+no longer exist; do not recreate them. `internal/infrastructure` is for technical adapters such
+as the Temporal runtime, `m2msync`, and the storage and search clients.
 
 ### A module
 
@@ -233,8 +244,7 @@ unassigned packages waiting to move.
    `-adapters`, `-jobs`, `-contracts`, `-module`, `-test`) with the same `in:` globs as the
    existing modules, and their `deps` entries naming the lower modules. Add the new module's
    `-domain`, `-ports` and `-contracts` to the `deps` lists of every higher module's
-   components, to `api` (with `-app`) and to `infrastructure`, and add all eight to
-   `legacy-contracts`.
+   components, to `api` (with `-app`) and to `infrastructure`.
 6. If it has a `<module>test` package, add it to the `testcode` deny list in `.golangci.yml`.
 7. Run `task lint`.
 
@@ -310,8 +320,8 @@ Two ledgers record the moves so the overlay can be rewritten mechanically.
 
 | Ledger | Lines | Format | Records |
 |---|---|---|---|
-| `services/tms/docs/modules/moves.tsv` | 743 | `old/import/path<TAB>new/import/path` | each package moved from `internal/core/{domain,services,temporaljobs}` and `internal/infrastructure/postgres/repositories` into a module |
-| `services/tms/docs/modules/symbol-moves.tsv` | 11,138 | `old/path.Symbol<TAB>new/path.Symbol` | each symbol that changed package: the split of `internal/core/ports/{repositories,services,storage}` and the root `ports` package into `<entity>ports` and `kernelports`, the mocks into `<entity>portsmock`, contract types out of jobs packages, test helpers into `<name>test` packages, and the generated column helpers into `pkg/buncolgen/<domain>col` |
+| `services/tms/docs/modules/moves.tsv` | 849 | `old/import/path<TAB>new/import/path` | each package moved from `internal/core/{domain,services,temporaljobs}` and `internal/infrastructure/postgres/repositories`: into a module, including the packages once left unassigned, or into `internal/infrastructure` (the Temporal runtime and workflow starter to `temporaljobs`, `m2msync` to `postgres/m2msync`) |
+| `services/tms/docs/modules/symbol-moves.tsv` | 11,838 | `old/path.Symbol<TAB>new/path.Symbol` | each symbol that changed package: the split of `internal/core/ports/{repositories,services,storage}` and the root `ports` package into `<entity>ports` and `kernelports`, the mocks into `<entity>portsmock`, contract types out of jobs packages, test helpers into `<name>test` packages, the generated column helpers into `pkg/buncolgen/<domain>col`, and the split of `agenttoolservice` into `agenttools/<family>tools` and `agenttools/common` |
 
 `scripts/buildbench/rewrite-imports` applies both to a tree of Go files, in place. Run it from
 `services/tms`:
@@ -403,4 +413,7 @@ the family's place in `ToolProviders()` (or the family's own provider list, such
 
 ## Not done yet
 
-- The 319 architecture exceptions in `.go-arch-lint.yml` (`TODO(build-arch)`) record imports that break the module rules today; each needs an inversion port or a decision before it can be removed.
+- The 348 architecture exceptions in `.go-arch-lint.yml` (`TODO(build-arch)`) record imports
+  that break the module rules today; each needs an inversion port or a decision before it can
+  be removed. The count rose from 319 when the last unassigned packages moved into modules and
+  became subject to the module rules.
