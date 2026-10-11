@@ -17,7 +17,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator *validationframework.TenantedValidator[*order.Order]
+	validator validationframework.TenantedEntityValidator[*order.Order]
 }
 
 func NewValidator(p ValidatorParams) *Validator {

@@ -17,7 +17,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator *validationframework.TenantedValidator[*hazmatsegregationrule.HazmatSegregationRule]
+	validator validationframework.TenantedEntityValidator[*hazmatsegregationrule.HazmatSegregationRule]
 }
 
 func NewValidator(p ValidatorParams) *Validator {

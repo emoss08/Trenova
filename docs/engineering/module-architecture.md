@@ -342,6 +342,32 @@ When you move a package, append its line to `moves.tsv`; when you move a symbol 
 packages, append it to `symbol-moves.tsv`. The column helper split is in the symbol ledger too,
 so `buncolgen.ShipmentColumns` in overlay code becomes `shipmentcol.ShipmentColumns`.
 
+## Generics and build time
+
+Go compiles the methods of an instantiated generic type in every package that can see the
+type, and the linker throws the copies away afterwards. A package "sees" a type when anything it
+reads from another package mentions it: an exported struct's fields, even unexported ones, and
+the signatures of an exported type's methods, even unexported ones. Plain package-level
+functions and interface types are not followed this way, so they stop the spread.
+
+Three designs did this at scale before they were changed:
+
+| Source | What every importer compiled | Fix |
+|---|---|---|
+| `twilio-go` | about 15,000 functions per package that reached its client | replaced with a direct call to Twilio's Messages API (`internal/infrastructure/sms`) |
+| `loaders.Loaders` | about 1,000 functions in each of 40 resolver packages | loaders reached through typed accessors; the set and its builders are unexported (`loaders/access.go`) |
+| service `Validator` structs | the generic validator of every entity a package could see: 1,400 to 1,700 functions in each GraphQL and bootstrap package | fields typed `validationframework.TenantedEntityValidator[T]` / `ScopedEntityValidator[T]` |
+
+To check a package, count the generic functions its object file defines:
+
+```bash
+go tool nm -type "$(go list -tags nomsgpack -export -f '{{.Export}}' ./internal/api/graphql)" \
+  | grep -E ' [Tt] ' | grep -c '\['
+```
+
+A package that defines thousands of functions for a library it only passes values through is
+paying for a type it can see but does not need.
+
 ## Build benchmark
 
 `task build-bench` measures what an edit costs. It builds a target, then applies a probe edit

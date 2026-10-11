@@ -18,7 +18,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator *validationframework.TenantedValidator[*carriercapacity.Posting]
+	validator validationframework.TenantedEntityValidator[*carriercapacity.Posting]
 }
 
 func optionalID(id *pulid.ID) pulid.ID {

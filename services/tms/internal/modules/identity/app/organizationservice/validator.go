@@ -19,7 +19,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator *validationframework.ScopedValidator[*tenant.Organization]
+	validator validationframework.ScopedEntityValidator[*tenant.Organization]
 }
 
 func NewValidator(p ValidatorParams) *Validator {

@@ -17,7 +17,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator *validationframework.TenantedValidator[*servicetype.ServiceType]
+	validator validationframework.TenantedEntityValidator[*servicetype.ServiceType]
 }
 
 func NewValidator(p ValidatorParams) *Validator {

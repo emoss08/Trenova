@@ -17,7 +17,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator *validationframework.TenantedValidator[*equipmentmanufacturer.EquipmentManufacturer]
+	validator validationframework.TenantedEntityValidator[*equipmentmanufacturer.EquipmentManufacturer]
 }
 
 func NewValidator(p ValidatorParams) *Validator {

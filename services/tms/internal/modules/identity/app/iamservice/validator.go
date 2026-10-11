@@ -22,7 +22,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator *validationframework.TenantedValidator[*iam.AccessPolicy]
+	validator validationframework.TenantedEntityValidator[*iam.AccessPolicy]
 }
 
 func NewValidator(p ValidatorParams) *Validator {

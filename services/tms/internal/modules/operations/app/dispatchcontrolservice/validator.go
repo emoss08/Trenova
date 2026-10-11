@@ -17,7 +17,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator *validationframework.TenantedValidator[*dispatchcontrol.DispatchControl]
+	validator validationframework.TenantedEntityValidator[*dispatchcontrol.DispatchControl]
 }
 
 func NewValidator(p ValidatorParams) *Validator {

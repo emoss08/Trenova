@@ -32,7 +32,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator        *validationframework.TenantedValidator[*invoice.Invoice]
+	validator        validationframework.TenantedEntityValidator[*invoice.Invoice]
 	l                *zap.Logger
 	accountingRepo   tenantports.AccountingControlRepository
 	fiscalPeriodRepo fiscalperiodports.FiscalPeriodRepository

@@ -25,9 +25,9 @@ type ValidatorParams struct {
 
 type Validator struct {
 	registry   *documenttemplate.Registry
-	template   *validationframework.TenantedValidator[*documenttemplate.DocumentTemplate]
-	version    *validationframework.TenantedValidator[*documenttemplate.DocumentTemplateVersion]
-	assignment *validationframework.TenantedValidator[*documenttemplate.DocumentTemplateAssignment]
+	template   validationframework.TenantedEntityValidator[*documenttemplate.DocumentTemplate]
+	version    validationframework.TenantedEntityValidator[*documenttemplate.DocumentTemplateVersion]
+	assignment validationframework.TenantedEntityValidator[*documenttemplate.DocumentTemplateAssignment]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
@@ -62,7 +62,7 @@ func withCheckers[T validationframework.TenantedEntity](
 
 func buildTemplateValidator(
 	p ValidatorParams,
-) *validationframework.TenantedValidator[*documenttemplate.DocumentTemplate] {
+) validationframework.TenantedEntityValidator[*documenttemplate.DocumentTemplate] {
 	builder := validationframework.
 		NewTenantedValidatorBuilder[*documenttemplate.DocumentTemplate]().
 		WithModelName("DocumentTemplate").
@@ -91,7 +91,7 @@ func buildTemplateValidator(
 
 func buildVersionValidator(
 	p ValidatorParams,
-) *validationframework.TenantedValidator[*documenttemplate.DocumentTemplateVersion] {
+) validationframework.TenantedEntityValidator[*documenttemplate.DocumentTemplateVersion] {
 	return withCheckers(
 		validationframework.
 			NewTenantedValidatorBuilder[*documenttemplate.DocumentTemplateVersion]().
@@ -119,7 +119,7 @@ func buildVersionValidator(
 
 func buildAssignmentValidator(
 	p ValidatorParams,
-) *validationframework.TenantedValidator[*documenttemplate.DocumentTemplateAssignment] {
+) validationframework.TenantedEntityValidator[*documenttemplate.DocumentTemplateAssignment] {
 	return withCheckers(
 		validationframework.
 			NewTenantedValidatorBuilder[*documenttemplate.DocumentTemplateAssignment]().

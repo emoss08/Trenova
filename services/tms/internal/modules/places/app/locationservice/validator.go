@@ -20,7 +20,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator *validationframework.TenantedValidator[*location.Location]
+	validator validationframework.TenantedEntityValidator[*location.Location]
 }
 
 func NewValidator(p ValidatorParams) *Validator {

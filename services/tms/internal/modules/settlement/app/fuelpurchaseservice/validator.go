@@ -29,7 +29,7 @@ type CardFinder interface {
 }
 
 type Validator struct {
-	cards *validationframework.TenantedValidator[*fuelpurchase.FuelCard]
+	cards validationframework.TenantedEntityValidator[*fuelpurchase.FuelCard]
 }
 
 func NewValidator(p ValidatorParams) *Validator {

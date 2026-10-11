@@ -24,7 +24,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator      *validationframework.TenantedValidator[*fiscalperiod.FiscalPeriod]
+	validator      validationframework.TenantedEntityValidator[*fiscalperiod.FiscalPeriod]
 	db             *postgres.Connection
 	invoiceRepo    invoiceports.InvoiceRepository
 	accountingRepo tenantports.AccountingControlRepository

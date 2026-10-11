@@ -19,7 +19,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator *validationframework.TenantedValidator[*fleetcode.FleetCode]
+	validator validationframework.TenantedEntityValidator[*fleetcode.FleetCode]
 }
 
 func NewValidator(p ValidatorParams) *Validator {

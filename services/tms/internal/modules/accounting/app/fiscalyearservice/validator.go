@@ -17,7 +17,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator *validationframework.TenantedValidator[*fiscalyear.FiscalYear]
+	validator validationframework.TenantedEntityValidator[*fiscalyear.FiscalYear]
 }
 
 func NewValidator(p ValidatorParams) *Validator {

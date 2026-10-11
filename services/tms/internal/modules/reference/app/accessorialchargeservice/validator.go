@@ -17,7 +17,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator *validationframework.TenantedValidator[*accessorialcharge.AccessorialCharge]
+	validator validationframework.TenantedEntityValidator[*accessorialcharge.AccessorialCharge]
 }
 
 func NewValidator(p ValidatorParams) *Validator {

@@ -17,8 +17,8 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	controlValidator  *validationframework.TenantedValidator[*costingcontrol.CostingControl]
-	categoryValidator *validationframework.TenantedValidator[*costingcontrol.CostCategory]
+	controlValidator  validationframework.TenantedEntityValidator[*costingcontrol.CostingControl]
+	categoryValidator validationframework.TenantedEntityValidator[*costingcontrol.CostCategory]
 }
 
 func NewValidator(p ValidatorParams) *Validator {

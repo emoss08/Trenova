@@ -17,7 +17,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator *validationframework.TenantedValidator[*documentpacketrule.DocumentPacketRule]
+	validator validationframework.TenantedEntityValidator[*documentpacketrule.DocumentPacketRule]
 }
 
 func NewValidator(p ValidatorParams) *Validator {

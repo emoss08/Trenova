@@ -17,7 +17,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator *validationframework.TenantedValidator[*customfield.CustomFieldDefinition]
+	validator validationframework.TenantedEntityValidator[*customfield.CustomFieldDefinition]
 }
 
 func NewValidator(p ValidatorParams) *Validator {

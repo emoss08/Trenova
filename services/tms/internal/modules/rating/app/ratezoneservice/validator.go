@@ -17,7 +17,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator *validationframework.TenantedValidator[*ratezone.RateZone]
+	validator validationframework.TenantedEntityValidator[*ratezone.RateZone]
 }
 
 func NewValidator(p ValidatorParams) *Validator {

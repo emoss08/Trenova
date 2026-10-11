@@ -17,7 +17,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator *validationframework.TenantedValidator[*billingqueue.BillingQueueItem]
+	validator validationframework.TenantedEntityValidator[*billingqueue.BillingQueueItem]
 }
 
 func NewValidator(p ValidatorParams) *Validator {

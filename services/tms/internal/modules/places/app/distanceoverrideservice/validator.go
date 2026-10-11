@@ -21,7 +21,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator *validationframework.TenantedValidator[*distanceoverride.DistanceOverride]
+	validator validationframework.TenantedEntityValidator[*distanceoverride.DistanceOverride]
 }
 
 func NewValidator(p ValidatorParams) *Validator {

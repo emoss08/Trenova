@@ -40,7 +40,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator      *validationframework.TenantedValidator[*shipment.Shipment]
+	validator      validationframework.TenantedEntityValidator[*shipment.Shipment]
 	assignmentRepo shipmentports.AssignmentRepository
 	coverage       rateCoverage
 }

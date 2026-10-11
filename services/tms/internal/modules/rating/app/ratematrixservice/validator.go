@@ -23,7 +23,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator *validationframework.TenantedValidator[*ratematrix.RateMatrix]
+	validator validationframework.TenantedEntityValidator[*ratematrix.RateMatrix]
 }
 
 func NewValidator(p ValidatorParams) *Validator {

@@ -24,7 +24,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator           *validationframework.TenantedValidator[*rateagreement.RateAgreement]
+	validator           validationframework.TenantedEntityValidator[*rateagreement.RateAgreement]
 	formulaTemplateRepo formulatemplateports.FormulaTemplateRepository
 }
 
