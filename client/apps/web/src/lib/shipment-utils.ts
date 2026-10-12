@@ -8,7 +8,18 @@ import {
   type Stop,
 } from "@trenova/shared/types/shipment";
 
-function findFirstStop(shipment: Shipment, type: Stop["type"]) {
+/**
+ * Anything that carries a shipment's moves and their stops: the full record,
+ * or a query's slice of one that selects only what it reads.
+ */
+type MovesOfStops<S extends { type: Stop["type"] }> = {
+  moves?: readonly { stops?: readonly S[] | null }[] | null;
+};
+
+function findFirstStop<S extends { type: Stop["type"] }>(
+  shipment: MovesOfStops<S>,
+  type: Stop["type"],
+): S | null {
   if (!shipment.moves?.length) return null;
 
   for (const move of shipment.moves) {
@@ -21,7 +32,10 @@ function findFirstStop(shipment: Shipment, type: Stop["type"]) {
   return null;
 }
 
-function findLastStop(shipment: Shipment, type: Stop["type"]) {
+function findLastStop<S extends { type: Stop["type"] }>(
+  shipment: MovesOfStops<S>,
+  type: Stop["type"],
+): S | null {
   if (!shipment.moves?.length) return null;
 
   const { moves } = shipment;
@@ -36,11 +50,15 @@ function findLastStop(shipment: Shipment, type: Stop["type"]) {
   return null;
 }
 
-export function getOriginStop(shipment: Shipment) {
+export function getOriginStop<S extends { type: Stop["type"] }>(
+  shipment: MovesOfStops<S>,
+): S | null {
   return findFirstStop(shipment, stopTypeSchema.enum.Pickup);
 }
 
-export function getDestinationStop(shipment: Shipment) {
+export function getDestinationStop<S extends { type: Stop["type"] }>(
+  shipment: MovesOfStops<S>,
+): S | null {
   return findLastStop(shipment, stopTypeSchema.enum.Delivery);
 }
 

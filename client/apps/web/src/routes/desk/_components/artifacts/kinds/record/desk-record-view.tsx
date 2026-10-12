@@ -4,8 +4,8 @@ import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
-import type { RecordFact, RecordView, RouteEnd, RouteStop } from "./artifact-payloads";
-import { ArtIcon } from "./desk-art-kinds";
+import type { RecordFact, RecordView, RouteEnd, RouteStop } from "../../artifact-payloads";
+import { ArtIcon } from "../../desk-art-kinds";
 
 const PHASE_PILL: Record<string, string> = {
   failed: "dk-warn",

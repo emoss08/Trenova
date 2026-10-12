@@ -45,6 +45,7 @@ type formulaWorkbench interface {
 func formulaToolProviders() []any {
 	return []any{
 		newListFormulaTemplatesTool,
+		newGetFormulaTemplateTool,
 		provideDescribeFormulaSchemaTool,
 		provideTestFormulaExpressionTool,
 		provideProposeFormulaTool,
@@ -81,7 +82,9 @@ func newListFormulaTemplatesTool(
 		entityPlural: "formula templates",
 		summary: "List formula templates — the rating methods a shipment is priced with. " +
 			"Use it to turn a rating method a person named into the id a shipment needs, or " +
-			"to find a formula to read.",
+			"to find a formula to read. A row carries only a template's name, description, " +
+			"type and status: to show, explain or price one template, read it whole with " +
+			"get_formula_template using the row's id.",
 		resource: permission.ResourceFormulaTemplate,
 		config:   querybuilder.GetFieldConfiguration((*formulatemplate.FormulaTemplate)(nil)),
 		fields: []listField{
@@ -116,6 +119,33 @@ func newListFormulaTemplatesTool(
 			}), nil
 		},
 	})
+}
+
+func newGetFormulaTemplateTool(
+	repo formulatemplateports.FormulaTemplateRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
+	return newGetTool(&getSpec{
+		name:   "get_formula_template",
+		entity: "formula template",
+		searchTerms: []string{
+			"formula template details", "read a formula", "formula variables",
+			"minimum charge", "rounding",
+		},
+		resource: permission.ResourceFormulaTemplate,
+		summary: "Retrieve one formula template by id, whole: its formula, variables and " +
+			"their defaults, breakdown lines, minimum, maximum, rounding, status and version. " +
+			"Read it before explaining or changing a formula. Use list_formula_templates first " +
+			"when you have a name rather than an id.",
+		paramName: "formulaTemplateId",
+		idSource:  "from list_formula_templates",
+		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
+			return repo.GetByID(ctx, formulatemplateports.GetFormulaTemplateByIDRequest{
+				TemplateID: id,
+				TenantInfo: tenant,
+			})
+		},
+	}, permissions)
 }
 
 type describeFormulaSchemaTool struct {

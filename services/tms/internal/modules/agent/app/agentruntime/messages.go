@@ -6,6 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -85,6 +86,14 @@ func replayHistory(
 	history []conversation.Message,
 	outcomes []agentports.ProposalOutcome,
 ) (messages []agentports.Message, shortened []string) {
+	return replayHistoryWithFiles(history, outcomes, nil)
+}
+
+func replayHistoryWithFiles(
+	history []conversation.Message,
+	outcomes []agentports.ProposalOutcome,
+	files map[string]string,
+) (messages []agentports.Message, shortened []string) {
 	// A compacted conversation is read from its latest summary, which stands
 	// in for everything before the turns it kept whole.
 	history = conversation.ReplayOrder(history)
@@ -102,7 +111,8 @@ func replayHistory(
 	}
 	history = history[start:]
 
-	whole := wholeResults(history, recentTurnStart(history, recentToolTurns))
+	recent := recentTurnStart(history, recentToolTurns)
+	whole := wholeResults(history, recent)
 
 	// A call and its result are replayed together or not at all. A refused
 	// assistant turn is left out, so a result answering one of its calls
@@ -152,21 +162,36 @@ func replayHistory(
 			if msg.Refused {
 				continue
 			}
-			content := msg.Content
-			switch {
-			case msg.Compacted():
-				content = compactionPreamble + content
-			case msg.Kind == conversation.MessageKindSteer:
-				content = SteerPrompt(content, msg.Mentions)
-			}
-			messages = append(messages, agentports.Message{
-				Role:    agentports.RoleUser,
-				Content: content,
-			})
+			messages = append(messages, replayUserMessage(&history[idx], files, idx >= recent))
 		}
 	}
 
 	return messages, shortened
+}
+
+func replayUserMessage(
+	msg *conversation.Message,
+	files map[string]string,
+	recent bool,
+) agentports.Message {
+	content := msg.Content
+	switch {
+	case msg.Compacted():
+		content = compactionPreamble + content
+	case msg.Kind == conversation.MessageKindSteer:
+		content = SteerPrompt(content, msg.Mentions)
+	}
+	budget := 0
+	if recent {
+		budget = agentdefinition.AttachmentTextBudget
+	}
+
+	return agentports.Message{
+		Role: agentports.RoleUser,
+		Content: agentdefinition.DescribeAttachments(
+			earlierAttachments(msg.Attachments, files), budget,
+		) + content,
+	}
 }
 
 // compactionPreamble opens the summary of a compacted conversation as the
@@ -398,4 +423,27 @@ func modelHistory(history []conversation.Message) []conversation.Message {
 	return slices.DeleteFunc(slices.Clone(history), func(message conversation.Message) bool {
 		return message.Delegated()
 	})
+}
+
+func earlierAttachments(
+	stored []conversation.MessageAttachment,
+	files map[string]string,
+) []agentdefinition.RuntimeAttachment {
+	if len(stored) == 0 {
+		return nil
+	}
+
+	attachments := make([]agentdefinition.RuntimeAttachment, 0, len(stored))
+	for idx := range stored {
+		id := stored[idx].DocumentID.String()
+		attachments = append(attachments, agentdefinition.RuntimeAttachment{
+			DocumentID:  id,
+			FileName:    stored[idx].FileName,
+			ContentType: stored[idx].ContentType,
+			PoorlyRead:  stored[idx].PoorlyRead,
+			Text:        files[id],
+		})
+	}
+
+	return attachments
 }

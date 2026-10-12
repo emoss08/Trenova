@@ -6,6 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/productguide"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,6 +33,35 @@ func TestPageContextValidateAcceptsAKnownRecordOnAnAppPath(t *testing.T) {
 	})
 
 	assert.Empty(t, errs)
+}
+
+func TestPageContextValidateAcceptsEveryRecordTheRegistryOpensOnAPage(t *testing.T) {
+	t.Parallel()
+
+	for _, kind := range productguide.Default.RecordEntities() {
+		if kind == "assistant_thread" {
+			continue
+		}
+		errs := pageErrors(agent.PageContext{Path: "/x", EntityType: kind, EntityID: "rec_1"})
+		assert.False(t, errs["context.entityType"], kind)
+	}
+	assert.True(
+		t,
+		pageErrors(agent.PageContext{Path: "/desk", EntityType: "assistant_thread", EntityID: "ath_1"})["context.entityType"],
+		"the conversation a question is typed into is never its subject",
+	)
+}
+
+func TestEntityRefsAcceptEveryKindTheMentionSearchOffers(t *testing.T) {
+	t.Parallel()
+
+	multiErr := errortypes.NewMultiError()
+	agent.ValidateEntityRefs("mentions", []agent.EntityRef{
+		{Type: "invoice_dispute", ID: pulid.MustNew("idsp_").String(), Label: "Dispute"},
+		{Type: "billing_queue_item", ID: pulid.MustNew("bqi_").String(), Label: "Item"},
+	}, multiErr)
+
+	assert.False(t, multiErr.HasErrors(), multiErr.Error())
 }
 
 func TestPageContextValidateRejectsWhatAClientCouldNotHaveShown(t *testing.T) {

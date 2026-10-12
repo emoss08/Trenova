@@ -158,3 +158,54 @@ func TestAdmit_ADeterministicRefusalBuildsNothing(t *testing.T) {
 	assert.Nil(t, runReq)
 	assert.Zero(t, contexts.calls.Load())
 }
+
+type countingClassifier struct {
+	agentports.CompletionService
+
+	calls atomic.Int32
+}
+
+func (c *countingClassifier) CompleteStructured(
+	context.Context,
+	*agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
+	c.calls.Add(1)
+
+	return &agentports.StructuredCompletionResult{
+		Text: `{"category":"PromptManipulation","reasoning":"reads like instructions"}`,
+	}, nil
+}
+
+/*
+A note Trenova writes is not judged as a person's message.
+
+After a person approved the customer and locations a load needed, the decision
+follow-up's note was read by the classifier as an attempt to change the
+assistant's instructions, and the turn that should have proposed the shipment
+was refused. The note is Trenova's own; outside content in it is the turn's
+taint, which every write still answers to.
+*/
+func TestAdmit_ANoteTrenovaWroteIsNotClassified(t *testing.T) {
+	t.Parallel()
+
+	classifier := &countingClassifier{}
+	guard := &agentguard.Service{ClassifierTimeout: 10 * time.Second}
+	agentguard.SetCompletionForTest(guard, classifier)
+	svc := &Service{logger: zap.NewNop(), guard: guard}
+
+	req := admitRequest()
+	req.Input = "Approved the plan, and it ran. Continue the work: propose the shipment now."
+	req.TrenovaWritten = true
+
+	decision, runReq := svc.admit(t.Context(), req)
+
+	require.True(t, decision.Allowed)
+	require.NotNil(t, runReq)
+	assert.Equal(t, agentguard.StageTrenova, decision.Stage)
+	assert.Zero(t, classifier.calls.Load())
+
+	req.TrenovaWritten = false
+	decision, runReq = svc.admit(t.Context(), req)
+	assert.False(t, decision.Allowed, "a person's message is still classified")
+	assert.Nil(t, runReq)
+}

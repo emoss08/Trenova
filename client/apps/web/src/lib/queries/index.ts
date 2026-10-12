@@ -25,6 +25,7 @@ import { billingControl } from "./billing-control";
 import { caseChecklist } from "./case-checklist";
 import { billingQueue } from "./billing-queue";
 import { customer } from "./customer";
+import { rateAgreement } from "./rate-agreement";
 import { customerPayment } from "./customer-payment";
 import { dataEntryControl } from "./data-entry-control";
 import { distanceControl } from "./distance-control";
@@ -96,6 +97,7 @@ const financialQueries = mergeQueryKeys(
   invoiceAdjustmentControl,
   invoiceShare,
   customer,
+  rateAgreement,
   customerPayment,
   formulaTemplate,
   sequenceConfig,

@@ -27,34 +27,26 @@ import {
   type DeskArtifactShape,
 } from "@/components/desk-chat/desk-skeletons";
 import { whenIdle } from "@/lib/when-idle";
-import { tableViewFrom } from "./artifact-payloads";
 import { ArtIcon, DeskArtKindIcon, deskArtKind, deskArtKindName } from "./desk-art-kinds";
+import { recordCardFor } from "./cards/registry";
 import { DeskArtifactBrowser } from "./desk-artifact-browser";
 import { DeskArtifactsEmpty } from "./desk-artifacts-empty";
-import {
-  DeskDecisionBody,
-  DeskDiffBody,
-  DeskEmailBody,
-  DeskPlanBody,
-  DeskRateBody,
-  DeskRecordBody,
-  DeskReportRunBody,
-  DeskViewBody,
-} from "./desk-bodies";
-import { DeskDocBody } from "./desk-doc-body";
+import { DeskDecisionBody } from "./kinds/decision/desk-decision-body";
+import { DeskDiffBody } from "./kinds/diff/desk-diff-body";
+import { DeskEmailBody } from "./kinds/email/desk-email-body";
+import { DeskPlanBody } from "./kinds/plan/desk-plan-body";
+import { DeskRateBody } from "./kinds/rate/desk-rate-body";
+import { DeskRecordBody } from "./kinds/record/desk-record-body";
+import { DeskReportRunBody } from "./kinds/report/desk-report-run-body";
+import { DeskViewBody } from "./kinds/view/desk-view-body";
+import { DeskDocBody } from "./kinds/document/desk-doc-body";
 import { VERSION_OPTION_CLASS, versionTriggerClass } from "./desk-version-classes";
-import { DeskExtractBody } from "./desk-extract-body";
+import { DeskExtractBody } from "./kinds/extraction/desk-extract-body";
 import { groupLineages, lineageContaining, type ArtifactLineage } from "./desk-lineage";
 import { olderNote, pushRecent, stackLineages, stepLineage } from "./desk-workspace-state";
 import { NO_PENDING_LOOKUPS, withoutPendingLookups } from "./pending-lookups";
-import {
-  DeskReportBars,
-  DeskTableBody,
-  barsOf,
-  changedCells,
-  gridOf,
-  versionNote,
-} from "./desk-table-body";
+import { DeskReportBars, barsOf } from "./kinds/report/desk-report-bars";
+import { DeskTableBody, gridOf, versionNote } from "./kinds/table/desk-table-body";
 
 /** How long a just-arrived artifact keeps its "New" mark. */
 const NEW_MS = 6000;
@@ -324,38 +316,6 @@ function VersionPicker({
   );
 }
 
-/** Where an artifact came from: the tool, how many rows, how many calls, what changed. */
-function Provenance({
-  artifact,
-  previous,
-}: {
-  artifact: AssistantArtifact;
-  previous: AssistantArtifact | null;
-}) {
-  const t = useT();
-  const tool = typeof artifact.payload.tool === "string" ? artifact.payload.tool : "";
-  const tabular = artifact.kind === "table_view" || artifact.kind === "report_preview";
-  const grid = tabular && !("path" in artifact.payload) ? gridOf(artifact) : null;
-  const calls =
-    artifact.kind === "table_view" && !("path" in artifact.payload)
-      ? tableViewFrom(artifact).calls
-      : 0;
-  const changes = grid && previous ? changedCells(grid, gridOf(previous)).size : 0;
-
-  if (tool === "" && !grid && calls === 0) {
-    return null;
-  }
-
-  return (
-    <div className="dk-ax-prov dk-sm">
-      {tool !== "" && <code>{tool}</code>}
-      {grid && <span>{t("{0, plural, one {# row} other {# rows}}", grid.rowCount)}</span>}
-      {calls > 0 && <span>{t("{0, plural, one {# call} other {# calls}}", calls)}</span>}
-      {changes > 0 && <span className="dk-ax-chg">{t("{0} changed", changes)}</span>}
-    </div>
-  );
-}
-
 export function ArtifactBody({
   artifact,
   previous,
@@ -474,6 +434,18 @@ function useFullLineage(threadId: string, active: ArtifactLineage | null) {
 const READ_AHEAD = 4;
 
 /** The shape an artifact's contents are drawn in while they are read. */
+/**
+ * An artifact's contents while they are read: a record with a card of its own
+ * in that card's outline, anything else in the shape its kind is drawn in.
+ */
+function ArtifactBodySkeleton({ artifact }: { artifact: AssistantArtifact }) {
+  const resource =
+    artifact.kind === "entity_card" && typeof artifact.payload.entity === "string"
+      ? recordCardFor(artifact.payload.entity)
+      : null;
+  return resource ? <resource.Skeleton /> : <DeskArtifactBodySkeleton shape={shapeOf(artifact)} />;
+}
+
 function shapeOf(artifact: AssistantArtifact): DeskArtifactShape {
   switch (deskArtKind(artifact)) {
     case "table":
@@ -486,6 +458,10 @@ function shapeOf(artifact: AssistantArtifact): DeskArtifactShape {
       return "document";
     case "record":
     case "bill":
+    case "formula":
+    case "shipment":
+    case "customer":
+    case "agreement":
     case "rate":
     case "extract":
       return "record";
@@ -791,7 +767,6 @@ export function DeskWorkspace({
             )}
             {full.lineage !== null ? (
               <>
-                <Provenance artifact={artifact} previous={previous} />
                 <ArtifactBody
                   artifact={artifact}
                   previous={previous}
@@ -813,7 +788,7 @@ export function DeskWorkspace({
                 </Button>
               </div>
             ) : (
-              <DeskArtifactBodySkeleton shape={shapeOf(artifact)} />
+              <ArtifactBodySkeleton artifact={artifact} />
             )}
           </div>
           <div className="dk-ax-foot">
@@ -833,10 +808,7 @@ export function DeskWorkspace({
             <Button
               variant="quiet"
               size="icon-sm"
-              className={cn(
-                "text-dsk-subtle",
-                pinned && "text-dsk-fg [&_svg_path]:fill-current",
-              )}
+              className={cn("text-dsk-subtle", pinned && "text-dsk-fg [&_svg_path]:fill-current")}
               title={pinned ? t("Unpin") : t("Pin to conversation")}
               aria-label={t("Pin to conversation")}
               aria-pressed={pinned}

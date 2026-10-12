@@ -263,11 +263,37 @@ func (s *Service) rows(definition *agentdefinition.Definition) []agentports.Agen
 	for _, name := range definition.ToolNames {
 		add(name, true)
 	}
+	for _, name := range s.companionWrites(definition) {
+		if !slices.Contains(definition.DisabledToolNames, name) {
+			add(name, true)
+		}
+	}
 	for _, name := range definition.DisabledToolNames {
 		add(name, false)
 	}
 
 	return rows
+}
+
+func (s *Service) companionWrites(definition *agentdefinition.Definition) []string {
+	companions := make([]string, 0, 4)
+	for _, name := range definition.ToolNames {
+		tool, ok := s.tools.Get(name)
+		if !ok {
+			continue
+		}
+		bringer, brings := tool.(agentports.CompanionTool)
+		if !brings {
+			continue
+		}
+		for _, companion := range bringer.Companions() {
+			if !slices.Contains(companions, companion) {
+				companions = append(companions, companion)
+			}
+		}
+	}
+
+	return companions
 }
 
 func (s *Service) row(

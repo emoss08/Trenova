@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/shared/numberguard"
 	"github.com/emoss08/trenova/shared/recordids"
@@ -86,6 +88,7 @@ func (b *Bench) evaluate(
 ) []CheckResult {
 	checks := make([]CheckResult, 0, 8)
 	checks = append(checks, turnsCompleted(evidence))
+	checks = append(checks, artifactLinkChecks(evidence.turns)...)
 
 	calls := evidence.calls()
 	reply := evidence.reply()
@@ -165,6 +168,76 @@ func (b *Bench) evaluate(
 	}
 
 	return checks
+}
+
+func artifactLinkChecks(turns []*TurnRecord) []CheckResult {
+	var stray, misnamed, corrected []string
+	named := false
+	for _, turn := range turns {
+		if len(turn.Artifacts) == 0 && len(agentruntime.ArtifactRefIDs(turn.Reply)) == 0 {
+			continue
+		}
+		named = true
+		stray = append(stray, agentruntime.StrayArtifactLinks(turn.Reply)...)
+		titles := make(map[string]string, len(turn.Artifacts))
+		for idx := range turn.Artifacts {
+			titles[turn.Artifacts[idx].ID.String()] = turn.Artifacts[idx].Title
+		}
+		titled := agentruntime.NameArtifactLinks(turn.Reply, func(id, words string) (string, bool) {
+			if title, ok := titles[id]; ok {
+				return title, true
+			}
+
+			return words, true
+		})
+		if titled != turn.Reply {
+			misnamed = append(misnamed, firstLine(turn.Reply))
+		}
+		corrected = append(corrected, artifactCorrections(turn.Events)...)
+	}
+	if !named {
+		return nil
+	}
+
+	return []CheckResult{
+		{
+			Name:   "artifacts are named inside sentences",
+			Passed: len(stray) == 0,
+			Detail: strings.Join(stray, ", "),
+		},
+		{
+			Name:   "artifact links read as their artifacts' titles",
+			Passed: len(misnamed) == 0,
+			Detail: strings.Join(misnamed, " | "),
+		},
+		{
+			Name:   "artifacts named without a correction",
+			Passed: len(corrected) == 0,
+			Detail: strings.Join(corrected, ", "),
+		},
+	}
+}
+
+func artifactCorrections(events []Event) []string {
+	var actions []string
+	for _, event := range events {
+		if event.Name != agentports.AssistantEventReplyRegrounded {
+			continue
+		}
+		data, ok := event.Data.(map[string]any)
+		if !ok {
+			continue
+		}
+		action, _ := data["action"].(string)
+		if reground := agentports.RegroundAction(
+			action,
+		); reground == agentports.RegroundRelinkArtifacts ||
+			reground == agentports.RegroundPlaceArtifacts {
+			actions = append(actions, action)
+		}
+	}
+
+	return actions
 }
 
 func formulaCheck(spec, formula string) CheckResult {

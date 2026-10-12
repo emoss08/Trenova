@@ -554,6 +554,300 @@ func TestArtifactFromObservation_AListBecomesATable(t *testing.T) {
 	assert.Equal(t, []string{"status is InTransit"}, artifact.Payload["searchedFor"])
 }
 
+/*
+A formula template's row opens as the template itself beside the
+conversation: its formula, its variables and a price for a sample load. So
+each row keeps its id, and the table is pointed to however short it is, since
+a list of three templates answered in the reply leaves nothing to open.
+*/
+func TestArtifactFromObservation_FormulaTemplateRowsOpenTheTemplate(t *testing.T) {
+	t.Parallel()
+
+	artifact := artifactFromObservation(observation("list_formula_templates", map[string]any{
+		"count":   float64(2),
+		"columns": []any{"id", "name", "description", "type", "status", "schemaId"},
+		"items": []any{
+			map[string]any{
+				"id": "ft_01JREEFER000000000000000", "name": "Reefer per mile",
+				"type": "FreightCharge", "status": "Active", "schemaId": "shipment",
+			},
+			map[string]any{
+				"id": "ft_01JDETENTION0000000000000", "name": "Detention",
+				"type": "AccessorialCharge", "status": "Draft", "schemaId": "shipment",
+			},
+		},
+	}))
+
+	require.NotNil(t, artifact)
+	assert.Equal(t, "formula_template", artifact.Payload["recordEntity"])
+	rows, ok := artifact.Payload["rows"].([]any)
+	require.True(t, ok)
+	require.Len(t, rows, 2)
+	first, _ := rows[0].(map[string]any)
+	assert.Equal(t, "ft_01JREEFER000000000000000", first[recordIDKey])
+	assert.Equal(t, "Reefer per mile", first["name"])
+
+	shown := shownArtifact(artifact)
+	assert.True(t, shown.OpensRecords)
+	assert.False(t, shown.Actionable, "its rows are read and tried, not selected and approved")
+	assert.True(t, mustBePointedTo(artifact), "two rows are still kept beside the conversation")
+}
+
+/*
+One formula template read whole is a card of its own: the Desk draws it as
+the template, its formula and its variables, and opens it in the Formula
+Studio.
+*/
+func TestArtifactFromObservation_AFormulaTemplateBecomesItsCard(t *testing.T) {
+	t.Parallel()
+
+	card := artifactFromObservation(observation("get_formula_template", map[string]any{
+		"id":          "ft_01JREEFER000000000000000",
+		"name":        "Reefer per mile",
+		"description": "Linehaul for reefer loads",
+		"type":        "FreightCharge",
+		"status":      "Active",
+		"schemaId":    "shipment",
+		"expression":  "baseRate * totalDistance + reeferFee",
+		"variableDefinitions": []any{
+			map[string]any{"name": "baseRate", "type": "Number", "defaultValue": 2.85},
+			map[string]any{"name": "reeferFee", "type": "Number", "defaultValue": 75},
+		},
+		"breakdownDefinitions": []any{},
+		"minCharge":            "250",
+		"maxCharge":            nil,
+		"roundingMode":         "HalfUp",
+		"roundingPrecision":    2,
+	}))
+
+	require.NotNil(t, card)
+	assert.Equal(t, assistantartifact.KindEntityCard, card.Kind)
+	assert.Equal(t, "Formula template Reefer per mile", card.Title)
+	assert.Equal(t, "formula_template", card.Payload["entity"])
+	assert.Equal(t, "ft_01JREEFER000000000000000", card.Payload["recordId"])
+	assert.Equal(
+		t,
+		"/billing/configuration-files/formula-templates/ft_01JREEFER000000000000000/edit",
+		card.Payload["path"],
+	)
+}
+
+/*
+Asked to show one formula template by name, the Desk finds it with
+list_formula_templates. A list that found that one template is drawn as the
+template's own card, as if it had been read with get_formula_template, rather
+than a table of one row the person has to open to see what they asked for.
+*/
+func TestArtifactFromObservation_AFormulaTemplateFoundByNameIsItsCard(t *testing.T) {
+	t.Parallel()
+
+	card := artifactFromObservation(observation("list_formula_templates", map[string]any{
+		"count":       float64(1),
+		"hasMore":     false,
+		"columns":     []any{"id", "name", "description", "type", "status", "schemaId"},
+		"searchedFor": []any{"name equals Per CWT (Hundredweight)"},
+		"items": []any{
+			map[string]any{
+				"id":          "ft_01JCWT00000000000000000000",
+				"name":        "Per CWT (Hundredweight)",
+				"description": "Multiplies the base rate per CWT by weight divided by 100.",
+				"type":        "FreightCharge",
+				"status":      "Active",
+				"schemaId":    "shipment",
+			},
+		},
+	}))
+
+	require.NotNil(t, card)
+	assert.Equal(t, assistantartifact.KindEntityCard, card.Kind)
+	assert.Equal(t, "Formula template Per CWT (Hundredweight)", card.Title)
+	assert.Equal(t, "formula_template", card.Payload["entity"])
+	assert.Equal(t, "ft_01JCWT00000000000000000000", card.Payload["recordId"])
+	assert.Equal(t, "list_formula_templates", card.Payload["tool"])
+	assert.Equal(
+		t,
+		"/billing/configuration-files/formula-templates/ft_01JCWT00000000000000000000/edit",
+		card.Payload["path"],
+	)
+	fields, ok := card.Payload["fields"].([]assistantartifact.DisplayField)
+	require.True(t, ok)
+	keys := make([]string, 0, len(fields))
+	for _, field := range fields {
+		keys = append(keys, field.Key)
+	}
+	assert.Equal(
+		t,
+		[]string{"name", "description", "type", "status"},
+		keys,
+		"the row's fields keep the order its tool declared, not the alphabet's",
+	)
+}
+
+func TestArtifactFromObservation_OnlyTheSoleRecordOfACardedKindIsItsCard(t *testing.T) {
+	t.Parallel()
+
+	template := func(id string) map[string]any {
+		return map[string]any{"id": id, "name": "Per mile", "status": "Active"}
+	}
+	columns := []any{"id", "name", "status"}
+
+	cases := map[string]struct {
+		tool   string
+		result map[string]any
+	}{
+		"a first page of one with more behind it": {
+			tool: "list_formula_templates",
+			result: map[string]any{
+				"count": float64(1), "hasMore": true, "columns": columns,
+				"items": []any{template("ft_01JPERMILE00000000000000")},
+			},
+		},
+		"one row of a larger count": {
+			tool: "list_formula_templates",
+			result: map[string]any{
+				"count": float64(16), "columns": columns,
+				"items": []any{template("ft_01JPERMILE00000000000000")},
+			},
+		},
+		"two templates": {
+			tool: "list_formula_templates",
+			result: map[string]any{
+				"count": float64(2), "columns": columns,
+				"items": []any{
+					template("ft_01JPERMILE00000000000000"),
+					template("ft_01JPERSTOP00000000000000"),
+				},
+			},
+		},
+		"one record of a kind the Desk has no card for": {
+			tool: "list_workers",
+			result: map[string]any{
+				"count": float64(1), "columns": columns,
+				"items": []any{map[string]any{"id": "wrk_01JAVERY000000000000000", "name": "Avery"}},
+			},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			artifact := artifactFromObservation(observation(tc.tool, tc.result))
+			require.NotNil(t, artifact)
+			assert.Equal(t, assistantartifact.KindTableView, artifact.Kind)
+		})
+	}
+}
+
+/*
+A shipment has a Desk card of its own, so a table of shipments opens each row
+beside the conversation as the shipment, and a search that found one shipment
+is that shipment's card rather than a table of one row.
+*/
+func TestArtifactFromObservation_ShipmentsOpenAsTheShipmentCard(t *testing.T) {
+	t.Parallel()
+
+	shipments := func(ids ...string) map[string]any {
+		items := make([]any, 0, len(ids))
+		for _, id := range ids {
+			items = append(items, map[string]any{
+				"id": id, "proNumber": "PRO-" + id[len(id)-2:], "status": "InTransit",
+			})
+		}
+		return map[string]any{
+			"count":   float64(len(ids)),
+			"hasMore": false,
+			"columns": []any{"id", "proNumber", "status"},
+			"items":   items,
+		}
+	}
+
+	table := artifactFromObservation(observation("list_shipments", shipments(
+		"shp_01JLOADA000000000000000001", "shp_01JLOADB000000000000000002",
+	)))
+	require.NotNil(t, table)
+	assert.Equal(t, assistantartifact.KindTableView, table.Kind)
+	assert.Equal(t, "shipment", table.Payload["recordEntity"])
+	assert.True(t, shownArtifact(table).OpensRecords)
+	assert.True(t, mustBePointedTo(table), "a short table of shipments is still kept to open")
+
+	card := artifactFromObservation(observation("search_shipments", shipments(
+		"shp_01JLOADA000000000000000001",
+	)))
+	require.NotNil(t, card)
+	assert.Equal(t, assistantartifact.KindEntityCard, card.Kind)
+	assert.Equal(t, "shipment", card.Payload["entity"])
+	assert.Equal(t, "shp_01JLOADA000000000000000001", card.Payload["recordId"])
+}
+
+func TestArtifactFromObservation_CustomersOpenAsTheCustomerCard(t *testing.T) {
+	t.Parallel()
+
+	customers := func(ids ...string) map[string]any {
+		items := make([]any, 0, len(ids))
+		for _, id := range ids {
+			items = append(items, map[string]any{"id": id, "name": "Customer " + id[len(id)-2:]})
+		}
+		return map[string]any{
+			"count":   float64(len(ids)),
+			"hasMore": false,
+			"columns": []any{"id", "name"},
+			"items":   items,
+		}
+	}
+
+	table := artifactFromObservation(observation("list_customers", customers(
+		"cus_01JACME0000000000000000001", "cus_01JBETA0000000000000000002",
+	)))
+	require.NotNil(t, table)
+	assert.Equal(t, assistantartifact.KindTableView, table.Kind)
+	assert.Equal(t, "customer", table.Payload["recordEntity"])
+	assert.True(t, shownArtifact(table).OpensRecords)
+	assert.True(t, mustBePointedTo(table), "a short table of customers is still kept to open")
+
+	card := artifactFromObservation(observation("list_customers", customers(
+		"cus_01JACME0000000000000000001",
+	)))
+	require.NotNil(t, card)
+	assert.Equal(t, assistantartifact.KindEntityCard, card.Kind)
+	assert.Equal(t, "customer", card.Payload["entity"])
+	assert.Equal(t, "cus_01JACME0000000000000000001", card.Payload["recordId"])
+}
+
+func TestArtifactFromObservation_RateAgreementsOpenAsTheAgreementCard(t *testing.T) {
+	t.Parallel()
+
+	agreements := func(ids ...string) map[string]any {
+		items := make([]any, 0, len(ids))
+		for _, id := range ids {
+			items = append(items, map[string]any{
+				"id": id, "code": "RA-" + id[len(id)-2:], "name": "Agreement", "status": "Active",
+			})
+		}
+		return map[string]any{
+			"count":   float64(len(ids)),
+			"hasMore": false,
+			"columns": []any{"id", "code", "name", "status"},
+			"items":   items,
+		}
+	}
+
+	table := artifactFromObservation(observation("list_rate_agreements", agreements(
+		"ra_01JACME0000000000000000001", "ra_01JBETA0000000000000000002",
+	)))
+	require.NotNil(t, table)
+	assert.Equal(t, assistantartifact.KindTableView, table.Kind)
+	assert.Equal(t, "rate_agreement", table.Payload["recordEntity"])
+	assert.True(t, shownArtifact(table).OpensRecords)
+
+	card := artifactFromObservation(observation("list_rate_agreements", agreements(
+		"ra_01JACME0000000000000000001",
+	)))
+	require.NotNil(t, card)
+	assert.Equal(t, assistantartifact.KindEntityCard, card.Kind)
+	assert.Equal(t, "rate_agreement", card.Payload["entity"])
+	assert.Equal(t, "ra_01JACME0000000000000000001", card.Payload["recordId"])
+}
+
 func TestArtifactFromObservation_ASearchBecomesATableToo(t *testing.T) {
 	t.Parallel()
 

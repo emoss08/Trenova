@@ -128,7 +128,7 @@ func TestBunch_SeveralGetsOfOneToolInATurnBecomeOneTable(t *testing.T) {
 	table := live[0]
 	assert.Equal(t, assistantartifact.KindTableView, table.Kind)
 	assert.Equal(t, "call_1", table.SourceToolCallID, "keyed by the turn's first call of the tool")
-	assert.Equal(t, "Invoice (3)", table.Title)
+	assert.Equal(t, "Invoices (3)", table.Title)
 	assert.Equal(t, true, table.Payload[payloadBunched])
 	assert.Equal(t, []string{"call_1", "call_2", "call_3"}, table.Payload[payloadCalls])
 	assert.Equal(t, "invoice", table.Payload["recordEntity"])

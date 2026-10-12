@@ -59,17 +59,10 @@ const (
 	pageViewCloseTag       = "</page_view>"
 	pageDraftOpenTag       = "<page_draft>"
 	pageDraftCloseTag      = "</page_draft>"
-	attachmentsOpenTag     = "<attachments>"
-	attachmentsCloseTag    = "</attachments>"
 	mentionsOpenTag        = "<mentioned_records>"
 	mentionsCloseTag       = "</mentioned_records>"
 	factsOpenTag           = "<pinned_facts>"
 	factsCloseTag          = "</pinned_facts>"
-
-	// maxAttachmentExcerptRunes bounds what one attached file contributes to
-	// the prompt. The whole text is reachable through get_document_summary;
-	// the fence is what lets the model know it is there.
-	maxAttachmentExcerptRunes = 1200
 )
 
 type RuntimeUser struct {
@@ -86,24 +79,6 @@ type RuntimeSubject struct {
 	Label           string
 	Notes           string
 	OutsideAuthored agent.TaintSource
-}
-
-// RuntimeAttachment is a file the person attached to their message, as the
-// prompt names it: what it is, how far its reading got, and an excerpt.
-type RuntimeAttachment struct {
-	DocumentID  string
-	FileName    string
-	ContentType string
-	PageCount   int
-	// Kind is what document intelligence decided the file is, when it has.
-	Kind string
-	// Status is where extraction stands, so the model knows whether to wait
-	// or to read: "Extracted", "Pending", "Failed".
-	Status  string
-	Excerpt string
-	// PoorlyRead says reading finished but most of the file could not be
-	// made out, so the model says what it could read rather than guessing.
-	PoorlyRead bool
 }
 
 // RuntimeMention is a record the person pointed at by name while asking.
@@ -130,6 +105,15 @@ type ToolSummary struct {
 	// agent: the tool's own ceiling, its egress or the agent's ceiling keeps
 	// it from ever running on its own.
 	AlwaysProposes bool
+}
+
+func ToolNamesOf(summaries []ToolSummary) []string {
+	names := make([]string, 0, len(summaries))
+	for idx := range summaries {
+		names = append(names, summaries[idx].Name)
+	}
+
+	return names
 }
 
 type RuntimeContext struct {
@@ -256,8 +240,10 @@ type PendingProposal struct {
 // reply refused. v6 tells the model to send only the parameters it has a
 // value for, to answer in the person's language, and shortens the section on
 // Trenova itself. v7 opens a conversation turn with the records it is about,
-// read again just then, ahead of the question.
-const PromptVersion = "agent-definition/v7"
+// read again just then, ahead of the question. v8 moves the files a person
+// attached out of the system prompt and onto the message they came with,
+// with their text, and names them on that message in every later turn.
+const PromptVersion = "agent-definition/v8"
 
 // SystemPrompt is a system prompt in the two parts a provider's prompt cache
 // cares about. Stable is the same on every turn of an agent for a person: who
@@ -569,9 +555,6 @@ func (d *Definition) buildContextSection(rc *RuntimeContext) string {
 	}
 	if len(rc.Mentions) > 0 {
 		fenced = append(fenced, describeMentions(rc.Mentions))
-	}
-	if len(rc.Attachments) > 0 {
-		fenced = append(fenced, describeAttachments(rc.Attachments))
 	}
 
 	if len(lines) == 0 && len(fenced) == 0 {
@@ -973,65 +956,6 @@ func describeMentions(mentions []RuntimeMention) string {
 	}
 	builder.WriteString("\n")
 	builder.WriteString(mentionsCloseTag)
-
-	return builder.String()
-}
-
-// describeAttachments names the files on the message with an excerpt each.
-// The full text is a tool call away; what the fence has to do is make the
-// file exist for the model and say whether its reading has finished.
-func describeAttachments(attachments []RuntimeAttachment) string {
-	var builder strings.Builder
-	builder.WriteString("- Files the person attached to this message. Call get_document_summary " +
-		"with the id for the full text and the fields read from it:\n")
-	builder.WriteString(attachmentsOpenTag)
-	for _, attachment := range attachments {
-		builder.WriteString("\n- id: ")
-		builder.WriteString(attachment.DocumentID)
-		builder.WriteString("\n  file: ")
-		builder.WriteString(
-			stringutils.NeutralizeCloseTag(attachment.FileName, attachmentsCloseTag),
-		)
-		if attachment.ContentType != "" {
-			builder.WriteString(" (")
-			builder.WriteString(
-				stringutils.NeutralizeCloseTag(attachment.ContentType, attachmentsCloseTag),
-			)
-			if attachment.PageCount > 0 {
-				builder.WriteString(", ")
-				builder.WriteString(strconv.Itoa(attachment.PageCount))
-				if attachment.PageCount == 1 {
-					builder.WriteString(" page")
-				} else {
-					builder.WriteString(" pages")
-				}
-			}
-			builder.WriteString(")")
-		}
-		if attachment.Kind != "" {
-			builder.WriteString("\n  looks like: ")
-			builder.WriteString(
-				stringutils.NeutralizeCloseTag(attachment.Kind, attachmentsCloseTag),
-			)
-		}
-		if attachment.Status != "" {
-			builder.WriteString("\n  reading: ")
-			builder.WriteString(attachment.Status)
-		}
-		if attachment.PoorlyRead {
-			builder.WriteString("\n  legibility: poor. Most of this file could not be read. " +
-				"Say what you could make out and ask for a clearer copy; do not guess the rest.")
-		}
-		if excerpt := strings.TrimSpace(attachment.Excerpt); excerpt != "" {
-			builder.WriteString("\n  excerpt: ")
-			builder.WriteString(stringutils.NeutralizeCloseTag(
-				stringutils.TruncateRunes(excerpt, maxAttachmentExcerptRunes),
-				attachmentsCloseTag,
-			))
-		}
-	}
-	builder.WriteString("\n")
-	builder.WriteString(attachmentsCloseTag)
 
 	return builder.String()
 }

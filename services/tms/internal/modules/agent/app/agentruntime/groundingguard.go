@@ -354,7 +354,7 @@ func claimedPhrases(reply string) replyClaims {
 }
 
 func (c replyClaims) names(words string) bool {
-	singular := singularOf(words)
+	singular := stringutils.SingularNoun(words)
 	for _, sentence := range c {
 		if containsWords(sentence, words) ||
 			(singular != words && containsWords(sentence, singular)) {
@@ -375,19 +375,6 @@ func negated(sentence string) bool {
 	}
 
 	return false
-}
-
-func singularOf(words string) string {
-	switch {
-	case strings.HasSuffix(words, "ies"):
-		return strings.TrimSuffix(words, "ies") + "y"
-	case strings.HasSuffix(words, "ses"), strings.HasSuffix(words, "xes"):
-		return strings.TrimSuffix(words, "es")
-	case strings.HasSuffix(words, "s") && !strings.HasSuffix(words, "ss"):
-		return strings.TrimSuffix(words, "s")
-	default:
-		return words
-	}
 }
 
 func containsWords(text, words string) bool {

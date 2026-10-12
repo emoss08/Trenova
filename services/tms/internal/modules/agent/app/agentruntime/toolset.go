@@ -122,7 +122,8 @@ type toolSetRequest struct {
 	decisions bool
 	// extensions is what the turn already read of the organization's
 	// extensions; nil reads them again.
-	extensions *activeExtensions
+	extensions  *activeExtensions
+	attachments bool
 }
 
 // toolSet is the live set of tools a turn may call. It starts from the agent's
@@ -177,6 +178,9 @@ func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 	// turn that opened with eight slots would otherwise spend half of them on
 	// memory and escalation before reaching the work it was asked to do.
 	for _, name := range coreOf(allowed) {
+		if name == agentdefinition.CoreToolReadAttachment && !req.attachments {
+			continue
+		}
 		s.load(set, name)
 	}
 
@@ -268,6 +272,9 @@ func (s *Service) load(set *toolSet, name string) bool {
 			if dependency, found := s.specFor(prerequisite); found {
 				set.add(dependency)
 			}
+		}
+		for _, companion := range s.catalog.Companions(name) {
+			s.load(set, companion)
 		}
 	}
 
@@ -559,16 +566,30 @@ func (s *Service) unheldOutcome(set *toolSet, name string) toolOutcome {
 		"%s", s.unheldRefusal(set, name, false))
 }
 
-// heldTools is every tool the agent holds: its core and selected tools, and
-// the reads its tools take their arguments from. A dependency is granted only
-// when it is a read — the agent holding create_dashboard may look reports up,
-// but nothing it holds grants it another write.
+// heldTools is every tool the agent holds: its core and selected tools, the
+// writes a selected tool names as its companions, and the reads its tools take
+// their arguments from. A prerequisite is granted only when it is a read — the
+// agent holding create_dashboard may look reports up, but that grants it no
+// write. A companion is the one write a tool may bring, because its job cannot
+// be finished without it: create_shipment brings the customer, location and
+// commodity it may find missing. Each still answers to its own policy, so it
+// is proposed and approved like any write, and one an administrator switched
+// off for the agent stays off.
 func (s *Service) heldTools(definition *agentdefinition.Definition) []string {
 	names := definition.EffectiveToolNames()
 	if s.catalog == nil {
 		return names
 	}
 
+	selected := len(names)
+	for idx := range selected {
+		for _, companion := range s.catalog.Companions(names[idx]) {
+			if !slices.Contains(names, companion) &&
+				!slices.Contains(definition.DisabledToolNames, companion) {
+				names = append(names, companion)
+			}
+		}
+	}
 	held := len(names)
 	for idx := range held {
 		for _, prerequisite := range s.catalog.Prerequisites(names[idx]) {

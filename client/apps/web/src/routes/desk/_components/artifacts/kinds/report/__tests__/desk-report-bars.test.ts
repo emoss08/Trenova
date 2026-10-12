@@ -1,6 +1,7 @@
 import type { AssistantArtifact } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
-import { barsOf, footTotals, gridOf, versionNote } from "../desk-table-body";
+import { footTotals, gridOf, versionNote } from "../../table/desk-table-body";
+import { barsOf } from "../desk-report-bars";
 
 const t = ((text: string, ...args: unknown[]) =>
   text.replace(/\{0, plural, one \{# ([^}]*)\} other \{# ([^}]*)\}\}/u, (_m, one, other) =>

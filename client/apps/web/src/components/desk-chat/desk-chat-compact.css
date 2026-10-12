@@ -129,6 +129,22 @@
   background: var(--dsk-b-sub);
 }
 
+/* A question waiting on the person: a choice with a line of consequence takes
+   the row, so the line is read rather than wrapped into a sliver, and a form's
+   labels sit over their controls instead of beside them. */
+.dk-dense .dk-ask-opt.dk-d {
+  flex-basis: 100%;
+}
+.dk-dense .dk-ask-f {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+.dk-dense .dk-ask-fl {
+  width: auto;
+  padding-top: 0;
+}
+
 /* The line under the composer wraps rather than clipping in a narrow column. */
 .dk-dense .dk-hint {
   height: auto;
@@ -136,4 +152,3 @@
   padding-inline: 12px;
   text-align: center;
 }
-

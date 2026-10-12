@@ -41,6 +41,12 @@ export const shipment = createQueryKeys("shipment", {
     queryKey: ["list-unassigned", req],
     queryFn: async () => apiService.shipmentService.listUnassigned(req),
   }),
+  // The latest events on one shipment, newest first, for a card's activity.
+  // Realtime refreshes them under ["shipment", "events"] with the shipment.
+  events: (shipmentId: NonNullable<Shipment["id"]>, limit: number) => ({
+    queryKey: ["events", shipmentId, limit],
+    queryFn: async () => apiService.shipmentEventService.list({ shipmentId, limit }),
+  }),
   listComments: (req: PaginationInfo & { shipmentId: Shipment["id"] }) => ({
     queryKey: ["comments", req.shipmentId, req],
     queryFn: async () => apiService.shipmentService.getComments(req),

@@ -37,9 +37,10 @@ type turnChecks struct {
 	history    []conversation.Message
 	historyErr error
 
-	proposals []agentports.ProposalOutcome
-	subject   *agentdefinition.RuntimeSubject
-	anchors   []agentdefinition.RuntimeAnchor
+	proposals    []agentports.ProposalOutcome
+	subject      *agentdefinition.RuntimeSubject
+	anchors      []agentdefinition.RuntimeAnchor
+	earlierFiles map[string]string
 }
 
 // err is the first check that failed, in the order the checks were always
@@ -112,6 +113,9 @@ func (s *Service) checkTurn(
 	// the answer that came back. A compacted stretch is read as its summary.
 	wg.Go(func() {
 		checks.history, checks.historyErr = s.modelHistory(ctx, thread.ID, req.TenantInfo)
+		if checks.historyErr == nil {
+			checks.earlierFiles = s.earlierFileTexts(ctx, checks.history, req.TenantInfo)
+		}
 	})
 	wg.Go(func() {
 		checks.proposals = s.proposalOutcomes(ctx, thread, req.TenantInfo)

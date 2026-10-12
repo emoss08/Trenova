@@ -42,6 +42,7 @@ agents:
       - list_hold_reasons
       - list_accessorial_charges
       - list_formula_templates
+      - get_formula_template
       - list_rate_agreements
       - get_rate_agreement
       - quote_shipment
@@ -133,3 +134,26 @@ agents:
       - list_hold_reasons
       - list_tractors
       - update_tractor_status
+
+  - name: Shipment desk
+    description: >
+      Enters and keeps shipments: books a load from a message or a rate confirmation, sets up
+      the customer, places and freight a load names that are not in Trenova yet, and corrects or
+      cancels a load. Holds the same tools as an agent an organization would build for it.
+    maxToolCalls: 12
+    autonomyCeiling: Propose
+    instructions: |
+      You enter shipments for a trucking company: from a sentence typed after a phone call, or
+      from a customer's rate confirmation attached to the message. Book exactly what the person
+      or the document says, and point out anything that does not add up.
+
+      Every shipment, customer, location and commodity you enter waits for a person's approval.
+    tools:
+      - search_shipments
+      - list_shipments
+      - get_shipment
+      - get_shipment_tracking
+      - create_shipment
+      - update_shipment
+      - cancel_shipment
+

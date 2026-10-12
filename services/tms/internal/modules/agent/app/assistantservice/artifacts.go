@@ -48,8 +48,7 @@ const (
 	toolGetShipmentDraft = "get_shipment_draft"
 	toolRankCandidates   = "rank_move_candidates"
 
-	maxArtifactTitleRunes = 120
-	minPreviewRows        = 1
+	minPreviewRows = 1
 
 	payloadProposalID  = "proposalId"
 	payloadProposalIDs = "proposalIds"
@@ -103,6 +102,7 @@ type artifactRecorder struct {
 	thread    *conversation.Thread
 	tenant    pagination.TenantInfo
 	actor     kernelports.AuditActor
+	reader    *permissionports.RequestActor
 	emit      kernelports.AssistantStreamEmitter
 	recorded  []*assistantartifact.Artifact
 	// svc reads what an artifact needs beyond the tool's result: the agent
@@ -136,6 +136,7 @@ func (s *Service) newArtifactRecorder(
 		thread:    thread,
 		tenant:    tenant,
 		actor:     actor.AuditActorOrSystem(),
+		reader:    actor,
 		emit:      emit,
 		svc:       s,
 	}
@@ -167,6 +168,14 @@ func (r *artifactRecorder) observe(
 				return nil, nil
 			}
 
+			return shownArtifact(saved), nil
+		}
+	}
+
+	if action := observation.Action; action != nil && action.Executed && !observation.Failed {
+		if saved := r.written(
+			observation.Call.ID, observation.Call.Name, action.ExecutionResult,
+		); saved != nil {
 			return shownArtifact(saved), nil
 		}
 	}
@@ -385,6 +394,73 @@ func (r *artifactRecorder) keepLinked(linked map[string]bool) {
 	}
 }
 
+func (r *artifactRecorder) nameLinks(messages []conversation.Message, reply *string) {
+	if r == nil {
+		return
+	}
+
+	titles := make(map[string]string, len(r.recorded))
+	for _, artifact := range r.recorded {
+		titles[artifact.ID.String()] = artifact.Title
+	}
+	lookedUp := true
+	if earlier := r.unrecordedLinks(messages, titles); len(earlier) > 0 {
+		found, err := r.repo.ListTitles(r.ctx, &assistantartifactports.ArtifactTitlesRequest{
+			ThreadID:   r.thread.ID,
+			TenantInfo: r.tenant,
+			IDs:        earlier,
+		})
+		if err != nil {
+			r.logger.Warn("could not read the titles of the artifacts a reply names",
+				zap.Error(err))
+			lookedUp = false
+		}
+		for id, title := range found {
+			titles[id.String()] = title
+		}
+	}
+
+	titleOf := func(id, words string) (string, bool) {
+		if title, ok := titles[id]; ok {
+			return title, true
+		}
+
+		return words, !lookedUp
+	}
+	for idx := range messages {
+		if messages[idx].Role == conversation.RoleAssistant {
+			messages[idx].Content = agentruntime.NameArtifactLinks(messages[idx].Content, titleOf)
+		}
+	}
+	if reply != nil {
+		*reply = agentruntime.NameArtifactLinks(*reply, titleOf)
+	}
+}
+
+func (r *artifactRecorder) unrecordedLinks(
+	messages []conversation.Message,
+	titles map[string]string,
+) []pulid.ID {
+	var ids []pulid.ID
+	seen := make(map[string]bool, 4)
+	for idx := range messages {
+		if messages[idx].Role != conversation.RoleAssistant {
+			continue
+		}
+		for _, raw := range agentruntime.ArtifactRefIDs(messages[idx].Content) {
+			if _, recorded := titles[raw]; recorded || seen[raw] {
+				continue
+			}
+			seen[raw] = true
+			if id, err := pulid.Parse(raw); err == nil {
+				ids = append(ids, id)
+			}
+		}
+	}
+
+	return ids
+}
+
 // linkedArtifacts is every artifact the turn's replies point to. Only the
 // conversation's own agent answers the person: an agent it handed a task to
 // reports back to that agent, and the records it cited while doing so are its
@@ -466,6 +542,7 @@ func (r *artifactRecorder) save(
 	artifact.ThreadID = r.thread.ID
 	artifact.OrganizationID = r.tenant.OrgID
 	artifact.BusinessUnitID = r.tenant.BuID
+	artifact.Title = assistantartifact.NormalizeTitle(artifact.Title)
 
 	multiErr := errortypes.NewMultiError()
 	artifact.Validate(multiErr)
@@ -542,28 +619,25 @@ func (r *artifactRecorder) forget(id pulid.ID) {
 // shownArtifact is how the model is told what the person now sees.
 func shownArtifact(artifact *assistantartifact.Artifact) *agentports.ShownArtifact {
 	return &agentports.ShownArtifact{
-		ID:         artifact.ID,
-		Kind:       string(artifact.Kind),
-		Title:      artifact.Title,
-		Labels:     tableLabels(artifact),
-		Rows:       int(numberOf(artifact.Payload, "rowCount")),
-		Actionable: actionableTable(artifact),
-		Opens:      opensView(artifact),
-		Ranked:     rankedTable(artifact),
+		ID:           artifact.ID,
+		Kind:         string(artifact.Kind),
+		Title:        artifact.Title,
+		Labels:       tableLabels(artifact),
+		Rows:         int(numberOf(artifact.Payload, "rowCount")),
+		Actionable:   actionableTable(artifact),
+		Opens:        opensView(artifact),
+		OpensRecords: opensRecords(artifact),
+		Ranked:       rankedTable(artifact),
+		Written:      writtenPhrase(artifact),
 	}
 }
 
 // mustBePointedTo is a lookup the model was told to point to rather than
-// reprint (shownNote's opens, actionable, ranked and long-table branches),
+// reprint (shownNote's opens, actionable, records, ranked and long-table branches),
 // which stays beside the conversation whether or not the reply managed the
 // link.
 func mustBePointedTo(artifact *assistantartifact.Artifact) bool {
-	shown := shownArtifact(artifact)
-	if shown.Opens || shown.Actionable || shown.Ranked {
-		return true
-	}
-
-	return tabularKind(artifact.Kind) && shown.Rows > agentruntime.InlineRows
+	return shownArtifact(artifact).MustBeLinked()
 }
 
 func tabularKind(kind assistantartifact.Kind) bool {
@@ -602,6 +676,25 @@ func actionableTable(artifact *assistantartifact.Artifact) bool {
 	}
 
 	return typeutils.StringOfTrimmed(artifact.Payload["recordEntity"]) == billingQueueRecordEntity
+}
+
+// opensRecords is a table whose rows open beside the conversation as the
+// record itself, drawn by the Desk's card for that kind of record: a formula
+// template opens as its formula, its variables and a price for a sample load,
+// which a markdown table in the reply could never hold. Which kinds have a
+// card is read from the Desk's card registry through the product guide.
+func opensRecords(artifact *assistantartifact.Artifact) bool {
+	if artifact.Kind != assistantartifact.KindTableView {
+		return false
+	}
+	if _, opens := artifact.Payload["path"]; opens {
+		return false
+	}
+	link, ok := productguide.Default.Record(
+		typeutils.StringOfTrimmed(artifact.Payload["recordEntity"]),
+	)
+
+	return ok && link.DeskCard
 }
 
 func (r *artifactRecorder) requestDecision(
@@ -703,7 +796,9 @@ func planDecisionArtifact(
 
 	artifact := decisionRequestArtifact(callID, steps[0])
 	artifact.PlanID = planID
-	artifact.Title = artifactTitle(fmt.Sprintf("Plan: %s", countChanges(len(steps))))
+	artifact.Title = assistantartifact.NormalizeTitle(
+		fmt.Sprintf("Plan: %s", countChanges(len(steps))),
+	)
 	artifact.Payload[payloadPlanID] = planID.String()
 	artifact.Payload[payloadProposalIDs] = proposalIDStrings(steps)
 	artifact.Payload[payloadToolName] = agent.PlanToolName
@@ -732,9 +827,8 @@ func bunchDecisionArtifact(
 	}
 
 	artifact := decisionRequestArtifact(callID, proposals[0])
-	artifact.Title = artifactTitle(fmt.Sprintf("%s (%d)",
-		stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(proposals[0].ToolName)),
-		len(proposals)))
+	artifact.Title = assistantartifact.NormalizeTitle(fmt.Sprintf("%s (%d)",
+		assistantartifact.PhraseTitle(proposals[0].ToolName), len(proposals)))
 	artifact.Payload[payloadProposalIDs] = proposalIDStrings(proposals)
 
 	return artifact, nil
@@ -764,9 +858,7 @@ func decisionRequestArtifact(
 	artifact := &assistantartifact.Artifact{
 		Kind:   assistantartifact.KindDecisionRequest,
 		Status: decisionStatus(proposal.Status),
-		Title: artifactTitle(
-			stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(proposal.ToolName)),
-		),
+		Title:  assistantartifact.PhraseTitle(proposal.ToolName),
 		Payload: map[string]any{
 			payloadProposalID: proposal.ID.String(),
 			payloadToolName:   proposal.ToolName,
@@ -835,7 +927,7 @@ func documentArtifact(
 	return &assistantartifact.Artifact{
 		Kind:   assistantartifact.KindDocument,
 		Status: assistantartifact.StatusReady,
-		Title:  artifactTitle(document.Title),
+		Title:  assistantartifact.NormalizeTitle(document.Title),
 		Payload: map[string]any{
 			assistantartifact.DocumentFormat:      "markdown",
 			assistantartifact.DocumentBody:        document.Body,
@@ -888,6 +980,9 @@ func artifactFromObservation(observation agentports.ToolObservation) *assistanta
 	case pagedraft.IsEditTool(name):
 		return draftEditArtifact(observation.Call.ID, result)
 	case strings.HasPrefix(name, listToolPrefix), strings.HasPrefix(name, searchToolPrefix):
+		if card := soleRecordCard(observation.Call.ID, name, result); card != nil {
+			return card
+		}
 		return tableArtifact(observation.Call.ID, name, result)
 	default:
 		return nil
@@ -926,10 +1021,7 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 		return nil
 	}
 
-	entity := strings.TrimPrefix(
-		strings.TrimPrefix(strings.TrimPrefix(toolName, listToolPrefix), searchToolPrefix),
-		getToolPrefix,
-	)
+	entity := listedEntity(toolName)
 	projection := projectTable(entity, declared, rows)
 	if len(projection.columns) == 0 {
 		return nil
@@ -950,14 +1042,71 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 	fitRows(payload, "rows")
 
 	return &assistantartifact.Artifact{
-		Kind:   assistantartifact.KindTableView,
-		Status: assistantartifact.StatusReady,
-		Title: artifactTitle(
-			stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity)),
-		),
+		Kind:             assistantartifact.KindTableView,
+		Status:           assistantartifact.StatusReady,
+		Title:            assistantartifact.RecordsTitle(entity),
 		Payload:          payload,
 		SourceToolCallID: callID,
 	}
+}
+
+// listedEntity is what a list, search or get tool names its records by:
+// "formula_templates" for list_formula_templates.
+func listedEntity(toolName string) string {
+	return strings.TrimPrefix(
+		strings.TrimPrefix(strings.TrimPrefix(toolName, listToolPrefix), searchToolPrefix),
+		getToolPrefix,
+	)
+}
+
+// soleRecordCard is a list or search that found exactly one record of a kind
+// the Desk draws as a card, drawn as that card rather than as a table of one
+// row. Asked to show a formula template by name, the Desk found it with
+// list_formula_templates and kept a one-row table, and the person had to open
+// the row to see the template they had asked for. A page of one that has more
+// behind it stays a table: it is not the only record, only the first.
+func soleRecordCard(callID, toolName string, result map[string]any) *assistantartifact.Artifact {
+	rows, ok := result["items"].([]any)
+	if !ok || len(rows) != 1 || result["hasMore"] == true {
+		return nil
+	}
+	if _, counted := result["count"]; counted && numberOf(result, "count") != 1 {
+		return nil
+	}
+	record, ok := rows[0].(map[string]any)
+	if !ok {
+		return nil
+	}
+	entity := recordEntityOf(listedEntity(toolName))
+	if link, carded := productguide.Default.Record(entity); !carded || !link.DeskCard {
+		return nil
+	}
+
+	return recordCardArtifact(&recordCard{
+		callID:   callID,
+		toolName: toolName,
+		entity:   entity,
+		record:   record,
+		order:    declaredOrder(stringsOf(result["columns"]), record),
+	})
+}
+
+// declaredOrder is a row's fields in the order its tool declared its
+// columns, then any it did not declare, alphabetically.
+func declaredOrder(declared []string, record map[string]any) []string {
+	order := make([]string, 0, len(record))
+	for _, key := range declared {
+		if _, ok := record[key]; ok && !slices.Contains(order, key) {
+			order = append(order, key)
+		}
+	}
+	for _, key := range slices.Sorted(maps.Keys(record)) {
+		if !slices.Contains(order, key) {
+			order = append(order, key)
+		}
+	}
+
+	return order
 }
 
 // candidateColumns are a ranked driver as a dispatcher weighs one: where it
@@ -1039,7 +1188,7 @@ func candidateRankingArtifact(callID string, result map[string]any) *assistantar
 	return &assistantartifact.Artifact{
 		Kind:             assistantartifact.KindTableView,
 		Status:           assistantartifact.StatusReady,
-		Title:            artifactTitle("Drivers ranked for the move"),
+		Title:            assistantartifact.NormalizeTitle("Drivers ranked for the move"),
 		Payload:          payload,
 		SourceToolCallID: callID,
 	}
@@ -1100,15 +1249,15 @@ func composedViewArtifact(callID string, result map[string]any) *assistantartifa
 		}
 	}
 
-	title := typeutils.StringOfTrimmed(result["explanation"])
-	if title == "" {
-		title = stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity))
+	title := assistantartifact.RecordsTitle(entity)
+	if explanation := typeutils.StringOfTrimmed(result["explanation"]); explanation != "" {
+		title = explanation
 	}
 
 	return &assistantartifact.Artifact{
 		Kind:             assistantartifact.KindTableView,
 		Status:           assistantartifact.StatusReady,
-		Title:            artifactTitle(stringutils.CapitalizeFirst(title)),
+		Title:            assistantartifact.NormalizeTitle(title),
 		Payload:          payload,
 		SourceToolCallID: callID,
 	}
@@ -1152,7 +1301,7 @@ func rateArtifact(callID string, result map[string]any) *assistantartifact.Artif
 	return &assistantartifact.Artifact{
 		Kind:             assistantartifact.KindRateExplanation,
 		Status:           assistantartifact.StatusReady,
-		Title:            artifactTitle("Rate breakdown"),
+		Title:            assistantartifact.NormalizeTitle("Rate breakdown"),
 		Payload:          payload,
 		SourceToolCallID: callID,
 	}
@@ -1191,7 +1340,7 @@ func runDiffArtifact(callID string, result map[string]any) *assistantartifact.Ar
 	return &assistantartifact.Artifact{
 		Kind:             assistantartifact.KindRunDiff,
 		Status:           assistantartifact.StatusReady,
-		Title:            artifactTitle(runDiffTitle(result)),
+		Title:            assistantartifact.NormalizeTitle(runDiffTitle(result)),
 		Payload:          payload,
 		SourceToolCallID: callID,
 	}
@@ -1214,7 +1363,7 @@ func navigationArtifact(callID string, result map[string]any) *assistantartifact
 	return &assistantartifact.Artifact{
 		Kind:   assistantartifact.KindNavigation,
 		Status: assistantartifact.StatusReady,
-		Title:  artifactTitle(name),
+		Title:  assistantartifact.NormalizeTitle(name),
 		Payload: map[string]any{
 			"path":     path,
 			"name":     name,
@@ -1248,7 +1397,7 @@ func draftEditArtifact(callID string, result map[string]any) *assistantartifact.
 	return &assistantartifact.Artifact{
 		Kind:             assistantartifact.KindDraftEdit,
 		Status:           assistantartifact.StatusReady,
-		Title:            artifactTitle(edit.Title()),
+		Title:            assistantartifact.NormalizeTitle(edit.Title()),
 		Payload:          payload.fields,
 		SourceToolCallID: callID,
 	}
@@ -1341,13 +1490,13 @@ func previewArtifact(
 	title := typeutils.StringOfTrimmed(result["name"])
 	if title == "" {
 		title = "Preview of " +
-			stringutils.HumanizeSnakeCase(typeutils.StringOfTrimmed(result["dataset"]))
+			stringutils.HumanizeSnakeCasePhrase(typeutils.StringOfTrimmed(result["dataset"]))
 	}
 
 	return &assistantartifact.Artifact{
 		Kind:             assistantartifact.KindReportPreview,
 		Status:           assistantartifact.StatusReady,
-		Title:            artifactTitle(title),
+		Title:            assistantartifact.NormalizeTitle(title),
 		Payload:          payload,
 		SourceToolCallID: callID,
 	}
@@ -1373,9 +1522,7 @@ func runArtifact(callID string, result map[string]any) *assistantartifact.Artifa
 
 	title := typeutils.StringOfTrimmed(result["reportName"])
 	if title == "" {
-		title = stringutils.CapitalizeFirst(
-			stringutils.HumanizeSnakeCase(typeutils.StringOfTrimmed(result["reportKey"])),
-		)
+		title = stringutils.HumanizeSnakeCasePhrase(typeutils.StringOfTrimmed(result["reportKey"]))
 	}
 	if title == "" {
 		title = "Report run"
@@ -1387,7 +1534,7 @@ func runArtifact(callID string, result map[string]any) *assistantartifact.Artifa
 			typeutils.BoolOf(result["finished"]),
 			typeutils.StringOfTrimmed(result["status"]),
 		),
-		Title:            artifactTitle(title),
+		Title:            assistantartifact.NormalizeTitle(title),
 		Payload:          payload,
 		SourceToolCallID: callID,
 	}
@@ -1418,16 +1565,35 @@ func entityCardArtifact(
 	callID, toolName string,
 	document jsonDocument,
 ) *assistantartifact.Artifact {
-	result := document.fields
+	return recordCardArtifact(&recordCard{
+		callID:   callID,
+		toolName: toolName,
+		entity:   strings.TrimPrefix(toolName, getToolPrefix),
+		record:   document.fields,
+		order:    document.keyOrder(),
+	})
+}
+
+// recordCard is one record to draw as a card: the call that read it, the
+// kind of record it is, and its fields in the order they were declared.
+type recordCard struct {
+	callID   string
+	toolName string
+	entity   string
+	record   map[string]any
+	order    []string
+}
+
+func recordCardArtifact(card *recordCard) *assistantartifact.Artifact {
+	callID, toolName, entity, result := card.callID, card.toolName, card.entity, card.record
 	if typeutils.StringOfTrimmed(result["id"]) == "" {
 		return nil
 	}
 
-	entity := strings.TrimPrefix(toolName, getToolPrefix)
 	payload := map[string]any{
 		"display":       assistantartifact.DisplayVersion,
 		payloadEntity:   entity,
-		payloadFields:   projectRecord(result, document.keyOrder()),
+		payloadFields:   projectRecord(result, card.order),
 		payloadTool:     toolName,
 		payloadRecordID: typeutils.StringOfTrimmed(result["id"]),
 	}
@@ -1446,7 +1612,7 @@ func entityCardArtifact(
 	return &assistantartifact.Artifact{
 		Kind:             assistantartifact.KindEntityCard,
 		Status:           assistantartifact.StatusReady,
-		Title:            artifactTitle(entityCardTitle(entity, result)),
+		Title:            assistantartifact.NormalizeTitle(entityCardTitle(entity, result)),
 		Payload:          payload,
 		SourceToolCallID: callID,
 	}
@@ -1474,10 +1640,7 @@ func entityCardTitle(entity string, result map[string]any) string {
 		}
 	}
 
-	return strings.TrimSpace(
-		stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity)) +
-			" " + assistantartifact.RecordLabel(result),
-	)
+	return assistantartifact.RecordTitle(entity, assistantartifact.RecordLabel(result))
 }
 
 // draftArtifact views an outbound message proposal as a draft. Only the
@@ -1517,7 +1680,7 @@ func draftArtifact(proposal *agent.AgentProposal) *assistantartifact.Artifact {
 	artifact := &assistantartifact.Artifact{
 		Kind:       assistantartifact.KindEmailDraft,
 		Status:     draftStatus(proposal.Status),
-		Title:      artifactTitle(title),
+		Title:      assistantartifact.NormalizeTitle(title),
 		Payload:    payload,
 		ProposalID: proposal.ID,
 		RunID:      proposal.RunID,
@@ -1557,7 +1720,7 @@ func planArtifact(
 	return &assistantartifact.Artifact{
 		Kind:   assistantartifact.KindPlan,
 		Status: planStatus(plan.Status),
-		Title:  artifactTitle(plan.Title),
+		Title:  assistantartifact.NormalizeTitle(plan.Title),
 		Payload: map[string]any{
 			"title":     plan.Title,
 			"summary":   plan.Summary,
@@ -1674,15 +1837,6 @@ func (d jsonDocument) keyOrder() []string {
 	}
 
 	return slices.Sorted(maps.Keys(d.fields))
-}
-
-func artifactTitle(title string) string {
-	title = strings.TrimSpace(title)
-	if title == "" {
-		title = "Untitled"
-	}
-
-	return stringutils.TruncateRunes(title, maxArtifactTitleRunes)
 }
 
 func toAssistantArtifact(artifact *assistantartifact.Artifact) agentports.AssistantArtifact {

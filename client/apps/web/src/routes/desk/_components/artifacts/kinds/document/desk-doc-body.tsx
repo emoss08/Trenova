@@ -1,4 +1,5 @@
 import { Button } from "@trenova/shared/components/ui/button";
+import { scrollParent } from "@/lib/dom";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { queries } from "@/lib/queries";
@@ -10,10 +11,10 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, downloadFromUrl } from "@trenova/shared/lib/utils";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useOutsideDismiss } from "@/components/desk-chat/use-outside-dismiss";
-import { VERSION_OPTION_CLASS, versionTriggerClass } from "./desk-version-classes";
-import { documentFrom, type DocumentSource } from "./artifact-payloads";
-import { ArtIcon } from "./desk-art-kinds";
-import type { ArtifactLineage } from "./desk-lineage";
+import { VERSION_OPTION_CLASS, versionTriggerClass } from "../../desk-version-classes";
+import { documentFrom, type DocumentSource } from "../../artifact-payloads";
+import { ArtIcon } from "../../desk-art-kinds";
+import type { ArtifactLineage } from "../../desk-lineage";
 import {
   editedBlockMarkdown,
   inlineParts,
@@ -285,17 +286,7 @@ export function DeskDocBody({
   const scrollTo = (id: string) => {
     const element = paperRef.current?.querySelector<HTMLElement>(`[data-blk="${id}"]`);
     if (!element) return;
-    let scroller = element.parentElement;
-    while (
-      scroller &&
-      scroller !== document.body &&
-      !(
-        scroller.scrollHeight > scroller.clientHeight &&
-        /auto|scroll/u.test(getComputedStyle(scroller).overflowY)
-      )
-    ) {
-      scroller = scroller.parentElement;
-    }
+    const scroller = scrollParent(element, { overflowing: true });
     scroller?.scrollTo({
       top:
         scroller.scrollTop +
@@ -805,11 +796,7 @@ export function DeskDocBody({
             {dirty ? t("Discard") : t("Done")}
           </Button>
           {dirty && (
-            <Button
-              size="sm"
-              disabled={saveMutation.isPending}
-              onClick={save}
-            >
+            <Button size="sm" disabled={saveMutation.isPending} onClick={save}>
               {t("Save as v{0}", versions[latestIndex].lineageSeq + 1)}
             </Button>
           )}

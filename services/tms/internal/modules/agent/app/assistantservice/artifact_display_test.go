@@ -149,18 +149,28 @@ func TestTableArtifact_ReadsAFindingAsAPersonDoes(t *testing.T) {
 func TestTableArtifact_KeepsARecordIDOnlyToOpenIt(t *testing.T) {
 	t.Parallel()
 
+	// Two rows: a list that found one shipment is that shipment's card, not a table.
 	artifact := artifactFromObservation(observation("list_shipments", map[string]any{
-		"count":   float64(1),
+		"count":   float64(2),
 		"columns": []any{"id", "proNumber", "customerId", "status", "totalCharge", "actualShipDate", "assignedTo"},
-		"items": []any{map[string]any{
-			"id":             shipmentPulid,
-			"proNumber":      "PRO-778",
-			"customerId":     customerPulid,
-			"status":         "InTransit",
-			"totalCharge":    "2840.50",
-			"actualShipDate": medicalCardNote,
-			"assignedTo":     workerPulid,
-		}},
+		"items": []any{
+			map[string]any{
+				"id":             shipmentPulid,
+				"proNumber":      "PRO-778",
+				"customerId":     customerPulid,
+				"status":         "InTransit",
+				"totalCharge":    "2840.50",
+				"actualShipDate": medicalCardNote,
+				"assignedTo":     workerPulid,
+			},
+			map[string]any{
+				"id":          "shp_01JSECOND00000000000000000",
+				"proNumber":   "PRO-779",
+				"customerId":  customerPulid,
+				"status":      "New",
+				"totalCharge": "1200.00",
+			},
+		},
 	}))
 	require.NotNil(t, artifact)
 

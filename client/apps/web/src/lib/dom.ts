@@ -38,3 +38,54 @@ export function numberKeyIndex(event: KeyboardEvent, count: number): number {
   const index = Number(event.key) - 1;
   return Number.isInteger(index) && index >= 0 && index < count ? index : -1;
 }
+
+/**
+ * True when a window-level key belongs to `scope`: it was pressed with focus on nothing,
+ * or on something inside the scope. A key pressed in another pane is that pane's.
+ */
+export function isKeyForScope(target: EventTarget | null, scope: Element | null): boolean {
+  if (target === document.body) {
+    return true;
+  }
+  return scope !== null && target instanceof Node && scope.contains(target);
+}
+
+/**
+ * Whether focus may be moved within `scope` without interrupting the person: it is on
+ * nothing, or inside the scope and not in a field holding words they are typing.
+ */
+export function mayMoveFocusWithin(scope: Element | null): boolean {
+  const active = document.activeElement;
+  if (active === null || active === document.body) {
+    return true;
+  }
+  if (scope === null || !scope.contains(active)) {
+    return false;
+  }
+  return (
+    !isTypingTarget(active) ||
+    ((active instanceof HTMLTextAreaElement || active instanceof HTMLInputElement) &&
+      active.value === "")
+  );
+}
+
+/**
+ * The nearest ancestor of `element` that scrolls vertically, or null when only the page
+ * does. An ancestor whose overflow lets it scroll counts whether or not it overflows now,
+ * since a pane about to hold taller content is still the one that will scroll; pass
+ * `overflowing` to skip one that has nothing to scroll yet.
+ */
+export function scrollParent(
+  element: Element | null,
+  { overflowing = false }: { overflowing?: boolean } = {},
+): HTMLElement | null {
+  let candidate = element?.parentElement ?? null;
+  while (candidate && candidate !== document.body) {
+    const scrolls = /auto|scroll/u.test(getComputedStyle(candidate).overflowY);
+    if (scrolls && (!overflowing || candidate.scrollHeight > candidate.clientHeight)) {
+      return candidate;
+    }
+    candidate = candidate.parentElement;
+  }
+  return null;
+}

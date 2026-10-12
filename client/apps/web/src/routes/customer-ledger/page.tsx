@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { customerStatementPath } from "@/lib/ar-links";
 import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { CustomerAutocompleteField } from "@/components/autocomplete-fields";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
@@ -112,7 +113,7 @@ export function CustomerLedgerPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => void navigate(`/accounting/ar/customer-statement/${customerId}`)}
+              onClick={() => void navigate(customerStatementPath(customerId))}
             >
               <File06Icon className="size-4" />
               {t("Statement")}

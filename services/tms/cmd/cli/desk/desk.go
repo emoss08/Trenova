@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"syscall"
 	"text/tabwriter"
@@ -62,6 +63,7 @@ var flags struct {
 	compare   string
 	thread    string
 	page      string
+	attach    []string
 	approve   bool
 	reject    string
 	quiet     bool
@@ -158,10 +160,20 @@ func init() {
 	persistent := DeskCmd.PersistentFlags()
 	persistent.StringVar(&flags.namespace, "namespace", deskbench.DefaultNamespace,
 		"Temporal namespace the bench's own worker uses")
-	persistent.StringVar(&flags.user, "user", deskbench.DefaultUserEmail, "email of the person the bench acts as")
+	persistent.StringVar(
+		&flags.user,
+		"user",
+		deskbench.DefaultUserEmail,
+		"email of the person the bench acts as",
+	)
 	persistent.StringVar(&flags.agent, "agent", "",
 		"agent name, id or template (default: the general assistant)")
-	persistent.StringVar(&flags.out, "out", "", "directory for this run's files (default: .deskbench/runs/<time>)")
+	persistent.StringVar(
+		&flags.out,
+		"out",
+		"",
+		"directory for this run's files (default: .deskbench/runs/<time>)",
+	)
 	persistent.BoolVar(&flags.keep, "keep", false,
 		"leave what the agents proposed waiting for a decision instead of rejecting it at the end")
 	persistent.BoolVar(&flags.delete, "delete", false,
@@ -172,25 +184,32 @@ func init() {
 	askCmd.Flags().StringVar(&flags.thread, "thread", "", "continue an existing conversation")
 	askCmd.Flags().StringVar(&flags.page, "page", "",
 		`page context as JSON, e.g. '{"path":"/shipments","title":"Shipments"}'`)
+	askCmd.Flags().StringArrayVar(&flags.attach, "attach", nil,
+		"attach a file or a copy of a document (doc_...) to the first message, or to message N with N=...")
 	askCmd.Flags().BoolVar(&flags.approve, "approve", false,
 		"approve every proposal the last message raised and follow what the agent says about it")
 	askCmd.Flags().StringVar(&flags.reject, "reject", "",
 		"reject every proposal the last message raised, telling the agent this note")
-	askCmd.Flags().BoolVar(&flags.quiet, "quiet", false, "print the summary only, not the transcript")
+	askCmd.Flags().
+		BoolVar(&flags.quiet, "quiet", false, "print the summary only, not the transcript")
 
 	runCmd.Flags().StringSliceVar(&flags.providers, "provider", nil,
 		"chat models to run against, repeatable; 'default' is the organization's order")
 	runCmd.Flags().IntVar(&flags.repeat, "repeat", 1, "runs of each scenario per model")
 	runCmd.Flags().IntVar(&flags.parallel, "parallel", 1, "cases run at once (at most 8)")
-	runCmd.Flags().StringSliceVar(&flags.tags, "tag", nil, "only scenarios carrying one of these tags")
-	runCmd.Flags().StringSliceVar(&flags.names, "name", nil, "only scenarios whose name contains one of these")
+	runCmd.Flags().
+		StringSliceVar(&flags.tags, "tag", nil, "only scenarios carrying one of these tags")
+	runCmd.Flags().
+		StringSliceVar(&flags.names, "name", nil, "only scenarios whose name contains one of these")
 	runCmd.Flags().StringVar(&flags.compare, "compare", comparePrevious,
 		"report to compare with: 'previous', a run directory, a report.json, or '' for none")
 
 	findingsCmd.Flags().StringVar(&flags.findings, "file", defaultFindings, "findings file")
-	findingsCmd.Flags().StringSliceVar(&flags.statuses, "status", []string{string(deskbench.FindingOpen)},
-		"open, fixed, wontfix, or all")
-	findingsCmd.Flags().StringSliceVar(&flags.severity, "severity", nil, "critical, high, medium, low")
+	findingsCmd.Flags().
+		StringSliceVar(&flags.statuses, "status", []string{string(deskbench.FindingOpen)},
+			"open, fixed, wontfix, or all")
+	findingsCmd.Flags().
+		StringSliceVar(&flags.severity, "severity", nil, "critical, high, medium, low")
 	findingsCmd.Flags().StringVar(&flags.area, "area", "", "only findings whose area contains this")
 	findingsCmd.Flags().StringVar(&flags.format, "format", formatMarkdown, "md, csv or json")
 
@@ -250,9 +269,14 @@ func askScenario(messages []string) (*deskbench.Scenario, error) {
 		}
 	}
 
+	attached, err := attachmentsByMessage(flags.attach, len(messages))
+	if err != nil {
+		return nil, err
+	}
+
 	steps := make([]deskbench.Step, 0, len(messages)+1)
 	for idx, message := range messages {
-		step := deskbench.Step{Say: message}
+		step := deskbench.Step{Say: message, Attach: attached[idx]}
 		if idx == 0 {
 			step.Page = page
 		}
@@ -266,7 +290,10 @@ func askScenario(messages []string) (*deskbench.Scenario, error) {
 	}
 
 	scenario := &deskbench.Scenario{
-		Name:  "ask " + stringutils.Ellipsize(stringutils.CollapseWhitespace(messages[0]), askNameLength),
+		Name: "ask " + stringutils.Ellipsize(
+			stringutils.CollapseWhitespace(messages[0]),
+			askNameLength,
+		),
 		Steps: steps,
 	}
 	if err := scenario.Validate(); err != nil {
@@ -274,6 +301,27 @@ func askScenario(messages []string) (*deskbench.Scenario, error) {
 	}
 
 	return scenario, nil
+}
+
+func attachmentsByMessage(refs []string, messages int) (map[int][]string, error) {
+	attached := make(map[int][]string, len(refs))
+	for _, ref := range refs {
+		index := 0
+		if position, rest, found := strings.Cut(ref, "="); found {
+			number, err := strconv.Atoi(position)
+			if err == nil {
+				if number < 1 || number > messages {
+					return nil, fmt.Errorf(
+						"--attach %s: there is no message %d of %d", ref, number, messages,
+					)
+				}
+				index, ref = number-1, rest
+			}
+		}
+		attached[index] = append(attached[index], ref)
+	}
+
+	return attached, nil
 }
 
 func runScenarios(cmd *cobra.Command, args []string) error {
@@ -384,7 +432,12 @@ func execute(
 		Command:   strings.Join(os.Args[1:], " "),
 		WorkerLog: bench.LogPath(),
 	}
-	fmt.Fprintf(os.Stderr, "desk bench: %d scenario(s), writing to %s\n", len(opts.Scenarios), outDir)
+	fmt.Fprintf(
+		os.Stderr,
+		"desk bench: %d scenario(s), writing to %s\n",
+		len(opts.Scenarios),
+		outDir,
+	)
 	fmt.Fprintf(os.Stderr, "watch it live: tail -f %s\n", livePath)
 
 	cases, runErr := bench.Run(ctx, opts)
@@ -527,8 +580,10 @@ func printProgress(result *deskbench.CaseResult) {
 }
 
 func printFiles(outDir string) {
-	fmt.Printf("\nFiles: %s/{summary.md,transcript.md,live.log,report.json,calls/,prompts/,tools/,worker.log}\n",
-		outDir)
+	fmt.Printf(
+		"\nFiles: %s/{summary.md,transcript.md,live.log,report.json,calls/,prompts/,tools/,worker.log}\n",
+		outDir,
+	)
 }
 
 func listFindings(_ *cobra.Command, _ []string) error {

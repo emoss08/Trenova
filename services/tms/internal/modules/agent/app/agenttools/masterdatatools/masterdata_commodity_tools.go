@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -134,7 +135,8 @@ func commodityFields() []masterField[commodity.Commodity] {
 		masterEnum("freightClass", "The NMFC freight class.", freightClasses,
 			func(c *commodity.Commodity) *commodity.FreightClass { return &c.FreightClass }),
 		masterOptionalInt("minTemperature", "The lowest temperature it may be carried at, "+
-			"in degrees Fahrenheit.", mdMinTemperature, mdMaxTemperature,
+			"in degrees Fahrenheit, below maxTemperature. Leave it out for one setpoint such "+
+			"as a reefer held at -10 F, which is the maximum.", mdMinTemperature, mdMaxTemperature,
 			func(c *commodity.Commodity) **int { return &c.MinTemperature }),
 		masterOptionalInt("maxTemperature", "The highest temperature it may be carried at, "+
 			"in degrees Fahrenheit.", mdMinTemperature, mdMaxTemperature,
@@ -163,7 +165,7 @@ func commodityFields() []masterField[commodity.Commodity] {
 func NewCreateCommodityTool(commodities CommodityKeeper) agentports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[commodity.Commodity]{
 		record: commodityRecord,
-		name:   "create_commodity",
+		name:   agentdefinition.ToolCreateCommodity,
 		description: "Add a commodity shipments can carry, with its freight class, " +
 			"temperature range, dimensions and handling. Name the hazardous material it is " +
 			"when it is hazmat, and check list_commodities first.",

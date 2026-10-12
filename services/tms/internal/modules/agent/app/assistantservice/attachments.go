@@ -2,6 +2,7 @@ package assistantservice
 
 import (
 	"context"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -9,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -24,10 +26,7 @@ const (
 	MaxAttachments = conversation.MaxMessageAttachments
 	// AttachmentResourceType is the resource an attachment is uploaded
 	// against: the thread, so ownership is a plain comparison.
-	AttachmentResourceType = "assistant_thread"
-	// attachmentExcerptRunes is how much of a file's text rides in the
-	// prompt; the rest waits behind get_document_summary.
-	attachmentExcerptRunes = 1200
+	AttachmentResourceType = document.ConversationResourceType
 )
 
 // turnContext is what the person handed over with a message besides the
@@ -152,9 +151,7 @@ func (s *Service) readAttachment(
 	if err != nil {
 		return attachmentSlot{problem: "Attachment was not found"}
 	}
-	if doc.UploadedByID != actor.UserID ||
-		doc.ResourceType != AttachmentResourceType ||
-		doc.ResourceID != thread.ID.String() {
+	if !doc.AttachedBy(thread.ID, actor.UserID) {
 		return attachmentSlot{problem: "Attachment does not belong to this conversation"}
 	}
 
@@ -185,7 +182,7 @@ func (s *Service) describeAttachment(
 		DocumentID:  documentID.String(),
 		FileName:    fileName,
 		ContentType: contentType,
-		Status:      string(documentcontent.StatusPending),
+		Reading:     agentdefinition.AttachmentReadingPending,
 	}
 	if s.contents == nil {
 		return attachment
@@ -203,15 +200,73 @@ func (s *Service) describeAttachment(
 		return attachment
 	}
 
-	attachment.Status = string(content.Status)
+	attachment.Reading = readingOf(content.Status)
 	attachment.PageCount = content.PageCount
 	attachment.Kind = content.DetectedDocumentKind
 	attachment.PoorlyRead = content.PoorlyRead()
-	if text := strings.TrimSpace(content.ContentText); text != "" {
-		attachment.Excerpt = text
-	}
+	attachment.Text = strings.TrimSpace(content.ContentText)
 
 	return attachment
+}
+
+func (s *Service) earlierFileTexts(
+	ctx context.Context,
+	history []conversation.Message,
+	tenant pagination.TenantInfo,
+) map[string]string {
+	if s.contents == nil {
+		return nil
+	}
+
+	ids := make([]pulid.ID, 0, MaxAttachments)
+	for idx := len(history) - 1; idx >= 0 && len(ids) < MaxAttachments; idx-- {
+		for _, attachment := range history[idx].Attachments {
+			if len(ids) < MaxAttachments && !slices.Contains(ids, attachment.DocumentID) {
+				ids = append(ids, attachment.DocumentID)
+			}
+		}
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+
+	texts := make([]string, len(ids))
+	var wg sync.WaitGroup
+	for idx, id := range ids {
+		wg.Go(func() {
+			if content, err := s.contents.GetContent(
+				ctx,
+				id,
+				tenant,
+			); err == nil &&
+				content != nil {
+				texts[idx] = strings.TrimSpace(content.ContentText)
+			}
+		})
+	}
+	wg.Wait()
+
+	files := make(map[string]string, len(ids))
+	for idx, id := range ids {
+		if texts[idx] != "" {
+			files[id.String()] = texts[idx]
+		}
+	}
+
+	return files
+}
+
+func readingOf(status documentcontent.Status) agentdefinition.AttachmentReading {
+	switch status {
+	case documentcontent.StatusExtracted, documentcontent.StatusIndexed:
+		return agentdefinition.AttachmentReadingDone
+	case documentcontent.StatusFailed:
+		return agentdefinition.AttachmentReadingFailed
+	case documentcontent.StatusPending, documentcontent.StatusExtracting:
+		return agentdefinition.AttachmentReadingPending
+	default:
+		return agentdefinition.AttachmentReadingPending
+	}
 }
 
 // attachTurnContext records what the person handed over on their turn only:

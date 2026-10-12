@@ -39,11 +39,12 @@ var ErrNothingToDecide = errors.New("no proposal is waiting for a decision in th
 type DecisionAction string
 
 type Utterance struct {
-	Content  string
-	Page     *agent.PageContext
-	Mentions []agent.EntityRef
-	Surface  agent.Surface
-	Directed pulid.ID
+	Content     string
+	Page        *agent.PageContext
+	Mentions    []agent.EntityRef
+	Surface     agent.Surface
+	Directed    pulid.ID
+	Attachments []string
 }
 
 type Decide struct {
@@ -120,7 +121,7 @@ func (c *Conversation) Turns() []*TurnRecord {
 	return c.turns
 }
 
-func (c *Conversation) Say(ctx context.Context, u Utterance) ([]*TurnRecord, error) {
+func (c *Conversation) Say(ctx context.Context, u *Utterance) ([]*TurnRecord, error) {
 	ctx = c.session.Context(ctx)
 	bench := c.session.bench
 
@@ -133,7 +134,12 @@ func (c *Conversation) Say(ctx context.Context, u Utterance) ([]*TurnRecord, err
 		surface = agent.SurfaceAssistant
 	}
 
-	_, err := bench.Turns.StartTurn(ctx, assistantturnservice.StartRequest{
+	attached, err := c.attach(ctx, u.Attachments)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = bench.Turns.StartTurn(ctx, assistantturnservice.StartRequest{
 		ThreadID:   c.Thread.ID,
 		UserID:     c.session.User.ID,
 		TenantInfo: c.session.Tenant,
@@ -144,13 +150,14 @@ func (c *Conversation) Say(ctx context.Context, u Utterance) ([]*TurnRecord, err
 			Actor:   c.session.Actor,
 			Content: u.Content,
 			Request: assistantcontract.AssistantTurnRequest{
-				Page:                u.Page,
-				Surface:             surface,
-				Mentions:            u.Mentions,
-				PreferredProviderID: providerID(c.Provider),
-				ProviderChosen:      c.Provider != nil,
-				DirectedAgentID:     u.Directed,
-				Awaited:             true,
+				Page:                  u.Page,
+				Surface:               surface,
+				Mentions:              u.Mentions,
+				PreferredProviderID:   providerID(c.Provider),
+				ProviderChosen:        c.Provider != nil,
+				DirectedAgentID:       u.Directed,
+				AttachmentDocumentIDs: attached,
+				Awaited:               true,
 			},
 		}
 		var runID string

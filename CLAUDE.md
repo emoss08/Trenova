@@ -394,6 +394,24 @@ in `services/tms/deskbench/findings.yaml` (`trenova desk findings` lists and exp
 `internal/deskbench` or writing scenarios.** It approves real writes, so run it against a
 seeded development database only.
 
+## Desk Artifacts
+
+Each Desk artifact kind has its own folder under `routes/desk/_components/artifacts/kinds/`.
+Resource cards (a record drawn for what it is read for, such as a formula template, opened
+from a table's row or looked up by the agent) live one folder each under `artifacts/cards/`,
+are lazy-loaded through `cards/registry.tsx`, and each ships a skeleton drawn in its own
+layout. **Read
+[docs/engineering/desk-artifacts.md](docs/engineering/desk-artifacts.md) before adding
+an artifact card or a part shared between cards.**
+
+## Record Kinds
+
+The server's permission registry owns which kinds of record exist; every other list of
+kinds (record links, page context and mentions, agent subjects, @ search tabs, Desk cards,
+memory) is generated from it, typed against it, or tested against it. **Read
+[docs/engineering/record-kinds.md](docs/engineering/record-kinds.md) before adding a kind
+of record or writing any table keyed by one**: never add another hand-kept list of kind names.
+
 ## Row-Level Security
 
 PostgreSQL enforces tenant isolation itself: every tenant table is under a FORCE

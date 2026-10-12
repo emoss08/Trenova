@@ -137,31 +137,6 @@ export function groupThread(messages: readonly AssistantMessage[]): ThreadEntry[
   return entries;
 }
 
-/**
- * The entry each of another agent's saved messages is drawn under, keyed by
- * the message and by every call it made. What that agent produced is tied to
- * its own message, which is never an entry of its own, so an artifact or a
- * card pointing at it is placed under the reply that handed the task over.
- */
-export function delegatedOwners(entries: readonly ThreadEntry[]): Map<string, string> {
-  const owners = new Map<string, string>();
-  for (const entry of entries) {
-    if (entry.kind !== "assistant") {
-      continue;
-    }
-    for (const exchange of entry.tools) {
-      for (const message of exchange.delegated ?? []) {
-        owners.set(message.id, entry.message.id);
-        for (const call of message.toolCalls ?? []) {
-          owners.set(call.id, entry.message.id);
-        }
-      }
-    }
-  }
-
-  return owners;
-}
-
 /** Where an assistant entry sits in the reply it belongs to. */
 export type TurnPlacement = {
   /** A later step of the same reply: drawn without the agent's header. */

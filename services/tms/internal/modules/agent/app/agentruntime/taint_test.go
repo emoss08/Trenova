@@ -136,7 +136,7 @@ func TestOpenTurn_AttachmentsAndTaintedMemoriesTaintTheTurn(t *testing.T) {
 		Input:      "What does this say?",
 		Context: agentdefinition.RuntimeContext{
 			Attachments: []agentdefinition.RuntimeAttachment{
-				{DocumentID: documentID, FileName: "rate-con.pdf", Excerpt: "Rate: $900"},
+				{DocumentID: documentID, FileName: "rate-con.pdf", Text: "Rate: $900"},
 			},
 			Memories: []*agent.Memory{
 				memory,

@@ -3,6 +3,7 @@ package agent
 import (
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -96,23 +97,18 @@ type MemoryRecordRef struct {
 	ID   pulid.ID
 }
 
-var memoryRecordPrefixes = map[string]MemoryRecordKind{
-	"cus_": MemoryRecordCustomer,
-	"loc_": MemoryRecordLocation,
-	"wrk_": MemoryRecordWorker,
-	"car_": MemoryRecordCarrier,
-	"shp_": MemoryRecordShipment,
-	"sm_":  MemoryRecordShipmentMove,
-	"inv_": MemoryRecordInvoice,
-}
-
+// MemoryRecordKindOfID is the memory kind of the record an id names, read
+// from its prefix in the permission registry.
 func MemoryRecordKindOfID(id pulid.ID) (MemoryRecordKind, bool) {
 	if !pulid.LooksLike(id.String()) {
 		return "", false
 	}
-	kind, ok := memoryRecordPrefixes[id.Prefix()]
+	kind, ok := permission.RecordKindOfIDPrefix(id.Prefix())
+	if !ok {
+		return "", false
+	}
 
-	return kind, ok
+	return ParseMemoryRecordKind(string(kind))
 }
 
 func MemoryRecordRefOf(kind, id string) (MemoryRecordRef, bool) {

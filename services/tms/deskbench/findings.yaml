@@ -3135,3 +3135,299 @@ findings:
       - services/tms/internal/infrastructure/agentcompletion/completionrouter/prompt.go
       - services/tms/internal/infrastructure/agentcompletion/modeladapter/adapter.go
       - services/tms/internal/infrastructure/agentcompletion/modeladapter/anthropicmodels.go
+
+  - id: DB-142
+    title: Artifacts were named with the model's own words and left outside sentences
+    status: fixed
+    severity: medium
+    area: agent runtime / artifact links / Desk
+    found: 2026-10-11, reported by the user (Bench · Operations, Formula Desk and Dispatch desk conversations)
+    models: [gpt-6-luna]
+    scenarios: []
+    problem: >
+      One shipment's card was linked as "shipment card", "Shipment S26100090038417" and "full formula
+      template" across one conversation, and the Formula Desk ended a reply with "rounded up. Formula
+      template Per CWT (Hundredweight)" as a sentence of its own. Titles of tables and decision cards
+      were humanized from identifiers with lower-cased initialisms ("ifta report"), and invoices,
+      prices and other "-ices" entities were singularized to "invoix" and "prix".
+    cause: >
+      The link's words were whatever the model wrote, and only the prompt asked for the title. Where a
+      link stood was checked nowhere on the server, and the Desk's withArtifactRefs moved a badge on a
+      line of its own, and every artifact the reply left out, to the end of the first paragraph, which
+      is how badges came to stand after a sentence.
+    fix: >
+      The link's words are always the artifact's title: NameArtifactLinks rewrites them when the turn
+      is saved and the badge draws artifact.title. Titles come from one owner (assistantartifact/naming.go)
+      on the registry's initialism-aware nouns. placement.go checks every final reply the person reads:
+      a stray, missing or made-up link is sent back once with a correction, then placed in a closing
+      sentence. withArtifactRefs is gone; the bench checks every turn that shows an artifact.
+    fixedIn: uncommitted; placement_test.go, artifacts_naming_test.go, naming_test.go, noun_test.go,
+      desk-inline-artifact.test.tsx
+    files:
+      - services/tms/internal/modules/agent/app/agentruntime/placement.go
+      - services/tms/internal/modules/agent/app/agentruntime/artifactref.go
+      - services/tms/internal/modules/agent/app/assistantservice/artifacts.go
+      - services/tms/internal/modules/agent/domain/assistantartifact/naming.go
+      - services/tms/internal/modules/identity/domain/permission/recordid.go
+      - shared/stringutils/noun.go
+      - client/apps/web/src/components/desk-chat/conversation/desk-turns.tsx
+      - client/apps/web/src/lib/artifact-ref.ts
+
+  - id: DB-143
+    title: The Formula Desk said it could not read a template's expression it reads in the next conversation
+    status: open
+    severity: medium
+    area: tool discovery / Formula Desk
+    found: 2026-10-11, reported by the user (conversation athr_01M4P2S94KWHYQ75HHMHF4JXWD)
+    models: [gpt-6-luna]
+    scenarios: []
+    problem: >
+      Asked to show Per CWT (Hundredweight), the Formula Desk listed it, then called find_in_trenova
+      and replied "I can't retrieve the full expression or charge policy with my available tools".
+      In athr_01M4P43X2493FXTJE0A13EMXPJ the same agent called get_formula_template directly.
+    cause: Not yet traced; get_formula_template is likely held but not disclosed on the first turn.
+
+  - id: DB-144
+    title: A reprinted table is recognised by word overlap rather than prevented
+    status: open
+    severity: low
+    area: agent runtime / reply passes
+    found: 2026-10-11, review of replypass.go
+    models: []
+    scenarios: []
+    problem: >
+      pointToTables decides a markdown table is a reprint when half its first column, or half the
+      title's words, match a kept table, with plurals stripped. It misses a reprint that renames its
+      columns and can replace a table that only resembles one.
+    cause: >
+      The model is sent every row of a long result and then told not to repeat them; the reply pass
+      guesses afterwards whether it did.
+
+  - id: DB-145
+    title: The grounding guard reads claims with a fixed list of negation words
+    status: open
+    severity: low
+    area: agent runtime / grounding guard
+    found: 2026-10-11, review of groundingguard.go
+    models: []
+    scenarios: []
+    problem: >
+      A sentence counts as a claim about a filed field unless it holds one of eighteen negation
+      words, after splitting on punctuation; "apart from the accessorials" is read as claiming them.
+      Figures in a reply are checked only when the turn filed a write, never in a read-only answer.
+    cause: >
+      The reply restates what the proposal holds in prose, and the guard parses the prose back.
+      Pointing to the proposal's preview instead of restating it would leave little to parse.
+
+  - id: DB-146
+    title: Record ids are stripped from replies on the server and again in the Desk
+    status: open
+    severity: low
+    area: agent runtime / Desk
+    found: 2026-10-11, review of replypass.go and desk-turns.tsx
+    models: []
+    scenarios: []
+    problem: >
+      recordids.Strip runs on every final reply and withoutRecordIds runs on every reply the Desk
+      draws, so the two lists of id shapes have to be kept in step.
+
+  - id: DB-147
+    title: An attached file could not be read, and a re-uploaded one was answered with "no file attached"
+    status: fixed
+    severity: critical
+    area: agent runtime / attachments, document intelligence
+    found: 2026-10-11, conversation athr_01M4PCCB687N678JGPND2SFXP6 (Shipment Assistant, gpt-6-luna)
+    models: [gpt-6-luna, claude-haiku-5-5]
+    scenarios: [rate-confirmation-attached-and-reattached]
+    problem: >
+      Asked to build a shipment from an attached C.H. Robinson rate confirmation, the agent said
+      the file only showed "Van, minimum 53 ft" and asked for a re-upload; given the file again it
+      answered twice that no file was attached.
+    evidence: >
+      The stored text was 11,821 characters over 4 pages, classified RateConfirmation at 0.99, but
+      the prompt carried its first 1,200 characters, which are the confirmation's terms. The agent
+      held no get_document_summary, find_tools could not load one, and the deterministic parse had
+      found only the equipment type.
+    cause: >
+      Files were a section of the system prompt for the turn they came with and nowhere after it,
+      read as a 1,200-character excerpt behind a tool an agent made in AI Control need not hold. A
+      native PDF's text was in content-stream order, putting the terms first and every label away
+      from its value, and pdfium's rect mode doubled and spaced the glyphs of a browser-printed PDF.
+    fix: >
+      The files ride on the message they came with (agentdefinition.DescribeAttachments), with up
+      to 24,000 characters of text, and every later turn replays the message with the files named.
+      read_attachment is a core tool, loaded on any conversation with a file, reading only the
+      person's own uploads to the thread and waiting for a file still being read. A native PDF page
+      is read glyph by glyph and laid out row by row (pdfreader.wordsOf, arrange); the rate
+      confirmation parser reads a row's cells. Document reads return what was found
+      (documentcontent.Findings) instead of the raw analysis, which crowded the text out.
+    files:
+      - services/tms/internal/modules/agent/domain/agentdefinition/attachments.go
+      - services/tms/internal/modules/agent/app/agentquerytoolservice/attachment_tool.go
+      - services/tms/internal/infrastructure/pdfrender/pdfreader/layout.go
+      - services/tms/internal/modules/documents/jobs/documentintelligencejobs/stopextraction.go
+    fixedIn: uncommitted; verified by .deskbench/runs/20261011-181022-run (every attachment check passes on gpt-6-luna and claude-haiku-5-5; the one failing check is DB-148)
+
+  - id: DB-148
+    title: A reply after many list calls names artifacts outside a sentence and is regrounded
+    status: open
+    severity: low
+    area: agent runtime / reply pass (artifact placement)
+    found: 2026-10-11, .deskbench/runs/20261011-180213-run and 20261011-181022-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios: [rate-confirmation-attached-and-reattached]
+    problem: >
+      Building a shipment calls list_customers, list_locations, list_commodities and the rest, each
+      showing an artifact. The reply links several of them ("from [Locations](artifact:...)") and
+      the placement guard rewrites it (relink_artifacts), costing a model call; the implicit
+      "artifacts named without a correction" check fails on both models. Seen against the
+      uncommitted artifactref.go and placement.go changes in the working tree.
+
+  - id: DB-149
+    title: Haiku states a rate agreement price no tool returned, and retracts it a turn later
+    status: open
+    severity: medium
+    area: agent runtime / grounding guard
+    found: 2026-10-11, .deskbench/runs/20261011-180213-run
+    models: [claude-haiku-5-5]
+    scenarios: [rate-confirmation-attached-and-reattached]
+    problem: >
+      Proposing create_shipment priced from the confirmation, the reply said Acme's agreement would
+      price the lane at $4,391.10 linehaul. No call that turn read an agreement; on the next turn the
+      model said the figure came from no lookup. The grounding guard did not catch it because the
+      figure is not a filed field of the proposal.
+
+  - id: DB-150
+    title: A load naming a customer or places Trenova did not have ended with "no shipment was created"
+    status: fixed
+    severity: high
+    area: agent tools / shipment creation
+    found: 2026-10-11, conversation athr_01M4PH54K8SDGWSZHMRTBZK074 and .deskbench/runs/20261011-185955-run
+    models: [gpt-6-luna, claude-haiku-5-5]
+    scenarios: [shipment-from-scratch-with-a-new-customer, shipment-from-a-rate-confirmation-with-new-parties]
+    problem: >
+      The Shipment Assistant held only shipment tools, so it could not add the customer, locations
+      or commodity a load named, and said so; once it could, a load with two new stops spent the
+      turn's twelve calls on one list call per record and ended without proposing anything.
+    cause: >
+      A held tool only ever granted its prerequisite reads, and nothing matched a load's records in
+      one call.
+    fix: >
+      create_shipment names create_customer, create_location and create_commodity as companions
+      (agentports.CompanionTool), held with it unless switched off for the agent, and
+      find_shipment_records matches the customer, stops and commodities in one call, says what is
+      missing and lists the reference values create_shipment takes.
+    fixedIn: uncommitted; verified by the shipment-creation scenarios on both models
+
+  - id: DB-151
+    title: An approved new location failed with "a geocoded location is required"
+    status: fixed
+    severity: high
+    area: places / location geofence
+    found: 2026-10-11, conversation athr_01M4PH54K8SDGWSZHMRTBZK074
+    models: [gpt-6-luna, claude-haiku-5-5]
+    scenarios: [shipment-desk-creates-a-location]
+    problem: >
+      create_location was proposed and approved, then failed on execution, and the rest of the plan
+      was skipped: an automatic geofence demanded coordinates nothing had supplied.
+    cause: >
+      The location form geocodes as the address is typed; the agent's tool had no address lookup,
+      and the geofence rule and the repository both required a point for an automatic geofence.
+    fix: >
+      create_location places the address through kernelports.AutoCompleteService when one is
+      connected; otherwise the location is saved without coordinates (decided 2026-10-11), an
+      automatic geofence then has no shape until it is geocoded, and the card says so. A circle
+      still needs a point.
+    fixedIn: uncommitted; verified by shipment-desk-creates-a-location on both models
+
+  - id: DB-152
+    title: A decision's follow-up was refused as prompt manipulation
+    status: fixed
+    severity: high
+    area: agent runtime / scope guard
+    found: 2026-10-11, .deskbench/runs/20261011-194849-run
+    models: [claude-haiku-5-5]
+    scenarios: [shipment-from-scratch-with-a-new-customer]
+    problem: >
+      After the customer and locations were approved, the turn that should have proposed the
+      shipment was refused: "This assistant's instructions are fixed and cannot be changed".
+    cause: >
+      The note Trenova writes for a decision's follow-up went through the classifier like a
+      person's message.
+    fix: >
+      A turn whose input Trenova wrote (a decision follow-up or a wait's note) is admitted at
+      StageTrenova without the scope guard; its outside content is still the turn's taint.
+    fixedIn: uncommitted
+
+  - id: DB-153
+    title: A follow-up after an approved step reported and stopped instead of doing the next step
+    status: fixed
+    severity: medium
+    area: agent runtime / decision follow-ups
+    found: 2026-10-11, .deskbench/runs/20261011-201922-run
+    models: [claude-haiku-5-5]
+    scenarios: [shipment-from-a-rate-confirmation-with-new-parties]
+    problem: >
+      With the records a shipment needed approved, the follow-up said the shipment could be filed
+      next and filed nothing; earlier, with the file replayed by name only, it withdrew details it
+      had read from the document as made up.
+    cause: >
+      The follow-up instruction asked for one or two sentences of report; the replay showed an
+      earlier file without its text.
+    fix: >
+      The instruction says to take the next step of the person's request when what ran was a step
+      toward it (continueTheWork). A file on a recent message is replayed with its text, and every
+      file the conversation carried counts as what the turn read (RunRequest.FileTexts).
+    fixedIn: uncommitted
+
+  - id: DB-154
+    title: The approval card for a new shipment reads "Enter a shipment on 5 shipments"
+    status: fixed
+    severity: medium
+    area: Desk / approval card
+    found: 2026-10-11, reported in the Desk
+    models: []
+    scenarios: []
+    problem: >
+      The card counts every change in the preview as a record of the first change's kind; a
+      create_shipment preview lists the shipment and one change per stop, so four stops read as
+      five shipments.
+    cause: >
+      approvalFacts counted every preview change, whatever its resource, and scoped the verb with
+      "on N <first resource>", which reads wrong for a create of any count.
+    fix: >
+      Only changes to the first change's resource are counted, and scopePhrase drops the scope for
+      a single create and says "N <resource> in all" for several, so a shipment with its stops
+      reads "Enter a shipment".
+    files:
+      - client/apps/web/src/components/desk-chat/conversation/approval-facts.ts
+      - client/apps/web/src/components/desk-chat/conversation/desk-approval-card.tsx
+      - client/apps/web/src/components/desk-chat/conversation/__tests__/desk-approval-card.test.tsx
+    fixedIn: uncommitted; desk-approval-card.test.tsx (failed before the fix, passes after)
+
+  - id: DB-155
+    title: A created or updated record is not shown until the person asks for it
+    status: fixed
+    severity: medium
+    area: Desk / artifacts
+    found: 2026-10-11, reported in the Desk
+    models: [gpt-6-luna, claude-haiku-5-5]
+    scenarios: [shipment-from-scratch-with-a-new-customer, shipment-from-a-rate-confirmation-with-new-parties]
+    problem: >
+      After an approved create_shipment ran, the follow-up named the pro number and the person had
+      to ask to see the shipment. Any create or update should show the record it wrote.
+    cause: >
+      Only a query result became a record card; an executed write produced none, so the model had
+      nothing to point to and the follow-up turn never read the record again.
+    fix: >
+      An executed write, in the turn or as an approved proposal's follow-up, reads its record again
+      through the record's get_ query tool (agentruntime.ReadRecord) and shows it as a linked card
+      (written_cards.go); WrittenNote tells the model to point to it in the sentence that says what
+      was done. Every write tool with a record ref gets one, not only shipments.
+    files:
+      - services/tms/internal/modules/agent/app/agentruntime/recordread.go
+      - services/tms/internal/modules/agent/app/agentruntime/publish.go
+      - services/tms/internal/modules/agent/app/assistantservice/written_cards.go
+      - services/tms/internal/modules/agent/app/assistantservice/artifacts.go
+      - services/tms/internal/modules/agent/app/assistantservice/turn.go
+    fixedIn: uncommitted; verified by .deskbench/runs/20261011-212132-run and .deskbench/runs/20261011-212432-run (customer, locations and both shipments linked on both providers)

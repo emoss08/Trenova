@@ -20,28 +20,37 @@ const (
 	mentionPageMax       = 50
 )
 
+// mentionKind is a kind of record the @ search offers and the tab it sits
+// under, its own name unless it is filed under another's; the permission that
+// guards it is the kind's own. The client's tabs and glyphs are generated from
+// this table (client/packages/graphql/scripts/generate-record-kinds.mjs), so
+// it stays a list of plain literals.
 type mentionKind struct {
-	kind     string
-	tab      string
-	resource permission.Resource
+	kind permission.RecordKind
+	// under is the tab the kind is filed under when it is not its own.
+	under string
 	// askedFor keeps a kind out of the search across every kind: it is
 	// offered only when its own tab is asked for.
 	askedFor bool
 }
 
+func (m mentionKind) tab() string {
+	if m.under != "" {
+		return m.under
+	}
+
+	return string(m.kind)
+}
+
 var mentionKinds = []mentionKind{
-	{kind: "shipment", tab: "shipment", resource: permission.ResourceShipment},
-	{kind: "customer", tab: "customer", resource: permission.ResourceCustomer},
-	{kind: "invoice", tab: "invoice", resource: permission.ResourceInvoice},
-	{kind: "billing_queue_item", tab: "invoice", resource: permission.ResourceBillingQueue},
-	{kind: "worker", tab: "worker", resource: permission.ResourceWorker},
-	{kind: "carrier", tab: "carrier", resource: permission.ResourceCarrier},
-	{
-		kind:     "invoice_dispute",
-		tab:      "dispute",
-		resource: permission.ResourceInvoiceDispute,
-		askedFor: true,
-	},
+	{kind: "shipment"},
+	{kind: "customer"},
+	{kind: "invoice"},
+	{kind: "billing_queue_item", under: "invoice"},
+	{kind: "worker"},
+	{kind: "carrier"},
+	{kind: "invoice_dispute", under: "dispute", askedFor: true},
+	{kind: "location", askedFor: true},
 }
 
 func (s *Service) SearchMentions(
@@ -56,7 +65,7 @@ func (s *Service) SearchMentions(
 
 	wanted := make([]mentionKind, 0, len(mentionKinds))
 	for _, candidate := range mentionKinds {
-		if (tab == "" && !candidate.askedFor) || candidate.tab == tab {
+		if (tab == "" && !candidate.askedFor) || candidate.tab() == tab {
 			wanted = append(wanted, candidate)
 		}
 	}
@@ -83,7 +92,7 @@ func (s *Service) SearchMentionPage(
 ) (*agentports.MentionPage, error) {
 	kind := strings.TrimSpace(req.Kind)
 	idx := slices.IndexFunc(mentionKinds, func(candidate mentionKind) bool {
-		return candidate.kind == kind
+		return string(candidate.kind) == kind
 	})
 	if idx < 0 {
 		return nil, errortypes.NewValidationError(
@@ -140,7 +149,7 @@ func (s *Service) searchKinds(
 	checks := make([]permissionports.ResourceOperationCheck, 0, len(search.wanted))
 	for _, candidate := range search.wanted {
 		checks = append(checks, permissionports.ResourceOperationCheck{
-			Resource:  candidate.resource.String(),
+			Resource:  candidate.kind.Resource().String(),
 			Operation: permission.OpRead,
 		})
 	}
@@ -160,7 +169,7 @@ func (s *Service) searchKinds(
 	kinds := make([]string, 0, len(search.wanted))
 	for idx, candidate := range search.wanted {
 		if idx < len(result.Results) && result.Results[idx].Allowed {
-			kinds = append(kinds, candidate.kind)
+			kinds = append(kinds, string(candidate.kind))
 		}
 	}
 	if len(kinds) == 0 {

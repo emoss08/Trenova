@@ -1,0 +1,216 @@
+defaults:
+  agent: Bench · Shipment desk
+  tags: [shipments, creation, write]
+
+scenarios:
+  - name: shipment-desk-creates-a-customer
+    description: >
+      create_customer reached from the Shipment Assistant, which holds it because create_shipment
+      names it as a companion. Approved, so the customer is really written.
+    exclusive: pinecrest-customer
+    tags: [masterdata]
+    setup:
+      - >
+        UPDATE customers SET code = 'R' || right(id, 9), name = 'Retired bench customer ' || id,
+          status = 'Inactive'
+        WHERE lower(code) = 'pcsp' OR lower(name) = 'pinecrest supply'
+    steps:
+      - say: "add Pinecrest Supply as a customer, code PCSP, billing address 880 Industrial Pkwy, Reno NV 89502"
+        expect:
+          proposals: [{ tool: create_customer, args: { code: PCSP } }]
+          maxFailedCalls: 1
+      - decide: approve
+        expect:
+          executed: true
+          db:
+            - sql: >
+                SELECT count(*) FROM customers
+                WHERE lower(code) = 'pcsp' AND name = 'Pinecrest Supply' AND status = 'Active'
+              equals: "1"
+              note: the customer was written once
+
+  - name: shipment-desk-creates-a-location
+    description: >
+      create_location reached from the Shipment Assistant, approved. Saved whether or not the
+      organization has an address lookup connected; without one it has no map coordinates yet.
+    exclusive: pinecrest-location
+    tags: [masterdata]
+    setup:
+      - >
+        UPDATE locations SET name = 'Retired bench location ' || id,
+          address_line_1 = 'Retired ' || right(id, 8), status = 'Inactive'
+        WHERE lower(name) = 'pinecrest supply warehouse'
+    steps:
+      - say: "add a location for Pinecrest Supply Warehouse, 880 Industrial Pkwy, Reno NV 89502. its a warehouse we pick up from"
+        expect:
+          proposals: [{ tool: create_location }]
+          maxFailedCalls: 1
+      - decide: approve
+        expect:
+          executed: true
+          db:
+            - sql: >
+                SELECT count(*) FROM locations
+                WHERE name = 'Pinecrest Supply Warehouse' AND city = 'Reno' AND status = 'Active'
+              equals: "1"
+              note: the location was written once
+
+  - name: shipment-desk-creates-a-commodity
+    description: create_commodity reached from the Shipment Assistant, approved.
+    exclusive: cedar-commodity
+    tags: [masterdata]
+    setup:
+      - >
+        UPDATE commodities SET name = 'Retired bench commodity ' || right(id, 12), status = 'Inactive'
+        WHERE lower(name) = 'kiln dried cedar decking'
+    steps:
+      - say: "set up a commodity: Kiln Dried Cedar Decking, freight class 70, not hazmat, stackable"
+        expect:
+          proposals: [{ tool: create_commodity }]
+          maxFailedCalls: 1
+      - decide: approve
+        expect:
+          executed: true
+          db:
+            - sql: >
+                SELECT count(*) FROM commodities
+                WHERE lower(name) = 'kiln dried cedar decking' AND status = 'Active'
+              equals: "1"
+              note: the commodity was written once
+
+  - name: shipment-from-scratch-with-a-new-customer
+    description: >
+      A load for a customer Trenova does not have yet, from one message. The agent used to stop
+      at "no match was found; no shipment was created". It proposes the customer and the two
+      places, then the shipment once they are approved, and the shipment is created. The second
+      load for the same customer goes straight to the shipment.
+    exclusive: silverline
+    setup:
+      - >
+        UPDATE customers SET code = 'R' || right(id, 9), name = 'Retired bench customer ' || id,
+          status = 'Inactive'
+        WHERE lower(code) = 'slvr' OR lower(name) = 'silverline outdoor co'
+      - >
+        UPDATE locations SET name = 'Retired bench location ' || id,
+          address_line_1 = 'Retired ' || right(id, 8), status = 'Inactive'
+        WHERE lower(name) IN ('silverline outdoor warehouse', 'summit sports boise')
+    steps:
+      - say: >
+          new load for Silverline Outdoor Co (code SLVR, bills to 455 W 5th Ave, Spokane WA 99201).
+          pick up at Silverline Outdoor Warehouse, 455 W 5th Ave, Spokane WA 99201 next monday
+          8am-noon, deliver to Summit Sports Boise, 1700 W Main St, Boise ID 83702 next tuesday 9am.
+          18 pallets of camping gear, 22,000 lbs, dry van, $1,850 flat. set up whatever we don't have
+        expect:
+          calls: [find_shipment_records]
+          proposals: [{ tool: create_customer, args: { code: SLVR } }, { tool: create_location }]
+          noCalls: [create_shipment]
+          maxFailedCalls: 2
+          replyExcludes: ["no shipment was created|couldn.t create|could not create"]
+          rubric: >
+            Finds neither the customer nor the two places, and proposes them all in one turn
+            instead of stopping: the customer SLVR with its Spokane billing address, both
+            locations with fitting categories, and camping gear as a commodity if none fits. Says
+            the shipment comes next, once they are approved, and asks nothing it was told.
+      - decide: approve
+        expect:
+          executed: true
+          proposals: [{ tool: create_shipment }]
+          rubric: >
+            The follow-up proposes the shipment with the new customer's and locations' ids: next
+            Monday 08:00-12:00 Spokane to next Tuesday 09:00 Boise, 18 pallets, 22,000 lb, dry van,
+            $1,850.00 Flat Rate.
+      - decide: approve
+        expect:
+          executed: true
+          replyIncludes: ["/artifact:art_/"]
+          db:
+            - sql: >
+                SELECT count(*) FROM shipments AS s JOIN customers AS c ON c.id = s.customer_id
+                WHERE lower(c.code) = 'slvr'
+              equals: "1"
+              note: the shipment was created for the new customer
+      - say: "another one for silverline, same pickup and delivery a week later, same freight and rate"
+        expect:
+          proposals: [{ tool: create_shipment }]
+          noCalls: [create_customer, create_location]
+          maxFailedCalls: 1
+      - decide: approve
+        expect:
+          executed: true
+          db:
+            - sql: >
+                SELECT count(*) FROM shipments AS s JOIN customers AS c ON c.id = s.customer_id
+                WHERE lower(c.code) = 'slvr'
+              equals: "2"
+              note: the second load was created without setting anything up again
+
+  - name: shipment-from-a-rate-confirmation-with-new-parties
+    description: >
+      A rate confirmation for a customer and two facilities Trenova does not have, attached to
+      the message. The agent proposes them, then the shipment, and the shipment is created; the
+      broker's next confirmation for the same lane becomes a shipment with nothing set up again.
+    exclusive: harbor-line
+    tags: [attachments, documents]
+    setup:
+      - >
+        UPDATE customers SET code = 'R' || right(id, 9), name = 'Retired bench customer ' || id,
+          status = 'Inactive'
+        WHERE lower(name) = 'harbor line foods'
+      - >
+        UPDATE locations SET name = 'Retired bench location ' || id,
+          address_line_1 = 'Retired ' || right(id, 8), status = 'Inactive'
+        WHERE lower(name) IN ('harbor line cold storage', 'cascade fresh market dc')
+      - >
+        UPDATE commodities SET name = 'Retired bench commodity ' || right(id, 12), status = 'Inactive'
+        WHERE lower(name) = 'frozen salmon fillets'
+      - >
+        UPDATE shipments SET bol = bol || '-retired-' || right(id, 6)
+        WHERE bol IN ('NP-88410', 'NP-88415')
+    steps:
+      - say: Build the shipment from this rate confirmation and set up anything we don't have yet.
+        page: { path: /shipments, title: Shipments }
+        attach: [../fixtures/attachments/rate-confirmation-np-88410.pdf]
+        expect:
+          calls: [find_shipment_records]
+          proposals: [{ tool: create_customer }, { tool: create_location }]
+          noCalls: [create_shipment]
+          maxFailedCalls: 2
+          replyExcludes:
+            - "don't see|do not see|can't see|no file|not attached|re-upload|no shipment was created"
+          rubric: >
+            Reads the confirmation and proposes Harbor Line Foods as the customer, Harbor Line Cold
+            Storage (Seattle) and Cascade Fresh Market DC (Clackamas) as locations, and frozen salmon
+            fillets as a commodity unless one already fits, all in this turn.
+      - decide: approve
+        expect:
+          executed: true
+          proposals: [{ tool: create_shipment }]
+          rubric: >
+            The follow-up proposes NP-88410: pickup 2027-04-06 06:00-10:00 Seattle, delivery
+            2027-04-07 07:00 Clackamas, 24 pallets, 41,500 lb, reefer at -10 F, $2,410.00 ($2,150
+            line haul and $260 fuel), with the document as its source.
+      - decide: approve
+        expect:
+          executed: true
+          replyIncludes: ["/artifact:art_/"]
+          db:
+            - sql: >
+                SELECT count(*) FROM shipments AS s JOIN customers AS c ON c.id = s.customer_id
+                WHERE c.name = 'Harbor Line Foods'
+              equals: "1"
+              note: the shipment was created for the new customer
+      - say: Here is their next one, same lane. Book it.
+        attach: [../fixtures/attachments/rate-confirmation-np-88415.pdf]
+        expect:
+          proposals: [{ tool: create_shipment }]
+          noCalls: [create_customer, create_location]
+          maxFailedCalls: 1
+      - decide: approve
+        expect:
+          executed: true
+          db:
+            - sql: >
+                SELECT count(*) FROM shipments AS s JOIN customers AS c ON c.id = s.customer_id
+                WHERE c.name = 'Harbor Line Foods'
+              equals: "2"
+              note: the second confirmation became a shipment with nothing set up again

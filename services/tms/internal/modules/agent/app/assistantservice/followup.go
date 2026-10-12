@@ -32,9 +32,14 @@ const (
 
 // followUpInstruction is what the agent is asked to do with a decision.
 const followUpInstruction = "Tell the person in one or two sentences what happened and the " +
-	"most useful next step. Report only what this note and the proposal's card hold: do not " +
-	"describe a value, a record or an effect that neither of them names, and where they do " +
-	"not say, say you do not know. Do not propose the same change again."
+	"most useful next step. Report only what this note and the proposal's card hold about " +
+	"what ran: do not describe a value, a record or an effect of it that neither of them " +
+	"names, and where they do not say, say you do not know. Do not propose the same change " +
+	"again. " + continueTheWork
+
+const continueTheWork = "When what ran was a step toward something the person asked for " +
+	"that is not done yet, such as the records a shipment needs, take the next step now " +
+	"with your tools instead of asking whether to; ask only for what you cannot find."
 
 const (
 	declinedNoteHeader = "The person declined:"
@@ -47,10 +52,16 @@ const (
 		"unchanged. Report only what this note and the proposal's card hold: do not describe " +
 		"a value, a record or an effect that neither of them names."
 	notedInstruction = "Tell the person in one or two sentences what happened, and answer " +
-		"what they said. Report only what this note and the proposal's card hold: do not " +
-		"describe a value, a record or an effect that neither of them names, and where they " +
-		"do not say, say you do not know. Do not propose the same change again."
+		"what they said. Report only what this note and the proposal's card hold about what " +
+		"ran: do not describe a value, a record or an effect of it that neither of them names, " +
+		"and where they do not say, say you do not know. Do not propose the same change " +
+		"again. " + continueTheWork
 )
+
+type decisionFollowUp struct {
+	note    string
+	decided []*agent.AgentProposal
+}
 
 type decisionNoteParams struct {
 	thread     *conversation.Thread
@@ -70,12 +81,17 @@ type decisionNoteParams struct {
 //
 // Its first line is the person-readable record of the decision, which is what
 // the thread shows in place of a message they did not type.
-func (s *Service) decisionNote(ctx context.Context, p decisionNoteParams) (string, error) {
+func (s *Service) decisionNote(
+	ctx context.Context,
+	p *decisionNoteParams,
+) (decisionFollowUp, error) {
 	if p.planID.IsNotNil() {
 		return s.planDecisionNote(ctx, p)
 	}
 	if s.proposals == nil {
-		return "", errortypes.NewBusinessError("Decisions cannot be followed up here")
+		return decisionFollowUp{}, errortypes.NewBusinessError(
+			"Decisions cannot be followed up here",
+		)
 	}
 
 	stored, err := s.proposals.ListByThread(ctx, agentports.ListAgentProposalsByThreadRequest{
@@ -83,7 +99,7 @@ func (s *Service) decisionNote(ctx context.Context, p decisionNoteParams) (strin
 		TenantInfo: p.tenant,
 	})
 	if err != nil {
-		return "", err
+		return decisionFollowUp{}, err
 	}
 
 	var proposal *agent.AgentProposal
@@ -94,7 +110,9 @@ func (s *Service) decisionNote(ctx context.Context, p decisionNoteParams) (strin
 		}
 	}
 	if proposal == nil {
-		return "", errortypes.NewNotFoundError("That proposal is not part of this conversation")
+		return decisionFollowUp{}, errortypes.NewNotFoundError(
+			"That proposal is not part of this conversation",
+		)
 	}
 
 	multiErr := errortypes.NewMultiError()
@@ -107,19 +125,22 @@ func (s *Service) decisionNote(ctx context.Context, p decisionNoteParams) (strin
 			"That decision has already been answered")
 	}
 	if multiErr.HasErrors() {
-		return "", multiErr
+		return decisionFollowUp{}, multiErr
 	}
 
 	decisions, err := s.decisionsOn(ctx, p.tenant, []pulid.ID{proposal.ID})
 	if err != nil {
-		return "", err
+		return decisionFollowUp{}, err
 	}
 	note := noteFrom(decisions, []pulid.ID{proposal.ID})
 
-	return fmt.Sprintf("%s%s\nDecision on proposal %s (%s). %s%s",
-		decisionLine(proposal), ranWith(proposal, decisions), proposal.ID, proposal.ToolName,
-		producedNote(proposal),
-		followUpAsk(proposal.Status == agent.ProposalStatusRejected, note)), nil
+	return decisionFollowUp{
+		note: fmt.Sprintf("%s%s\nDecision on proposal %s (%s). %s%s",
+			decisionLine(proposal), ranWith(proposal, decisions), proposal.ID, proposal.ToolName,
+			producedNote(proposal),
+			followUpAsk(proposal.Status == agent.ProposalStatusRejected, note)),
+		decided: []*agent.AgentProposal{proposal},
+	}, nil
 }
 
 func (s *Service) personNote(
@@ -312,9 +333,14 @@ func executionFailureReason(text string) string {
 
 // planDecisionNote writes the input of the turn that follows a decision on
 // one of the thread's plans: what was decided, and how far the steps got.
-func (s *Service) planDecisionNote(ctx context.Context, p decisionNoteParams) (string, error) {
+func (s *Service) planDecisionNote(
+	ctx context.Context,
+	p *decisionNoteParams,
+) (decisionFollowUp, error) {
 	if s.plans == nil {
-		return "", errortypes.NewBusinessError("Decisions cannot be followed up here")
+		return decisionFollowUp{}, errortypes.NewBusinessError(
+			"Decisions cannot be followed up here",
+		)
 	}
 
 	plans, err := s.plans.ListByThread(ctx, agentports.ListAgentPlansByThreadRequest{
@@ -322,7 +348,7 @@ func (s *Service) planDecisionNote(ctx context.Context, p decisionNoteParams) (s
 		TenantInfo: p.tenant,
 	})
 	if err != nil {
-		return "", err
+		return decisionFollowUp{}, err
 	}
 
 	var plan *agent.AgentPlan
@@ -333,7 +359,9 @@ func (s *Service) planDecisionNote(ctx context.Context, p decisionNoteParams) (s
 		}
 	}
 	if plan == nil {
-		return "", errortypes.NewNotFoundError("That plan is not part of this conversation")
+		return decisionFollowUp{}, errortypes.NewNotFoundError(
+			"That plan is not part of this conversation",
+		)
 	}
 
 	multiErr := errortypes.NewMultiError()
@@ -345,12 +373,12 @@ func (s *Service) planDecisionNote(ctx context.Context, p decisionNoteParams) (s
 			"That decision has already been answered")
 	}
 	if multiErr.HasErrors() {
-		return "", multiErr
+		return decisionFollowUp{}, multiErr
 	}
 
-	steps, err := s.planSteps(ctx, &p, plan.ID)
+	steps, err := s.planSteps(ctx, p, plan.ID)
 	if err != nil {
-		return "", err
+		return decisionFollowUp{}, err
 	}
 
 	stepIDs := make([]pulid.ID, 0, len(steps))
@@ -359,12 +387,15 @@ func (s *Service) planDecisionNote(ctx context.Context, p decisionNoteParams) (s
 	}
 	note, err := s.personNote(ctx, p.tenant, stepIDs)
 	if err != nil {
-		return "", err
+		return decisionFollowUp{}, err
 	}
 
-	return fmt.Sprintf("%s\nDecision on plan %s (%d steps). %s%s",
-		planDecisionLine(plan, steps), plan.ID, plan.StepCount, stepsProducedNote(steps),
-		followUpAsk(plan.Status == agent.PlanStatusRejected, note)), nil
+	return decisionFollowUp{
+		note: fmt.Sprintf("%s\nDecision on plan %s (%d steps). %s%s",
+			planDecisionLine(plan, steps), plan.ID, plan.StepCount, stepsProducedNote(steps),
+			followUpAsk(plan.Status == agent.PlanStatusRejected, note)),
+		decided: steps,
+	}, nil
 }
 
 func (s *Service) planSteps(

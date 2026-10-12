@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -55,17 +56,26 @@ type CreateLocationTool struct {
 	locations  locationCreator
 	states     stateReader
 	categories locationCategoryReader
+	places     placeFinder
 }
 
-func NewCreateLocationTool(
-	locations locationCreator,
-	states stateReader,
-	categories locationCategoryReader,
-) agentports.AgentTool {
-	return &CreateLocationTool{locations: locations, states: states, categories: categories}
+type CreateLocationToolParams struct {
+	Locations  locationCreator
+	States     stateReader
+	Categories locationCategoryReader
+	Places     placeFinder
 }
 
-func (t *CreateLocationTool) Name() string { return "create_location" }
+func NewCreateLocationTool(p CreateLocationToolParams) agentports.AgentTool {
+	return &CreateLocationTool{
+		locations:  p.Locations,
+		states:     p.States,
+		categories: p.Categories,
+		places:     p.Places,
+	}
+}
+
+func (t *CreateLocationTool) Name() string { return agentdefinition.ToolCreateLocation }
 
 func (t *CreateLocationTool) Description() string {
 	return "Create a location record for a pickup or delivery address that has none, such " +
@@ -224,6 +234,7 @@ type locationPlan struct {
 	entity   *location.Location
 	state    *usstate.UsState
 	category *locationcategory.LocationCategory
+	unplaced string
 }
 
 func (t *CreateLocationTool) plan(
@@ -263,21 +274,32 @@ func (t *CreateLocationTool) Build(
 		)
 	}
 
+	entity := &location.Location{
+		OrganizationID:     tenant.OrgID,
+		BusinessUnitID:     tenant.BuID,
+		LocationCategoryID: category.ID,
+		StateID:            state.ID,
+		Status:             domaintypes.StatusActive,
+		Name:               draft.name,
+		AddressLine1:       draft.addressLine1,
+		AddressLine2:       draft.addressLine2,
+		City:               draft.city,
+		PostalCode:         draft.postalCode,
+	}
+	place, unplaced := t.place(ctx, draft, tenant)
+	if place != nil {
+		latitude, longitude := place.Latitude, place.Longitude
+		entity.PlaceID = place.PlaceID
+		entity.IsGeocoded = true
+		entity.Latitude = &latitude
+		entity.Longitude = &longitude
+	}
+
 	return &locationPlan{
-		entity: &location.Location{
-			OrganizationID:     tenant.OrgID,
-			BusinessUnitID:     tenant.BuID,
-			LocationCategoryID: category.ID,
-			StateID:            state.ID,
-			Status:             domaintypes.StatusActive,
-			Name:               draft.name,
-			AddressLine1:       draft.addressLine1,
-			AddressLine2:       draft.addressLine2,
-			City:               draft.city,
-			PostalCode:         draft.postalCode,
-		},
+		entity:   entity,
 		state:    state,
 		category: category,
+		unplaced: unplaced,
 	}, nil
 }
 

@@ -34,9 +34,10 @@ Verdicts:
 | `deferred-decisions-pill.tsx` | the dock's "N changes wait on you" pill in `DeskThread` | reuse Desk's |
 | `read-only-thread-notice.tsx` | the composer `lock` line (`desk-locks.tsx`) | reuse Desk's |
 | `floating-slot.tsx` | none needed: the Desk dock stacks its cards | delete |
+| `choice-prompt.tsx` | `desk-chat/conversation/desk-ask.tsx` (docked above the composer) and `desk-ask-fields.tsx` | deleted |
 | `web-citations.tsx` | `desk-chat/conversation/desk-web.tsx` for replies | keep (shared) for `tool-activity.tsx` only |
 | `tool-activity.tsx`, `delegate-step.tsx`, `decision-chrome.tsx`, `voice/agent-gutter.tsx` | none: the Desk shows a ledger, never a step list | keep (shared): the agent-control run transcript draws them |
-| `choice-prompt.tsx`, `report-run-card.tsx`, `proposal-editor.tsx`, `record-subset-field.tsx`, `proposal-preview/*`, `display-value.tsx`, `voice/artifact-chrome.tsx`, `voice/working-dot.tsx`, `artifact-opener.tsx`, `decision-follow-up.tsx`, `outside-content-badge.tsx` | already Desk's own building blocks | keep (shared) |
+| `report-run-card.tsx`, `proposal-editor.tsx`, `record-subset-field.tsx`, `proposal-preview/*`, `display-value.tsx`, `voice/artifact-chrome.tsx`, `voice/working-dot.tsx`, `artifact-opener.tsx`, `decision-follow-up.tsx`, `outside-content-badge.tsx` | already Desk's own building blocks | keep (shared) |
 | `agent-picker.tsx` | — (an admin form control, not chat) | keep (shared) |
 | `page-assistant.tsx` | — (binds a thread to a page) | keep (shell); now renders `DeskThread` |
 

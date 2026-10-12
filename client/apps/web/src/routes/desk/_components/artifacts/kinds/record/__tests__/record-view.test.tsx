@@ -2,8 +2,8 @@ import type { AssistantArtifact } from "@/types/assistant";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
-import { entityCardFrom } from "../artifact-payloads";
-import { DeskRecordBody } from "../desk-bodies";
+import { entityCardFrom } from "../../../artifact-payloads";
+import { DeskRecordBody } from "../desk-record-body";
 import { localMoment } from "../desk-record-view";
 
 function card(payload: Record<string, unknown>): AssistantArtifact {

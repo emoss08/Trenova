@@ -1,6 +1,7 @@
 package assistantservice
 
 import (
+	"strings"
 	"context"
 	"errors"
 	"testing"
@@ -116,10 +117,13 @@ func TestSendMessageStream_StoresAttachmentsAndMentionsOnTheUserTurn(t *testing.
 	}
 
 	require.NotNil(t, completion.LastReq)
-	assert.Contains(t, completion.LastReq.System, "<attachments>")
-	assert.Contains(t, completion.LastReq.System, "file: rate-con.pdf (application/pdf, 2 pages)")
-	assert.Contains(t, completion.LastReq.System, "looks like: rate_confirmation")
-	assert.Contains(t, completion.LastReq.System, "excerpt: RATE CONFIRMATION Acme Foods")
+	question := askedWith(t, completion.LastReq)
+	assert.Contains(t, question, "<attachments>")
+	assert.Contains(t, question, "file: rate-con.pdf (application/pdf, 2 pages)")
+	assert.Contains(t, question, "looks like: rate_confirmation")
+	assert.Contains(t, question, "<file_text>\nRATE CONFIRMATION Acme Foods $1,200\n</file_text>")
+	assert.True(t, strings.HasSuffix(question, "Does this match what we quoted?"))
+	assert.NotContains(t, completion.LastReq.System, "RATE CONFIRMATION Acme Foods")
 	assert.Contains(t, completion.LastReq.System, "<mentioned_records>")
 	assert.Contains(t, completion.LastReq.System, "- customer "+customer.String()+": Acme Foods")
 }
@@ -225,8 +229,22 @@ func TestSendMessageStream_NamesAPendingAttachment(t *testing.T) {
 	}, actor, nil)
 	require.NoError(t, err)
 
-	assert.Contains(t, completion.LastReq.System, "id: "+doc.ID.String())
-	assert.Contains(t, completion.LastReq.System, "reading: Pending")
+	question := askedWith(t, completion.LastReq)
+	assert.Contains(t, question, "id: "+doc.ID.String())
+	assert.Contains(t, question, "reading: still being read")
+}
+
+func askedWith(t *testing.T, req *agentports.ChatCompletionRequest) string {
+	t.Helper()
+
+	for idx := len(req.Messages) - 1; idx >= 0; idx-- {
+		if req.Messages[idx].Role == agentports.RoleUser {
+			return req.Messages[idx].Content
+		}
+	}
+	require.Fail(t, "the request carries no question")
+
+	return ""
 }
 
 func TestSendMessageStream_RendersTheTableView(t *testing.T) {
@@ -401,4 +419,25 @@ func TestAsk_FallsBackToAnyChatAgentAndRefusesWithNone(t *testing.T) {
 	}, actor, nil)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
+}
+
+func TestEarlierFileTexts_ReadsTheFilesTheConversationCarried(t *testing.T) {
+	t.Parallel()
+
+	svc, _ := newConversationService(&scriptedCompletion{}, testDefinition())
+	svc.contents = &stubContents{content: &documentcontent.Content{ContentText: "Total:   $2,410.00"}}
+	doc := pulid.MustNew("doc_")
+	history := []conversation.Message{
+		{Role: conversation.RoleUser, Content: "Build it",
+			Attachments: []conversation.MessageAttachment{{DocumentID: doc}}},
+		{Role: conversation.RoleAssistant, Content: "Proposed."},
+		{Role: conversation.RoleUser, Content: "Again",
+			Attachments: []conversation.MessageAttachment{{DocumentID: doc}}},
+	}
+
+	texts := svc.earlierFileTexts(t.Context(), history, testActor().TenantInfo())
+
+	assert.Equal(t, map[string]string{doc.String(): "Total:   $2,410.00"}, texts,
+		"a file attached twice is read once")
+	assert.Empty(t, svc.earlierFileTexts(t.Context(), nil, testActor().TenantInfo()))
 }

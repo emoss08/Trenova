@@ -149,10 +149,11 @@ export type MarkdownLinkRenderer = (href: string, children: ReactNode) => ReactN
 export const MarkdownLinkContext = createContext<MarkdownLinkRenderer | null>(null);
 
 /**
- * Draws an artifact a reply names in its sentence, or returns null when the
- * surface does not know that artifact, which leaves the link its words.
+ * Draws an artifact a reply names in its sentence, by the artifact's own
+ * title, or returns null when the surface does not know that artifact, which
+ * leaves the link its words.
  */
-export type ArtifactLinkRenderer = (id: string, children: ReactNode) => ReactNode | null;
+export type ArtifactLinkRenderer = (id: string) => ReactNode | null;
 
 export const ArtifactLinkContext = createContext<ArtifactLinkRenderer | null>(null);
 
@@ -162,8 +163,7 @@ export function MarkdownLink({ href, children }: ComponentProps<"a">) {
   const renderArtifact = use(ArtifactLinkContext);
   const artifactId = artifactRefId(href);
   if (artifactId !== null || href?.startsWith("artifact:")) {
-    const drawn =
-      artifactId !== null && renderArtifact ? renderArtifact(artifactId, children) : null;
+    const drawn = artifactId !== null && renderArtifact ? renderArtifact(artifactId) : null;
     return drawn ?? <span className="font-medium">{children}</span>;
   }
   if (inRouter && isAppPath(href)) {

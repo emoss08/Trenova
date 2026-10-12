@@ -2,6 +2,7 @@ import { AssistantAgentProvider } from "@/components/agent-identity/agent-contex
 import { stepsFromExchanges, type ToolStep } from "@/components/assistant/activity";
 import type { ApprovalEntry } from "@/components/assistant/approval-queue";
 import { ArtifactOpenerProvider } from "@/components/assistant/artifact-opener";
+import { liveAskRequest } from "@/components/assistant/ask-requests";
 import { fillCommand, SLASH_COMMANDS } from "@/components/assistant/composer-commands";
 import { readyAttachments } from "@/components/assistant/composer-types";
 import { meterView } from "@/components/assistant/compaction";
@@ -20,7 +21,6 @@ import {
   type PageRequest,
 } from "@/components/assistant/use-thread-model";
 import { ArtifactLinkContext, type ArtifactLinkRenderer } from "@/components/elements/ai-markdown";
-import { keptWhileWriting, withArtifactRefs } from "@/lib/artifact-ref";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { invalidateProposalViews } from "@/lib/proposal-cache";
 import { queries } from "@/lib/queries";
@@ -66,6 +66,7 @@ import { DeskModelPicker } from "./composer/desk-model-picker";
 import { DeskPageChip, useDeskPage } from "./composer/desk-page-chip";
 import { DeskDropOverlay, useDeskDrop } from "./composer/desk-uploads";
 import { DeskApprovalCard, DeskApprovedCard } from "./conversation/desk-approval-card";
+import { DeskAskDock, deskAskPlaceholder } from "./conversation/desk-ask";
 import { DeskCompactMark } from "./conversation/desk-compact-mark";
 import { DeskConfetti } from "./conversation/desk-confetti";
 import {
@@ -206,7 +207,6 @@ export type DeskThreadProps = {
 
 const NO_STEPS: ToolStep[] = [];
 const NO_OP = () => {};
-const NO_ARTIFACTS: AssistantArtifact[] = [];
 
 /** How long a confetti burst lasts. */
 const CONFETTI_MS = 5400;
@@ -223,13 +223,12 @@ function lockedForFiles(thread: AssistantThread, agentsUnavailable: boolean): bo
 }
 
 /** Whether a saved reply has anything of its own to show besides the work behind it. */
-function replyShows(
-  entry: { message: { content: string }; tools: { call: { name: string } }[] },
-  artifacts: number,
-): boolean {
+function replyShows(entry: {
+  message: { content: string };
+  tools: { call: { name: string } }[];
+}): boolean {
   return (
     entry.message.content !== "" ||
-    artifacts > 0 ||
     entry.tools.some((tool) => tool.call.name === "ask_user" || tool.call.name === "run_report")
   );
 }
@@ -382,7 +381,6 @@ export function DeskThread({
     thread,
     agent,
     agentsUnavailable,
-    artifacts,
     onLiveArtifacts: artifactHost?.onLive,
     onWorkingChange,
     onNavigate,
@@ -797,6 +795,20 @@ export function DeskThread({
   const lock = composerLock?.lock ?? fallbackLock;
   const rateLimited = turn?.status === "error" ? turn.rateLimited : null;
 
+  // The question the conversation waits on the person to answer sits above
+  // the composer: the one the reply being written has just asked, or the
+  // newest one in the saved thread that nothing has answered. A question the
+  // reply under way is answering, or one in a conversation nobody can send
+  // to, waits on no one.
+  const liveAsk = useMemo(() => (turn ? liveAskRequest(turn.segments) : null), [turn]);
+  const answeringAsk =
+    turn !== null && !turn.followUp && turn.userContent !== "" && turn.rateLimited === null;
+  const answerAsk = lock ? undefined : model.answer;
+  const dockedAsk =
+    answerAsk === undefined ? null : (liveAsk ?? (answeringAsk ? null : model.asks.open));
+  const askBlocked = isActive || !online || rateLimited !== null;
+  const replyAsks = useSharedMap(model.asks.byReply);
+
   // Each reply's steps and artifacts are worked out from the whole list, and
   // stay the same arrays while they are equal (useSharedMap), so a reply's
   // memoized row is skipped when an older page arrives above it.
@@ -817,45 +829,7 @@ export function DeskThread({
   }, [entries]);
   const replySteps = useSharedMap(replyStepsByEntry);
 
-  // A step that only looked something up has no words of its own; what it
-  // made is shown under the reply's text that follows it, where the design
-  // puts a reply's artifacts, or on its last step when no text follows.
   const showsArtifacts = artifactHost !== undefined;
-  const rowArtifactsByEntry = useMemo(() => {
-    const byEntry = new Map<string, AssistantArtifact[]>();
-    if (!showsArtifacts) {
-      return byEntry;
-    }
-    let carried: AssistantArtifact[] = [];
-    let lastReply: string | null = null;
-    const settle = () => {
-      if (carried.length > 0 && lastReply !== null) {
-        byEntry.set(lastReply, [...(byEntry.get(lastReply) ?? []), ...carried]);
-      }
-      carried = [];
-      lastReply = null;
-    };
-    for (const entry of entries) {
-      if (entry.kind === "user") {
-        settle();
-        continue;
-      }
-      if (entry.kind !== "assistant") {
-        continue;
-      }
-      const own = model.artifactsByMessage.get(entry.message.id) ?? [];
-      if (entry.message.content === "") {
-        carried = [...carried, ...own];
-      } else {
-        byEntry.set(entry.message.id, [...carried, ...own]);
-        carried = [];
-      }
-      lastReply = entry.message.id;
-    }
-    settle();
-    return byEntry;
-  }, [entries, model.artifactsByMessage, showsArtifacts]);
-  const rowArtifacts = useSharedMap(rowArtifactsByEntry);
 
   // Which rows open the conversation, and which reply steps carry their
   // reply's time: worked out before drawing, from what each row will show.
@@ -869,11 +843,7 @@ export function DeskThread({
         continue;
       }
       if (entry.kind === "assistant") {
-        const shown = replyShows(
-          entry,
-          (rowArtifacts.get(entry.message.id) ?? NO_ARTIFACTS).length,
-        );
-        if (!shown) {
+        if (!replyShows(entry)) {
           continue;
         }
         if (!replyHeaded || !(placements.get(entry.message.id)?.continued ?? false)) {
@@ -889,7 +859,7 @@ export function DeskThread({
       }
     }
     return { first, headed, any: seenFirst };
-  }, [entries, placements, rowArtifacts]);
+  }, [entries, placements]);
   const isFirst = (id: string) => layout.first.has(id);
 
   // A reply names an artifact in its sentence by id; the badge is drawn from
@@ -904,12 +874,14 @@ export function DeskThread({
   }, [artifacts, liveArtifacts]);
   const activeInline = workspaceOpen ? (artifactHost?.activeId ?? null) : null;
   const renderArtifactLink = useCallback<ArtifactLinkRenderer>(
-    (id, children) => {
+    (id) => {
       const artifact = showsArtifacts ? knownArtifacts.get(id) : undefined;
       return artifact ? (
-        <DeskInlineArtifact artifact={artifact} active={activeInline === id} onOpen={openArtifact}>
-          {children}
-        </DeskInlineArtifact>
+        <DeskInlineArtifact
+          artifact={artifact}
+          active={activeInline === id}
+          onOpen={openArtifact}
+        />
       ) : null;
     },
     [activeInline, knownArtifacts, openArtifact, showsArtifacts],
@@ -1144,8 +1116,7 @@ export function DeskThread({
                           </DeskRow>
                         );
                       }
-                      const own = rowArtifacts.get(entry.message.id) ?? NO_ARTIFACTS;
-                      if (!replyShows(entry, own.length)) {
+                      if (!replyShows(entry)) {
                         return null;
                       }
                       const continued = !layout.headed.has(entry.message.id);
@@ -1162,12 +1133,11 @@ export function DeskThread({
                             entry={entry}
                             steps={replySteps.get(entry.message.id) ?? NO_STEPS}
                             threadArtifacts={artifacts}
-                            artifacts={own}
-                            latestUserSequence={model.latestUserSequence}
+                            asks={replyAsks.get(entry.message.id)}
+                            dockedAskId={dockedAsk?.callId ?? null}
                             chapter={chapterOf(entry.message.id)}
                             closesTurn={lastOfTurn.has(entry.message.id)}
                             onTogglePin={chapters?.toggle}
-                            onAnswer={model.answer}
                             onOpenArtifact={openArtifact}
                           />
                           {(poorlyRead.get(entry.message.id) ?? []).map((fileName) => (
@@ -1253,7 +1223,7 @@ export function DeskThread({
                         time={turnTime(Math.floor(turn.startedAt / 1000), timezone, t)}
                       >
                         <DeskStreamingReply
-                          text={withArtifactRefs(live, keptWhileWriting(turn.artifacts))}
+                          text={live}
                           usedMemoryIds={turn.usedMemoryIds}
                           webSources={liveSources}
                         />
@@ -1451,6 +1421,22 @@ export function DeskThread({
                         </div>
                       )}
                       {budgetQuery.data && !lock && <DeskUsageMeter budget={budgetQuery.data} />}
+                      {dockedAsk && answerAsk && (
+                        <DeskAskDock
+                          key={dockedAsk.callId}
+                          request={dockedAsk}
+                          disabled={askBlocked}
+                          disabledNote={
+                            isActive
+                              ? undefined
+                              : !online
+                                ? t("You can answer once you're back online.")
+                                : t("You can answer in a moment.")
+                          }
+                          compact={compact}
+                          onAnswer={answerAsk}
+                        />
+                      )}
                       {undo.state.phase === "waiting" && (
                         <DeskUndoBar
                           key={undo.state.window.key}
@@ -1538,9 +1524,11 @@ export function DeskThread({
                         placeholder={
                           showCard
                             ? t("Reply, or ask about this change…")
-                            : lastIsRefusal
-                              ? t("Rephrase, or ask another agent…")
-                              : undefined
+                            : dockedAsk
+                              ? deskAskPlaceholder(dockedAsk, t)
+                              : lastIsRefusal
+                                ? t("Rephrase, or ask another agent…")
+                                : undefined
                         }
                         lock={lock}
                         note={composerLock?.note}

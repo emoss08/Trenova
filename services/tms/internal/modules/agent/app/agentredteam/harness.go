@@ -332,8 +332,8 @@ func contextFor(
 			DocumentID:  source.Attachment.DocumentID,
 			FileName:    source.Attachment.FileName,
 			ContentType: "application/pdf",
-			Status:      "Extracted",
-			Excerpt:     source.Attachment.Excerpt,
+			Reading:     agentdefinition.AttachmentReadingDone,
+			Text:        source.Attachment.Excerpt,
 		}}
 	}
 	if source.Memory != nil {

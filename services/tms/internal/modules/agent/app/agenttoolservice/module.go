@@ -37,6 +37,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
@@ -290,8 +291,14 @@ func provideCreateLocationTool(
 	locations *locationservice.Service,
 	states usstateports.UsStateRepository,
 	categories locationcategoryports.LocationCategoryRepository,
+	places kernelports.AutoCompleteService,
 ) agentports.AgentTool {
-	return masterdatatools.NewCreateLocationTool(locations, states, categories)
+	return masterdatatools.NewCreateLocationTool(masterdatatools.CreateLocationToolParams{
+		Locations:  locations,
+		States:     states,
+		Categories: categories,
+		Places:     places,
+	})
 }
 
 func provideUpdateShipmentTool(

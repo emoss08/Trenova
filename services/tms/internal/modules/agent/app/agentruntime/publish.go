@@ -46,8 +46,11 @@ func publishArtifactSpec() kernelports.ToolSpec {
 			"properties": map[string]any{
 				"title": map[string]any{
 					"type": "string",
-					"description": "What the document is, in a few words. " +
-						"\"Shipment SEED-SHP-007 brief\".",
+					"description": "What the document is, in a few words and in sentence " +
+						"case: only the first word, names and record numbers take capitals, " +
+						"and no markdown or quotes. It is how the document is named wherever " +
+						"it is shown. \"Shipment SEED-SHP-007 brief\", \"Late loads for " +
+						"Peak Distributing\".",
 				},
 				"body": map[string]any{
 					"type": "string",
@@ -244,14 +247,17 @@ func publishedContent(shown *agentports.ShownArtifact) string {
 // rewrote five ranked drivers as its own table and linked nothing, and the
 // dispatcher lost the findings and the driver links the table carries.
 func shownNote(shown *agentports.ShownArtifact) string {
-	if tabular(shown.Kind) && shown.Opens {
+	if shown.Written != "" {
+		return WrittenNote(shown)
+	}
+	if shown.Tabular() && shown.Opens {
 		return fmt.Sprintf("\n\n[This view is kept beside the conversation as %q, with how many "+
 			"rows it holds and the first few; the person opens it as the live table. Point to it "+
 			"in the sentence that describes it, and do not write its rows out or paste a link. Say "+
 			"what it was narrowed to, and anything the description asked for that it could not "+
 			"express.%s]", shown.Title, artifactRefNote(shown))
 	}
-	if tabular(shown.Kind) && shown.Actionable {
+	if shown.Tabular() && shown.Actionable {
 		return fmt.Sprintf("\n\n[This result is kept as a table titled %q that the person works "+
 			"from beside the conversation: they select rows there, review each one and act on "+
 			"them. Point to it in the sentence that mentions it, however few rows it has, and do "+
@@ -259,7 +265,15 @@ func shownNote(shown *agentports.ShownArtifact) string {
 			"need attention. Work from the fields it already has instead of looking up each row "+
 			"again.%s]", shown.Title, artifactRefNote(shown))
 	}
-	if tabular(shown.Kind) && shown.Ranked {
+	if shown.Tabular() && shown.OpensRecords {
+		return fmt.Sprintf("\n\n[This result is kept as a table titled %q beside the "+
+			"conversation, and each row opens there as the record itself, to read whole and "+
+			"try. Point to it in the sentence that mentions it, however few rows it has, and do "+
+			"not write its rows out as a markdown table. Answer with what the question asks of "+
+			"them, naming the rows that answer it. Work from the fields it already has instead "+
+			"of looking up each row again.%s]", shown.Title, artifactRefNote(shown))
+	}
+	if shown.Tabular() && shown.Ranked {
 		return fmt.Sprintf("\n\n[This result is kept as a ranked table titled %q, best first, "+
 			"that the person picks from beside the conversation, with the findings behind each "+
 			"row and a link to each record. Point to it in the sentence that names your pick, "+
@@ -268,7 +282,7 @@ func shownNote(shown *agentports.ShownArtifact) string {
 			"the others. Work from the fields it already has instead of looking up each row "+
 			"again.%s]", shown.Title, artifactRefNote(shown))
 	}
-	if tabular(shown.Kind) && shown.Rows > 0 && shown.Rows <= InlineRows {
+	if shown.Tabular() && shown.Rows > 0 && shown.Rows <= InlineRows {
 		return fmt.Sprintf("\n\n[This result has %d rows, few enough to answer in your reply "+
 			"when the answer is a fact or a few of its rows: give them with only the columns the "+
 			"question needs, and do not point to the table titled %q; a table you do not point "+
@@ -277,7 +291,7 @@ func shownNote(shown *agentports.ShownArtifact) string {
 			"rows out as a markdown table. Work from the fields it already has instead of "+
 			"looking up each row again.%s]", shown.Rows, shown.Title, artifactRefNote(shown))
 	}
-	if tabular(shown.Kind) {
+	if shown.Tabular() {
 		return fmt.Sprintf("\n\n[This result is kept as %s titled %q, which the person can "+
 			"open beside the conversation. It is too long to repeat: do not write its rows "+
 			"out as a markdown table. Answer with the count and the rows that need attention, "+
@@ -298,11 +312,7 @@ func shownNote(shown *agentports.ShownArtifact) string {
 // that short is answered in the reply and not kept, unless the reply ranks or
 // compares its rows; a longer one is kept and pointed to, and its rows are
 // not repeated. One or the other, never both.
-const InlineRows = 12
-
-func tabular(kind string) bool {
-	return kind == "table_view" || kind == "report_preview"
-}
+const InlineRows = agentports.InlineTableRows
 
 func artifactNoun(kind string) string {
 	switch kind {
@@ -329,3 +339,9 @@ func artifactNoun(kind string) string {
 // a document: a background run, or a surface without a pane.
 const unpublishableRefusal = "There is nowhere to publish a document from here. Put the text " +
 	"in your reply instead."
+
+func WrittenNote(shown *agentports.ShownArtifact) string {
+	return fmt.Sprintf("\n\n[The record this %s is shown beside the conversation as %q, read "+
+		"again just now. Point to it in the sentence that says what was done, and do not read "+
+		"it again to show it.%s]", shown.Written, shown.Title, artifactRefNote(shown))
+}

@@ -190,18 +190,6 @@ export function initials(name: string): string {
     .join("");
 }
 
-export function money(amount: string | number | null | undefined, currency = "USD"): string {
-  const figure = Number(amount);
-  if (amount === null || amount === undefined || amount === "" || !Number.isFinite(figure)) {
-    return "—";
-  }
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: currency || "USD",
-    minimumFractionDigits: 2,
-  }).format(figure);
-}
-
 /** How the selection in a queue table splits for the bulk bar. */
 export type BulkSplit = {
   /** Selected items every check clears; Approve takes these. */

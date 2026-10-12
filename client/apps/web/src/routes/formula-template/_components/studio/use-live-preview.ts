@@ -1,5 +1,6 @@
 import { DEFAULT_TEST_VALUES } from "@/components/formula-editor/test-data-editor";
 import { describeApiError } from "@/lib/api-error-message";
+import { formulaTestRequest } from "@/lib/formula-test-request";
 import { apiService } from "@/services/api";
 import type {
   FormulaTemplateFormValues,
@@ -57,46 +58,38 @@ export function useLivePreview(): LivePreviewState {
     onSuccess: () => setLastRunAt(Date.now()),
   });
 
-  const buildRequest = useCallback((): TestExpressionRequest | null => {
-    if (!expression?.trim()) return null;
-
-    const usingShipment = useRealShipment && !!shipmentId;
-    const variables: Record<string, unknown> = usingShipment ? {} : { ...testValues };
-
-    for (const variable of variableDefinitions ?? []) {
-      if (variable.name && variable.defaultValue !== undefined && variable.defaultValue !== null) {
-        variables[variable.name] = variable.defaultValue;
-      }
-    }
-
-    const validBreakdowns = (breakdownDefinitions ?? []).filter(
-      (item) => item.name?.trim() && item.expression?.trim(),
-    );
-
-    return {
+  const buildRequest = useCallback(
+    (): TestExpressionRequest | null =>
+      formulaTestRequest(
+        {
+          expression,
+          schemaId,
+          variableDefinitions,
+          breakdownDefinitions,
+          minCharge,
+          maxCharge,
+          roundingMode,
+          roundingPrecision,
+        },
+        {
+          sampleValues: testValues,
+          shipmentId: useRealShipment && shipmentId ? shipmentId : undefined,
+        },
+      ),
+    [
       expression,
-      schemaId: schemaId || "shipment",
-      variables,
-      ...(usingShipment ? { shipmentId } : {}),
-      ...(validBreakdowns.length > 0 ? { breakdowns: validBreakdowns } : {}),
-      ...(minCharge != null ? { minCharge: String(minCharge) } : {}),
-      ...(maxCharge != null ? { maxCharge: String(maxCharge) } : {}),
-      ...(roundingMode ? { roundingMode } : {}),
-      ...(roundingPrecision != null ? { roundingPrecision } : {}),
-    };
-  }, [
-    expression,
-    schemaId,
-    variableDefinitions,
-    breakdownDefinitions,
-    minCharge,
-    maxCharge,
-    roundingMode,
-    roundingPrecision,
-    testValues,
-    useRealShipment,
-    shipmentId,
-  ]);
+      schemaId,
+      variableDefinitions,
+      breakdownDefinitions,
+      minCharge,
+      maxCharge,
+      roundingMode,
+      roundingPrecision,
+      testValues,
+      useRealShipment,
+      shipmentId,
+    ],
+  );
 
   const buildRequestRef = useRef(buildRequest);
   buildRequestRef.current = buildRequest;

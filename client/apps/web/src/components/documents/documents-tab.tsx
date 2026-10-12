@@ -8,6 +8,11 @@ import { usePermission } from "@/hooks/use-permission";
 import { usePendingActions } from "@/hooks/use-pending-actions";
 import { useShipmentBillingActions } from "@/hooks/use-shipment-billing-actions";
 import { queries } from "@/lib/queries";
+import {
+  hasPendingDocumentWork,
+  PENDING_DOCUMENTS_REFETCH_MS,
+  resourceDocumentsQuery,
+} from "@/lib/resource-documents";
 import { apiService } from "@/services/api";
 import type { Document, DocumentPacketSummary } from "@trenova/shared/types/document";
 import type { DocumentType } from "@trenova/shared/types/document-type";
@@ -67,10 +72,6 @@ function matchesFileTypeFilter(doc: Document, filter: FileTypeFilter): boolean {
     default:
       return true;
   }
-}
-
-function hasTargetedProcessing(doc: Document): boolean {
-  return doc.processingProfile === "rate_confirmation_import";
 }
 
 function sortDocuments(docs: Document[], field: SortField, direction: SortDirection): Document[] {
@@ -155,8 +156,6 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
     return metadata;
   }, [isShipment, replacementLineageId, selectedDocumentTypeId]);
 
-  const queryKey = ["documents", resourceType, resourceId, deferredSearchQuery];
-
   const shipmentDetailsQuery = queries.shipment.get(resourceId, {
     expandShipmentDetails: "true",
   });
@@ -185,27 +184,10 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   });
 
   const { data: documents = [], isLoading } = useQuery({
-    queryKey,
-    queryFn: () =>
-      apiService.documentService.getByResource(resourceType, resourceId, deferredSearchQuery, {
-        includeDocumentType: "true",
-      }),
+    ...resourceDocumentsQuery(resourceType, resourceId, deferredSearchQuery),
     enabled: !!resourceId,
-    refetchInterval: (query) => {
-      const docs = query.state.data;
-      if (!docs) return false;
-
-      const hasPendingWork = docs.some(
-        (doc) =>
-          doc.previewStatus === "Pending" ||
-          (hasTargetedProcessing(doc) &&
-            (doc.contentStatus === "Pending" ||
-              doc.contentStatus === "Extracting" ||
-              doc.shipmentDraftStatus === "Pending")),
-      );
-
-      return hasPendingWork ? 3000 : false;
-    },
+    refetchInterval: (query) =>
+      query.state.data?.some(hasPendingDocumentWork) ? PENDING_DOCUMENTS_REFETCH_MS : false,
   });
 
   const { data: packetSummary } = useQuery<DocumentPacketSummary>({

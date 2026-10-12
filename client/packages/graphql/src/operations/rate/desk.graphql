@@ -1,0 +1,13 @@
+# How much freight a rate agreement has priced, for the Desk's agreement card:
+# the loads it rated, and when it last rated one.
+query DeskRateAgreementPricing($input: DataTableConnectionInput!) {
+  rateQuotes(input: $input) {
+    edges {
+      node {
+        id
+        ratedAt
+      }
+    }
+    totalCount
+  }
+}

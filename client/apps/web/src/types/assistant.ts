@@ -1,4 +1,10 @@
 import { optionalIdSchema } from "@trenova/shared/types/helpers";
+import {
+  MentionKindTab,
+  MentionKindsAskedFor,
+  type MentionKind,
+  type MentionTab,
+} from "@trenova/shared/types/generated/record-kinds";
 import { z } from "zod";
 import { pageDraftEditSchema, pageDraftSchema } from "./page-draft";
 import { translate } from "@trenova/shared/i18n/runtime";
@@ -561,16 +567,27 @@ export const pageContextSchema = z.object({
   draft: pageDraftSchema.nullish().catch(null),
 });
 
-/** The kinds of record the composer's @ search can be narrowed to. */
-export const mentionSearchTypes = [
+/** A tab the @ search can be narrowed to, as the server names them, or every kind at once. */
+export type MentionSearchType = "all" | MentionTab;
+
+/**
+ * The tabs along the composer's @ search, in the server's order: one for each
+ * kind it offers across every kind. A kind offered only when its own tab is
+ * asked for (an invoice dispute) is searched from its own picker instead.
+ */
+export const mentionSearchTypes: readonly MentionSearchType[] = [
   "all",
-  "shipment",
-  "customer",
-  "invoice",
-  "worker",
-  "carrier",
-] as const;
-export type MentionSearchType = (typeof mentionSearchTypes)[number];
+  ...new Set(
+    (Object.keys(MentionKindTab) as MentionKind[])
+      .filter((kind) => !MentionKindsAskedFor.includes(kind))
+      .map((kind) => MentionKindTab[kind]),
+  ),
+];
+
+/** Whether a kind of record is one the @ search can find. */
+export function isMentionKind(type: string): type is MentionKind {
+  return Object.hasOwn(MentionKindTab, type);
+}
 
 /** A record the @ search offers. */
 export const mentionCandidateSchema = z.object({
@@ -587,7 +604,7 @@ export const mentionCandidateListSchema = z.object({
 export type MentionCandidateRecord = z.infer<typeof mentionCandidateSchema>;
 
 /** The kinds of record a list can page through one at a time. */
-export type MentionPageKind = "shipment" | "invoice" | "invoice_dispute";
+export type MentionPageKind = Extract<MentionKind, "shipment" | "invoice" | "invoice_dispute">;
 
 /** One page of the records of one kind, and whether another follows. */
 export const mentionPageSchema = z.object({

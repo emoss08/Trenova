@@ -20,8 +20,8 @@ const (
 	paramSyncStatus        = "status"
 	paramSyncDocumentType  = "documentType"
 	paramSyncErrorCategory = "errorCategory"
-	paramSyncDocumentID    = "documentId"
-	paramSyncDocumentIDs   = "documentIds"
+	paramDocumentID        = "documentId"
+	paramDocumentIDs       = "documentIds"
 	paramSyncRecordID      = "syncRecordId"
 	paramSyncSearch        = "search"
 
@@ -245,7 +245,7 @@ func (t *listAccountingSyncRecordsTool) ParamSchema() map[string]any {
 			agenttoolschema.Enum("An error category.", agenttoolschema.SyncErrorCategories),
 			len(accountingsync.AllSyncErrorCategories()),
 		),
-		paramSyncDocumentID: agenttoolschema.OfKinds(jsonschemautils.Text(
+		paramDocumentID: agenttoolschema.OfKinds(jsonschemautils.Text(
 			"Only the records of one Trenova document, by its id from "+
 				syncDocumentIDSources+".",
 		), syncDocumentKinds...),
@@ -297,9 +297,9 @@ func (t *listAccountingSyncRecordsTool) request(
 	if err != nil {
 		return nil, err
 	}
-	documentID, err := optionalID(params.Params, paramSyncDocumentID)
+	documentID, err := optionalID(params.Params, paramDocumentID)
 	if err != nil {
-		return nil, fmt.Errorf("parameter %q is not a valid id: %w", paramSyncDocumentID, err)
+		return nil, fmt.Errorf("parameter %q is not a valid id: %w", paramDocumentID, err)
 	}
 	limit := min(
 		max(optionalInt(params.Params, paramLimit, syncRecordsDefaultLimit), 1),
@@ -486,7 +486,7 @@ func (t *getRecordAccountingSyncStateTool) SearchTerms() []string {
 
 func (t *getRecordAccountingSyncStateTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramSyncDocumentIDs: agenttoolschema.OfKinds(jsonschemautils.DescribedArray(
+		paramDocumentIDs: agenttoolschema.OfKinds(jsonschemautils.DescribedArray(
 			fmt.Sprintf(
 				"Up to %d Trenova document ids, from %s, or the record on screen.",
 				syncStateMaxDocuments,
@@ -495,7 +495,7 @@ func (t *getRecordAccountingSyncStateTool) ParamSchema() map[string]any {
 			jsonschemautils.String(0),
 			syncStateMaxDocuments,
 		), syncDocumentKinds...),
-	}, paramSyncDocumentIDs)
+	}, paramDocumentIDs)
 }
 
 func (t *getRecordAccountingSyncStateTool) Policy() agentports.ToolPolicy {
@@ -505,17 +505,17 @@ func (t *getRecordAccountingSyncStateTool) Policy() agentports.ToolPolicy {
 func (t *getRecordAccountingSyncStateTool) documentIDs(
 	params *agentports.QueryToolParams,
 ) ([]pulid.ID, error) {
-	raw := sliceutils.DedupeStrings(optionalStrings(params.Params, paramSyncDocumentIDs))
+	raw := sliceutils.DedupeStrings(optionalStrings(params.Params, paramDocumentIDs))
 	if len(raw) == 0 {
 		return nil, fmt.Errorf(
 			"parameter %q must name at least one document id",
-			paramSyncDocumentIDs,
+			paramDocumentIDs,
 		)
 	}
 	if len(raw) > syncStateMaxDocuments {
 		return nil, fmt.Errorf(
 			"parameter %q holds %d ids, more than the %d one call looks up; split it",
-			paramSyncDocumentIDs, len(raw), syncStateMaxDocuments,
+			paramDocumentIDs, len(raw), syncStateMaxDocuments,
 		)
 	}
 
@@ -526,7 +526,7 @@ func (t *getRecordAccountingSyncStateTool) documentIDs(
 			return nil, fmt.Errorf(
 				"%q in %q is not a valid id: %w",
 				value,
-				paramSyncDocumentIDs,
+				paramDocumentIDs,
 				err,
 			)
 		}

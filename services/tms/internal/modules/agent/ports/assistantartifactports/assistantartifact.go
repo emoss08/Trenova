@@ -74,6 +74,12 @@ type ListArtifactsByToolCallsRequest struct {
 	CallIDs    []string
 }
 
+type ArtifactTitlesRequest struct {
+	ThreadID   pulid.ID
+	TenantInfo pagination.TenantInfo
+	IDs        []pulid.ID
+}
+
 type DeleteArtifactsRequest struct {
 	ThreadID   pulid.ID
 	TenantInfo pagination.TenantInfo
@@ -148,6 +154,7 @@ type AssistantArtifactRepository interface {
 		ctx context.Context,
 		req *ListArtifactsByToolCallsRequest,
 	) ([]*assistantartifact.Artifact, error)
+	ListTitles(ctx context.Context, req *ArtifactTitlesRequest) (map[pulid.ID]string, error)
 	Delete(ctx context.Context, req *DeleteArtifactsRequest) error
 	// SetPinned pins or unpins the whole lineage the artifact belongs to and
 	// returns its latest version.

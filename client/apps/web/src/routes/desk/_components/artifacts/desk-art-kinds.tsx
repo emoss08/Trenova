@@ -4,6 +4,31 @@ import type { ReactNode } from "react";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const ICONS = {
+  shipment: (
+    <>
+      <path d="M3.5 6.5h10v9h-10zM13.5 9.5h4l3 3v3h-7" />
+      <circle cx="7" cy="17" r="1.6" />
+      <circle cx="17" cy="17" r="1.6" />
+    </>
+  ),
+  agreement: (
+    <>
+      <path d="M6 3.5h12v17H6z" />
+      <path d="M9 8h6M9 11.5h6M8.8 16.8c.9-1.4 1.8-1.4 2.3 0s1.5 1.3 3.9-.6" />
+    </>
+  ),
+  customer: (
+    <>
+      <path d="M4.5 20.5V7l7.5-3.5L19.5 7v13.5" />
+      <path d="M3 20.5h18M9 9.5h1.5M13.5 9.5H15M9 13h1.5M13.5 13H15M10.5 20.5V17h3v3.5" />
+    </>
+  ),
+  formula: (
+    <>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
+      <path d="M11 8.5c-1.3 0-1.9.7-2.1 2l-.8 4.8c-.2 1.3-.8 1.9-2.1 1.9M7.2 12h3.6M13.2 11l3.6 4.5M16.8 11l-3.6 4.5" />
+    </>
+  ),
   bill: (
     <>
       <path d="M6 3.5h12v17l-2-1.3-2 1.3-2-1.3-2 1.3-2-1.3-2 1.3z" />
@@ -165,7 +190,11 @@ export type DeskArtKind =
   | "view"
   | "decision"
   | "extract"
-  | "bill";
+  | "bill"
+  | "formula"
+  | "shipment"
+  | "customer"
+  | "agreement";
 
 const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
   table: "Table",
@@ -180,7 +209,26 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
   decision: "Decision",
   extract: "Extraction",
   bill: "Billing item",
+  formula: "Formula template",
+  shipment: "Shipment",
+  customer: "Customer",
+  agreement: "Rate agreement",
 });
+
+/**
+ * Records the Desk draws as a card of their own, each with its own mark: a
+ * billing queue item as the item a biller reviews, a formula template as the
+ * formula a biller reads, a shipment as the load a dispatcher follows, a
+ * customer as the account an account manager or a biller keeps, a rate
+ * agreement as the terms a pricing analyst holds freight to.
+ */
+const CARD_KINDS: Readonly<Record<string, DeskArtKind>> = {
+  billing_queue_item: "bill",
+  formula_template: "formula",
+  shipment: "shipment",
+  customer: "customer",
+  rate_agreement: "agreement",
+};
 
 export function deskArtKind(artifact: Pick<AssistantArtifact, "kind" | "payload">): DeskArtKind {
   switch (artifact.kind) {
@@ -189,10 +237,12 @@ export function deskArtKind(artifact: Pick<AssistantArtifact, "kind" | "payload"
     case "report_preview":
     case "report_run":
       return "report";
-    case "entity_card":
-      // A billing queue item is drawn as the item a biller reviews, not as a
-      // record card, and the design gives it its own mark.
-      return artifact.payload.entity === "billing_queue_item" ? "bill" : "record";
+    case "entity_card": {
+      const entity = artifact.payload.entity;
+      return typeof entity === "string" && Object.hasOwn(CARD_KINDS, entity)
+        ? CARD_KINDS[entity]
+        : "record";
+    }
     case "rate_explanation":
       return "rate";
     case "email_draft":
@@ -249,6 +299,14 @@ export function deskArtKindName(kind: DeskArtKind, t: TranslateFn): string {
       return t("Extraction");
     case "bill":
       return t("Billing item");
+    case "formula":
+      return t("Formula template");
+    case "shipment":
+      return t("Shipment");
+    case "customer":
+      return t("Customer");
+    case "agreement":
+      return t("Rate agreement");
   }
 }
 

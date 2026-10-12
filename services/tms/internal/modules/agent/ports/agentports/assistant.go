@@ -508,6 +508,10 @@ const RegroundStripIDs RegroundAction = "strip_ids"
 
 const RegroundPointToTable RegroundAction = "point_to_table"
 
+const RegroundRelinkArtifacts RegroundAction = "relink_artifacts"
+
+const RegroundPlaceArtifacts RegroundAction = "place_artifacts"
+
 type AssistantReplyRegroundedEvent struct {
 	Action  RegroundAction `json:"action"`
 	Figures []string       `json:"figures,omitempty"`

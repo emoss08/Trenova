@@ -3,13 +3,14 @@ package agentquerytoolservice
 import (
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -71,7 +72,21 @@ func TestGetDocumentSummary_ReadsTextAndFieldsInWindows(t *testing.T) {
 			DetectedDocumentKind:     "tender",
 			ClassificationConfidence: 0.91,
 			ContentText:              text,
-			StructuredData:           map[string]any{"bol": "BOL-1"},
+			StructuredData: map[string]any{
+				"intelligence": map[string]any{
+					"kind": "RateConfirmation",
+					"fields": map[string]any{
+						"bol":     map[string]any{"label": "BOL", "value": "BOL-1", "confidence": 0.9},
+						"pending": map[string]any{"label": "Pending", "value": ""},
+					},
+					"stops": []any{map[string]any{
+						"sequence": 1, "role": "pickup", "name": "Los Angeles Terminal",
+						"city": "Los Angeles", "state": "CA", "evidenceExcerpt": "SHIPPER#1",
+					}},
+					"missingFields": []any{"Rate"},
+				},
+				"aiDiagnostics": map[string]any{"fallbackAnalysis": map[string]any{"rawExcerpt": "x"}},
+			},
 		}},
 		&fakePermissions{allowed: true},
 		nil,
@@ -88,10 +103,16 @@ func TestGetDocumentSummary_ReadsTextAndFieldsInWindows(t *testing.T) {
 	assert.Equal(t, "Extracted", summary.Reading)
 	assert.Equal(t, 3, summary.PageCount)
 	assert.Equal(t, "tender", summary.LooksLike)
-	assert.Equal(t, map[string]any{"bol": "BOL-1"}, summary.Fields)
+	require.NotNil(t, summary.Findings)
+	assert.Equal(t, []documentcontent.FoundField{
+		{Key: "bol", Label: "BOL", Value: "BOL-1", Confidence: 0.9},
+	}, summary.Findings.Fields)
+	require.Len(t, summary.Findings.Stops, 1)
+	assert.Equal(t, "Los Angeles Terminal", summary.Findings.Stops[0].Name)
+	assert.Equal(t, []string{"Rate"}, summary.Findings.MissingFields)
 	assert.True(t, summary.TextTruncated)
 	assert.NotContains(t, summary.Text, "TAIL")
-	assert.Contains(t, summary.Note, "offset 12000")
+	assert.Contains(t, summary.Note, "offset "+strconv.Itoa(maxDocumentSummaryRunes))
 
 	result, err = tool.Query(t.Context(), testParams(map[string]any{
 		"documentId": doc.ID.String(),

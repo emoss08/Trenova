@@ -83,6 +83,7 @@ const TOOL_TITLES: Record<string, string> = defineLabels({
   ask_user: "Ask you to choose",
   find_tools: "Look for a tool",
   find_in_trenova: "Search the product guide",
+  read_attachment: "Read an attached file",
   open_page: "Open a page",
   accept_field: "Accept a field",
   accept_all_confident: "Accept confident fields",

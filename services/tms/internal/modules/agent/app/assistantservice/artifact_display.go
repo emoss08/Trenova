@@ -3,7 +3,6 @@ package assistantservice
 import (
 	"maps"
 	"slices"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/pkg/productguide"
@@ -155,7 +154,7 @@ func projectRecord(record map[string]any, order []string) []assistantartifact.Di
 // recordEntityOf is the record-link registry's name for a list's entity, when
 // its records have a page: "shipments" opens as "shipment".
 func recordEntityOf(entity string) string {
-	for _, candidate := range []string{entity, singular(entity)} {
+	for _, candidate := range []string{entity, stringutils.SingularNoun(entity)} {
 		if candidate == "" {
 			continue
 		}
@@ -165,21 +164,6 @@ func recordEntityOf(entity string) string {
 	}
 
 	return ""
-}
-
-func singular(plural string) string {
-	switch {
-	case strings.HasSuffix(plural, "ices"):
-		return strings.TrimSuffix(plural, "ices") + "ix"
-	case strings.HasSuffix(plural, "ies"):
-		return strings.TrimSuffix(plural, "ies") + "y"
-	case strings.HasSuffix(plural, "sses"):
-		return strings.TrimSuffix(plural, "es")
-	case strings.HasSuffix(plural, "s"):
-		return strings.TrimSuffix(plural, "s")
-	default:
-		return plural
-	}
 }
 
 // leadFirst moves the keys that name a record to the front and keeps the rest

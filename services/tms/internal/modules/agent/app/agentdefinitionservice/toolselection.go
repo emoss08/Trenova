@@ -173,9 +173,14 @@ func catalogEntry(
 	return entry
 }
 
+// prerequisitesOf is always a list, empty when the tool names none: a tool
+// that can name prerequisites and names none returns nil, which the client,
+// reading a list, refused.
 func prerequisitesOf(tool any) []string {
 	if dependent, ok := tool.(agentports.PrerequisiteTool); ok {
-		return dependent.Prerequisites()
+		if prerequisites := dependent.Prerequisites(); prerequisites != nil {
+			return prerequisites
+		}
 	}
 
 	return []string{}

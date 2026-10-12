@@ -8,7 +8,7 @@ import {
   rateExplanationFrom,
   runDiffFrom,
 } from "./artifact-payloads";
-import { gridOf } from "./desk-table-body";
+import { gridOf } from "./kinds/table/desk-table-body";
 
 function money(amount: string, currency: string): string {
   const figure = Number(amount);

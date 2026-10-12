@@ -18,6 +18,7 @@
     "dev": "graphql-codegen --config codegen.ts --watch",
     "enums": "node scripts/generate-error-enums.mjs",
     "resources": "node scripts/generate-permission-resources.mjs",
+    "record-kinds": "node scripts/generate-record-kinds.mjs",
     "codegen:check": "pnpm codegen && node scripts/assert-codegen-clean.mjs"
   },
   "dependencies": {

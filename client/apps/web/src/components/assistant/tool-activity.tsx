@@ -81,6 +81,7 @@ const EFFECT_ICONS: Record<ToolEffect, IconComponent> = {
 /** A few tools say more about themselves than their effect does. */
 const NAMED_ICONS: Readonly<Record<string, IconComponent>> = {
   find_in_trenova: BookOpen01Icon,
+  read_attachment: File06Icon,
   run_report: File06Icon,
   publish_artifact: ScrollTextIcon,
   compose_table_view: TableIcon,

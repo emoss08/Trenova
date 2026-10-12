@@ -1,6 +1,10 @@
 package permission
 
-import "strings"
+import (
+	"slices"
+
+	"github.com/emoss08/trenova/shared/stringutils"
+)
 
 // RecordKind is one kind of record with one id prefix. A resource whose
 // records are all one kind is that kind under its own name (Resource.Kind);
@@ -20,7 +24,7 @@ const (
 	KindDOTRandomPool            RecordKind = "dot_random_pool"
 	KindDOTRandomDraw            RecordKind = "dot_random_draw"
 	KindDOTRandomSelection       RecordKind = "dot_random_selection"
-	KindConversation             RecordKind = "conversation"
+	KindAssistantThread          RecordKind = "assistant_thread"
 	KindWait                     RecordKind = "wait"
 	KindWatchtowerItem           RecordKind = "watchtower_item"
 	KindAccountingConnection     RecordKind = "accounting_connection"
@@ -69,6 +73,8 @@ const (
 	KindChecklistItem            RecordKind = "checklist_item"
 	KindSafetyViolation          RecordKind = "safety_violation"
 	KindLeaveDay                 RecordKind = "leave_day"
+	KindAIAuditEvent             RecordKind = "ai_audit_event"
+	KindAIAuditExport            RecordKind = "ai_audit_export"
 )
 
 type recordKindSpec struct {
@@ -85,7 +91,7 @@ var recordKinds = map[RecordKind]recordKindSpec{
 	KindDOTRandomPool:           {"drpool_", ResourceDOTRandomPool, "DOT random pool"},
 	KindDOTRandomDraw:           {"drdraw_", ResourceDOTRandomPool, "DOT random draw"},
 	KindDOTRandomSelection:      {"drde_", ResourceDOTRandomPool, "DOT random selection"},
-	KindConversation:            {"athr_", ResourceAssistant, "conversation"},
+	KindAssistantThread:         {"athr_", ResourceAssistant, "conversation"},
 	KindWait:                    {"awt_", ResourceAgentRun, "wait"},
 	KindWatchtowerItem:          {"wt_", ResourceWatchtower, "watchtower item"},
 	KindAccountingConnection:    {"acctc_", ResourceAccountingIntegration, "accounting connection"},
@@ -136,6 +142,8 @@ var recordKinds = map[RecordKind]recordKindSpec{
 	KindChecklistItem:         {"wcli_", ResourceWorkerChecklist, "checklist item"},
 	KindSafetyViolation:       {"wsvi_", ResourceWorkerSafetyEvent, "safety violation"},
 	KindLeaveDay:              {"wle_", ResourceWorkerLeave, "leave day"},
+	KindAIAuditEvent:          {"aiae_", ResourceAIAuditTrail, "AI audit event"},
+	KindAIAuditExport:         {"aiax_", ResourceAIAuditTrail, "AI audit export"},
 }
 
 var kindsByIDPrefix = func() map[string]RecordKind {
@@ -184,7 +192,7 @@ func (k RecordKind) Noun() string {
 		return spec.noun
 	}
 
-	return strings.ReplaceAll(string(k), "_", " ")
+	return stringutils.HumanizeSnakeCasePhrase(string(k))
 }
 
 // Known reports whether ids of this kind have a prefix the runtime can check.
@@ -209,6 +217,22 @@ func RecordKindPrefixes() map[RecordKind]string {
 	for kind, spec := range recordKinds {
 		out[kind] = spec.prefix
 	}
+
+	return out
+}
+
+// RecordKinds is every kind of record whose ids the runtime can check: each
+// single-kind resource under its own name and each declared kind, sorted. A
+// table of kinds kept anywhere else is held to it.
+func RecordKinds() []RecordKind {
+	out := make([]RecordKind, 0, len(recordIDPrefixes)+len(recordKinds))
+	for resource := range recordIDPrefixes {
+		out = append(out, RecordKind(resource))
+	}
+	for kind := range recordKinds {
+		out = append(out, kind)
+	}
+	slices.Sort(out)
 
 	return out
 }

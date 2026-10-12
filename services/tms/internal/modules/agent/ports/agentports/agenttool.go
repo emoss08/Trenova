@@ -128,6 +128,7 @@ type AgentToolDescriptor struct {
 	Query         bool     `json:"query"`
 	SearchTerms   []string `json:"searchTerms,omitempty"`
 	Prerequisites []string `json:"prerequisites,omitempty"`
+	Companions    []string `json:"companions,omitempty"`
 	// BatchOf names the tool this one does to several records at once, for
 	// a tool that is the plural twin of another.
 	BatchOf string `json:"batchOf,omitempty"`
@@ -150,6 +151,10 @@ type SearchableTool interface {
 // holding the tool.
 type PrerequisiteTool interface {
 	Prerequisites() []string
+}
+
+type CompanionTool interface {
+	Companions() []string
 }
 
 // BatchTool is a tool that does to a list of records what another tool does
@@ -201,6 +206,9 @@ func DescribeTool(
 	}
 	if dependent, ok := tool.(PrerequisiteTool); ok {
 		descriptor.Prerequisites = dependent.Prerequisites()
+	}
+	if companion, ok := tool.(CompanionTool); ok {
+		descriptor.Companions = companion.Companions()
 	}
 	if batch, ok := tool.(BatchTool); ok {
 		descriptor.BatchOf = batch.BatchOf()

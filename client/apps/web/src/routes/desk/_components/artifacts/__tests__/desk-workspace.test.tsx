@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router";
 import { useDeskStore } from "@/stores/desk-store";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { groupLineages, lineageContaining } from "../desk-lineage";
-import { changedCells, gridOf } from "../desk-table-body";
+import { changedCells, gridOf } from "../kinds/table/desk-table-body";
 import { DeskWorkspace } from "../desk-workspace";
 
 const state = vi.hoisted(() => ({
@@ -211,13 +211,25 @@ describe("DeskWorkspace", () => {
     renderWorkspace();
 
     expect(await screen.findByText("Inactive")).toBeInTheDocument();
-    expect(screen.getByText("1 changed")).toBeInTheDocument();
 
     fireEvent.click(screen.getByTitle("Versions"));
     fireEvent.click(within(screen.getByRole("listbox")).getByRole("option", { name: /v1/ }));
 
     expect(await screen.findAllByText("Active")).not.toHaveLength(0);
     expect(screen.queryByText("Inactive")).not.toBeInTheDocument();
+  });
+
+  it("does not label the artifact with the tool that produced it", async () => {
+    state.artifacts = [
+      workers("art_1", "Active"),
+      workers("art_3", "Inactive", { lineageId: "art_1", lineageSeq: 2 }),
+    ];
+    renderWorkspace();
+
+    expect(await screen.findByText("Inactive")).toBeInTheDocument();
+    expect(screen.queryByText("list_workers")).not.toBeInTheDocument();
+    expect(screen.queryByText("2 rows")).not.toBeInTheDocument();
+    expect(screen.queryByText("1 changed")).not.toBeInTheDocument();
   });
 
   it("searches everything the conversation made, on the server", async () => {
@@ -306,8 +318,8 @@ describe("DeskWorkspace contents", () => {
     state.lineage = () => new Promise(() => undefined);
     renderWorkspace();
 
-    expect(await screen.findByRole("status")).toHaveTextContent("Loading the artifact…");
-    expect(document.querySelector(".dk-skb-tb")).not.toBeNull();
+    await waitFor(() => expect(document.querySelector(".dk-skb-tb")).not.toBeNull());
+    expect(screen.getByRole("status")).toHaveTextContent("Loading the artifact…");
     expect(screen.queryByText("Avery Lane")).not.toBeInTheDocument();
   });
 

@@ -27,7 +27,6 @@ import type {
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useCallback, useRef, useState, type ReactNode } from "react";
-import { Link } from "react-router";
 import { useOutsideDismiss } from "@/components/desk-chat/use-outside-dismiss";
 import {
   HOLD_REASONS,
@@ -38,89 +37,40 @@ import {
   initials,
   issueOf,
   itemStage,
-  money,
   paymentTermLabel,
+  type ItemStage,
   stageLabel,
 } from "./billing-item-checks";
-
-const BI_PATHS = {
-  check: <path d="M5 12.5l4.5 4.5L19 7" />,
-  warn: (
-    <>
-      <path d="M12 4l9 15.5H3z" />
-      <path d="M12 10v4M12 17v.01" />
-    </>
-  ),
-  x: <path d="M7 7l10 10M17 7L7 17" />,
-  file: (
-    <>
-      <path d="M6 3.5h8l4 4v13H6z" />
-      <path d="M14 3.5v4h4" />
-    </>
-  ),
-  pause: <path d="M9 6v12M15 6v12" />,
-  truck: (
-    <>
-      <path d="M3.5 6.5h10v9h-10zM13.5 9.5h4l3 3v3h-7" />
-      <circle cx="7" cy="17" r="1.6" />
-      <circle cx="17" cy="17" r="1.6" />
-    </>
-  ),
-  ext: (
-    <path d="M14 4.5h5.5V10M19.5 4.5L11 13M17 14v4.5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h4.5" />
-  ),
-  down: <path d="M6 9l6 6 6-6" />,
-  up: <path d="M6 15l6-6 6 6" />,
-  undo: <path d="M9 7L4.5 11.5 9 16M5 11.5h9a5 5 0 0 1 0 10h-2" />,
-  back: <path d="M15 6l-6 6 6 6" />,
-} as const;
-
-/** The billing item's own icons, drawn as the design draws them. */
-export function BiIcon({
-  name,
-  size = 13,
-  stroke = 1.9,
-}: {
-  name: keyof typeof BI_PATHS;
-  size?: number;
-  stroke?: number;
-}) {
-  return (
-    <svg
-      className="size-auto"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={stroke}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {BI_PATHS[name]}
-    </svg>
-  );
-}
-
-function shortDate(seconds: number | null | undefined): string {
-  if (!seconds) return "";
-  return new Date(seconds * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
-
-function moment(seconds: number | null | undefined): string {
-  if (!seconds) return "";
-  return new Date(seconds * 1000).toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
+import {
+  CardBar,
+  CardBarHint,
+  CardCheck,
+  CardChecks,
+  CardFacts,
+  CardHead,
+  CardIcon,
+  CardLink,
+  CardSection,
+  CardStatus,
+  CardStepper,
+  CardTimeline,
+  RecordCard,
+  type CardTone,
+} from "../../record-card/record-card";
+import { CardDocuments } from "../../record-card/card-documents";
+import { cardDay, cardMoment, money } from "../../record-card/record-card-values";
 
 function daysSince(seconds: number): number {
   return Math.max(0, Math.floor((Date.now() / 1000 - seconds) / 86_400));
 }
+
+const STAGE_TONE: Record<ItemStage, CardTone> = {
+  review: "progress",
+  approved: "success",
+  posted: "ink",
+  held: "warn",
+  other: "progress",
+};
 
 type Stop = NonNullable<Shipment["moves"]>[number]["stops"][number];
 
@@ -148,33 +98,13 @@ function laneOf(shipment: Shipment | undefined, t: TranslateFn) {
     from: placeOf(from),
     to: placeOf(to),
     detail: [
-      to?.actualArrival ? t("Delivered {0}", shortDate(to.actualArrival)) : "",
+      to?.actualArrival ? t("Delivered {0}", cardDay(to.actualArrival)) : "",
       driverName,
       miles > 0 ? t("{0} mi", Math.round(miles).toLocaleString()) : "",
     ]
       .filter((part) => part !== "")
       .join(" · "),
   };
-}
-
-function Section({
-  title,
-  aside,
-  children,
-}: {
-  title: string;
-  aside?: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <section className="dk-bi-sec">
-      <div className="dk-bi-sh">
-        <h3>{title}</h3>
-        {aside}
-      </div>
-      {children}
-    </section>
-  );
 }
 
 type Biller = { id: string; name: string };
@@ -244,78 +174,71 @@ function CheckRow({
   const ok = check.state === "ok";
 
   return (
-    <div className={cn("dk-bi-ck", `dk-${check.state === "fail" ? "bad" : check.state}`)}>
-      <span className="dk-bi-ci">
-        <BiIcon
-          name={ok ? "check" : check.state === "warn" ? "warn" : "x"}
-          size={check.state === "warn" ? 12 : 11}
-          stroke={check.state === "warn" ? 2 : 2.8}
-        />
-      </span>
-      <div className="dk-bi-cb">
-        <b>{checkTitle(check.key, t)}</b>
-        <span>{issue && !ok ? issue.summary : checkDetail(check, t)}</span>
-        {!ok &&
-          check.code === "unassigned" &&
-          canAct &&
-          (picking ? (
-            <BillerPicker
-              me={me}
-              busy={busy}
-              onPick={(biller) => {
-                setPicking(false);
-                onAssign(biller);
-              }}
-            />
-          ) : (
-            <div className="dk-bi-opts">
-              {me && (
-                <Button
-                  size="sm"
-                  className="disabled:opacity-55"
-                  disabled={busy}
-                  onClick={() => onAssign(me)}
-                >
-                  {t("Assign to me")}
-                </Button>
-              )}
+    <CardCheck
+      state={check.state === "fail" ? "bad" : check.state}
+      title={checkTitle(check.key, t)}
+      detail={issue && !ok ? issue.summary : checkDetail(check, t)}
+    >
+      {!ok &&
+        check.code === "unassigned" &&
+        canAct &&
+        (picking ? (
+          <BillerPicker
+            me={me}
+            busy={busy}
+            onPick={(biller) => {
+              setPicking(false);
+              onAssign(biller);
+            }}
+          />
+        ) : (
+          <div className="dk-bi-opts">
+            {me && (
               <Button
-                variant="outline"
                 size="sm"
                 className="disabled:opacity-55"
                 disabled={busy}
-                onClick={() => setPicking(true)}
+                onClick={() => onAssign(me)}
               >
-                {t("Someone else…")}
+                {t("Assign to me")}
               </Button>
-            </div>
-          ))}
-        {!ok && issue && (
-          <>
-            {issue.reasoning && <p className="dk-bi-why">{issue.reasoning}</p>}
-            {canAct && issue.options.length > 0 && (
-              <div className="dk-bi-opts">
-                {issue.options.map((option, index) => {
-                  const asked = option.effect.kind === "request" && issue.requestedAt;
-                  return (
-                    <Button
-                      key={option.key}
-                      variant={index === 0 && !asked ? "default" : "outline"}
-                      size="sm"
-                      className="disabled:opacity-55"
-                      disabled={busy || Boolean(asked)}
-                      onClick={() => onResolve(issue, option.key)}
-                    >
-                      {asked ? t("Asked {0}", moment(issue.requestedAt)) : option.label}
-                    </Button>
-                  );
-                })}
-              </div>
             )}
-          </>
-        )}
-      </div>
-    </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="disabled:opacity-55"
+              disabled={busy}
+              onClick={() => setPicking(true)}
+            >
+              {t("Someone else…")}
+            </Button>
+          </div>
+        ))}
+      {!ok && issue && (
+        <>
+          {issue.reasoning && <p className="dk-bi-why">{issue.reasoning}</p>}
+          {canAct && issue.options.length > 0 && (
+            <div className="dk-bi-opts">
+              {issue.options.map((option, index) => {
+                const asked = option.effect.kind === "request" && issue.requestedAt;
+                return (
+                  <Button
+                    key={option.key}
+                    variant={index === 0 && !asked ? "default" : "outline"}
+                    size="sm"
+                    className="disabled:opacity-55"
+                    disabled={busy || Boolean(asked)}
+                    onClick={() => onResolve(issue, option.key)}
+                  >
+                    {asked ? t("Asked {0}", cardMoment(issue.requestedAt)) : option.label}
+                  </Button>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+    </CardCheck>
   );
 }
 
@@ -356,7 +279,7 @@ function LedgerRow({
           disabled={busy}
           onClick={() => line.issueId && onUndo(line.issueId)}
         >
-          <BiIcon name="undo" size={12} />
+          <CardIcon name="undo" size={12} />
         </Button>
       )}
     </div>
@@ -387,7 +310,7 @@ function ActivityLog({ itemId, meId }: { itemId: string; meId: string | undefine
   };
 
   return (
-    <Section title={t("Activity")}>
+    <CardSection title={t("Activity")}>
       {query.hasNextPage && (
         <Button
           variant="bare"
@@ -399,21 +322,15 @@ function ActivityLog({ itemId, meId }: { itemId: string; meId: string | undefine
           {t("Show earlier")}
         </Button>
       )}
-      <ol className="dk-bi-log">
-        {entries.map((entry) => (
-          <li
-            key={entry.id}
-            className={cn(entry.actorType === "User" && entry.actorId === meId && "dk-you")}
-          >
-            <i />
-            <span>{entry.text}</span>
-            <em>
-              {who(entry)} · {moment(entry.at)}
-            </em>
-          </li>
-        ))}
-      </ol>
-    </Section>
+      <CardTimeline
+        entries={entries.map((entry) => ({
+          id: entry.id,
+          text: entry.text,
+          meta: `${who(entry)} · ${cardMoment(entry.at)}`,
+          mine: entry.actorType === "User" && entry.actorId === meId,
+        }))}
+      />
+    </CardSection>
   );
 }
 
@@ -440,9 +357,9 @@ function HoldMenu({
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
-        <BiIcon name="pause" size={12} stroke={2.4} />
+        <CardIcon name="pause" size={12} stroke={2.4} />
         {t("Hold")}
-        <BiIcon name="down" size={10} stroke={2.4} />
+        <CardIcon name="down" size={10} stroke={2.4} />
       </Button>
       {open && (
         <div className="dk-bi-mp" role="menu">
@@ -484,11 +401,14 @@ export function DeskBillingItem({
   fallback,
   onSelect,
   onBack,
+  backLabel,
 }: {
   itemId: string;
   fallback: ReactNode;
   onSelect?: (itemId: string) => void;
   onBack?: () => void;
+  /** What the way back says; the queue, unless the item was opened from another card. */
+  backLabel?: string;
 }) {
   const t = useT();
   const queryClient = useQueryClient();
@@ -586,77 +506,38 @@ export function DeskBillingItem({
   const needs = review?.needsCount ?? 0;
   const postedNumber = posted?.invoiceNumber || (invoice?.posted ? invoice.number : "");
   const sentTo = posted?.sentTo ?? "";
-  const step = (id: string | null | undefined) => {
-    if (id && onSelect) {
+  const step = (id: string) => {
+    if (onSelect) {
       setPosted(null);
       onSelect(id);
     }
   };
 
   return (
-    <div className={cn("dk-bi", stage === "posted" && "dk-posted", stage === "held" && "dk-held")}>
-      <div className="dk-bi-head">
-        <div className="dk-bi-kick">
-          {onBack && (
-            <Button
-              variant="quiet"
-              size="icon-xs"
-              className="-ml-1"
-              onClick={onBack}
-              title={t("Back to the queue")}
-            >
-              <BiIcon name="back" size={12} stroke={2.2} />
-            </Button>
-          )}
-          <span>{item.number}</span>
-          {invoiceNumber !== "" && invoiceNumber !== item.number && (
-            <>
-              <i />
-              <span>{invoiceNumber}</span>
-            </>
-          )}
-          {item.poNumber && (
-            <>
-              <i />
-              <span>{t("PO {0}", item.poNumber)}</span>
-            </>
-          )}
-          {onSelect && neighbors && (
-            <span className="dk-bi-nav">
-              <Button
-                variant="quiet"
-                size="icon-xs"
-                className="disabled:opacity-30"
-                title={t("Previous item")}
-                aria-label={t("Previous item")}
-                disabled={!neighbors.prevId}
-                onClick={() => step(neighbors.prevId)}
-              >
-                <BiIcon name="up" size={12} stroke={2.2} />
-              </Button>
-              {neighbors.position > 0 && (
-                <em>{t("{0} of {1}", neighbors.position, neighbors.total)}</em>
-              )}
-              <Button
-                variant="quiet"
-                size="icon-xs"
-                className="disabled:opacity-30"
-                title={t("Next item")}
-                aria-label={t("Next item")}
-                disabled={!neighbors.nextId}
-                onClick={() => step(neighbors.nextId)}
-              >
-                <BiIcon name="down" size={12} stroke={2.2} />
-              </Button>
-            </span>
-          )}
-        </div>
-        <div className="dk-bi-hrow">
-          <div className="dk-bi-who">
-            <h2>{item.billToCustomer?.name ?? t("No bill-to")}</h2>
-            <span>{recipient ? t("AP · {0}", recipient) : (item.billToCustomer?.code ?? "")}</span>
-          </div>
-          <div className="dk-bi-amt">
+    <RecordCard className={cn(stage === "posted" && "dk-posted", stage === "held" && "dk-held")}>
+      <CardHead
+        onBack={onBack}
+        backLabel={backLabel ?? t("Back to the queue")}
+        kicker={[
+          item.number,
+          ...(invoiceNumber !== "" && invoiceNumber !== item.number ? [invoiceNumber] : []),
+          ...(item.poNumber ? [t("PO {0}", item.poNumber)] : []),
+        ]}
+        stepper={
+          onSelect &&
+          neighbors && (
+            <CardStepper
+              neighbors={neighbors}
+              onStep={step}
+              previousLabel={t("Previous item")}
+              nextLabel={t("Next item")}
+            />
+          )
+        }
+        title={item.billToCustomer?.name ?? t("No bill-to")}
+        subtitle={recipient ? t("AP · {0}", recipient) : (item.billToCustomer?.code ?? "")}
+        figure={
+          <>
             <b key={String(total)}>{money(total)}</b>
             {terms?.paymentTerm && (
               <span>
@@ -664,58 +545,54 @@ export function DeskBillingItem({
                   ? t(
                       "{0} · due {1}",
                       paymentTermLabel(terms.paymentTerm, t),
-                      shortDate(terms.dueDate),
+                      cardDay(terms.dueDate),
                     )
                   : paymentTermLabel(terms.paymentTerm, t)}
               </span>
             )}
-          </div>
-        </div>
-        <div className="dk-bi-meta">
-          <span
-            key={`${item.status}:${item.holdReasonCode ?? ""}`}
-            className={cn(
-              "dk-bi-st",
-              stage === "approved" && "dk-s1",
-              stage === "posted" && "dk-s2",
-              stage === "held" && "dk-hold",
-            )}
-          >
-            {stage === "held" ? (
-              <BiIcon name="pause" size={11} stroke={2.6} />
-            ) : stage === "approved" || stage === "posted" ? (
-              <BiIcon name="check" size={11} stroke={2.8} />
-            ) : (
-              <i />
-            )}
-            {stageLabel(item.status, item.holdReasonCode, t)}
-          </span>
-          <span className="dk-bi-q">
-            <span>{t("Queued {0}", moment(item.createdAt))}</span>
-            <b aria-hidden="true">·</b>
-            <span>
-              {t(
-                "{0, plural, one {# day in queue} other {# days in queue}}",
-                daysSince(item.createdAt),
-              )}
-            </span>
-          </span>
-          {stage === "held" && canUpdate && (
-            <Button
-              variant="outline"
-              size="xs"
-              className="ml-auto"
-              disabled={busy}
-              onClick={() => release.mutate(undefined)}
+          </>
+        }
+        meta={
+          <>
+            <CardStatus
+              key={`${item.status}:${item.holdReasonCode ?? ""}`}
+              tone={STAGE_TONE[stage]}
+              mark={
+                stage === "held"
+                  ? "pause"
+                  : stage === "approved" || stage === "posted"
+                    ? "check"
+                    : "dot"
+              }
             >
-              {t("Release")}
-            </Button>
-          )}
-        </div>
-      </div>
+              {stageLabel(item.status, item.holdReasonCode, t)}
+            </CardStatus>
+            <CardFacts>
+              {[
+                t("Queued {0}", cardMoment(item.createdAt)),
+                t(
+                  "{0, plural, one {# day in queue} other {# days in queue}}",
+                  daysSince(item.createdAt),
+                ),
+              ]}
+            </CardFacts>
+            {stage === "held" && canUpdate && (
+              <Button
+                variant="outline"
+                size="xs"
+                className="ml-auto"
+                disabled={busy}
+                onClick={() => release.mutate(undefined)}
+              >
+                {t("Release")}
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {stage === "review" && review && (
-        <Section
+        <CardSection
           title={t("Before it can be approved")}
           aside={
             needs > 0 ? (
@@ -725,7 +602,7 @@ export function DeskBillingItem({
             )
           }
         >
-          <div className="dk-bi-checks">
+          <CardChecks>
             {review.checks.map((check) => (
               <CheckRow
                 key={check.key}
@@ -738,12 +615,12 @@ export function DeskBillingItem({
                 onResolve={(issue, optionKey) => resolve.mutate({ issueId: issue.id, optionKey })}
               />
             ))}
-          </div>
-        </Section>
+          </CardChecks>
+        </CardSection>
       )}
 
       {charges && charges.lines.length > 0 && (
-        <Section
+        <CardSection
           title={t("Charges")}
           aside={
             charges.hasRateCon ? (
@@ -782,74 +659,51 @@ export function DeskBillingItem({
               </div>
             )}
           </div>
-        </Section>
+        </CardSection>
       )}
 
-      {(lane || (review?.documents.length ?? 0) > 0) && (
-        <Section
+      {lane && (
+        <CardSection
           title={t("Shipment")}
-          aside={
-            <Link className="dk-bi-lnk" to={shipmentPath}>
-              {item.shipment?.proNumber || t("Open")}
-              <BiIcon name="ext" size={11} />
-            </Link>
-          }
+          aside={<CardLink to={shipmentPath}>{item.shipment?.proNumber || t("Open")}</CardLink>}
         >
-          {lane && (
-            <div className="dk-bi-lane">
-              <span className="dk-bi-lt-i">
-                <BiIcon name="truck" size={14} />
-              </span>
-              <div>
-                <b>
-                  {lane.from} <i>→</i> {lane.to}
-                </b>
-                {lane.detail !== "" && <span>{lane.detail}</span>}
-              </div>
+          <div className="dk-bi-lane">
+            <span className="dk-bi-lt-i">
+              <CardIcon name="truck" size={14} />
+            </span>
+            <div>
+              <b>
+                {lane.from} <i>→</i> {lane.to}
+              </b>
+              {lane.detail !== "" && <span>{lane.detail}</span>}
             </div>
-          )}
-          {review && review.documents.length > 0 && (
-            <div className="dk-bi-docs">
-              {review.documents.map((doc) => (
-                <Link
-                  key={doc.documentId ?? `${doc.code}-${doc.name}`}
-                  to={shipmentPath}
-                  className={cn(doc.state !== "ok" && "dk-miss")}
-                >
-                  <BiIcon name="file" size={13} />
-                  <span>
-                    <b>{doc.name || doc.code}</b>
-                    <em>
-                      {doc.state === "missing"
-                        ? t("Missing")
-                        : doc.state === "unsigned"
-                          ? t("Unsigned")
-                          : doc.signed
-                            ? t("Signed")
-                            : doc.fileName}
-                    </em>
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </Section>
+          </div>
+        </CardSection>
       )}
 
       <ActivityLog itemId={itemId} meId={user?.id} />
 
+      {/* The documents a biller bills from are the shipment's, where they are filed. */}
+      {item.shipmentId !== "" && (
+        <CardDocuments
+          resourceType="shipment"
+          resourceId={item.shipmentId}
+          manageTo={shipmentPath}
+        />
+      )}
+
       {canUpdate &&
         (stage === "review" || stage === "approved" || stage === "posted" || stage === "held") && (
-          <div className="dk-bi-bar">
+          <CardBar>
             {stage === "posted" ? (
               <div className="dk-bi-done">
-                <BiIcon name="check" size={13} stroke={2.6} />
+                <CardIcon name="check" size={13} stroke={2.6} />
                 {sentTo
                   ? t("Posted as {0} · sent to {1}", postedNumber, sentTo)
                   : t("Posted as {0}", postedNumber || item.number)}
               </div>
             ) : stage === "held" ? (
-              <span className="dk-bi-bh">{reason}</span>
+              <CardBarHint>{reason}</CardBarHint>
             ) : (
               <>
                 {stage === "review" && (
@@ -858,7 +712,7 @@ export function DeskBillingItem({
                     onHold={(holdReasonCode) => status.mutate({ status: "OnHold", holdReasonCode })}
                   />
                 )}
-                <span className="dk-bi-bh">{reason}</span>
+                <CardBarHint>{reason}</CardBarHint>
                 {stage === "review" ? (
                   <Button
                     className="disabled:opacity-35"
@@ -878,8 +732,8 @@ export function DeskBillingItem({
                 )}
               </>
             )}
-          </div>
+          </CardBar>
         )}
-    </div>
+    </RecordCard>
   );
 }

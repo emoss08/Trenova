@@ -95,7 +95,9 @@ so a person checks every one against the DOT table before it is saved.
 | `locate_tractor` | tractor / update | inside | Propose → Ask first | no |
 | `locate_trailer` | trailer / update | money | Propose → Propose | yes |
 
-Creating a location was already `create_location`. `locate_tractor` moves where Trenova thinks
+Creating a location was already `create_location`. It places the address on the map through
+the organization's address lookup; without one, or when nothing is found at that state and ZIP,
+the location is saved without coordinates and the card says so. `locate_tractor` moves where Trenova thinks
 a tractor is and locating it again moves it back. `locate_trailer` adds an empty move to the
 trailer's last shipment and re-rates it, which can change what that customer is charged, so
 the preview shows the shipment's total before and after and it runs only on a person's
@@ -166,6 +168,7 @@ nothing to bring them back, so it is always proposed.
 | Master data steward | chat, at a Propose ceiling, Internal data access | `create_carrier`, `update_carrier`, `update_carrier_status`, `create_customer`, `update_customer`, `update_customer_status`, `create_commodity`, `update_commodity`, `update_commodity_status`, `create_hazardous_material`, `update_hazardous_material`, `update_hazardous_material_status`, `create_location`, `update_location`, `update_location_status`, `create_tractor`, `update_tractor`, `update_tractor_status`, `locate_tractor`, `create_trailer`, `update_trailer`, `update_trailer_status`, `locate_trailer`, `list_equipment_manufacturers`, `delete_documents`, `restore_document_version`, `list_table_change_alerts`, `create_table_change_alert`, `update_table_change_alert`, `set_table_change_alert_status`, `delete_table_change_alert`, `list_watchtower_items`, `dismiss_watchtower_item`, `list_capture_batches`, `file_capture_items`, `discard_capture_item`, `discard_capture_batch`, and the list and get tools each needs |
 | Customer assistant | chat, at a Propose ceiling | `create_customer`, `update_customer`, `update_customer_status`, `list_locations`, `update_location`, `update_location_status`, `list_commodities`, `create_commodity`, `update_commodity` |
 | Insight analyst | on each new insight, at a Propose ceiling | `restore_insight` |
+| Any agent holding `create_shipment` | as the agent runs | `create_customer`, `create_location`, `create_commodity`, as `create_shipment`'s companions, unless switched off for the agent |
 
 The master data steward is the organization's records keeper and holds 55 of its 56 tools:
 every write on this page, the reads that find each record, `search_documents` and

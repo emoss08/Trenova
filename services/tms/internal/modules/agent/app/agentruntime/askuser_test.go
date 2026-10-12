@@ -6,13 +6,20 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 var askNow = time.Date(2026, time.September, 29, 10, 0, 0, 0, time.UTC)
 
-func decodeAsk(t *testing.T, content string) askRequest {
+func askContent(now time.Time, arguments map[string]any) string {
+	content, _ := resolveAsk(now, arguments)
+
+	return content
+}
+
+func askBody(t *testing.T, content string) string {
 	t.Helper()
 
 	open := strings.Index(content, untrustedOpenTag)
@@ -20,10 +27,14 @@ func decodeAsk(t *testing.T, content string) askRequest {
 	require.Positive(t, open, "an ask is fenced like any other tool result")
 	require.Greater(t, close, open)
 
-	body := strings.TrimSpace(content[open+len(untrustedOpenTag) : close])
+	return strings.TrimSpace(content[open+len(untrustedOpenTag) : close])
+}
+
+func decodeAsk(t *testing.T, content string) askRequest {
+	t.Helper()
 
 	var request askRequest
-	require.NoError(t, sonic.Unmarshal([]byte(body), &request))
+	require.NoError(t, sonic.Unmarshal([]byte(askBody(t, content)), &request))
 
 	return request
 }
@@ -31,7 +42,7 @@ func decodeAsk(t *testing.T, content string) askRequest {
 func TestResolveAsk_CarriesTheQuestionAndItsChoices(t *testing.T) {
 	t.Parallel()
 
-	content := resolveAsk(askNow, map[string]any{
+	content := askContent(askNow, map[string]any{
 		"question": "Which window should the report cover?",
 		"options": []any{
 			map[string]any{"value": "7", "label": "7 days", "detail": "the last week"},
@@ -58,7 +69,7 @@ func TestResolveAsk_CarriesTheQuestionAndItsChoices(t *testing.T) {
 func TestResolveAsk_TellsTheModelToStopAndWait(t *testing.T) {
 	t.Parallel()
 
-	request := decodeAsk(t, resolveAsk(askNow, map[string]any{
+	request := decodeAsk(t, askContent(askNow, map[string]any{
 		"question": "Which customer?",
 		"options":  []any{map[string]any{"value": "acme", "label": "Acme"}},
 	}))
@@ -70,7 +81,7 @@ func TestResolveAsk_TellsTheModelToStopAndWait(t *testing.T) {
 func TestResolveAsk_HonoursAClosedSetOfChoices(t *testing.T) {
 	t.Parallel()
 
-	request := decodeAsk(t, resolveAsk(askNow, map[string]any{
+	request := decodeAsk(t, askContent(askNow, map[string]any{
 		"question":   "Which status?",
 		"allowOther": false,
 		"options": []any{
@@ -86,7 +97,7 @@ func TestResolveAsk_HonoursAClosedSetOfChoices(t *testing.T) {
 func TestResolveAsk_RefusesAQuestionWithNothingToAnswerIt(t *testing.T) {
 	t.Parallel()
 
-	content := resolveAsk(askNow, map[string]any{
+	content := askContent(askNow, map[string]any{
 		"question":   "Which one?",
 		"options":    []any{},
 		"allowOther": false,
@@ -99,7 +110,7 @@ func TestResolveAsk_RefusesAQuestionWithNothingToAnswerIt(t *testing.T) {
 func TestResolveAsk_RefusesAnEmptyQuestion(t *testing.T) {
 	t.Parallel()
 
-	assert.Contains(t, resolveAsk(askNow, map[string]any{"question": "   "}), "needs a question")
+	assert.Contains(t, askContent(askNow, map[string]any{"question": "   "}), "needs a question")
 }
 
 // A model that offers twenty choices has made a search, not a decision, and a
@@ -120,7 +131,7 @@ func TestResolveAsk_BoundsAndCleansTheOptions(t *testing.T) {
 		options = append(options, map[string]any{"value": strings.Repeat("a", len(options))})
 	}
 
-	request := decodeAsk(t, resolveAsk(askNow, map[string]any{
+	request := decodeAsk(t, askContent(askNow, map[string]any{
 		"question": "Which one?",
 		"options":  options,
 	}))
@@ -141,7 +152,7 @@ func TestResolveAsk_BoundsAndCleansTheOptions(t *testing.T) {
 func TestResolveAsk_DoesNotRewriteAnOptionValueAsADate(t *testing.T) {
 	t.Parallel()
 
-	request := decodeAsk(t, resolveAsk(askNow, map[string]any{
+	request := decodeAsk(t, askContent(askNow, map[string]any{
 		"question": "Which cut-off date?",
 		"options": []any{
 			map[string]any{"value": "1791591001", "label": "10 October 2026"},
@@ -157,7 +168,7 @@ func TestResolveAsk_DoesNotRewriteAnOptionValueAsADate(t *testing.T) {
 func TestResolveAsk_AnOptionWithoutAValueAnswersWithItsLabel(t *testing.T) {
 	t.Parallel()
 
-	request := decodeAsk(t, resolveAsk(askNow, map[string]any{
+	request := decodeAsk(t, askContent(askNow, map[string]any{
 		"question": "Which lane should the report cover?",
 		"options": []any{
 			map[string]any{"label": "Chicago to Dallas", "detail": "the busiest lane"},
@@ -205,7 +216,7 @@ func TestAskUserSpec_RequiresOnlyTheLabel(t *testing.T) {
 func TestResolveAsk_SaysHowFarAwayEachDateIs(t *testing.T) {
 	t.Parallel()
 
-	request := decodeAsk(t, resolveAsk(askNow, map[string]any{
+	request := decodeAsk(t, askContent(askNow, map[string]any{
 		"question": "Which day should the pickup be scheduled?",
 		"options": []any{
 			map[string]any{"value": "2026-10-06", "label": "2026-10-06"},
@@ -235,7 +246,7 @@ func TestResolveAsk_ReadsTheDatesInThePersonsZone(t *testing.T) {
 	require.NoError(t, err)
 	lateEvening := time.Date(2026, time.September, 29, 23, 30, 0, 0, chicago)
 
-	request := decodeAsk(t, resolveAsk(lateEvening, map[string]any{
+	request := decodeAsk(t, askContent(lateEvening, map[string]any{
 		"question": "When should it deliver?",
 		"options":  []any{map[string]any{"label": "2026-09-30"}},
 	}))
@@ -246,7 +257,7 @@ func TestResolveAsk_ReadsTheDatesInThePersonsZone(t *testing.T) {
 func TestResolveAsk_NamesTheYearOfADateInAnotherYear(t *testing.T) {
 	t.Parallel()
 
-	request := decodeAsk(t, resolveAsk(askNow, map[string]any{
+	request := decodeAsk(t, askContent(askNow, map[string]any{
 		"question": "Which appointment?",
 		"options":  []any{map[string]any{"label": "2027-01-05"}},
 	}))
@@ -257,7 +268,7 @@ func TestResolveAsk_NamesTheYearOfADateInAnotherYear(t *testing.T) {
 func TestResolveAsk_TellsTheModelWhenASchedulingChoiceIsInThePast(t *testing.T) {
 	t.Parallel()
 
-	request := decodeAsk(t, resolveAsk(askNow, map[string]any{
+	request := decodeAsk(t, askContent(askNow, map[string]any{
 		"question": "Which day should I schedule the delivery appointment for?",
 		"options": []any{
 			map[string]any{"label": "2026-09-25"},
@@ -273,11 +284,457 @@ func TestResolveAsk_TellsTheModelWhenASchedulingChoiceIsInThePast(t *testing.T) 
 func TestResolveAsk_APastDateOnAnotherKindOfQuestionIsNoConcern(t *testing.T) {
 	t.Parallel()
 
-	request := decodeAsk(t, resolveAsk(askNow, map[string]any{
+	request := decodeAsk(t, askContent(askNow, map[string]any{
 		"question": "Which window should the report start from?",
 		"options":  []any{map[string]any{"label": "2026-09-01"}},
 	}))
 
 	assert.Equal(t, "Tue Sep 1 (28 days ago)", request.Options[0].Label)
 	assert.NotContains(t, request.Note, "in the past")
+}
+
+// The thread reads one shape. A question answered only by typing used to
+// carry "options": null, which every reader had to special-case.
+func TestResolveAsk_OptionsAreAnEmptyListWhenThereAreNone(t *testing.T) {
+	t.Parallel()
+
+	content, shown := resolveAsk(askNow, map[string]any{
+		"question": "Which PO number should I use?",
+	})
+
+	require.True(t, shown)
+	body := askBody(t, content)
+	assert.Contains(t, body, `"options":[]`)
+	assert.NotContains(t, body, `"options":null`)
+	assert.NotContains(t, body, `"input"`, "plain text has no input type")
+	assert.NotContains(t, body, `"fields"`)
+
+	request := decodeAsk(t, content)
+	assert.NotNil(t, request.Options)
+	assert.Empty(t, request.Options)
+	assert.True(t, request.AllowOther)
+}
+
+func TestResolveAsk_TypesThePersonsOwnValue(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		input      any
+		allowOther any
+		want       *askInput
+	}{
+		{
+			name:  "a customer picked from a search",
+			input: map[string]any{"type": "record", "recordKind": "customer"},
+			want:  &askInput{Type: askTypeRecord, RecordKind: "customer"},
+		},
+		{
+			name:  "a location, written loosely",
+			input: map[string]any{"type": " Record ", "recordKind": " Location "},
+			want:  &askInput{Type: askTypeRecord, RecordKind: "location"},
+		},
+		{
+			name:  "a kind of record the registry does not know is typed as text",
+			input: map[string]any{"type": "record", "recordKind": "spaceship"},
+		},
+		{
+			name:  "a record with no kind is typed as text",
+			input: map[string]any{"type": "record"},
+		},
+		{
+			name:  "the conversation itself is never a record to pick",
+			input: map[string]any{"type": "record", "recordKind": "assistant_thread"},
+		},
+		{
+			name:  "a date and time",
+			input: map[string]any{"type": "DateTime"},
+			want:  &askInput{Type: askTypeDateTime},
+		},
+		{
+			name:  "a kind only a record takes is dropped from a number",
+			input: map[string]any{"type": "number", "recordKind": "customer"},
+			want:  &askInput{Type: askTypeNumber},
+		},
+		{
+			name:  "a type the thread has no box for is typed as text",
+			input: map[string]any{"type": "colour"},
+		},
+		{
+			name:  "plain text says nothing",
+			input: map[string]any{"type": "text"},
+		},
+		{
+			name:  "not an object",
+			input: "date",
+		},
+		{
+			name:       "nothing is typed when nothing may be",
+			input:      map[string]any{"type": "date"},
+			allowOther: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			arguments := map[string]any{
+				"question": "Which one should I use?",
+				"options":  []any{map[string]any{"value": "a", "label": "A"}},
+				"input":    tt.input,
+			}
+			if tt.allowOther != nil {
+				arguments["allowOther"] = tt.allowOther
+			}
+
+			content, shown := resolveAsk(askNow, arguments)
+			require.True(t, shown)
+			assert.Equal(t, tt.want, decodeAsk(t, content).Input)
+		})
+	}
+}
+
+func askFieldArgs() []any {
+	return []any{
+		map[string]any{
+			"key": "customerId", "label": "Customer", "type": "record",
+			"recordKind": "customer",
+		},
+		map[string]any{
+			"key": "pickupWindow", "label": "Pickup window", "type": "datetime",
+			"hint": "When the truck can load",
+		},
+		map[string]any{
+			"key": "weight", "label": "Weight", "type": "number", "optional": true,
+		},
+	}
+}
+
+// A write refused for missing values is completed by one form, and the form
+// stands alone: no box of its own beside it, and no input type for one.
+func TestResolveAsk_AsksForTheValuesAWriteReportedMissing(t *testing.T) {
+	t.Parallel()
+
+	content, shown := resolveAsk(askNow, map[string]any{
+		"question":   "What does the shipment still need?",
+		"fields":     askFieldArgs(),
+		"allowOther": true,
+		"otherHint":  "Anything else",
+		"input":      map[string]any{"type": "date"},
+	})
+
+	require.True(t, shown)
+	request := decodeAsk(t, content)
+	assert.Equal(t, []askField{
+		{Key: "customerId", Label: "Customer", Type: askTypeRecord, RecordKind: "customer"},
+		{
+			Key:   "pickupWindow",
+			Label: "Pickup window",
+			Type:  askTypeDateTime,
+			Hint:  "When the truck can load",
+		},
+		{Key: "weight", Label: "Weight", Type: askTypeNumber, Optional: true},
+	}, request.Fields)
+	assert.NotNil(t, request.Options)
+	assert.Empty(t, request.Options)
+	assert.False(t, request.AllowOther, "a form has no box of its own")
+	assert.Nil(t, request.Input)
+	assert.Empty(t, request.OtherHint)
+	assert.Contains(t, request.Note, "a form with 3 fields")
+	assert.Contains(t, request.Note, "End your turn now and write nothing more")
+	assert.NotContains(t, request.Note, "their own value")
+}
+
+func TestResolveAsk_NamesASingleFieldInTheNote(t *testing.T) {
+	t.Parallel()
+
+	request := decodeAsk(t, askContent(askNow, map[string]any{
+		"question": "Which customer is this load for?",
+		"fields": []any{map[string]any{
+			"key": "customerId", "label": "Customer", "type": "record", "recordKind": "customer",
+		}},
+	}))
+
+	assert.Contains(t, request.Note, "a form with 1 field for this question")
+}
+
+func TestResolveAsk_RefusesChoicesAndAFormTogether(t *testing.T) {
+	t.Parallel()
+
+	content, shown := resolveAsk(askNow, map[string]any{
+		"question": "What does the shipment still need?",
+		"options":  []any{map[string]any{"value": "a", "label": "A"}},
+		"fields":   askFieldArgs(),
+	})
+
+	assert.False(t, shown)
+	assert.Equal(t, mixedAskRefusal, content)
+	assert.NotContains(t, content, untrustedOpenTag, "there is no question to render")
+}
+
+// An empty list beside a form is no choice offered, and a model that sends
+// one is still asking for the form.
+func TestResolveAsk_AnEmptyListOfChoicesBesideAFormIsNoChoice(t *testing.T) {
+	t.Parallel()
+
+	_, shown := resolveAsk(askNow, map[string]any{
+		"question": "What does the shipment still need?",
+		"options":  []any{},
+		"fields":   askFieldArgs(),
+	})
+
+	assert.True(t, shown)
+}
+
+func TestResolveAsk_DropsTheFieldsItCannotShow(t *testing.T) {
+	t.Parallel()
+
+	fields := []any{
+		map[string]any{"key": "keep", "label": "Keep", "type": "text"},
+		map[string]any{"label": "No key", "type": "text"},
+		map[string]any{"key": "nolabel", "type": "text"},
+		map[string]any{"key": "notype", "label": "No type"},
+		map[string]any{"key": "colour", "label": "Colour", "type": "colour"},
+		map[string]any{"key": "kindless", "label": "Kindless", "type": "record"},
+		map[string]any{
+			"key": "unknown", "label": "Unknown", "type": "record", "recordKind": "spaceship",
+		},
+		map[string]any{"key": "keep", "label": "Duplicate", "type": "number"},
+		"not a field at all",
+		map[string]any{"key": "long", "label": strings.Repeat("x", 200), "type": "date"},
+	}
+	for idx := range maxAskFields {
+		fields = append(fields, map[string]any{
+			"key": strings.Repeat("k", idx+1), "label": "Extra", "type": "text",
+		})
+	}
+
+	request := decodeAsk(t, askContent(askNow, map[string]any{
+		"question": "What does the shipment still need?",
+		"fields":   fields,
+	}))
+
+	require.Len(t, request.Fields, maxAskFields)
+	keys := make([]string, 0, len(request.Fields))
+	for _, field := range request.Fields {
+		keys = append(keys, field.Key)
+		assert.LessOrEqual(t, len([]rune(field.Label)), maxAskLabelChars+1)
+	}
+	assert.Equal(t, []string{"keep", "long", "k"}, keys[:3])
+	assert.Equal(t, "Keep", request.Fields[0].Label, "the first of a key is the one kept")
+	assert.Equal(t, askTypeDate, request.Fields[1].Type)
+}
+
+func TestResolveAsk_RefusesAFormWithNothingToShow(t *testing.T) {
+	t.Parallel()
+
+	content, shown := resolveAsk(askNow, map[string]any{
+		"question": "What does the shipment still need?",
+		"fields": []any{
+			map[string]any{"key": "customerId", "label": "Customer", "type": "record"},
+			map[string]any{"label": "Pickup window", "type": "datetime"},
+		},
+	})
+
+	assert.False(t, shown)
+	assert.Equal(t, unshowableFieldsRefusal, content)
+}
+
+// A model asked for a whole shipment in one free-text question and was shown
+// a box to retype a load sheet into. A question answered only by typing asks
+// for one value.
+func TestResolveAsk_RefusesAFormDisguisedAsOneQuestion(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		question string
+	}{
+		{
+			name: "the shipment that was asked for in one box",
+			question: "What shipment details should I book? Please include the customer, " +
+				"pickup and delivery locations with date/time windows, service type, shipment " +
+				"type, and any freight details (weight, pieces, commodity) or price/reference.",
+		},
+		{
+			name:     "a short list",
+			question: "Which customer, pickup and delivery?",
+		},
+		{
+			name:     "a list joined by and",
+			question: "What are the pickup and delivery windows, and the weight?",
+		},
+		{
+			name:     "a list split by semicolons",
+			question: "What is the weight; the piece count; the commodity?",
+		},
+		{
+			name:     "a question too long to be about one value",
+			question: "What " + strings.Repeat("very ", maxOpenQuestionRunes/5) + "long question?",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			content, shown := resolveAsk(askNow, map[string]any{"question": tt.question})
+
+			assert.False(t, shown)
+			assert.Equal(t, multiPartAskRefusal, content)
+			assert.Contains(t, content, "with fields for exactly those values")
+		})
+	}
+}
+
+func TestResolveAsk_ShowsAQuestionAboutOneValue(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		arguments map[string]any
+	}{
+		{
+			name:      "a short question",
+			arguments: map[string]any{"question": "Which PO number should I use?"},
+		},
+		{
+			name:      "one aside",
+			arguments: map[string]any{"question": "What weight should I use, in pounds?"},
+		},
+		{
+			name:      "a figure with a thousands separator",
+			arguments: map[string]any{"question": "Should I use $2,450 or something else?"},
+		},
+		{
+			name: "two things joined by a bare and",
+			arguments: map[string]any{
+				"question": "Which date should I use for pickup and delivery?",
+			},
+		},
+		{
+			name: "a list of choices is a choice, not a form",
+			arguments: map[string]any{
+				"question": "Which customer, pickup and delivery?",
+				"options":  []any{map[string]any{"value": "a", "label": "Acme, LA to Chicago"}},
+			},
+		},
+		{
+			name: "a typed value of its own type",
+			arguments: map[string]any{
+				"question": "When, roughly, and at which dock, should pickup start?",
+				"input":    map[string]any{"type": "datetime"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			content, shown := resolveAsk(askNow, tt.arguments)
+
+			assert.True(t, shown, content)
+			assert.Contains(t, content, untrustedOpenTag)
+		})
+	}
+}
+
+// Options are no longer required: a question answered only by typing sends
+// none, and a strict provider must not demand them.
+func TestAskUserSpec_RequiresOnlyTheQuestion(t *testing.T) {
+	t.Parallel()
+
+	spec := askUserSpec()
+	assert.Equal(t, []string{"question"}, spec.Parameters["required"])
+
+	properties, ok := spec.Parameters["properties"].(map[string]any)
+	require.True(t, ok)
+
+	fields, ok := properties["fields"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, maxAskFields, fields["maxItems"])
+	items, ok := fields["items"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, []string{"key", "label", "type"}, items["required"])
+	itemProperties, ok := items["properties"].(map[string]any)
+	require.True(t, ok)
+	fieldType, ok := itemProperties["type"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, askValueTypes, fieldType["enum"])
+
+	input, ok := properties["input"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, []string{"type"}, input["required"])
+}
+
+// A question nobody saw is not one the conversation asked, so asking it
+// again properly is not repeating it.
+func TestAskedQuestions_LeavesOutAQuestionThatWasRefused(t *testing.T) {
+	t.Parallel()
+
+	history := []conversation.Message{
+		{Role: conversation.RoleUser, Content: "book a load"},
+		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{
+			{ID: "c1", Name: askUserName, Arguments: map[string]any{
+				"question": "Which customer, pickup and delivery?",
+			}},
+		}},
+		{
+			Role:       conversation.RoleTool,
+			ToolCallID: "c1",
+			ToolName:   askUserName,
+			ToolFailed: true,
+			Content:    multiPartAskRefusal,
+		},
+		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{
+			{ID: "c2", Name: askUserName, Arguments: map[string]any{
+				"question": "Which customer is it for?",
+			}},
+		}},
+		{Role: conversation.RoleTool, ToolCallID: "c2", ToolName: askUserName, Content: "shown"},
+	}
+
+	asked := askedQuestions(history)
+
+	assert.Equal(t, map[string]struct{}{"which customer is it for": {}}, asked)
+}
+
+// A turn that asked nothing anyone saw has not said what it needed to, so
+// an empty reply after it is asked for again like any other.
+func TestRun_AQuestionNobodySawDoesNotEndTheTurnInSilence(t *testing.T) {
+	t.Parallel()
+
+	result, completion, _ := runReplies(t,
+		toolTurn(askUserName, map[string]any{"question": "Which customer, pickup and delivery?"}),
+		textTurn(""),
+		textTurn("Which customer is the load for?"),
+	)
+
+	assert.True(t, result.Messages[2].ToolFailed)
+	assert.Contains(t, result.Messages[2].Content, "several values at once")
+	assert.Equal(t, 3, completion.CallCount)
+	assert.Equal(t, "Which customer is the load for?", result.Reply)
+}
+
+func TestRun_AQuestionRefusedAsAskedCanBeAskedAgainProperly(t *testing.T) {
+	t.Parallel()
+
+	question := "What does the shipment still need?"
+	result, _, _ := runReplies(t,
+		toolTurn(askUserName, map[string]any{
+			"question": question,
+			"options":  []any{map[string]any{"value": "a", "label": "A"}},
+			"fields":   askFieldArgs(),
+		}),
+		toolTurn(askUserName, map[string]any{"question": question, "fields": askFieldArgs()}),
+		textTurn(""),
+	)
+
+	require.Len(t, result.Messages, 6, "the question, two asks with their answers, and the reply")
+	assert.True(t, result.Messages[2].ToolFailed)
+	assert.False(t, result.Messages[4].ToolFailed, "the form is shown, not refused as repeated")
+	assert.Contains(t, result.Messages[4].Content, untrustedOpenTag)
+	assert.Empty(t, result.Reply)
 }

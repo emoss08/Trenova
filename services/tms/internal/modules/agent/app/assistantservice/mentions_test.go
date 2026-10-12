@@ -2,10 +2,11 @@ package assistantservice
 
 import (
 	"context"
+	"slices"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -136,6 +137,31 @@ func TestSearchMentions_AllLeavesOutTheKindsOnlyAPickerAsksFor(t *testing.T) {
 	assert.Equal(t, []string{"invoice"}, repo.captured.Kinds)
 }
 
+func TestSearchMentions_LocationsAreSearchedOnlyUnderTheirOwnTab(t *testing.T) {
+	t.Parallel()
+
+	readable := map[string]bool{
+		permission.ResourceCustomer.String(): true,
+		permission.ResourceLocation.String(): true,
+	}
+
+	all := &mentionConversations{}
+	service := &Service{conversations: all, permissions: &mentionPermissions{readable: readable}}
+	_, err := service.SearchMentions(t.Context(), providerActor(), agentports.MentionSearchRequest{})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"customer"}, all.captured.Kinds)
+
+	tab := &mentionConversations{}
+	service = &Service{conversations: tab, permissions: &mentionPermissions{readable: readable}}
+	_, err = service.SearchMentions(
+		t.Context(),
+		providerActor(),
+		agentports.MentionSearchRequest{Kind: "location"},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"location"}, tab.captured.Kinds)
+}
+
 func TestSearchMentionPage_PagesOneKindAndSaysWhetherMoreFollow(t *testing.T) {
 	t.Parallel()
 
@@ -200,4 +226,18 @@ func TestSearchMentionPage_CapsThePageAndRefusesAnUnknownKind(t *testing.T) {
 		Kind: "all",
 	})
 	require.Error(t, err)
+}
+
+func TestMentionKindsAreKindsOfRecordGuardedByTheirResource(t *testing.T) {
+	t.Parallel()
+
+	for _, candidate := range mentionKinds {
+		assert.True(t, candidate.kind.Known(), candidate.kind)
+		assert.True(t, permission.NewRegistry().HasResource(candidate.kind.Resource().String()), candidate.kind)
+	}
+	idx := slices.IndexFunc(mentionKinds, func(candidate mentionKind) bool {
+		return candidate.kind == permission.KindBillingQueueItem
+	})
+	require.GreaterOrEqual(t, idx, 0)
+	assert.Equal(t, permission.ResourceBillingQueue, mentionKinds[idx].kind.Resource())
 }

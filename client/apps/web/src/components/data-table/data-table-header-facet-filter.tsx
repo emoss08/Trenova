@@ -12,7 +12,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { DataTableQueryOptions } from "@trenova/shared/types/data-table";
 import { useState } from "react";
-import { useRecordNames } from "./record-filter-input";
+import { useRecordNames } from "@/hooks/use-record-names";
 
 /** How many values a header lists; the server counts the most common first. */
 const FACET_LIMIT = 50;
@@ -187,12 +187,7 @@ function FacetList({
       </ScrollArea>
       <div className="border-border flex items-center justify-between border-t px-2 py-1.5">
         <span className="text-muted-foreground text-xs tabular-nums">
-          {data
-            ? t(
-                "{0, plural, one {# row} other {# rows}}",
-                data.dataTableFacets.total,
-              )
-            : null}
+          {data ? t("{0, plural, one {# row} other {# rows}}", data.dataTableFacets.total) : null}
         </span>
         <Button
           type="button"

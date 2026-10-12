@@ -4047,10 +4047,6 @@
     opacity 260ms,
     filter 260ms;
 }
-.dk-ax-prov b {
-  font-weight: 500;
-  color: var(--dsk-fg2);
-}
 .dk-ax-num {
   font: 12px var(--dk-plex);
   font-feature-settings: "tnum";
@@ -4657,22 +4653,6 @@
   display: none;
 }
 
-.dk-ax-prov.dk-sm {
-  gap: 8px;
-  padding: 2px 16px 10px;
-  font-size: 11px;
-  color: var(--dsk-subtle);
-}
-.dk-ax-prov.dk-sm > span:not(.dk-ax-chg)::before {
-  content: "·";
-  margin-right: 8px;
-  color: var(--dsk-faint);
-}
-.dk-ax-prov.dk-sm .dk-ax-chg {
-  margin-left: auto;
-  font-size: 10.5px;
-  padding: 1px 7px;
-}
 .dk-axv {
   position: relative;
   flex: none;
@@ -4915,6 +4895,13 @@
   --dk-t: var(--dsk-muted);
   background: var(--dsk-sunken);
   box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+/* A question waiting on the person: a panel in ink, not a colour, because it
+   asks for nothing to be fixed and nothing to be feared. */
+.dk-ec-card.dk-t-ask {
+  --dk-t: var(--dsk-fg);
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
 }
 .dk-ec-ic {
   flex: none;
@@ -7926,12 +7913,39 @@
   background: color-mix(in srgb, var(--dsk-fg) 10%, transparent);
   overflow: hidden;
 }
-/* an artifact named inside a sentence: the badge, sized to a line of text */
-.dk-abadge.dk-inline {
-  animation: none;
+/* an artifact named inside a sentence: a link in the brand's blue, lit on hover and while open */
+.dk-alink {
+  display: inline;
+  margin: 0 -2px;
+  padding: 0 2px;
+  border-radius: 4px;
+  color: var(--brand);
+  text-align: start;
+  white-space: normal;
+  user-select: text;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in srgb, var(--brand) 40%, transparent);
+  text-underline-offset: 3px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition:
+    background-color 140ms,
+    color 140ms,
+    text-decoration-color 140ms;
 }
-.dk-abadge.dk-inline:hover {
-  transform: none;
+.dk-alink:hover,
+.dk-alink.dk-on {
+  background: var(--brand-subtle);
+  color: var(--brand-hover);
+  text-decoration-color: currentColor;
+}
+.dk-alink .dk-alink-i {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 3px;
+  vertical-align: -1px;
 }
 /* a reply that broke off: its last lines fade, and the card that says so sits a step below it */
 .dk-prose.dk-cut {
@@ -7949,6 +7963,181 @@
 }
 .dk-ec-dockcard {
   margin: 0 0 10px;
+}
+/* a question the agent asked: its choices and its form in the dock, and the
+   quiet record it leaves in the conversation */
+.dk-ask-opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.dk-ask-opt {
+  gap: 8px;
+  max-width: 100%;
+  min-height: 30px;
+  padding: 5px 11px 5px 6px;
+  border-radius: 8px;
+  text-align: left;
+  color: var(--dsk-fg);
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
+  transition:
+    background 120ms,
+    box-shadow 120ms;
+}
+.dk-ask-opt:hover {
+  background: var(--dsk-hover);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-strong);
+}
+.dk-ask-opt .dk-kbd {
+  flex: none;
+  margin-top: 1.5px;
+}
+.dk-ask-optt {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.dk-ask-optt b {
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 18px;
+}
+.dk-ask-optt em {
+  font-style: normal;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--dsk-muted);
+  text-wrap: pretty;
+}
+.dk-ask-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+.dk-ask-f {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.dk-ask-fl {
+  flex: none;
+  width: 132px;
+  padding-top: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--dsk-fg2);
+  overflow-wrap: anywhere;
+}
+.dk-ask-fl em {
+  margin-left: 6px;
+  font-style: normal;
+  font-weight: 400;
+  color: var(--dsk-subtle);
+}
+.dk-ask-fc {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.dk-ask-fh {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--dsk-subtle);
+}
+.dk-ask-in {
+  width: 100%;
+  height: 30px;
+  padding: 0 9px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--dsk-fg);
+}
+.dk-ask-in::placeholder {
+  color: var(--dsk-faint);
+}
+.dk-ask-in:disabled {
+  opacity: 0.6;
+}
+.dk-ask-pick {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 0 3px 0 4px;
+}
+.dk-ask-pick .dk-mn-chip {
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+.dk-ask-send {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.dk-mn.dk-ask-mn {
+  left: 0;
+  right: 0;
+  width: auto;
+  bottom: calc(100% + 6px);
+}
+.dk-ask-rec {
+  display: flex;
+  gap: 9px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--dsk-muted);
+}
+.dk-ask-rec-ic {
+  flex: none;
+  display: grid;
+  place-items: center;
+  height: 19.5px;
+  color: var(--dsk-subtle);
+}
+.dk-ask-rec-b {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.dk-ask-rec-q {
+  text-wrap: pretty;
+}
+.dk-ask-rec-q b {
+  font-weight: 500;
+  color: var(--dsk-fg2);
+}
+.dk-ask-rec-s {
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-ask-rec-a {
+  display: flex;
+  gap: 7px;
+  color: var(--dsk-fg);
+}
+.dk-ask-rec-a > svg {
+  margin-top: 4px;
+  color: var(--dsk-subtle);
+}
+.dk-ask-rec-a > span {
+  min-width: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
 }
 .dk-ec-queued-row {
   margin-top: 8px;
@@ -9207,29 +9396,29 @@
   font: 10.5px var(--dk-plex);
   color: var(--dsk-subtle);
 }
-.dk-bi-nav em {
+.dk-rec-nav em {
   font-style: normal;
   padding: 0 4px;
   color: var(--dsk-subtle);
 }
-.dk-bi-amt b {
+.dk-rec-amt b {
   font: 500 24px/1.1 var(--dk-plex);
   letter-spacing: -0.02em;
   color: var(--dsk-fg);
   font-feature-settings: "tnum";
-  animation: dk-biamt 420ms var(--dk-settle) both;
+  animation: dk-recamt 420ms var(--dk-settle) both;
 }
-@keyframes dk-biamt {
+@keyframes dk-recamt {
   from {
     opacity: 0.3;
     transform: translateY(3px);
   }
 }
-.dk-bi-q b {
+.dk-rec-q b {
   font-weight: 400;
   color: var(--dsk-faint);
 }
-.dk-bi-cb > b {
+.dk-rec-cb > b {
   font-size: 12.5px;
   font-weight: 500;
   color: var(--dsk-fg);
@@ -9248,37 +9437,7 @@
   font-weight: 500;
   color: var(--dsk-fg);
 }
-.dk-bi-docs a {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  text-align: left;
-  color: var(--dsk-subtle);
-  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
-  transition: background 140ms;
-}
-.dk-bi-docs a:hover {
-  background: var(--dsk-hover);
-}
-.dk-bi-docs b {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--dsk-fg2);
-}
-.dk-bi-docs em {
-  font-style: normal;
-  font-size: 11px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.dk-bi-docs a.dk-miss {
-  box-shadow: inset 0 0 0 1px var(--dsk-warn);
-  background: var(--dsk-warn-sub);
-}
-.dk-bi-log em {
+.dk-rec-log em {
   font-style: normal;
   font-size: 11px;
   color: var(--dsk-subtle);

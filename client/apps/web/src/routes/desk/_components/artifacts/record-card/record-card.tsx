@@ -1,0 +1,400 @@
+import { Button } from "@trenova/shared/components/ui/button";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
+import { Fragment, type ReactNode } from "react";
+import { Link } from "react-router";
+import type { Neighbors } from "./record-card-values";
+
+/*
+The parts every Desk record card is built from, the billing queue item's and
+the formula template's alike: a head with the record's name, its figure and
+where it stands; titled sections; a list of checks; a timeline; and a bar of
+actions held to the bottom. A card that opens from a table's row steps
+through the table's other rows from its head.
+*/
+
+const CARD_PATHS = {
+  check: <path d="M5 12.5l4.5 4.5L19 7" />,
+  warn: (
+    <>
+      <path d="M12 4l9 15.5H3z" />
+      <path d="M12 10v4M12 17v.01" />
+    </>
+  ),
+  x: <path d="M7 7l10 10M17 7L7 17" />,
+  file: (
+    <>
+      <path d="M6 3.5h8l4 4v13H6z" />
+      <path d="M14 3.5v4h4" />
+    </>
+  ),
+  pause: <path d="M9 6v12M15 6v12" />,
+  truck: (
+    <>
+      <path d="M3.5 6.5h10v9h-10zM13.5 9.5h4l3 3v3h-7" />
+      <circle cx="7" cy="17" r="1.6" />
+      <circle cx="17" cy="17" r="1.6" />
+    </>
+  ),
+  ext: (
+    <path d="M14 4.5h5.5V10M19.5 4.5L11 13M17 14v4.5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h4.5" />
+  ),
+  down: <path d="M6 9l6 6 6-6" />,
+  up: <path d="M6 15l6-6 6 6" />,
+  undo: <path d="M9 7L4.5 11.5 9 16M5 11.5h9a5 5 0 0 1 0 10h-2" />,
+  back: <path d="M15 6l-6 6 6 6" />,
+  forward: <path d="M9 6l6 6-6 6" />,
+  copy: (
+    <>
+      <rect x="8.5" y="8.5" width="11" height="11" rx="2" />
+      <path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5" />
+    </>
+  ),
+  reset: <path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 4.5v4h4" />,
+} as const;
+
+export type CardIconName = keyof typeof CARD_PATHS;
+
+/** A record card's icons, drawn on one grid in the card's stroke. */
+export function CardIcon({
+  name,
+  size = 13,
+  stroke = 1.9,
+}: {
+  name: CardIconName;
+  size?: number;
+  stroke?: number;
+}) {
+  return (
+    <svg
+      className="size-auto"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={stroke}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {CARD_PATHS[name]}
+    </svg>
+  );
+}
+
+/** The card itself: a column its sections stack in, with the bar held to the bottom. */
+export function RecordCard({ className, children }: { className?: string; children: ReactNode }) {
+  return <div className={cn("dk-rec", className)}>{children}</div>;
+}
+
+/**
+ * A card's head: a kicker of short identifiers, the record's name with a line
+ * under it, the figure it is read for on the right, and what it stands at.
+ */
+export function CardHead({
+  kicker,
+  onBack,
+  backLabel,
+  stepper,
+  title,
+  subtitle,
+  figure,
+  meta,
+}: {
+  /** Short identifiers, set apart by dots; the first reads strongest. */
+  kicker: readonly ReactNode[];
+  /** Back to the table the card was opened from. */
+  onBack?: () => void;
+  backLabel?: string;
+  stepper?: ReactNode;
+  title: ReactNode;
+  subtitle?: ReactNode;
+  figure?: ReactNode;
+  meta?: ReactNode;
+}) {
+  return (
+    <div className="dk-rec-head">
+      <div className="dk-rec-kick">
+        {onBack && (
+          <Button
+            variant="quiet"
+            size="icon-xs"
+            className="-ml-1"
+            onClick={onBack}
+            title={backLabel}
+            aria-label={backLabel}
+          >
+            <CardIcon name="back" size={12} stroke={2.2} />
+          </Button>
+        )}
+        {kicker.map((item, index) => (
+          // oxlint-disable-next-line react/no-array-index-key -- the kicker is a fixed run of slots
+          <Fragment key={index}>
+            {index > 0 && <i />}
+            <span>{item}</span>
+          </Fragment>
+        ))}
+        {stepper}
+      </div>
+      <div className="dk-rec-hrow">
+        <div className="dk-rec-who">
+          <h2>{title}</h2>
+          {subtitle !== undefined && <span>{subtitle}</span>}
+        </div>
+        {figure && <div className="dk-rec-amt">{figure}</div>}
+      </div>
+      {meta && <div className="dk-rec-meta">{meta}</div>}
+    </div>
+  );
+}
+
+/** Up and down through the list the card was opened from, with where it sits in it. */
+export function CardStepper({
+  neighbors,
+  onStep,
+  previousLabel,
+  nextLabel,
+}: {
+  neighbors: Neighbors;
+  onStep: (id: string) => void;
+  previousLabel: string;
+  nextLabel: string;
+}) {
+  const t = useT();
+  return (
+    <span className="dk-rec-nav">
+      <Button
+        variant="quiet"
+        size="icon-xs"
+        className="disabled:opacity-30"
+        title={previousLabel}
+        aria-label={previousLabel}
+        disabled={!neighbors.prevId}
+        onClick={() => neighbors.prevId && onStep(neighbors.prevId)}
+      >
+        <CardIcon name="up" size={12} stroke={2.2} />
+      </Button>
+      {neighbors.position > 0 && <em>{t("{0} of {1}", neighbors.position, neighbors.total)}</em>}
+      <Button
+        variant="quiet"
+        size="icon-xs"
+        className="disabled:opacity-30"
+        title={nextLabel}
+        aria-label={nextLabel}
+        disabled={!neighbors.nextId}
+        onClick={() => neighbors.nextId && onStep(neighbors.nextId)}
+      >
+        <CardIcon name="down" size={12} stroke={2.2} />
+      </Button>
+    </span>
+  );
+}
+
+/**
+ * How a status reads on a card: still moving, done, closed out, held, retired
+ * or not yet started.
+ */
+export type CardTone = "progress" | "success" | "ink" | "warn" | "muted" | "draft";
+
+const TONE_CLASS: Record<CardTone, string> = {
+  progress: "",
+  success: "dk-s1",
+  ink: "dk-s2",
+  warn: "dk-hold",
+  muted: "dk-off",
+  draft: "dk-draft",
+};
+
+/** A record's status as a pill, marked with a dot, a tick or a pause. */
+export function CardStatus({
+  tone,
+  mark = "dot",
+  children,
+}: {
+  tone: CardTone;
+  mark?: "dot" | "check" | "pause";
+  children: ReactNode;
+}) {
+  return (
+    <span className={cn("dk-rec-st", TONE_CLASS[tone])}>
+      {mark === "pause" ? (
+        <CardIcon name="pause" size={11} stroke={2.6} />
+      ) : mark === "check" ? (
+        <CardIcon name="check" size={11} stroke={2.8} />
+      ) : (
+        <i />
+      )}
+      {children}
+    </span>
+  );
+}
+
+/** Facts set side by side under a card's head, apart by dots. */
+export function CardFacts({ children }: { children: readonly ReactNode[] }) {
+  const shown = children.filter((child) => child !== null && child !== false && child !== "");
+  return (
+    <span className="dk-rec-q">
+      {shown.map((child, index) => (
+        // oxlint-disable-next-line react/no-array-index-key -- the facts are a fixed run of slots
+        <Fragment key={index}>
+          {index > 0 && <b aria-hidden="true">·</b>}
+          <span>{child}</span>
+        </Fragment>
+      ))}
+    </span>
+  );
+}
+
+/** A titled block of a card, with what sits beside its title. */
+export function CardSection({
+  title,
+  aside,
+  children,
+}: {
+  title: string;
+  aside?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="dk-rec-sec">
+      <div className="dk-rec-sh">
+        <h3>{title}</h3>
+        {aside}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** The bordered list a card's checks sit in. */
+export function CardChecks({ children }: { children: ReactNode }) {
+  return <div className="dk-rec-checks">{children}</div>;
+}
+
+export type CardCheckState = "ok" | "warn" | "bad";
+
+/** One check: whether it holds, what it is, what it found, and anything to do about it. */
+export function CardCheck({
+  state,
+  title,
+  detail,
+  children,
+}: {
+  state: CardCheckState;
+  title: ReactNode;
+  detail: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <div className={cn("dk-rec-ck", `dk-${state}`)}>
+      <span className="dk-rec-ci">
+        <CardIcon
+          name={state === "ok" ? "check" : state === "warn" ? "warn" : "x"}
+          size={state === "warn" ? 12 : 11}
+          stroke={state === "warn" ? 2 : 2.8}
+        />
+      </span>
+      <div className="dk-rec-cb">
+        <b>{title}</b>
+        <span>{detail}</span>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export type CardTimelineEntry = {
+  id: string;
+  text: ReactNode;
+  /** Who and when, under the entry. */
+  meta: ReactNode;
+  /** The person's own entry, marked solid. */
+  mine?: boolean;
+};
+
+/** What has happened to the record, oldest first, down a line. */
+export function CardTimeline({ entries }: { entries: readonly CardTimelineEntry[] }) {
+  return (
+    <ol className="dk-rec-log">
+      {entries.map((entry) => (
+        <li key={entry.id} className={cn(entry.mine && "dk-you")}>
+          <i />
+          <span>{entry.text}</span>
+          <em>{entry.meta}</em>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** The card's actions, held to the bottom as it scrolls. */
+export function CardBar({ children }: { children: ReactNode }) {
+  return <div className="dk-rec-bar">{children}</div>;
+}
+
+/** A line in the bar saying why its actions stand as they do. */
+export function CardBarHint({ children }: { children: ReactNode }) {
+  return <span className="dk-rec-bh">{children}</span>;
+}
+
+/** A way out of the card to the record's own page, beside a section's title. */
+export function CardLink({ to, children }: { to: string; children: ReactNode }) {
+  return (
+    <Link className="dk-rec-lnk" to={to}>
+      {children}
+      <CardIcon name="ext" size={11} />
+    </Link>
+  );
+}
+
+/**
+ * One record a card lists: opened in the card's place when its kind has a
+ * card here (`useListedRecords`), or a link to the record's page when it does
+ * not, so a listed record opens the same way a table's row does.
+ */
+export function CardRecordRow({
+  to,
+  onOpen,
+  className,
+  children,
+}: {
+  /** The record's own page. */
+  to: string;
+  /** Opens the record in the card's place; absent, the row links to its page. */
+  onOpen?: () => void;
+  className?: string;
+  children: ReactNode;
+}) {
+  return onOpen ? (
+    <Button variant="bare" size="bare" className={cn("dk-rec-row", className)} onClick={onOpen}>
+      {children}
+    </Button>
+  ) : (
+    <Link className={cn("dk-rec-row", className)} to={to}>
+      {children}
+    </Link>
+  );
+}
+
+/** A section that could not be read says so in its own place, and the rest of the card stands. */
+export function CardSectionError({ children }: { children: ReactNode }) {
+  return (
+    <div className="dk-ax-warn">
+      <CardIcon name="warn" size={13} />
+      <span>{children}</span>
+    </div>
+  );
+}
+
+/** Rows standing in for a section's list while it is read. */
+export function CardSectionWait({ rows }: { rows: number }) {
+  return (
+    <div className="dk-rec-wait" aria-busy>
+      {Array.from({ length: rows }, (_, index) => (
+        // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
+        <i key={index} className="dk-sk" />
+      ))}
+    </div>
+  );
+}

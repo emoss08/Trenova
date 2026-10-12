@@ -98,36 +98,20 @@ func TestBuildSystemPrompt_ListsMentionsAsRecordsToLookUp(t *testing.T) {
 	assert.Equal(t, 1, strings.Count(prompt, "</mentioned_records>"))
 }
 
-func TestBuildSystemPrompt_NamesAttachmentsWithABoundedExcerpt(t *testing.T) {
+func TestBuildSystemPrompt_LeavesAttachmentsToTheMessageTheyCameWith(t *testing.T) {
 	t.Parallel()
 
 	rc := fullContext()
 	rc.Attachments = []agentdefinition.RuntimeAttachment{{
-		DocumentID:  "doc_1",
-		FileName:    "rate-con.pdf",
-		ContentType: "application/pdf",
-		PageCount:   2,
-		Kind:        "rate_confirmation",
-		Status:      "Extracted",
-		Excerpt:     strings.Repeat("x", 5000) + "TAIL",
-	}, {
-		DocumentID: "doc_2",
-		FileName:   "pod.jpg",
-		Status:     "Pending",
+		DocumentID: "doc_1",
+		FileName:   "rate-con.pdf",
+		Text:       "SHIPPER#1:   BEX Logistics",
 	}}
 
 	prompt := definitionWithInstructions("Be brief.").BuildSystemPrompt(rc)
 
-	assert.Contains(t, prompt, "<attachments>")
-	assert.Contains(t, prompt, "id: doc_1")
-	assert.Contains(t, prompt, "file: rate-con.pdf (application/pdf, 2 pages)")
-	assert.Contains(t, prompt, "looks like: rate_confirmation")
-	assert.Contains(t, prompt, "reading: Extracted")
-	assert.NotContains(t, prompt, "TAIL", "the excerpt is bounded")
-	assert.Contains(t, prompt, "file: pod.jpg")
-	assert.Contains(t, prompt, "reading: Pending")
-	assert.Contains(t, prompt, "get_document_summary")
-	assert.Equal(t, 1, strings.Count(prompt, "</attachments>"))
+	assert.NotContains(t, prompt, "doc_1")
+	assert.NotContains(t, prompt, "BEX Logistics")
 }
 
 func TestBuildSystemPrompt_PreambleNamesEveryFenceAsData(t *testing.T) {

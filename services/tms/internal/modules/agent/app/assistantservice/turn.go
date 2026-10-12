@@ -185,16 +185,18 @@ func (s *Service) prepareTurn(
 		}
 	}
 	if followUp {
-		content, err = s.decisionNote(ctx, decisionNoteParams{
+		followed, noteErr := s.decisionNote(ctx, &decisionNoteParams{
 			thread:     thread,
 			proposalID: req.FollowUpProposalID,
 			planID:     req.FollowUpPlanID,
 			history:    history,
 			tenant:     req.TenantInfo,
 		})
-		if err != nil {
-			return nil, nil, err
+		if noteErr != nil {
+			return nil, nil, noteErr
 		}
+		content = followed.note +
+			s.showWritten(ctx, thread, actor, req.TenantInfo, followed.decided)
 	}
 
 	s.keepProviderChoice(ctx, thread, req, actor)
@@ -215,6 +217,8 @@ func (s *Service) prepareTurn(
 		Taint:               thread.Taint,
 		Facts:               thread.PinnedFacts,
 		Anchors:             checks.anchors,
+		TrenovaWritten:      followUp || resumesWait,
+		EarlierFiles:        checks.earlierFiles,
 	}
 
 	decision, runReq := s.admit(ctx, turnReq)
@@ -327,6 +331,8 @@ func (s *Service) FinishTurn(
 	case plan.WaitNote:
 		markInput(turn.Messages, conversation.MessageKindWaitNote)
 	}
+
+	artifacts.nameLinks(turn.Messages, &turn.Reply)
 
 	saved, err := s.conversations.AppendTurn(ctx, agentports.AppendTurnRequest{
 		ThreadID:   thread.ID,

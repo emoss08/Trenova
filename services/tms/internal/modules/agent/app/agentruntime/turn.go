@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
@@ -79,9 +80,9 @@ type Turn struct {
 	// toolMemories are the carried memories about a tool that was only on
 	// hand, by tool, counted as used when the turn calls it.
 	toolMemories map[string][]pulid.ID
-	// tables are the tables the turn put beside the conversation, in the
-	// order it did, which the pass over the final reply points a reprint to.
-	tables []agentports.ShownArtifact
+	// artifacts are what the turn put beside the conversation, in the order
+	// it did.
+	artifacts []agentports.ShownArtifact
 }
 
 // TurnEffects is everything a turn does outside itself.
@@ -496,6 +497,8 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 		delegates:  delegates,
 		decisions:  pendingDecisions(req.Proposals),
 		extensions: &active,
+		attachments: len(runtimeContext.Attachments) > 0 ||
+			conversation.CarriesAttachments(history),
 	})
 	runtimeContext.ToolsDisclosed = tools.disclosed
 	runtimeContext.Artifacts = tools.offers(publishArtifactName)
@@ -526,10 +529,13 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 		s.seedFromLedger(ctx, req, repeats)
 	}
 
-	messages, shortened := replayHistory(history, req.Proposals)
+	messages, shortened := replayHistoryWithFiles(history, req.Proposals, req.FileTexts)
 	now := turnNow(&runtimeContext)
 	input := req.Input
 	if req.Delegation == nil {
+		input = agentdefinition.DescribeAttachments(
+			runtimeContext.Attachments, agentdefinition.AttachmentTextBudget,
+		) + input
 		input = outOfViewDecisions(history, req.Proposals) + input
 		input = agentdefinition.DescribeAnchors(
 			runtimeContext.Anchors, now, runtimeContext.Timezone,
@@ -553,7 +559,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 		system:       prompt.Stable + prompt.Volatile,
 		systemStable: len(prompt.Stable),
 		messages:     messages,
-		evidence:     figuresOf(shortened),
+		evidence:     figuresOf(append(shortened, maputils.SortedValues(req.FileTexts)...)),
 		tools:        tools,
 		held:         held,
 		repeats:      repeats,

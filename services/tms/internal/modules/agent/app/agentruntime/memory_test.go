@@ -62,7 +62,9 @@ func TestContextBuilder_ReadsTheMemoriesOfWhatTheTurnIsAbout(t *testing.T) {
 		runtime: newRuntime(
 			&scriptedCompletion{},
 			&stubQueryRegistry{},
-			&stubActionRegistry{},
+			&stubActionRegistry{Tools: []agentports.AgentTool{
+				actionTool("assign_move", agent.TierPropose, nil),
+			}},
 			nil,
 		),
 		memories: memories,
@@ -93,7 +95,8 @@ func TestContextBuilder_ReadsTheMemoriesOfWhatTheTurnIsAbout(t *testing.T) {
 		{Type: "location", ID: location},
 		{Type: "worker", ID: parentRecord},
 	}, memories.asked.Records)
-	assert.Equal(t, definition.EffectiveToolNames(), memories.asked.ToolNames)
+	assert.Equal(t, []string{"assign_move"}, memories.asked.ToolNames,
+		"memories are read for the tools the agent holds")
 	assert.Equal(t, memories.answer.Memories, rc.Memories)
 	assert.Equal(t, memories.answer.Subjects, rc.MemorySubjects)
 	assert.Equal(t, memories.answer.Relevance, rc.MemoryRelevance)

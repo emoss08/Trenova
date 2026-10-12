@@ -1,9 +1,13 @@
+import { mentionToken } from "@/components/assistant/composer-types";
 import { apiService } from "@/services/api";
-import type {
-  AssistantEntityRef,
-  MentionCandidateRecord,
-  MentionSearchType,
+import {
+  isMentionKind,
+  mentionSearchTypes,
+  type AssistantEntityRef,
+  type MentionCandidateRecord,
+  type MentionSearchType,
 } from "@/types/assistant";
+import { MentionKindTab, type MentionKind } from "@trenova/shared/types/generated/record-kinds";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -22,14 +26,7 @@ import { defineLabels } from "@trenova/shared/i18n/labels";
 /** How long typing has to settle before the records are searched. */
 const SEARCH_DEBOUNCE_MS = 140;
 
-const TABS: readonly MentionSearchType[] = [
-  "all",
-  "shipment",
-  "customer",
-  "invoice",
-  "worker",
-  "carrier",
-];
+const TABS = mentionSearchTypes;
 
 const TAB_LABELS: Record<MentionSearchType, string> = defineLabels({
   all: "All",
@@ -38,17 +35,16 @@ const TAB_LABELS: Record<MentionSearchType, string> = defineLabels({
   invoice: "Invoices",
   worker: "Drivers",
   carrier: "Carriers",
+  dispute: "Disputes",
+  location: "Locations",
 });
 
-/** Which tab a record type sits under: a billing queue item is an invoice in waiting. */
+/** Which tab a record type sits under, as the server files it: a billing queue item is an invoice in waiting. */
 function tabOf(type: string): MentionSearchType {
-  if (type === "billing_queue_item") {
-    return "invoice";
-  }
-  return (TABS as readonly string[]).includes(type) ? (type as MentionSearchType) : "all";
+  return isMentionKind(type) ? MentionKindTab[type] : "all";
 }
 
-const TYPE_ICONS: Record<string, DeskIconName> = {
+const TYPE_ICONS: Record<MentionKind, DeskIconName> = {
   shipment: "truck",
   customer: "headset",
   invoice: "receipt",
@@ -56,10 +52,11 @@ const TYPE_ICONS: Record<string, DeskIconName> = {
   invoice_dispute: "receipt",
   worker: "route",
   carrier: "shield",
+  location: "compass",
 };
 
 export function MentionGlyph({ type, size = 13 }: { type: string; size?: number }) {
-  return <DeskIcon name={TYPE_ICONS[type] ?? "link"} size={size} stroke={2} />;
+  return <DeskIcon name={isMentionKind(type) ? TYPE_ICONS[type] : "link"} size={size} stroke={2} />;
 }
 
 /** The @ token at the caret: where it starts in the draft and what follows the @. */
@@ -73,33 +70,15 @@ function tokenAt(draft: string, caret: number): MentionToken | null {
 export type DeskMentions = ReturnType<typeof useDeskMentions>;
 
 /**
- * Naming a record with @. Typing @ opens a search over the records the person
- * may read, narrowed by kind with the tabs along its top; the record picked
- * is written into the draft as @label and rides with the message as a record
- * the agent can look up. A record whose @label is deleted from the draft is
- * dropped when the message leaves.
+ * The records the @ search finds for what is typed, once typing settles, and
+ * which of them the keyboard is on. A null query searches nothing. The caller
+ * sets `loading` the moment the words change, so the list never shows the
+ * last search's records as the answer to the new one.
  */
-export function useDeskMentions({
-  value,
-  onChange,
-  textareaRef,
-  mentions,
-  onMentionsChange,
-  enabled,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  textareaRef: RefObject<HTMLTextAreaElement | null>;
-  mentions: readonly AssistantEntityRef[];
-  onMentionsChange: (mentions: AssistantEntityRef[]) => void;
-  enabled: boolean;
-}) {
-  const [token, setToken] = useState<MentionToken | null>(null);
-  const [tab, setTab] = useState<MentionSearchType>("all");
+export function useMentionSearch(query: string | null, tab: MentionSearchType) {
   const [highlighted, setHighlighted] = useState(0);
   const [results, setResults] = useState<MentionCandidateRecord[]>([]);
   const [loading, setLoading] = useState(false);
-  const query = token?.query ?? null;
 
   useEffect(() => {
     if (query === null) {
@@ -126,6 +105,39 @@ export function useDeskMentions({
       window.clearTimeout(timer);
     };
   }, [query, tab]);
+
+  return { results, loading, setLoading, highlighted, setHighlighted };
+}
+
+/**
+ * Naming a record with @. Typing @ opens a search over the records the person
+ * may read, narrowed by kind with the tabs along its top; the record picked
+ * is written into the draft as @label and rides with the message as a record
+ * the agent can look up. A record whose @label is deleted from the draft is
+ * dropped when the message leaves.
+ */
+export function useDeskMentions({
+  value,
+  onChange,
+  textareaRef,
+  mentions,
+  onMentionsChange,
+  enabled,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  textareaRef: RefObject<HTMLTextAreaElement | null>;
+  mentions: readonly AssistantEntityRef[];
+  onMentionsChange: (mentions: AssistantEntityRef[]) => void;
+  enabled: boolean;
+}) {
+  const [token, setToken] = useState<MentionToken | null>(null);
+  const [tab, setTab] = useState<MentionSearchType>("all");
+  const query = token?.query ?? null;
+  const { results, loading, setLoading, highlighted, setHighlighted } = useMentionSearch(
+    query,
+    tab,
+  );
 
   const detect = (draft: string, caret: number) => {
     if (!enabled) {
@@ -154,7 +166,7 @@ export function useDeskMentions({
     }
     const textarea = textareaRef.current;
     const caret = textarea ? textarea.selectionStart : value.length;
-    const inserted = `@${record.label} `;
+    const inserted = `${mentionToken(record.label)} `;
     onChange(value.slice(0, token.start) + inserted + value.slice(caret));
     if (!mentions.some((mention) => mention.type === record.type && mention.id === record.id)) {
       onMentionsChange([...mentions, { type: record.type, id: record.id, label: record.label }]);
@@ -343,6 +355,64 @@ const SKELETON_WIDTHS = [
   [52, 55],
 ] as const;
 
+/** The rows a record search shows while it reads, drawn in the shape of the records to come. */
+export function DeskMentionLoading() {
+  return (
+    <div className="dk-mn-sk" aria-busy>
+      {SKELETON_WIDTHS.map(([title, sub], index) => (
+        <div key={index} className="dk-mn-skr" style={{ animationDelay: `${index * 80}ms` }}>
+          <i className="dk-a" />
+          <span>
+            <i className="dk-b" style={{ width: `${title}%` }} />
+            <i className="dk-c" style={{ width: `${sub}%` }} />
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** One record a search found: its kind's glyph, what it is called and what tells it apart. */
+export function DeskMentionOption({
+  id,
+  record,
+  highlighted,
+  onHighlight,
+  onPick,
+}: {
+  /** Set where an input names the option it is on with aria-activedescendant. */
+  id?: string;
+  record: MentionCandidateRecord;
+  highlighted: boolean;
+  onHighlight: () => void;
+  onPick: () => void;
+}) {
+  return (
+    <Button
+      id={id}
+      variant="bare"
+      size="bare"
+      role="option"
+      aria-selected={highlighted}
+      className={cn(
+        "flex h-10 w-full gap-2.5 rounded-lg px-2 text-left",
+        highlighted && "bg-dsk-hover",
+      )}
+      onMouseMove={() => !highlighted && onHighlight()}
+      onClick={onPick}
+    >
+      <span className="dk-mn-ic">
+        <MentionGlyph type={record.type} />
+      </span>
+      <span className="dk-mn-t">
+        <b>{record.label}</b>
+        <em>{record.subtitle}</em>
+      </span>
+      {highlighted && <span className="dk-kbd">↵</span>}
+    </Button>
+  );
+}
+
 /** The list over the box while an @ is being typed. */
 export function DeskMentionPicker({ mentions }: { mentions: DeskMentions }) {
   const t = useT();
@@ -353,19 +423,7 @@ export function DeskMentionPicker({ mentions }: { mentions: DeskMentions }) {
     <div className="dk-mn" onMouseDown={(event) => event.preventDefault()}>
       <MentionTabs tab={mentions.tab} onChange={mentions.setTab} />
       <div className="dk-mn-l" role="listbox">
-        {mentions.loading && (
-          <div className="dk-mn-sk" aria-busy>
-            {SKELETON_WIDTHS.map(([title, sub], index) => (
-              <div key={index} className="dk-mn-skr" style={{ animationDelay: `${index * 80}ms` }}>
-                <i className="dk-a" />
-                <span>
-                  <i className="dk-b" style={{ width: `${title}%` }} />
-                  <i className="dk-c" style={{ width: `${sub}%` }} />
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
+        {mentions.loading && <DeskMentionLoading />}
         {!mentions.loading &&
           mentions.results.map((record, index) => {
             const previous = mentions.results[index - 1];
@@ -374,29 +432,12 @@ export function DeskMentionPicker({ mentions }: { mentions: DeskMentions }) {
             return (
               <Fragment key={record.type + record.id}>
                 {heading && <div className="dk-mn-h">{TAB_LABELS[tabOf(record.type)]}</div>}
-                <Button
-                  variant="bare"
-                  size="bare"
-                  role="option"
-                  aria-selected={mentions.highlighted === index}
-                  className={cn(
-                    "flex h-10 w-full gap-2.5 rounded-lg px-2 text-left",
-                    mentions.highlighted === index && "bg-dsk-hover",
-                  )}
-                  onMouseMove={() =>
-                    mentions.highlighted !== index && mentions.setHighlighted(index)
-                  }
-                  onClick={() => mentions.pick(record)}
-                >
-                  <span className="dk-mn-ic">
-                    <MentionGlyph type={record.type} />
-                  </span>
-                  <span className="dk-mn-t">
-                    <b>{record.label}</b>
-                    <em>{record.subtitle}</em>
-                  </span>
-                  {mentions.highlighted === index && <span className="dk-kbd">↵</span>}
-                </Button>
+                <DeskMentionOption
+                  record={record}
+                  highlighted={mentions.highlighted === index}
+                  onHighlight={() => mentions.setHighlighted(index)}
+                  onPick={() => mentions.pick(record)}
+                />
               </Fragment>
             );
           })}

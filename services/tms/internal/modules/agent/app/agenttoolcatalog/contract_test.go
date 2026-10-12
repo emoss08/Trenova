@@ -97,7 +97,8 @@ var selfEvident = map[string]struct{}{
 // Naming that source is as good as naming a tool; naming neither is not.
 var fromContext = regexp.MustCompile(
 	`(?i)\b(the page|the record on screen|this run'?s subject|the run'?s subject|` +
-		`the event that started|mentioned record|the thread'?s subject)\b`,
+		`the event that started|mentioned record|the thread'?s subject|` +
+		`the attachments on (a|the) message)\b`,
 )
 
 /*

@@ -249,6 +249,67 @@ func TestRun_HoldsTheReadsAHeldToolTakesItsArgumentsFrom(t *testing.T) {
 	assert.Contains(t, result.Messages[4].Content, "not enabled for this agent")
 }
 
+type companionTool struct {
+	*agenttest.StubActionTool
+	brings []string
+}
+
+func (t *companionTool) Companions() []string { return t.brings }
+
+/*
+A write brings the writes its job cannot be finished without.
+
+The Shipment Assistant held create_shipment and nothing that adds a customer,
+so a rate confirmation from a broker Trenova did not know ended with "no match
+was found; no shipment was created". create_shipment names create_customer,
+create_location and create_commodity as its companions: an agent holding it
+holds them, each still proposed, and one switched off for the agent stays off.
+*/
+func TestRun_HoldsTheWritesAHeldToolNamesAsCompanions(t *testing.T) {
+	t.Parallel()
+
+	categories := queryTool("list_location_categories", []map[string]any{}, nil)
+	query := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{categories}}
+	action := &stubActionRegistry{Tools: []agentports.AgentTool{
+		&companionTool{
+			StubActionTool: actionTool("create_shipment", agent.TierPropose, nil),
+			brings:         []string{"create_customer", "create_location"},
+		},
+		actionTool("create_customer", agent.TierPropose, nil),
+		&dependentTool{
+			StubActionTool: actionTool("create_location", agent.TierPropose, nil),
+			needs:          []string{"list_location_categories"},
+		},
+		actionTool("delete_customer", agent.TierPropose, nil),
+	}}
+	service := newRuntime(&scriptedCompletion{}, query, action, nil)
+	service.catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
+		QueryTools:  query,
+		ActionTools: action,
+	})
+
+	held := service.heldTools(testDefinition("create_shipment"))
+	assert.Contains(t, held, "create_customer")
+	assert.Contains(t, held, "create_location")
+	assert.Contains(t, held, "list_location_categories",
+		"a companion's own reads come with it")
+	assert.NotContains(t, held, "delete_customer")
+
+	definition := testDefinition("create_shipment")
+	definition.DisabledToolNames = []string{"create_customer"}
+	held = service.heldTools(definition)
+	assert.NotContains(t, held, "create_customer", "a companion switched off stays off")
+	assert.Contains(t, held, "create_location")
+
+	set := &toolSet{loaded: map[string]struct{}{}, allowed: service.heldTools(testDefinition(
+		"create_shipment",
+	))}
+	require.True(t, service.load(set, "create_shipment"))
+	assert.True(t, set.offers("create_customer"), "a companion is loaded with its tool")
+	assert.True(t, set.offers("create_location"))
+	assert.True(t, set.offers("list_location_categories"))
+}
+
 /*
 A disclosed turn that calls a tool the agent does not hold is handed the
 nearest ones it does, loaded, instead of a bare refusal.

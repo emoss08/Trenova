@@ -6,7 +6,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
-import { ArtIcon } from "./desk-art-kinds";
+import { ArtIcon } from "../../desk-art-kinds";
 
 /** One value read off the page, how sure the reading is, and where it was. */
 export type ExtractedField = {

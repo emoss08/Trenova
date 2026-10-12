@@ -67,12 +67,17 @@ func (t *CreateLocationTool) Preview(
 		return nil, err
 	}
 
-	return toolpreview.Build(fmt.Sprintf(
+	summary := fmt.Sprintf(
 		"Would create the location %s at %s, %s, %s %s. Its code is assigned when it is saved.",
 		plan.entity.Name,
 		plan.entity.AddressLine1,
 		plan.entity.City,
 		plan.state.Abbreviation,
 		plan.entity.PostalCode,
-	), change), nil
+	)
+	if plan.unplaced != "" {
+		summary += fmt.Sprintf(unplacedNote, plan.unplaced)
+	}
+
+	return toolpreview.Build(summary, change), nil
 }

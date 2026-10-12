@@ -23,6 +23,7 @@ type QueryToolParams struct {
 	// what it may recall of what was kept for one agent alone.
 	AgentDefinitionID pulid.ID
 	DataAccessCeiling permission.FieldSensitivity
+	ThreadID          pulid.ID
 }
 
 // AgentQueryTool reads data and returns it.

@@ -102,6 +102,15 @@ WHERE c.organization_id = ? AND c.business_unit_id = ?
 	AND (c.name ILIKE ? OR c.code ILIKE ? OR c.mc_number ILIKE ?)
 ORDER BY (c.name ILIKE ?) DESC, c.name
 LIMIT ?`,
+	"location": `
+SELECT 'location' AS type, l.id::text AS id, l.name AS label,
+	concat_ws(' · ', l.code, NULLIF(concat_ws(', ', NULLIF(l.city, ''), st.abbreviation), '')) AS subtitle
+FROM locations AS l
+LEFT JOIN us_states AS st ON st.id = l.state_id
+WHERE l.organization_id = ? AND l.business_unit_id = ?
+	AND (l.name ILIKE ? OR l.code ILIKE ? OR l.city ILIKE ?)
+ORDER BY (l.name ILIKE ?) DESC, l.name
+LIMIT ?`,
 }
 
 func likeEscape(value string) string {
@@ -124,7 +133,7 @@ func (r *repository) SearchMentions(
 				continue
 			}
 			args := []any{req.TenantInfo.OrgID, req.TenantInfo.BuID, contains, contains}
-			if kind == "carrier" {
+			if kind == "carrier" || kind == "location" {
 				args = append(args, contains)
 			}
 			args = append(args, prefix, req.LimitPerKind, max(req.Offset, 0))

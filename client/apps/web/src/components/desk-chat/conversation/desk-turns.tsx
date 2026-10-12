@@ -1,11 +1,9 @@
 import type { ToolStep } from "@/components/assistant/activity";
-import { askRequestsFrom } from "@/components/assistant/ask-requests";
-import { ChoicePrompt } from "@/components/assistant/choice-prompt";
+import type { ThreadAsk } from "@/components/assistant/ask-requests";
 import { ReportRunCard } from "@/components/assistant/report-run-card";
 import { reportRunsFrom } from "@/components/assistant/report-runs";
 import type { ThreadEntry } from "@/components/assistant/thread-view";
 import { ArtifactKindIcon } from "@/components/assistant/voice/artifact-chrome";
-import { withArtifactRefs } from "@/lib/artifact-ref";
 import { withoutRecordIds } from "@/lib/record-ids";
 import { AiMarkdown, StreamingAiMarkdown } from "@/components/elements/ai-markdown";
 import type {
@@ -21,7 +19,8 @@ import { DeskMentionText } from "../composer/desk-mentions";
 import { DeskMessageAttachments } from "../composer/desk-uploads";
 import { DeskMemoryRecall, DeskMemorySavedList } from "../memory/desk-memory-notes";
 import { citeSteps, withCitations } from "./citations";
-import { artifactBadgeClass, useCitationOverrides } from "./desk-citations";
+import { DeskAskRecord } from "./desk-ask";
+import { useCitationOverrides } from "./desk-citations";
 import { DeskMessageActions } from "./desk-message-actions";
 import { DeskStepFailures } from "./desk-tool-failures";
 import { DeskWebCites, DeskWebSources } from "./desk-web";
@@ -113,41 +112,37 @@ export function DeskQuestion({
 }
 
 /**
- * An artifact a reply names inside its sentence, as the same dark-blue badge
- * the list under a reply uses, sized to sit in a line of text. Its words are
- * the reply's, so the sentence still reads; the icon says what kind it is.
+ * An artifact a reply names inside its sentence, as a link in the brand's blue
+ * that wraps with the words around it and is lit while its artifact is open.
+ * It reads as the artifact's own title wherever a reply names it, whatever
+ * words the model wrote; the icon says what kind it is.
  */
 export function DeskInlineArtifact({
   artifact,
   active,
   onOpen,
-  children,
 }: {
   artifact: Pick<AssistantArtifact, "id" | "kind" | "title">;
   active: boolean;
   onOpen: (id: string) => void;
-  children: ReactNode;
 }) {
   const t = useT();
   return (
     <Button
       variant="bare"
       size="bare"
-      className={cn(
-        "dk-abadge dk-inline mx-px max-w-full align-[-1px] text-sm [&>span]:truncate",
-        artifactBadgeClass,
-        active && "dk-on",
-      )}
+      className={cn("dk-alink", active && "dk-on")}
       aria-label={t("Open {0}", artifact.title)}
       onClick={() => onOpen(artifact.id)}
     >
-      <ArtifactKindIcon kind={artifact.kind} className="dk-abadge-i" />
-      <span>{children}</span>
+      <ArtifactKindIcon kind={artifact.kind} className="dk-alink-i" />
+      {artifact.title}
     </Button>
   );
 }
 
 const NO_IDS: readonly string[] = [];
+const NO_ASKS: readonly ThreadAsk[] = [];
 
 const CUT_NOTE = /\s*_This reply was cut off before it finished\.[^_]*_\s*$/u;
 
@@ -164,12 +159,11 @@ export const DeskReply = memo(function DeskReply({
   entry,
   steps,
   threadArtifacts,
-  artifacts,
-  latestUserSequence,
+  asks = NO_ASKS,
+  dockedAskId = null,
   chapter,
   closesTurn = false,
   onTogglePin,
-  onAnswer,
   onOpenArtifact,
 }: {
   entry: Extract<ThreadEntry, { kind: "assistant" }>;
@@ -177,8 +171,10 @@ export const DeskReply = memo(function DeskReply({
   steps: readonly ToolStep[];
   /** The conversation's artifacts, so a cited step can offer the one it made. */
   threadArtifacts: readonly AssistantArtifact[];
-  artifacts: readonly AssistantArtifact[];
-  latestUserSequence: number;
+  /** The questions the reply asked, each with the message that answered it once one has. */
+  asks?: readonly ThreadAsk[];
+  /** The reply's question that waits above the composer, if one of its questions does. */
+  dockedAskId?: string | null;
   chapter: number;
   /**
    * The reply is the last of its turn, so it says which of the turn's steps
@@ -187,11 +183,9 @@ export const DeskReply = memo(function DeskReply({
   closesTurn?: boolean;
   /** Pins or unpins the reply as a chapter, by its message id. Left out, replies have no chapters. */
   onTogglePin?: (messageId: string) => void;
-  onAnswer?: (value: string) => void;
   onOpenArtifact: (id: string) => void;
 }) {
   const { message, tools } = entry;
-  const asks = askRequestsFrom(tools);
   const reportRuns = reportRunsFrom(tools);
   // A reply that broke off carries the server's note saying so; the card
   // under it says it instead.
@@ -203,11 +197,9 @@ export const DeskReply = memo(function DeskReply({
   // The pages the turn found on the web so far; the reply cites them by
   // number, and the one that closes the turn lists them under it.
   const webSources = useMemo(() => deskWebSources(steps), [steps]);
-  // Every artifact the reply made is opened from its words: one it named
-  // where it named it, any other at the end of its last sentence.
   const cited = useMemo(
-    () => withArtifactRefs(withCitations(withWebCites(content, webSources), citations), artifacts),
-    [artifacts, citations, content, webSources],
+    () => withCitations(withWebCites(content, webSources), citations),
+    [citations, content, webSources],
   );
   const overrides = useCitationOverrides(citations, threadArtifacts, onOpenArtifact);
   const usedMemories = message.usedMemoryIds ?? NO_IDS;
@@ -233,12 +225,8 @@ export const DeskReply = memo(function DeskReply({
         </div>
       ))}
       {asks.map((ask) => (
-        <div key={ask.callId} className="dk-extra">
-          <ChoicePrompt
-            request={ask}
-            answered={latestUserSequence > ask.sequence}
-            onAnswer={onAnswer}
-          />
+        <div key={ask.request.callId} className="dk-extra">
+          <DeskAskRecord ask={ask} docked={ask.request.callId === dockedAskId} />
         </div>
       ))}
       {closesTurn && (

@@ -5,6 +5,7 @@ const (
 	toolListLocations       = "list_locations"
 	toolGetCarrier          = "get_carrier"
 	toolListServiceFailures = "list_service_failures"
+	toolGetFormulaTemplate  = "get_formula_template"
 )
 
 func (t Template) StarterTools() []string {
@@ -402,6 +403,7 @@ func (t Template) StarterTools() []string {
 			"list_service_types",
 			"list_shipment_types",
 			"list_formula_templates",
+			toolGetFormulaTemplate,
 			toolListLocations,
 			"list_location_categories",
 			"search_shipments",
@@ -422,6 +424,7 @@ func (t Template) StarterTools() []string {
 			"list_shipment_types",
 			"list_equipment_types",
 			"list_formula_templates",
+			toolGetFormulaTemplate,
 			"list_commodities",
 			"list_accessorial_charges",
 			"search_shipments",
@@ -513,6 +516,7 @@ func (t Template) StarterTools() []string {
 			"test_formula_expression",
 			"propose_formula",
 			"list_formula_templates",
+			toolGetFormulaTemplate,
 			"list_rate_agreements",
 			"get_rate_agreement",
 			"get_rate_matrix",

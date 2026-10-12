@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -93,6 +94,7 @@ func (t *CreateShipmentTool) SearchTerms() []string {
 
 func (t *CreateShipmentTool) Prerequisites() []string {
 	return []string{
+		agentdefinition.ToolFindShipmentRecords,
 		"list_customers",
 		"list_service_types",
 		"list_shipment_types",
@@ -104,29 +106,26 @@ func (t *CreateShipmentTool) Prerequisites() []string {
 	}
 }
 
-func (t *CreateShipmentTool) Recipe() []string {
+func (t *CreateShipmentTool) Companions() []string {
 	return []string{
-		"list_customers",
-		"list_service_types",
-		"list_shipment_types",
-		"list_locations",
-		"create_shipment",
+		agentdefinition.ToolCreateCustomer,
+		agentdefinition.ToolCreateLocation,
+		agentdefinition.ToolCreateCommodity,
 	}
 }
 
+func (t *CreateShipmentTool) Recipe() []string {
+	return []string{agentdefinition.ToolFindShipmentRecords, "create_shipment"}
+}
+
 func (t *CreateShipmentTool) Description() string {
-	return "Enter a new shipment, priced by the customer's rate agreement when no price is " +
-		"given; to copy one, use duplicate_shipment. Give the customer, " +
-		"service type and shipment type by id. Price it the way the person did: \"$2,450 " +
-		"flat\" is the Flat Rate template with baseRate 2450, \"$2.10 a mile\" Per Mile with " +
-		"2.10, and charges they name are accessorial charges. Given no price, leave the rating " +
-		"out and call it: it finds the agreement itself, so do not look one up. Only when " +
-		"it says none covers the lane, ask the person for the price, offering " +
-		"one to react to. Add the freight (pieces, weight, " +
-		"commodities, temperatures) and one move with its stops in travel order, each with a " +
-		"location id, a type and a local window such as 2026-10-01T08:00, from 0. Pass " +
-		"sourceDocumentId for a shipment read from an uploaded document. The system assigns " +
-		"the pro number; the BOL is optional, and a BOL must be unique."
+	return "Enter a new shipment, priced by the customer's rate agreement when no price is given; to copy one, use duplicate_shipment. " +
+		"Match its customer, stops and commodities first with one find_shipment_records call, and propose what it says is missing instead of stopping. " +
+		"Do not interview the person first: fill what the conversation, page and lookups give and call it; ask_user only for what it refuses as missing. " +
+		"Price it the way the person did: \"$2,450 flat\" is the Flat Rate template, \"$2.10 a mile\" Per Mile, and charges they name are accessorial charges. " +
+		"Given no price, leave the rating out: it finds the agreement itself; ask for one only when none covers the lane. " +
+		"Add the freight and one move with its stops in travel order, each with a location and a local window; a window that has passed is entered as written. " +
+		"The system assigns the pro number; the BOL is optional, and a BOL must be unique."
 }
 
 func (t *CreateShipmentTool) ParamSchema() map[string]any {
@@ -137,8 +136,9 @@ func (t *CreateShipmentTool) ParamSchema() map[string]any {
 			"sourceDocumentId": agenttoolschema.RecordIDText(
 				permission.ResourceDocument,
 				"The uploaded document this shipment was read from, "+
-					"when there is one: the documentId you read with get_shipment_draft, usually "+
-					"this run's subject or the page.",
+					"when there is one: the documentId you read with get_shipment_draft or "+
+					"read_attachment, usually a file on the message, this run's subject or "+
+					"the page.",
 			),
 		},
 		toolschema.KeyRequired:             []string{"shipment"},
@@ -518,9 +518,10 @@ func (t *CreateShipmentTool) contractRating(
 
 func errNoRatingMethod(outcome string) error {
 	message := "No rate agreement prices this lane for this customer, so the price is the " +
-		"person's to give. Ask them for it, offering one to react to (a figure from " +
-		"quote_shipment or their recent loads on the lane, if you can get one), then send it " +
-		"as formulaTemplateId from list_formula_templates and baseRate"
+		"one the person or the customer's own rate confirmation gives. When neither gives " +
+		"one, ask the person for it, offering one to react to (a figure from " +
+		"quote_shipment or their recent loads on the lane, if you can get one). Send it as " +
+		"formulaTemplateId from list_formula_templates and baseRate"
 	if outcome != "" {
 		message += " (the agreements answered " + outcome + ")"
 	}

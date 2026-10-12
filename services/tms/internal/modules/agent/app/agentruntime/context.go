@@ -112,7 +112,8 @@ func (b *ContextBuilder) Build(
 	// about one of Acme's shipments. The prompt keeps what its budget holds.
 	if definition.HasContextProvider(agentdefinition.ContextMemory) && b.memories != nil {
 		records := rc.MemoryRecords()
-		wg.Go(func() { memories = b.readMemories(ctx, req, records, tenant) })
+		toolNames := agentdefinition.ToolNamesOf(rc.Tools)
+		wg.Go(func() { memories = b.readMemories(ctx, req, records, toolNames, tenant) })
 	}
 	wg.Wait()
 
@@ -186,13 +187,14 @@ func (b *ContextBuilder) readMemories(
 	ctx context.Context,
 	req *agentports.RuntimeContextRequest,
 	records []agent.EntityRef,
+	toolNames []string,
 	tenant pagination.TenantInfo,
 ) *agentports.MemoryContext {
 	memories, err := b.memories.ForContext(ctx, agentports.MemoryContextRequest{
 		TenantInfo:        tenant,
 		AgentDefinitionID: req.Definition.ID,
 		ReaderUserID:      req.Actor.PersonUserID(),
-		ToolNames:         req.Definition.EffectiveToolNames(),
+		ToolNames:         toolNames,
 		Records:           records,
 		Query:             b.memoryQuery(ctx, &req.Query),
 		Text:              req.Query.Text,

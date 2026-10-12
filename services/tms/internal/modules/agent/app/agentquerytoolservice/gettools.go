@@ -222,6 +222,7 @@ func getCatalogSpecs() []getSpec {
 		specOfGet(newGetTrailerTool(nil, nil)),
 		specOfGet(newGetDetentionOccurrenceTool(nil, nil, nil)),
 		specOfGet(newGetServiceFailureTool(nil, nil)),
+		specOfGet(newGetFormulaTemplateTool(nil, nil)),
 	}
 }
 

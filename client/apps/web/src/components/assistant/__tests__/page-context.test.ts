@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { derivePageContext, stripAppTitle } from "../page-context";
 
 /**
- * The server accepts only the record kinds it lists (domain/agent/pagecontext.go)
- * and rejects anything else with a field error, so the client has to derive a
- * kind it knows the server will take, or send none at all.
+ * The server accepts every record kind the registry opens on a page
+ * (domain/agent/pagecontext.go) and rejects anything else with a field error,
+ * so the client derives the kind from the registry, or sends none at all.
  */
 describe("derivePageContext", () => {
   it("names the record kind and the open panel record on a list page", () => {
@@ -20,6 +20,16 @@ describe("derivePageContext", () => {
       entityId: "shp_01J",
       title: "Shipments",
     });
+  });
+
+  it("names a formula template open in Formula Studio", () => {
+    expect(
+      derivePageContext({
+        pathname: "/billing/configuration-files/formula-templates/fmt_01J/edit",
+        search: "",
+        title: "Formula Studio",
+      }),
+    ).toMatchObject({ entityType: "formula_template", entityId: "fmt_01J" });
   });
 
   it("reads the legacy entityId parameter too", () => {

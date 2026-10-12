@@ -226,6 +226,15 @@ func (c *Catalog) Prerequisites(name string) []string {
 	return descriptor.Prerequisites
 }
 
+func (c *Catalog) Companions(name string) []string {
+	descriptor, ok := c.Descriptor(name)
+	if !ok {
+		return nil
+	}
+
+	return descriptor.Companions
+}
+
 // IsQuery reports whether a tool only reads.
 func (c *Catalog) IsQuery(name string) bool {
 	descriptor, ok := c.Descriptor(name)

@@ -113,7 +113,7 @@ func (s *Service) handOffNote(
 	lines := make([]string, 0, len(others))
 	holders := make([]pulid.ID, 0, len(others))
 	for _, other := range others {
-		held := other.EffectiveToolNames()
+		held := s.heldTools(other)
 		matched := make([]string, 0, len(tools))
 		for _, name := range tools {
 			if slices.Contains(held, name) {

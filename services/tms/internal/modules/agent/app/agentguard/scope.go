@@ -24,6 +24,7 @@ const (
 	StageAllowed       = Stage("Allowed")
 	StageOutput        = Stage("Output")
 	StageUnavailable   = Stage("Unavailable")
+	StageTrenova       = Stage("Trenova")
 )
 
 // Reason names why a request was refused.

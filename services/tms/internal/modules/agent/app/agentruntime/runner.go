@@ -155,6 +155,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 	asked := false
 	stuck := false
 	grounding := groundingState{}
+	placement := placementState{}
 	for result.ToolCallsUsed < budget && !stuck {
 		s.interject(t, fx)
 		reply, err := fx.Complete(t, t.completionRequest())
@@ -234,6 +235,9 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 				continue
 			}
 			s.passReply(t, fx, completion)
+			if s.placeArtifacts(t, fx, completion, &placement) {
+				continue
+			}
 
 			return s.finish(result, completion, fx), nil
 		}
@@ -351,7 +355,8 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 			if call.Name == askUserName {
 				question := comparableQuestion(stringArg(call.Arguments, "question"))
 				_, repeated := t.questions[question]
-				outcome := toolOutcome{content: resolveAsk(t.localNow(fx), call.Arguments)}
+				content, shown := resolveAsk(t.localNow(fx), call.Arguments)
+				outcome := toolOutcome{content: content}
 				switch {
 				case !tools.offers(askUserName) && t.req.Delegation != nil:
 					outcome = refusedOutcome(aitrace.OutcomeDenied,
@@ -362,6 +367,12 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 				case question != "" && repeated:
 					outcome = refusedOutcome(aitrace.OutcomeDuplicate,
 						"the same question was already asked", "%s", repeatedAskRefusal)
+				case !shown && fx.Supports(changeUnshownAsk):
+					// Nothing reached the person, so the turn has not asked
+					// anything: it may not end in silence on it, and the
+					// question may be asked again as it should have been.
+					outcome = refusedOutcome(aitrace.OutcomeInvalid,
+						"the question could not be shown as asked", "%s", content)
 				default:
 					asked = true
 					if question != "" {
@@ -514,6 +525,8 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 			grounding.rewritten = true
 			s.reground(t, fx, final, &grounding)
 			s.passReply(t, fx, final)
+			placement.retried = true
+			s.placeArtifacts(t, fx, final, &placement)
 
 			return s.finish(result, final, fx), nil
 		}
@@ -604,7 +617,7 @@ func (s *Service) recordToolResult(
 	}
 	outcome = fx.Observe(t, &call, outcome.exported()).internal()
 	s.countToolOutcome(fx, call.Name, &outcome)
-	t.keepTable(&outcome)
+	t.keepShown(&outcome)
 	effect := s.ToolEffect(call.Name)
 	summary := summarizeOutcome(call, outcome)
 

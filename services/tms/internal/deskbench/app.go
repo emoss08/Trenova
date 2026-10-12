@@ -15,6 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	temporallog "go.temporal.io/sdk/log"
@@ -55,6 +57,8 @@ type deps struct {
 	Decisions        agentports.AgentDecisionService
 	Plans            agentports.AgentPlanService
 	Committer        agentports.ApprovalCommitter
+	Documents        *documentservice.Service
+	Contents         documentports.DocumentContentService
 }
 
 type Bench struct {

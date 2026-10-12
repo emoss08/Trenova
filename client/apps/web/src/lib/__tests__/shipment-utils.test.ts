@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getStopStrip, shipmentPanelPath } from "@/lib/shipment-utils";
+import {
+  getDestinationStop,
+  getOriginStop,
+  getStopStrip,
+  shipmentPanelPath,
+} from "@/lib/shipment-utils";
 import type { Shipment, Stop } from "@trenova/shared/types/shipment";
 
 describe("shipmentPanelPath", () => {
@@ -88,5 +93,32 @@ describe("getStopStrip", () => {
       ["canceled", false],
       ["upcoming", true],
     ]);
+  });
+});
+
+describe("getOriginStop and getDestinationStop", () => {
+  // A query that selects only what it reads still finds its lane: the first
+  // pickup and the last delivery, across moves, as the full record would.
+  it("read a slice of a shipment as they read the whole record", () => {
+    const slice = {
+      moves: [
+        {
+          stops: [
+            { type: "Delivery" as const, city: "Macon" },
+            { type: "Pickup" as const, city: "Atlanta" },
+          ],
+        },
+        { stops: null },
+        { stops: [{ type: "Delivery" as const, city: "Dallas" }] },
+      ],
+    };
+
+    expect(getOriginStop(slice)?.city).toBe("Atlanta");
+    expect(getDestinationStop(slice)?.city).toBe("Dallas");
+  });
+
+  it("find nothing on a shipment without moves", () => {
+    expect(getOriginStop({ moves: null })).toBeNull();
+    expect(getDestinationStop({})).toBeNull();
   });
 });

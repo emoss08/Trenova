@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Rate Confirmation {{LOAD}}</title>
+<style>
+  @page { size: Letter; margin: 0.5in; }
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 9.5pt; color: #111; }
+  h1 { font-size: 12pt; margin: 0 0 4pt; }
+  h2 { font-size: 10pt; margin: 12pt 0 4pt; }
+  p { margin: 0 0 6pt; line-height: 1.3; }
+  .terms { font-size: 8.5pt; }
+  .grid { display: grid; grid-template-columns: 1.1in 2.6in 1.2in 1.6in; row-gap: 3pt; }
+  .label { font-weight: bold; }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { text-align: left; padding: 2pt 18pt 2pt 0; }
+  .revised { font-weight: bold; }
+</style>
+</head>
+<body>
+<h1>{{BILL_TO}} — Rate Confirmation #{{LOAD}}{{REVISION}}</h1>
+<p class="terms">This rate confirmation is confidential information of {{BILL_TO}} and may not be
+disclosed to third parties without its prior written approval. Carrier agrees to provide check calls at pickup,
+every four hours in transit, and at delivery. Carrier must notify {{BILL_TO}} immediately of any delay to pickup
+or delivery. Failure to report arrival and departure times will result in no detention being paid. All delays
+must be reported in real time; a missed delivery appointment that was not reported may be fined up to $250 per
+occurrence. Carrier shall not re-broker, assign or interline this shipment. Payment terms are thirty days from
+receipt of a complete invoice with signed proof of delivery, sent to the billing
+address below. The rate below is what {{BILL_TO}} pays for this load.</p>
+<p class="terms">This load was booked with the {{BILL_TO}} shipping desk, (555) 010-4400.
+Thank you for your business.</p>
+
+<h2>Customer</h2>
+<div class="grid">
+  <div class="label">Bill To:</div><div>{{BILL_TO}}</div>
+  <div class="label">Load #:</div><div>{{LOAD}}</div>
+  <div class="label">Billing Address:</div><div>{{BILL_TO_STREET}}</div>
+  <div class="label">Equipment:</div><div>{{EQUIPMENT}}</div>
+  <div></div><div>{{BILL_TO_CITY}}</div>
+  <div class="label">Temp:</div><div>{{TEMP}}</div>
+</div>
+
+<h2>Shipper</h2>
+<div class="grid">
+  <div class="label">SHIPPER#1:</div><div>{{SHIPPER}}</div>
+  <div class="label">Pick Up Date:</div><div>{{PICKUP_DATE}}</div>
+  <div class="label">Address:</div><div>{{SHIPPER_STREET}}</div>
+  <div class="label">Pick Up Time:</div><div>{{PICKUP_TIME}}</div>
+  <div></div><div>{{SHIPPER_CITY}}</div>
+  <div class="label">Pickup#:</div><div>{{PICKUP_NO}}</div>
+</div>
+
+<h2>Freight</h2>
+<table>
+  <tr><th>Commodity</th><th>Weight</th><th>Units</th><th>Count</th><th>Pallets</th></tr>
+  <tr><td>{{COMMODITY}}</td><td>{{WEIGHT}}</td><td>Pallet(s)</td><td>{{PALLETS}}</td><td>{{PALLETS}}</td></tr>
+</table>
+
+<h2>Receiver</h2>
+<div class="grid">
+  <div class="label">RECEIVER #1:</div><div>{{RECEIVER}}</div>
+  <div class="label">Delivery Date:</div><div>{{DELIVERY_DATE}}</div>
+  <div class="label">Address:</div><div>{{RECEIVER_STREET}}</div>
+  <div class="label">Delivery Time:</div><div class="revised">{{DELIVERY_TIME}}</div>
+  <div></div><div>{{RECEIVER_CITY}}</div>
+  <div class="label">Delivery#:</div><div>{{DELIVERY_NO}}</div>
+</div>
+
+<h2>Rate Details</h2>
+<table>
+  <tr><th>Service</th><th>Amount</th><th>Rate</th><th>Extended</th></tr>
+  <tr><td>Line Haul - FLAT RATE</td><td>1</td><td>{{LINEHAUL}}</td><td>{{LINEHAUL}}</td></tr>
+  <tr><td>Fuel Surcharge - FLAT RATE</td><td>1</td><td>{{FUEL}}</td><td>{{FUEL}}</td></tr>
+  <tr><td><b>Total:</b></td><td></td><td></td><td><b>{{TOTAL}}</b></td></tr>
+</table>
+</body>
+</html>

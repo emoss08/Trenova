@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/typeutils"
 	"go.uber.org/zap"
 )
@@ -198,8 +197,8 @@ func bunchTable(
 		ID:     id,
 		Kind:   assistantartifact.KindTableView,
 		Status: assistantartifact.StatusReady,
-		Title: artifactTitle(fmt.Sprintf("%s (%d)",
-			stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity)), len(rows))),
+		Title: assistantartifact.NormalizeTitle(fmt.Sprintf("%s (%d)",
+			assistantartifact.RecordsTitle(entity), len(rows))),
 		Payload:          payload,
 		SourceToolCallID: source,
 	}

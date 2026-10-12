@@ -137,6 +137,8 @@ func coreToolProviders() []any {
 		provideListEmailProfilesTool,
 		provideGetShipmentDraftTool,
 		provideGetDocumentSummaryTool,
+		provideReadAttachmentTool,
+		provideFindShipmentRecordsTool,
 		provideQuoteShipmentTool,
 		provideShopCarriersTool,
 		provideRankMoveCandidatesTool,
@@ -285,6 +287,18 @@ func provideGetDocumentSummaryTool(
 	threads agentports.ThreadOwnerRepository,
 ) agentports.AgentQueryTool {
 	return newGetDocumentSummaryTool(documents, content, permissions, threads)
+}
+
+//nolint:gocritic // fx.In parameter structs are passed by value
+func provideFindShipmentRecordsTool(p ShipmentRecordsToolParams) agentports.AgentQueryTool {
+	return newFindShipmentRecordsTool(&p)
+}
+
+func provideReadAttachmentTool(
+	documents documentports.DocumentRepository,
+	content documentports.DocumentContentService,
+) agentports.AgentQueryTool {
+	return newReadAttachmentTool(documents, content)
 }
 
 func provideGetShipmentDraftTool(

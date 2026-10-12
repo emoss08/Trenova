@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { whenIdle } from "../when-idle";
 
-type IdleWindow = Window & {
+type IdleWindow = Omit<Window, "requestIdleCallback" | "cancelIdleCallback"> & {
   requestIdleCallback?: Window["requestIdleCallback"];
   cancelIdleCallback?: Window["cancelIdleCallback"];
 };

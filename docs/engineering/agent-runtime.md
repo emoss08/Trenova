@@ -946,6 +946,69 @@ person declined:"; the agent answers it and may propose a different change.
 That turn is the rejection's own follow-up, so the note is never also sent as
 a message and the agent answers once.
 
+A follow-up is admitted without the scope guard: its input is a note Trenova wrote
+(`TrenovaWritten`, stage `Trenova`), and the classifier once read a decision note as an attempt
+to change the assistant's instructions and refused the turn that should have proposed the
+shipment its records were for. The report stays bound to the note and the card, but only about
+what ran: when what ran was a step toward something the person asked for that is not done
+(the customer and locations a shipment needs), the agent takes the next step with its tools
+instead of asking whether to (`continueTheWork`).
+
+### What a change wrote is shown
+
+A write that names the one record it made or changed (`ToolExecutionResult.Record`) shows that
+record beside the conversation, read again just then, without the person asking for it. Before,
+an approved `create_shipment` named its pro number and the person had to ask to see the
+shipment. The record is read as the person through the tool that reads its kind (`get_` and the
+record-link entity, by its one required parameter, `agentruntime.ReadRecord`) and drawn as that
+kind's card; a kind with no reader (a location, a commodity) is drawn from what the write
+reported, linked to the record's page. The card carries `written` with what the change did, and
+the shown note (`WrittenNote`) tells the model to point to it rather than read the record
+again; it is kept whether or not the reply manages the link (`ShownArtifact.MustBeLinked`). A
+write that ran inside a turn is shown as its call finishes (`artifactRecorder.observe`); one that
+ran on a person's approval is shown as its follow-up is prepared (`showWritten`), with the note
+pointing the follow-up at it, so a plan that made a customer, two locations and a commodity
+shows each of them. A card for a record read before is a new version of the same card, by the
+reader's lineage key.
+
+### Asking the person
+
+`ask_user` is answered by the loop itself (`agentruntime/askuser.go`), in workflow
+code: it reads and writes nothing, and its result is the question the thread pins
+above the person's message box. A call asks for one value in one of three shapes:
+
+- **A choice:** `options` (`value`, `label`, `detail`; at most 8), shown as
+  buttons, with a box for the person's own value unless `allowOther` is false.
+- **A typed value:** no options, a box only. `input` (`type`: `text`, `number`,
+  `date`, `datetime` or `record`; `recordKind` for a record) says what the box takes.
+  A record is picked from a search of one kind, and the kind is held to the
+  permission registry (`agent.IsKnownPageEntityType`); an unknown type, or a record
+  of no known kind, falls back to text. `otherHint` is the box's placeholder.
+- **A form:** `fields` (`key`, `label`, `type`, `recordKind`, `hint`, `optional`; at
+  most 8), the values a write tool refused for as missing, which together complete
+  that one write. A form has no options, no box of its own and no `input`.
+
+The stored result is `{question, options, allowOther, otherHint?, input?, fields?,
+note}`, with `options` always a list. Malformed options and fields are dropped one
+by one. The loop refuses, telling the model what to do instead: no question;
+nothing to answer with; options and fields together; fields none of which can be
+shown; and a typed-text question that asks for several values, which is one over
+160 characters or one that lists what it wants (two or more commas or semicolons,
+or one followed later by "and"; a comma between digits does not count). That last
+refusal sends a model that wants to create a record to call the write tool with
+what it knows and ask for exactly the missing values with `fields`, rather than
+interviewing the person first. A question already asked in the conversation's last
+turns is refused as repeated, and a run nobody watches or a delegate's task is told
+there is no one to ask.
+
+The note on a shown question tells the model to end its turn and write nothing
+more: the question is on screen, and the loop accepts an empty reply after one
+(`TestRun_AcceptsSilenceAfterAQuestion`). A refused ask is a failed result with
+verdict `invalid` and does not count as asked, so an empty reply after it is asked
+for again, and the same question may be asked again properly; a refused ask also
+does not count towards the repeated-question check of later turns
+(`askedQuestions`).
+
 ### A typed approval opens the approval box
 
 Typing "approved" decides nothing: a proposal is decided in the approval box
@@ -1103,6 +1166,29 @@ stale when a tool was renamed, and told an agent without a tool to call it.
 Every recipe and prerequisite names a registered tool, and a recipe names its
 own tool (`TestEveryRecipeNamesRegisteredTools`).
 
+A prerequisite only ever grants a read. A write a tool cannot finish its job without is
+declared instead as a companion (`agentports.CompanionTool`): `create_shipment` names
+`create_customer`, `create_location` and `create_commodity`, because a load from a broker
+Trenova has never seen names a customer, facilities and freight that do not exist yet, and an
+agent made in AI Control that held only shipment tools ended with "no match was found; no
+shipment was created". An agent holding the tool holds its companions (`heldTools`), they load
+with it, and each answers to its own policy, so it is proposed and approved like any write; one
+an administrator switched off for the agent stays off, and AI Control lists them under the
+agent's capabilities. What the companions are for is found in one call: `find_shipment_records`
+matches the customer, each stop's location (by name, then street) and each commodity, says
+which are missing, and lists the service types, shipment types, equipment types, location
+categories and rating methods to choose from. Before it, a load with two new stops spent the
+turn's twelve calls on one list call per record and ended without proposing anything. The turn
+proposes what is missing; once those are approved, the decision follow-up proposes the shipment
+with their new ids, and a later load for the same customer goes straight to `create_shipment`
+(`deskbench/scenarios/shipment-creation.yaml`).
+
+`create_location` places the address on the map through the organization's address lookup
+(`kernelports.AutoCompleteService`, Google Maps) and, when there is none or it finds nothing at
+that state and ZIP, saves the location without coordinates and says so on the card: an
+automatic geofence then has no shape until the location is geocoded in Locations. A circle is
+still drawn around a point, so it still needs one.
+
 The prompt's tool section groups changes only by what is certain before a
 call: a change that always records a proposal (`ToolSummary.AlwaysProposes`,
 from `agenttoolpolicy.AlwaysProposes`: the tool's promotable tier, its egress
@@ -1185,6 +1271,23 @@ see the answer appear to fail and start over. Each pass that changed something
 is a `reply_regrounded` event (`strip_ids`, `point_to_table`) before it. The
 passes sit beneath the prompt's rules, not in place of them.
 
+Artifact links are then held to the contract in
+[desk-artifacts.md](desk-artifacts.md#naming-and-linking-artifacts) on every final reply the
+person reads (`placement.go`, behind `agent-loop-artifact-placement`; a delegate's reply is read
+by the agent that asked, which names what it needs in its own). The check is exact, not a
+judgement: a link stands outside a sentence when the sentence around it, split at `.`, `!` or `?`
+before a space, holds no word once the links are taken out, or when it sits in a table row, a
+heading or a fenced block. A reply that names an artifact outside a sentence, leaves out a table
+or document it must name (`ShownArtifact.MustBeLinked`, the same rule that keeps the artifact
+when the reply forgets it), or names an id the conversation never held is discarded once, the way
+the grounding guard does it: a `retrying` event, a `reply_regrounded` `relink_artifacts`, and a
+correction naming each link as it should be written. A rewrite that still breaks the contract, or
+a reply written after the tool budget was spent, is not asked again: each stray link is cut from
+where it stood, an id nobody holds is left as its words, and one sentence at the end of the reply
+names what was cut or left out (`The full table is in …`, `The full record is in …`), sent as a
+`reply_replaced` after a `reply_regrounded` `place_artifacts`. A clean reply costs one pass over
+its text; only a broken one costs a model call, and never more than one.
+
 The output guard (`agentguard.EvaluateOutput`) runs last, on every final
 reply. A reply with code in it is no longer refused whole: a fenced block with
 a programming-language tag, a fenced block holding source or markup, and a
@@ -1208,6 +1311,61 @@ its drivers and moves and lost the summary that held the uncovered and late coun
 A result that is not a JSON object, or does not fit even with its lists shortened, is
 still cut at a character boundary, with a note saying records are missing and not to
 count or infer from them.
+
+### Files a person attaches
+
+A file is uploaded against the conversation (`document.ConversationResourceType`)
+and its id rides on the message (`SendMessageRequest.AttachmentDocumentIDs`, at
+most `MaxMessageAttachments` = 5). `resolveAttachments` refuses an id that is not
+the person's own upload to this thread (`Document.AttachedBy`), so an attachment
+cannot be used to read another record's file, and reads what document
+intelligence has made of each one.
+
+The files reach the model on the message they came with, never in the system
+prompt: `agentdefinition.DescribeAttachments` writes an `<attachments>` block
+ahead of the question, after `<records_in_play>`, naming each file (id, name,
+type, pages, what it looks like, whether its reading has finished) with its text
+inside `<file_text>`. The message's files share `AttachmentTextBudget` (24,000
+characters), shortest first, so a short file always arrives whole and a long one
+says where its text stops and the offset to read on from. As with the anchors,
+the block is never saved; the question is kept as the person typed it. Every
+later turn replays that message with the same block, so the model always knows
+which message carried which file: within the last three turns (the window tool
+results are kept whole in) with the file's text again, read while the turn is
+prepared (`earlierFileTexts`, at most `MaxMessageAttachments` files), and named
+only before that, to be read again with `read_attachment`. Without the text, a
+decision's follow-up saw its own summary of the confirmation and no document
+behind it, decided it had made the details up, and withdrew them. The same texts
+count as what the turn read for the grounding guard (`RunRequest.FileTexts`), so
+a figure quoted from a file is not taken for an invented one. Before, the files were a section of the system prompt for the turn they
+came with and nowhere after it: the model was shown a 1,200-character excerpt,
+told to call `get_document_summary`, which an agent made in AI Control did not
+necessarily hold, and in the next turn the files had gone. Asked twice to read a
+re-uploaded rate confirmation, gpt-6-luna answered both times that no file was
+attached.
+
+`read_attachment` is a core tool, so every agent holds it, and it rides on any
+turn of a conversation a file was attached to (`toolSetRequest.attachments`). It
+reads only the person's own uploads to this thread (`QueryToolParams.ThreadID`):
+its text in reading order, one page of it, or a window from an offset, with what
+document intelligence found; without an id it lists the conversation's files,
+which is how a turn past a compaction finds them again. A file still being read
+is waited for, polling for up to 20 seconds, and one still not read says so
+rather than coming back empty. Its policy is the person's own read
+(`ToolScopeSelf`) that always reads outside content (`TaintSourceAttachment`), so
+a run nobody is watching goes without it and a turn that read a file proposes
+its later writes. `get_document_summary` stays for documents a record names.
+
+A native PDF page's text is its layout read top to bottom, each row's segments
+left to right with `kernelports.PDFColumnGap` between them
+(`pdfreader.arrange`), not the order its content stream happens to draw in,
+which put a rate confirmation's terms first and left every label a page away
+from its value. The stream's text is kept only when the layout misses some of it
+(`readsWhole`). The rate confirmation parser reads such a row as its cells
+(`splitLayoutCells`), so `SHIPPER#1:` is followed by the shipper's name and
+`Address:` by the street, and a stop's name and address fill the shipper and
+consignee when no label names them. Documents read before this keep their old
+text until they are extracted again.
 
 ### History replay
 
@@ -1706,9 +1864,11 @@ before the change:
 | `assistant-turn-prepare-local` | a turn prepares as a regular activity: a task-queue dispatch and a second workflow task before the model call is scheduled | nothing; `PrepareTurnActivity` stays registered, and the old branch keeps its priority and fairness keys |
 | `agent-loop-grounding-guard` | a reply that names what the filed writes do not hold is kept as written | nothing; the check itself is the only cost, and it is asked only of a reply the guard found wanting |
 | `agent-loop-reply-passes` | a final reply is recorded as the model wrote it, internal ids and reprinted tables included | nothing; the check itself is the only cost, and it is asked only of a reply the passes would change |
+| `agent-loop-artifact-placement` | a final reply is recorded with its artifact links wherever the model put them, including outside any sentence, and a table it was told to point to may go unnamed | nothing; the check itself is the only cost, and it is asked only of a reply that names an artifact outside a sentence, leaves out one it must name, or names one the conversation never held |
 | `agent-loop-cut-off-call-retry` | a completion cut off inside a tool call, or before any visible answer, ends the turn with `truncationNotice` (a broken native call is refused as invalid JSON and the model asked again at the same limit) | nothing; the check itself is the only cost, and it is asked only of a completion cut off that way |
 | `agent-loop-interjections` | a turn never reads what the person said while it worked, nor checks its records for changes; a steer waits in the queue and is sent as the next message | nothing; the check itself is the only cost, and it is asked only when a steer is waiting or a check of the records is due |
 | `agent-loop-fresh-synthesized-call-ids` | a call whose id the adapter synthesized keeps it unless the replayed conversation already holds it | nothing; the check itself is the only cost, and it is asked only of a completion that carries a synthesized id |
+| `agent-loop-unshown-ask` | an `ask_user` call the runtime refused is an ordinary result that counts as asked: the turn may end in silence after it, and the same question is refused as repeated | nothing; the check itself is the only cost, and it is asked only of an ask the runtime refused |
 | `document-ai-extraction-timer-poll` | `extractWithTaskToken` | `SubmitAndAwaitDocumentAIExtractionActivity`, `PollPendingDocumentAIExtractionsWorkflow` and its schedule, task tokens on `document_ai_extractions` |
 | none: the workflow is retired whole | `ImportAssistantTurnWorkflow` on `agent-chat-queue`, which no route starts any more | the workflow, its activities and registry in `importassistantjobs`, `workflow_test.go`, and the turn machinery in `shipmentimportassistantservice` (the tool loop, `toolGrants`, `persistConversationTurn`); delete them once no `ImportAssistantTurnWorkflow` execution is open |
 

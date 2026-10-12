@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/bytedance/sonic"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -418,4 +420,28 @@ func TestBuildToolCatalog_NamesTheMostEachChangeMayBeGiven(t *testing.T) {
 	assert.Equal(t, agent.TierAutoExecute, byName["update_customer"].MaxAutonomyTier)
 	assert.Equal(t, agent.EgressMoney.Ceiling(), byName["pay_carrier"].MaxAutonomyTier)
 	assert.Empty(t, byName["get_shipment"].MaxAutonomyTier)
+}
+
+// noPrerequisites is a tool that can name the tools it takes its arguments
+// from and names none, as most receivable tools do.
+type noPrerequisites struct {
+	*agenttest.StubQueryTool
+}
+
+func (noPrerequisites) Prerequisites() []string { return nil }
+
+// The client reads prerequisites as a list. A tool that can name some and
+// names none was sent as null, and the AI Control tool picker refused the
+// whole catalog.
+func TestCatalogEntry_SendsNoPrerequisitesAsAnEmptyList(t *testing.T) {
+	t.Parallel()
+
+	for _, tool := range []catalogTool{
+		noPrerequisites{&agenttest.StubQueryTool{ToolName: "list_open_invoices"}},
+		&agenttest.StubQueryTool{ToolName: "get_shipment"},
+	} {
+		encoded, err := sonic.Marshal(catalogEntry(tool, agentdefinitionports.ToolCatalogKindQuery))
+		require.NoError(t, err)
+		assert.Contains(t, string(encoded), `"prerequisites":[]`, tool.Name())
+	}
 }

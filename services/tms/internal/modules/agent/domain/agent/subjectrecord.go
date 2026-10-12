@@ -3,60 +3,71 @@ package agent
 import (
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-type subjectRecord struct {
-	prefix  string
-	noun    string
-	article string
-}
-
-var subjectRecords = map[SubjectType]subjectRecord{
-	SubjectBillingQueueItem:     {"bqi_", "billing queue item", "a"},
-	SubjectShipmentMove:         {"sm_", "shipment move", "a"},
-	SubjectAssistantThread:      {"athr_", "conversation", "a"},
-	SubjectShipment:             {"shp_", "shipment", "a"},
-	SubjectDocument:             {"doc_", "document", "a"},
-	SubjectOrganization:         {"org_", "organization", "an"},
-	SubjectInsight:              {"inst_", "insight", "an"},
-	SubjectBankReceipt:          {"brcpt_", "bank receipt", "a"},
-	SubjectDetentionOccurrence:  {"dto_", "detention occurrence", "a"},
-	SubjectWorker:               {"wrk_", "worker", "a"},
-	SubjectCarrierIntelEvent:    {"cievt_", "carrier intelligence event", "a"},
-	SubjectEDIInboundFile:       {"ediinf_", "EDI inbound file", "an"},
-	SubjectInboundMessage:       {"imsg_", "inbound message", "an"},
-	SubjectReport:               {"rd_", "report", "a"},
-	SubjectDashboard:            {"rdb_", "dashboard", "a"},
-	SubjectAccountingConnection: {"acctc_", "accounting connection", "an"},
-	SubjectAccountingSyncRecord: {"acctsr_", "accounting sync record", "an"},
-	SubjectAccountingInbound:    {"acctic_", "accounting inbound change", "an"},
-	SubjectAccountingDrift:      {"acctdf_", "accounting drift finding", "an"},
-	SubjectFormulaTemplate:      {"ft_", "formula template", "a"},
-	SubjectInvoice:              {"inv_", "invoice", "an"},
-	SubjectInvoiceDispute:       {"idsp_", "invoice dispute", "an"},
+// subjectRecordKinds is the kind of record each subject is, as the permission
+// registry names it; its prefix and its noun are read from there. The client
+// is generated from this table (client/packages/graphql/scripts/
+// generate-record-kinds.mjs), so it stays a map of plain literals.
+var subjectRecordKinds = map[SubjectType]permission.RecordKind{
+	SubjectBillingQueueItem:     "billing_queue_item",
+	SubjectShipmentMove:         "shipment_move",
+	SubjectAssistantThread:      "assistant_thread",
+	SubjectShipment:             "shipment",
+	SubjectDocument:             "document",
+	SubjectOrganization:         "organization",
+	SubjectInsight:              "insight",
+	SubjectBankReceipt:          "bank_receipt",
+	SubjectDetentionOccurrence:  "detention_occurrence",
+	SubjectWorker:               "worker",
+	SubjectCarrierIntelEvent:    "carrier_intelligence_event",
+	SubjectEDIInboundFile:       "edi_inbound_file",
+	SubjectInboundMessage:       "inbound_message",
+	SubjectReport:               "report",
+	SubjectDashboard:            "dashboard",
+	SubjectAccountingConnection: "accounting_connection",
+	SubjectAccountingSyncRecord: "accounting_sync_record",
+	SubjectAccountingInbound:    "accounting_inbound_change",
+	SubjectAccountingDrift:      "accounting_drift_finding",
+	SubjectFormulaTemplate:      "formula_template",
+	SubjectInvoice:              "invoice",
+	SubjectInvoiceDispute:       "invoice_dispute",
 }
 
 var subjectsByPrefix = func() map[string]SubjectType {
-	out := make(map[string]SubjectType, len(subjectRecords))
-	for subject, record := range subjectRecords {
-		out[record.prefix] = subject
+	out := make(map[string]SubjectType, len(subjectRecordKinds))
+	for subject, kind := range subjectRecordKinds {
+		if prefix, ok := kind.IDPrefix(); ok {
+			out[prefix] = subject
+		}
 	}
 
 	return out
 }()
 
+// RecordKind is the kind of record this subject is.
+func (s SubjectType) RecordKind() (permission.RecordKind, bool) {
+	kind, ok := subjectRecordKinds[s]
+
+	return kind, ok
+}
+
 // IDPrefix is the prefix every id of this kind of record carries, so an id
 // can be told apart from another kind's before anything is read.
 func (s SubjectType) IDPrefix() string {
-	return subjectRecords[s].prefix
+	prefix, _ := subjectRecordKinds[s].IDPrefix()
+
+	return prefix
 }
 
 // Noun is what one record of this kind is called in a sentence: "report",
 // "EDI inbound file".
 func (s SubjectType) Noun() string {
-	if record, ok := subjectRecords[s]; ok {
-		return record.noun
+	if kind, ok := subjectRecordKinds[s]; ok {
+		return kind.Noun()
 	}
 
 	return string(s)
@@ -65,11 +76,7 @@ func (s SubjectType) Noun() string {
 // NounWithArticle is Noun as a sentence introduces it: "a report", "an
 // insight".
 func (s SubjectType) NounWithArticle() string {
-	if record, ok := subjectRecords[s]; ok {
-		return record.article + " " + record.noun
-	}
-
-	return "a " + string(s)
+	return stringutils.WithArticle(s.Noun())
 }
 
 // SubjectTypeOfID is the kind of record an id's prefix belongs to.

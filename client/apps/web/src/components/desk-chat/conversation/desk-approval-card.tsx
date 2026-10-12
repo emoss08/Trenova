@@ -23,7 +23,13 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, type MutableRefObject } from "react";
 import { toast } from "sonner";
 import { DeskIcon } from "../desk-icons";
-import { approvalFacts, recordCount, refusalReasons, type ApprovalFacts } from "./approval-facts";
+import {
+  approvalFacts,
+  recordCount,
+  refusalReasons,
+  scopePhrase,
+  type ApprovalFacts,
+} from "./approval-facts";
 import type { UndoController } from "./desk-undo-bar";
 import type { UndoWindow } from "./undo-window";
 
@@ -189,6 +195,7 @@ function PlanCard({
     refused: [],
     wouldFail: null,
     changedSince: 0,
+    creates: false,
   };
   const reversible = steps.every((step) => presentProposal(step).reversible);
 
@@ -322,9 +329,8 @@ function approvedWhat(title: string, facts: ApprovalFacts, t: TranslateFn): stri
   // A presenter's title is English source text from the catalog; translate it here, where
   // it is put into the sentence.
   const shown = t(title);
-  return facts.count > 0
-    ? t("{0} on {1}", shown, recordCount(facts.resource, facts.count, t))
-    : shown;
+  const scope = scopePhrase(facts, t);
+  return scope ? `${shown} ${scope}` : shown;
 }
 
 const cardButton = "rounded-lg in-[.dk-dense]:order-2";
@@ -364,8 +370,7 @@ function CardRow({
   onRedraft?: () => void;
 }) {
   const t = useT();
-  const scope =
-    countLabel ?? (facts.count > 0 ? recordCount(facts.resource, facts.count, t) : null);
+  const scope = countLabel ? t("on {0}", countLabel) : scopePhrase(facts, t);
 
   // Out of date: what it was drafted against has changed, so it is drafted
   // again rather than approved.
@@ -378,7 +383,7 @@ function CardRow({
         </span>
         <span className="dk-dcx-t">
           <b>
-            {title} {scope && <span className="dk-dcx-s">{t("on {0}", scope)}</span>}
+            {title} {scope && <span className="dk-dcx-s">{scope}</span>}
           </b>
           <span className="dk-dcx-d">
             {facts.changedSince > 0
@@ -389,12 +394,7 @@ function CardRow({
               : t("What it was drafted against has changed since")}
           </span>
         </span>
-        <Button
-          variant="quiet"
-          size="sm"
-          className={cn(plainButton, leadButton)}
-          onClick={onDefer}
-        >
+        <Button variant="quiet" size="sm" className={cn(plainButton, leadButton)} onClick={onDefer}>
           {t("Not now")}
         </Button>
         {onRedraft ? (
@@ -463,7 +463,7 @@ function CardRow({
       </span>
       <span className="dk-dcx-t">
         <b>
-          {title} {scope && <span className="dk-dcx-s">{t("on {0}", scope)}</span>}
+          {title} {scope && <span className="dk-dcx-s">{scope}</span>}
         </b>
         <span className="dk-dcx-d">
           {changed ? (
@@ -478,12 +478,7 @@ function CardRow({
           <span className="dk-dcx-m">· {reversible ? t("reversible") : t("can't be undone")}</span>
         </span>
       </span>
-      <Button
-        variant="quiet"
-        size="sm"
-        className={cn(warnButton, leadButton)}
-        onClick={onReview}
-      >
+      <Button variant="quiet" size="sm" className={cn(warnButton, leadButton)} onClick={onReview}>
         {t("Review")}
       </Button>
       <Button variant="quiet" size="sm" className={warnButton} onClick={onDefer}>

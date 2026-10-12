@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -115,7 +116,9 @@ var customerRecord = &masterRecord[customer.Customer]{
 
 func customerFields() []masterField[customer.Customer] {
 	return []masterField[customer.Customer]{
-		masterText(mdCode, "The customer's short code, unique in this organization.",
+		masterText(mdCode, "The customer's short code, unique in this organization. When "+
+			"the person and the document give none, make one from the name: up to ten "+
+			"letters, such as HARBORLN for Harbor Line Foods.",
 			mdMaxCode, true, func(c *customer.Customer) *string { return &c.Code }),
 		masterText(MdName, "The customer's name.", mdMaxName, true,
 			func(c *customer.Customer) *string { return &c.Name }),
@@ -163,7 +166,7 @@ func customerPolicy() masterPolicy {
 func NewCreateCustomerTool(customers CustomerKeeper, states StateLookup) agentports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[customer.Customer]{
 		record: customerRecord,
-		name:   "create_customer",
+		name:   agentdefinition.ToolCreateCustomer,
 		description: "Add a customer the organization ships for: its code, name, billing " +
 			"address and DOT and MC numbers. Check list_customers first. Billing terms " +
 			"start from the organization's defaults; who is emailed status updates is " +

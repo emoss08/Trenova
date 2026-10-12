@@ -3,6 +3,7 @@ package agentruntime
 import (
 	"encoding/json"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -17,8 +18,9 @@ const CompactionKeepTurns = 2
 // fileTools are the tools whose results are the text of a document the person
 // attached, which the context meter counts as files rather than tool results.
 var fileTools = map[string]struct{}{
-	"get_document_summary": {},
-	"get_document":         {},
+	"get_document_summary":                 {},
+	"get_document":                         {},
+	agentdefinition.CoreToolReadAttachment: {},
 }
 
 // ContextRequest is what a conversation's next turn would send, for

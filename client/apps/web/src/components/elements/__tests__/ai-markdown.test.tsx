@@ -144,7 +144,7 @@ describe("a reply still streaming", () => {
  */
 describe("math in a reply", () => {
   it("shows math as written until the typesetter arrives, then typesets it", async () => {
-    renderReply("$$a + b$$\n\nThe rate is $r = d / t$ per mile.");
+    renderReply("$$\na + b\n$$\n\nThe rate is $r = d / t$ per mile.");
 
     expect(document.querySelector(".md-math-pending")?.textContent).toBe("r = d / t");
     expect(document.querySelector("pre.md-math-raw")?.textContent).toContain("a + b");

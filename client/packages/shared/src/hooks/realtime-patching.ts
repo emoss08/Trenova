@@ -197,6 +197,9 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
     "shipment-list",
     "shipmentBoard",
     "shipment-events",
+    // One shipment read whole, and its latest events: the Desk's shipment card.
+    ["shipment", "get"],
+    ["shipment", "events"],
     "dispatch-board",
     "dispatch-live-tender",
     "dispatch-shipment-tenders",
@@ -216,7 +219,7 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
     "billing-transfer-active-run",
     "billing-transfer-run-items",
   ],
-  shipmentEvents: ["shipment-events"],
+  shipmentEvents: ["shipment-events", ["shipment", "events"]],
   "report-run": ["report-run-list"],
   routing_guides: ["routing-guide-list"],
   driver_settlement: [

@@ -2,7 +2,7 @@
 import { threadListQuery, threadsOf, updateCachedThread } from "@/lib/thread-list";
 import type { AssistantThread } from "@/types/assistant";
 import { QueryClient, QueryClientProvider, useInfiniteQuery } from "@tanstack/react-query";
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useDeskThreads } from "../use-desk-threads";
 
@@ -97,7 +97,7 @@ describe("useDeskThreads", () => {
 
     await act(() => rail.loadMore());
 
-    expect(screen.getByText("4 listed")).toBeInTheDocument();
+    expect(await screen.findByText("4 listed")).toBeInTheDocument();
     expect(renders.frame).toBe(before);
   });
 
@@ -108,7 +108,9 @@ describe("useDeskThreads", () => {
 
     await act(() => rail.loadMore());
 
-    expect(screen.getByTestId("frame")).toHaveTextContent("Deep one · 2 recent");
+    await waitFor(() =>
+      expect(screen.getByTestId("frame")).toHaveTextContent("Deep one · 2 recent"),
+    );
   });
 
   it("follows a change to the open conversation", async () => {
@@ -117,6 +119,8 @@ describe("useDeskThreads", () => {
 
     act(() => updateCachedThread(queryClient, "a", (item) => ({ ...item, title: "Renamed" })));
 
-    expect(screen.getByTestId("frame")).toHaveTextContent("Renamed · 2 recent");
+    await waitFor(() =>
+      expect(screen.getByTestId("frame")).toHaveTextContent("Renamed · 2 recent"),
+    );
   });
 });

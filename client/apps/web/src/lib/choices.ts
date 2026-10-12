@@ -220,7 +220,7 @@ import type {
 import type { DrugAlcoholStatus } from "@trenova/shared/types/worker-drug-alcohol-status";
 import type { SafetyRating } from "@trenova/shared/types/worker-safety";
 import type { WorkerTrainingHealth } from "@trenova/shared/types/worker-training";
-import { defineLabels, sourceLabels } from "@trenova/shared/i18n/labels";
+import { defineLabels, sourceLabels, translateLabel } from "@trenova/shared/i18n/labels";
 
 export const formulaTemplateStatusChoices = [
   { label: "Active", value: "Active", color: "var(--success)" },
@@ -1326,6 +1326,15 @@ export function findChoice<TValue extends string | boolean | number>(
   value: TValue,
 ) {
   return choices.find((choice) => choice.value === value);
+}
+
+/** A choice's label in the reader's language, or the value itself when no choice has it. */
+export function choiceLabel<TValue extends string>(
+  choices: ReadonlyArray<GenericSelectOption<TValue>>,
+  value: TValue,
+): string {
+  const label = findChoice(choices, value)?.label;
+  return label === undefined ? value : translateLabel(label);
 }
 
 export const transferScheduleChoices = [

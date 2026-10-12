@@ -130,7 +130,7 @@ func extractionArtifact(
 	return &assistantartifact.Artifact{
 		Kind:             assistantartifact.KindExtraction,
 		Status:           assistantartifact.StatusReady,
-		Title:            artifactTitle(title),
+		Title:            assistantartifact.NormalizeTitle(title),
 		Payload:          payload,
 		SourceToolCallID: callID,
 	}

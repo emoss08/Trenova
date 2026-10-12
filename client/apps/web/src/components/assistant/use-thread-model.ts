@@ -5,7 +5,6 @@ import { useSharedItems } from "@/hooks/use-keyed-sharing";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useRealtimeStore } from "@/stores/realtime-store";
 import type {
-  AssistantArtifact,
   AssistantArtifactEvent,
   AssistantEntityRef,
   AssistantPageContext,
@@ -36,8 +35,9 @@ import { modelSwitchNotice } from "./model-switch";
 import { groupPlans } from "./plan-state";
 import { decidedSignature, groupProposalsByMessage, pollIntervalFor } from "./proposal-state";
 import { agentSuggestions } from "./suggestions";
+import { threadAsks } from "./ask-requests";
 import { composerBlock, shouldSendOpeningQuestion } from "./thread-guard";
-import { delegatedOwners, groupThread, turnPlacements, type ThreadEntry } from "./thread-view";
+import { groupThread, turnPlacements, type ThreadEntry } from "./thread-view";
 import { useLiveThreadIds } from "./use-active-turns";
 import { steeredIds } from "./turn-stream";
 import { useAssistantTurn } from "./use-assistant-turn";
@@ -51,9 +51,6 @@ import { replyWebSources } from "./web-sources";
 
 /** A stable empty list, so a thread with no live turn does not re-run the follower each render. */
 const NO_ARTIFACTS: readonly AssistantArtifactEvent[] = [];
-
-/** A stable empty list, so a thread given no artifacts keeps its rows between renders. */
-const NO_SAVED_ARTIFACTS: AssistantArtifact[] = [];
 
 /**
  * A conversation that belongs to a page: the import or formula assistant.
@@ -76,7 +73,6 @@ export type ThreadModelOptions = {
   thread: AssistantThread;
   agent: AgentChoice | null;
   agentsUnavailable?: boolean;
-  artifacts?: AssistantArtifact[];
   onLiveArtifacts?: (artifacts: readonly AssistantArtifactEvent[]) => void;
   onWorkingChange?: (working: boolean) => void;
   onNavigate?: () => void;
@@ -114,7 +110,6 @@ export function useThreadModel({
   thread,
   agent,
   agentsUnavailable = false,
-  artifacts = NO_SAVED_ARTIFACTS,
   onLiveArtifacts,
   onWorkingChange,
   onNavigate,
@@ -280,21 +275,9 @@ export function useThreadModel({
   const answerIds = useMemo(() => answerMessageIds(entries), [entries]);
   const sourcesByMessage = useMemo(() => replyWebSources(entries), [entries]);
 
-  // A question the assistant asked is settled by whatever the person said next,
-  // whether they clicked one of its options or typed something else entirely.
-  // Comparing positions rather than tracking which button was pressed is what
-  // makes a reopened thread render the same as a live one.
-  const latestUserSequence = useMemo(
-    () =>
-      messages.reduce(
-        (latest, message) =>
-          message.role === "User" && message.kind === "Message"
-            ? Math.max(latest, message.sequence)
-            : latest,
-        -1,
-      ),
-    [messages],
-  );
+  // A question the assistant asked is settled by whatever the person said
+  // next; the newest one nothing has settled waits above the composer.
+  const asks = useMemo(() => threadAsks(entries), [entries]);
 
   // The server says whether the reader may still ask this conversation's
   // agent anything. When not, the conversation stays readable and nothing
@@ -387,41 +370,6 @@ export function useThreadModel({
   // A change the assistant hands its page is applied as it arrives, once.
   useApplyDraftEdits(turn?.artifacts ?? NO_ARTIFACTS, page?.surface, page?.onDraftEdit);
 
-  // Each turn's artifacts, by the message that produced them or, before the
-  // message id was tied on, by the tool call that did. What another agent
-  // produced on a task is tied to its own message, which is drawn inside the
-  // hand-off rather than as an entry, so it is shown under the reply that
-  // handed the task over.
-  const artifactsByMessage = useMemo(() => {
-    const owners = delegatedOwners(entries);
-    const byMessage = new Map<string, AssistantArtifact[]>();
-    const byCall = new Map<string, AssistantArtifact>();
-    const add = (messageId: string, artifact: AssistantArtifact) =>
-      byMessage.set(messageId, [...(byMessage.get(messageId) ?? []), artifact]);
-    for (const artifact of artifacts) {
-      if (artifact.messageId) {
-        add(owners.get(artifact.messageId) ?? artifact.messageId, artifact);
-      } else if (artifact.sourceToolCallId !== "") {
-        const owner = owners.get(artifact.sourceToolCallId);
-        if (owner) {
-          add(owner, artifact);
-        } else {
-          byCall.set(artifact.sourceToolCallId, artifact);
-        }
-      }
-    }
-    for (const entry of entries) {
-      if (entry.kind !== "assistant") continue;
-      for (const exchange of entry.tools) {
-        const artifact = byCall.get(exchange.call.id);
-        if (artifact) {
-          add(entry.message.id, artifact);
-        }
-      }
-    }
-    return byMessage;
-  }, [artifacts, entries]);
-
   // A question typed at the Desk's front door arrives here, because the
   // thread it opened did not exist when it was asked. It is sent once, only
   // into a thread that is genuinely empty, and only once history has loaded —
@@ -458,9 +406,16 @@ export function useThreadModel({
 
   // An answer to the assistant's question is an ordinary message. Sending it
   // that way is what keeps a clicked answer and a typed one the same thing:
-  // nothing new is stored, and the thread reads identically either way.
+  // nothing new is stored, and the thread reads identically either way. A
+  // record picked in answer rides with it as an @ mention does.
   const sendAnswer = useCallback(
-    (value: string) => void send(value, undefined, providerId),
+    (value: string, mentions: readonly AssistantEntityRef[] = []) =>
+      void send(
+        value,
+        undefined,
+        providerId,
+        mentions.length > 0 ? { mentions: [...mentions] } : undefined,
+      ),
     [send, providerId],
   );
   const answer = readOnly ? undefined : sendAnswer;
@@ -619,7 +574,7 @@ export function useThreadModel({
     placements,
     answerIds,
     sourcesByMessage,
-    latestUserSequence,
+    asks,
     readOnly,
     pageContext,
     contextIncluded,
@@ -631,7 +586,6 @@ export function useThreadModel({
     stop,
     dismiss,
     retry,
-    artifactsByMessage,
     answer,
     showDock,
     threadFull,

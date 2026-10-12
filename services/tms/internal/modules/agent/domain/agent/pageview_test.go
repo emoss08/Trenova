@@ -162,9 +162,12 @@ func TestPageEntityTypesCoverTheDeskRecords(t *testing.T) {
 
 	for _, kind := range []string{
 		"insight", "report", "report_run", "dashboard", "driver_settlement", "detention_occurrence",
-		"carrier_intel_event", "agent_run", "agent_proposal", "service_failure", "worker_credential",
-		"edi_inbound_file", "weather_alert",
+		"carrier_intelligence_event", "agent_run", "service_failure", "worker_credential",
+		"edi_inbound_file", "invoice_dispute", "bank_receipt", "formula_template",
 	} {
 		assert.True(t, agent.IsKnownPageEntityType(kind), kind)
+	}
+	for _, kind := range []string{"assistant_thread", "user_secret", "", "carrier_intel_event"} {
+		assert.False(t, agent.IsKnownPageEntityType(kind), kind)
 	}
 }

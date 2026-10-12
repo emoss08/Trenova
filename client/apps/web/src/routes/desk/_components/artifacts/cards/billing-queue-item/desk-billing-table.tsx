@@ -16,7 +16,7 @@ import {
   stageLabel,
   undoSecondsLeft,
 } from "./billing-item-checks";
-import { BiIcon } from "./desk-billing-item";
+import { CardIcon } from "../../record-card/record-card";
 import { billingCardLineage, useDeskBillingStore } from "./desk-billing-store";
 
 /** At most this many rows' live state is read at once, the server's own limit. */
@@ -78,7 +78,7 @@ export function BillingCheckbox({
   const mid = state === "some";
   const box = (
     <span className={cn("dk-ax-cb", on && "dk-on", mid && "dk-mid")}>
-      <BiIcon name="check" size={10} stroke={3} />
+      <CardIcon name="check" size={10} stroke={3} />
     </span>
   );
   if (!onClick) return box;
@@ -93,7 +93,7 @@ export function BillingCheckbox({
       title={label}
       onClick={onClick}
     >
-      <BiIcon name="check" size={10} stroke={3} />
+      <CardIcon name="check" size={10} stroke={3} />
     </Button>
   );
 }
@@ -233,7 +233,7 @@ export function BillingBulkBar({
       {counting && undo ? (
         <>
           <span className="dk-ax-bk-ok">
-            <BiIcon name="check" size={12} stroke={2.6} />
+            <CardIcon name="check" size={12} stroke={2.6} />
           </span>
           <span className="dk-ax-bk-t">
             <b>

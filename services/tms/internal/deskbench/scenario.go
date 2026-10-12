@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"gopkg.in/yaml.v3"
 )
@@ -39,11 +40,12 @@ type Step struct {
 	Note          string           `yaml:"note"          json:"note,omitempty"`
 	Tool          string           `yaml:"tool"          json:"tool,omitempty"`
 	Modifications map[string]any   `yaml:"modifications" json:"modifications,omitempty"`
+	Attach        []string         `yaml:"attach"        json:"attach,omitempty"`
 	Expect        Expect           `yaml:"expect"        json:"expect"`
 }
 
 func (s *Step) Utterance() (Utterance, error) {
-	utterance := Utterance{Content: s.Say, Surface: s.Surface}
+	utterance := Utterance{Content: s.Say, Surface: s.Surface, Attachments: s.Attach}
 	if len(s.Page) > 0 {
 		utterance.Page = new(agent.PageContext)
 		if err := jsonutils.Convert(s.Page, utterance.Page); err != nil {
@@ -58,6 +60,18 @@ func (s *Step) Utterance() (Utterance, error) {
 	}
 
 	return utterance, nil
+}
+
+func (s *Step) validateAttach(where string, decides bool) error {
+	switch {
+	case decides && len(s.Attach) > 0:
+		return fmt.Errorf("%s: attach belongs on a say step, the message the files go with", where)
+	case len(s.Attach) > conversation.MaxMessageAttachments:
+		return fmt.Errorf("%s: a message carries at most %d files",
+			where, conversation.MaxMessageAttachments)
+	default:
+		return nil
+	}
 }
 
 func (s *Step) Label() string {
@@ -206,12 +220,24 @@ func loadScenarioFile(file string) ([]*Scenario, error) {
 		}
 		scenario.Source = file
 		scenario.applyDefaults(&doc.Defaults)
+		scenario.resolveAttachments(filepath.Dir(file))
 		if err = scenario.Validate(); err != nil {
 			return nil, fmt.Errorf("%s: %w", file, err)
 		}
 	}
 
 	return doc.Scenarios, nil
+}
+
+func (s *Scenario) resolveAttachments(dir string) {
+	for idx := range s.Steps {
+		for pos, ref := range s.Steps[idx].Attach {
+			if strings.HasPrefix(ref, documentIDPrefix) || filepath.IsAbs(ref) {
+				continue
+			}
+			s.Steps[idx].Attach[pos] = filepath.Join(dir, ref)
+		}
+	}
 }
 
 func (s *Scenario) applyDefaults(defaults *Scenario) {
@@ -266,6 +292,9 @@ func (s *Scenario) Validate() error {
 				"%s: agent belongs on a say step, the one that hands the message over",
 				where,
 			)
+		}
+		if err := step.validateAttach(where, hasDecide); err != nil {
+			return err
 		}
 		if hasSay {
 			if _, err := step.Utterance(); err != nil {

@@ -37,7 +37,12 @@ export default defineConfig({
     // changes in place, start with "use no memo", as does any page found showing stale
     // values: that is how a page opts out. TanStack Table v9 is compiled; a component
     // that reads table state through a row, column or header subscribes to it.
-    babel({ presets: [reactCompilerPreset()] }),
+    // The generated GraphQL client is megabytes of documents and types with no
+    // components; compiling it stalls the build on Babel's deoptimised printer.
+    babel({
+      presets: [reactCompilerPreset()],
+      exclude: [/[\\/]node_modules[\\/]/, /[\\/]packages[\\/]graphql[\\/]src[\\/]generated[\\/]/],
+    }),
     tailwindcss(),
     compression({
       algorithms: ["gzip", "brotliCompress"],

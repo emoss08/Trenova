@@ -11,6 +11,7 @@ const (
 	CoreToolOpenPage       = "open_page"
 	CoreToolWaitUntil      = "wait_until"
 	CoreToolCancelWait     = "cancel_wait"
+	CoreToolReadAttachment = "read_attachment"
 )
 
 var coreTools = [...]string{
@@ -22,13 +23,16 @@ var coreTools = [...]string{
 	CoreToolOpenPage,
 	CoreToolWaitUntil,
 	CoreToolCancelWait,
+	CoreToolReadAttachment,
 }
 
 // CoreTools are held by every agent without being selected. Memory, escalation,
 // review, waiting on the world and knowing the product it runs in are how an agent works at all
 // rather than what it works on, so an organization building an agent should
-// not have to know to tick them. find_in_trenova and open_page answer for the
-// person in the conversation, so a run nobody is watching goes without them.
+// not have to know to tick them. find_in_trenova, open_page and read_attachment
+// answer for the person in the conversation, so a run nobody is watching goes
+// without them; read_attachment rides only on a conversation a file was
+// attached to.
 // find_tools and ask_user are the other two always-on tools; the runtime
 // answers those itself, so they are not registry tools and are not listed here.
 func CoreTools() []string {

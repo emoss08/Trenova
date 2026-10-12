@@ -2,6 +2,7 @@ package agentruntime
 
 import (
 	"regexp"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
@@ -13,12 +14,16 @@ const ArtifactHrefScheme = "artifact:"
 
 // artifactLink matches a reply's link to an artifact: its words, and the id.
 var artifactLink = regexp.MustCompile(
-	`\[([^\[\]\n]+)\]\(` + ArtifactHrefScheme + `([A-Za-z0-9_]+)\)`,
+	`\[([^\[\]\n]*)\]\(` + ArtifactHrefScheme + `([A-Za-z0-9_]+)\)`,
 )
 
 // ArtifactRef is how the model names an artifact inside a sentence.
 func ArtifactRef(shown *agentports.ShownArtifact) string {
-	return "[" + escapeLinkText(shown.Title) + "](" + ArtifactHrefScheme + shown.ID.String() + ")"
+	return artifactRefOf(shown.ID.String(), shown.Title)
+}
+
+func artifactRefOf(id, title string) string {
+	return "[" + escapeLinkText(title) + "](" + ArtifactHrefScheme + id + ")"
 }
 
 // StripArtifactLinks leaves a reply's artifact links as their words, for
@@ -27,14 +32,44 @@ func StripArtifactLinks(text string) string {
 	return artifactLink.ReplaceAllString(text, "$1")
 }
 
+func NameArtifactLinks(text string, titleOf func(id, words string) (string, bool)) string {
+	if !strings.Contains(text, ArtifactHrefScheme) {
+		return text
+	}
+	matches := artifactLink.FindAllStringSubmatchIndex(text, -1)
+	if len(matches) == 0 {
+		return text
+	}
+
+	var b strings.Builder
+	b.Grow(len(text))
+	last := 0
+	for _, match := range matches {
+		b.WriteString(text[last:match[0]])
+		words, id := text[match[2]:match[3]], text[match[4]:match[5]]
+		if title, known := titleOf(id, words); known {
+			b.WriteString(artifactRefOf(id, title))
+		} else {
+			b.WriteString(words)
+		}
+		last = match[1]
+	}
+	b.WriteString(text[last:])
+
+	return b.String()
+}
+
 // artifactRefNote tells the model how to point at an artifact where its
 // sentence mentions it, so the person can open it from the words that
 // explain it rather than from a list under the reply.
 func artifactRefNote(shown *agentports.ShownArtifact) string {
-	return " To point to it, write " + ArtifactRef(shown) +
-		" inside the sentence that mentions it, exactly as written, never on a line of its " +
-		"own or after a table; it is shown as a button that opens it. Use it once, and never " +
-		"make up an id."
+	ref := ArtifactRef(shown)
+
+	return " To point to it, write " + ref + " as part of the sentence that says what it " +
+		"shows, as in \"The details are in " + ref + ".\" It always reads as that title, so write " +
+		"it exactly so, once, without adding words such as card or table to it. Never put " +
+		"it on a line of its own, in a list, heading or table, or after a sentence that " +
+		"has ended. Never make up an id."
 }
 
 var linkTextSpecials = regexp.MustCompile(`[\[\]]`)

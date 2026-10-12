@@ -75,6 +75,8 @@ trenova desk ask "find the walmart load" "push it to friday"    # several, in on
 trenova desk ask --approve "mark S-1042 delivered"              # approve what it proposes
 trenova desk ask --reject "use the 2pm window" "reschedule ..." # reject, with a note
 trenova desk ask --provider "Haiku 5.5" "..."                   # pin one model
+trenova desk ask --attach rate-con.pdf "build a shipment from this"  # attach a file to message 1
+trenova desk ask --attach 2=doc_01... "hi" "here it is"         # a copy of a stored document, on message 2
 trenova desk ask --thread athr_... "and the next one?"          # continue a conversation
 trenova desk clean                                              # delete every [bench] conversation
 trenova desk run                                                # every scenario, once
@@ -189,6 +191,18 @@ scenarios:
 | `maxSeconds` | the step's turns took at most this long |
 | `rubric` | not checked; printed beside the step for whoever reads the transcript |
 
+A `say` step may carry `attach:`, a list of files (a path, read from the working directory) or
+stored documents (`doc_...`, downloaded and uploaded again as a copy). Each is uploaded to the
+conversation as the Desk's composer uploads it (`documentservice.Upload`, profile
+`assistant_attachment`), and the step waits until document intelligence has read it, so the
+turn sees the file the way a person's does once its upload has finished. A relative path is
+read from the scenario file's folder. Fixtures live in `deskbench/fixtures/attachments/` and are
+made up: no real broker, carrier or person. Each rate confirmation there is one entry of
+`variants.json` (an entry may `extend` another and change a few values) filled into
+`rate-confirmation.html` and printed by Gotenberg's Chromium (`node render.mjs` from that folder,
+with the local stack up), so it is laid out the way a browser-printed confirmation is; the PDF
+reader's own tests read them too.
+
 A scenario with a `formula:` block talks to the Formula Studio's own assistant instead of a Desk
 agent: the bench opens the studio's page thread (`OpenPageThread`, origin `Formula`), on the
 template named by `template` (looked up by name; leave it out for a new formula, and `type`
@@ -274,6 +288,5 @@ trenova desk findings --area anthropic --format json
 
 - A turn the application starts long after the last one (a wait resolving, a scheduled
   request) is not followed; the bench stops waiting a few seconds after the last turn ends.
-- Attachments are not sent: a scenario talks, it does not upload files.
 - Approved writes are real. Run against a seeded development database, and `task db-reset`
   when a run has moved the data too far.

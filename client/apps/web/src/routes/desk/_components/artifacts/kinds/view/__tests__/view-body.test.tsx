@@ -2,8 +2,8 @@ import type { AssistantArtifact } from "@/types/assistant";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
-import { composedViewFrom } from "../artifact-payloads";
-import { asSentence, DeskViewBody } from "../desk-bodies";
+import { composedViewFrom } from "../../../artifact-payloads";
+import { asSentence, DeskViewBody } from "../desk-view-body";
 
 function view(payload: Record<string, unknown>): AssistantArtifact {
   return {

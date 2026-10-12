@@ -56,7 +56,7 @@ func (s *Service) passReply(
 	}
 
 	stripped := recordids.Strip(completion.Text)
-	pointed, table := pointToTables(stripped, t.tables)
+	pointed, table := pointToTables(stripped, t.keptTables())
 	if pointed == completion.Text || !fx.Supports(changeReplyPasses) {
 		return
 	}
@@ -93,20 +93,31 @@ func passEvent(
 	return kernelports.StreamEvent{Event: agentports.AssistantEventReplyRegrounded, Data: data}
 }
 
-// keepTable remembers a table the call put beside the conversation, so the
-// reply pass can point a reprint of it to it.
-func (t *Turn) keepTable(outcome *toolOutcome) {
-	if outcome.failed || outcome.shown == nil || !tabular(outcome.shown.Kind) {
+// keepShown remembers what the call put beside the conversation, so the
+// reply passes can check the reply names it and point a reprint to it.
+func (t *Turn) keepShown(outcome *toolOutcome) {
+	if outcome.failed || outcome.shown == nil {
 		return
 	}
-	for idx := range t.tables {
-		if t.tables[idx].ID == outcome.shown.ID {
-			t.tables[idx] = *outcome.shown
+	for idx := range t.artifacts {
+		if t.artifacts[idx].ID == outcome.shown.ID {
+			t.artifacts[idx] = *outcome.shown
 
 			return
 		}
 	}
-	t.tables = append(t.tables, *outcome.shown)
+	t.artifacts = append(t.artifacts, *outcome.shown)
+}
+
+func (t *Turn) keptTables() []agentports.ShownArtifact {
+	tables := make([]agentports.ShownArtifact, 0, len(t.artifacts))
+	for idx := range t.artifacts {
+		if t.artifacts[idx].Tabular() {
+			tables = append(tables, t.artifacts[idx])
+		}
+	}
+
+	return tables
 }
 
 // pointToTables replaces each markdown table in the reply that reprints a

@@ -202,6 +202,44 @@ func (r *repository) ListByToolCalls(
 	})
 }
 
+func (r *repository) ListTitles(
+	ctx context.Context,
+	req *assistantartifactports.ArtifactTitlesRequest,
+) (map[pulid.ID]string, error) {
+	if len(req.IDs) == 0 {
+		return map[pulid.ID]string{}, nil
+	}
+
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]string, error) {
+		cols := assistantartifactcol.ArtifactColumns
+		entities := make([]*assistantartifact.Artifact, 0, len(req.IDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Column(cols.ID.Bare(), cols.Title.Bare()).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return assistantartifactcol.ArtifactScopeTenant(sq, req.TenantInfo).
+					Where(cols.ThreadID.Eq(), req.ThreadID).
+					Where(cols.ID.In(), bun.List(req.IDs))
+			}).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list assistant artifact titles",
+				zap.String("threadId", req.ThreadID.String()),
+				zap.Error(err))
+
+			return nil, fmt.Errorf("list assistant artifact titles: %w", err)
+		}
+
+		titles := make(map[pulid.ID]string, len(entities))
+		for _, entity := range entities {
+			titles[entity.ID] = entity.Title
+		}
+
+		return titles, nil
+	})
+}
+
 func (r *repository) Delete(
 	ctx context.Context,
 	req *assistantartifactports.DeleteArtifactsRequest,

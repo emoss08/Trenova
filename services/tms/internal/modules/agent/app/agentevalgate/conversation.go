@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"maps"
 	"os"
+	"slices"
 	"strings"
 	"sync"
 
@@ -354,8 +355,10 @@ func (o *ConversationOutcome) Failures() []string {
 		switch {
 		case !kept:
 			failures = append(failures, tool+" kept no table")
-		case !strings.Contains(reply, agentruntime.ArtifactRef(&table)):
+		case !slices.Contains(agentruntime.ArtifactRefIDs(reply), table.ID.String()):
 			failures = append(failures, "the reply does not point to "+tool+"'s table")
+		case slices.Contains(agentruntime.StrayArtifactLinks(reply), table.ID.String()):
+			failures = append(failures, "the reply points to "+tool+"'s table outside a sentence")
 		}
 	}
 	if expect.NoMarkdownTable && len(mdtable.Find(reply)) > 0 {

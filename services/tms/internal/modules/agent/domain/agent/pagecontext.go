@@ -31,8 +31,9 @@ const (
 )
 
 // PageContext is what the person was looking at when they asked. It is data
-// about the page, never an instruction, and only the listed record kinds are
-// accepted so a client cannot smuggle arbitrary text in as a "record".
+// about the page, never an instruction, and only a kind of record the
+// permission registry knows is accepted, so a client cannot smuggle arbitrary
+// text in as a "record".
 type PageContext struct {
 	Path       string `json:"path"`
 	EntityType string `json:"entityType"`
@@ -75,48 +76,12 @@ type PageKPI struct {
 	Sub   string `json:"sub,omitempty"`
 }
 
-var knownPageEntityTypes = map[string]struct{}{
-	"shipment":             {},
-	"shipment_move":        {},
-	"order":                {},
-	"worker":               {},
-	"tractor":              {},
-	"trailer":              {},
-	"customer":             {},
-	"carrier":              {},
-	"location":             {},
-	"billing_queue_item":   {},
-	"invoice":              {},
-	"document":             {},
-	"rate_matrix":          {},
-	"agent_definition":     {},
-	"insight":              {},
-	"report":               {},
-	"report_run":           {},
-	"dashboard":            {},
-	"driver_settlement":    {},
-	"detention_occurrence": {},
-	"carrier_intel_event":  {},
-	"agent_run":            {},
-	"agent_proposal":       {},
-	"service_failure":      {},
-	"worker_credential":    {},
-	"edi_inbound_file":     {},
-	"weather_alert":        {},
-}
-
-func KnownPageEntityTypes() []string {
-	kinds := make([]string, 0, len(knownPageEntityTypes))
-	for kind := range knownPageEntityTypes {
-		kinds = append(kinds, kind)
-	}
-
-	return kinds
-}
-
+// IsKnownPageEntityType reports whether a page or a mention may name this
+// kind of record: any kind the permission registry checks ids of, which is a
+// closed set a client cannot widen, except the conversation a question is
+// typed into, which is the place it is asked and never its subject.
 func IsKnownPageEntityType(kind string) bool {
-	_, ok := knownPageEntityTypes[kind]
-	return ok
+	return kind != string(permission.KindAssistantThread) && permission.RecordKind(kind).Known()
 }
 
 var pageResources = permission.NewRegistry()

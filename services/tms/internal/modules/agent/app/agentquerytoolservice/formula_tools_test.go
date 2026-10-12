@@ -5,10 +5,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/formulaassistantservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -250,4 +252,75 @@ func TestProposeFormula_RefusesAPersonWhoMayOnlyReadFormulas(t *testing.T) {
 		"expression": "totalDistance * 2",
 	}, ""))
 	require.Error(t, err)
+}
+
+type stubFormulaTemplates struct {
+	formulatemplateports.FormulaTemplateRepository
+
+	entity *formulatemplate.FormulaTemplate
+	last   formulatemplateports.GetFormulaTemplateByIDRequest
+}
+
+func (s *stubFormulaTemplates) GetByID(
+	_ context.Context,
+	req formulatemplateports.GetFormulaTemplateByIDRequest,
+) (*formulatemplate.FormulaTemplate, error) {
+	s.last = req
+
+	return s.entity, nil
+}
+
+func TestGetFormulaTemplate_IsAReadOfFormulaTemplates(t *testing.T) {
+	t.Parallel()
+
+	tool := newGetFormulaTemplateTool(&stubFormulaTemplates{}, &fakePermissions{})
+	policy := tool.Policy()
+
+	assert.Equal(t, "get_formula_template", tool.Name())
+	assert.Equal(t, permission.ResourceFormulaTemplate, policy.Resource)
+	assert.Equal(t, agent.ToolKindQuery, policy.Kind)
+	assert.Contains(t, tool.Description(), "list_formula_templates")
+}
+
+/*
+A formula is explained or changed from the template whole: its expression,
+its own variables with their defaults and the limits its price is held to.
+The list gives only the name and status, so the get returns the record.
+*/
+func TestGetFormulaTemplate_ReturnsTheTemplateWholeFromTheCallersTenant(t *testing.T) {
+	t.Parallel()
+
+	id := pulid.MustNew("ft_")
+	repo := &stubFormulaTemplates{entity: &formulatemplate.FormulaTemplate{
+		ID:         id,
+		Name:       "Reefer per mile",
+		Expression: "baseRate * totalDistance + reeferFee",
+		Status:     formulatemplate.StatusActive,
+		SchemaID:   "shipment",
+	}}
+	tool := newGetFormulaTemplateTool(repo, &fakePermissions{allowed: true})
+	params := testParams(map[string]any{"formulaTemplateId": id.String()})
+
+	result, err := tool.Query(t.Context(), params)
+	require.NoError(t, err)
+
+	assert.Equal(t, id, repo.last.TemplateID)
+	assert.Equal(t, params.OrganizationID, repo.last.TenantInfo.OrgID)
+	assert.Equal(t, params.BusinessUnitID, repo.last.TenantInfo.BuID)
+	document := encodedDocument(t, result)
+	assert.Equal(t, "Reefer per mile", document["name"])
+	assert.Equal(t, "baseRate * totalDistance + reeferFee", document["expression"])
+}
+
+func TestGetFormulaTemplate_RefusesSomethingThatIsNotAnID(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubFormulaTemplates{}
+	tool := newGetFormulaTemplateTool(repo, &fakePermissions{allowed: true})
+
+	_, err := tool.Query(t.Context(), testParams(map[string]any{
+		"formulaTemplateId": "Reefer per mile",
+	}))
+	require.Error(t, err)
+	assert.True(t, repo.last.TemplateID.IsNil(), "nothing is read for a name passed as an id")
 }

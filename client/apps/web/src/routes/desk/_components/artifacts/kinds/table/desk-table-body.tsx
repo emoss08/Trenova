@@ -9,29 +9,39 @@ import {
   type DisplayType,
 } from "@/components/assistant/readable-values";
 import type { AssistantArtifact } from "@/types/assistant";
-import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { BillingQueueSummary } from "@trenova/shared/types/billing-queue";
 import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { Link, useNavigate } from "react-router";
-import { artifactCsvUrl } from "@/services/assistant";
-import { downloadFromUrl } from "@trenova/shared/lib/utils";
-import { reportPreviewFrom, tableViewFrom } from "./artifact-payloads";
-import { selectionState, toggleAll, toggleOne } from "./billing-item-checks";
-import { ArtIcon } from "./desk-art-kinds";
-import { DeskBillingItem } from "./desk-billing-item";
+import { reportPreviewFrom, tableViewFrom } from "../../artifact-payloads";
+import {
+  selectionState,
+  toggleAll,
+  toggleOne,
+} from "../../cards/billing-queue-item/billing-item-checks";
+import { ArtIcon } from "../../desk-art-kinds";
 import {
   BillingBulkBar,
   BillingCheckbox,
   BillingRowPill,
   useBillingSummaries,
   useOpenBillingItem,
-} from "./desk-billing-table";
-import { translateLabel } from "@trenova/shared/i18n/labels";
+} from "../../cards/billing-queue-item/desk-billing-table";
+import {
+  InPlaceRecord,
+  recordCardFor,
+  usePreloadRecordCard,
+  type RecordCardEntry,
+} from "../../cards/registry";
 
 /** A table the workspace draws: columns, rows by key, and where each row opens. */
-type GridRow = { key: string; values: Record<string, unknown>; path: string; recordId?: string };
+export type GridRow = {
+  key: string;
+  values: Record<string, unknown>;
+  path: string;
+  recordId?: string;
+};
 export type Grid = {
   /** The record kind of the rows, when they are records; empty otherwise. */
   entity?: string;
@@ -225,134 +235,28 @@ export function versionNote(
   return parts.length > 0 ? parts.join(" · ") : t("Nothing changed");
 }
 
-/** A report short enough to read as bars: its label column, and the figures beside it. */
-type Bars = { label: DisplayColumn; bar: DisplayColumn; extra: DisplayColumn | null };
-
-/**
- * Whether a report reads best as bars, the way the design draws a summary:
- * one label per row, a figure to measure them by, and a dozen rows or fewer,
- * all of them present and none below zero.
- */
-export function barsOf(grid: Grid): Bars | null {
-  const [label, ...rest] = grid.columns;
-  const figures = rest.filter((column) => isFigureType(column.type));
-  if (!label || isFigureType(label.type) || figures.length === 0) {
-    return null;
-  }
-  if (grid.truncated || grid.rows.length < 2 || grid.rows.length > 12) {
-    return null;
-  }
-  const [bar, extra = null] = figures;
-  const measured = grid.rows.every((row) => {
-    const figure = Number(row.values[bar.key]);
-    return row.values[bar.key] != null && Number.isFinite(figure) && figure >= 0;
-  });
-  return measured ? { label, bar, extra } : null;
-}
-
-/** A short report as bars: each row measured against the largest, and the totals under them. */
-export function DeskReportBars({ artifact, bars }: { artifact: AssistantArtifact; bars: Bars }) {
-  const t = useT();
-  const grid = useMemo(() => gridOf(artifact), [artifact]);
-  const figure = (row: GridRow, column: DisplayColumn) => Number(row.values[column.key]) || 0;
-  const max = Math.max(...grid.rows.map((row) => figure(row, bars.bar)), 0);
-  const sum = (column: DisplayColumn) =>
-    grid.totals?.[column.key] ?? grid.rows.reduce((total, row) => total + figure(row, column), 0);
-  const columns = bars.extra ? [bars.bar, bars.extra] : [bars.bar];
-
-  const preview = reportPreviewFrom(artifact);
-  const definitionId =
-    typeof artifact.payload.definitionId === "string" ? artifact.payload.definitionId : "";
-  const fullReport = definitionId
-    ? `/reports/explore/${definitionId}`
-    : `/desk/c/${artifact.threadId}/a/${artifact.slug || artifact.lineageId || artifact.id}/page`;
-
-  return (
-    <div className="dk-ax-pad dk-ax-rep">
-      <div className="dk-ax-repm">
-        <span>
-          {humanizeDataset(preview.dataset) || columns.map((column) => column.label).join(" · ")}
-        </span>
-        <span>
-          {t(
-            "{0, plural, one {# row} other {# rows}} · top {1} by {2}",
-            grid.rowCount,
-            grid.rows.length,
-            bars.bar.label.toLowerCase(),
-          )}
-        </span>
-      </div>
-      <div className={cn("dk-ax-bars", !bars.extra && "dk-one")}>
-        {grid.rows.map((row, index) => (
-          <div key={row.key} className="dk-ax-br" style={{ animationDelay: `${index * 60}ms` }}>
-            <span className="dk-ax-bn">
-              {formatDisplayValue(bars.label.type, row.values[bars.label.key], t)}
-            </span>
-            <span className="dk-ax-bt">
-              <i
-                style={{
-                  width: `${max > 0 ? (figure(row, bars.bar) / max) * 100 : 0}%`,
-                  animationDelay: `${120 + index * 60}ms`,
-                }}
-              />
-            </span>
-            {columns.map((column, at) => (
-              <span key={column.key} className={cn("dk-ax-num", at > 0 && "dk-mut")}>
-                {formatDisplayValue(column.type, row.values[column.key], t)}
-              </span>
-            ))}
-          </div>
-        ))}
-        <div className="dk-ax-br dk-tot">
-          <span className="dk-ax-bn">{t("Total")}</span>
-          <span />
-          {columns.map((column) => (
-            <span key={column.key} className="dk-ax-num">
-              {column.type === "percent" ? "" : formatDisplayValue(column.type, sum(column), t)}
-            </span>
-          ))}
-        </div>
-      </div>
-      <div className="dk-ax-acts">
-        <Button
-          variant="quiet"
-          onClick={() => downloadFromUrl(artifactCsvUrl(artifact.threadId, artifact.id))}
-        >
-          <ArtIcon name="dl" size={13} />
-          {t("Download CSV")}
-        </Button>
-        <Link
-          className="dk-ax-btn dk-ghost"
-          to={fullReport}
-          target={definitionId ? undefined : "_blank"}
-        >
-          <ArtIcon name="ext" size={13} />
-          {t("Open full report")}
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-/** A dataset's key as a reader names it: "shipment_stops" as "Shipment stops". */
-function humanizeDataset(dataset: string): string {
-  const words = dataset.replace(/[_.-]+/gu, " ").trim();
-  return words ? translateLabel(words.charAt(0).toUpperCase() + words.slice(1)) : "";
-}
-
 type Sort = { key: string; direction: 1 | -1 };
 
 /**
  * A table read whole: a filter over every cell as it reads, sortable columns,
  * figures on the right, statuses as coloured dots, and each row opening its
- * record. A cell that changed since the version before is marked.
+ * record — in place, as the record itself, for the kinds that have a card
+ * here, and on its page otherwise. A cell that changed since the version
+ * before is marked.
  */
 export function DeskTableBody(props: TableBodyProps) {
-  const billing =
-    props.artifact.kind === "table_view" &&
-    tableViewFrom(props.artifact).recordEntity === "billing_queue_item";
+  const listed = props.artifact.kind === "table_view" && !("path" in props.artifact.payload);
+  const entity = listed ? tableViewFrom(props.artifact).recordEntity : "";
+  const card = recordCardFor(entity);
+  if (card && entity === "billing_queue_item") {
+    return <BillingTableBody {...props} card={card} />;
+  }
 
-  return billing ? <BillingTableBody {...props} /> : <TableBodyView {...props} kit={null} />;
+  return card ? (
+    <InPlaceTableBody {...props} card={card} />
+  ) : (
+    <TableBodyView {...props} kit={null} records={null} />
+  );
 }
 
 type TableBodyProps = {
@@ -371,12 +275,30 @@ type BillingKit = {
   inline: string | null;
   setInline: (itemId: string | null) => void;
   openItem: (itemId: string) => void;
+  card: RecordCardEntry;
 };
+
+/** What a table whose rows open in place adds: the row open now, and its card. */
+type RecordKit = {
+  inline: string | null;
+  setInline: (recordId: string | null) => void;
+  card: RecordCardEntry;
+};
+
+// A table whose rows open in place keeps the open row beside its own filter
+// and sort, so going back finds the table as it was left. The card's code is
+// read while the browser is idle, so the first row opened draws at once.
+function InPlaceTableBody({ card, ...props }: TableBodyProps & { card: RecordCardEntry }) {
+  const [inline, setInline] = useState<string | null>(null);
+  usePreloadRecordCard(card);
+
+  return <TableBodyView {...props} kit={null} records={{ inline, setInline, card }} />;
+}
 
 // A table of billing queue items is worked from: rows are picked, opened and
 // approved in bulk, and their status is read live rather than as the agent
 // saw it.
-function BillingTableBody(props: TableBodyProps) {
+function BillingTableBody({ card, ...props }: TableBodyProps & { card: RecordCardEntry }) {
   const grid = useMemo(() => gridOf(props.artifact), [props.artifact]);
   const rowIds = useMemo(
     () => grid.rows.map((row) => row.recordId ?? "").filter((id) => id !== ""),
@@ -386,11 +308,13 @@ function BillingTableBody(props: TableBodyProps) {
   const [selected, setSelected] = useState<string[]>([]);
   const [inline, setInline] = useState<string | null>(null);
   const openItem = useOpenBillingItem(props.artifact.threadId, setInline);
+  usePreloadRecordCard(card);
 
   return (
     <TableBodyView
       {...props}
-      kit={{ summaries, selected, setSelected, inline, setInline, openItem }}
+      kit={{ summaries, selected, setSelected, inline, setInline, openItem, card }}
+      records={null}
     />
   );
 }
@@ -400,7 +324,8 @@ function TableBodyView({
   previous,
   versions,
   kit,
-}: TableBodyProps & { kit: BillingKit | null }) {
+  records,
+}: TableBodyProps & { kit: BillingKit | null; records: RecordKit | null }) {
   const t = useT();
   const navigate = useNavigate();
   const grid = useMemo(() => gridOf(artifact), [artifact]);
@@ -444,9 +369,10 @@ function TableBodyView({
   const totals = useMemo(() => footTotals(grid, rows), [grid, rows]);
 
   const billing = kit !== null;
+  const opensRecords = billing || records !== null;
   const shownIds = useMemo(
-    () => (billing ? rows.map((row) => row.recordId ?? "").filter((id) => id !== "") : []),
-    [billing, rows],
+    () => (opensRecords ? rows.map((row) => row.recordId ?? "").filter((id) => id !== "") : []),
+    [opensRecords, rows],
   );
 
   const cycle = (key: string) =>
@@ -460,11 +386,23 @@ function TableBodyView({
 
   if (kit?.inline) {
     return (
-      <DeskBillingItem
-        itemId={kit.inline}
-        fallback={<div className="dk-ax-pad dk-ax-oldnote">{t("Loading…")}</div>}
+      <InPlaceRecord
+        entry={kit.card}
+        recordId={kit.inline}
+        order={shownIds}
         onSelect={kit.setInline}
         onBack={() => kit.setInline(null)}
+      />
+    );
+  }
+  if (records?.inline) {
+    return (
+      <InPlaceRecord
+        entry={records.card}
+        recordId={records.inline}
+        order={shownIds}
+        onSelect={records.setInline}
+        onBack={() => records.setInline(null)}
       />
     );
   }
@@ -522,7 +460,7 @@ function TableBodyView({
           </thead>
           <tbody>
             {rows.map((row, index) => {
-              const id = kit ? (row.recordId ?? "") : "";
+              const id = opensRecords ? (row.recordId ?? "") : "";
               const summary = id ? kit?.summaries.get(id) : undefined;
               const picked = id !== "" && Boolean(kit?.selected.includes(id));
               return (
@@ -536,9 +474,11 @@ function TableBodyView({
                   onClick={
                     id && kit
                       ? () => kit.openItem(id)
-                      : row.path !== ""
-                        ? () => void navigate(row.path)
-                        : undefined
+                      : id && records
+                        ? () => records.setInline(id)
+                        : row.path !== ""
+                          ? () => void navigate(row.path)
+                          : undefined
                   }
                 >
                   {kit && (

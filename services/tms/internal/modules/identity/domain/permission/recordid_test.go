@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
@@ -390,7 +391,9 @@ var kindMinters = map[permission.RecordKind]minter{
 	permission.KindDOTRandomSelection: mint(
 		func(e *worker.DOTRandomDrawEntry) pulid.ID { return e.ID },
 	),
-	permission.KindConversation: mint(
+	permission.KindAIAuditEvent: mint(func(e *aiaudit.AIAuditEvent) pulid.ID { return e.ID }),
+	permission.KindAIAuditExport: mint(func(e *aiaudit.AIAuditExport) pulid.ID { return e.ID }),
+	permission.KindAssistantThread: mint(
 		func(e *conversation.Thread) pulid.ID { return e.ID },
 	),
 	permission.KindWait: mint(

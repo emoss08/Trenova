@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { customerStatementPath } from "@/lib/ar-links";
 import { AgingBadge } from "@/components/accounting/aging-buckets";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { PlainSettlementStatusBadge } from "@trenova/shared/components/status-badge";
@@ -111,10 +112,7 @@ export function OpenItemsTable({
         enableSorting: false,
         header: () => null,
         cell: ({ row }) => (
-          <SelectOpenItem
-            row={row}
-            label={t("Select invoice {0}", row.original.invoiceNumber)}
-          />
+          <SelectOpenItem row={row} label={t("Select invoice {0}", row.original.invoiceNumber)} />
         ),
       },
       {
@@ -131,7 +129,7 @@ export function OpenItemsTable({
         accessorFn: (row) => row.customerName,
         cell: ({ row }) => (
           <Link
-            to={`/accounting/ar/customer-statement/${row.original.customerId}`}
+            to={customerStatementPath(row.original.customerId)}
             className="text-xs font-medium hover:underline"
             onClick={(e) => e.stopPropagation()}
           >

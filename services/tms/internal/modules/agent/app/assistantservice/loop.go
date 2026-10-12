@@ -45,8 +45,10 @@ type TurnRequest struct {
 	Taint *agent.RunTaint
 	// Facts are what the person pinned for the agents to keep in mind for
 	// the whole conversation.
-	Facts   []string
-	Anchors []agentdefinition.RuntimeAnchor
+	Facts          []string
+	Anchors        []agentdefinition.RuntimeAnchor
+	TrenovaWritten bool
+	EarlierFiles   map[string]string
 }
 
 type TurnResult struct {
@@ -71,24 +73,31 @@ func (s *Service) admit(
 	ctx context.Context,
 	req *TurnRequest,
 ) (agentguard.Decision, *agentports.RunRequest) {
-	evaluate := agentguard.EvaluateRequest{
-		TenantInfo: req.Actor.TenantInfo(),
-		Input:      req.Input,
-		Recent:     recentTurns(req.History),
-	}
-	if !agentguard.EvaluateDeterministic(req.Input).Allowed {
-		return s.guard.Evaluate(ctx, evaluate), nil
-	}
+	var decision agentguard.Decision
+	var runtimeContext agentdefinition.RuntimeContext
+	if req.TrenovaWritten {
+		decision = trenovaWrittenDecision()
+		runtimeContext = s.buildContext(ctx, req)
+	} else {
+		evaluate := agentguard.EvaluateRequest{
+			TenantInfo: req.Actor.TenantInfo(),
+			Input:      req.Input,
+			Recent:     recentTurns(req.History),
+		}
+		if !agentguard.EvaluateDeterministic(req.Input).Allowed {
+			return s.guard.Evaluate(ctx, evaluate), nil
+		}
 
-	verdict := make(chan agentguard.Decision, 1)
-	go func() {
-		verdict <- s.guard.Evaluate(ctx, evaluate)
-	}()
+		verdict := make(chan agentguard.Decision, 1)
+		go func() {
+			verdict <- s.guard.Evaluate(ctx, evaluate)
+		}()
 
-	runtimeContext := s.buildContext(ctx, req)
-	decision := <-verdict
-	if !decision.Allowed {
-		return decision, nil
+		runtimeContext = s.buildContext(ctx, req)
+		decision = <-verdict
+		if !decision.Allowed {
+			return decision, nil
+		}
 	}
 
 	runtimeContext.PendingProposals = pendingProposals(req.Proposals)
@@ -108,6 +117,15 @@ func (s *Service) admit(
 		Proposals:   req.Proposals,
 		Taint:       req.Taint.Clone(),
 		Records:     runtimeContext.MemoryRecords(),
+		FileTexts:   req.EarlierFiles,
+	}
+}
+
+func trenovaWrittenDecision() agentguard.Decision {
+	return agentguard.Decision{
+		Allowed:  true,
+		Stage:    agentguard.StageTrenova,
+		Category: agentguard.CategoryTransportationOperations,
 	}
 }
 

@@ -1,13 +1,20 @@
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { AssistantThread, AssistantThreadPage } from "@/types/assistant";
-import { infiniteQueryOptions, type InfiniteData, type QueryClient } from "@tanstack/react-query";
+import {
+  infiniteQueryOptions,
+  type DefaultError,
+  type InfiniteData,
+  type QueryClient,
+} from "@tanstack/react-query";
 
 /** Conversations a page of the list holds: a rail and a half. */
 export const THREAD_PAGE_SIZE = 50;
 
 /** The person's conversations as the cache holds them: every page read so far. */
 export type ThreadPages = InfiniteData<AssistantThreadPage, string>;
+
+type ThreadListKey = ReturnType<typeof queries.assistant.threads>["queryKey"];
 
 const NO_THREADS: AssistantThread[] = [];
 
@@ -124,7 +131,13 @@ async function readPage({
  * see readPage.
  */
 export function threadListQuery() {
-  return infiniteQueryOptions({
+  return infiniteQueryOptions<
+    AssistantThreadPage,
+    DefaultError,
+    ThreadPages,
+    ThreadListKey,
+    string
+  >({
     queryKey: queries.assistant.threads().queryKey,
     queryFn: ({ client, pageParam, signal }) => readPage({ client, pageParam, signal }),
     initialPageParam: "",

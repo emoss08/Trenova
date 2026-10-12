@@ -3,7 +3,7 @@ import type { AssistantArtifact } from "@/types/assistant";
 import type { QueryClient } from "@tanstack/react-query";
 import type { BillingQueueItem } from "@trenova/shared/types/billing-queue";
 import { create } from "zustand";
-import { entityCardFrom } from "./artifact-payloads";
+import { entityCardFrom } from "../../artifact-payloads";
 
 /**
  * Which queue item each billing item artifact is showing. The artifact is one

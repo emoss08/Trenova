@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -144,7 +145,8 @@ type RunRequest struct {
 	// Records are the records the turn is about: its subject, the page, the
 	// records the person named. A turn it hands a task to reads their
 	// memories too.
-	Records []agent.EntityRef
+	Records   []agent.EntityRef
+	FileTexts map[string]string
 	// Directed is a task the person handed straight to another agent from
 	// this conversation. The turn runs that agent on it instead of asking
 	// its own model.
@@ -291,10 +293,33 @@ type ShownArtifact struct {
 	// Opens is a composed view: it opens the live table rather than being
 	// worked from where it is drawn.
 	Opens bool `json:"opens,omitempty"`
+	// OpensRecords is a table whose rows open beside the conversation as the
+	// record itself, read whole and tried there, so it is pointed to however
+	// short it is.
+	OpensRecords bool `json:"opensRecords,omitempty"`
 	// Ranked is a table whose order is the answer, such as drivers ranked
 	// for a move: the person picks from it, so it is pointed to however
 	// short it is.
-	Ranked bool `json:"ranked,omitempty"`
+	Ranked  bool   `json:"ranked,omitempty"`
+	Written string `json:"written,omitempty"`
+}
+
+const InlineTableRows = 12
+
+func (a *ShownArtifact) Tabular() bool {
+	return a.Kind == string(assistantartifact.KindTableView) ||
+		a.Kind == string(assistantartifact.KindReportPreview)
+}
+
+func (a *ShownArtifact) MustBeLinked() bool {
+	switch {
+	case a.Kind == string(assistantartifact.KindDocument), a.Written != "":
+		return true
+	case a.Tabular():
+		return a.Opens || a.Actionable || a.OpensRecords || a.Ranked || a.Rows > InlineTableRows
+	default:
+		return false
+	}
 }
 
 // PublishedDocument is a write-up the model asked to keep beside the

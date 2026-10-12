@@ -343,3 +343,37 @@ func TestLabel(t *testing.T) {
 	assert.Equal(t, "Billing queue list", Label("billing.queue.list"))
 	assert.Equal(t, "Ab", Label("AB"))
 }
+
+type bringingTool struct {
+	*agenttest.StubActionTool
+	brings []string
+}
+
+func (t bringingTool) Companions() []string { return t.brings }
+
+func TestGet_ListsTheWritesAHeldToolBrings(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	f.agent.ToolNames = []string{"create_shipment"}
+	f.agent.DisabledToolNames = []string{"create_commodity"}
+	f.svc.tools = &agenttest.StubActionRegistry{Tools: []agentports.AgentTool{
+		bringingTool{
+			StubActionTool: &agenttest.StubActionTool{
+				ToolName: "create_shipment", Tier: agent.TierPropose,
+			},
+			brings: []string{"create_customer", "create_commodity"},
+		},
+		&agenttest.StubActionTool{ToolName: "create_customer", Tier: agent.TierPropose},
+		&agenttest.StubActionTool{ToolName: "create_commodity", Tier: agent.TierPropose},
+	}}
+
+	writes := f.get(t).WriteTools
+
+	customer := toolByKey(writes, "create_customer")
+	assert.Equal(t, "create_customer", customer.Key, "a companion is listed with its tool")
+	assert.Equal(t, agentports.AgentCapabilityAskFirst, customer.Mode)
+	assert.Contains(t, customer.AllowedModes, agentports.AgentCapabilityOff,
+		"a companion can be switched off")
+	assert.Equal(t, agentports.AgentCapabilityOff, toolByKey(writes, "create_commodity").Mode)
+}

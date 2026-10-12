@@ -51,7 +51,7 @@ var families = [...][]string{
 	{"describe_formula_schema", "test_formula_expression", "propose_formula"},
 	{"accept_field", "accept_all_confident", "set_field_value"},
 	{"list_locations", "set_stop_location", "set_stop_schedule", "create_location"},
-	{"list_formula_templates", "set_required_field"},
+	{"list_formula_templates", "get_formula_template", "set_required_field"},
 	{
 		"list_billing_queue_items",
 		"get_billing_queue_items",

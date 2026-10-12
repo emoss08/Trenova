@@ -275,6 +275,9 @@ func TestFollowUpInstruction_KeepsTheReplyToWhatTheNoteAndTheCardHold(t *testing
 	assert.Contains(t, followUpInstruction,
 		"Report only what this note and the proposal's card hold")
 	assert.Contains(t, followUpInstruction, "Do not propose the same change again.")
+	assert.Contains(t, followUpInstruction, continueTheWork,
+		"an approved step toward the person's request is followed by the next one")
+	assert.Contains(t, notedInstruction, continueTheWork)
 }
 
 func (s *stubPlanStore) ExpirePendingByThread(

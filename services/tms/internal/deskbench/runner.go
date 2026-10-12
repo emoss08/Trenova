@@ -317,7 +317,7 @@ func (b *Bench) runStep(
 			utterance.Directed, err = conv.directedAgent(ctx, step.Agent)
 		}
 		if err == nil {
-			result.Turns, err = conv.Say(ctx, utterance)
+			result.Turns, err = conv.Say(ctx, &utterance)
 		}
 		evidence.turns = result.Turns
 		if err != nil {

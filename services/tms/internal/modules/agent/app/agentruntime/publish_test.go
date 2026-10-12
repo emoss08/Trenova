@@ -235,6 +235,31 @@ func TestRun_AnActionableTableIsPointedToHoweverShort(t *testing.T) {
 	assert.NotContains(t, content, "few enough to answer in your reply")
 }
 
+/*
+A table whose rows open as the record itself is pointed to however short it
+is. Three formula templates answered in the reply leave no formula to read
+and nothing to price.
+*/
+func TestRun_ATableOfRecordsToOpenIsPointedToHoweverShort(t *testing.T) {
+	t.Parallel()
+
+	observer := &recordingObserver{shown: &agentports.ShownArtifact{
+		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Formula templates", Rows: 3,
+		OpensRecords: true,
+	}}
+	tool := queryTool("list_formula_templates", map[string]any{"items": []any{}}, nil)
+	result, _ := runWithObserver(t, observer.observe, []agentports.AgentQueryTool{tool},
+		toolTurn("list_formula_templates", map[string]any{"query": ""}),
+		textTurn("Three templates."),
+	)
+
+	content := result.Messages[2].Content
+	assert.Contains(t, content, "each row opens there as the record itself")
+	assert.Contains(t, content, "artifact:", "the reply is given the pointer to write")
+	assert.NotContains(t, content, "few enough to answer in your reply")
+	assert.NotContains(t, content, "select rows there")
+}
+
 // A composed view is pointed to as a view: what it was narrowed to, not rows
 // to work from where it is drawn.
 func TestRun_AViewIsPointedToAsAView(t *testing.T) {

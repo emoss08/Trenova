@@ -408,6 +408,8 @@ cases:
     expect: [list_formula_templates]
   - request: which rating methods are active
     expect: [list_formula_templates]
+  - request: show me the reefer formula template with its minimum charge and rounding
+    expect: [get_formula_template, list_formula_templates]
   - request: what variables and functions can a rating formula use
     expect: [describe_formula_schema]
   - request: describe the formula schema and its rate tables

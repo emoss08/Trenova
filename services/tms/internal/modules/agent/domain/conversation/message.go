@@ -218,6 +218,16 @@ type MessageAttachment struct {
 	PoorlyRead bool `json:"poorlyRead,omitempty"`
 }
 
+func CarriesAttachments(messages []Message) bool {
+	for idx := range messages {
+		if messages[idx].Role == RoleUser && len(messages[idx].Attachments) > 0 {
+			return true
+		}
+	}
+
+	return false
+}
+
 // ReasoningTrace is a model's thinking, kept in two parts.
 //
 // Text is what a person can read: the full chain for a provider that streams
