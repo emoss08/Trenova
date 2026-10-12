@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -270,7 +271,7 @@ func (r *repository) upsertPeriodBalance(
 			period_credit_minor = gb.period_credit_minor + EXCLUDED.period_credit_minor,
 			net_change_minor = gb.net_change_minor + EXCLUDED.net_change_minor,
 			last_journal_entry_id = EXCLUDED.last_journal_entry_id,
-			updated_at = `+r.db.NowEpoch()+`
+			updated_at = `+dbhelper.NowEpoch+`
 	`,
 			params.organizationID,
 			params.businessUnitID,
@@ -302,7 +303,7 @@ func (r *repository) updateGLAccountRunningBalance(
 			Set("current_balance = current_balance + ?", aggregate.net).
 			Set("debit_balance = debit_balance + ?", aggregate.debit).
 			Set("credit_balance = credit_balance + ?", aggregate.credit).
-			Set("updated_at = "+r.db.NowEpoch()).
+			Set("updated_at = "+dbhelper.NowEpoch).
 			Where("id = ?", aggregate.glAccountID).
 			Where("organization_id = ?", params.organizationID).
 			Where("business_unit_id = ?", params.businessUnitID).

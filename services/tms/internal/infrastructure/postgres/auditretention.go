@@ -6,7 +6,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect"
 )
 
 const enableAuditRetentionSQL = "SET LOCAL trenova.audit_retention = 'on'"
@@ -38,10 +37,6 @@ func DeleteUnderAuditRetention(
 }
 
 func enableAuditRetention(ctx context.Context, tx bun.Tx) error {
-	if tx.Dialect().Name() != dialect.PG {
-		return nil
-	}
-
 	if _, err := tx.ExecContext(ctx, enableAuditRetentionSQL); err != nil {
 		return fmt.Errorf("enable audit retention for this transaction: %w", err)
 	}

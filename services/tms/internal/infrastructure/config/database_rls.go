@@ -101,7 +101,7 @@ func (c *RLSConfig) DecodeScopeKey() ([]byte, error) {
 }
 
 func (c *Config) GetDSNForRole(role DatabaseRole) string {
-	if c.Database.GetDialect().IsSQLite() || !role.Configured() {
+	if !role.Configured() {
 		return c.GetDSN(c.Database.Password)
 	}
 
@@ -118,10 +118,6 @@ func validateRLSConfig(config *Config) error {
 
 	if !rls.Enabled() {
 		return nil
-	}
-
-	if !db.GetDialect().IsPostgres() {
-		return ErrRLSRequiresPostgres
 	}
 
 	if !rlsScopeKeyIDPattern.MatchString(strings.TrimSpace(rls.ScopeKeyID)) {

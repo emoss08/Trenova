@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/pkg/dbdialect"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/uptrace/bun"
 )
 
@@ -29,7 +29,7 @@ func ProvisionRLS(
 	cfg *config.Config,
 ) (*RLSProvisionResult, error) {
 	result := new(RLSProvisionResult)
-	if cfg == nil || !cfg.Database.GetDialect().IsPostgres() {
+	if cfg == nil {
 		return result, nil
 	}
 
@@ -105,7 +105,7 @@ func RetireRLSScopeKey(ctx context.Context, db bun.IDB, keyID string) (bool, err
 
 	res, err := db.NewRaw(
 		`UPDATE trenova_rls.scope_keys
-		SET retired_at = `+dbdialect.NowEpochFromBun(db)+`
+		SET retired_at = `+dbhelper.NowEpoch+`
 		WHERE key_id = ? AND retired_at IS NULL`,
 		keyID,
 	).Exec(ctx)

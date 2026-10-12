@@ -1,4 +1,7 @@
-import { getShipmentProfitabilityGraphQL } from "@/lib/graphql/shipment";
+import {
+  getShipmentProfitabilityGraphQL,
+  listShipmentTrackingEventsGraphQL,
+} from "@/lib/graphql/shipment";
 import { apiService } from "@/services/api";
 import type { PaginationInfo } from "@trenova/shared/types/server";
 import type { Shipment } from "@trenova/shared/types/shipment";
@@ -46,6 +49,12 @@ export const shipment = createQueryKeys("shipment", {
   events: (shipmentId: NonNullable<Shipment["id"]>, limit: number) => ({
     queryKey: ["events", shipmentId, limit],
     queryFn: async () => apiService.shipmentEventService.list({ shipmentId, limit }),
+  }),
+  // Every reported arrival and departure on the shipment's stops, newest first,
+  // with what became of each when the stop times were settled.
+  trackingEvents: (shipmentId: NonNullable<Shipment["id"]>) => ({
+    queryKey: ["tracking-events", shipmentId],
+    queryFn: async ({ signal }) => listShipmentTrackingEventsGraphQL(shipmentId, { signal }),
   }),
   listComments: (req: PaginationInfo & { shipmentId: Shipment["id"] }) => ({
     queryKey: ["comments", req.shipmentId, req],

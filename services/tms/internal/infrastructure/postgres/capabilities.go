@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/pgvector"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -27,7 +27,7 @@ type CapabilityProbe struct {
 	now    func() time.Time
 
 	mu       sync.RWMutex
-	current  dbdialect.Capabilities
+	current  pgvector.VectorSupport
 	probedAt time.Time
 	probed   bool
 }
@@ -58,7 +58,7 @@ func newCapabilityProbe(db *Connection, logger *zap.Logger) *CapabilityProbe {
 }
 
 func (p *CapabilityProbe) startup(ctx context.Context) {
-	caps, err := p.Refresh(ctx)
+	vector, err := p.Refresh(ctx)
 	if err != nil {
 		p.logger.Warn(
 			"database capability probe failed; retrying on first use",
@@ -67,10 +67,8 @@ func (p *CapabilityProbe) startup(ctx context.Context) {
 		return
 	}
 
-	vector := caps.Vector()
 	fields := []zap.Field{
-		zap.String("driver", caps.Kind().String()),
-		zap.Bool("vector_search", caps.Supports(dbdialect.CapVectorSearch)),
+		zap.Bool("vector_search", vector.Ready()),
 		zap.String("vector_state", string(vector.State)),
 	}
 	if vector.ExtensionVersion != "" {
@@ -80,7 +78,7 @@ func (p *CapabilityProbe) startup(ctx context.Context) {
 	p.logger.Info("database capabilities probed", fields...)
 }
 
-func (p *CapabilityProbe) Capabilities(ctx context.Context) (dbdialect.Capabilities, error) {
+func (p *CapabilityProbe) VectorSupport(ctx context.Context) (pgvector.VectorSupport, error) {
 	p.mu.RLock()
 	current, fresh := p.current, p.freshLocked()
 	p.mu.RUnlock()
@@ -99,21 +97,20 @@ func (p *CapabilityProbe) Capabilities(ctx context.Context) (dbdialect.Capabilit
 	return p.probeLocked(ctx)
 }
 
-func (p *CapabilityProbe) Supports(ctx context.Context, capability dbdialect.Capability) bool {
-	caps, err := p.Capabilities(ctx)
+func (p *CapabilityProbe) VectorReady(ctx context.Context) bool {
+	vector, err := p.VectorSupport(ctx)
 	if err != nil {
 		p.logger.Warn(
-			"database capability probe failed; treating capability as absent",
-			zap.String("capability", string(capability)),
+			"database capability probe failed; treating vector search as absent",
 			zap.Error(err),
 		)
 		return false
 	}
 
-	return caps.Supports(capability)
+	return vector.Ready()
 }
 
-func (p *CapabilityProbe) Refresh(ctx context.Context) (dbdialect.Capabilities, error) {
+func (p *CapabilityProbe) Refresh(ctx context.Context) (pgvector.VectorSupport, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -122,22 +119,22 @@ func (p *CapabilityProbe) Refresh(ctx context.Context) (dbdialect.Capabilities, 
 
 const capabilityProbeReason = "probe the database server's installed extensions"
 
-func (p *CapabilityProbe) probeLocked(ctx context.Context) (dbdialect.Capabilities, error) {
+func (p *CapabilityProbe) probeLocked(ctx context.Context) (pgvector.VectorSupport, error) {
 	if p.db.DB() == nil {
-		return dbdialect.Capabilities{}, ErrDatabaseConnectionNotInitialized
+		return pgvector.VectorSupport{}, ErrDatabaseConnectionNotInitialized
 	}
 
 	ctx = dbscope.WithSystem(ctx, capabilityProbeReason)
-	caps, err := dbdialect.ProbeCapabilities(ctx, p.db.DBForContext(ctx))
+	vector, err := pgvector.ProbeVector(ctx, p.db.DBForContext(ctx))
 	if err != nil {
-		return dbdialect.Capabilities{}, err
+		return pgvector.VectorSupport{}, err
 	}
 
-	p.current = caps
+	p.current = vector
 	p.probedAt = p.now()
 	p.probed = true
 
-	return caps, nil
+	return vector, nil
 }
 
 func (p *CapabilityProbe) freshLocked() bool {
@@ -145,7 +142,7 @@ func (p *CapabilityProbe) freshLocked() bool {
 		return false
 	}
 
-	if p.current.Supports(dbdialect.CapVectorSearch) {
+	if p.current.Ready() {
 		return true
 	}
 

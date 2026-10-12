@@ -283,9 +283,6 @@ func (e *extractor) recordLabelMethod(fn *ast.FuncDecl, rel string) {
 	if fn.Recv == nil || fn.Body == nil || fn.Name == nil {
 		return
 	}
-	if strings.Contains(rel, "pkg/dbdialect") {
-		return
-	}
 	if _, wanted := labelMethods[fn.Name.Name]; !wanted {
 		return
 	}

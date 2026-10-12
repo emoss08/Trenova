@@ -3,6 +3,7 @@ package ediinboundservice
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
@@ -300,7 +301,7 @@ func (s *Service) routeShipmentStatus(
 			transaction.controlNumber,
 		)}, nil
 	}
-	if details.statusCode == "" {
+	if len(details.events) == 0 {
 		return []string{fmt.Sprintf(
 			"shipment status %s/%s does not carry an AT7 status code",
 			transaction.set,
@@ -324,16 +325,42 @@ func (s *Service) routeShipmentStatus(
 		}
 		return nil, err
 	}
-	return nil, s.ediService.RecordExternalShipmentStatus(
-		ctx,
-		&ediservice.RecordExternalShipmentStatusRequest{
-			Recipient:   recipient,
-			StatusCode:  details.statusCode,
-			ReasonCode:  details.reasonCode,
-			ReferenceID: details.referenceID,
-			EventAt:     details.eventAt,
-		},
-	)
+	for index := range details.events {
+		event := &details.events[index]
+		if err = s.ediService.RecordExternalShipmentStatus(
+			ctx,
+			&ediservice.RecordExternalShipmentStatusRequest{
+				Recipient:   recipient,
+				StatusCode:  statusEventCode(event),
+				ReasonCode:  statusEventReason(event),
+				ReferenceID: details.referenceID,
+				EventAt:     event.EventAt,
+			},
+		); err != nil {
+			return nil, err
+		}
+	}
+	return nil, nil
+}
+
+func statusEventCode(event *edi.ShipmentStatusEvent) string {
+	return stringutils.FirstNonEmpty(event.StatusCode, event.AppointmentCode)
+}
+
+func statusEventReason(event *edi.ShipmentStatusEvent) string {
+	if event.StatusCode != "" {
+		return event.ReasonCode
+	}
+	return event.AppointmentReasonCode
+}
+
+func statusEventReference(
+	file *edi.EDIInboundFile,
+	details *shipmentStatusDetails,
+	event *edi.ShipmentStatusEvent,
+) string {
+	return "edi_inbound_file:" + file.ID.String() + ":" + details.controlNumber + ":" +
+		strconv.Itoa(event.Index)
 }
 
 func (s *Service) routeFreightInvoice(

@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/pkg/dbdialect"
+	"github.com/emoss08/trenova/pkg/pgvector"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -371,12 +371,12 @@ func TestEnableVector_InstallsTheSchemaAMigrationSkipped(t *testing.T) {
 
 	result, err := migrations.EnableVector(h.ctx, h.db)
 	require.NoError(t, err)
-	assert.Equal(t, dbdialect.VectorSchemaMissing, result.Before.State)
-	assert.Equal(t, dbdialect.VectorReady, result.After.State)
+	assert.Equal(t, pgvector.VectorSchemaMissing, result.Before.State)
+	assert.Equal(t, pgvector.VectorReady, result.After.State)
 
 	again, err := migrations.EnableVector(h.ctx, h.db)
 	require.NoError(t, err, "enabling twice is harmless")
-	assert.Equal(t, dbdialect.VectorReady, again.Before.State)
+	assert.Equal(t, pgvector.VectorReady, again.Before.State)
 
 	repo = newRepository(h.conn)
 	availability, err = repo.VectorAvailability(h.ctx)

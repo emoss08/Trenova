@@ -5522,7 +5522,11 @@ export type RecordLeaveDayInput = {
 
 export type RecordMyStopActionInput = {
   action: PortalStopAction;
+  /** An id the device makes once per tap, so a resend after a dropped connection is recorded once. */
+  clientEventId?: string | null | undefined;
   moveId: string | number;
+  /** When it happened on the device. Omitted means when the server receives it. */
+  occurredAt?: number | null | undefined;
   stopId: string | number;
 };
 
@@ -6955,6 +6959,10 @@ export type StopType =
   | 'SplitDelivery'
   | 'SplitPickup';
 
+export type StopVisitKind =
+  | 'Arrival'
+  | 'Departure';
+
 export type SubmitMyExpenseInput = {
   amountMinor: number;
   description: string;
@@ -7075,6 +7083,30 @@ export type TodaysBriefingInput = {
   /** Whose morning to read; omitted reads the one written for everybody. */
   roleKey?: BriefingRoleKey | null | undefined;
 };
+
+/** What became of a reported visit when the stop's times were settled. */
+export type TrackingEventOutcome =
+  | 'Applied'
+  | 'Duplicate'
+  | 'Pending'
+  | 'Refused'
+  | 'Superseded';
+
+/** Who reported a stop arrival or departure. */
+export type TrackingEventSource =
+  | 'Agent'
+  | 'Dispatcher'
+  | 'Driver'
+  | 'EDI'
+  | 'Telematics';
+
+/** How a reported visit was tied to its stop. */
+export type TrackingMatchMethod =
+  | 'Direct'
+  | 'Inferred'
+  | 'Location'
+  | 'StopReference'
+  | 'StopRole';
 
 export type TrainingCategory =
   | 'Compliance'
@@ -15416,6 +15448,13 @@ export type ShipmentEventsQuery = { shipmentEvents: Array<
     | { ' $fragmentRefs'?: { 'ShipmentEventFields_ShipmentOwnershipEvent_Fragment': ShipmentEventFields_ShipmentOwnershipEvent_Fragment } }
     | { ' $fragmentRefs'?: { 'ShipmentEventFields_ShipmentTenderEvent_Fragment': ShipmentEventFields_ShipmentTenderEvent_Fragment } }
   > };
+
+export type ShipmentTrackingEventsQueryVariables = Exact<{
+  shipmentId: string | number;
+}>;
+
+
+export type ShipmentTrackingEventsQuery = { shipmentTrackingEvents: Array<{ id: string, shipmentMoveId: string, stopId: string, source: TrackingEventSource, kind: StopVisitKind, matchMethod: TrackingMatchMethod, eventAt: number, receivedAt: number, sourceStatus: string | null, outcome: TrackingEventOutcome, outcomeReason: string | null }> };
 
 export type ShipmentBillingReadinessQueryVariables = Exact<{
   shipmentId: string | number;
@@ -28418,6 +28457,7 @@ export const ShipmentCommentsDocument = {"__meta__":{"kind":"query","name":"Ship
 export const ShipmentCommentRepliesDocument = {"__meta__":{"kind":"query","name":"ShipmentCommentReplies","hash":"sha256:c3d7d09953b6ceb3ea38fbc547d409fea336121d2b3bcacefce4b894f29bd3c6"}} as unknown as TypedDocumentString<ShipmentCommentRepliesQuery, ShipmentCommentRepliesQueryVariables>;
 export const ShipmentCommentCountDocument = {"__meta__":{"kind":"query","name":"ShipmentCommentCount","hash":"sha256:1f62df3579f042a9c8914aa2b124bb976b08c30fdb27dc1fa25926487e7d877e"}} as unknown as TypedDocumentString<ShipmentCommentCountQuery, ShipmentCommentCountQueryVariables>;
 export const ShipmentEventsDocument = {"__meta__":{"kind":"query","name":"ShipmentEvents","hash":"sha256:78c0855d984d37ab5e0f0b5cb23b5bdb5d86ba194c21d403a3339edf336821f5"}} as unknown as TypedDocumentString<ShipmentEventsQuery, ShipmentEventsQueryVariables>;
+export const ShipmentTrackingEventsDocument = {"__meta__":{"kind":"query","name":"ShipmentTrackingEvents","hash":"sha256:1497c22d6748842aa931cc8d2c072d89d1104555fb3abb53d5beda73d72fe040"}} as unknown as TypedDocumentString<ShipmentTrackingEventsQuery, ShipmentTrackingEventsQueryVariables>;
 export const ShipmentBillingReadinessDocument = {"__meta__":{"kind":"query","name":"ShipmentBillingReadiness","hash":"sha256:98a2cd4d00d91a045e742b52e3c9a318781d5eb12903f63fe4d141f0aefe449c"}} as unknown as TypedDocumentString<ShipmentBillingReadinessQuery, ShipmentBillingReadinessQueryVariables>;
 export const ShipmentUiPolicyDocument = {"__meta__":{"kind":"query","name":"ShipmentUIPolicy","hash":"sha256:31816c9ef557fefb9f366f7c6de4a496827f84f1ce406e42f21e1444ddefb7a1"}} as unknown as TypedDocumentString<ShipmentUiPolicyQuery, ShipmentUiPolicyQueryVariables>;
 export const ShipmentPreviousRatesDocument = {"__meta__":{"kind":"query","name":"ShipmentPreviousRates","hash":"sha256:fb9ce636f0cfa91106dfcc559e31eb59e1e6cfa4d229668dbc2208e7a3730f9b"}} as unknown as TypedDocumentString<ShipmentPreviousRatesQuery, ShipmentPreviousRatesQueryVariables>;

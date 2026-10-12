@@ -461,6 +461,7 @@ modules:
       - shipmentstate
       - shipmentsuggestion
       - tender
+      - trackingevent
       - weatheralert
     service:
       - allocationcheck
@@ -502,6 +503,7 @@ modules:
       - shipmenttracking
       - shipmentwatchlistservice
       - tenderservice
+      - trackingeventservice
       - triagedeliveryrelay
       - weatheralertservice
     job:
@@ -534,6 +536,7 @@ modules:
       - shipmentsuggestionrepository
       - shipmenttrackingrepository
       - tenderrepository
+      - trackingeventrepository
       - triageoverlaprepository
       - weatheralertrepository
   edi:

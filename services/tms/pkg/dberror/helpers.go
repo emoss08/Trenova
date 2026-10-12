@@ -13,7 +13,6 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/uptrace/bun/driver/pgdriver"
-	sqlitedriver "modernc.org/sqlite"
 )
 
 var ErrCheckRowNil = errors.New("check rows affected: result is nil")
@@ -174,10 +173,6 @@ func DriverError(err error) error {
 		return pgDriverErr
 	}
 
-	if sqliteErr, ok := errors.AsType[*sqlitedriver.Error](err); ok {
-		return sqliteErr
-	}
-
 	return nil
 }
 
@@ -286,5 +281,5 @@ func extractPostgresErrorDetails(err error) (postgresErrorDetails, bool) {
 		}, true
 	}
 
-	return extractSQLiteErrorDetails(err)
+	return postgresErrorDetails{}, false
 }

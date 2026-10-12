@@ -13,12 +13,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
-	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -301,10 +299,9 @@ func (r *repository) SearchByResource(
 					Where(docCols.ResourceType.Eq(), req.ResourceType)
 			})
 
-		switch {
-		case query == "":
+		if query == "" {
 			selectQuery = selectQuery.Order(docCols.CreatedAt.OrderDesc())
-		case dbdialect.FromBun(selectQuery.DB()).Supports(dbdialect.CapFullTextSearch):
+		} else {
 			selectQuery = selectQuery.
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return sq.
@@ -317,16 +314,6 @@ func (r *repository) SearchByResource(
 					query, query,
 					query, query,
 				)
-		default:
-			pattern := "%" + stringutils.EscapeLikePattern(query) + "%"
-			selectQuery = selectQuery.
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.
-						Where(docCols.FileName.Expr(escapedLike), pattern).
-						WhereOr(docCols.OriginalName.Expr(escapedLike), pattern).
-						WhereOr(contentCols.ContentText.Expr(escapedLike), pattern)
-				}).
-				Order(docCols.CreatedAt.OrderDesc())
 		}
 
 		if req.Limit > 0 {
@@ -344,5 +331,4 @@ func (r *repository) SearchByResource(
 const (
 	websearchMatch = "{} @@ (websearch_to_tsquery('simple', ?) || websearch_to_tsquery('english', ?))"
 	websearchRank  = "ts_rank_cd({}, websearch_to_tsquery('simple', ?) || websearch_to_tsquery('english', ?))"
-	escapedLike    = "{} LIKE ? ESCAPE '\\'"
 )
