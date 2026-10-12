@@ -740,6 +740,10 @@ func (r *repository) ResolveSuggestion(
 			case agent.MemoryScopeRole:
 				role = req.RoleID
 			}
+			var reviewedAt any
+			if req.ByUserID.IsNotNil() {
+				reviewedAt = req.At
+			}
 			query = query.
 				Set(cols.Content.Set(), req.Content).
 				Set(cols.Kind.Set(), req.Kind).
@@ -748,7 +752,7 @@ func (r *repository) ResolveSuggestion(
 				Set(cols.RoleID.Set(), nullableID(role)).
 				Set(cols.CreatedByUserID.Set(), nullableID(req.ByUserID)).
 				Set(cols.ReviewedByUserID.Set(), nullableID(req.ByUserID)).
-				Set(cols.ReviewedAt.Set(), req.At).
+				Set(cols.ReviewedAt.Set(), reviewedAt).
 				Set(cols.RetiredAt.Set(), nil).
 				Set(cols.RetiredByUserID.Set(), nil)
 		case agent.MemoryStatusDismissed:
