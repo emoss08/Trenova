@@ -88,7 +88,11 @@ func (s *Service) List(
 
 func PrepareList(req *inboundmessageports.ListInboundMessagesRequest) error {
 	if req.Lane != "" && !req.Lane.IsValid() {
-		return errortypes.NewValidationError("lane", errortypes.ErrInvalid, "That folder does not exist")
+		return errortypes.NewValidationError(
+			"lane",
+			errortypes.ErrInvalid,
+			"That folder does not exist",
+		)
 	}
 	if req.Sort != "" && !req.Sort.IsValid() {
 		return errortypes.NewValidationError("sort", errortypes.ErrInvalid,
@@ -289,7 +293,8 @@ func (s *Service) Review(
 	}
 
 	s.recordActivity(ctx, byPerson(
-		triage.NewActivity(updated, settleActivityKind(updated.Status)).About("", updated.ReviewNote),
+		triage.NewActivity(updated, settleActivityKind(updated.Status)).
+			About("", updated.ReviewNote),
 		req.ReviewerID,
 	))
 	s.afterQueueChange(ctx, req.TenantInfo, &transitionResult{

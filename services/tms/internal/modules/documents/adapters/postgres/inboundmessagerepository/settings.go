@@ -48,7 +48,10 @@ func (r *targetRepository) List(
 	})
 }
 
-func (r *targetRepository) Save(ctx context.Context, req inboundmessageports.SaveTargetsRequest) error {
+func (r *targetRepository) Save(
+	ctx context.Context,
+	req inboundmessageports.SaveTargetsRequest,
+) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		dba := r.db.DBForContext(ctx)
 		cols := triagecol.ResponseTargetColumns

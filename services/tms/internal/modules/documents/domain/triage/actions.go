@@ -85,12 +85,6 @@ type ActionInput struct {
 	Reply   *Reply
 }
 
-var paperwork = map[inboundmessage.Classification]struct{}{
-	inboundmessage.ClassificationProofOfDelivery:  {},
-	inboundmessage.ClassificationRateConfirmation: {},
-	inboundmessage.ClassificationInvoice:          {},
-}
-
 func NeedsRecord(class inboundmessage.Classification) bool {
 	switch class {
 	case inboundmessage.ClassificationProofOfDelivery,
@@ -99,6 +93,8 @@ func NeedsRecord(class inboundmessage.Classification) bool {
 		inboundmessage.ClassificationDetentionDispute,
 		inboundmessage.ClassificationStatusRequest:
 		return true
+	case inboundmessage.ClassificationTender, inboundmessage.ClassificationOther:
+		return false
 	default:
 		return false
 	}
@@ -108,6 +104,12 @@ func FilesAttachments(class inboundmessage.Classification) bool {
 	switch class {
 	case inboundmessage.ClassificationDetentionDispute, inboundmessage.ClassificationStatusRequest:
 		return false
+	case inboundmessage.ClassificationTender,
+		inboundmessage.ClassificationRateConfirmation,
+		inboundmessage.ClassificationProofOfDelivery,
+		inboundmessage.ClassificationInvoice,
+		inboundmessage.ClassificationOther:
+		return true
 	default:
 		return true
 	}
@@ -119,7 +121,7 @@ func Actions(in ActionInput) []Action {
 		return nil
 	}
 
-	state := m.ActionState
+	state := &m.ActionState
 	actions := make([]Action, 0, 4)
 
 	if m.Status == inboundmessage.StatusQuarantined {
@@ -151,22 +153,36 @@ func Actions(in ActionInput) []Action {
 
 	if FilesAttachments(class) {
 		for _, attachment := range m.Attachments {
-			if !attachment.Readable() {
-				continue
+			if attachment.Readable() {
+				actions = append(actions, fileAction(m, attachment))
 			}
-			actions = append(actions, fileAction(m, attachment))
 		}
 	}
 
-	switch class {
+	actions = append(actions, classActions(in)...)
+	for i := range actions {
+		if actions[i].ShipmentID.IsNil() && actions[i].Kind != ActionLink {
+			actions[i].ShipmentID = m.MatchedShipmentID
+		}
+	}
+
+	return actions
+}
+
+func classActions(in ActionInput) []Action {
+	m := in.Message
+	state := &m.ActionState
+
+	switch m.Classification {
 	case inboundmessage.ClassificationTender:
-		actions = append(actions, loadAction(m))
 		purpose := ReplyConfirmTender
 		if hasReadableAttachment(m) {
 			purpose = ReplyAcceptTender
 		}
-		actions = append(actions, replyAction(in.Reply, purpose, false))
+
+		return []Action{loadAction(m), replyAction(in.Reply, purpose, false)}
 	case inboundmessage.ClassificationDetentionDispute:
+		actions := make([]Action, 0, 2)
 		if m.MatchedShipmentID.IsNotNil() {
 			actions = append(actions, Action{
 				ID:            "stops",
@@ -177,43 +193,48 @@ func Actions(in ActionInput) []Action {
 				CompletedAt:   state.StopsDecidedAt,
 			})
 		}
-		actions = append(actions, replyAction(in.Reply, ReplyAnswerDispute, false))
-	case inboundmessage.ClassificationRateConfirmation:
-		actions = append(actions, replyAction(in.Reply, ReplyReturnSigned, false))
-	case inboundmessage.ClassificationProofOfDelivery:
-		if hasWarningFact(m) && m.MatchedShipmentID.IsNotNil() {
-			actions = append(actions, Action{
-				ID:            "exception",
-				Kind:          ActionLogException,
-				Done:          state.ExceptionLoggedAt > 0,
-				ShipmentID:    m.MatchedShipmentID,
-				ExceptionKind: state.ExceptionKind,
-				CompletedAt:   state.ExceptionLoggedAt,
-			})
-		}
-		if refused := firstRefused(m); refused != "" {
-			reply := replyAction(in.Reply, ReplyAskResend, false)
-			reply.RefusedFileName = refused
-			actions = append(actions, reply)
-		}
-	case inboundmessage.ClassificationStatusRequest:
-		actions = append(actions, replyAction(in.Reply, ReplySendEta, true))
-	case inboundmessage.ClassificationInvoice, inboundmessage.ClassificationOther:
-	}
 
-	for i := range actions {
-		if actions[i].ShipmentID.IsNil() && actions[i].Kind != ActionLink {
-			actions[i].ShipmentID = m.MatchedShipmentID
-		}
+		return append(actions, replyAction(in.Reply, ReplyAnswerDispute, false))
+	case inboundmessage.ClassificationRateConfirmation:
+		return []Action{replyAction(in.Reply, ReplyReturnSigned, false)}
+	case inboundmessage.ClassificationProofOfDelivery:
+		return deliveryActions(in)
+	case inboundmessage.ClassificationStatusRequest:
+		return []Action{replyAction(in.Reply, ReplySendEta, true)}
+	case inboundmessage.ClassificationInvoice, inboundmessage.ClassificationOther:
+		return nil
+	default:
+		return nil
+	}
+}
+
+func deliveryActions(in ActionInput) []Action {
+	m := in.Message
+	state := &m.ActionState
+	actions := make([]Action, 0, 2)
+	if hasWarningFact(m) && m.MatchedShipmentID.IsNotNil() {
+		actions = append(actions, Action{
+			ID:            "exception",
+			Kind:          ActionLogException,
+			Done:          state.ExceptionLoggedAt > 0,
+			ShipmentID:    m.MatchedShipmentID,
+			ExceptionKind: state.ExceptionKind,
+			CompletedAt:   state.ExceptionLoggedAt,
+		})
+	}
+	if refused := firstRefused(m); refused != "" {
+		reply := replyAction(in.Reply, ReplyAskResend, false)
+		reply.RefusedFileName = refused
+		actions = append(actions, reply)
 	}
 
 	return actions
 }
 
 func NextOpen(actions []Action) (Action, bool) {
-	for _, action := range actions {
-		if !action.Done {
-			return action, true
+	for i := range actions {
+		if !actions[i].Done {
+			return actions[i], true
 		}
 	}
 
@@ -321,7 +342,17 @@ func hasWarningFact(m *inboundmessage.InboundMessage) bool {
 }
 
 func IsPaperwork(class inboundmessage.Classification) bool {
-	_, ok := paperwork[class]
-
-	return ok
+	switch class {
+	case inboundmessage.ClassificationProofOfDelivery,
+		inboundmessage.ClassificationRateConfirmation,
+		inboundmessage.ClassificationInvoice:
+		return true
+	case inboundmessage.ClassificationTender,
+		inboundmessage.ClassificationStatusRequest,
+		inboundmessage.ClassificationDetentionDispute,
+		inboundmessage.ClassificationOther:
+		return false
+	default:
+		return false
+	}
 }

@@ -158,6 +158,8 @@ func applyLane(
 		return sq.Where(c.Status.Eq(), inboundmessage.StatusActioned)
 	case inboundmessageports.LaneIgnored:
 		return sq.Where(c.Status.Eq(), inboundmessage.StatusIgnored)
+	case inboundmessageports.LaneEverything:
+		return sq
 	default:
 		return sq
 	}

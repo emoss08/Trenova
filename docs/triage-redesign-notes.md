@@ -195,6 +195,30 @@ _Filled in as each area lands._
   (`lib/triage/document-types.ts`), since the reading's `documentType` and a page's
   `suggestedType` are names.
 
+### Briefing, rules and overlays
+
+- **The ring is how much of today is cleared.** The briefing returns what is waiting and the
+  points you cleared, not a target or a start-of-day count, so the ring fills to
+  cleared / (cleared + waiting) and reads full on a day with nothing to do.
+- **A new source has no address of its own until someone types one.** The server has no inbound
+  domain setting. The connect flow suggests `name@domain` from the domain most of the
+  organization's other sources receive on and asks for the whole address on a first source.
+  It creates the mailbox to review anything below 0.8 confidence. For Postmark it generates
+  credentials and stores the signing secret; Resend's signing secret only exists in Resend, so
+  that step links to the source's settings to paste it. The webhook URL comes from the same
+  helper the admin page uses.
+- **The document viewer highlights by text, not by box.** A reading's fields carry values but no
+  page coordinates, so the viewer marks matches in the PDF's text layer. A scanned page with no
+  text layer shows the page without marks, and the list of read fields still shows.
+- **Desk hand-off chips sit above the thread.** `DeskThread` builds its own user bubble, so the
+  open actions the message carries are a strip above the conversation instead of chips inside
+  the first message. The message and its shipment go in as hand-off mentions, so the agent sees
+  the same context. The agent is picked by matching the message's kind to each agent's name,
+  template, description and tools, falls back to the last agent used, and can be changed in the
+  header.
+- **The hand-off line is gender-neutral.** The prototype's "he'll see them first thing" names a
+  pronoun the server does not know; the copy reads "they'll".
+
 ## Performance
 
 Measured on the development database with 50,055 messages in one tenant (50,000 synthetic across

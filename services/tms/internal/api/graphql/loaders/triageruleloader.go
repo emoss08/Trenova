@@ -32,9 +32,11 @@ func newTriageRuleMonthMatchesLoader(
 	f *TriageRuleMonthMatchesLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, int] {
-	return newLoader(batchCountFunc(func(ctx context.Context, ids []pulid.ID) (map[pulid.ID]int, error) {
-		return f.stats.MatchesThisMonth(ctx, tenantInfo, ids)
-	}))
+	return newLoader(
+		batchCountFunc(func(ctx context.Context, ids []pulid.ID) (map[pulid.ID]int, error) {
+			return f.stats.MatchesThisMonth(ctx, tenantInfo, ids)
+		}),
+	)
 }
 
 type TriageSampleByMessageIDLoaderFactory struct {

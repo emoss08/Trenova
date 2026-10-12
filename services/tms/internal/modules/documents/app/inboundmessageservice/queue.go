@@ -217,8 +217,14 @@ func (s *Service) resolveSelection(
 	if len(selection.IDs) > 0 {
 		ids := sliceutils.Dedupe(selection.IDs)
 		if len(ids) > inboundmessageports.MaxBulkSelection {
-			return nil, errortypes.NewValidationError("selection.ids", errortypes.ErrInvalid,
-				fmt.Sprintf("Choose at most %d messages at once", inboundmessageports.MaxBulkSelection))
+			return nil, errortypes.NewValidationError(
+				"selection.ids",
+				errortypes.ErrInvalid,
+				fmt.Sprintf(
+					"Choose at most %d messages at once",
+					inboundmessageports.MaxBulkSelection,
+				),
+			)
 		}
 
 		return ids, nil
@@ -281,9 +287,10 @@ func (s *Service) messageAfter(
 }
 
 func requireFound(states []*inboundmessageports.QueueState, id pulid.ID) error {
-	if len(states) == 0 || !slices.ContainsFunc(states, func(state *inboundmessageports.QueueState) bool {
-		return state.ID == id
-	}) {
+	if len(states) == 0 ||
+		!slices.ContainsFunc(states, func(state *inboundmessageports.QueueState) bool {
+			return state.ID == id
+		}) {
 		return errortypes.NewNotFoundError("Inbound message not found within your organization")
 	}
 

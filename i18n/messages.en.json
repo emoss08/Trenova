@@ -267650,15 +267650,6 @@
       "routes/shipment"
     ]
   },
-  "a detention dispute": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
-    ]
-  },
   "a full profile": {
     "sites": 1,
     "scope": [
@@ -267686,15 +267677,6 @@
       "apps/web/components"
     ]
   },
-  "a proof of delivery": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
-    ]
-  },
   "a rate agreement": {
     "sites": 1,
     "scope": [
@@ -267702,15 +267684,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "a rate confirmation": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
     ]
   },
   "a shipment": {
@@ -267740,15 +267713,6 @@
       "routes/inbox"
     ]
   },
-  "a status request": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
-    ]
-  },
   "a teammate": {
     "sites": 3,
     "scope": [
@@ -267758,15 +267722,6 @@
       "routes/carrier-monitoring",
       "routes/inbox",
       "routes/shipment"
-    ]
-  },
-  "a tender": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
     ]
   },
   "a week on average": {
@@ -267913,15 +267868,6 @@
       "routes/shipment"
     ]
   },
-  "an invoice": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
-    ]
-  },
   "an overage": {
     "sites": 1,
     "scope": [
@@ -267994,15 +267940,6 @@
     ],
     "areas": [
       "routes/reports"
-    ]
-  },
-  "anything else": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
     ]
   },
   "applied — {0} became {1}.": {

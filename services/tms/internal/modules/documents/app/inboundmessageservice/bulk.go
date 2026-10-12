@@ -163,7 +163,10 @@ func (s *Service) teach(
 
 	if err = s.activityRepo.Insert(ctx, []*triage.Activity{
 		byPerson(
-			activityOf(source, triage.ActivityRuleCreated).About(string(req.Teach), source.SenderDomain),
+			activityOf(
+				source,
+				triage.ActivityRuleCreated,
+			).About(string(req.Teach), source.SenderDomain),
 			req.ActorID,
 		),
 	}); err != nil {

@@ -33,7 +33,10 @@ func (s *Service) WakeSchedule(
 	return scheduleOf(states, id), nil
 }
 
-func scheduleOf(states []*inboundmessageports.QueueState, id pulid.ID) *triagewakecontract.Schedule {
+func scheduleOf(
+	states []*inboundmessageports.QueueState,
+	id pulid.ID,
+) *triagewakecontract.Schedule {
 	for _, state := range states {
 		if state.ID == id && state.HasTimer() {
 			return &triagewakecontract.Schedule{Open: true, WakeAt: state.WakeAt()}
@@ -92,10 +95,13 @@ func (s *Service) WakeIfDue(
 func (s *Service) ReconcileOverdueWakes(ctx context.Context, now int64) (int, error) {
 	woken := 0
 	for {
-		refs, err := s.queueRepo.ListOverdueParked(ctx, inboundmessageports.ListOverdueParkedRequest{
-			Now:   now - reconcileGraceSeconds,
-			Limit: inboundmessageports.ReconcileBatchSize,
-		})
+		refs, err := s.queueRepo.ListOverdueParked(
+			ctx,
+			inboundmessageports.ListOverdueParkedRequest{
+				Now:   now - reconcileGraceSeconds,
+				Limit: inboundmessageports.ReconcileBatchSize,
+			},
+		)
 		if err != nil {
 			return woken, err
 		}

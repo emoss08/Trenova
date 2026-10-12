@@ -51,12 +51,12 @@ func (r *Registry) registerCommunicationResources() {
 			},
 			{
 				Operation:   OpAssign,
-				DisplayName: "Assign",
+				DisplayName: operationDefinitions[OpAssign].DisplayName,
 				Description: "Assign messages to other people and hand the queue off",
 			},
 			{
 				Operation:   OpManage,
-				DisplayName: "Manage",
+				DisplayName: operationDefinitions[OpManage].DisplayName,
 				Description: "Set the rules Nova follows, reply templates and response targets",
 			},
 		},

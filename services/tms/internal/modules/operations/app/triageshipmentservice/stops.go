@@ -219,7 +219,10 @@ func waivedOf(
 	return settledOf(waived.WaivedAmount, waived.Currency), nil
 }
 
-func settledOf(amount decimal.Decimal, currency string) *inboundmessageports.SettledTriageDetention {
+func settledOf(
+	amount decimal.Decimal,
+	currency string,
+) *inboundmessageports.SettledTriageDetention {
 	return &inboundmessageports.SettledTriageDetention{
 		Amount:   amount.StringFixed(amountPlaces),
 		Currency: currency,

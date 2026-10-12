@@ -531,9 +531,15 @@ func newSet(f *Factory, tenantInfo pagination.TenantInfo) *set {
 			f.inboundReply,
 			tenantInfo,
 		),
-		inboundReplyDraftByMessageID: newInboundReplyDraftByMessageIDLoader(f.inboundReply, tenantInfo),
-		inboundRepliesByMessageID:    newInboundRepliesByMessageIDLoader(f.inboundReply, tenantInfo),
-		inboundReplyByID:             newInboundReplyByIDLoader(f.inboundReply, tenantInfo),
+		inboundReplyDraftByMessageID: newInboundReplyDraftByMessageIDLoader(
+			f.inboundReply,
+			tenantInfo,
+		),
+		inboundRepliesByMessageID: newInboundRepliesByMessageIDLoader(
+			f.inboundReply,
+			tenantInfo,
+		),
+		inboundReplyByID: newInboundReplyByIDLoader(f.inboundReply, tenantInfo),
 		inboundDocumentReadingByDocumentID: newInboundDocumentReadingByDocumentIDLoader(
 			f.inboundDocumentReading,
 			tenantInfo,

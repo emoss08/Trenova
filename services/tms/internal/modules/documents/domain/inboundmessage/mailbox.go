@@ -56,19 +56,19 @@ type Mailbox struct {
 	// ProviderAPIKey is the key the mailbox reads message content with,
 	// encrypted at rest. Resend posts only a message's metadata to the
 	// webhook, so its body, headers and attachments are fetched afterwards.
-	ProviderAPIKey string        `json:"-"             bun:"provider_api_key,type:TEXT,nullzero"`
-	Purpose        string        `json:"purpose"       bun:"purpose,type:VARCHAR(255),nullzero"`
-	ReviewPolicy   ReviewPolicy  `json:"reviewPolicy"  bun:"review_policy,type:VARCHAR(30),notnull"`
-	MinConfidence  float64       `json:"minConfidence" bun:"min_confidence,type:NUMERIC(4,3),notnull"`
-	Status         MailboxStatus `json:"status"        bun:"status,type:VARCHAR(20),notnull"`
+	ProviderAPIKey string        `json:"-"              bun:"provider_api_key,type:TEXT,nullzero"`
+	Purpose        string        `json:"purpose"        bun:"purpose,type:VARCHAR(255),nullzero"`
+	ReviewPolicy   ReviewPolicy  `json:"reviewPolicy"   bun:"review_policy,type:VARCHAR(30),notnull"`
+	MinConfidence  float64       `json:"minConfidence"  bun:"min_confidence,type:NUMERIC(4,3),notnull"`
+	Status         MailboxStatus `json:"status"         bun:"status,type:VARCHAR(20),notnull"`
 	LastReceivedAt int64         `json:"lastReceivedAt" bun:"last_received_at,type:BIGINT,nullzero"`
 	TestToken      string        `json:"-"              bun:"test_token,type:VARCHAR(64),nullzero"`
 	TestSentAt     int64         `json:"testSentAt"     bun:"test_sent_at,type:BIGINT,nullzero"`
 	TestReceivedAt int64         `json:"testReceivedAt" bun:"test_received_at,type:BIGINT,nullzero"`
 	BlockedSenders []string      `json:"blockedSenders" bun:"blocked_senders,type:JSONB,nullzero"`
-	Version        int64         `json:"version"       bun:"version,type:BIGINT"`
-	CreatedAt      int64         `json:"createdAt"     bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64         `json:"updatedAt"     bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version        int64         `json:"version"        bun:"version,type:BIGINT"`
+	CreatedAt      int64         `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt      int64         `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`

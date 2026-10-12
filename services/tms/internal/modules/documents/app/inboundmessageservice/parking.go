@@ -76,7 +76,9 @@ func ValidateSnooze(req *SnoozeRequest, now int64) error {
 	}
 }
 
-func checkSnoozable(event inboundmessage.SnoozeEvent) func([]*inboundmessageports.QueueState) error {
+func checkSnoozable(
+	event inboundmessage.SnoozeEvent,
+) func([]*inboundmessageports.QueueState) error {
 	return func(states []*inboundmessageports.QueueState) error {
 		for _, state := range states {
 			if !state.NeedsReview() {
@@ -224,7 +226,10 @@ func (s *Service) WaitForReply(
 			},
 		},
 		activity: func(_, after *inboundmessageports.QueueState) *triage.Activity {
-			activity := activityOf(after, triage.ActivityWaitingOnReply).About(after.FromAddress, "")
+			activity := activityOf(
+				after,
+				triage.ActivityWaitingOnReply,
+			).About(after.FromAddress, "")
 			activity.Until = req.Until
 
 			return byPerson(activity, req.ActorID)
@@ -277,7 +282,10 @@ func linkedID(state *inboundmessageports.QueueState, record LinkedRecord) pulid.
 	}
 }
 
-func UnlinkPatch(state *inboundmessageports.QueueState, record LinkedRecord) inboundmessageports.QueuePatch {
+func UnlinkPatch(
+	state *inboundmessageports.QueueState,
+	record LinkedRecord,
+) inboundmessageports.QueuePatch {
 	patch := inboundmessageports.QueuePatch{
 		ClearShipment: record == LinkedShipment,
 		ClearCustomer: record == LinkedCustomer,

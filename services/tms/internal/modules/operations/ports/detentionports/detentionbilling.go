@@ -35,7 +35,9 @@ type SyncDetentionInvoiceBillingRequest struct {
 	Waivers       []DetentionWaiver
 }
 
-func (r *SyncDetentionInvoiceBillingRequest) WaiverFor(occurrenceID pulid.ID) (DetentionWaiver, bool) {
+func (r *SyncDetentionInvoiceBillingRequest) WaiverFor(
+	occurrenceID pulid.ID,
+) (DetentionWaiver, bool) {
 	for _, waiver := range r.Waivers {
 		if waiver.OccurrenceID == occurrenceID {
 			return waiver, true

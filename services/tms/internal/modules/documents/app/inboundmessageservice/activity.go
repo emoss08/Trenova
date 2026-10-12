@@ -27,7 +27,10 @@ func NewActivityRecorder(p ActivityRecorderParams) *ActivityRecorder {
 	return &ActivityRecorder{repo: p.Repo}
 }
 
-func (r *ActivityRecorder) RecordActivity(ctx context.Context, activities ...*triage.Activity) error {
+func (r *ActivityRecorder) RecordActivity(
+	ctx context.Context,
+	activities ...*triage.Activity,
+) error {
 	return r.repo.Insert(ctx, activities)
 }
 

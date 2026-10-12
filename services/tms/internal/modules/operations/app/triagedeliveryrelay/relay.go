@@ -44,6 +44,14 @@ func Delivered(status shipment.Status) bool {
 	switch status {
 	case shipment.StatusCompleted, shipment.StatusReadyToInvoice, shipment.StatusInvoiced:
 		return true
+	case shipment.StatusNew,
+		shipment.StatusPartiallyAssigned,
+		shipment.StatusAssigned,
+		shipment.StatusInTransit,
+		shipment.StatusDelayed,
+		shipment.StatusPartiallyCompleted,
+		shipment.StatusCanceled:
+		return false
 	default:
 		return false
 	}

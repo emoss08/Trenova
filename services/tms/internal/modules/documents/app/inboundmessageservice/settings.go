@@ -340,11 +340,17 @@ func (s *Service) HandOff(
 	target := req.ToUserID
 	affected := 0
 	for affected < triage.DefaultHandOffBatchMax {
-		ids, cErr := s.queueRepo.HandOffCandidates(ctx, inboundmessageports.HandOffCandidatesRequest{
-			TenantInfo: req.TenantInfo,
-			To:         req.ToUserID,
-			Limit:      min(inboundmessageports.HandOffBatchSize, triage.DefaultHandOffBatchMax-affected),
-		})
+		ids, cErr := s.queueRepo.HandOffCandidates(
+			ctx,
+			inboundmessageports.HandOffCandidatesRequest{
+				TenantInfo: req.TenantInfo,
+				To:         req.ToUserID,
+				Limit: min(
+					inboundmessageports.HandOffBatchSize,
+					triage.DefaultHandOffBatchMax-affected,
+				),
+			},
+		)
 		if cErr != nil {
 			return nil, cErr
 		}

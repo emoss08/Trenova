@@ -73,14 +73,22 @@ func (r *repository) QueueStates(
 	req inboundmessageports.QueueStatesRequest,
 ) ([]*inboundmessageports.QueueState, error) {
 	if req.ForUpdate {
-		return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*inboundmessageports.QueueState, error) {
-			return r.queueStates(ctx, req)
-		})
+		return dbtx.Write(
+			ctx,
+			r.db,
+			func(ctx context.Context) ([]*inboundmessageports.QueueState, error) {
+				return r.queueStates(ctx, req)
+			},
+		)
 	}
 
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*inboundmessageports.QueueState, error) {
-		return r.queueStates(ctx, req)
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*inboundmessageports.QueueState, error) {
+			return r.queueStates(ctx, req)
+		},
+	)
 }
 
 func (r *repository) queueStates(
@@ -172,17 +180,24 @@ func (r *repository) UpdateQueueState(
 	ctx context.Context,
 	req inboundmessageports.UpdateQueueStateRequest,
 ) ([]*inboundmessageports.QueueState, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*inboundmessageports.QueueState, error) {
-		states := make([]*inboundmessageports.QueueState, 0, len(req.IDs))
-		if len(req.IDs) == 0 {
-			return states, nil
-		}
-		if err := updateQueueStateQuery(r.db.DBForContext(ctx), req).Scan(ctx, &states); err != nil {
-			return nil, err
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*inboundmessageports.QueueState, error) {
+			states := make([]*inboundmessageports.QueueState, 0, len(req.IDs))
+			if len(req.IDs) == 0 {
+				return states, nil
+			}
+			if err := updateQueueStateQuery(
+				r.db.DBForContext(ctx),
+				req,
+			).Scan(ctx, &states); err != nil {
+				return nil, err
+			}
 
-		return states, nil
-	})
+			return states, nil
+		},
+	)
 }
 
 func updateQueueStateQuery(
@@ -364,25 +379,29 @@ func (r *repository) ListByIDs(
 	ctx context.Context,
 	req inboundmessageports.ListInboundMessagesByIDsRequest,
 ) ([]*inboundmessage.InboundMessage, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
-		entities := make([]*inboundmessage.InboundMessage, 0, len(req.IDs))
-		if len(req.IDs) == 0 {
-			return entities, nil
-		}
-		cols := inboundmessagecol.InboundMessageColumns
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(inboundmessagecol.InboundMessageRelations.Mailbox).
-			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-			Where(cols.ID.In(), bun.List(req.IDs)).
-			Order(cols.ReceivedAt.OrderDesc(), cols.ID.OrderDesc()).
-			Scan(ctx); err != nil {
-			return nil, err
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
+			entities := make([]*inboundmessage.InboundMessage, 0, len(req.IDs))
+			if len(req.IDs) == 0 {
+				return entities, nil
+			}
+			cols := inboundmessagecol.InboundMessageColumns
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Relation(inboundmessagecol.InboundMessageRelations.Mailbox).
+				Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
+				Where(cols.ID.In(), bun.List(req.IDs)).
+				Order(cols.ReceivedAt.OrderDesc(), cols.ID.OrderDesc()).
+				Scan(ctx); err != nil {
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) ThreadKeysByMessageKeys(
@@ -459,14 +478,22 @@ func (r *repository) ListThread(
 	ctx context.Context,
 	req inboundmessageports.ListThreadRequest,
 ) ([]*inboundmessage.InboundMessage, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
-		entities := make([]*inboundmessage.InboundMessage, 0, req.Limit)
-		if err := listThreadQuery(r.db.DBForContext(ctx), req, &entities).Scan(ctx); err != nil {
-			return nil, err
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
+			entities := make([]*inboundmessage.InboundMessage, 0, req.Limit)
+			if err := listThreadQuery(
+				r.db.DBForContext(ctx),
+				req,
+				&entities,
+			).Scan(ctx); err != nil {
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func listThreadQuery(
@@ -495,40 +522,48 @@ func (r *repository) AwaitingOnThread(
 	ctx context.Context,
 	req inboundmessageports.AwaitingOnThreadRequest,
 ) ([]*inboundmessageports.QueueState, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*inboundmessageports.QueueState, error) {
-		states := make([]*inboundmessageports.QueueState, 0, 2)
-		cols := inboundmessagecol.InboundMessageColumns
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*inboundmessage.InboundMessage)(nil)).
-			Column(stateColumns...).
-			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-			Where(cols.ThreadKey.Eq(), req.ThreadKey).
-			Where(cols.Parked.Eq(), inboundmessage.ParkingAwaitingReply).
-			Limit(inboundmessageports.MaxThreadMessages)
-		if req.ExcludeID.IsNotNil() {
-			query = query.Where(cols.ID.NotEq(), req.ExcludeID)
-		}
-		if err := query.Scan(ctx, &states); err != nil {
-			return nil, err
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*inboundmessageports.QueueState, error) {
+			states := make([]*inboundmessageports.QueueState, 0, 2)
+			cols := inboundmessagecol.InboundMessageColumns
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*inboundmessage.InboundMessage)(nil)).
+				Column(stateColumns...).
+				Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
+				Where(cols.ThreadKey.Eq(), req.ThreadKey).
+				Where(cols.Parked.Eq(), inboundmessage.ParkingAwaitingReply).
+				Limit(inboundmessageports.MaxThreadMessages)
+			if req.ExcludeID.IsNotNil() {
+				query = query.Where(cols.ID.NotEq(), req.ExcludeID)
+			}
+			if err := query.Scan(ctx, &states); err != nil {
+				return nil, err
+			}
 
-		return states, nil
-	})
+			return states, nil
+		},
+	)
 }
 
 func (r *repository) WakeByEvent(
 	ctx context.Context,
 	req inboundmessageports.WakeByEventRequest,
 ) ([]*inboundmessageports.QueueState, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*inboundmessageports.QueueState, error) {
-		states := make([]*inboundmessageports.QueueState, 0, 2)
-		if err := wakeByEventQuery(r.db.DBForContext(ctx), req).Scan(ctx, &states); err != nil {
-			return nil, err
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*inboundmessageports.QueueState, error) {
+			states := make([]*inboundmessageports.QueueState, 0, 2)
+			if err := wakeByEventQuery(r.db.DBForContext(ctx), req).Scan(ctx, &states); err != nil {
+				return nil, err
+			}
 
-		return states, nil
-	})
+			return states, nil
+		},
+	)
 }
 
 func wakeByEventQuery(db bun.IDB, req inboundmessageports.WakeByEventRequest) *bun.UpdateQuery {
@@ -571,7 +606,10 @@ func (r *repository) ListOverdueParked(
 	})
 }
 
-func overdueParkedQuery(db bun.IDB, req inboundmessageports.ListOverdueParkedRequest) *bun.SelectQuery {
+func overdueParkedQuery(
+	db bun.IDB,
+	req inboundmessageports.ListOverdueParkedRequest,
+) *bun.SelectQuery {
 	cols := inboundmessagecol.InboundMessageColumns
 	refColumns := []string{cols.ID.Bare(), cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()}
 

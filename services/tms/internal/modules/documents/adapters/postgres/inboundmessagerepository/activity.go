@@ -49,7 +49,11 @@ func (r *activityRepository) ListByMessageIDs(
 		}
 
 		entities := make([]*triage.Activity, 0, len(req.MessageIDs)*4)
-		if err := listActivitiesQuery(r.db.DBForContext(ctx), req, &entities).Scan(ctx); err != nil {
+		if err := listActivitiesQuery(
+			r.db.DBForContext(ctx),
+			req,
+			&entities,
+		).Scan(ctx); err != nil {
 			return nil, err
 		}
 		for _, entity := range entities {

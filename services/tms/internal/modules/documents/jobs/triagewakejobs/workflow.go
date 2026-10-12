@@ -90,7 +90,11 @@ func TriageWakeWorkflow(ctx workflow.Context, payload *Payload) error {
 	return nil
 }
 
-func sleepUntil(ctx workflow.Context, reschedule workflow.ReceiveChannel, wakeAt int64) (bool, error) {
+func sleepUntil(
+	ctx workflow.Context,
+	reschedule workflow.ReceiveChannel,
+	wakeAt int64,
+) (bool, error) {
 	wait := time.Unix(wakeAt, 0).Sub(workflow.Now(ctx))
 	if wait < 0 {
 		wait = 0

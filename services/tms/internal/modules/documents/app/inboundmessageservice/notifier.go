@@ -67,11 +67,17 @@ func newNotifier(deps notifierDeps) *Notifier {
 	}
 }
 
-func (n *Notifier) MessagesChanged(ctx context.Context, messages ...*inboundmessage.InboundMessage) {
+func (n *Notifier) MessagesChanged(
+	ctx context.Context,
+	messages ...*inboundmessage.InboundMessage,
+) {
 	n.changed(ctx, inboxRealtimeAction, messages)
 }
 
-func (n *Notifier) MessagesCreated(ctx context.Context, messages ...*inboundmessage.InboundMessage) {
+func (n *Notifier) MessagesCreated(
+	ctx context.Context,
+	messages ...*inboundmessage.InboundMessage,
+) {
 	n.changed(ctx, realtimeActionCreated, messages)
 }
 

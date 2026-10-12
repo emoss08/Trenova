@@ -193,7 +193,10 @@ func (r *mailboxRepository) MarkReceived(
 	})
 }
 
-func markReceivedQuery(db bun.IDB, req inboundmessageports.MailboxReceivedRequest) *bun.UpdateQuery {
+func markReceivedQuery(
+	db bun.IDB,
+	req inboundmessageports.MailboxReceivedRequest,
+) *bun.UpdateQuery {
 	cols := inboundmessagecol.MailboxColumns
 
 	return db.NewUpdate().
@@ -253,7 +256,10 @@ func (r *mailboxRepository) MarkTestReceived(
 	})
 }
 
-func markTestReceivedQuery(db bun.IDB, req inboundmessageports.MailboxTestRequest) *bun.UpdateQuery {
+func markTestReceivedQuery(
+	db bun.IDB,
+	req inboundmessageports.MailboxTestRequest,
+) *bun.UpdateQuery {
 	cols := inboundmessagecol.MailboxColumns
 
 	return db.NewUpdate().

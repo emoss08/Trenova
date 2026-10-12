@@ -110,7 +110,11 @@ func detentionWaiversOf(
 
 	var waivers []detentionports.DetentionWaiver
 	if err := jsonutils.Convert(raw, &waivers); err != nil {
-		return nil, fmt.Errorf("read the detention waivers of adjustment %s: %w", adjustment.ID, err)
+		return nil, fmt.Errorf(
+			"read the detention waivers of adjustment %s: %w",
+			adjustment.ID,
+			err,
+		)
 	}
 
 	return waivers, nil

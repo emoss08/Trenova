@@ -517,8 +517,11 @@ func (s *Service) recordArrival(
 ) {
 	activities := make([]*triage.Activity, 0, 2)
 	if blocked {
-		activities = append(activities,
-			triage.NewActivity(message, triage.ActivityIgnored).About(message.FromAddress, "blocked"))
+		activities = append(
+			activities,
+			triage.NewActivity(message, triage.ActivityIgnored).
+				About(message.FromAddress, "blocked"),
+		)
 	}
 	if activity := s.noteTestReceived(ctx, mailbox, message); activity != nil {
 		activities = append(activities, activity)

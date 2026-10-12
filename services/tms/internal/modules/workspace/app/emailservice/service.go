@@ -49,7 +49,7 @@ type Params struct {
 	WorkflowStarter    kernelports.WorkflowStarter
 	Storage            kernelports.Client
 	Plans              platformplanports.PlanService     `optional:"true"`
-	Observers          []emailports.EmailMessageObserver `group:"email_message_observers"`
+	Observers          []emailports.EmailMessageObserver `                group:"email_message_observers"`
 }
 
 type Service struct {

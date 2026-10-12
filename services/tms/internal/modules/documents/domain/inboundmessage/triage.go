@@ -81,6 +81,8 @@ func (a NovaAction) Settles() bool {
 	switch a {
 	case NovaActionFileOnShipment, NovaActionFileAndQueuePay, NovaActionIgnore:
 		return true
+	case NovaActionDraftReply, NovaActionDraftLoad, NovaActionLinkBySender, NovaActionAssign:
+		return false
 	default:
 		return false
 	}

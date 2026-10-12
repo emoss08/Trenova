@@ -58,48 +58,27 @@ func classifierSchema() map[string]any {
 		classes = append(classes, string(class))
 	}
 
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"classification": map[string]any{
+	return jsonschemautils.Object(map[string]any{
+		"classification": map[string]any{
+			"type": "string",
+			"enum": classes,
+		},
+		"confidence": jsonschemautils.Number(0, 1),
+		"reasoning":  jsonschemautils.String(maxReasoningRunes),
+		"facts": jsonschemautils.Array(jsonschemautils.Object(map[string]any{
+			"key":   jsonschemautils.String(maxFactKeyRunes),
+			"label": jsonschemautils.String(maxFactLabelRunes),
+			"value": jsonschemautils.String(maxFactValueRunes),
+			"quote": jsonschemautils.String(maxFactQuoteRunes),
+			"tone": map[string]any{
 				"type": "string",
-				"enum": classes,
-			},
-			"confidence": map[string]any{
-				"type":    "number",
-				"minimum": 0,
-				"maximum": 1,
-			},
-			"reasoning": map[string]any{
-				"type":      "string",
-				"maxLength": maxReasoningRunes,
-			},
-			"facts": map[string]any{
-				"type":     "array",
-				"maxItems": MaxFacts,
-				"items": map[string]any{
-					"type": "object",
-					"properties": map[string]any{
-						"key":   map[string]any{"type": "string", "maxLength": maxFactKeyRunes},
-						"label": map[string]any{"type": "string", "maxLength": maxFactLabelRunes},
-						"value": map[string]any{"type": "string", "maxLength": maxFactValueRunes},
-						"quote": map[string]any{"type": "string", "maxLength": maxFactQuoteRunes},
-						"tone": map[string]any{
-							"type": "string",
-							"enum": []string{
-								string(inboundmessage.FactToneNeutral),
-								string(inboundmessage.FactToneWarning),
-							},
-						},
-					},
-					"required":             []string{"key", "label", "value", "quote", "tone"},
-					"additionalProperties": false,
+				"enum": []string{
+					string(inboundmessage.FactToneNeutral),
+					string(inboundmessage.FactToneWarning),
 				},
 			},
-		},
-		"required":             []string{"classification", "confidence", "reasoning", "facts"},
-		"additionalProperties": false,
-	}
+		}, "key", "label", "value", "quote", "tone"), MaxFacts),
+	}, "classification", "confidence", "reasoning", "facts")
 }
 
 const classifierSystemPrompt = `You sort mail arriving at a freight carrier's monitored address into one of seven kinds.

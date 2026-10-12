@@ -68,7 +68,11 @@ func (p *RecomputeDuePayload) Tenant() pagination.TenantInfo {
 }
 
 type Worker interface {
-	WakeSchedule(ctx context.Context, tenantInfo pagination.TenantInfo, id pulid.ID) (*Schedule, error)
+	WakeSchedule(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		id pulid.ID,
+	) (*Schedule, error)
 	WakeIfDue(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

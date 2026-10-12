@@ -193,10 +193,13 @@ func (s *Service) billedInvoices(
 	ctx context.Context,
 	req *detentionports.CreditBilledDetentionRequest,
 ) ([]billedLines, error) {
-	byShipment, err := s.invoices.ListByShipmentIDs(ctx, invoiceports.ListInvoicesByShipmentIDsRequest{
-		TenantInfo:  req.TenantInfo,
-		ShipmentIDs: []pulid.ID{req.ShipmentID},
-	})
+	byShipment, err := s.invoices.ListByShipmentIDs(
+		ctx,
+		invoiceports.ListInvoicesByShipmentIDsRequest{
+			TenantInfo:  req.TenantInfo,
+			ShipmentIDs: []pulid.ID{req.ShipmentID},
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -256,19 +259,26 @@ func (s *Service) creditInvoice(
 	}
 
 	adjustmentReq := &invoiceadjustmentports.InvoiceAdjustmentRequest{
-		InvoiceID:        entry.invoice.ID,
-		Kind:             invoiceadjustment.KindCreditOnly,
-		Reason:           req.Reason,
-		IdempotencyKey:   key,
-		Lines:            make([]*invoiceadjustmentports.InvoiceAdjustmentLineInput, 0, len(entry.lines)),
+		InvoiceID:      entry.invoice.ID,
+		Kind:           invoiceadjustment.KindCreditOnly,
+		Reason:         req.Reason,
+		IdempotencyKey: key,
+		Lines: make(
+			[]*invoiceadjustmentports.InvoiceAdjustmentLineInput,
+			0,
+			len(entry.lines),
+		),
 		TenantInfo:       req.TenantInfo,
 		DetentionWaivers: []detentionports.DetentionWaiver{req.Waiver},
 	}
 	for _, line := range entry.lines {
-		adjustmentReq.Lines = append(adjustmentReq.Lines, &invoiceadjustmentports.InvoiceAdjustmentLineInput{
-			OriginalLineID: line.ID,
-			Description:    line.Description,
-		})
+		adjustmentReq.Lines = append(
+			adjustmentReq.Lines,
+			&invoiceadjustmentports.InvoiceAdjustmentLineInput{
+				OriginalLineID: line.ID,
+				Description:    line.Description,
+			},
+		)
 	}
 
 	preview, err := s.adjustments.Preview(ctx, adjustmentReq, req.Actor)
@@ -302,10 +312,13 @@ func creditableLines(
 		}
 	}
 
-	return slices.DeleteFunc(lines, func(line *invoiceadjustmentports.InvoiceAdjustmentLineInput) bool {
-		_, ok := creditable[line.OriginalLineID]
-		return !ok
-	})
+	return slices.DeleteFunc(
+		lines,
+		func(line *invoiceadjustmentports.InvoiceAdjustmentLineInput) bool {
+			_, ok := creditable[line.OriginalLineID]
+			return !ok
+		},
+	)
 }
 
 func (s *Service) attemptKey(

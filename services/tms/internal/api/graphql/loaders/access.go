@@ -1323,9 +1323,13 @@ func InboundAttachmentsByMessageID(
 	ctx context.Context,
 	key string,
 ) ([]*inboundmessage.InboundAttachment, error) {
-	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, []*inboundmessage.InboundAttachment] {
-		return s.inboundAttachmentsByMessageID
-	})
+	return load(
+		ctx,
+		key,
+		func(s *set) *dataloadgen.Loader[string, []*inboundmessage.InboundAttachment] {
+			return s.inboundAttachmentsByMessageID
+		},
+	)
 }
 
 func (f *InboundAttachmentsByMessageIDLoaderFactory) Attach(
@@ -1337,10 +1341,17 @@ func (f *InboundAttachmentsByMessageIDLoaderFactory) Attach(
 	})
 }
 
-func InboundAttachmentByID(ctx context.Context, key string) (*inboundmessage.InboundAttachment, error) {
-	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *inboundmessage.InboundAttachment] {
-		return s.inboundAttachmentByID
-	})
+func InboundAttachmentByID(
+	ctx context.Context,
+	key string,
+) (*inboundmessage.InboundAttachment, error) {
+	return load(
+		ctx,
+		key,
+		func(s *set) *dataloadgen.Loader[string, *inboundmessage.InboundAttachment] {
+			return s.inboundAttachmentByID
+		},
+	)
 }
 
 func (f *InboundAttachmentByIDLoaderFactory) Attach(
@@ -1392,9 +1403,13 @@ func InboundDocumentReadingByDocumentID(
 	ctx context.Context,
 	key string,
 ) (*inboundmessageports.DocumentReading, error) {
-	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *inboundmessageports.DocumentReading] {
-		return s.inboundDocumentReadingByDocumentID
-	})
+	return load(
+		ctx,
+		key,
+		func(s *set) *dataloadgen.Loader[string, *inboundmessageports.DocumentReading] {
+			return s.inboundDocumentReadingByDocumentID
+		},
+	)
 }
 
 func (f *InboundDocumentReadingLoaderFactory) Attach(
@@ -1402,6 +1417,9 @@ func (f *InboundDocumentReadingLoaderFactory) Attach(
 	tenantInfo pagination.TenantInfo,
 ) context.Context {
 	return attach(ctx, func(s *set) {
-		s.inboundDocumentReadingByDocumentID = newInboundDocumentReadingByDocumentIDLoader(f, tenantInfo)
+		s.inboundDocumentReadingByDocumentID = newInboundDocumentReadingByDocumentIDLoader(
+			f,
+			tenantInfo,
+		)
 	})
 }
