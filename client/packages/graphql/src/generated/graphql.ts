@@ -4332,6 +4332,14 @@ export type InboundProvider =
   | 'Postmark'
   | 'Resend';
 
+/** Where a file a reply can carry is stored. */
+export type InboundReplyAttachableSource =
+  | 'Carrier'
+  | 'Customer'
+  /** Came with the message, or was uploaded to it. */
+  | 'Message'
+  | 'Shipment';
+
 /** Where a reply is. */
 export type InboundReplyStatus =
   | 'Draft'
@@ -6161,6 +6169,8 @@ export type SelectOptionsInput = {
 
 export type SendInboundReplyInput = {
   body: string;
+  /** Documents to attach, from inboundReplyAttachables. */
+  documentIds?: Array<string | number> | null | undefined;
   /** The body is Nova's draft, sent as written or after edits. */
   draftedByNova?: boolean | null | undefined;
   messageId: string | number;
@@ -13165,7 +13175,11 @@ export type SetInboundMailboxApiKeyMutation = { setInboundMailboxApiKey: { ' $fr
 
 export type InboundSnoozeFieldsFragment = { until: number | null, event: InboundSnoozeEvent | null, documentTypeId: string | null, documentTypeName: string | null, snoozedAt: number, watchShipment: { ' $fragmentRefs'?: { 'InboundShipmentRefFieldsFragment': InboundShipmentRefFieldsFragment } } | null, snoozedBy: { ' $fragmentRefs'?: { 'TriageUserFieldsFragment': TriageUserFieldsFragment } } | null } & { ' $fragmentName'?: 'InboundSnoozeFieldsFragment' };
 
-export type InboundReplyFieldsFragment = { id: string, messageId: string, status: InboundReplyStatus, fromAddress: string, toAddress: string, ccAddresses: Array<string>, subject: string, body: string, draftedByNova: boolean, templateId: string | null, failureText: string, suggestedAddress: string | null, sentAt: number | null, createdAt: number, updatedAt: number, sentBy: { ' $fragmentRefs'?: { 'TriageUserFieldsFragment': TriageUserFieldsFragment } } | null } & { ' $fragmentName'?: 'InboundReplyFieldsFragment' };
+export type InboundReplyFieldsFragment = { id: string, messageId: string, status: InboundReplyStatus, fromAddress: string, toAddress: string, ccAddresses: Array<string>, subject: string, body: string, draftedByNova: boolean, templateId: string | null, failureText: string, suggestedAddress: string | null, sentAt: number | null, createdAt: number, updatedAt: number, sentBy: { ' $fragmentRefs'?: { 'TriageUserFieldsFragment': TriageUserFieldsFragment } } | null, attachments: Array<{ ' $fragmentRefs'?: { 'InboundReplyAttachmentFieldsFragment': InboundReplyAttachmentFieldsFragment } }> } & { ' $fragmentName'?: 'InboundReplyFieldsFragment' };
+
+export type InboundReplyAttachmentFieldsFragment = { documentId: string, fileName: string, contentType: string, byteSize: number } & { ' $fragmentName'?: 'InboundReplyAttachmentFieldsFragment' };
+
+export type InboundReplyAttachableFieldsFragment = { id: string, fileName: string, contentType: string, documentType: string, byteSize: number, createdAt: number, source: InboundReplyAttachableSource } & { ' $fragmentName'?: 'InboundReplyAttachableFieldsFragment' };
 
 export type TriageActionFieldsFragment = { id: string, kind: TriageActionKind, done: boolean, novaCanDo: boolean, replyPurpose: TriageReplyPurpose | null, refusedFileName: string | null, loadDrafted: boolean, stopsDecision: TriageStopsDecision | null, exceptionKind: TriageExceptionKind | null, completedAt: number | null, attachment: { id: string, fileName: string, kind: InboundAttachmentKind, documentId: string | null, filedShipmentId: string | null, filedAs: string | null, pageCount: number } | null, shipment: { ' $fragmentRefs'?: { 'InboundShipmentRefFieldsFragment': InboundShipmentRefFieldsFragment } } | null, reply: { id: string, status: InboundReplyStatus, sentAt: number | null, draftedByNova: boolean } | null, createdShipment: { ' $fragmentRefs'?: { 'InboundShipmentRefFieldsFragment': InboundShipmentRefFieldsFragment } } | null } & { ' $fragmentName'?: 'TriageActionFieldsFragment' };
 
@@ -13272,6 +13286,13 @@ export type TriageReplyTemplatesQueryVariables = Exact<{ [key: string]: never; }
 
 
 export type TriageReplyTemplatesQuery = { triageReplyTemplates: Array<{ ' $fragmentRefs'?: { 'TriageReplyTemplateFieldsFragment': TriageReplyTemplateFieldsFragment } }> };
+
+export type InboundReplyAttachablesQueryVariables = Exact<{
+  messageId: string | number;
+}>;
+
+
+export type InboundReplyAttachablesQuery = { inboundReplyAttachmentLimit: number, inboundReplyAttachables: Array<{ ' $fragmentRefs'?: { 'InboundReplyAttachableFieldsFragment': InboundReplyAttachableFieldsFragment } }> };
 
 export type RenderTriageReplyTemplateQueryVariables = Exact<{
   templateId: string | number;
@@ -13494,6 +13515,7 @@ export type SaveInboundReplyDraftMutationVariables = Exact<{
   messageId: string | number;
   subject: string;
   body: string;
+  documentIds?: Array<string | number> | string | number | null | undefined;
 }>;
 
 
@@ -22950,6 +22972,14 @@ export const InboundActivityFieldsFragmentDoc = new TypedDocumentString(`
   emailAddress
   thumbnailUrl
 }`, {"fragmentName":"InboundActivityFields"}) as unknown as TypedDocumentString<InboundActivityFieldsFragment, unknown>;
+export const InboundReplyAttachmentFieldsFragmentDoc = new TypedDocumentString(`
+    fragment InboundReplyAttachmentFields on InboundReplyAttachment {
+  documentId
+  fileName
+  contentType
+  byteSize
+}
+    `, {"fragmentName":"InboundReplyAttachmentFields"}) as unknown as TypedDocumentString<InboundReplyAttachmentFieldsFragment, unknown>;
 export const InboundReplyFieldsFragmentDoc = new TypedDocumentString(`
     fragment InboundReplyFields on InboundReply {
   id
@@ -22968,6 +22998,9 @@ export const InboundReplyFieldsFragmentDoc = new TypedDocumentString(`
     ...TriageUserFields
   }
   sentAt
+  attachments {
+    ...InboundReplyAttachmentFields
+  }
   createdAt
   updatedAt
 }
@@ -22976,6 +23009,12 @@ export const InboundReplyFieldsFragmentDoc = new TypedDocumentString(`
   name
   emailAddress
   thumbnailUrl
+}
+fragment InboundReplyAttachmentFields on InboundReplyAttachment {
+  documentId
+  fileName
+  contentType
+  byteSize
 }`, {"fragmentName":"InboundReplyFields"}) as unknown as TypedDocumentString<InboundReplyFieldsFragment, unknown>;
 export const TriageLoadDraftFieldsFragmentDoc = new TypedDocumentString(`
     fragment TriageLoadDraftFields on TriageLoadDraft {
@@ -23162,8 +23201,17 @@ fragment InboundReplyFields on InboundReply {
     ...TriageUserFields
   }
   sentAt
+  attachments {
+    ...InboundReplyAttachmentFields
+  }
   createdAt
   updatedAt
+}
+fragment InboundReplyAttachmentFields on InboundReplyAttachment {
+  documentId
+  fileName
+  contentType
+  byteSize
 }
 fragment TriageActionFields on TriageAction {
   id
@@ -23273,6 +23321,17 @@ fragment InboundAttachmentDetailFields on InboundAttachment {
     }
   }
 }`, {"fragmentName":"InboundMessageDetailFields"}) as unknown as TypedDocumentString<InboundMessageDetailFieldsFragment, unknown>;
+export const InboundReplyAttachableFieldsFragmentDoc = new TypedDocumentString(`
+    fragment InboundReplyAttachableFields on InboundReplyAttachable {
+  id
+  fileName
+  contentType
+  documentType
+  byteSize
+  createdAt
+  source
+}
+    `, {"fragmentName":"InboundReplyAttachableFields"}) as unknown as TypedDocumentString<InboundReplyAttachableFieldsFragment, unknown>;
 export const TriageSampleFieldsFragmentDoc = new TypedDocumentString(`
     fragment TriageSampleFields on TriageSample {
   messageId
@@ -27825,11 +27884,11 @@ export const IftaTaxRateTableDocument = {"__meta__":{"kind":"query","name":"Ifta
 export const UpsertIftaTaxRatesDocument = {"__meta__":{"kind":"mutation","name":"UpsertIftaTaxRates","hash":"sha256:40687ccd074f12591f177689ac65f9ebc0c02b96ee78cbd3a20c61f549c6f28b"}} as unknown as TypedDocumentString<UpsertIftaTaxRatesMutation, UpsertIftaTaxRatesMutationVariables>;
 export const DeleteIftaTaxRateDocument = {"__meta__":{"kind":"mutation","name":"DeleteIftaTaxRate","hash":"sha256:3ea06bea9c4fe480fb22642ac0608f800ac5ce37559751b23103bc25274b2755"}} as unknown as TypedDocumentString<DeleteIftaTaxRateMutation, DeleteIftaTaxRateMutationVariables>;
 export const InboundMessagesDocument = {"__meta__":{"kind":"query","name":"InboundMessages","hash":"sha256:93ebb7cbf43f65a76daa8b35f8dd788a25a4e218072b1c2c20ec9062d306bdf3"}} as unknown as TypedDocumentString<InboundMessagesQuery, InboundMessagesQueryVariables>;
-export const InboundMessageDocument = {"__meta__":{"kind":"query","name":"InboundMessage","hash":"sha256:9f759105aefc8625f02ebdea248acd8751da1093ca8f7fd45ff39e61f011c47a"}} as unknown as TypedDocumentString<InboundMessageQuery, InboundMessageQueryVariables>;
+export const InboundMessageDocument = {"__meta__":{"kind":"query","name":"InboundMessage","hash":"sha256:948e57e4108a4bd7948ff202aa16eedf5cb038a8146b53736a1c8c61144ec6f3"}} as unknown as TypedDocumentString<InboundMessageQuery, InboundMessageQueryVariables>;
 export const InboundMessageCountsDocument = {"__meta__":{"kind":"query","name":"InboundMessageCounts","hash":"sha256:50f8b7f7bd7f58102ef6370f1afc91df114a4c5f1888afdb5dbcdf790bca86de"}} as unknown as TypedDocumentString<InboundMessageCountsQuery, InboundMessageCountsQueryVariables>;
 export const InboundMailboxesDocument = {"__meta__":{"kind":"query","name":"InboundMailboxes","hash":"sha256:fa0972d727a0251c04e7eaaa1a8a268d05dc8ff652b0d5c947e77c6f1c1ae3ca"}} as unknown as TypedDocumentString<InboundMailboxesQuery, InboundMailboxesQueryVariables>;
-export const ReviewInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"ReviewInboundMessage","hash":"sha256:710390b04a8a992da681b8eee44894696cdb95cffc7309afd1bf34fd9358db74"}} as unknown as TypedDocumentString<ReviewInboundMessageMutation, ReviewInboundMessageMutationVariables>;
-export const LinkInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"LinkInboundMessage","hash":"sha256:561c5c92504947da62f7f6fc53b2718bf2f80c82a9083f9dbf96a4a8cda78d63"}} as unknown as TypedDocumentString<LinkInboundMessageMutation, LinkInboundMessageMutationVariables>;
+export const ReviewInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"ReviewInboundMessage","hash":"sha256:7b0d940c08a7a72fd3ead51f8769b91402d412a130e85e482527d2361b26a88a"}} as unknown as TypedDocumentString<ReviewInboundMessageMutation, ReviewInboundMessageMutationVariables>;
+export const LinkInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"LinkInboundMessage","hash":"sha256:b2c92a2b39fb8f57579f84cb877b184d96cc20b413271b67082d5300470c0fbb"}} as unknown as TypedDocumentString<LinkInboundMessageMutation, LinkInboundMessageMutationVariables>;
 export const CreateInboundMailboxDocument = {"__meta__":{"kind":"mutation","name":"CreateInboundMailbox","hash":"sha256:d250da4c3ff90fc46f694611385a6d9f2fb14970a26927bcab1163fd8e8151fb"}} as unknown as TypedDocumentString<CreateInboundMailboxMutation, CreateInboundMailboxMutationVariables>;
 export const UpdateInboundMailboxDocument = {"__meta__":{"kind":"mutation","name":"UpdateInboundMailbox","hash":"sha256:dc6dfb33051be08a6e6f56cbc8574e68b599a848c0452cb73558dd7a9aa5e4e0"}} as unknown as TypedDocumentString<UpdateInboundMailboxMutation, UpdateInboundMailboxMutationVariables>;
 export const RotateInboundMailboxTokenDocument = {"__meta__":{"kind":"mutation","name":"RotateInboundMailboxToken","hash":"sha256:c096e0f35cda70fa030394788b2c38641d8e178c9c06c2415736b7b570446880"}} as unknown as TypedDocumentString<RotateInboundMailboxTokenMutation, RotateInboundMailboxTokenMutationVariables>;
@@ -27847,6 +27906,7 @@ export const TriageRuleMatchesDocument = {"__meta__":{"kind":"query","name":"Tri
 export const TriageSenderDomainsDocument = {"__meta__":{"kind":"query","name":"TriageSenderDomains","hash":"sha256:e7ec26fcf178d10b45c491e6f834192e408a7506451308ee6c165fbc8fff67de"}} as unknown as TypedDocumentString<TriageSenderDomainsQuery, TriageSenderDomainsQueryVariables>;
 export const InboundSenderProfileDocument = {"__meta__":{"kind":"query","name":"InboundSenderProfile","hash":"sha256:b266228c2579290b0c7e2bf96037e66214c2f1fcf22c431c105e5b8f337ba14b"}} as unknown as TypedDocumentString<InboundSenderProfileQuery, InboundSenderProfileQueryVariables>;
 export const TriageReplyTemplatesDocument = {"__meta__":{"kind":"query","name":"TriageReplyTemplates","hash":"sha256:85b0a0c0c1651ee98fd9759c57df5a96ac93d93d4dabf8ace084c01cc8a1bbad"}} as unknown as TypedDocumentString<TriageReplyTemplatesQuery, TriageReplyTemplatesQueryVariables>;
+export const InboundReplyAttachablesDocument = {"__meta__":{"kind":"query","name":"InboundReplyAttachables","hash":"sha256:350e858931fb464608ee5c1d890af89a66c95cb5f8af662346f43c62f3a1fb7c"}} as unknown as TypedDocumentString<InboundReplyAttachablesQuery, InboundReplyAttachablesQueryVariables>;
 export const RenderTriageReplyTemplateDocument = {"__meta__":{"kind":"query","name":"RenderTriageReplyTemplate","hash":"sha256:494e3e71eac537fb78a5ce2c185bac873942924f9e5565e60a6a57b653467ecc"}} as unknown as TypedDocumentString<RenderTriageReplyTemplateQuery, RenderTriageReplyTemplateQueryVariables>;
 export const TriageStopTimesDocument = {"__meta__":{"kind":"query","name":"TriageStopTimes","hash":"sha256:e90ea024a33c5d9a0ee1eafcadb6b17974f13f06e47c8ac25dc3def271292755"}} as unknown as TypedDocumentString<TriageStopTimesQuery, TriageStopTimesQueryVariables>;
 export const TriageShipmentPeekDocument = {"__meta__":{"kind":"query","name":"TriageShipmentPeek","hash":"sha256:d8b836dbc02ae0cd2530f08084c2264a930e5a319a20b69f492fa853812e69a2"}} as unknown as TypedDocumentString<TriageShipmentPeekQuery, TriageShipmentPeekQueryVariables>;
@@ -27855,10 +27915,10 @@ export const ReviewInboundMessagesDocument = {"__meta__":{"kind":"mutation","nam
 export const ReopenInboundMessagesDocument = {"__meta__":{"kind":"mutation","name":"ReopenInboundMessages","hash":"sha256:8056a2a3adf6d38988d8a9d00135fe9081c9e4543946d96d761c6efc344223b4"}} as unknown as TypedDocumentString<ReopenInboundMessagesMutation, ReopenInboundMessagesMutationVariables>;
 export const AssignInboundMessagesDocument = {"__meta__":{"kind":"mutation","name":"AssignInboundMessages","hash":"sha256:7dd00f8f75d29999869f21641c16303cf8c4dfce9eb7eeaea32d1c7410623c4e"}} as unknown as TypedDocumentString<AssignInboundMessagesMutation, AssignInboundMessagesMutationVariables>;
 export const SnoozeInboundMessagesDocument = {"__meta__":{"kind":"mutation","name":"SnoozeInboundMessages","hash":"sha256:0e28ee7b8bc9be9ec3b57c5ac142f47950d019863375818d1dba03eefc1e8398"}} as unknown as TypedDocumentString<SnoozeInboundMessagesMutation, SnoozeInboundMessagesMutationVariables>;
-export const WakeInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"WakeInboundMessage","hash":"sha256:8f1781fe3ac28a54d33e26b769194b4a88b1bb186567a0f8206f68c5465daab5"}} as unknown as TypedDocumentString<WakeInboundMessageMutation, WakeInboundMessageMutationVariables>;
-export const WaitForInboundReplyDocument = {"__meta__":{"kind":"mutation","name":"WaitForInboundReply","hash":"sha256:022a5164992bb41c13c2ebdf82acc59d0a78e62a6c684cfb300cc4acb9899d85"}} as unknown as TypedDocumentString<WaitForInboundReplyMutation, WaitForInboundReplyMutationVariables>;
-export const StopWaitingForInboundReplyDocument = {"__meta__":{"kind":"mutation","name":"StopWaitingForInboundReply","hash":"sha256:bdae8542feceef711192ffdfe4ba025ee66d9b1260c86ca7716fe5e6189f9c64"}} as unknown as TypedDocumentString<StopWaitingForInboundReplyMutation, StopWaitingForInboundReplyMutationVariables>;
-export const UnlinkInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"UnlinkInboundMessage","hash":"sha256:4802759265ff089164d19a480ba6573d61ff69014dc2f5ecde924d4303862065"}} as unknown as TypedDocumentString<UnlinkInboundMessageMutation, UnlinkInboundMessageMutationVariables>;
+export const WakeInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"WakeInboundMessage","hash":"sha256:15c209c702ea07d6ce41bdc3b970cbbfa0b70ee38f779a7a5e80a9b46bec19be"}} as unknown as TypedDocumentString<WakeInboundMessageMutation, WakeInboundMessageMutationVariables>;
+export const WaitForInboundReplyDocument = {"__meta__":{"kind":"mutation","name":"WaitForInboundReply","hash":"sha256:9dd5ed2394551512f518f03c9f1b72f78a383193553595cce7e80325c16b03b4"}} as unknown as TypedDocumentString<WaitForInboundReplyMutation, WaitForInboundReplyMutationVariables>;
+export const StopWaitingForInboundReplyDocument = {"__meta__":{"kind":"mutation","name":"StopWaitingForInboundReply","hash":"sha256:bb60455e66cc7782020b0523459b912946f7de7655df98066c5fe5434c97d471"}} as unknown as TypedDocumentString<StopWaitingForInboundReplyMutation, StopWaitingForInboundReplyMutationVariables>;
+export const UnlinkInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"UnlinkInboundMessage","hash":"sha256:5ddadab1bf6009e7bde0b1f44f0a835255f2c6c736ab8a9e185bce284a472ae0"}} as unknown as TypedDocumentString<UnlinkInboundMessageMutation, UnlinkInboundMessageMutationVariables>;
 export const SendInboundMailboxTestDocument = {"__meta__":{"kind":"mutation","name":"SendInboundMailboxTest","hash":"sha256:c41b55d3dd180898dc3ad9f957cf83f87bbc2b68e4e58d98a2ced9dd96cf4ac7"}} as unknown as TypedDocumentString<SendInboundMailboxTestMutation, SendInboundMailboxTestMutationVariables>;
 export const HandOffTriageDocument = {"__meta__":{"kind":"mutation","name":"HandOffTriage","hash":"sha256:1b403916b079aff0670afaedbd21ce4394bf01e1be50b519d2168829a435cf08"}} as unknown as TypedDocumentString<HandOffTriageMutation, HandOffTriageMutationVariables>;
 export const ReadUnreadInboundMessagesDocument = {"__meta__":{"kind":"mutation","name":"ReadUnreadInboundMessages","hash":"sha256:5a1bf84f9012b1dfefd929360562c92c8c37430f229869b12dba0a04a073d572"}} as unknown as TypedDocumentString<ReadUnreadInboundMessagesMutation, ReadUnreadInboundMessagesMutationVariables>;
@@ -27871,28 +27931,28 @@ export const CreateTriageRuleDocument = {"__meta__":{"kind":"mutation","name":"C
 export const UpdateTriageRuleDocument = {"__meta__":{"kind":"mutation","name":"UpdateTriageRule","hash":"sha256:f16a22e1698b224384531f0c13a700e0b896fa1639f1b2d3bbf6950aa094d4ac"}} as unknown as TypedDocumentString<UpdateTriageRuleMutation, UpdateTriageRuleMutationVariables>;
 export const SetTriageRuleEnabledDocument = {"__meta__":{"kind":"mutation","name":"SetTriageRuleEnabled","hash":"sha256:daf8410331e6237fbb24b936815cf0d82b93ff416374c8cbdd8aabd7e1b7da1a"}} as unknown as TypedDocumentString<SetTriageRuleEnabledMutation, SetTriageRuleEnabledMutationVariables>;
 export const DeleteTriageRuleDocument = {"__meta__":{"kind":"mutation","name":"DeleteTriageRule","hash":"sha256:440b391d3924e20e21ccfb8d42f28d47db7e4511166903f8613e21b6a17da253"}} as unknown as TypedDocumentString<DeleteTriageRuleMutation, DeleteTriageRuleMutationVariables>;
-export const CorrectInboundClassificationDocument = {"__meta__":{"kind":"mutation","name":"CorrectInboundClassification","hash":"sha256:c75d8bb399b9b4619d4dd889e436b2e5e20c47a11a006da7014d002bae9f8032"}} as unknown as TypedDocumentString<CorrectInboundClassificationMutation, CorrectInboundClassificationMutationVariables>;
-export const FlagInboundFactDocument = {"__meta__":{"kind":"mutation","name":"FlagInboundFact","hash":"sha256:0b6facdf11c44009d01a0d766f3b6ed964ffc240693e2c9466e1d6fab274c5fe"}} as unknown as TypedDocumentString<FlagInboundFactMutation, FlagInboundFactMutationVariables>;
-export const ResolveInboundConflictDocument = {"__meta__":{"kind":"mutation","name":"ResolveInboundConflict","hash":"sha256:135f2bb21819db3ef457c69e81335802a6a3807a644ac4e49dbb9de66026ccab"}} as unknown as TypedDocumentString<ResolveInboundConflictMutation, ResolveInboundConflictMutationVariables>;
-export const ReopenInboundConflictDocument = {"__meta__":{"kind":"mutation","name":"ReopenInboundConflict","hash":"sha256:569a55363c36650dbc7ad0deb3162e377fa05a96848a82afd6a554979292e334"}} as unknown as TypedDocumentString<ReopenInboundConflictMutation, ReopenInboundConflictMutationVariables>;
-export const DraftInboundReplyDocument = {"__meta__":{"kind":"mutation","name":"DraftInboundReply","hash":"sha256:f720b3275bce10c5d9883b4d5541a27a48d8a4fdee53d9e56316942adf86c7a8"}} as unknown as TypedDocumentString<DraftInboundReplyMutation, DraftInboundReplyMutationVariables>;
-export const SaveInboundReplyDraftDocument = {"__meta__":{"kind":"mutation","name":"SaveInboundReplyDraft","hash":"sha256:14af8f884ccb9ffa74c6e73cc082a8474b3b04f5c1326d7cc26e2771e1b43f5e"}} as unknown as TypedDocumentString<SaveInboundReplyDraftMutation, SaveInboundReplyDraftMutationVariables>;
-export const DiscardInboundReplyDraftDocument = {"__meta__":{"kind":"mutation","name":"DiscardInboundReplyDraft","hash":"sha256:80facc243cc9e37429f38ba395c1c4cbc96c4b12010141a365fb454c0349b868"}} as unknown as TypedDocumentString<DiscardInboundReplyDraftMutation, DiscardInboundReplyDraftMutationVariables>;
-export const SendInboundReplyDocument = {"__meta__":{"kind":"mutation","name":"SendInboundReply","hash":"sha256:ef659dd8b8fbb40fd48925f73b1b87c47eb91ea048618894acb65483b6c9dddb"}} as unknown as TypedDocumentString<SendInboundReplyMutation, SendInboundReplyMutationVariables>;
+export const CorrectInboundClassificationDocument = {"__meta__":{"kind":"mutation","name":"CorrectInboundClassification","hash":"sha256:6e8bc87add67ef350ebcc0336a1102b0b9962daa928a48c41d4719b15b592438"}} as unknown as TypedDocumentString<CorrectInboundClassificationMutation, CorrectInboundClassificationMutationVariables>;
+export const FlagInboundFactDocument = {"__meta__":{"kind":"mutation","name":"FlagInboundFact","hash":"sha256:6fe6b2b1c3dd984cb20cd7a69331c4d8909d853116d00e49e6184a0cd1657a6a"}} as unknown as TypedDocumentString<FlagInboundFactMutation, FlagInboundFactMutationVariables>;
+export const ResolveInboundConflictDocument = {"__meta__":{"kind":"mutation","name":"ResolveInboundConflict","hash":"sha256:0f647c0a5598679f910558aab9bb7e2fbaf9e6dbf19f2406284d60662368ed47"}} as unknown as TypedDocumentString<ResolveInboundConflictMutation, ResolveInboundConflictMutationVariables>;
+export const ReopenInboundConflictDocument = {"__meta__":{"kind":"mutation","name":"ReopenInboundConflict","hash":"sha256:5699c6430361aaa70d039639bdefda54309929ad6c9d213f2e63508f571cf696"}} as unknown as TypedDocumentString<ReopenInboundConflictMutation, ReopenInboundConflictMutationVariables>;
+export const DraftInboundReplyDocument = {"__meta__":{"kind":"mutation","name":"DraftInboundReply","hash":"sha256:29e6355c57fa5cec8a2afa8cf1eaa95ad2c909d6aca7f96011aa0e1f8fac48b5"}} as unknown as TypedDocumentString<DraftInboundReplyMutation, DraftInboundReplyMutationVariables>;
+export const SaveInboundReplyDraftDocument = {"__meta__":{"kind":"mutation","name":"SaveInboundReplyDraft","hash":"sha256:58bbd0aaa17ce522c3fbcf2d2a823e1dceaa791c5f529e7338afd1747d226476"}} as unknown as TypedDocumentString<SaveInboundReplyDraftMutation, SaveInboundReplyDraftMutationVariables>;
+export const DiscardInboundReplyDraftDocument = {"__meta__":{"kind":"mutation","name":"DiscardInboundReplyDraft","hash":"sha256:a1fbe82e9927d0a2e4c2971174812b429fd6d8510549c3091fb9718ae71a2125"}} as unknown as TypedDocumentString<DiscardInboundReplyDraftMutation, DiscardInboundReplyDraftMutationVariables>;
+export const SendInboundReplyDocument = {"__meta__":{"kind":"mutation","name":"SendInboundReply","hash":"sha256:916395255355e121052285ff31188c1190656999f0f6412fe11434b0e4f024d5"}} as unknown as TypedDocumentString<SendInboundReplyMutation, SendInboundReplyMutationVariables>;
 export const DraftInboundManyDocument = {"__meta__":{"kind":"mutation","name":"DraftInboundMany","hash":"sha256:771c056480fc8747b44dedde3fad4cf8f973c7e4f1aac854039a5a2aedd3cadf"}} as unknown as TypedDocumentString<DraftInboundManyMutation, DraftInboundManyMutationVariables>;
 export const CreateTriageReplyTemplateDocument = {"__meta__":{"kind":"mutation","name":"CreateTriageReplyTemplate","hash":"sha256:44a6fa659a2c4b3c631acad9901f6c0b86d0b0ce3cd7f69eedb07038a353afb9"}} as unknown as TypedDocumentString<CreateTriageReplyTemplateMutation, CreateTriageReplyTemplateMutationVariables>;
 export const UpdateTriageReplyTemplateDocument = {"__meta__":{"kind":"mutation","name":"UpdateTriageReplyTemplate","hash":"sha256:d68e259cf34318a91e689bfee60fb89f4721da16e4c028c9c3913235669ff3c5"}} as unknown as TypedDocumentString<UpdateTriageReplyTemplateMutation, UpdateTriageReplyTemplateMutationVariables>;
 export const DeleteTriageReplyTemplateDocument = {"__meta__":{"kind":"mutation","name":"DeleteTriageReplyTemplate","hash":"sha256:724edb0f7deabe0935f7380739230cfd8b24d0e6a68962c68f8119afc26f5ec1"}} as unknown as TypedDocumentString<DeleteTriageReplyTemplateMutation, DeleteTriageReplyTemplateMutationVariables>;
-export const DraftInboundLoadDocument = {"__meta__":{"kind":"mutation","name":"DraftInboundLoad","hash":"sha256:b8c80e82f4691a48d64474f2b8762bde17f5e1c03687f27a12b462840d7aaf8e"}} as unknown as TypedDocumentString<DraftInboundLoadMutation, DraftInboundLoadMutationVariables>;
-export const DiscardInboundLoadDocument = {"__meta__":{"kind":"mutation","name":"DiscardInboundLoad","hash":"sha256:e32fb8c4547e3cf21966e4ecf9f1c0b3c7b517afdc237f42d3801f278fcfc700"}} as unknown as TypedDocumentString<DiscardInboundLoadMutation, DiscardInboundLoadMutationVariables>;
-export const CreateInboundLoadDocument = {"__meta__":{"kind":"mutation","name":"CreateInboundLoad","hash":"sha256:92f728a1871842cb8008817d8953037ec5f22c1d76eaeba536841809e4dc8173"}} as unknown as TypedDocumentString<CreateInboundLoadMutation, CreateInboundLoadMutationVariables>;
-export const FileInboundAttachmentDocument = {"__meta__":{"kind":"mutation","name":"FileInboundAttachment","hash":"sha256:2e924db27c3e3b53a4ddaa8063f4600ad88c8fe3e5beb91c691382432a393149"}} as unknown as TypedDocumentString<FileInboundAttachmentMutation, FileInboundAttachmentMutationVariables>;
+export const DraftInboundLoadDocument = {"__meta__":{"kind":"mutation","name":"DraftInboundLoad","hash":"sha256:14ddb958f5b8683025b1b528d7696d0f3ce6ee34e2c3bd5f3548ec6fb57ee166"}} as unknown as TypedDocumentString<DraftInboundLoadMutation, DraftInboundLoadMutationVariables>;
+export const DiscardInboundLoadDocument = {"__meta__":{"kind":"mutation","name":"DiscardInboundLoad","hash":"sha256:2a6086b071664ba53ab865c0c631eb506a624ded589e1c93759a3aa162aae523"}} as unknown as TypedDocumentString<DiscardInboundLoadMutation, DiscardInboundLoadMutationVariables>;
+export const CreateInboundLoadDocument = {"__meta__":{"kind":"mutation","name":"CreateInboundLoad","hash":"sha256:9b9c2f31db528ba67f47bf76bb9e4b6ae5b92396e4e4e10efddfa2fcb0588c6b"}} as unknown as TypedDocumentString<CreateInboundLoadMutation, CreateInboundLoadMutationVariables>;
+export const FileInboundAttachmentDocument = {"__meta__":{"kind":"mutation","name":"FileInboundAttachment","hash":"sha256:dc63c6ecaa97fe8891c9a717e23e98a8d4decb8c5165b5b85c8a72fa3d3dc673"}} as unknown as TypedDocumentString<FileInboundAttachmentMutation, FileInboundAttachmentMutationVariables>;
 export const FileInboundManyDocument = {"__meta__":{"kind":"mutation","name":"FileInboundMany","hash":"sha256:2eb0902ed25ef92aa91902a9516fc5b41d53ef08aa307cd23a9508373a30441e"}} as unknown as TypedDocumentString<FileInboundManyMutation, FileInboundManyMutationVariables>;
-export const UnfileInboundAttachmentDocument = {"__meta__":{"kind":"mutation","name":"UnfileInboundAttachment","hash":"sha256:77523f99f6adb134f5fd86d0be70d0c4bdc83c6abc474661935439f26077c190"}} as unknown as TypedDocumentString<UnfileInboundAttachmentMutation, UnfileInboundAttachmentMutationVariables>;
-export const LogInboundExceptionDocument = {"__meta__":{"kind":"mutation","name":"LogInboundException","hash":"sha256:7c08cae0a2e54ef66c5ebf39082d3dc7952c433f4abe2fd9fc5fe1390a70ca4b"}} as unknown as TypedDocumentString<LogInboundExceptionMutation, LogInboundExceptionMutationVariables>;
-export const BlockInboundSenderDocument = {"__meta__":{"kind":"mutation","name":"BlockInboundSender","hash":"sha256:4e71abbe1cf3df1c31972ab15e52dcc3c523cb8d9e0fb986af47fe15961badbf"}} as unknown as TypedDocumentString<BlockInboundSenderMutation, BlockInboundSenderMutationVariables>;
+export const UnfileInboundAttachmentDocument = {"__meta__":{"kind":"mutation","name":"UnfileInboundAttachment","hash":"sha256:41a2ae56d962908e968ed1c83e7ce92016b2f708539bcd25c398bf8f1c67b275"}} as unknown as TypedDocumentString<UnfileInboundAttachmentMutation, UnfileInboundAttachmentMutationVariables>;
+export const LogInboundExceptionDocument = {"__meta__":{"kind":"mutation","name":"LogInboundException","hash":"sha256:ac91766d0741ec6f5cf525a4afcde922cf560ce8861cd97c73013fff6f685a68"}} as unknown as TypedDocumentString<LogInboundExceptionMutation, LogInboundExceptionMutationVariables>;
+export const BlockInboundSenderDocument = {"__meta__":{"kind":"mutation","name":"BlockInboundSender","hash":"sha256:40ee4f998d8d19bac52fd36c0a274f077fdc7bc155b00afcf75e344565782347"}} as unknown as TypedDocumentString<BlockInboundSenderMutation, BlockInboundSenderMutationVariables>;
 export const UnblockInboundSenderDocument = {"__meta__":{"kind":"mutation","name":"UnblockInboundSender","hash":"sha256:cd43b9c477092a1c7b177001cf57579f37d1312fef626f81404deb6262757f63"}} as unknown as TypedDocumentString<UnblockInboundSenderMutation, UnblockInboundSenderMutationVariables>;
-export const DecideInboundStopsDocument = {"__meta__":{"kind":"mutation","name":"DecideInboundStops","hash":"sha256:64855db9e1b25d0b4bd5d2ea019515880fd7d4601f00e0476b2a445c8778541a"}} as unknown as TypedDocumentString<DecideInboundStopsMutation, DecideInboundStopsMutationVariables>;
+export const DecideInboundStopsDocument = {"__meta__":{"kind":"mutation","name":"DecideInboundStops","hash":"sha256:900da0757fc1cad10f874fcaee8e3594a52f1f511efd9d13a47879b60a68b10a"}} as unknown as TypedDocumentString<DecideInboundStopsMutation, DecideInboundStopsMutationVariables>;
 export const InvoiceAdjustmentApprovalsDocument = {"__meta__":{"kind":"query","name":"InvoiceAdjustmentApprovals","hash":"sha256:051cda2df75986990c40b1ec9cbcaa20d4a398519581fbf58098f79859a2b0f8"}} as unknown as TypedDocumentString<InvoiceAdjustmentApprovalsQuery, InvoiceAdjustmentApprovalsQueryVariables>;
 export const InvoiceAdjustmentApprovalDetailDocument = {"__meta__":{"kind":"query","name":"InvoiceAdjustmentApprovalDetail","hash":"sha256:3faee37cd372092eca2df737c1d885af871a825933f88250bc9c91dc0cb6e59b"}} as unknown as TypedDocumentString<InvoiceAdjustmentApprovalDetailQuery, InvoiceAdjustmentApprovalDetailQueryVariables>;
 export const InvoiceAdjustmentOperationsSummaryDocument = {"__meta__":{"kind":"query","name":"InvoiceAdjustmentOperationsSummary","hash":"sha256:441d3f879bd0cfc9f9aa4483469fc03a694dbdf70ec8831621691b0c8121b5e3"}} as unknown as TypedDocumentString<InvoiceAdjustmentOperationsSummaryQuery, InvoiceAdjustmentOperationsSummaryQueryVariables>;

@@ -151,6 +151,9 @@ func SharedOptions() fx.Option {
 			func(s *triageshipmentservice.Service) inboundmessageports.TriageLoadCreator { return s },
 			func(s *triageshipmentservice.Service) inboundmessageports.TriageExceptionLogger { return s },
 			func(s *triageshipmentservice.Service) inboundmessageports.TriageDetentionSettler { return s },
+			func(s *triageshipmentservice.Service) inboundmessageports.TriageDetentionEvidenceSource {
+				return s
+			},
 			fx.Annotate(
 				func(r *triagedeliveryrelay.Relay) shipmenteventports.ShipmentEventObserver { return r },
 				fx.ResultTags(`group:"shipment_event_observers"`),

@@ -15,11 +15,13 @@ import (
 )
 
 type SaveDraftRequest struct {
-	TenantInfo pagination.TenantInfo
-	UserID     pulid.ID
-	MessageID  pulid.ID
-	Subject    string
-	Body       string
+	TenantInfo         pagination.TenantInfo
+	UserID             pulid.ID
+	MessageID          pulid.ID
+	Subject            string
+	Body               string
+	DocumentIDs        []pulid.ID
+	ReplaceAttachments bool
 }
 
 type DraftReplyRequest struct {
@@ -41,6 +43,9 @@ func (s *Service) SaveDraft(ctx context.Context, req *SaveDraftRequest) (*triage
 	}
 	draft.Body = strings.TrimSpace(req.Body)
 	if err = validateDraft(draft); err != nil {
+		return nil, err
+	}
+	if draft.Attachments, err = s.draftAttachments(ctx, req, message); err != nil {
 		return nil, err
 	}
 
@@ -129,6 +134,8 @@ func (s *Service) draftReplyFor(
 		mc.stops = stops
 	}
 
+	mc.attachments, mc.evidence = s.novaAttachments(ctx, message)
+
 	body, err := s.writeReply(ctx, req, mc)
 	if err != nil {
 		return nil, err
@@ -137,6 +144,7 @@ func (s *Service) draftReplyFor(
 	draft := s.draftFor(message, req.UserID)
 	draft.Body = body
 	draft.DraftedByNova = true
+	draft.Attachments = mc.attachments
 	if err = validateDraft(draft); err != nil {
 		return nil, err
 	}

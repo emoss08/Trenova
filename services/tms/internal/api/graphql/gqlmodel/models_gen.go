@@ -6887,6 +6887,8 @@ type SendInboundReplyInput struct {
 	TemplateID *string `json:"templateId,omitempty"`
 	// The body is Nova's draft, sent as written or after edits.
 	DraftedByNova *bool `json:"draftedByNova,omitempty"`
+	// Documents to attach, from inboundReplyAttachables.
+	DocumentIds []string `json:"documentIds,omitempty"`
 }
 
 type SendTestMessageTemplateInput struct {

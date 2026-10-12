@@ -24,6 +24,8 @@ var Shard = &gqlexec.Shard{
 		{Name: "InboundDocumentField", Implementors: []string{"InboundDocumentField"}},
 		{Name: "InboundDocumentReading", Implementors: []string{"InboundDocumentReading"}},
 		{Name: "InboundReply", Implementors: []string{"InboundReply"}},
+		{Name: "InboundReplyAttachable", Implementors: []string{"InboundReplyAttachable"}},
+		{Name: "InboundReplyAttachment", Implementors: []string{"InboundReplyAttachment"}},
 		{Name: "TriageAction", Implementors: []string{"TriageAction"}},
 		{Name: "TriageCustomerPeek", Implementors: []string{"TriageCustomerPeek"}},
 		{Name: "TriageLoadDraft", Implementors: []string{"TriageLoadDraft"}},
@@ -324,6 +326,17 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
 			{
+				Name:      "attachments",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "InboundReplyAttachment",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*triage.Reply)
+					return obj.Attachments, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInboundReplyAttachment2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtriageᚐReplyAttachmentᚄ),
+			},
+			{
 				Name:     "createdAt",
 				NonNull:  true,
 				ChildErr: errNoChild7,
@@ -342,6 +355,120 @@ var Shard = &gqlexec.Shard{
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
+		{Object: "InboundReplyAttachable", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*inboundmessageports.ReplyAttachable)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "fileName",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*inboundmessageports.ReplyAttachable)
+					return obj.FileName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "contentType",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*inboundmessageports.ReplyAttachable)
+					return obj.ContentType, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "documentType",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*inboundmessageports.ReplyAttachable)
+					return obj.DocumentType, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "byteSize",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*inboundmessageports.ReplyAttachable)
+					return obj.ByteSize, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*inboundmessageports.ReplyAttachable)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "source",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*inboundmessageports.ReplyAttachable)
+					return obj.Source, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInboundReplyAttachableSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtriageᚐAttachableSource),
+			},
+		}},
+		{Object: "InboundReplyAttachment", Fields: []*gqlexec.Field{
+			{
+				Name:     "documentId",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*triage.ReplyAttachment)
+					return obj.DocumentID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "fileName",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*triage.ReplyAttachment)
+					return obj.FileName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "contentType",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*triage.ReplyAttachment)
+					return obj.ContentType, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "byteSize",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*triage.ReplyAttachment)
+					return obj.ByteSize, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
 			},
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
@@ -367,7 +494,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_saveInboundReplyDraft_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SaveInboundReplyDraft(ctx, fc.Args["messageId"].(string), fc.Args["subject"].(string), fc.Args["body"].(string))
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SaveInboundReplyDraft(ctx, fc.Args["messageId"].(string), fc.Args["subject"].(string), fc.Args["body"].(string), fc.Args["documentIds"].([]string))
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundReply2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtriageᚐReply),
 			},
@@ -645,6 +772,31 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNTriageCustomerPeek2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋinboundmessageportsᚐCustomerPeek),
 			},
+			{
+				Name:       "inboundReplyAttachables",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "InboundReplyAttachable",
+				Args:       field_Query_inboundReplyAttachables_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").InboundReplyAttachables(ctx, fc.Args["messageId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNInboundReplyAttachable2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋinboundmessageportsᚐReplyAttachableᚄ),
+			},
+			{
+				Name:       "inboundReplyAttachmentLimit",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[resolverQuery](ec, "Query").InboundReplyAttachmentLimit(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
 		}},
 		{Object: "TriageAction", Fields: []*gqlexec.Field{
 			{
@@ -660,7 +812,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "kind",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*triage.Action)
 					return obj.Kind, nil
@@ -715,7 +867,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "replyPurpose",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild9,
+				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*triage.Action)
 					return gqlexec.Resolver[resolverTriageAction](ec, "TriageAction").ReplyPurpose(ctx, obj)
@@ -771,7 +923,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "stopsDecision",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild10,
+				ChildErr:   errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*triage.Action)
 					return gqlexec.Resolver[resolverTriageAction](ec, "TriageAction").StopsDecision(ctx, obj)
@@ -782,7 +934,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "exceptionKind",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild11,
+				ChildErr:   errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*triage.Action)
 					return gqlexec.Resolver[resolverTriageAction](ec, "TriageAction").ExceptionKind(ctx, obj)
@@ -932,7 +1084,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "key",
 				NonNull:  true,
-				ChildErr: errNoChild12,
+				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*inboundmessage.LoadDraftField)
 					return obj.Key, nil
@@ -1315,7 +1467,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "billedDetentionAmount",
-				ChildErr: errNoChild13,
+				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*inboundmessageports.StopTimes)
 					return obj.BilledDetentionAmount, nil
@@ -1385,7 +1537,7 @@ type resolverInboundReply interface {
 
 type resolverMutation interface {
 	DraftInboundReply(ctx context.Context, messageID string) (*triage.Reply, error)
-	SaveInboundReplyDraft(ctx context.Context, messageID string, subject string, body string) (*triage.Reply, error)
+	SaveInboundReplyDraft(ctx context.Context, messageID string, subject string, body string, documentIds []string) (*triage.Reply, error)
 	DiscardInboundReplyDraft(ctx context.Context, messageID string) (*inboundmessage.InboundMessage, error)
 	SendInboundReply(ctx context.Context, input gqlmodel.SendInboundReplyInput) (*triage.Reply, error)
 	DraftInboundMany(ctx context.Context, messageIds []string) (int, error)
@@ -1410,6 +1562,8 @@ type resolverQuery interface {
 	TriageStopTimes(ctx context.Context, messageID string) (*inboundmessageports.StopTimes, error)
 	TriageShipmentPeek(ctx context.Context, shipmentID string) (*inboundmessageports.ShipmentPeek, error)
 	TriageCustomerPeek(ctx context.Context, customerID string) (*inboundmessageports.CustomerPeek, error)
+	InboundReplyAttachables(ctx context.Context, messageID string) ([]*inboundmessageports.ReplyAttachable, error)
+	InboundReplyAttachmentLimit(ctx context.Context) (int, error)
 }
 
 type resolverTriageAction interface {
@@ -1441,12 +1595,13 @@ var (
 	errNoChild5  = errors.New("field of type InboundReplyStatus does not have child fields")
 	errNoChild6  = errors.New("field of type Boolean does not have child fields")
 	errNoChild7  = errors.New("field of type Timestamp does not have child fields")
-	errNoChild8  = errors.New("field of type TriageActionKind does not have child fields")
-	errNoChild9  = errors.New("field of type TriageReplyPurpose does not have child fields")
-	errNoChild10 = errors.New("field of type TriageStopsDecision does not have child fields")
-	errNoChild11 = errors.New("field of type TriageExceptionKind does not have child fields")
-	errNoChild12 = errors.New("field of type TriageLoadFieldKey does not have child fields")
-	errNoChild13 = errors.New("field of type Decimal does not have child fields")
+	errNoChild8  = errors.New("field of type InboundReplyAttachableSource does not have child fields")
+	errNoChild9  = errors.New("field of type TriageActionKind does not have child fields")
+	errNoChild10 = errors.New("field of type TriageReplyPurpose does not have child fields")
+	errNoChild11 = errors.New("field of type TriageStopsDecision does not have child fields")
+	errNoChild12 = errors.New("field of type TriageExceptionKind does not have child fields")
+	errNoChild13 = errors.New("field of type TriageLoadFieldKey does not have child fields")
+	errNoChild14 = errors.New("field of type Decimal does not have child fields")
 )
 
 func field_Mutation_draftInboundReply_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -1463,7 +1618,7 @@ func field_Mutation_draftInboundReply_args(ctx context.Context, ec *gqlexec.Exec
 }
 
 func field_Mutation_saveInboundReplyDraft_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 3)
+	args := make(map[string]any, 4)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "messageId",
 		func(ctx context.Context, v any) (string, error) {
 			return unmarshalNID2string(ctx, ec, v)
@@ -1488,6 +1643,14 @@ func field_Mutation_saveInboundReplyDraft_args(ctx context.Context, ec *gqlexec.
 		return nil, err
 	}
 	args["body"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "documentIds",
+		func(ctx context.Context, v any) ([]string, error) {
+			return unmarshalOID2ᚕstringᚄ(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["documentIds"] = arg3
 	return args, nil
 }
 
@@ -1807,6 +1970,19 @@ func field_Query_triageCustomerPeek_args(ctx context.Context, ec *gqlexec.Exec, 
 	return args, nil
 }
 
+func field_Query_inboundReplyAttachables_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "messageId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["messageId"] = arg0
+	return args, nil
+}
+
 func unmarshalInputFileInboundAttachmentInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.FileInboundAttachmentInput, error) {
 	var it gqlmodel.FileInboundAttachmentInput
 	if obj == nil {
@@ -1967,7 +2143,7 @@ func unmarshalInputSendInboundReplyInput(ctx context.Context, ec *gqlexec.Exec, 
 		asMap["draftedByNova"] = false
 	}
 
-	fieldsInOrder := [...]string{"messageId", "subject", "body", "toAddress", "templateId", "draftedByNova"}
+	fieldsInOrder := [...]string{"messageId", "subject", "body", "toAddress", "templateId", "draftedByNova", "documentIds"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -2016,6 +2192,13 @@ func unmarshalInputSendInboundReplyInput(ctx context.Context, ec *gqlexec.Exec, 
 				return it, err
 			}
 			it.DraftedByNova = data
+		case "documentIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentIds"))
+			data, err := unmarshalOID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DocumentIds = data
 		}
 	}
 	return it, nil
@@ -2174,6 +2357,13 @@ func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*b
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalOID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
+}
+
 func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
 	if v == nil {
 		return nil, nil
@@ -2267,6 +2457,42 @@ func marshalNInboundReply2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "InboundReply", v)
+}
+
+func marshalNInboundReplyAttachable2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋinboundmessageportsᚐReplyAttachableᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*inboundmessageports.ReplyAttachable) graphql.Marshaler {
+	return gqlexec.List[*inboundmessageports.ReplyAttachable]{
+		Elem:        marshalNInboundReplyAttachable2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋinboundmessageportsᚐReplyAttachable,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNInboundReplyAttachable2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋinboundmessageportsᚐReplyAttachable(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundmessageports.ReplyAttachable) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "InboundReplyAttachable", v)
+}
+
+func marshalNInboundReplyAttachableSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtriageᚐAttachableSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v triage.AttachableSource) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNInboundReplyAttachment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtriageᚐReplyAttachment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v triage.ReplyAttachment) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "InboundReplyAttachment", &v)
+}
+
+func marshalNInboundReplyAttachment2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtriageᚐReplyAttachmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []triage.ReplyAttachment) graphql.Marshaler {
+	return gqlexec.List[triage.ReplyAttachment]{
+		Elem:        marshalNInboundReplyAttachment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtriageᚐReplyAttachment,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNInboundReplyStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtriageᚐReplyStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v triage.ReplyStatus) graphql.Marshaler {

@@ -84,6 +84,25 @@ func (r *Reply) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
+type AttachableSource string
+
+const (
+	AttachableFromMessage  = AttachableSource("Message")
+	AttachableFromShipment = AttachableSource("Shipment")
+	AttachableFromCustomer = AttachableSource("Customer")
+	AttachableFromCarrier  = AttachableSource("Carrier")
+)
+
+func (s AttachableSource) IsValid() bool {
+	switch s {
+	case AttachableFromMessage, AttachableFromShipment, AttachableFromCustomer,
+		AttachableFromCarrier:
+		return true
+	default:
+		return false
+	}
+}
+
 type ReplyAttachment struct {
 	DocumentID  pulid.ID `json:"documentId"`
 	FileName    string   `json:"fileName"`

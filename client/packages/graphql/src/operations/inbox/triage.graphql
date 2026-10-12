@@ -29,8 +29,28 @@ fragment InboundReplyFields on InboundReply {
     ...TriageUserFields
   }
   sentAt
+  attachments {
+    ...InboundReplyAttachmentFields
+  }
   createdAt
   updatedAt
+}
+
+fragment InboundReplyAttachmentFields on InboundReplyAttachment {
+  documentId
+  fileName
+  contentType
+  byteSize
+}
+
+fragment InboundReplyAttachableFields on InboundReplyAttachable {
+  id
+  fileName
+  contentType
+  documentType
+  byteSize
+  createdAt
+  source
 }
 
 fragment TriageActionFields on TriageAction {
@@ -443,6 +463,13 @@ query TriageReplyTemplates {
   }
 }
 
+query InboundReplyAttachables($messageId: ID!) {
+  inboundReplyAttachables(messageId: $messageId) {
+    ...InboundReplyAttachableFields
+  }
+  inboundReplyAttachmentLimit
+}
+
 query RenderTriageReplyTemplate($templateId: ID!, $messageId: ID!) {
   renderTriageReplyTemplate(templateId: $templateId, messageId: $messageId)
 }
@@ -654,8 +681,18 @@ mutation DraftInboundReply($messageId: ID!) {
   }
 }
 
-mutation SaveInboundReplyDraft($messageId: ID!, $subject: String!, $body: String!) {
-  saveInboundReplyDraft(messageId: $messageId, subject: $subject, body: $body) {
+mutation SaveInboundReplyDraft(
+  $messageId: ID!
+  $subject: String!
+  $body: String!
+  $documentIds: [ID!]
+) {
+  saveInboundReplyDraft(
+    messageId: $messageId
+    subject: $subject
+    body: $body
+    documentIds: $documentIds
+  ) {
     ...InboundReplyFields
   }
 }

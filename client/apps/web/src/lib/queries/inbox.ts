@@ -3,6 +3,7 @@ import {
   fetchInboundMessage,
   fetchInboundMessageCounts,
   fetchInboundMessages,
+  fetchInboundReplyAttachables,
   fetchInboundSenderProfile,
   fetchInboundThread,
   fetchMyTriageViews,
@@ -116,6 +117,10 @@ export const inbox = createQueryKeys("inbox", {
   customerPeek: (customerId: string) => ({
     queryKey: [customerId],
     queryFn: ({ signal }: QueryContext) => fetchTriageCustomerPeek(customerId, { signal }),
+  }),
+  replyAttachables: (messageId: string) => ({
+    queryKey: [messageId],
+    queryFn: ({ signal }: QueryContext) => fetchInboundReplyAttachables(messageId, { signal }),
   }),
   stopTimes: (messageId: string) => ({
     queryKey: [messageId],

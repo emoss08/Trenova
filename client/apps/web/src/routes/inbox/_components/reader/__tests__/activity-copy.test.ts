@@ -120,9 +120,20 @@ describe("activityLine", () => {
   });
 
   it("says where a reply went, and that one did not go", () => {
+    expect(line({ kind: "Replied", actor: ME, subject: "intake@trenova.app", detail: "" })).toBe(
+      "You replied from intake@trenova.app",
+    );
     expect(
-      line({ kind: "Replied", actor: ME, subject: "intake@trenova.app", detail: "a@b.example" }),
-    ).toBe("You replied from intake@trenova.app");
+      line({
+        kind: "Replied",
+        actor: ME,
+        subject: "billing@trenova.app",
+        detail: "ELD_SEED-PAY-002_Oct3.pdf, BOL.pdf",
+      }),
+    ).toBe("You replied from billing@trenova.app with ELD_SEED-PAY-002_Oct3.pdf, BOL.pdf");
+    expect(line({ kind: "Replied", actorKind: "Nova", actor: null, detail: "ELD.pdf" })).toBe(
+      "Nova replied with ELD.pdf",
+    );
     expect(
       line({ kind: "ReplyFailed", actor: ME, subject: "edi@partner.example", detail: "550" }),
     ).toBe("Your reply to edi@partner.example didn't send");

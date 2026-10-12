@@ -20,6 +20,7 @@ import {
   FileInboundAttachmentDocument,
   FileInboundManyDocument,
   FlagInboundFactDocument,
+  InboundReplyAttachablesDocument,
   HandOffTriageDocument,
   InboundMailboxCredentialsFieldsFragmentDoc,
   InboundMailboxesDocument,
@@ -86,6 +87,8 @@ import {
   type InboundMessagesInput,
   type InboundMessageStatus,
   type InboundProvider,
+  type InboundReplyAttachableFieldsFragment,
+  type InboundReplyAttachableSource,
   type InboundReplyFieldsFragment,
   type InboundReviewPolicy,
   type InboundSenderProfileQuery,
@@ -149,6 +152,15 @@ export type InboundShipmentRef = NonNullable<InboundMessageRow["matchedShipment"
 export type InboundAttachment = InboundMessageDetail["attachments"][number];
 export type InboundSnooze = NonNullable<InboundMessageRow["snooze"]>;
 export type InboundReply = UnmaskFragments<InboundReplyFieldsFragment>;
+export type InboundReplyAttachment = InboundReply["attachments"][number];
+export type InboundReplyAttachable = UnmaskFragments<InboundReplyAttachableFieldsFragment>;
+export type { InboundReplyAttachableSource };
+
+/** What a reply to a message can carry, and how much its files may add up to. */
+export type InboundReplyAttachables = {
+  documents: InboundReplyAttachable[];
+  limitBytes: number;
+};
 export type InboundActivity = InboundMessageDetail["activity"][number];
 export type TriageAction = UnmaskFragments<TriageActionFieldsFragment>;
 export type TriageFact = InboundMessageDetail["facts"][number];
@@ -465,6 +477,23 @@ export async function fetchTriageStopTimes(
   });
 
   return data.triageStopTimes === null ? null : unmask(data.triageStopTimes);
+}
+
+export async function fetchInboundReplyAttachables(
+  messageId: string,
+  options?: RequestOptions,
+): Promise<InboundReplyAttachables> {
+  const data = await requestGraphQL({
+    document: InboundReplyAttachablesDocument,
+    operationName: "InboundReplyAttachables",
+    variables: { messageId },
+    signal: options?.signal,
+  });
+
+  return {
+    documents: unmask(data.inboundReplyAttachables),
+    limitBytes: data.inboundReplyAttachmentLimit,
+  };
 }
 
 export async function fetchTriageShipmentPeek(
@@ -813,15 +842,22 @@ export async function draftInboundReply(messageId: string): Promise<InboundReply
   return unmask(data.draftInboundReply);
 }
 
+/** documentIds replaces the draft's files; leaving it out keeps the ones it has. */
 export async function saveInboundReplyDraft(
   messageId: string,
   subject: string,
   body: string,
+  documentIds?: readonly string[],
 ): Promise<InboundReply> {
   const data = await requestGraphQL({
     document: SaveInboundReplyDraftDocument,
     operationName: "SaveInboundReplyDraft",
-    variables: { messageId, subject, body },
+    variables: {
+      messageId,
+      subject,
+      body,
+      ...(documentIds === undefined ? {} : { documentIds: [...documentIds] }),
+    },
   });
 
   return unmask(data.saveInboundReplyDraft);

@@ -3229,6 +3229,15 @@ models:
         resolver: true
       sentAt:
         resolver: true
+  InboundReplyAttachment:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/triage.ReplyAttachment
+  InboundReplyAttachableSource:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/triage.AttachableSource
+  InboundReplyAttachable:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.ReplyAttachable
   TriageReplyTemplate:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/triage.ReplyTemplate

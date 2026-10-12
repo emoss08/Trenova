@@ -117,6 +117,7 @@ describe("actionBarMode", () => {
             suggestedAddress: null,
             sentBy: null,
             sentAt: null,
+            attachments: [],
             createdAt: 1,
             updatedAt: 1,
           },

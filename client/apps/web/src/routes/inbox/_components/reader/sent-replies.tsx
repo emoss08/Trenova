@@ -1,8 +1,9 @@
 import type { InboundMessageDetail } from "@/lib/graphql/inbox";
+import { PaperclipIcon } from "@trenova/shared/components/icons";
 import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixTime } from "@trenova/shared/lib/date";
-import { cn } from "@trenova/shared/lib/utils";
+import { cn, formatFileSize } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useState } from "react";
 import { PersonAvatar } from "../person-avatar";
@@ -51,6 +52,24 @@ function SentReply({ reply }: { reply: Reply }) {
       >
         {reply.body}
       </span>
+      {reply.attachments.length > 0 && (
+        <span role="list" aria-label={t("Files")} className="flex flex-wrap gap-1.5">
+          {reply.attachments.map((file) => (
+            <span
+              role="listitem"
+              key={file.documentId}
+              title={file.fileName}
+              className="bg-surface-hover text-foreground-muted inline-flex h-5.5 max-w-60 min-w-0 items-center gap-1.5 rounded-full px-2 text-xs"
+            >
+              <PaperclipIcon aria-hidden className="text-foreground-subtle size-3 shrink-0" />
+              <span className="truncate">{file.fileName}</span>
+              <span className="text-foreground-subtle shrink-0 tabular-nums">
+                {formatFileSize(file.byteSize)}
+              </span>
+            </span>
+          ))}
+        </span>
+      )}
     </button>
   );
 }

@@ -27,24 +27,10 @@ import { cn, formatFileSize, toSentenceFragment } from "@trenova/shared/lib/util
 import { toast } from "sonner";
 import { useTriageActions, type TriageActions } from "../use-triage-actions";
 import { useTriageDocumentTypes } from "../use-triage-data";
+import { FileBadge } from "./file-badge";
 import { useReaderPanel } from "./reader-panel";
 
-const EXTENSION = /\.([a-z0-9]{2,5})$/i;
 const REFUSED_PREFIX = /^refused:\s*/i;
-const IMAGE_EXTENSIONS: ReadonlySet<string> = new Set([
-  "jpg",
-  "jpeg",
-  "png",
-  "gif",
-  "heic",
-  "webp",
-  "tif",
-  "tiff",
-]);
-
-function extensionOf(fileName: string): string {
-  return EXTENSION.exec(fileName)?.[1]?.toLowerCase() ?? "file";
-}
 
 function laneOf(option: SelectOption): string | undefined {
   return option.description ?? undefined;
@@ -235,8 +221,6 @@ function FileChip({
   const documentTypes = useTriageDocumentTypes().data?.results ?? [];
   const refused = attachment.failureText.trim() !== "";
   const filed = attachment.filedShipment;
-  const extension = extensionOf(attachment.fileName);
-  const image = IMAGE_EXTENSIONS.has(extension);
 
   const trigger = useContextMenuTrigger(() =>
     refused
@@ -294,16 +278,7 @@ function FileChip({
           : "hover:border-border-strong hover:bg-surface-hover",
       )}
     >
-      <span
-        aria-hidden
-        className={cn(
-          "bg-sunken border-border flex h-8 w-7 shrink-0 items-end justify-center rounded-sm border pb-1 font-mono text-3xs font-semibold uppercase",
-          extension === "pdf" ? "text-danger" : image ? "text-brand" : "text-foreground-subtle",
-          refused && "opacity-50",
-        )}
-      >
-        {extension}
-      </span>
+      <FileBadge fileName={attachment.fileName} dimmed={refused} />
       <span className="flex min-w-0 flex-col leading-snug">
         <span className="truncate text-base font-medium">{attachment.fileName}</span>
         <span

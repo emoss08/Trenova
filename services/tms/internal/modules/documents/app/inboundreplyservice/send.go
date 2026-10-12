@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -44,6 +45,7 @@ type SendRequest struct {
 	ToAddress      string
 	TemplateID     pulid.ID
 	DraftedByNova  bool
+	DocumentIDs    []pulid.ID
 	IdempotencyKey string
 }
 
@@ -77,6 +79,16 @@ func (s *Service) Send(ctx context.Context, req *SendRequest) (*triage.Reply, er
 		return nil, err
 	}
 
+	attachments, err := s.resolveAttachments(ctx, &documentports.ResolveMailAttachmentsRequest{
+		TenantInfo:  personTenant(req.TenantInfo, req.UserID),
+		DocumentIDs: req.DocumentIDs,
+		Recipients:  []string{reply.ToAddress},
+	})
+	if err != nil {
+		return nil, err
+	}
+	reply.Attachments = snapshotOf(attachments)
+
 	created, err := s.replies.Create(ctx, reply)
 	if err != nil {
 		if req.IdempotencyKey != "" && dberror.IsUniqueConstraintViolation(err) {
@@ -100,7 +112,7 @@ func (s *Service) Send(ctx context.Context, req *SendRequest) (*triage.Reply, er
 			zap.String("messageId", message.ID.String()), zap.Error(err))
 	}
 
-	return s.dispatch(ctx, message, created)
+	return s.dispatch(ctx, message, created, emailAttachmentsOf(attachments))
 }
 
 func (s *Service) newOutgoingReply(
@@ -171,6 +183,7 @@ func (s *Service) dispatch(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
 	reply *triage.Reply,
+	attachments []emailports.EmailAttachment,
 ) (*triage.Reply, error) {
 	if s.email == nil {
 		return s.fail(ctx, &failure{message: message, reply: reply, text: failureNoOutbound})
@@ -184,6 +197,7 @@ func (s *Service) dispatch(
 		Subject:        reply.Subject,
 		Text:           reply.Body,
 		HTML:           stringutils.TextToHTMLParagraph(reply.Body),
+		Attachments:    attachments,
 		Headers:        threadHeaders(message, reply),
 		IdempotencyKey: inboundmessageports.InboundReplyIdempotencyPrefix + reply.ID.String(),
 	})
@@ -319,7 +333,7 @@ func (s *tracker) markSent(
 	}
 
 	activity := triage.NewActivity(message, triage.ActivityReplied).
-		About(updated.FromAddress, updated.ToAddress)
+		About(updated.FromAddress, attachmentDetail(updated))
 	activity.RecordID = updated.ID
 	if updated.SentByID.IsNotNil() {
 		activity.ByPerson(updated.SentByID)

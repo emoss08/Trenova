@@ -15994,6 +15994,8 @@ enum InboundProvider {
 A reply from a monitored address, stored with what the provider said about it.
 """
 type InboundReply {
+  """The files it carries, as they were named when it was written."""
+  attachments: [InboundReplyAttachment!]!
   body: String!
   ccAddresses: [String!]!
   createdAt: Timestamp!
@@ -16012,6 +16014,38 @@ type InboundReply {
   templateId: ID
   toAddress: String!
   updatedAt: Timestamp!
+}
+
+"""A stored document a reply to the message can carry."""
+type InboundReplyAttachable {
+  byteSize: Int!
+  contentType: String!
+  createdAt: Timestamp!
+  """The document type's name; blank when it has none."""
+  documentType: String!
+  fileName: String!
+  """The document's id."""
+  id: ID!
+  source: InboundReplyAttachableSource!
+}
+
+"""Where a file a reply can carry is stored."""
+enum InboundReplyAttachableSource {
+  Carrier
+  Customer
+  """Came with the message, or was uploaded to it."""
+  Message
+  Shipment
+}
+
+"""
+A stored document a reply carries, kept as it was when the reply was written.
+"""
+type InboundReplyAttachment {
+  byteSize: Int!
+  contentType: String!
+  documentId: ID!
+  fileName: String!
 }
 
 """Where a reply is."""
@@ -18301,8 +18335,10 @@ type Mutation {
   Holds a tool lower than its declared rule for this organization, or returns it to the declared rule.
   """
   saveAgentToolRule(input: AgentToolRuleInput!, name: String!, version: Int!): AgentToolRuleSaved!
-  """Saves what a person wrote as the message's draft."""
-  saveInboundReplyDraft(body: String!, messageId: ID!, subject: String!): InboundReply!
+  """
+  Saves what a person wrote as the message's draft. documentIds replaces the draft's files; leaving it out keeps them.
+  """
+  saveInboundReplyDraft(body: String!, documentIds: [ID!], messageId: ID!, subject: String!): InboundReply!
   """Keeps the caller's arrangement of a table, replacing the one before."""
   saveMyTableLayout(input: TableLayoutInput!): TableLayout!
   saveOshaSummary(input: SaveOSHASummaryInput!): OSHAAnnualSummary!
@@ -20857,6 +20893,12 @@ type Query {
   inboundMessageCounts: InboundMessageCounts!
   """Mail that arrived on a monitored address, newest first."""
   inboundMessages(input: InboundMessagesInput!): InboundMessageConnection!
+  """
+  Documents a reply to the message can carry: its own files and those on its shipment, customer and carrier.
+  """
+  inboundReplyAttachables(messageId: ID!): [InboundReplyAttachable!]!
+  """The most a reply's files may add up to, in bytes."""
+  inboundReplyAttachmentLimit: Int!
   inboundSenderProfile(messageId: ID!): InboundSenderProfile!
   """The messages in one thread, oldest first."""
   inboundThread(threadKey: String!): [InboundMessage!]!
@@ -23051,6 +23093,8 @@ input SelectOptionsInput {
 
 input SendInboundReplyInput {
   body: String!
+  """Documents to attach, from inboundReplyAttachables."""
+  documentIds: [ID!]
   """The body is Nova's draft, sent as written or after edits."""
   draftedByNova: Boolean = false
   messageId: ID!

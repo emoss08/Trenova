@@ -80,6 +80,13 @@ type detentionDecider interface {
 	) (*detention.DetentionOccurrence, error)
 }
 
+type disputeRecorder interface {
+	DisputeRecord(
+		ctx context.Context,
+		p *detentionservice.DisputeRecordParams,
+	) (*detentionservice.DisputeRecord, error)
+}
+
 type Params struct {
 	fx.In
 
@@ -105,6 +112,7 @@ type Service struct {
 	comments    commentCreator
 	occurrences occurrenceReader
 	detention   detentionDecider
+	records     disputeRecorder
 	credits     detentionports.BilledDetentionCreditor
 	now         func() int64
 }
@@ -120,6 +128,7 @@ func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 		comments:    p.Comments,
 		occurrences: p.Occurrences,
 		detention:   p.Detention,
+		records:     p.Detention,
 		credits:     p.Credits,
 		now:         timeutils.NowUnix,
 	}
@@ -131,4 +140,6 @@ var (
 	_ inboundmessageports.TriageLoadCreator      = (*Service)(nil)
 	_ inboundmessageports.TriageExceptionLogger  = (*Service)(nil)
 	_ inboundmessageports.TriageDetentionSettler = (*Service)(nil)
+
+	_ inboundmessageports.TriageDetentionEvidenceSource = (*Service)(nil)
 )

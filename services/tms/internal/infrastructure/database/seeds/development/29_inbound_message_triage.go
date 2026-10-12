@@ -1509,7 +1509,7 @@ func (b *triageSeed) waitingOnThem() {
 	drafted.RecordID = reply.ID
 	replied := seedActivity(message, triage.ActivityReplied, sentAt).
 		ByPerson(b.refs.admin.ID).
-		About(reply.FromAddress, reply.ToAddress)
+		About(reply.FromAddress, "")
 	replied.RecordID = reply.ID
 	until := sentAt + 2*inboundSeedDay
 	message.AwaitReply(until, sentAt)

@@ -1,7 +1,22 @@
+import { useUploadWithProgress } from "@/hooks/use-upload-with-progress";
 import { describeApiError } from "@/lib/api-error-message";
 import type { InboundMessageDetail, TriageAction, TriageReplyTemplate } from "@/lib/graphql/inbox";
 import { queries } from "@/lib/queries";
 import { inboxReferenceQuery } from "@/lib/queries/inbox";
+import {
+  fileFromDocument,
+  filesKey,
+  overBudget,
+  planUploads,
+  remainingBytes,
+  sameFiles,
+  totalBytes,
+  uploadTarget,
+  withFile,
+  withoutFile,
+  type ReplyFile,
+} from "@/lib/triage/reply-files";
+import type { Document } from "@trenova/shared/types/document";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LayersThree01Icon, PlusIcon, Send01Icon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -13,8 +28,8 @@ import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
-import { cn } from "@trenova/shared/lib/utils";
-import { useEffect, useMemo, useReducer, useState } from "react";
+import { cn, formatFileSize } from "@trenova/shared/lib/utils";
+import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import { PersonAvatar } from "../../person-avatar";
 import { useAnnouncePresence, useMessagePresence } from "../../use-triage-presence";
 import { useTriageActions } from "../../use-triage-actions";
@@ -26,6 +41,12 @@ import {
   type ReplyOutcome,
 } from "../composer-state";
 import { useReaderPanel, useStepSubmit } from "../reader-panel";
+import {
+  AttachMenu,
+  RefusedFileChip,
+  ReplyFileChip,
+  UploadingChip,
+} from "./reply-files";
 import { StepBody, StepError, StepFooter } from "./step-parts";
 
 /** How long typing pauses before the draft is saved for the team. */
@@ -53,6 +74,66 @@ function replySubject(t: TranslateFn, message: InboundMessageDetail): string {
   }
 
   return REPLY_PREFIX.test(subject) ? subject : t("Re: {0}", subject);
+}
+
+const NO_FILES: readonly ReplyFile[] = [];
+
+type RefusedUpload = { key: string; name: string; reason: string };
+
+/** The files a reply carries, the ones on their way up, and the ones refused before upload. */
+function ReplyFiles({
+  files,
+  uploads,
+  refused,
+  onRemove,
+  onCancelUpload,
+  onRetryUpload,
+  onDismissRefusal,
+}: {
+  files: readonly ReplyFile[];
+  uploads: ReturnType<typeof useUploadWithProgress>["uploads"];
+  refused: readonly RefusedUpload[];
+  onRemove?: (documentId: string) => void;
+  onCancelUpload: (id: string) => void;
+  onRetryUpload: (id: string) => void;
+  onDismissRefusal: (key: string) => void;
+}) {
+  const t = useT();
+  const pending = uploads.filter((upload) => upload.status !== "success");
+  if (files.length === 0 && pending.length === 0 && refused.length === 0) {
+    return null;
+  }
+
+  return (
+    <div role="list" aria-label={t("Files")} className="flex flex-wrap gap-2">
+      {files.map((file) => (
+        <ReplyFileChip key={file.documentId} file={file} onRemove={onRemove} />
+      ))}
+      {pending.map((upload) => (
+        <UploadingChip
+          key={upload.id}
+          upload={upload}
+          onCancel={onCancelUpload}
+          onRetry={onRetryUpload}
+        />
+      ))}
+      {refused.map((refusal) => (
+        <RefusedFileChip
+          key={refusal.key}
+          name={refusal.name}
+          reason={refusal.reason}
+          onDismiss={() => onDismissRefusal(refusal.key)}
+        />
+      ))}
+    </div>
+  );
+}
+
+/** What the files still uploading will add when they land. */
+function inFlightBytes(uploads: ReturnType<typeof useUploadWithProgress>["uploads"]): number {
+  return uploads
+    .filter((upload) => upload.status !== "success" && upload.status !== "error")
+    .reduce((sum, upload) => sum + upload.file.size, 0);
 }
 
 /** Someone else is writing a reply to this message right now. */
@@ -286,6 +367,11 @@ export function ReplyComposer({
   const [savedBody, setSavedBody] = useState(draft?.body ?? "");
   const [templateId, setTemplateId] = useState<string | null>(draft?.templateId ?? null);
   const [novaDrafted, setNovaDrafted] = useState(draft?.draftedByNova ?? false);
+  const [files, setFiles] = useState<readonly ReplyFile[]>(draft?.attachments ?? NO_FILES);
+  const [savedFiles, setSavedFiles] = useState<readonly ReplyFile[]>(
+    draft?.attachments ?? NO_FILES,
+  );
+  const [refusedUploads, setRefusedUploads] = useState<readonly RefusedUpload[]>([]);
   const [saveFailed, setSaveFailed] = useState(false);
   const [focused, setFocused] = useState(false);
   const draftKey = draft === null ? null : `${draft.id}:${draft.updatedAt}`;
@@ -300,7 +386,71 @@ export function ReplyComposer({
       setTemplateId(draft.templateId);
       setNovaDrafted(draft.draftedByNova);
     }
+    if (draft !== null && !sameFiles(draft.attachments, savedFiles)) {
+      setFiles(draft.attachments);
+      setSavedFiles(draft.attachments);
+    }
   }
+
+  const attachables = useQuery(queries.inbox.replyAttachables(message.id));
+  const limitBytes = attachables.data?.limitBytes ?? null;
+  const target = uploadTarget(message);
+  const attachablesKey = queries.inbox.replyAttachables(message.id).queryKey;
+  const onUploaded = useCallback((result: unknown) => {
+    const document = result as Document;
+    setFiles((current) => withFile(current, fileFromDocument(document)));
+  }, []);
+  const upload = useUploadWithProgress({
+    resourceId: target.resourceId,
+    resourceType: target.resourceType,
+    invalidateQueryKey: attachablesKey,
+    onSuccess: onUploaded,
+  });
+  const uploading = upload.uploads.some(
+    (state) => state.status !== "success" && state.status !== "error",
+  );
+
+  const addFiles = (chosen: File[]) => {
+    if (limitBytes === null) {
+      upload.uploadFiles(chosen);
+      return;
+    }
+    const plan = planUploads(
+      chosen,
+      remainingBytes(files, limitBytes) - inFlightBytes(upload.uploads),
+    );
+    if (plan.refused.length > 0) {
+      setRefusedUploads((current) => [
+        ...current,
+        ...plan.refused.map(({ file, remainingBytes: left }) => ({
+          key: `${file.name}:${file.size}:${file.lastModified}`,
+          name: file.name,
+          reason: t(
+            "{0} is {1}. A reply can carry {2} in all, and {3} is left.",
+            file.name,
+            formatFileSize(file.size),
+            formatFileSize(limitBytes),
+            formatFileSize(left),
+          ),
+        })),
+      ]);
+    }
+    if (plan.accepted.length > 0) {
+      upload.uploadFiles(plan.accepted);
+    }
+  };
+
+  const toggleFile = (file: ReplyFile) => {
+    setFiles((current) =>
+      current.some((existing) => existing.documentId === file.documentId)
+        ? withoutFile(current, file.documentId)
+        : withFile(current, file),
+    );
+  };
+
+  const removeFile = (documentId: string) => {
+    setFiles((current) => withoutFile(current, documentId));
+  };
 
   useAnnouncePresence(focused ? message.id : null, "writing");
 
@@ -322,29 +472,47 @@ export function ReplyComposer({
   }, [drafting, draftError]);
 
   const writing = state.phase === "writing" || state.phase === "failed";
+  const fileIds = filesKey(files);
+  const unsavedFiles = fileIds !== filesKey(savedFiles);
   useEffect(() => {
-    if (!writing || body.trim() === "" || body === savedBody) {
+    if (!writing || body.trim() === "" || (body === savedBody && !unsavedFiles)) {
       return;
     }
     const timer = setTimeout(() => {
       setSavedBody(body);
-      actions.saveReplyDraft(message.id, subject, body).then(
-        () => setSaveFailed(false),
-        () => setSaveFailed(true),
-      );
+      setSavedFiles(files);
+      actions
+        .saveReplyDraft(
+          message.id,
+          subject,
+          body,
+          files.map((file) => file.documentId),
+        )
+        .then(
+          () => setSaveFailed(false),
+          () => setSaveFailed(true),
+        );
     }, SAVE_AFTER_MS);
     return () => clearTimeout(timer);
-  }, [writing, body, savedBody, actions, message.id, subject]);
+  }, [writing, body, savedBody, unsavedFiles, files, actions, message.id, subject]);
 
   const flushDraft = useLatestCallback(() => {
-    if (writing && body.trim() !== "" && body !== savedBody) {
-      actions.saveReplyDraft(message.id, subject, body).catch(() => undefined);
+    if (writing && body.trim() !== "" && (body !== savedBody || unsavedFiles)) {
+      actions
+        .saveReplyDraft(
+          message.id,
+          subject,
+          body,
+          files.map((file) => file.documentId),
+        )
+        .catch(() => undefined);
     }
   });
   useEffect(() => flushDraft, [flushDraft]);
 
+  const tooLarge = limitBytes !== null && overBudget(files, limitBytes);
   const send = (to: string | null) => {
-    if (!canSend(state, body)) {
+    if (!canSend(state, body) || tooLarge || uploading) {
       return;
     }
     dispatch({ type: "send", to });
@@ -356,6 +524,7 @@ export function ReplyComposer({
         toAddress: to,
         templateId,
         draftedByNova: novaDrafted,
+        documentIds: files.map((file) => file.documentId),
       })
       .then(
         (reply) => dispatch({ type: "sendSettled", reply }),
@@ -363,7 +532,7 @@ export function ReplyComposer({
       );
   };
 
-  const ready = canSend(state, body) && state.phase === "writing";
+  const ready = canSend(state, body) && state.phase === "writing" && !tooLarge && !uploading;
   useStepSubmit(action?.id ?? "reply", ready ? () => send(null) : null);
 
   const sentReply = useMemo(
@@ -375,11 +544,19 @@ export function ReplyComposer({
   );
 
   if (state.phase === "sent") {
+    const sentFiles = sentReply?.attachments ?? files;
     return (
       <StepBody className="gap-1.5">
         <p className="text-foreground-muted text-base leading-relaxed whitespace-pre-wrap">
           {sentReply?.body ?? body}
         </p>
+        {sentFiles.length > 0 && (
+          <div role="list" aria-label={t("Files")} className="flex flex-wrap gap-2">
+            {sentFiles.map((file) => (
+              <ReplyFileChip key={file.documentId} file={file} />
+            ))}
+          </div>
+        )}
       </StepBody>
     );
   }
@@ -413,6 +590,26 @@ export function ReplyComposer({
           onChange={(event) => setBody(event.target.value)}
         />
       )}
+      <ReplyFiles
+        files={files}
+        uploads={upload.uploads}
+        refused={refusedUploads}
+        onRemove={sending ? undefined : removeFile}
+        onCancelUpload={upload.cancelUpload}
+        onRetryUpload={upload.retryUpload}
+        onDismissRefusal={(key) =>
+          setRefusedUploads((current) => current.filter((refusal) => refusal.key !== key))
+        }
+      />
+      {tooLarge && limitBytes !== null && (
+        <StepError>
+          {t(
+            "These files add up to {0}. A reply can carry {1} in all, so remove one to send it.",
+            formatFileSize(totalBytes(files)),
+            formatFileSize(limitBytes),
+          )}
+        </StepError>
+      )}
       {state.phase === "failed" && (
         <StepError>
           {rt(
@@ -432,11 +629,30 @@ export function ReplyComposer({
               ? t("Sending to {0}…", to)
               : saveFailed
                 ? t("Couldn't save the draft — it is still here")
-                : mailbox === ""
-                  ? t("To {0}", to)
-                  : t("From {0} to {1}", mailbox, to)
+                : uploading
+                  ? t("Uploading — Send waits for the files")
+                  : files.length > 0 && limitBytes !== null
+                    ? t(
+                        "{0, plural, one {# file} other {# files}} · {1} of {2}",
+                        files.length,
+                        formatFileSize(totalBytes(files)),
+                        formatFileSize(limitBytes),
+                      )
+                    : mailbox === ""
+                      ? t("To {0}", to)
+                      : t("From {0} to {1}", mailbox, to)
           }
         >
+          {state.phase === "writing" && (
+            <AttachMenu
+              messageId={message.id}
+              files={files}
+              limitBytes={limitBytes}
+              disabled={sending}
+              onToggle={toggleFile}
+              onUpload={addFiles}
+            />
+          )}
           {state.phase === "writing" && (
             <TemplatesMenu
               messageId={message.id}

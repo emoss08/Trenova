@@ -16110,6 +16110,10 @@ func init() {
 				FieldMapKey: "sentAt",
 			},
 			{
+				Name:        "attachments",
+				FieldMapKey: "attachments",
+			},
+			{
 				Name:        "createdAt",
 				FieldMapKey: "createdAt",
 			},

@@ -179,6 +179,11 @@ export function activityLine(
     case "ReplyDrafted":
       return t("{0} drafted a reply", by);
     case "Replied":
+      if (detail !== "") {
+        return subject === ""
+          ? t("{0} replied with {1}", by, detail)
+          : t("{0} replied from {1} with {2}", by, subject, detail);
+      }
       return subject === "" ? t("{0} replied", by) : t("{0} replied from {1}", by, subject);
     case "ReplyFailed":
       if (activity.actorKind === "Person" && activity.actor?.id === meId) {

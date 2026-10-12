@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
@@ -34,9 +35,11 @@ type Params struct {
 	Templates     inboundmessageports.TriageReplyTemplateRepository
 	Organizations tenantports.OrganizationRepository
 	Nova          *triagenova.Caller
-	Email         emailports.EmailService                   `optional:"true"`
-	Peeks         inboundmessageports.TriageShipmentPeeker  `optional:"true"`
-	Stops         inboundmessageports.TriageStopTimesReader `optional:"true"`
+	Documents     documentports.DocumentMailAttachments
+	Email         emailports.EmailService                           `optional:"true"`
+	Peeks         inboundmessageports.TriageShipmentPeeker          `optional:"true"`
+	Stops         inboundmessageports.TriageStopTimesReader         `optional:"true"`
+	Evidence      inboundmessageports.TriageDetentionEvidenceSource `optional:"true"`
 }
 
 type tracker struct {
@@ -58,6 +61,8 @@ type Service struct {
 	email         emailports.EmailService
 	peeks         inboundmessageports.TriageShipmentPeeker
 	stops         inboundmessageports.TriageStopTimesReader
+	documents     documentports.DocumentMailAttachments
+	evidence      inboundmessageports.TriageDetentionEvidenceSource
 }
 
 func newTracker(p *TrackerParams) *tracker {
@@ -86,6 +91,8 @@ func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 		email:         p.Email,
 		peeks:         p.Peeks,
 		stops:         p.Stops,
+		documents:     p.Documents,
+		evidence:      p.Evidence,
 	}
 }
 

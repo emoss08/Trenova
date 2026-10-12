@@ -11,15 +11,22 @@ func TestDecisionInstructionFollowsWhatTheWaiverDid(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		name  string
-		state inboundmessage.ActionState
-		want  string
+		name     string
+		state    inboundmessage.ActionState
+		evidence bool
+		want     string
 	}{
 		{name: "undecided", state: inboundmessage.ActionState{}, want: ""},
 		{
 			name:  "stand by",
 			state: inboundmessage.ActionState{StopsDecision: inboundmessage.StopsDecisionStandBy},
 			want:  standByInstruction,
+		},
+		{
+			name:     "stand by with the record attached",
+			state:    inboundmessage.ActionState{StopsDecision: inboundmessage.StopsDecisionStandBy},
+			evidence: true,
+			want:     standByEvidenceInstruction,
 		},
 		{
 			name:  "waived before the waiver was recorded",
@@ -63,7 +70,7 @@ func TestDecisionInstructionFollowsWhatTheWaiverDid(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, tc.want, decisionInstruction(&tc.state))
+			assert.Equal(t, tc.want, decisionInstruction(&tc.state, tc.evidence))
 		})
 	}
 }

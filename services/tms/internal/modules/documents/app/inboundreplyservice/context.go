@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -29,12 +30,14 @@ const (
 )
 
 type messageContext struct {
-	message  *inboundmessage.InboundMessage
-	shipment *inboundmessageports.ShipmentPeek
-	reply    inboundmessageports.ReplyContext
-	stops    *inboundmessageports.StopTimes
-	location *time.Location
-	orgName  string
+	message     *inboundmessage.InboundMessage
+	shipment    *inboundmessageports.ShipmentPeek
+	reply       inboundmessageports.ReplyContext
+	stops       *inboundmessageports.StopTimes
+	location    *time.Location
+	orgName     string
+	attachments []triage.ReplyAttachment
+	evidence    bool
 }
 
 func (s *Service) messageContext(

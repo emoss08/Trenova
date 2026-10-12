@@ -1906,7 +1906,7 @@ type MutationResolver interface {
 	UpdateTriageResponseTargets(ctx context.Context, input []*gqlmodel.TriageResponseTargetInput) ([]*inboundmessageports.ResponseTargetView, error)
 	UpdateTriageSettings(ctx context.Context, input gqlmodel.TriageSettingsInput) (*triage.Settings, error)
 	DraftInboundReply(ctx context.Context, messageID string) (*triage.Reply, error)
-	SaveInboundReplyDraft(ctx context.Context, messageID string, subject string, body string) (*triage.Reply, error)
+	SaveInboundReplyDraft(ctx context.Context, messageID string, subject string, body string, documentIds []string) (*triage.Reply, error)
 	DiscardInboundReplyDraft(ctx context.Context, messageID string) (*inboundmessage.InboundMessage, error)
 	SendInboundReply(ctx context.Context, input gqlmodel.SendInboundReplyInput) (*triage.Reply, error)
 	DraftInboundMany(ctx context.Context, messageIds []string) (int, error)
@@ -2689,6 +2689,8 @@ type QueryResolver interface {
 	TriageStopTimes(ctx context.Context, messageID string) (*inboundmessageports.StopTimes, error)
 	TriageShipmentPeek(ctx context.Context, shipmentID string) (*inboundmessageports.ShipmentPeek, error)
 	TriageCustomerPeek(ctx context.Context, customerID string) (*inboundmessageports.CustomerPeek, error)
+	InboundReplyAttachables(ctx context.Context, messageID string) ([]*inboundmessageports.ReplyAttachable, error)
+	InboundReplyAttachmentLimit(ctx context.Context) (int, error)
 	Invoices(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.InvoiceConnection, error)
 	Invoice(ctx context.Context, id string) (*invoice.Invoice, error)
 	InvoiceAdjustment(ctx context.Context, id string) (*invoiceadjustment.InvoiceAdjustment, error)
@@ -21753,8 +21755,40 @@ type InboundReply {
   suggestedAddress: String
   sentBy: User
   sentAt: Timestamp
+  "The files it carries, as they were named when it was written."
+  attachments: [InboundReplyAttachment!]!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"A stored document a reply carries, kept as it was when the reply was written."
+type InboundReplyAttachment {
+  documentId: ID!
+  fileName: String!
+  contentType: String!
+  byteSize: Int!
+}
+
+"Where a file a reply can carry is stored."
+enum InboundReplyAttachableSource {
+  "Came with the message, or was uploaded to it."
+  Message
+  Shipment
+  Customer
+  Carrier
+}
+
+"A stored document a reply to the message can carry."
+type InboundReplyAttachable {
+  "The document's id."
+  id: ID!
+  fileName: String!
+  contentType: String!
+  "The document type's name; blank when it has none."
+  documentType: String!
+  byteSize: Int!
+  createdAt: Timestamp!
+  source: InboundReplyAttachableSource!
 }
 
 input SendInboundReplyInput {
@@ -21766,6 +21800,8 @@ input SendInboundReplyInput {
   templateId: ID
   "The body is Nova's draft, sent as written or after edits."
   draftedByNova: Boolean = false
+  "Documents to attach, from inboundReplyAttachables."
+  documentIds: [ID!]
 }
 
 "A reply people reuse, with placeholders filled in from the message and its shipment."
@@ -22008,13 +22044,17 @@ extend type Query {
   triageStopTimes(messageId: ID!): TriageStopTimes
   triageShipmentPeek(shipmentId: ID!): TriageShipmentPeek!
   triageCustomerPeek(customerId: ID!): TriageCustomerPeek!
+  "Documents a reply to the message can carry: its own files and those on its shipment, customer and carrier."
+  inboundReplyAttachables(messageId: ID!): [InboundReplyAttachable!]!
+  "The most a reply's files may add up to, in bytes."
+  inboundReplyAttachmentLimit: Int!
 }
 
 extend type Mutation {
   "Has Nova draft a reply. It is stored as the message's draft."
   draftInboundReply(messageId: ID!): InboundReply!
-  "Saves what a person wrote as the message's draft."
-  saveInboundReplyDraft(messageId: ID!, subject: String!, body: String!): InboundReply!
+  "Saves what a person wrote as the message's draft. documentIds replaces the draft's files; leaving it out keeps them."
+  saveInboundReplyDraft(messageId: ID!, subject: String!, body: String!, documentIds: [ID!]): InboundReply!
   discardInboundReplyDraft(messageId: ID!): InboundMessage!
   "Sends a reply from the mailbox's address. A refusal comes back as a Failed reply, not an error."
   sendInboundReply(input: SendInboundReplyInput!): InboundReply!

@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/idempotency"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -131,7 +132,7 @@ func (r *MutationResolver) DraftInboundReply(ctx context.Context, messageID stri
 	})
 }
 
-func (r *MutationResolver) SaveInboundReplyDraft(ctx context.Context, messageID string, subject string, body string) (*triage.Reply, error) {
+func (r *MutationResolver) SaveInboundReplyDraft(ctx context.Context, messageID string, subject string, body string, documentIds []string) (*triage.Reply, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceInboundMessage, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -142,12 +143,19 @@ func (r *MutationResolver) SaveInboundReplyDraft(ctx context.Context, messageID 
 		return nil, err
 	}
 
+	documentIDs, err := base.ParseIDs(documentIds)
+	if err != nil {
+		return nil, err
+	}
+
 	return r.InboundReplyService.SaveDraft(ctx, &inboundreplyservice.SaveDraftRequest{
-		TenantInfo: base.TenantInfo(authCtx),
-		UserID:     authCtx.UserID,
-		MessageID:  id,
-		Subject:    subject,
-		Body:       body,
+		TenantInfo:         base.TenantInfo(authCtx),
+		UserID:             authCtx.UserID,
+		MessageID:          id,
+		Subject:            subject,
+		Body:               body,
+		DocumentIDs:        documentIDs,
+		ReplaceAttachments: documentIds != nil,
 	})
 }
 
@@ -182,6 +190,10 @@ func (r *MutationResolver) SendInboundReply(ctx context.Context, input gqlmodel.
 	if err != nil {
 		return nil, err
 	}
+	documentIDs, err := base.ParseIDs(input.DocumentIds)
+	if err != nil {
+		return nil, err
+	}
 	idempotencyKey, _ := idempotency.KeyFrom(ctx)
 
 	return r.InboundReplyService.Send(ctx, &inboundreplyservice.SendRequest{
@@ -193,6 +205,7 @@ func (r *MutationResolver) SendInboundReply(ctx context.Context, input gqlmodel.
 		ToAddress:      stringutils.FromPtr(input.ToAddress),
 		TemplateID:     templateID,
 		DraftedByNova:  base.BoolValue(input.DraftedByNova),
+		DocumentIDs:    documentIDs,
 		IdempotencyKey: idempotencyKey,
 	})
 }
@@ -636,4 +649,30 @@ func (r *TriageStopTimesResolver) Shipment(ctx context.Context, obj *inboundmess
 	}
 
 	return loaders.ShipmentSummaryByID(ctx, obj.ShipmentID.String())
+}
+
+func (r *QueryResolver) InboundReplyAttachables(ctx context.Context, messageID string) ([]*inboundmessageports.ReplyAttachable, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceInboundMessage, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(messageID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InboundReplyService.Attachables(ctx, &inboundreplyservice.AttachablesRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		UserID:     authCtx.UserID,
+		MessageID:  id,
+	})
+}
+
+func (r *QueryResolver) InboundReplyAttachmentLimit(ctx context.Context) (int, error) {
+	if _, err := r.RequirePermission(ctx, permission.ResourceInboundMessage, permission.OpRead); err != nil {
+		return 0, err
+	}
+
+	return int(emailports.MaxAttachmentBytes), nil
 }

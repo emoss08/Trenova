@@ -153,7 +153,13 @@ export type TriageActions = {
    */
   fileMany: (ids: readonly string[]) => Promise<number>;
   draftReply: (id: string) => Promise<InboundReply>;
-  saveReplyDraft: (id: string, subject: string, body: string) => Promise<InboundReply>;
+  /** documentIds replaces the draft's files; leaving it out keeps the ones it has. */
+  saveReplyDraft: (
+    id: string,
+    subject: string,
+    body: string,
+    documentIds?: readonly string[],
+  ) => Promise<InboundReply>;
   discardReplyDraft: (id: string) => void;
   /** Sends once even if retried: the same reply resent after no answer reuses its key. */
   sendReply: (input: SendInboundReplyInput) => Promise<InboundReply>;
@@ -733,8 +739,8 @@ export function useTriageActionsController(): TriageActions {
             throw error;
           },
         ),
-      saveReplyDraft: (id, subject, body) =>
-        saveInboundReplyDraft(id, subject, body).then(
+      saveReplyDraft: (id, subject, body, documentIds) =>
+        saveInboundReplyDraft(id, subject, body, documentIds).then(
           (reply) => {
             updateReply(id, reply);
             return reply;

@@ -8,8 +8,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -138,6 +140,7 @@ func (f *fakeReplies) UpsertDraft(_ context.Context, entity *triage.Reply) (*tri
 			reply.Subject = entity.Subject
 			reply.Body = entity.Body
 			reply.DraftedByNova = entity.DraftedByNova
+			reply.Attachments = entity.Attachments
 			copied := *reply
 			return &copied, nil
 		}
@@ -175,10 +178,20 @@ func (f *fakeReplies) ListByMessageIDs(
 }
 
 func (f *fakeReplies) DraftsByMessageIDs(
-	context.Context,
-	inboundmessageports.InboundRepliesByMessagesRequest,
+	_ context.Context,
+	req inboundmessageports.InboundRepliesByMessagesRequest,
 ) (map[pulid.ID]*triage.Reply, error) {
-	return nil, nil
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	out := make(map[pulid.ID]*triage.Reply, len(req.MessageIDs))
+	for _, reply := range f.replies {
+		if reply.Status == triage.ReplyDraft && slices.Contains(req.MessageIDs, reply.MessageID) {
+			copied := *reply
+			out[reply.MessageID] = &copied
+		}
+	}
+
+	return out, nil
 }
 
 func (f *fakeReplies) LatestByMessageIDs(
@@ -421,8 +434,99 @@ func (f *fakePeeks) CustomerShipments(
 	return &inboundmessageports.TriageCustomerShipments{}, nil
 }
 
+type fakeAttachments struct {
+	mu       sync.Mutex
+	docs     map[pulid.ID]*document.Document
+	requests []*documentports.ResolveMailAttachmentsRequest
+	mailable []*document.Document
+	listed   *documentports.MailableDocumentsRequest
+}
+
+func (f *fakeAttachments) add(name string, size int64) *document.Document {
+	doc := &document.Document{
+		ID:             pulid.MustNew("doc_"),
+		OrganizationID: testOrgID,
+		BusinessUnitID: testBUID,
+		OriginalName:   name,
+		FileSize:       size,
+		FileType:       "application/pdf",
+		StoragePath:    testOrgID.String() + "/shipment/" + name,
+		Status:         document.StatusActive,
+	}
+	f.docs[doc.ID] = doc
+
+	return doc
+}
+
+func (f *fakeAttachments) Resolve(
+	_ context.Context,
+	req *documentports.ResolveMailAttachmentsRequest,
+) ([]*documentports.MailAttachment, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.requests = append(f.requests, req)
+	out := make([]*documentports.MailAttachment, 0, len(req.DocumentIDs))
+	for i, id := range req.DocumentIDs {
+		doc, ok := f.docs[id]
+		if !ok {
+			multiErr := errortypes.NewMultiError()
+			multiErr.WithIndex(req.Field, i).Add("", errortypes.ErrInvalid, "This file no longer exists")
+
+			return nil, multiErr
+		}
+		out = append(out, &documentports.MailAttachment{
+			Document: doc,
+			Attachment: emailports.EmailAttachment{
+				FileName:    doc.OriginalName,
+				ContentType: doc.FileType,
+				ObjectKey:   doc.StoragePath,
+				SizeBytes:   doc.FileSize,
+				Seal:        email.AttachmentSealDocument,
+			},
+		})
+	}
+
+	return out, nil
+}
+
+func (f *fakeAttachments) Mailable(
+	_ context.Context,
+	req *documentports.MailableDocumentsRequest,
+) ([]*document.Document, error) {
+	f.listed = req
+
+	return f.mailable, nil
+}
+
+func (f *fakeAttachments) last() *documentports.ResolveMailAttachmentsRequest {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if len(f.requests) == 0 {
+		return nil
+	}
+
+	return f.requests[len(f.requests)-1]
+}
+
+type fakeEvidence struct {
+	evidence *inboundmessageports.TriageDetentionEvidence
+	err      error
+	asked    []*inboundmessageports.TriageDetentionEvidenceRequest
+}
+
+func (f *fakeEvidence) DetentionEvidence(
+	_ context.Context,
+	req *inboundmessageports.TriageDetentionEvidenceRequest,
+) (*inboundmessageports.TriageDetentionEvidence, error) {
+	f.asked = append(f.asked, req)
+
+	return f.evidence, f.err
+}
+
 type fixture struct {
 	service   *Service
+	documents *fakeAttachments
+	evidence  *fakeEvidence
 	messages  *fakeMessages
 	replies   *fakeReplies
 	templates *fakeTemplates
@@ -487,7 +591,9 @@ func newFixture() *fixture {
 				},
 			},
 		}},
-		message: message,
+		message:   message,
+		documents: &fakeAttachments{docs: map[pulid.ID]*document.Document{}},
+		evidence:  &fakeEvidence{},
 	}
 	f.service = &Service{
 		tracker: &tracker{
@@ -504,6 +610,8 @@ func newFixture() *fixture {
 		nova:          f.nova,
 		email:         f.email,
 		peeks:         f.peeks,
+		documents:     f.documents,
+		evidence:      f.evidence,
 	}
 
 	return f
