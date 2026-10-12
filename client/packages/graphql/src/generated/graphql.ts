@@ -3048,6 +3048,8 @@ export type DetentionScoreBand =
 export type DetentionStatsInput = {
   from: number;
   limit?: number | null | undefined;
+  /** Only the stops made at this location. */
+  locationId?: string | number | null | undefined;
   to: number;
 };
 
@@ -3460,6 +3462,12 @@ export type EquipmentClass =
   | 'Other'
   | 'Tractor'
   | 'Trailer';
+
+/** Who owns a piece of equipment. */
+export type EquipmentOwnershipType =
+  | 'CompanyOwned'
+  | 'Leased'
+  | 'OwnerOperator';
 
 export type EquipmentStatus =
   | 'AtMaintenance'
@@ -4571,6 +4579,12 @@ export type LocationCategoryType =
   | 'Terminal'
   | 'TruckStop'
   | 'Warehouse';
+
+export type LocationGeofenceType =
+  | 'auto'
+  | 'circle'
+  | 'draw'
+  | 'rectangle';
 
 export type ManualJournalStatus =
   | 'Approved'
@@ -6639,6 +6653,8 @@ export type ShipmentsInput = {
   after?: string | null | undefined;
   /** Only Completed or Ready to Invoice shipments that are not in the billing queue. */
   billingTransferEligible?: boolean | null | undefined;
+  /** Only shipments with a live move tendered to one of these carriers. */
+  carrierIds?: Array<string | number> | null | undefined;
   expandShipmentDetails?: boolean | null | undefined;
   fieldFilters?: Array<FieldFilterInput> | null | undefined;
   filterGroups?: Array<FilterGroupInput> | null | undefined;
@@ -6649,8 +6665,16 @@ export type ShipmentsInput = {
   quickFilters?: Array<ShipmentQuickFilterInput> | null | undefined;
   sort?: Array<SortFieldInput> | null | undefined;
   status?: string | null | undefined;
+  /** Only shipments with a live stop at one of these locations. */
+  stopLocationIds?: Array<string | number> | null | undefined;
   /** IANA time zone for day and hour quick filters. */
   timezone?: string | null | undefined;
+  /** Only shipments with a live move assigned to one of these tractors. */
+  tractorIds?: Array<string | number> | null | undefined;
+  /** Only shipments with a live move assigned to one of these trailers. */
+  trailerIds?: Array<string | number> | null | undefined;
+  /** Only shipments with a live move one of these workers drives, in either seat. */
+  workerIds?: Array<string | number> | null | undefined;
 };
 
 export type SidebarActivityPreferenceInput = {
@@ -9909,6 +9933,35 @@ export type DeleteCaptureProfileMutationVariables = Exact<{
 
 export type DeleteCaptureProfileMutation = { deleteCaptureProfile: boolean };
 
+export type DeskCarrierCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskCarrierCardQuery = { carrier: { id: string, status: CarrierStatus, code: string, name: string, dbaName: string | null, carrierType: CarrierType, dotNumber: string | null, mcNumber: string | null, scac: string | null, complianceStatus: CarrierComplianceStatus, safetyRating: CarrierSafetyRating, qualifiedAt: number | null, disqualifiedReason: string | null, w9OnFile: boolean, paymentMethod: CarrierPaymentMethod, paymentTermDays: number, remitToName: string | null, addressLine1: string | null, addressLine2: string | null, city: string | null, postalCode: string | null, phone: string | null, email: string | null, externalId: string | null, notes: string | null, intelRiskLevel: string | null, intelReviewRequired: boolean, createdAt: number, state: { abbreviation: string } | null, contacts: Array<{ id: string, name: string, title: string | null, email: string | null, phone: string | null, isPrimary: boolean, receivesRateConfirmations: boolean }> | null, insurancePolicies: Array<{ id: string, policyType: CarrierInsurancePolicyType, policyNumber: string, providerName: string, coverageAmount: string, effectiveDate: number, expirationDate: number, isVerified: boolean }> | null } | null };
+
+export type DeskCarrierEligibilityQueryVariables = Exact<{
+  carrierId: string | number;
+}>;
+
+
+export type DeskCarrierEligibilityQuery = { dispatchCarrierAssignmentPreview: { blockers: Array<string>, warnings: Array<string>, advisories: Array<string>, findings: Array<{ code: string, source: string, severity: string, message: string, requiresOverride: boolean }> } };
+
+export type DeskCarrierIntelQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskCarrierIntelQuery = { carrier: { id: string, intelligence: { id: string, provider: string, notFound: boolean, riskLevel: CarrierIntelRiskLevel, fetchedAt: number, effectiveAsOf: number, profile: { authority: { totalRevocations: number | null, lastRevocationAt: number | null, common: { status: CarrierIntelAuthorityStatus, pending: boolean, revocationPending: boolean, grantedAt: number | null } | null, contract: { status: CarrierIntelAuthorityStatus, pending: boolean, revocationPending: boolean, grantedAt: number | null } | null, broker: { status: CarrierIntelAuthorityStatus, pending: boolean, revocationPending: boolean, grantedAt: number | null } | null } | null, safety: { rating: string | null, ratingDate: number | null, outOfServiceOrder: boolean | null, outOfServiceAt: number | null } | null, basics: Array<{ basic: CsaBasic, measure: number | null, percentile: number | null, threshold: number | null, alert: boolean }> | null } } | null } | null };
+
+export type DeskCarrierSettlementsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount: boolean;
+}>;
+
+
+export type DeskCarrierSettlementsQuery = { carrierSettlements: { totalCount?: number | null, edges: Array<{ node: { id: string, settlementNumber: string, status: CarrierSettlementStatus, periodStart: number, periodEnd: number, payDate: number, netPayableMinor: number, shipmentCount: number, currencyCode: string } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
 export type CarrierIntelFindingFieldsFragment = { code: string, category: CarrierIntelSection, action: CarrierIntelRuleAction, severity: CarrierIntelSeverity, message: string, unverifiable: boolean, unconfirmed: boolean, overridden: boolean, overrideId: string | null, overrideExpiresAt: number | null } & { ' $fragmentName'?: 'CarrierIntelFindingFieldsFragment' };
 
 export type CarrierIntelAddressFieldsFragment = { line1: string | null, city: string | null, state: string | null, postalCode: string | null, country: string | null, undelivered: boolean | null } & { ' $fragmentName'?: 'CarrierIntelAddressFieldsFragment' };
@@ -10523,13 +10576,6 @@ export type DeskCustomerCardQueryVariables = Exact<{
 
 
 export type DeskCustomerCardQuery = { customer: { id: string, status: EntityStatus, code: string, name: string, addressLine1: string | null, addressLine2: string | null, city: string | null, postalCode: string, dotNumber: string | null, mcNumber: string | null, createdAt: number, updatedAt: number, state: { abbreviation: string } | null, billingProfile: { paymentTerm: CustomerPaymentTerm, billingCycle: CustomerBillingCycle, invoiceDelivery: CustomerInvoiceDelivery, emailInvoiceEnabled: boolean, ediInvoiceEnabled: boolean, autoBill: boolean, creditLimit: string | null, creditBalance: string, creditStatus: CustomerCreditStatus, enforceCreditLimit: boolean, creditHoldReason: string, fuelSurchargeMode: CustomerFuelSurchargeMode, billingCurrency: string, requirePONumber: boolean, requireBOLNumber: boolean, requireDeliveryNumber: boolean, taxExempt: boolean, applyLateCharges: boolean, lateChargeRate: string | null, gracePeriodDays: number, billingNotes: string, documentTypes: Array<{ id: string, name: string }> | null } | null } | null };
-
-export type DeskCustomerShipmentsQueryVariables = Exact<{
-  input: ShipmentsInput;
-}>;
-
-
-export type DeskCustomerShipmentsQuery = { shipments: { totalCount: number | null, edges: Array<{ node: { id: string, proNumber: string, status: ShipmentStatus, totalChargeAmount: string, moves: Array<{ sequence: number, stops: Array<{ sequence: number, type: StopType, scheduledWindowStart: number, location: { city: string, state: { abbreviation: string } | null } | null }> }> } }> } };
 
 export type DeskCustomerRateAgreementsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -13093,6 +13139,29 @@ export type LocationCategoryTableQueryVariables = Exact<{
 
 export type LocationCategoryTableQuery = { locationCategories: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'LocationCategoryTableRowFieldsFragment': LocationCategoryTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type DeskLocationCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskLocationCardQuery = { location: { id: string, status: EntityStatus, code: string, name: string, description: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, timezone: string, isGeocoded: boolean, latitude: number | null, longitude: number | null, geofenceType: LocationGeofenceType, geofenceRadiusMeters: number | null, createdAt: number, geofenceVertices: Array<{ latitude: number, longitude: number }>, state: { abbreviation: string } | null, locationCategory: { id: string, name: string, type: LocationCategoryType, facilityType: FacilityType | null, hasSecureParking: boolean, requiresAppointment: boolean, allowsOvernight: boolean, hasRestroom: boolean } | null } | null };
+
+export type DeskLocationDwellQueryVariables = Exact<{
+  locationId: string | number;
+  from: number;
+  to: number;
+}>;
+
+
+export type DeskLocationDwellQuery = { detentionFacilityStats: Array<{ locationId: string, stopCount: number, breachCount: number, avgDwellMinutes: number, medianDwellMinutes: number, p90DwellMinutes: number, billedAmount: string, waivedAmount: string, disputeCount: number }> };
+
+export type DeskLocationPoliciesQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type DeskLocationPoliciesQuery = { detentionPolicies: { totalCount: number | null, edges: Array<{ node: { id: string, name: string, code: string, status: DetentionPolicyStatus, priority: number, customerId: string | null, stopTypes: Array<StopType>, appointmentStopsOnly: boolean, billingFreeMinutes: number, pickupFreeMinutes: number | null, deliveryFreeMinutes: number | null, effectiveStartDate: number | null, effectiveEndDate: number | null } }> } };
+
 export type LocationTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, locationCategoryId: string, stateId: string, status: EntityStatus, code: string, name: string, description: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, latitude: number | null, longitude: number | null, placeId: string, version: number, createdAt: number, updatedAt: number, state: { id: string, name: string, abbreviation: string } | null, locationCategory: { id: string, name: string, color: string } | null } & { ' $fragmentName'?: 'LocationTableRowFieldsFragment' };
 
 export type LocationTableQueryVariables = Exact<{
@@ -13208,6 +13277,13 @@ export type RestoreNotificationsMutationVariables = Exact<{
 
 
 export type RestoreNotificationsMutation = { restoreNotifications: boolean };
+
+export type DeskOrderCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskOrderCardQuery = { order: { id: string, status: OrderStatus, orderNumber: string, poNumber: string | null, bol: string | null, currencyCode: string, quotedAmount: string | null, baseAmount: string | null, totalAmount: string | null, createdAt: number, updatedAt: number, customer: { id: string, code: string, name: string } | null, charges: Array<{ id: string, description: string, amount: string, invoiceId: string | null, invoicedAt: number | null, allocations: Array<{ id: string }> }> } | null };
 
 export type OrderDetailQueryVariables = Exact<{
   id: string | number;
@@ -13715,6 +13791,15 @@ export type RateQuoteTableQueryVariables = Exact<{
 
 export type RateQuoteTableQuery = { rateQuotes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RateQuoteRowFieldsFragment': RateQuoteRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type DeskRecordActivityQueryVariables = Exact<{
+  resourceId: string | number;
+  input: DataTableConnectionInput;
+  includeTotalCount: boolean;
+}>;
+
+
+export type DeskRecordActivityQuery = { auditEntriesByResourceId: { totalCount?: number | null, edges: Array<{ node: { id: string, operation: string, timestamp: number, changes: unknown, comment: string | null, principalType: string, user: { id: string, name: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
 export type RecurringShipmentTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceShipmentId: string, customerId: string | null, originLocationId: string | null, destinationLocationId: string | null, name: string, description: string, status: RecurringShipmentStatus, cronExpression: string, timezone: string, startDate: number | null, endDate: number | null, maxOccurrences: number | null, leadTimeDays: number, skipWeekends: boolean, exceptionPolicy: RecurringShipmentExceptionPolicy, blackoutDates: Array<string> | null, autoGenerate: boolean, nextOccurrenceAt: number | null, lastOccurrenceAt: number | null, lastRunAt: number | null, generationCount: number, consecutiveFailures: number, version: number, createdAt: number, updatedAt: number, customer: { id: string, name: string, code: string } | null, originLocation: { id: string, name: string, code: string } | null, destinationLocation: { id: string, name: string, code: string } | null } & { ' $fragmentName'?: 'RecurringShipmentTableRowFieldsFragment' };
 
 export type RecurringShipmentTableQueryVariables = Exact<{
@@ -14170,6 +14255,23 @@ export type ServiceFailureReasonCodeTableQueryVariables = Exact<{
 
 export type ServiceFailureReasonCodeTableQuery = { serviceFailureReasonCodes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ServiceFailureReasonCodeTableRowFieldsFragment': ServiceFailureReasonCodeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type DeskServiceFailureCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskServiceFailureCardQuery = { serviceFailure: { id: string, shipmentId: string, number: string, type: ServiceFailureType, source: ServiceFailureSource, status: ServiceFailureStatus, stopType: StopType, scheduledCutoff: number, actualArrival: number, gracePeriodMinutes: number, lateMinutes: number, notes: string, internalNotes: string, x12StatusCodeOverride: string, x12ReasonCodeOverride: string, x12ExceptionCode: string, detectedAt: number, reviewedAt: number | null, resolvedAt: number | null, voidedAt: number | null, voidReason: string, createdAt: number, updatedAt: number, createdBy: { id: string, name: string } | null, reviewedBy: { id: string, name: string } | null, resolvedBy: { id: string, name: string } | null, voidedBy: { id: string, name: string } | null, shipment: { id: string, proNumber: string, bol: string | null, customer: { id: string, code: string, name: string } | null } | null, stop: { id: string, type: StopType, sequence: number, location: { id: string, code: string, name: string, addressLine1: string, city: string, postalCode: string, latitude: number | null, longitude: number | null, state: { abbreviation: string } | null } | null } | null, reasonCode: { id: string, code: string, label: string, description: string, category: ServiceFailureReasonCategory } | null } | null };
+
+export type DeskRecordFailuresQueryVariables = Exact<{
+  locationId?: string | number | null | undefined;
+  shipmentId?: string | number | null | undefined;
+  input: DataTableConnectionInput;
+  includeTotalCount: boolean;
+}>;
+
+
+export type DeskRecordFailuresQuery = { serviceFailures: { totalCount?: number | null, edges: Array<{ node: { id: string, number: string, type: ServiceFailureType, status: ServiceFailureStatus, stopType: StopType, lateMinutes: number, actualArrival: number, shipment: { id: string, proNumber: string } | null, stop: { id: string, location: { id: string, name: string, city: string, state: { abbreviation: string } | null } | null } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
 export type ServiceFailureTableRowFieldsFragment = { id: string, shipmentId: string, shipmentMoveId: string, number: string, type: ServiceFailureType, source: ServiceFailureSource, status: ServiceFailureStatus, stopType: StopType, stopId: string, scheduledCutoff: number, actualArrival: number, gracePeriodMinutes: number, lateMinutes: number, reasonCodeId: string | null, notes: string, internalNotes: string, x12StatusCodeOverride: string, x12ReasonCodeOverride: string, x12ExceptionCode: string, detectedAt: number, version: number, shipment: { id: string, proNumber: string, bol: string | null } | null, stop: { id: string, type: StopType, sequence: number, locationId: string, location: { id: string, name: string, code: string, city: string, state: { abbreviation: string } | null } | null } | null, reasonCode: { id: string, code: string, label: string } | null } & { ' $fragmentName'?: 'ServiceFailureTableRowFieldsFragment' };
 
 export type ServiceFailureTableQueryVariables = Exact<{
@@ -14299,6 +14401,14 @@ export type NotifyShipmentDelayMutationVariables = Exact<{
 
 
 export type NotifyShipmentDelayMutation = { notifyShipmentDelay: boolean };
+
+export type DeskRecordShipmentsQueryVariables = Exact<{
+  input: ShipmentsInput;
+  includeTotalCount: boolean;
+}>;
+
+
+export type DeskRecordShipmentsQuery = { shipments: { totalCount?: number | null, edges: Array<{ node: { id: string, proNumber: string, status: ShipmentStatus, totalChargeAmount: string, moves: Array<{ sequence: number, stops: Array<{ sequence: number, type: StopType, scheduledWindowStart: number, location: { city: string, state: { abbreviation: string } | null } | null }> }> } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type ShipmentUserFieldsFragment = { id: string, name: string, username: string, emailAddress: string, timezone: string, status: EntityStatus, profilePicUrl: string, thumbnailUrl: string } & { ' $fragmentName'?: 'ShipmentUserFieldsFragment' };
 
@@ -15030,6 +15140,37 @@ export type VoidPayrollExportMutationVariables = Exact<{
 
 export type VoidPayrollExportMutation = { voidPayrollExport: { id: string, status: PayrollExportStatus, voidedAt: number | null } };
 
+export type DeskTractorCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskTractorCardQuery = { tractor: { id: string, code: string, status: EquipmentStatus, make: string, model: string, year: number | null, vin: string, licensePlateNumber: string, registrationNumber: string, registrationExpiry: number | null, externalId: string, fuelType: IftaFuelType, iftaQualified: boolean, ownershipType: EquipmentOwnershipType, lessorName: string, leaseReference: string, leaseEndDate: number | null, createdAt: number, state: { abbreviation: string } | null, equipmentType: { id: string, code: string, description: string } | null, equipmentManufacturer: { id: string, name: string } | null, fleetCode: { id: string, code: string } | null, primaryWorker: { id: string, firstName: string, lastName: string } | null, secondaryWorker: { id: string, firstName: string, lastName: string } | null, ownerWorker: { id: string, firstName: string, lastName: string } | null, lastKnownLocation: { id: string, name: string, latitude: number | null, longitude: number | null } | null } | null };
+
+export type DeskTractorPositionQueryVariables = Exact<{
+  tractorId: string | number;
+}>;
+
+
+export type DeskTractorPositionQuery = { vehiclePosition: { latitude: number, longitude: number, headingDegrees: number, speedMph: number, engineState: string | null, fuelPercent: number | null, odometerMeters: number | null, formattedLocation: string | null, recordedAt: number } | null };
+
+export type DeskTractorInspectionsQueryVariables = Exact<{
+  tractorId: string | number;
+  limit: number;
+  before?: number | null | undefined;
+  beforeId?: string | number | null | undefined;
+}>;
+
+
+export type DeskTractorInspectionsQuery = { vehicleInspections: Array<{ id: string, inspectionType: string, safetyStatus: string, workerName: string | null, startedAt: number, location: string | null, odometerMeters: number | null, defectCount: number, unresolvedDefectCount: number }> };
+
+export type DeskTrailerCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskTrailerCardQuery = { trailer: { id: string, code: string, status: EquipmentStatus, make: string, model: string, year: number | null, vin: string, licensePlateNumber: string, registrationNumber: string, registrationExpiry: number | null, lastInspectionDate: number | null, maxLoadWeight: number | null, externalId: string, ownershipType: EquipmentOwnershipType, lessorName: string, leaseReference: string, leaseEndDate: number | null, createdAt: number, registrationState: { abbreviation: string } | null, equipmentType: { id: string, code: string, description: string } | null, equipmentManufacturer: { id: string, name: string } | null, fleetCode: { id: string, code: string } | null, ownerWorker: { id: string, firstName: string, lastName: string } | null, lastKnownLocation: { id: string, name: string, latitude: number | null, longitude: number | null } | null } | null };
+
 export type UserTableRowFieldsFragment = { id: string, businessUnitId: string, currentOrganizationId: string, status: EntityStatus, name: string, username: string, emailAddress: string, profilePicUrl: string, thumbnailUrl: string, timezone: string, isLocked: boolean, mustChangePassword: boolean, version: number, lastLoginAt: number | null, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'UserTableRowFieldsFragment' };
 
 export type UserTableQueryVariables = Exact<{
@@ -15282,6 +15423,35 @@ export type AttachWorkerCredentialDocumentMutationVariables = Exact<{
 
 
 export type AttachWorkerCredentialDocumentMutation = { attachWorkerCredentialDocument: { ' $fragmentRefs'?: { 'WorkerCredentialFieldsFragment': WorkerCredentialFieldsFragment } } };
+
+export type DeskWorkerCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskWorkerCardQuery = { worker: { id: string, status: EntityStatus, type: WorkerType, driverType: DriverType, firstName: string, lastName: string, phoneNumber: string, email: string, city: string, externalId: string, assignmentBlocked: string, canBeAssigned: boolean, availableForDispatch: boolean, createdAt: number, state: { abbreviation: string } | null, fleetCode: { id: string, code: string } | null, manager: { id: string, name: string } | null, profile: { licenseNumber: string, cdlClass: CdlClass, cdlRestrictions: string, endorsement: EndorsementType, licenseExpiry: number, hazmatExpiry: number | null, medicalCardExpiry: number | null, twicExpiry: number | null, physicalDueDate: number | null, mvrDueDate: number | null, hireDate: number, isQualified: boolean, disqualificationReason: string, licenseState: { abbreviation: string } | null } | null } | null };
+
+export type DeskWorkerHosQueryVariables = Exact<{
+  workerId: string | number;
+  violations: number;
+}>;
+
+
+export type DeskWorkerHosQuery = { workerHosState: { dutyStatus: string | null, driveRemainingMs: number, driveLimitMs: number, shiftRemainingMs: number, shiftLimitMs: number, cycleRemainingMs: number, cycleLimitMs: number, breakRemainingMs: number, breakLimitMs: number, currentTractorId: string | null, rulesetCycle: string | null, recordedAt: number } | null, workerHosViolations: Array<{ violationType: string, description: string | null, durationMs: number, violationStartAt: number }> };
+
+export type DeskWorkerStandingQueryVariables = Exact<{
+  workerId: string | number;
+}>;
+
+
+export type DeskWorkerStandingQuery = { workerOverview: { standing: WorkerStanding, concerns: Array<{ severity: WorkerConcernSeverity, code: string, headline: string, detail: string }> } };
+
+export type DeskWorkerCredentialsQueryVariables = Exact<{
+  workerId: string | number;
+}>;
+
+
+export type DeskWorkerCredentialsQuery = { workerCredentialSummary: { items: Array<{ health: WorkerCredentialHealth, daysUntilExpiry: number | null, required: boolean, credentialType: { id: string, name: string, profileField: string | null }, credential: { id: string, expiresAt: number | null } | null }> } };
 
 export type DriverQualificationFileQueryVariables = Exact<{
   workerId: string | number;
@@ -25845,6 +26015,10 @@ export const RevokeCaptureDeviceDocument = {"__meta__":{"kind":"mutation","name"
 export const CreateCaptureProfileDocument = {"__meta__":{"kind":"mutation","name":"CreateCaptureProfile","hash":"sha256:f164652c5c381d1301d9449d1623dffe9ddba96c450c61815b9f4d71e3ec473b"}} as unknown as TypedDocumentString<CreateCaptureProfileMutation, CreateCaptureProfileMutationVariables>;
 export const UpdateCaptureProfileDocument = {"__meta__":{"kind":"mutation","name":"UpdateCaptureProfile","hash":"sha256:906331e1953ab30bbb168a6963ec72cd98e087a9c7578f438d087d7ea6e90c7b"}} as unknown as TypedDocumentString<UpdateCaptureProfileMutation, UpdateCaptureProfileMutationVariables>;
 export const DeleteCaptureProfileDocument = {"__meta__":{"kind":"mutation","name":"DeleteCaptureProfile","hash":"sha256:cb6a096217b18ad0fa8d5e532e70b09329738262494bfb7a7f348a488e1c18cb"}} as unknown as TypedDocumentString<DeleteCaptureProfileMutation, DeleteCaptureProfileMutationVariables>;
+export const DeskCarrierCardDocument = {"__meta__":{"kind":"query","name":"DeskCarrierCard","hash":"sha256:e2c9ecb82adffabead4f5fa05fffda23b2d62edf912f359397b420922b8dda63"}} as unknown as TypedDocumentString<DeskCarrierCardQuery, DeskCarrierCardQueryVariables>;
+export const DeskCarrierEligibilityDocument = {"__meta__":{"kind":"query","name":"DeskCarrierEligibility","hash":"sha256:f02d82768c013c8b18898f2d43d82798a53fc3b8f2dcb90878a35a4399adeb16"}} as unknown as TypedDocumentString<DeskCarrierEligibilityQuery, DeskCarrierEligibilityQueryVariables>;
+export const DeskCarrierIntelDocument = {"__meta__":{"kind":"query","name":"DeskCarrierIntel","hash":"sha256:4559c1ab96c04567884bc29d6dc12b76127e87db7c6aa764cfd505d390f638b5"}} as unknown as TypedDocumentString<DeskCarrierIntelQuery, DeskCarrierIntelQueryVariables>;
+export const DeskCarrierSettlementsDocument = {"__meta__":{"kind":"query","name":"DeskCarrierSettlements","hash":"sha256:2badc709e114e0a815d2f590fba2c865eadea95687dd1d680ddebb8c4084125c"}} as unknown as TypedDocumentString<DeskCarrierSettlementsQuery, DeskCarrierSettlementsQueryVariables>;
 export const CarrierIntelSettingsDocument = {"__meta__":{"kind":"query","name":"CarrierIntelSettings","hash":"sha256:4a7babaf1487c88a6bd87dffabb128a4aa3596f4588b785dc0d829fb13ae17c6"}} as unknown as TypedDocumentString<CarrierIntelSettingsQuery, CarrierIntelSettingsQueryVariables>;
 export const CarrierIntelCostEstimateDocument = {"__meta__":{"kind":"query","name":"CarrierIntelCostEstimate","hash":"sha256:bdbf9851d96a8afa735c9a57aa94a2cb1178adc0ad769eae1dcbfe566a39af79"}} as unknown as TypedDocumentString<CarrierIntelCostEstimateQuery, CarrierIntelCostEstimateQueryVariables>;
 export const CarrierIntelUsageDocument = {"__meta__":{"kind":"query","name":"CarrierIntelUsage","hash":"sha256:2781e60e21bd7c2e05802c14748eddc0b97a4f3f22d6d7dfda25f5aefd9d4d63"}} as unknown as TypedDocumentString<CarrierIntelUsageQuery, CarrierIntelUsageQueryVariables>;
@@ -25924,7 +26098,6 @@ export const PostAndApplyCustomerPaymentDocument = {"__meta__":{"kind":"mutation
 export const ApplyUnappliedCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"ApplyUnappliedCustomerPayment","hash":"sha256:1c0798232c1c035894870e85c421a9f0f214ff7407eb9f35155cfd9b87a9b4e0"}} as unknown as TypedDocumentString<ApplyUnappliedCustomerPaymentMutation, ApplyUnappliedCustomerPaymentMutationVariables>;
 export const ReverseCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"ReverseCustomerPayment","hash":"sha256:fe84be95798f92734cec53df3348b8593909fafde378deb329d583affe25145f"}} as unknown as TypedDocumentString<ReverseCustomerPaymentMutation, ReverseCustomerPaymentMutationVariables>;
 export const DeskCustomerCardDocument = {"__meta__":{"kind":"query","name":"DeskCustomerCard","hash":"sha256:f9392e6e7b40d6562977857131ff16dbaf3bfcbc0d21b2512c1acec7fbd6176f"}} as unknown as TypedDocumentString<DeskCustomerCardQuery, DeskCustomerCardQueryVariables>;
-export const DeskCustomerShipmentsDocument = {"__meta__":{"kind":"query","name":"DeskCustomerShipments","hash":"sha256:d1e1c514368e82ef2b04e590a6463b19cb3d232effffabea1c941a16b48d5965"}} as unknown as TypedDocumentString<DeskCustomerShipmentsQuery, DeskCustomerShipmentsQueryVariables>;
 export const DeskCustomerRateAgreementsDocument = {"__meta__":{"kind":"query","name":"DeskCustomerRateAgreements","hash":"sha256:1ba242b68d29998af524f262662b0017f695a8e36d48900f2a6969c1b19bce2e"}} as unknown as TypedDocumentString<DeskCustomerRateAgreementsQuery, DeskCustomerRateAgreementsQueryVariables>;
 export const CustomerTableDocument = {"__meta__":{"kind":"query","name":"CustomerTable","hash":"sha256:5ac4908d539bd6bee48049a6729a62ad4ac0e1a6a6c7e4ddf366f208b533ef1b"}} as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
 export const DataTableInsightFieldsDocument = {"__meta__":{"kind":"query","name":"DataTableInsightFields","hash":"sha256:22fecf32b7271231ed11fa6894b1067fa462fe7647a51aec3ce2573a6dead073"}} as unknown as TypedDocumentString<DataTableInsightFieldsQuery, DataTableInsightFieldsQueryVariables>;
@@ -26255,6 +26428,9 @@ export const JournalReversalTableDocument = {"__meta__":{"kind":"query","name":"
 export const JurisdictionRuleOverrideTableDocument = {"__meta__":{"kind":"query","name":"JurisdictionRuleOverrideTable","hash":"sha256:308688c1ff8677796acd9575f32c4ad0d890bbee12abccbf63e5c3ec5804c11e"}} as unknown as TypedDocumentString<JurisdictionRuleOverrideTableQuery, JurisdictionRuleOverrideTableQueryVariables>;
 export const JurisdictionRuleTableDocument = {"__meta__":{"kind":"query","name":"JurisdictionRuleTable","hash":"sha256:d4c8d8690aaf40f0f90a9fb47da5503d91df2371c1a129a4f12eae53e42f09e8"}} as unknown as TypedDocumentString<JurisdictionRuleTableQuery, JurisdictionRuleTableQueryVariables>;
 export const LocationCategoryTableDocument = {"__meta__":{"kind":"query","name":"LocationCategoryTable","hash":"sha256:5ca16e1292c673eceb32a9d1189fe4af156f3ffa10b7088854e40761fbf5e1bf"}} as unknown as TypedDocumentString<LocationCategoryTableQuery, LocationCategoryTableQueryVariables>;
+export const DeskLocationCardDocument = {"__meta__":{"kind":"query","name":"DeskLocationCard","hash":"sha256:60f3d8fe71ac91442e6d7d08664494096af9b149530f463387d539942b9b33c2"}} as unknown as TypedDocumentString<DeskLocationCardQuery, DeskLocationCardQueryVariables>;
+export const DeskLocationDwellDocument = {"__meta__":{"kind":"query","name":"DeskLocationDwell","hash":"sha256:e20a73f20cd00cdb0229ddf91edab379cc659ec10c8c53d3c493d2500a1eed10"}} as unknown as TypedDocumentString<DeskLocationDwellQuery, DeskLocationDwellQueryVariables>;
+export const DeskLocationPoliciesDocument = {"__meta__":{"kind":"query","name":"DeskLocationPolicies","hash":"sha256:af2e7d401b0fca0f608c9c7d176fe5db6e6284a7e59d10d19b84909f5923dd2e"}} as unknown as TypedDocumentString<DeskLocationPoliciesQuery, DeskLocationPoliciesQueryVariables>;
 export const LocationTableDocument = {"__meta__":{"kind":"query","name":"LocationTable","hash":"sha256:db0953dee7cb9ece4aa05feb18d26f2986a6636cc3ad0b168e41c7ece0e7bd43"}} as unknown as TypedDocumentString<LocationTableQuery, LocationTableQueryVariables>;
 export const ManualJournalTableDocument = {"__meta__":{"kind":"query","name":"ManualJournalTable","hash":"sha256:8cd46bc08994ea9aee268bf5b08a578d5a39f6d8628919ae255b58c350fabebf"}} as unknown as TypedDocumentString<ManualJournalTableQuery, ManualJournalTableQueryVariables>;
 export const NotificationListDocument = {"__meta__":{"kind":"query","name":"NotificationList","hash":"sha256:d495edf2331e2fb69b5bfd7c646882ba80f82d2b859e740d86606ece6b83aac5"}} as unknown as TypedDocumentString<NotificationListQuery, NotificationListQueryVariables>;
@@ -26271,6 +26447,7 @@ export const MarkNotificationsUnreadDocument = {"__meta__":{"kind":"mutation","n
 export const MarkAllNotificationsReadDocument = {"__meta__":{"kind":"mutation","name":"MarkAllNotificationsRead","hash":"sha256:e919497b911d73638f8329785ecb0b4b48a247bb6d037bf89b2a498c5bca336d"}} as unknown as TypedDocumentString<MarkAllNotificationsReadMutation, MarkAllNotificationsReadMutationVariables>;
 export const DismissNotificationsDocument = {"__meta__":{"kind":"mutation","name":"DismissNotifications","hash":"sha256:762abd6aba103c349367b7834a0e909dd2e06b9d5c1a33f71a4467431db83d50"}} as unknown as TypedDocumentString<DismissNotificationsMutation, DismissNotificationsMutationVariables>;
 export const RestoreNotificationsDocument = {"__meta__":{"kind":"mutation","name":"RestoreNotifications","hash":"sha256:e97ca2a47ac7291064a1651afaf8807310b842b010cc23d5b383cab58018d6e1"}} as unknown as TypedDocumentString<RestoreNotificationsMutation, RestoreNotificationsMutationVariables>;
+export const DeskOrderCardDocument = {"__meta__":{"kind":"query","name":"DeskOrderCard","hash":"sha256:1af2ca0371a6d7d8a919ad6b7217635f87cb481a2036748d961db8af230d299f"}} as unknown as TypedDocumentString<DeskOrderCardQuery, DeskOrderCardQueryVariables>;
 export const OrderDetailDocument = {"__meta__":{"kind":"query","name":"OrderDetail","hash":"sha256:8489d71b0ee45ca376e2ab63d2529afca382b8700c267e32f57abd116e6af645"}} as unknown as TypedDocumentString<OrderDetailQuery, OrderDetailQueryVariables>;
 export const AttachOrderShipmentsDocument = {"__meta__":{"kind":"mutation","name":"AttachOrderShipments","hash":"sha256:c5dd0f391421cd1c7def4a849abaf9630283cc0b9b5c4ad83164f677b79273a9"}} as unknown as TypedDocumentString<AttachOrderShipmentsMutation, AttachOrderShipmentsMutationVariables>;
 export const DetachOrderShipmentDocument = {"__meta__":{"kind":"mutation","name":"DetachOrderShipment","hash":"sha256:5a7b3fa35274ee455c2c6c8eb92842cbf663284cf5639cbc0c4dea9d7350984c"}} as unknown as TypedDocumentString<DetachOrderShipmentMutation, DetachOrderShipmentMutationVariables>;
@@ -26335,6 +26512,7 @@ export const RateAgreementTableDocument = {"__meta__":{"kind":"query","name":"Ra
 export const RateZoneTableDocument = {"__meta__":{"kind":"query","name":"RateZoneTable","hash":"sha256:5c85f76694ab5702f5ea01ffaae7a1b360b3f9f4845cb21d3230f95cf45bd3d8"}} as unknown as TypedDocumentString<RateZoneTableQuery, RateZoneTableQueryVariables>;
 export const RateMatrixTableDocument = {"__meta__":{"kind":"query","name":"RateMatrixTable","hash":"sha256:65be740d59f9fe8439905de2e2b2a65d1a468902d99009a28fb0577333ddd82f"}} as unknown as TypedDocumentString<RateMatrixTableQuery, RateMatrixTableQueryVariables>;
 export const RateQuoteTableDocument = {"__meta__":{"kind":"query","name":"RateQuoteTable","hash":"sha256:88e2aef95489941a0c4ba7d6658c28748e949efb2bc7e48800463e41a8406141"}} as unknown as TypedDocumentString<RateQuoteTableQuery, RateQuoteTableQueryVariables>;
+export const DeskRecordActivityDocument = {"__meta__":{"kind":"query","name":"DeskRecordActivity","hash":"sha256:126f8ab49f988b55d4618a79d275470be43e07dca41e8e7c663ea8cbb8211c8b"}} as unknown as TypedDocumentString<DeskRecordActivityQuery, DeskRecordActivityQueryVariables>;
 export const RecurringShipmentTableDocument = {"__meta__":{"kind":"query","name":"RecurringShipmentTable","hash":"sha256:39b9629192b6601cb0ad2d676939a2f409a667373cf616f7bc85fb478d36c6d7"}} as unknown as TypedDocumentString<RecurringShipmentTableQuery, RecurringShipmentTableQueryVariables>;
 export const CannedReportsDocument = {"__meta__":{"kind":"query","name":"CannedReports","hash":"sha256:597b62a2e0291d15c7fc013e195a15594efb4e35e2b82183a24c791037994b27"}} as unknown as TypedDocumentString<CannedReportsQuery, CannedReportsQueryVariables>;
 export const ReportCatalogDocument = {"__meta__":{"kind":"query","name":"ReportCatalog","hash":"sha256:79e369a4fec3bb0d7d5c6975d5782adb517ddeb55868c86d31e6f644f12d2d39"}} as unknown as TypedDocumentString<ReportCatalogQuery, ReportCatalogQueryVariables>;
@@ -26394,6 +26572,8 @@ export const CreateWorkerPolicyDocument = {"__meta__":{"kind":"mutation","name":
 export const UpdateWorkerPolicyDocument = {"__meta__":{"kind":"mutation","name":"UpdateWorkerPolicy","hash":"sha256:d3f5e0446b95e5f7fdc703eedca4eb8c8a794d16c3491b3163e8fae37605e7dc"}} as unknown as TypedDocumentString<UpdateWorkerPolicyMutation, UpdateWorkerPolicyMutationVariables>;
 export const DecideProfileChangeDocument = {"__meta__":{"kind":"mutation","name":"DecideProfileChange","hash":"sha256:b9fbfae26045f2d782234256da0675b4132c549dd45627b12b64d0da7a15c767"}} as unknown as TypedDocumentString<DecideProfileChangeMutation, DecideProfileChangeMutationVariables>;
 export const ServiceFailureReasonCodeTableDocument = {"__meta__":{"kind":"query","name":"ServiceFailureReasonCodeTable","hash":"sha256:041698d7f51840151afa5a8fb10ceb205540001dc66ed1969c2366060585b3aa"}} as unknown as TypedDocumentString<ServiceFailureReasonCodeTableQuery, ServiceFailureReasonCodeTableQueryVariables>;
+export const DeskServiceFailureCardDocument = {"__meta__":{"kind":"query","name":"DeskServiceFailureCard","hash":"sha256:cf91522df33cf577a105a49de7c61a898d6442db2d0cb5db4791044e3841b4d9"}} as unknown as TypedDocumentString<DeskServiceFailureCardQuery, DeskServiceFailureCardQueryVariables>;
+export const DeskRecordFailuresDocument = {"__meta__":{"kind":"query","name":"DeskRecordFailures","hash":"sha256:73202f49b3a51561641b75de0472e21508dfd5b2b9b2befbce2a1e2bcda6977c"}} as unknown as TypedDocumentString<DeskRecordFailuresQuery, DeskRecordFailuresQueryVariables>;
 export const ServiceFailureTableDocument = {"__meta__":{"kind":"query","name":"ServiceFailureTable","hash":"sha256:802d21c82ae8c40acf8a3e43537d88efc7781983e248ad672961a74b46c52bd0"}} as unknown as TypedDocumentString<ServiceFailureTableQuery, ServiceFailureTableQueryVariables>;
 export const ServiceTypeTableDocument = {"__meta__":{"kind":"query","name":"ServiceTypeTable","hash":"sha256:ba2cc0fdc314c6c3e25d306f5ad63a4c09ac96b537a0bf60b874ea22eec70682"}} as unknown as TypedDocumentString<ServiceTypeTableQuery, ServiceTypeTableQueryVariables>;
 export const ShipmentTypeTableDocument = {"__meta__":{"kind":"query","name":"ShipmentTypeTable","hash":"sha256:2be2cf7c6760639a92a3977f36a489f31e14b4c27edae1049a9589cce837a534"}} as unknown as TypedDocumentString<ShipmentTypeTableQuery, ShipmentTypeTableQueryVariables>;
@@ -26411,6 +26591,7 @@ export const TenderShipmentsDocument = {"__meta__":{"kind":"mutation","name":"Te
 export const DecideShipmentSuggestionDocument = {"__meta__":{"kind":"mutation","name":"DecideShipmentSuggestion","hash":"sha256:c58d215bd70ddacae5cb7bb1db402fe00f516e3b02750be051dba50a8fb157a8"}} as unknown as TypedDocumentString<DecideShipmentSuggestionMutation, DecideShipmentSuggestionMutationVariables>;
 export const UndoShipmentSuggestionDecisionDocument = {"__meta__":{"kind":"mutation","name":"UndoShipmentSuggestionDecision","hash":"sha256:70cabba6bbcd1f39dd47f1d0d7c1458757280bef6239eab04b33a90166f9ad16"}} as unknown as TypedDocumentString<UndoShipmentSuggestionDecisionMutation, UndoShipmentSuggestionDecisionMutationVariables>;
 export const NotifyShipmentDelayDocument = {"__meta__":{"kind":"mutation","name":"NotifyShipmentDelay","hash":"sha256:ac9e4fcb73800c23f82a4b48d988a24a084b6aca45e5d9747b7a7c04a0ad7183"}} as unknown as TypedDocumentString<NotifyShipmentDelayMutation, NotifyShipmentDelayMutationVariables>;
+export const DeskRecordShipmentsDocument = {"__meta__":{"kind":"query","name":"DeskRecordShipments","hash":"sha256:a9cf9b623392f2f14bab6db16dee4c7dd368b5429c28393ac5e79f0d133fc4d1"}} as unknown as TypedDocumentString<DeskRecordShipmentsQuery, DeskRecordShipmentsQueryVariables>;
 export const ShipmentBoardTableDocument = {"__meta__":{"kind":"query","name":"ShipmentBoardTable","hash":"sha256:173bd6b0bd2951dbc6f0f2c7e7b37f107eacaac97bad99d7c9164a18742d58e6"}} as unknown as TypedDocumentString<ShipmentBoardTableQuery, ShipmentBoardTableQueryVariables>;
 export const ShipmentDetailDocument = {"__meta__":{"kind":"query","name":"ShipmentDetail","hash":"sha256:e4cea406adc9fa670c66e4b1e33216c5ba72cea42a2c3e84de2b8692b14a02f3"}} as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
 export const ShipmentPageAnalyticsDocument = {"__meta__":{"kind":"query","name":"ShipmentPageAnalytics","hash":"sha256:7781708ca578b5c735008b859ff154d5a6cdebb8449afb02f5abf4fdc1cf3214"}} as unknown as TypedDocumentString<ShipmentPageAnalyticsQuery, ShipmentPageAnalyticsQueryVariables>;
@@ -26498,6 +26679,10 @@ export const DeleteTimeEntryDocument = {"__meta__":{"kind":"mutation","name":"De
 export const TransitionTimesheetDocument = {"__meta__":{"kind":"mutation","name":"TransitionTimesheet","hash":"sha256:dfc4ed27650848f5717c720bb246c172df69fe44f78a9cce0061aa8dcd68ea01"}} as unknown as TypedDocumentString<TransitionTimesheetMutation, TransitionTimesheetMutationVariables>;
 export const GeneratePayrollExportDocument = {"__meta__":{"kind":"mutation","name":"GeneratePayrollExport","hash":"sha256:d2e6498db231b0929eaae44b9fec9404182112f932187530c9b5d214f16cb761"}} as unknown as TypedDocumentString<GeneratePayrollExportMutation, GeneratePayrollExportMutationVariables>;
 export const VoidPayrollExportDocument = {"__meta__":{"kind":"mutation","name":"VoidPayrollExport","hash":"sha256:91d91e0679fb937df8c50be37f8d75aa727a2a797c7a9a886e9afe3e903b89c2"}} as unknown as TypedDocumentString<VoidPayrollExportMutation, VoidPayrollExportMutationVariables>;
+export const DeskTractorCardDocument = {"__meta__":{"kind":"query","name":"DeskTractorCard","hash":"sha256:7e891cf8b78a2c790d256fc2a4d6f22a889904c19d0eef1b48a232741c3df9a1"}} as unknown as TypedDocumentString<DeskTractorCardQuery, DeskTractorCardQueryVariables>;
+export const DeskTractorPositionDocument = {"__meta__":{"kind":"query","name":"DeskTractorPosition","hash":"sha256:f8521c1294e9d33869acf4c29b2a57a566f712b6ee39f5dcde29bd8ec24a0bba"}} as unknown as TypedDocumentString<DeskTractorPositionQuery, DeskTractorPositionQueryVariables>;
+export const DeskTractorInspectionsDocument = {"__meta__":{"kind":"query","name":"DeskTractorInspections","hash":"sha256:2742f209aa41823b96826c84706fea9b44f24df2dc30cb10b92e518b2f65a325"}} as unknown as TypedDocumentString<DeskTractorInspectionsQuery, DeskTractorInspectionsQueryVariables>;
+export const DeskTrailerCardDocument = {"__meta__":{"kind":"query","name":"DeskTrailerCard","hash":"sha256:0a228b3ed6cf7d63b60e5ab74e5316d0db769b5c08ecec9ccf5df21e0e74682c"}} as unknown as TypedDocumentString<DeskTrailerCardQuery, DeskTrailerCardQueryVariables>;
 export const UserTableDocument = {"__meta__":{"kind":"query","name":"UserTable","hash":"sha256:40300ce9b4742ab9f0008bfa9e6af539b18334e725df797823f41d75af2f3b48"}} as unknown as TypedDocumentString<UserTableQuery, UserTableQueryVariables>;
 export const WatchtowerFeedDocument = {"__meta__":{"kind":"query","name":"WatchtowerFeed","hash":"sha256:ceca8b044fbd37d9f5a5e86dbe6d66b6b6c8696ba19d2ac18418fde175b16e37"}} as unknown as TypedDocumentString<WatchtowerFeedQuery, WatchtowerFeedQueryVariables>;
 export const WatchtowerCountsDocument = {"__meta__":{"kind":"query","name":"WatchtowerCounts","hash":"sha256:9abddd9875a5ae7d5580f430cbfc811d4c5b7f7058e05d91b7555b02b5018b1e"}} as unknown as TypedDocumentString<WatchtowerCountsQuery, WatchtowerCountsQueryVariables>;
@@ -26530,6 +26715,10 @@ export const UpdateWorkerCredentialDocument = {"__meta__":{"kind":"mutation","na
 export const VerifyWorkerCredentialDocument = {"__meta__":{"kind":"mutation","name":"VerifyWorkerCredential","hash":"sha256:0c01bb1bc452347831f5d0cad19075b7d183fafb2512c618ca4cb9341adce768"}} as unknown as TypedDocumentString<VerifyWorkerCredentialMutation, VerifyWorkerCredentialMutationVariables>;
 export const ArchiveWorkerCredentialDocument = {"__meta__":{"kind":"mutation","name":"ArchiveWorkerCredential","hash":"sha256:f2fb9b04e7db4c0c4d0e5ad5fae584f6b22821a0cb94431a0471da4d200f4591"}} as unknown as TypedDocumentString<ArchiveWorkerCredentialMutation, ArchiveWorkerCredentialMutationVariables>;
 export const AttachWorkerCredentialDocumentDocument = {"__meta__":{"kind":"mutation","name":"AttachWorkerCredentialDocument","hash":"sha256:c8fdce1ebd201267552bef9db629a8bac5798e0cf8dc4647efb93c4a0b4469e0"}} as unknown as TypedDocumentString<AttachWorkerCredentialDocumentMutation, AttachWorkerCredentialDocumentMutationVariables>;
+export const DeskWorkerCardDocument = {"__meta__":{"kind":"query","name":"DeskWorkerCard","hash":"sha256:6763db3f6248e12214d70b327693f51bcf290b9ec526b9a6db12d18874fb1287"}} as unknown as TypedDocumentString<DeskWorkerCardQuery, DeskWorkerCardQueryVariables>;
+export const DeskWorkerHosDocument = {"__meta__":{"kind":"query","name":"DeskWorkerHos","hash":"sha256:052f005b2bc8a4a4d757341f84b42a36d9dda1fbf297008fda59b01b2405a551"}} as unknown as TypedDocumentString<DeskWorkerHosQuery, DeskWorkerHosQueryVariables>;
+export const DeskWorkerStandingDocument = {"__meta__":{"kind":"query","name":"DeskWorkerStanding","hash":"sha256:5d3f4cbe57764e3d7c1b243f21d3d3c710ac6aeca4438a21988cd9c0afe9854e"}} as unknown as TypedDocumentString<DeskWorkerStandingQuery, DeskWorkerStandingQueryVariables>;
+export const DeskWorkerCredentialsDocument = {"__meta__":{"kind":"query","name":"DeskWorkerCredentials","hash":"sha256:bd9f70fe8574c0fbd1d423a03e71cb9f999fd4b5951a391a62dbfb57886f8480"}} as unknown as TypedDocumentString<DeskWorkerCredentialsQuery, DeskWorkerCredentialsQueryVariables>;
 export const DriverQualificationFileDocument = {"__meta__":{"kind":"query","name":"DriverQualificationFile","hash":"sha256:c327cd209c4906e271ec4c2f0d0467fcd9206ef1e6ba8f3c9390a1bb30ac9a01"}} as unknown as TypedDocumentString<DriverQualificationFileQuery, DriverQualificationFileQueryVariables>;
 export const OutstandingEmploymentVerificationsDocument = {"__meta__":{"kind":"query","name":"OutstandingEmploymentVerifications","hash":"sha256:acfb692dd34077cb99269bfc9fb5f58d281c2c77d5be71c225d894ba2d49dec2"}} as unknown as TypedDocumentString<OutstandingEmploymentVerificationsQuery, OutstandingEmploymentVerificationsQueryVariables>;
 export const DqfRetentionCandidatesDocument = {"__meta__":{"kind":"query","name":"DqfRetentionCandidates","hash":"sha256:3bbff8bf13ac7e808446b33d7476ca6da5ad3290af1d5bee5937188efd342d2c"}} as unknown as TypedDocumentString<DqfRetentionCandidatesQuery, DqfRetentionCandidatesQueryVariables>;

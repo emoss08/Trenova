@@ -360,3 +360,40 @@ func TestStaticFieldMapperIntegration(t *testing.T) {
 	_, hasSearchVector := fm["searchVector"]
 	assert.False(t, hasSearchVector, "searchVector should not be in FieldMap (json:\"-\")")
 }
+
+func TestGetByID_LoadsTheManagerFleetAndLicenseStateItIsAskedFor(t *testing.T) {
+	repo, data, cleanup := setupRepo(t)
+	t.Cleanup(cleanup)
+	ctx := t.Context()
+
+	entity := newTestWorker(data)
+	entity.ManagerID = data.User.ID
+	entity.Profile.LicenseStateID = data.State.ID
+	created, err := repo.Create(ctx, entity)
+	require.NoError(t, err)
+	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
+
+	full, err := repo.GetByID(ctx, workerports.GetWorkerByIDRequest{
+		ID:                  created.ID,
+		TenantInfo:          tenant,
+		IncludeProfile:      true,
+		IncludeFleetCode:    true,
+		IncludeManager:      true,
+		IncludeLicenseState: true,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, full.Manager)
+	assert.Equal(t, data.User.ID, full.Manager.ID)
+	require.NotNil(t, full.Profile)
+	require.NotNil(t, full.Profile.LicenseState)
+	assert.Equal(t, data.State.ID, full.Profile.LicenseState.ID)
+	assert.Nil(t, full.FleetCode)
+
+	bare, err := repo.GetByID(ctx, workerports.GetWorkerByIDRequest{
+		ID:         created.ID,
+		TenantInfo: tenant,
+	})
+	require.NoError(t, err)
+	assert.Nil(t, bare.Manager)
+	assert.Nil(t, bare.Profile)
+}

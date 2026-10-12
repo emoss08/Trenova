@@ -217,3 +217,46 @@ func TestTractorConnectionToModel_PropagatesTotalCount(t *testing.T) {
 	assert.Equal(t, total, *connection.TotalCount)
 	assert.Len(t, connection.Edges, 1)
 }
+
+func TestTractorRelationIncludesForFields_LoadsOwnerOperatorOnlyWhenSelected(t *testing.T) {
+	t.Parallel()
+
+	selected := map[string]bool{
+		"ownershipType":         true,
+		"leaseEndDate":          true,
+		"ownerWorker":           true,
+		"ownerWorker.firstName": true,
+		"ownerWorker.lastName":  true,
+	}
+	includes := tractorRelationIncludesForFields(
+		func(path string) bool { return selected[path] },
+		"",
+		nil,
+		nil,
+		nil,
+	)
+
+	assert.True(t, includes.IncludeOwnerWorker)
+	assert.False(t, includes.IncludePrimaryWorker)
+	assert.False(t, includes.IncludeSecondaryWorker)
+	assert.Equal(
+		t,
+		[]string{"id", "created_at", "ownership_type", "lease_end_date", "owner_worker_id"},
+		includes.TractorColumns,
+	)
+	assert.Equal(
+		t,
+		[]string{"id", "created_at", "first_name", "last_name"},
+		includes.OwnerWorkerColumns,
+	)
+
+	without := tractorRelationIncludesForFields(
+		func(path string) bool { return path == "ownershipType" },
+		"",
+		nil,
+		nil,
+		nil,
+	)
+	assert.False(t, without.IncludeOwnerWorker)
+	assert.Nil(t, without.OwnerWorkerColumns)
+}

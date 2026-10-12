@@ -39,6 +39,16 @@ type Trailer {
   registrationExpiry: Timestamp
   lastKnownLocationId: ID
   lastKnownLocationName: String!
+  "Who owns the trailer: the company, a lessor, or an owner-operator."
+  ownershipType: EquipmentOwnershipType!
+  "The owner-operator who owns the trailer, when it is theirs."
+  ownerWorkerId: ID
+  "The lessor a leased trailer is leased from."
+  lessorName: String!
+  "The lessor's reference for the lease."
+  leaseReference: String!
+  "When the lease on a leased trailer ends."
+  leaseEndDate: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -49,6 +59,7 @@ type Trailer {
   equipmentManufacturer: EquipmentManufacturer
   fleetCode: FleetCode
   registrationState: UsState
+  ownerWorker: Worker
   lastKnownLocation: LocationReference
 }
 

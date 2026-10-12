@@ -1,7 +1,6 @@
 {
   "<b>{0}</b> accounts for {1}% of everything forgiven — {2} across {3, plural, one {# waiver} other {# waivers}}.": "<b>{0}</b> 占所有豁免金額的 {1}%——共 {2}，涵蓋 {3, plural, other {# 筆豁免}}。",
   "Analysis window": "分析期間",
-  "Average dwell": "平均停留時間",
   "Breach": "違反",
   "Customer margin": "客戶利潤",
   "Detention billed against detention paid. A negative margin means the customer's free-time concession is wider than the driver contract grants.": "已開帳的滯留費相對於已給付的滯留費。利潤為負，表示給予客戶的免費等候時間比駕駛員合約所允許者更寬鬆。",

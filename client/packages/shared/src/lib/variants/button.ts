@@ -13,8 +13,7 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default:
-          "bg-ink text-ink-foreground hover:bg-ink-hover active:bg-ink-active",
+        default: "bg-ink text-ink-foreground hover:bg-ink-hover active:bg-ink-active",
         destructive:
           "bg-danger text-foreground-on-solid hover:bg-danger-hover [--ring:var(--ring-danger)]",
         outline:
@@ -31,17 +30,17 @@ export const buttonVariants = cva(
         bare: "",
       },
       size: {
-        default: `${shape} h-8 px-3.5 py-1.5 has-[>svg]:px-2.5`,
-        xxxs: `${shape} h-4.5 px-1.5 py-1 has-[>svg]:px-1`,
-        xxs: `${shape} h-5.5 px-2 py-1 has-[>svg]:px-1.5`,
-        xs: `${shape} h-6 px-2.5 py-1 has-[>svg]:px-2`,
-        sm: `${shape} h-7 gap-1.5 rounded-md px-2.5 has-[>svg]:px-2`,
-        lg: `${shape} h-9 rounded-md px-5 has-[>svg]:px-3.5`,
-        icon: `${shape} size-8`,
-        "icon-xxs": `${shape} size-3.5`,
-        "icon-xs": `${shape} size-5.5`,
-        "icon-sm": `${shape} size-7`,
-        "icon-lg": `${shape} size-9`,
+        default: `${shape} h-8 px-3.5 py-1.5 has-[>svg]:px-2.5`, // i18n-ignore: Tailwind classes
+        xxxs: `${shape} h-4.5 px-1.5 py-1 has-[>svg]:px-1`, // i18n-ignore: Tailwind classes
+        xxs: `${shape} h-5.5 px-2 py-1 has-[>svg]:px-1.5`, // i18n-ignore: Tailwind classes
+        xs: `${shape} h-6 px-2.5 py-1 has-[>svg]:px-2`, // i18n-ignore: Tailwind classes
+        sm: `${shape} h-7 gap-1.5 rounded-md px-2.5 has-[>svg]:px-2`, // i18n-ignore: Tailwind classes
+        lg: `${shape} h-9 rounded-md px-5 has-[>svg]:px-3.5`, // i18n-ignore: Tailwind classes
+        icon: `${shape} size-8`, // i18n-ignore: Tailwind classes
+        "icon-xxs": `${shape} size-3.5`, // i18n-ignore: Tailwind classes
+        "icon-xs": `${shape} size-5.5`, // i18n-ignore: Tailwind classes
+        "icon-sm": `${shape} size-7`, // i18n-ignore: Tailwind classes
+        "icon-lg": `${shape} size-9`, // i18n-ignore: Tailwind classes
         /** No size, padding, radius or type: for a row, tab or chip that sets its own. */
         bare: "",
       },

@@ -24,10 +24,13 @@ type WorkerSelectOptionsRequest struct {
 }
 
 type GetWorkerByIDRequest struct {
-	ID             pulid.ID              `json:"id"`
-	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
-	IncludeProfile bool                  `json:"includeProfile"`
-	IncludeState   bool                  `json:"includeState"`
+	ID                  pulid.ID              `json:"id"`
+	TenantInfo          pagination.TenantInfo `json:"tenantInfo"`
+	IncludeProfile      bool                  `json:"includeProfile"`
+	IncludeState        bool                  `json:"includeState"`
+	IncludeFleetCode    bool                  `json:"includeFleetCode"`
+	IncludeManager      bool                  `json:"includeManager"`
+	IncludeLicenseState bool                  `json:"includeLicenseState"`
 }
 
 type WorkerSyncReadinessCounts struct {

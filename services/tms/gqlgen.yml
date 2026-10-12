@@ -94,6 +94,9 @@ models:
   EntityStatus:
     model:
       - github.com/emoss08/trenova/pkg/domaintypes.Status
+  EquipmentOwnershipType:
+    model:
+      - github.com/emoss08/trenova/pkg/domaintypes.OwnershipType
   EquipmentStatus:
     model:
       - github.com/emoss08/trenova/pkg/domaintypes.EquipmentStatus
@@ -3917,6 +3920,9 @@ models:
   ServiceFailureShipment:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.Shipment
+    fields:
+      customer:
+        resolver: true
   ServiceFailureStop:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.Stop
@@ -3931,6 +3937,14 @@ models:
       - github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure.ServiceFailure
     fields:
       stopType:
+        resolver: true
+      createdBy:
+        resolver: true
+      reviewedBy:
+        resolver: true
+      resolvedBy:
+        resolver: true
+      voidedBy:
         resolver: true
   FieldType:
     model:

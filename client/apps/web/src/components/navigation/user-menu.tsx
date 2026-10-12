@@ -18,9 +18,7 @@ import {
   ChevronSelectorVerticalIcon,
   LogOut01Icon,
   Settings01Icon,
-  User01Icon,
 } from "@trenova/shared/components/icons";
-import { useNavigate } from "react-router";
 
 /**
  * `compact` renders the avatar alone as the trigger, for a rail with no room
@@ -30,7 +28,6 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
   const t = useT();
 
   const user = useAuthStore((s) => s.user);
-  const navigate = useNavigate();
   const signOut = useSignOut();
   const openDialog = useAppDialogsStore((state) => state.openDialog);
 

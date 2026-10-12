@@ -11,6 +11,13 @@ import { DeskCustomerSkeleton } from "./customer/customer-skeleton";
 import { DeskRateAgreementSkeleton } from "./rate-agreement/rate-agreement-skeleton";
 import { DeskFormulaTemplateSkeleton } from "./formula-template/formula-template-skeleton";
 import { DeskShipmentSkeleton } from "./shipment/shipment-skeleton";
+import { DeskTractorSkeleton } from "./tractor/tractor-skeleton";
+import { DeskTrailerSkeleton } from "./trailer/trailer-skeleton";
+import { DeskWorkerSkeleton } from "./worker/worker-skeleton";
+import { DeskLocationSkeleton } from "./location/location-skeleton";
+import { DeskCarrierSkeleton } from "./carrier/carrier-skeleton";
+import { DeskOrderSkeleton } from "./order/order-skeleton";
+import { DeskServiceFailureSkeleton } from "./service-failure/service-failure-skeleton";
 
 /*
 The Desk's resource cards: a record drawn for what a person reads that kind of
@@ -56,6 +63,13 @@ const loadBillingItem = preloadable(() => import("./billing-queue-item/desk-bill
 const loadShipment = preloadable(() => import("./shipment/desk-shipment"));
 const loadCustomer = preloadable(() => import("./customer/desk-customer"));
 const loadRateAgreement = preloadable(() => import("./rate-agreement/desk-rate-agreement"));
+const loadTractor = preloadable(() => import("./tractor/desk-tractor"));
+const loadTrailer = preloadable(() => import("./trailer/desk-trailer"));
+const loadWorker = preloadable(() => import("./worker/desk-worker"));
+const loadLocation = preloadable(() => import("./location/desk-location"));
+const loadCarrier = preloadable(() => import("./carrier/desk-carrier"));
+const loadOrder = preloadable(() => import("./order/desk-order"));
+const loadServiceFailure = preloadable(() => import("./service-failure/desk-service-failure"));
 
 const RECORD_CARDS: Partial<Record<RecordEntityType, RecordCardEntry>> = {
   formula_template: {
@@ -87,6 +101,48 @@ const RECORD_CARDS: Partial<Record<RecordEntityType, RecordCardEntry>> = {
     Skeleton: DeskRateAgreementSkeleton,
     inPlace: lazyComponent(loadRateAgreement, (module) => module.DeskRateAgreement),
     artifact: lazyComponent(loadRateAgreement, (module) => module.DeskRateAgreementArtifact),
+  },
+  tractor: {
+    resource: Resource.Tractor,
+    Skeleton: DeskTractorSkeleton,
+    inPlace: lazyComponent(loadTractor, (module) => module.DeskTractor),
+    artifact: lazyComponent(loadTractor, (module) => module.DeskTractorArtifact),
+  },
+  trailer: {
+    resource: Resource.Trailer,
+    Skeleton: DeskTrailerSkeleton,
+    inPlace: lazyComponent(loadTrailer, (module) => module.DeskTrailer),
+    artifact: lazyComponent(loadTrailer, (module) => module.DeskTrailerArtifact),
+  },
+  worker: {
+    resource: Resource.Worker,
+    Skeleton: DeskWorkerSkeleton,
+    inPlace: lazyComponent(loadWorker, (module) => module.DeskWorker),
+    artifact: lazyComponent(loadWorker, (module) => module.DeskWorkerArtifact),
+  },
+  location: {
+    resource: Resource.Location,
+    Skeleton: DeskLocationSkeleton,
+    inPlace: lazyComponent(loadLocation, (module) => module.DeskLocation),
+    artifact: lazyComponent(loadLocation, (module) => module.DeskLocationArtifact),
+  },
+  carrier: {
+    resource: Resource.Carrier,
+    Skeleton: DeskCarrierSkeleton,
+    inPlace: lazyComponent(loadCarrier, (module) => module.DeskCarrier),
+    artifact: lazyComponent(loadCarrier, (module) => module.DeskCarrierArtifact),
+  },
+  order: {
+    resource: Resource.Order,
+    Skeleton: DeskOrderSkeleton,
+    inPlace: lazyComponent(loadOrder, (module) => module.DeskOrder),
+    artifact: lazyComponent(loadOrder, (module) => module.DeskOrderArtifact),
+  },
+  service_failure: {
+    resource: Resource.ServiceFailure,
+    Skeleton: DeskServiceFailureSkeleton,
+    inPlace: lazyComponent(loadServiceFailure, (module) => module.DeskServiceFailure),
+    artifact: lazyComponent(loadServiceFailure, (module) => module.DeskServiceFailureArtifact),
   },
 };
 

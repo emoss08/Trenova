@@ -221,6 +221,13 @@ func (s *Service) ListLanes(
 	return s.repo.ListLanes(ctx, req)
 }
 
+func (s *Service) SummarizeLanes(
+	ctx context.Context,
+	req *rateagreementports.ListRateAgreementLanesRequest,
+) (*rateagreementports.RateAgreementLaneSummary, error) {
+	return s.repo.SummarizeLanes(ctx, req)
+}
+
 func (s *Service) GetRuleByID(
 	ctx context.Context,
 	req *rateagreementports.GetRateAgreementRuleByIDRequest,

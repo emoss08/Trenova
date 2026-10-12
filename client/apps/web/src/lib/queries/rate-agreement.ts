@@ -23,6 +23,12 @@ export const rateAgreement = createQueryKeys("rateAgreement", {
     queryKey: [rateAgreementId],
     queryFn: async () => apiService.rateAgreementService.listVersions(rateAgreementId),
   }),
+  /** The agreement's live lanes grouped by what prices them, with each group's rate range. */
+  laneSummary: (rateAgreementId: string) => ({
+    queryKey: [rateAgreementId],
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.rateAgreementService.laneSummary(rateAgreementId, { signal }),
+  }),
   /** The loads the agreement has priced, and when it last priced one. */
   pricing: (rateAgreementId: string) => ({
     queryKey: [rateAgreementId],

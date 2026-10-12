@@ -44,6 +44,9 @@ type Location {
 type LocationReference {
   id: ID!
   name: String!
+  "Where the location is, when it has been geocoded."
+  latitude: Float
+  longitude: Float
 }
 
 type LocationEdge {

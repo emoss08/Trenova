@@ -1,8 +1,4 @@
-import type {
-  DeskCustomer,
-  DeskCustomerBilling,
-  DeskCustomerShipment,
-} from "@/lib/graphql/customer-card";
+import type { DeskCustomer, DeskCustomerBilling } from "@/lib/graphql/customer-card";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describe, expect, it } from "vitest";
 import {
@@ -16,7 +12,6 @@ import {
   invoiceNeeds,
   paymentTermDays,
   payPace,
-  shipmentLane,
 } from "../customer-card";
 
 /** Fills a message's numbered places the way the catalog would, plurals read as their `other` arm. */
@@ -27,7 +22,6 @@ const t = ((message: string, ...args: unknown[]) =>
     )
     .replace(/\{(\d+)\}/gu, (_, index) => String(args[Number(index)]))) as TranslateFn;
 
-const DAY = 86_400;
 /** Oct 11, 2026 12:00 UTC. */
 const NOW = 1_791_720_000;
 
@@ -303,60 +297,5 @@ describe("billingTerms, invoiceNeeds and billingRules", () => {
         rule.includes("late charge"),
       ),
     ).toBe(false);
-  });
-});
-
-describe("shipmentLane", () => {
-  it("runs from the first pickup to the last delivery across moves", () => {
-    const shipment = {
-      id: "shp_1",
-      proNumber: "S1",
-      status: "InTransit",
-      totalChargeAmount: "2450",
-      moves: [
-        {
-          sequence: 0,
-          stops: [
-            {
-              sequence: 0,
-              type: "Pickup",
-              scheduledWindowStart: NOW,
-              location: { city: "Atlanta", state: { abbreviation: "GA" } },
-            },
-            {
-              sequence: 1,
-              type: "Delivery",
-              scheduledWindowStart: NOW + DAY,
-              location: { city: "Nashville", state: { abbreviation: "TN" } },
-            },
-          ],
-        },
-        {
-          sequence: 1,
-          stops: [
-            {
-              sequence: 0,
-              type: "Delivery",
-              scheduledWindowStart: NOW + 2 * DAY,
-              location: { city: "Dallas", state: null },
-            },
-          ],
-        },
-      ],
-    } as DeskCustomerShipment;
-
-    expect(shipmentLane(shipment)).toEqual({
-      origin: "Atlanta, GA",
-      destination: "Dallas",
-      pickupAt: NOW,
-    });
-  });
-
-  it("has no lane for a shipment with no stops", () => {
-    expect(shipmentLane({ moves: [] } as unknown as DeskCustomerShipment)).toEqual({
-      origin: null,
-      destination: null,
-      pickupAt: null,
-    });
   });
 });

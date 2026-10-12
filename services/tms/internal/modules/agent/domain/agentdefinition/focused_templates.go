@@ -145,6 +145,7 @@ func masterDataStewardTools() []string {
 		"update_hazardous_material",
 		"update_hazardous_material_status",
 		toolListLocations,
+		"get_location",
 		"list_location_categories",
 		"create_location",
 		"update_location",

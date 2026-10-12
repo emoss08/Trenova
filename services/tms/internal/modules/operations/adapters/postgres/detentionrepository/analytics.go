@@ -209,6 +209,7 @@ func (r *analyticsRepository) FacilityStats(
 			if req.To > 0 {
 				q = q.Where(cols.ClockStartAt.Lte(), req.To)
 			}
+			q = atLocation(q, req)
 			if req.Limit > 0 {
 				q = q.Limit(int64(req.Limit))
 			}
@@ -278,6 +279,7 @@ func (r *analyticsRepository) CustomerStats(
 			if req.To > 0 {
 				q = q.Where(cols.ClockStartAt.Lte(), req.To)
 			}
+			q = atLocation(q, req)
 			if req.Limit > 0 {
 				q = q.Limit(int64(req.Limit))
 			}
@@ -327,6 +329,7 @@ func (r *analyticsRepository) WaiverStats(
 			if req.To > 0 {
 				q = q.Where(cols.WaivedAt.Lte(), req.To)
 			}
+			q = atLocation(q, req)
 
 			if err := q.Scan(ctx, &stats); err != nil {
 				r.l.Error("failed to aggregate detention waiver stats", zap.Error(err))
@@ -336,6 +339,16 @@ func (r *analyticsRepository) WaiverStats(
 			return stats, nil
 		},
 	)
+}
+
+func atLocation(
+	q *bun.SelectQuery,
+	req *detentionports.DetentionStatsRequest,
+) *bun.SelectQuery {
+	if req.LocationID.IsNil() {
+		return q
+	}
+	return q.Where(detentioncol.DetentionOccurrenceColumns.LocationID.Eq(), req.LocationID)
 }
 
 type entityNameRow struct {

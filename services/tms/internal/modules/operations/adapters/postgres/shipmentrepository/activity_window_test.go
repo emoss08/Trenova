@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -61,4 +62,103 @@ func TestApplyShipmentOptionFilters_HalfOpenWindowIgnored(t *testing.T) {
 		ActivityWindowStart: 100,
 		ActivityWindowEnd:   200,
 	}).HasActivityWindow())
+}
+
+func TestApplyShipmentOptionFilters_TractorIDsMatchLiveAssignments(t *testing.T) {
+	t.Parallel()
+
+	repo, _ := newCancelTestRepository(t)
+	dba := repo.db.DB()
+	tractorA := pulid.MustNew("tr_")
+	tractorB := pulid.MustNew("tr_")
+
+	q := dba.NewSelect().Model((*shipment.Shipment)(nil))
+	q = applyShipmentOptionFilters(q, dba, shipmentports.ShipmentOptions{
+		TractorIDs: []pulid.ID{tractorA, tractorB},
+	})
+
+	sql := q.String()
+	assert.Contains(t, sql, "EXISTS (SELECT 1")
+	assert.Contains(t, sql, `"shipment_moves" AS "sm_wrk"`)
+	assert.Contains(t, sql, `JOIN "assignments" AS "a_wrk"`)
+	assert.Contains(t, sql, "a_wrk.archived_at IS NULL")
+	assert.Contains(t, sql, "a_wrk.status != 'Canceled'")
+	assert.Contains(t, sql, "sm_wrk.status != 'Canceled'")
+	assert.Contains(t, sql, "sm_wrk.shipment_id = sp.id")
+	assert.Contains(
+		t,
+		sql,
+		"a_wrk.tractor_id IN ('"+tractorA.String()+"', '"+tractorB.String()+"')",
+	)
+	assert.NotContains(t, sql, "primary_worker_id")
+}
+
+func TestApplyShipmentOptionFilters_WorkerIDsStillMatchEitherSeat(t *testing.T) {
+	t.Parallel()
+
+	repo, _ := newCancelTestRepository(t)
+	dba := repo.db.DB()
+	workerID := pulid.MustNew("wrk_")
+
+	q := dba.NewSelect().Model((*shipment.Shipment)(nil))
+	q = applyShipmentOptionFilters(q, dba, shipmentports.ShipmentOptions{
+		WorkerIDs: []pulid.ID{workerID},
+	})
+
+	sql := q.String()
+	assert.Contains(t, sql, "a_wrk.archived_at IS NULL")
+	assert.Contains(
+		t,
+		sql,
+		"((a_wrk.primary_worker_id IN ('"+workerID.String()+"')) OR "+
+			"(a_wrk.secondary_worker_id IN ('"+workerID.String()+"')))",
+	)
+	assert.NotContains(t, sql, "tractor_id")
+}
+
+func TestApplyShipmentOptionFilters_TrailerIDsMatchLiveAssignments(t *testing.T) {
+	t.Parallel()
+
+	repo, _ := newCancelTestRepository(t)
+	dba := repo.db.DB()
+	trailerID := pulid.MustNew("trl_")
+
+	q := dba.NewSelect().Model((*shipment.Shipment)(nil))
+	q = applyShipmentOptionFilters(q, dba, shipmentports.ShipmentOptions{
+		TrailerIDs: []pulid.ID{trailerID},
+	})
+
+	sql := q.String()
+	assert.Contains(t, sql, `JOIN "assignments" AS "a_wrk"`)
+	assert.Contains(t, sql, "a_wrk.archived_at IS NULL")
+	assert.Contains(t, sql, "a_wrk.trailer_id IN ('"+trailerID.String()+"')")
+	assert.NotContains(t, sql, "tractor_id")
+}
+
+func TestApplyShipmentOptionFilters_CarrierIDsMatchLiveCarrierAssignments(t *testing.T) {
+	t.Parallel()
+
+	repo, _ := newCancelTestRepository(t)
+	dba := repo.db.DB()
+	carrierA := pulid.MustNew("car_")
+	carrierB := pulid.MustNew("car_")
+
+	q := dba.NewSelect().Model((*shipment.Shipment)(nil))
+	q = applyShipmentOptionFilters(q, dba, shipmentports.ShipmentOptions{
+		CarrierIDs: []pulid.ID{carrierA, carrierB},
+	})
+
+	sql := q.String()
+	assert.Contains(t, sql, "EXISTS (SELECT 1")
+	assert.Contains(t, sql, `"shipment_moves" AS "sm_car"`)
+	assert.Contains(t, sql, `JOIN "carrier_assignments" AS "ca_car"`)
+	assert.Contains(t, sql, "ca_car.status != 'Canceled'")
+	assert.Contains(t, sql, "sm_car.status != 'Canceled'")
+	assert.Contains(t, sql, "sm_car.shipment_id = sp.id")
+	assert.Contains(
+		t,
+		sql,
+		"ca_car.carrier_id IN ('"+carrierA.String()+"', '"+carrierB.String()+"')",
+	)
+	assert.NotContains(t, sql, `"assignments" AS "a_wrk"`)
 }

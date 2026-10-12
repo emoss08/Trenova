@@ -1,5 +1,5 @@
 {
-  "version": "sha256:be89aac2373a38fe324966d1e1d2017e3997780388e55ec5566acd983c1b45d9",
+  "version": "sha256:8183c4609cb64b04701f2af56dec57498cf3e133d8471cb00d6c36e3fdfa469b",
   "modules": [
     {
       "id": "home",
@@ -16895,7 +16895,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "carrier_settlement",
@@ -17021,7 +17022,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "manual_journal",
@@ -17039,7 +17041,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "rate_agreement",
@@ -17073,7 +17076,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "shipment",
@@ -17093,7 +17097,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "trailer",
@@ -17102,7 +17107,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "worker",
@@ -17111,7 +17117,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     }
   ]
 }

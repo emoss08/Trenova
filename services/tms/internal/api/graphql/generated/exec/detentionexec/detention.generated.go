@@ -3767,7 +3767,7 @@ func unmarshalInputDetentionStatsInput(ctx context.Context, ec *gqlexec.Exec, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"from", "to", "limit"}
+	fieldsInOrder := [...]string{"from", "to", "limit", "locationId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3795,6 +3795,13 @@ func unmarshalInputDetentionStatsInput(ctx context.Context, ec *gqlexec.Exec, ob
 				return it, err
 			}
 			it.Limit = data
+		case "locationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locationId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LocationID = data
 		}
 	}
 	return it, nil

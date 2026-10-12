@@ -20520,6 +20520,22 @@ func init() {
 				FieldMapKey: "detectedAt",
 			},
 			{
+				Name:        "reviewedAt",
+				FieldMapKey: "reviewedAt",
+			},
+			{
+				Name:        "resolvedAt",
+				FieldMapKey: "resolvedAt",
+			},
+			{
+				Name:        "voidedAt",
+				FieldMapKey: "voidedAt",
+			},
+			{
+				Name:        "voidReason",
+				FieldMapKey: "voidReason",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -20550,6 +20566,34 @@ func init() {
 				FieldMapKey: "businessUnitId",
 				Relation: &RelationSpec{
 					Target: &ServiceFailureReasonCodeSpec,
+				},
+			},
+			{
+				Name:        "createdBy",
+				FieldMapKey: "createdById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "reviewedBy",
+				FieldMapKey: "reviewedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "resolvedBy",
+				FieldMapKey: "resolvedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "voidedBy",
+				FieldMapKey: "voidedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
 				},
 			},
 		},
@@ -20671,6 +20715,13 @@ func init() {
 			{
 				Name:        "bol",
 				FieldMapKey: "bol",
+			},
+			{
+				Name:        "customer",
+				FieldMapKey: "customerId",
+				Relation: &RelationSpec{
+					Target: &CustomerSpec,
+				},
 			},
 		},
 	}
@@ -24309,6 +24360,26 @@ func init() {
 				FieldMapKey: "iftaQualified",
 			},
 			{
+				Name:        "ownershipType",
+				FieldMapKey: "ownershipType",
+			},
+			{
+				Name:        "ownerWorkerId",
+				FieldMapKey: "ownerWorkerId",
+			},
+			{
+				Name:        "lessorName",
+				FieldMapKey: "lessorName",
+			},
+			{
+				Name:        "leaseReference",
+				FieldMapKey: "leaseReference",
+			},
+			{
+				Name:        "leaseEndDate",
+				FieldMapKey: "leaseEndDate",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -24383,6 +24454,13 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 					Gate:   "workerDetails",
+				},
+			},
+			{
+				Name:        "ownerWorker",
+				FieldMapKey: "ownerWorkerId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
 				},
 			},
 			{
@@ -24489,6 +24567,26 @@ func init() {
 				Special: "lastKnownLocation",
 			},
 			{
+				Name:        "ownershipType",
+				FieldMapKey: "ownershipType",
+			},
+			{
+				Name:        "ownerWorkerId",
+				FieldMapKey: "ownerWorkerId",
+			},
+			{
+				Name:        "lessorName",
+				FieldMapKey: "lessorName",
+			},
+			{
+				Name:        "leaseReference",
+				FieldMapKey: "leaseReference",
+			},
+			{
+				Name:        "leaseEndDate",
+				FieldMapKey: "leaseEndDate",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -24547,6 +24645,13 @@ func init() {
 				FieldMapKey: "registrationStateId",
 				Relation: &RelationSpec{
 					Target: &UsStateSpec,
+				},
+			},
+			{
+				Name:        "ownerWorker",
+				FieldMapKey: "ownerWorkerId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
 				},
 			},
 			{

@@ -24,6 +24,8 @@ type GetOrderByIDRequest struct {
 	ID              pulid.ID              `json:"id"              form:"id"`
 	TenantInfo      pagination.TenantInfo `json:"tenantInfo"      form:"tenantInfo"`
 	IncludeShipment bool                  `json:"includeShipment" form:"includeShipment"`
+	IncludeCustomer bool                  `json:"includeCustomer" form:"includeCustomer"`
+	IncludeCharges  bool                  `json:"includeCharges"  form:"includeCharges"`
 }
 
 type GetOrdersByIDsRequest struct {
