@@ -253,9 +253,9 @@ export function CustomerBillingProfileForm() {
             <SwitchField
               control={control}
               name="billingProfile.autoSendInvoiceOnGeneration"
-              label={t("Auto-send after PDF generation")}
+              label={t("Send automatically when posted")}
               description={t(
-                "Email the invoice to the configured recipients after the invoice PDF is generated.",
+                "Email the invoice, and send the EDI 210 when it is on, as soon as the invoice is posted and its PDF is ready. Draft invoices are never sent.",
               )}
             />
           </FormControl>

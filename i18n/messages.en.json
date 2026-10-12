@@ -30724,15 +30724,6 @@
       "apps/web/lib"
     ]
   },
-  "Auto-send after PDF generation": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/customer"
-    ]
-  },
   "Auto-transfer to billing": {
     "sites": 1,
     "scope": [
@@ -31687,6 +31678,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "BCC": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "BCC recipients": {
@@ -36229,12 +36229,13 @@
     ]
   },
   "Bounced": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "routes/detention-desk",
+      "routes/invoice"
     ]
   },
   "Brakes, lights, load securement — everything a roadside inspection checks.": {
@@ -37492,6 +37493,15 @@
       "apps/web/components"
     ]
   },
+  "CC": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "CC recipients": {
     "sites": 1,
     "scope": [
@@ -38253,7 +38263,7 @@
     ]
   },
   "Cancel": {
-    "sites": 281,
+    "sites": 282,
     "scope": [
       "ts"
     ],
@@ -67370,7 +67380,7 @@
     ]
   },
   "Delivered": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -67384,6 +67394,7 @@
       "routes/detention-desk",
       "routes/home",
       "routes/inbox",
+      "routes/invoice",
       "routes/shipment"
     ]
   },
@@ -67573,6 +67584,24 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Delivery for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Delivery for {0} updated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Delivery in": {
@@ -79003,6 +79032,15 @@
       "routes/holiday"
     ]
   },
+  "Edit delivery": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Edit directory": {
     "sites": 1,
     "scope": [
@@ -80282,7 +80320,7 @@
       "apps/web/components"
     ]
   },
-  "Email the invoice to the configured recipients after the invoice PDF is generated.": {
+  "Email the invoice, and send the EDI 210 when it is on, as soon as the invoice is posted and its PDF is ready. Draft invoices are never sent.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -98368,6 +98406,15 @@
       "apps/web/lib"
     ]
   },
+  "From the customer's email profile": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "From the email text": {
     "sites": 1,
     "scope": [
@@ -98465,6 +98512,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "From your invoice email template": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "From {0}": {
@@ -119228,6 +119284,15 @@
       "go/other"
     ]
   },
+  "Leave a field empty to use the customer's email profile and your invoice email template. Anything entered here applies to this invoice only.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Leave a filter empty to apply to all — the surcharge only generates when the shipment matches every non-empty filter": {
     "sites": 1,
     "scope": [
@@ -121435,6 +121500,15 @@
     ],
     "areas": [
       "routes/carrier-invoice-matching"
+    ]
+  },
+  "Link clicked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Link copied": {
@@ -127554,6 +127628,15 @@
       "apps/dash/_components"
     ]
   },
+  "Marked as spam": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Marked false positive": {
     "sites": 1,
     "scope": [
@@ -130024,7 +130107,7 @@
     ]
   },
   "Message": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -130038,6 +130121,7 @@
       "routes/desk",
       "routes/edi",
       "routes/inbox",
+      "routes/invoice",
       "routes/worker"
     ]
   },
@@ -145639,6 +145723,15 @@
       "apps/web/components"
     ]
   },
+  "Not an email address: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Not answered yet": {
     "sites": 1,
     "scope": [
@@ -151530,6 +151623,15 @@
       "routes/inbox"
     ]
   },
+  "On the suppression list": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "On this dashboard": {
     "sites": 1,
     "scope": [
@@ -156405,7 +156507,7 @@
     ]
   },
   "Opened": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -156413,7 +156515,8 @@
     "areas": [
       "go/other",
       "routes/detention-desk",
-      "routes/escrow-account"
+      "routes/escrow-account",
+      "routes/invoice"
     ]
   },
   "Opened a page": {
@@ -198720,7 +198823,7 @@
     ]
   },
   "Save": {
-    "sites": 47,
+    "sites": 48,
     "scope": [
       "ts"
     ],
@@ -198737,6 +198840,7 @@
       "routes/hold-reason",
       "routes/home",
       "routes/inbox",
+      "routes/invoice",
       "routes/jurisdiction-rule",
       "routes/jurisdiction-rule-override",
       "routes/location",
@@ -206361,6 +206465,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Send automatically when posted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Send back": {
     "sites": 2,
     "scope": [
@@ -207678,6 +207791,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "Separate multiple addresses with commas.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Separated": {
@@ -220876,7 +220998,7 @@
     ]
   },
   "Subject": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -246396,7 +246518,7 @@
     ]
   },
   "To": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -246406,7 +246528,8 @@
       "routes/agent-control",
       "routes/desk",
       "routes/detention-policy",
-      "routes/fuel-management"
+      "routes/fuel-management",
+      "routes/invoice"
     ]
   },
   "To Values": {
@@ -246565,13 +246688,14 @@
     ]
   },
   "To {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/detention-desk",
-      "routes/inbox"
+      "routes/inbox",
+      "routes/invoice"
     ]
   },
   "Today": {
@@ -256383,6 +256507,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Use customer defaults": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Use dark theme": {

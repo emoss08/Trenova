@@ -1,5 +1,5 @@
 import { translate } from "@trenova/shared/i18n/runtime";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { AccountingSyncStateLine } from "@/components/accounting-sync/sync-state-line";
@@ -46,6 +46,7 @@ import {
   AlertTriangleIcon,
   CheckIcon,
   Download01Icon,
+  Edit05Icon,
   File06Icon,
   Mail01Icon,
   PackageCheckIcon,
@@ -53,13 +54,14 @@ import {
   Send01Icon,
 } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
-import { lazy, useEffect, useMemo, useRef } from "react";
+import { lazy, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BillingQueueDocumentsTab } from "../../billing-queue/_components/billing-queue-documents-tab";
 import { InvoiceActionsMenu } from "./invoice-actions-menu";
 import { InvoiceAdjustmentPanel } from "./invoice-adjustment-panel";
 import { InvoiceChargesTab } from "./invoice-charges-tab";
 import { InvoiceDisputesTab } from "./invoice-disputes-tab";
+import { InvoiceDeliveryDialog } from "./invoice-delivery-dialog";
 import { InvoiceEdiDeliveryCard } from "./invoice-edi-delivery-card";
 import { InvoiceOverviewTab } from "./invoice-overview-tab";
 import { InvoicePaymentsTab } from "./invoice-payments-tab";
@@ -369,6 +371,7 @@ function InvoiceDeliveryTab({
 
   const queryClient = useQueryClient();
   const sendPlanQuery = useQuery(queries.invoice.sendPlan(invoice.id));
+  const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
 
   const invalidateInvoiceDelivery = () => {
     void queryClient.invalidateQueries({ queryKey: ["invoice"] });
@@ -439,6 +442,12 @@ function InvoiceDeliveryTab({
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
+                {invoice.status !== "Voided" ? (
+                  <Button size="sm" variant="outline" onClick={() => setDeliveryDialogOpen(true)}>
+                    <Edit05Icon className="size-3.5" />
+                    {t("Edit delivery")}
+                  </Button>
+                ) : null}
                 {hasGeneratedPDF ? (
                   <Button size="sm" variant="outline" onClick={() => void reprintPDF()}>
                     <Download01Icon className="size-3.5" />
@@ -515,6 +524,12 @@ function InvoiceDeliveryTab({
       </ScrollArea>
 
       <InvoiceSendHistoryPanel invoiceId={invoice.id} />
+      <InvoiceDeliveryDialog
+        invoice={invoice}
+        sendPlan={sendPlan}
+        open={deliveryDialogOpen}
+        onOpenChange={setDeliveryDialogOpen}
+      />
     </div>
   );
 }
@@ -860,7 +875,9 @@ function InvoiceSendHistoryCard({ attempt }: { attempt: InvoiceEmailAttempt }) {
   const t = useT();
 
   const status = invoiceAttemptDisplayStatus(attempt);
+  const providerDetail = emailProviderDetail(attempt.email?.status, t);
   const error = invoiceAttemptDisplayError(attempt);
+  const recipients = [...attempt.toRecipients, ...(attempt.ccRecipients ?? [])];
   const sentAt = attempt.email?.sentAt ?? attempt.sentAt;
   const failedAt = attempt.email?.failedAt;
   const providerMessageId = attempt.email?.providerMessageId ?? attempt.providerMessageId;
@@ -868,12 +885,22 @@ function InvoiceSendHistoryCard({ attempt }: { attempt: InvoiceEmailAttempt }) {
   return (
     <div className="bg-muted/20 rounded-md border p-3">
       <div className="flex items-center justify-between gap-2">
-        <Badge variant={SEND_STATUS_VARIANTS[status]}>{status}</Badge>
+        <span className="flex min-w-0 items-center gap-2">
+          <Badge variant={SEND_STATUS_VARIANTS[status]}>{status}</Badge>
+          {providerDetail ? (
+            <span className="text-muted-foreground truncate text-xs">{providerDetail}</span>
+          ) : null}
+        </span>
         <span className="text-muted-foreground text-xs">
           {t("Part {0} of {1}", attempt.partNumber, attempt.totalParts)}
         </span>
       </div>
       <p className="mt-2 truncate text-sm font-medium">{attempt.subject}</p>
+      {recipients.length > 0 ? (
+        <p className="text-muted-foreground mt-1 truncate text-xs" title={recipients.join(", ")}>
+          {t("To {0}", recipients.join(", "))}
+        </p>
+      ) : null}
       <p className="text-muted-foreground mt-1 text-xs">
         {sentAt
           ? formatUnixDate(sentAt)
@@ -886,9 +913,37 @@ function InvoiceSendHistoryCard({ attempt }: { attempt: InvoiceEmailAttempt }) {
           {t("Provider ID: {0}", providerMessageId)}
         </p>
       ) : null}
-      {error ? <DeliveryNotice tone="error" message={error} /> : null}
+      {error ? (
+        <DeliveryNotice tone={status === "Failed" ? "error" : "warning"} message={error} />
+      ) : null}
     </div>
   );
+}
+
+/**
+ * What the email provider reported after accepting a message, shown beside the
+ * send status when it says more than "Sent" or "Failed" does.
+ */
+function emailProviderDetail(
+  status: NonNullable<InvoiceEmailAttempt["email"]>["status"] | undefined,
+  t: TranslateFn,
+): string | null {
+  switch (status) {
+    case "Delivered":
+      return t("Delivered");
+    case "Opened":
+      return t("Opened");
+    case "Clicked":
+      return t("Link clicked");
+    case "Bounced":
+      return t("Bounced");
+    case "Complained":
+      return t("Marked as spam");
+    case "Suppressed":
+      return t("On the suppression list");
+    default:
+      return null;
+  }
 }
 
 function getInvoiceSendDisabledReason(
@@ -898,6 +953,9 @@ function getInvoiceSendDisabledReason(
 ): string | null {
   if (invoice.status === "Voided") {
     return "A voided invoice is never sent.";
+  }
+  if (invoice.status === "Draft") {
+    return "Post the invoice before sending it. Draft invoices are never emailed.";
   }
   if (sendPlanLoading) {
     return "Checking invoice email configuration.";
