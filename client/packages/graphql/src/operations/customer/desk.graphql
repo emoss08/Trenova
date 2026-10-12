@@ -48,36 +48,6 @@ query DeskCustomerCard($id: ID!) {
   }
 }
 
-# A customer's latest freight for the card: each load's lane, when it picks up,
-# where it stands and what it bills.
-query DeskCustomerShipments($input: ShipmentsInput!) {
-  shipments(input: $input) {
-    edges {
-      node {
-        id
-        proNumber
-        status
-        totalChargeAmount
-        moves {
-          sequence
-          stops {
-            sequence
-            type
-            scheduledWindowStart
-            location {
-              city
-              state {
-                abbreviation
-              }
-            }
-          }
-        }
-      }
-    }
-    totalCount
-  }
-}
-
 # The rate agreements that price a customer's freight, for the card.
 query DeskCustomerRateAgreements($input: DataTableConnectionInput!) {
   rateAgreements(input: $input) {

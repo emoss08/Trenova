@@ -2,7 +2,9 @@ import { EXTENSION_ROUTES } from "./aiextensions.mjs";
 import { PROVIDER_ROUTES } from "./aiproviders.mjs";
 import { AI_ROUTES } from "./aicontrol.mjs";
 import { TRIAGE_ROUTES } from "./triage.mjs";
-import { ORG, permissionManifest, USER } from "../fixtures/session.mjs";
+import { DESK_CARD_ROUTES } from "./deskcards.mjs";
+import { ORG, permissionManifest } from "../fixtures/session.mjs";
+import { SETTINGS_ROUTES } from "./settings.mjs";
 
 const EMPTY_PAGE = { results: [], count: 0, next: null, prev: null };
 
@@ -11,7 +13,8 @@ const ROUTES = [
   ...PROVIDER_ROUTES,
   ...EXTENSION_ROUTES,
   ...AI_ROUTES,
-  ["GET", /^\/api\/v1\/users\/me\/?$/, () => USER],
+  ...DESK_CARD_ROUTES,
+  ...SETTINGS_ROUTES,
   ["GET", /^\/api\/v1\/me\/permissions\/?$/, () => permissionManifest()],
   ["GET", /^\/api\/v1\/me\/permissions\/version\/?$/, () => ({ checksum: "mock", expiresAt: Math.floor(Date.now() / 1000) + 86400 })],
   ["GET", /^\/api\/v1\/system\/version\/?$/, () => ({ version: "mock", commit: "mock", buildDate: "" })],

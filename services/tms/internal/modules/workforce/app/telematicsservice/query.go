@@ -42,6 +42,25 @@ func (s *Service) ListVehiclePositions(
 	})
 }
 
+func (s *Service) GetVehiclePosition(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	tractorID pulid.ID,
+) (*telematics.VehiclePosition, error) {
+	positions, err := s.repo.ListVehiclePositions(ctx, &telematicsports.ListVehiclePositionsRequest{
+		TenantInfo:    tenantInfo,
+		TractorIDs:    []pulid.ID{tractorID},
+		IncludeWorker: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(positions) == 0 {
+		return nil, errortypes.NewNotFoundError("The tractor has not reported a position")
+	}
+	return positions[0], nil
+}
+
 func (s *Service) ListWorkerHOSStates(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -93,22 +112,9 @@ type VehicleInspectionRecord struct {
 
 func (s *Service) ListVehicleInspections(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	tractorID pulid.ID,
-	workerID pulid.ID,
-	since int64,
-	limit int,
+	req *telematicsports.ListVehicleInspectionsRequest,
 ) ([]*VehicleInspectionRecord, error) {
-	inspections, err := s.repo.ListVehicleInspections(
-		ctx,
-		&telematicsports.ListVehicleInspectionsRequest{
-			TenantInfo: tenantInfo,
-			TractorID:  tractorID,
-			WorkerID:   workerID,
-			Since:      since,
-			Limit:      limit,
-		},
-	)
+	inspections, err := s.repo.ListVehicleInspections(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +122,7 @@ func (s *Service) ListVehicleInspections(
 		return []*VehicleInspectionRecord{}, nil
 	}
 
-	names, err := s.workerNamesByID(ctx, tenantInfo)
+	names, err := s.workerNamesByID(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}

@@ -727,6 +727,21 @@
   --invert-foreground: var(--canvas);
 }
 
+/* The theme picker's miniature pages. Each card draws one theme whichever theme is
+   showing around it, so the values are the same in both: the light page is the
+   light canvas, panel, hairline and ink, the dark page the dark ones. */
+:root,
+.dark {
+  --theme-preview-light-canvas: oklch(0.985 0 0);
+  --theme-preview-light-panel: oklch(0.94 0 0);
+  --theme-preview-light-line: oklch(0.922 0 0);
+  --theme-preview-light-ink: oklch(0.205 0 0);
+  --theme-preview-dark-canvas: oklch(0 0 0);
+  --theme-preview-dark-panel: oklch(0.145 0 0);
+  --theme-preview-dark-line: oklch(0.26 0 0);
+  --theme-preview-dark-ink: oklch(0.946 0 0);
+}
+
 /* The sign-in screen's two grounds. The form column sits on the canvas and its
    fields one step up; in dark the canvas is pure black, so the column moves up to
    the card and the fields to the raised fill, keeping a field visibly a slot. */
@@ -1998,6 +2013,13 @@
     box-shadow: 0 0 0 var(--ring-width)
       color-mix(in oklch, var(--ring) calc(var(--ring-opacity) * 100%), transparent);
   }
+}
+
+@utility field-focus-state {
+    outline: none;
+    border-color: var(--ring);
+    box-shadow: 0 0 0 var(--ring-width)
+      color-mix(in oklch, var(--ring) calc(var(--ring-opacity) * 100%), transparent);
 }
 
 /* Focus landed on a child and the wrapper draws the ring: a field with an affix,

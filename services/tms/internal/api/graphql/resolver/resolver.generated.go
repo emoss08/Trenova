@@ -323,6 +323,7 @@ type Resolver struct {
 	routingGuideEntry                  *routingguideresolver.RoutingGuideEntryResolver
 	safetyScorecard                    *workersafetyresolver.SafetyScorecardResolver
 	serviceFailure                     *servicefailureresolver.ServiceFailureResolver
+	serviceFailureShipment             *servicefailureresolver.ServiceFailureShipmentResolver
 	serviceFailureStop                 *servicefailureresolver.ServiceFailureStopResolver
 	settlementControl                  *driversettlementresolver.SettlementControlResolver
 	settlementException                *driversettlementresolver.SettlementExceptionResolver
@@ -1452,6 +1453,7 @@ func FromServices(s *Services) *Resolver {
 		routingGuideEntry:            &routingguideresolver.RoutingGuideEntryResolver{Deps: routingguideDeps},
 		safetyScorecard:              &workersafetyresolver.SafetyScorecardResolver{Deps: workersafetyDeps},
 		serviceFailure:               &servicefailureresolver.ServiceFailureResolver{Deps: servicefailureDeps},
+		serviceFailureShipment:       &servicefailureresolver.ServiceFailureShipmentResolver{Deps: servicefailureDeps},
 		serviceFailureStop:           &servicefailureresolver.ServiceFailureStopResolver{Deps: servicefailureDeps},
 		settlementControl:            &driversettlementresolver.SettlementControlResolver{Deps: driversettlementDeps},
 		settlementException:          &driversettlementresolver.SettlementExceptionResolver{Deps: driversettlementDeps},
@@ -2508,6 +2510,10 @@ func (r *Resolver) SafetyScorecard() generated.SafetyScorecardResolver {
 
 func (r *Resolver) ServiceFailure() generated.ServiceFailureResolver {
 	return r.serviceFailure
+}
+
+func (r *Resolver) ServiceFailureShipment() generated.ServiceFailureShipmentResolver {
+	return r.serviceFailureShipment
 }
 
 func (r *Resolver) ServiceFailureStop() generated.ServiceFailureStopResolver {

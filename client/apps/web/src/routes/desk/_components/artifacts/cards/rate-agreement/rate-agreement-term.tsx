@@ -2,7 +2,7 @@ import { agreementWindow } from "@/lib/rate-agreement";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { RateAgreement } from "@trenova/shared/types/rate";
-import { CardIcon } from "../../record-card/record-card";
+import { CardPath } from "../../record-card/card-path";
 import { cardDate } from "../../record-card/record-card-values";
 import {
   lifecycleSteps,
@@ -49,8 +49,9 @@ export function TermPanel({ agreement, now }: { agreement: TermAgreement; now: n
   const state = termState(agreement, now);
   const span = termSpan(agreement, now);
   const end = agreement.effectiveTo ?? null;
-  const today = span?.today ?? OPEN_TODAY;
-  const showsToday = span === null || span.when === "during";
+  const begun = agreement.effectiveFrom <= now;
+  const today = span?.today ?? (begun ? OPEN_TODAY : 0);
+  const showsToday = span === null ? begun : span.when === "during";
 
   return (
     <div className={cn("dk-ra-now", `dk-ra-${state}`)}>
@@ -79,7 +80,7 @@ export function TermPanel({ agreement, now }: { agreement: TermAgreement; now: n
         <i className="dk-ra-done" style={{ width: `${today * 100}%` }} />
         {span && span.notice > 0 && (
           <i
-            className={cn("dk-ra-notice", agreement.autoRenew && "dk-renews")}
+            className={cn("dk-ra-notice-zone", agreement.autoRenew && "dk-renews")}
             style={{ width: `${span.notice * 100}%` }}
           />
         )}
@@ -133,9 +134,8 @@ function stepLine(
 
 /**
  * The way the agreement came to price freight, down a rail: drafted,
- * submitted for review, approved, and how it ended. A step taken is ticked,
- * the one it stands at is ringed, a hold is paused, and a reviewer's comment
- * sits on the step it was left at.
+ * submitted for review, approved, and how it ended, with a reviewer's comment
+ * on the step it was left at.
  */
 export function ApprovalPath({
   agreement,
@@ -155,31 +155,19 @@ export function ApprovalPath({
 }) {
   const t = useT();
   const steps = lifecycleSteps(agreement, t);
-  const note = agreement.reviewComment.trim();
   const noteAt = steps.find((step) => step.state === "now")?.key ?? steps.at(-1)?.key;
 
   return (
-    <ol className="dk-ra-path" aria-label={t("Approval")}>
-      {steps.map((step) => (
-        <li key={step.key} className={cn(`dk-${step.state}`, step.tone && `dk-${step.tone}`)}>
-          <span className="dk-ra-node" aria-hidden>
-            {step.tone === "held" ? (
-              <CardIcon name="pause" size={10} stroke={2.6} />
-            ) : step.tone === "closed" ? (
-              <CardIcon name="x" size={9} stroke={2.8} />
-            ) : step.state === "done" ? (
-              <CardIcon name="check" size={10} stroke={3} />
-            ) : null}
-          </span>
-          <div className="dk-ra-pb">
-            <b>{step.label}</b>
-            <span>{stepLine(step, agreement.status, users, t)}</span>
-            {note !== "" && step.key === noteAt && (
-              <blockquote className="dk-ra-review">{note}</blockquote>
-            )}
-          </div>
-        </li>
-      ))}
-    </ol>
+    <CardPath
+      label={t("Approval")}
+      steps={steps.map((step) => ({
+        key: step.key,
+        label: step.label,
+        line: stepLine(step, agreement.status, users, t),
+        state: step.state,
+        tone: step.tone,
+        note: step.key === noteAt ? agreement.reviewComment : undefined,
+      }))}
+    />
   );
 }

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:03a81a829b9485ee46b1d5c9e7116712f9d794d889918583efc497cfd0c63884",
+  "version": "sha256:78aa8ed8713e953afa6f3bdbde96b464806af05dcaba8a2cad83f35da261fcdb",
   "modules": [
     {
       "id": "home",
@@ -7999,7 +7999,7 @@
         "Desk"
       ],
       "description": "The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app.",
-      "summary": "The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page greets you with the date and one line on what the day holds (the morning briefing's headline when one was written, otherwise how many decisions are waiting on you), and below it the box you ask in. The box names the agent it will ask and types out that agent's starter questions as its placeholder: press Tab to take the one on screen, or ⌘1–3 (Ctrl+1–3) to ask it outright. The rail down the left holds **New conversation**, search, links to **Today**, **Watchtower** and **Decisions**, every conversation grouped by when it was last used (**Pinned** first, then **Today**, **Yesterday**, **Previous 7 days**, **Previous 30 days** and **Older**), **Desk settings** and **Back to Trenova**. On a phone the rail slides over the page from the menu button at the top left.\n\nEach conversation opens in the middle, and anything an agent produces (a table, a draft, a document, a plan) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own: in a Desk conversation they wait in a card above the message box, and they are also listed on [Decisions](/desk/decisions).\n\nWhile an agent replies you can steer it with a correction or queue the next question. The message box names records with @, takes slash commands, files, scans and dictation, and can share the page you came from. A conversation about a shipment, invoice or dispute becomes a case, with a ready-to-bill or ready-to-close checklist, snoozes and waiting on the customer's or carrier's reply. Conversations can also run a request on a schedule, be handed to another agent, keep pinned facts in mind, and compact themselves when they grow long. Each fact an agent looked up carries a number tying it to the step that found it.",
+      "summary": "The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page greets you with the date and one line on what the day holds (the morning briefing's headline when one was written, otherwise how many decisions are waiting on you), and below it the box you ask in. The box names the agent it will ask and types out that agent's starter questions as its placeholder: press Tab to take the one on screen, or ⌘1–3 (Ctrl+1–3) to ask it outright. The rail down the left holds **New conversation**, search, links to **Today**, **Watchtower** and **Decisions**, every conversation grouped by when it was last used (**Pinned** first, then **Today**, **Yesterday**, **Previous 7 days**, **Previous 30 days** and **Older**), **Desk settings** and **Back to Trenova**. Select a group's heading to fold it away or open it again; a folded group shows how many conversations it holds, and the rail remembers which groups you folded. On a phone the rail slides over the page from the menu button at the top left.\n\nEach conversation opens in the middle, and anything an agent produces (a table, a draft, a document, a plan) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own: in a Desk conversation they wait in a card above the message box, and they are also listed on [Decisions](/desk/decisions).\n\nWhile an agent replies you can steer it with a correction or queue the next question. The message box names records with @, takes slash commands, files, scans and dictation, and can share the page you came from. A conversation about a shipment, invoice or dispute becomes a case, with a ready-to-bill or ready-to-close checklist, snoozes and waiting on the customer's or carrier's reply. Conversations can also run a request on a schedule, be handed to another agent, keep pinned facts in mind, and compact themselves when they grow long. Each fact an agent looked up carries a number tying it to the step that found it.",
       "requires": [
         {
           "resource": "assistant",
@@ -8884,7 +8884,7 @@
           ]
         }
       ],
-      "notes": "Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI Control** on the Desk.\n\nWhen an agent in your own conversation proposes a change, the card above the message box shows it the same way on the Desk and in the floating assistant: what it would set and whether it can be undone, checked against your records as they are now. **Approve** waits until that check has loaded. If the change was drafted against records that have changed since, the card says it is out of date and offers to redraft it instead. A plan of several steps, or several changes of one kind, is approved with one answer. You need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.\n\nThe conversation marks each decided change with a line (\"Approved\"), and deciding on the card or on [Decisions](/desk/decisions) updates both.\n\nA long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.\n\n- Enter sends and Shift+Enter starts a new line. In **Desk settings**, **Send with** can be set to **⌘ Enter** instead. **@ mentions**, **Slash commands** and **Dictation** can each be turned off there. - Only words can steer a reply under way. A message carrying files always waits until the reply finishes. Once a steering message has been handed to the agent, it can't be edited or taken back; stopping the reply is the only way to undo it. Waiting messages are kept with the conversation, so they survive a reload or another tab. - You can't change the agent or the model while an agent is replying. - A message can carry up to 5 files, each up to 25 MB: PDF, PNG, JPG, HEIC, TIFF, CSV, Excel, Word, text and email (.eml) files. Password-protected PDFs and other file types are refused before they upload. Scanning works only inside an open conversation, not from the box on Today. - @ search lists only records you are allowed to read. Dictation isn't available in every browser; where it isn't, the microphone says so. - A conversation keeps up to 12 pinned facts of up to 200 characters each. Compacting keeps pinned facts, pending approvals and, where it can, the latest turns in full. A conversation set to compact itself does so at 85% full. - An agent can wait on up to ten things in one conversation. A wait gives up after a day unless the agent sets a longer limit (at most a week); either way the agent picks the task back up and is told it ran out. If the thing has already happened, the agent acts on it right away. - A case is in one of four states, shown on its card, in its menu and beside the conversation in the rail. **Working**: nothing is put off. Waiting: on something such as **Waiting on the customer**, **Waiting on the carrier** or **Waiting on a reply**. **Snoozed**: put away until a time, the next appointment or the ETA. **Settled**: the record is closed. A shipment settles once it is invoiced or canceled, not when it delivers, because the ready-to-bill work comes after delivery; an invoice once it is paid or voided; a dispute once it is resolved or withdrawn. - A case's state is worked out each time you look, so a payment recorded elsewhere settles its invoice's case on its own. Snoozed and settled cases sit on their own **Snoozed** and **Settled** shelves in the rail; a snoozed case comes back on time, or sooner when something the agent was waiting on arrives. A conversation started from a shipment, invoice or dispute is a case from the start. - Which steps a case checklist shows, their order, and whether each is required or optional, are set in **Settings** › **Case checklists** on the Desk; a customer can have its own. A ticked step belongs to the record, so everyone working a case about the same shipment or invoice sees it. - If a record the agent was working with changes elsewhere during its turn, a note headed **Changed while the agent was working** lists what changed, and the agent reads those records again before relying on them. - An agent can hand a task only to the agents chosen for it in [AI control](/admin/agent-control), and only ones you may use. A case step you hand to another agent with its button needs only that you may use that agent. That agent works as you, its changes still wait for your approval, and it cannot pass the work on again. Hand-off goes to another agent, not to another person. - Anything an agent produces lands in the workspace: tables, reports, record cards, documents, email drafts, plans, read documents, decisions and billing items. With **Open new artifacts** set to **Right away**, a new item opens as it arrives; otherwise a dot on **Workspace** marks something new. - Billing actions on a billing item are your own and need billing queue permissions. The agent never approves or posts an invoice on its own. - Desk settings and chapters are kept in this browser; they do not follow you to another browser or computer. - Changing what an agent can do needs permission to manage agents.",
+      "notes": "Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI Control** on the Desk.\n\nWhen an agent in your own conversation proposes a change, the card above the message box shows it the same way on the Desk and in the floating assistant: what it would set and whether it can be undone, checked against your records as they are now. **Approve** waits until that check has loaded. If the change was drafted against records that have changed since, the card says it is out of date and offers to redraft it instead. A plan of several steps, or several changes of one kind, is approved with one answer. You need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.\n\nThe conversation marks each decided change with a line (\"Approved\"), and deciding on the card or on [Decisions](/desk/decisions) updates both.\n\nA long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.\n\n- Enter sends and Shift+Enter starts a new line. In **Desk settings**, **Send with** can be set to **⌘ Enter** instead. **@ mentions**, **Slash commands** and **Dictation** can each be turned off there. - Only words can steer a reply under way. A message carrying files always waits until the reply finishes. Once a steering message has been handed to the agent, it can't be edited or taken back; stopping the reply is the only way to undo it. Waiting messages are kept with the conversation, so they survive a reload or another tab. - You can't change the agent or the model while an agent is replying. - A message can carry up to 5 files, each up to 25 MB: PDF, PNG, JPG, HEIC, TIFF, CSV, Excel, Word, text and email (.eml) files. Password-protected PDFs and other file types are refused before they upload. Scanning works only inside an open conversation, not from the box on Today. - @ search lists only records you are allowed to read. Dictation isn't available in every browser; where it isn't, the microphone says so. - A conversation keeps up to 12 pinned facts of up to 200 characters each. Compacting keeps pinned facts, pending approvals and, where it can, the latest turns in full. A conversation set to compact itself does so at 85% full. - An agent can wait on up to ten things in one conversation. A wait gives up after a day unless the agent sets a longer limit (at most a week); either way the agent picks the task back up and is told it ran out. If the thing has already happened, the agent acts on it right away. - A case is in one of four states, shown on its card and in its menu. **Working**: nothing is put off. Waiting: on something such as **Waiting on the customer**, **Waiting on the carrier** or **Waiting on a reply**. Snoozed: put away until a time, the next appointment or the ETA. **Settled**: the record is closed. A shipment settles once it is invoiced or canceled, not when it delivers, because the ready-to-bill work comes after delivery; an invoice once it is paid or voided; a dispute once it is resolved or withdrawn. - A case's state is worked out each time you look, so a payment recorded elsewhere settles its invoice's case on its own. In the rail a case stays with the other conversations, grouped by when it was last used; a snoozed case comes back on time, or sooner when something the agent was waiting on arrives. A conversation started from a shipment, invoice or dispute is a case from the start. - Which steps a case checklist shows, their order, and whether each is required or optional, are set in **Settings** › **Case checklists** on the Desk; a customer can have its own. A ticked step belongs to the record, so everyone working a case about the same shipment or invoice sees it. - If a record the agent was working with changes elsewhere during its turn, a note headed **Changed while the agent was working** lists what changed, and the agent reads those records again before relying on them. - An agent can hand a task only to the agents chosen for it in [AI control](/admin/agent-control), and only ones you may use. A case step you hand to another agent with its button needs only that you may use that agent. That agent works as you, its changes still wait for your approval, and it cannot pass the work on again. Hand-off goes to another agent, not to another person. - Anything an agent produces lands in the workspace: tables, reports, record cards, documents, email drafts, plans, read documents, decisions and billing items. With **Open new artifacts** set to **Right away**, a new item opens as it arrives; otherwise a dot on **Workspace** marks something new. - Billing actions on a billing item are your own and need billing queue permissions. The agent never approves or posts an invoice on its own. - Desk settings and chapters are kept in this browser; they do not follow you to another browser or computer. - Changing what an agent can do needs permission to manage agents.",
       "related": [
         "/desk/decisions",
         "/desk/watchtower",
@@ -16722,7 +16722,7 @@
         "Triage"
       ],
       "description": "Messages from connected sources, what Nova did with them on its own, and what is left for a person, each with its next step",
-      "summary": "Triage is where messages from your connected sources arrive. Today a source is an inbound email address; Nova reads every message, works out what kind it is (tender, rate confirmation, proof of delivery, invoice, status request, detention dispute or other) and which shipment or customer it is about, and handles whatever a rule allows. Anything left over waits for a person with its next step already worked out. Customer service, dispatch and billing staff use it to clear the queue.\n\nThe rail on the left holds the **Briefing**, the lanes (**Waiting on you**, **Assigned to me**, **Snoozed**, **Handled**, **Ignored**, **Everything**), the kinds still **Waiting**, saved **Views**, your **Sources** and **Rules**. Each message's response target counts down beside it: what is past its target is listed under **Over target**.",
+      "summary": "Triage is where messages from your connected sources arrive. Today a source is an inbound email address; Nova reads every message, works out what kind it is (tender, rate confirmation, proof of delivery, invoice, status request, detention dispute or other) and which shipment or customer it is about, and handles whatever a rule allows. Anything left over waits for a person with its next step already worked out. Customer service, dispatch and billing staff use it to clear the queue.\n\nTriage opens on the **Briefing**: a ring with how many messages are left for you, Nova's line about the day (who has waited longest and roughly how long the rest will take), a timeline of today with what Nova handled on one lane and what was yours on the other, and a deck of cards that each clear a group at once (**File all**, **Draft all**, **Start**, **Link**, **Review**). Under the deck sit what Nova handled on its own (**Spot-check**), corrections this week, sources that stopped receiving mail (**Fix**) and a rule Nova suggests (**Hand it to Nova**). At the end of the day the deck becomes **Carrying over**, with a button to hand what is left to the person on call.\n\nThe rail on the left holds the **Briefing**, the lanes (**Waiting on you**, **Assigned to me**, **Waiting on them**, **Snoozed**, **Handled**, **Ignored**, **Everything**), the kinds still **Waiting**, saved **Views**, your **Sources** and **Rules**. Hide or show it with the sidebar button at the left of the header, or ⌘B / Ctrl+B. On a phone the lanes run along the top and the rest of the rail opens from the menu button beside them. Each message's response target counts down beside it: what is past its target is listed under **Over target**.\n\nAn open message shows its subject, sender and thread, the kind Nova read it as, the words, its files and what happened to it. Beside it (above it on a narrow screen, in a sheet on a phone) are its **Actions**, a numbered list of steps each finished in place, and its **Information**: the shipment and customer it is about and the facts Nova read from it. A bar along the foot of the message always holds the next step.",
       "requires": [
         {
           "resource": "inbound_message",
@@ -16744,6 +16744,22 @@
       ],
       "tasks": [
         {
+          "title": "Clear a group from the Briefing",
+          "keywords": [
+            "briefing",
+            "file all",
+            "draft all",
+            "deck",
+            "what is left"
+          ],
+          "steps": [
+            "Open [Triage](/triage). The **Briefing** is the first thing you see.",
+            "Read the front card in the deck: who is in the group, the time left on each, and roughly how long it takes.",
+            "Select its button (**File all**, **Draft all**, **Start**, **Link** or **Review**). A finished card turns into a chip, and the next card comes forward.",
+            "Select a name in Nova's line or a dot on the timeline to open that message."
+          ]
+        },
+        {
           "title": "Work through what is waiting on you",
           "keywords": [
             "triage email",
@@ -16754,7 +16770,21 @@
           "steps": [
             "Open [Triage](/triage) and select **Waiting on you**.",
             "The first message opens. Press j to go to the next one and k to go back.",
-            "Follow the steps listed under **Actions**, then select **Mark handled** (e) or **Ignore** (#). The next waiting message opens, and **Undo** in the notice puts it back."
+            "The bar at the foot of the message shows the next step: select **Do it**, **Have Nova do it** or **Review reply** (or press Enter), and finish each step under **Actions**.",
+            "When every step is done, select **Mark handled** (e). Tick **Do this on its own next time** to have Nova handle messages like it from now on. **Wait for reply** parks it under **Waiting on them** until they answer, and **Ignore** (#) sets it aside. The next waiting message opens, and **Undo** in the notice puts it back."
+          ]
+        },
+        {
+          "title": "Hand a message to an agent in Desk",
+          "keywords": [
+            "desk agent",
+            "ask an agent",
+            "help with a message"
+          ],
+          "steps": [
+            "Open the message in [Triage](/triage).",
+            "Select **Work on it in Desk** at the foot of the actions, choose an agent and send.",
+            "When the agent answers, select **Yes, do it** to start its next step in Triage."
           ]
         },
         {
@@ -16784,6 +16814,35 @@
           ]
         },
         {
+          "title": "Let Nova handle a kind of message on its own",
+          "keywords": [
+            "rule",
+            "automation",
+            "auto file",
+            "let nova handle"
+          ],
+          "steps": [
+            "In [Triage](/triage), select **Rules** in the rail.",
+            "Select **New rule** and fill in the blanks of the sentence: which kind of message, from whom, on which source, and what Nova should do.",
+            "Check how many messages from the last 30 days it would have matched and how many look off, then select **Turn on**.",
+            "Hover a rule and select **See what it matched** to spot-check it; the switch beside a rule pauses it."
+          ]
+        },
+        {
+          "title": "Connect a source",
+          "keywords": [
+            "connect mailbox",
+            "add email address",
+            "forward email",
+            "new source"
+          ],
+          "steps": [
+            "In [Triage](/triage), select **Add** beside **Sources** (or **Add a source** when there is none yet).",
+            "Choose the kind of source and the address Nova should watch, then follow the steps to forward mail to the address Trenova gives you.",
+            "Select **Send a test email** to see a message arrive."
+          ]
+        },
+        {
           "title": "Find a message and keep the search",
           "keywords": [
             "search email",
@@ -16798,7 +16857,7 @@
           ]
         }
       ],
-      "notes": "Needs read access to inbound messages. Messages that look like phishing are held back and also land in **Waiting on you**.\n\nSources are set up under [Inbound mailboxes](/admin/inbound-mailboxes). A source that has stopped receiving mail shows a dot in the rail, and its folder offers **Send a test email**.\n\nThe folder, search and open message are kept in the page address, so a link to a message opens exactly that message. Old links to the inbox open Triage.",
+      "notes": "Needs read access to inbound messages. Messages that look like phishing are held back and also land in **Waiting on you**; the bar offers **Ignore** and **Not phishing**.\n\nSources are set up under [Inbound mailboxes](/admin/inbound-mailboxes). A source that has stopped receiving mail shows a dot in the rail, and its folder offers **Send a test email**. Press ? in Triage for the **Keyboard shortcuts**.\n\nThe folder, search and open message are kept in the page address, so a link to a message opens exactly that message. Old links to the inbox open Triage.",
       "related": [
         "/desk",
         "/desk/watchtower",
@@ -16900,7 +16959,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "carrier_settlement",
@@ -17034,7 +17094,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "manual_journal",
@@ -17052,7 +17113,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "rate_agreement",
@@ -17086,7 +17148,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "shipment",
@@ -17106,7 +17169,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "trailer",
@@ -17115,7 +17179,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "worker",
@@ -17124,7 +17189,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     }
   ]
 }

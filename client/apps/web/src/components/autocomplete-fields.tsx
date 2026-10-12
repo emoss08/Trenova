@@ -29,7 +29,7 @@ import type { ReactNode } from "react";
 export type _ServerEndpointTypes = API_ENDPOINTS | SELECT_OPTIONS_ENDPOINTS;
 import type { Control, FieldPath, FieldValues, Path, RegisterOptions } from "react-hook-form";
 import { Autocomplete, AutocompleteField } from "./fields/autocomplete/autocomplete";
-import { FieldWrapper } from "./fields/field-components";
+import { FieldWrapper, type FieldLayout } from "./fields/field-components";
 import { MultiSelectAutocompleteField } from "./fields/multi-select-field";
 import { ColorOptionValue } from "./fields/select-components";
 import { SelectField } from "./fields/select-field";
@@ -39,7 +39,9 @@ type BaseAutocompleteFieldProps<TOption, TForm extends FieldValues> = {
   name: Path<TForm>;
   label?: string;
   rules?: RegisterOptions<TForm, Path<TForm>>;
-  description?: string;
+  description?: ReactNode;
+  /** Where the label sits: above the control, or beside it in a settings row. */
+  layout?: FieldLayout;
   clearable?: boolean;
   placeholder?: string;
   disabled?: boolean;

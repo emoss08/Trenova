@@ -1,5 +1,6 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type {
+  LanePricingGroup,
   RateAgreement,
   RateAgreementAccessorial,
   RateAgreementFuelBinding,
@@ -17,6 +18,7 @@ import {
   lanePricing,
   laneTerms,
   lifecycleSteps,
+  pricingGroups,
   termSpan,
   termState,
 } from "../rate-agreement-card";
@@ -385,5 +387,85 @@ describe("agreementReferences", () => {
       carriers: [],
       users: ["usr_1", "usr_2", "usr_3"],
     });
+  });
+});
+
+describe("pricingGroups", () => {
+  const group = (overrides: Partial<LanePricingGroup>): LanePricingGroup => ({
+    formulaTemplateId: "ft_mile",
+    formulaTemplateName: "Per mile",
+    rateMatrixId: null,
+    rateMatrixName: "",
+    currency: "USD",
+    lanes: 1,
+    minRate: null,
+    maxRate: null,
+    ...overrides,
+  });
+
+  it("names each way of pricing, with its share of the lanes and the rates they quote", () => {
+    const groups = pricingGroups(
+      {
+        count: 8,
+        groups: [
+          group({ lanes: 2, minRate: "2.5", maxRate: "2.5" }),
+          group({
+            formulaTemplateId: null,
+            formulaTemplateName: "",
+            rateMatrixId: "rm_1",
+            rateMatrixName: "Zones",
+            lanes: 5,
+          }),
+          group({ formulaTemplateId: null, formulaTemplateName: "", lanes: 1 }),
+        ],
+      },
+      { rows: 5, currency: "USD" },
+      t,
+    );
+
+    expect(groups).toEqual([
+      { key: ":rm_1:USD", label: "Rate table Zones", lanes: 5, share: 5 / 8, range: null },
+      { key: "ft_mile::USD", label: "Per mile", lanes: 2, share: 2 / 8, range: "2.5" },
+      { key: "::USD", label: "Not priced", lanes: 1, share: 1 / 8, range: null },
+    ]);
+  });
+
+  it("writes a range low to high, and says a currency other than the agreement's", () => {
+    const [mile] = pricingGroups(
+      {
+        count: 3,
+        groups: [group({ lanes: 3, currency: "CAD", minRate: "2.1", maxRate: "3.4525" })],
+      },
+      { rows: 5, currency: "USD" },
+      t,
+    );
+
+    expect(mile).toMatchObject({ label: "Per mile · CAD", range: "2.1 – 3.4525", share: 1 });
+  });
+
+  it("folds the ways past its rows into one, keeping the lanes they price", () => {
+    const groups = pricingGroups(
+      {
+        count: 10,
+        groups: [4, 3, 2, 1].map((lanes) =>
+          group({ formulaTemplateId: `ft_${lanes}`, formulaTemplateName: `T${lanes}`, lanes }),
+        ),
+      },
+      { rows: 3, currency: "USD" },
+      t,
+    );
+
+    expect(groups.map((row) => [row.label, row.lanes])).toEqual([
+      ["T4", 4],
+      ["T3", 3],
+      ["2 other ways", 3],
+    ]);
+    expect(groups[2]).toMatchObject({ key: "rest", share: 0.3, range: null });
+  });
+
+  it("draws every way when they fit, and no share of an agreement with no lanes", () => {
+    expect(
+      pricingGroups({ count: 0, groups: [group({ lanes: 0 })] }, { rows: 1, currency: "USD" }, t),
+    ).toEqual([{ key: "ft_mile::USD", label: "Per mile", lanes: 0, share: 0, range: null }]);
   });
 });

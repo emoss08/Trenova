@@ -42,6 +42,8 @@ anchor. A scenario is set from the environment when the server starts, or at any
 | `triage` | `live` \| `firstDay` \| `noMailbox` \| `deskOff` | `live` | Triage's queue: the prototype's mail with a new message every 26s, no mail yet, no source, or Nova off |
 | `triageTime` | `afternoon` \| `endOfDay` | `afternoon` | Triage's clock: 13:39 (the prototype's NOW) or 17:20, after the 17:00 wrap-up |
 | `triageReplyAfterMs` | number | `6500` | How long after "Wait for reply" the sender answers on the thread |
+| `desk` | `full` \| `empty` \| `hold` | `full` | Desk resource cards: the fixture, every section empty, or every card request left open (the skeleton) |
+| `deskSlug` | an artifact slug | `tractor-t-101` | The card the Desk cards conversation (`thr_desk_cards`) holds |
 
 ```bash
 curl -X POST localhost:8080/__mock/scenario \
@@ -53,9 +55,9 @@ curl -X POST localhost:8080/__mock/scenario \
 (`triageAnchor`), both Unix seconds. A new scenario sends `reset` down every open realtime stream,
 so an open page refetches. Environment equivalents: `MOCK_BOARD`, `MOCK_AI=0`,
 `MOCK_OPERATION_TYPE`, `MOCK_HOS=0`, `MOCK_MAPS=1`, `MOCK_LIST_ROWS`, `MOCK_AI_PROVIDERS`,
-`MOCK_AI_PAUSED=1`, `MOCK_TRIAGE`, `MOCK_TRIAGE_TIME`, `MOCK_TRIAGE_REPLY_MS`, plus
-`MOCK_TRIAGE_LIVE_MS` (the live arrival interval, default 26000), `MOCK_API_PORT` (default 8080)
-and `MOCK_API_PUBLIC_URL` (the origin avatar URLs are built on).
+`MOCK_AI_PAUSED=1`, `MOCK_DESK`, `MOCK_DESK_SLUG`, `MOCK_TRIAGE`, `MOCK_TRIAGE_TIME`,
+`MOCK_TRIAGE_REPLY_MS`, plus `MOCK_TRIAGE_LIVE_MS` (the live arrival interval, default 26000),
+`MOCK_API_PORT` (default 8080) and `MOCK_API_PUBLIC_URL` (the origin avatar URLs are built on).
 
 The board briefing is stored the way the server stores it: written on the first read of a
 scenario, read unchanged after that, and written again (its `generation` going up) only once
@@ -195,6 +197,34 @@ Regenerate them after the registry changes with a throwaway test that marshals
 `aiproviderhandler`'s catalog, `agentextensionservice.ListCatalog`,
 `agentdefinitionservice.buildToolCatalog` (parameters stripped) and `agent.KnownEvents()`.
 
+The Desk's resource cards have their own walkthrough:
+
+```bash
+node e2e/mock-api/desk-cards-screenshots.mjs [outDir] [name,name,...]
+```
+
+It opens each card where people see it, beside the conversation that looked the record up
+(`/desk/c/thr_desk_cards/a/<slug>`), and on its own page at full length (`…/page`), and shoots
+it loaded in light and dark, with something wrong on it, empty, as its skeleton, unreadable and
+in a 1000px window. It writes to `e2e/mock-api/screenshots/desk-cards` by default. The records
+are in `fixtures/desk-cards.mjs`: each card has a conversation for the record loaded, one with
+something to flag, one with nothing on file and one that is gone. A new card adds its records
+there, its operations to `handlers/deskcards.mjs`, and an entry to `CARDS` in the walkthrough.
+
+Settings has its own walkthrough, the same way:
+
+```bash
+node e2e/mock-api/settings-screenshots.mjs [outDir] [name,name,...]
+```
+
+It opens the fullscreen Settings dialog over the shipments board with ⌘⇧S and captures each
+section in light and dark, the Away sub-rows, an expanded notification category, the Saved ·
+Undo toast, a pause, the inline password change, ⌘K search and its jump, an 800px width and the
+page left as it was after Escape. Writes are stateful: the profile, availability, notification
+preferences and sessions the dialog saves are what it reads back. The password change accepts
+`correct-horse` as the current password. It writes to `e2e/mock-api/screenshots/settings` by
+default.
+
 ## Layout
 
 ```
@@ -204,15 +234,21 @@ realtime.mjs          The realtime stream: ready, heartbeats, invalidations and 
 fixtures/board.mjs    Shipments, drivers and carriers ported from the design prototype
 fixtures/session.mjs  Signed-in user and permission manifest
 fixtures/aicontrol.mjs  Agents, providers, runs, usage and tune-ups for AI control
+fixtures/desk-cards.mjs  The records the Desk's resource cards draw, and their conversations
+fixtures/settings.mjs   The signed-in person's settings, sessions, sign-ins and teammates
 fixtures/triage.mjs   Triage's sources, messages, rules, templates and team, from the prototype
 fixtures/ai/          Catalogs dumped from the Go service
 handlers/rest.mjs     REST routes the shell and board call
 handlers/graphql.mjs  GraphQL operations, keyed by operation name
 handlers/aicontrol.mjs  AI control's GraphQL operations and REST routes
+handlers/deskcards.mjs  The Desk cards conversation and each card's GraphQL operations
+handlers/settings.mjs   Settings' REST routes and the user select options
 handlers/triage-model.mjs  Triage's rules: actions, lanes, counts, briefing, previews and every write
 handlers/triage.mjs   Triage's GraphQL operations shaped to their selections, presence and Desk routes
 screenshots.mjs       Playwright walkthrough of every board scenario
 ai-control-screenshots.mjs  Playwright walkthrough of AI control
+desk-cards-screenshots.mjs  Playwright walkthrough of the Desk's resource cards
+settings-screenshots.mjs    Playwright walkthrough of Settings
 triage-screenshots.mjs  Playwright walkthrough of Triage
 check-triage.mjs      Sends every Triage operation and checks each response against its selection
 ```

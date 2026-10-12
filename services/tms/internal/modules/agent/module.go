@@ -42,6 +42,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationschedulerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/insightrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/recordlabelrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/roleagentgrantrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/shipmentbriefrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/shipmentimportchatrepository"
@@ -197,6 +198,7 @@ func SharedOptions() fx.Option {
 				fx.As(new(agentports.AIRetrievalSettingsRepository)),
 			),
 			agentproposalbaselinerepository.New,
+			recordlabelrepository.New,
 			aiusagerepository.New,
 			aiauditrepository.New,
 			aiauditrepository.NewSource,

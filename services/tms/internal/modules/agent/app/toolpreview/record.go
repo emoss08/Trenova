@@ -252,7 +252,7 @@ func (o *options) field(
 		field.Type = assistantartifact.DisplayText
 		field.Before, field.BeforeRef = refValue(target, entry.From)
 		field.After, field.AfterRef = refValue(target, entry.To)
-		field.Label = o.fieldLabel(path, field.Type)
+		field.Label = o.refLabel(path)
 
 		return field, true
 	}
@@ -330,6 +330,28 @@ func (o *options) fieldLabel(path string, displayType assistantartifact.DisplayT
 	}
 
 	return assistantartifact.DisplayLabel(camelPath(path), displayType)
+}
+
+// refIDWords end a key that holds another record's id; the value is shown as
+// that record's name, so its label names the record: "assignedBillerId"
+// reads "Assigned biller".
+var refIDWords = []string{"IDs", "Ids", "ID", "Id"}
+
+func (o *options) refLabel(path string) string {
+	if label, ok := o.label(path); ok {
+		return label
+	}
+
+	key := camelPath(path)
+	for _, word := range refIDWords {
+		trimmed, ok := strings.CutSuffix(key, word)
+		if ok && trimmed != "" && assistantartifact.EndsWithWord(key, []string{word}) {
+			key = trimmed
+			break
+		}
+	}
+
+	return assistantartifact.DisplayLabel(key, assistantartifact.DisplayText)
 }
 
 // camelPath joins a nested path into one camel-case key, so "address.city"

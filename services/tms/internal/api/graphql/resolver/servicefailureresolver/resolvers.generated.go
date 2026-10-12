@@ -16,4 +16,6 @@ type QueryResolver struct{ *Deps }
 
 type ServiceFailureResolver struct{ *Deps }
 
+type ServiceFailureShipmentResolver struct{ *Deps }
+
 type ServiceFailureStopResolver struct{ *Deps }

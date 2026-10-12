@@ -78,3 +78,52 @@ func TestDistinctIDs_KeepsEveryRecordASubsetMayOffer(t *testing.T) {
 
 	assert.Len(t, distinctIDs(offered), toolschema.MaxSubsetChoices)
 }
+
+func TestOwnedLabelQueries_AreScopedToTheTenantAndCarryTheOwner(t *testing.T) {
+	t.Parallel()
+
+	db := bun.NewDB(nil, pgdialect.New())
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	ids := []pulid.ID{pulid.MustNew("rec_"), pulid.MustNew("rec_")}
+
+	for resource, src := range ownedSources {
+		_, named := sources[src.owner]
+		assert.True(t, named, "%s is named by %s, which has no label", resource, src.owner)
+
+		sql := ownedQuery(db, tenant, &src, ids).String()
+
+		assert.Contains(t, sql, tenant.OrgID.String(), resource)
+		assert.Contains(t, sql, tenant.BuID.String(), resource)
+		assert.Contains(t, sql, " AS owner_id", resource)
+		assert.Contains(t, sql, " AS label", resource)
+		assert.Contains(t, sql, ids[0].String(), resource)
+		assert.Contains(t, sql, ids[1].String(), resource)
+	}
+}
+
+func TestUserLabelQuery_NamesOnlyPeopleOfTheTenant(t *testing.T) {
+	t.Parallel()
+
+	db := bun.NewDB(nil, pgdialect.New())
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	id := pulid.MustNew("usr_")
+
+	sql := userQuery(db, tenant, []pulid.ID{id}).String()
+
+	assert.Contains(t, sql, id.String())
+	assert.Contains(t, sql, "user_organization_memberships")
+	assert.Contains(t, sql, "EXISTS")
+	assert.Equal(t, 2, strings.Count(sql, tenant.OrgID.String()), sql)
+	assert.Equal(t, 2, strings.Count(sql, tenant.BuID.String()), sql)
+	assert.NotContains(t, sql, "password")
+	assert.NotContains(t, sql, "email_address")
+}
+
+func TestJoinLabel_NamesTheOwnerThenWhatTheRecordIsOfIt(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "Jane Doe · Medical", joinLabel("Jane Doe", "Medical"))
+	assert.Equal(t, "Jane Doe", joinLabel(" Jane Doe ", ""))
+	assert.Equal(t, "Medical", joinLabel("", "Medical"))
+	assert.Empty(t, joinLabel(" ", " "))
+}

@@ -25,6 +25,7 @@ type ServiceFailureShipment {
   id: ID!
   proNumber: String!
   bol: String
+  customer: Customer
 }
 
 type ServiceFailureStop {
@@ -65,12 +66,23 @@ type ServiceFailure {
   x12ReasonCodeOverride: String!
   x12ExceptionCode: String!
   detectedAt: Timestamp!
+  reviewedAt: Timestamp
+  resolvedAt: Timestamp
+  voidedAt: Timestamp
+  voidReason: String!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
   shipment: ServiceFailureShipment
   stop: ServiceFailureStop
   reasonCode: ServiceFailureReasonCode
+  """
+  Who logged the failure by hand; null for one detected or received.
+  """
+  createdBy: User
+  reviewedBy: User
+  resolvedBy: User
+  voidedBy: User
 }
 
 type ServiceFailureEdge {
@@ -85,6 +97,11 @@ type ServiceFailureConnection {
 }
 
 extend type Query {
-  serviceFailures(input: DataTableConnectionInput!, shipmentId: ID): ServiceFailureConnection!
+  serviceFailures(
+    input: DataTableConnectionInput!
+    shipmentId: ID
+    "Only failures at a stop made at this location."
+    locationId: ID
+  ): ServiceFailureConnection!
   serviceFailure(id: ID!): ServiceFailure
 }

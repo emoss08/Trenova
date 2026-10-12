@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -15,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -38,6 +40,8 @@ type Params struct {
 	Storage           kernelports.Client
 	Config            *config.Config
 	Validator         *Validator
+	AuthEventHistory  iamports.AuthEventHistoryRepository `optional:"true"`
+	AuthEvents        iamports.AuthEventRecorder          `optional:"true"`
 }
 
 type Service struct {
@@ -51,6 +55,8 @@ type Service struct {
 	storage      kernelports.Client
 	storageCfg   *config.StorageConfig
 	validator    *Validator
+	signIns      iamports.AuthEventHistoryRepository
+	authEvents   iamports.AuthEventRecorder
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -65,6 +71,8 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		storage:      p.Storage,
 		storageCfg:   p.Config.GetStorageConfig(),
 		validator:    p.Validator,
+		signIns:      p.AuthEventHistory,
+		authEvents:   p.AuthEvents,
 	}
 }
 
@@ -353,12 +361,20 @@ func (s *Service) DeleteProfilePicture(
 		return nil, err
 	}
 
+	original := *user
 	previousProfilePicture := user.ProfilePicURL
 	previousThumbnail := user.ThumbnailURL
 	user.ProfilePicURL = ""
 	user.ThumbnailURL = ""
 
-	updatedUser, err := s.Update(ctx, user, tenantInfo.UserID)
+	cols := tenantcol.UserColumns
+	updatedUser, err := s.updateSelf(ctx, selfUpdate{
+		tenantInfo: tenantInfo,
+		user:       user,
+		original:   &original,
+		columns:    []string{cols.ProfilePicURL.String(), cols.ThumbnailURL.String()},
+		comment:    "Profile picture removed",
+	})
 	if err != nil {
 		return nil, err
 	}

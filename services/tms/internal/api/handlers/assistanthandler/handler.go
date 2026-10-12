@@ -89,6 +89,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET("/mentions/", h.pm.RequirePermission(resource, permission.OpRead), h.searchMentions)
 	api.GET("/search/", h.pm.RequirePermission(resource, permission.OpRead), h.searchDesk)
 	api.GET("/threads/", h.pm.RequirePermission(resource, permission.OpRead), h.listThreads)
+	api.GET(
+		"/threads/shelves/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.countThreadShelves,
+	)
 	api.POST("/threads/", h.pm.RequirePermission(resource, permission.OpCreate), h.startThread)
 	// A quick question makes a thread of its own, so it needs what starting
 	// one needs.
@@ -270,9 +275,12 @@ func threadRequest(c *gin.Context) (agentports.GetThreadRequest, error) {
 }
 
 type listThreadsQuery struct {
-	Limit  int    `form:"limit"`
-	Cursor string `form:"cursor"`
-	Until  string `form:"until"`
+	Limit         int    `form:"limit"`
+	Cursor        string `form:"cursor"`
+	Until         string `form:"until"`
+	Pinned        *bool  `form:"pinned"`
+	TouchedFrom   int64  `form:"touchedFrom"`
+	TouchedBefore int64  `form:"touchedBefore"`
 }
 
 func (h *Handler) listThreads(c *gin.Context) {
@@ -285,12 +293,44 @@ func (h *Handler) listThreads(c *gin.Context) {
 	}
 
 	result, err := h.service.ListThreads(c.Request.Context(), agentports.ListThreadsRequest{
-		UserID:     authCtx.UserID,
-		TenantInfo: tenantFromAuthContext(authCtx),
-		Limit:      query.Limit,
-		Cursor:     query.Cursor,
-		Until:      query.Until,
+		UserID:        authCtx.UserID,
+		TenantInfo:    tenantFromAuthContext(authCtx),
+		Limit:         query.Limit,
+		Cursor:        query.Cursor,
+		Until:         query.Until,
+		Pinned:        query.Pinned,
+		TouchedFrom:   query.TouchedFrom,
+		TouchedBefore: query.TouchedBefore,
 	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+type threadShelvesQuery struct {
+	Edges []int64 `form:"edge"`
+}
+
+func (h *Handler) countThreadShelves(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	var query threadShelvesQuery
+	if err := c.ShouldBindQuery(&query); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	result, err := h.service.CountThreadShelves(
+		c.Request.Context(),
+		&agentports.CountThreadShelvesRequest{
+			UserID:     authCtx.UserID,
+			TenantInfo: tenantFromAuthContext(authCtx),
+			Edges:      query.Edges,
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

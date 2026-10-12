@@ -49,6 +49,7 @@ export function CardHeadSkeleton({
   figure = false,
   meta,
   stepper = false,
+  lead = false,
 }: {
   /** The kicker's pieces, as widths in pixels. */
   kicker: readonly number[];
@@ -58,6 +59,8 @@ export function CardHeadSkeleton({
   /** The facts after the status pill, as widths in pixels. */
   meta: readonly number[];
   stepper?: boolean;
+  /** The head opens with a person's or a company's initials. */
+  lead?: boolean;
 }) {
   return (
     <div className="dk-rec-head">
@@ -69,6 +72,7 @@ export function CardHeadSkeleton({
         {stepper && <SkeletonBar w="64px" className="dk-rec-sk-kick dk-rec-sk-step" />}
       </div>
       <div className="dk-rec-hrow">
+        {lead && <i className="dk-sk dk-rec-av dk-lg" />}
         <div className="dk-rec-who dk-rec-sk-who">
           <SkeletonBar w={title} className="dk-rec-sk-title" />
           {subtitle !== undefined && <SkeletonBar w={subtitle} className="dk-rec-sk-sub" />}
@@ -142,6 +146,85 @@ export function CardRowsSkeleton({
   );
 }
 
+/** A record's shipments while they are read, in the layout the card draws them in. */
+export function CardShipmentsSkeleton({
+  layout,
+  rows,
+}: {
+  layout: "rows" | "table" | "board" | "route";
+  rows: number;
+}) {
+  const lines = Array.from({ length: rows }, (_, index) => index);
+  switch (layout) {
+    case "table":
+      return (
+        <div className="dk-rec-tbl">
+          <div className="dk-rec-tbl-h">
+            <SkeletonBar w="28px" className="dk-rec-sk-label" />
+            <SkeletonBar w="32px" className="dk-rec-sk-label" />
+            <SkeletonBar w="40px" className="dk-rec-sk-label" />
+            <SkeletonBar w="40px" className="dk-rec-sk-label" />
+            <SkeletonBar w="36px" className="dk-rec-sk-label" />
+          </div>
+          {lines.map((index) => (
+            <div key={index} className="dk-rec-row dk-rec-tbl-r">
+              <SkeletonBar w="76%" className="dk-rec-sk-line" />
+              <SkeletonBar w="64%" className="dk-rec-sk-line" />
+              <SkeletonBar w="100%" className="dk-rec-sk-line" />
+              <SkeletonBar w="100%" className="dk-rec-sk-line" />
+              <SkeletonBar w="56px" className="dk-rec-sk-pill" />
+            </div>
+          ))}
+        </div>
+      );
+    case "board":
+      return (
+        <div className="dk-rec-board">
+          {lines.map((index) => (
+            <div key={index} className="dk-rec-row dk-rec-board-r">
+              <span className="dk-rec-board-at">
+                <SkeletonBar w="52px" className="dk-rec-sk-line" />
+                <SkeletonBar w="40px" className="dk-rec-sk-label" />
+              </span>
+              <span className="dk-rec-main">
+                <SkeletonBar w="40%" className="dk-rec-sk-line" />
+                <SkeletonBar w="64%" className="dk-rec-sk-label" />
+              </span>
+              <SkeletonBar w="56px" className="dk-rec-sk-pill" />
+            </div>
+          ))}
+        </div>
+      );
+    case "route":
+      return (
+        <ol className="dk-rec-route">
+          {lines.map((index) => (
+            <li key={index}>
+              <i className="dk-sk dk-rec-route-n" />
+              <div className="dk-rec-row dk-rec-route-r">
+                <span className="dk-rec-route-ends">
+                  <SkeletonBar w="52%" className="dk-rec-sk-line" />
+                  <SkeletonBar w="44%" className="dk-rec-sk-line" />
+                </span>
+                <SkeletonBar w="72px" className="dk-rec-sk-line" />
+                <SkeletonBar w="56px" className="dk-rec-sk-pill" />
+              </div>
+            </li>
+          ))}
+        </ol>
+      );
+    default:
+      return (
+        <CardRowsSkeleton
+          rows={lines.map((index): readonly [number, number] =>
+            index % 2 === 0 ? [22, 56] : [26, 48],
+          )}
+          trailing={88}
+        />
+      );
+  }
+}
+
 /** A ledger: lines with a figure on the right, under a rule, and their total. */
 export function CardLedgerSkeleton({ lines }: { lines: readonly number[] }) {
   return (
@@ -189,6 +272,81 @@ export function CardChecksSkeleton({ rows }: { rows: readonly (readonly [number,
         </div>
       ))}
     </div>
+  );
+}
+
+/** Where a record is (CardWhere): the map's square beside the place's lines. */
+export function CardWhereSkeleton() {
+  return (
+    <div className="dk-rec-where">
+      <i className="dk-sk dk-rec-scope" />
+      <div className="dk-rec-at">
+        <SkeletonBar w="62%" className="dk-rec-sk-line" />
+        <SkeletonBar w="44%" className="dk-rec-sk-label" />
+        <SkeletonBar w="52%" className="dk-rec-sk-label" />
+      </div>
+    </div>
+  );
+}
+
+/** A record's facts (CardFactGrid): a label over a value, two to a row. */
+export function CardFactGridSkeleton({ cells }: { cells: number }) {
+  return (
+    <div className="dk-rec-facts">
+      {Array.from({ length: cells }, (_, index) => (
+        // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
+        <div key={index}>
+          <SkeletonBar w="40%" className="dk-rec-sk-label" />
+          <SkeletonBar w="68%" className="dk-rec-sk-line" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** A `CardStats` strip while it is read: a label over a figure in each cell. */
+export function CardStatsSkeleton({ cells, className }: { cells: number; className?: string }) {
+  return (
+    <div className={cn("dk-rec-stats", className)}>
+      {Array.from({ length: cells }, (_, index) => (
+        // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
+        <div key={index}>
+          <SkeletonBar w="46%" className="dk-rec-sk-label" />
+          <SkeletonBar w="64%" className="dk-rec-sk-line" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** A `CardMeter` while it is read: its label and reading over the empty bar. */
+export function CardMeterSkeleton() {
+  return (
+    <div className="dk-rec-gauge">
+      <div className="dk-rec-gauge-h">
+        <SkeletonBar w="20%" className="dk-rec-sk-label" />
+        <SkeletonBar w="32%" className="dk-rec-sk-label" />
+      </div>
+      <i className="dk-sk dk-rec-meter" />
+    </div>
+  );
+}
+
+/** A `CardPath` while it is read: a ring per step beside its name and its line. */
+export function CardPathSkeleton({ steps }: { steps: number }) {
+  return (
+    <ol className="dk-rec-path">
+      {Array.from({ length: steps }, (_, index) => (
+        // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
+        <li key={index}>
+          <i className="dk-sk dk-rec-node" />
+          <div className="dk-rec-pb">
+            <SkeletonBar w="34%" className="dk-rec-sk-line" />
+            <SkeletonBar w="52%" className="dk-rec-sk-label" />
+          </div>
+        </li>
+      ))}
+    </ol>
   );
 }
 

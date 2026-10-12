@@ -13,7 +13,7 @@ import { useFieldValueFormat } from "@trenova/shared/lib/form-field-registry";
 import React, { useCallback, useId, useMemo, useState } from "react";
 import type { Control, Path, RegisterOptions } from "react-hook-form";
 import { Controller, type FieldValues } from "react-hook-form";
-import { FieldWrapper } from "../field-components";
+import { FieldWrapper, type FieldLayout } from "../field-components";
 import { AutocompleteCommandContent, MISSING_OPTION_SOURCE_ERROR } from "./autocomplete-content";
 import { AutocompleteTrigger } from "./autocomplete-input";
 
@@ -230,7 +230,8 @@ export type AutocompleteFieldProps<TOption, TForm extends FieldValues> = Omit<
   "onChange" | "value" | "onBlur" | "ref"
 > &
   AutocompleteFormControlProps<TForm> & {
-    description?: string;
+    description?: React.ReactNode;
+    layout?: FieldLayout;
   };
 
 type SelectedOptionSource = {
@@ -566,6 +567,7 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
   initialLimit,
   filterOption,
   selectedValueLink,
+  layout,
   ...props
 }: AutocompleteFieldProps<TOption, TForm>) {
   return (
@@ -582,6 +584,7 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
             required={!!rules?.required}
             error={fieldState.error?.message}
             className={className}
+            layout={layout}
           >
             <Autocomplete<TOption, TForm>
               link={link}

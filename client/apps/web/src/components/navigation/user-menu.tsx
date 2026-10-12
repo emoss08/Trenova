@@ -2,19 +2,13 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { LanguageSubmenu } from "@/components/navigation/language-submenu";
 import { SidebarLayoutSubmenu } from "@/components/navigation/sidebar-variant-menu";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
-import { useTheme } from "@trenova/shared/components/theme-provider";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { useSignOut } from "@/hooks/use-sign-out";
@@ -23,11 +17,8 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import {
   ChevronSelectorVerticalIcon,
   LogOut01Icon,
-  PaletteIcon,
   Settings01Icon,
-  User01Icon,
 } from "@trenova/shared/components/icons";
-import { useNavigate } from "react-router";
 
 /**
  * `compact` renders the avatar alone as the trigger, for a rail with no room
@@ -37,10 +28,8 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
   const t = useT();
 
   const user = useAuthStore((s) => s.user);
-  const navigate = useNavigate();
   const signOut = useSignOut();
   const openDialog = useAppDialogsStore((state) => state.openDialog);
-  const { theme, setTheme } = useTheme();
 
   const displayName = user?.name ?? user?.username ?? "User";
 
@@ -62,7 +51,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
               name={user?.name}
               profilePicUrl={user?.profilePicUrl}
               thumbnailUrl={user?.thumbnailUrl}
-              className="size-7"
+              className="size-5"
               fallbackClassName="bg-muted text-2xs font-medium text-muted-foreground"
             />
           </DropdownMenuTrigger>
@@ -117,48 +106,12 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              title={t("Profile")}
-              startContent={<User01Icon className="size-4" />}
-              onClick={() => void navigate("/profile")}
-            />
-            <DropdownMenuItem
               title={t("Settings")}
               startContent={<Settings01Icon className="size-4" />}
               onClick={() => openDialog("settings")}
             />
             <SidebarLayoutSubmenu />
             <LanguageSubmenu />
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                <PaletteIcon className="mr-2 size-4" />
-                <span>{t("Switch theme")}</span>
-              </DropdownMenuSubTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuSubContent sideOffset={5}>
-                  <DropdownMenuCheckboxItem
-                    checked={theme === "light"}
-                    onCheckedChange={() => setTheme("light")}
-                    className="cursor-pointer"
-                  >
-                    {t("Light")}
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={theme === "dark"}
-                    onCheckedChange={() => setTheme("dark")}
-                    className="cursor-pointer"
-                  >
-                    {t("Dark")}
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={theme === "system"}
-                    onCheckedChange={() => setTheme("system")}
-                    className="cursor-pointer"
-                  >
-                    {t("System")}
-                  </DropdownMenuCheckboxItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuPortal>
-            </DropdownMenuSub>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               title={t("Log out")}

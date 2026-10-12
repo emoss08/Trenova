@@ -13,18 +13,16 @@ import (
 const threadCursorSeparator = "."
 
 type threadCursor struct {
-	pinned        bool
-	lastMessageAt int64
-	createdAt     int64
-	id            pulid.ID
+	pinned    bool
+	touchedAt int64
+	id        pulid.ID
 }
 
 func threadCursorAt(thread *conversation.Thread) threadCursor {
 	return threadCursor{
-		pinned:        thread.Pinned,
-		lastMessageAt: thread.LastMessageAt,
-		createdAt:     thread.CreatedAt,
-		id:            thread.ID,
+		pinned:    thread.Pinned,
+		touchedAt: max(thread.LastMessageAt, thread.CreatedAt),
+		id:        thread.ID,
 	}
 }
 
@@ -36,8 +34,7 @@ func (c threadCursor) encode() string {
 
 	return base64.RawURLEncoding.EncodeToString([]byte(strings.Join([]string{
 		pinned,
-		strconv.FormatInt(c.lastMessageAt, 10),
-		strconv.FormatInt(c.createdAt, 10),
+		strconv.FormatInt(c.touchedAt, 10),
 		c.id.String(),
 	}, threadCursorSeparator)))
 }
@@ -48,31 +45,25 @@ func decodeThreadCursor(raw string) (*threadCursor, error) {
 		return nil, errBadThreadCursor()
 	}
 
-	parts := strings.SplitN(string(decoded), threadCursorSeparator, 4)
-	if len(parts) != 4 || (parts[0] != "0" && parts[0] != "1") {
+	parts := strings.Split(string(decoded), threadCursorSeparator)
+	if len(parts) != 3 || (parts[0] != "0" && parts[0] != "1") {
 		return nil, errBadThreadCursor()
 	}
 
-	lastMessageAt, err := strconv.ParseInt(parts[1], 10, 64)
+	touchedAt, err := strconv.ParseInt(parts[1], 10, 64)
 	if err != nil {
 		return nil, errBadThreadCursor()
 	}
 
-	createdAt, err := strconv.ParseInt(parts[2], 10, 64)
-	if err != nil {
-		return nil, errBadThreadCursor()
-	}
-
-	id, err := pulid.Parse(parts[3])
+	id, err := pulid.Parse(parts[2])
 	if err != nil {
 		return nil, errBadThreadCursor()
 	}
 
 	return &threadCursor{
-		pinned:        parts[0] == "1",
-		lastMessageAt: lastMessageAt,
-		createdAt:     createdAt,
-		id:            id,
+		pinned:    parts[0] == "1",
+		touchedAt: touchedAt,
+		id:        id,
 	}, nil
 }
 

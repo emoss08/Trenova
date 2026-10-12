@@ -1,6 +1,5 @@
 import { recordPath } from "@/config/record-links";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { describeApiError } from "@/lib/api-error-message";
 import { queries } from "@/lib/queries";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -23,6 +22,7 @@ import {
   CardSection,
   CardStatus,
   CardStepper,
+  CardUnreadable,
   CardTimeline,
   RecordCard,
 } from "../../record-card/record-card";
@@ -109,18 +109,13 @@ export function DeskShipment({
 
   if (!shipment) {
     return query.isError ? (
-      <RecordCard>
-        <CardHead
-          onBack={onBack}
-          backLabel={backLabel ?? t("Back to the table")}
-          kicker={[t("Shipment")]}
-          title={t("This shipment could not be read")}
-          subtitle={describeApiError(
-            query.error,
-            t("It may have been removed, or you may not be allowed to see it."),
-          )}
-        />
-      </RecordCard>
+      <CardUnreadable
+        kind={t("Shipment")}
+        title={t("This shipment could not be read")}
+        error={query.error}
+        onBack={onBack}
+        backLabel={backLabel}
+      />
     ) : (
       <DeskShipmentSkeleton stepper={onSelect !== undefined && order.length > 1} />
     );

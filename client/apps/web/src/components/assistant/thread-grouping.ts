@@ -1,6 +1,7 @@
 import {
   groupDeskThreadsByRecency,
   matchesThreadSearch,
+  threadTouchedAt,
   type DeskShelfKey,
 } from "@/components/desk-chat/rail/desk-threads";
 import type { AssistantThread } from "@/types/assistant";
@@ -22,10 +23,6 @@ export type AssistantShelvesOptions = {
   agentName: (thread: AssistantThread) => string;
 };
 
-function touchedAt(thread: AssistantThread): number {
-  return thread.lastMessageAt > 0 ? thread.lastMessageAt : thread.createdAt;
-}
-
 function waitsOnPerson(thread: AssistantThread): boolean {
   return (thread.attention?.pendingDecisions ?? 0) > 0;
 }
@@ -41,7 +38,7 @@ export function assistantShelves(
   { now, timezone, query, agentName }: AssistantShelvesOptions,
 ): AssistantShelf[] {
   const found = threads.filter((thread) => matchesThreadSearch(thread, agentName(thread), query));
-  const waiting = found.filter(waitsOnPerson).sort((a, b) => touchedAt(b) - touchedAt(a));
+  const waiting = found.filter(waitsOnPerson).sort((a, b) => threadTouchedAt(b) - threadTouchedAt(a));
   const rest = groupDeskThreadsByRecency(
     found.filter((thread) => !waitsOnPerson(thread)),
     now,

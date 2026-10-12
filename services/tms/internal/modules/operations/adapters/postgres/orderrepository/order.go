@@ -845,7 +845,13 @@ func (r *repository) GetByID(
 			})
 
 		if req.IncludeShipment {
-			q = q.Relation("Shipments").Relation("Customer").Relation("Charges")
+			q = q.Relation("Shipments")
+		}
+		if req.IncludeShipment || req.IncludeCustomer {
+			q = q.Relation("Customer")
+		}
+		if req.IncludeShipment || req.IncludeCharges {
+			q = q.Relation("Charges")
 		}
 
 		if err := q.Scan(ctx); err != nil {

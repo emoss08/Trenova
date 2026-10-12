@@ -22,7 +22,6 @@
   "Rate confirmations": "Confirmaciones de tarifa",
   "Read-only record of every carrier payable statement across pay periods — process active settlements in the workspace.": "Registro de solo lectura de todos los estados de cuenta por pagar de transportistas en los distintos períodos de pago; procese las liquidaciones activas en el espacio de trabajo.",
   "Records the disbursement to the carrier and posts the cash journal (debit accounts payable, credit cash) plus the ledger payment entry.": "Registra el desembolso al transportista y contabiliza el diario de caja (carga a cuentas por pagar, abono a caja) junto con el asiento de pago en el libro mayor.",
-  "Remit to": "Enviar pago a",
   "Settlement marked paid — cash journal and ledger payment recorded": "Liquidación marcada como pagada: se registraron el diario de caja y el pago en el libro mayor",
   "Settlement recalculated from current cost events": "Liquidación recalculada a partir de los eventos de costo actuales",
   "The check number or ACH trace so the payment reconciles against the bank.": "El número de cheque o el rastreo ACH para que el pago concilie con el banco.",

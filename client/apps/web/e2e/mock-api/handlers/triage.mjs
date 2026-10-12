@@ -4,6 +4,7 @@
 import { DOCUMENT_TYPES } from "../fixtures/triage.mjs";
 import { ORG, USER } from "../fixtures/session.mjs";
 import { publish } from "../realtime.mjs";
+import { userSelectOptions } from "./settings.mjs";
 import * as model from "./triage-model.mjs";
 
 const MOCK_ORIGIN = process.env.MOCK_API_PUBLIC_URL ?? `http://localhost:${process.env.MOCK_API_PORT ?? 8080}`;
@@ -744,7 +745,12 @@ export const DESK_HANDLERS = {
       SHIPMENT: () => [...t.shipments.values()].map((s) => ({ id: s.id, label: s.proNumber, description: `${s.originCity}, ${s.originState} → ${s.destinationCity}, ${s.destinationState}`, meta: { bol: s.bol, poNumber: s.poNumber } })),
       CUSTOMER: () => [...t.customers.values()].map((c) => ({ id: c.id, label: c.code, description: c.name, meta: null })),
       CARRIER: () => [...t.carriers.values()].map((c) => ({ id: c.id, label: c.name, description: c.domain, meta: null })),
-      USER: () => [...t.users.values()].map((u) => ({ id: u.id, label: u.name, description: u.emailAddress, meta: null })),
+      USER: () => {
+        const triageUsers = [...t.users.values()].map((u) => ({ id: u.id, label: u.name, description: u.emailAddress, meta: null }));
+        const known = new Set(triageUsers.map((u) => u.id));
+        const team = userSelectOptions(state, {}).selectOptions.edges.map((edge) => edge.node).filter((u) => !known.has(u.id));
+        return [...triageUsers, ...team];
+      },
     }[input.resource];
     let rows = options ? options() : [];
     if (input.ids?.length) rows = rows.filter((row) => input.ids.includes(row.id));

@@ -70,7 +70,7 @@ export function WorkspaceHeader({ leading }: { leading?: ReactNode }) {
     >
       <div className="flex min-w-0 items-center gap-1.5">
         {leading}
-        <div className="flex min-w-0 max-w-64 shrink items-center">
+        <div className="flex max-w-64 min-w-0 shrink items-center">
           <OrgSwitcher />
         </div>
         <div aria-hidden className="bg-border mx-0.5 h-4 w-px shrink-0" />

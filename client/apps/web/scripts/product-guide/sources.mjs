@@ -146,6 +146,18 @@ function resolveModule(src, specifier) {
 }
 
 /**
+ * The route array a `routes` declaration holds, looking through a call that
+ * wraps it whole, such as `withPathScopedRevalidation([...])`.
+ */
+function routeArray(node) {
+  if (node?.type === "CallExpression" && node.arguments.length === 1) {
+    return node.arguments[0];
+  }
+
+  return node;
+}
+
+/**
  * The pages a signed-in person can open: every route under a protected
  * loader that renders a page rather than redirecting, with the permissions
  * and capabilities its loaders (and its parents') demand.
@@ -153,7 +165,7 @@ function resolveModule(src, specifier) {
 export function readRoutes(paths, members) {
   const { program } = parseFile(paths.router);
   const consts = topLevelConsts(program);
-  const routesNode = consts.get("routes");
+  const routesNode = routeArray(consts.get("routes"));
   if (routesNode?.type !== "ArrayExpression") {
     throw new Error(`${paths.router}: routes is not an array literal`);
   }

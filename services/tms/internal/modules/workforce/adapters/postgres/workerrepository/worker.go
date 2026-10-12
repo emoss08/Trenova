@@ -214,6 +214,18 @@ func (r *repository) GetByID(
 		if req.IncludeState {
 			q.Relation(workercol.WorkerRelations.State)
 		}
+		if req.IncludeFleetCode {
+			q.Relation(workercol.WorkerRelations.FleetCode)
+		}
+		if req.IncludeManager {
+			q.Relation(workercol.WorkerRelations.Manager)
+		}
+		if req.IncludeProfile && req.IncludeLicenseState {
+			q.Relation(buncolgen.Rel(
+				workercol.WorkerRelations.Profile,
+				workercol.WorkerProfileRelations.LicenseState,
+			))
+		}
 
 		if err := q.Scan(ctx); err != nil {
 			log.Error("failed to get worker", zap.Error(err))

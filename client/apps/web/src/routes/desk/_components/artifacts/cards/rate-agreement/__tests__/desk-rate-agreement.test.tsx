@@ -1,8 +1,13 @@
+import type { ActivityEntry } from "@/lib/graphql/record-activity";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import type { RateAgreement, RateAgreementRule } from "@trenova/shared/types/rate";
+import type {
+  RateAgreement,
+  RateAgreementLaneSummary,
+  RateAgreementRule,
+} from "@trenova/shared/types/rate";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskRateAgreement } from "../desk-rate-agreement";
@@ -11,13 +16,15 @@ const service = vi.hoisted(() => ({
   getWithoutLanes: vi.fn(),
   listLanes: vi.fn(),
   listVersions: vi.fn(),
+  laneSummary: vi.fn(),
 }));
-const fetchers = vi.hoisted(() => ({ pricing: vi.fn(), options: vi.fn() }));
+const fetchers = vi.hoisted(() => ({ pricing: vi.fn(), options: vi.fn(), activity: vi.fn() }));
 
 vi.mock("@/services/api", () => ({ apiService: { rateAgreementService: service } }));
 vi.mock("@/lib/graphql/rate-agreement-card", () => ({
   fetchRateAgreementPricing: fetchers.pricing,
 }));
+vi.mock("@/lib/graphql/record-activity", () => ({ fetchRecordActivity: fetchers.activity }));
 vi.mock("@/lib/graphql/select-options", () => ({
   fetchGraphQLSelectOptions: fetchers.options,
 }));
@@ -164,8 +171,49 @@ function manyLanes(count: number): RateAgreementRule[] {
   );
 }
 
+/** The agreement's live lanes by what prices them, as GET /rate-agreements/{id}/lanes/summary/ returns them. */
+function summary(overrides: Partial<RateAgreementLaneSummary> = {}): RateAgreementLaneSummary {
+  return {
+    count: 40,
+    groups: [
+      {
+        formulaTemplateId: "ft_mile",
+        formulaTemplateName: "Per mile",
+        rateMatrixId: null,
+        rateMatrixName: "",
+        currency: "USD",
+        lanes: 30,
+        minRate: "2.1",
+        maxRate: "3.45",
+      },
+      {
+        formulaTemplateId: null,
+        formulaTemplateName: "",
+        rateMatrixId: "rm_1",
+        rateMatrixName: "Southeast zones",
+        currency: "CAD",
+        lanes: 10,
+        minRate: null,
+        maxRate: null,
+      },
+    ],
+    ...overrides,
+  };
+}
+
+const entry = {
+  id: "ae_1",
+  operation: "update",
+  timestamp: NOW - 3_600,
+  changes: { status: { from: "PendingApproval", to: "Active" } },
+  comment: null,
+  principalType: "session_user",
+  user: { id: "usr_2", name: "Robin Hale" },
+} as ActivityEntry;
+
 const EVERYTHING = {
   [Resource.RateAgreement]: Operation.Read,
+  [Resource.AuditLog]: Operation.Read,
   [Resource.RateQuote]: Operation.Read,
   [Resource.Customer]: Operation.Read,
   [Resource.FormulaTemplate]: Operation.Read,
@@ -215,6 +263,13 @@ beforeEach(() => {
     },
   ]);
   fetchers.pricing.mockResolvedValue({ loads: 412, lastRatedAt: NOW - 2 * DAY });
+  service.laneSummary.mockResolvedValue(summary());
+  fetchers.activity.mockResolvedValue({
+    rows: [entry],
+    total: 6,
+    endCursor: "c1",
+    hasNextPage: true,
+  });
   fetchers.options.mockImplementation(async ({ ids }: { ids: string[] }) => ({
     results: ids.map((id) => ({
       id,
@@ -234,7 +289,9 @@ describe("DeskRateAgreement", () => {
     const { container } = draw();
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading the rate agreement…");
-    expect(container.querySelector(".dk-rec-skel .dk-ra-path")).not.toBeNull();
+    expect(container.querySelector(".dk-rec-skel .dk-rec-path")).not.toBeNull();
+    expect(container.querySelectorAll(".dk-rec-skel .dk-ra-mix .dk-rec-gauge")).toHaveLength(2);
+    expect(container.querySelector(".dk-rec-skel .dk-rec-sk-log")).not.toBeNull();
 
     expect(
       await screen.findByRole("heading", { name: "Acme dry van contract", level: 2 }),
@@ -252,12 +309,97 @@ describe("DeskRateAgreement", () => {
     expect(container.querySelector(".dk-rec-amt")).toHaveTextContent("1lane priced");
   });
 
+  it("draws how its lanes are priced, each way as its share of the live lanes", async () => {
+    draw();
+
+    const structure = await section("Rate structure");
+    const mile = await within(structure).findByRole("meter", { name: "Per mile" });
+    expect(mile).toHaveAttribute("aria-valuenow", "75");
+    expect(mile.closest(".dk-rec-gauge")).toHaveTextContent("30 lanes2.1 – 3.45");
+    const table = within(structure).getByRole("meter", {
+      name: "Rate table Southeast zones · CAD",
+    });
+    expect(table).toHaveAttribute("aria-valuenow", "25");
+    expect(table.closest(".dk-rec-gauge")).toHaveTextContent(/10 lanes$/u);
+    expect(service.laneSummary).toHaveBeenCalledWith("ra_1", expect.anything());
+  });
+
+  it("says how its lanes are priced could not be read, and the rest of the card stands", async () => {
+    service.laneSummary.mockRejectedValue(new Error("Lane summary is unavailable"));
+    draw();
+
+    expect(await screen.findByText("Lane summary is unavailable")).toBeInTheDocument();
+    expect(await within(await section("Lanes")).findByText("Per mile")).toBeInTheDocument();
+  });
+
+  it("lists what has been done to it, and reads earlier activity on request", async () => {
+    draw();
+
+    const activity = await section("Activity");
+    expect(await within(activity).findByText("Changed status")).toBeInTheDocument();
+    expect(within(activity).getByText(/^Robin Hale · /u)).toBeInTheDocument();
+    expect(within(activity).getByText("6 changes")).toBeInTheDocument();
+    expect(fetchers.activity).toHaveBeenCalledWith(
+      "ra_1",
+      { first: 5, after: null },
+      expect.anything(),
+    );
+
+    fetchers.activity.mockResolvedValue({
+      rows: [{ ...entry, id: "ae_2", operation: "create", changes: null }],
+      total: null,
+      endCursor: null,
+      hasNextPage: false,
+    });
+    fireEvent.click(within(activity).getByRole("button", { name: "Show more" }));
+    expect(await within(activity).findByText("Created")).toBeInTheDocument();
+    expect(fetchers.activity).toHaveBeenLastCalledWith(
+      "ra_1",
+      { first: 5, after: "c1" },
+      expect.anything(),
+    );
+  });
+
+  it("stands with nothing around it: no lanes, no charges, no versions, no activity", async () => {
+    service.getWithoutLanes.mockResolvedValue(
+      agreement({ accessorials: [], fuelBinding: null, currentVersionNumber: 1 }),
+    );
+    service.listLanes.mockImplementation(lanePages([]));
+    service.listVersions.mockResolvedValue([]);
+    service.laneSummary.mockResolvedValue({ count: 0, groups: [] });
+    fetchers.activity.mockResolvedValue({
+      rows: [],
+      total: 0,
+      endCursor: null,
+      hasNextPage: false,
+    });
+    draw();
+
+    expect(
+      await screen.findByText("Once a lane prices freight, how each is priced shows here."),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText("No lane prices freight on this agreement yet."),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText("Nothing has been done to this agreement yet."),
+    ).toBeInTheDocument();
+    expect(await screen.findByText("lanes priced")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Charges" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Versions" })).toBeNull();
+  });
+
   it("leads with the term on its track, coloured by where it stands", async () => {
     const { container } = draw();
 
     const term = await screen.findByRole("meter", { name: "Term elapsed" });
     expect(term).toHaveAttribute("aria-valuenow", "83");
     expect(container.querySelector(".dk-ra-now")).toHaveClass("dk-ra-notice");
+    // The notice's span on the track has a class of its own: the panel's state
+    // classes are the panel's, and one shared with the span lifts the panel
+    // out of the card along with it.
+    expect(container.querySelectorAll(".dk-ra-notice")).toHaveLength(1);
+    expect(term.querySelector(".dk-ra-notice-zone")).not.toBeNull();
     expect(within(term).getByText("Today")).toBeInTheDocument();
     const panel = container.querySelector(".dk-ra-now") as HTMLElement;
     expect(within(panel).getByText("Started")).toBeInTheDocument();
@@ -438,6 +580,8 @@ describe("DeskRateAgreement", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText(/^Priced /)).toBeNull();
     expect(fetchers.pricing).not.toHaveBeenCalled();
+    expect(screen.queryByRole("heading", { name: "Activity" })).toBeNull();
+    expect(fetchers.activity).not.toHaveBeenCalled();
 
     const customer = await within(await section("Customer")).findByRole("link", {
       name: /Acme Foods/,
@@ -445,6 +589,15 @@ describe("DeskRateAgreement", () => {
     expect(customer).toHaveAttribute("href", expect.stringContaining("cus_1"));
     const lanes = await section("Lanes");
     expect(await within(lanes).findByText("Per mile")).not.toHaveRole("button");
+  });
+
+  it("leaves the outline of activity the person may not read out of the skeleton", () => {
+    seedPermissions({ [Resource.RateAgreement]: Operation.Read });
+    service.getWithoutLanes.mockReturnValue(new Promise(() => {}));
+    const { container } = draw();
+
+    expect(container.querySelector(".dk-rec-skel .dk-ra-mix")).not.toBeNull();
+    expect(container.querySelector(".dk-rec-skel .dk-rec-sk-log")).toBeNull();
   });
 
   it("says when an agreement has no end, and when it has never priced a load", async () => {
@@ -457,6 +610,25 @@ describe("DeskRateAgreement", () => {
     expect(container.querySelector(".dk-ra-track")).toHaveClass("dk-open");
     expect(container.querySelector(".dk-ra-end.dk-to b")).toHaveTextContent("No end date");
     expect(await screen.findByText("Has not priced a load yet")).toBeInTheDocument();
+  });
+
+  it("leaves an open term that has not begun unfilled, with today not yet on it", async () => {
+    service.getWithoutLanes.mockResolvedValue(
+      agreement({
+        status: "Draft",
+        approvedAt: null,
+        effectiveFrom: NOW + 14 * DAY,
+        effectiveTo: null,
+      }),
+    );
+    const { container } = draw();
+
+    expect(await screen.findByText("Starts")).toBeInTheDocument();
+    expect(container.querySelector(".dk-ra-track")).toHaveClass("dk-open");
+    expect(container.querySelector<HTMLElement>(".dk-ra-done")?.style.width).toBe("0%");
+    expect(
+      within(container.querySelector(".dk-ra-now") as HTMLElement).queryByText("Today"),
+    ).toBeNull();
   });
 
   it("puts a reviewer's comment on the step the agreement was sent back to", async () => {

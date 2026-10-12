@@ -106,6 +106,7 @@ async function handle(req, res) {
 
   if (url.pathname.startsWith("/graphql")) {
     const result = await handleGraphQL(state, body ?? {});
+    if (result.hold) return undefined;
     if (!result.known && LOG_UNKNOWN) {
       console.log(`[mock-api] unhandled GraphQL operation ${body?.operationName}`);
     }
@@ -116,6 +117,7 @@ async function handle(req, res) {
   if (!result.known && LOG_UNKNOWN) {
     console.log(`[mock-api] unhandled ${req.method} ${url.pathname}`);
   }
+  if (result.hold) return undefined;
   if (result.sse) {
     res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" });
     let closed = false;

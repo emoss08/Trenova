@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func workerCursorConnectionToModel(
@@ -84,5 +85,22 @@ func ptoBulkActionOperation(action workerports.PTOBulkActionType) (permission.Op
 			errortypes.ErrInvalid,
 			"Bulk action is invalid",
 		)
+	}
+}
+
+func workerByIDRequest(
+	fieldRequested func(string) bool,
+	id pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) workerports.GetWorkerByIDRequest {
+	includeProfile := fieldRequested("profile")
+	return workerports.GetWorkerByIDRequest{
+		ID:                  id,
+		TenantInfo:          tenantInfo,
+		IncludeProfile:      includeProfile,
+		IncludeState:        fieldRequested("state"),
+		IncludeFleetCode:    fieldRequested("fleetCode"),
+		IncludeManager:      fieldRequested("manager"),
+		IncludeLicenseState: includeProfile && fieldRequested("profile.licenseState"),
 	}
 }

@@ -50,6 +50,7 @@ import { invoiceAdjustment } from "./invoice-adjustment";
 import { invoiceAdjustmentControl } from "./invoice-adjustment-control";
 import { invoiceShare } from "./invoice-share";
 import { location } from "./location";
+import { order } from "./order";
 import { organization } from "./organization";
 import { pageFavoite } from "./page-favorite";
 import { reports } from "./reports";
@@ -61,6 +62,8 @@ import { recurringShipment } from "./recurring-shipment";
 import { shipment } from "./shipment";
 import { shipmentBoard } from "./shipment-board";
 import { shipmentControl } from "./shipment-control";
+import { tractor } from "./tractor";
+import { trailer } from "./trailer";
 import { homeLayout } from "./home-layout";
 import { sidebarPreferences } from "./sidebar-preferences";
 import { notification } from "@trenova/shared/lib/queries/notification";
@@ -76,6 +79,7 @@ import { worker } from "./worker";
 import { exchangeRate } from "./exchange-rate";
 import { fuelSurcharge } from "./fuel-surcharge";
 import { costControl } from "./cost-control";
+import { carrier } from "./carrier";
 import { carrierIntelSettings } from "./carrier-intel-settings";
 import { telematics } from "./telematics";
 
@@ -116,7 +120,10 @@ const operationsQueries = mergeQueryKeys(
   documentControl,
   documentParsingRule,
   location,
+  order,
   shipment,
+  tractor,
+  trailer,
   shipmentBoard,
   rateQuote,
   recurringShipment,
@@ -154,6 +161,7 @@ const workspaceQueries = mergeQueryKeys(
   agentRun,
   assistant,
   insight,
+  carrier,
   carrierIntelSettings,
   agentQuality,
   agentSafety,

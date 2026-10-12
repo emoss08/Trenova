@@ -7,7 +7,6 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { memo, type KeyboardEvent } from "react";
-import { caseRailLabel, caseStateLabel } from "./case/case-labels";
 
 const ROW_ACTION_CLASS =
   "dk-sb-a relative size-5.5 justify-center rounded-md text-dsk-subtle transition-colors duration-150 hover:bg-dsk-fg/8 hover:text-dsk-fg";
@@ -33,14 +32,15 @@ type DeskRailThreadRowProps = {
   active: boolean;
   confirming: boolean;
   leaving: boolean;
-  now: number;
+  /** When the reader's day began, so the row's time says the hour today and the date before. */
+  today: number;
   timezone: string;
   actions: DeskRailRowActions;
 };
 
 /**
  * One conversation on the rail: a dot that says what it waits on, its name,
- * the case it is about, and pin and delete on hover. Delete asks once more,
+ * and pin and delete on hover. Delete asks once more,
  * inline, before it acts. It is renamed from its name in the top bar.
  *
  * Memoized by hand: it is drawn inside a virtual list, which is kept out of
@@ -53,14 +53,13 @@ export const DeskRailThreadRow = memo(function DeskRailThreadRow({
   active,
   confirming,
   leaving,
-  now,
+  today,
   timezone,
   actions,
 }: DeskRailThreadRowProps) {
   const t = useT();
   const state = deskThreadState(thread, { live, active });
   const title = thread.title || t("Untitled conversation");
-  const caseLabel = thread.case ? caseRailLabel(thread.case, now, timezone, t) : "";
   const openOnKey = (event: KeyboardEvent) => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
@@ -82,8 +81,7 @@ export const DeskRailThreadRow = memo(function DeskRailThreadRow({
       title={[
         agentName ?? t("Agent unavailable"),
         stateLabel(t, state),
-        thread.case ? caseStateLabel(thread.case, now, timezone, t) : "",
-        railTime(thread, now, timezone),
+        railTime(thread, today, timezone),
       ]
         .filter(Boolean)
         .join(" · ")}
@@ -93,7 +91,6 @@ export const DeskRailThreadRow = memo(function DeskRailThreadRow({
     >
       <RailDot state={state} />
       <span className="dk-sb-t">{title}</span>
-      {caseLabel !== "" && <span className="dk-sb-cs">{caseLabel}</span>}
       <span
         className="dk-sb-acts"
         onClick={(event) => event.stopPropagation()}

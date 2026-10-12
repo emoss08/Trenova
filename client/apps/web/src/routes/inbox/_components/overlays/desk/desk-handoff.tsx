@@ -174,7 +174,7 @@ function HandoffBody({ message, onClose }: { message: InboundMessageDetail; onCl
     return (
       <div className="flex flex-wrap items-center gap-1.5 pb-2">
         <span className="text-foreground-subtle min-w-0 flex-1 truncate text-xs">
-          {t("Next: {0}", copy.title)}
+          {t("Next step: {0}", copy.title)}
         </span>
         <Button
           size="sm"

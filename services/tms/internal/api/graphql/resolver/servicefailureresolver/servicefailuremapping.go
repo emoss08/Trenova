@@ -1,10 +1,14 @@
 package servicefailureresolver
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func serviceFailureConnectionToModel(
@@ -29,4 +33,12 @@ func serviceFailureConnectionToModel(
 		PageInfo:   page.PageInfo,
 		TotalCount: page.TotalCount,
 	}, nil
+}
+
+func failureUser(ctx context.Context, loaded *tenant.User, id *pulid.ID) (*tenant.User, error) {
+	if loaded != nil {
+		return loaded, nil
+	}
+
+	return base.LoadUser(ctx, pulid.ConvertFromPtr(id))
 }

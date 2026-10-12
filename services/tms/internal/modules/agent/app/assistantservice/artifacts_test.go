@@ -720,10 +720,10 @@ func TestArtifactFromObservation_OnlyTheSoleRecordOfACardedKindIsItsCard(t *test
 			},
 		},
 		"one record of a kind the Desk has no card for": {
-			tool: "list_workers",
+			tool: "list_commodities",
 			result: map[string]any{
 				"count": float64(1), "columns": columns,
-				"items": []any{map[string]any{"id": "wrk_01JAVERY000000000000000", "name": "Avery"}},
+				"items": []any{map[string]any{"id": "com_01JPAPER000000000000000", "name": "Paper"}},
 			},
 		},
 	}

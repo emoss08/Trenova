@@ -314,6 +314,8 @@ input WorkerPTOChartInput {
 
 extend type Query {
   workers(input: DataTableConnectionInput!): WorkerConnection!
+  "One worker, with the profile, state, fleet, manager and license state it is asked for."
+  worker(id: ID!): Worker
   workerPTOEntries(input: WorkerPTOEntriesInput!): WorkerPTOConnection!
   upcomingWorkerPTO(input: UpcomingWorkerPTOInput!): WorkerPTOConnection!
   workerPTOChartData(input: WorkerPTOChartInput!): [PTOChartDataPoint!]!

@@ -158,16 +158,16 @@ export function CommentItem({
           name={comment.user?.name}
           profilePicUrl={comment.user?.profilePicUrl}
           thumbnailUrl={comment.user?.thumbnailUrl}
-          className={cn("size-9", isResolved && "opacity-70")}
+          className={cn("size-7", isResolved && "opacity-70")}
           fallbackClassName="text-xs"
         />
         {isOnline && (
-          <span className="border-background absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 bg-success" />
+          <span className="border-background bg-success absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2" />
         )}
         {PRIORITY_INDICATOR[comment.priority] && (
           <span
             className={cn(
-              "absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full border text-2xs leading-none font-semibold",
+              "text-2xs absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full border leading-none font-semibold",
               PRIORITY_INDICATOR[comment.priority]!.className,
             )}
           >
@@ -195,7 +195,7 @@ export function CommentItem({
           {isPinned && (
             <Tooltip>
               <TooltipTrigger
-                render={<Pin01Icon className="size-3 shrink-0 text-warning-foreground" />}
+                render={<Pin01Icon className="text-warning-foreground size-3 shrink-0" />}
               />
               <TooltipContent side="top">
                 {t(
@@ -240,7 +240,7 @@ export function CommentItem({
 
         {comment.failed && (
           <div className="mt-1.5 flex items-center gap-2">
-            <span className="text-2xs font-medium text-danger-foreground">
+            <span className="text-2xs text-danger-foreground font-medium">
               {t("Failed to send")}
             </span>
             <Button
@@ -268,12 +268,12 @@ export function CommentItem({
 
         {isResolved && !isEditing && (
           <div className="text-2xs text-muted-foreground mt-1.5 flex items-center gap-1.5">
-            <CheckCircleIcon className="size-3 text-success-foreground" />
+            <CheckCircleIcon className="text-success-foreground size-3" />
             {t(
               "Resolved {0} {1}",
               comment.resolvedBy?.name ? ` ${t("by {0}", comment.resolvedBy.name)}` : "",
               comment.resolvedAt != null &&
-                ` · ${formatDistanceToNow(fromUnixTime(comment.resolvedAt), { addSuffix: true })}`,
+              ` · ${formatDistanceToNow(fromUnixTime(comment.resolvedAt), { addSuffix: true })}`,
             )}
           </div>
         )}
@@ -430,11 +430,11 @@ function CommentActions({
           <AlertDialogDescription>
             {hasReplies
               ? t(
-                  "This comment has replies, so it will be replaced with a deleted-comment placeholder. Its content and attachments are removed permanently.",
-                )
+                "This comment has replies, so it will be replaced with a deleted-comment placeholder. Its content and attachments are removed permanently.",
+              )
               : t(
-                  "This action cannot be undone. This will permanently delete this comment and its attachments.",
-                )}
+                "This action cannot be undone. This will permanently delete this comment and its attachments.",
+              )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

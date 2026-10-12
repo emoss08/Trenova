@@ -1,6 +1,7 @@
 import { createAIState } from "./fixtures/aicontrol.mjs";
 import { buildShipments, CARRIERS, createDriverPool } from "./fixtures/board.mjs";
 import { createTriageState } from "./handlers/triage-model.mjs";
+import { createSettingsState } from "./fixtures/settings.mjs";
 
 export const SCENARIO_DEFAULTS = {
   // quiet | busy | high (480 rows)
@@ -22,6 +23,10 @@ export const SCENARIO_DEFAULTS = {
   triageTime: process.env.MOCK_TRIAGE_TIME ?? "afternoon",
   // how long after "Wait for reply" the sender answers on the thread (app.jsx waits 6.5s)
   triageReplyAfterMs: Number(process.env.MOCK_TRIAGE_REPLY_MS ?? 6500),
+  // Desk resource cards: full | empty | hold (every card request left open, for the skeleton)
+  desk: process.env.MOCK_DESK ?? "full",
+  // the card the Desk cards conversation holds
+  deskSlug: process.env.MOCK_DESK_SLUG ?? "tractor-t-101",
 };
 
 const TRIAGE_SCENARIOS = new Set(["live", "firstDay", "noMailbox", "deskOff"]);
@@ -90,6 +95,7 @@ export function createState(requested) {
     dispose: () => triage.dispose(),
     now: () => anchor + Math.floor((Date.now() - startedAt) / 1000),
     ai: createAIState(anchor, scenario),
+    settings: createSettingsState(anchor),
     shipments,
     drivers: scenario.board === "quiet" ? pool.slice(0, 4) : scenario.board === "high" ? pool : pool.slice(0, 9),
     carriers: CARRIERS.map((carrier) => ({ ...carrier })),

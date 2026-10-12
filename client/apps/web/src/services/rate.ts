@@ -3,6 +3,7 @@ import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   rateAgreementLanePageSchema,
+  rateAgreementLaneSummarySchema,
   rateAgreementSchema,
   rateMatrixCellSchema,
   rateMatrixSchema,
@@ -15,6 +16,7 @@ import {
   rateZoneSchema,
   type RateAgreement,
   type RateAgreementLanePage,
+  type RateAgreementLaneSummary,
   type RateAgreementRule,
   type RateAgreementVersion,
   type RateIncreasePlan,
@@ -93,6 +95,19 @@ export class RateAgreementService {
     );
 
     return safeParse(rateAgreementLanePageSchema, response, "Rate Agreement Lanes");
+  }
+
+  /** The agreement's live lanes grouped by what prices them, with each group's rate range. */
+  public async laneSummary(
+    id: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<RateAgreementLaneSummary> {
+    const response = await api.get<RateAgreementLaneSummary>(
+      `/rate-agreements/${encodeURIComponent(id)}/lanes/summary/`,
+      { signal: options?.signal },
+    );
+
+    return safeParse(rateAgreementLaneSummarySchema, response, "Rate Agreement Lane Summary");
   }
 
   public async create(data: RateAgreement): Promise<RateAgreement> {

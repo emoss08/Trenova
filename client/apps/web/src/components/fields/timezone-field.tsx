@@ -4,15 +4,18 @@ import { formatTimezoneLabel } from "@trenova/shared/lib/timezones";
 import type { FormControlProps, SelectOptionGroup } from "@trenova/shared/types/fields";
 import { useMemo } from "react";
 import { useWatch, type FieldValues } from "react-hook-form";
+import type React from "react";
+import type { FieldLayout } from "./field-components";
 import { SelectField } from "./select-field";
 
 type TimezoneFieldProps<T extends FieldValues> = FormControlProps<T> & {
   label?: string;
-  description?: string;
+  description?: React.ReactNode;
   placeholder?: string;
   isClearable?: boolean;
   className?: string;
   triggerClassName?: string;
+  layout?: FieldLayout;
 };
 
 const KNOWN_ZONES = new Set(
@@ -34,6 +37,7 @@ export function TimezoneField<T extends FieldValues>({
   isClearable,
   className,
   triggerClassName,
+  layout,
 }: TimezoneFieldProps<T>) {
   const t = useT();
   const value: unknown = useWatch({ control, name });
@@ -64,6 +68,7 @@ export function TimezoneField<T extends FieldValues>({
       isClearable={isClearable}
       className={className}
       triggerClassName={triggerClassName}
+      layout={layout}
       renderOption={(option) => (
         <span className="flex w-full items-center justify-between gap-3">
           <span>{t(option.label)}</span>

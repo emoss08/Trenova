@@ -1,6 +1,7 @@
+import { describeApiError } from "@/lib/api-error-message";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
+import { cn, getNameInitials } from "@trenova/shared/lib/utils";
 import { Fragment, type ReactNode } from "react";
 import { Link } from "react-router";
 import type { Neighbors } from "./record-card-values";
@@ -22,6 +23,12 @@ const CARD_PATHS = {
     </>
   ),
   x: <path d="M7 7l10 10M17 7L7 17" />,
+  info: (
+    <>
+      <path d="M12 11v6" />
+      <path d="M12 7.5v.01" />
+    </>
+  ),
   file: (
     <>
       <path d="M6 3.5h8l4 4v13H6z" />
@@ -51,6 +58,12 @@ const CARD_PATHS = {
     </>
   ),
   reset: <path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 4.5v4h4" />,
+  pin: (
+    <>
+      <path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z" />
+      <circle cx="12" cy="10" r="2.3" />
+    </>
+  ),
 } as const;
 
 export type CardIconName = keyof typeof CARD_PATHS;
@@ -99,6 +112,7 @@ export function CardHead({
   stepper,
   title,
   subtitle,
+  lead,
   figure,
   meta,
 }: {
@@ -110,6 +124,8 @@ export function CardHead({
   stepper?: ReactNode;
   title: ReactNode;
   subtitle?: ReactNode;
+  /** A mark before the title that says who the record is, such as a person's initials. */
+  lead?: ReactNode;
   figure?: ReactNode;
   meta?: ReactNode;
 }) {
@@ -138,7 +154,8 @@ export function CardHead({
         {stepper}
       </div>
       <div className="dk-rec-hrow">
-        <div className="dk-rec-who">
+        {lead}
+        <div className={cn("dk-rec-who", subtitle === undefined && "dk-alone")}>
           <h2>{title}</h2>
           {subtitle !== undefined && <span>{subtitle}</span>}
         </div>
@@ -146,6 +163,51 @@ export function CardHead({
       </div>
       {meta && <div className="dk-rec-meta">{meta}</div>}
     </div>
+  );
+}
+
+/** A person or a company as their initials in a round mark, where a card names them. */
+export function CardAvatar({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
+  return (
+    <span className={cn("dk-rec-av", `dk-${size}`)} aria-hidden>
+      {getNameInitials(name, "•")}
+    </span>
+  );
+}
+
+/**
+ * A card whose record could not be read: what kind of record it was, that it
+ * could not be read and why, and the way back to where it was opened from.
+ */
+export function CardUnreadable({
+  kind,
+  title,
+  error,
+  onBack,
+  backLabel,
+}: {
+  /** The record's kind, in the kicker. */
+  kind: string;
+  /** "This tractor could not be read", in the record's own words. */
+  title: string;
+  error: unknown;
+  onBack?: () => void;
+  backLabel?: string;
+}) {
+  const t = useT();
+  return (
+    <RecordCard>
+      <CardHead
+        onBack={onBack}
+        backLabel={backLabel ?? t("Back to the table")}
+        kicker={[kind]}
+        title={title}
+        subtitle={describeApiError(
+          error,
+          t("It may have been removed, or you may not be allowed to see it."),
+        )}
+      />
+    </RecordCard>
   );
 }
 
@@ -201,7 +263,7 @@ const TONE_CLASS: Record<CardTone, string> = {
   progress: "",
   success: "dk-s1",
   ink: "dk-s2",
-  warn: "dk-hold",
+  warn: "dk-st-warn",
   muted: "dk-off",
   draft: "dk-draft",
 };
@@ -267,12 +329,57 @@ export function CardSection({
   );
 }
 
+/** One fact a card lists about its record: what it is and what it says. */
+export type CardFact = { key: string; label: string; value: ReactNode };
+
+/** A record's facts, two to a row, in a ruled grid: the plate, the VIN, who owns it. */
+export function CardFactGrid({ facts }: { facts: readonly CardFact[] }) {
+  return (
+    <dl className="dk-rec-facts">
+      {facts.map((fact) => (
+        <div key={fact.key}>
+          <dt>{fact.label}</dt>
+          <dd>{fact.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/** One figure a card reads about its record, marked when it is close to or past a line. */
+export type CardStat = { key: string; label: string; value: ReactNode; state?: CardCheckState };
+
+/** A record's figures side by side in a ruled strip, four to a row and two in a narrow card. */
+export function CardStats({
+  stats,
+  className,
+}: {
+  stats: readonly CardStat[];
+  className?: string;
+}) {
+  return (
+    <dl className={cn("dk-rec-stats", className)}>
+      {stats.map((stat) => (
+        <div key={stat.key} className={cn(stat.state && stat.state !== "ok" && `dk-${stat.state}`)}>
+          <dt>{stat.label}</dt>
+          <dd>{stat.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 /** The bordered list a card's checks sit in. */
 export function CardChecks({ children }: { children: ReactNode }) {
   return <div className="dk-rec-checks">{children}</div>;
 }
 
-export type CardCheckState = "ok" | "warn" | "bad";
+export type CardCheckState = "ok" | "info" | "warn" | "bad";
+
+/** Whether a check asks for a look: what is wrong or close, not what holds or is only worth knowing. */
+export function needsLook(state: CardCheckState): boolean {
+  return state === "bad" || state === "warn";
+}
 
 /** One check: whether it holds, what it is, what it found, and anything to do about it. */
 export function CardCheck({
@@ -290,7 +397,9 @@ export function CardCheck({
     <div className={cn("dk-rec-ck", `dk-${state}`)}>
       <span className="dk-rec-ci">
         <CardIcon
-          name={state === "ok" ? "check" : state === "warn" ? "warn" : "x"}
+          name={
+            state === "ok" ? "check" : state === "info" ? "info" : state === "warn" ? "warn" : "x"
+          }
           size={state === "warn" ? 12 : 11}
           stroke={state === "warn" ? 2 : 2.8}
         />
@@ -309,6 +418,8 @@ export type CardTimelineEntry = {
   text: ReactNode;
   /** Who and when, under the entry. */
   meta: ReactNode;
+  /** What the entry changed, under its sentence. */
+  detail?: ReactNode;
   /** The person's own entry, marked solid. */
   mine?: boolean;
 };
@@ -321,6 +432,7 @@ export function CardTimeline({ entries }: { entries: readonly CardTimelineEntry[
         <li key={entry.id} className={cn(entry.mine && "dk-you")}>
           <i />
           <span>{entry.text}</span>
+          {entry.detail}
           <em>{entry.meta}</em>
         </li>
       ))}
@@ -345,6 +457,29 @@ export function CardLink({ to, children }: { to: string; children: ReactNode }) 
       {children}
       <CardIcon name="ext" size={11} />
     </Link>
+  );
+}
+
+/**
+ * A way to a record beside a section's title: opened in the card's place when
+ * its kind has a card here (`onOpen`), or a link to its page when it does not.
+ */
+export function CardOpenLink({
+  to,
+  onOpen,
+  children,
+}: {
+  to: string;
+  onOpen?: () => void;
+  children: ReactNode;
+}) {
+  return onOpen ? (
+    <Button variant="bare" size="bare" className="dk-rec-lnk" onClick={onOpen}>
+      {children}
+      <CardIcon name="forward" size={11} />
+    </Button>
+  ) : (
+    <CardLink to={to}>{children}</CardLink>
   );
 }
 
@@ -383,6 +518,76 @@ export function CardSectionError({ children }: { children: ReactNode }) {
     <div className="dk-ax-warn">
       <CardIcon name="warn" size={13} />
       <span>{children}</span>
+    </div>
+  );
+}
+
+/**
+ * The foot of a list that has more to read: how many are shown, and the way to
+ * read the next page, which says so while it is read.
+ */
+export function CardMore({
+  shown,
+  onMore,
+  loading,
+  label,
+  loadingLabel,
+}: {
+  /** How many are shown, and of how many when that is known. */
+  shown: ReactNode;
+  onMore: () => void;
+  loading: boolean;
+  label: string;
+  loadingLabel: string;
+}) {
+  return (
+    <div className="dk-rec-more">
+      <span>{shown}</span>
+      <Button variant="quiet" size="xs" disabled={loading} onClick={onMore}>
+        {loading ? loadingLabel : label}
+      </Button>
+    </div>
+  );
+}
+
+/**
+ * A share of something drawn as a meter under what it measures: the label on
+ * the left, the reading and its figure on the right, and a bar that turns as it
+ * nears its end. `share` is 0 to 1; past 1 the bar stays full.
+ */
+export function CardMeter({
+  label,
+  reading,
+  figure,
+  share,
+  state,
+}: {
+  label: string;
+  reading: ReactNode;
+  figure?: ReactNode;
+  share: number;
+  state: CardCheckState;
+}) {
+  const percent = Math.round(Math.min(1, Math.max(0, share)) * 100);
+  return (
+    <div className={cn("dk-rec-gauge", state !== "ok" && `dk-${state}`)}>
+      <div className="dk-rec-gauge-h">
+        <span>{label}</span>
+        <span>
+          {reading}
+          {figure !== undefined && <b>{figure}</b>}
+        </span>
+      </div>
+      <div
+        className="dk-rec-meter"
+        role="meter"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={percent}
+      >
+        <i style={{ width: `${percent}%` }} />
+      </div>
     </div>
   );
 }

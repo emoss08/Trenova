@@ -209,7 +209,9 @@ func withholdMoney(money *agent.MoneyPreview) {
 
 // recorded is a decision's preview as a later reader may see it: what the
 // decider was shown, filtered again for this reader, with the digest the
-// decision recorded.
+// decision recorded. A record it names without a label, recorded before its
+// kind could be labelled, is named now, before the filter decides whether
+// this reader may see the name.
 func (s *Service) recorded(
 	ctx context.Context,
 	decision *agent.AgentDecision,
@@ -225,6 +227,7 @@ func (s *Service) recorded(
 
 	clone.Recorded = true
 	clone.Warnings = withoutCode(clone.Warnings, agent.PreviewWarningWithheld)
+	applyLabels(clone.Changes, s.labels(ctx, tenantOf(decision), clone.Changes))
 	filter(ctx, clone, a)
 	clone.Digest = decision.PreviewDigest
 

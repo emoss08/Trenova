@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -108,4 +109,18 @@ func orderConnectionToModel(
 		PageInfo:   page.PageInfo,
 		TotalCount: page.TotalCount,
 	}, nil
+}
+
+func orderByIDRequest(
+	fieldRequested func(string) bool,
+	id pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) orderports.GetOrderByIDRequest {
+	return orderports.GetOrderByIDRequest{
+		ID:              id,
+		TenantInfo:      tenantInfo,
+		IncludeShipment: fieldRequested("legs"),
+		IncludeCustomer: fieldRequested("customer"),
+		IncludeCharges:  fieldRequested("charges"),
+	}
 }

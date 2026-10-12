@@ -10889,6 +10889,8 @@ type DetentionScoreFactor {
 input DetentionStatsInput {
   from: Timestamp!
   limit: Int
+  """Only the stops made at this location."""
+  locationId: ID
   to: Timestamp!
 }
 
@@ -12877,6 +12879,13 @@ input EquipmentManufacturerPatchInput {
   status: EntityStatus @goField(omittable: true)
   """Omit to leave unchanged; null is rejected."""
   version: Int @goField(omittable: true)
+}
+
+"""Who owns a piece of equipment."""
+enum EquipmentOwnershipType {
+  CompanyOwned
+  Leased
+  OwnerOperator
 }
 
 enum EquipmentStatus {
@@ -17424,6 +17433,9 @@ enum LocationGeofenceType {
 
 type LocationReference {
   id: ID!
+  """Where the location is, when it has been geocoded."""
+  latitude: Float
+  longitude: Float
   name: String!
 }
 
@@ -21168,7 +21180,12 @@ type Query {
   serviceFailure(id: ID!): ServiceFailure
   serviceFailureReasonCode(id: ID!): ServiceFailureReasonCode
   serviceFailureReasonCodes(input: DataTableConnectionInput!): ServiceFailureReasonCodeConnection!
-  serviceFailures(input: DataTableConnectionInput!, shipmentId: ID): ServiceFailureConnection!
+  serviceFailures(
+    input: DataTableConnectionInput!
+    """Only failures at a stop made at this location."""
+    locationId: ID
+    shipmentId: ID
+  ): ServiceFailureConnection!
   serviceType(id: ID!): ServiceType
   serviceTypes(input: DataTableConnectionInput!): ServiceTypeConnection!
   settlementBatch(id: ID!): SettlementBatch
@@ -21283,13 +21300,25 @@ type Query {
   upcomingWorkerPTO(input: UpcomingWorkerPTOInput!): WorkerPTOConnection!
   user(id: ID!): User
   users(input: DataTableConnectionInput!): UserConnection!
-  vehicleInspections(limit: Int, since: Timestamp, tractorId: ID, workerId: ID): [VehicleInspection!]!
+  """
+  Inspections newest first. Pass the startedAt and id of the last one seen as
+  before and beforeId to read the next page.
+  """
+  vehicleInspections(before: Timestamp, beforeId: ID, limit: Int, since: Timestamp, tractorId: ID, workerId: ID): [VehicleInspection!]!
+  """
+  One tractor's latest reported position, however old; null when the tractor has never reported one.
+  """
+  vehiclePosition(tractorId: ID!): VehiclePosition
   vehiclePositions(maxAgeSeconds: Int): [VehiclePosition!]!
   watchtowerCounts: WatchtowerCounts!
   """
   What needs attention, newest first, filtered to what this reader may see.
   """
   watchtowerItems(input: WatchtowerItemsInput!): WatchtowerItemConnection!
+  """
+  One worker, with the profile, state, fleet, manager and license state it is asked for.
+  """
+  worker(id: ID!): Worker
   workerAvailabilityPreferences(workerId: ID!): [WorkerAvailabilityPreference!]!
   workerBenefitEnrollments(openOnly: Boolean, workerId: ID!): [WorkerBenefitEnrollment!]!
   workerChecklist(id: ID!): WorkerChecklist!
@@ -23115,6 +23144,8 @@ type ServiceFailure {
   actualArrival: Timestamp!
   businessUnitId: ID!
   createdAt: Timestamp!
+  """Who logged the failure by hand; null for one detected or received."""
+  createdBy: User
   detectedAt: Timestamp!
   gracePeriodMinutes: Int!
   id: ID!
@@ -23126,6 +23157,10 @@ type ServiceFailure {
   organizationId: ID!
   reasonCode: ServiceFailureReasonCode
   reasonCodeId: ID
+  resolvedAt: Timestamp
+  resolvedBy: User
+  reviewedAt: Timestamp
+  reviewedBy: User
   scheduledCutoff: Timestamp!
   shipment: ServiceFailureShipment
   shipmentId: ID!
@@ -23138,6 +23173,9 @@ type ServiceFailure {
   type: ServiceFailureType!
   updatedAt: Timestamp!
   version: Int!
+  voidReason: String!
+  voidedAt: Timestamp
+  voidedBy: User
   x12ExceptionCode: String!
   x12ReasonCodeOverride: String!
   """
@@ -23215,6 +23253,7 @@ type ServiceFailureReasonCodeEdge {
 
 type ServiceFailureShipment {
   bol: String
+  customer: Customer
   id: ID!
   proNumber: String!
 }
@@ -25602,6 +25641,8 @@ input ShipmentsInput {
   Only Completed or Ready to Invoice shipments that are not in the billing queue.
   """
   billingTransferEligible: Boolean = false
+  """Only shipments with a live move tendered to one of these carriers."""
+  carrierIds: [ID!]
   expandShipmentDetails: Boolean = false
   fieldFilters: [FieldFilterInput!]
   filterGroups: [FilterGroupInput!]
@@ -25614,8 +25655,18 @@ input ShipmentsInput {
   quickFilters: [ShipmentQuickFilterInput!]
   sort: [SortFieldInput!]
   status: String
+  """Only shipments with a live stop at one of these locations."""
+  stopLocationIds: [ID!]
   """IANA time zone for day and hour quick filters."""
   timezone: String
+  """Only shipments with a live move assigned to one of these tractors."""
+  tractorIds: [ID!]
+  """Only shipments with a live move assigned to one of these trailers."""
+  trailerIds: [ID!]
+  """
+  Only shipments with a live move one of these workers drives, in either seat.
+  """
+  workerIds: [ID!]
 }
 
 type SidebarActivityPreference {
@@ -26311,11 +26362,24 @@ type Tractor {
   lastKnownLocation: LocationReference
   lastKnownLocationId: ID
   lastKnownLocationName: String!
+  """When the lease on a leased tractor ends."""
+  leaseEndDate: Timestamp
+  """The lessor's reference for the lease."""
+  leaseReference: String!
+  """The lessor a leased tractor is leased from."""
+  lessorName: String!
   licensePlateNumber: String!
   make: String!
   model: String!
   organization: Organization
   organizationId: ID!
+  ownerWorker: Worker
+  """The owner-operator who owns the tractor, when it is theirs."""
+  ownerWorkerId: ID
+  """
+  Who owns the tractor: the company, a lessor, or the owner-operator who drives it.
+  """
+  ownershipType: EquipmentOwnershipType!
   primaryWorker: Worker
   primaryWorkerId: ID!
   registrationExpiry: Timestamp
@@ -26427,12 +26491,23 @@ type Trailer {
   lastKnownLocation: LocationReference
   lastKnownLocationId: ID
   lastKnownLocationName: String!
+  """When the lease on a leased trailer ends."""
+  leaseEndDate: Timestamp
+  """The lessor's reference for the lease."""
+  leaseReference: String!
+  """The lessor a leased trailer is leased from."""
+  lessorName: String!
   licensePlateNumber: String!
   make: String!
   maxLoadWeight: Int
   model: String!
   organization: Organization
   organizationId: ID!
+  ownerWorker: Worker
+  """The owner-operator who owns the trailer, when it is theirs."""
+  ownerWorkerId: ID
+  """Who owns the trailer: the company, a lessor, or an owner-operator."""
+  ownershipType: EquipmentOwnershipType!
   registrationExpiry: Timestamp
   registrationNumber: String!
   registrationState: UsState

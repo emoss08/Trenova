@@ -831,7 +831,7 @@ export function useTriageActionsController(): TriageActions {
             queryClient.setQueryData<TriageRule[]>(key, (rules) =>
               rules?.map((row) => (row.id === updated.id ? updated : row)),
             );
-            announce(enabled ? t("Back on") : t("Paused — matches wait for a person"));
+            announce(enabled ? t("Turned back on") : t("Paused — matches wait for a person"));
           },
           (error: unknown) => {
             queryClient.setQueryData<TriageRule[]>(key, (rules) =>

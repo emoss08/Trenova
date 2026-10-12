@@ -172,8 +172,10 @@ is read until the popover opens. Disputes are a search kind only the picker
 asks for, so the composer's @ search across all kinds leaves them out. The
 same menu snoozes, waits on a party, wakes, moves and unbinds. The card above the
 composer shows the record, its state and the checklist with the next step. The
-rail shelves snoozed and settled cases below the calendar shelves and wakes a
-snooze on time without polling.
+rail draws no case state: a case sits on the calendar shelf its last message
+puts it on, because each shelf is read from the server by a range of
+`greatest(last_message_at, created_at)`, and a state worked out on read cannot
+be filtered on there.
 
 ## Not covered
 

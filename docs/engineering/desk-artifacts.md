@@ -6,7 +6,11 @@ a document, a record. Most are drawn by kind (`table_view`, `entity_card`, …) 
 drawn for one kind of record and what a person reads it for: the billing queue
 item a biller reviews, the formula template a biller reads and prices, the
 shipment a dispatcher follows from pickup to delivery, the customer an account
-manager or a biller keeps, the rate agreement a pricing analyst holds freight to.
+manager or a biller keeps, the tractor and trailer a fleet manager runs, the driver a
+dispatcher puts on loads, the dock a planner sends trucks to, the carrier a carrier manager
+qualifies and pays, the order a customer service rep follows to billing, the service failure
+a customer service rep explains and settles, the rate agreement a pricing analyst holds
+freight to.
 
 ## Naming and linking artifacts
 
@@ -44,10 +48,25 @@ artifacts/
                           report, document, extraction, record, rate, diff, plan,
                           email, view, decision, each with its __tests__/
   record-card/            the parts every card is built from: head, stepper, status,
-                          sections, checks, timeline, bottom bar (record-card.tsx),
+                          sections, checks, timeline, a list's next page, the
+                          "could not be read" head, bottom bar (record-card.tsx),
                           money, moments and table stepping (record-card-values.ts),
-                          and a record's documents (card-documents.tsx, a rail
-                          drawn by document-rail.tsx from record-documents.ts)
+                          a record's shipments, paged (card-shipments.tsx, read by
+                          useRecordShipments in record-shipments.ts), where a
+                          record is on a small still OpenStreetMap map
+                          (card-where.tsx, the map lazily in still-map.tsx from
+                          map-tiles.ts, with a location's fence drawn round
+                          the dot), what falls due (card-due.tsx: a check is
+                          bad, warn, info, which is worth knowing and asks
+                          for no look, or ok), a share
+                          drawn as a meter (CardMeter: credit used, a rate
+                          structure's groups), figures in a ruled strip
+                          (CardStats: payment pace), a person's initials
+                          (CardAvatar), what a
+                          tractor's and a trailer's cards read alike
+                          (equipment.ts), and a record's documents
+                          (card-documents.tsx, a rail drawn by document-rail.tsx
+                          from record-documents.ts)
   skeletons/              the parts every card's skeleton is built from
   cards/
     registry.tsx          the resource cards, in place and as artifacts
@@ -61,7 +80,41 @@ kinds or two cards use moves to `kinds/artifact-body-parts.tsx`, `record-card/` 
 is drawn as a table and reads `kinds/table/`. Shared card styles are the `dk-rec-*` classes in
 `routes/desk/_styles/desk-v2.css`; a card's own styles take its own prefix
 (`dk-bi-*` for the billing item, `dk-ft-*` for the formula template, `dk-sh-*` for the
-shipment, `dk-cu-*` for the customer, `dk-ra-*` for the rate agreement).
+shipment, `dk-cu-*` for the customer, `dk-ra-*` for the rate agreement, `dk-tr-*` for the
+tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure).
+Before taking a prefix or a modifier class, search every stylesheet the Desk loads, the
+Desk chat's `components/desk-chat/desk-chat.css` included: `dk-sf` is the chat's tool
+failures, and the status pill's warn tone once shared `dk-hold` with the hold-to-confirm
+button, which stretched every warn pill to the button's width.
+
+## Giving a card its own shape
+
+`record-card/` is the frame every card shares: the head, the stepper, sections, the
+bottom bar, the way back. What a card is *for* is drawn by parts of its own, in
+`cards/<resource>/<resource>-parts.tsx`, so two cards that hold similar facts still read
+as different records. Before reaching for `CardChecks`, `CardStats` or `CardFactGrid`,
+ask what the record looks like to the person who reads it, and draw that:
+
+| Card | Its own parts |
+| --- | --- |
+| Worker | hours of service as `RingGauge`s (`HosRings`, the tones from `hosClockTone`, as the worker panel draws them), credentials as a wallet of tiles, `tel:`/`mailto:` ways to reach them beside their record |
+| Order | its lifecycle as one segmented track, its legs down a numbered route, its charges as a ledger with what is invoiced against what is still to invoice, its references as chips |
+| Tractor | an ink dashboard of its last report (speed, heading, fuel ring, engine, odometer), its drivers as seats, a specification sheet |
+| Trailer | a service calendar a season back and a year ahead with each date its papers hang on, a data plate |
+| Location | amenity chips under the map, a dwell ruler with median, average and p90 pins and the share that ran past free time, an address card, terms as tickets |
+| Carrier | a verdict banner for whether it can be tendered, insurance as coverage tiles, authority as pills over the CSA BASICs as columns against their thresholds, contacts with initials |
+| Service failure | its clock along one track, each stretch as wide as it ran (before the cutoff, in grace, late) with its moments beneath, the 214's codes as tiles |
+
+Tone is carried by the part's own fill, icon or text, never by an accent bar down or across
+its edge. A part only one card draws stays in that card's folder; it moves to `record-card/` when a
+second card needs it. The shared parts take a shape where cards differ:
+`CardShipments` takes a `layout` (`rows`, `table`, `board` with the pickup time first, or
+`route` numbered down a line) and `CardShipmentsSkeleton` the same one; `CardHead` takes a
+`lead` (a `CardAvatar` of a person's initials before their name, `CardHeadSkeleton`'s
+`lead` in the outline); `CardActivity` takes `showChanges` to read the first changed fields
+of an update from what to what (`activityChanges` in `record-activity.ts`, which reads an
+enum value as words and never shows a redacted one). Every new part has its outline in the
+card's skeleton, drawn on the part's own classes.
 
 ## Lazy loading and skeletons
 
@@ -96,7 +149,64 @@ section's outline out of the skeleton the same way, so nothing moves when the ca
 lands. `CardDocuments` and `CardDocumentsSkeleton` already do this for documents.
 
 A section the person may read but that fails to load says so in its own place
-(`describeApiError`), and the rest of the card stands.
+(`describeApiError`), and the rest of the card stands. A card whose own record cannot be
+read draws `CardUnreadable` with the way back.
+
+## A record's shipments
+
+A card that lists the shipments of its record (a customer's freight, the loads a tractor
+pulled) reads them with `useRecordShipments({ scope, pageSize, enabled })` and draws them
+with `CardShipments`. The scope says how the record owns them (`{ kind: "customer", id }`
+filters on the customer; `{ kind: "tractor", id }` asks `shipments(input: { tractorIds })`
+for loads with a live move assigned to it). One operation, `DeskRecordShipments`, reads
+every scope a page at a time with the count on the first page only, and the next page is
+read on request. A new scope is a case in `scopeInput` (`lib/graphql/record-shipments.ts`)
+and, where the server cannot yet filter by it, a `ShipmentsInput` field
+(`tractorIds`, `trailerIds` and `workerIds` match loads with a live move assigned to the
+unit or the driver; `stopLocationIds` matches loads with a live stop at the location;
+`carrierIds` matches loads with a move tendered to the carrier and not canceled; an order's
+legs filter on `orderId`).
+
+A record's service failures are `CardFailures` over `useRecordFailures({ scope, pageSize,
+enabled })` (`record-card/record-failures.ts`), one operation, `DeskRecordFailures`, for every
+scope: `{ kind: "location", id }` reads the failures at stops made there and names each row's
+load, `{ kind: "shipment", id }` reads a load's failures and names each row's stop.
+`withoutFailure` leaves out the failure a card is about when it lists the rest of its load.
+
+A record's way through review or approval, step by step down a rail, is `CardPath`
+(`record-card/card-path.tsx`, with `CardPathSkeleton`): each step is done, where the record
+stands, or still to come; a closing step is held or closed; and a note (a reviewer's
+comment, why a failure was voided) sits on the step it was left at. The rate agreement's
+approval and the service failure's review are both drawn with it.
+
+Any other list a card reads a page at a time (a carrier's
+settlements, a record's activity) goes through `usePagedRows` (`record-card/paged-rows.ts`),
+which turns an infinite query into rows, a count and the next page, and is drawn by
+`CardPagedList` (`record-card/card-paged-list.tsx`), which holds the rows while the first page
+is read, says when there is nothing or it could not be read, and reads the next page on
+request. A card's activity is `CardActivity` over `useRecordActivity`: what was done to the
+record from its audit trail, newest first and without reads, each entry a sentence with who
+did it and when, shown only to someone who may read the audit log.
+
+`CardHead` sets the title level with the foot of the figure beside it. A title with no
+subtitle is marked `dk-alone` and holds the top of the row instead, so a card whose record
+has no description or trade name does not leave a gap under its kicker; there is no need
+to invent a subtitle for it.
+
+## Where a record is
+
+`CardWhere` draws a place as a 112px still map of OpenStreetMap's tiles with a dot on it,
+beside the place's name and how the record stands there. The map is a picture: nothing on it
+moves or takes a click but the credit OpenStreetMap asks for. Its code is its own chunk
+(`still-map.tsx`), mounted only once the square comes within reach of the screen, and it reads
+at most four tiles, each lazily; a record with no coordinates shows a bare pin in the same
+square. Tiles come from `tile.openstreetmap.org` (`OSM_TILE_URL` in `map-tiles.ts`), which the
+Caddy CSP allows.
+
+A place with a fence passes it as `outline` (a circle by its radius, or the corners drawn for
+it) with a `zoom`; the map draws the fence in ink over the tiles, projected the same way the
+tiles are laid (`projectOnMap`), and `zoomToFit` picks the closest zoom that keeps the whole
+fence in view. A fence too small to see beside the dot is left off.
 
 ## Records a card lists
 
@@ -170,7 +280,12 @@ registry entry like any other.
    Never read a list that can grow without bound along with the record: read its
    count and its first page, and the next page on request (the rate agreement card
    reads its lanes from `GET /rate-agreements/:id/lanes/` with `useInfiniteQuery`,
-   and the agreement itself with `includeRules=false`).
+   and the agreement itself with `includeRules=false`). When the card needs the shape of
+   the whole list rather than its rows, ask the server for the aggregate: the rate
+   agreement's rate structure reads `GET /rate-agreements/:id/lanes/summary/`, its live
+   lanes grouped by formula template or rate table with each group's count and rate
+   range, and draws each group as a `CardMeter` of its share, folding the groups past
+   the first few into one.
 3. Add the entry to `cards/registry.tsx`, and the card's mark to `desk-art-kinds.tsx`
    when it should not read as a plain record. Run `pnpm --filter @trenova/web
    guide:generate`, which marks the kind as having a card for the server.

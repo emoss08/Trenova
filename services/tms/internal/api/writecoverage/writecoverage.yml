@@ -2884,6 +2884,21 @@ writes:
   "PATCH /api/v1/users/me/settings/":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
+  "PATCH /api/v1/users/me/profile/":
+    exempt: user-preference
+    reason: "A person's own job title, phone and avatar; they describe themselves and no agent speaks for them."
+  "PUT /api/v1/users/me/availability/":
+    exempt: user-preference
+    reason: "Whether a person is available, focusing or away, and who covers for them, is theirs alone to say."
+  "PUT /api/v1/users/me/notification-preferences/":
+    exempt: user-preference
+    reason: "What reaches a person outside the bell, and when, is their own choice; it changes nothing anyone else sees."
+  "DELETE /api/v1/users/me/sessions/:sessionID/":
+    exempt: security
+    reason: "Signing a device out decides who can act as the person; an agent never ends someone's sessions."
+  "POST /api/v1/users/me/sessions/revoke-others/":
+    exempt: security
+    reason: "Signing a device out decides who can act as the person; an agent never ends someone's sessions."
   "POST /api/v1/users/:userID/permissions/simulate/":
     exempt: read-only
     reason: "Shows what a user could do with a set of roles and saves nothing."

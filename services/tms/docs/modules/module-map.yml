@@ -260,7 +260,6 @@ modules:
       - equipmentmanufacturerrepository
       - equipmenttyperepository
       - fleetcoderepository
-      - recordlabelrepository
       - tractorrepository
       - trailerrepository
   parties:
@@ -895,6 +894,7 @@ modules:
       - conversationrepository
       - conversationschedulerepository
       - insightrepository
+      - recordlabelrepository
       - roleagentgrantrepository
       - shipmentbriefrepository
       - shipmentimportchatrepository

@@ -449,6 +449,67 @@ func TestForProposal_ReturnsTheRecordedPreviewOnceDecided(t *testing.T) {
 		"the recorded preview itself is never changed")
 }
 
+// A preview recorded before its kind of record could be labelled names the
+// biller by id; read again, it names them, and a reader who may not read
+// people still sees no name.
+func TestForProposal_NamesTheRecordsARecordedPreviewLeftUnlabelled(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	biller := pulid.MustNew("usr_")
+	item := pulid.MustNew("bqi_")
+	f.labeler.labels = agentports.RecordLabels{
+		permission.ResourceUser:         {biller: "Avery Biller"},
+		permission.ResourceBillingQueue: {item: "INV2610000079"},
+	}
+	proposal := f.proposal(f.cancelParams())
+	proposal.Status = agent.ProposalStatusExecuted
+	recorded := &agent.ProposalPreview{
+		Schema:     agent.PreviewSchemaVersion,
+		ProposalID: proposal.ID,
+		Coverage:   agent.PreviewCoverageFull,
+		Changes: []agent.RecordChange{{
+			Resource:  permission.ResourceBillingQueue,
+			EntityID:  item,
+			Operation: agent.PreviewOperationUpdate,
+			Fields: []agent.PreviewFieldChange{{
+				Path:        "assignedBillerId",
+				After:       biller.String(),
+				AfterRef:    &agent.PreviewRef{Resource: permission.ResourceUser, ID: biller},
+				Sensitivity: permission.SensitivityInternal,
+			}},
+		}},
+	}
+	f.decisions.decisions = []*agent.AgentDecision{{
+		ID:             pulid.MustNew("ad_"),
+		OrganizationID: f.org,
+		BusinessUnitID: f.bu,
+		Preview:        recorded,
+		PreviewDigest:  "d1",
+	}}
+
+	preview, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+		Proposal: proposal,
+		Viewer:   f.viewer(),
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "INV2610000079", preview.Changes[0].Label)
+	assert.Equal(t, "Avery Biller", preview.Changes[0].Fields[0].AfterRef.Label)
+	assert.Equal(t, "d1", preview.Digest, "the digest stays the one the decision recorded")
+	assert.Empty(t, recorded.Changes[0].Fields[0].AfterRef.Label,
+		"the recorded preview itself is never changed")
+
+	narrow := f.viewer()
+	narrow.Reads = fakeReads{denied: map[permission.Resource]bool{permission.ResourceUser: true}}
+	hidden, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+		Proposal: proposal,
+		Viewer:   narrow,
+	})
+	require.NoError(t, err)
+	assert.True(t, hidden.Changes[0].Fields[0].AfterRef.Withheld)
+	assert.Empty(t, hidden.Changes[0].Fields[0].AfterRef.Label)
+}
+
 func TestForPlan_ProjectsLaterStepsFromEarlierOnes(t *testing.T) {
 	t.Parallel()
 

@@ -144,6 +144,12 @@ func (s *Service) ListThreads(
 	ctx context.Context,
 	req agentports.ListThreadsRequest,
 ) (*agentports.ThreadPage, error) {
+	multiErr := errortypes.NewMultiError()
+	req.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
 	result, err := s.conversations.ListThreads(ctx, req)
 	if err != nil {
 		return nil, err
@@ -163,6 +169,19 @@ func (s *Service) ListThreads(
 	}
 
 	return result, nil
+}
+
+func (s *Service) CountThreadShelves(
+	ctx context.Context,
+	req *agentports.CountThreadShelvesRequest,
+) (*agentports.ThreadShelfCounts, error) {
+	multiErr := errortypes.NewMultiError()
+	req.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	return s.conversations.CountThreadShelves(ctx, req)
 }
 
 func (s *Service) markAttention(

@@ -4492,6 +4492,15 @@ var UserColumns = struct {
 	CreatedAt             buncolgen.Column // "created_at" → qualified: "usr.created_at"
 	UpdatedAt             buncolgen.Column // "updated_at" → qualified: "usr.updated_at"
 	LastLoginAt           buncolgen.Column // "last_login_at" → qualified: "usr.last_login_at"
+	JobTitle              buncolgen.Column // "job_title" → qualified: "usr.job_title"
+	PhoneNumber           buncolgen.Column // "phone_number" → qualified: "usr.phone_number"
+	AvatarStyle           buncolgen.Column // "avatar_style" → qualified: "usr.avatar_style"
+	AvailabilityStatus    buncolgen.Column // "availability_status" → qualified: "usr.availability_status"
+	FocusUntil            buncolgen.Column // "focus_until" → qualified: "usr.focus_until"
+	AwayBackOn            buncolgen.Column // "away_back_on" → qualified: "usr.away_back_on"
+	AwayDelegateUserID    buncolgen.Column // "away_delegate_user_id" → qualified: "usr.away_delegate_user_id"
+	AwayNote              buncolgen.Column // "away_note" → qualified: "usr.away_note"
+	PasswordChangedAt     buncolgen.Column // "password_changed_at" → qualified: "usr.password_changed_at"
 }{
 	ID:                    buncolgen.NewColumn("id", "usr"),
 	BusinessUnitID:        buncolgen.NewColumn("business_unit_id", "usr"),
@@ -4512,6 +4521,15 @@ var UserColumns = struct {
 	CreatedAt:             buncolgen.NewColumn("created_at", "usr"),
 	UpdatedAt:             buncolgen.NewColumn("updated_at", "usr"),
 	LastLoginAt:           buncolgen.NewColumn("last_login_at", "usr"),
+	JobTitle:              buncolgen.NewColumn("job_title", "usr"),
+	PhoneNumber:           buncolgen.NewColumn("phone_number", "usr"),
+	AvatarStyle:           buncolgen.NewColumn("avatar_style", "usr"),
+	AvailabilityStatus:    buncolgen.NewColumn("availability_status", "usr"),
+	FocusUntil:            buncolgen.NewColumn("focus_until", "usr"),
+	AwayBackOn:            buncolgen.NewColumn("away_back_on", "usr"),
+	AwayDelegateUserID:    buncolgen.NewColumn("away_delegate_user_id", "usr"),
+	AwayNote:              buncolgen.NewColumn("away_note", "usr"),
+	PasswordChangedAt:     buncolgen.NewColumn("password_changed_at", "usr"),
 }
 
 // UserFieldMap maps JSON API field names to database column names.
@@ -4537,6 +4555,15 @@ var UserFieldMap = map[string]string{
 	"createdAt":             "created_at",
 	"updatedAt":             "updated_at",
 	"lastLoginAt":           "last_login_at",
+	"jobTitle":              "job_title",
+	"phoneNumber":           "phone_number",
+	"avatarStyle":           "avatar_style",
+	"availabilityStatus":    "availability_status",
+	"focusUntil":            "focus_until",
+	"awayBackOn":            "away_back_on",
+	"awayDelegateUserId":    "away_delegate_user_id",
+	"awayNote":              "away_note",
+	"passwordChangedAt":     "password_changed_at",
 }
 
 // UserInsertableColumns lists column names suitable for INSERT statements on the "users" table.
@@ -4561,6 +4588,15 @@ var UserInsertableColumns = []string{
 	"created_at",
 	"updated_at",
 	"last_login_at",
+	"job_title",
+	"phone_number",
+	"avatar_style",
+	"availability_status",
+	"focus_until",
+	"away_back_on",
+	"away_delegate_user_id",
+	"away_note",
+	"password_changed_at",
 }
 
 // UserRelations provides type-safe names for Bun eager-loading.
@@ -4606,6 +4642,15 @@ var UserFilter = struct {
 	CreatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 	LastLoginAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastLoginAt" → DB: "last_login_at"
+	JobTitle              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "jobTitle" → DB: "job_title"
+	PhoneNumber           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "phoneNumber" → DB: "phone_number"
+	AvatarStyle           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "avatarStyle" → DB: "avatar_style"
+	AvailabilityStatus    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "availabilityStatus" → DB: "availability_status"
+	FocusUntil            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "focusUntil" → DB: "focus_until"
+	AwayBackOn            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "awayBackOn" → DB: "away_back_on"
+	AwayDelegateUserID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "awayDelegateUserId" → DB: "away_delegate_user_id"
+	AwayNote              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "awayNote" → DB: "away_note"
+	PasswordChangedAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "passwordChangedAt" → DB: "password_changed_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("id", op, value)
@@ -4660,5 +4705,32 @@ var UserFilter = struct {
 	},
 	LastLoginAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("lastLoginAt", op, value)
+	},
+	JobTitle: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("jobTitle", op, value)
+	},
+	PhoneNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("phoneNumber", op, value)
+	},
+	AvatarStyle: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("avatarStyle", op, value)
+	},
+	AvailabilityStatus: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("availabilityStatus", op, value)
+	},
+	FocusUntil: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("focusUntil", op, value)
+	},
+	AwayBackOn: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("awayBackOn", op, value)
+	},
+	AwayDelegateUserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("awayDelegateUserId", op, value)
+	},
+	AwayNote: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("awayNote", op, value)
+	},
+	PasswordChangedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("passwordChangedAt", op, value)
 	},
 }

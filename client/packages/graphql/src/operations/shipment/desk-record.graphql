@@ -1,0 +1,35 @@
+# The shipments a Desk card lists for one of its records, such as a customer's
+# freight or the loads a tractor pulled: each load's lane, when it picks up,
+# where it stands and what it bills, a page at a time. The count is read with
+# the first page only.
+query DeskRecordShipments($input: ShipmentsInput!, $includeTotalCount: Boolean!) {
+  shipments(input: $input) {
+    edges {
+      node {
+        id
+        proNumber
+        status
+        totalChargeAmount
+        moves {
+          sequence
+          stops {
+            sequence
+            type
+            scheduledWindowStart
+            location {
+              city
+              state {
+                abbreviation
+              }
+            }
+          }
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount @include(if: $includeTotalCount)
+  }
+}

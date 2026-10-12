@@ -2,6 +2,7 @@ import { PROVIDER_HANDLERS } from "./aiproviders.mjs";
 import { AI_HANDLERS } from "./aicontrol.mjs";
 import { DESK_HANDLERS, TRIAGE_HANDLERS } from "./triage.mjs";
 import { TriageError } from "./triage-model.mjs";
+import { DESK_CARD_HANDLERS } from "./deskcards.mjs";
 import { hash, stageOf, stageRankOf, STAGE_RANKS } from "../state.mjs";
 
 const HOUR = 3600;
@@ -867,6 +868,28 @@ const HANDLERS = {
   ...AI_HANDLERS,
   ...DESK_HANDLERS,
   ...TRIAGE_HANDLERS,
+  ...DESK_CARD_HANDLERS,
+  SelectOptions: (state, v) => {
+    const cards = DESK_CARD_HANDLERS.SelectOptions(state, v);
+    return v.input?.resource !== "USER" && cards.selectOptions.totalCount > 0
+      ? cards
+      : DESK_HANDLERS.SelectOptions(state, v);
+  },
+  MyAgents: (state, v) => {
+    const triage = DESK_HANDLERS.MyAgents(state, v).myAgents;
+    const known = new Set(triage.edges.map((edge) => edge.node.id));
+    const cards = DESK_CARD_HANDLERS.MyAgents(state, v).myAgents.edges
+      .filter((edge) => !known.has(edge.node.id))
+      .map((edge) => ({ node: { systemKey: "", delegates: [], starters: [], ...edge.node } }));
+    const edges = [...triage.edges, ...cards];
+    return {
+      myAgents: {
+        edges,
+        pageInfo: triage.pageInfo,
+        ...(v.includeTotalCount ? { totalCount: edges.length } : {}),
+      },
+    };
+  },
   ShipmentBoardTable: (state, v) => ({ shipments: shipmentConnection(state, v.input, v.includeTotalCount) }),
   ShipmentDetail: (state, v) => {
     const s = state.shipments.find((x) => x.id === v.id);
@@ -990,7 +1013,9 @@ export async function handleGraphQL(state, body) {
     return { known: false, payload: { data: null, errors: [{ message: `mock-api: no handler for ${body.operationName}`, extensions: { code: "MOCK_UNHANDLED" } }] } };
   }
   try {
-    return { known: true, payload: { data: await handler(state, body.variables ?? {}) } };
+    const data = await handler(state, body.variables ?? {});
+    if (data && data.__hold) return { known: true, hold: true };
+    return { known: true, payload: { data } };
   } catch (error) {
     if (error instanceof TriageError) {
       return { known: true, payload: { data: null, errors: [presentedError(error, body.operationName)] } };

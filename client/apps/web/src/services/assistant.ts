@@ -30,6 +30,7 @@ import {
   proposalEditsSchema,
   assistantProviderListSchema,
   assistantThreadPageSchema,
+  assistantThreadShelfCountsSchema,
   assistantThreadSchema,
   conversationScheduleListSchema,
   queuedMessageListSchema,
@@ -82,6 +83,18 @@ export function artifactDocumentUrl(
 ): string {
   return `${API_BASE_URL}/assistant/threads/${encodeURIComponent(threadId)}/artifacts/${encodeURIComponent(artifactId)}/export/?format=${format}`;
 }
+
+/**
+ * What narrows the person's conversations to one shelf, on the server: pinned
+ * or not, and the instants, in Unix seconds, between which each was last
+ * touched (its last message, or its creation when it has none). Either end of
+ * the range may be left open.
+ */
+export type ThreadListFilter = {
+  pinned?: boolean;
+  touchedFrom?: number;
+  touchedBefore?: number;
+};
 
 /** What narrows a page of a conversation's artifacts, on the server. */
 export type ArtifactListParams = {
@@ -213,8 +226,15 @@ export class AssistantService {
     limit,
     cursor,
     until,
+    filter,
     signal,
-  }: { limit?: number; cursor?: string; until?: string; signal?: AbortSignal } = {}) {
+  }: {
+    limit?: number;
+    cursor?: string;
+    until?: string;
+    filter?: ThreadListFilter;
+    signal?: AbortSignal;
+  } = {}) {
     const params = new URLSearchParams();
     if (limit !== undefined) {
       params.set("limit", String(limit));
@@ -225,9 +245,31 @@ export class AssistantService {
     if (until) {
       params.set("until", until);
     }
+    if (filter?.pinned !== undefined) {
+      params.set("pinned", String(filter.pinned));
+    }
+    if (filter?.touchedFrom !== undefined) {
+      params.set("touchedFrom", String(filter.touchedFrom));
+    }
+    if (filter?.touchedBefore !== undefined) {
+      params.set("touchedBefore", String(filter.touchedBefore));
+    }
     const query = params.size > 0 ? `?${params.toString()}` : "";
     const response = await api.get(`/assistant/threads/${query}`, { signal });
     return safeParse(assistantThreadPageSchema, response, "Assistant Thread");
+  }
+
+  /** How many conversations each shelf holds, banded by the edges given, newest first. */
+  public async countThreadShelves(
+    edges: readonly number[],
+    { signal }: { signal?: AbortSignal } = {},
+  ) {
+    const params = new URLSearchParams();
+    for (const edge of edges) {
+      params.append("edge", String(edge));
+    }
+    const response = await api.get(`/assistant/threads/shelves/?${params.toString()}`, { signal });
+    return safeParse(assistantThreadShelfCountsSchema, response, "Assistant Thread Shelves");
   }
 
   public async startThread(agentDefinitionId: string, options: StartThreadOptions = {}) {

@@ -81,6 +81,7 @@ Callable after find_tools:
 - update_hazardous_material — Change a hazardous material: its class, UN number, packing group, shipping name, placarding, handling or emergency contact.
 - update_hazardous_material_status — Set one or more hazardous materials Active or Inactive, which decides whether commodities can name them.
 - list_locations — List locations (facilities, terminals, yards) narrowed by status, code, name or city.
+- get_location — Retrieve one location by id, with its address, coordinates, geofence, timezone and category (appointments, parking, overnight).
 - list_location_categories — List location categories — how facilities are grouped, and what each offers: secure parking, overnight, a restroom, whether an appointment is required.
 - create_location — Create a location record for a pickup or delivery address that has none, such as a facility read from a document.
 - update_location — Change a location's name, description, address or category.

@@ -196,6 +196,15 @@ func applyShipmentOptionFilters(
 	if len(opts.WorkerIDs) > 0 {
 		q = q.Where("EXISTS (?)", assignedWorkerPredicate(dba, opts.WorkerIDs))
 	}
+	if len(opts.TractorIDs) > 0 {
+		q = q.Where("EXISTS (?)", assignedTractorPredicate(dba, opts.TractorIDs))
+	}
+	if len(opts.TrailerIDs) > 0 {
+		q = q.Where("EXISTS (?)", assignedTrailerPredicate(dba, opts.TrailerIDs))
+	}
+	if len(opts.CarrierIDs) > 0 {
+		q = q.Where("EXISTS (?)", assignedCarrierPredicate(dba, opts.CarrierIDs))
+	}
 	if len(opts.CommodityIDs) > 0 {
 		q = q.Where("EXISTS (?)", commodityPredicate(dba, opts.CommodityIDs))
 	}
@@ -219,6 +228,39 @@ func commodityPredicate(dba bun.IDB, commodityIDs []pulid.ID) *bun.SelectQuery {
 }
 
 func assignedWorkerPredicate(dba bun.IDB, workerIDs []pulid.ID) *bun.SelectQuery {
+	return liveAssignmentPredicate(dba).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("a_wrk.primary_worker_id IN (?)", bun.List(workerIDs)).
+				WhereOr("a_wrk.secondary_worker_id IN (?)", bun.List(workerIDs))
+		})
+}
+
+func assignedTractorPredicate(dba bun.IDB, tractorIDs []pulid.ID) *bun.SelectQuery {
+	return liveAssignmentPredicate(dba).Where("a_wrk.tractor_id IN (?)", bun.List(tractorIDs))
+}
+
+func assignedTrailerPredicate(dba bun.IDB, trailerIDs []pulid.ID) *bun.SelectQuery {
+	return liveAssignmentPredicate(dba).Where("a_wrk.trailer_id IN (?)", bun.List(trailerIDs))
+}
+
+func assignedCarrierPredicate(dba bun.IDB, carrierIDs []pulid.ID) *bun.SelectQuery {
+	return dba.NewSelect().
+		TableExpr(`"shipment_moves" AS "sm_car"`).
+		ColumnExpr("1").
+		Join(`JOIN "carrier_assignments" AS "ca_car"`).
+		JoinOn("ca_car.shipment_move_id = sm_car.id").
+		JoinOn("ca_car.organization_id = sm_car.organization_id").
+		JoinOn("ca_car.business_unit_id = sm_car.business_unit_id").
+		JoinOn("ca_car.status != ?", shipment.CarrierAssignmentStatusCanceled).
+		Where("sm_car.shipment_id = sp.id").
+		Where("sm_car.organization_id = sp.organization_id").
+		Where("sm_car.business_unit_id = sp.business_unit_id").
+		Where("sm_car.status != ?", shipment.MoveStatusCanceled).
+		Where("ca_car.carrier_id IN (?)", bun.List(carrierIDs))
+}
+
+func liveAssignmentPredicate(dba bun.IDB) *bun.SelectQuery {
 	return dba.NewSelect().
 		TableExpr(`"shipment_moves" AS "sm_wrk"`).
 		ColumnExpr("1").
@@ -231,12 +273,7 @@ func assignedWorkerPredicate(dba bun.IDB, workerIDs []pulid.ID) *bun.SelectQuery
 		Where("sm_wrk.shipment_id = sp.id").
 		Where("sm_wrk.organization_id = sp.organization_id").
 		Where("sm_wrk.business_unit_id = sp.business_unit_id").
-		Where("sm_wrk.status != ?", shipment.MoveStatusCanceled).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where("a_wrk.primary_worker_id IN (?)", bun.In(workerIDs)).
-				WhereOr("a_wrk.secondary_worker_id IN (?)", bun.In(workerIDs))
-		})
+		Where("sm_wrk.status != ?", shipment.MoveStatusCanceled)
 }
 
 func stopLocationPredicate(dba bun.IDB, locationIDs []pulid.ID) *bun.SelectQuery {

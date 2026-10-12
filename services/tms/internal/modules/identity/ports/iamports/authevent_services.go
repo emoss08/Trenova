@@ -13,6 +13,8 @@ const AuthEventProviderMFA = "mfa"
 
 const AuthEventProviderLogout = "session.logout"
 
+const AuthEventProviderSessionRevoked = "session.revoked"
+
 const AuthEventProviderPasswordResetRequest = "password_reset.request"
 
 const AuthEventProviderPasswordResetConfirm = "password_reset.confirm"
@@ -26,6 +28,19 @@ const AuthEventProviderSignupVerified = "signup_verified"
 const AuthEventProviderSignupProvisioned = "signup_provisioned"
 
 const AuthEventProviderLoginThrottled = "login_throttled"
+
+func NonSignInAuthEventProviders() []string {
+	return []string{
+		AuthEventProviderLogout,
+		AuthEventProviderSessionRevoked,
+		AuthEventProviderPasswordResetRequest,
+		AuthEventProviderPasswordResetConfirm,
+		AuthEventProviderSignupRequested,
+		AuthEventProviderSignupRejected,
+		AuthEventProviderSignupVerified,
+		AuthEventProviderSignupProvisioned,
+	}
+}
 
 type AuthEventRecord struct {
 	Provider         string

@@ -1858,6 +1858,16 @@ input ShipmentsInput {
   quickFilters: [ShipmentQuickFilterInput!]
   "IANA time zone for day and hour quick filters."
   timezone: String
+  "Only shipments with a live move assigned to one of these tractors."
+  tractorIds: [ID!]
+  "Only shipments with a live move assigned to one of these trailers."
+  trailerIds: [ID!]
+  "Only shipments with a live move one of these workers drives, in either seat."
+  workerIds: [ID!]
+  "Only shipments with a live stop at one of these locations."
+  stopLocationIds: [ID!]
+  "Only shipments with a live move tendered to one of these carriers."
+  carrierIds: [ID!]
 }
 
 input ShipmentEventsInput {

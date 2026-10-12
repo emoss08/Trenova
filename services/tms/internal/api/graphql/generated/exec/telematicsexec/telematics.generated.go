@@ -320,6 +320,19 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNVehiclePosition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐVehiclePositionᚄ),
 			},
 			{
+				Name:       "vehiclePosition",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "VehiclePosition",
+				Args:       field_Query_vehiclePosition_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").VehiclePosition(ctx, fc.Args["tractorId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalOVehiclePosition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐVehiclePosition),
+			},
+			{
 				Name:       "workerHosStates",
 				NonNull:    true,
 				IsResolver: true,
@@ -398,7 +411,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_vehicleInspections_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").VehicleInspections(ctx, fc.Args["tractorId"].(*string), fc.Args["workerId"].(*string), fc.Args["since"].(*int), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").VehicleInspections(ctx, fc.Args["tractorId"].(*string), fc.Args["workerId"].(*string), fc.Args["since"].(*int), fc.Args["limit"].(*int), fc.Args["before"].(*int), fc.Args["beforeId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNVehicleInspection2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐVehicleInspectionᚄ),
 			},
@@ -1754,12 +1767,13 @@ type resolverQuery interface {
 	TelematicsFormMapping(ctx context.Context, id string) (*gqlmodel.TelematicsFormMapping, error)
 	ShipmentDriverFeasibility(ctx context.Context, shipmentID string) ([]*gqlmodel.DriverFeasibility, error)
 	VehiclePositions(ctx context.Context, maxAgeSeconds *int) ([]*gqlmodel.VehiclePosition, error)
+	VehiclePosition(ctx context.Context, tractorID string) (*gqlmodel.VehiclePosition, error)
 	WorkerHosStates(ctx context.Context, workerIds []string, limit *int) ([]*gqlmodel.WorkerHosState, error)
 	WorkerHosState(ctx context.Context, workerID string) (*gqlmodel.WorkerHosState, error)
 	WorkerHosViolations(ctx context.Context, workerID *string, since *int, limit *int) ([]*gqlmodel.WorkerHosViolation, error)
 	WorkerHosLogs(ctx context.Context, workerID string, startTime int, endTime int) ([]*gqlmodel.WorkerHosLogEntry, error)
 	WorkerHosDailyLogs(ctx context.Context, workerID string, startDate string, endDate string) ([]*gqlmodel.WorkerHosDailyLog, error)
-	VehicleInspections(ctx context.Context, tractorID *string, workerID *string, since *int, limit *int) ([]*gqlmodel.VehicleInspection, error)
+	VehicleInspections(ctx context.Context, tractorID *string, workerID *string, since *int, limit *int, before *int, beforeID *string) ([]*gqlmodel.VehicleInspection, error)
 	WorkerFormSubmissions(ctx context.Context, workerID string, startTime int, endTime int) ([]*gqlmodel.WorkerFormSubmission, error)
 	HosCertificationSummary(ctx context.Context, startDate string, endDate string) ([]*gqlmodel.HosCertificationSummary, error)
 	TelematicsStatus(ctx context.Context) (*gqlmodel.TelematicsStatus, error)
@@ -1850,6 +1864,19 @@ func field_Query_vehiclePositions_args(ctx context.Context, ec *gqlexec.Exec, ra
 		return nil, err
 	}
 	args["maxAgeSeconds"] = arg0
+	return args, nil
+}
+
+func field_Query_vehiclePosition_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "tractorId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["tractorId"] = arg0
 	return args, nil
 }
 
@@ -1975,7 +2002,7 @@ func field_Query_workerHosDailyLogs_args(ctx context.Context, ec *gqlexec.Exec, 
 }
 
 func field_Query_vehicleInspections_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 4)
+	args := make(map[string]any, 6)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "tractorId",
 		func(ctx context.Context, v any) (*string, error) {
 			return unmarshalOID2ᚖstring(ctx, ec, v)
@@ -2008,6 +2035,22 @@ func field_Query_vehicleInspections_args(ctx context.Context, ec *gqlexec.Exec, 
 		return nil, err
 	}
 	args["limit"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "before",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOTimestamp2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "beforeId",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["beforeId"] = arg5
 	return args, nil
 }
 
@@ -2621,6 +2664,13 @@ func marshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Sel
 	}
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func marshalOVehiclePosition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐVehiclePosition(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.VehiclePosition) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "VehiclePosition", v)
 }
 
 func marshalOWorkerHosState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerHosState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.WorkerHosState) graphql.Marshaler {

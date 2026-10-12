@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/requestmeta"
 	"github.com/emoss08/trenova/pkg/sessiontoken"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -637,6 +638,12 @@ func (s *Service) AuthenticateSession(
 		return nil, errortypes.NewAuthenticationError("Session is invalid. Please login again.")
 	}
 
+	if now := timeutils.NowUnix(); sess.NeedsTouch(now) {
+		if touchErr := s.sr.Touch(ctx, sess.ID, now); touchErr == nil {
+			sess.LastAccessedAt = now
+		}
+	}
+
 	return sess, nil
 }
 
@@ -869,7 +876,10 @@ func (s *Service) createSession(
 		return nil, "", err
 	}
 
+	meta, _ := requestmeta.From(ctx)
 	sess := session.NewSession(&session.NewSessionRequest{
+		IPAddress:             meta.ClientIP,
+		UserAgent:             meta.UserAgent,
 		TenantInfo:            tenantInfo,
 		IsPortalUser:          isPortalUser,
 		MustChangePassword:    user.MustChangePassword,

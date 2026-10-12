@@ -446,9 +446,14 @@ func (r *repository) ListVehicleInspections(
 				if req.Since > 0 {
 					sq = sq.Where(cols.StartedAt.Gte(), req.Since)
 				}
+				if req.Before > 0 {
+					sq = sq.WhereGroup(" AND ", func(page *bun.SelectQuery) *bun.SelectQuery {
+						return inspectionsBefore(page, req)
+					})
+				}
 				return sq
 			}).
-			Order(cols.StartedAt.OrderDesc())
+			Order(cols.StartedAt.OrderDesc(), cols.ID.OrderDesc())
 
 		if req.Limit > 0 {
 			q = q.Limit(int64(req.Limit))
@@ -458,6 +463,23 @@ func (r *repository) ListVehicleInspections(
 			return nil, fmt.Errorf("list vehicle inspections: %w", err)
 		}
 		return entities, nil
+	})
+}
+
+func inspectionsBefore(
+	q *bun.SelectQuery,
+	req *telematicsports.ListVehicleInspectionsRequest,
+) *bun.SelectQuery {
+	cols := telematicscol.VehicleInspectionColumns
+
+	q = q.Where(cols.StartedAt.Lt(), req.Before)
+	if req.BeforeID.IsNil() {
+		return q
+	}
+	return q.WhereGroup(" OR ", func(tie *bun.SelectQuery) *bun.SelectQuery {
+		return tie.
+			Where(cols.StartedAt.Eq(), req.Before).
+			Where(cols.ID.Lt(), req.BeforeID)
 	})
 }
 
