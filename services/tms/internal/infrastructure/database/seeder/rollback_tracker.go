@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/uptrace/bun"
 )
 
@@ -19,7 +18,7 @@ func NewRollbackTracker(db *bun.DB) *RollbackTracker {
 }
 
 func (rt *RollbackTracker) Initialize(ctx context.Context) error {
-	statements, err := loadSchema(dbdialect.FromBun(rt.db), seedRollbacksSchema)
+	statements, err := loadSchema(seedRollbacksSchema)
 	if err != nil {
 		return err
 	}

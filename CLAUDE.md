@@ -18,7 +18,6 @@ trenova/
 ├── dev/                   # Local environment: compose.yml, config/, samsara-sim, edi-partner-sim
 ├── deploy/                # Dockerfiles, self-host compose, Caddy, GTC routing, observability
 ├── tools/                 # Not shipped: extraction-finetune (Python), screenshots, smack, release
-├── scripts/dialect-convert # SQLite migration converter (goes away with SQLite)
 ├── docs/                  # engineering/, product-guide/, self-hosting/, notes/
 └── go.work                # Go workspace: services/tms, shared, dev/samsara-sim, dev/edi-partner-sim
 ```

@@ -219,12 +219,10 @@ func (r *repository) Prune(
 				ctx,
 				kernelports.TxOptions{},
 				func(txCtx context.Context, tx bun.Tx) error {
-					if isPostgres(tx) {
-						if _, err := tx.NewSelect().
-							ColumnExpr("set_config(?, 'on', true)", pruneSetting).
-							Exec(txCtx); err != nil {
-							return fmt.Errorf("admit the AI audit prune: %w", err)
-						}
+					if _, err := tx.NewSelect().
+						ColumnExpr("set_config(?, 'on', true)", pruneSetting).
+						Exec(txCtx); err != nil {
+						return fmt.Errorf("admit the AI audit prune: %w", err)
 					}
 
 					doomed := tx.NewSelect().

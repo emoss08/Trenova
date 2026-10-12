@@ -31217,7 +31217,6 @@
   "{0} is not an id": "{0} 不是 id",
   "{0} is not available": "{0} 不可用",
   "{0} is not available as a carrier intelligence provider": "{0} 不可用作承运商情报提供商",
-  "{0} is not available when running on {1}; configure database.driver=postgres to use this feature": "在 {1} 上运行时无法使用 {0}；请配置 database.driver=postgres 以使用此功能",
   "{0} is not connected": "{0} 尚未连接",
   "{0} is not connected for this organization": "本组织尚未连接 {0}",
   "{0} is not connected right now. The request waits a few minutes for it to come online.": "{0} 目前未连接。请求会等待几分钟让它上线。",

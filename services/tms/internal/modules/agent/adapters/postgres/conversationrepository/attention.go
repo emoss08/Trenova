@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -120,7 +121,7 @@ func (r *repository) ListThreadAttention(
 				req.TenantInfo.OrgID,
 				req.TenantInfo.BuID,
 				agent.ProposalStatusPending,
-				bun.Safe(r.db.NowEpoch()),
+				bun.Safe(dbhelper.NowEpoch),
 				agent.SubjectAssistantThread,
 				bun.In(owned),
 			).Scan(ctx, &runs); err != nil {

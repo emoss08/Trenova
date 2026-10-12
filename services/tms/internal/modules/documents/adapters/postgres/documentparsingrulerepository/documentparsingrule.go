@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/documentparsingrulecol"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -315,7 +316,7 @@ func (r *repository) ArchivePublishedVersions(
 			NewUpdate().
 			Model((*documentparsingrule.RuleVersion)(nil)).
 			Set(cols.Status.Set(), documentparsingrule.VersionStatusArchived).
-			Set(cols.UpdatedAt.SetExpr(r.db.NowEpoch())).
+			Set(cols.UpdatedAt.SetExpr(dbhelper.NowEpoch)).
 			Where(cols.RuleSetID.Eq(), ruleSetID).
 			Where(cols.OrganizationID.Eq(), orgID).
 			Where(cols.BusinessUnitID.Eq(), buID).
@@ -335,7 +336,7 @@ func (r *repository) SetPublishedVersion(
 			NewUpdate().
 			Model((*documentparsingrule.RuleSet)(nil)).
 			Set(cols.PublishedVersionID.Set(), versionID).
-			Set(cols.UpdatedAt.SetExpr(r.db.NowEpoch())).
+			Set(cols.UpdatedAt.SetExpr(dbhelper.NowEpoch)).
 			Where(cols.ID.Eq(), ruleSetID).
 			Where(cols.OrganizationID.Eq(), orgID).
 			Where(cols.BusinessUnitID.Eq(), buID).

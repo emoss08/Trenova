@@ -72,7 +72,7 @@ starts with no scope and is refused.
 
 | `database.rls.mode` | Driver | When |
 |---|---|---|
-| `off` (default) | not installed; `dbtx` helpers call straight through | SQLite, and deployments not yet migrated |
+| `off` (default) | not installed; `dbtx` helpers call straight through | deployments not yet migrated |
 | `observe` | signs scopes, logs and meters access that `enforce` would refuse | while rolling out |
 | `enforce` | refuses unscoped statements and statements outside a scoped transaction | production |
 
