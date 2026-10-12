@@ -72,6 +72,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/driverportalports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"go.uber.org/fx"
 )
@@ -182,6 +183,7 @@ func SharedOptions() fx.Option {
 				trackingeventservice.New,
 				fx.As(new(trackingeventports.TrackingEventService)),
 				fx.As(new(telematicsports.StopVisitRecorder)),
+				fx.As(new(driverportalports.StopReporter)),
 			),
 			fx.Annotate(
 				shipmentservice.New,

@@ -4394,6 +4394,15 @@
       "apps/web/components"
     ]
   },
+  "A departure time goes with an arrival": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A departure time goes with an arrival; record a departure on its own as Depart": {
     "sites": 1,
     "scope": [
@@ -6514,6 +6523,15 @@
     ]
   },
   "A plan is accepted or rejected as a whole; change a step by deciding it on its own": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A plan is required": {
     "sites": 1,
     "scope": [
       "go"
@@ -13173,7 +13191,7 @@
     ]
   },
   "Action must be Arrive or Depart": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -21568,6 +21586,15 @@
       "go/other"
     ]
   },
+  "An arrival time is required with a departure time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "An assignment cannot end before it begins": {
     "sites": 1,
     "scope": [
@@ -26251,7 +26278,7 @@
     ]
   },
   "Arrive at this stop before departing": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -37174,7 +37201,7 @@
     ]
   },
   "Business unit ID is required": {
-    "sites": 48,
+    "sites": 50,
     "scope": [
       "go"
     ],
@@ -37192,7 +37219,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 134,
+    "sites": 135,
     "scope": [
       "go"
     ],
@@ -47938,6 +47965,15 @@
       "go/other"
     ]
   },
+  "Client event ID must be 128 characters or fewer with no spaces": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Client id cannot be longer than 255 characters": {
     "sites": 1,
     "scope": [
@@ -50751,7 +50787,7 @@
     ]
   },
   "Complete the earlier stops on this load first": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -84805,7 +84841,7 @@
       "routes/shipment"
     ]
   },
-  "Event time predates the arrival at this stop": {
+  "Event time is required": {
     "sites": 1,
     "scope": [
       "go"
@@ -84814,8 +84850,26 @@
       "go/other"
     ]
   },
-  "Event time predates the previous stop's departure": {
+  "Event time must be a valid timestamp": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Event time predates the arrival at this stop": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Event time predates the previous stop's departure": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -116943,7 +116997,7 @@
     ]
   },
   "Kind is required": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "go"
     ],
@@ -116958,6 +117012,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Kind must be Arrival or Departure": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Kind must be custom or canned_fork": {
@@ -118897,8 +118960,17 @@
       "go/other"
     ]
   },
+  "Latitude is required with a longitude": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Latitude must be between -90 and 90": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -124634,8 +124706,17 @@
       "go/other"
     ]
   },
+  "Longitude is required with a latitude": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Longitude must be between -180 and 180": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -127904,6 +127985,15 @@
     ],
     "areas": [
       "routes/routing-guide"
+    ]
+  },
+  "Match method is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Match mode": {
@@ -133141,7 +133231,7 @@
     ]
   },
   "Move ID is required": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -133295,6 +133385,15 @@
       "routes/shipment"
     ]
   },
+  "Move is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Move may go uncovered": {
     "sites": 1,
     "scope": [
@@ -133386,7 +133485,7 @@
     ]
   },
   "Move status transition from {0} to {1} is not allowed": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go"
     ],
@@ -150336,7 +150435,7 @@
     ]
   },
   "Occurred at cannot be in the future": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -150363,7 +150462,7 @@
     ]
   },
   "Occurred at must be a valid timestamp": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -158106,7 +158205,7 @@
     ]
   },
   "Organization ID is required": {
-    "sites": 51,
+    "sites": 53,
     "scope": [
       "go",
       "ts"
@@ -158220,7 +158319,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 133,
+    "sites": 134,
     "scope": [
       "go"
     ],
@@ -159418,7 +159517,16 @@
     ]
   },
   "Outcome is required": {
-    "sites": 3,
+    "sites": 4,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Outcome reason cannot be longer than 500 characters": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -179221,6 +179329,15 @@
       "routes/carrier"
     ]
   },
+  "Raw reference cannot be longer than 255 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Raw {0} before guardrails and rounding": {
     "sites": 1,
     "scope": [
@@ -181828,6 +181945,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Received time is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Received time must be a valid timestamp": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Received via {0} · {1}": {
@@ -189324,7 +189459,7 @@
     ]
   },
   "Request is required": {
-    "sites": 46,
+    "sites": 50,
     "scope": [
       "go"
     ],
@@ -210912,7 +211047,7 @@
     ]
   },
   "Shipment ID is required": {
-    "sites": 33,
+    "sites": 34,
     "scope": [
       "go",
       "ts"
@@ -211843,7 +211978,7 @@
     ]
   },
   "Shipment is required": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "go"
     ],
@@ -216312,7 +216447,7 @@
     ]
   },
   "Source is required": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -216320,6 +216455,24 @@
     "areas": [
       "go/other",
       "routes/bank-receipt-batch"
+    ]
+  },
+  "Source key cannot be longer than 255 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Source key is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Source kind is invalid": {
@@ -216368,6 +216521,24 @@
     ]
   },
   "Source message ID or payload is required for acknowledgment documents": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Source must be Dispatcher, Agent or Driver": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Source must be Telematics or EDI": {
     "sites": 1,
     "scope": [
       "go"
@@ -216530,6 +216701,15 @@
   },
   "Source shipment version cannot be negative": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Source status cannot be longer than 64 characters": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -219860,7 +220040,7 @@
     ]
   },
   "Stop ID is required": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -219977,7 +220157,7 @@
     ]
   },
   "Stop is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -220022,7 +220202,7 @@
     ]
   },
   "Stop not found on this load": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -224177,6 +224357,15 @@
       "go/other",
       "packages/shared/types",
       "routes/tractor"
+    ]
+  },
+  "Telematics event is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Telematics forms": {
@@ -237738,6 +237927,15 @@
       "routes/inbox"
     ]
   },
+  "The stop times on this load did not settle": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The stops are still in the notice window — try again in a moment.": {
     "sites": 1,
     "scope": [
@@ -242519,7 +242717,7 @@
     ]
   },
   "This load has been canceled": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -242927,6 +243125,15 @@
     ]
   },
   "This organization's trial has expired": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This outcome needs a reason": {
     "sites": 1,
     "scope": [
       "go"
@@ -243626,6 +243833,15 @@
     ]
   },
   "This report run was generated before its rows were stored, so it cannot be compared": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This report was already recorded for a different stop or action": {
     "sites": 1,
     "scope": [
       "go"

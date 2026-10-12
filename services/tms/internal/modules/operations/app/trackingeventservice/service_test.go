@@ -5,6 +5,7 @@ import (
 	"math/rand/v2"
 	"slices"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/driverportalports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -554,4 +556,69 @@ func TestRecordStopVisit_MapsTheTrackingOutcome(t *testing.T) {
 
 	_, err = h.service.RecordStopVisit(t.Context(), &telematicsports.StopVisitReport{})
 	require.Error(t, err)
+}
+
+func TestReportDriverStop_RecordsATapOnceUnderTheDriversKey(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, 2)
+	driver := pulid.MustNew("usr_")
+	tapped := timeutils.NowUnix() - 900
+	report := &driverportalports.StopReport{
+		TenantInfo:    h.tenant,
+		MoveID:        h.move.ID,
+		StopID:        h.stops[0].ID,
+		OccurredAt:    &tapped,
+		ClientEventID: "7f1c2a",
+		ReportedByID:  driver,
+	}
+
+	require.NoError(t, h.service.ReportDriverStop(t.Context(), report))
+	require.NoError(t, h.service.ReportDriverStop(t.Context(), report))
+
+	stored := h.repo.byKey(driver.String() + ":7f1c2a")
+	require.NotNil(t, stored)
+	assert.Equal(t, trackingevent.SourceDriver, stored.Source)
+	assert.Equal(t, shipment.VisitArrival, stored.Kind)
+	assert.Equal(t, driver, stored.ReportedByID)
+	assert.Equal(t, tapped, *h.stops[0].ActualArrival)
+	assert.Len(t, h.moves.recorded, 1)
+}
+
+func TestReportDriverStop_AFastDeviceClockIsReadAsNow(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, 1)
+	ahead := timeutils.NowUnix() + 3*3600
+	before := timeutils.NowUnix()
+
+	require.NoError(t, h.service.ReportDriverStop(t.Context(), &driverportalports.StopReport{
+		TenantInfo:   h.tenant,
+		MoveID:       h.move.ID,
+		StopID:       h.stops[0].ID,
+		OccurredAt:   &ahead,
+		ReportedByID: pulid.MustNew("usr_"),
+	}))
+
+	require.NotNil(t, h.stops[0].ActualArrival)
+	assert.GreaterOrEqual(t, *h.stops[0].ActualArrival, before)
+	assert.Less(t, *h.stops[0].ActualArrival, ahead)
+}
+
+func TestReportDriverStop_RejectsABadClientEventID(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, 1)
+	for _, id := range []string{"has space", strings.Repeat("x", 129)} {
+		err := h.service.ReportDriverStop(t.Context(), &driverportalports.StopReport{
+			TenantInfo:    h.tenant,
+			MoveID:        h.move.ID,
+			StopID:        h.stops[0].ID,
+			Departure:     true,
+			ClientEventID: id,
+		})
+		require.Error(t, err, id)
+		assert.True(t, errortypes.IsRefusal(err), id)
+	}
+	assert.Empty(t, h.repo.events)
 }

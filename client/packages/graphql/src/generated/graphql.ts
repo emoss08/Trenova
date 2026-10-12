@@ -5521,7 +5521,11 @@ export type RecordLeaveDayInput = {
 
 export type RecordMyStopActionInput = {
   action: PortalStopAction;
+  /** An id the device makes once per tap, so a resend after a dropped connection is recorded once. */
+  clientEventId?: string | null | undefined;
   moveId: string | number;
+  /** When it happened on the device. Omitted means when the server receives it. */
+  occurredAt?: number | null | undefined;
   stopId: string | number;
 };
 

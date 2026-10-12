@@ -15789,6 +15789,10 @@ input RecordMyStopActionInput {
   moveId: ID!
   stopId: ID!
   action: PortalStopAction!
+  "When it happened on the device. Omitted means when the server receives it."
+  occurredAt: Timestamp
+  "An id the device makes once per tap, so a resend after a dropped connection is recorded once."
+  clientEventId: String
 }
 
 input CreateSettlementDisputeInput {
