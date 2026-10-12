@@ -3,10 +3,16 @@
 -- Google Cloud, or Microsoft Foundry. Each signs in its own way and needs its own
 -- region, project, workspace or resource, kept in platform_settings. None of those is
 -- secret; the credential stays in api_key, encrypted. Every other kind is called
--- directly.
+-- directly. It first shipped as 20261231008760, a version master also gave the
+-- assistant_threads touched index, so it is renumbered here and written to run again
+-- on a database that applied it under the old number.
 ALTER TABLE "ai_providers"
     ADD COLUMN IF NOT EXISTS "platform" varchar(50) NOT NULL DEFAULT 'Direct',
     ADD COLUMN IF NOT EXISTS "platform_settings" jsonb;
+
+--bun:split
+ALTER TABLE "ai_providers"
+    DROP CONSTRAINT IF EXISTS "ck_ai_providers_platform";
 
 --bun:split
 ALTER TABLE "ai_providers"
@@ -14,7 +20,15 @@ ALTER TABLE "ai_providers"
 
 --bun:split
 ALTER TABLE "ai_providers"
+    DROP CONSTRAINT IF EXISTS "ck_ai_providers_platform_kind";
+
+--bun:split
+ALTER TABLE "ai_providers"
     ADD CONSTRAINT "ck_ai_providers_platform_kind" CHECK ("platform" = 'Direct' OR "kind" = 'AnthropicMessages');
+
+--bun:split
+ALTER TABLE "ai_providers"
+    DROP CONSTRAINT IF EXISTS "ck_ai_providers_platform_settings";
 
 --bun:split
 ALTER TABLE "ai_providers"
