@@ -1,3 +1,4 @@
+import type { TriageRuleInput } from "@/lib/graphql/inbox";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -21,7 +22,17 @@ export type TriageOverlay =
   /** Hands the message and the steps still open on it to an agent in Desk. */
   | { kind: "desk"; messageId: string; openActionIds: readonly string[] }
   /** Connects a new source, or reconnects the one named. */
-  | { kind: "connect"; mailboxId: string | null };
+  | { kind: "connect"; mailboxId: string | null }
+  /** What a rule matched, or what a rule not yet turned on would have matched. */
+  | { kind: "ruleMatches"; target: RuleMatchesTarget };
+
+/** A saved rule by id, or a rule still being written by what it says. */
+export type RuleMatchesTarget = { ruleId: string } | { input: TriageRuleInput };
+
+/** The blanks a new rule starts with when something outside the Rules page asks for one. */
+export type RuleSeed = Partial<
+  Pick<TriageRuleInput, "classification" | "senderScope" | "sender" | "mailboxId" | "action">
+>;
 
 /**
  * What the open reader can do that a key asks for. The reader registers these
@@ -59,6 +70,10 @@ type TriageState = {
   readerCommands: ReaderCommands;
   /** How many Triage pages are mounted; arrival toasts only show while one is. */
   mounted: number;
+  /** A new rule's blanks, asked for from outside the Rules page; the add row takes them once. */
+  ruleSeed: RuleSeed | null;
+  /** When a source was connected from this page, so a first day shows the backlog being read. */
+  sourceConnectedAt: number | null;
 
   toggleSelected: (id: string) => void;
   selectRange: (orderedIds: readonly string[], toId: string) => void;
@@ -75,6 +90,8 @@ type TriageState = {
   setRowMode: (mode: TriageRowMode) => void;
   setUnderlineFacts: (underline: boolean) => void;
   setReaderCommands: (commands: ReaderCommands) => void;
+  seedRule: (seed: RuleSeed | null) => void;
+  markSourceConnected: (at: number | null) => void;
   mount: () => () => void;
 };
 
@@ -142,6 +159,8 @@ export const useTriageStore = create<TriageState>()(
       underlineFacts: false,
       readerCommands: {},
       mounted: 0,
+      ruleSeed: null,
+      sourceConnectedAt: null,
 
       toggleSelected: (id) =>
         set((state) => {
@@ -177,6 +196,8 @@ export const useTriageStore = create<TriageState>()(
       setRowMode: (rowMode) => set({ rowMode }),
       setUnderlineFacts: (underlineFacts) => set({ underlineFacts }),
       setReaderCommands: (readerCommands) => set({ readerCommands }),
+      seedRule: (ruleSeed) => set({ ruleSeed }),
+      markSourceConnected: (sourceConnectedAt) => set({ sourceConnectedAt }),
       mount: () => {
         set((state) => ({ mounted: state.mounted + 1 }));
         return () =>
@@ -186,6 +207,8 @@ export const useTriageStore = create<TriageState>()(
             selectionAnchor: null,
             leaving: EMPTY,
             overlay: null,
+            ruleSeed: null,
+            sourceConnectedAt: null,
           });
       },
     }),

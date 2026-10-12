@@ -34,6 +34,9 @@ const (
 	seedTemplateAskPOD   = "Ask for the POD"
 	seedTemplateAccept   = "Accept the tender"
 	seedProviderIDPrefix = "seed-triage-"
+	seedDisputeSender    = "claims@freshhaul.example"
+	seedDuplicatePrefix  = "dup:"
+	seedOverlapPrefix    = "load:"
 	seedReadDelay        = int64(25)
 	seedRuleDelay        = int64(40)
 )
@@ -43,6 +46,15 @@ type seededMessage struct {
 	attachments []*inboundmessage.InboundAttachment
 	activities  []*triage.Activity
 	replies     []*triage.Reply
+	documents   []seededDocument
+	corrections []*aicorrection.Correction
+}
+
+type seededDocument struct {
+	document   *document.Document
+	content    *documentcontent.Content
+	draft      *documentshipmentdraft.DocumentShipmentDraft
+	extraction *documentaiextraction.Extraction
 }
 
 type seedTeammateSpec struct {
@@ -184,17 +196,19 @@ type triageSeedRules struct {
 	pods        *triage.Rule
 	invoices    *triage.Rule
 	newsletters *triage.Rule
+	disputes    *triage.Rule
 }
 
 type seedRuleSpec struct {
-	class   inboundmessage.Classification
-	scope   triage.SenderScope
-	sender  string
-	mailbox *inboundmessage.Mailbox
-	action  inboundmessage.NovaAction
-	matches int64
-	enabled bool
-	by      *tenant.User
+	class    inboundmessage.Classification
+	scope    triage.SenderScope
+	sender   string
+	mailbox  *inboundmessage.Mailbox
+	action   inboundmessage.NovaAction
+	assignee *tenant.User
+	matches  int64
+	enabled  bool
+	by       *tenant.User
 }
 
 func seedRules(refs *inboundSeedRefs, boxes *seedMailboxes) []*triage.Rule {
@@ -235,10 +249,25 @@ func seedRules(refs *inboundSeedRefs, boxes *seedMailboxes) []*triage.Rule {
 			action:  inboundmessage.NovaActionDraftReply,
 			by:      refs.admin,
 		},
+		{
+			class:    inboundmessage.ClassificationDetentionDispute,
+			scope:    triage.SenderAddress,
+			sender:   seedDisputeSender,
+			mailbox:  boxes.intake,
+			action:   inboundmessage.NovaActionAssign,
+			assignee: refs.team.dana,
+			matches:  9,
+			enabled:  true,
+			by:       refs.team.dana,
+		},
 	}
 
 	rules := make([]*triage.Rule, 0, len(specs))
 	for _, spec := range specs {
+		assignee := pulid.Nil
+		if spec.assignee != nil {
+			assignee = spec.assignee.ID
+		}
 		rules = append(rules, &triage.Rule{
 			ID:             pulid.MustNew("trule_"),
 			OrganizationID: refs.org.ID,
@@ -248,6 +277,7 @@ func seedRules(refs *inboundSeedRefs, boxes *seedMailboxes) []*triage.Rule {
 			Sender:         spec.sender,
 			MailboxID:      spec.mailbox.ID,
 			Action:         spec.action,
+			AssigneeID:     assignee,
 			Enabled:        spec.enabled,
 			CreatedByID:    spec.by.ID,
 			MatchCount:     spec.matches,
@@ -262,6 +292,7 @@ func seedRuleSet(rules []*triage.Rule) triageSeedRules {
 		pods:        rules[0],
 		invoices:    rules[1],
 		newsletters: rules[2],
+		disputes:    rules[4],
 	}
 }
 
@@ -279,19 +310,20 @@ func seedReplyTemplates(refs *inboundSeedRefs) []*triage.ReplyTemplate {
 
 	return []*triage.ReplyTemplate{
 		template(seedTemplateETA,
-			"Hi {first} — {pro} is {status}. Current ETA is {eta}. "+
+			"Hi {first} — {pro} ({po}) is {status}. Current ETA is {eta}. "+
 				"We'll tell you if that moves.\n\nThanks,\nTrenova",
 			refs.team.priya),
 		template(seedTemplateWaiver,
-			"Hi {first} — you're right. We've removed the detention on {pro}; "+
+			"Hi {first} — you're right. We've removed the detention on {pro} for {customer}; "+
 				"a corrected invoice follows today.\n\nThanks,\nTrenova Billing",
 			refs.team.dana),
 		template(seedTemplateAskPOD,
 			"Hi {first} — could you send the signed POD for {pro}? "+
-				"A clear photo of each page works.\n\nThanks,\nTrenova",
+				"A clear photo of each page works; reply to this email from {sender}."+
+				"\n\nThanks,\nTrenova",
 			refs.admin),
 		template(seedTemplateAccept,
-			"Hi {first} — we'll take it. Confirming {lane}. "+
+			"Hi {first} — we'll take it for {customer}. Confirming {lane}. "+
 				"Rate confirmation to follow.\n\nThanks,\nTrenova Dispatch",
 			refs.team.marcus),
 	}
@@ -410,6 +442,14 @@ func pauseRules(ctx context.Context, tx bun.Tx, paused []*triage.Rule) error {
 	return nil
 }
 
+func matchedBy(rule *triage.Rule, message *inboundmessage.InboundMessage) bool {
+	if rule.Action == inboundmessage.NovaActionAssign {
+		return rule.Covers(message) && message.OwnerID == rule.AssigneeID
+	}
+
+	return message.HandledByRuleID == rule.ID
+}
+
 func markRuleMatches(
 	ctx context.Context,
 	tx bun.Tx,
@@ -421,7 +461,7 @@ func markRuleMatches(
 		var latest *inboundmessage.InboundMessage
 		for _, seeded := range messages {
 			message := seeded.message
-			if message.HandledByRuleID != rule.ID {
+			if !matchedBy(rule, message) {
 				continue
 			}
 			if latest == nil || message.ReceivedAt > latest.ReceivedAt {
@@ -434,7 +474,7 @@ func markRuleMatches(
 
 		if _, err := tx.NewUpdate().
 			Model((*triage.Rule)(nil)).
-			Set(cols.LastMatchedAt.Set(), latest.ReviewedAt).
+			Set(cols.LastMatchedAt.Set(), latest.ReceivedAt+seedRuleDelay).
 			Set(cols.LastMessageID.Set(), latest.ID).
 			Where(cols.ID.Eq(), rule.ID).
 			Where(cols.OrganizationID.Eq(), rule.OrganizationID).
@@ -715,6 +755,7 @@ func (b *triageSeed) tomorrowAt(hour int) int64 {
 }
 
 func (b *triageSeed) waitingOnYou() {
+	b.carrierInvoiceWaiting()
 	b.tenderWithoutAttachment()
 	b.unreadableEDI()
 	b.heldBack()
@@ -773,7 +814,27 @@ func (b *triageSeed) unreadableEDI() {
 		"so Nova could not read which load it is about."
 	message.ReviewNote = "Nova could not tell what this is about, so it is waiting on a person."
 
-	b.add(seededMessage{message: message})
+	failedAt := message.ReceivedAt + 35*inboundSeedMinute
+	bounced := b.reply(seedReply{
+		message: message,
+		body: "Hi — your status file 20260919-0441 arrived cut off after the first stop. " +
+			"Could you send it again?\n\nThanks,\nTrenova",
+		at:        failedAt,
+		failure:   "550 5.1.1 <edi@partnercarrier.example>: Recipient address rejected: " +
+			"this mailbox only sends.",
+		suggested: "ops@partnercarrier.example",
+		by:        b.refs.team.marcus,
+	})
+	failed := seedActivity(message, triage.ActivityReplyFailed, failedAt).
+		ByPerson(b.refs.team.marcus.ID).
+		About(bounced.ToAddress, bounced.FailureText)
+	failed.RecordID = bounced.ID
+
+	b.add(seededMessage{
+		message:    message,
+		replies:    []*triage.Reply{bounced},
+		activities: []*triage.Activity{failed},
+	})
 }
 
 func (b *triageSeed) heldBack() {
@@ -806,15 +867,15 @@ func (b *triageSeed) rateConfirmationOnFile() {
 	message := b.mail(seedMail{
 		mailbox:    b.boxes.intake,
 		key:        "ratecon-seed-shp-003",
-		from:       "loads@globaltrade.example",
-		fromName:   "GlobalTrade Imports",
+		from:       seedBrokerSender,
+		fromName:   "Blue Ridge Brokerage",
 		subject:    "Rate con — SEED-SHP-003 Columbus to Louisville",
 		body:       body,
 		receivedAt: b.minutesAgo(54),
 		class:      inboundmessage.ClassificationRateConfirmation,
 		confidence: 0.83,
 	})
-	matched(message, ship, b.customer("GLBL"),
+	matched(message, ship, b.refs.broker,
 		"The PRO number SEED-SHP-003 is in the subject, and the attached PDF names the same lane.")
 	message.ReviewNote = "Filing a document on a shipment waits for a person on this mailbox."
 	message.Facts = []inboundmessage.Fact{
@@ -832,31 +893,66 @@ func (b *triageSeed) rateConfirmationOnFile() {
 		PageCount:   2,
 		Pages: []inboundmessage.AttachmentPage{
 			{Number: 1, Label: "Rate confirmation", SuggestedType: rateCon.Name},
-			{Number: 2, Label: "Signed BOL", SuggestedType: "Bill of Lading"},
+			{Number: 2, Label: "Signed BOL", SuggestedType: b.docType("BOL").Name},
 		},
 	}
+	incoming := b.stage(seedStaging{
+		message:    message,
+		attachment: attachment,
+		docType:    rateCon,
+		kind:       "RateConfirmation",
+		rate:       "$1,240.00",
+		fields: []documentcontent.FoundField{
+			{Key: "load", Label: "Load", Value: "SEED-SHP-003", Confidence: 0.97},
+			{Key: "rate", Label: "Rate", Value: "$1,240.00 all-in", Confidence: 0.96},
+			{Key: "equipment", Label: "Equipment", Value: "53' dry van", Confidence: 0.92},
+			{Key: "signed", Label: "Signed", Value: "Yes", Confidence: 0.9},
+		},
+	})
+	onFile := b.stage(seedStaging{
+		message:  message,
+		resource: ship,
+		docType:  rateCon,
+		kind:     "RateConfirmation",
+		rate:     "$1,180.00",
+		file: seedFile{
+			name:        "RateCon_SEED-SHP-003.pdf",
+			contentType: "application/pdf",
+			size:        198 * 1024,
+			pages:       1,
+		},
+		uploadedAt: b.minutesAgo(1440 + 300),
+		fields: []documentcontent.FoundField{
+			{Key: "load", Label: "Load", Value: "SEED-SHP-003", Confidence: 0.97},
+			{Key: "rate", Label: "Rate", Value: "$1,180.00 all-in", Confidence: 0.95},
+		},
+	})
 	message.Conflicts = []inboundmessage.Conflict{{
-		ID:                 "duplicate:" + attachment.ID.String(),
+		ID:                 seedDuplicatePrefix + attachment.ID.String(),
 		Kind:               inboundmessage.ConflictDuplicateDocument,
 		AttachmentID:       attachment.ID,
+		ExistingDocumentID: onFile.document.ID,
 		ExistingShipmentID: ship.ID,
-		ExistingFiledAt:    b.minutesAgo(1440 + 300),
-		ExistingAmount:     "$1,180.00",
-		NewAmount:          "$1,240.00",
+		ExistingFiledAt:    onFile.document.CreatedAt,
+		ExistingAmount:     "1180.00",
+		NewAmount:          "1240.00",
 	}}
 
 	b.add(seededMessage{
 		message:     message,
 		attachments: []*inboundmessage.InboundAttachment{attachment},
+		documents:   []seededDocument{incoming, onFile},
 	})
 }
 
 func (b *triageSeed) proofOfDeliveryWithAShortage() {
+	driver := b.refs.driver
+	driverName := driver.FirstName + " " + driver.LastName
 	message := b.mail(seedMail{
 		mailbox:  b.boxes.intake,
 		key:      "pod-seed-shp-005",
-		from:     "luis.ortega@drivers.trenova.example",
-		fromName: "Luis Ortega",
+		from:     driver.Email,
+		fromName: driverName,
 		subject:  "POD SEED-SHP-005",
 		body: "Delivered, signed by receiving. 2 pallets short-shipped noted on the BOL.\n\n" +
 			"Sent from my phone",
@@ -875,17 +971,37 @@ func (b *triageSeed) proofOfDeliveryWithAShortage() {
 			"2 pallets short-shipped noted on the BOL"),
 	}
 
+	photo := &inboundmessage.InboundAttachment{
+		ID:          pulid.MustNew("imsga_"),
+		FileName:    "IMG_4410.jpg",
+		ContentType: "image/jpeg",
+		ByteSize:    2_400 * 1024,
+		Kind:        inboundmessage.AttachmentProofOfDelivery,
+		PageCount:   1,
+	}
+	reading := b.stage(seedStaging{
+		message:    message,
+		attachment: photo,
+		docType:    b.docType(documenttype.CodePOD),
+		kind:       "ProofOfDelivery",
+		fields: []documentcontent.FoundField{
+			{Key: "bol", Label: "BOL", Value: "BOL-2026-0005", Confidence: 0.91},
+			{Key: "received_by", Label: "Received by", Value: "R. Patel", Confidence: 0.88},
+			{Key: "signature", Label: "Signature", Value: "Present", Confidence: 0.93},
+			{
+				Key:            "exceptions",
+				Label:          "Exceptions",
+				Value:          "2 pallets short",
+				Confidence:     0.86,
+				ReviewRequired: true,
+			},
+		},
+	})
+
 	b.add(seededMessage{
 		message: message,
 		attachments: []*inboundmessage.InboundAttachment{
-			{
-				ID:          pulid.MustNew("imsga_"),
-				FileName:    "IMG_4410.jpg",
-				ContentType: "image/jpeg",
-				ByteSize:    2_400 * 1024,
-				Kind:        inboundmessage.AttachmentProofOfDelivery,
-				PageCount:   1,
-			},
+			photo,
 			{
 				ID:          pulid.MustNew("imsga_"),
 				FileName:    "IMG_4411.HEIC",
@@ -895,6 +1011,7 @@ func (b *triageSeed) proofOfDeliveryWithAShortage() {
 				FailureText: "Refused: larger than this mailbox's 25 MB limit per file.",
 			},
 		},
+		documents: []seededDocument{reading},
 		activities: []*triage.Activity{
 			b.assigned(message, b.refs.admin, message.ReceivedAt+12*inboundSeedMinute),
 		},
@@ -902,7 +1019,11 @@ func (b *triageSeed) proofOfDeliveryWithAShortage() {
 }
 
 func (b *triageSeed) tenderWithLoads() {
-	weekOf := b.dateLabel(b.refs.weekStart + 7*inboundSeedDay)
+	lane := b.refs.lane
+	firstDay := b.dateOnly(lane.pickupAt - inboundSeedDay)
+	secondDay := lane.pickupDay(b.refs.loc)
+	thirdDay := b.dateOnly(lane.pickupAt + 2*inboundSeedDay)
+	weekOf := b.dateLabel(lane.pickupAt)
 	message := b.mail(seedMail{
 		mailbox:  b.boxes.intake,
 		key:      "tender-4471",
@@ -934,9 +1055,41 @@ func (b *triageSeed) tenderWithLoads() {
 		Pages: []inboundmessage.AttachmentPage{
 			{Number: 1, Label: "Cover letter", SuggestedType: "Other"},
 			{Number: 2, Label: "Load sheet", SuggestedType: "Tender"},
-			{Number: 3, Label: "BOL template", SuggestedType: "Bill of Lading"},
+			{Number: 3, Label: "BOL template", SuggestedType: b.docType("BOL").Name},
 		},
 	}
+	reading := b.stage(seedStaging{
+		message:    message,
+		attachment: attachment,
+		kind:       "Tender",
+		fields: []documentcontent.FoundField{
+			{Key: "tender", Label: "Tender", Value: "4471", Confidence: 0.95, PageNumber: 1},
+			{Key: "loads", Label: "Loads", Value: "3", Confidence: 0.93, PageNumber: 2},
+			{Key: "equipment", Label: "Equipment", Value: "Dry van", Confidence: 0.9, PageNumber: 2},
+			{Key: "respond_by", Label: "Respond by", Value: "Thursday", Confidence: 0.82, PageNumber: 1},
+		},
+		stops: []documentcontent.FoundStop{
+			{Sequence: 1, Role: "pickup", City: "Chicago", State: "IL", Date: firstDay, PageNumber: 2},
+			{Sequence: 2, Role: "delivery", City: "Columbus", State: "OH", PageNumber: 2},
+			{
+				Sequence:   3,
+				Role:       "pickup",
+				City:       lane.originCity,
+				State:      lane.originState,
+				Date:       secondDay,
+				PageNumber: 2,
+			},
+			{
+				Sequence:   4,
+				Role:       "delivery",
+				City:       lane.destinationCity,
+				State:      lane.destinationState,
+				PageNumber: 2,
+			},
+			{Sequence: 5, Role: "pickup", City: "Toledo", State: "OH", Date: thirdDay, PageNumber: 2},
+			{Sequence: 6, Role: "delivery", City: "Lansing", State: "MI", PageNumber: 2},
+		},
+	})
 	draftedAt := message.ReceivedAt + 2*inboundSeedMinute
 	message.LoadDraft = &inboundmessage.LoadDraft{
 		Source: attachment.FileName,
@@ -947,24 +1100,34 @@ func (b *triageSeed) tenderWithLoads() {
 			{Key: inboundmessage.LoadFieldWeekOf, Value: weekOf},
 			{Key: inboundmessage.LoadFieldEquipment, Value: "Dry van"},
 			{Key: inboundmessage.LoadFieldRespondBy, Value: "Thursday, end of day"},
+			{Key: inboundmessage.LoadFieldOrigin, Value: "Chicago, IL"},
+			{Key: inboundmessage.LoadFieldDestination, Value: "Columbus, OH"},
+			{Key: inboundmessage.LoadFieldPickup, Value: firstDay},
+			{Key: inboundmessage.LoadFieldOrigin, Value: lane.origin},
+			{Key: inboundmessage.LoadFieldDestination, Value: lane.destination},
+			{Key: inboundmessage.LoadFieldPickup, Value: secondDay},
+			{Key: inboundmessage.LoadFieldOrigin, Value: "Toledo, OH"},
+			{Key: inboundmessage.LoadFieldDestination, Value: "Lansing, MI"},
+			{Key: inboundmessage.LoadFieldPickup, Value: thirdDay},
 		},
 		DraftedAt:     draftedAt,
 		DraftedByNova: true,
 	}
 	message.Conflicts = []inboundmessage.Conflict{{
-		ID:                 "overlap:2",
+		ID:                 seedOverlapPrefix + "2",
 		Kind:               inboundmessage.ConflictOverlappingLoad,
-		ExistingShipmentID: b.shipment("SEED-PAY-001").ID,
+		ExistingShipmentID: lane.shipment.ID,
 		LoadIndex:          2,
 	}}
 
 	b.add(seededMessage{
 		message:     message,
 		attachments: []*inboundmessage.InboundAttachment{attachment},
+		documents:   []seededDocument{reading},
 		activities: []*triage.Activity{
 			seedActivity(message, triage.ActivityLoadDrafted, draftedAt).
 				ByNova().
-				About(attachment.FileName, "6 fields"),
+				About(attachment.FileName, "15 fields"),
 		},
 	})
 }
@@ -997,67 +1160,92 @@ func (b *triageSeed) threads() {
 }
 
 func (b *triageSeed) detentionThread() {
-	ship := b.shipment("SEED-PAY-002")
+	ship := b.shipment(seedDetentionPro)
 	freshHaul := b.customer("FRSH")
 
 	appointment := b.mail(seedMail{
 		mailbox:    b.boxes.intake,
-		key:        "freshhaul-appointment-friday",
+		key:        "freshhaul-appointment-seed-det-008",
 		from:       "ops@freshhaul.example",
 		fromName:   "FreshHaul Foods",
-		subject:    "Re: appointment for Friday",
-		body:       "Can we move Friday's appointment for SEED-PAY-002 to 10:00?",
+		subject:    "Re: delivery appointment for " + seedDetentionPro,
+		body:       "Can we confirm the cold storage appointment for " + seedDetentionPro + "?",
 		receivedAt: b.minutesAgo(1640),
 		class:      inboundmessage.ClassificationStatusRequest,
 		confidence: 0.8,
 	})
-	matched(appointment, ship, freshHaul, "The PRO number SEED-PAY-002 is in the message.")
+	matched(appointment, ship, freshHaul,
+		"The PRO number "+seedDetentionPro+" is in the subject line.")
 	appointment.Status = inboundmessage.StatusActioned
 	b.add(seededMessage{
 		message: appointment,
 		activities: []*triage.Activity{
 			settledBy(appointment, b.refs.team.dana, b.minutesAgo(1580),
-				"Called receiving, moved the appointment to 10:00."),
+				"Confirmed the appointment with Phoenix Cold Storage."),
 		},
 	})
 
 	dispute := b.mail(seedMail{
 		mailbox:  b.boxes.intake,
-		key:      "freshhaul-detention-seed-pay-002",
-		from:     "claims@freshhaul.example",
+		key:      "freshhaul-detention-seed-det-008",
+		from:     seedDisputeSender,
 		fromName: "FreshHaul Foods Claims",
-		subject:  "Disputing detention on SEED-PAY-002",
-		body: "Hello,\n\nWe show the driver arriving 40 minutes after the appointment window " +
-			"on Oct 3, so we are disputing the $185.00 detention on invoice INV-20931.\n\n" +
-			"Please send the gate log or ELD record if you believe otherwise.\n\n" +
-			"Regards,\nFreshHaul Claims",
+		subject:  "Disputing detention on " + seedDetentionPro,
+		body: "Hello,\n\nWe show the driver arriving after the appointment window " +
+			"at Phoenix Cold Storage, so we are disputing the $1,200.00 detention on invoice " +
+			"INV-20931.\n\nPlease send the gate log or ELD record if you believe otherwise." +
+			"\n\nRegards,\nFreshHaul Claims",
 		receivedAt: b.minutesAgo(1222),
 		class:      inboundmessage.ClassificationDetentionDispute,
 		confidence: 0.91,
 	})
 	continues(dispute, appointment, appointment)
-	matched(dispute, ship, freshHaul, "The PRO number SEED-PAY-002 is in the subject line.")
+	matched(dispute, ship, freshHaul,
+		"The PRO number "+seedDetentionPro+" is in the subject line.")
 	dispute.ReviewNote = "A charge is being disputed; that is a person's call."
 	dispute.Facts = []inboundmessage.Fact{
-		fact("lateArrival", "Late arrival claim", "40 minutes after the window",
-			"40 minutes after the appointment window"),
-		fact("disputedAmount", "Disputed amount", "$185.00", "$185.00 detention"),
+		fact("lateArrival", "Late arrival claim", "After the appointment window",
+			"arriving after the appointment window"),
+		fact("disputedAmount", "Disputed amount", "$1,200.00", "$1,200.00 detention"),
 		fact("invoice", "Invoice", "INV-20931", "INV-20931"),
 	}
 
-	b.add(seededMessage{
-		message: dispute,
-		attachments: []*inboundmessage.InboundAttachment{{
-			ID:          pulid.MustNew("imsga_"),
-			FileName:    "INV-20931.pdf",
-			ContentType: "application/pdf",
-			ByteSize:    88 * 1024,
-			Kind:        inboundmessage.AttachmentInvoice,
-			PageCount:   1,
-		}},
-		activities: []*triage.Activity{
-			b.assigned(dispute, b.refs.team.dana, dispute.ReceivedAt+2*inboundSeedHour),
+	invoice := &inboundmessage.InboundAttachment{
+		ID:          pulid.MustNew("imsga_"),
+		FileName:    "INV-20931.pdf",
+		ContentType: "application/pdf",
+		ByteSize:    88 * 1024,
+		Kind:        inboundmessage.AttachmentInvoice,
+		PageCount:   1,
+	}
+	reading := b.stage(seedStaging{
+		message:    dispute,
+		attachment: invoice,
+		docType:    b.docType("INVOICE"),
+		kind:       "Invoice",
+		fields: []documentcontent.FoundField{
+			{Key: "invoice_number", Label: "Invoice", Value: "INV-20931", Confidence: 0.98},
+			{Key: "linehaul", Label: "Linehaul", Value: "$1,420.00", Confidence: 0.95},
+			{Key: "detention", Label: "Detention", Value: "$1,200.00", Confidence: 0.94},
+			{Key: "total", Label: "Total", Value: "$2,620.00", Confidence: 0.97},
 		},
+	})
+	assignedAt := dispute.ReceivedAt + seedRuleDelay
+	applied := seedActivity(dispute, triage.ActivityRuleApplied, assignedAt).
+		ByNova().
+		About(string(b.rules.disputes.Action), dispute.SenderDomain)
+	applied.RecordID = b.rules.disputes.ID
+	dispute.OwnerID = b.refs.team.dana.ID
+	assigned := seedActivity(dispute, triage.ActivityAssigned, assignedAt).
+		ByNova().
+		About(b.refs.team.dana.Name, "")
+	assigned.RecordID = b.refs.team.dana.ID
+
+	b.add(seededMessage{
+		message:     dispute,
+		attachments: []*inboundmessage.InboundAttachment{invoice},
+		documents:   []seededDocument{reading},
+		activities:  []*triage.Activity{applied, assigned},
 	})
 }
 
@@ -1128,14 +1316,25 @@ func (b *triageSeed) statusThread() {
 }
 
 type seedReply struct {
-	message  *inboundmessage.InboundMessage
-	template *triage.ReplyTemplate
-	body     string
-	at       int64
-	sentBy   *tenant.User
+	message   *inboundmessage.InboundMessage
+	template  *triage.ReplyTemplate
+	body      string
+	at        int64
+	sentBy    *tenant.User
+	by        *tenant.User
+	failure   string
+	suggested string
 }
 
 func (b *triageSeed) reply(r seedReply) *triage.Reply {
+	templateID := pulid.Nil
+	if r.template != nil {
+		templateID = r.template.ID
+	}
+	author := b.refs.admin
+	if r.by != nil {
+		author = r.by
+	}
 	mailbox := b.mailboxOf(r.message)
 	reply := &triage.Reply{
 		ID:             pulid.MustNew("irpl_"),
@@ -1149,9 +1348,9 @@ func (b *triageSeed) reply(r seedReply) *triage.Reply {
 		ToAddress:      r.message.FromAddress,
 		Subject:        "Re: " + r.message.Subject,
 		Body:           r.body,
-		DraftedByNova:  true,
-		TemplateID:     r.template.ID,
-		CreatedByID:    b.refs.admin.ID,
+		DraftedByNova:  r.template != nil,
+		TemplateID:     templateID,
+		CreatedByID:    author.ID,
 		CreatedAt:      r.at,
 		UpdatedAt:      r.at,
 	}
@@ -1163,6 +1362,12 @@ func (b *triageSeed) reply(r seedReply) *triage.Reply {
 			"<seed-reply-" + reply.ID.String() + "@" + emailutils.Domain(mailbox.Address) + ">",
 		)
 		reply.ProviderMessageID = "seed-reply-" + reply.ID.String()
+	}
+	if r.failure != "" {
+		reply.Status = triage.ReplyFailed
+		reply.FailureText = r.failure
+		reply.SuggestedAddress = r.suggested
+		reply.SentByID = author.ID
 	}
 
 	return reply
@@ -1289,9 +1494,9 @@ func (b *triageSeed) snoozedUntilPOD() {
 func (b *triageSeed) waitingOnThem() {
 	message := b.mail(seedMail{
 		mailbox:  b.boxes.intake,
-		key:      "kestrel-seed-pay-001-delivered",
-		from:     "dispatch@kestrelfreight.example",
-		fromName: "Kestrel Freight Dispatch",
+		key:      "ironhorse-seed-pay-001-delivered",
+		from:     "dispatch@ironhorsefreight.example",
+		fromName: "Ironhorse Freight Dispatch",
 		subject:  "SEED-PAY-001 delivered",
 		body: "Delivered this morning. The driver forgot to photograph the signed BOL; " +
 			"we'll chase it.",
@@ -1301,13 +1506,14 @@ func (b *triageSeed) waitingOnThem() {
 	})
 	matched(message, b.shipment("SEED-PAY-001"), nil,
 		"The PRO number SEED-PAY-001 is in the subject line.")
+	message.MatchedCarrierID = b.refs.carriers["IHF"].ID
 
 	draftedAt := message.ReceivedAt + 30*inboundSeedMinute
 	sentAt := message.ReceivedAt + 40*inboundSeedMinute
 	reply := b.reply(seedReply{
 		message:  message,
 		template: b.templates[seedTemplateAskPOD],
-		body: "Hi Kestrel — could you send the signed POD for SEED-PAY-001? " +
+		body: "Hi Ironhorse — could you send the signed POD for SEED-PAY-001? " +
 			"A clear photo of each page works.\n\nThanks,\nTrenova",
 		at:     sentAt,
 		sentBy: b.refs.admin,
@@ -1337,6 +1543,8 @@ func (b *triageSeed) waitingOnThem() {
 }
 
 func (b *triageSeed) settledEarlier() {
+	b.brokerRateConsFiledByHand()
+	b.settledByPeopleToday()
 	b.invoiceFiledByRule()
 	b.newsletterIgnoredByHand()
 }
@@ -1345,30 +1553,31 @@ func (b *triageSeed) invoiceFiledByRule() {
 	ship := b.shipment("SEED-SHP-002")
 	message := b.mail(seedMail{
 		mailbox:    b.boxes.billing,
-		key:        "kestrel-invoice-kf-5521",
-		from:       "ap@kestrelfreight.example",
-		fromName:   "Kestrel Freight AP",
-		subject:    "Invoice KF-5521 for SEED-SHP-002",
-		body:       "Invoice KF-5521 attached for SEED-SHP-002. Net 30.",
+		key:        "ironhorse-invoice-kf-5521",
+		from:       "ap@ironhorsefreight.example",
+		fromName:   "Ironhorse Freight AP",
+		subject:    "Invoice IHF-5521 for SEED-SHP-002",
+		body:       "Invoice IHF-5521 attached for SEED-SHP-002. Net 30.",
 		receivedAt: b.minutesAgo(410),
 		class:      inboundmessage.ClassificationInvoice,
 		confidence: 0.97,
 	})
 	matched(message, ship, nil, "The invoice references SEED-SHP-002.")
+	message.MatchedCarrierID = b.refs.carriers["IHF"].ID
 	message.Facts = []inboundmessage.Fact{
-		fact("invoice", "Invoice", "KF-5521", "KF-5521"),
+		fact("invoice", "Invoice", "IHF-5521", "IHF-5521"),
 		fact("terms", "Terms", "Net 30", "Net 30"),
 	}
 	attachment := &inboundmessage.InboundAttachment{
 		ID:          pulid.MustNew("imsga_"),
-		FileName:    "KF-5521.pdf",
+		FileName:    "IHF-5521.pdf",
 		ContentType: "application/pdf",
 		ByteSize:    74 * 1024,
 		Kind:        inboundmessage.AttachmentInvoice,
 		PageCount:   1,
 	}
 	applied := settledByRule(message, b.rules.invoices,
-		"Filed KF-5521.pdf on SEED-SHP-002 and queued it for carrier pay.")
+		"Filed IHF-5521.pdf on SEED-SHP-002 and queued it for carrier pay.")
 	filing := filed(seedFiling{
 		message:    message,
 		attachment: attachment,
@@ -1409,6 +1618,7 @@ func (b *triageSeed) newsletterIgnoredByHand() {
 type seedSender struct {
 	address string
 	name    string
+	carrier string
 }
 
 var seedDrivers = []seedSender{
@@ -1420,9 +1630,9 @@ var seedDrivers = []seedSender{
 }
 
 var seedCarrierBilling = []seedSender{
-	{address: "ap@kestrelfreight.example", name: "Kestrel Freight AP"},
-	{address: "billing@bluewaterlines.example", name: "Bluewater Lines Billing"},
-	{address: "invoices@summitcarriers.example", name: "Summit Carriers"},
+	{address: "ap@ironhorsefreight.example", name: "Ironhorse Freight AP", carrier: "IHF"},
+	{address: "billing@harborpointtrucking.example", name: "Harbor Point Trucking", carrier: "HPT"},
+	{address: "invoices@lonestarhaulers.example", name: "Lone Star Haulers", carrier: "LSH"},
 }
 
 var seedNewsletterSubjects = []string{
@@ -1452,7 +1662,7 @@ func (b *triageSeed) todayAt(index int) int64 {
 func (b *triageSeed) settledByNovaToday() {
 	slot := 0
 	for i := range seedTodayPODs {
-		pro := seedInboundShipmentPros[i%len(seedInboundShipmentPros)]
+		pro := seedRoutinePros[i%len(seedRoutinePros)]
 		b.podFiledByRule(seedPOD{
 			driver:     seedDrivers[i%len(seedDrivers)],
 			shipment:   b.shipment(pro),
@@ -1463,7 +1673,7 @@ func (b *triageSeed) settledByNovaToday() {
 		slot++
 	}
 	for i := range seedTodayInvoices {
-		pro := seedInboundShipmentPros[(i+2)%len(seedInboundShipmentPros)]
+		pro := seedRoutinePros[(i+2)%len(seedRoutinePros)]
 		b.invoiceQueuedByRule(seedInvoice{
 			carrier:    seedCarrierBilling[i%len(seedCarrierBilling)],
 			shipment:   b.shipment(pro),
@@ -1553,6 +1763,7 @@ func (b *triageSeed) invoiceQueuedByRule(p seedInvoice) {
 		confidence: 0.96,
 	})
 	matched(message, p.shipment, nil, "The invoice references "+pro+".")
+	message.MatchedCarrierID = b.refs.carriers[p.carrier.carrier].ID
 	message.Facts = []inboundmessage.Fact{
 		fact("invoice", "Invoice", p.number, p.number),
 		fact("terms", "Terms", "Net 30", "Net 30"),
@@ -1656,12 +1867,22 @@ func (b *triageSeed) correctedThisWeek() {
 		})
 		message.Status = inboundmessage.StatusActioned
 		correctedAt := receivedAt + inboundSeedHour
+		activities := []*triage.Activity{
+			corrected(message, correction, mail.by, correctedAt),
+			settledBy(message, mail.by, correctedAt+10*inboundSeedMinute, mail.note),
+		}
+		if i == 0 {
+			message.Facts = []inboundmessage.Fact{
+				fact("shipment", "Shipment", "SEED-SHP-002", "SEED-SHP-002"),
+				flaggedFact("pickupDay", "Pickup day", "Tuesday", "still on for Monday"),
+			}
+			activities = append(activities,
+				flagged(message, message.Facts[1], mail.by, correctedAt+5*inboundSeedMinute))
+		}
 		b.add(seededMessage{
-			message: message,
-			activities: []*triage.Activity{
-				corrected(message, correction, mail.by, correctedAt),
-				settledBy(message, mail.by, correctedAt+10*inboundSeedMinute, mail.note),
-			},
+			message:     message,
+			activities:  activities,
+			corrections: []*aicorrection.Correction{b.aiCorrection(message, correction, mail.by, correctedAt)},
 		})
 	}
 }
@@ -1722,14 +1943,23 @@ func (b *triageSeed) lastWeek() {
 	})
 	matched(rateCon, b.shipment("SEED-SHP-003"), b.customer("GLBL"),
 		"The PRO number SEED-SHP-003 is in the subject line.")
+	rateCon.Facts = []inboundmessage.Fact{
+		flaggedFact("rate", "Rate", "$11,800.00", "Signed rate confirmation"),
+	}
 	rateCon.Status = inboundmessage.StatusActioned
 	b.add(seededMessage{
 		message: rateCon,
 		activities: []*triage.Activity{
 			corrected(rateCon, seedCorrectionLastWeek, b.refs.team.dana,
 				rateCon.ReceivedAt+inboundSeedHour),
+			flagged(rateCon, rateCon.Facts[0], b.refs.team.dana,
+				rateCon.ReceivedAt+inboundSeedHour+30),
 			settledBy(rateCon, b.refs.team.dana, rateCon.ReceivedAt+inboundSeedHour+60,
 				"Filed on SEED-SHP-003."),
+		},
+		corrections: []*aicorrection.Correction{
+			b.aiCorrection(rateCon, seedCorrectionLastWeek, b.refs.team.dana,
+				rateCon.ReceivedAt+inboundSeedHour),
 		},
 	})
 

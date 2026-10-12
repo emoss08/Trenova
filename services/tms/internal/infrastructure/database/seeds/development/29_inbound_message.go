@@ -12,12 +12,19 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/hashutils"
@@ -41,7 +48,7 @@ const (
 	seedClaimsMailboxAddress  = "claims@dev.trenova.app"
 )
 
-var seedInboundShipmentPros = []string{
+var seedRoutinePros = []string{
 	"SEED-PAY-001",
 	"SEED-PAY-002",
 	"SEED-SHP-002",
@@ -49,7 +56,13 @@ var seedInboundShipmentPros = []string{
 	"SEED-SHP-005",
 }
 
-var seedInboundDocumentTypeCodes = []string{"INVOICE", documenttype.CodePOD, "RATECONF"}
+var seedInboundShipmentPros = append(
+	append([]string(nil), seedRoutinePros...),
+	seedOpenLanePro,
+	seedDetentionPro,
+)
+
+var seedInboundDocumentTypeCodes = []string{"INVOICE", documenttype.CodePOD, "RATECONF", "BOL"}
 
 type stringSealer interface {
 	EncryptString(value string) (string, error)
@@ -84,6 +97,11 @@ func NewInboundMessageSeed() *InboundMessageSeed {
 		seedhelpers.SeedDriverPay,
 		seedhelpers.SeedDocumentType,
 		seedhelpers.SeedOrganizationRoles,
+		seedhelpers.SeedCarrier,
+		seedhelpers.SeedWorker,
+		seedhelpers.SeedAIProvider,
+		seedhelpers.SeedDetention,
+		seedhelpers.SeedHoldReason,
 	)
 
 	return seed
@@ -94,6 +112,10 @@ type inboundSeedRefs struct {
 	admin     *tenant.User
 	team      seedTeam
 	customers map[string]*customer.Customer
+	broker    *customer.Customer
+	carriers  map[string]*carrier.Carrier
+	driver    *worker.Worker
+	lane      *seedLane
 	shipments map[string]*shipment.Shipment
 	docTypes  map[string]*documenttype.DocumentType
 	loc       *time.Location
@@ -147,6 +169,12 @@ func (s *InboundMessageSeed) Run(ctx context.Context, tx bun.Tx) error {
 
 			refs, err := s.loadRefs(ctx, tx, sc, org)
 			if err != nil {
+				return err
+			}
+			if err = ensureExceptionHoldReason(ctx, tx, org); err != nil {
+				return err
+			}
+			if err = routeInboundClassification(ctx, tx, org); err != nil {
 				return err
 			}
 			if err = retireFirstEditionSeed(ctx, tx, org); err != nil {
@@ -252,6 +280,18 @@ func (s *InboundMessageSeed) loadRefs(
 		return nil, err
 	}
 	if refs.team, err = seedTeammates(ctx, tx, sc, org, admin, s.Name()); err != nil {
+		return nil, err
+	}
+	if refs.carriers, err = loadSeedCarriers(ctx, tx, org); err != nil {
+		return nil, err
+	}
+	if refs.driver, err = loadSeedDriver(ctx, tx, org); err != nil {
+		return nil, err
+	}
+	if refs.broker, err = ensureSeedBroker(ctx, tx, sc, org); err != nil {
+		return nil, err
+	}
+	if refs.lane, err = loadOpenLane(ctx, tx, refs.shipments[seedOpenLanePro]); err != nil {
 		return nil, err
 	}
 
@@ -450,8 +490,13 @@ func ptrSlice[T any](items []T) *[]T {
 }
 
 func insertSeededMessages(ctx context.Context, tx bun.Tx, messages []seededMessage) error {
+	if err := insertSeededDocuments(ctx, tx, messages); err != nil {
+		return err
+	}
+
 	activities := make([]*triage.Activity, 0, len(messages)*3)
-	replies := make([]*triage.Reply, 0, 2)
+	replies := make([]*triage.Reply, 0, 4)
+	corrections := make([]*aicorrection.Correction, 0, 4)
 	for _, seeded := range messages {
 		if _, err := tx.NewInsert().Model(seeded.message).Exec(ctx); err != nil {
 			return fmt.Errorf("insert message %q: %w", seeded.message.Subject, err)
@@ -463,16 +508,66 @@ func insertSeededMessages(ctx context.Context, tx bun.Tx, messages []seededMessa
 		}
 		activities = append(activities, seeded.activities...)
 		replies = append(replies, seeded.replies...)
+		corrections = append(corrections, seeded.corrections...)
 	}
 
-	if len(replies) > 0 {
-		if _, err := tx.NewInsert().Model(&replies).Exec(ctx); err != nil {
-			return fmt.Errorf("insert replies: %w", err)
+	batches := []struct {
+		what  string
+		model any
+		size  int
+	}{
+		{what: "replies", model: &replies, size: len(replies)},
+		{what: "activities", model: &activities, size: len(activities)},
+		{what: "AI corrections", model: &corrections, size: len(corrections)},
+	}
+	for _, batch := range batches {
+		if batch.size == 0 {
+			continue
+		}
+		if _, err := tx.NewInsert().Model(batch.model).Exec(ctx); err != nil {
+			return fmt.Errorf("insert %s: %w", batch.what, err)
 		}
 	}
-	if len(activities) > 0 {
-		if _, err := tx.NewInsert().Model(&activities).Exec(ctx); err != nil {
-			return fmt.Errorf("insert activities: %w", err)
+
+	return nil
+}
+
+func insertSeededDocuments(ctx context.Context, tx bun.Tx, messages []seededMessage) error {
+	documents := make([]*document.Document, 0, 8)
+	contents := make([]*documentcontent.Content, 0, 8)
+	drafts := make([]*documentshipmentdraft.DocumentShipmentDraft, 0, 4)
+	extractions := make([]*documentaiextraction.Extraction, 0, 2)
+	for _, seeded := range messages {
+		for _, staged := range seeded.documents {
+			documents = append(documents, staged.document)
+			if staged.content != nil {
+				contents = append(contents, staged.content)
+			}
+			if staged.draft != nil {
+				drafts = append(drafts, staged.draft)
+			}
+			if staged.extraction != nil {
+				extractions = append(extractions, staged.extraction)
+			}
+		}
+	}
+
+	batches := []struct {
+		what  string
+		model any
+		size  int
+	}{
+		{what: "documents", model: &documents, size: len(documents)},
+		{what: "document readings", model: &contents, size: len(contents)},
+		{what: "shipment drafts", model: &drafts, size: len(drafts)},
+		{what: "AI extractions", model: &extractions, size: len(extractions)},
+	}
+	for _, batch := range batches {
+		if batch.size == 0 {
+			continue
+		}
+		if _, err := tx.NewInsert().Model(batch.model).Exec(ctx); err != nil {
+			return fmt.Errorf("insert %s: %w", batch.what, err)
 		}
 	}
 
