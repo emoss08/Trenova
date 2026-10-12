@@ -268,7 +268,9 @@ function AgreementCard({
             <CardFacts>
               {[
                 agreement.status === "Active" ? (
-                  <span className={cn(runs.state && `dk-ra-${runs.state}`)}>{runs.text}</span>
+                  <span key="runs" className={cn(runs.state && `dk-ra-${runs.state}`)}>
+                    {runs.text}
+                  </span>
                 ) : (
                   ""
                 ),
