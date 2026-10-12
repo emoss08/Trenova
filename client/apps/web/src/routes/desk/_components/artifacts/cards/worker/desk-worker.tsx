@@ -20,18 +20,16 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useCardAccess } from "../../record-card/card-access";
 import { CardDocuments } from "../../record-card/card-documents";
-import { CardDue } from "../../record-card/card-due";
 import { CardShipments } from "../../record-card/card-shipments";
 import {
+  CardAvatar,
   CardBar,
   CardBarHint,
   CardCheck,
   CardChecks,
-  CardFactGrid,
   CardFacts,
   CardHead,
   CardIcon,
-  CardMeter,
   CardOpenLink,
   CardSection,
   CardSectionError,
@@ -57,15 +55,18 @@ import {
   workerFacts,
   workerName,
 } from "./worker-card";
+import { CredentialWallet, HosRings, WorkerReach } from "./worker-parts";
 import { WORKER_SECTIONS } from "./worker-sections";
-import { DeskWorkerSkeleton, HosClocksSkeleton } from "./worker-skeleton";
+import { DeskWorkerSkeleton, HosClocksSkeleton, WalletSkeleton } from "./worker-skeleton";
 
 /** The shipments the card reads at a time; the next page is read on request. */
 const SHIPMENT_ROWS = 5;
 /** The latest violations the card lists under the clocks. */
 const VIOLATION_ROWS = 3;
 const STANDING_WAIT = [[40, 56]] as const;
-const CREDENTIAL_WAIT = [[36, 40]] as const;
+/** The facts the card draws as ways to reach the worker rather than in their record. */
+const REACH_KEYS = new Set(["phone", "email"]);
+const CREDENTIAL_WAIT = 2;
 
 /**
  * What the card is given: the worker, and when they were opened from a table
@@ -215,6 +216,7 @@ function WorkerCard({
             />
           )
         }
+        lead={<CardAvatar name={name} size="lg" />}
         title={name}
         subtitle={profile ? licenseLine(profile, t) : t("No driver profile on file")}
         figure={<DriveFigure hos={hos.data} pending={hos.isPending} />}
@@ -257,7 +259,10 @@ function WorkerCard({
       />
 
       {profile && (
-        <CardDue title={t("Qualifications")} checks={qualificationChecks(profile, now, t)} />
+        <CredentialWallet
+          title={t("Qualifications")}
+          checks={qualificationChecks(profile, now, t)}
+        />
       )}
 
       {access.credentials && (
@@ -274,11 +279,16 @@ function WorkerCard({
           shipments={shipments}
           onOpen={listedShipments.open}
           emptyText={t("This worker has not run a load yet.")}
+          layout="table"
         />
       )}
 
-      <CardSection title={t("Details")}>
-        <CardFactGrid facts={workerFacts(worker, t)} />
+      <CardSection title={t("Reach and record")}>
+        <WorkerReach
+          phone={worker.phoneNumber.trim()}
+          email={worker.email.trim()}
+          facts={workerFacts(worker, t).filter((fact) => !REACH_KEYS.has(fact.key))}
+        />
       </CardSection>
 
       <CardDocuments resourceType="worker" resourceId={id} manageTo={recordPath("worker", id)} />
@@ -362,27 +372,13 @@ function HoursOfService({
                 .join(" · ")}
             </span>
           </p>
-          <div className="dk-wk-clocks">
-            {hosClocks(state, t).map((clock) => (
-              <CardMeter
-                key={clock.key}
-                label={clock.label}
-                reading={t(
-                  "{0} of {1}",
-                  formatClockDurationMs(clock.remainingMs),
-                  formatClockDurationMs(clock.limitMs),
-                )}
-                share={clock.share}
-                state={clock.state}
-              />
-            ))}
-          </div>
+          <HosRings clocks={hosClocks(state, t)} />
         </>
       ) : (
         <p className="dk-rec-note">{t("Telematics has not reported this worker's hours.")}</p>
       )}
       {hos.violations.length > 0 && (
-        <ol className="dk-rec-list dk-wk-viol" aria-label={t("Latest violations")}>
+        <ol className="dk-wk-viol" aria-label={t("Latest violations")}>
           {hos.violations.map((violation) => (
             <li key={`${violation.violationType}-${violation.violationStartAt}`}>
               <span className="dk-rec-main">
@@ -439,25 +435,23 @@ function StandingSection({
         </CardSectionError>
       ) : pending || !standing ? (
         <CardChecksSkeleton rows={STANDING_WAIT} />
-      ) : (
+      ) : concerns.length > 0 ? (
         <CardChecks>
-          {concerns.length > 0 ? (
-            concerns.map((concern) => (
-              <CardCheck
-                key={concern.code}
-                state={concernState(concern.severity)}
-                title={concern.headline}
-                detail={concern.detail}
-              />
-            ))
-          ) : (
+          {concerns.map((concern) => (
             <CardCheck
-              state="ok"
-              title={t("Nothing else stands against them")}
-              detail={t("Training, safety, discipline and reviews are in order")}
+              key={concern.code}
+              state={concernState(concern.severity)}
+              title={concern.headline}
+              detail={concern.detail}
             />
-          )}
+          ))}
         </CardChecks>
+      ) : (
+        <p className="dk-wk-clear">
+          <CardIcon name="check" size={12} stroke={2.6} />
+          <b>{t("Nothing else stands against them")}</b>
+          <span>{t("Training, safety, discipline and reviews are in order")}</span>
+        </p>
       )}
     </CardSection>
   );
@@ -486,7 +480,7 @@ function OtherCredentials({
   if (pending || !rows) {
     return (
       <CardSection title={t("Other credentials")}>
-        <CardChecksSkeleton rows={CREDENTIAL_WAIT} />
+        <WalletSkeleton tiles={CREDENTIAL_WAIT} />
       </CardSection>
     );
   }
@@ -498,5 +492,5 @@ function OtherCredentials({
       </CardSection>
     );
   }
-  return <CardDue title={t("Other credentials")} checks={checks} />;
+  return <CredentialWallet title={t("Other credentials")} checks={checks} />;
 }

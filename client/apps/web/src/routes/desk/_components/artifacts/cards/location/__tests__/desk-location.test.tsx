@@ -215,7 +215,8 @@ describe("DeskLocation", () => {
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading the location…");
     expect(container.querySelector(".dk-rec-skel .dk-rec-where")).not.toBeNull();
-    expect(container.querySelector(".dk-rec-skel .dk-rec-stats")).not.toBeNull();
+    expect(container.querySelector(".dk-rec-skel .dk-lo-dwell")).not.toBeNull();
+    expect(container.querySelector(".dk-rec-skel .dk-lo-file")).not.toBeNull();
 
     expect(
       await screen.findByRole("heading", { name: "Dallas yard", level: 2 }),
@@ -223,7 +224,6 @@ describe("DeskLocation", () => {
     expect(container.querySelector(".dk-rec-skel")).toBeNull();
     expect(screen.getByText("1801 Commerce St, Dallas, TX 75201")).toBeInTheDocument();
     expect(screen.getByText("Terminal")).toBeInTheDocument();
-    expect(screen.getByText("Appointment required")).toBeInTheDocument();
     expect(screen.getByText("Active")).toBeInTheDocument();
 
     expect(await screen.findByText("average dwell")).toBeInTheDocument();
@@ -231,9 +231,17 @@ describe("DeskLocation", () => {
 
     const where = section("Where it is");
     expect(within(where).getByText("Circle fence, 250 m")).toBeInTheDocument();
+    expect(within(where).getByText("Appointment required").closest("li")).toHaveClass("dk-off");
+    expect(within(where).getByText("No overnight").closest("li")).toHaveClass("dk-off");
 
     const dwellSection = section("Dwell, last 90 days");
-    expect(within(dwellSection).getByText("6 of 40")).toBeInTheDocument();
+    expect(
+      within(dwellSection).getByRole("img", { name: "Dwell distribution" }),
+    ).toBeInTheDocument();
+    expect(dwellSection.querySelector(".dk-lo-pin.dk-avg")).toHaveTextContent("1h 36mAverage");
+    expect(dwellSection.querySelector(".dk-lo-breach")).toHaveTextContent(
+      "15%6 of 40 stops ran past free time",
+    );
     expect(
       within(dwellSection).getByText("$1,250.00 detention billed on 40 stops"),
     ).toBeInTheDocument();
@@ -395,7 +403,7 @@ describe("DeskLocation", () => {
 
     expect(await screen.findByText("Detention analytics are not available")).toBeInTheDocument();
     expect(await screen.findByText("boom")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Details", level: 3 })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "On file", level: 3 })).toBeInTheDocument();
   });
 
   it("says the location could not be read, with the way back", async () => {

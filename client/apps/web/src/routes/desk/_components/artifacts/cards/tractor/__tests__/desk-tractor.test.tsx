@@ -197,7 +197,8 @@ describe("DeskTractor", () => {
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading the tractor…");
     expect(container.querySelector(".dk-rec-skel .dk-rec-where")).not.toBeNull();
-    expect(container.querySelector(".dk-rec-skel .dk-rec-facts")).not.toBeNull();
+    expect(container.querySelector(".dk-rec-skel .dk-tr-spec")).not.toBeNull();
+    expect(container.querySelector(".dk-rec-skel .dk-tr-dash")).not.toBeNull();
 
     expect(
       await screen.findByRole("heading", { name: "2022 Freightliner Cascadia", level: 2 }),
@@ -218,6 +219,17 @@ describe("DeskTractor", () => {
       expect.stringContaining("loc_1"),
     );
     expect(await screen.findByText("182,124 mi")).toBeInTheDocument();
+
+    const dash = where.querySelector(".dk-tr-dash") as HTMLElement;
+    expect(within(dash).getByText("58")).toBeInTheDocument();
+    expect(within(dash).getByText("Heading NE")).toBeInTheDocument();
+    expect(within(dash).getByText("Engine on")).toBeInTheDocument();
+    expect(within(dash).getByRole("meter", { name: "Fuel" })).toBeInTheDocument();
+    expect(within(dash).getByText("182,124")).toBeInTheDocument();
+
+    const drivers = section("Drivers");
+    expect(drivers.querySelector(".dk-tr-seat .dk-rec-av")).toHaveTextContent("RD");
+    expect(within(section("Specification")).getByText("3AKJHHDR5NSNA1234")).toBeInTheDocument();
   });
 
   it("reads the map only once its square comes within reach of the screen", async () => {

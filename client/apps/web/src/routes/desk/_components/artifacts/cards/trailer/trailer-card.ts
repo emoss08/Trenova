@@ -8,7 +8,7 @@ import {
   leaseCheck,
   registrationCheck,
 } from "../../record-card/equipment";
-import type { CardFact } from "../../record-card/record-card";
+import type { CardCheckState, CardFact } from "../../record-card/record-card";
 import { cardDate, dueReading } from "../../record-card/record-card-values";
 
 const DAY_SECONDS = 86_400;
@@ -95,4 +95,84 @@ export function trailerFacts(trailer: DeskTrailer, t: TranslateFn): CardFact[] {
     ],
     t,
   );
+}
+
+/** One date on the trailer's service calendar, where it falls and how it stands. */
+export type CalendarMark = {
+  key: "last" | "inspection" | "registration" | "lease";
+  label: string;
+  at: number;
+  state: CardCheckState | "past";
+};
+
+/** The span the calendar draws: a season back and a year ahead of now. */
+export const CALENDAR_BACK_DAYS = 90;
+export const CALENDAR_AHEAD_DAYS = 365;
+
+/**
+ * The dates the trailer's papers hang on, as marks on its service calendar:
+ * the last annual inspection, when the next falls due, when its registration
+ * runs out, and when the lease on a leased trailer ends, each in the state its
+ * check reads.
+ */
+export function calendarMarks(
+  trailer: Pick<
+    DeskTrailer,
+    "lastInspectionDate" | "registrationExpiry" | "ownershipType" | "leaseEndDate" | "lessorName"
+  >,
+  now: number,
+  t: TranslateFn,
+): CalendarMark[] {
+  const marks: CalendarMark[] = [];
+  if (trailer.lastInspectionDate) {
+    marks.push({
+      key: "last",
+      label: t("Last inspected"),
+      at: trailer.lastInspectionDate,
+      state: "past",
+    });
+    const due = nextInspectionDue(trailer.lastInspectionDate);
+    if (due !== null) {
+      marks.push({
+        key: "inspection",
+        label: t("Inspection due"),
+        at: due,
+        state: annualInspectionCheck(trailer.lastInspectionDate, now, t).state,
+      });
+    }
+  }
+  if (trailer.registrationExpiry) {
+    marks.push({
+      key: "registration",
+      label: t("Registration ends"),
+      at: trailer.registrationExpiry,
+      state: registrationCheck(trailer.registrationExpiry, now, t).state,
+    });
+  }
+  const lease = leaseCheck(trailer, now, t);
+  if (lease && trailer.leaseEndDate) {
+    marks.push({
+      key: "lease",
+      label: t("Lease ends"),
+      at: trailer.leaseEndDate,
+      state: lease.state,
+    });
+  }
+  return marks.sort((a, b) => a.at - b.at);
+}
+
+/**
+ * Where a moment falls along the calendar, from 0 at its start to 1 at its
+ * end, held to the ends for one outside it; `outside` says which way it ran off.
+ */
+export function calendarPlace(
+  at: number,
+  now: number,
+): { share: number; outside: "before" | "after" | null } {
+  const start = now - CALENDAR_BACK_DAYS * DAY_SECONDS;
+  const end = now + CALENDAR_AHEAD_DAYS * DAY_SECONDS;
+  const share = (at - start) / (end - start);
+  if (share < 0) return { share: 0, outside: "before" };
+  if (share > 1) return { share: 1, outside: "after" };
+  return { share, outside: null };
 }

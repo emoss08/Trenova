@@ -63,6 +63,75 @@ export function facilityTerms(
   ].filter(Boolean);
 }
 
+/** One thing the facility offers or asks, and whether it does. */
+export type Amenity = { key: string; label: string; on: boolean };
+
+/**
+ * What the facility offers a driver and what it asks of them, each said
+ * whether it holds or not: an appointment, secure parking, an overnight stay
+ * and a restroom.
+ */
+export function amenities(category: DeskLocation["locationCategory"], t: TranslateFn): Amenity[] {
+  if (!category) return [];
+  return [
+    {
+      key: "appointment",
+      label: category.requiresAppointment ? t("Appointment required") : t("No appointment needed"),
+      on: !category.requiresAppointment,
+    },
+    {
+      key: "parking",
+      label: category.hasSecureParking ? t("Secure parking") : t("No secure parking"),
+      on: category.hasSecureParking,
+    },
+    {
+      key: "overnight",
+      label: category.allowsOvernight ? t("Overnight allowed") : t("No overnight"),
+      on: category.allowsOvernight,
+    },
+    {
+      key: "restroom",
+      label: category.hasRestroom ? t("Restroom") : t("No restroom"),
+      on: category.hasRestroom,
+    },
+  ];
+}
+
+/** One mark on the dwell ruler: what it measures, how long, and where it falls. */
+export type DwellMark = {
+  key: "median" | "avg" | "p90";
+  label: string;
+  minutes: number;
+  share: number;
+};
+
+/**
+ * The dwell ruler's scale and marks: the median, the average and the 90th
+ * percentile, each placed along a scale that runs a little past the longest so
+ * its mark never sits on the edge.
+ */
+export function dwellScale(
+  dwell: Pick<LocationDwell, "avgDwellMinutes" | "medianDwellMinutes" | "p90DwellMinutes">,
+  t: TranslateFn,
+): { maxMinutes: number; marks: DwellMark[] } {
+  const longest = Math.max(dwell.avgDwellMinutes, dwell.medianDwellMinutes, dwell.p90DwellMinutes);
+  const maxMinutes = Math.max(60, Math.ceil((longest * 1.15) / 30) * 30);
+  const mark = (key: DwellMark["key"], label: string, minutes: number): DwellMark => ({
+    key,
+    label,
+    minutes,
+    share: Math.min(1, Math.max(0, minutes / maxMinutes)),
+  });
+  return {
+    maxMinutes,
+    marks: [
+      mark("median", t("Median"), dwell.medianDwellMinutes),
+      mark("avg", t("Average"), dwell.avgDwellMinutes),
+      mark("p90", t("90th percentile"), dwell.p90DwellMinutes),
+    ],
+  };
+}
+
 /**
  * The location's geofence as the map draws it: a circle round a point, or the
  * outline drawn for it. A fence with nothing to draw (an automatic one the

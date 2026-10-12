@@ -75,16 +75,26 @@ function cents(amount: string | null | undefined): number {
   return Number.isFinite(value) ? Math.round(value * 100) : 0;
 }
 
+/** What the order's charges come to in cents: in all, already invoiced, and still to invoice. */
+export function chargeTotals(charges: readonly DeskOrderCharge[]): {
+  total: number;
+  invoiced: number;
+  open: number;
+} {
+  const total = charges.reduce((sum, charge) => sum + cents(charge.amount), 0);
+  const invoiced = charges
+    .filter((charge) => charge.invoicedAt)
+    .reduce((sum, charge) => sum + cents(charge.amount), 0);
+  return { total, invoiced, open: total - invoiced };
+}
+
 /** What the order's charges come to: in all, already invoiced, and still to invoice. */
 export function chargeStats(
   charges: readonly DeskOrderCharge[],
   currency: string,
   t: TranslateFn,
 ): CardStat[] {
-  const total = charges.reduce((sum, charge) => sum + cents(charge.amount), 0);
-  const invoiced = charges
-    .filter((charge) => charge.invoicedAt)
-    .reduce((sum, charge) => sum + cents(charge.amount), 0);
+  const { total, invoiced } = chargeTotals(charges);
   return [
     { key: "total", label: t("Charges"), value: money(total / 100, currency) },
     { key: "invoiced", label: t("Invoiced"), value: money(invoiced / 100, currency) },

@@ -7,6 +7,7 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describe, expect, it } from "vitest";
 import {
   compassPoint,
+  engineText,
   inspectionKind,
   inspectionReading,
   positionReading,
@@ -273,6 +274,17 @@ describe("compassPoint", () => {
     expect(compassPoint(350)).toBe("N");
     expect(compassPoint(-90)).toBe("W");
     expect(compassPoint(540)).toBe("S");
+  });
+});
+
+describe("engineText", () => {
+  it("says whether the engine was on, idling or off, and that it went unreported otherwise", () => {
+    expect(engineText("On", t)).toBe("Engine on");
+    expect(engineText(" Idle ", t)).toBe("Engine idling");
+    expect(engineText("Off", t)).toBe("Engine off");
+    expect(engineText("", t)).toBe("Engine not reported");
+    expect(engineText(null, t)).toBe("Engine not reported");
+    expect(engineText("Stalled", t)).toBe("Engine not reported");
   });
 });
 

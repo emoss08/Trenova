@@ -158,6 +158,20 @@ export function compassPoint(degrees: number): (typeof COMPASS)[number] {
   return COMPASS[Math.round(normalized / 45) % COMPASS.length];
 }
 
+/** What the engine was doing at the last report, as the dash says it; unreported when telematics left it out. */
+export function engineText(state: string | null | undefined, t: TranslateFn): string {
+  switch (state?.trim()) {
+    case "On":
+      return t("Engine on");
+    case "Idle":
+      return t("Engine idling");
+    case "Off":
+      return t("Engine off");
+    default:
+      return t("Engine not reported");
+  }
+}
+
 /** Where the tractor is, as its last report says it: now or a while ago, moving or standing. */
 export type PositionReading = {
   live: boolean;

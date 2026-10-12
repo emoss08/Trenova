@@ -2,37 +2,63 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { useCardAccess } from "../../record-card/card-access";
 import {
   CardBarSkeleton,
-  CardFactGridSkeleton,
   CardHeadSkeleton,
   CardRowsSkeleton,
   CardSectionSkeleton,
-  CardStatsSkeleton,
+  CardShipmentsSkeleton,
   CardWhereSkeleton,
   RecordCardSkeleton,
   SkeletonBar,
 } from "../../skeletons/record-card-skeleton";
 import { LOCATION_SECTIONS } from "./location-sections";
 
-const DWELL_CELLS = 4;
 const POLICY_ROWS = [[34, 58]] as const;
-const SHIPMENT_ROWS = [
-  [22, 56],
-  [26, 48],
-  [20, 60],
-] as const;
+const SHIPMENT_ROWS = 3;
+const AMENITIES = [112, 96, 104, 72] as const;
+const FILE_ROWS = 5;
 const FAILURE_ROWS = [
   [24, 62],
   [20, 54],
 ] as const;
-const FACT_CELLS = 6;
 
-/** The dwell figures' outline: the strip of four and the line of money under it. */
+/** The dwell ruler's outline: the bar with its pins, the stops past free time, and the money line. */
 export function DwellSkeleton() {
   return (
-    <>
-      <CardStatsSkeleton cells={DWELL_CELLS} />
+    <div className="dk-lo-dwell">
+      <i className="dk-sk dk-lo-ruler-sk" />
+      <i className="dk-sk dk-lo-breach-sk" />
       <SkeletonBar w="58%" className="dk-rec-sk-line dk-lo-sk-money" />
-    </>
+    </div>
+  );
+}
+
+/** The amenity chips under the map while the location is read. */
+function AmenitiesSkeleton() {
+  return (
+    <div className="dk-lo-amen">
+      {AMENITIES.map((width, index) => (
+        // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
+        <SkeletonBar key={index} w={`${width}px`} className="dk-rec-sk-pill" />
+      ))}
+    </div>
+  );
+}
+
+/** The address card while the location is read. */
+function FileSkeleton() {
+  return (
+    <div className="dk-lo-file">
+      <div className="dk-lo-file-sk">
+        <SkeletonBar w="70%" className="dk-rec-sk-line" />
+        <SkeletonBar w="52%" className="dk-rec-sk-label" />
+      </div>
+      <div className="dk-lo-file-sk">
+        {Array.from({ length: FILE_ROWS }, (_, index) => (
+          // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
+          <SkeletonBar key={index} w="88%" className="dk-rec-sk-label" />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -55,10 +81,11 @@ export function DeskLocationSkeleton({ stepper = false }: { stepper?: boolean })
         title={60}
         subtitle={72}
         figure={access.detention}
-        meta={[64, 132]}
+        meta={[96]}
       />
       <CardSectionSkeleton title={72}>
         <CardWhereSkeleton />
+        <AmenitiesSkeleton />
       </CardSectionSkeleton>
       {access.detention && (
         <CardSectionSkeleton title={120}>
@@ -72,7 +99,7 @@ export function DeskLocationSkeleton({ stepper = false }: { stepper?: boolean })
       )}
       {access.shipments && (
         <CardSectionSkeleton title={112} aside={72}>
-          <CardRowsSkeleton rows={SHIPMENT_ROWS} trailing={88} />
+          <CardShipmentsSkeleton layout="table" rows={SHIPMENT_ROWS} />
         </CardSectionSkeleton>
       )}
       {access.failures && (
@@ -81,7 +108,7 @@ export function DeskLocationSkeleton({ stepper = false }: { stepper?: boolean })
         </CardSectionSkeleton>
       )}
       <CardSectionSkeleton title={48}>
-        <CardFactGridSkeleton cells={FACT_CELLS} />
+        <FileSkeleton />
       </CardSectionSkeleton>
       <CardBarSkeleton actions={[116]} />
     </RecordCardSkeleton>

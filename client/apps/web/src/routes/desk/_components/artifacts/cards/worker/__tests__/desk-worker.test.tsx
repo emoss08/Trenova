@@ -211,7 +211,8 @@ describe("DeskWorker", () => {
     const { container } = draw();
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading the worker…");
-    expect(container.querySelector(".dk-rec-skel .dk-wk-clocks")).not.toBeNull();
+    expect(container.querySelectorAll(".dk-rec-skel .dk-wk-ring-sk")).toHaveLength(4);
+    expect(container.querySelector(".dk-rec-skel .dk-rec-av")).not.toBeNull();
 
     expect(await screen.findByRole("heading", { name: "Ana Ruiz", level: 2 })).toBeInTheDocument();
     expect(container.querySelector(".dk-rec-skel")).toBeNull();
@@ -224,10 +225,11 @@ describe("DeskWorker", () => {
     const hours = section("Hours of service");
     expect(within(hours).getByText("Driving")).toBeInTheDocument();
     expect(within(hours).getAllByRole("meter")).toHaveLength(4);
-    expect(within(hours).getByRole("meter", { name: "Drive" })).toHaveAttribute(
-      "aria-valuenow",
-      "57",
-    );
+    const drive = within(hours).getByRole("meter", { name: "Drive time remaining" });
+    expect(drive).toHaveAttribute("aria-valuenow", "57");
+    expect(drive).toHaveTextContent("6:15");
+    expect(drive.closest(".dk-wk-ring")).toHaveTextContent("of 11:00");
+    expect(drive.querySelector("circle:last-of-type")).toHaveClass("text-brand");
     expect(within(hours).getByRole("link", { name: /Open tractor/ })).toHaveAttribute(
       "href",
       expect.stringContaining("tr_101"),
@@ -243,6 +245,17 @@ describe("DeskWorker", () => {
       expect.anything(),
     );
     expect(fetchers.hos).toHaveBeenCalledWith("wrk_1", 3, expect.anything());
+
+    expect(document.querySelector(".dk-rec-hrow .dk-rec-av")).toHaveTextContent("AR");
+    const reach = section("Reach and record");
+    expect(within(reach).getByRole("link", { name: /214-555-0100/ })).toHaveAttribute(
+      "href",
+      "tel:2145550100",
+    );
+    expect(within(reach).getByRole("link", { name: /ana@example.com/ })).toHaveAttribute(
+      "href",
+      "mailto:ana@example.com",
+    );
   });
 
   it("draws the worker before their hours, standing and credentials are read, each holding its place", async () => {
@@ -253,9 +266,9 @@ describe("DeskWorker", () => {
 
     expect(await screen.findByRole("heading", { name: "Ana Ruiz", level: 2 })).toBeInTheDocument();
     expect(screen.getByText("Drive time")).toBeInTheDocument();
-    expect(section("Hours of service").querySelectorAll(".dk-rec-gauge")).toHaveLength(4);
+    expect(section("Hours of service").querySelectorAll(".dk-wk-ring-sk")).toHaveLength(4);
     expect(section("Standing").querySelector(".dk-rec-sk-mark")).not.toBeNull();
-    expect(section("Other credentials").querySelector(".dk-rec-sk-mark")).not.toBeNull();
+    expect(section("Other credentials").querySelector(".dk-wk-wallet .dk-sk")).not.toBeNull();
     expect(container.querySelector('[role="meter"]')).toBeNull();
   });
 
@@ -315,14 +328,15 @@ describe("DeskWorker", () => {
     const qualifications = section("Qualifications");
     expect(within(qualifications).getByText("2 need a look")).toBeInTheDocument();
     expect(
-      Array.from(qualifications.querySelectorAll(".dk-rec-cb > b")).map((b) => b.textContent),
+      Array.from(qualifications.querySelectorAll(".dk-wk-wallet > li > b")).map(
+        (b) => b.textContent,
+      ),
     ).toEqual(["Medical card expired", "Hazmat endorsement expires in 10 days", "CDL"]);
 
     const hours = section("Hours of service");
-    expect(await within(hours).findByRole("meter", { name: "Drive" })).toHaveAttribute(
-      "aria-valuenow",
-      "0",
-    );
+    const drive = await within(hours).findByRole("meter", { name: "Drive time remaining" });
+    expect(drive).toHaveAttribute("aria-valuenow", "0");
+    expect(drive.querySelector("circle:last-of-type")).toHaveClass("text-destructive");
     expect(within(hours).getByText("Shift Driving")).toBeInTheDocument();
     expect(within(hours).getByText("Drove past the 11-hour limit")).toBeInTheDocument();
     expect(document.querySelector(".dk-rec-amt b")).toHaveClass("dk-bad");
@@ -376,6 +390,9 @@ describe("DeskWorker", () => {
     ).toBeInTheDocument();
     expect(await screen.findByText("This worker has not run a load yet.")).toBeInTheDocument();
     expect(await screen.findByText("Nothing else stands against them")).toBeInTheDocument();
+    const reach = section("Reach and record");
+    expect(within(reach).getByText("No email on file")).toBeInTheDocument();
+    expect(within(reach).queryByRole("link", { name: /Email/ })).toBeNull();
   });
 
   it("says a section that could not be read, and draws the rest", async () => {

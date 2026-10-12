@@ -1,19 +1,17 @@
 import {
   choiceLabel,
   serviceFailureReasonCategoryChoices,
-  serviceFailureSourceChoices,
   serviceFailureStatusChoices,
-  serviceFailureTypeChoices,
   stopTypeChoices,
 } from "@/lib/choices";
 import type { DeskServiceFailure } from "@/lib/graphql/service-failure-card";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { PathStep } from "../../record-card/card-path";
-import type { CardFact, CardStat, CardTone } from "../../record-card/record-card";
+import type { CardTone } from "../../record-card/record-card";
 import {
   cardDate,
-  cardMoment,
-  cardMomentAfter,
+  cardDay,
+  cardTime,
   cityLine,
   waitText,
 } from "../../record-card/record-card-values";
@@ -55,22 +53,135 @@ export function stopLine(
   return failure.stop ? t("{0}, stop {1}", kind, failure.stop.sequence) : kind;
 }
 
+/** A moment on the failure's clock: the cutoff, the end of its grace, or the arrival. */
+export type ClockEvent = {
+  kind: "event";
+  key: "due" | "grace" | "arrived";
+  label: string;
+  /** The time of day, with the day beside it when it is not the day the clock last named. */
+  time: string;
+  day: string | null;
+  state: "warn" | "bad" | null;
+};
+
+/** The stretch between two moments, named by the window it falls in. */
+export type ClockGap = {
+  kind: "gap";
+  key: string;
+  window: "early" | "grace" | "late";
+  text: string;
+  /** How much of the clock's whole span the stretch takes, 0 to 1. */
+  share: number;
+};
+
+const MINUTE = 60;
+
 /**
- * The failure's clock: when the stop was due, the grace it was given, when the
- * truck arrived (the time alone on the day it was due), and by how much it
- * missed. The arrival and the miss read bad.
+ * The failure's clock in order: when the stop was due, when its
+ * grace ran out and when the truck arrived, with each stretch between them
+ * named by the window it falls in (before the cutoff, inside the grace, or
+ * late) and its share of the whole. Grace of none leaves the cutoff alone;
+ * an arrival inside the grace or before the cutoff lands where it fell.
  */
-export function failureTimes(failure: DeskServiceFailure, t: TranslateFn): CardStat[] {
+export function missClock(
+  failure: Pick<DeskServiceFailure, "scheduledCutoff" | "actualArrival" | "gracePeriodMinutes">,
+  t: TranslateFn,
+): (ClockEvent | ClockGap)[] {
+  const cutoff = failure.scheduledCutoff;
+  const graceEnd = cutoff + Math.max(0, failure.gracePeriodMinutes) * MINUTE;
+  const arrival = failure.actualArrival;
+  const late = arrival > graceEnd;
+  const moments: { key: ClockEvent["key"]; at: number; label: string }[] = [
+    { key: "due", at: cutoff, label: t("Due by") },
+    ...(graceEnd > cutoff ? [{ key: "grace" as const, at: graceEnd, label: t("Grace ends") }] : []),
+    { key: "arrived", at: arrival, label: t("Arrived") },
+  ];
+  moments.sort((a, b) => a.at - b.at);
+  const first = moments[0]?.at ?? cutoff;
+  const span = Math.max(MINUTE, (moments.at(-1)?.at ?? cutoff) - first);
+
+  const clock: (ClockEvent | ClockGap)[] = [];
+  let lastDay = "";
+  moments.forEach((moment, index) => {
+    const previous = index > 0 ? moments[index - 1] : undefined;
+    if (previous && moment.at > previous.at) {
+      const seconds = moment.at - previous.at;
+      const middle = previous.at + seconds / 2;
+      const window = middle < cutoff ? "early" : middle < graceEnd ? "grace" : "late";
+      const length = waitText(Math.ceil(seconds / MINUTE));
+      clock.push({
+        kind: "gap",
+        key: `${previous.key}-${moment.key}`,
+        window,
+        text:
+          window === "early"
+            ? t("{0} before the cutoff", length)
+            : window === "grace"
+              ? t("{0} of grace", length)
+              : t("Late by {0}", length),
+        share: seconds / span,
+      });
+    }
+    const day = cardDay(moment.at);
+    clock.push({
+      kind: "event",
+      key: moment.key,
+      label: moment.label,
+      time: cardTime(moment.at),
+      day: day === lastDay ? null : day,
+      state:
+        moment.key === "arrived"
+          ? late
+            ? "bad"
+            : null
+          : moment.key === "grace" && late
+            ? "warn"
+            : null,
+    });
+    lastDay = day;
+  });
+  return clock;
+}
+
+/** One code the failure's 214 carries: the one set on it, else where it comes from. */
+export type EdiCode = {
+  key: "status" | "reason" | "exception";
+  label: string;
+  code: string | null;
+  note: string;
+};
+
+/**
+ * The codes the failure's X12 214 sends: its status and reason codes, each the
+ * one set on the failure or taken from its type, and an exception code when
+ * one was given.
+ */
+export function ediCodes(
+  failure: Pick<
+    DeskServiceFailure,
+    "x12StatusCodeOverride" | "x12ReasonCodeOverride" | "x12ExceptionCode"
+  >,
+  t: TranslateFn,
+): EdiCode[] {
+  const override = (key: "status" | "reason", label: string, value: string): EdiCode => {
+    const code = value.trim();
+    return {
+      key,
+      label,
+      code: code || null,
+      note: code ? t("Set on this failure") : t("From the failure type"),
+    };
+  };
+  const exception = failure.x12ExceptionCode.trim();
   return [
-    { key: "due", label: t("Due by"), value: cardMoment(failure.scheduledCutoff) },
-    { key: "grace", label: t("Grace"), value: waitText(failure.gracePeriodMinutes) },
+    override("status", t("Status code"), failure.x12StatusCodeOverride),
+    override("reason", t("Reason code"), failure.x12ReasonCodeOverride),
     {
-      key: "arrived",
-      label: t("Arrived"),
-      value: cardMomentAfter(failure.scheduledCutoff, failure.actualArrival),
-      state: "bad",
+      key: "exception",
+      label: t("Exception code"),
+      code: exception || null,
+      note: exception ? t("Set on this failure") : t("None"),
     },
-    { key: "late", label: t("Late by"), value: waitText(failure.lateMinutes), state: "bad" },
   ];
 }
 
@@ -163,39 +274,4 @@ export function failureCause(
 /** Whether the failure still asks for someone: open or reviewed, and not settled. */
 export function isUnsettled(status: FailureStatus): boolean {
   return status === "Open" || status === "Reviewed";
-}
-
-/** An X12 code the failure's 214 sends in place of the one its type gives, or that it is derived. */
-function x12Code(code: string, t: TranslateFn): string {
-  return code.trim() || t("From the failure type");
-}
-
-/** The facts the card lists about the failure, in the order the office reads them. */
-export function failureFacts(failure: DeskServiceFailure, t: TranslateFn): CardFact[] {
-  return [
-    { key: "number", label: t("Number"), value: failure.number },
-    { key: "type", label: t("Type"), value: choiceLabel(serviceFailureTypeChoices, failure.type) },
-    {
-      key: "source",
-      label: t("Source"),
-      value: choiceLabel(serviceFailureSourceChoices, failure.source),
-    },
-    { key: "stop", label: t("Stop"), value: stopLine(failure, t) },
-    {
-      key: "status",
-      label: t("214 status code"),
-      value: x12Code(failure.x12StatusCodeOverride, t),
-    },
-    {
-      key: "reason",
-      label: t("214 reason code"),
-      value: x12Code(failure.x12ReasonCodeOverride, t),
-    },
-    {
-      key: "exception",
-      label: t("214 exception code"),
-      value: failure.x12ExceptionCode.trim() || t("None"),
-    },
-    { key: "updated", label: t("Last changed"), value: cardMoment(failure.updatedAt) },
-  ];
 }

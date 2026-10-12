@@ -34,6 +34,11 @@ const SEVERITY_TONE: Record<HosClockSeverity, RingGaugeTone> = {
   critical: "critical",
 };
 
+/** The tone a clock's ring is drawn in, from the hours it has left. */
+export function hosClockTone(remainingMs: number): RingGaugeTone {
+  return SEVERITY_TONE[hosClockSeverity(Math.max(0, remainingMs))];
+}
+
 const SEVERITY_TEXT: Record<HosClockSeverity, string> = {
   normal: "text-foreground",
   warning: "text-warning",

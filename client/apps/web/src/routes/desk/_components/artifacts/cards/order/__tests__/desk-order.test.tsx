@@ -149,7 +149,8 @@ describe("DeskOrder", () => {
     const { container } = draw();
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading the order…");
-    expect(container.querySelector(".dk-rec-skel .dk-or-way")).not.toBeNull();
+    expect(container.querySelector(".dk-rec-skel .dk-or-track")).not.toBeNull();
+    expect(container.querySelector(".dk-rec-skel .dk-rec-route")).not.toBeNull();
 
     expect(
       await screen.findByRole("heading", { name: "Acme Foods", level: 2 }),
@@ -161,9 +162,11 @@ describe("DeskOrder", () => {
     expect(screen.getByText("Quoted $4,000.00")).toBeInTheDocument();
 
     const way = section("Where it stands");
-    const now = way.querySelector('[aria-current="step"]');
-    expect(now).toHaveTextContent("In progress");
-    expect(way.querySelectorAll(".dk-done")).toHaveLength(2);
+    const track = within(way).getByRole("list", { name: "Order lifecycle" });
+    expect(track.querySelector('[aria-current="step"]')).toHaveTextContent("In progress");
+    expect(track.querySelectorAll("li.dk-done")).toHaveLength(2);
+    expect(track.querySelectorAll("li.dk-done svg")).toHaveLength(2);
+    expect(within(way).getByText(/^Step 3 of 6 · last changed /u)).toBeInTheDocument();
 
     expect(await screen.findByText("2 shipments")).toBeInTheDocument();
     expect(fetchers.shipments).toHaveBeenCalledWith(
@@ -172,13 +175,28 @@ describe("DeskOrder", () => {
       expect.anything(),
     );
 
+    expect(section("Legs").querySelector(".dk-rec-route-n")).toHaveTextContent("1");
+
     const charges = section("Charges");
     expect(within(charges).getByText("Lumper")).toBeInTheDocument();
     expect(within(charges).getByText("Not yet invoiced")).toBeInTheDocument();
-    expect(within(charges).getByText("Still to invoice")).toBeInTheDocument();
+    expect(within(charges).getByText("Still to invoice $85.00")).toBeInTheDocument();
+    expect(within(charges).getByText("Invoiced $0.00")).toBeInTheDocument();
+    expect(within(charges).getByRole("meter", { name: "Invoiced" })).toHaveAttribute(
+      "aria-valuenow",
+      "0",
+    );
+    expect(charges.querySelector(".dk-or-total")).toHaveTextContent("$85.00");
+
+    const references = section("References");
+    expect(within(references).getByText("PO-88213")).toBeInTheDocument();
 
     const activity = section("Activity");
     expect(await within(activity).findByText("Changed status")).toBeInTheDocument();
+    const diff = activity.querySelector(".dk-rec-diff") as HTMLElement;
+    expect(within(diff).getByText("status")).toBeInTheDocument();
+    expect(within(diff).getByText("Confirmed").tagName).toBe("S");
+    expect(within(diff).getByText("In progress").tagName).toBe("B");
     expect(within(activity).getByText(/^Mia Chen · /u)).toBeInTheDocument();
     expect(within(activity).getByText("8 changes")).toBeInTheDocument();
     expect(fetchers.activity).toHaveBeenCalledWith(
@@ -214,6 +232,8 @@ describe("DeskOrder", () => {
 
     expect(await screen.findByText("This order was canceled.")).toBeInTheDocument();
     expect(section("Where it stands").querySelector('[aria-current="step"]')).toBeNull();
+    expect(section("Where it stands").querySelector(".dk-or-track")).toHaveClass("dk-off");
+    expect(screen.getByText(/^Canceled · last changed /u)).toBeInTheDocument();
     expect(document.querySelector(".dk-rec-st")).toHaveTextContent("Canceled");
   });
 

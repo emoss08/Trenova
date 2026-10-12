@@ -12,13 +12,11 @@ import { CardShipments } from "../../record-card/card-shipments";
 import {
   CardBar,
   CardBarHint,
-  CardFactGrid,
   CardFacts,
   CardHead,
   CardIcon,
   CardOpenLink,
   CardSection,
-  CardStats,
   CardStatus,
   CardStepper,
   CardUnreadable,
@@ -28,14 +26,8 @@ import { money, neighborsIn } from "../../record-card/record-card-values";
 import { useRecordActivity } from "../../record-card/record-activity";
 import { useRecordShipments } from "../../record-card/record-shipments";
 import { useListedRecords, type RecordArtifactProps } from "../registry";
-import {
-  chargeLine,
-  chargeStats,
-  lifecycleSteps,
-  orderFacts,
-  orderStanding,
-  orderWorth,
-} from "./order-card";
+import { lifecycleSteps, orderFacts, orderStanding, orderWorth } from "./order-card";
+import { ChargeLedger, LifecycleTrack, OrderReferences } from "./order-parts";
 import { ORDER_SECTIONS } from "./order-sections";
 import { DeskOrderSkeleton } from "./order-skeleton";
 
@@ -232,18 +224,11 @@ function OrderCard({
         {record.status === "Canceled" && (
           <p className="dk-rec-note dk-or-canceled">{t("This order was canceled.")}</p>
         )}
-        <ol className={cn("dk-or-way", record.status === "Canceled" && "dk-off")}>
-          {steps.map((step) => (
-            <li
-              key={step.key}
-              className={`dk-${step.state}`}
-              aria-current={step.state === "now" ? "step" : undefined}
-            >
-              <i aria-hidden />
-              <span>{step.label}</span>
-            </li>
-          ))}
-        </ol>
+        <LifecycleTrack
+          steps={steps}
+          canceled={record.status === "Canceled"}
+          changedAt={record.updatedAt}
+        />
       </CardSection>
 
       {access.shipments && (
@@ -252,28 +237,13 @@ function OrderCard({
           shipments={shipments}
           onOpen={listedShipments.open}
           emptyText={t("No shipment carries this order yet.")}
+          layout="route"
         />
       )}
 
       <CardSection title={t("Charges")}>
         {record.charges.length > 0 ? (
-          <>
-            <CardStats
-              className="dk-or-sums"
-              stats={chargeStats(record.charges, record.currencyCode, t)}
-            />
-            <ul className="dk-rec-list dk-or-charges">
-              {record.charges.map((charge) => (
-                <li key={charge.id}>
-                  <span className="dk-rec-main">
-                    <b>{charge.description}</b>
-                    <span className="dk-rec-sub">{chargeLine(charge, t)}</span>
-                  </span>
-                  <span className="dk-or-amt">{money(charge.amount, record.currencyCode)}</span>
-                </li>
-              ))}
-            </ul>
-          </>
+          <ChargeLedger charges={record.charges} currency={record.currencyCode} />
         ) : (
           <p className="dk-rec-note">{t("No charge has been added to this order.")}</p>
         )}
@@ -283,11 +253,12 @@ function OrderCard({
         <CardActivity
           activity={activity}
           emptyText={t("Nothing has been done to this order yet.")}
+          showChanges
         />
       )}
 
-      <CardSection title={t("Details")}>
-        <CardFactGrid facts={orderFacts(record, t)} />
+      <CardSection title={t("References")}>
+        <OrderReferences facts={orderFacts(record, t)} />
       </CardSection>
 
       <CardBar>

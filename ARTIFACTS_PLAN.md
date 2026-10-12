@@ -442,12 +442,20 @@ These were found by looking at the screenshots:
   the same rule the lane list uses. Past five ways of pricing, the rest are folded into one
   row.
 - **Service failure.**
-  - The card's "Late by" is the failure's stored `lateMinutes`.
+  - The head's late figure is the failure's stored `lateMinutes`. The clock's stretches
+    are measured from the cutoff, the grace and the arrival, the way the server computes
+    `lateMinutes`, so they agree for a detected failure; a failure logged by hand with a
+    late figure that disagrees with its times shows both as recorded.
   - The card shows the internal note to anyone who may read the failure, as its edit page
     does, labelled as kept off the customer's record.
   - Every categorical accent is taken, so the kind's mark uses the warning tone.
 - **Translations.** The es, zh-CN and zh-TW translations of the new strings follow the
   glossary and the existing catalogs. They were machine-written and deserve a native
   reader's pass.
+- **Card shapes.** After review, each card draws its signature facts in a form of its own
+  (worker's hours as ring gauges, the order's lifecycle track, the tractor's dashboard,
+  the trailer's service calendar, the location's dwell ruler, the carrier's verdict and
+  BASIC columns, the service failure's clock); "Giving a card its own shape" in
+  `docs/engineering/desk-artifacts.md` lists them.
 - **Environment.** `pnpm typecheck` could not run through Turborepo here: it failed to
   spawn child processes. Each package's `tsc -b` was run directly and all were clean.

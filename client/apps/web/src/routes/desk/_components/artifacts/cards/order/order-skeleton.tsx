@@ -2,40 +2,52 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { useCardAccess } from "../../record-card/card-access";
 import {
   CardBarSkeleton,
-  CardFactGridSkeleton,
   CardHeadSkeleton,
-  CardRowsSkeleton,
   CardSectionSkeleton,
-  CardStatsSkeleton,
+  CardShipmentsSkeleton,
   CardTimelineSkeleton,
   RecordCardSkeleton,
   SkeletonBar,
 } from "../../skeletons/record-card-skeleton";
-import { ORDER_LIFECYCLE } from "./order-card";
 import { ORDER_SECTIONS } from "./order-sections";
 
-const SHIPMENT_ROWS = [
-  [22, 56],
-  [26, 48],
-] as const;
-const CHARGE_ROWS = [
-  [30, 40],
-  [26, 36],
-] as const;
+const SHIPMENT_ROWS = 2;
+const CHARGE_ROWS = 2;
 const ACTIVITY_ENTRIES = [58, 46, 52] as const;
-const FACT_CELLS = 6;
+const REFERENCES = [88, 72, 72, 56, 72, 80] as const;
 
-/** The order's way, step by step, while it is read. */
+/** The order's track while it is read: one bar where the segments will stand, and its line. */
 export function LifecycleSkeleton() {
   return (
-    <ol className="dk-or-way" aria-hidden>
-      {ORDER_LIFECYCLE.map((step) => (
-        <li key={step}>
-          <i className="dk-sk" />
-          <SkeletonBar w="64%" className="dk-rec-sk-label" />
-        </li>
-      ))}
-    </ol>
+    <div className="dk-or-track" aria-hidden>
+      <i className="dk-sk dk-or-track-sk" />
+      <SkeletonBar w="34%" className="dk-rec-sk-label" />
+    </div>
+  );
+}
+
+/** The charge ledger while it is read: its bar, its lines on their leaders, and its total. */
+function LedgerSkeleton() {
+  return (
+    <div className="dk-or-ledger">
+      <div className="dk-or-billed">
+        <i className="dk-sk dk-or-billbar" />
+        <SkeletonBar w="52%" className="dk-rec-sk-label" />
+      </div>
+      <ul>
+        {Array.from({ length: CHARGE_ROWS }, (_, index) => (
+          // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
+          <li key={index}>
+            <SkeletonBar w="100%" className="dk-rec-sk-line" />
+            <SkeletonBar w="34%" className="dk-rec-sk-label" />
+          </li>
+        ))}
+      </ul>
+      <div className="dk-or-total">
+        <SkeletonBar w="56px" className="dk-rec-sk-label" />
+        <SkeletonBar w="72px" className="dk-rec-sk-line" />
+      </div>
+    </div>
   );
 }
 
@@ -64,12 +76,11 @@ export function DeskOrderSkeleton({ stepper = false }: { stepper?: boolean }) {
       </CardSectionSkeleton>
       {access.shipments && (
         <CardSectionSkeleton title={64} aside={72}>
-          <CardRowsSkeleton rows={SHIPMENT_ROWS} trailing={88} />
+          <CardShipmentsSkeleton layout="route" rows={SHIPMENT_ROWS} />
         </CardSectionSkeleton>
       )}
       <CardSectionSkeleton title={60}>
-        <CardStatsSkeleton cells={3} className="dk-or-sums" />
-        <CardRowsSkeleton rows={CHARGE_ROWS} trailing={72} />
+        <LedgerSkeleton />
       </CardSectionSkeleton>
       {access.activity && (
         <CardSectionSkeleton title={56} aside={64}>
@@ -77,7 +88,15 @@ export function DeskOrderSkeleton({ stepper = false }: { stepper?: boolean }) {
         </CardSectionSkeleton>
       )}
       <CardSectionSkeleton title={48}>
-        <CardFactGridSkeleton cells={FACT_CELLS} />
+        <div className="dk-or-refs">
+          {REFERENCES.map((width, index) => (
+            // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
+            <div key={index}>
+              <SkeletonBar w="40px" className="dk-rec-sk-label" />
+              <SkeletonBar w={`${width}px`} className="dk-rec-sk-line" />
+            </div>
+          ))}
+        </div>
       </CardSectionSkeleton>
       <CardBarSkeleton actions={[100]} />
     </RecordCardSkeleton>

@@ -134,6 +134,68 @@ export function eligibilityChecks(eligibility: CarrierEligibility, t: TranslateF
  * expiry, read against the notice the server's own checks give, and one not
  * yet verified marked for a look.
  */
+type InsurancePolicy = NonNullable<DeskCarrier["insurancePolicies"]>[number];
+
+/** One policy read against now: its kind, how it stands, and how its title says so. */
+function policyReading(policy: InsurancePolicy, now: number, t: TranslateFn) {
+  const kind = choiceLabel(carrierInsurancePolicyTypeChoices, policy.policyType);
+  const due = dueReading(policy.expirationDate, now, INSURANCE_NOTICE_DAYS);
+  const unverified = !policy.isVerified && due.state === "ok";
+  return {
+    kind,
+    due,
+    unverified,
+    state: (unverified ? "warn" : due.state) as CardCheckState,
+    title:
+      due.state === "bad"
+        ? t("{0} expired", kind)
+        : due.state === "warn"
+          ? t("{0} expires in {1, plural, one {# day} other {# days}}", kind, due.days)
+          : kind,
+  };
+}
+
+/** One policy as a coverage tile draws it: its cover large, who writes it and until when. */
+export type CoverageTile = {
+  key: string;
+  title: string;
+  amount: string;
+  insurer: string;
+  until: string;
+  state: CardCheckState;
+  unverified: boolean;
+};
+
+/** The carrier's insurance as coverage tiles, worst first, each read as `insuranceChecks` reads it. */
+export function coverageTiles(
+  policies: readonly InsurancePolicy[],
+  now: number,
+  t: TranslateFn,
+): CoverageTile[] {
+  const rank: Record<CardCheckState, number> = { bad: 0, warn: 1, info: 2, ok: 3 };
+  return policies
+    .map((policy, index) => {
+      const reading = policyReading(policy, now, t);
+      return {
+        index,
+        tile: {
+          key: policy.id,
+          title: reading.title,
+          amount: money(policy.coverageAmount),
+          insurer: policy.providerName.trim(),
+          until:
+            reading.due.state === "bad"
+              ? t("Since {0}", cardDate(policy.expirationDate))
+              : t("Through {0}", cardDate(policy.expirationDate)),
+          state: reading.state,
+          unverified: reading.unverified,
+        },
+      };
+    })
+    .sort((a, b) => rank[a.tile.state] - rank[b.tile.state] || a.index - b.index)
+    .map(({ tile }) => tile);
+}
+
 export function insuranceChecks(
   policies: NonNullable<DeskCarrier["insurancePolicies"]>,
   now: number,
@@ -141,18 +203,11 @@ export function insuranceChecks(
 ): DueCheck[] {
   return worstFirst(
     policies.map((policy) => {
-      const kind = choiceLabel(carrierInsurancePolicyTypeChoices, policy.policyType);
-      const due = dueReading(policy.expirationDate, now, INSURANCE_NOTICE_DAYS);
-      const unverified = !policy.isVerified && due.state === "ok";
+      const { due, unverified, state, title } = policyReading(policy, now, t);
       return {
         key: policy.id,
-        state: unverified ? "warn" : due.state,
-        title:
-          due.state === "bad"
-            ? t("{0} expired", kind)
-            : due.state === "warn"
-              ? t("{0} expires in {1, plural, one {# day} other {# days}}", kind, due.days)
-              : kind,
+        state,
+        title,
         detail: [
           policy.providerName.trim(),
           money(policy.coverageAmount),
@@ -224,6 +279,8 @@ export type BasicMeter = {
   label: string;
   reading: string;
   share: number;
+  /** Where the threshold that sets an alert sits, 0 to 1; null when the BASIC has none. */
+  thresholdShare: number | null;
   state: CardCheckState;
 };
 
@@ -250,6 +307,7 @@ export function basicMeters(
             ? t("{0} of {1}", formatNumber(Math.round(percentile)), formatNumber(threshold))
             : formatNumber(Math.round(percentile)),
       share: percentile === null ? 0 : percentile / 100,
+      thresholdShare: threshold === null ? null : threshold / 100,
       state:
         basic.alert || (percentile !== null && threshold !== null && percentile >= threshold)
           ? "bad"

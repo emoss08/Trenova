@@ -3,6 +3,10 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describe, expect, it } from "vitest";
 import {
   annualInspectionCheck,
+  CALENDAR_AHEAD_DAYS,
+  CALENDAR_BACK_DAYS,
+  calendarMarks,
+  calendarPlace,
   maxLoadText,
   nextInspectionDue,
   trailerChecks,
@@ -141,5 +145,54 @@ describe("maxLoadText and trailerFacts", () => {
     expect(facts[0]?.value).toBe("TX-T5501 · TX");
     expect(facts[4]?.value).toBe("45,000 lb");
     expect(trailerFacts(trailer({ maxLoadWeight: null }), t)[4]?.value).toBe("None on file");
+  });
+});
+
+describe("calendarMarks and calendarPlace", () => {
+  it("marks the last inspection, the next one due, the registration and a lease, in date order", () => {
+    const marks = calendarMarks(
+      {
+        lastInspectionDate: NOW - 300 * DAY,
+        registrationExpiry: NOW + 20 * DAY,
+        ownershipType: "Leased",
+        leaseEndDate: NOW + 200 * DAY,
+        lessorName: "XTRA Lease",
+      },
+      NOW,
+      t,
+    );
+
+    expect(marks.map((mark) => [mark.key, mark.state])).toEqual([
+      ["last", "past"],
+      ["registration", "warn"],
+      ["inspection", "ok"],
+      ["lease", "ok"],
+    ]);
+  });
+
+  it("leaves out what is not on file, and a lease on a trailer the company owns", () => {
+    expect(
+      calendarMarks(
+        {
+          lastInspectionDate: null,
+          registrationExpiry: null,
+          ownershipType: "CompanyOwned",
+          leaseEndDate: NOW + DAY,
+          lessorName: "",
+        },
+        NOW,
+        t,
+      ),
+    ).toEqual([]);
+  });
+
+  it("places today a season in, and holds a date beyond either end to it", () => {
+    const today = calendarPlace(NOW, NOW);
+    expect(today.outside).toBeNull();
+    expect(today.share).toBeCloseTo(
+      CALENDAR_BACK_DAYS / (CALENDAR_BACK_DAYS + CALENDAR_AHEAD_DAYS),
+    );
+    expect(calendarPlace(NOW - 400 * DAY, NOW)).toEqual({ share: 0, outside: "before" });
+    expect(calendarPlace(NOW + 900 * DAY, NOW)).toEqual({ share: 1, outside: "after" });
   });
 });

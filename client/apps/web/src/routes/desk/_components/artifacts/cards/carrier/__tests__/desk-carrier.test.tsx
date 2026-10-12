@@ -221,7 +221,9 @@ describe("DeskCarrier", () => {
     const { container } = draw();
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading the carrier…");
-    expect(container.querySelector(".dk-rec-skel .dk-ca-basics")).not.toBeNull();
+    expect(container.querySelector(".dk-rec-skel .dk-ca-chart")).not.toBeNull();
+    expect(container.querySelector(".dk-rec-skel .dk-ca-verdict")).not.toBeNull();
+    expect(container.querySelector(".dk-rec-skel .dk-ca-cover")).not.toBeNull();
 
     expect(
       await screen.findByRole("heading", { name: "Red River Freight", level: 2 }),
@@ -235,17 +237,23 @@ describe("DeskCarrier", () => {
     const tender = section("Can we tender to them");
     expect(await within(tender).findByText("Clear to tender")).toBeInTheDocument();
     expect(within(tender).getByText("Nothing stands in the way")).toBeInTheDocument();
+    expect(tender.querySelector(".dk-ca-verdict")).toHaveClass("dk-ok");
+    expect(tender.querySelector(".dk-ca-verdict > ul")).toBeNull();
     expect(fetchers.eligibility).toHaveBeenCalledWith("car_1", expect.anything());
 
-    expect(within(section("Insurance")).getByText("Cargo liability")).toBeInTheDocument();
+    const cover = section("Insurance");
+    const tile = within(cover).getByText("Cargo liability").closest("li");
+    expect(tile).toHaveClass("dk-ok");
+    expect(tile?.querySelector("b")).toHaveTextContent("$100,000");
 
     const safety = section("Authority and safety");
     expect(await within(safety).findByText("Common authority")).toBeInTheDocument();
-    expect(within(safety).getByRole("meter", { name: "Hours of Service" })).toHaveAttribute(
-      "aria-valuenow",
-      "81",
-    );
-    expect(within(safety).getByText("81 of 65").closest(".dk-rec-gauge")).toHaveClass("dk-bad");
+    expect(within(safety).getByText("Common authority").closest(".dk-ca-auth > div")).toBeTruthy();
+    const hos = within(safety).getByRole("meter", { name: "Hours of Service" });
+    expect(hos).toHaveAttribute("aria-valuenow", "81");
+    expect(hos).toHaveAttribute("aria-valuetext", "81 of 65");
+    expect(hos.closest(".dk-ca-col")).toHaveClass("dk-bad");
+    expect(hos.querySelector("span")).toHaveStyle({ bottom: "65%" });
 
     expect(await screen.findByText("23 shipments")).toBeInTheDocument();
     expect(fetchers.shipments).toHaveBeenCalledWith(
@@ -261,6 +269,9 @@ describe("DeskCarrier", () => {
     const contacts = section("Contacts");
     expect(within(contacts).getByText("Marcus Bell")).toBeInTheDocument();
     expect(within(contacts).getByText("Primary · Gets rate confirmations")).toBeInTheDocument();
+    expect(within(contacts).getByText("Marcus Bell").closest(".dk-ca-person")).toHaveTextContent(
+      /^MB/u,
+    );
   });
 
   it("names what blocks a tender and what needs an override, worst first", async () => {
@@ -313,12 +324,22 @@ describe("DeskCarrier", () => {
 
     const tender = section("Can we tender to them");
     expect(await within(tender).findByText("Blocked")).toBeInTheDocument();
-    expect(Array.from(tender.querySelectorAll(".dk-rec-cb > b")).map((b) => b.textContent)).toEqual(
-      ["Carrier compliance status is Disqualified", "Authority granted 4 months ago"],
-    );
+    expect(tender.querySelector(".dk-ca-verdict")).toHaveClass("dk-bad");
+    expect(within(tender).getByText("2 findings")).toBeInTheDocument();
+    expect(
+      Array.from(tender.querySelectorAll(".dk-ca-verdict > ul > li")).map((li) => [
+        li.className,
+        li.querySelector("b")?.textContent,
+      ]),
+    ).toEqual([
+      ["dk-bad", "Carrier compliance status is Disqualified"],
+      ["dk-warn", "Authority granted 4 months ago"],
+    ]);
     expect(within(tender).getByText("From intelligence · Needs an override")).toBeInTheDocument();
 
-    expect(within(section("Insurance")).getByText("Cargo liability expired")).toBeInTheDocument();
+    const lapsed = within(section("Insurance")).getByText("Cargo liability expired").closest("li");
+    expect(lapsed).toHaveClass("dk-bad");
+    expect(lapsed).toHaveTextContent("Great West Casualty");
   });
 
   it("opens a load it hauled in the card's place, and reads the next settlements on request", async () => {

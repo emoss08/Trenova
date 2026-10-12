@@ -3,7 +3,9 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describe, expect, it } from "vitest";
 import { outlineReach } from "../../../record-card/map-tiles";
 import {
+  amenities,
   dwellMoneyLine,
+  dwellScale,
   dwellStats,
   dwellWindow,
   facilityTerms,
@@ -254,5 +256,55 @@ describe("locationFacts", () => {
     expect(locationFacts(location(), t).find((fact) => fact.key === "coordinates")?.value).toBe(
       "32.78010, -96.80050",
     );
+  });
+});
+
+describe("amenities", () => {
+  it("says what the facility offers and asks, each whether it holds or not", () => {
+    expect(
+      amenities(
+        {
+          id: "lc_1",
+          name: "Terminal",
+          type: "Terminal",
+          facilityType: null,
+          hasSecureParking: true,
+          requiresAppointment: true,
+          allowsOvernight: false,
+          hasRestroom: true,
+        } as never,
+        t,
+      ),
+    ).toEqual([
+      { key: "appointment", label: "Appointment required", on: false },
+      { key: "parking", label: "Secure parking", on: true },
+      { key: "overnight", label: "No overnight", on: false },
+      { key: "restroom", label: "Restroom", on: true },
+    ]);
+  });
+
+  it("has nothing to say for a location with no category", () => {
+    expect(amenities(null, t)).toEqual([]);
+  });
+});
+
+describe("dwellScale", () => {
+  it("runs the scale a little past the longest wait, on a half hour, and places each mark along it", () => {
+    const scale = dwellScale(
+      { avgDwellMinutes: 96, medianDwellMinutes: 80, p90DwellMinutes: 190 },
+      t,
+    );
+    expect(scale.maxMinutes).toBe(240);
+    expect(scale.marks.map((mark) => [mark.key, mark.share])).toEqual([
+      ["median", 80 / 240],
+      ["avg", 96 / 240],
+      ["p90", 190 / 240],
+    ]);
+  });
+
+  it("draws at least an hour, so a quick dock does not fill the ruler", () => {
+    const scale = dwellScale({ avgDwellMinutes: 5, medianDwellMinutes: 4, p90DwellMinutes: 9 }, t);
+    expect(scale.maxMinutes).toBe(60);
+    expect(scale.marks[2]?.share).toBeCloseTo(9 / 60);
   });
 });

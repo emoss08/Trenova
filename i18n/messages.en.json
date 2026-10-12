@@ -1146,33 +1146,6 @@
       "apps/web/lib"
     ]
   },
-  "214 exception code": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
-  "214 reason code": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
-  "214 status code": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "24 Hour": {
     "sites": 1,
     "scope": [
@@ -1596,7 +1569,7 @@
     ]
   },
   "90th percentile": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -23497,7 +23470,7 @@
     ]
   },
   "Appointment required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -30062,7 +30035,7 @@
     ]
   },
   "Average": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -36165,12 +36138,13 @@
     ]
   },
   "CSA BASICs": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/fleet-safety"
     ]
   },
@@ -36509,6 +36483,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Call": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Call back": {
@@ -37400,6 +37383,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Canceled · last changed {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Canceling a move ends it for good, so a cancellation is a proposal a person decides; any other status runs once a person approves it.": {
@@ -41976,7 +41968,7 @@
     ]
   },
   "Charge": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -42147,7 +42139,7 @@
     ]
   },
   "Charges": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -60956,6 +60948,15 @@
       "apps/web/config"
     ]
   },
+  "Data plate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Data retention": {
     "sites": 2,
     "scope": [
@@ -67065,7 +67066,7 @@
     ]
   },
   "Details": {
-    "sites": 22,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -74072,7 +74073,7 @@
     ]
   },
   "Due": {
-    "sites": 14,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -74710,6 +74711,15 @@
     ]
   },
   "Duty status unknown": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Dwell distribution": {
     "sites": 1,
     "scope": [
       "ts"
@@ -77464,7 +77474,7 @@
     ]
   },
   "Email": {
-    "sites": 19,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -79684,6 +79694,42 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Engine idling": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Engine not reported": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Engine off": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Engine on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Engine version cannot be longer than 32 characters": {
@@ -84566,11 +84612,12 @@
     ]
   },
   "Exception code": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/service-failure",
       "routes/service-failure-reason-code"
     ]
@@ -95635,7 +95682,7 @@
     ]
   },
   "Fuel": {
-    "sites": 15,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -95968,6 +96015,15 @@
       "routes/fuel-management"
     ]
   },
+  "Fuel not reported": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Fuel percent must be between 0 and 100": {
     "sites": 2,
     "scope": [
@@ -96276,12 +96332,11 @@
     ]
   },
   "Fuel {0}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk",
       "routes/shipment"
     ]
   },
@@ -98464,13 +98519,12 @@
     ]
   },
   "Grace": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/desk"
+      "apps/web/components"
     ]
   },
   "Grace after expiry": {
@@ -98480,6 +98534,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Grace ends": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Grace period": {
@@ -100219,6 +100282,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Heading {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Headings or labels in the document that indicate this rule applies. The parser looks for these strings as section boundaries.": {
@@ -106609,6 +106681,15 @@
       "routes/desk"
     ]
   },
+  "Inspection due": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Inspection level is 1 to 6": {
     "sites": 1,
     "scope": [
@@ -106891,7 +106972,7 @@
     ]
   },
   "Insurance": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -109897,7 +109978,7 @@
     ]
   },
   "Invoiced": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -109939,7 +110020,7 @@
     ]
   },
   "Invoiced {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -111294,15 +111375,6 @@
     ],
     "areas": [
       "routes/intake"
-    ]
-  },
-  "Its record and its intelligence are both clear": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Its runs and audit trail are kept. Open proposals are withdrawn and people can no longer pick it in Desk.": {
@@ -113832,7 +113904,7 @@
     ]
   },
   "Lane": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -113840,6 +113912,7 @@
       "apps/web/components",
       "routes/admin",
       "routes/carrier-sourcing",
+      "routes/desk",
       "routes/rate-agreement",
       "routes/recurring-shipment",
       "routes/routing-guide",
@@ -114321,13 +114394,21 @@
     ]
   },
   "Last changed": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
+      "routes/admin"
+    ]
+  },
+  "Last changed {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/desk"
     ]
   },
@@ -114439,6 +114520,15 @@
     ],
     "areas": [
       "routes/fuel-card"
+    ]
+  },
+  "Last inspected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Last inspection": {
@@ -114932,15 +115022,6 @@
       "go/other"
     ]
   },
-  "Late by": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Late by minutes cannot be negative": {
     "sites": 1,
     "scope": [
@@ -114948,6 +115029,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Late by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Late charge": {
@@ -115571,6 +115661,15 @@
     ]
   },
   "Lease ended": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Lease ends": {
     "sites": 1,
     "scope": [
       "ts"
@@ -125553,7 +125652,7 @@
     ]
   },
   "Median": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -134443,7 +134542,7 @@
     ]
   },
   "No appointment needed": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -135687,7 +135786,7 @@
     ]
   },
   "No delivery": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -136173,6 +136272,15 @@
     ],
     "areas": [
       "routes/organization"
+    ]
+  },
+  "No email on file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No email profile is set up for this organization, so nothing can be emailed until an admin adds one in the email settings. Say so, and offer another way to reach them": {
@@ -136966,6 +137074,15 @@
     ]
   },
   "No insurance policy is on file.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "No insurer on file": {
     "sites": 1,
     "scope": [
       "ts"
@@ -138000,7 +138117,7 @@
     ]
   },
   "No overnight": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -138207,8 +138324,17 @@
       "routes/admin"
     ]
   },
-  "No pickup": {
+  "No phone on file": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "No pickup": {
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -138941,6 +139067,15 @@
       "packages/shared/lib"
     ]
   },
+  "No restroom": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No results for \"{0}\"": {
     "sites": 1,
     "scope": [
@@ -139308,6 +139443,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "No secure parking": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No segments in this version.": {
@@ -139808,7 +139952,7 @@
     ]
   },
   "No street address on file": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -142459,7 +142603,7 @@
     ]
   },
   "Not verified": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -142951,7 +143095,7 @@
     ]
   },
   "Nothing due": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -144952,7 +145096,7 @@
     ]
   },
   "Number": {
-    "sites": 11,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -145642,6 +145786,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Odometer, mi": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Off": {
@@ -146436,7 +146589,7 @@
     ]
   },
   "On file": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -152833,6 +152986,15 @@
       "go/other"
     ]
   },
+  "Order lifecycle": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Order loader is not configured": {
     "sites": 1,
     "scope": [
@@ -154659,7 +154821,7 @@
     ]
   },
   "Overnight allowed": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -155670,7 +155832,7 @@
     ]
   },
   "PRO": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -155678,7 +155840,8 @@
     "areas": [
       "apps/dash/routes",
       "go/other",
-      "routes/billing-queue"
+      "routes/billing-queue",
+      "routes/desk"
     ]
   },
   "PRO / BOL": {
@@ -162575,7 +162738,7 @@
     ]
   },
   "Pickup": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -174013,6 +174176,15 @@
       "routes/admin"
     ]
   },
+  "Reach and record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Reached its lifetime cap and stopped permanently.": {
     "sites": 4,
     "scope": [
@@ -175425,11 +175597,12 @@
     ]
   },
   "Reason code": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/hold-reason",
       "routes/journal-reversal",
       "routes/service-failure",
@@ -179295,11 +179468,12 @@
     ]
   },
   "References": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/invoice"
     ]
   },
@@ -179742,6 +179916,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Registration ends": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Registration expired": {
@@ -186472,7 +186655,7 @@
     ]
   },
   "Restroom": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -197236,7 +197419,7 @@
     ]
   },
   "Secure parking": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -201358,6 +201541,15 @@
       "apps/web/hooks"
     ]
   },
+  "Sent on the 214": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Sent on {0}": {
     "sites": 1,
     "scope": [
@@ -202048,6 +202240,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Service calendar": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Service date": {
@@ -202832,6 +203033,15 @@
     "areas": [
       "routes/admin",
       "routes/auth"
+    ]
+  },
+  "Set on this failure": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Set one field to the same value on every row below. You can undo it for a day.": {
@@ -208057,7 +208267,7 @@
     ]
   },
   "Since {0}": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -209461,7 +209671,7 @@
     ]
   },
   "Source": {
-    "sites": 39,
+    "sites": 38,
     "scope": [
       "go",
       "ts"
@@ -209474,7 +209684,6 @@
       "routes/carrier-invoice-matching",
       "routes/carrier-monitoring",
       "routes/customer-ledger",
-      "routes/desk",
       "routes/edi",
       "routes/fuel-management",
       "routes/fuel-purchase",
@@ -210144,6 +210353,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Specification": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Specificity": {
@@ -212371,7 +212589,7 @@
     ]
   },
   "Status": {
-    "sites": 323,
+    "sites": 324,
     "scope": [
       "go",
       "ts"
@@ -212402,6 +212620,7 @@
       "routes/commodity",
       "routes/customer",
       "routes/customer-payments",
+      "routes/desk",
       "routes/detention-policy",
       "routes/driver-expense",
       "routes/driver-pay-event",
@@ -212536,11 +212755,12 @@
     ]
   },
   "Status code": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/edi",
       "routes/service-failure",
       "routes/service-failure-reason-code"
@@ -213023,6 +213243,15 @@
       "apps/web/components"
     ]
   },
+  "Step {0} of {1} · last changed {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Steps": {
     "sites": 2,
     "scope": [
@@ -213122,8 +213351,17 @@
       "routes/desk"
     ]
   },
+  "Still to invoice {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Stop": {
-    "sites": 18,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -213135,7 +213373,6 @@
       "routes/admin",
       "routes/agent-control",
       "routes/billing-queue",
-      "routes/desk",
       "routes/service-failure",
       "template/rateconfirmation.pdf"
     ]
@@ -237558,7 +237795,7 @@
     ]
   },
   "Through {0}": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -239016,7 +239253,7 @@
     ]
   },
   "Today": {
-    "sites": 30,
+    "sites": 31,
     "scope": [
       "go",
       "ts"
@@ -244002,7 +244239,7 @@
     ]
   },
   "Type": {
-    "sites": 58,
+    "sites": 57,
     "scope": [
       "go",
       "ts"
@@ -246366,7 +246603,7 @@
     ]
   },
   "Unnamed worker": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -255524,7 +255761,7 @@
     ]
   },
   "What happened": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -268951,13 +269188,14 @@
     ]
   },
   "of {0}": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
       "routes/billing-queue",
+      "routes/desk",
       "routes/formula-template",
       "routes/my-team",
       "routes/scheduling"
@@ -272302,6 +272540,15 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {# finding} other {# findings}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# fixture} other {# fixtures}}": {
     "sites": 1,
     "scope": [
@@ -272822,7 +273069,7 @@
     ]
   },
   "{0, plural, one {# needs a look} other {# need a look}}": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -276588,6 +276835,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "{0} before the cutoff": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} before the window opens": {
@@ -280578,6 +280834,15 @@
       "routes/billing-queue"
     ]
   },
+  "{0} of grace": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} of it overtime, on {1, plural, one {# week} other {# weeks}}": {
     "sites": 1,
     "scope": [
@@ -280704,8 +280969,17 @@
       "routes/detention-desk"
     ]
   },
+  "{0} of {1, plural, one {# stop} other {# stops}} ran past free time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} of {1}": {
-    "sites": 28,
+    "sites": 27,
     "scope": [
       "ts"
     ],
@@ -282787,12 +283061,13 @@
     ]
   },
   "{0} time remaining": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/worker"
     ]
   },

@@ -2,27 +2,55 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { useCardAccess } from "../../record-card/card-access";
 import {
   CardBarSkeleton,
-  CardChecksSkeleton,
   CardDocumentsSkeleton,
-  CardFactGridSkeleton,
   CardHeadSkeleton,
-  CardRowsSkeleton,
   CardSectionSkeleton,
+  CardShipmentsSkeleton,
   CardWhereSkeleton,
   RecordCardSkeleton,
+  SkeletonBar,
 } from "../../skeletons/record-card-skeleton";
 import { TRAILER_SECTIONS } from "./trailer-sections";
 
-const CHECK_ROWS = [
-  [36, 48],
-  [28, 40],
-] as const;
-const SHIPMENT_ROWS = [
-  [22, 56],
-  [26, 48],
-  [20, 60],
-] as const;
-const FACT_CELLS = 8;
+const LEGEND_ROWS = 2;
+const SHIPMENT_ROWS = 3;
+const PLATE_CELLS = 8;
+
+/** The service calendar's axis and legend while the trailer is read. */
+function CalendarSkeleton() {
+  return (
+    <div className="dk-tl-cal">
+      <i className="dk-sk dk-tl-axis-sk" />
+      <ul className="dk-tl-legend">
+        {Array.from({ length: LEGEND_ROWS }, (_, index) => (
+          // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
+          <li key={index}>
+            <i className="dk-sk dk-rec-sk-mark" />
+            <span>
+              <SkeletonBar w="60%" className="dk-rec-sk-line" />
+              <SkeletonBar w="44%" className="dk-rec-sk-label" />
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** The data plate while the trailer is read. */
+function PlateSkeleton() {
+  return (
+    <div className="dk-tl-plate">
+      {Array.from({ length: PLATE_CELLS }, (_, index) => (
+        // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
+        <div key={index}>
+          <SkeletonBar w="44%" className="dk-rec-sk-label" />
+          <SkeletonBar w="64%" className="dk-rec-sk-line" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /**
  * The trailer card while its code or its trailer is read: the code and type
@@ -47,16 +75,16 @@ export function DeskTrailerSkeleton({ stepper = false }: { stepper?: boolean }) 
       <CardSectionSkeleton title={72}>
         <CardWhereSkeleton />
       </CardSectionSkeleton>
-      <CardSectionSkeleton title={32} aside={72}>
-        <CardChecksSkeleton rows={CHECK_ROWS} />
+      <CardSectionSkeleton title={112} aside={72}>
+        <CalendarSkeleton />
       </CardSectionSkeleton>
       {access.shipments && (
         <CardSectionSkeleton title={112} aside={72}>
-          <CardRowsSkeleton rows={SHIPMENT_ROWS} trailing={88} />
+          <CardShipmentsSkeleton layout="rows" rows={SHIPMENT_ROWS} />
         </CardSectionSkeleton>
       )}
-      <CardSectionSkeleton title={48}>
-        <CardFactGridSkeleton cells={FACT_CELLS} />
+      <CardSectionSkeleton title={72}>
+        <PlateSkeleton />
       </CardSectionSkeleton>
       <CardDocumentsSkeleton />
       <CardBarSkeleton actions={[108]} />

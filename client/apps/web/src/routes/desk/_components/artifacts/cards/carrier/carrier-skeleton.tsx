@@ -5,21 +5,17 @@ import {
   CardChecksSkeleton,
   CardFactGridSkeleton,
   CardHeadSkeleton,
-  CardMeterSkeleton,
   CardRowsSkeleton,
   CardSectionSkeleton,
-  CardStatsSkeleton,
   RecordCardSkeleton,
+  SkeletonBar,
 } from "../../skeletons/record-card-skeleton";
 import { CARRIER_SECTIONS } from "./carrier-sections";
 
-const ELIGIBILITY_ROWS = [[44, 30]] as const;
-const INSURANCE_ROWS = [
-  [32, 58],
-  [28, 54],
-] as const;
-const AUTHORITY_CELLS = 4;
-const BASIC_METERS = 4;
+const FINDING_ROWS = [[44, 30]] as const;
+const COVER_TILES = 2;
+const AUTHORITY_PILLS = 4;
+const BASIC_COLUMNS = 7;
 const SHIPMENT_ROWS = [
   [22, 56],
   [26, 48],
@@ -29,29 +25,85 @@ const SETTLEMENT_ROWS = [
   [24, 58],
   [22, 52],
 ] as const;
-const CONTACT_ROWS = [[30, 62]] as const;
+const CONTACT_ROWS = 1;
 const FACT_CELLS = 8;
 
-/** The intelligence section's outline: the authority strip over the BASICs' meters. */
+function times(count: number) {
+  return Array.from({ length: count }, (_, index) => index);
+}
+
+/** The verdict banner's outline while whether the carrier can be tendered is read. */
+export function VerdictSkeleton() {
+  return (
+    <div className="dk-ca-verdict dk-ca-verdict-sk">
+      <div className="dk-ca-verdict-h">
+        <i className="dk-sk dk-ca-verdict-i" />
+        <SkeletonBar w={120} className="dk-rec-sk-line" />
+      </div>
+      <CardChecksSkeleton rows={FINDING_ROWS} />
+    </div>
+  );
+}
+
+/** The coverage tiles' outline while the carrier is read. */
+function CoverageSkeleton() {
+  return (
+    <ul className="dk-ca-cover">
+      {times(COVER_TILES).map((index) => (
+        <li key={index}>
+          <SkeletonBar w="52%" className="dk-rec-sk-label" />
+          <SkeletonBar w="40%" className="dk-ca-cover-sk" />
+          <SkeletonBar w="64%" className="dk-rec-sk-label" />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** The intelligence section's outline: the authority pills over the BASICs' columns. */
 export function CarrierIntelSkeleton() {
   return (
     <>
-      <CardStatsSkeleton cells={AUTHORITY_CELLS} />
-      <div className="dk-ca-basics">
-        {Array.from({ length: BASIC_METERS }, (_, index) => (
-          // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
-          <CardMeterSkeleton key={index} />
+      <div className="dk-ca-auth">
+        {times(AUTHORITY_PILLS).map((index) => (
+          <i key={index} className="dk-sk dk-ca-auth-sk" />
+        ))}
+      </div>
+      <div className="dk-ca-chart">
+        {times(BASIC_COLUMNS).map((index) => (
+          <div key={index} className="dk-ca-col">
+            <i className="dk-sk dk-ca-col-bar" />
+            <SkeletonBar w="60%" className="dk-rec-sk-label" />
+          </div>
         ))}
       </div>
     </>
   );
 }
 
+/** The contacts' outline: a person each, their initials beside their name and line. */
+function ContactsSkeleton() {
+  return (
+    <ul className="dk-ca-contacts">
+      {times(CONTACT_ROWS).map((index) => (
+        <li key={index} className="dk-ca-person">
+          <i className="dk-sk dk-rec-av dk-md" />
+          <span className="dk-rec-main">
+            <SkeletonBar w="34%" className="dk-rec-sk-line" />
+            <SkeletonBar w="58%" className="dk-rec-sk-label" />
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /**
  * The carrier card while its code or its carrier is read: its identifiers over
- * the name and DBA, the risk figure, whether it can be tendered as checks, its
- * insurance as checks, its authority and BASICs, its shipments, settlements and
- * contacts as rows and its details as a grid, each where the card draws it. A
+ * the name and DBA, the risk figure, whether it can be tendered as a verdict,
+ * its insurance as coverage tiles, its authority as pills over the BASICs'
+ * columns, its shipments and settlements as rows, its contacts with their
+ * initials and its details as a grid, each where the card draws it. A
  * section the person may not read is left out here as it is on the card.
  */
 export function DeskCarrierSkeleton({ stepper = false }: { stepper?: boolean }) {
@@ -69,11 +121,11 @@ export function DeskCarrierSkeleton({ stepper = false }: { stepper?: boolean }) 
       />
       {access.eligibility && (
         <CardSectionSkeleton title={120} aside={84}>
-          <CardChecksSkeleton rows={ELIGIBILITY_ROWS} />
+          <VerdictSkeleton />
         </CardSectionSkeleton>
       )}
       <CardSectionSkeleton title={64} aside={72}>
-        <CardChecksSkeleton rows={INSURANCE_ROWS} />
+        <CoverageSkeleton />
       </CardSectionSkeleton>
       {access.intelligence && (
         <CardSectionSkeleton title={112} aside={96}>
@@ -91,7 +143,7 @@ export function DeskCarrierSkeleton({ stepper = false }: { stepper?: boolean }) 
         </CardSectionSkeleton>
       )}
       <CardSectionSkeleton title={64}>
-        <CardRowsSkeleton rows={CONTACT_ROWS} />
+        <ContactsSkeleton />
       </CardSectionSkeleton>
       <CardSectionSkeleton title={48}>
         <CardFactGridSkeleton cells={FACT_CELLS} />

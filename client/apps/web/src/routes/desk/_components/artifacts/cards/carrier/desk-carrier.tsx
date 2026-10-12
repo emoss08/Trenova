@@ -19,32 +19,27 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useCardAccess } from "../../record-card/card-access";
-import { CardDue } from "../../record-card/card-due";
 import { CardPagedList } from "../../record-card/card-paged-list";
 import { CardShipments } from "../../record-card/card-shipments";
 import {
   CardBar,
   CardBarHint,
-  CardCheck,
-  CardChecks,
   CardFactGrid,
   CardFacts,
   CardHead,
   CardIcon,
-  CardMeter,
   CardRecordRow,
   CardSection,
   CardSectionError,
-  CardStats,
   CardStatus,
   CardStepper,
   CardUnreadable,
+  needsLook,
   RecordCard,
 } from "../../record-card/record-card";
 import { usePagedRows, type PagedRows } from "../../record-card/paged-rows";
 import { neighborsIn } from "../../record-card/record-card-values";
 import { useRecordShipments } from "../../record-card/record-shipments";
-import { CardChecksSkeleton } from "../../skeletons/record-card-skeleton";
 import { useListedRecords, type RecordArtifactProps } from "../registry";
 import {
   authorityStats,
@@ -54,6 +49,7 @@ import {
   carrierSubtitle,
   complianceStanding,
   contactLine,
+  coverageTiles,
   eligibilityChecks,
   eligibilityVerdict,
   insuranceChecks,
@@ -62,14 +58,20 @@ import {
   settlementAmount,
   settlementLine,
 } from "./carrier-card";
+import {
+  AuthorityPills,
+  BasicChart,
+  ContactCard,
+  CoverageTiles,
+  VerdictBanner,
+} from "./carrier-parts";
 import { CARRIER_SECTIONS } from "./carrier-sections";
-import { CarrierIntelSkeleton, DeskCarrierSkeleton } from "./carrier-skeleton";
+import { CarrierIntelSkeleton, DeskCarrierSkeleton, VerdictSkeleton } from "./carrier-skeleton";
 
 /** The shipments the card reads at a time; the next page is read on request. */
 const SHIPMENT_ROWS = 5;
 /** The settlements the card reads at a time. */
 const SETTLEMENT_ROWS = 5;
-const ELIGIBILITY_WAIT = [[44, 30]] as const;
 
 /**
  * What the card is given: the carrier, and when it was opened from a table or
@@ -185,6 +187,9 @@ function CarrierCard({
   const risk = riskReading(carrier.intelRiskLevel);
   const neighbors = neighborsIn(order, id);
   const policies = carrier.insurancePolicies ?? [];
+  const insuranceOpen = insuranceChecks(policies, now, t).filter((check) =>
+    needsLook(check.state),
+  ).length;
   const contacts = orderedContacts(carrier.contacts ?? []);
   const settlementIds = useMemo(
     () => settlements.rows?.map((row) => row.id) ?? NO_ROWS,
@@ -260,13 +265,26 @@ function CarrierCard({
         />
       )}
 
-      {policies.length > 0 ? (
-        <CardDue title={t("Insurance")} checks={insuranceChecks(policies, now, t)} />
-      ) : (
-        <CardSection title={t("Insurance")}>
+      <CardSection
+        title={t("Insurance")}
+        aside={
+          policies.length > 0 ? (
+            insuranceOpen > 0 ? (
+              <span className="dk-warn">
+                {t("{0, plural, one {# needs a look} other {# need a look}}", insuranceOpen)}
+              </span>
+            ) : (
+              <span className="dk-ok">{t("Nothing due")}</span>
+            )
+          ) : undefined
+        }
+      >
+        {policies.length > 0 ? (
+          <CoverageTiles tiles={coverageTiles(policies, now, t)} />
+        ) : (
           <p className="dk-rec-note">{t("No insurance policy is on file.")}</p>
-        </CardSection>
-      )}
+        )}
+      </CardSection>
 
       {access.intelligence && (
         <AuthorityAndSafety
@@ -303,24 +321,19 @@ function CarrierCard({
 
       <CardSection title={t("Contacts")}>
         {contacts.length > 0 ? (
-          <ul className="dk-rec-list dk-ca-contacts">
+          <ul className="dk-ca-contacts">
             {contacts.map((contact) => (
-              <li key={contact.id}>
-                <span className="dk-rec-main">
-                  <b>{contact.name}</b>
-                  <span className="dk-rec-sub">
-                    {contactLine(contact) || t("No way to reach them on file")}
-                  </span>
-                </span>
-                <span className="dk-ca-role">
-                  {[
-                    contact.isPrimary ? t("Primary") : "",
-                    contact.receivesRateConfirmations ? t("Gets rate confirmations") : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </span>
-              </li>
+              <ContactCard
+                key={contact.id}
+                name={contact.name}
+                line={contactLine(contact) || t("No way to reach them on file")}
+                role={[
+                  contact.isPrimary ? t("Primary") : "",
+                  contact.receivesRateConfirmations ? t("Gets rate confirmations") : "",
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              />
             ))}
           </ul>
         ) : (
@@ -357,39 +370,15 @@ function Eligibility({
   const verdict = eligibility ? eligibilityVerdict(eligibility, t) : null;
   const checks = eligibility ? eligibilityChecks(eligibility, t) : [];
   return (
-    <CardSection
-      title={t("Can we tender to them")}
-      aside={
-        verdict ? (
-          <span className={cn(verdict.state === "ok" ? "dk-ok" : "dk-warn")}>{verdict.label}</span>
-        ) : undefined
-      }
-    >
+    <CardSection title={t("Can we tender to them")}>
       {error && !eligibility ? (
         <CardSectionError>
           {describeApiError(error, t("Whether the carrier can be tendered could not be read."))}
         </CardSectionError>
       ) : pending || !eligibility ? (
-        <CardChecksSkeleton rows={ELIGIBILITY_WAIT} />
+        <VerdictSkeleton />
       ) : (
-        <CardChecks>
-          {checks.length > 0 ? (
-            checks.map((check) => (
-              <CardCheck
-                key={check.key}
-                state={check.state}
-                title={check.title}
-                detail={check.detail}
-              />
-            ))
-          ) : (
-            <CardCheck
-              state="ok"
-              title={t("Nothing stands in the way")}
-              detail={t("Its record and its intelligence are both clear")}
-            />
-          )}
-        </CardChecks>
+        verdict && <VerdictBanner verdict={verdict} checks={checks} />
       )}
     </CardSection>
   );
@@ -443,19 +432,9 @@ function AuthorityAndSafety({
         </p>
       ) : (
         <>
-          <CardStats stats={authorityStats(intel, labels, t)} />
+          <AuthorityPills stats={authorityStats(intel, labels, t)} />
           {meters.length > 0 ? (
-            <div className="dk-ca-basics">
-              {meters.map((meter) => (
-                <CardMeter
-                  key={meter.key}
-                  label={meter.label}
-                  reading={meter.reading}
-                  share={meter.share}
-                  state={meter.state}
-                />
-              ))}
-            </div>
+            <BasicChart meters={meters} />
           ) : (
             <p className="dk-rec-note dk-ca-nobasics">
               {t("No CSA BASIC has been measured for this carrier.")}

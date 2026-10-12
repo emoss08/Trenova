@@ -24,14 +24,12 @@ import { CardWhere, mapPoint } from "../../record-card/card-where";
 import {
   CardBar,
   CardBarHint,
-  CardFactGrid,
   CardFacts,
   CardHead,
   CardIcon,
   CardSection,
   CardSectionError,
   CardSectionWait,
-  CardStats,
   CardStatus,
   CardStepper,
   CardUnreadable,
@@ -43,11 +41,9 @@ import { useRecordShipments } from "../../record-card/record-shipments";
 import { MAP_SIZE } from "../../record-card/still-map";
 import { useListedRecords, type RecordArtifactProps } from "../registry";
 import {
+  amenities,
   DWELL_WINDOW_DAYS,
-  dwellMoneyLine,
-  dwellStats,
   dwellWindow,
-  facilityTerms,
   geofenceLine,
   geofenceOutline,
   locationFacts,
@@ -57,6 +53,7 @@ import {
   policyScope,
   streetLine,
 } from "./location-card";
+import { AmenityChips, DwellRuler, LocationFile } from "./location-parts";
 import { LOCATION_SECTIONS } from "./location-sections";
 import { DeskLocationSkeleton, DwellSkeleton } from "./location-skeleton";
 
@@ -240,7 +237,7 @@ function LocationCard({
             <CardStatus key={standing.label} tone={standing.tone}>
               {standing.label}
             </CardStatus>
-            <CardFacts>{[...facilityTerms(category, t), location.timezone.trim()]}</CardFacts>
+            <CardFacts>{[location.timezone.trim()]}</CardFacts>
           </>
         }
       />
@@ -258,6 +255,7 @@ function LocationCard({
           mapLabel={t("Map of {0}", location.name)}
           noMapLabel={t("This location has not been geocoded")}
         />
+        <AmenityChips items={amenities(category, t)} />
       </CardSection>
 
       {access.detention && (
@@ -291,6 +289,7 @@ function LocationCard({
           shipments={shipments}
           onOpen={listedShipments.open}
           emptyText={t("No load has stopped here yet.")}
+          layout="table"
         />
       )}
 
@@ -314,8 +313,13 @@ function LocationCard({
         </CardSection>
       )}
 
-      <CardSection title={t("Details")}>
-        <CardFactGrid facts={locationFacts(location, t)} />
+      <CardSection title={t("On file")}>
+        <LocationFile
+          street={street}
+          city={city}
+          notes={location.description.trim()}
+          facts={locationFacts(location, t)}
+        />
       </CardSection>
 
       <CardBar>
@@ -384,12 +388,7 @@ function Dwell({
       </p>
     );
   }
-  return (
-    <>
-      <CardStats stats={dwellStats(dwell, t)} />
-      <p className="dk-rec-note dk-lo-money">{dwellMoneyLine(dwell, t)}</p>
-    </>
-  );
+  return <DwellRuler dwell={dwell} />;
 }
 
 /** The detention policies written for the location, highest priority first. */
@@ -421,7 +420,7 @@ function Policies({
     );
   }
   return (
-    <ul className="dk-rec-list dk-lo-terms">
+    <ul className="dk-lo-terms">
       {policies.rows.map((policy) => (
         <li key={policy.id} className={cn(policy.status !== "Active" && "dk-off")}>
           <span className="dk-rec-main">

@@ -164,7 +164,14 @@ describe("DeskTrailer", () => {
       "href",
       expect.stringContaining("loc_dal"),
     );
-    expect(within(section("Due")).getByText("Nothing due")).toBeInTheDocument();
+    const calendar = section("Service calendar");
+    expect(within(calendar).getByText("Nothing due")).toBeInTheDocument();
+    expect(within(calendar).getByRole("img", { name: "Service calendar" })).toBeInTheDocument();
+    expect(within(calendar).getByText("Today")).toBeInTheDocument();
+    expect(
+      Array.from(calendar.querySelectorAll(".dk-tl-mark > b")).map((b) => b.textContent),
+    ).toEqual(expect.arrayContaining(["Last inspected", "Inspection due", "Registration ends"]));
+    expect(within(section("Data plate")).getByText("Max load")).toBeInTheDocument();
     expect(await screen.findByText("9 shipments")).toBeInTheDocument();
     expect(fetchers.shipments).toHaveBeenCalledWith(
       { kind: "trailer", id: "trl_1" },
@@ -197,11 +204,12 @@ describe("DeskTrailer", () => {
     );
     draw();
 
-    await screen.findByRole("heading", { name: "Due", level: 3 });
-    const due = section("Due");
+    await screen.findByRole("heading", { name: "Service calendar", level: 3 });
+    const due = section("Service calendar");
     expect(within(due).getByText("3 need a look")).toBeInTheDocument();
-    const titles = Array.from(due.querySelectorAll(".dk-rec-cb > b")).map((b) => b.textContent);
+    const titles = Array.from(due.querySelectorAll(".dk-tl-legend b")).map((b) => b.textContent);
     expect(titles).toEqual(["Out of service", "Annual inspection overdue", "Registration expired"]);
+    expect(due.querySelector(".dk-tl-mark.dk-bad > b")).toHaveTextContent("Inspection due");
   });
 
   it("names an owner-operator and opens the shipments it carried in the card's place", async () => {

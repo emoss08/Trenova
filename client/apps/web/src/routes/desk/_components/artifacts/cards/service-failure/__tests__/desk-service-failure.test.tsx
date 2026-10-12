@@ -146,6 +146,8 @@ describe("DeskServiceFailure", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Loading the service failure…");
     expect(container.querySelector(".dk-rec-skel .dk-rec-path")).not.toBeNull();
     expect(container.querySelector(".dk-rec-skel .dk-rec-where")).not.toBeNull();
+    expect(container.querySelector(".dk-rec-skel .dk-svf-clock")).not.toBeNull();
+    expect(container.querySelector(".dk-rec-skel .dk-svf-edi")).not.toBeNull();
 
     expect(
       await screen.findByRole("heading", { name: "Tyson Foods DC", level: 2 }),
@@ -161,9 +163,26 @@ describe("DeskServiceFailure", () => {
     expect(document.querySelector(".dk-rec-st")).toHaveTextContent("Open");
     expect(screen.getByText("Shipment S2610-1366")).toBeInTheDocument();
 
-    const happened = section("What happened");
-    expect(within(happened).getByText("Late by").nextElementSibling).toHaveTextContent("1h 45m");
-    expect(within(happened).getByText("Grace").nextElementSibling).toHaveTextContent("30m");
+    const clock = within(section("What happened")).getByRole("list", { name: "What happened" });
+    expect(
+      Array.from(clock.children).map((li) => [
+        li.className,
+        li.querySelector(".dk-svf-what, .dk-svf-span")?.textContent,
+      ]),
+    ).toEqual([
+      ["dk-svf-ev", "Due by"],
+      ["dk-svf-gap dk-grace", "30m of grace"],
+      ["dk-svf-ev dk-warn", "Grace ends"],
+      ["dk-svf-gap dk-late", "Late by 1h 45m"],
+      ["dk-svf-ev dk-bad", "Arrived"],
+    ]);
+    expect(clock.querySelector(".dk-svf-gap.dk-late")).toHaveStyle({ flexGrow: "0.778" });
+
+    const edi = section("Sent on the 214");
+    expect(within(edi).getByText("Status code").nextElementSibling).toHaveTextContent(
+      "—From the failure type",
+    );
+    expect(within(edi).getByText("Exception code").closest("div")).toHaveClass("dk-none");
 
     expect(within(section("Where")).getByText("2200 W Don Tyson Pkwy")).toBeInTheDocument();
     expect(within(section("Load")).getByText("Tyson Foods")).toBeInTheDocument();

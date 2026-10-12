@@ -1,7 +1,7 @@
 import { describeApiError } from "@/lib/api-error-message";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
+import { cn, getNameInitials } from "@trenova/shared/lib/utils";
 import { Fragment, type ReactNode } from "react";
 import { Link } from "react-router";
 import type { Neighbors } from "./record-card-values";
@@ -112,6 +112,7 @@ export function CardHead({
   stepper,
   title,
   subtitle,
+  lead,
   figure,
   meta,
 }: {
@@ -123,6 +124,8 @@ export function CardHead({
   stepper?: ReactNode;
   title: ReactNode;
   subtitle?: ReactNode;
+  /** A mark before the title that says who the record is, such as a person's initials. */
+  lead?: ReactNode;
   figure?: ReactNode;
   meta?: ReactNode;
 }) {
@@ -151,6 +154,7 @@ export function CardHead({
         {stepper}
       </div>
       <div className="dk-rec-hrow">
+        {lead}
         <div className={cn("dk-rec-who", subtitle === undefined && "dk-alone")}>
           <h2>{title}</h2>
           {subtitle !== undefined && <span>{subtitle}</span>}
@@ -159,6 +163,15 @@ export function CardHead({
       </div>
       {meta && <div className="dk-rec-meta">{meta}</div>}
     </div>
+  );
+}
+
+/** A person or a company as their initials in a round mark, where a card names them. */
+export function CardAvatar({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
+  return (
+    <span className={cn("dk-rec-av", `dk-${size}`)} aria-hidden>
+      {getNameInitials(name, "•")}
+    </span>
   );
 }
 
@@ -405,6 +418,8 @@ export type CardTimelineEntry = {
   text: ReactNode;
   /** Who and when, under the entry. */
   meta: ReactNode;
+  /** What the entry changed, under its sentence. */
+  detail?: ReactNode;
   /** The person's own entry, marked solid. */
   mine?: boolean;
 };
@@ -417,6 +432,7 @@ export function CardTimeline({ entries }: { entries: readonly CardTimelineEntry[
         <li key={entry.id} className={cn(entry.mine && "dk-you")}>
           <i />
           <span>{entry.text}</span>
+          {entry.detail}
           <em>{entry.meta}</em>
         </li>
       ))}

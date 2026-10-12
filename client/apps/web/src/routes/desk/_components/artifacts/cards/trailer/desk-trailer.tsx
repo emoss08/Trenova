@@ -8,14 +8,13 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useCardAccess } from "../../record-card/card-access";
 import { CardDocuments } from "../../record-card/card-documents";
-import { CardDue } from "../../record-card/card-due";
 import { CardShipments } from "../../record-card/card-shipments";
 import { CardWhere, mapPoint } from "../../record-card/card-where";
 import { equipmentName, equipmentStanding } from "../../record-card/equipment";
 import {
+  CardAvatar,
   CardBar,
   CardBarHint,
-  CardFactGrid,
   CardFacts,
   CardHead,
   CardIcon,
@@ -25,12 +24,14 @@ import {
   CardStatus,
   CardStepper,
   CardUnreadable,
+  needsLook,
   RecordCard,
 } from "../../record-card/record-card";
 import { neighborsIn, personName } from "../../record-card/record-card-values";
 import { useRecordShipments } from "../../record-card/record-shipments";
 import { useListedRecords, type RecordArtifactProps } from "../registry";
-import { maxLoadText, trailerChecks, trailerFacts } from "./trailer-card";
+import { calendarMarks, maxLoadText, trailerChecks, trailerFacts } from "./trailer-card";
+import { DataPlate, ServiceCalendar } from "./trailer-parts";
 import { TRAILER_SECTIONS } from "./trailer-sections";
 import { DeskTrailerSkeleton } from "./trailer-skeleton";
 
@@ -132,6 +133,7 @@ function TrailerCard({
   });
 
   const checks = trailerChecks(trailer, now, t);
+  const openChecks = checks.filter((check) => needsLook(check.state)).length;
   const standing = equipmentStanding(trailer.status, t);
   const neighbors = neighborsIn(order, id);
   const load = maxLoadText(trailer.maxLoadWeight, t);
@@ -253,7 +255,20 @@ function TrailerCard({
         />
       </CardSection>
 
-      <CardDue title={t("Due")} checks={checks} />
+      <CardSection
+        title={t("Service calendar")}
+        aside={
+          openChecks > 0 ? (
+            <span className="dk-warn">
+              {t("{0, plural, one {# needs a look} other {# need a look}}", openChecks)}
+            </span>
+          ) : (
+            <span className="dk-ok">{t("Nothing due")}</span>
+          )
+        }
+      >
+        <ServiceCalendar marks={calendarMarks(trailer, now, t)} checks={checks} now={now} />
+      </CardSection>
 
       {owner && (
         <CardSection title={t("Owner")}>
@@ -262,9 +277,12 @@ function TrailerCard({
               to={recordPath("worker", owner.id)}
               onOpen={listedOwner.open && (() => listedOwner.open?.(owner.id))}
             >
-              <span className="dk-rec-main">
-                <b>{personName(owner) || t("Unnamed worker")}</b>
-                <span className="dk-rec-sub">{t("Owner-operator")}</span>
+              <span className="dk-tl-owner">
+                <CardAvatar name={personName(owner) || t("Unnamed worker")} />
+                <span className="dk-rec-main">
+                  <b>{personName(owner) || t("Unnamed worker")}</b>
+                  <span className="dk-rec-sub">{t("Owner-operator")}</span>
+                </span>
               </span>
               <CardIcon name="forward" size={12} />
             </CardRecordRow>
@@ -281,8 +299,8 @@ function TrailerCard({
         />
       )}
 
-      <CardSection title={t("Details")}>
-        <CardFactGrid facts={trailerFacts(trailer, t)} />
+      <CardSection title={t("Data plate")}>
+        <DataPlate facts={trailerFacts(trailer, t)} />
       </CardSection>
 
       <CardDocuments resourceType="trailer" resourceId={id} manageTo={recordPath("trailer", id)} />

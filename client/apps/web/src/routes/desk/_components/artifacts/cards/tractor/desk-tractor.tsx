@@ -11,7 +11,7 @@ import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-qu
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn, formatPercent, metersToMiles } from "@trenova/shared/lib/utils";
+import { cn, metersToMiles } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useCardAccess } from "../../record-card/card-access";
@@ -20,7 +20,6 @@ import { CardShipments } from "../../record-card/card-shipments";
 import {
   CardBar,
   CardBarHint,
-  CardFactGrid,
   CardFacts,
   CardHead,
   CardIcon,
@@ -47,6 +46,7 @@ import {
 } from "./tractor-card";
 import { CardDue } from "../../record-card/card-due";
 import { CardWhere, mapPoint } from "../../record-card/card-where";
+import { DriverSeats, SpecSheet, TractorDash } from "./tractor-parts";
 import { equipmentName, equipmentStanding } from "../../record-card/equipment";
 import { TRACTOR_SECTIONS } from "./tractor-sections";
 import { DeskTractorSkeleton } from "./tractor-skeleton";
@@ -270,21 +270,7 @@ function TractorCard({
 
       <CardSection title={t("Drivers")}>
         {people.length > 0 ? (
-          <div className="dk-rec-list">
-            {people.map((person) => (
-              <CardRecordRow
-                key={person.key}
-                to={recordPath("worker", person.id)}
-                onOpen={listedPeople.open && (() => listedPeople.open?.(person.id))}
-              >
-                <span className="dk-rec-main">
-                  <b>{person.name}</b>
-                  <span className="dk-rec-sub">{person.role}</span>
-                </span>
-                <CardIcon name="forward" size={12} />
-              </CardRecordRow>
-            ))}
-          </div>
+          <DriverSeats people={people} onOpen={listedPeople.open} />
         ) : (
           <p className="dk-rec-note">{t("No driver is assigned to this tractor.")}</p>
         )}
@@ -296,6 +282,7 @@ function TractorCard({
           shipments={shipments}
           onOpen={listedShipments.open}
           emptyText={t("This tractor has not pulled a load yet.")}
+          layout="board"
         />
       )}
 
@@ -310,8 +297,8 @@ function TractorCard({
         />
       </CardSection>
 
-      <CardSection title={t("Details")}>
-        <CardFactGrid facts={tractorFacts(tractor, t)} />
+      <CardSection title={t("Specification")}>
+        <SpecSheet facts={tractorFacts(tractor, t)} />
       </CardSection>
 
       <CardDocuments resourceType="tractor" resourceId={id} manageTo={recordPath("tractor", id)} />
@@ -400,20 +387,14 @@ function Whereabouts({
       }
       lineOff={!reading}
       facts={
-        position
-          ? [
-              position.fuelPercent !== null && position.fuelPercent !== undefined
-                ? t("Fuel {0}", formatPercent(position.fuelPercent, 0))
-                : "",
-              t("{0}, {1}", position.latitude.toFixed(4), position.longitude.toFixed(4)),
-            ]
-          : []
+        position ? [t("{0}, {1}", position.latitude.toFixed(4), position.longitude.toFixed(4))] : []
       }
       mapLabel={place ? t("Map of {0}", place) : t("Map of the tractor's last reported position")}
       noMapLabel={t("No position reported")}
       error={error}
       errorText={t("The tractor's position could not be read.")}
     >
+      {position && <TractorDash position={position} />}
       {lastKnown && position && (
         <div className="dk-rec-list dk-rec-left">
           <CardRecordRow
@@ -466,7 +447,7 @@ function Inspections({
   }
   return (
     <>
-      <ol className="dk-rec-list dk-tr-insp">
+      <ol className="dk-tr-insp">
         {rows.map((inspection) => {
           const reading = inspectionReading(inspection, t);
           const location = inspection.location?.trim();

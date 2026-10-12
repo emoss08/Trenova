@@ -59,9 +59,10 @@ artifacts/
                           the dot), what falls due (card-due.tsx: a check is
                           bad, warn, info, which is worth knowing and asks
                           for no look, or ok), a share
-                          drawn as a meter (CardMeter: credit used, drive time
-                          left), figures in a ruled strip (CardStats: payment
-                          pace, dwell), what a
+                          drawn as a meter (CardMeter: credit used, a rate
+                          structure's groups), figures in a ruled strip
+                          (CardStats: payment pace), a person's initials
+                          (CardAvatar), what a
                           tractor's and a trailer's cards read alike
                           (equipment.ts), and a record's documents
                           (card-documents.tsx, a rail drawn by document-rail.tsx
@@ -85,6 +86,35 @@ Before taking a prefix or a modifier class, search every stylesheet the Desk loa
 Desk chat's `components/desk-chat/desk-chat.css` included: `dk-sf` is the chat's tool
 failures, and the status pill's warn tone once shared `dk-hold` with the hold-to-confirm
 button, which stretched every warn pill to the button's width.
+
+## Giving a card its own shape
+
+`record-card/` is the frame every card shares: the head, the stepper, sections, the
+bottom bar, the way back. What a card is *for* is drawn by parts of its own, in
+`cards/<resource>/<resource>-parts.tsx`, so two cards that hold similar facts still read
+as different records. Before reaching for `CardChecks`, `CardStats` or `CardFactGrid`,
+ask what the record looks like to the person who reads it, and draw that:
+
+| Card | Its own parts |
+| --- | --- |
+| Worker | hours of service as `RingGauge`s (`HosRings`, the tones from `hosClockTone`, as the worker panel draws them), credentials as a wallet of tiles, `tel:`/`mailto:` ways to reach them beside their record |
+| Order | its lifecycle as one segmented track, its legs down a numbered route, its charges as a ledger with what is invoiced against what is still to invoice, its references as chips |
+| Tractor | an ink dashboard of its last report (speed, heading, fuel ring, engine, odometer), its drivers as seats, a specification sheet |
+| Trailer | a service calendar a season back and a year ahead with each date its papers hang on, a data plate |
+| Location | amenity chips under the map, a dwell ruler with median, average and p90 pins and the share that ran past free time, an address card, terms as tickets |
+| Carrier | a verdict banner for whether it can be tendered, insurance as coverage tiles, authority as pills over the CSA BASICs as columns against their thresholds, contacts with initials |
+| Service failure | its clock along one track, each stretch as wide as it ran (before the cutoff, in grace, late) with its moments beneath, the 214's codes as tiles |
+
+Tone is carried by the part's own fill, icon or text, never by an accent bar down or across
+its edge. A part only one card draws stays in that card's folder; it moves to `record-card/` when a
+second card needs it. The shared parts take a shape where cards differ:
+`CardShipments` takes a `layout` (`rows`, `table`, `board` with the pickup time first, or
+`route` numbered down a line) and `CardShipmentsSkeleton` the same one; `CardHead` takes a
+`lead` (a `CardAvatar` of a person's initials before their name, `CardHeadSkeleton`'s
+`lead` in the outline); `CardActivity` takes `showChanges` to read the first changed fields
+of an update from what to what (`activityChanges` in `record-activity.ts`, which reads an
+enum value as words and never shows a redacted one). Every new part has its outline in the
+card's skeleton, drawn on the part's own classes.
 
 ## Lazy loading and skeletons
 

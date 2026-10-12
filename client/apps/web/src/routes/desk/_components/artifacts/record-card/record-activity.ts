@@ -1,6 +1,10 @@
 import type { ActivityEntry, RecordActivityPage } from "@/lib/graphql/record-activity";
 import { recordActivityQuery } from "@/lib/queries/record-activity";
-import { normalizeAuditChanges } from "@/routes/admin/audit-logs/_components/audit-log-formatters";
+import {
+  formatAuditValueWithDates,
+  isSensitiveOmittedValue,
+  normalizeAuditChanges,
+} from "@/routes/admin/audit-logs/_components/audit-log-formatters";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { toTitleCase } from "@trenova/shared/lib/utils";
@@ -95,6 +99,46 @@ export function activitySentence(
   return Object.hasOwn(DONE_LABELS, operation)
     ? DONE_LABELS[operation as keyof typeof DONE_LABELS]
     : toTitleCase(operation);
+}
+
+/** One field an entry changed, from what to what, as the activity reads it. */
+export type ActivityChange = { field: string; from: string; to: string };
+
+/** An enum value as the trail stores it, "InProgress", read as words: "In progress". */
+const ENUM_VALUE = /^[A-Z][a-z]+(?:[A-Z][a-z]+)+$/u;
+
+function changeValue(value: unknown, path: string, t: TranslateFn): string | null {
+  if (value === undefined || value === null || value === "") return t("nothing");
+  if (isSensitiveOmittedValue(value)) return t("hidden");
+  if (typeof value === "object") return null;
+  if (typeof value === "string" && ENUM_VALUE.test(value)) {
+    const words = value.replace(/([a-z])([A-Z])/gu, "$1 $2").toLowerCase();
+    return words.charAt(0).toUpperCase() + words.slice(1);
+  }
+  return formatAuditValueWithDates(value, path).value;
+}
+
+/**
+ * The fields an update changed, from what to what, the first `limit` of them
+ * that hold a plain value: a nested record or a list says nothing a person
+ * reads at a glance, so it is left to the sentence above.
+ */
+export function activityChanges(
+  entry: Pick<ActivityEntry, "operation" | "changes">,
+  limit: number,
+  t: TranslateFn,
+): ActivityChange[] {
+  if (entry.operation.toLowerCase() !== "update") return [];
+  if (!entry.changes || typeof entry.changes !== "object") return [];
+  const changes: ActivityChange[] = [];
+  for (const change of normalizeAuditChanges(entry.changes as Record<string, unknown>)) {
+    const from = changeValue(change.from, change.path, t);
+    const to = changeValue(change.to, change.path, t);
+    if (from === null || to === null || from === to) continue;
+    changes.push({ field: fieldName(change.path), from, to });
+    if (changes.length === limit) break;
+  }
+  return changes;
 }
 
 /** Who did it: the person, or the system when no one did. */

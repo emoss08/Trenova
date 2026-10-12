@@ -15,32 +15,37 @@ import { CardWhere, mapPoint } from "../../record-card/card-where";
 import {
   CardBar,
   CardBarHint,
-  CardFactGrid,
   CardFacts,
   CardHead,
   CardIcon,
   CardRecordRow,
   CardSection,
-  CardStats,
   CardStatus,
   CardStepper,
   CardUnreadable,
   RecordCard,
 } from "../../record-card/record-card";
-import { cardDate, cityLine, neighborsIn, waitText } from "../../record-card/record-card-values";
+import {
+  cardDate,
+  cardMoment,
+  cityLine,
+  neighborsIn,
+  waitText,
+} from "../../record-card/record-card-values";
 import { useRecordActivity } from "../../record-card/record-activity";
 import { useRecordFailures, withoutFailure } from "../../record-card/record-failures";
 import { useListedRecords, type RecordArtifactProps } from "../registry";
 import {
+  ediCodes,
   failureCause,
-  failureFacts,
   failurePlace,
   failureStanding,
-  failureTimes,
   isUnsettled,
+  missClock,
   reviewSteps,
   stopLine,
 } from "./service-failure-card";
+import { EdiCodes, MissClock } from "./service-failure-parts";
 import { SERVICE_FAILURE_SECTIONS } from "./service-failure-sections";
 import { DeskServiceFailureSkeleton } from "./service-failure-skeleton";
 
@@ -237,7 +242,7 @@ function ServiceFailureCard({
       />
 
       <CardSection title={t("What happened")}>
-        <CardStats stats={failureTimes(record, t)} />
+        <MissClock clock={missClock(record, t)} />
       </CardSection>
 
       <CardSection title={t("Where")}>
@@ -343,8 +348,11 @@ function ServiceFailureCard({
         />
       )}
 
-      <CardSection title={t("Details")}>
-        <CardFactGrid facts={failureFacts(record, t)} />
+      <CardSection
+        title={t("Sent on the 214")}
+        aside={<span>{t("Last changed {0}", cardMoment(record.updatedAt))}</span>}
+      >
+        <EdiCodes codes={ediCodes(record, t)} />
       </CardSection>
 
       <CardBar>

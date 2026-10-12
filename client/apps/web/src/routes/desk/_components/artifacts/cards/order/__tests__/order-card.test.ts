@@ -3,6 +3,7 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describe, expect, it } from "vitest";
 import {
   chargeLine,
+  chargeTotals,
   chargeStats,
   lifecycleSteps,
   orderFacts,
@@ -148,6 +149,27 @@ describe("orderFacts", () => {
       bol: "None",
       currency: "USD",
       quoted: "Not quoted",
+    });
+  });
+});
+
+describe("chargeTotals", () => {
+  it("adds the charges in cents, splitting what has been invoiced from what is still to invoice", () => {
+    expect(
+      chargeTotals([
+        charge({ amount: "0.10" }),
+        charge({ id: "och_2", amount: "0.20", invoicedAt: 1_791_720_000, invoiceId: "inv_1" }),
+        charge({ id: "och_3", amount: "1250.05" }),
+      ]),
+    ).toEqual({ total: 125_035, invoiced: 20, open: 125_015 });
+  });
+
+  it("comes to nothing for an order with no charges, or charges with no amount", () => {
+    expect(chargeTotals([])).toEqual({ total: 0, invoiced: 0, open: 0 });
+    expect(chargeTotals([charge({ amount: null as unknown as string })])).toEqual({
+      total: 0,
+      invoiced: 0,
+      open: 0,
     });
   });
 });

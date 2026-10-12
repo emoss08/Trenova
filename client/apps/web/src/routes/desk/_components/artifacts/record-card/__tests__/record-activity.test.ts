@@ -1,6 +1,6 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describe, expect, it } from "vitest";
-import { activityActor, activitySentence, fieldName } from "../record-activity";
+import { activityActor, activityChanges, activitySentence, fieldName } from "../record-activity";
 
 const t = ((message: string, ...args: unknown[]) =>
   message
@@ -65,5 +65,59 @@ describe("activityActor", () => {
       "A capture device",
     );
     expect(activityActor({ user: null, principalType: "system" }, t)).toBe("Trenova");
+  });
+});
+
+describe("activityChanges", () => {
+  it("reads each changed field from what to what, the first few that hold a plain value", () => {
+    const entry = {
+      operation: "update",
+      changes: {
+        status: { from: "Confirmed", to: "InProgress" },
+        poNumber: { from: null, to: "PO-88213" },
+        stops: { from: [], to: [{ id: "stp_1" }] },
+        totalAmount: { from: "4200", to: "4285" },
+      },
+    };
+
+    expect(activityChanges(entry, 2, t)).toEqual([
+      { field: "PO number", from: "nothing", to: "PO-88213" },
+      { field: "status", from: "Confirmed", to: "In progress" },
+    ]);
+    expect(activityChanges(entry, 5, t).map((change) => change.field)).toEqual([
+      "PO number",
+      "status",
+      "total amount",
+    ]);
+  });
+
+  it("hides a value the trail redacted, and leaves out a field that did not change", () => {
+    expect(
+      activityChanges(
+        {
+          operation: "update",
+          changes: {
+            apiKey: { from: "****", to: "[REDACTED]" },
+            code: { from: "ACME", to: "ACME" },
+          },
+        },
+        5,
+        t,
+      ),
+    ).toEqual([]);
+    expect(
+      activityChanges(
+        { operation: "update", changes: { password: { from: "****", to: "abc" } } },
+        5,
+        t,
+      ),
+    ).toEqual([{ field: "password", from: "hidden", to: "abc" }]);
+  });
+
+  it("says nothing for anything but an update", () => {
+    expect(
+      activityChanges({ operation: "create", changes: { code: { from: null, to: "A" } } }, 5, t),
+    ).toEqual([]);
+    expect(activityChanges({ operation: "update", changes: null }, 5, t)).toEqual([]);
   });
 });
