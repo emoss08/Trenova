@@ -109,6 +109,10 @@ type CreateMemoRequest struct {
 	Memo               string
 	MemoKind           invoice.MemoKind
 	AutoPost           bool
+	// CurrencyCode bills the memo in a currency other than the customer's
+	// billing currency, as a late charge on an invoice in that currency must
+	// be. Blank means the customer's billing currency.
+	CurrencyCode string
 }
 
 type CreateInvoiceFromShipmentsRequest struct {

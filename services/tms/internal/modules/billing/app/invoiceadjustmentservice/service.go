@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -64,8 +65,9 @@ type Params struct {
 	Commercial         *shipmentcommercial.Calculator
 	Generator          invoiceadjustmentports.InvoiceAdjustGenerator
 	SequenceGenerator  seqgen.Generator
-	SequenceFormats    seqgen.FormatProvider                      `optional:"true"`
-	AccountingSync     accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
+	SequenceFormats    seqgen.FormatProvider                       `optional:"true"`
+	CreditApplier      customerpaymentports.CustomerPaymentService `optional:"true"`
+	AccountingSync     accountingsyncports.AccountingSyncEnqueuer  `optional:"true"`
 	CustomerLedgerRepo customerledgerports.CustomerLedgerProjectionRepository
 	AccountingPolicy   *accountingcontrolpolicyservice.Service
 	Realtime           agentports.RealtimeService `optional:"true"`
@@ -99,6 +101,7 @@ type Service struct {
 	generator          invoiceadjustmentports.InvoiceAdjustGenerator
 	sequenceGenerator  seqgen.Generator
 	sequenceFormats    seqgen.FormatProvider
+	credits            creditApplier
 	accountingSync     accountingsyncports.AccountingSyncEnqueuer
 	customerLedgerRepo customerledgerports.CustomerLedgerProjectionRepository
 	accountingPolicy   *accountingcontrolpolicyservice.Service
@@ -134,7 +137,7 @@ type previewLineValues struct {
 
 //nolint:gocritic // stable API shape
 func New(p Params) invoiceadjustmentports.InvoiceAdjustmentService {
-	return &Service{
+	svc := &Service{
 		l:                  p.Logger.Named("service.invoice-adjustment"),
 		db:                 p.DB,
 		repo:               p.Repo,
@@ -167,6 +170,11 @@ func New(p Params) invoiceadjustmentports.InvoiceAdjustmentService {
 		accountingPolicy:   p.AccountingPolicy,
 		realtime:           p.Realtime,
 	}
+	if p.CreditApplier != nil {
+		svc.credits = p.CreditApplier
+	}
+
+	return svc
 }
 
 func (s *Service) publishAdjustedInvoices(

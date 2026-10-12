@@ -1,18 +1,18 @@
 package bankreceiptservice
 
 import (
+	"context"
 	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptworkitemportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -43,8 +43,9 @@ func TestImportAndMatchBankReceipt(t *testing.T) {
 			return &copy, nil
 		}).
 		Once()
+	receiptRepo.EXPECT().ListMatchedToPayment(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	receiptRepo.EXPECT().
-		GetByID(mock.Anything, mock.Anything).
+		LockForUpdate(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, _ bankreceiptports.GetBankReceiptByIDRequest) (*bankreceipt.BankReceipt, error) {
 			return receipt, nil
 		}).
@@ -66,6 +67,7 @@ func TestImportAndMatchBankReceipt(t *testing.T) {
 	}
 	paymentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(payment, nil).Once()
 	svc := &Service{
+		db:           passthroughDB{},
 		repo:         receiptRepo,
 		paymentRepo:  paymentRepo,
 		auditService: &mocks.NoopAuditService{},
@@ -133,8 +135,9 @@ func TestImportAutoMatchesWhenUniqueCandidateExists(t *testing.T) {
 		Return([]*customerpayment.Payment{payment}, nil).
 		Once()
 	paymentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(payment, nil).Once()
+	receiptRepo.EXPECT().ListMatchedToPayment(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	receiptRepo.EXPECT().
-		GetByID(mock.Anything, mock.Anything).
+		LockForUpdate(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, _ bankreceiptports.GetBankReceiptByIDRequest) (*bankreceipt.BankReceipt, error) {
 			return createdReceipt, nil
 		}).
@@ -153,6 +156,7 @@ func TestImportAutoMatchesWhenUniqueCandidateExists(t *testing.T) {
 		Return(&tenant.AccountingControl{ReconciliationMode: tenant.ReconciliationModeWarnOnly, NotifyOnReconciliationException: true}, nil).
 		Once()
 	svc := &Service{
+		db:             passthroughDB{},
 		repo:           receiptRepo,
 		paymentRepo:    paymentRepo,
 		accountingRepo: accountingRepo,
@@ -213,6 +217,7 @@ func TestImportMarksExceptionWhenNoUniqueCandidateExists(t *testing.T) {
 		Return(&tenant.AccountingControl{ReconciliationMode: tenant.ReconciliationModeWarnOnly, NotifyOnReconciliationException: false}, nil).
 		Once()
 	svc := &Service{
+		db:             passthroughDB{},
 		repo:           receiptRepo,
 		paymentRepo:    paymentRepo,
 		accountingRepo: accountingRepo,
@@ -284,6 +289,7 @@ func TestImportCreatesWorkItemForException(t *testing.T) {
 		Return(&tenant.AccountingControl{ReconciliationMode: tenant.ReconciliationModeWarnOnly, NotifyOnReconciliationException: false}, nil).
 		Once()
 	svc := &Service{
+		db:             passthroughDB{},
 		repo:           receiptRepo,
 		workItemRepo:   workItemRepo,
 		paymentRepo:    paymentRepo,
@@ -328,6 +334,7 @@ func TestListExceptionsAndSuggestMatches(t *testing.T) {
 		Status:          customerpayment.StatusPosted,
 	}
 	svc := &Service{
+		db:           passthroughDB{},
 		repo:         bankreceiptportsmock.NewMockBankReceiptRepository(t),
 		paymentRepo:  customerpaymentportsmock.NewMockCustomerPaymentRepository(t),
 		auditService: &mocks.NoopAuditService{},

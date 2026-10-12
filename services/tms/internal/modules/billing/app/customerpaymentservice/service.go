@@ -4,6 +4,8 @@ package customerpaymentservice
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
@@ -54,6 +56,7 @@ type Params struct {
 	AccountingSync     accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
 	Realtime           agentports.RealtimeService                 `optional:"true"`
 	Triage             inboundmessageports.TriageEventSink        `optional:"true"`
+	ReceiptMatches     bankreceiptports.BankReceiptService        `optional:"true"`
 }
 
 type Service struct {
@@ -71,10 +74,21 @@ type Service struct {
 	accountingSync     accountingsyncports.AccountingSyncEnqueuer
 	realtime           agentports.RealtimeService
 	triage             inboundmessageports.TriageEventSink
+	receiptMatches     receiptMatchReleaser
+}
+
+// receiptMatchReleaser hands back the deposits a reversed payment was
+// reconciled against.
+type receiptMatchReleaser interface {
+	ReleasePaymentMatch(
+		ctx context.Context,
+		req *bankreceiptports.ReleasePaymentMatchRequest,
+		actor *permissionports.RequestActor,
+	) ([]*bankreceipt.BankReceipt, error)
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
-	return &Service{
+	svc := &Service{
 		l:                  p.Logger.Named("service.customer-payment"),
 		db:                 p.DB,
 		repo:               p.Repo,
@@ -90,6 +104,11 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		realtime:           p.Realtime,
 		triage:             p.Triage,
 	}
+	if p.ReceiptMatches != nil {
+		svc.receiptMatches = p.ReceiptMatches
+	}
+
+	return svc
 }
 
 func (s *Service) List(
@@ -590,6 +609,20 @@ func (s *Service) Reverse( //nolint:funlen // legacy workflow
 			},
 		); txErr != nil {
 			return txErr
+		}
+		if s.receiptMatches != nil {
+			if _, txErr := s.receiptMatches.ReleasePaymentMatch(
+				txCtx,
+				&bankreceiptports.ReleasePaymentMatchRequest{
+					PaymentID:        payment.ID,
+					PaymentReference: payment.DocumentLabel(),
+					Reason:           req.Reason,
+					TenantInfo:       req.TenantInfo,
+				},
+				actor,
+			); txErr != nil {
+				return txErr
+			}
 		}
 		if s.customerLedgerRepo != nil {
 			reverseAmount := payment.AppliedAmountMinor + payment.ShortPayAmountMinor()

@@ -311,7 +311,7 @@ func (s *Service) buildMemoEntity(
 		BillType:           req.BillType,
 		Status:             invoice.StatusDraft,
 		PaymentTerm:        paymentTerm,
-		CurrencyCode:       billingCurrencyFromCustomer(cus),
+		CurrencyCode:       memoCurrency(req, cus),
 		InvoiceDate:        invoiceDate,
 		AppliedAmount:      decimal.Zero,
 		SettlementStatus:   invoice.SettlementStatusUnpaid,
@@ -369,4 +369,12 @@ func memoAuditComment(billType billingqueue.BillType) string {
 	}
 
 	return "Debit memo created"
+}
+
+func memoCurrency(req *invoiceports.CreateMemoRequest, cus *customer.Customer) string {
+	if code := strings.ToUpper(strings.TrimSpace(req.CurrencyCode)); code != "" {
+		return code
+	}
+
+	return billingCurrencyFromCustomer(cus)
 }

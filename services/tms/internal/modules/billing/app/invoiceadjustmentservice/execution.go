@@ -225,6 +225,15 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 	); err != nil {
 		return nil, err
 	}
+	if lockedInvoice, err = s.applyCreditToSource(
+		ctx,
+		adjustment,
+		creditMemoInvoice,
+		lockedInvoice,
+		actor,
+	); err != nil {
+		return nil, err
+	}
 
 	var rebillQueueItem *billingqueue.BillingQueueItem
 	var replacementInvoice *invoice.Invoice

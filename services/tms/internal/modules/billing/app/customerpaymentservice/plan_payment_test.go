@@ -9,7 +9,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -398,4 +400,44 @@ func TestReverse_PutsAShortPayBackOnTheInvoiceAndTheLedger(t *testing.T) {
 	assert.Equal(t, debit, credit, "the reversal balances")
 	assert.Equal(t, int64(10000), posting.TotalDebit, "cash and the short pay are both reversed")
 	assert.Len(t, posting.Lines, 4)
+}
+
+type recordingReceiptReleaser struct {
+	requests []*bankreceiptports.ReleasePaymentMatchRequest
+}
+
+func (r *recordingReceiptReleaser) ReleasePaymentMatch(
+	_ context.Context,
+	req *bankreceiptports.ReleasePaymentMatchRequest,
+	_ *permissionports.RequestActor,
+) ([]*bankreceipt.BankReceipt, error) {
+	r.requests = append(r.requests, req)
+	return nil, nil
+}
+
+func TestReverse_ReleasesTheDepositTheReversedPaymentWasMatchedTo(t *testing.T) {
+	t.Parallel()
+
+	invoiceID := pulid.MustNew("inv_")
+	payment := postedPayment(10000, 10000, &customerpayment.Application{
+		ID: pulid.MustNew("cpapp_"), InvoiceID: invoiceID, AppliedAmountMinor: 10000,
+	})
+	paid := openInvoiceFor(payment, 10000, 10000)
+	paid.ID = invoiceID
+	w := newPaymentWorld(t, payment, paid)
+	releaser := &recordingReceiptReleaser{}
+	w.svc.receiptMatches = releaser
+
+	_, err := w.svc.Reverse(t.Context(), &customerpaymentports.ReverseCustomerPaymentRequest{
+		PaymentID:      payment.ID,
+		AccountingDate: 300,
+		Reason:         "Returned for insufficient funds",
+		TenantInfo:     w.tenantInfo,
+	}, w.actor)
+
+	require.NoError(t, err)
+	require.Len(t, releaser.requests, 1)
+	assert.Equal(t, payment.ID, releaser.requests[0].PaymentID)
+	assert.Equal(t, "Returned for insufficient funds", releaser.requests[0].Reason)
+	assert.Equal(t, payment.DocumentLabel(), releaser.requests[0].PaymentReference)
 }

@@ -996,3 +996,17 @@ const (
 	maxAttachmentContentTypeLength = 120
 	maxShareTokenHashLength        = 128
 )
+
+// BilledIn reports whether the invoice is in the given currency. A blank code
+// on either side means the default currency, which is what a blank is saved as.
+func (i *Invoice) BilledIn(currencyCode string) bool {
+	return strings.EqualFold(currencyOrDefault(i.CurrencyCode), currencyOrDefault(currencyCode))
+}
+
+func currencyOrDefault(code string) string {
+	if code = strings.TrimSpace(code); code == "" {
+		return money.DefaultCurrencyCode
+	}
+
+	return code
+}

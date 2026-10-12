@@ -82692,6 +82692,15 @@
       "routes/reports"
     ]
   },
+  "Enter an amount with at most two decimal places": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/bank-receipt-batch"
+    ]
+  },
   "Enter an amount with up to two decimals": {
     "sites": 1,
     "scope": [
@@ -113382,6 +113391,24 @@
     ],
     "areas": [
       "template/invoice.email"
+    ]
+  },
+  "Invoice {0} is billed in {1}, but this credit memo is in {2}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Invoice {0} is billed in {1}, but this payment is in {2}": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Invoice {0} is not posted": {
@@ -243353,6 +243380,15 @@
     ],
     "areas": [
       "routes/accounting-inbound"
+    ]
+  },
+  "This payment is already matched to bank receipt {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This period has closed — bill it": {
