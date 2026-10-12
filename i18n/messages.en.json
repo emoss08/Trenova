@@ -94099,7 +94099,7 @@
     ]
   },
   "Files": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -281471,12 +281471,13 @@
     ]
   },
   "{0, plural, one {# file} other {# files}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/inbox"
     ]
   },
   "{0, plural, one {# filter} other {# filters}}": {

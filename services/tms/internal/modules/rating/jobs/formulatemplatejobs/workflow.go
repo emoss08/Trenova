@@ -9,7 +9,7 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
-const ExpireStaleSubmissionsWorkflowName = "ExpireStaleFormulaSubmissionsWorkflow"
+const ExpireStaleSubmissionsWorkflowName = "ExpireStaleSubmissionsWorkflow"
 
 var expireStaleSubmissionsRetryPolicy = &temporal.RetryPolicy{
 	InitialInterval:    2 * time.Second,

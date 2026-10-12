@@ -22,7 +22,7 @@ import { Progress } from "@trenova/shared/components/ui/progress";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, formatFileSize } from "@trenova/shared/lib/utils";
-import { useRef, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import { FileBadge } from "../file-badge";
 
 function sourceHeading(t: TranslateFn, source: InboundReplyAttachableSource): string {
@@ -38,41 +38,63 @@ function sourceHeading(t: TranslateFn, source: InboundReplyAttachableSource): st
   }
 }
 
+const ROW = "animate-rise flex min-h-8 min-w-0 items-center gap-2 py-1 pr-1 pl-2";
+
+/**
+ * The files a reply carries, one line each in a single box, so a reply with a
+ * handful of files stays short. The summary closes the box: the count and,
+ * while writing, how much of the email's budget they spend.
+ */
+export function ReplyFileList({ summary, children }: { summary?: ReactNode; children: ReactNode }) {
+  const t = useT();
+
+  return (
+    <div className="border-border min-w-0 overflow-hidden rounded-lg border">
+      <ul aria-label={t("Files")} className="divide-border-subtle flex flex-col divide-y">
+        {children}
+      </ul>
+      {summary !== undefined && (
+        <div className="border-border-subtle text-foreground-subtle flex h-7 items-center justify-between gap-2 border-t px-2 text-xs tabular-nums">
+          {summary}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RemoveButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <Button size="icon-xs" variant="ghost" aria-label={label} onClick={onClick}>
+      <XCloseIcon aria-hidden className="size-3" />
+    </Button>
+  );
+}
+
 /** A file the reply carries: its kind, name and size, and a way to take it off. */
 export function ReplyFileChip({
   file,
   onRemove,
 }: {
   file: ReplyFile;
-  /** Absent once the reply has gone: a sent file cannot be taken back. */
+  /** Absent while the reply is sending: a file on its way cannot be taken back. */
   onRemove?: (documentId: string) => void;
 }) {
   const t = useT();
 
   return (
-    <span
-      role="listitem"
-      title={file.fileName}
-      className="border-border animate-rise flex max-w-70 min-w-0 items-center gap-2.5 rounded-lg border py-1.75 pr-1.5 pl-1.75"
-    >
-      <FileBadge fileName={file.fileName} />
-      <span className="flex min-w-0 flex-1 flex-col leading-snug">
-        <span className="truncate text-base font-medium">{file.fileName}</span>
-        <span className="text-foreground-subtle truncate text-xs tabular-nums">
-          {formatFileSize(file.byteSize)}
-        </span>
+    <li title={file.fileName} className={cn(ROW, onRemove === undefined && "pr-2")}>
+      <FileBadge fileName={file.fileName} compact />
+      <span className="min-w-0 flex-1 truncate text-sm">{file.fileName}</span>
+      <span className="text-foreground-subtle shrink-0 text-xs tabular-nums">
+        {formatFileSize(file.byteSize)}
       </span>
       {onRemove !== undefined && (
-        <Button
-          size="icon-xs"
-          variant="ghost"
-          aria-label={t("Remove {0}", file.fileName)}
+        <RemoveButton
+          label={t("Remove {0}", file.fileName)}
           onClick={() => onRemove(file.documentId)}
-        >
-          <XCloseIcon aria-hidden className="size-3" />
-        </Button>
+        />
       )}
-    </span>
+    </li>
   );
 }
 
@@ -88,33 +110,16 @@ export function UploadingChip({
 }) {
   const t = useT();
   const failed = upload.status === "error";
+  const reason = upload.error ?? t("The file could not be uploaded");
 
   return (
-    <span
-      role="listitem"
-      title={failed ? upload.error : upload.file.name}
-      className={cn(
-        "border-border flex max-w-70 min-w-0 items-center gap-2.5 rounded-lg border py-1.75 pr-1.5 pl-1.75",
-        failed && "border-danger-border border-dashed",
-      )}
-    >
-      <FileBadge fileName={upload.file.name} dimmed />
-      <span className="flex min-w-0 flex-1 flex-col gap-1 leading-snug">
-        <span className="truncate text-base font-medium">{upload.file.name}</span>
-        {failed ? (
-          <span className="text-danger truncate text-xs">
-            {upload.error ?? t("The file could not be uploaded")}
-          </span>
-        ) : (
-          <Progress
-            size="sm"
-            showLabel
-            value={upload.progress}
-            aria-label={t("Uploading {0}", upload.file.name)}
-          />
-        )}
+    <li title={failed ? reason : upload.file.name} className={ROW}>
+      <FileBadge fileName={upload.file.name} dimmed compact />
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate text-sm">{upload.file.name}</span>
+        {failed && <span className="text-danger truncate text-xs">{reason}</span>}
       </span>
-      {failed && (
+      {failed ? (
         <Button
           size="icon-xs"
           variant="ghost"
@@ -123,16 +128,20 @@ export function UploadingChip({
         >
           <RefreshCw01Icon aria-hidden className="size-3" />
         </Button>
+      ) : (
+        <Progress
+          size="sm"
+          showLabel
+          value={upload.progress}
+          className="w-20 shrink-0"
+          aria-label={t("Uploading {0}", upload.file.name)}
+        />
       )}
-      <Button
-        size="icon-xs"
-        variant="ghost"
-        aria-label={failed ? t("Remove {0}", upload.file.name) : t("Cancel upload")}
+      <RemoveButton
+        label={failed ? t("Remove {0}", upload.file.name) : t("Cancel upload")}
         onClick={() => onCancel(upload.id)}
-      >
-        <XCloseIcon aria-hidden className="size-3" />
-      </Button>
-    </span>
+      />
+    </li>
   );
 }
 
@@ -149,20 +158,14 @@ export function RefusedFileChip({
   const t = useT();
 
   return (
-    <span
-      role="listitem"
-      title={reason}
-      className="border-danger-border flex max-w-80 min-w-0 items-center gap-2.5 rounded-lg border border-dashed py-1.75 pr-1.5 pl-1.75"
-    >
-      <FileBadge fileName={name} dimmed />
-      <span className="flex min-w-0 flex-1 flex-col leading-snug">
-        <span className="truncate text-base font-medium">{name}</span>
+    <li title={reason} className={ROW}>
+      <FileBadge fileName={name} dimmed compact />
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate text-sm">{name}</span>
         <span className="text-danger line-clamp-2 text-xs">{reason}</span>
       </span>
-      <Button size="icon-xs" variant="ghost" aria-label={t("Remove {0}", name)} onClick={onDismiss}>
-        <XCloseIcon aria-hidden className="size-3" />
-      </Button>
-    </span>
+      <RemoveButton label={t("Remove {0}", name)} onClick={onDismiss} />
+    </li>
   );
 }
 

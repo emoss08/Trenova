@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const PollInboundMailboxesWorkflowName = "PollInboundEDIMailboxesWorkflow"
+const PollInboundMailboxesWorkflowName = "PollInboundMailboxesWorkflow"
 
 type PollInboundMailboxesResult struct {
 	PolledProfiles int `json:"polledProfiles"`

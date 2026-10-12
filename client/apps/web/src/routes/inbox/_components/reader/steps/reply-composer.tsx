@@ -41,7 +41,13 @@ import {
   type ReplyOutcome,
 } from "../composer-state";
 import { useReaderPanel, useStepSubmit } from "../reader-panel";
-import { AttachMenu, RefusedFileChip, ReplyFileChip, UploadingChip } from "./reply-files";
+import {
+  AttachMenu,
+  RefusedFileChip,
+  ReplyFileChip,
+  ReplyFileList,
+  UploadingChip,
+} from "./reply-files";
 import { StepBody, StepError, StepFooter } from "./step-parts";
 
 /** How long typing pauses before the draft is saved for the team. */
@@ -100,9 +106,21 @@ function ReplyFiles({
   if (files.length === 0 && pending.length === 0 && refused.length === 0) {
     return null;
   }
+  const carried = formatFileSize(totalBytes(files));
 
   return (
-    <div role="list" aria-label={t("Files")} className="flex flex-wrap gap-2">
+    <ReplyFileList
+      summary={
+        files.length > 0 ? (
+          <>
+            <span>{t("{0, plural, one {# file} other {# files}}", files.length)}</span>
+            <span>
+              {limitBytes === null ? carried : t("{0} of {1}", carried, formatFileSize(limitBytes))}
+            </span>
+          </>
+        ) : undefined
+      }
+    >
       {files.map((file) => (
         <ReplyFileChip key={file.documentId} file={file} onRemove={onRemove} />
       ))}
@@ -122,12 +140,7 @@ function ReplyFiles({
           onDismiss={() => onDismissRefusal(refusal.key)}
         />
       ))}
-      {files.length > 0 && limitBytes !== null && (
-        <span className="text-foreground-subtle self-center text-xs tabular-nums">
-          {t("{0} of {1}", formatFileSize(totalBytes(files)), formatFileSize(limitBytes))}
-        </span>
-      )}
-    </div>
+    </ReplyFileList>
   );
 }
 
@@ -545,19 +558,11 @@ export function ReplyComposer({
   );
 
   if (state.phase === "sent") {
-    const sentFiles = sentReply?.attachments ?? files;
     return (
       <StepBody className="gap-1.5">
         <p className="text-foreground-muted text-base leading-relaxed whitespace-pre-wrap">
           {sentReply?.body ?? body}
         </p>
-        {sentFiles.length > 0 && (
-          <div role="list" aria-label={t("Files")} className="flex flex-wrap gap-2">
-            {sentFiles.map((file) => (
-              <ReplyFileChip key={file.documentId} file={file} />
-            ))}
-          </div>
-        )}
       </StepBody>
     );
   }

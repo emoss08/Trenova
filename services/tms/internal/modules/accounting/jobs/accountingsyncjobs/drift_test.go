@@ -142,7 +142,7 @@ func TestDriftWorkflowsAndSchedulesAreRegistered(t *testing.T) {
 	}
 	require.True(t, names[accountingsynccontract.ReconcileAccountingDriftWorkflowName])
 	require.True(t, names[KickAccountingDriftWorkflowName])
-	require.True(t, names[AnnounceAccountingReconciliationWorkflow])
+	require.True(t, names[AnnounceAccountingReconciliationDueWorkflowName])
 
 	schedules := map[string]bool{}
 	for _, sched := range NewScheduleProvider().GetSchedules() {
