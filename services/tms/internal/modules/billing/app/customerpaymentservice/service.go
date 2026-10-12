@@ -534,7 +534,7 @@ func (s *Service) Reverse( //nolint:funlen // legacy workflow
 			if app == nil {
 				continue
 			}
-			invoices[idx].RemovePaymentMinor(app.AppliedAmountMinor)
+			invoices[idx].RemovePaymentMinor(app.SettledAmountMinor())
 			updatedInvoice, txErr := s.invoiceRepo.Update(txCtx, invoices[idx])
 			if txErr != nil {
 				return txErr
@@ -592,12 +592,7 @@ func (s *Service) Reverse( //nolint:funlen // legacy workflow
 			return txErr
 		}
 		if s.customerLedgerRepo != nil {
-			reverseAmount := payment.AppliedAmountMinor
-			for _, app := range payment.Applications {
-				if app != nil {
-					reverseAmount += app.ShortPayAmountMinor
-				}
-			}
+			reverseAmount := payment.AppliedAmountMinor + payment.ShortPayAmountMinor()
 			if txErr := s.customerLedgerRepo.AppendEntries(
 				txCtx,
 				[]*customerledger.CustomerLedgerEntry{
