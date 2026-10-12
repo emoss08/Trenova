@@ -28,13 +28,19 @@ type GetMailboxByIDRequest struct {
 }
 
 type ListInboundMessagesRequest struct {
-	Filter         *pagination.QueryOptions      `json:"filter"`
-	Cursor         pagination.CursorInfo         `json:"-"`
-	Statuses       []inboundmessage.Status       `json:"statuses"`
-	Classification inboundmessage.Classification `json:"classification"`
-	MailboxID      pulid.ID                      `json:"mailboxId"`
-	ShipmentID     pulid.ID                      `json:"shipmentId"`
-	Since          int64                         `json:"since"`
+	Filter          *pagination.QueryOptions      `json:"filter"`
+	Cursor          pagination.CursorInfo         `json:"-"`
+	Statuses        []inboundmessage.Status       `json:"statuses"`
+	Classification  inboundmessage.Classification `json:"classification"`
+	MailboxID       pulid.ID                      `json:"mailboxId"`
+	ShipmentID      pulid.ID                      `json:"shipmentId"`
+	Since           int64                         `json:"since"`
+	Lane            Lane                          `json:"lane"`
+	Sort            Sort                          `json:"sort"`
+	CollapseThreads bool                          `json:"collapseThreads"`
+	ThreadKey       string                        `json:"threadKey"`
+	OwnerID         pulid.ID                      `json:"ownerId"`
+	ViewerID        pulid.ID                      `json:"-"`
 }
 
 type GetInboundMessageByIDRequest struct {

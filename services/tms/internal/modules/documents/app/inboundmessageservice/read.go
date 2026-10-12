@@ -26,6 +26,11 @@ const maxReviewNoteLength = 2000
 // the others are what make it a lane rather than a list.
 type Counts struct {
 	Waiting          int                   `json:"waiting"`
+	WaitingOnThem    int                   `json:"waitingOnThem"`
+	Snoozed          int                   `json:"snoozed"`
+	AssignedToMe     int                   `json:"assignedToMe"`
+	Overdue          int                   `json:"overdue"`
+	Processing       int                   `json:"processing"`
 	Handled          int                   `json:"handled"`
 	Ignored          int                   `json:"ignored"`
 	Quarantined      int                   `json:"quarantined"`

@@ -1,0 +1,315 @@
+"Where a reply is."
+enum InboundReplyStatus {
+  Draft
+  Sending
+  Sent
+  "The provider refused it; failureText says why."
+  Failed
+}
+
+"A reply from a monitored address, stored with what the provider said about it."
+type InboundReply {
+  id: ID!
+  messageId: ID!
+  status: InboundReplyStatus!
+  fromAddress: String!
+  toAddress: String!
+  ccAddresses: [String!]!
+  subject: String!
+  body: String!
+  draftedByNova: Boolean!
+  templateId: ID
+  "Why the provider refused it."
+  failureText: String!
+  "Another address at the sender that is likely to accept it."
+  suggestedAddress: String
+  sentBy: User
+  sentAt: Timestamp
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input SendInboundReplyInput {
+  messageId: ID!
+  subject: String!
+  body: String!
+  "Another address to send to instead of the sender, after a refusal."
+  toAddress: String
+  templateId: ID
+  "The body is Nova's draft, sent as written or after edits."
+  draftedByNova: Boolean = false
+}
+
+"A reply people reuse, with placeholders filled in from the message and its shipment."
+type TriageReplyTemplate {
+  id: ID!
+  name: String!
+  "The text, with placeholders such as {first}, {pro}, {status}, {eta}, {lane}, {customer} and {po}."
+  body: String!
+  createdBy: User
+  version: Int!
+  createdAt: Timestamp!
+}
+
+input TriageReplyTemplateInput {
+  name: String!
+  body: String!
+}
+
+"A field of a load Nova drafted."
+enum TriageLoadFieldKey {
+  Customer
+  Origin
+  Destination
+  Pickup
+  Delivery
+  Equipment
+  Weight
+  Rate
+  Loads
+  WeekOf
+  RespondBy
+  Reference
+  Commodity
+  Instructions
+}
+
+type TriageLoadField {
+  key: TriageLoadFieldKey!
+  "Blank when Nova could not read it."
+  value: String!
+}
+
+"A load Nova drafted from a message, waiting for a person to check it."
+type TriageLoadDraft {
+  "The file it was read from; blank when it was read from the message text."
+  source: String!
+  fields: [TriageLoadField!]!
+  draftedAt: Timestamp!
+  draftedByNova: Boolean!
+}
+
+input TriageLoadFieldInput {
+  key: TriageLoadFieldKey!
+  value: String!
+}
+
+"A page range of a file, filed as its own document."
+input InboundAttachmentPagesInput {
+  fromPage: Int!
+  toPage: Int!
+  "The document type id to file the range as."
+  documentTypeId: ID!
+}
+
+input FileInboundAttachmentInput {
+  attachmentId: ID!
+  shipmentId: ID!
+  "The document type id to file it as. Ignored when pages are given."
+  documentTypeId: ID
+  "File page ranges as separate documents instead of the whole file."
+  pages: [InboundAttachmentPagesInput!]
+}
+
+input LogInboundExceptionInput {
+  kind: TriageExceptionKind!
+  quantity: Int!
+  "What was short, over or damaged: pallets, cases, pieces."
+  unit: String!
+  note: String
+}
+
+"One field of a document, as the extraction read it."
+type InboundDocumentField {
+  label: String!
+  value: String!
+  tone: TriageFactTone!
+}
+
+"What Nova read from an attached document."
+type InboundDocumentReading {
+  documentType: String!
+  confidence: Float!
+  pageCount: Int!
+  fields: [InboundDocumentField!]!
+}
+
+extend type InboundAttachment {
+  "What the extraction read from the document, once it has."
+  reading: InboundDocumentReading
+}
+
+"A step a message asks for."
+enum TriageActionKind {
+  File
+  BuildLoad
+  Reply
+  CheckStops
+  LogException
+  BlockSender
+  Link
+}
+
+"What a reply is for."
+enum TriageReplyPurpose {
+  ConfirmTender
+  AcceptTender
+  AnswerDispute
+  ReturnSigned
+  AskResend
+  SendEta
+}
+
+"How a detention dispute was settled after the stop times were checked."
+enum TriageStopsDecision {
+  Waive
+  StandBy
+}
+
+"A shortage, overage or damage noted on a delivery."
+enum TriageExceptionKind {
+  Shortage
+  Overage
+  Damage
+}
+
+"""
+One step a message asks for, in the order to do them. Worked out on the server
+from the message's state, so the reader, the action bar and the briefing agree.
+"""
+type TriageAction {
+  "Stable within a message: file:<attachment id>, load, reply, stops, exception, block or link."
+  id: String!
+  kind: TriageActionKind!
+  done: Boolean!
+  "Nova can do this step itself."
+  novaCanDo: Boolean!
+  attachment: InboundAttachment
+  "The shipment the step is about."
+  shipment: InboundShipmentRef
+  replyPurpose: TriageReplyPurpose
+  "For a reply asking for a file again, the file that was refused."
+  refusedFileName: String
+  reply: InboundReply
+  "Nova drafted the load and it waits for a look."
+  loadDrafted: Boolean!
+  "The shipment the step created."
+  createdShipment: InboundShipmentRef
+  stopsDecision: TriageStopsDecision
+  exceptionKind: TriageExceptionKind
+  completedAt: Timestamp
+}
+
+extend type InboundMessage {
+  "The steps it asks for."
+  actions: [TriageAction!]!
+  "Replies sent or drafted, oldest first."
+  replies: [InboundReply!]!
+  "The reply still being written, where there is one."
+  replyDraft: InboundReply
+  "The load Nova drafted, waiting for a look."
+  loadDraft: TriageLoadDraft
+}
+
+"The stop times a detention dispute turns on, read from the shipment."
+type TriageStopTimes {
+  shipment: InboundShipmentRef!
+  stopName: String!
+  appointmentStart: Timestamp
+  appointmentEnd: Timestamp
+  arrivedAt: Timestamp
+  checkedInAt: Timestamp
+  departedAt: Timestamp
+  "Minutes after the appointment window closed; zero when on time."
+  lateMinutes: Int!
+  billedDetentionMinutes: Int!
+  billedDetentionAmount: Decimal
+  "Whether the customer's terms pay detention on a late arrival."
+  detentionPaysWhenLate: Boolean!
+  "Where the arrival time came from: ELD, geofence or a person."
+  arrivalSource: String!
+}
+
+"A stop on a shipment peek."
+type TriagePeekStop {
+  kind: String!
+  city: String!
+  state: String!
+  scheduledAt: Timestamp
+  arrivedAt: Timestamp
+  departedAt: Timestamp
+  done: Boolean!
+}
+
+"A shipment, as a peek shows it."
+type TriageShipmentPeek {
+  id: ID!
+  proNumber: String!
+  bol: String!
+  poNumber: String!
+  status: String!
+  customerName: String!
+  equipment: String!
+  driverName: String!
+  "How far along the route it is, from 0 to 1."
+  progress: Float!
+  late: Boolean!
+  eta: Timestamp
+  deliveredAt: Timestamp
+  stops: [TriagePeekStop!]!
+  "Document types already on file."
+  documentsOnFile: [String!]!
+}
+
+"A customer, as a peek shows it."
+type TriageCustomerPeek {
+  id: ID!
+  code: String!
+  name: String!
+  since: Timestamp!
+  shipmentsThisWeek: Int!
+  waitingInTriage: Int!
+  shipments: [TriageShipmentPeek!]!
+  messages: [TriageSample!]!
+}
+
+extend type Query {
+  triageReplyTemplates: [TriageReplyTemplate!]!
+  "A template with its placeholders filled in from a message and its shipment."
+  renderTriageReplyTemplate(templateId: ID!, messageId: ID!): String!
+  triageStopTimes(messageId: ID!): TriageStopTimes
+  triageShipmentPeek(shipmentId: ID!): TriageShipmentPeek!
+  triageCustomerPeek(customerId: ID!): TriageCustomerPeek!
+}
+
+extend type Mutation {
+  "Has Nova draft a reply. It is stored as the message's draft."
+  draftInboundReply(messageId: ID!): InboundReply!
+  "Saves what a person wrote as the message's draft."
+  saveInboundReplyDraft(messageId: ID!, subject: String!, body: String!): InboundReply!
+  discardInboundReplyDraft(messageId: ID!): InboundMessage!
+  "Sends a reply from the mailbox's address. A refusal comes back as a Failed reply, not an error."
+  sendInboundReply(input: SendInboundReplyInput!): InboundReply!
+  "Has Nova draft replies or loads for many messages; they arrive as each is ready."
+  draftInboundMany(messageIds: [ID!]!): Int!
+  createTriageReplyTemplate(input: TriageReplyTemplateInput!): TriageReplyTemplate!
+  updateTriageReplyTemplate(id: ID!, version: Int!, input: TriageReplyTemplateInput!): TriageReplyTemplate!
+  deleteTriageReplyTemplate(id: ID!): Boolean!
+  "Has Nova draft the load a message describes."
+  draftInboundLoad(messageId: ID!): InboundMessage!
+  discardInboundLoad(messageId: ID!): InboundMessage!
+  "Creates the load from the checked draft, as a new shipment."
+  createInboundLoad(messageId: ID!, fields: [TriageLoadFieldInput!]!): InboundMessage!
+  "Files an attachment on a shipment, whole or split into page ranges."
+  fileInboundAttachment(input: FileInboundAttachmentInput!): InboundMessage!
+  "Files every readable attachment of each message on its matched shipment."
+  fileInboundMany(messageIds: [ID!]!): TriageBulkResult!
+  unfileInboundAttachment(attachmentId: ID!): InboundMessage!
+  "Adds a shortage, overage or damage exception to the matched shipment."
+  logInboundException(messageId: ID!, input: LogInboundExceptionInput!): InboundMessage!
+  "Sends the sender's future mail on this source straight to Ignored, and ignores this message."
+  blockInboundSender(messageId: ID!): InboundMessage!
+  unblockInboundSender(mailboxId: ID!, sender: String!): InboundMailbox!
+  "Records what to do about a detention dispute after checking the stop times, and drafts the reply."
+  decideInboundStops(messageId: ID!, decision: TriageStopsDecision!): InboundMessage!
+}

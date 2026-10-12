@@ -12,6 +12,8 @@ type Deps struct {
 	InboundMessageService *inboundmessageservice.Service
 }
 
+type InboundActivityResolver struct{ *Deps }
+
 type InboundAttachmentResolver struct{ *Deps }
 
 type InboundMailboxCredentialsResolver struct{ *Deps }
@@ -20,6 +22,18 @@ type InboundMailboxResolver struct{ *Deps }
 
 type InboundMessageResolver struct{ *Deps }
 
+type InboundSnoozeResolver struct{ *Deps }
+
+type InboundSplitDocumentResolver struct{ *Deps }
+
 type MutationResolver struct{ *Deps }
 
 type QueryResolver struct{ *Deps }
+
+type TriageAssigneeResolver struct{ *Deps }
+
+type TriageHandOffResolver struct{ *Deps }
+
+type TriageSettingsResolver struct{ *Deps }
+
+type TriageViewResolver struct{ *Deps }

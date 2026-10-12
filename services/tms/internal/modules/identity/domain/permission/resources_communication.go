@@ -49,6 +49,16 @@ func (r *Registry) registerCommunicationResources() {
 				DisplayName: "Review",
 				Description: "Link a message to a record, reply to it, or mark it handled",
 			},
+			{
+				Operation:   OpAssign,
+				DisplayName: "Assign",
+				Description: "Assign messages to other people and hand the queue off",
+			},
+			{
+				Operation:   OpManage,
+				DisplayName: "Manage",
+				Description: "Set the rules Nova follows, reply templates and response targets",
+			},
 		},
 		DefaultSensitivity: SensitivityInternal,
 	})

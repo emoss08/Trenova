@@ -7,6 +7,7 @@ package inboundmessageresolver
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -15,8 +16,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/inboundhandler"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -425,4 +428,240 @@ func (r *MutationResolver) SetInboundMailboxAPIKey(ctx context.Context, id strin
 		ID:     mailboxID,
 		APIKey: apiKey,
 	})
+}
+
+func (r *InboundActivityResolver) Actor(ctx context.Context, obj *triage.Activity) (*tenant.User, error) {
+	panic(fmt.Errorf("not implemented: Actor - actor"))
+}
+
+func (r *InboundActivityResolver) Until(ctx context.Context, obj *triage.Activity) (*int, error) {
+	panic(fmt.Errorf("not implemented: Until - until"))
+}
+
+func (r *InboundActivityResolver) FromClassification(ctx context.Context, obj *triage.Activity) (*inboundmessage.Classification, error) {
+	panic(fmt.Errorf("not implemented: FromClassification - fromClassification"))
+}
+
+func (r *InboundActivityResolver) ToClassification(ctx context.Context, obj *triage.Activity) (*inboundmessage.Classification, error) {
+	panic(fmt.Errorf("not implemented: ToClassification - toClassification"))
+}
+
+func (r *InboundActivityResolver) RecordID(ctx context.Context, obj *triage.Activity) (*string, error) {
+	panic(fmt.Errorf("not implemented: RecordID - recordId"))
+}
+
+func (r *InboundAttachmentResolver) FiledShipmentID(ctx context.Context, obj *inboundmessage.InboundAttachment) (*string, error) {
+	panic(fmt.Errorf("not implemented: FiledShipmentID - filedShipmentId"))
+}
+
+func (r *InboundAttachmentResolver) FiledShipment(ctx context.Context, obj *inboundmessage.InboundAttachment) (*shipmentports.ShipmentSummary, error) {
+	panic(fmt.Errorf("not implemented: FiledShipment - filedShipment"))
+}
+
+func (r *InboundAttachmentResolver) FiledAs(ctx context.Context, obj *inboundmessage.InboundAttachment) (*string, error) {
+	panic(fmt.Errorf("not implemented: FiledAs - filedAs"))
+}
+
+func (r *InboundAttachmentResolver) FiledAt(ctx context.Context, obj *inboundmessage.InboundAttachment) (*int, error) {
+	panic(fmt.Errorf("not implemented: FiledAt - filedAt"))
+}
+
+func (r *InboundAttachmentResolver) Pages(ctx context.Context, obj *inboundmessage.InboundAttachment) ([]*inboundmessage.AttachmentPage, error) {
+	panic(fmt.Errorf("not implemented: Pages - pages"))
+}
+
+func (r *InboundAttachmentResolver) SplitDocuments(ctx context.Context, obj *inboundmessage.InboundAttachment) ([]*inboundmessage.SplitDocument, error) {
+	panic(fmt.Errorf("not implemented: SplitDocuments - splitDocuments"))
+}
+
+func (r *InboundMailboxResolver) LastReceivedAt(ctx context.Context, obj *inboundmessage.Mailbox) (*int, error) {
+	panic(fmt.Errorf("not implemented: LastReceivedAt - lastReceivedAt"))
+}
+
+func (r *InboundMailboxResolver) Health(ctx context.Context, obj *inboundmessage.Mailbox) (inboundmessage.SourceHealth, error) {
+	panic(fmt.Errorf("not implemented: Health - health"))
+}
+
+func (r *InboundMailboxResolver) TestSentAt(ctx context.Context, obj *inboundmessage.Mailbox) (*int, error) {
+	panic(fmt.Errorf("not implemented: TestSentAt - testSentAt"))
+}
+
+func (r *InboundMailboxResolver) TestReceivedAt(ctx context.Context, obj *inboundmessage.Mailbox) (*int, error) {
+	panic(fmt.Errorf("not implemented: TestReceivedAt - testReceivedAt"))
+}
+
+func (r *InboundMailboxResolver) BlockedSenders(ctx context.Context, obj *inboundmessage.Mailbox) ([]string, error) {
+	panic(fmt.Errorf("not implemented: BlockedSenders - blockedSenders"))
+}
+
+func (r *InboundMessageResolver) ThreadCount(ctx context.Context, obj *inboundmessage.InboundMessage) (int, error) {
+	panic(fmt.Errorf("not implemented: ThreadCount - threadCount"))
+}
+
+func (r *InboundMessageResolver) OwnerID(ctx context.Context, obj *inboundmessage.InboundMessage) (*string, error) {
+	panic(fmt.Errorf("not implemented: OwnerID - ownerId"))
+}
+
+func (r *InboundMessageResolver) Owner(ctx context.Context, obj *inboundmessage.InboundMessage) (*tenant.User, error) {
+	panic(fmt.Errorf("not implemented: Owner - owner"))
+}
+
+func (r *InboundMessageResolver) DueAt(ctx context.Context, obj *inboundmessage.InboundMessage) (*int, error) {
+	panic(fmt.Errorf("not implemented: DueAt - dueAt"))
+}
+
+func (r *InboundMessageResolver) ResponseTargetMinutes(ctx context.Context, obj *inboundmessage.InboundMessage) (int, error) {
+	panic(fmt.Errorf("not implemented: ResponseTargetMinutes - responseTargetMinutes"))
+}
+
+func (r *InboundMessageResolver) Snooze(ctx context.Context, obj *inboundmessage.InboundMessage) (*inboundmessageports.SnoozeView, error) {
+	panic(fmt.Errorf("not implemented: Snooze - snooze"))
+}
+
+func (r *InboundMessageResolver) AwaitingReply(ctx context.Context, obj *inboundmessage.InboundMessage) (*inboundmessageports.AwaitingReplyView, error) {
+	panic(fmt.Errorf("not implemented: AwaitingReply - awaitingReply"))
+}
+
+func (r *InboundMessageResolver) HandledByNova(ctx context.Context, obj *inboundmessage.InboundMessage) (bool, error) {
+	panic(fmt.Errorf("not implemented: HandledByNova - handledByNova"))
+}
+
+func (r *InboundMessageResolver) HandledByRuleID(ctx context.Context, obj *inboundmessage.InboundMessage) (*string, error) {
+	panic(fmt.Errorf("not implemented: HandledByRuleID - handledByRuleId"))
+}
+
+func (r *InboundMessageResolver) HandledAction(ctx context.Context, obj *inboundmessage.InboundMessage) (*inboundmessage.NovaAction, error) {
+	panic(fmt.Errorf("not implemented: HandledAction - handledAction"))
+}
+
+func (r *InboundMessageResolver) Reviewer(ctx context.Context, obj *inboundmessage.InboundMessage) (*tenant.User, error) {
+	panic(fmt.Errorf("not implemented: Reviewer - reviewer"))
+}
+
+func (r *InboundMessageResolver) Activity(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*triage.Activity, error) {
+	panic(fmt.Errorf("not implemented: Activity - activity"))
+}
+
+func (r *InboundSnoozeResolver) WatchShipment(ctx context.Context, obj *inboundmessageports.SnoozeView) (*shipmentports.ShipmentSummary, error) {
+	panic(fmt.Errorf("not implemented: WatchShipment - watchShipment"))
+}
+
+func (r *InboundSnoozeResolver) DocumentTypeName(ctx context.Context, obj *inboundmessageports.SnoozeView) (*string, error) {
+	panic(fmt.Errorf("not implemented: DocumentTypeName - documentTypeName"))
+}
+
+func (r *InboundSnoozeResolver) SnoozedBy(ctx context.Context, obj *inboundmessageports.SnoozeView) (*tenant.User, error) {
+	panic(fmt.Errorf("not implemented: SnoozedBy - snoozedBy"))
+}
+
+func (r *InboundSplitDocumentResolver) DocumentID(ctx context.Context, obj *inboundmessage.SplitDocument) (string, error) {
+	panic(fmt.Errorf("not implemented: DocumentID - documentId"))
+}
+
+func (r *MutationResolver) ReviewInboundMessages(ctx context.Context, selection gqlmodel.TriageSelectionInput, input gqlmodel.BulkReviewInboundMessagesInput) (*inboundmessageports.BulkResult, error) {
+	panic(fmt.Errorf("not implemented: ReviewInboundMessages - reviewInboundMessages"))
+}
+
+func (r *MutationResolver) ReopenInboundMessages(ctx context.Context, selection gqlmodel.TriageSelectionInput) (*inboundmessageports.BulkResult, error) {
+	panic(fmt.Errorf("not implemented: ReopenInboundMessages - reopenInboundMessages"))
+}
+
+func (r *MutationResolver) AssignInboundMessages(ctx context.Context, selection gqlmodel.TriageSelectionInput, ownerID *string) (*inboundmessageports.BulkResult, error) {
+	panic(fmt.Errorf("not implemented: AssignInboundMessages - assignInboundMessages"))
+}
+
+func (r *MutationResolver) SnoozeInboundMessages(ctx context.Context, selection gqlmodel.TriageSelectionInput, input gqlmodel.SnoozeInboundMessagesInput) (*inboundmessageports.BulkResult, error) {
+	panic(fmt.Errorf("not implemented: SnoozeInboundMessages - snoozeInboundMessages"))
+}
+
+func (r *MutationResolver) WakeInboundMessage(ctx context.Context, id string) (*inboundmessage.InboundMessage, error) {
+	panic(fmt.Errorf("not implemented: WakeInboundMessage - wakeInboundMessage"))
+}
+
+func (r *MutationResolver) WaitForInboundReply(ctx context.Context, id string, until int) (*inboundmessage.InboundMessage, error) {
+	panic(fmt.Errorf("not implemented: WaitForInboundReply - waitForInboundReply"))
+}
+
+func (r *MutationResolver) StopWaitingForInboundReply(ctx context.Context, id string) (*inboundmessage.InboundMessage, error) {
+	panic(fmt.Errorf("not implemented: StopWaitingForInboundReply - stopWaitingForInboundReply"))
+}
+
+func (r *MutationResolver) UnlinkInboundMessage(ctx context.Context, id string, record gqlmodel.InboundLinkedRecord) (*inboundmessage.InboundMessage, error) {
+	panic(fmt.Errorf("not implemented: UnlinkInboundMessage - unlinkInboundMessage"))
+}
+
+func (r *MutationResolver) SendInboundMailboxTest(ctx context.Context, id string) (*inboundmessage.Mailbox, error) {
+	panic(fmt.Errorf("not implemented: SendInboundMailboxTest - sendInboundMailboxTest"))
+}
+
+func (r *MutationResolver) HandOffTriage(ctx context.Context, toUserID string) (*inboundmessageports.HandOffResult, error) {
+	panic(fmt.Errorf("not implemented: HandOffTriage - handOffTriage"))
+}
+
+func (r *MutationResolver) ReadUnreadInboundMessages(ctx context.Context) (int, error) {
+	panic(fmt.Errorf("not implemented: ReadUnreadInboundMessages - readUnreadInboundMessages"))
+}
+
+func (r *MutationResolver) CreateMyTriageView(ctx context.Context, name string, query string) (*triage.View, error) {
+	panic(fmt.Errorf("not implemented: CreateMyTriageView - createMyTriageView"))
+}
+
+func (r *MutationResolver) RenameMyTriageView(ctx context.Context, id string, name string) (*triage.View, error) {
+	panic(fmt.Errorf("not implemented: RenameMyTriageView - renameMyTriageView"))
+}
+
+func (r *MutationResolver) DeleteMyTriageView(ctx context.Context, id string) (bool, error) {
+	panic(fmt.Errorf("not implemented: DeleteMyTriageView - deleteMyTriageView"))
+}
+
+func (r *MutationResolver) UpdateTriageResponseTargets(ctx context.Context, input []*gqlmodel.TriageResponseTargetInput) ([]*inboundmessageports.ResponseTargetView, error) {
+	panic(fmt.Errorf("not implemented: UpdateTriageResponseTargets - updateTriageResponseTargets"))
+}
+
+func (r *MutationResolver) UpdateTriageSettings(ctx context.Context, input gqlmodel.TriageSettingsInput) (*triage.Settings, error) {
+	panic(fmt.Errorf("not implemented: UpdateTriageSettings - updateTriageSettings"))
+}
+
+func (r *QueryResolver) InboundThread(ctx context.Context, threadKey string) ([]*inboundmessage.InboundMessage, error) {
+	panic(fmt.Errorf("not implemented: InboundThread - inboundThread"))
+}
+
+func (r *QueryResolver) MyTriageViews(ctx context.Context) ([]*triage.View, error) {
+	panic(fmt.Errorf("not implemented: MyTriageViews - myTriageViews"))
+}
+
+func (r *QueryResolver) TriageResponseTargets(ctx context.Context) ([]*inboundmessageports.ResponseTargetView, error) {
+	panic(fmt.Errorf("not implemented: TriageResponseTargets - triageResponseTargets"))
+}
+
+func (r *QueryResolver) TriageSettings(ctx context.Context) (*triage.Settings, error) {
+	panic(fmt.Errorf("not implemented: TriageSettings - triageSettings"))
+}
+
+func (r *QueryResolver) TriageAssignees(ctx context.Context) ([]*inboundmessageports.AssigneeView, error) {
+	panic(fmt.Errorf("not implemented: TriageAssignees - triageAssignees"))
+}
+
+func (r *TriageAssigneeResolver) User(ctx context.Context, obj *inboundmessageports.AssigneeView) (*tenant.User, error) {
+	panic(fmt.Errorf("not implemented: User - user"))
+}
+
+func (r *TriageHandOffResolver) To(ctx context.Context, obj *inboundmessageports.HandOffResult) (*tenant.User, error) {
+	panic(fmt.Errorf("not implemented: To - to"))
+}
+
+func (r *TriageSettingsResolver) OnCallUser(ctx context.Context, obj *triage.Settings) (*tenant.User, error) {
+	panic(fmt.Errorf("not implemented: OnCallUser - onCallUser"))
+}
+
+func (r *TriageSettingsResolver) OnCallUserID(ctx context.Context, obj *triage.Settings) (*string, error) {
+	panic(fmt.Errorf("not implemented: OnCallUserID - onCallUserId"))
+}
+
+func (r *TriageSettingsResolver) Timezone(ctx context.Context, obj *triage.Settings) (string, error) {
+	panic(fmt.Errorf("not implemented: Timezone - timezone"))
+}
+
+func (r *TriageViewResolver) Waiting(ctx context.Context, obj *triage.View) (int, error) {
+	panic(fmt.Errorf("not implemented: Waiting - waiting"))
 }

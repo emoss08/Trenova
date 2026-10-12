@@ -356,6 +356,7 @@ modules:
       - extractionrollout
       - extractionshadow
       - inboundmessage
+      - triage
     service:
       - capturereleaseservice
       - captureservice

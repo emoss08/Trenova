@@ -2,12 +2,14 @@ package inboundmessage
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/emailutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -59,6 +61,11 @@ type Mailbox struct {
 	ReviewPolicy   ReviewPolicy  `json:"reviewPolicy"  bun:"review_policy,type:VARCHAR(30),notnull"`
 	MinConfidence  float64       `json:"minConfidence" bun:"min_confidence,type:NUMERIC(4,3),notnull"`
 	Status         MailboxStatus `json:"status"        bun:"status,type:VARCHAR(20),notnull"`
+	LastReceivedAt int64         `json:"lastReceivedAt" bun:"last_received_at,type:BIGINT,nullzero"`
+	TestToken      string        `json:"-"              bun:"test_token,type:VARCHAR(64),nullzero"`
+	TestSentAt     int64         `json:"testSentAt"     bun:"test_sent_at,type:BIGINT,nullzero"`
+	TestReceivedAt int64         `json:"testReceivedAt" bun:"test_received_at,type:BIGINT,nullzero"`
+	BlockedSenders []string      `json:"blockedSenders" bun:"blocked_senders,type:JSONB,nullzero"`
 	Version        int64         `json:"version"       bun:"version,type:BIGINT"`
 	CreatedAt      int64         `json:"createdAt"     bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64         `json:"updatedAt"     bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -116,6 +123,33 @@ func (m *Mailbox) HandlesWithoutReview(confidence float64) bool {
 	default:
 		return false
 	}
+}
+
+func (m *Mailbox) Blocks(address string) bool {
+	if len(m.BlockedSenders) == 0 {
+		return false
+	}
+	domain := emailutils.Domain(address)
+	normalized := strings.ToLower(strings.TrimSpace(address))
+	for _, blocked := range m.BlockedSenders {
+		if blocked == normalized {
+			return true
+		}
+		if !strings.Contains(blocked, "@") && emailutils.DomainAllowed(domain, []string{blocked}) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (m *Mailbox) Health(now int64) SourceHealth {
+	return HealthOf(SourceHealthInput{
+		Status:         m.Status,
+		CreatedAt:      m.CreatedAt,
+		LastReceivedAt: m.LastReceivedAt,
+		Now:            now,
+	})
 }
 
 func (m *Mailbox) BeforeAppendModel(_ context.Context, query bun.Query) error {
