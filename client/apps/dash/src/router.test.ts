@@ -166,7 +166,10 @@ describe("dash signed-in route revalidation", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (input: RequestInfo | URL) => {
-        const url = new URL(input instanceof Request ? input.url : String(input), "http://localhost");
+        const url = new URL(
+          input instanceof Request ? input.url : String(input),
+          "http://localhost",
+        );
         if (!url.pathname.endsWith("/users/me/")) {
           throw new Error(`unexpected request to ${url.pathname}`);
         }

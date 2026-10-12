@@ -146,10 +146,12 @@ describe("revalidateOnPathChange", () => {
     ).toBe(false);
   });
 
-  // revalidate() keeps the URL as it is; it is an explicit request for fresh data.
-  it("defers to the router on an explicit revalidate", () => {
+  // A navigation to the URL already shown (keys pressed faster than navigations commit) is
+  // indistinguishable from revalidate() here; the session and permission checks answer the
+  // same either way, and a 401 on any request still ends the session.
+  it("skips a navigation to the URL already shown", () => {
     expect(revalidateOnPathChange(revalidation("/triage?message=a", "/triage?message=a"))).toBe(
-      true,
+      false,
     );
   });
 

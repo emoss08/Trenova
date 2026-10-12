@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   STEP_READ_AHEAD,
   TRIAGE_KEYMAP,
+  createStepCursor,
   loadAheadOfReader,
   nextAfterLeaving,
   resolveTriageKey,
@@ -104,6 +105,33 @@ describe("moving through a folder", () => {
     expect(stepFrom(ids, "m1", -1)).toBe("m1");
     expect(stepFrom(ids, "gone", 1)).toBe("m1");
     expect(stepFrom([], null, 1)).toBeNull();
+  });
+
+  it("counts every key pressed before the last step has opened", () => {
+    const ids = ["m1", "m2", "m3", "m4", "m5"];
+    const cursor = createStepCursor();
+    let open: string | null = "m1";
+    const press = () => {
+      const next = stepFrom(ids, cursor.from(open), 1);
+      if (next !== null) {
+        cursor.aim(next);
+      }
+    };
+
+    press();
+    press();
+    press();
+    expect(cursor.from(open)).toBe("m4");
+
+    open = "m2";
+    cursor.settle(open);
+    expect(cursor.from(open)).toBe("m4");
+
+    open = "m4";
+    cursor.settle(open);
+    expect(cursor.from(open)).toBe("m4");
+    open = "m3";
+    expect(cursor.from(open)).toBe("m3");
   });
 
   it("fetches the folder's next page before the reader reaches the last loaded row", () => {

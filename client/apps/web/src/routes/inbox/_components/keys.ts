@@ -151,6 +151,37 @@ export function resolveTriageKey(press: KeyPress, context: KeyContext): TriageCo
 }
 
 /** Where the open message moves on J or K: the first at either end when nothing is open. */
+export type StepCursor = {
+  /** The message the next step moves from. */
+  from: (open: string | null) => string | null;
+  /** Records the message a step has asked to open. */
+  aim: (id: string | null) => void;
+  /** Called with the message that is open now; forgets the aim once it has opened. */
+  settle: (open: string | null) => void;
+};
+
+/**
+ * Where J and K step from. A step opens its message through the URL, which
+ * takes a moment to commit; keys pressed in between would read the message
+ * still open and all land on the same one. The cursor steps from the message
+ * the last step aimed at until that message is the one open.
+ */
+export function createStepCursor(): StepCursor {
+  let aimed: string | null = null;
+
+  return {
+    from: (open) => aimed ?? open,
+    aim: (id) => {
+      aimed = id;
+    },
+    settle: (open) => {
+      if (open === aimed) {
+        aimed = null;
+      }
+    },
+  };
+}
+
 /** How long the reader stays on a message before it is fetched and its neighbours read ahead. */
 export const STEP_SETTLE_MS = 150;
 

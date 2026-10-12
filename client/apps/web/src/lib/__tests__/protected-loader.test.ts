@@ -238,7 +238,10 @@ describe("signed-in route revalidation", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (input: RequestInfo | URL) => {
-        const url = new URL(input instanceof Request ? input.url : String(input), "http://localhost");
+        const url = new URL(
+          input instanceof Request ? input.url : String(input),
+          "http://localhost",
+        );
         if (!url.pathname.endsWith("/users/me/")) {
           throw new Error(`unexpected request to ${url.pathname}`);
         }
@@ -295,13 +298,19 @@ describe("signed-in route revalidation", () => {
     router.dispose();
   });
 
-  it("re-runs the session check on an explicit revalidate", async () => {
+  // Keys pressed faster than a navigation commits read the message that is still open, so
+  // each one navigates to the URL already shown. The router treats that like revalidate(),
+  // and re-running the session check on each kept a navigation pending for good.
+  it("does not re-run the session check when quick steps land on the URL already shown", async () => {
     const router = await startAt("/billing/invoices?status=open");
     const afterLoad = sessionChecks;
 
-    await router.revalidate();
+    for (let step = 0; step < 5; step += 1) {
+      await router.navigate("/billing/invoices?status=open");
+    }
 
-    expect(sessionChecks).toBeGreaterThan(afterLoad);
+    expect(router.state.errors).toBeNull();
+    expect(sessionChecks).toBe(afterLoad);
     router.dispose();
   });
 

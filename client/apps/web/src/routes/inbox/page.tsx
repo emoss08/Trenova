@@ -35,6 +35,7 @@ import {
   useLayoutEffect,
   useMemo,
   useRef,
+  useState,
   type ReactNode,
 } from "react";
 import { useNavigate, useSearchParams } from "react-router";
@@ -58,6 +59,7 @@ import {
   type TriageFolder,
 } from "./_components/folders";
 import {
+  createStepCursor,
   loadAheadOfReader,
   STEP_SETTLE_MS,
   stepFrom,
@@ -293,9 +295,11 @@ function TriageWorkspace({
   );
 
   const state = useRef<WorkspaceState>({ openId, orderedIds, filter, wide });
+  const [stepCursor] = useState(createStepCursor);
   useLayoutEffect(() => {
     const snapshot = { openId, orderedIds, filter, wide };
     state.current = snapshot;
+    stepCursor.settle(openId);
     publish(snapshot);
   });
 
@@ -305,16 +309,19 @@ function TriageWorkspace({
     [setSearchParams],
   );
   const openMessage = useCallback(
-    (id: string | null, replace = false) =>
-      update((current) => messageParams(current, id), replace),
-    [update],
+    (id: string | null, replace = false) => {
+      stepCursor.aim(id);
+      update((current) => messageParams(current, id), replace);
+    },
+    [update, stepCursor],
   );
   const selectFolder = useCallback(
     (next: TriageFolder) => {
+      stepCursor.aim(null);
       useTriageStore.getState().clearSelection();
       update((current) => folderParams(current, next));
     },
-    [update],
+    [update, stepCursor],
   );
 
   const commitSearch = useCallback(
@@ -432,8 +439,9 @@ function TriageWorkspace({
           return;
         case "next":
         case "previous": {
-          const next = stepFrom(state.current.orderedIds, current, command === "next" ? 1 : -1);
-          if (next !== null && next !== current) {
+          const from = stepCursor.from(current);
+          const next = stepFrom(state.current.orderedIds, from, command === "next" ? 1 : -1);
+          if (next !== null && next !== from) {
             openMessage(next);
           }
           return;
@@ -497,7 +505,7 @@ function TriageWorkspace({
           return;
       }
     },
-    [actions, openMessage, queryClient, selectFolder, state],
+    [actions, openMessage, queryClient, selectFolder, state, stepCursor],
   );
 
   useTriageKeys({
@@ -709,8 +717,9 @@ function TriageWorkspace({
                     settled={openId === settledOpenId}
                     onClose={() => openMessage(null)}
                     onStep={(direction) => {
-                      const next = stepFrom(orderedIds, openId, direction);
-                      if (next !== null) {
+                      const from = stepCursor.from(openId);
+                      const next = stepFrom(orderedIds, from, direction);
+                      if (next !== null && next !== from) {
                         openMessage(next);
                       }
                     }}

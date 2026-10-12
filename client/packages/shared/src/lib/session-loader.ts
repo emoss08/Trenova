@@ -30,12 +30,13 @@ export async function requireSession(loginPath: string): Promise<Response | null
 }
 
 /**
- * Skips a revalidation that only changed the search or the hash of the same path, and
- * defers to the router for anything else: a new path, a form submission, or an explicit
- * revalidate() (which keeps the URL exactly as it is). A page that keeps its state in the
- * search — Triage's open message, a table's filters — would otherwise re-run the session
- * and permission checks on every keypress, and a quick run of them exhausts the per-user
- * rate limit.
+ * Skips a revalidation that stays on the same path, and defers to the router for a new
+ * path or a form submission. A page that keeps its state in the search — Triage's open
+ * message, a table's filters — would otherwise re-run the session and permission checks on
+ * every keypress, and a quick run of them exhausts the per-user rate limit. A navigation to
+ * the URL already shown is skipped too: keys pressed faster than navigations commit produce
+ * one each, and the router cannot tell them from revalidate(). Neither check depends on
+ * the search, and a 401 on any request still ends the session.
  */
 export const revalidateOnPathChange: ShouldRevalidateFunction = ({
   currentUrl,
@@ -44,13 +45,12 @@ export const revalidateOnPathChange: ShouldRevalidateFunction = ({
   actionResult,
   defaultShouldRevalidate,
 }) => {
-  const searchOrHashOnly =
+  const samePath =
     formMethod === undefined &&
     actionResult === undefined &&
-    currentUrl.pathname === nextUrl.pathname &&
-    currentUrl.href !== nextUrl.href;
+    currentUrl.pathname === nextUrl.pathname;
 
-  return searchOrHashOnly ? false : defaultShouldRevalidate;
+  return samePath ? false : defaultShouldRevalidate;
 };
 
 const pathScopedLoaders = new WeakSet<LoaderFunction>();

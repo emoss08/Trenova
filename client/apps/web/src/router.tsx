@@ -2272,6 +2272,6 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
       },
     ],
   },
-] satisfies RouteObject[]);
+]);
 
 export const router = createBrowserRouter(withRouteCatalogs(routes));
