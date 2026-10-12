@@ -28746,6 +28746,7 @@
   "You're offline · messages will send when you reconnect": "Está sin conexión · los mensajes se enviarán cuando se vuelva a conectar",
   "You're on it — dispatch can see you accepted.": "Lo tiene asignado — despacho puede ver que lo aceptó.",
   "You're sending messages quickly · send again in a moment": "Está enviando mensajes muy rápido · envíe de nuevo en un momento",
+  "You're waiting on {0} to reply": "Esperas a que {0} responda",
   "You've already arrived at this stop": "Ya llegó a esta parada",
   "You've already departed this stop": "Ya salió de esta parada",
   "You've reached the request limit for now. Wait a few seconds, then try again.": "Alcanzó el límite de solicitudes por ahora. Espere unos segundos y vuelva a intentarlo.",

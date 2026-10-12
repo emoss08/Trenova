@@ -167,8 +167,11 @@ export function activityLine(
         ? wokenBy(t, subject)
         : t("{0} woke it", actor);
     case "WaitingOnReply":
-      return actor === null
-        ? t("Waiting on {0} to reply", subject)
+      if (actor === null) {
+        return t("Waiting on {0} to reply", subject);
+      }
+      return activity.actorKind === "Person" && activity.actor?.id === meId
+        ? t("You're waiting on {0} to reply", subject)
         : t("{0} is waiting on {1} to reply", actor, subject);
     case "StoppedWaiting":
       return actor === null

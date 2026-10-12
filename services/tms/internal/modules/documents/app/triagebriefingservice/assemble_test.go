@@ -210,6 +210,30 @@ func TestDeck_GroupsWaitingMailByItsNextStep(t *testing.T) {
 	assert.Equal(t, triage.ActionFile, groups[triage.DeckFile].Items[0].Action.Kind)
 }
 
+func TestDeck_LongestWaitingIsAPersonBeforeAnAutomatedSender(t *testing.T) {
+	t.Parallel()
+
+	bounce := &inboundmessage.InboundMessage{
+		ID:             "imsg_bounce",
+		Status:         inboundmessage.StatusQuarantined,
+		Classification: inboundmessage.ClassificationOther,
+		NovaRead:       true,
+		FromAddress:    "noreply@unknownsender.example",
+		DueAt:          10,
+	}
+	person := waitingTender("imsg_person", 90)
+	person.FromAddress = "dana@acme.example"
+
+	deck := Deck([]*inboundmessage.InboundMessage{bounce, person}, map[pulid.ID]*triage.Reply{})
+	require.NotNil(t, deck.longest)
+	assert.Equal(t, pulid.ID("imsg_person"), deck.longest.MessageID,
+		"nobody waits behind a no-reply address, so the person is the one who has waited longest")
+
+	onlyMachines := Deck([]*inboundmessage.InboundMessage{bounce}, map[pulid.ID]*triage.Reply{})
+	require.NotNil(t, onlyMachines.longest)
+	assert.Equal(t, pulid.ID("imsg_bounce"), onlyMachines.longest.MessageID)
+}
+
 func TestCorrections_AccuracyInPercentagePoints(t *testing.T) {
 	t.Parallel()
 

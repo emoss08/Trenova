@@ -112,6 +112,18 @@ function presenceMessageId(value: unknown): string | null | undefined {
   return typeof value === "string" ? (value === "" ? null : value) : undefined;
 }
 
+/** A join names what the member is doing only on a message; the server refuses an activity on none. */
+function joinBody(
+  connectionId: string,
+  presence: RealtimePresenceState | null,
+): { connectionId: string; messageId?: string; activity?: RealtimePresenceActivity } {
+  if (presence === null || presence.messageId === null) {
+    return { connectionId };
+  }
+
+  return { connectionId, messageId: presence.messageId, activity: presence.activity };
+}
+
 /**
  * The browser's one live connection to the server: a server-sent event stream
  * carrying record invalidations, presence and typing for the signed-in user's
@@ -501,8 +513,10 @@ export class RealtimeClient {
 
   private async sendJoin(scope: string, path: string, connectionId: string): Promise<void> {
     try {
-      const presence = this.scopes.get(scope)?.state ?? null;
-      const snapshot = await api.post<PresenceSnapshot>(path, { connectionId, ...presence });
+      const snapshot = await api.post<PresenceSnapshot>(
+        path,
+        joinBody(connectionId, this.scopes.get(scope)?.state ?? null),
+      );
       const state = this.scopes.get(scope);
       if (!state || state.joins === 0 || this.connectionId !== connectionId) {
         return;

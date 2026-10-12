@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -225,7 +226,7 @@ func Deck(
 		if len(result.carryOver) < MaxCarryOver {
 			result.carryOver = append(result.carryOver, item)
 		}
-		if result.longest == nil || overdueFirst(item, result.longest) {
+		if result.longest == nil || waitedLonger(item, result.longest) {
 			result.longest = item
 		}
 	}
@@ -272,6 +273,15 @@ func deckItem(
 	}
 
 	return item
+}
+
+func waitedLonger(candidate, current *inboundmessageports.DeckItem) bool {
+	candidateAutomated := stringutils.IsAutomatedSender(candidate.FromAddress)
+	if candidateAutomated != stringutils.IsAutomatedSender(current.FromAddress) {
+		return !candidateAutomated
+	}
+
+	return overdueFirst(candidate, current)
 }
 
 func overdueFirst(candidate, current *inboundmessageports.DeckItem) bool {

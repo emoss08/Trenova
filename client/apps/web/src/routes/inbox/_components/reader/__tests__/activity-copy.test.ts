@@ -104,6 +104,9 @@ describe("activityLine", () => {
     expect(line({ kind: "WaitingOnReply", subject: "luis@drivers.example" })).toBe(
       "Dana Whitfield is waiting on luis@drivers.example to reply",
     );
+    expect(line({ kind: "WaitingOnReply", actor: ME, subject: "luis@drivers.example" })).toBe(
+      "You're waiting on luis@drivers.example to reply",
+    );
     expect(line({ kind: "StoppedWaiting" })).toBe("Dana Whitfield stopped waiting");
     expect(
       line({

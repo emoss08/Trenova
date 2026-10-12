@@ -117,7 +117,7 @@ export function Deck({ entries, now, drafting, flying, onAct, onOpenMessage }: D
 
   return (
     <div
-      className="relative h-84 w-full max-w-140 @max-2xl:h-auto"
+      className="grid w-full max-w-140 pb-9 @max-2xl:pb-0"
       role="region"
       aria-roledescription={t("deck")}
       aria-label={t("What is left, by what it needs")}
@@ -191,10 +191,10 @@ const DeckCard = memo(function DeckCard({
       onClick={isFront ? undefined : onBring}
       style={{ "--tb-offset": offset, zIndex: 10 - offset } as CSSProperties}
       className={cn(
-        "tb-card border-border bg-card absolute inset-x-0 top-0 flex h-75 flex-col rounded-lg border px-5.5 pt-5 pb-4",
+        "tb-card border-border bg-card relative col-start-1 row-start-1 flex min-h-75 flex-col rounded-lg border px-5.5 pt-5 pb-4",
         isFront ? "ui-lift cursor-default" : "cursor-pointer",
         nova && "tb-nova-card",
-        "@max-2xl:relative @max-2xl:h-auto @max-2xl:min-h-70",
+        "@max-2xl:min-h-70",
         !isFront && "@max-2xl:hidden",
       )}
     >

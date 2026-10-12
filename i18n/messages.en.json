@@ -266402,6 +266402,15 @@
       "apps/web/components"
     ]
   },
+  "You're waiting on {0} to reply": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "You've already arrived at this stop": {
     "sites": 1,
     "scope": [

@@ -28746,6 +28746,7 @@
   "You're offline · messages will send when you reconnect": "您目前離線 · 重新連線後訊息將會傳送",
   "You're on it — dispatch can see you accepted.": "由您負責 — 調度人員可以看到您已接受。",
   "You're sending messages quickly · send again in a moment": "您傳送訊息的速度過快 · 請稍後再傳送",
+  "You're waiting on {0} to reply": "你正在等待 {0} 回覆",
   "You've already arrived at this stop": "您已抵達此停靠點",
   "You've already departed this stop": "您已離開此停靠點",
   "You've reached the request limit for now. Wait a few seconds, then try again.": "您已暫時達到請求上限。請稍候幾秒再試一次。",

@@ -514,6 +514,7 @@
   "You ignored {0} of {1} {2} from {3} by hand": "在來自 {3} 的 {1} 項{2}中，您手動忽略了 {0} 項",
   "You replied": "您已回覆",
   "You took it": "您已接手",
+  "You're waiting on {0} to reply": "你正在等待 {0} 回覆",
   "Your first briefing": "您的第一份簡報",
   "Your first briefing is ready.": "您的第一份簡報已就緒。",
   "Your mail provider posts this source's mail to": "您的郵件服務供應商將此來源的郵件發布到",

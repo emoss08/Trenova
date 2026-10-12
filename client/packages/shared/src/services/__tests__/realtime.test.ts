@@ -366,11 +366,8 @@ describe("RealtimeClient", () => {
 
     const leave = client.joinScope(scope, path, { messageId: null, activity: "viewing" });
     await tick();
-    expect(apiPost).toHaveBeenLastCalledWith(path, {
-      connectionId: "rtc_1",
-      messageId: null,
-      activity: "viewing",
-    });
+    // The server refuses an activity that names no message (realtimeservice validatePresenceState).
+    expect(apiPost).toHaveBeenLastCalledWith(path, { connectionId: "rtc_1" });
 
     client.setScopeState(scope, { messageId: "imsg_7", activity: "writing" });
     await tick();
@@ -394,6 +391,10 @@ describe("RealtimeClient", () => {
       messageId: "imsg_7",
       activity: "writing",
     });
+
+    client.setScopeState(scope, { messageId: null, activity: "viewing" });
+    await tick();
+    expect(apiPost).toHaveBeenLastCalledWith(path, { connectionId: "rtc_2" });
 
     leave();
     client.disconnect();
