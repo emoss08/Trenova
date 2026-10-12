@@ -344,6 +344,20 @@ export const rateAgreementRuleSchema = z
   });
 export type RateAgreementRule = z.infer<typeof rateAgreementRuleSchema>;
 
+/**
+ * One page of an agreement's live lanes, most specific first, with how many it
+ * prices in all and how many it has retired. An agreement can price tens of
+ * thousands of lanes, so a reader takes them a page at a time.
+ */
+export const rateAgreementLanePageSchema = z.object({
+  results: z.array(rateAgreementRuleSchema).default([]),
+  count: z.number().int().min(0),
+  retired: z.number().int().min(0).default(0),
+  limit: z.number().int().min(0),
+  offset: z.number().int().min(0),
+});
+export type RateAgreementLanePage = z.infer<typeof rateAgreementLanePageSchema>;
+
 export const rateAgreementAccessorialSchema = z.object({
   ...tenantInfoSchema.shape,
 

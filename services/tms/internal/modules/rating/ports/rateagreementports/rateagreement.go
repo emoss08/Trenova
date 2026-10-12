@@ -28,6 +28,10 @@ type GetRateAgreementByIDRequest struct {
 	// IncludeChildren loads the rules with their weight breaks, the
 	// accessorial schedule, and the fuel binding.
 	IncludeChildren bool `json:"includeChildren"`
+	// OmitRules leaves the rules out of a load that includes children, so a
+	// reader that pages lanes through ListLanes still gets the accessorials and
+	// fuel binding without pulling every lane. The zero value keeps the rules.
+	OmitRules bool `json:"omitRules"`
 	// AsOf narrows the loaded rules to those effective at a moment. Zero loads
 	// every rule that has not been closed out — current and future lanes,
 	// which is what an editor needs; a rating passes the moment it prices at.
@@ -90,6 +94,41 @@ type ListRateAgreementRulesRequest struct {
 	// IncludeSuperseded keeps the closed-out rules: the full lineage, newest
 	// first, instead of only what is effective now.
 	IncludeSuperseded bool `json:"includeSuperseded"`
+}
+
+const (
+	DefaultLaneLimit = 8
+	MaxLaneLimit     = 100
+)
+
+// ListRateAgreementLanesRequest pages an agreement's live lanes: active rules
+// that have not been closed out, the same set an editor load shows.
+type ListRateAgreementLanesRequest struct {
+	TenantInfo      pagination.TenantInfo `json:"-"`
+	RateAgreementID pulid.ID              `json:"rateAgreementId"`
+	Limit           int                   `json:"limit"`
+	Offset          int                   `json:"offset"`
+}
+
+// Normalize falls back to the default page size for a missing or non-positive
+// limit, caps it at MaxLaneLimit, and floors the offset at zero.
+func (r *ListRateAgreementLanesRequest) Normalize() {
+	if r.Limit <= 0 {
+		r.Limit = DefaultLaneLimit
+	}
+
+	r.Limit = min(r.Limit, MaxLaneLimit)
+	r.Offset = max(r.Offset, 0)
+}
+
+// RateAgreementLanePage is one page of live lanes. Count is every live lane
+// and Retired every other rule the agreement holds, inactive or closed out.
+type RateAgreementLanePage struct {
+	Lanes   []*rateagreement.RateAgreementRule `json:"results"`
+	Count   int                                `json:"count"`
+	Retired int                                `json:"retired"`
+	Limit   int                                `json:"limit"`
+	Offset  int                                `json:"offset"`
 }
 
 type GetRateAgreementRuleByIDRequest struct {
@@ -158,6 +197,10 @@ type RateAgreementRepository interface {
 		ctx context.Context,
 		req *ListRateAgreementRulesRequest,
 	) ([]*rateagreement.RateAgreementRule, error)
+	ListLanes(
+		ctx context.Context,
+		req *ListRateAgreementLanesRequest,
+	) (*RateAgreementLanePage, error)
 	GetRuleByID(
 		ctx context.Context,
 		req *GetRateAgreementRuleByIDRequest,

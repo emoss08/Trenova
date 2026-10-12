@@ -36,7 +36,7 @@ import { ArrowRightIcon, Beaker02Icon, PlayIcon } from "@trenova/shared/componen
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
-import { useLaneKeyLabels } from "./use-lane-scope-labels";
+import { useLaneKeyLabels } from "@/hooks/use-lane-scope-labels";
 
 /** How often a running simulation is asked how it is getting on. */
 const POLL_INTERVAL_MS = 5_000;

@@ -1,4 +1,5 @@
-import { INTEL_EMPTY_VALUE, cityStateLabel } from "@/lib/carrier-intelligence";
+import { INTEL_EMPTY_VALUE } from "@/lib/carrier-intelligence";
+import { cityStateLabel } from "@/lib/place";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   Fact,

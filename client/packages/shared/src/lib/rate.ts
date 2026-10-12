@@ -1,4 +1,6 @@
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { translate } from "@trenova/shared/i18n/runtime";
+import { metersToMiles } from "@trenova/shared/lib/utils";
 import type { RateAgreementRule, RateScopeType } from "../types/rate";
 
 /**
@@ -335,6 +337,54 @@ export function findCoverageIssues(rules: RateAgreementRule[]): LaneCoverageIssu
   });
 
   return issues;
+}
+
+/**
+ * One end of a lane as a person reads it: "Dallas, TX", "GA", "ZIP 303xx",
+ * "Anywhere". A record the end names reads by the record's name, and one whose
+ * name has not resolved yet reads as an ellipsis, never as its id.
+ */
+export function laneEndDisplay(
+  rule: RateAgreementRule,
+  end: "origin" | "destination",
+  resolveScopeValue: LaneScopeLabelResolver,
+): string {
+  const type = end === "origin" ? rule.originScopeType : rule.destinationScopeType;
+  const value = (end === "origin" ? rule.originScopeValue : rule.destinationScopeValue).trim();
+  const city = (end === "origin" ? rule.originCity : rule.destinationCity).trim();
+  const named = () => resolveScopeValue(type, value) ?? "…";
+
+  switch (type) {
+    case "Any":
+      return translate("Anywhere");
+    case "Location":
+    case "Zone":
+    case "State":
+      return value ? named() : translate("Anywhere");
+    case "CityState":
+      return value && city ? `${city}, ${named()}` : city || translate("Anywhere");
+    case "Zip5":
+      return translate("ZIP {0}", normalizePostal(value));
+    case "Zip3":
+      return translate("ZIP {0}xx", normalizePostal(value).slice(0, 3));
+    case "Country":
+      return value.toUpperCase();
+    case "Radius": {
+      const meters = Number(
+        end === "origin" ? rule.originRadiusMeters : rule.destinationRadiusMeters,
+      );
+      const miles = Number.isFinite(meters) && meters > 0 ? metersToMiles(meters) : null;
+      return miles === null
+        ? city || translate("Anywhere")
+        : translate(
+            "Within {0} mi of {1}",
+            formatNumber(miles, { maximumFractionDigits: 0 }),
+            city || "…",
+          );
+    }
+    default:
+      return translate("Anywhere");
+  }
 }
 
 /** The label a lane shows when nobody has named it. */

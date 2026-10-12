@@ -431,16 +431,6 @@ export function ageFromDays(days: number | null | undefined): CarrierAge | null 
   return { unit: "month", value: Math.floor(days / DAYS_PER_MONTH) };
 }
 
-export function cityStateLabel(
-  city: string | null | undefined,
-  state: string | null | undefined,
-): string | null {
-  if (city && state) {
-    return `${city}, ${state}`;
-  }
-  return city || state || null;
-}
-
 type AuthorityGrantLike = { status: string; ageDays: number | null } | null | undefined;
 
 export function oldestActiveAuthorityAgeDays(

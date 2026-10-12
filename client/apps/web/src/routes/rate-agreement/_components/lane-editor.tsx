@@ -26,7 +26,7 @@ import { useMemo } from "react";
 import type { Control } from "react-hook-form";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { LaneScopeFields } from "./lane-scope-fields";
-import { useLaneScopeLabels } from "./use-lane-scope-labels";
+import { useLaneScopeLabels } from "@/hooks/use-lane-scope-labels";
 
 const NEW_LANE: RateAgreementRule = {
   label: "",

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
+  rateAgreementLanePageSchema,
   rateAgreementSchema,
   rateMatrixCellSchema,
   rateMatrixSchema,
@@ -13,6 +14,7 @@ import {
   shopResultSchema,
   rateZoneSchema,
   type RateAgreement,
+  type RateAgreementLanePage,
   type RateAgreementRule,
   type RateAgreementVersion,
   type RateIncreasePlan,
@@ -57,6 +59,40 @@ export class RateAgreementService {
     const response = await api.get<RateAgreement>(`/rate-agreements/${id}/?includeChildren=true`);
 
     return safeParse(rateAgreementSchema, response, "Rate Agreement");
+  }
+
+  /**
+   * The agreement with its accessorials and fuel binding but none of its lanes,
+   * which a reader takes a page at a time with `listLanes`.
+   */
+  public async getWithoutLanes(
+    id: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<RateAgreement> {
+    const response = await api.get<RateAgreement>(
+      `/rate-agreements/${encodeURIComponent(id)}/?includeChildren=true&includeRules=false`,
+      { signal: options?.signal },
+    );
+
+    return safeParse(rateAgreementSchema, response, "Rate Agreement");
+  }
+
+  /** One page of the agreement's live lanes, most specific first, with the counts. */
+  public async listLanes(
+    id: string,
+    page: { limit: number; offset: number },
+    options?: { signal?: AbortSignal },
+  ): Promise<RateAgreementLanePage> {
+    const params = new URLSearchParams({
+      limit: String(page.limit),
+      offset: String(page.offset),
+    });
+    const response = await api.get<RateAgreementLanePage>(
+      `/rate-agreements/${encodeURIComponent(id)}/lanes/?${params.toString()}`,
+      { signal: options?.signal },
+    );
+
+    return safeParse(rateAgreementLanePageSchema, response, "Rate Agreement Lanes");
   }
 
   public async create(data: RateAgreement): Promise<RateAgreement> {

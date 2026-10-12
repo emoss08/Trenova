@@ -210,6 +210,17 @@ func (s *Service) ListRules(
 	return s.repo.ListRules(ctx, req)
 }
 
+// ListLanes pages an agreement's live lanes for a reader that cannot afford
+// the whole rule set, such as a card showing one agreement.
+func (s *Service) ListLanes(
+	ctx context.Context,
+	req *rateagreementports.ListRateAgreementLanesRequest,
+) (*rateagreementports.RateAgreementLanePage, error) {
+	req.Normalize()
+
+	return s.repo.ListLanes(ctx, req)
+}
+
 func (s *Service) GetRuleByID(
 	ctx context.Context,
 	req *rateagreementports.GetRateAgreementRuleByIDRequest,

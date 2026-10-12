@@ -210,7 +210,7 @@ func (r *repository) GetByID(
 					Where(cols.ID.Eq(), req.RateAgreementID)
 			})
 
-		if req.IncludeChildren {
+		if req.IncludeChildren && !req.OmitRules {
 			q = q.
 				Relation(
 					buncolgen.Rel(rateagreementcol.RateAgreementRelations.Rules),
@@ -232,7 +232,11 @@ func (r *repository) GetByID(
 				Relation(buncolgen.Rel(
 					rateagreementcol.RateAgreementRelations.Rules,
 					rateagreementcol.RateAgreementRuleRelations.Breaks,
-				)).
+				))
+		}
+
+		if req.IncludeChildren {
+			q = q.
 				Relation(buncolgen.Rel(rateagreementcol.RateAgreementRelations.Accessorials)).
 				Relation(buncolgen.Rel(rateagreementcol.RateAgreementRelations.FuelBinding))
 		}

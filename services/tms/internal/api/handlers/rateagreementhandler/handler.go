@@ -54,6 +54,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.listRules,
 	)
+	api.GET(
+		"/:rateAgreementID/lanes/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.listLanes,
+	)
 	api.POST(
 		"/:rateAgreementID/rules/amend/",
 		h.pm.RequirePermission(resource, permission.OpUpdate),
@@ -162,7 +167,8 @@ func (h *Handler) list(c *gin.Context) {
 // @Tags Rate Agreements
 // @Produce json
 // @Param rateAgreementID path string true "Rate agreement ID"
-// @Param includeChildren query bool false "Include rules, accessorials and the fuel binding"
+// @Param includeChildren query bool false "Include rules, accessorials and the fuel binding" default(true)
+// @Param includeRules query bool false "With includeChildren, also include the rules; false leaves them to the lanes endpoint" default(true)
 // @Success 200 {object} rateagreement.RateAgreement
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
@@ -185,6 +191,7 @@ func (h *Handler) get(c *gin.Context) {
 			RateAgreementID: agreementID,
 			TenantInfo:      tenantOf(authCtx),
 			IncludeChildren: helpers.QueryBool(c, "includeChildren", true),
+			OmitRules:       !helpers.QueryBool(c, "includeRules", true),
 		},
 	)
 	if err != nil {
@@ -310,6 +317,47 @@ func (h *Handler) listRules(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, rules)
+}
+
+// @Summary List a rate agreement's live lanes
+// @Description Pages the active rules that have not been closed out, most specific first, with the number of live lanes and of retired rules.
+// @ID listRateAgreementLanes
+// @Tags Rate Agreements
+// @Produce json
+// @Param rateAgreementID path string true "Rate agreement ID"
+// @Param limit query int false "Page size" minimum(1) maximum(100) default(8)
+// @Param offset query int false "Page offset" minimum(0) default(0)
+// @Success 200 {object} rateagreementports.RateAgreementLanePage
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /rate-agreements/{rateAgreementID}/lanes [get]
+func (h *Handler) listLanes(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	agreementID, err := h.agreementID(c)
+	if err != nil {
+		return
+	}
+
+	page, err := h.service.ListLanes(
+		c.Request.Context(),
+		&rateagreementports.ListRateAgreementLanesRequest{
+			TenantInfo:      tenantOf(authCtx),
+			RateAgreementID: agreementID,
+			Limit:           helpers.QueryInt(c, "limit", rateagreementports.DefaultLaneLimit),
+			Offset:          helpers.QueryInt(c, "offset", 0),
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, page)
 }
 
 type amendRulesRequest struct {

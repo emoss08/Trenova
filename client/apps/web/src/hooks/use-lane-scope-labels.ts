@@ -124,7 +124,7 @@ function useScopeIdLabels(idsByResource: string[][]): LaneScopeLabelResolver {
  * — to those records' names, so the lane header shows a person the actual
  * places rather than identifiers.
  */
-export function useLaneScopeLabels(rules: RateAgreementRule[]): LaneScopeLabelResolver {
+export function useLaneScopeLabels(rules: readonly RateAgreementRule[]): LaneScopeLabelResolver {
   // Recomputed on every render on purpose: query keys are hashed structurally,
   // so equal id lists never refetch, and memoizing against `rules` — a watched
   // array with a fresh identity per keystroke — would buy nothing.
