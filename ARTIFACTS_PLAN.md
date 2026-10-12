@@ -422,6 +422,11 @@ These were found by looking at the screenshots:
 - The `lib/queries/assistant.ts` exhaustive-deps lint error was a false positive. The
   factory prefixes each context key with the thread's. Each site now carries a disable
   comment that says so.
+- `i18n check` was already failing on master, in code this branch did not write:
+  - The case checklist editor's validation messages showed in English. They now go
+    through `translate()`.
+  - The button size variants' Tailwind class templates were being read as English. Each
+    line is now marked `i18n-ignore`.
 
 ### Assumptions
 
