@@ -432,6 +432,7 @@ type chatStream struct {
 	cacheWriteTokens int
 	finishReason     string
 	thinkingDropped  int
+	cacheDiagnosis   *modeladapter.CacheDiagnosis
 	// firstAt is when the first text or thinking reached the reader: how
 	// long a person watched nothing. Zero when none did.
 	firstAt time.Time
@@ -493,6 +494,7 @@ func (s *Service) attemptChat(
 		StreamIdle:               s.ai.GetStreamIdleTimeout(),
 		ServerCredentialsAllowed: s.ai.ServerCloudCredentialsAllowed(),
 		Files:                    s.fileSource(req.TenantInfo),
+		CacheDiagnostics:         s.ai.CacheDiagnosticsEnabled(),
 		Request: &modeladapter.Request{
 			System:       req.System,
 			SystemStable: req.SystemStable,
@@ -575,6 +577,7 @@ func (s *Service) attemptChat(
 	}
 
 	s.noteFiles(provider, resp.Files)
+	s.noteCacheDiagnosis(provider, req, resp)
 	if resp.Refused {
 		return nil, streamed, errRefused
 	}
@@ -589,21 +592,23 @@ func (s *Service) attemptChat(
 	streamed.cacheWriteTokens = resp.CacheWriteTokens
 	streamed.finishReason = finishReason(resp)
 	streamed.thinkingDropped = resp.ThinkingDropped
+	streamed.cacheDiagnosis = resp.CacheDiagnosis
 
 	return &agentports.ChatCompletionResult{
-		Text:            resp.Text,
-		ToolCalls:       resp.ToolCalls,
-		ModelIdentifier: resp.ModelIdentifier,
-		InputTokens:     resp.InputTokens,
-		OutputTokens:    resp.OutputTokens,
-		ProviderID:      provider.ID,
-		ProviderKind:    provider.Kind,
-		Truncated:       resp.Truncated,
-		Reasoning:       resp.Reasoning,
-		ReasoningTokens: resp.ReasoningTokens,
-		OutputLimit:     cmp.Or(resp.OutputLimit, maxTokens),
-		CutOffCall:      resp.CutOffCall,
-		ContextWindow:   provider.ConfiguredContextWindow(),
+		Text:              resp.Text,
+		ToolCalls:         resp.ToolCalls,
+		ModelIdentifier:   resp.ModelIdentifier,
+		InputTokens:       resp.InputTokens,
+		OutputTokens:      resp.OutputTokens,
+		ProviderID:        provider.ID,
+		ProviderKind:      provider.Kind,
+		ProviderMessageID: resp.MessageID,
+		Truncated:         resp.Truncated,
+		Reasoning:         resp.Reasoning,
+		ReasoningTokens:   resp.ReasoningTokens,
+		OutputLimit:       cmp.Or(resp.OutputLimit, maxTokens),
+		CutOffCall:        resp.CutOffCall,
+		ContextWindow:     provider.ConfiguredContextWindow(),
 	}, streamed, nil
 }
 
@@ -805,5 +810,6 @@ func chatOutcome(
 		FinishReason:     streamed.finishReason,
 		Truncated:        result.Truncated,
 		ThinkingDropped:  streamed.thinkingDropped,
+		CacheDiagnosis:   streamed.cacheDiagnosis,
 	}
 }

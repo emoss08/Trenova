@@ -244,27 +244,30 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 
 		liftRationales(completion.ToolCalls)
 		assistantTurn := conversation.Message{
-			Role:         conversation.RoleAssistant,
-			Content:      completion.Text,
-			ToolCalls:    toToolCallRecords(completion.ToolCalls),
-			Reasoning:    completion.Reasoning,
-			Model:        completion.ModelIdentifier,
-			ProviderID:   completion.ProviderID,
-			FallbackFrom: fallbackOf(completion),
-			InputTokens:  completion.InputTokens,
-			OutputTokens: completion.OutputTokens,
-			LatencyMs:    completion.LatencyMs,
-			CostUSD:      completion.CostUSD,
-			CreatedAt:    fx.Now(),
+			Role:              conversation.RoleAssistant,
+			Content:           completion.Text,
+			ToolCalls:         toToolCallRecords(completion.ToolCalls),
+			Reasoning:         completion.Reasoning,
+			Model:             completion.ModelIdentifier,
+			ProviderID:        completion.ProviderID,
+			FallbackFrom:      fallbackOf(completion),
+			InputTokens:       completion.InputTokens,
+			OutputTokens:      completion.OutputTokens,
+			LatencyMs:         completion.LatencyMs,
+			CostUSD:           completion.CostUSD,
+			CreatedAt:         fx.Now(),
+			ProviderMessageID: completion.ProviderMessageID,
 		}
 		result.Messages = append(result.Messages, assistantTurn)
 		// The thinking goes back with the calls it produced. Anthropic and the
 		// Responses API both refuse a tool result whose reasoning is missing.
 		t.messages = append(t.messages, agentports.Message{
-			Role:      agentports.RoleAssistant,
-			Content:   completion.Text,
-			ToolCalls: completion.ToolCalls,
-			Reasoning: completion.Reasoning,
+			Role:          agentports.RoleAssistant,
+			Content:       completion.Text,
+			ToolCalls:     completion.ToolCalls,
+			Reasoning:     completion.Reasoning,
+			ReplyID:       completion.ProviderMessageID,
+			ReplyProvider: completion.ProviderID,
 		})
 		fx.Emit(kernelports.StreamEvent{
 			Event: agentports.AssistantEventMessage,
@@ -790,18 +793,19 @@ func (s *Service) finish(
 
 	result.Reply = reply
 	message := conversation.Message{
-		Role:         conversation.RoleAssistant,
-		Content:      reply,
-		Reasoning:    completion.Reasoning,
-		Model:        completion.ModelIdentifier,
-		ProviderID:   completion.ProviderID,
-		Truncated:    completion.Truncated,
-		FallbackFrom: fallbackOf(completion),
-		InputTokens:  completion.InputTokens,
-		OutputTokens: completion.OutputTokens,
-		LatencyMs:    completion.LatencyMs,
-		CostUSD:      completion.CostUSD,
-		CreatedAt:    fx.Now(),
+		Role:              conversation.RoleAssistant,
+		Content:           reply,
+		Reasoning:         completion.Reasoning,
+		Model:             completion.ModelIdentifier,
+		ProviderID:        completion.ProviderID,
+		Truncated:         completion.Truncated,
+		FallbackFrom:      fallbackOf(completion),
+		InputTokens:       completion.InputTokens,
+		OutputTokens:      completion.OutputTokens,
+		LatencyMs:         completion.LatencyMs,
+		CostUSD:           completion.CostUSD,
+		CreatedAt:         fx.Now(),
+		ProviderMessageID: completion.ProviderMessageID,
 	}
 	if outputDecision.Altered {
 		message.ScopeStage = string(outputDecision.Stage)

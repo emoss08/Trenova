@@ -846,7 +846,13 @@ type AIConfig struct {
 	// organizations it would let any of their administrators spend the
 	// operator's cloud account.
 	ServerCloudCredentials bool `mapstructure:"serverCloudCredentials"`
-	MaxRetries             int  `mapstructure:"maxRetries"             validate:"omitempty,min=0,max=10"`
+	// CacheDiagnostics asks the Claude API, on each agent turn's model call,
+	// where the prompt stopped matching the call before it, and logs and
+	// traces the answer. Off unless set: it is for an operator chasing cache
+	// misses, and the API keeps a fingerprint of each request it is asked
+	// about for a short while.
+	CacheDiagnostics bool `mapstructure:"cacheDiagnostics"`
+	MaxRetries       int  `mapstructure:"maxRetries"       validate:"omitempty,min=0,max=10"`
 	// ModelPriceReference fills in a model's price, when the provider's own
 	// model list gives none, from OpenRouter's public catalog, marked as an
 	// estimate. It is a pointer so an absent key keeps it on; a deployment that
@@ -924,6 +930,12 @@ func (c *AIConfig) PrivateNetworkProvidersAllowed() bool {
 // the server's own cloud credentials.
 func (c *AIConfig) ServerCloudCredentialsAllowed() bool {
 	return c != nil && c.ServerCloudCredentials
+}
+
+// CacheDiagnosticsEnabled reports whether model calls ask the Claude API why
+// their prompt cache missed.
+func (c *AIConfig) CacheDiagnosticsEnabled() bool {
+	return c != nil && c.CacheDiagnostics
 }
 
 func (c *AIConfig) AIEnabled() bool {

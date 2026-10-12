@@ -439,6 +439,19 @@ func (p *Provider) OnOpenAIPlatform() bool {
 	return p.Kind == KindOpenAIResponses && p.Host() == openAIPlatformHost
 }
 
+// claudeAPIHost is where Anthropic serves the Claude API.
+const claudeAPIHost = "api.anthropic.com"
+
+// OnClaudeAPI reports an Anthropic Messages provider calling the Claude API
+// itself. It takes request fields, such as cache diagnostics, that Claude
+// Platform on AWS or Google Cloud, the cloud platforms and a gateway speaking
+// the same protocol do not.
+func (p *Provider) OnClaudeAPI() bool {
+	return p.Kind == KindAnthropicMessages &&
+		p.ResolvedPlatform() == PlatformDirect &&
+		strings.EqualFold(p.Host(), claudeAPIHost)
+}
+
 func nonNegativePrice(label string) validation.RuleFunc {
 	return func(value any) error {
 		price, _ := value.(*decimal.Decimal)

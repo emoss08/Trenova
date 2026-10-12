@@ -288,6 +288,38 @@ what the server accepts and sends only the settings the chosen platform takes.
 `anthropicplatform_internal_test.go` checks every platform's address, headers and
 signature, re-verifying each SigV4 signature as AWS would.
 
+### Why a prompt cache missed
+
+`ai.cacheDiagnostics` (default false) has every agent chat call to a provider on the
+Claude API itself (`aiprovider.Provider.OnClaudeAPI`: Direct platform at
+`api.anthropic.com`) ask the API where its prompt stopped matching the call before
+it. Claude Platform on AWS and Google Cloud, Bedrock, Vertex AI, Foundry and gateways
+do not take the field, and one-shot completions have no call before them, so neither
+asks.
+
+The API keeps a short-lived fingerprint only of a call that asked, so every call
+sends `diagnostics`: `previous_message_id` null when there is nothing to name, else
+the id of the last reply this provider gave in the conversation
+(`modeladapter.previousReply`). That id travels on the assistant message
+(`agentports.Message.ReplyID`/`ReplyProvider`, from
+`ChatCompletionResult.ProviderMessageID`) and is saved in
+`assistant_messages.provider_message_id`, so a turn's first call names the last call
+of the turn before. A reply from another provider is passed over; one from this
+provider without an id (saved before the column) leaves nothing to name. Grounding
+and placement retries resend the rejected reply with its id; a hand-off or tool round
+the server wrote has none.
+
+The adapter reads `diagnostics` off the message, or off `message_start` on a stream,
+into `Response.CacheDiagnosis`: the reason (`model_changed`, `system_changed`,
+`tools_changed`, `messages_changed`, `previous_message_not_found`, `unavailable`, or
+`pending` when the comparison had not finished) and, for a change, the estimated
+tokens after the divergence. The router (`noteCacheDiagnosis`) logs a changed prompt
+at info, with the provider, model, cache counts, organization, agent, thread and run,
+and anything else at debug, and puts the reason on the attempt's span. A changed
+prompt is the harness's to fix: the most likely places are history replay shortening
+older tool results and anything per-turn written ahead of a cache breakpoint.
+Diagnostics never fail a call.
+
 ### Thinking on Claude
 
 Claude models differ in how they are asked to think, and the Anthropic adapter reads which

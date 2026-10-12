@@ -187,6 +187,7 @@ type runOutcome struct {
 	FinishReason     string
 	Truncated        bool
 	ThinkingDropped  int
+	CacheDiagnosis   *modeladapter.CacheDiagnosis
 	ProviderID       pulid.ID
 	ProviderKind     aiprovider.Kind
 	LatencyMs        int64

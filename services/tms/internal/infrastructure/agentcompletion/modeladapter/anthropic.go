@@ -51,6 +51,7 @@ func anthropicParams(call *Call, attached *anthropicFiles) anthropic.BetaMessage
 		Tools:     cachedTools(toAnthropicTools(call.Request.Tools)),
 	}
 	applyThinking(&params, call)
+	applyDiagnostics(&params, call)
 
 	return params
 }
@@ -215,6 +216,8 @@ func (a anthropicAdapter) complete(
 		Reasoning:        anthropicReasoning(content),
 		OutputLimit:      int(params.MaxTokens),
 		ThinkingDropped:  thinkingDropped(message.InputTransformations),
+		MessageID:        message.ID,
+		CacheDiagnosis:   anthropicDiagnosis(message),
 		Files:            attached.report,
 	}, nil
 }
@@ -341,6 +344,8 @@ func (a anthropicAdapter) stream(
 		usage      anthropicUsage
 		stopReason string
 		dropped    int
+		messageID  string
+		diagnosis  *CacheDiagnosis
 		blocks     = map[int64]*anthropicStreamBlock{}
 		order      []int64
 	)
@@ -360,6 +365,8 @@ func (a anthropicAdapter) stream(
 				CacheCreationInputTokens: event.Message.Usage.CacheCreationInputTokens,
 			})
 			dropped = thinkingDropped(event.Message.InputTransformations)
+			messageID = event.Message.ID
+			diagnosis = anthropicDiagnosis(&event.Message)
 		case "content_block_start":
 			blocks[event.Index] = openedBlock(&event.ContentBlock)
 			order = append(order, event.Index)
@@ -419,6 +426,8 @@ func (a anthropicAdapter) stream(
 		Reasoning:        anthropicReasoning(content),
 		OutputLimit:      int(params.MaxTokens),
 		ThinkingDropped:  dropped,
+		MessageID:        messageID,
+		CacheDiagnosis:   diagnosis,
 		Files:            attached.report,
 	}, nil
 }

@@ -34,6 +34,11 @@ type Message struct {
 	// Reasoning is the thinking behind an assistant turn, replayed so a
 	// provider that signs or references its reasoning can continue it.
 	Reasoning *conversation.ReasoningTrace
+	// ReplyID is the provider's own id for an assistant turn, and
+	// ReplyProvider the provider that gave it. The next call to that provider
+	// names it when it asks the Claude API why its prompt cache missed.
+	ReplyID       string
+	ReplyProvider pulid.ID
 	// Files are the files the person attached to this user message. A model
 	// that reads files is sent each it can take as the file itself, in place
 	// of its entry in Content; any other reads Content as it is.

@@ -895,6 +895,60 @@ func TestRun_StreamsKeepsAndReplaysReasoning(t *testing.T) {
 	assert.True(t, found, "the signed reasoning travels with the tool calls it produced")
 }
 
+// Each reply's id is kept on the turn it became and handed to the next call
+// with it, so a provider asked why its prompt cache missed can name the call
+// before this one; the saved turns keep it for the next turn's first call.
+func TestRun_KeepsEachReplysIDForTheNextCall(t *testing.T) {
+	t.Parallel()
+
+	provider := pulid.MustNew("aip_")
+	tool := queryTool("get_shipment", map[string]any{"proNumber": "S1"}, nil)
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+		{
+			ToolCalls: []agentports.ToolCall{
+				{ID: "c1", Name: "get_shipment", Arguments: map[string]any{"id": "S1"}},
+			},
+			ProviderID:        provider,
+			ProviderMessageID: "msg_01CALLS",
+			ModelIdentifier:   "test-model",
+		},
+		{
+			Text:              "It is in Dallas.",
+			ProviderID:        provider,
+			ProviderMessageID: "msg_02ANSWER",
+			ModelIdentifier:   "test-model",
+		},
+	}}
+	rt := newRuntime(
+		completion,
+		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{tool}},
+		&stubActionRegistry{},
+		nil,
+	)
+
+	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+		Definition: testDefinition("get_shipment"),
+		Actor:      testActor(),
+		Input:      "Where is S1?",
+	})
+	require.NoError(t, err)
+
+	require.Len(t, result.Messages, 4)
+	assert.Equal(t, "msg_01CALLS", result.Messages[1].ProviderMessageID)
+	assert.Equal(t, "msg_02ANSWER", result.Messages[3].ProviderMessageID)
+
+	require.Equal(t, 2, completion.CallCount)
+	var replied *agentports.Message
+	for idx := range completion.LastReq.Messages {
+		if completion.LastReq.Messages[idx].Role == agentports.RoleAssistant {
+			replied = &completion.LastReq.Messages[idx]
+		}
+	}
+	require.NotNil(t, replied)
+	assert.Equal(t, "msg_01CALLS", replied.ReplyID)
+	assert.Equal(t, provider, replied.ReplyProvider)
+}
+
 // What a turn cost and how long it took are kept on the saved turn, so the
 // footer can say so without another lookup.
 func TestRun_KeepsLatencyAndCostOnTheTurn(t *testing.T) {

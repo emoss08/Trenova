@@ -184,6 +184,27 @@ func TestToAdapterMessages_CarriesReasoning(t *testing.T) {
 	assert.Equal(t, "s", messages[1].Reasoning.Signature)
 }
 
+// History replay carries each reply's provider id, so the first call of a
+// turn can name the last call of the turn before.
+func TestToAdapterMessages_CarriesEachReplysProviderID(t *testing.T) {
+	t.Parallel()
+
+	provider := pulid.MustNew("aip_")
+	messages := toAdapterMessages([]conversation.Message{
+		{Role: conversation.RoleUser, Content: "Where is S1?"},
+		{
+			Role:              conversation.RoleAssistant,
+			Content:           "In Dallas.",
+			ProviderID:        provider,
+			ProviderMessageID: "msg_01ANSWER",
+		},
+	}, nil)
+
+	require.Len(t, messages, 2)
+	assert.Equal(t, "msg_01ANSWER", messages[1].ReplyID)
+	assert.Equal(t, provider, messages[1].ReplyProvider)
+}
+
 // A refused assistant turn is left out of the replay, and so must be the
 // tool results that answered its calls: a result whose call is not in the
 // conversation is an orphan every provider rejects.

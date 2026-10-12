@@ -142,10 +142,12 @@ func replayHistoryWithFiles(
 			// ordinal is not shifted by a call that was left out.
 			ledger.noteCalls(msg)
 			messages = append(messages, agentports.Message{
-				Role:      agentports.RoleAssistant,
-				Content:   msg.Content,
-				ToolCalls: fromToolCallRecords(calls),
-				Reasoning: msg.Reasoning,
+				Role:          agentports.RoleAssistant,
+				Content:       msg.Content,
+				ToolCalls:     fromToolCallRecords(calls),
+				Reasoning:     msg.Reasoning,
+				ReplyID:       msg.ProviderMessageID,
+				ReplyProvider: msg.ProviderID,
 			})
 		case conversation.RoleTool:
 			if _, answers := open[msg.ToolCallID]; !answers {

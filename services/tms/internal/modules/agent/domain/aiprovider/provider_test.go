@@ -479,6 +479,36 @@ func TestProvider_KnowsWhenItIsOpenAIsOwnPlatform(t *testing.T) {
 	}
 }
 
+// Cache diagnostics are served by the Claude API alone: Claude Platform on AWS
+// or Google Cloud, the cloud platforms and a gateway in front of Anthropic
+// speak the same protocol and do not take them.
+func TestProvider_KnowsWhenItCallsTheClaudeAPI(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		kind     aiprovider.Kind
+		platform aiprovider.Platform
+		baseURL  string
+		claude   bool
+	}{
+		{aiprovider.KindAnthropicMessages, "", "", true},
+		{aiprovider.KindAnthropicMessages, aiprovider.PlatformDirect, "https://API.anthropic.com/", true},
+		{aiprovider.KindAnthropicMessages, aiprovider.PlatformDirect, "https://gateway.example.com/anthropic", false},
+		{aiprovider.KindAnthropicMessages, aiprovider.PlatformClaudeAWS, "", false},
+		{aiprovider.KindAnthropicMessages, aiprovider.PlatformBedrock, "", false},
+		{aiprovider.KindAnthropicMessages, aiprovider.PlatformVertexAI, "", false},
+		{aiprovider.KindOpenAIChat, "", "https://api.anthropic.com/v1", false},
+	} {
+		provider := &aiprovider.Provider{
+			Kind:             tc.kind,
+			Platform:         tc.platform,
+			BaseURL:          tc.baseURL,
+			PlatformSettings: &aiprovider.PlatformSettings{Region: "us-east-1", ProjectID: "trenova"},
+		}
+		assert.Equal(t, tc.claude, provider.OnClaudeAPI(), "%s %s %s", tc.kind, tc.platform, tc.baseURL)
+	}
+}
+
 func TestValidate_RejectsAnUnknownThinkingStyle(t *testing.T) {
 	t.Parallel()
 

@@ -88,6 +88,12 @@ type Response struct {
 	// dropped because the conversation before them had changed. Anthropic
 	// reports it; a recurring drop is an edit the harness should stop making.
 	ThinkingDropped int
+	// MessageID is the provider's own id for the reply, where it gives one.
+	MessageID string
+	// CacheDiagnosis is what the provider said about why the prompt cache
+	// missed against the call before this one. Nil when it was not asked, or
+	// found nothing to report.
+	CacheDiagnosis *CacheDiagnosis
 }
 
 // Adapter speaks one wire protocol.
@@ -124,6 +130,10 @@ type Call struct {
 	// Files reads the files a request's messages carry, for a protocol whose
 	// model reads files itself. Nil sends every message as its text.
 	Files FileSource
+	// CacheDiagnostics asks a provider that can say why its prompt cache
+	// missed to compare this call with the one before it. The server's
+	// configuration says.
+	CacheDiagnostics bool
 }
 
 // FileSource reads the bytes of a file a message carries, by its document.

@@ -71,7 +71,12 @@ func (s *Service) placeArtifacts(
 		fx.Emit(passEvent(agentports.RegroundRelinkArtifacts, placementRetryReason, nil))
 		t.messages = append(
 			t.messages,
-			agentports.Message{Role: agentports.RoleAssistant, Content: completion.Text},
+			agentports.Message{
+				Role:          agentports.RoleAssistant,
+				Content:       completion.Text,
+				ReplyID:       completion.ProviderMessageID,
+				ReplyProvider: completion.ProviderID,
+			},
 			agentports.Message{
 				Role:    agentports.RoleUser,
 				Content: t.placementCorrection(&problems),
