@@ -60,6 +60,7 @@
   "The original computation is preserved for the claim file.": "El cálculo original se conserva para el expediente de la reclamación.",
   "The stops are still in the notice window — try again in a moment.": "Las paradas siguen dentro de la ventana del aviso: vuelva a intentarlo en un momento.",
   "Their claim, verbatim where possible — it decides which evidence matters.": "Su reclamación, literal en la medida de lo posible: determina qué evidencia es relevante.",
+  "To {0}": "Hasta {0}",
   "Uncollectable": "Incobrable",
   "Unknown customer": "Cliente desconocido",
   "Unknown facility": "Instalación desconocida",

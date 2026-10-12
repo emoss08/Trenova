@@ -21,7 +21,17 @@ describe("long press", () => {
     press.move(touch(43, 62));
     vi.advanceTimersByTime(1);
 
-    expect(onLongPress).toHaveBeenCalledWith({ x: 40, y: 60 });
+    expect(onLongPress).toHaveBeenCalledWith({ x: 40, y: 60 }, undefined);
+  });
+
+  it("hands back what the press started with, such as the element pressed", () => {
+    const onLongPress = vi.fn();
+    const press = createLongPress<string>({ onLongPress });
+
+    press.down(touch(1, 2), "row-7");
+    vi.advanceTimersByTime(LONG_PRESS_MS);
+
+    expect(onLongPress).toHaveBeenCalledWith({ x: 1, y: 2 }, "row-7");
   });
 
   it("is a tap, not a press, when the finger lifts early", () => {
@@ -82,6 +92,6 @@ describe("long press", () => {
     vi.advanceTimersByTime(LONG_PRESS_MS);
 
     expect(onLongPress).toHaveBeenCalledTimes(1);
-    expect(onLongPress).toHaveBeenCalledWith({ x: 200, y: 200 });
+    expect(onLongPress).toHaveBeenCalledWith({ x: 200, y: 200 }, undefined);
   });
 });

@@ -4766,6 +4766,7 @@
   "Mention must reference a valid user ID": "La mención debe hacer referencia a un ID de usuario válido",
   "Mentioned user is required": "El usuario mencionado es obligatorio",
   "Merchant and processing fees": "Comisiones de comercio y procesamiento",
+  "Message": "Mensaje",
   "Message Stream": "Flujo de mensajes",
   "Message cannot be empty": "El mensaje no puede estar vacío",
   "Message cannot exceed 2000 characters": "El mensaje no puede superar los 2000 caracteres",

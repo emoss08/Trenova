@@ -78,13 +78,13 @@ func (r *evaluatorRig) withRules(rules ...*triage.Rule) {
 
 func (r *evaluatorRig) expectClaim(rule *triage.Rule) {
 	r.store.EXPECT().
-		ClaimRule(mock.Anything, mock.MatchedBy(func(req triageports.ClaimRuleRequest) bool {
+		ClaimRule(mock.Anything, mock.MatchedBy(func(req *triageports.ClaimRuleRequest) bool {
 			return req.RuleID == rule.ID && req.Action == rule.Action
 		})).
 		Return(&triageports.ClaimedRule{Claimed: true, Version: 8}, nil).
 		Once()
 	r.rules.EXPECT().
-		RecordMatch(mock.Anything, mock.MatchedBy(func(req triageports.RecordRuleMatchRequest) bool {
+		RecordMatch(mock.Anything, mock.MatchedBy(func(req *triageports.RecordRuleMatchRequest) bool {
 			return req.RuleID == rule.ID
 		})).
 		Return(nil).

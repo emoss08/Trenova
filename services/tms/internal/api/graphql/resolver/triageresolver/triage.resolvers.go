@@ -78,7 +78,7 @@ func (r *MutationResolver) UpdateTriageRule(ctx context.Context, id string, vers
 		return nil, err
 	}
 
-	return r.TriageRuleService.Update(ctx, triageruleservice.UpdateRequest{
+	return r.TriageRuleService.Update(ctx, &triageruleservice.UpdateRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ActorID:    actorutil.FromAuthContext(authCtx).UserID,
 		ID:         ruleID,
@@ -98,7 +98,7 @@ func (r *MutationResolver) SetTriageRuleEnabled(ctx context.Context, id string, 
 		return nil, err
 	}
 
-	return r.TriageRuleService.SetEnabled(ctx, triageruleservice.SetEnabledRequest{
+	return r.TriageRuleService.SetEnabled(ctx, &triageruleservice.SetEnabledRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ActorID:    actorutil.FromAuthContext(authCtx).UserID,
 		ID:         ruleID,
@@ -117,7 +117,7 @@ func (r *MutationResolver) DeleteTriageRule(ctx context.Context, id string) (boo
 		return false, err
 	}
 
-	if err = r.TriageRuleService.Delete(ctx, triageruleservice.DeleteRequest{
+	if err = r.TriageRuleService.Delete(ctx, &triageruleservice.DeleteRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ActorID:    actorutil.FromAuthContext(authCtx).UserID,
 		ID:         ruleID,
@@ -139,7 +139,7 @@ func (r *MutationResolver) CorrectInboundClassification(ctx context.Context, id 
 		return nil, err
 	}
 
-	return r.TriageCorrectionService.Correct(ctx, triagecorrectionservice.CorrectRequest{
+	return r.TriageCorrectionService.Correct(ctx, &triagecorrectionservice.CorrectRequest{
 		TenantInfo:     base.TenantInfo(authCtx),
 		ActorID:        actorutil.FromAuthContext(authCtx).UserID,
 		MessageID:      messageID,
@@ -158,7 +158,7 @@ func (r *MutationResolver) FlagInboundFact(ctx context.Context, id string, key s
 		return nil, err
 	}
 
-	return r.TriageCorrectionService.FlagFact(ctx, triagecorrectionservice.FlagRequest{
+	return r.TriageCorrectionService.FlagFact(ctx, &triagecorrectionservice.FlagRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ActorID:    actorutil.FromAuthContext(authCtx).UserID,
 		MessageID:  messageID,
@@ -177,7 +177,7 @@ func (r *MutationResolver) ResolveInboundConflict(ctx context.Context, id string
 		return nil, err
 	}
 
-	return r.TriageConflictService.Resolve(ctx, triageconflictservice.ResolveRequest{
+	return r.TriageConflictService.Resolve(ctx, &triageconflictservice.ResolveRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ActorID:    actorutil.FromAuthContext(authCtx).UserID,
 		MessageID:  messageID,
@@ -197,7 +197,7 @@ func (r *MutationResolver) ReopenInboundConflict(ctx context.Context, id string,
 		return nil, err
 	}
 
-	return r.TriageConflictService.Reopen(ctx, triageconflictservice.ReopenRequest{
+	return r.TriageConflictService.Reopen(ctx, &triageconflictservice.ReopenRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ActorID:    actorutil.FromAuthContext(authCtx).UserID,
 		MessageID:  messageID,

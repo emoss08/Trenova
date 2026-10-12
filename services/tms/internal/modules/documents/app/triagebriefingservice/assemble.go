@@ -203,7 +203,7 @@ func Deck(
 	for _, message := range waiting {
 		actions := triage.Actions(triage.ActionInput{Message: message, Reply: replies[message.ID]})
 		group, next, ok := triage.GroupFor(message, actions)
-		item := deckItem(message, next, ok)
+		item := deckItem(message, &next, ok)
 		if !ok {
 			group = triage.DeckDecide
 		}
@@ -247,7 +247,7 @@ func Deck(
 
 func deckItem(
 	message *inboundmessage.InboundMessage,
-	next triage.Action,
+	next *triage.Action,
 	hasNext bool,
 ) *inboundmessageports.DeckItem {
 	item := &inboundmessageports.DeckItem{
@@ -267,7 +267,7 @@ func deckItem(
 		item.DueAt = &due
 	}
 	if hasNext {
-		action := next
+		action := *next
 		item.Action = &action
 	}
 

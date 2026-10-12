@@ -111,7 +111,7 @@ describe("the inbound_message patcher", () => {
       meId: "usr_me",
       fetchMessage: async () => {
         throw new GraphQLRequestError({
-          kind: "resolver",
+          kind: "graphql",
           message: "not found",
           graphQLErrors: [
             {
@@ -121,7 +121,7 @@ describe("the inbound_message patcher", () => {
               extensions: {},
             },
           ],
-        } as ConstructorParameters<typeof GraphQLRequestError>[0]);
+        });
       },
       now: () => NOW,
     });

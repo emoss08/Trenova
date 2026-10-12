@@ -32,7 +32,7 @@ type ReopenRequest struct {
 
 func (s *Service) Resolve(
 	ctx context.Context,
-	req ResolveRequest,
+	req *ResolveRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	if !req.Resolution.FitsKind(inboundmessage.ConflictDuplicateDocument) &&
 		!req.Resolution.FitsKind(inboundmessage.ConflictOverlappingLoad) {
@@ -41,7 +41,7 @@ func (s *Service) Resolve(
 		)
 	}
 
-	return s.change(ctx, changeRequest{
+	return s.change(ctx, &changeRequest{
 		tenantInfo: req.TenantInfo,
 		messageID:  req.MessageID,
 		conflictID: req.ConflictID,
@@ -76,9 +76,9 @@ func (s *Service) Resolve(
 
 func (s *Service) Reopen(
 	ctx context.Context,
-	req ReopenRequest,
+	req *ReopenRequest,
 ) (*inboundmessage.InboundMessage, error) {
-	return s.change(ctx, changeRequest{
+	return s.change(ctx, &changeRequest{
 		tenantInfo: req.TenantInfo,
 		messageID:  req.MessageID,
 		conflictID: req.ConflictID,
@@ -119,7 +119,7 @@ type changeRequest struct {
 
 func (s *Service) change(
 	ctx context.Context,
-	req changeRequest,
+	req *changeRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	for attempt := range saveAttempts {
 		message, err := s.messages.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
@@ -140,7 +140,7 @@ func (s *Service) change(
 			return nil, err
 		}
 
-		err = s.store.SaveTriageFields(ctx, triageports.SaveTriageFieldsRequest{
+		err = s.store.SaveTriageFields(ctx, &triageports.SaveTriageFieldsRequest{
 			TenantInfo: req.tenantInfo,
 			MessageID:  message.ID,
 			Version:    message.Version,

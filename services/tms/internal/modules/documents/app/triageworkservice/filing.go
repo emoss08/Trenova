@@ -23,13 +23,6 @@ const (
 	maxBulkFileMessages = inboundmessageports.MaxBulkResultMessages
 )
 
-var kindDocumentTypeCodes = map[inboundmessage.AttachmentKind]string{
-	inboundmessage.AttachmentProofOfDelivery:  "POD",
-	inboundmessage.AttachmentBillOfLading:     "BOL",
-	inboundmessage.AttachmentRateConfirmation: "RATECONF",
-	inboundmessage.AttachmentInvoice:          "INVOICE",
-}
-
 type PageRange struct {
 	FromPage       int
 	ToPage         int
@@ -548,7 +541,7 @@ func (s *Service) typeForKind(
 		return cached, nil
 	}
 
-	code, ok := kindDocumentTypeCodes[kind]
+	code, ok := kind.DocumentTypeCode()
 	if !ok {
 		cache[kind] = nil
 

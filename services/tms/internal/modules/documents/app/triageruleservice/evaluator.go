@@ -58,7 +58,7 @@ type Evaluator struct {
 	now         func() int64
 }
 
-func NewEvaluator(p EvaluatorParams) *Evaluator {
+func NewEvaluator(p EvaluatorParams) *Evaluator { //nolint:gocritic // fx params are passed by value
 	return &Evaluator{
 		l:           p.Logger.Named("service.triage-rule-evaluator"),
 		db:          p.DB,
@@ -137,7 +137,7 @@ func (e *Evaluator) ApplyRules(
 		return e.replay(ctx, message)
 	}
 
-	settle(message, rule, result, e.now())
+	settle(message, rule, &result, e.now())
 
 	return &inboundmessageports.RuleApplication{
 		Rule:    rule,
@@ -175,7 +175,7 @@ func (e *Evaluator) replay(
 	}
 
 	result := e.replayed(ctx, rule, message)
-	settle(message, rule, result, e.now())
+	settle(message, rule, &result, e.now())
 
 	return &inboundmessageports.RuleApplication{Rule: rule, Settled: result.settle != ""}, nil
 }
@@ -277,8 +277,9 @@ func (e *Evaluator) file(
 }
 
 func blocksFiling(conflicts []inboundmessage.Conflict) bool {
-	for _, conflict := range conflicts {
-		if conflict.Kind == inboundmessage.ConflictDuplicateDocument && conflict.Resolution == "" {
+	for i := range conflicts {
+		if conflicts[i].Kind == inboundmessage.ConflictDuplicateDocument &&
+			conflicts[i].Resolution == "" {
 			return true
 		}
 	}
@@ -405,7 +406,7 @@ func (e *Evaluator) claim(
 	var claimed *triageports.ClaimedRule
 	err := e.db.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
 		var txErr error
-		claimed, txErr = e.store.ClaimRule(ctx, triageports.ClaimRuleRequest{
+		claimed, txErr = e.store.ClaimRule(ctx, &triageports.ClaimRuleRequest{
 			TenantInfo: tenantInfo,
 			MessageID:  message.ID,
 			RuleID:     rule.ID,
@@ -416,7 +417,7 @@ func (e *Evaluator) claim(
 			return txErr
 		}
 
-		return e.rules.RecordMatch(ctx, triageports.RecordRuleMatchRequest{
+		return e.rules.RecordMatch(ctx, &triageports.RecordRuleMatchRequest{
 			TenantInfo: tenantInfo,
 			RuleID:     rule.ID,
 			MessageID:  message.ID,
@@ -441,7 +442,7 @@ func (e *Evaluator) claim(
 func settle(
 	message *inboundmessage.InboundMessage,
 	rule *triage.Rule,
-	result outcome,
+	result *outcome,
 	now int64,
 ) {
 	message.HandledByRuleID = rule.ID

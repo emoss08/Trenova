@@ -39,7 +39,6 @@ const (
 	seedBillingMailboxAddress = "ap@dev.trenova.app"
 	seedClaimsMailboxToken    = "trenova-development-claims-token"
 	seedClaimsMailboxAddress  = "claims@dev.trenova.app"
-	seedOldMessagePrefix      = "seed-inbound-%"
 )
 
 var seedInboundShipmentPros = []string{
@@ -96,7 +95,8 @@ type inboundSeedRefs struct {
 	team      seedTeam
 	customers map[string]*customer.Customer
 	shipments map[string]*shipment.Shipment
-	docTypes  map[string]pulid.ID
+	docTypes  map[string]*documenttype.DocumentType
+	loc       *time.Location
 	now       int64
 	dayStart  int64
 	weekStart int64
@@ -236,6 +236,7 @@ func (s *InboundMessageSeed) loadRefs(
 	refs := &inboundSeedRefs{
 		org:       org,
 		admin:     admin,
+		loc:       loc,
 		now:       now,
 		dayStart:  timeutils.DayStart(now, loc),
 		weekStart: timeutils.WeekStart(now, loc),
@@ -319,7 +320,7 @@ func loadSeedDocumentTypes(
 	ctx context.Context,
 	tx bun.Tx,
 	org *tenant.Organization,
-) (map[string]pulid.ID, error) {
+) (map[string]*documenttype.DocumentType, error) {
 	cols := documenttypecol.DocumentTypeColumns
 	rows := make([]*documenttype.DocumentType, 0, len(seedInboundDocumentTypeCodes))
 	if err := tx.NewSelect().
@@ -331,9 +332,9 @@ func loadSeedDocumentTypes(
 		return nil, fmt.Errorf("load document types: %w", err)
 	}
 
-	byCode := make(map[string]pulid.ID, len(rows))
+	byCode := make(map[string]*documenttype.DocumentType, len(rows))
 	for _, row := range rows {
-		byCode[row.Code] = row.ID
+		byCode[row.Code] = row
 	}
 	for _, code := range seedInboundDocumentTypeCodes {
 		if _, ok := byCode[code]; !ok {
@@ -405,8 +406,12 @@ func (s *InboundMessageSeed) insertTriage(
 ) error {
 	rules := seedRules(refs, boxes)
 	if len(rules) > 0 {
+		paused := pausedRules(rules)
 		if _, err := tx.NewInsert().Model(&rules).Exec(ctx); err != nil {
 			return fmt.Errorf("insert triage rules: %w", err)
+		}
+		if err := pauseRules(ctx, tx, paused); err != nil {
+			return err
 		}
 	}
 
@@ -452,11 +457,6 @@ func insertSeededMessages(ctx context.Context, tx bun.Tx, messages []seededMessa
 			return fmt.Errorf("insert message %q: %w", seeded.message.Subject, err)
 		}
 		if len(seeded.attachments) > 0 {
-			for _, attachment := range seeded.attachments {
-				attachment.MessageID = seeded.message.ID
-				attachment.OrganizationID = seeded.message.OrganizationID
-				attachment.BusinessUnitID = seeded.message.BusinessUnitID
-			}
 			if _, err := tx.NewInsert().Model(&seeded.attachments).Exec(ctx); err != nil {
 				return fmt.Errorf("insert attachments for %q: %w", seeded.message.Subject, err)
 			}

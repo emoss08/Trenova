@@ -16,6 +16,14 @@ describe("snooze times", () => {
     ]);
   });
 
+  it("reads tomorrow from the person's own date, not the server's or UTC's", () => {
+    const tuesdayEveningInDenver = at("2026-10-07T02:00:00Z");
+    expect(snoozePresets(tuesdayEveningInDenver, "America/Denver")).toEqual([
+      { key: "tomorrow", until: at("2026-10-07T14:00:00Z") },
+      { key: "monday", until: at("2026-10-12T14:00:00Z") },
+    ]);
+  });
+
   it("drops later today after five, and Monday when tomorrow is Monday", () => {
     const sundayEvening = at("2026-10-11T22:00:00Z");
     expect(snoozePresets(sundayEvening, "UTC")).toEqual([

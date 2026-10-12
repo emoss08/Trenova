@@ -11,13 +11,6 @@ import { mailboxName } from "../folder-labels";
 import { useTriageActions } from "../use-triage-actions";
 import { useTriageMailboxes, useTriageRules } from "../use-triage-data";
 
-/**
- * The Rules page's contract with the page: it takes nothing, reads its data
- * from `useTriageRules()` / `useTriageMailboxes()` and changes rules through
- * `useTriageActions()`.
- */
-export type RulesViewProps = Record<string, never>;
-
 function Blank({ children }: { children: ReactNode }) {
   return <b className="text-foreground font-medium">{children}</b>;
 }
@@ -62,8 +55,12 @@ function RuleSentence({ rule }: { rule: TriageRule }) {
  * Every rule as the sentence it is, with the switch that pauses it and how
  * often it has matched. Editing the blanks in place, the add row and the
  * match preview are built on this.
+ *
+ * Its contract with the page: it takes no props, reads its data from
+ * `useTriageRules()` / `useTriageMailboxes()` and changes rules only through
+ * `useTriageActions()`.
  */
-export function RulesView(_: RulesViewProps) {
+export function RulesView() {
   const t = useT();
   const actions = useTriageActions();
   const query = useTriageRules();

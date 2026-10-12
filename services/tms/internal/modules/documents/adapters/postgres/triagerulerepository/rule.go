@@ -262,7 +262,7 @@ func (r *repository) Delete(ctx context.Context, req triageports.GetRuleRequest)
 
 func (r *repository) RecordMatch(
 	ctx context.Context,
-	req triageports.RecordRuleMatchRequest,
+	req *triageports.RecordRuleMatchRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := triagecol.RuleColumns
@@ -284,7 +284,7 @@ func (r *repository) RecordMatch(
 
 func (r *repository) CountSettledSince(
 	ctx context.Context,
-	req triageports.CountRuleSettlementsRequest,
+	req *triageports.CountRuleSettlementsRequest,
 ) (map[pulid.ID]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
 		counts := make(map[pulid.ID]int, len(req.RuleIDs))

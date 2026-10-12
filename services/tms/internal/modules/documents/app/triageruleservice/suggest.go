@@ -39,7 +39,7 @@ func (s *Service) Suggest(
 			TTL:        suggestionTTL,
 		},
 		func(ctx context.Context) (*suggestionResult, error) {
-			rows, err := s.insights.ManualOutcomes(ctx, triageports.ManualOutcomesRequest{
+			rows, err := s.insights.ManualOutcomes(ctx, &triageports.ManualOutcomesRequest{
 				TenantInfo: tenantInfo,
 				Since:      s.clock.DaysAgo(triagesupport.PreviewWindowDays),
 			})

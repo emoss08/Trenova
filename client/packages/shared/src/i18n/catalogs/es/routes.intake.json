@@ -99,5 +99,6 @@
   "{0, plural, one {Its page moves} other {Its # pages move}} to Set aside. From there you can drag them into another document, or leave them to be deleted with the stack's other unfiled pages.": "{0, plural, one {Su página pasa} other {Sus # páginas pasan}} a Apartar. Desde allí puede arrastrarlas a otro documento o dejarlas para que se eliminen con las demás páginas sin archivar del lote.",
   "{0, plural, one {The # document already filed stays on its record.} other {The # documents already filed stay on their records.}} Every other page is deleted.": "{0, plural, one {El # documento ya archivado permanece en su registro.} other {Los # documentos ya archivados permanecen en sus registros.}} Todas las demás páginas se eliminan.",
   "{0, plural, one {Unfiled pages are deleted in # day} other {Unfiled pages are deleted in # days}}, on {1}.": "{0, plural, one {Las páginas no archivadas se eliminan en # día} other {Las páginas no archivadas se eliminan en # días}}, el {1}.",
-  "{0} of {1} filed": "{0} de {1} archivados"
+  "{0} of {1} filed": "{0} de {1} archivados",
+  "{0}% sure": "{0}% de seguridad"
 }

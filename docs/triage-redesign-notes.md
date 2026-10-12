@@ -70,6 +70,43 @@ provider webhook ──▶ inboundhandler ──▶ inboundmessageservice.Receiv
 
 _Filled in as each area lands._
 
+### Replies and work
+
+- **Replies carry no attachments.** The prototype's "stand by" reply attaches the gate and ELD
+  record. `sendInboundReply` sends text only (the email port has no attachment path for a reply
+  that must thread under the sender's Message-ID), so Nova's stand-by draft cites the arrival,
+  check-in and departure times and their source instead, and offers to send the record.
+- **Send status arrives later.** Email goes out through the email workflow, so the mutation
+  returns the reply as `Sending` unless the provider answered at once. `Sent` or `Failed` (a
+  bounce, complaint or suppression included) lands through an email observer
+  (`emailports.EmailMessageObserver`) and reaches the list as a realtime invalidation. The
+  design shows "Sent" immediately.
+- **A refused recipient suggests an alternate only when one is known**: the most recent other
+  address at the same domain that wrote in or was replied to in the last 90 days. With none,
+  `suggestedAddress` is null and the client should offer the address field.
+- **Creating a load needs what a shipment needs.** The prototype calls an empty field "fine for a
+  draft"; `createInboundLoad` needs a customer (or the message's matched customer), origin,
+  destination, and pickup and delivery windows, and each one that does not resolve to exactly one
+  record comes back at `fields[i].value`. Service and shipment type are taken from the customer's
+  latest shipment, or the only active service type; with neither, the error asks for the shipment
+  form. `Loads` (a multi-load tender) is kept on the draft but one call creates one shipment.
+- **OS&D is a shipment hold** with the hold reason coded `OSD` (blocks billing). A tenant without
+  that reason gets a business error naming it; there is no separate OS&D record.
+- **Stop times have no check-in.** Detention occurrences record arrival, departure and the
+  appointment window, so `checkedInAt` is always null; "Arrival source" comes from the arrival
+  evidence (ELD, geofence, driver app, ...), "Not recorded" without one.
+- **Queue for pay needs a reading.** A carrier invoice is queued into settlement's invoice intake
+  only when the message matched a carrier and the document has an AI extraction (number and
+  total come from it); otherwise it is filed and left for settlement to pick up by hand.
+- **Underlying permissions apply.** On top of `inbound_message:update`, sending a reply also
+  needs `customer_communication:create`; creating a load `shipment:create`; filing
+  `document:update` (and `document:create` to split); logging an exception `shipment_hold:create`;
+  deciding stops `detention_policy:update`. Peeks hide a shipment or customer the viewer cannot
+  read rather than failing the message.
+- **Sending does not park the message as waiting on them.** The design moves a replied message
+  to "Waiting on them" automatically; the queue core parks a message only when asked, so the
+  client sends the park after a successful send if the reply asks a question.
+
 ## Performance
 
 _Filled in after profiling with a seeded tenant of 50,000 messages._

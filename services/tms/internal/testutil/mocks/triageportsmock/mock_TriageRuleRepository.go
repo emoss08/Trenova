@@ -41,7 +41,7 @@ func (_m *MockTriageRuleRepository) EXPECT() *MockTriageRuleRepository_Expecter 
 }
 
 // CountSettledSince provides a mock function for the type MockTriageRuleRepository
-func (_mock *MockTriageRuleRepository) CountSettledSince(ctx context.Context, req triageports.CountRuleSettlementsRequest) (map[pulid.ID]int, error) {
+func (_mock *MockTriageRuleRepository) CountSettledSince(ctx context.Context, req *triageports.CountRuleSettlementsRequest) (map[pulid.ID]int, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -50,17 +50,17 @@ func (_mock *MockTriageRuleRepository) CountSettledSince(ctx context.Context, re
 
 	var r0 map[pulid.ID]int
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.CountRuleSettlementsRequest) (map[pulid.ID]int, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.CountRuleSettlementsRequest) (map[pulid.ID]int, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.CountRuleSettlementsRequest) map[pulid.ID]int); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.CountRuleSettlementsRequest) map[pulid.ID]int); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(map[pulid.ID]int)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, triageports.CountRuleSettlementsRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *triageports.CountRuleSettlementsRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -75,20 +75,20 @@ type MockTriageRuleRepository_CountSettledSince_Call struct {
 
 // CountSettledSince is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req triageports.CountRuleSettlementsRequest
+//   - req *triageports.CountRuleSettlementsRequest
 func (_e *MockTriageRuleRepository_Expecter) CountSettledSince(ctx any, req any) *MockTriageRuleRepository_CountSettledSince_Call {
 	return &MockTriageRuleRepository_CountSettledSince_Call{Call: _e.mock.On("CountSettledSince", ctx, req)}
 }
 
-func (_c *MockTriageRuleRepository_CountSettledSince_Call) Run(run func(ctx context.Context, req triageports.CountRuleSettlementsRequest)) *MockTriageRuleRepository_CountSettledSince_Call {
+func (_c *MockTriageRuleRepository_CountSettledSince_Call) Run(run func(ctx context.Context, req *triageports.CountRuleSettlementsRequest)) *MockTriageRuleRepository_CountSettledSince_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 triageports.CountRuleSettlementsRequest
+		var arg1 *triageports.CountRuleSettlementsRequest
 		if args[1] != nil {
-			arg1 = args[1].(triageports.CountRuleSettlementsRequest)
+			arg1 = args[1].(*triageports.CountRuleSettlementsRequest)
 		}
 		run(
 			arg0,
@@ -103,7 +103,7 @@ func (_c *MockTriageRuleRepository_CountSettledSince_Call) Return(iDToInt map[pu
 	return _c
 }
 
-func (_c *MockTriageRuleRepository_CountSettledSince_Call) RunAndReturn(run func(ctx context.Context, req triageports.CountRuleSettlementsRequest) (map[pulid.ID]int, error)) *MockTriageRuleRepository_CountSettledSince_Call {
+func (_c *MockTriageRuleRepository_CountSettledSince_Call) RunAndReturn(run func(ctx context.Context, req *triageports.CountRuleSettlementsRequest) (map[pulid.ID]int, error)) *MockTriageRuleRepository_CountSettledSince_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -444,7 +444,7 @@ func (_c *MockTriageRuleRepository_List_Call) RunAndReturn(run func(ctx context.
 }
 
 // RecordMatch provides a mock function for the type MockTriageRuleRepository
-func (_mock *MockTriageRuleRepository) RecordMatch(ctx context.Context, req triageports.RecordRuleMatchRequest) error {
+func (_mock *MockTriageRuleRepository) RecordMatch(ctx context.Context, req *triageports.RecordRuleMatchRequest) error {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -452,7 +452,7 @@ func (_mock *MockTriageRuleRepository) RecordMatch(ctx context.Context, req tria
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.RecordRuleMatchRequest) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.RecordRuleMatchRequest) error); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		r0 = ret.Error(0)
@@ -467,20 +467,20 @@ type MockTriageRuleRepository_RecordMatch_Call struct {
 
 // RecordMatch is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req triageports.RecordRuleMatchRequest
+//   - req *triageports.RecordRuleMatchRequest
 func (_e *MockTriageRuleRepository_Expecter) RecordMatch(ctx any, req any) *MockTriageRuleRepository_RecordMatch_Call {
 	return &MockTriageRuleRepository_RecordMatch_Call{Call: _e.mock.On("RecordMatch", ctx, req)}
 }
 
-func (_c *MockTriageRuleRepository_RecordMatch_Call) Run(run func(ctx context.Context, req triageports.RecordRuleMatchRequest)) *MockTriageRuleRepository_RecordMatch_Call {
+func (_c *MockTriageRuleRepository_RecordMatch_Call) Run(run func(ctx context.Context, req *triageports.RecordRuleMatchRequest)) *MockTriageRuleRepository_RecordMatch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 triageports.RecordRuleMatchRequest
+		var arg1 *triageports.RecordRuleMatchRequest
 		if args[1] != nil {
-			arg1 = args[1].(triageports.RecordRuleMatchRequest)
+			arg1 = args[1].(*triageports.RecordRuleMatchRequest)
 		}
 		run(
 			arg0,
@@ -495,7 +495,7 @@ func (_c *MockTriageRuleRepository_RecordMatch_Call) Return(err error) *MockTria
 	return _c
 }
 
-func (_c *MockTriageRuleRepository_RecordMatch_Call) RunAndReturn(run func(ctx context.Context, req triageports.RecordRuleMatchRequest) error) *MockTriageRuleRepository_RecordMatch_Call {
+func (_c *MockTriageRuleRepository_RecordMatch_Call) RunAndReturn(run func(ctx context.Context, req *triageports.RecordRuleMatchRequest) error) *MockTriageRuleRepository_RecordMatch_Call {
 	_c.Call.Return(run)
 	return _c
 }

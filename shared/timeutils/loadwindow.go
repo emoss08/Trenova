@@ -22,11 +22,11 @@ var (
 )
 
 const (
-	hoursPerHalfDay  = 12
-	maxHour          = 23
-	maxMinute        = 59
-	staleWindowDays  = 30
-	maxClockMatches  = 2
+	hoursPerHalfDay = 12
+	maxHour         = 23
+	maxMinute       = 59
+	staleWindowDays = 30
+	maxClockMatches = 2
 )
 
 func ParseWindow(text string, loc *time.Location, now time.Time) (Window, bool) {

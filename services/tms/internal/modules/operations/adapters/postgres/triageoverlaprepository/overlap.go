@@ -35,7 +35,7 @@ func New(p Params) triageports.TenderOverlapFinder {
 
 func (r *repository) FindOverlappingLoads(
 	ctx context.Context,
-	req triageports.FindOverlappingLoadsRequest,
+	req *triageports.FindOverlappingLoadsRequest,
 ) ([]triageports.OverlappingLoad, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]triageports.OverlappingLoad, error) {
 		found := make([]triageports.OverlappingLoad, 0, len(req.Loads))

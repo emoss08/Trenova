@@ -32,7 +32,7 @@ func (s *Service) SenderProfile(
 	}
 
 	domain := stringutils.FirstNonEmpty(message.SenderDomain, emailutils.Domain(message.FromAddress))
-	stats, err := s.insights.SenderStats(ctx, triageports.SenderStatsRequest{
+	stats, err := s.insights.SenderStats(ctx, &triageports.SenderStatsRequest{
 		TenantInfo:   req.TenantInfo,
 		SenderDomain: domain,
 		Since:        s.clock.DaysAgo(triagesupport.ProfileWindowDays),
@@ -43,7 +43,7 @@ func (s *Service) SenderProfile(
 		return nil, err
 	}
 
-	party, err := s.insights.SenderParty(ctx, triageports.SenderPartyRequest{
+	party, err := s.insights.SenderParty(ctx, &triageports.SenderPartyRequest{
 		TenantInfo:   req.TenantInfo,
 		Address:      message.FromAddress,
 		SenderDomain: domain,
@@ -59,7 +59,7 @@ func (s *Service) SenderProfile(
 		return nil, err
 	}
 
-	return Profile(ProfileInputs{
+	return Profile(&ProfileInputs{
 		Address: message.FromAddress,
 		Name:    message.FromName,
 		Domain:  domain,
@@ -78,7 +78,7 @@ type ProfileInputs struct {
 	Rules   []*triage.Rule
 }
 
-func Profile(in ProfileInputs) *inboundmessageports.SenderProfile {
+func Profile(in *ProfileInputs) *inboundmessageports.SenderProfile {
 	profile := &inboundmessageports.SenderProfile{
 		Address:            in.Address,
 		Name:               stringutils.FirstNonEmpty(in.Name, emailutils.LocalPart(in.Address)),

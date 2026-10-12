@@ -47,10 +47,10 @@ type TriageRuleRepository interface {
 	Update(ctx context.Context, rule *triage.Rule) (*triage.Rule, error)
 	SetEnabled(ctx context.Context, req SetRuleEnabledRequest) (*triage.Rule, error)
 	Delete(ctx context.Context, req GetRuleRequest) error
-	RecordMatch(ctx context.Context, req RecordRuleMatchRequest) error
+	RecordMatch(ctx context.Context, req *RecordRuleMatchRequest) error
 	CountSettledSince(
 		ctx context.Context,
-		req CountRuleSettlementsRequest,
+		req *CountRuleSettlementsRequest,
 	) (map[pulid.ID]int, error)
 }
 

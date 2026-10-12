@@ -53,7 +53,7 @@ type Service struct {
 	clock       *triagesupport.Clock
 }
 
-func New(p Params) *Service {
+func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 	return &Service{
 		l:           p.Logger.Named("service.triage-rule"),
 		rules:       p.Rules,
@@ -130,10 +130,6 @@ type ruleSource struct {
 	l     *zap.Logger
 	rules triageports.TriageRuleRepository
 	cache triageports.TriageCache
-}
-
-func (s *Service) source() ruleSource {
-	return ruleSource{l: s.l, rules: s.rules, cache: s.cache}
 }
 
 func (s *Service) rulesChanged(ctx context.Context, tenantInfo pagination.TenantInfo) {

@@ -81,7 +81,7 @@ type Service struct {
 	clock      *triagesupport.Clock
 }
 
-func New(p Params) *Service {
+func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 	return &Service{
 		l:          p.Logger.Named("service.triage-conflict"),
 		messages:   p.Messages,
@@ -115,7 +115,7 @@ func (s *Service) CheckConflicts(
 		return merged, nil
 	}
 
-	if err = s.store.SaveTriageFields(ctx, triageports.SaveTriageFieldsRequest{
+	if err = s.store.SaveTriageFields(ctx, &triageports.SaveTriageFieldsRequest{
 		TenantInfo: tenantOf(message),
 		MessageID:  message.ID,
 		Version:    message.Version,
@@ -344,7 +344,7 @@ func (s *Service) overlapping(
 		return nil, nil
 	}
 
-	found, err := s.overlaps.FindOverlappingLoads(ctx, triageports.FindOverlappingLoadsRequest{
+	found, err := s.overlaps.FindOverlappingLoads(ctx, &triageports.FindOverlappingLoadsRequest{
 		TenantInfo: tenantOf(message),
 		CustomerID: message.MatchedCustomerID,
 		Loads:      loads,
@@ -367,27 +367,28 @@ func (s *Service) overlapping(
 }
 
 func Merge(current, detected []inboundmessage.Conflict) []inboundmessage.Conflict {
-	byID := make(map[string]inboundmessage.Conflict, len(current))
-	for _, conflict := range current {
-		byID[conflict.ID] = conflict
+	byID := make(map[string]int, len(current))
+	for i := range current {
+		byID[current[i].ID] = i
 	}
 
 	merged := make([]inboundmessage.Conflict, 0, len(detected)+len(current))
 	seen := make(map[string]struct{}, len(detected))
-	for _, conflict := range detected {
+	for i := range detected {
+		conflict := detected[i]
 		if previous, ok := byID[conflict.ID]; ok {
-			conflict.Resolution = previous.Resolution
-			conflict.ResolvedAt = previous.ResolvedAt
-			conflict.ResolvedBy = previous.ResolvedBy
+			conflict.Resolution = current[previous].Resolution
+			conflict.ResolvedAt = current[previous].ResolvedAt
+			conflict.ResolvedBy = current[previous].ResolvedBy
 		}
 		merged = append(merged, conflict)
 		seen[conflict.ID] = struct{}{}
 	}
-	for _, conflict := range current {
-		if _, ok := seen[conflict.ID]; ok || conflict.Resolution == "" {
+	for i := range current {
+		if _, ok := seen[current[i].ID]; ok || current[i].Resolution == "" {
 			continue
 		}
-		merged = append(merged, conflict)
+		merged = append(merged, current[i])
 	}
 
 	return merged

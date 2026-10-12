@@ -27,7 +27,7 @@ func (s *Service) MatchesThisMonth(
 		return nil, err
 	}
 
-	return s.rules.CountSettledSince(ctx, triageports.CountRuleSettlementsRequest{
+	return s.rules.CountSettledSince(ctx, &triageports.CountRuleSettlementsRequest{
 		TenantInfo: tenantInfo,
 		RuleIDs:    ruleIDs,
 		Since:      timeutils.MonthStart(s.clock.Now(), loc),
@@ -44,7 +44,7 @@ func (s *Service) Samples(
 		return samples, nil
 	}
 
-	rows, err := s.insights.MessageRows(ctx, triageports.MessageRowsRequest{
+	rows, err := s.insights.MessageRows(ctx, &triageports.MessageRowsRequest{
 		TenantInfo: tenantInfo,
 		IDs:        messageIDs,
 	})

@@ -50,7 +50,7 @@ type Service struct {
 	now        func() int64
 }
 
-func New(p Params) *Service {
+func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 	return &Service{
 		l:          p.Logger.Named("service.triage-correction"),
 		db:         p.DB,
@@ -82,7 +82,7 @@ type FlagRequest struct {
 
 func (s *Service) Correct(
 	ctx context.Context,
-	req CorrectRequest,
+	req *CorrectRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	if !req.Classification.IsValid() {
 		return nil, errortypes.NewValidationError(
@@ -113,7 +113,7 @@ func (s *Service) Correct(
 	changed := false
 	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
 		var txErr error
-		changed, txErr = s.store.CorrectClassification(ctx, triageports.CorrectClassificationRequest{
+		changed, txErr = s.store.CorrectClassification(ctx, &triageports.CorrectClassificationRequest{
 			TenantInfo:     req.TenantInfo,
 			MessageID:      message.ID,
 			Classification: req.Classification,
@@ -136,7 +136,7 @@ func (s *Service) Correct(
 			return nil
 		}
 
-		return s.hints.Upsert(ctx, triageports.UpsertSenderHintRequest{
+		return s.hints.Upsert(ctx, &triageports.UpsertSenderHintRequest{
 			TenantInfo:     req.TenantInfo,
 			SenderDomain:   message.SenderDomain,
 			Classification: req.Classification,
@@ -174,7 +174,7 @@ func (s *Service) Correct(
 
 func (s *Service) FlagFact(
 	ctx context.Context,
-	req FlagRequest,
+	req *FlagRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	for attempt := range saveAttempts {
 		message, err := s.read(ctx, req.TenantInfo, req.MessageID)
@@ -192,7 +192,7 @@ func (s *Service) FlagFact(
 		}
 		facts[index].Flagged = true
 
-		err = s.store.SaveTriageFields(ctx, triageports.SaveTriageFieldsRequest{
+		err = s.store.SaveTriageFields(ctx, &triageports.SaveTriageFieldsRequest{
 			TenantInfo: req.TenantInfo,
 			MessageID:  message.ID,
 			Version:    message.Version,
@@ -207,7 +207,7 @@ func (s *Service) FlagFact(
 
 		message.Version++
 		message.Facts = facts
-		s.afterFlag(ctx, req, message, facts[index])
+		s.afterFlag(ctx, req, message, &facts[index])
 
 		return message, nil
 	}
@@ -219,9 +219,9 @@ func (s *Service) FlagFact(
 
 func (s *Service) afterFlag(
 	ctx context.Context,
-	req FlagRequest,
+	req *FlagRequest,
 	message *inboundmessage.InboundMessage,
-	fact inboundmessage.Fact,
+	fact *inboundmessage.Fact,
 ) {
 	flagged := triage.NewActivity(message, triage.ActivityFactFlagged).
 		ByPerson(req.ActorID).

@@ -22,7 +22,7 @@ import (
 
 func (r *repository) SenderStats(
 	ctx context.Context,
-	req triageports.SenderStatsRequest,
+	req *triageports.SenderStatsRequest,
 ) (*triageports.SenderStats, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*triageports.SenderStats, error) {
 		db := r.db.DBForContext(ctx)
@@ -70,7 +70,7 @@ type senderSummary struct {
 	CarrierID          pulid.ID `bun:"carrier_id"`
 }
 
-func fromSender(req triageports.SenderStatsRequest) func(*bun.SelectQuery) *bun.SelectQuery {
+func fromSender(req *triageports.SenderStatsRequest) func(*bun.SelectQuery) *bun.SelectQuery {
 	cols := inboundmessagecol.InboundMessageColumns
 
 	return func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -81,7 +81,7 @@ func fromSender(req triageports.SenderStatsRequest) func(*bun.SelectQuery) *bun.
 	}
 }
 
-func senderKindsQuery(db bun.IDB, req triageports.SenderStatsRequest) *bun.SelectQuery {
+func senderKindsQuery(db bun.IDB, req *triageports.SenderStatsRequest) *bun.SelectQuery {
 	cols := inboundmessagecol.InboundMessageColumns
 
 	return messages(db).
@@ -92,7 +92,7 @@ func senderKindsQuery(db bun.IDB, req triageports.SenderStatsRequest) *bun.Selec
 		OrderExpr("2 DESC, 1 ASC")
 }
 
-func senderSummaryQuery(db bun.IDB, req triageports.SenderStatsRequest) *bun.SelectQuery {
+func senderSummaryQuery(db bun.IDB, req *triageports.SenderStatsRequest) *bun.SelectQuery {
 	cols := inboundmessagecol.InboundMessageColumns
 
 	return messages(db).
@@ -108,7 +108,7 @@ func senderSummaryQuery(db bun.IDB, req triageports.SenderStatsRequest) *bun.Sel
 		Apply(fromSender(req))
 }
 
-func senderRecentQuery(db bun.IDB, req triageports.SenderStatsRequest) *bun.SelectQuery {
+func senderRecentQuery(db bun.IDB, req *triageports.SenderStatsRequest) *bun.SelectQuery {
 	cols := inboundmessagecol.InboundMessageColumns
 
 	query := messages(db).Apply(messageRowColumns).Apply(fromSender(req))
@@ -123,7 +123,7 @@ func senderRecentQuery(db bun.IDB, req triageports.SenderStatsRequest) *bun.Sele
 
 func (r *repository) SenderParty(
 	ctx context.Context,
-	req triageports.SenderPartyRequest,
+	req *triageports.SenderPartyRequest,
 ) (*triageports.SenderParty, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*triageports.SenderParty, error) {
 		db := r.db.DBForContext(ctx)
@@ -148,7 +148,7 @@ func (r *repository) SenderParty(
 func customerParty(
 	ctx context.Context,
 	db bun.IDB,
-	req triageports.SenderPartyRequest,
+	req *triageports.SenderPartyRequest,
 ) (*triageports.SenderParty, bool, error) {
 	cols := customercol.CustomerColumns
 	rows := make([]struct {
@@ -181,7 +181,7 @@ func customerParty(
 func carrierParty(
 	ctx context.Context,
 	db bun.IDB,
-	req triageports.SenderPartyRequest,
+	req *triageports.SenderPartyRequest,
 ) (*triageports.SenderParty, bool, error) {
 	cols := carriercol.CarrierColumns
 	since := make([]int64, 0, 1)
@@ -208,7 +208,7 @@ func carrierParty(
 func driverParty(
 	ctx context.Context,
 	db bun.IDB,
-	req triageports.SenderPartyRequest,
+	req *triageports.SenderPartyRequest,
 ) (*triageports.SenderParty, error) {
 	unknown := &triageports.SenderParty{Role: inboundmessageports.SenderRoleUnknown}
 	address := stringutils.NormalizeEmailAddress(req.Address)

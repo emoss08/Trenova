@@ -168,12 +168,25 @@ authorization. Today that is the shipment comment thread:
 | `DELETE /api/v1/realtime/presence/:resource/?connectionId=` | leave a table |
 | `POST /api/v1/realtime/presence/:resource/:recordID/` | join a record (`record:{resource}:{id}`) |
 | `DELETE /api/v1/realtime/presence/:resource/:recordID/?connectionId=` | leave a record |
+| `POST /api/v1/inbox/presence/` | join Triage (`inbox:messages`) or move within it, returns the snapshot |
+| `DELETE /api/v1/inbox/presence/?connectionId=` | leave Triage |
 
 The table and record routes take the permission resource from the path and check
 read access on it (`PermissionMiddleware.RequireParamPermission`), so anyone who can
 see a table can see who else is on it, and no one else can. Every data table joins
 its own scope from the toolbar (`DataTableViewers`), and its edit panel joins the
 open record's (`RecordPresence`), so the panel header shows who else has it open.
+
+Triage keeps one scope for the whole inbox rather than one per message, because the
+list shows who is on every row at once. The join body carries the member's state as
+well as `connectionId`: `messageId` (the message they have open) and `activity`
+(`viewing` or `writing`, which needs a `messageId`). Posting again with a new state
+moves the member without leaving: the broker rewrites the member's entry and
+announces another `enter` carrying the new state, which clients treat as a move. Members in the snapshot and in
+`presence` events carry `messageId` and `activity` when set, and a departure carries
+the state the member last held, so a client can clear that message's row. The
+route requires `inbound_message:read`. `Broker.JoinPresence` takes the state as its
+last argument; every other scope passes the zero `RealtimePresenceState`.
 
 Each takes the caller's `connectionId`, and the gateway checks that the
 connection belongs to the caller in the caller's current tenant. The scope is

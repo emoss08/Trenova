@@ -4,7 +4,7 @@ aliases: [watchtower, watch tower, alerts feed, exceptions feed, exception feed,
 related:
   - /desk
   - /desk/decisions
-  - /inbox
+  - /triage
   - /shipment-management/service-failures
 ---
 

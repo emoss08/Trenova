@@ -66,7 +66,7 @@ type Service struct {
 	clock     *triagesupport.Clock
 }
 
-func New(p Params) *Service {
+func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 	return &Service{
 		l:         p.Logger.Named("service.triage-briefing"),
 		insights:  p.Insights,

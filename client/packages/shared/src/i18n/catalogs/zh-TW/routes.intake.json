@@ -99,5 +99,6 @@
   "{0, plural, one {Its page moves} other {Its # pages move}} to Set aside. From there you can drag them into another document, or leave them to be deleted with the stack's other unfiled pages.": "{0, plural, other {其 # 個頁面將移至}}「擱置」。您可以從那裡將它們拖入其他文件，或保留在那裡，隨該批次其他未歸檔的頁面一起刪除。",
   "{0, plural, one {The # document already filed stays on its record.} other {The # documents already filed stay on their records.}} Every other page is deleted.": "{0, plural, other {已歸檔的 # 份文件會保留在其記錄上。}}其餘頁面都會被刪除。",
   "{0, plural, one {Unfiled pages are deleted in # day} other {Unfiled pages are deleted in # days}}, on {1}.": "{0, plural, other {未歸檔的頁面將於 # 天後刪除}},即 {1}。",
-  "{0} of {1} filed": "已歸檔 {0}/{1}"
+  "{0} of {1} filed": "已歸檔 {0}/{1}",
+  "{0}% sure": "把握度 {0}%"
 }

@@ -326,6 +326,15 @@ function TriageWorkspace({
     [update],
   );
 
+  const commitSearch = useCallback(
+    (value: string) => update((current) => searchParamsWith(current, value), true),
+    [update],
+  );
+  const changeSort = useCallback(
+    (next: FolderSort) => update((current) => sortParams(current, next), true),
+    [update],
+  );
+
   const folderKeyValue = folderKey(folder);
   useEffect(() => {
     if (
@@ -631,12 +640,12 @@ function TriageWorkspace({
               <TriageList
                 searchPlaceholder={t("Search {0}", title.toLocaleLowerCase())}
                 search={search}
-                onSearch={(value) => update((current) => searchParamsWith(current, value), true)}
+                onSearch={commitSearch}
                 onSaveView={saveView}
                 searchRef={searchRef}
                 sort={sort}
                 canSort={hasWaiting}
-                onSort={(next: FolderSort) => update((current) => sortParams(current, next), true)}
+                onSort={changeSort}
                 items={items}
                 messages={pages.messages}
                 isLoading={pages.isLoading}

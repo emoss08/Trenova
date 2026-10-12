@@ -37,7 +37,7 @@ func hintConflict() string {
 
 func (r *hintRepository) Upsert(
 	ctx context.Context,
-	req triageports.UpsertSenderHintRequest,
+	req *triageports.UpsertSenderHintRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := triagecol.SenderHintColumns

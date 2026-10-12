@@ -1,8 +1,9 @@
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
+import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { SearchLgIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useEffect, useState, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 
 const SEARCH_DEBOUNCE_MS = 250;
 
@@ -29,20 +30,25 @@ export function SearchBox({
   const t = useT();
   const [text, setText] = useState(value);
   const settled = useDebounce(text, SEARCH_DEBOUNCE_MS);
+  const commit = useLatestCallback(onCommit);
+  const committed = useRef(value);
 
   useEffect(() => {
+    committed.current = value;
     setText((current) => (current.trim() === value.trim() ? current : value));
   }, [value]);
 
   useEffect(() => {
-    if (settled.trim() !== value.trim()) {
-      onCommit(settled);
+    if (settled.trim() !== committed.current.trim()) {
+      committed.current = settled;
+      commit(settled);
     }
-  }, [settled, value, onCommit]);
+  }, [settled, commit]);
 
   const clear = () => {
     setText("");
-    onCommit("");
+    committed.current = "";
+    commit("");
   };
 
   return (

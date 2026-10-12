@@ -20,8 +20,9 @@ export type PressEvent = {
   button: number;
 };
 
-export type LongPressOptions = {
-  onLongPress: (point: { x: number; y: number }) => void;
+export type LongPressOptions<C = undefined> = {
+  /** `context` is whatever the press that fired was started with, such as the element pressed. */
+  onLongPress: (point: { x: number; y: number }, context: C | undefined) => void;
   delay?: number;
   tolerance?: number;
   schedule?: (callback: () => void, ms: number) => unknown;
@@ -29,8 +30,8 @@ export type LongPressOptions = {
   now?: () => number;
 };
 
-export type LongPressTracker = {
-  down: (event: PressEvent) => void;
+export type LongPressTracker<C = undefined> = {
+  down: (event: PressEvent, context?: C) => void;
   move: (event: PressEvent) => void;
   up: () => void;
   cancel: () => void;
@@ -40,14 +41,14 @@ export type LongPressTracker = {
   justFired: () => boolean;
 };
 
-export function createLongPress({
+export function createLongPress<C = undefined>({
   onLongPress,
   delay = LONG_PRESS_MS,
   tolerance = LONG_PRESS_TOLERANCE,
   schedule = (callback, ms) => setTimeout(callback, ms),
   cancel: clear = (handle) => clearTimeout(handle as ReturnType<typeof setTimeout>),
   now = () => Date.now(),
-}: LongPressOptions): LongPressTracker {
+}: LongPressOptions<C>): LongPressTracker<C> {
   let timer: unknown = null;
   let origin: { x: number; y: number } | null = null;
   let firedAt = Number.NEGATIVE_INFINITY;
@@ -62,7 +63,7 @@ export function createLongPress({
   };
 
   return {
-    down: (event) => {
+    down: (event, context) => {
       stop();
       if (event.pointerType === "mouse" || event.button !== 0) {
         return;
@@ -74,7 +75,7 @@ export function createLongPress({
         origin = null;
         firedAt = now();
         swallowClick = true;
-        onLongPress(start);
+        onLongPress(start, context);
       }, delay);
     },
     move: (event) => {

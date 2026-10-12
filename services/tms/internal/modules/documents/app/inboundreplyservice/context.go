@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"

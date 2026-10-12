@@ -60,7 +60,7 @@ func (s *Service) preview(
 		},
 		func(ctx context.Context) (*inboundmessageports.RulePreview, error) {
 			since := s.clock.DaysAgo(triagesupport.PreviewWindowDays)
-			candidates, err := s.insights.RuleCandidates(ctx, triageports.RuleCandidatesRequest{
+			candidates, err := s.insights.RuleCandidates(ctx, &triageports.RuleCandidatesRequest{
 				TenantInfo:     tenantInfo,
 				Classification: rule.Classification,
 				SenderScope:    rule.SenderScope,

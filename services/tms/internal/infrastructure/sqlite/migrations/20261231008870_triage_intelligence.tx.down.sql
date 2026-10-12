@@ -78,4 +78,8 @@ CREATE INDEX IF NOT EXISTS "idx_ai_corrections_subject"
 
 --bun:split
 
+DROP INDEX IF EXISTS "idx_inbound_messages_sender_received";
+
+--bun:split
+
 DROP INDEX IF EXISTS "idx_inbound_messages_received";

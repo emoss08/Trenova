@@ -151,7 +151,7 @@ func TestCorrect_RelabelsRecomputesDueAndTeachesTheSender(t *testing.T) {
 	r := newRig(t, before, after)
 
 	r.store.EXPECT().
-		CorrectClassification(mock.Anything, triageports.CorrectClassificationRequest{
+		CorrectClassification(mock.Anything, &triageports.CorrectClassificationRequest{
 			TenantInfo:     tenantInfo,
 			MessageID:      "imsg_1",
 			Classification: inboundmessage.ClassificationInvoice,
@@ -161,7 +161,7 @@ func TestCorrect_RelabelsRecomputesDueAndTeachesTheSender(t *testing.T) {
 		Return(true, nil).
 		Once()
 	r.hints.EXPECT().
-		Upsert(mock.Anything, triageports.UpsertSenderHintRequest{
+		Upsert(mock.Anything, &triageports.UpsertSenderHintRequest{
 			TenantInfo:     tenantInfo,
 			SenderDomain:   "kestrel.example",
 			Classification: inboundmessage.ClassificationInvoice,
@@ -179,7 +179,7 @@ func TestCorrect_RelabelsRecomputesDueAndTeachesTheSender(t *testing.T) {
 		Return(nil).
 		Once()
 
-	updated, err := r.service.Correct(t.Context(), CorrectRequest{
+	updated, err := r.service.Correct(t.Context(), &CorrectRequest{
 		TenantInfo:     tenantInfo,
 		ActorID:        "usr_dana",
 		MessageID:      "imsg_1",
@@ -202,7 +202,7 @@ func TestCorrect_TheSameKindChangesNothing(t *testing.T) {
 
 	r := newRig(t, readMessage())
 
-	updated, err := r.service.Correct(t.Context(), CorrectRequest{
+	updated, err := r.service.Correct(t.Context(), &CorrectRequest{
 		TenantInfo:     tenantInfo,
 		ActorID:        "usr_dana",
 		MessageID:      "imsg_1",
@@ -240,7 +240,7 @@ func TestCorrect_ASecondCorrectionRemembersWhatNovaFirstRead(t *testing.T) {
 		Return(nil).
 		Once()
 
-	_, err := r.service.Correct(t.Context(), CorrectRequest{
+	_, err := r.service.Correct(t.Context(), &CorrectRequest{
 		TenantInfo:     tenantInfo,
 		ActorID:        "usr_dana",
 		MessageID:      "imsg_1",
@@ -255,7 +255,7 @@ func TestCorrect_RefusesAKindThatDoesNotExist(t *testing.T) {
 
 	r := newRig(t, readMessage())
 
-	_, err := r.service.Correct(t.Context(), CorrectRequest{
+	_, err := r.service.Correct(t.Context(), &CorrectRequest{
 		TenantInfo:     tenantInfo,
 		MessageID:      "imsg_1",
 		Classification: inboundmessage.Classification("Urgent"),
@@ -270,7 +270,7 @@ func TestFlagFact_FlagsTheFactAndRecordsTheCorrection(t *testing.T) {
 
 	r := newRig(t, readMessage())
 	r.store.EXPECT().
-		SaveTriageFields(mock.Anything, mock.MatchedBy(func(req triageports.SaveTriageFieldsRequest) bool {
+		SaveTriageFields(mock.Anything, mock.MatchedBy(func(req *triageports.SaveTriageFieldsRequest) bool {
 			return req.Version == 4 && req.Facts != nil && (*req.Facts)[1].Flagged &&
 				!(*req.Facts)[0].Flagged && req.Conflicts == nil
 		})).
@@ -283,7 +283,7 @@ func TestFlagFact_FlagsTheFactAndRecordsTheCorrection(t *testing.T) {
 		Return(nil).
 		Once()
 
-	updated, err := r.service.FlagFact(t.Context(), FlagRequest{
+	updated, err := r.service.FlagFact(t.Context(), &FlagRequest{
 		TenantInfo: tenantInfo,
 		ActorID:    "usr_dana",
 		MessageID:  "imsg_1",
@@ -305,15 +305,15 @@ func TestFlagFact_TriesAgainWhenTheMessageMovedUnderIt(t *testing.T) {
 	fresh := readMessage()
 	fresh.Version = 5
 	r := newRig(t, stale, fresh)
-	r.store.EXPECT().SaveTriageFields(mock.Anything, mock.MatchedBy(func(req triageports.SaveTriageFieldsRequest) bool {
+	r.store.EXPECT().SaveTriageFields(mock.Anything, mock.MatchedBy(func(req *triageports.SaveTriageFieldsRequest) bool {
 		return req.Version == 4
 	})).Return(triageports.ErrMessageChanged).Once()
-	r.store.EXPECT().SaveTriageFields(mock.Anything, mock.MatchedBy(func(req triageports.SaveTriageFieldsRequest) bool {
+	r.store.EXPECT().SaveTriageFields(mock.Anything, mock.MatchedBy(func(req *triageports.SaveTriageFieldsRequest) bool {
 		return req.Version == 5
 	})).Return(nil).Once()
 	r.recorder.EXPECT().RecordInboundCorrection(mock.Anything, mock.Anything).Return(nil).Once()
 
-	updated, err := r.service.FlagFact(t.Context(), FlagRequest{
+	updated, err := r.service.FlagFact(t.Context(), &FlagRequest{
 		TenantInfo: tenantInfo,
 		ActorID:    "usr_dana",
 		MessageID:  "imsg_1",
@@ -329,7 +329,7 @@ func TestFlagFact_AnUnknownKeyIsNotFound(t *testing.T) {
 
 	r := newRig(t, readMessage())
 
-	_, err := r.service.FlagFact(t.Context(), FlagRequest{
+	_, err := r.service.FlagFact(t.Context(), &FlagRequest{
 		TenantInfo: tenantInfo,
 		MessageID:  "imsg_1",
 		Key:        "nope",
@@ -345,7 +345,7 @@ func TestFlagFact_AFlaggedFactStaysFlagged(t *testing.T) {
 	message.Facts[0].Flagged = true
 	r := newRig(t, message)
 
-	updated, err := r.service.FlagFact(t.Context(), FlagRequest{
+	updated, err := r.service.FlagFact(t.Context(), &FlagRequest{
 		TenantInfo: tenantInfo,
 		MessageID:  "imsg_1",
 		Key:        "invoiceNumber",

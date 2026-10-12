@@ -108,7 +108,7 @@ func (_c *MockSenderHintRepository_ListByDomain_Call) RunAndReturn(run func(ctx 
 }
 
 // Upsert provides a mock function for the type MockSenderHintRepository
-func (_mock *MockSenderHintRepository) Upsert(ctx context.Context, req triageports.UpsertSenderHintRequest) error {
+func (_mock *MockSenderHintRepository) Upsert(ctx context.Context, req *triageports.UpsertSenderHintRequest) error {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -116,7 +116,7 @@ func (_mock *MockSenderHintRepository) Upsert(ctx context.Context, req triagepor
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.UpsertSenderHintRequest) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.UpsertSenderHintRequest) error); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		r0 = ret.Error(0)
@@ -131,20 +131,20 @@ type MockSenderHintRepository_Upsert_Call struct {
 
 // Upsert is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req triageports.UpsertSenderHintRequest
+//   - req *triageports.UpsertSenderHintRequest
 func (_e *MockSenderHintRepository_Expecter) Upsert(ctx any, req any) *MockSenderHintRepository_Upsert_Call {
 	return &MockSenderHintRepository_Upsert_Call{Call: _e.mock.On("Upsert", ctx, req)}
 }
 
-func (_c *MockSenderHintRepository_Upsert_Call) Run(run func(ctx context.Context, req triageports.UpsertSenderHintRequest)) *MockSenderHintRepository_Upsert_Call {
+func (_c *MockSenderHintRepository_Upsert_Call) Run(run func(ctx context.Context, req *triageports.UpsertSenderHintRequest)) *MockSenderHintRepository_Upsert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 triageports.UpsertSenderHintRequest
+		var arg1 *triageports.UpsertSenderHintRequest
 		if args[1] != nil {
-			arg1 = args[1].(triageports.UpsertSenderHintRequest)
+			arg1 = args[1].(*triageports.UpsertSenderHintRequest)
 		}
 		run(
 			arg0,
@@ -159,7 +159,7 @@ func (_c *MockSenderHintRepository_Upsert_Call) Return(err error) *MockSenderHin
 	return _c
 }
 
-func (_c *MockSenderHintRepository_Upsert_Call) RunAndReturn(run func(ctx context.Context, req triageports.UpsertSenderHintRequest) error) *MockSenderHintRepository_Upsert_Call {
+func (_c *MockSenderHintRepository_Upsert_Call) RunAndReturn(run func(ctx context.Context, req *triageports.UpsertSenderHintRequest) error) *MockSenderHintRepository_Upsert_Call {
 	_c.Call.Return(run)
 	return _c
 }

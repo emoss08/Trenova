@@ -79,7 +79,7 @@ export function groupPresence(
 ): Record<string, readonly TriagePresenceMember[]> {
   const grouped = new Map<string, Map<string, TriagePresenceMember>>();
   for (const member of members) {
-    if (!member.messageId) {
+    if (member.userId === meId || !member.messageId) {
       continue;
     }
     let people = grouped.get(member.messageId);

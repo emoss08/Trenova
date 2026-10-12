@@ -39,7 +39,7 @@ func (_m *MockTenderOverlapFinder) EXPECT() *MockTenderOverlapFinder_Expecter {
 }
 
 // FindOverlappingLoads provides a mock function for the type MockTenderOverlapFinder
-func (_mock *MockTenderOverlapFinder) FindOverlappingLoads(ctx context.Context, req triageports.FindOverlappingLoadsRequest) ([]triageports.OverlappingLoad, error) {
+func (_mock *MockTenderOverlapFinder) FindOverlappingLoads(ctx context.Context, req *triageports.FindOverlappingLoadsRequest) ([]triageports.OverlappingLoad, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -48,17 +48,17 @@ func (_mock *MockTenderOverlapFinder) FindOverlappingLoads(ctx context.Context, 
 
 	var r0 []triageports.OverlappingLoad
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.FindOverlappingLoadsRequest) ([]triageports.OverlappingLoad, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.FindOverlappingLoadsRequest) ([]triageports.OverlappingLoad, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.FindOverlappingLoadsRequest) []triageports.OverlappingLoad); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.FindOverlappingLoadsRequest) []triageports.OverlappingLoad); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]triageports.OverlappingLoad)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, triageports.FindOverlappingLoadsRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *triageports.FindOverlappingLoadsRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -73,20 +73,20 @@ type MockTenderOverlapFinder_FindOverlappingLoads_Call struct {
 
 // FindOverlappingLoads is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req triageports.FindOverlappingLoadsRequest
+//   - req *triageports.FindOverlappingLoadsRequest
 func (_e *MockTenderOverlapFinder_Expecter) FindOverlappingLoads(ctx any, req any) *MockTenderOverlapFinder_FindOverlappingLoads_Call {
 	return &MockTenderOverlapFinder_FindOverlappingLoads_Call{Call: _e.mock.On("FindOverlappingLoads", ctx, req)}
 }
 
-func (_c *MockTenderOverlapFinder_FindOverlappingLoads_Call) Run(run func(ctx context.Context, req triageports.FindOverlappingLoadsRequest)) *MockTenderOverlapFinder_FindOverlappingLoads_Call {
+func (_c *MockTenderOverlapFinder_FindOverlappingLoads_Call) Run(run func(ctx context.Context, req *triageports.FindOverlappingLoadsRequest)) *MockTenderOverlapFinder_FindOverlappingLoads_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 triageports.FindOverlappingLoadsRequest
+		var arg1 *triageports.FindOverlappingLoadsRequest
 		if args[1] != nil {
-			arg1 = args[1].(triageports.FindOverlappingLoadsRequest)
+			arg1 = args[1].(*triageports.FindOverlappingLoadsRequest)
 		}
 		run(
 			arg0,
@@ -101,7 +101,7 @@ func (_c *MockTenderOverlapFinder_FindOverlappingLoads_Call) Return(overlappingL
 	return _c
 }
 
-func (_c *MockTenderOverlapFinder_FindOverlappingLoads_Call) RunAndReturn(run func(ctx context.Context, req triageports.FindOverlappingLoadsRequest) ([]triageports.OverlappingLoad, error)) *MockTenderOverlapFinder_FindOverlappingLoads_Call {
+func (_c *MockTenderOverlapFinder_FindOverlappingLoads_Call) RunAndReturn(run func(ctx context.Context, req *triageports.FindOverlappingLoadsRequest) ([]triageports.OverlappingLoad, error)) *MockTenderOverlapFinder_FindOverlappingLoads_Call {
 	_c.Call.Return(run)
 	return _c
 }

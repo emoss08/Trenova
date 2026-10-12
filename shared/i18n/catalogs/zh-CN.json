@@ -4766,6 +4766,7 @@
   "Mention must reference a valid user ID": "提及必须引用有效的用户 ID",
   "Mentioned user is required": "被提及的用户为必填",
   "Merchant and processing fees": "商户与支付处理费",
+  "Message": "消息",
   "Message Stream": "消息流",
   "Message cannot be empty": "消息不能为空",
   "Message cannot exceed 2000 characters": "消息不得超过 2000 个字符",

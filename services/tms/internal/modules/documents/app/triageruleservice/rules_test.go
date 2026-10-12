@@ -233,7 +233,7 @@ func TestUpdate_KeepsTheCounters(t *testing.T) {
 
 	input := podRule()
 	input.Action = inboundmessage.NovaActionIgnore
-	updated, err := rig.service.Update(t.Context(), UpdateRequest{
+	updated, err := rig.service.Update(t.Context(), &UpdateRequest{
 		TenantInfo: testTenant,
 		ActorID:    "usr_admin",
 		ID:         "trule_1",
@@ -297,7 +297,7 @@ func TestMatchesThisMonth_CountsFromTheLocalMonthStart(t *testing.T) {
 	chicago, err := time.LoadLocation("America/Chicago")
 	require.NoError(t, err)
 	rig.rules.EXPECT().
-		CountSettledSince(mock.Anything, triageports.CountRuleSettlementsRequest{
+		CountSettledSince(mock.Anything, &triageports.CountRuleSettlementsRequest{
 			TenantInfo: testTenant,
 			RuleIDs:    []pulid.ID{"trule_1"},
 			Since:      time.Date(2026, time.October, 1, 0, 0, 0, 0, chicago).Unix(),

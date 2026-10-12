@@ -52,7 +52,7 @@ type OverlappingLoad struct {
 type TenderOverlapFinder interface {
 	FindOverlappingLoads(
 		ctx context.Context,
-		req FindOverlappingLoadsRequest,
+		req *FindOverlappingLoadsRequest,
 	) ([]OverlappingLoad, error)
 }
 

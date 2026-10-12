@@ -47,9 +47,9 @@ type FirstCorrectionRequest struct {
 }
 
 type TriageMessageRepository interface {
-	ClaimRule(ctx context.Context, req ClaimRuleRequest) (*ClaimedRule, error)
-	CorrectClassification(ctx context.Context, req CorrectClassificationRequest) (bool, error)
-	SaveTriageFields(ctx context.Context, req SaveTriageFieldsRequest) error
+	ClaimRule(ctx context.Context, req *ClaimRuleRequest) (*ClaimedRule, error)
+	CorrectClassification(ctx context.Context, req *CorrectClassificationRequest) (bool, error)
+	SaveTriageFields(ctx context.Context, req *SaveTriageFieldsRequest) error
 	OriginalClassification(
 		ctx context.Context,
 		req FirstCorrectionRequest,
@@ -70,7 +70,7 @@ type ListSenderHintsRequest struct {
 }
 
 type SenderHintRepository interface {
-	Upsert(ctx context.Context, req UpsertSenderHintRequest) error
+	Upsert(ctx context.Context, req *UpsertSenderHintRequest) error
 	ListByDomain(
 		ctx context.Context,
 		req ListSenderHintsRequest,

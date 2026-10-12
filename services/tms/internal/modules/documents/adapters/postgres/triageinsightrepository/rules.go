@@ -26,7 +26,7 @@ const (
 
 func (r *repository) RuleCandidates(
 	ctx context.Context,
-	req triageports.RuleCandidatesRequest,
+	req *triageports.RuleCandidatesRequest,
 ) (*triageports.RuleCandidates, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*triageports.RuleCandidates, error) {
 		db := r.db.DBForContext(ctx)
@@ -48,12 +48,12 @@ func (r *repository) RuleCandidates(
 	})
 }
 
-func ruleCandidatesCountQuery(db bun.IDB, req triageports.RuleCandidatesRequest) *bun.SelectQuery {
+func ruleCandidatesCountQuery(db bun.IDB, req *triageports.RuleCandidatesRequest) *bun.SelectQuery {
 	return messages(db).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery { return narrowToRule(sq, req) })
 }
 
-func ruleCandidatesQuery(db bun.IDB, req triageports.RuleCandidatesRequest) *bun.SelectQuery {
+func ruleCandidatesQuery(db bun.IDB, req *triageports.RuleCandidatesRequest) *bun.SelectQuery {
 	cols := inboundmessagecol.InboundMessageColumns
 	att := inboundmessagecol.InboundAttachmentColumns
 
@@ -76,7 +76,7 @@ func ruleCandidatesQuery(db bun.IDB, req triageports.RuleCandidatesRequest) *bun
 
 func narrowToRule(
 	sq *bun.SelectQuery,
-	req triageports.RuleCandidatesRequest,
+	req *triageports.RuleCandidatesRequest,
 ) *bun.SelectQuery {
 	cols := inboundmessagecol.InboundMessageColumns
 
@@ -113,7 +113,7 @@ func narrowToRule(
 
 func (r *repository) ManualOutcomes(
 	ctx context.Context,
-	req triageports.ManualOutcomesRequest,
+	req *triageports.ManualOutcomesRequest,
 ) ([]*triageports.ManualOutcomeRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*triageports.ManualOutcomeRow, error) {
 		rows := make([]*triageports.ManualOutcomeRow, 0, 32)
@@ -125,7 +125,7 @@ func (r *repository) ManualOutcomes(
 	})
 }
 
-func manualOutcomesQuery(db bun.IDB, req triageports.ManualOutcomesRequest) *bun.SelectQuery {
+func manualOutcomesQuery(db bun.IDB, req *triageports.ManualOutcomesRequest) *bun.SelectQuery {
 	cols := inboundmessagecol.InboundMessageColumns
 	act := triagecol.ActivityColumns
 	table := inboundmessagecol.InboundMessageTable
@@ -189,7 +189,7 @@ func manualOutcomesQuery(db bun.IDB, req triageports.ManualOutcomesRequest) *bun
 
 func (r *repository) MessageRows(
 	ctx context.Context,
-	req triageports.MessageRowsRequest,
+	req *triageports.MessageRowsRequest,
 ) ([]*triageports.MessageRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*triageports.MessageRow, error) {
 		rows := make([]*triageports.MessageRow, 0, len(req.IDs))
@@ -205,7 +205,7 @@ func (r *repository) MessageRows(
 	})
 }
 
-func messageRowsQuery(db bun.IDB, req triageports.MessageRowsRequest) *bun.SelectQuery {
+func messageRowsQuery(db bun.IDB, req *triageports.MessageRowsRequest) *bun.SelectQuery {
 	return messages(db).
 		Apply(messageRowColumns).
 		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).

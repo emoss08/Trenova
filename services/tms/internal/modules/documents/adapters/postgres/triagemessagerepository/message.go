@@ -39,7 +39,7 @@ func New(p Params) triageports.TriageMessageRepository {
 
 func (r *repository) ClaimRule(
 	ctx context.Context,
-	req triageports.ClaimRuleRequest,
+	req *triageports.ClaimRuleRequest,
 ) (*triageports.ClaimedRule, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*triageports.ClaimedRule, error) {
 		versions := make([]int64, 0, 1)
@@ -54,7 +54,7 @@ func (r *repository) ClaimRule(
 	})
 }
 
-func claimRuleQuery(db bun.IDB, req triageports.ClaimRuleRequest) *bun.UpdateQuery {
+func claimRuleQuery(db bun.IDB, req *triageports.ClaimRuleRequest) *bun.UpdateQuery {
 	cols := inboundmessagecol.InboundMessageColumns
 
 	return db.NewUpdate().
@@ -73,7 +73,7 @@ func claimRuleQuery(db bun.IDB, req triageports.ClaimRuleRequest) *bun.UpdateQue
 
 func (r *repository) CorrectClassification(
 	ctx context.Context,
-	req triageports.CorrectClassificationRequest,
+	req *triageports.CorrectClassificationRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		cols := inboundmessagecol.InboundMessageColumns
@@ -118,7 +118,7 @@ func (r *repository) CorrectClassification(
 
 func (r *repository) SaveTriageFields(
 	ctx context.Context,
-	req triageports.SaveTriageFieldsRequest,
+	req *triageports.SaveTriageFieldsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := inboundmessagecol.InboundMessageColumns

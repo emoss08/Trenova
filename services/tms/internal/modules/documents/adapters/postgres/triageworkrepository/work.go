@@ -126,8 +126,8 @@ func (r *repository) DocumentTypesOnShipments(
 			Where(doc.IsCurrentVersion.IsTrue()).
 			Where(doc.Status.Eq(), document.StatusActive).
 			Apply(documentcol.DocumentApplyTenant(tenantInfo)).
-			GroupExpr(doc.ResourceID.Qualified() + ", " + dt.Name.Qualified()).
-			OrderExpr(doc.ResourceID.Qualified() + ", " + dt.Name.Qualified()).
+			GroupExpr(doc.ResourceID.Qualified()+", "+dt.Name.Qualified()).
+			OrderExpr(doc.ResourceID.Qualified()+", "+dt.Name.Qualified()).
 			Scan(ctx, &rows); err != nil {
 			return nil, err
 		}
@@ -218,7 +218,7 @@ func (r *repository) AlternateAddresses(
 
 		senders := db.NewSelect().
 			Model((*inboundmessage.InboundMessage)(nil)).
-			ColumnExpr(msg.FromAddress.Expr("lower({})") + " AS address").
+			ColumnExpr(msg.FromAddress.Expr("lower({})")+" AS address").
 			ColumnExpr(buncolgen.Max(msg.ReceivedAt, "seen_at")).
 			Where(msg.SenderDomain.Eq(), domain).
 			Where(msg.ReceivedAt.Gte(), req.Since).
@@ -228,7 +228,7 @@ func (r *repository) AlternateAddresses(
 
 		delivered := db.NewSelect().
 			Model((*triage.Reply)(nil)).
-			ColumnExpr(reply.ToAddress.Expr("lower({})") + " AS address").
+			ColumnExpr(reply.ToAddress.Expr("lower({})")+" AS address").
 			ColumnExpr(buncolgen.Max(reply.SentAt, "seen_at")).
 			Where(reply.Status.Eq(), triage.ReplySent).
 			Where(reply.ToAddress.Expr("lower(split_part({}, '@', 2))")+" = ?", domain).

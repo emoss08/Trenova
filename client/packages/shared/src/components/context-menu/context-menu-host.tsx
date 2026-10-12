@@ -98,22 +98,18 @@ export type ContextMenuTriggerProps = {
  */
 export function useContextMenuTrigger(build: () => ContextMenuSpec | null): ContextMenuTriggerProps {
   const latestBuild = useLatestCallback(build);
-  const pressTarget = useRef<HTMLElement | null>(null);
-  const tracker = useMemo(
-    () =>
-      createLongPress({
-        onLongPress: (point) => {
-          const spec = latestBuild();
-          if (spec !== null) {
-            openContextMenu(point, spec, pressTarget.current);
-          }
-        },
-      }),
-    [latestBuild],
-  );
 
-  return useMemo<ContextMenuTriggerProps>(
-    () => ({
+  return useMemo<ContextMenuTriggerProps>(() => {
+    const tracker = createLongPress<HTMLElement>({
+      onLongPress: (point, target) => {
+        const spec = latestBuild();
+        if (spec !== null) {
+          openContextMenu(point, spec, target ?? null);
+        }
+      },
+    });
+
+    return {
       onContextMenu: (event) => {
         if (tracker.justFired()) {
           event.preventDefault();
@@ -126,10 +122,7 @@ export function useContextMenuTrigger(build: () => ContextMenuSpec | null): Cont
         event.preventDefault();
         openContextMenu({ x: event.clientX, y: event.clientY }, spec, event.currentTarget);
       },
-      onPointerDown: (event) => {
-        pressTarget.current = event.currentTarget;
-        tracker.down(event);
-      },
+      onPointerDown: (event) => tracker.down(event, event.currentTarget),
       onPointerMove: (event) => tracker.move(event),
       onPointerUp: () => tracker.up(),
       onPointerCancel: () => tracker.cancel(),
@@ -151,9 +144,8 @@ export function useContextMenuTrigger(build: () => ContextMenuSpec | null): Cont
         const rect = event.currentTarget.getBoundingClientRect();
         openContextMenu({ x: rect.left + 8, y: rect.bottom }, spec, event.currentTarget);
       },
-    }),
-    [latestBuild, tracker],
-  );
+    };
+  }, [latestBuild]);
 }
 
 function viewport() {

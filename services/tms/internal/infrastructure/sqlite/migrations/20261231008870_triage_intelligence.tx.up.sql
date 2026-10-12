@@ -4,6 +4,10 @@
 -- nowhere.
 -- Source: 20261231008870_triage_intelligence.tx.up.sql
 
+CREATE INDEX IF NOT EXISTS "idx_inbound_messages_sender_received" ON "inbound_messages" ("organization_id", "business_unit_id", "sender_domain", "received_at" DESC);
+
+--bun:split
+
 CREATE INDEX IF NOT EXISTS "idx_inbound_messages_received" ON "inbound_messages" ("organization_id", "business_unit_id", "received_at" DESC);
 
 --bun:split

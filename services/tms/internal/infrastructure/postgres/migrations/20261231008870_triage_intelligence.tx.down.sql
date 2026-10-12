@@ -13,4 +13,7 @@ ALTER TABLE "ai_corrections"
     ADD CONSTRAINT "ck_ai_corrections_subject_type" CHECK ("subject_type" IN ('Shipment'));
 
 --bun:split
+DROP INDEX IF EXISTS "idx_inbound_messages_sender_received";
+
+--bun:split
 DROP INDEX IF EXISTS "idx_inbound_messages_received";

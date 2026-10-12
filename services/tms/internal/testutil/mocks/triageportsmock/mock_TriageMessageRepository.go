@@ -40,7 +40,7 @@ func (_m *MockTriageMessageRepository) EXPECT() *MockTriageMessageRepository_Exp
 }
 
 // ClaimRule provides a mock function for the type MockTriageMessageRepository
-func (_mock *MockTriageMessageRepository) ClaimRule(ctx context.Context, req triageports.ClaimRuleRequest) (*triageports.ClaimedRule, error) {
+func (_mock *MockTriageMessageRepository) ClaimRule(ctx context.Context, req *triageports.ClaimRuleRequest) (*triageports.ClaimedRule, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -49,17 +49,17 @@ func (_mock *MockTriageMessageRepository) ClaimRule(ctx context.Context, req tri
 
 	var r0 *triageports.ClaimedRule
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.ClaimRuleRequest) (*triageports.ClaimedRule, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.ClaimRuleRequest) (*triageports.ClaimedRule, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.ClaimRuleRequest) *triageports.ClaimedRule); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.ClaimRuleRequest) *triageports.ClaimedRule); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*triageports.ClaimedRule)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, triageports.ClaimRuleRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *triageports.ClaimRuleRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -74,20 +74,20 @@ type MockTriageMessageRepository_ClaimRule_Call struct {
 
 // ClaimRule is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req triageports.ClaimRuleRequest
+//   - req *triageports.ClaimRuleRequest
 func (_e *MockTriageMessageRepository_Expecter) ClaimRule(ctx any, req any) *MockTriageMessageRepository_ClaimRule_Call {
 	return &MockTriageMessageRepository_ClaimRule_Call{Call: _e.mock.On("ClaimRule", ctx, req)}
 }
 
-func (_c *MockTriageMessageRepository_ClaimRule_Call) Run(run func(ctx context.Context, req triageports.ClaimRuleRequest)) *MockTriageMessageRepository_ClaimRule_Call {
+func (_c *MockTriageMessageRepository_ClaimRule_Call) Run(run func(ctx context.Context, req *triageports.ClaimRuleRequest)) *MockTriageMessageRepository_ClaimRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 triageports.ClaimRuleRequest
+		var arg1 *triageports.ClaimRuleRequest
 		if args[1] != nil {
-			arg1 = args[1].(triageports.ClaimRuleRequest)
+			arg1 = args[1].(*triageports.ClaimRuleRequest)
 		}
 		run(
 			arg0,
@@ -102,13 +102,13 @@ func (_c *MockTriageMessageRepository_ClaimRule_Call) Return(claimedRule *triage
 	return _c
 }
 
-func (_c *MockTriageMessageRepository_ClaimRule_Call) RunAndReturn(run func(ctx context.Context, req triageports.ClaimRuleRequest) (*triageports.ClaimedRule, error)) *MockTriageMessageRepository_ClaimRule_Call {
+func (_c *MockTriageMessageRepository_ClaimRule_Call) RunAndReturn(run func(ctx context.Context, req *triageports.ClaimRuleRequest) (*triageports.ClaimedRule, error)) *MockTriageMessageRepository_ClaimRule_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CorrectClassification provides a mock function for the type MockTriageMessageRepository
-func (_mock *MockTriageMessageRepository) CorrectClassification(ctx context.Context, req triageports.CorrectClassificationRequest) (bool, error) {
+func (_mock *MockTriageMessageRepository) CorrectClassification(ctx context.Context, req *triageports.CorrectClassificationRequest) (bool, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -117,15 +117,15 @@ func (_mock *MockTriageMessageRepository) CorrectClassification(ctx context.Cont
 
 	var r0 bool
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.CorrectClassificationRequest) (bool, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.CorrectClassificationRequest) (bool, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.CorrectClassificationRequest) bool); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.CorrectClassificationRequest) bool); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, triageports.CorrectClassificationRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *triageports.CorrectClassificationRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -140,20 +140,20 @@ type MockTriageMessageRepository_CorrectClassification_Call struct {
 
 // CorrectClassification is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req triageports.CorrectClassificationRequest
+//   - req *triageports.CorrectClassificationRequest
 func (_e *MockTriageMessageRepository_Expecter) CorrectClassification(ctx any, req any) *MockTriageMessageRepository_CorrectClassification_Call {
 	return &MockTriageMessageRepository_CorrectClassification_Call{Call: _e.mock.On("CorrectClassification", ctx, req)}
 }
 
-func (_c *MockTriageMessageRepository_CorrectClassification_Call) Run(run func(ctx context.Context, req triageports.CorrectClassificationRequest)) *MockTriageMessageRepository_CorrectClassification_Call {
+func (_c *MockTriageMessageRepository_CorrectClassification_Call) Run(run func(ctx context.Context, req *triageports.CorrectClassificationRequest)) *MockTriageMessageRepository_CorrectClassification_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 triageports.CorrectClassificationRequest
+		var arg1 *triageports.CorrectClassificationRequest
 		if args[1] != nil {
-			arg1 = args[1].(triageports.CorrectClassificationRequest)
+			arg1 = args[1].(*triageports.CorrectClassificationRequest)
 		}
 		run(
 			arg0,
@@ -168,7 +168,7 @@ func (_c *MockTriageMessageRepository_CorrectClassification_Call) Return(b bool,
 	return _c
 }
 
-func (_c *MockTriageMessageRepository_CorrectClassification_Call) RunAndReturn(run func(ctx context.Context, req triageports.CorrectClassificationRequest) (bool, error)) *MockTriageMessageRepository_CorrectClassification_Call {
+func (_c *MockTriageMessageRepository_CorrectClassification_Call) RunAndReturn(run func(ctx context.Context, req *triageports.CorrectClassificationRequest) (bool, error)) *MockTriageMessageRepository_CorrectClassification_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -246,7 +246,7 @@ func (_c *MockTriageMessageRepository_OriginalClassification_Call) RunAndReturn(
 }
 
 // SaveTriageFields provides a mock function for the type MockTriageMessageRepository
-func (_mock *MockTriageMessageRepository) SaveTriageFields(ctx context.Context, req triageports.SaveTriageFieldsRequest) error {
+func (_mock *MockTriageMessageRepository) SaveTriageFields(ctx context.Context, req *triageports.SaveTriageFieldsRequest) error {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -254,7 +254,7 @@ func (_mock *MockTriageMessageRepository) SaveTriageFields(ctx context.Context, 
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.SaveTriageFieldsRequest) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.SaveTriageFieldsRequest) error); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		r0 = ret.Error(0)
@@ -269,20 +269,20 @@ type MockTriageMessageRepository_SaveTriageFields_Call struct {
 
 // SaveTriageFields is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req triageports.SaveTriageFieldsRequest
+//   - req *triageports.SaveTriageFieldsRequest
 func (_e *MockTriageMessageRepository_Expecter) SaveTriageFields(ctx any, req any) *MockTriageMessageRepository_SaveTriageFields_Call {
 	return &MockTriageMessageRepository_SaveTriageFields_Call{Call: _e.mock.On("SaveTriageFields", ctx, req)}
 }
 
-func (_c *MockTriageMessageRepository_SaveTriageFields_Call) Run(run func(ctx context.Context, req triageports.SaveTriageFieldsRequest)) *MockTriageMessageRepository_SaveTriageFields_Call {
+func (_c *MockTriageMessageRepository_SaveTriageFields_Call) Run(run func(ctx context.Context, req *triageports.SaveTriageFieldsRequest)) *MockTriageMessageRepository_SaveTriageFields_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 triageports.SaveTriageFieldsRequest
+		var arg1 *triageports.SaveTriageFieldsRequest
 		if args[1] != nil {
-			arg1 = args[1].(triageports.SaveTriageFieldsRequest)
+			arg1 = args[1].(*triageports.SaveTriageFieldsRequest)
 		}
 		run(
 			arg0,
@@ -297,7 +297,7 @@ func (_c *MockTriageMessageRepository_SaveTriageFields_Call) Return(err error) *
 	return _c
 }
 
-func (_c *MockTriageMessageRepository_SaveTriageFields_Call) RunAndReturn(run func(ctx context.Context, req triageports.SaveTriageFieldsRequest) error) *MockTriageMessageRepository_SaveTriageFields_Call {
+func (_c *MockTriageMessageRepository_SaveTriageFields_Call) RunAndReturn(run func(ctx context.Context, req *triageports.SaveTriageFieldsRequest) error) *MockTriageMessageRepository_SaveTriageFields_Call {
 	_c.Call.Return(run)
 	return _c
 }

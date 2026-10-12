@@ -312,7 +312,7 @@ func (_c *MockTriageInsightRepository_HandledByNova_Call) RunAndReturn(run func(
 }
 
 // ManualOutcomes provides a mock function for the type MockTriageInsightRepository
-func (_mock *MockTriageInsightRepository) ManualOutcomes(ctx context.Context, req triageports.ManualOutcomesRequest) ([]*triageports.ManualOutcomeRow, error) {
+func (_mock *MockTriageInsightRepository) ManualOutcomes(ctx context.Context, req *triageports.ManualOutcomesRequest) ([]*triageports.ManualOutcomeRow, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -321,17 +321,17 @@ func (_mock *MockTriageInsightRepository) ManualOutcomes(ctx context.Context, re
 
 	var r0 []*triageports.ManualOutcomeRow
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.ManualOutcomesRequest) ([]*triageports.ManualOutcomeRow, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.ManualOutcomesRequest) ([]*triageports.ManualOutcomeRow, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.ManualOutcomesRequest) []*triageports.ManualOutcomeRow); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.ManualOutcomesRequest) []*triageports.ManualOutcomeRow); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*triageports.ManualOutcomeRow)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, triageports.ManualOutcomesRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *triageports.ManualOutcomesRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -346,20 +346,20 @@ type MockTriageInsightRepository_ManualOutcomes_Call struct {
 
 // ManualOutcomes is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req triageports.ManualOutcomesRequest
+//   - req *triageports.ManualOutcomesRequest
 func (_e *MockTriageInsightRepository_Expecter) ManualOutcomes(ctx any, req any) *MockTriageInsightRepository_ManualOutcomes_Call {
 	return &MockTriageInsightRepository_ManualOutcomes_Call{Call: _e.mock.On("ManualOutcomes", ctx, req)}
 }
 
-func (_c *MockTriageInsightRepository_ManualOutcomes_Call) Run(run func(ctx context.Context, req triageports.ManualOutcomesRequest)) *MockTriageInsightRepository_ManualOutcomes_Call {
+func (_c *MockTriageInsightRepository_ManualOutcomes_Call) Run(run func(ctx context.Context, req *triageports.ManualOutcomesRequest)) *MockTriageInsightRepository_ManualOutcomes_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 triageports.ManualOutcomesRequest
+		var arg1 *triageports.ManualOutcomesRequest
 		if args[1] != nil {
-			arg1 = args[1].(triageports.ManualOutcomesRequest)
+			arg1 = args[1].(*triageports.ManualOutcomesRequest)
 		}
 		run(
 			arg0,
@@ -374,13 +374,13 @@ func (_c *MockTriageInsightRepository_ManualOutcomes_Call) Return(manualOutcomeR
 	return _c
 }
 
-func (_c *MockTriageInsightRepository_ManualOutcomes_Call) RunAndReturn(run func(ctx context.Context, req triageports.ManualOutcomesRequest) ([]*triageports.ManualOutcomeRow, error)) *MockTriageInsightRepository_ManualOutcomes_Call {
+func (_c *MockTriageInsightRepository_ManualOutcomes_Call) RunAndReturn(run func(ctx context.Context, req *triageports.ManualOutcomesRequest) ([]*triageports.ManualOutcomeRow, error)) *MockTriageInsightRepository_ManualOutcomes_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // MessageRows provides a mock function for the type MockTriageInsightRepository
-func (_mock *MockTriageInsightRepository) MessageRows(ctx context.Context, req triageports.MessageRowsRequest) ([]*triageports.MessageRow, error) {
+func (_mock *MockTriageInsightRepository) MessageRows(ctx context.Context, req *triageports.MessageRowsRequest) ([]*triageports.MessageRow, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -389,17 +389,17 @@ func (_mock *MockTriageInsightRepository) MessageRows(ctx context.Context, req t
 
 	var r0 []*triageports.MessageRow
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.MessageRowsRequest) ([]*triageports.MessageRow, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.MessageRowsRequest) ([]*triageports.MessageRow, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.MessageRowsRequest) []*triageports.MessageRow); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.MessageRowsRequest) []*triageports.MessageRow); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*triageports.MessageRow)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, triageports.MessageRowsRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *triageports.MessageRowsRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -414,20 +414,20 @@ type MockTriageInsightRepository_MessageRows_Call struct {
 
 // MessageRows is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req triageports.MessageRowsRequest
+//   - req *triageports.MessageRowsRequest
 func (_e *MockTriageInsightRepository_Expecter) MessageRows(ctx any, req any) *MockTriageInsightRepository_MessageRows_Call {
 	return &MockTriageInsightRepository_MessageRows_Call{Call: _e.mock.On("MessageRows", ctx, req)}
 }
 
-func (_c *MockTriageInsightRepository_MessageRows_Call) Run(run func(ctx context.Context, req triageports.MessageRowsRequest)) *MockTriageInsightRepository_MessageRows_Call {
+func (_c *MockTriageInsightRepository_MessageRows_Call) Run(run func(ctx context.Context, req *triageports.MessageRowsRequest)) *MockTriageInsightRepository_MessageRows_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 triageports.MessageRowsRequest
+		var arg1 *triageports.MessageRowsRequest
 		if args[1] != nil {
-			arg1 = args[1].(triageports.MessageRowsRequest)
+			arg1 = args[1].(*triageports.MessageRowsRequest)
 		}
 		run(
 			arg0,
@@ -442,7 +442,7 @@ func (_c *MockTriageInsightRepository_MessageRows_Call) Return(messageRows []*tr
 	return _c
 }
 
-func (_c *MockTriageInsightRepository_MessageRows_Call) RunAndReturn(run func(ctx context.Context, req triageports.MessageRowsRequest) ([]*triageports.MessageRow, error)) *MockTriageInsightRepository_MessageRows_Call {
+func (_c *MockTriageInsightRepository_MessageRows_Call) RunAndReturn(run func(ctx context.Context, req *triageports.MessageRowsRequest) ([]*triageports.MessageRow, error)) *MockTriageInsightRepository_MessageRows_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -516,7 +516,7 @@ func (_c *MockTriageInsightRepository_River_Call) RunAndReturn(run func(ctx cont
 }
 
 // RuleCandidates provides a mock function for the type MockTriageInsightRepository
-func (_mock *MockTriageInsightRepository) RuleCandidates(ctx context.Context, req triageports.RuleCandidatesRequest) (*triageports.RuleCandidates, error) {
+func (_mock *MockTriageInsightRepository) RuleCandidates(ctx context.Context, req *triageports.RuleCandidatesRequest) (*triageports.RuleCandidates, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -525,17 +525,17 @@ func (_mock *MockTriageInsightRepository) RuleCandidates(ctx context.Context, re
 
 	var r0 *triageports.RuleCandidates
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.RuleCandidatesRequest) (*triageports.RuleCandidates, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.RuleCandidatesRequest) (*triageports.RuleCandidates, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.RuleCandidatesRequest) *triageports.RuleCandidates); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.RuleCandidatesRequest) *triageports.RuleCandidates); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*triageports.RuleCandidates)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, triageports.RuleCandidatesRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *triageports.RuleCandidatesRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -550,20 +550,20 @@ type MockTriageInsightRepository_RuleCandidates_Call struct {
 
 // RuleCandidates is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req triageports.RuleCandidatesRequest
+//   - req *triageports.RuleCandidatesRequest
 func (_e *MockTriageInsightRepository_Expecter) RuleCandidates(ctx any, req any) *MockTriageInsightRepository_RuleCandidates_Call {
 	return &MockTriageInsightRepository_RuleCandidates_Call{Call: _e.mock.On("RuleCandidates", ctx, req)}
 }
 
-func (_c *MockTriageInsightRepository_RuleCandidates_Call) Run(run func(ctx context.Context, req triageports.RuleCandidatesRequest)) *MockTriageInsightRepository_RuleCandidates_Call {
+func (_c *MockTriageInsightRepository_RuleCandidates_Call) Run(run func(ctx context.Context, req *triageports.RuleCandidatesRequest)) *MockTriageInsightRepository_RuleCandidates_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 triageports.RuleCandidatesRequest
+		var arg1 *triageports.RuleCandidatesRequest
 		if args[1] != nil {
-			arg1 = args[1].(triageports.RuleCandidatesRequest)
+			arg1 = args[1].(*triageports.RuleCandidatesRequest)
 		}
 		run(
 			arg0,
@@ -578,7 +578,7 @@ func (_c *MockTriageInsightRepository_RuleCandidates_Call) Return(ruleCandidates
 	return _c
 }
 
-func (_c *MockTriageInsightRepository_RuleCandidates_Call) RunAndReturn(run func(ctx context.Context, req triageports.RuleCandidatesRequest) (*triageports.RuleCandidates, error)) *MockTriageInsightRepository_RuleCandidates_Call {
+func (_c *MockTriageInsightRepository_RuleCandidates_Call) RunAndReturn(run func(ctx context.Context, req *triageports.RuleCandidatesRequest) (*triageports.RuleCandidates, error)) *MockTriageInsightRepository_RuleCandidates_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -652,7 +652,7 @@ func (_c *MockTriageInsightRepository_SenderDomains_Call) RunAndReturn(run func(
 }
 
 // SenderParty provides a mock function for the type MockTriageInsightRepository
-func (_mock *MockTriageInsightRepository) SenderParty(ctx context.Context, req triageports.SenderPartyRequest) (*triageports.SenderParty, error) {
+func (_mock *MockTriageInsightRepository) SenderParty(ctx context.Context, req *triageports.SenderPartyRequest) (*triageports.SenderParty, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -661,17 +661,17 @@ func (_mock *MockTriageInsightRepository) SenderParty(ctx context.Context, req t
 
 	var r0 *triageports.SenderParty
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.SenderPartyRequest) (*triageports.SenderParty, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.SenderPartyRequest) (*triageports.SenderParty, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.SenderPartyRequest) *triageports.SenderParty); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.SenderPartyRequest) *triageports.SenderParty); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*triageports.SenderParty)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, triageports.SenderPartyRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *triageports.SenderPartyRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -686,20 +686,20 @@ type MockTriageInsightRepository_SenderParty_Call struct {
 
 // SenderParty is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req triageports.SenderPartyRequest
+//   - req *triageports.SenderPartyRequest
 func (_e *MockTriageInsightRepository_Expecter) SenderParty(ctx any, req any) *MockTriageInsightRepository_SenderParty_Call {
 	return &MockTriageInsightRepository_SenderParty_Call{Call: _e.mock.On("SenderParty", ctx, req)}
 }
 
-func (_c *MockTriageInsightRepository_SenderParty_Call) Run(run func(ctx context.Context, req triageports.SenderPartyRequest)) *MockTriageInsightRepository_SenderParty_Call {
+func (_c *MockTriageInsightRepository_SenderParty_Call) Run(run func(ctx context.Context, req *triageports.SenderPartyRequest)) *MockTriageInsightRepository_SenderParty_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 triageports.SenderPartyRequest
+		var arg1 *triageports.SenderPartyRequest
 		if args[1] != nil {
-			arg1 = args[1].(triageports.SenderPartyRequest)
+			arg1 = args[1].(*triageports.SenderPartyRequest)
 		}
 		run(
 			arg0,
@@ -714,13 +714,13 @@ func (_c *MockTriageInsightRepository_SenderParty_Call) Return(senderParty *tria
 	return _c
 }
 
-func (_c *MockTriageInsightRepository_SenderParty_Call) RunAndReturn(run func(ctx context.Context, req triageports.SenderPartyRequest) (*triageports.SenderParty, error)) *MockTriageInsightRepository_SenderParty_Call {
+func (_c *MockTriageInsightRepository_SenderParty_Call) RunAndReturn(run func(ctx context.Context, req *triageports.SenderPartyRequest) (*triageports.SenderParty, error)) *MockTriageInsightRepository_SenderParty_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SenderStats provides a mock function for the type MockTriageInsightRepository
-func (_mock *MockTriageInsightRepository) SenderStats(ctx context.Context, req triageports.SenderStatsRequest) (*triageports.SenderStats, error) {
+func (_mock *MockTriageInsightRepository) SenderStats(ctx context.Context, req *triageports.SenderStatsRequest) (*triageports.SenderStats, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -729,17 +729,17 @@ func (_mock *MockTriageInsightRepository) SenderStats(ctx context.Context, req t
 
 	var r0 *triageports.SenderStats
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.SenderStatsRequest) (*triageports.SenderStats, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.SenderStatsRequest) (*triageports.SenderStats, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.SenderStatsRequest) *triageports.SenderStats); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.SenderStatsRequest) *triageports.SenderStats); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*triageports.SenderStats)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, triageports.SenderStatsRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *triageports.SenderStatsRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -754,20 +754,20 @@ type MockTriageInsightRepository_SenderStats_Call struct {
 
 // SenderStats is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req triageports.SenderStatsRequest
+//   - req *triageports.SenderStatsRequest
 func (_e *MockTriageInsightRepository_Expecter) SenderStats(ctx any, req any) *MockTriageInsightRepository_SenderStats_Call {
 	return &MockTriageInsightRepository_SenderStats_Call{Call: _e.mock.On("SenderStats", ctx, req)}
 }
 
-func (_c *MockTriageInsightRepository_SenderStats_Call) Run(run func(ctx context.Context, req triageports.SenderStatsRequest)) *MockTriageInsightRepository_SenderStats_Call {
+func (_c *MockTriageInsightRepository_SenderStats_Call) Run(run func(ctx context.Context, req *triageports.SenderStatsRequest)) *MockTriageInsightRepository_SenderStats_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 triageports.SenderStatsRequest
+		var arg1 *triageports.SenderStatsRequest
 		if args[1] != nil {
-			arg1 = args[1].(triageports.SenderStatsRequest)
+			arg1 = args[1].(*triageports.SenderStatsRequest)
 		}
 		run(
 			arg0,
@@ -782,7 +782,7 @@ func (_c *MockTriageInsightRepository_SenderStats_Call) Return(senderStats *tria
 	return _c
 }
 
-func (_c *MockTriageInsightRepository_SenderStats_Call) RunAndReturn(run func(ctx context.Context, req triageports.SenderStatsRequest) (*triageports.SenderStats, error)) *MockTriageInsightRepository_SenderStats_Call {
+func (_c *MockTriageInsightRepository_SenderStats_Call) RunAndReturn(run func(ctx context.Context, req *triageports.SenderStatsRequest) (*triageports.SenderStats, error)) *MockTriageInsightRepository_SenderStats_Call {
 	_c.Call.Return(run)
 	return _c
 }

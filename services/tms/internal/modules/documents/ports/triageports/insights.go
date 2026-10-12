@@ -229,9 +229,9 @@ type SenderParty struct {
 }
 
 type TriageInsightRepository interface {
-	RuleCandidates(ctx context.Context, req RuleCandidatesRequest) (*RuleCandidates, error)
-	ManualOutcomes(ctx context.Context, req ManualOutcomesRequest) ([]*ManualOutcomeRow, error)
-	MessageRows(ctx context.Context, req MessageRowsRequest) ([]*MessageRow, error)
+	RuleCandidates(ctx context.Context, req *RuleCandidatesRequest) (*RuleCandidates, error)
+	ManualOutcomes(ctx context.Context, req *ManualOutcomesRequest) ([]*ManualOutcomeRow, error)
+	MessageRows(ctx context.Context, req *MessageRowsRequest) ([]*MessageRow, error)
 	SenderDomains(ctx context.Context, req SenderDomainsRequest) ([]string, error)
 	BriefingCounts(ctx context.Context, req BriefingWindow) (*BriefingCounts, error)
 	HandledByNova(ctx context.Context, req BriefingWindow) ([]*HandledRow, error)
@@ -239,6 +239,6 @@ type TriageInsightRepository interface {
 	River(ctx context.Context, req BriefingWindow) ([]*RiverRow, error)
 	Waiting(ctx context.Context, req WaitingRequest) ([]*inboundmessage.InboundMessage, error)
 	CorrectionTotals(ctx context.Context, req CorrectionTotalsRequest) (*CorrectionTotals, error)
-	SenderStats(ctx context.Context, req SenderStatsRequest) (*SenderStats, error)
-	SenderParty(ctx context.Context, req SenderPartyRequest) (*SenderParty, error)
+	SenderStats(ctx context.Context, req *SenderStatsRequest) (*SenderStats, error)
+	SenderParty(ctx context.Context, req *SenderPartyRequest) (*SenderParty, error)
 }

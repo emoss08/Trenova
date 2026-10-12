@@ -204,7 +204,7 @@ export function Reader({ messageId, position, onClose, onStep }: ReaderProps) {
       </div>
 
       <div className="scrollbar-overlay min-h-0 flex-1 overflow-y-auto">
-        <div className="animate-rise mx-auto flex w-full max-w-170 flex-col gap-5 px-8 pt-5 pb-32">
+        <div className="animate-rise mx-auto flex w-full max-w-170 flex-col gap-5 px-5 pt-5 pb-32 sm:px-8">
           <h1 className="text-2xl font-semibold">
             {message.subject === "" ? t("(no subject)") : message.subject}
           </h1>

@@ -109,10 +109,9 @@ export function entryHeight(entry: ContextMenuEntry): number {
 
 /** Where each row starts, plus the total height as the last element. */
 export function entryOffsets(entries: readonly ContextMenuEntry[]): number[] {
-  const offsets = new Array<number>(entries.length + 1);
-  offsets[0] = 0;
-  for (let index = 0; index < entries.length; index += 1) {
-    offsets[index + 1] = offsets[index] + entryHeight(entries[index]);
+  const offsets = [0];
+  for (const entry of entries) {
+    offsets.push(offsets[offsets.length - 1] + entryHeight(entry));
   }
 
   return offsets;

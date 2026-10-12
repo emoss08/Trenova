@@ -36,7 +36,9 @@ func (s *Service) SaveDraft(ctx context.Context, req *SaveDraftRequest) (*triage
 	}
 
 	draft := s.draftFor(message, req.UserID)
-	draft.Subject = strings.TrimSpace(req.Subject)
+	if subject := strings.TrimSpace(req.Subject); subject != "" {
+		draft.Subject = subject
+	}
 	draft.Body = strings.TrimSpace(req.Body)
 	if err = validateDraft(draft); err != nil {
 		return nil, err

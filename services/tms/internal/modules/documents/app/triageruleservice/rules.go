@@ -78,7 +78,7 @@ func (s *Service) Create(ctx context.Context, req SaveRequest) (*triage.Rule, er
 	}
 
 	s.rulesChanged(ctx, req.TenantInfo)
-	s.logAudit(ctx, auditEntry{
+	s.logAudit(ctx, &auditEntry{
 		tenantInfo: req.TenantInfo,
 		actorID:    req.ActorID,
 		operation:  permission.OpCreate,
@@ -88,7 +88,7 @@ func (s *Service) Create(ctx context.Context, req SaveRequest) (*triage.Rule, er
 	return created, nil
 }
 
-func (s *Service) Update(ctx context.Context, req UpdateRequest) (*triage.Rule, error) {
+func (s *Service) Update(ctx context.Context, req *UpdateRequest) (*triage.Rule, error) {
 	original, err := s.rules.GetByID(ctx, triageports.GetRuleRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
@@ -119,7 +119,7 @@ func (s *Service) Update(ctx context.Context, req UpdateRequest) (*triage.Rule, 
 	}
 
 	s.rulesChanged(ctx, req.TenantInfo)
-	s.logAudit(ctx, auditEntry{
+	s.logAudit(ctx, &auditEntry{
 		tenantInfo: req.TenantInfo,
 		actorID:    req.ActorID,
 		operation:  permission.OpUpdate,
@@ -130,7 +130,7 @@ func (s *Service) Update(ctx context.Context, req UpdateRequest) (*triage.Rule, 
 	return updated, nil
 }
 
-func (s *Service) SetEnabled(ctx context.Context, req SetEnabledRequest) (*triage.Rule, error) {
+func (s *Service) SetEnabled(ctx context.Context, req *SetEnabledRequest) (*triage.Rule, error) {
 	original, err := s.rules.GetByID(ctx, triageports.GetRuleRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
@@ -157,7 +157,7 @@ func (s *Service) SetEnabled(ctx context.Context, req SetEnabledRequest) (*triag
 	}
 
 	s.rulesChanged(ctx, req.TenantInfo)
-	s.logAudit(ctx, auditEntry{
+	s.logAudit(ctx, &auditEntry{
 		tenantInfo: req.TenantInfo,
 		actorID:    req.ActorID,
 		operation:  permission.OpUpdate,
@@ -168,7 +168,7 @@ func (s *Service) SetEnabled(ctx context.Context, req SetEnabledRequest) (*triag
 	return updated, nil
 }
 
-func (s *Service) Delete(ctx context.Context, req DeleteRequest) error {
+func (s *Service) Delete(ctx context.Context, req *DeleteRequest) error {
 	original, err := s.rules.GetByID(ctx, triageports.GetRuleRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
@@ -185,7 +185,7 @@ func (s *Service) Delete(ctx context.Context, req DeleteRequest) error {
 	}
 
 	s.rulesChanged(ctx, req.TenantInfo)
-	s.logAudit(ctx, auditEntry{
+	s.logAudit(ctx, &auditEntry{
 		tenantInfo: req.TenantInfo,
 		actorID:    req.ActorID,
 		operation:  permission.OpDelete,
@@ -195,7 +195,7 @@ func (s *Service) Delete(ctx context.Context, req DeleteRequest) error {
 	return nil
 }
 
-func (s *Service) Teach(
+func (s *Service) Teach( //nolint:gocritic // the TriageRuleTeacher port takes its request by value
 	ctx context.Context,
 	req inboundmessageports.TeachRequest,
 ) (*triage.Rule, error) {
@@ -239,7 +239,7 @@ func (s *Service) Teach(
 			return nil, err
 		}
 	} else if !existing.Enabled {
-		if taught, err = s.SetEnabled(ctx, SetEnabledRequest{
+		if taught, err = s.SetEnabled(ctx, &SetEnabledRequest{
 			TenantInfo: req.TenantInfo,
 			ActorID:    req.ActorID,
 			ID:         existing.ID,
@@ -376,7 +376,7 @@ type auditEntry struct {
 	previous   *triage.Rule
 }
 
-func (s *Service) logAudit(_ context.Context, entry auditEntry) {
+func (s *Service) logAudit(_ context.Context, entry *auditEntry) {
 	if s.audit == nil {
 		return
 	}
