@@ -1,6 +1,7 @@
 package billingjobs
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -15,11 +16,36 @@ import (
 
 const invoiceSendHeartbeatInterval = 10 * time.Second
 
+// changeReportAutoPostFailure tells the approver when an automatic post gives
+// up. Executions that began before it replay without the step.
+const changeReportAutoPostFailure = "invoice-auto-post-report-failure"
+
+// A post the domain refuses (a closed period, a missing GL account, an invoice
+// that is no longer a draft) refuses the same way every time, so only outages
+// and races are retried.
 var autoPostInvoiceRetryPolicy = &temporal.RetryPolicy{
 	InitialInterval:    time.Second,
 	BackoffCoefficient: 2.0,
 	MaximumAttempts:    5,
 	MaximumInterval:    30 * time.Second,
+	NonRetryableErrorTypes: []string{
+		temporaltype.ErrorTypeInvalidInput.String(),
+		temporaltype.ErrorTypeResourceNotFound.String(),
+		temporaltype.ErrorTypePermissionDenied.String(),
+		temporaltype.ErrorTypeNonRetryable.String(),
+		temporaltype.ErrorTypeQuotaExceeded.String(),
+		temporaltype.ErrorTypePlanRestricted.String(),
+	},
+}
+
+var reportAutoPostFailureActivityOptions = workflow.ActivityOptions{
+	StartToCloseTimeout: time.Minute,
+	RetryPolicy: &temporal.RetryPolicy{
+		InitialInterval:    time.Second,
+		BackoffCoefficient: 2.0,
+		MaximumAttempts:    3,
+		MaximumInterval:    10 * time.Second,
+	},
 }
 
 var autoPostInvoiceActivityOptions = workflow.ActivityOptions{
@@ -106,10 +132,42 @@ func AutoPostInvoiceWorkflow(
 		payload,
 	).Get(ctx, result); err != nil {
 		workflow.GetLogger(ctx).Error("Invoice auto-post workflow failed", "error", err)
+		reportAutoPostFailure(ctx, payload, err)
 		return nil, err
 	}
 
 	return result, nil
+}
+
+func reportAutoPostFailure(
+	ctx workflow.Context,
+	payload *billingcontract.AutoPostInvoicePayload,
+	cause error,
+) {
+	if workflow.GetVersion(ctx, changeReportAutoPostFailure, workflow.DefaultVersion, 1) != 1 {
+		return
+	}
+
+	var a *Activities
+	ctx = workflow.WithActivityOptions(ctx, reportAutoPostFailureActivityOptions)
+	if err := workflow.ExecuteActivity(
+		ctx,
+		a.ReportAutoPostFailureActivity,
+		&billingcontract.AutoPostFailurePayload{
+			AutoPostInvoicePayload: *payload,
+			Reason:                 autoPostFailureReason(cause),
+		},
+	).Get(ctx, nil); err != nil {
+		workflow.GetLogger(ctx).Warn("Invoice auto-post failure was not reported", "error", err)
+	}
+}
+
+func autoPostFailureReason(err error) string {
+	if appErr, ok := errors.AsType[*temporal.ApplicationError](err); ok {
+		return appErr.Message()
+	}
+
+	return err.Error()
 }
 
 func SendInvoiceEmailWorkflow(

@@ -128,5 +128,5 @@ func TestPreviewDecisionRefusesAnAdjustmentNotPendingApproval(t *testing.T) {
 		TenantInfo:   tenantInfo,
 	})
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "pending approval")
+	assert.Contains(t, err.Error(), "awaiting approval or whose execution failed")
 }

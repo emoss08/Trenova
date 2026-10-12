@@ -7,6 +7,7 @@ const (
 	RealtimeActionPDFGenerated = "pdf.generated"
 	RealtimeActionSendUpdated  = "send.updated"
 	RealtimeActionEDIUpdated   = "edi.updated"
+	RealtimeActionPostFailed   = "post.failed"
 )
 
 type RealtimeSnapshot struct {
@@ -19,6 +20,8 @@ type RealtimeSnapshot struct {
 	LastSendError      string        `json:"lastSendError,omitempty"`
 	PDFDocumentID      pulid.ID      `json:"pdfDocumentId,omitempty"`
 	EDISendStatus      EDISendStatus `json:"ediSendStatus"`
+	PostError          string        `json:"postError,omitempty"`
+	NotifiedUserID     pulid.ID      `json:"notifiedUserId,omitempty"`
 	UpdatedAt          int64         `json:"updatedAt"`
 }
 

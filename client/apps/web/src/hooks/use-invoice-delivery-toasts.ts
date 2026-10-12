@@ -4,6 +4,7 @@ import {
 } from "@trenova/shared/hooks/realtime-patching";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { realtimeClient } from "@trenova/shared/services/realtime";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
@@ -18,6 +19,7 @@ type DeliveryInvoice = Pick<Invoice, "id" | "sendStatus" | "pdfDocumentId">;
  */
 export function useInvoiceDeliveryToasts(invoice: DeliveryInvoice) {
   const t = useT();
+  const currentUserId = useAuthStore((s) => s.user?.id ?? null);
   const seenRef = useRef<InvoiceDeliveryState>({
     sendStatus: invoice.sendStatus,
     pdfDocumentId: invoice.pdfDocumentId ?? null,
@@ -65,7 +67,15 @@ export function useInvoiceDeliveryToasts(invoice: DeliveryInvoice) {
             description: outcome.error ?? undefined,
           });
           break;
+        case "post-failed":
+          if (outcome.notifiedUserId && outcome.notifiedUserId === currentUserId) {
+            break;
+          }
+          toast.error(t("{0} could not be posted automatically", outcome.number), {
+            description: outcome.error ?? t("It is still a draft. Fix the problem and post it."),
+          });
+          break;
       }
     });
-  }, [invoiceId, t]);
+  }, [invoiceId, currentUserId, t]);
 }

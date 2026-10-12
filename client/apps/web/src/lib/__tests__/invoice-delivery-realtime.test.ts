@@ -10,8 +10,9 @@ import {
 /*
 Fixtures follow the realtime contract the API publishes for invoices:
 resource "invoice", recordId the invoice id, an action naming what changed
-("pdf.generated", "send.updated", "edi.updated", "balance.updated", "updated")
-and entity a snapshot { id, number, sendStatus, lastSendError, pdfDocumentId }.
+("pdf.generated", "send.updated", "post.failed", "edi.updated", "balance.updated",
+"updated") and entity a snapshot { id, number, sendStatus, lastSendError,
+pdfDocumentId, postError }.
 */
 function invoiceEvent(
   action: string,
@@ -40,6 +41,34 @@ describe("invoiceDeliveryOutcome", () => {
     );
     expect(outcome).toEqual({ kind: "pdf-ready", number: "INV-1" });
     expect(seen.pdfDocumentId).toBe("doc_2");
+  });
+
+  it("announces an automatic post that gave up, with its reason", () => {
+    const { outcome } = invoiceDeliveryOutcome(
+      invoiceEvent("post.failed", {
+        status: "Draft",
+        sendStatus: "NotSent",
+        postError: "The fiscal period is closed",
+        notifiedUserId: "usr_1",
+      }),
+      "inv_1",
+      { sendStatus: "NotSent", pdfDocumentId: null },
+    );
+    expect(outcome).toEqual({
+      kind: "post-failed",
+      number: "INV-1",
+      error: "The fiscal period is closed",
+      notifiedUserId: "usr_1",
+    });
+  });
+
+  it("ignores a failed post on another invoice", () => {
+    const { outcome } = invoiceDeliveryOutcome(
+      invoiceEvent("post.failed", { postError: "closed" }, { recordId: "inv_2" }),
+      "inv_1",
+      sending,
+    );
+    expect(outcome).toBeNull();
   });
 
   it("announces a send settling as sent, failed or partly sent", () => {

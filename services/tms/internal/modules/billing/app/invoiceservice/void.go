@@ -228,21 +228,31 @@ func (s *Service) voidPosted(
 
 	// The reason and disposition are recorded before the reversal runs, so an
 	// approver sees them and the engine has them when it marks the invoice.
+	// Both happen in one transaction: a reversal the engine refuses must not
+	// leave a posted invoice carrying a void reason it never got.
 	previous := *entity
-	entity.VoidReason = strings.TrimSpace(req.Reason)
-	entity.VoidDisposition = req.Disposition
-	if _, err := s.repo.Update(ctx, entity); err != nil {
-		return nil, err
-	}
+	var (
+		adjustment *invoiceadjustment.InvoiceAdjustment
+		reloaded   *invoice.Invoice
+	)
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		entity.VoidReason = strings.TrimSpace(req.Reason)
+		entity.VoidDisposition = req.Disposition
+		if _, txErr := s.repo.Update(txCtx, entity); txErr != nil {
+			return txErr
+		}
 
-	adjustment, err := s.adjustmentService.Submit(ctx, voidReversalRequest(entity, req), actor)
-	if err != nil {
-		return nil, err
-	}
+		var txErr error
+		adjustment, txErr = s.adjustmentService.Submit(txCtx, voidReversalRequest(entity, req), actor)
+		if txErr != nil {
+			return txErr
+		}
 
-	reloaded, err := s.repo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
-		ID:         entity.ID,
-		TenantInfo: req.TenantInfo,
+		reloaded, txErr = s.repo.GetByID(txCtx, invoiceports.GetInvoiceByIDRequest{
+			ID:         entity.ID,
+			TenantInfo: req.TenantInfo,
+		})
+		return txErr
 	})
 	if err != nil {
 		return nil, err

@@ -6,6 +6,7 @@ import {
 export const INVOICE_RESOURCE = "invoice";
 export const INVOICE_PDF_GENERATED_ACTION = "pdf.generated";
 export const INVOICE_SEND_UPDATED_ACTION = "send.updated";
+export const INVOICE_POST_FAILED_ACTION = "post.failed";
 
 /** What the open invoice last showed, so a repeated event announces nothing new. */
 export interface InvoiceDeliveryState {
@@ -17,7 +18,8 @@ export type InvoiceDeliveryOutcome =
   | { kind: "pdf-ready"; number: string }
   | { kind: "sent"; number: string }
   | { kind: "partially-sent"; number: string; error: string | null }
-  | { kind: "failed"; number: string; error: string | null };
+  | { kind: "failed"; number: string; error: string | null }
+  | { kind: "post-failed"; number: string; error: string | null; notifiedUserId: string | null };
 
 export interface InvoiceDeliveryDecision {
   outcome: InvoiceDeliveryOutcome | null;
@@ -31,8 +33,8 @@ function stringField(entity: Record<string, unknown>, field: string): string | n
 
 /**
  * Whether an invoice event finishes something the person with that invoice
- * open is waiting on: its PDF becoming ready, or an email send settling as
- * sent, partly sent or failed. A send moves through several events (queued,
+ * open is waiting on: its PDF becoming ready, an automatic post giving up, or
+ * an email send settling as sent, partly sent or failed. A send moves through several events (queued,
  * attempted, then the provider's answer), and the same failure can be
  * reported more than once, so only a change from what was last seen counts.
  */
@@ -56,6 +58,18 @@ export function invoiceDeliveryOutcome(
   if (event.action === INVOICE_PDF_GENERATED_ACTION) {
     const ready = next.pdfDocumentId !== null && next.pdfDocumentId !== seen.pdfDocumentId;
     return { outcome: ready ? { kind: "pdf-ready", number } : null, seen: next };
+  }
+
+  if (event.action === INVOICE_POST_FAILED_ACTION) {
+    return {
+      outcome: {
+        kind: "post-failed",
+        number,
+        error: stringField(entity, "postError"),
+        notifiedUserId: stringField(entity, "notifiedUserId"),
+      },
+      seen: next,
+    };
   }
 
   if (event.action !== INVOICE_SEND_UPDATED_ACTION || next.sendStatus === seen.sendStatus) {

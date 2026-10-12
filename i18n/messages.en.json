@@ -17019,6 +17019,15 @@
       "routes/invoice-approval"
     ]
   },
+  "Adjustment closed without changes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Adjustment description is required": {
     "sites": 3,
     "scope": [
@@ -17125,6 +17134,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Adjustment ran": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Adjustment reason requirement": {
@@ -48573,6 +48591,15 @@
       "apps/web/hooks"
     ]
   },
+  "Close without changes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Close year": {
     "sites": 2,
     "scope": [
@@ -52250,6 +52277,15 @@
     "areas": [
       "routes/journal-reversal",
       "routes/manual-journal"
+    ]
+  },
+  "Confirm closing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Confirm decline": {
@@ -87531,6 +87567,15 @@
       "routes/invoice"
     ]
   },
+  "Execution failed, but no detailed reason was recorded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Execution history for reports, schedules, and exports": {
     "sites": 1,
     "scope": [
@@ -95906,6 +95951,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Fix what stopped it and run it again, or close it without changing the invoice.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Fixed": {
@@ -114174,6 +114228,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "It is still a draft. Fix the problem and post it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "It is the last document left to file, so the stack is done once it goes. Its pages are not filed and are deleted with the stack's other unfiled pages.": {
@@ -153340,6 +153403,15 @@
       "go/other"
     ]
   },
+  "Only adjustments awaiting approval or whose execution failed may be rejected": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Only agents people talk to can ask others": {
     "sites": 1,
     "scope": [
@@ -153434,7 +153506,7 @@
       "packages/shared/types"
     ]
   },
-  "Only an adjustment pending approval can be approved or rejected; this one is {0}": {
+  "Only an adjustment awaiting approval or whose execution failed can be approved or rejected; this one is {0}": {
     "sites": 1,
     "scope": [
       "go"
@@ -154139,15 +154211,6 @@
       "go/other"
     ]
   },
-  "Only pending approval adjustments may be rejected": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Only pending carrier assignments can be confirmed": {
     "sites": 1,
     "scope": [
@@ -154826,7 +154889,7 @@
     ]
   },
   "Open": {
-    "sites": 61,
+    "sites": 62,
     "scope": [
       "go",
       "ts"
@@ -181199,6 +181262,15 @@
       "routes/billing-queue"
     ]
   },
+  "Reason for closing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Reason for disqualification (if applicable).": {
     "sites": 1,
     "scope": [
@@ -196758,12 +196830,13 @@
     ]
   },
   "Run again": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/invoice"
     ]
   },
   "Run again and again while enabled": {
@@ -227376,6 +227449,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The adjustment still cannot run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "The agent": {
@@ -268085,6 +268167,15 @@
       "routes/billing-queue"
     ]
   },
+  "Why is this being closed?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Why is this being rejected?": {
     "sites": 1,
     "scope": [
@@ -286714,6 +286805,15 @@
     ]
   },
   "{0} could not be emailed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "{0} could not be posted automatically": {
     "sites": 1,
     "scope": [
       "ts"

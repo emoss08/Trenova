@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -56,6 +57,20 @@ type VoidInvoiceRequest struct {
 	TenantInfo  pagination.TenantInfo
 	Reason      string
 	Disposition invoice.VoidDisposition
+}
+
+type AttachGeneratedPDFRequest struct {
+	InvoiceID  pulid.ID
+	DocumentID pulid.ID
+	TenantInfo pagination.TenantInfo
+	Actor      kernelports.AuditActor
+}
+
+type ReportAutoPostFailureRequest struct {
+	InvoiceID  pulid.ID
+	TenantInfo pagination.TenantInfo
+	Reason     string
+	Actor      kernelports.AuditActor
 }
 
 type DiscardDraftForReviewRequest struct {
@@ -349,6 +364,11 @@ type InvoiceService interface {
 		req *CreateInvoiceFromOrderRequest,
 		actor *permissionports.RequestActor,
 	) (*CreateInvoicesResult, error)
+	AttachGeneratedPDF(
+		ctx context.Context,
+		req *AttachGeneratedPDFRequest,
+	) (*invoice.Invoice, error)
+	ReportAutoPostFailure(ctx context.Context, req *ReportAutoPostFailureRequest) error
 	DiscardDraftForReview(
 		ctx context.Context,
 		req *DiscardDraftForReviewRequest,

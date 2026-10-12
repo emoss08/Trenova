@@ -396,6 +396,7 @@ func (r *repository) UpdateAdjustment(
 				Set("rejected_at = ?", adjustment.RejectedAt).
 				Set("rejection_reason = ?", adjustment.RejectionReason).
 				Set("execution_error = ?", adjustment.ExecutionError).
+				Set("idempotency_key = ?", adjustment.IdempotencyKey).
 				Set("metadata = ?", adjustment.Metadata).
 				Set("version = version + 1").
 				Exec(ctx)
