@@ -3,15 +3,13 @@
 package invoiceservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -23,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueuerepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
-	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -80,9 +77,6 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 	)
 	accountingRepo := accountingcontrolrepository.New(
 		accountingcontrolrepository.Params{DB: conn, Logger: logger},
-	)
-	fiscalYearRepo := fiscalyearrepository.New(
-		fiscalyearrepository.Params{DB: conn, Logger: logger},
 	)
 	fiscalPeriodRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: logger},
@@ -156,31 +150,12 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 	require.NoError(t, err)
 
 	now := time.Now().UTC()
-	fy, err := fiscalYearRepo.Create(ctx, &fiscalyear.FiscalYear{
-		OrganizationID:        org.ID,
-		BusinessUnitID:        org.BusinessUnitID,
-		Status:                fiscalyear.StatusOpen,
-		Year:                  now.Year(),
-		Name:                  fmt.Sprintf("FY %d", now.Year()),
-		StartDate:             now.Add(-24 * time.Hour).Unix(),
-		EndDate:               now.Add(24 * time.Hour).Unix(),
-		IsCurrent:             true,
-		AllowAdjustingEntries: true,
+	_, period := fiscaltest.OpenPeriod(t, ctx, fiscaltest.OpenPeriodParams{
+		DB:             db,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		At:             now.Unix(),
 	})
-	require.NoError(t, err)
-	period, err := fiscalPeriodRepo.Create(ctx, &fiscalperiod.FiscalPeriod{
-		OrganizationID:        org.ID,
-		BusinessUnitID:        org.BusinessUnitID,
-		FiscalYearID:          fy.ID,
-		PeriodNumber:          1,
-		PeriodType:            fiscalperiod.PeriodTypeMonth,
-		Status:                fiscalperiod.StatusOpen,
-		Name:                  now.Format("January 2006"),
-		StartDate:             now.Add(-24 * time.Hour).Unix(),
-		EndDate:               now.Add(24 * time.Hour).Unix(),
-		AllowAdjustingEntries: true,
-	})
-	require.NoError(t, err)
 
 	queue := &billingqueue.BillingQueueItem{
 		OrganizationID:   org.ID,
@@ -374,9 +349,6 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 	accountingRepo := accountingcontrolrepository.New(
 		accountingcontrolrepository.Params{DB: conn, Logger: logger},
 	)
-	fiscalYearRepo := fiscalyearrepository.New(
-		fiscalyearrepository.Params{DB: conn, Logger: logger},
-	)
 	fiscalPeriodRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: logger},
 	)
@@ -451,37 +423,12 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 	require.NoError(t, err)
 
 	now := time.Now().UTC()
-	fy, err := fiscalYearRepo.Create(
-		ctx,
-		&fiscalyear.FiscalYear{
-			OrganizationID:        org.ID,
-			BusinessUnitID:        org.BusinessUnitID,
-			Status:                fiscalyear.StatusOpen,
-			Year:                  now.Year(),
-			Name:                  fmt.Sprintf("FY %d", now.Year()),
-			StartDate:             now.Add(-24 * time.Hour).Unix(),
-			EndDate:               now.Add(24 * time.Hour).Unix(),
-			IsCurrent:             true,
-			AllowAdjustingEntries: true,
-		},
-	)
-	require.NoError(t, err)
-	period, err := fiscalPeriodRepo.Create(
-		ctx,
-		&fiscalperiod.FiscalPeriod{
-			OrganizationID:        org.ID,
-			BusinessUnitID:        org.BusinessUnitID,
-			FiscalYearID:          fy.ID,
-			PeriodNumber:          1,
-			PeriodType:            fiscalperiod.PeriodTypeMonth,
-			Status:                fiscalperiod.StatusOpen,
-			Name:                  now.Format("January 2006"),
-			StartDate:             now.Add(-24 * time.Hour).Unix(),
-			EndDate:               now.Add(24 * time.Hour).Unix(),
-			AllowAdjustingEntries: true,
-		},
-	)
-	require.NoError(t, err)
+	_, period := fiscaltest.OpenPeriod(t, ctx, fiscaltest.OpenPeriodParams{
+		DB:             db,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		At:             now.Unix(),
+	})
 
 	queue := &billingqueue.BillingQueueItem{
 		OrganizationID:   org.ID,
@@ -580,13 +527,13 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 		Where("reference_id = ?", entity.ID.String()).
 		Count(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 0, entryCount)
+	assert.Equal(t, int64(0), entryCount)
 	sourceCount, err := db.NewSelect().
 		Table("journal_sources").
 		Where("source_object_id = ?", entity.ID.String()).
 		Count(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 0, sourceCount)
+	assert.Equal(t, int64(0), sourceCount)
 }
 
 func lookupInvoiceGLAccount(

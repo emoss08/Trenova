@@ -175,3 +175,44 @@ type AccountingAppCredentialRepository interface {
 		integrationType integration.Type,
 	) (*accountingsync.AccountingAppCredential, error)
 }
+
+type ListAccountingWebhookSubscriptionsRequest struct {
+	TenantInfo   pagination.TenantInfo
+	ConnectionID pulid.ID
+}
+
+type DeleteAccountingWebhookSubscriptionRequest struct {
+	TenantInfo pagination.TenantInfo
+	ID         pulid.ID
+}
+
+type ListWebhookSubscriptionConnectionsRequest struct {
+	IntegrationTypes []integration.Type
+	AfterID          pulid.ID
+	Limit            int
+}
+
+type AccountingWebhookSubscriptionRepository interface {
+	ListByConnection(
+		ctx context.Context,
+		req ListAccountingWebhookSubscriptionsRequest,
+	) ([]*accountingsync.AccountingWebhookSubscription, error)
+	ListByExternalIDs(
+		ctx context.Context,
+		integrationType integration.Type,
+		externalIDs []string,
+	) ([]*accountingsync.AccountingWebhookSubscription, error)
+	ListConnections(
+		ctx context.Context,
+		req ListWebhookSubscriptionConnectionsRequest,
+	) ([]*accountingsync.AccountingConnection, error)
+	Create(
+		ctx context.Context,
+		entity *accountingsync.AccountingWebhookSubscription,
+	) (*accountingsync.AccountingWebhookSubscription, error)
+	Update(
+		ctx context.Context,
+		entity *accountingsync.AccountingWebhookSubscription,
+	) (*accountingsync.AccountingWebhookSubscription, error)
+	Delete(ctx context.Context, req DeleteAccountingWebhookSubscriptionRequest) error
+}

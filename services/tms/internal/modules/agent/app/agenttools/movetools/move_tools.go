@@ -10,7 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -21,23 +23,33 @@ type moveStopReader interface {
 	) (*shipment.ShipmentMove, error)
 }
 
+type stopReporter interface {
+	RecordReported(
+		ctx context.Context,
+		params *trackingeventports.RecordReportedStopEventParams,
+	) (*trackingeventports.StopEventResult, error)
+}
+
 type RecordStopActualTool struct {
 	moves     shipmentports.ShipmentMoveService
+	reports   stopReporter
 	moveStops moveStopReader
 }
 
 func newRecordStopActualTool(
 	moves shipmentports.ShipmentMoveService,
+	reports stopReporter,
 	moveStops moveStopReader,
 ) agentports.AgentTool {
-	return &RecordStopActualTool{moves: moves, moveStops: moveStops}
+	return &RecordStopActualTool{moves: moves, reports: reports, moveStops: moveStops}
 }
 
 func ProvideRecordStopActualTool(
 	moves shipmentports.ShipmentMoveService,
+	reports trackingeventports.TrackingEventService,
 	moveStops shipmentports.ShipmentMoveRepository,
 ) agentports.AgentTool {
-	return newRecordStopActualTool(moves, moveStops)
+	return newRecordStopActualTool(moves, reports, moveStops)
 }
 
 func (t *RecordStopActualTool) Name() string { return "record_stop_actual" }
@@ -119,7 +131,17 @@ func (t *RecordStopActualTool) Execute(
 		return err
 	}
 
-	_, err = t.moves.RecordStopActual(ctx, request)
+	_, err = t.reports.RecordReported(ctx, &trackingeventports.RecordReportedStopEventParams{
+		TenantInfo:   request.TenantInfo,
+		MoveID:       request.MoveID,
+		StopID:       request.StopID,
+		Action:       request.Action,
+		OccurredAt:   request.OccurredAt,
+		DepartedAt:   request.DepartedAt,
+		Source:       trackingevent.SourceAgent,
+		SourceKey:    params.IdempotencyKey,
+		ReportedByID: request.TenantInfo.UserID,
+	})
 
 	return err
 }

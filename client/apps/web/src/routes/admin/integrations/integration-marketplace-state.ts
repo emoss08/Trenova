@@ -19,6 +19,7 @@ export const integrationModalTypes = [
   "FMCSAQCMobile",
   "QuickBooksOnline",
   "Xero",
+  "BusinessCentral",
 ] as const;
 
 export const integrationSetupStates = ["connected"] as const;

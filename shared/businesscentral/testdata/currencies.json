@@ -1,0 +1,4 @@
+{"@odata.context": "https://api.businesscentral.dynamics.com/v2.0/6e1f2a3b-4c5d-4e6f-8a9b-0c1d2e3f4a5b/Production/api/v2.0/$metadata#companies(a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d)/currencies", "value": [
+  {"id": "22222222-3333-4444-8555-666666666661", "code": "CAD", "displayName": "Canadian dollar", "symbol": "$"},
+  {"id": "22222222-3333-4444-8555-666666666662", "code": "EUR", "displayName": "Euro", "symbol": "€"}
+]}

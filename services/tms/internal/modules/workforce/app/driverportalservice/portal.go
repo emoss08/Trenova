@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/driverportalports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -349,13 +350,24 @@ func (s *Service) MyLoadComments(
 	return views, nil
 }
 
-func (s *Service) MyStopAction(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	moveID pulid.ID,
-	stopID pulid.ID,
-	action shipmentports.StopActualAction,
-) error {
+type MyStopActionRequest struct {
+	TenantInfo    pagination.TenantInfo
+	MoveID        pulid.ID
+	StopID        pulid.ID
+	Action        shipmentports.StopActualAction
+	OccurredAt    *int64
+	ClientEventID string
+}
+
+func (s *Service) MyStopAction(ctx context.Context, req *MyStopActionRequest) error {
+	tenantInfo := req.TenantInfo
+	if !req.Action.IsValid() {
+		return errortypes.NewValidationError(
+			"action",
+			errortypes.ErrInvalid,
+			"Action must be Arrive or Depart",
+		)
+	}
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return err
@@ -367,7 +379,7 @@ func (s *Service) MyStopAction(
 		return err
 	}
 
-	assigned, err := s.portalRepo.WorkerAssignedToMove(ctx, tenantInfo, wrk.ID, moveID)
+	assigned, err := s.portalRepo.WorkerAssignedToMove(ctx, tenantInfo, wrk.ID, req.MoveID)
 	if err != nil {
 		return err
 	}
@@ -375,13 +387,15 @@ func (s *Service) MyStopAction(
 		return errortypes.NewNotFoundError("Load not found")
 	}
 
-	_, err = s.moveService.RecordStopActual(ctx, &shipmentports.RecordStopActualRequest{
-		TenantInfo: tenantInfo,
-		MoveID:     moveID,
-		StopID:     stopID,
-		Action:     action,
+	return s.stopReporter.ReportDriverStop(ctx, &driverportalports.StopReport{
+		TenantInfo:    tenantInfo,
+		MoveID:        req.MoveID,
+		StopID:        req.StopID,
+		Departure:     req.Action == shipmentports.StopActualActionDepart,
+		OccurredAt:    req.OccurredAt,
+		ClientEventID: req.ClientEventID,
+		ReportedByID:  tenantInfo.UserID,
 	})
-	return err
 }
 
 func (s *Service) CreateMyLoadComment(

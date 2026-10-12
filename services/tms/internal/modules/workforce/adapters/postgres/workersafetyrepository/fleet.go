@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
-	"github.com/emoss08/trenova/pkg/dbdialect"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -249,9 +249,8 @@ func (r *repository) FleetTrend(
 
 			// Bucketing by UTC month in SQL keeps the trend a single scan. Months are
 			// what a safety meeting talks in, and the day boundary an org's timezone
-			// would move is not worth a second query. The dialect spells the truncation
-			// so the query is not Postgres-only.
-			period := dbdialect.MonthStartEpochFromBun(r.db.DBForContext(ctx), "wsev.occurred_at")
+			// would move is not worth a second query.
+			period := dbhelper.MonthStartEpoch("wsev.occurred_at")
 
 			if err := r.eventScope(ctx, req, since).
 				ColumnExpr(period+" AS period_start").

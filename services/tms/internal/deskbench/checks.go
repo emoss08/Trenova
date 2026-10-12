@@ -14,12 +14,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/pkg/dbdialect"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/shared/numberguard"
 	"github.com/emoss08/trenova/shared/recordids"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -713,9 +712,7 @@ func (b *Bench) FactValues(
 // want a hold for missing paperwork", and the case that asks for that hold
 // failed on every run after. Memories from people's own conversations are
 // never touched.
-func benchLeftovers(db bun.IDB) []string {
-	nowEpoch := dbdialect.NowEpochFromBun(db)
-
+func benchLeftovers() []string {
 	return []string{
 		`CREATE TEMP TABLE bench_leftovers ON COMMIT DROP AS
 		SELECT s.id FROM shipments s
@@ -748,9 +745,9 @@ func benchLeftovers(db bun.IDB) []string {
 		`UPDATE agent_memories SET
 			status = CASE WHEN status = 'Suggested' THEN 'Dismissed' ELSE 'Retired' END,
 			retired_at = CASE WHEN status = 'Suggested' THEN retired_at
-				ELSE ` + nowEpoch + ` END,
+				ELSE ` + dbhelper.NowEpoch + ` END,
 			version = version + 1,
-			updated_at = ` + nowEpoch + `
+			updated_at = ` + dbhelper.NowEpoch + `
 		WHERE id IN (SELECT id FROM bench_lessons)`,
 	}
 }
@@ -760,14 +757,10 @@ func (b *Bench) runSetup(ctx context.Context, session *Session, statements []str
 		return nil
 	}
 
-	return b.runStatements(ctx, session, func(bun.IDB) []string { return statements })
+	return b.runStatements(ctx, session, statements)
 }
 
-func (b *Bench) runStatements(
-	ctx context.Context,
-	session *Session,
-	build func(db bun.IDB) []string,
-) error {
+func (b *Bench) runStatements(ctx context.Context, session *Session, statements []string) error {
 	ctx = session.Context(ctx)
 
 	return dbtx.WriteErr(ctx, b.DB, func(ctx context.Context) error {
@@ -778,7 +771,7 @@ func (b *Bench) runStatements(
 		); err != nil {
 			return fmt.Errorf("bound the setup: %w", err)
 		}
-		for idx, statement := range build(db) {
+		for idx, statement := range statements {
 			if _, err := db.ExecContext(ctx, statement); err != nil {
 				return fmt.Errorf("setup %d: %w", idx+1, err)
 			}

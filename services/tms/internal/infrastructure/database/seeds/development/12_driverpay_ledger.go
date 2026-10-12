@@ -7,15 +7,15 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/pkg/dbdialect"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -829,7 +829,7 @@ func (s *DriverPayLedgerSeed) applyBalances(
 			period_credit_minor = gb.period_credit_minor + EXCLUDED.period_credit_minor,
 			net_change_minor = gb.net_change_minor + EXCLUDED.net_change_minor,
 			last_journal_entry_id = EXCLUDED.last_journal_entry_id,
-			updated_at = `+dbdialect.NowEpochFromBun(tx)+`
+			updated_at = `+dbhelper.NowEpoch+`
 	`,
 		orgID, buID, line.GLAccountID, fiscalYearID, fiscalPeriodID,
 		line.DebitAmount, line.CreditAmount, line.NetAmount, entryID,
@@ -841,7 +841,7 @@ func (s *DriverPayLedgerSeed) applyBalances(
 		Set("current_balance = current_balance + ?", line.NetAmount).
 		Set("debit_balance = debit_balance + ?", line.DebitAmount).
 		Set("credit_balance = credit_balance + ?", line.CreditAmount).
-		Set("updated_at = "+dbdialect.NowEpochFromBun(tx)).
+		Set("updated_at = "+dbhelper.NowEpoch).
 		Where("id = ?", line.GLAccountID).
 		Where("organization_id = ?", orgID).
 		Where("business_unit_id = ?", buID).

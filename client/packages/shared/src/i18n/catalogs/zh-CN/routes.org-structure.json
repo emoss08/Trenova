@@ -107,7 +107,6 @@
   "e.g. Today": "例如：今天",
   "{0, plural, one {# person with no position} other {# people with no position}}": "{0, plural, other {# 人未分配职务}}",
   "{0, plural, one {# title nobody holds} other {# titles nobody holds}}": "{0, plural, other {# 个无人担任的职务}}",
-  "{0} active": "{0} 个有效",
   "{0} active · {1} on record": "{0} 个生效中 · 共 {1} 笔记录",
   "{0} archived": "{0} 已归档",
   "{0} ending this week": "{0} 本周结束",

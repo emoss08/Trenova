@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -132,7 +133,7 @@ func (r *repository) UpsertTenderRecipient(
 			Set("partner_document_profile_id = COALESCE(NULLIF(EXCLUDED.partner_document_profile_id, ''), etr.partner_document_profile_id)").
 			Set("communication_profile_id = COALESCE(NULLIF(EXCLUDED.communication_profile_id, ''), etr.communication_profile_id)").
 			Set("status = ?", edi.TenderRecipientStatusActive).
-			Set("updated_at = " + r.db.NowEpoch()).
+			Set("updated_at = " + dbhelper.NowEpoch).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {

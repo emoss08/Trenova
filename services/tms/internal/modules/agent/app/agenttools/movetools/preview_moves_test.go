@@ -102,7 +102,7 @@ func TestRecordStopActual_PreviewMatchesWhatIsSaved(t *testing.T) {
 	before := new(shipment.ShipmentMove)
 	require.NoError(t, jsonutils.Convert(move, before))
 	moves := &savingMoves{move: move}
-	tool := newRecordStopActualTool(moves, nil).(*RecordStopActualTool)
+	tool := newRecordStopActualTool(moves, reportsFor(moves), nil).(*RecordStopActualTool)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"moveId":     move.ID.String(),
 		"stopId":     move.Stops[0].ID.String(),
@@ -110,9 +110,13 @@ func TestRecordStopActual_PreviewMatchesWhatIsSaved(t *testing.T) {
 		"occurredAt": "2026-09-21T14:13:20",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &moves.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&moves.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, permission.ResourceShipmentMove, change.Resource)
@@ -136,17 +140,28 @@ func TestRecordStopActual_PreviewMarksNowAsVolatile(t *testing.T) {
 
 	move := dispatchedMove()
 	moves := &savingMoves{move: move}
-	tool := newRecordStopActualTool(moves, nil).(*RecordStopActualTool)
+	tool := newRecordStopActualTool(moves, reportsFor(moves), nil).(*RecordStopActualTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &moves.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			"moveId": move.ID.String(),
-			"stopId": move.Stops[0].ID.String(),
-			"action": "Arrive",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&moves.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				"moveId": move.ID.String(),
+				"stopId": move.Stops[0].ID.String(),
+				"action": "Arrive",
+			}))
+		},
+	)
 
-	assert.True(t, agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "actualArrival").Volatile)
+	assert.True(
+		t,
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			"actualArrival",
+		).Volatile,
+	)
 	assert.Contains(t, preview.Summary, "as happening now")
 }
 
@@ -157,15 +172,19 @@ func TestRecordStopActual_PreviewWarnsWhenTheServiceWouldRefuse(t *testing.T) {
 	arrived := int64(100)
 	move.Stops[0].ActualArrival = &arrived
 	moves := &savingMoves{move: move}
-	tool := newRecordStopActualTool(moves, nil).(*RecordStopActualTool)
+	tool := newRecordStopActualTool(moves, reportsFor(moves), nil).(*RecordStopActualTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &moves.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			"moveId": move.ID.String(),
-			"stopId": move.Stops[0].ID.String(),
-			"action": "Arrive",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&moves.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				"moveId": move.ID.String(),
+				"stopId": move.Stops[0].ID.String(),
+				"action": "Arrive",
+			}))
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)

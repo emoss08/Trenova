@@ -7,11 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/customerpaymentservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -23,7 +22,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/bankreceiptrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerpaymentrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
-	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
@@ -77,9 +75,6 @@ func TestImportAndMatchBankReceiptToCustomerPayment(t *testing.T) {
 	invoiceRepo := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
 	accountingRepo := accountingcontrolrepository.New(
 		accountingcontrolrepository.Params{DB: conn, Logger: logger},
-	)
-	fiscalYearRepo := fiscalyearrepository.New(
-		fiscalyearrepository.Params{DB: conn, Logger: logger},
 	)
 	fiscalPeriodRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: logger},
@@ -155,37 +150,12 @@ func TestImportAndMatchBankReceiptToCustomerPayment(t *testing.T) {
 	require.NoError(t, err)
 
 	now := time.Now().UTC()
-	fy, err := fiscalYearRepo.Create(
-		ctx,
-		&fiscalyear.FiscalYear{
-			OrganizationID:        org.ID,
-			BusinessUnitID:        org.BusinessUnitID,
-			Status:                fiscalyear.StatusOpen,
-			Year:                  now.Year(),
-			Name:                  "FY",
-			StartDate:             now.Add(-24 * time.Hour).Unix(),
-			EndDate:               now.Add(24 * time.Hour).Unix(),
-			IsCurrent:             true,
-			AllowAdjustingEntries: true,
-		},
-	)
-	require.NoError(t, err)
-	period, err := fiscalPeriodRepo.Create(
-		ctx,
-		&fiscalperiod.FiscalPeriod{
-			OrganizationID:        org.ID,
-			BusinessUnitID:        org.BusinessUnitID,
-			FiscalYearID:          fy.ID,
-			PeriodNumber:          1,
-			PeriodType:            fiscalperiod.PeriodTypeMonth,
-			Status:                fiscalperiod.StatusOpen,
-			Name:                  "Period",
-			StartDate:             now.Add(-24 * time.Hour).Unix(),
-			EndDate:               now.Add(24 * time.Hour).Unix(),
-			AllowAdjustingEntries: true,
-		},
-	)
-	require.NoError(t, err)
+	_, period := fiscaltest.OpenPeriod(t, ctx, fiscaltest.OpenPeriodParams{
+		DB:             db,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		At:             now.Unix(),
+	})
 
 	queue := &billingqueue.BillingQueueItem{
 		OrganizationID:   org.ID,

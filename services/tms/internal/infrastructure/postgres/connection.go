@@ -10,26 +10,16 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domainregistry"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
-	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/extra/bundebug"
 	"github.com/uptrace/bun/extra/bunotel"
-	"github.com/uptrace/bun/schema"
 	"go.opentelemetry.io/otel"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
-	_ "modernc.org/sqlite"
-)
-
-const (
-	sqliteDriverName = "sqlite"
-
-	sqliteMaxOpenConns = 8
 )
 
 var _ kernelports.DBConnection = (*Connection)(nil)
@@ -179,22 +169,13 @@ func reportingSettings(cfg *config.Config) connectionSettings {
 func (c *Connection) connect(ctx context.Context) error {
 	dsn := c.cfg.GetDSN(c.cfg.Database.Password)
 	maskedDSN := c.cfg.GetDSNMasked()
-	dialect := c.cfg.Database.GetDialect()
 
-	c.logger.Debug(
-		ctx, "Connecting to database",
-		zap.String("driver", dialect.String()),
-		zap.String("dsn", maskedDSN),
-	)
+	c.logger.Debug(ctx, "Connecting to database", zap.String("dsn", maskedDSN))
 
-	sqldb, bunDialect, err := c.openDB(dialect, dsn)
-	if err != nil {
-		return err
-	}
+	sqldb := c.openDB(dsn)
+	c.applyPoolSettings(sqldb)
 
-	c.applyPoolSettings(dialect, sqldb)
-
-	c.db = bun.NewDB(sqldb, bunDialect)
+	c.db = bun.NewDB(sqldb, pgdialect.New())
 	if c.settings.registerStats && c.metrics != nil && c.metrics.Database != nil {
 		c.metrics.Database.RegisterSQLStats(c.db.Stats)
 	}
@@ -202,28 +183,27 @@ func (c *Connection) connect(ctx context.Context) error {
 	c.db = c.withHooks(c.db)
 	registerModels(c.db)
 
-	if err = c.HealthCheck(ctx); err != nil {
+	if err := c.HealthCheck(ctx); err != nil {
 		return fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	if err = c.connectSystem(ctx); err != nil {
+	if err := c.connectSystem(ctx); err != nil {
 		return err
 	}
 
-	if err = c.verifyRLS(ctx); err != nil {
+	if err := c.verifyRLS(ctx); err != nil {
 		return err
 	}
 
 	c.logger.Info(
 		ctx, "Database connection established",
-		zap.String("driver", dialect.String()),
-		zap.String("database", c.databaseName()),
+		zap.String("database", c.cfg.Database.Name),
 		zap.Int("max_open_conns", c.settings.maxOpenConns),
 		zap.Int("max_idle_conns", c.settings.maxIdleConns),
 		zap.String("row_level_security", c.rlsMode()),
 	)
 
-	if c.cfg.App.IsProduction() && dialect.IsPostgres() && !c.rls.enforced() {
+	if c.cfg.App.IsProduction() && !c.rls.enforced() {
 		c.logger.Warn(
 			ctx,
 			"Row-level security is not enforced; tenant isolation rests on application filters alone",
@@ -277,50 +257,28 @@ func registerModels(db *bun.DB) {
 	db.RegisterModel(domainregistry.RegisterEntities()...)
 }
 
-func (c *Connection) openDB(
-	dialect dbdialect.Kind,
-	dsn string,
-) (*sql.DB, schema.Dialect, error) {
-	if dialect.IsSQLite() {
-		sqldb, err := openSQLiteDB(dsn)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		return sqldb, sqlitedialect.New(), nil
-	}
-
+func (c *Connection) openDB(dsn string) *sql.DB {
 	if c.rls != nil {
 		return sql.OpenDB(c.rls.connector(
 			dsn,
 			c.settings.connParams,
 			scopePoolTenant,
 			!c.cfg.Database.System.Configured(),
-		)), pgdialect.New(), nil
+		))
 	}
 
-	sqldb := sql.OpenDB(pgdriver.NewConnector(
+	return sql.OpenDB(pgdriver.NewConnector(
 		pgdriver.WithDSN(dsn),
 		pgdriver.WithConnParams(c.settings.connParams),
 	))
-
-	return sqldb, pgdialect.New(), nil
 }
 
-func (c *Connection) applyPoolSettings(dialect dbdialect.Kind, sqldb *sql.DB) {
-	maxOpenConns := c.settings.maxOpenConns
-	maxIdleConns := c.settings.maxIdleConns
-
-	if dialect.IsSQLite() {
-		maxOpenConns = min(maxOpenConns, sqliteMaxOpenConns)
-		maxIdleConns = min(maxIdleConns, maxOpenConns)
+func (c *Connection) applyPoolSettings(sqldb *sql.DB) {
+	if c.settings.maxOpenConns > 0 {
+		sqldb.SetMaxOpenConns(c.settings.maxOpenConns)
 	}
-
-	if maxOpenConns > 0 {
-		sqldb.SetMaxOpenConns(maxOpenConns)
-	}
-	if maxIdleConns > 0 {
-		sqldb.SetMaxIdleConns(maxIdleConns)
+	if c.settings.maxIdleConns > 0 {
+		sqldb.SetMaxIdleConns(c.settings.maxIdleConns)
 	}
 	if c.settings.connMaxLifetime > 0 {
 		sqldb.SetConnMaxLifetime(c.settings.connMaxLifetime)
@@ -328,17 +286,6 @@ func (c *Connection) applyPoolSettings(dialect dbdialect.Kind, sqldb *sql.DB) {
 	if c.settings.connMaxIdleTime > 0 {
 		sqldb.SetConnMaxIdleTime(c.settings.connMaxIdleTime)
 	}
-
-	c.settings.maxOpenConns = maxOpenConns
-	c.settings.maxIdleConns = maxIdleConns
-}
-
-func (c *Connection) databaseName() string {
-	if c.cfg.Database.GetDialect().IsSQLite() {
-		return c.cfg.Database.SQLite.GetPath()
-	}
-
-	return c.cfg.Database.Name
 }
 
 func (c *Connection) withHooks(db *bun.DB) *bun.DB {
@@ -353,7 +300,7 @@ func (c *Connection) withHooks(db *bun.DB) *bun.DB {
 
 	return db.WithQueryHook(
 		bunotel.NewQueryHook(
-			bunotel.WithDBName(c.databaseName()),
+			bunotel.WithDBName(c.cfg.Database.Name),
 			bunotel.WithTracerProvider(otel.GetTracerProvider()),
 			bunotel.WithFormattedQueries(c.cfg.App.IsDevelopment()),
 		),
@@ -433,10 +380,8 @@ func (c *Connection) WithTx(
 		return ErrDatabaseConnectionNotInitialized
 	}
 
-	supportsLockTimeout := c.cfg == nil || c.cfg.Database.GetDialect().IsPostgres()
-
 	if existingTx, ok := c.txForContext(ctx); ok {
-		if opts.LockTimeout > 0 && supportsLockTimeout {
+		if opts.LockTimeout > 0 {
 			if err := applyLockTimeout(ctx, existingTx, opts.LockTimeout); err != nil {
 				return err
 			}
@@ -456,7 +401,10 @@ func (c *Connection) WithTx(
 	}
 	txCtx, hooks := kernelports.WithAfterCommitHooks(baseCtx)
 
-	tx, err := c.poolForContext(ctx).BeginTx(txCtx, c.txOptions(opts))
+	tx, err := c.poolForContext(ctx).BeginTx(txCtx, &sql.TxOptions{
+		Isolation: opts.Isolation,
+		ReadOnly:  opts.ReadOnly,
+	})
 	if err != nil {
 		return err
 	}
@@ -470,7 +418,7 @@ func (c *Connection) WithTx(
 		}
 	}()
 
-	if opts.LockTimeout > 0 && supportsLockTimeout {
+	if opts.LockTimeout > 0 {
 		if err = applyLockTimeout(ctx, tx, opts.LockTimeout); err != nil {
 			return err
 		}
@@ -500,17 +448,6 @@ func applyLockTimeout(ctx context.Context, tx bun.Tx, timeout time.Duration) err
 	return nil
 }
 
-func (c *Connection) txOptions(opts kernelports.TxOptions) *sql.TxOptions {
-	if c.cfg != nil && c.cfg.Database.GetDialect().IsSQLite() {
-		return &sql.TxOptions{ReadOnly: opts.ReadOnly}
-	}
-
-	return &sql.TxOptions{
-		Isolation: opts.Isolation,
-		ReadOnly:  opts.ReadOnly,
-	}
-}
-
 func (c *Connection) HealthCheck(ctx context.Context) error {
 	if c.db == nil {
 		return ErrDatabaseConnectionNotInitialized
@@ -531,13 +468,4 @@ func (c *Connection) Close() error {
 		return c.db.Close()
 	}
 	return nil
-}
-
-// NowEpoch is the current-Unix-timestamp SQL for the connection's dialect.
-func (c *Connection) NowEpoch() string {
-	if c.cfg == nil {
-		return dbdialect.DefaultKind.NowEpoch()
-	}
-
-	return c.cfg.Database.GetDialect().NowEpoch()
 }

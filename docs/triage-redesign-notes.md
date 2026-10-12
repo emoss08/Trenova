@@ -32,7 +32,7 @@ provider webhook ──▶ inboundhandler ──▶ inboundmessageservice.Receiv
 | Rules, preview, suggestions, corrections, sender hints, facts, conflicts, briefing | `triageruleservice`, `triagebriefingservice`, `triagecorrectionservice` |
 | Replies and templates, Nova drafts, loads, filing and splitting, exceptions, blocking, stops, peeks, presence | `inboundreplyservice`, `triageworkservice`, `triagepeekservice`, `inboxpresencehandler` |
 | GraphQL | `schema/inboundmessage.graphqls` (queue core), `schema/triage.graphqls` (rules, briefing, corrections), `schema/inboundreply.graphqls` (replies, work, peeks, actions) |
-| Migrations | `postgres/migrations/20261231008800_triage.*` and its SQLite twin |
+| Migrations | `postgres/migrations/20261231008800_triage.*` |
 
 ### Decisions
 
@@ -293,7 +293,7 @@ synthetic rows were deleted afterwards (50,000 rows and their activity lines cas
 | Total count, search | seq scan (`ILIKE` on five columns) | 133 |
 | Everything, due first (`20261231008940_triage_due_index`) | Index Only Scan `idx_inbound_messages_due`, stops at 51 | 0.07 |
 
-What changed after the first run (`20261231008890_triage_queue_indexes` and its SQLite twin):
+What changed after the first run (`20261231008890_triage_queue_indexes`):
 
 - **Waiting by due was a sort of every waiting row** (bitmap scan of `idx_inbound_messages_lane`,
   top-N heapsort of 3,508 rows, 14 ms; `idx_inbound_messages_waiting_due` leads with `status`, so

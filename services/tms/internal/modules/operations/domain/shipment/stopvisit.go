@@ -37,10 +37,12 @@ func (m *ShipmentMove) ActiveStopsBySequence() []*Stop {
 }
 
 type visitCandidates struct {
-	atLocation *Stop
-	onSite     *Stop
-	unarrived  *Stop
-	undeparted *Stop
+	atLocation   *Stop
+	onSite       *Stop
+	unarrived    *Stop
+	undeparted   *Stop
+	lastArrived  *Stop
+	lastDeparted *Stop
 }
 
 func (c *visitCandidates) consider(stop *Stop) {
@@ -58,6 +60,32 @@ func (c *visitCandidates) consider(stop *Stop) {
 	if !departed && c.undeparted == nil {
 		c.undeparted = stop
 	}
+	if arrived {
+		c.lastArrived = stop
+	}
+	if departed {
+		c.lastDeparted = stop
+	}
+}
+
+func (c *visitCandidates) reported(kind VisitKind) *Stop {
+	switch kind {
+	case VisitArrival:
+		return firstStop(c.onSite, c.unarrived, c.lastArrived)
+	case VisitDeparture:
+		return firstStop(c.onSite, c.undeparted, c.lastDeparted)
+	default:
+		return nil
+	}
+}
+
+func firstStop(stops ...*Stop) *Stop {
+	for _, stop := range stops {
+		if stop != nil {
+			return stop
+		}
+	}
+	return nil
 }
 
 func (c *visitCandidates) match(kind VisitKind) (*Stop, VisitMatch) {
@@ -88,16 +116,30 @@ func (m *ShipmentMove) MatchObservedVisit(
 	locationID pulid.ID,
 	kind VisitKind,
 ) (*Stop, VisitMatch) {
-	if locationID.IsNil() {
-		return nil, VisitMatchNoStop
-	}
+	return m.visitCandidatesAt(locationID).match(kind)
+}
 
-	var candidates visitCandidates
+func (m *ShipmentMove) StopForObservedVisit(locationID pulid.ID, kind VisitKind) *Stop {
+	return m.visitCandidatesAt(locationID).reported(kind)
+}
+
+func (m *ShipmentMove) StopForReportedVisit(matches func(*Stop) bool, kind VisitKind) *Stop {
+	return m.visitCandidatesWhere(matches).reported(kind)
+}
+
+func (m *ShipmentMove) visitCandidatesAt(locationID pulid.ID) *visitCandidates {
+	if locationID.IsNil() {
+		return &visitCandidates{}
+	}
+	return m.visitCandidatesWhere(func(stop *Stop) bool { return stop.LocationID == locationID })
+}
+
+func (m *ShipmentMove) visitCandidatesWhere(matches func(*Stop) bool) *visitCandidates {
+	candidates := &visitCandidates{}
 	for _, stop := range m.ActiveStopsBySequence() {
-		if stop.LocationID == locationID {
+		if matches(stop) {
 			candidates.consider(stop)
 		}
 	}
-
-	return candidates.match(kind)
+	return candidates
 }

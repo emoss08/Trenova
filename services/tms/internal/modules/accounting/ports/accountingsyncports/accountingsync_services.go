@@ -10,12 +10,36 @@ import (
 )
 
 type AccountingSyncStatus struct {
-	IntegrationType integration.Type
-	ProviderName    string
-	Profile         accountingsync.ProviderProfile
-	Available       bool
-	App             *AccountingAppSettings
-	Connection      *accountingsync.AccountingConnection
+	IntegrationType      integration.Type
+	ProviderName         string
+	Profile              accountingsync.ProviderProfile
+	Available            bool
+	App                  *AccountingAppSettings
+	Connection           *accountingsync.AccountingConnection
+	WebhookSubscriptions *AccountingWebhookSubscriptionSummary
+}
+
+type AccountingWebhookSubscriptionSummary struct {
+	Configured   bool
+	Active       int
+	Pending      int
+	Failed       int
+	NextExpiryAt *int64
+	LastError    string
+}
+
+type SyncAccountingWebhookSubscriptionsRequest struct {
+	AfterID pulid.ID
+	Limit   int
+}
+
+type AccountingSubscriptionSweep struct {
+	Listed      int
+	Created     int
+	Renewed     int
+	Removed     int
+	Failed      int
+	NextAfterID pulid.ID
 }
 
 type AccountingAppSettings struct {
@@ -126,6 +150,10 @@ type AccountingConnectionService interface {
 		connectionID pulid.ID,
 	) (*accountingsync.AccountingConnection, error)
 	CheckDue(ctx context.Context, limit int) (*AccountingHealthSweep, error)
+	SyncWebhookSubscriptions(
+		ctx context.Context,
+		req *SyncAccountingWebhookSubscriptionsRequest,
+	) (*AccountingSubscriptionSweep, error)
 	ReceiveWebhook(ctx context.Context, req *ReceiveAccountingWebhookRequest) error
 	SaveApp(ctx context.Context, req *SaveAccountingAppRequest) (*AccountingSyncStatus, error)
 	RemoveApp(ctx context.Context, req *RemoveAccountingAppRequest) (*AccountingSyncStatus, error)

@@ -11,8 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -364,7 +364,7 @@ func (s *Service) setShipmentTenderStatus(
 			Model((*shipment.Shipment)(nil)).
 			Set("tender_status = ?", status).
 			Set("version = version + 1").
-			Set("updated_at = "+dbdialect.NowEpochFromBun(db)).
+			Set("updated_at = "+dbhelper.NowEpoch).
 			Where("id = ?", shipmentID).
 			Where("organization_id = ?", tenantInfo.OrgID).
 			Where("business_unit_id = ?", tenantInfo.BuID).

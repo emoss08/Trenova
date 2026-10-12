@@ -1112,7 +1112,6 @@
   "Use this when the action should not have been issued. It stops counting toward the next rung immediately; the row and your reason stay on the record.": "当处分本不应开具时，请使用此选项。该处分会立即停止计入下一阶；该行与您填写的原因仍会保留在记录中。",
   "Use this when the item does not apply to this worker at all.": "当此项目完全不适用于此司机时，请使用此选项。",
   "Use this when the worker already meets the requirement another way — prior experience, an equivalent certificate, a grandfathered rule. The waiver satisfies the matrix and is kept in the audit log with your reason.": "当司机已通过其他方式满足要求时，请使用此选项 — 例如先前经验、同等证书或既有适用规定。此豁免即满足课程矩阵，并连同您填写的原因保存于审计日志中。",
-  "Used": "已使用",
   "Used YTD": "年初至今已使用",
   "Used when the request is made or chased by phone.": "以电话提出或催询请求时使用。",
   "Used with the type's validity to suggest an expiry.": "与该类型的有效期间搭配使用，以建议到期日。",

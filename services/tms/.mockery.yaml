@@ -273,6 +273,9 @@ packages:
   github.com/emoss08/trenova/internal/modules/operations/ports/tenderports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports:
+    interfaces:
+      TrackingEventService: {}
   github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports:
     config:
       all: true

@@ -1,0 +1,4 @@
+{"value": [
+  {"subscriptionId": "3a6f0b1c2d4e4f5a8b9c0d1e2f3a4b5c", "clientState": "s3cr3t-state", "expirationDateTime": "2026-10-09T09:00:00Z", "resource": "api/v2.0/companies(a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d)/salesInvoices(99999999-aaaa-4bbb-8ccc-ddddddddddd1)", "changeType": "updated", "lastModifiedDateTime": "2026-10-06T10:15:00.25Z"},
+  {"subscriptionId": "3a6f0b1c2d4e4f5a8b9c0d1e2f3a4b5c", "clientState": "s3cr3t-state", "expirationDateTime": "2026-10-09T09:00:00Z", "resource": "api/v2.0/companies(a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d)/salesInvoices", "changeType": "Collection", "lastModifiedDateTime": "2026-10-06T10:16:00Z"}
+]}

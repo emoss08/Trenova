@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -207,14 +206,10 @@ func (r *repository) applyListConditions(
 			q = q.Where(sc.ResolvedAt.IsNull())
 		}
 		if f.Search != "" {
-			if dbdialect.FromBun(q.DB()).Supports(dbdialect.CapFullTextSearch) {
-				q = q.Where(
-					sc.SearchVector.Expr("{} @@ websearch_to_tsquery('english', ?)"),
-					f.Search,
-				)
-			} else {
-				q = q.Where(sc.Comment.Expr("{} LIKE ?"), "%"+f.Search+"%")
-			}
+			q = q.Where(
+				sc.SearchVector.Expr("{} @@ websearch_to_tsquery('english', ?)"),
+				f.Search,
+			)
 		}
 
 		return q

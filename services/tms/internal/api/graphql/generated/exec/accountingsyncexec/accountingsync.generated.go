@@ -61,6 +61,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "AccountingSyncStatus", Implementors: []string{"AccountingSyncStatus"}},
 		{Name: "AccountingSyncStatusCount", Implementors: []string{"AccountingSyncStatusCount"}},
 		{Name: "AccountingSyncSummary", Implementors: []string{"AccountingSyncSummary"}},
+		{Name: "AccountingWebhookSubscriptionSummary", Implementors: []string{"AccountingWebhookSubscriptionSummary"}},
 		{Name: "CompleteAccountingAuthorizationPayload", Implementors: []string{"CompleteAccountingAuthorizationPayload"}},
 	},
 	Fields: []gqlexec.Fields{
@@ -2657,6 +2658,45 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNAccountingReferenceKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐReferenceKindᚄ),
 			},
+			{
+				Name:     "inboundPaymentsAvailable",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingsync.ProviderProfile)
+					return obj.InboundPayments, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "inboundUnavailableReason",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingsync.ProviderProfile)
+					return obj.InboundUnavailableReason, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:     "webhookSubscriptions",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingsync.ProviderProfile)
+					return obj.WebhookSubscriptions, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "revokesTokens",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingsync.ProviderProfile)
+					return obj.RevokesTokens, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "AccountingReferenceObject", Fields: []*gqlexec.Field{
 			{
@@ -3473,6 +3513,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingConnection),
 			},
+			{
+				Name:      "webhookSubscriptions",
+				HasChild:  true,
+				ChildType: "AccountingWebhookSubscriptionSummary",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingsyncports.AccountingSyncStatus)
+					return obj.WebhookSubscriptions, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAccountingWebhookSubscriptionSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingWebhookSubscriptionSummary),
+			},
 		}},
 		{Object: "AccountingSyncStatusCount", Fields: []*gqlexec.Field{
 			{
@@ -3558,6 +3608,66 @@ var Shard = &gqlexec.Shard{
 					return obj.ActiveBackfill, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOAccountingBackfill2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingBackfill),
+			},
+		}},
+		{Object: "AccountingWebhookSubscriptionSummary", Fields: []*gqlexec.Field{
+			{
+				Name:     "configured",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingsyncports.AccountingWebhookSubscriptionSummary)
+					return obj.Configured, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "active",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingsyncports.AccountingWebhookSubscriptionSummary)
+					return obj.Active, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "pending",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingsyncports.AccountingWebhookSubscriptionSummary)
+					return obj.Pending, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "failed",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingsyncports.AccountingWebhookSubscriptionSummary)
+					return obj.Failed, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "nextExpiryAt",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingsyncports.AccountingWebhookSubscriptionSummary)
+					return obj.NextExpiryAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "lastError",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*accountingsyncports.AccountingWebhookSubscriptionSummary)
+					return obj.LastError, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
 			},
 		}},
 		{Object: "CompleteAccountingAuthorizationPayload", Fields: []*gqlexec.Field{
@@ -7310,6 +7420,13 @@ func marshalOAccountingSyncOperation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	}
 	res := graphql.MarshalString(string(*v))
 	return res
+}
+
+func marshalOAccountingWebhookSubscriptionSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingWebhookSubscriptionSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsyncports.AccountingWebhookSubscriptionSummary) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AccountingWebhookSubscriptionSummary", v)
 }
 
 func marshalOFloat2ᚖfloat64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *float64) graphql.Marshaler {

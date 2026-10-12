@@ -44,44 +44,46 @@ const (
 	refreshTokenField        = "refresh_token"
 )
 
-var realmIDPattern = regexp.MustCompile(`^[A-Za-z0-9-]{1,100}$`)
+var realmIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,100}$`)
 
 type Params struct {
 	fx.In
 
-	Logger       *zap.Logger
-	DB           kernelports.DBConnection
-	Connections  accountingsyncports.AccountingConnectionRepository
-	Apps         accountingsyncports.AccountingAppCredentialRepository
-	States       accountingsyncports.AccountingOAuthStateRepository
-	Integrations integrationports.IntegrationRepository
-	Connectors   accountingsyncports.AccountingConnectorRegistry
-	Encryption   *encryptionservice.Service
-	AuditService auditports.AuditService
-	Realtime     agentports.RealtimeService                       `optional:"true"`
-	Watchtower   watchtowerports.WatchtowerProjector              `optional:"true"`
-	Publisher    agentports.AgentEventPublisher                   `optional:"true"`
-	Refresher    accountingsyncports.AccountingReferenceRefresher `optional:"true"`
-	Poller       accountingsyncports.AccountingChangePoller       `optional:"true"`
-	Plans        platformplanports.PlanService                    `optional:"true"`
+	Logger        *zap.Logger
+	DB            kernelports.DBConnection
+	Connections   accountingsyncports.AccountingConnectionRepository
+	Apps          accountingsyncports.AccountingAppCredentialRepository
+	States        accountingsyncports.AccountingOAuthStateRepository
+	Integrations  integrationports.IntegrationRepository
+	Connectors    accountingsyncports.AccountingConnectorRegistry
+	Encryption    *encryptionservice.Service
+	AuditService  auditports.AuditService
+	Realtime      agentports.RealtimeService                                  `optional:"true"`
+	Watchtower    watchtowerports.WatchtowerProjector                         `optional:"true"`
+	Publisher     agentports.AgentEventPublisher                              `optional:"true"`
+	Refresher     accountingsyncports.AccountingReferenceRefresher            `optional:"true"`
+	Poller        accountingsyncports.AccountingChangePoller                  `optional:"true"`
+	Plans         platformplanports.PlanService                               `optional:"true"`
+	Subscriptions accountingsyncports.AccountingWebhookSubscriptionRepository `optional:"true"`
 }
 
 type Service struct {
-	l            *zap.Logger
-	db           kernelports.DBConnection
-	connections  accountingsyncports.AccountingConnectionRepository
-	apps         accountingsyncports.AccountingAppCredentialRepository
-	states       accountingsyncports.AccountingOAuthStateRepository
-	integrations integrationports.IntegrationRepository
-	connectors   accountingsyncports.AccountingConnectorRegistry
-	encryption   *encryptionservice.Service
-	audit        auditports.AuditService
-	realtime     agentports.RealtimeService
-	watchtower   watchtowerports.WatchtowerProjector
-	publisher    agentports.AgentEventPublisher
-	refresher    accountingsyncports.AccountingReferenceRefresher
-	poller       accountingsyncports.AccountingChangePoller
-	plans        platformplanports.PlanService
+	l             *zap.Logger
+	db            kernelports.DBConnection
+	connections   accountingsyncports.AccountingConnectionRepository
+	apps          accountingsyncports.AccountingAppCredentialRepository
+	states        accountingsyncports.AccountingOAuthStateRepository
+	integrations  integrationports.IntegrationRepository
+	connectors    accountingsyncports.AccountingConnectorRegistry
+	encryption    *encryptionservice.Service
+	audit         auditports.AuditService
+	realtime      agentports.RealtimeService
+	watchtower    watchtowerports.WatchtowerProjector
+	publisher     agentports.AgentEventPublisher
+	refresher     accountingsyncports.AccountingReferenceRefresher
+	poller        accountingsyncports.AccountingChangePoller
+	plans         platformplanports.PlanService
+	subscriptions accountingsyncports.AccountingWebhookSubscriptionRepository
 }
 
 var _ accountingsyncports.AccountingConnectionService = (*Service)(nil)
@@ -89,21 +91,22 @@ var _ accountingsyncports.AccountingConnectionService = (*Service)(nil)
 //nolint:gocritic // dependency injection
 func New(p Params) *Service {
 	return &Service{
-		l:            p.Logger.Named("service.accounting-connection"),
-		db:           p.DB,
-		connections:  p.Connections,
-		apps:         p.Apps,
-		states:       p.States,
-		integrations: p.Integrations,
-		connectors:   p.Connectors,
-		encryption:   p.Encryption,
-		audit:        p.AuditService,
-		realtime:     p.Realtime,
-		watchtower:   p.Watchtower,
-		publisher:    p.Publisher,
-		refresher:    p.Refresher,
-		poller:       p.Poller,
-		plans:        p.Plans,
+		l:             p.Logger.Named("service.accounting-connection"),
+		db:            p.DB,
+		connections:   p.Connections,
+		apps:          p.Apps,
+		states:        p.States,
+		integrations:  p.Integrations,
+		connectors:    p.Connectors,
+		encryption:    p.Encryption,
+		audit:         p.AuditService,
+		realtime:      p.Realtime,
+		watchtower:    p.Watchtower,
+		publisher:     p.Publisher,
+		refresher:     p.Refresher,
+		poller:        p.Poller,
+		plans:         p.Plans,
+		subscriptions: p.Subscriptions,
 	}
 }
 
@@ -150,6 +153,15 @@ func (s *Service) Status(
 		status.Connection = conn
 	case !errortypes.IsNotFoundError(err):
 		return nil, err
+	}
+	if status.Connection != nil {
+		if status.WebhookSubscriptions, err = s.subscriptionSummary(
+			ctx,
+			status.Connection,
+			provider,
+		); err != nil {
+			return nil, err
+		}
 	}
 
 	return status, nil
@@ -259,6 +271,17 @@ func (s *Service) Disconnect(
 	provider, err := s.provider(req.IntegrationType)
 	if err != nil {
 		return nil, err
+	}
+
+	if current, getErr := s.connections.GetByType(
+		ctx,
+		accountingsyncports.GetAccountingConnectionRequest{
+			TenantInfo:      req.TenantInfo,
+			IntegrationType: req.IntegrationType,
+		},
+	); getErr == nil &&
+		current.IsActive() {
+		s.releaseSubscriptions(ctx, current)
 	}
 
 	now := timeutils.NowUnix()
