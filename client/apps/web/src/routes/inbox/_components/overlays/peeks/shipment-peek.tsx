@@ -82,7 +82,7 @@ export function ShipmentPeek({ shipmentId, onClose }: { shipmentId: string; onCl
 
   return (
     <Dialog open onOpenChange={(open) => (open ? undefined : onClose())}>
-      <DialogContent size="sm" showCloseButton={false} className="max-w-110 gap-3.5 sm:max-w-110">
+      <DialogContent size="sm" showCloseButton={false} className="gap-3.5">
         {shipment === undefined ? (
           query.isError ? (
             <>

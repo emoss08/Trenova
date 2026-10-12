@@ -70,7 +70,7 @@ export function DocumentViewer({
       <DialogContent
         size="2xl"
         showCloseButton={false}
-        className="grid h-[min(720px,calc(100dvh-3rem))] max-w-[min(1040px,calc(100%-3rem))] grid-rows-[auto_minmax(0,1fr)] gap-0 overflow-hidden p-0 sm:max-w-[min(1040px,calc(100%-3rem))]"
+        className="grid h-[min(720px,calc(100dvh-3rem))] grid-rows-[auto_minmax(0,1fr)] gap-0 overflow-hidden p-0"
       >
         {message === undefined || attachment === undefined ? (
           <>

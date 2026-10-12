@@ -4,6 +4,15 @@ import { isValidElement } from "react";
 import type { RouteObject } from "react-router";
 import { describe, expect, it } from "vitest";
 
+function routeAt(entries: RouteObject[], path: string): RouteObject | null {
+  for (const entry of entries) {
+    if (entry.path === path) return entry;
+    const found = entry.children ? routeAt(entry.children, path) : null;
+    if (found) return found;
+  }
+  return null;
+}
+
 function layoutsAbove(
   entries: RouteObject[],
   path: string,
@@ -31,5 +40,11 @@ describe("triage route", () => {
 
     expect(layouts).not.toBeNull();
     expect(layouts).toContain(AppLayout);
+  });
+
+  // The prototype gives Triage's folder rail, list and reader the window under the
+  // app header; the module's sidebar and the breadcrumb bar would take it back.
+  it("asks the shell to frame it as a room", () => {
+    expect(routeAt(routes, "/triage")?.handle).toMatchObject({ frame: "room" });
   });
 });

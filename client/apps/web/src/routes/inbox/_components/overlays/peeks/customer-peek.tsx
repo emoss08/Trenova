@@ -45,7 +45,7 @@ export function CustomerPeek({
 
   return (
     <Dialog open onOpenChange={(open) => (open ? undefined : onClose())}>
-      <DialogContent size="sm" showCloseButton={false} className="max-w-110 gap-3.5 sm:max-w-110">
+      <DialogContent size="sm" showCloseButton={false} className="gap-3.5">
         {customer === undefined ? (
           query.isError ? (
             <>
