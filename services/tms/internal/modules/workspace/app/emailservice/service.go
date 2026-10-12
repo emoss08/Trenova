@@ -7,7 +7,10 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"io"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -16,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -28,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -52,6 +57,7 @@ type Params struct {
 	WorkflowStarter    kernelports.WorkflowStarter
 	Storage            kernelports.Client
 	Plans              platformplanports.PlanService `optional:"true"`
+	Realtime           agentports.RealtimeService    `optional:"true"`
 }
 
 // ObserverParams are the observers told when a message changes. They are
@@ -78,6 +84,7 @@ type Service struct {
 	workflowStarter    kernelports.WorkflowStarter
 	storage            kernelports.Client
 	plans              platformplanports.PlanService
+	realtime           agentports.RealtimeService
 	observers          atomic.Pointer[[]emailports.EmailMessageObserver]
 	observersMu        sync.Mutex
 }
@@ -105,6 +112,7 @@ func New(p Params) *Service {
 		workflowStarter: p.WorkflowStarter,
 		storage:         p.Storage,
 		plans:           p.Plans,
+		realtime:        p.Realtime,
 	}
 }
 
@@ -324,13 +332,17 @@ func (s *Service) Send(
 	if err != nil {
 		return nil, err
 	}
-	suppressed, err := s.suppressedRecipients(ctx, req.TenantInfo, req.To, true)
+	split, err := s.splitSuppressed(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if len(suppressed) > 0 {
-		return nil, errortypes.NewBusinessError("recipient is suppressed: {0}", suppressed[0])
+	if len(split.To) == 0 {
+		return nil, errortypes.NewBusinessError(
+			"Every To recipient is on the suppression list: {0}",
+			strings.Join(split.Suppressed, ", "),
+		)
 	}
+	req.To, req.CC, req.BCC = split.To, split.CC, split.BCC
 
 	if req.IdempotencyKey == "" {
 		req.IdempotencyKey = newIdempotencyKey()
@@ -368,14 +380,7 @@ func (s *Service) Send(
 		}
 		return nil, err
 	}
-	if err = s.startSendWorkflow(
-		ctx,
-		msg,
-		req.HTML,
-		req.Text,
-		req.Headers,
-		req.OpenTracking,
-	); err != nil {
+	if err = s.startSendWorkflow(ctx, msg, req); err != nil {
 		if _, updateErr := s.markFailed(ctx, msg, err); updateErr != nil {
 			return nil, updateErr
 		}
@@ -416,14 +421,7 @@ func (s *Service) replaySend(
 
 	switch stored.Status {
 	case email.MessageStatusQueued:
-		if err := s.startSendWorkflow(
-			ctx,
-			stored,
-			req.HTML,
-			req.Text,
-			req.Headers,
-			req.OpenTracking,
-		); err != nil {
+		if err := s.startSendWorkflow(ctx, stored, req); err != nil {
 			return nil, err
 		}
 		return stored, nil
@@ -472,14 +470,7 @@ func (s *Service) resendFailed(
 		return nil, err
 	}
 	requeued.Replayed = true
-	if err = s.startSendWorkflow(
-		ctx,
-		requeued,
-		req.HTML,
-		req.Text,
-		req.Headers,
-		req.OpenTracking,
-	); err != nil {
+	if err = s.startSendWorkflow(ctx, requeued, req); err != nil {
 		if _, updateErr := s.markFailed(ctx, requeued, err); updateErr != nil {
 			return nil, updateErr
 		}
@@ -582,7 +573,7 @@ func (s *Service) SendPersisted(
 		},
 	})
 	if err != nil {
-		return s.markFailed(ctx, msg, err)
+		return s.markFailed(ctx, msg, s.describeSenderRejection(ctx, msg, err))
 	}
 
 	msg.Status = email.MessageStatusSent
@@ -784,10 +775,7 @@ func (s *Service) unsealDocument(attachment *email.Attachment, sealed []byte) ([
 func (s *Service) startSendWorkflow(
 	ctx context.Context,
 	msg *email.Message,
-	html string,
-	text string,
-	headers map[string]string,
-	openTracking bool,
+	req *emailports.SendEmailRequest,
 ) error {
 	if !s.workflowStarter.Enabled() {
 		return kernelports.ErrWorkflowStarterDisabled
@@ -814,10 +802,10 @@ func (s *Service) startSendWorkflow(
 				Timestamp:      timeutils.NowUnix(),
 			},
 			MessageID:    msg.ID,
-			HTML:         html,
-			Text:         text,
-			Headers:      headers,
-			OpenTracking: openTracking,
+			HTML:         req.HTML,
+			Text:         req.Text,
+			Headers:      req.Headers,
+			OpenTracking: req.OpenTracking,
 		},
 	)
 	return err
@@ -862,40 +850,100 @@ func (s *Service) HandleProviderEvent(
 	if err != nil {
 		return err
 	}
-	now := timeutils.NowUnix()
-	switch event.Type {
-	case email.EventTypeDelivered:
-		msg.Status = email.MessageStatusDelivered
-		msg.DeliveredAt = now
-	case email.EventTypeOpened:
-		msg.Status = email.MessageStatusOpened
-	case email.EventTypeClicked:
-		msg.Status = email.MessageStatusClicked
-	case email.EventTypeBounced:
-		msg.Status = email.MessageStatusBounced
-		msg.FailedAt = now
-	case email.EventTypeComplained:
-		msg.Status = email.MessageStatusComplained
-		msg.FailedAt = now
-	case email.EventTypeFailed:
-		msg.Status = email.MessageStatusFailed
-		msg.FailedAt = now
-	}
-	if _, err = s.repo.UpdateMessage(ctx, msg); err != nil {
+	changed, err := s.applyProviderEvent(ctx, msg, event, tenantInfo)
+	if err != nil {
 		return err
 	}
-	s.messageChanged(ctx, msg, event)
-	if params.SuppressionReason != "" {
-		_, err = s.repo.CreateSuppression(ctx, &email.Suppression{
-			BusinessUnitID: tenantInfo.BuID,
-			OrganizationID: tenantInfo.OrgID,
-			EmailAddress:   event.Recipient,
-			Reason:         params.SuppressionReason,
-			Provider:       event.Provider,
-			SourceEventID:  event.ProviderEventID,
-		})
+	if changed {
+		if _, err = s.repo.UpdateMessage(ctx, msg); err != nil {
+			return err
+		}
+		s.messageChanged(ctx, msg, event)
 	}
+	if params.SuppressionReason == "" || strings.TrimSpace(event.Recipient) == "" {
+		return nil
+	}
+	_, err = s.repo.CreateSuppression(ctx, &email.Suppression{
+		BusinessUnitID: tenantInfo.BuID,
+		OrganizationID: tenantInfo.OrgID,
+		EmailAddress:   event.Recipient,
+		Reason:         params.SuppressionReason,
+		Provider:       event.Provider,
+		SourceEventID:  event.ProviderEventID,
+	})
 	return err
+}
+
+func (s *Service) applyProviderEvent(
+	ctx context.Context,
+	msg *email.Message,
+	event *email.Event,
+	tenantInfo pagination.TenantInfo,
+) (bool, error) {
+	next, changed := email.NextMessageStatus(msg.Status, event.Type)
+	if !changed {
+		return false, nil
+	}
+	now := timeutils.NowUnix()
+	if next == email.MessageStatusBounced {
+		bounced, err := s.bouncedRecipients(ctx, msg, event, tenantInfo)
+		if err != nil {
+			return false, err
+		}
+		if remaining := unbouncedRecipients(msg, bounced); len(remaining) > 0 {
+			msg.LastError = "Bounced for " + strings.Join(bounced, ", ")
+			return true, nil
+		}
+		msg.LastError = "Bounced for every recipient"
+	}
+	msg.Status = next
+	switch {
+	case next == email.MessageStatusDelivered:
+		msg.DeliveredAt = now
+	case next.IsFailure():
+		msg.FailedAt = now
+	}
+	return true, nil
+}
+
+func (s *Service) bouncedRecipients(
+	ctx context.Context,
+	msg *email.Message,
+	event *email.Event,
+	tenantInfo pagination.TenantInfo,
+) ([]string, error) {
+	if strings.TrimSpace(event.Recipient) == "" {
+		return nil, nil
+	}
+	recipients, err := s.repo.ListEventRecipients(ctx, emailports.ListEmailEventRecipientsRequest{
+		MessageID:  msg.ID,
+		Type:       email.EventTypeBounced,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return stringutils.NormalizeEmailList(recipients), nil
+}
+
+func unbouncedRecipients(msg *email.Message, bounced []string) []string {
+	if len(bounced) == 0 {
+		return nil
+	}
+	seen := make(map[string]struct{}, len(bounced))
+	for _, address := range bounced {
+		seen[address] = struct{}{}
+	}
+	all := stringutils.NormalizeEmailList(
+		slices.Concat(msg.ToRecipients, msg.CCRecipients, msg.BCCRecipients),
+	)
+	remaining := make([]string, 0, len(all))
+	for _, address := range all {
+		if _, ok := seen[address]; !ok {
+			remaining = append(remaining, address)
+		}
+	}
+	return remaining
 }
 
 func (s *Service) ListMessages(
@@ -1057,19 +1105,73 @@ func (s *Service) messageChanged(ctx context.Context, msg *email.Message, event 
 	}
 }
 
+func (s *Service) describeSenderRejection(
+	ctx context.Context,
+	msg *email.Message,
+	err error,
+) error {
+	var rejected *SenderRejectedError
+	if !errors.As(err, &rejected) {
+		return err
+	}
+	rejected.Address = msg.FromEmail
+	rejected.Origin = s.profileSenderOrigin(ctx, msg)
+	return rejected
+}
+
+func (s *Service) profileSenderOrigin(ctx context.Context, msg *email.Message) string {
+	profile, err := s.repo.GetProfile(ctx, emailports.GetEmailEntityRequest{
+		ID: msg.ProfileID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: msg.OrganizationID,
+			BuID:  msg.BusinessUnitID,
+		},
+	})
+	if err != nil {
+		if s.l != nil {
+			s.l.Warn(
+				"failed to load email profile to describe a rejected sender",
+				zap.Error(err),
+				zap.String("messageId", msg.ID.String()),
+			)
+		}
+		return ""
+	}
+	if !strings.EqualFold(strings.TrimSpace(profile.SenderEmail), strings.TrimSpace(msg.FromEmail)) {
+		return ""
+	}
+	return fmt.Sprintf(
+		"the sender email of the %q email profile (Organization settings > Email profiles)",
+		profile.Name,
+	)
+}
+
 func (s *Service) syncInvoiceAttempts(ctx context.Context, msg *email.Message) {
 	if s.invoiceRepo == nil || msg == nil || msg.ID.IsNil() {
 		return
 	}
-	if err := s.invoiceRepo.SyncEmailAttemptsForMessage(ctx, msg.ID, pagination.TenantInfo{
+	updated, err := s.invoiceRepo.SyncEmailAttemptsForMessage(ctx, msg.ID, pagination.TenantInfo{
 		OrgID: msg.OrganizationID,
 		BuID:  msg.BusinessUnitID,
-	}); err != nil && s.l != nil {
-		s.l.Error(
-			"failed to sync invoice email attempts",
-			zap.Error(err),
-			zap.String("messageId", msg.ID.String()),
-		)
+	})
+	if err != nil {
+		if s.l != nil {
+			s.l.Error(
+				"failed to sync invoice email attempts",
+				zap.Error(err),
+				zap.String("messageId", msg.ID.String()),
+			)
+		}
+		return
+	}
+	for _, entity := range updated {
+		realtimeinvalidation.PublishAfterCommit(ctx, s.realtime, s.l, realtimeinvalidation.ChangeOf(
+			permission.ResourceInvoice.String(),
+			entity,
+			invoice.RealtimeActionSendUpdated,
+			permissionports.SystemAuditActor(),
+			invoice.NewRealtimeSnapshot(entity),
+		))
 	}
 }
 

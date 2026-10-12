@@ -23,6 +23,7 @@ export const PREVIEW_WARNING_CODES = [
   "retarget_refused",
   "unpinned",
   "rate_coverage",
+  "recipient_skipped",
 ] as const;
 
 export type PreviewWarningCode = (typeof PREVIEW_WARNING_CODES)[number];
@@ -45,6 +46,7 @@ const TONES: Record<PreviewWarningCode, PreviewWarningTone> = {
   preview_failed: "warning",
   sensitive_content: "warning",
   rate_coverage: "warning",
+  recipient_skipped: "warning",
   depends_on_step: "info",
   withheld: "info",
   unpinned: "info",
@@ -242,6 +244,10 @@ export function previewWarningText(warning: PreviewWarning, t: TranslateFn): str
       return arg !== ""
         ? t("The rate needs review: {0}", arg)
         : t("Nothing prices this shipment, so it would be saved at zero and flagged for review.");
+    case "recipient_skipped":
+      return arg !== ""
+        ? t("{0} is on the suppression list and would be skipped.", warning.args.join(", "))
+        : t("A recipient is on the suppression list and would be skipped.");
     default:
       return warning.message;
   }

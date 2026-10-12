@@ -9031,8 +9031,8 @@ func init() {
 				FieldMapKey: "comment",
 			},
 			{
-				Name:        "fromEmail",
-				FieldMapKey: "fromEmail",
+				Name:    "fromEmail",
+				Special: "fromEmail",
 			},
 			{
 				Name:        "toRecipients",

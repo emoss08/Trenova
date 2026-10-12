@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -18,11 +19,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -49,7 +52,8 @@ type ActivitiesParams struct {
 	LateChargeService  latechargeports.LateChargeService    `optional:"true"`
 	LateChargeRepo     latechargeports.LateChargeRepository `optional:"true"`
 	BillingControlRepo tenantports.BillingControlRepository
-	EDIService         ediports.EDIService `optional:"true"`
+	EDIService         ediports.EDIService        `optional:"true"`
+	Realtime           agentports.RealtimeService `optional:"true"`
 }
 
 type Activities struct {
@@ -67,6 +71,7 @@ type Activities struct {
 	lateChargeRepo     latechargeports.LateChargeRepository
 	billingControlRepo tenantports.BillingControlRepository
 	ediService         ediports.EDIService
+	realtime           agentports.RealtimeService
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -84,6 +89,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		lateChargeRepo:     p.LateChargeRepo,
 		billingControlRepo: p.BillingControlRepo,
 		ediService:         p.EDIService,
+		realtime:           p.Realtime,
 		logger:             p.Logger.Named("billing-activities"),
 	}
 }
@@ -149,10 +155,14 @@ func (a *Activities) SendInvoiceEmailActivity(
 		UserID: payload.UserID,
 	}
 
+	stopHeartbeat := temporaltype.HeartbeatEvery(ctx, invoiceSendHeartbeatInterval)
+	defer stopHeartbeat()
+
 	result, err := a.invoiceService.SendFromWorkflow(ctx, &invoiceports.InvoiceSendRequest{
 		InvoiceID:  payload.InvoiceID,
 		TenantInfo: tenantInfo,
 		BaseURL:    payload.BaseURL,
+		StartedAt:  payload.Timestamp,
 	}, &permissionports.RequestActor{
 		PrincipalType:  payload.PrincipalType,
 		PrincipalID:    payload.PrincipalID,
@@ -301,13 +311,28 @@ func (a *Activities) CompleteInvoicePDFGenerationActivity(
 			zap.Error(auditErr),
 		)
 	}
+	realtimeinvalidation.PublishAfterCommit(ctx, a.realtime, a.logger, realtimeinvalidation.ChangeOf(
+		permission.ResourceInvoice.String(),
+		updated,
+		invoice.RealtimeActionPDFGenerated,
+		kernelports.AuditActor{
+			PrincipalType: payload.PrincipalType,
+			PrincipalID:   payload.PrincipalID,
+			UserID:        payload.UserID,
+			APIKeyID:      payload.APIKeyID,
+		},
+		invoice.NewRealtimeSnapshot(updated),
+	))
 
+	stopHeartbeat := temporaltype.HeartbeatEvery(ctx, invoiceSendHeartbeatInterval)
+	defer stopHeartbeat()
 	if _, err = a.invoiceService.AutoSendInvoiceAfterPDFGeneration(
 		ctx,
 		&invoiceports.AutoSendInvoiceAfterPDFGenerationRequest{
 			InvoiceID:  payload.InvoiceID,
 			TenantInfo: tenantInfo,
 			BaseURL:    payload.BaseURL,
+			StartedAt:  payload.Timestamp,
 		},
 		&permissionports.RequestActor{
 			PrincipalType:  payload.PrincipalType,

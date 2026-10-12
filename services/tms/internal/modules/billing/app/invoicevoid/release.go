@@ -42,8 +42,8 @@ type Params struct {
 }
 
 // Release hands back everything a voided invoice held: its queue items, the
-// order charges and allocation shares it carried, and the shipments it marked
-// invoiced. Rebill leaves the freight ready to bill again; DoNotRebill retires
+// order charges and allocation shares it carried, the download links sent to
+// the customer, and the shipments it marked invoiced. Rebill leaves the freight ready to bill again; DoNotRebill retires
 // it. It runs inside the caller's transaction.
 func Release(ctx context.Context, deps Deps, p Params) ([]pulid.ID, error) {
 	if p.Invoice == nil {
@@ -71,6 +71,17 @@ func Release(ctx context.Context, deps Deps, p Params) ([]pulid.ID, error) {
 	)
 	if err != nil {
 		return nil, err
+	}
+	if deps.InvoiceRepo != nil {
+		if _, err = deps.InvoiceRepo.RevokeDocumentShareTokens(
+			ctx,
+			invoiceports.RevokeInvoiceDocumentShareTokensRequest{
+				InvoiceID:  entity.ID,
+				TenantInfo: tenantInfo,
+			},
+		); err != nil {
+			return nil, err
+		}
 	}
 	releasedIDs := make([]pulid.ID, 0, len(released))
 	for _, item := range released {

@@ -165,7 +165,6 @@ export const customerEmailProfileSchema = z.object({
   customerId: z.string().optional(),
   subject: z.string().default(""),
   comment: z.string().default(""),
-  fromEmail: z.string().default(""),
   toRecipients: z.string().default(""),
   ccRecipients: z.string().default(""),
   bccRecipients: z.string().default(""),

@@ -2,6 +2,8 @@ package invoicerepository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -24,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -786,6 +789,14 @@ func (r *repository) CreateEmailAttempt(
 			ctx,
 			kernelports.TxOptions{},
 			func(txCtx context.Context, _ bun.Tx) error {
+				existingID, lookupErr := r.emailAttemptIDForMessage(txCtx, attempt)
+				if lookupErr != nil {
+					return lookupErr
+				}
+				if !existingID.IsNil() {
+					attempt.ID = existingID
+					return nil
+				}
 				if _, insertErr := r.db.DBForContext(txCtx).
 					NewInsert().
 					Model(attempt).
@@ -876,12 +887,39 @@ func (r *repository) ListEmailAttempts(
 	)
 }
 
+func (r *repository) emailAttemptIDForMessage(
+	ctx context.Context,
+	attempt *invoice.EmailAttempt,
+) (pulid.ID, error) {
+	if attempt.EmailMessageID.IsNil() {
+		return pulid.Nil, nil
+	}
+	cols := invoicecol.EmailAttemptColumns
+	existing := new(invoice.EmailAttempt)
+	err := invoicecol.EmailAttemptScopeTenant(
+		r.db.DBForContext(ctx).NewSelect().Model(existing),
+		pagination.TenantInfo{OrgID: attempt.OrganizationID, BuID: attempt.BusinessUnitID},
+	).
+		ColumnExpr(cols.ID.Qualified()).
+		Where(cols.EmailMessageID.Eq(), attempt.EmailMessageID).
+		Where(cols.InvoiceID.Eq(), attempt.InvoiceID).
+		Limit(1).
+		Scan(ctx)
+	if errors.Is(err, sql.ErrNoRows) {
+		return pulid.Nil, nil
+	}
+	if err != nil {
+		return pulid.Nil, fmt.Errorf("find invoice email attempt for message: %w", err)
+	}
+	return existing.ID, nil
+}
+
 func (r *repository) SyncEmailAttemptsForMessage(
 	ctx context.Context,
 	messageID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+) ([]*invoice.Invoice, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*invoice.Invoice, error) {
 		msg := new(email.Message)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -890,7 +928,7 @@ func (r *repository) SyncEmailAttemptsForMessage(
 			Where("em.organization_id = ?", tenantInfo.OrgID).
 			Where("em.business_unit_id = ?", tenantInfo.BuID).
 			Scan(ctx); err != nil {
-			return dberror.HandleNotFoundError(err, "EmailMessage")
+			return nil, dberror.HandleNotFoundError(err, "EmailMessage")
 		}
 
 		attempts := make([]*invoice.EmailAttempt, 0)
@@ -901,10 +939,10 @@ func (r *repository) SyncEmailAttemptsForMessage(
 			Where("inea.organization_id = ?", tenantInfo.OrgID).
 			Where("inea.business_unit_id = ?", tenantInfo.BuID).
 			Scan(ctx); err != nil {
-			return err
+			return nil, err
 		}
 		if len(attempts) == 0 {
-			return nil
+			return []*invoice.Invoice{}, nil
 		}
 
 		status := invoiceSendStatusForEmailMessage(msg)
@@ -914,36 +952,41 @@ func (r *repository) SyncEmailAttemptsForMessage(
 			sentAt = &msg.SentAt
 		}
 
-		return r.db.WithTx(
-			ctx,
-			kernelports.TxOptions{},
-			func(txCtx context.Context, _ bun.Tx) error {
-				if _, err := r.db.DBForContext(txCtx).
-					NewUpdate().
-					Model((*invoice.EmailAttempt)(nil)).
-					Set("status = ?", status).
-					Set("provider_message_id = ?", msg.ProviderMessageID).
-					Set("error = ?", errorMessage).
-					Set("sent_at = ?", sentAt).
-					Where("email_message_id = ?", messageID).
-					Where("organization_id = ?", tenantInfo.OrgID).
-					Where("business_unit_id = ?", tenantInfo.BuID).
-					Exec(txCtx); err != nil {
-					return fmt.Errorf("sync invoice email attempts: %w", err)
-				}
+		updated := make([]*invoice.Invoice, 0, len(attempts))
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+			if _, err := r.db.DBForContext(txCtx).
+				NewUpdate().
+				Model((*invoice.EmailAttempt)(nil)).
+				Set("status = ?", status).
+				Set("provider_message_id = ?", msg.ProviderMessageID).
+				Set("error = ?", errorMessage).
+				Set("sent_at = ?", sentAt).
+				Where("email_message_id = ?", messageID).
+				Where("organization_id = ?", tenantInfo.OrgID).
+				Where("business_unit_id = ?", tenantInfo.BuID).
+				Exec(txCtx); err != nil {
+				return fmt.Errorf("sync invoice email attempts: %w", err)
+			}
 
-				invoiceIDs := make(map[pulid.ID]struct{}, len(attempts))
-				for _, attempt := range attempts {
-					invoiceIDs[attempt.InvoiceID] = struct{}{}
+			invoiceIDs := make(map[pulid.ID]struct{}, len(attempts))
+			for _, attempt := range attempts {
+				invoiceIDs[attempt.InvoiceID] = struct{}{}
+			}
+			for invoiceID := range invoiceIDs {
+				entity, err := r.syncInvoiceSendStatus(txCtx, invoiceID, tenantInfo)
+				if err != nil {
+					return err
 				}
-				for invoiceID := range invoiceIDs {
-					if err := r.syncInvoiceSendStatus(txCtx, invoiceID, tenantInfo); err != nil {
-						return err
-					}
+				if entity != nil {
+					updated = append(updated, entity)
 				}
-				return nil
-			},
-		)
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+		return updated, nil
 	})
 }
 
@@ -951,8 +994,8 @@ func (r *repository) syncInvoiceSendStatus(
 	ctx context.Context,
 	invoiceID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+) (*invoice.Invoice, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.Invoice, error) {
 		attempts := make([]*invoice.EmailAttempt, 0)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -961,26 +1004,31 @@ func (r *repository) syncInvoiceSendStatus(
 			Where("inea.organization_id = ?", tenantInfo.OrgID).
 			Where("inea.business_unit_id = ?", tenantInfo.BuID).
 			Scan(ctx); err != nil {
-			return err
+			return nil, err
 		}
 		if len(attempts) == 0 {
-			return nil
+			return nil, nil
 		}
 
-		status, sentAt, lastError := invoiceSendStatusFromAttempts(attempts)
+		status, sentAt, lastError := invoiceSendStatusFromAttempts(invoice.LatestSendAttempts(attempts))
+		entity := new(invoice.Invoice)
 		if _, err := r.db.DBForContext(ctx).
 			NewUpdate().
-			Model((*invoice.Invoice)(nil)).
+			Model(entity).
 			Set("send_status = ?", status).
 			Set("sent_at = ?", sentAt).
 			Set("last_send_error = ?", lastError).
 			Where("id = ?", invoiceID).
 			Where("organization_id = ?", tenantInfo.OrgID).
 			Where("business_unit_id = ?", tenantInfo.BuID).
+			Returning("*").
 			Exec(ctx); err != nil {
-			return fmt.Errorf("sync invoice send status: %w", err)
+			return nil, fmt.Errorf("sync invoice send status: %w", err)
 		}
-		return nil
+		if entity.ID.IsNil() {
+			return nil, nil
+		}
+		return entity, nil
 	})
 }
 
@@ -1018,13 +1066,13 @@ func invoiceSendStatusFromAttempts(
 	failed := 0
 	sending := 0
 	var sentAt *int64
-	errors := make([]string, 0)
+	failures := make([]string, 0)
 	for _, attempt := range attempts {
 		switch attempt.Status {
 		case invoice.SendStatusFailed:
 			failed++
 			if strings.TrimSpace(attempt.Error) != "" {
-				errors = append(errors, attempt.Error)
+				failures = append(failures, attempt.Error)
 			}
 		case invoice.SendStatusSending:
 			sending++
@@ -1035,7 +1083,7 @@ func invoiceSendStatusFromAttempts(
 		}
 	}
 
-	lastError := strings.Join(errors, "; ")
+	lastError := strings.Join(sliceutils.DedupeStrings(failures), "; ")
 	switch {
 	case sending > 0:
 		return invoice.SendStatusSending, sentAt, lastError
@@ -1082,6 +1130,31 @@ func (r *repository) GetDocumentShareToken(
 			return nil, dberror.HandleNotFoundError(err, "Document share token")
 		}
 		return entity, nil
+	})
+}
+
+func (r *repository) RevokeDocumentShareTokens(
+	ctx context.Context,
+	req invoiceports.RevokeInvoiceDocumentShareTokensRequest,
+) (int64, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
+		cols := invoicecol.DocumentShareTokenColumns
+		now := timeutils.NowUnix()
+		result, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*invoice.DocumentShareToken)(nil)).
+			Set(cols.RevokedAt.Set(), now).
+			Set(cols.UpdatedAt.Set(), now).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return invoicecol.DocumentShareTokenScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.InvoiceID.Eq(), req.InvoiceID).
+					Where(cols.RevokedAt.IsNull())
+			}).
+			Exec(ctx)
+		if err != nil {
+			return 0, fmt.Errorf("revoke invoice document share tokens: %w", err)
+		}
+		return result.RowsAffected()
 	})
 }
 

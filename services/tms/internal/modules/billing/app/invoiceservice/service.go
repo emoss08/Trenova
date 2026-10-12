@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
@@ -102,6 +103,8 @@ type Params struct {
 	EDICommunicationProfileRepo ediports.EDICommunicationProfileRepository   `optional:"true"`
 	LateChargeRepo              latechargeports.LateChargeRepository         `optional:"true"`
 	AccountingSync              accountingsyncports.AccountingSyncEnqueuer   `optional:"true"`
+	EmailSenders                emailports.EmailSenderResolver               `optional:"true"`
+	Config                      *config.Config                               `optional:"true"`
 }
 
 type Service struct {
@@ -145,6 +148,8 @@ type Service struct {
 	ediCommunicationProfileRepo ediports.EDICommunicationProfileRepository
 	lateChargeRepo              latechargeports.LateChargeRepository
 	accountingSync              accountingsyncports.AccountingSyncEnqueuer
+	emailSenders                emailports.EmailSenderResolver
+	webBaseURL                  string
 }
 
 type existingInvoiceLookupResult struct {
@@ -219,7 +224,16 @@ func NewService(p Params) *Service { //nolint:gocritic // mirrors New
 		ediCommunicationProfileRepo: p.EDICommunicationProfileRepo,
 		lateChargeRepo:              p.LateChargeRepo,
 		accountingSync:              p.AccountingSync,
+		emailSenders:                p.EmailSenders,
+		webBaseURL:                  webBaseURL(p.Config),
 	}
+}
+
+func webBaseURL(cfg *config.Config) string {
+	if cfg == nil {
+		return ""
+	}
+	return cfg.App.GetWebBaseURL()
 }
 
 func (s *Service) List(
@@ -496,6 +510,7 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 	}
 
 	var posted *invoice.Invoice
+	newlyPosted := false
 	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		entity, getErr := s.repo.GetByID(txCtx, invoiceports.GetInvoiceByIDRequest{
 			ID:         req.InvoiceID,
@@ -527,10 +542,13 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 			return nil
 		}
 
+		entity.PDFDocumentID = pulid.Nil
+		entity.PDFDocument = nil
 		updated, updateErr := s.repo.Update(txCtx, entity)
 		if updateErr != nil {
 			return updateErr
 		}
+		newlyPosted = true
 
 		legs, shipErr := s.markInvoicedLegs(txCtx, entity, now, req.TenantInfo)
 		if shipErr != nil {
@@ -580,8 +598,32 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 		return nil, err
 	}
 	s.enqueueEDIAfterPost(ctx, posted, req.TenantInfo, actor)
+	if newlyPosted {
+		s.generatePDFAfterPost(ctx, posted, req.TenantInfo, actor)
+	}
 
 	return posted, nil
+}
+
+func (s *Service) generatePDFAfterPost(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	tenantInfo pagination.TenantInfo,
+	actor *permissionports.RequestActor,
+) {
+	if entity == nil || s.workflowStarter == nil || !s.workflowStarter.Enabled() {
+		return
+	}
+	if _, err := s.GeneratePDF(ctx, &invoiceports.InvoicePreviewRequest{
+		InvoiceID:  entity.ID,
+		TenantInfo: tenantInfo,
+	}, actor); err != nil {
+		s.l.Warn(
+			"failed to start invoice PDF generation after post",
+			zap.String("invoiceId", entity.ID.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 func (s *Service) notifyReconciliationWarning(
@@ -1577,6 +1619,24 @@ func (s *Service) publishInvalidation(
 	}); err != nil {
 		s.l.Warn("failed to publish invoice invalidation", zap.Error(err))
 	}
+}
+
+func (s *Service) publishInvoiceChange(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	actor kernelports.AuditActor,
+	action string,
+) {
+	if entity == nil {
+		return
+	}
+	realtimeinvalidation.PublishAfterCommit(ctx, s.realtime, s.l, realtimeinvalidation.ChangeOf(
+		permission.ResourceInvoice.String(),
+		entity,
+		action,
+		actor,
+		invoice.NewRealtimeSnapshot(entity),
+	))
 }
 
 func (s *Service) logBillingQueuePosted(

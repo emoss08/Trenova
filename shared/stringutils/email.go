@@ -61,3 +61,11 @@ func FormatEmailAddress(name, address string) string {
 	}
 	return name + " <" + address + ">"
 }
+
+func EmailDomain(address string) string {
+	at := strings.LastIndexByte(address, '@')
+	if at < 0 {
+		return ""
+	}
+	return strings.TrimSuffix(NormalizeEmailAddress(address[at+1:]), ">")
+}

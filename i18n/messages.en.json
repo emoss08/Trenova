@@ -7124,6 +7124,15 @@
       "go/other"
     ]
   },
+  "A recipient is on the suppression list and would be skipped.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "A record hidden by your data access": {
     "sites": 1,
     "scope": [
@@ -9662,6 +9671,15 @@
   },
   "A void reason is required": {
     "sites": 5,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A voided invoice cannot be changed": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -26961,7 +26979,7 @@
       "go/other"
     ]
   },
-  "Ask the recipient's email client to send a delivery/read confirmation. Note: many email clients and corporate mail servers silently ignore read receipt requests.": {
+  "Ask the recipient's email client for a read confirmation and track when the email is opened. Many mail servers ignore read receipt requests, so opens are the more reliable signal.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -28792,7 +28810,16 @@
     ]
   },
   "At least one recipient is required": {
-    "sites": 4,
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "At least one recipient is required to email invoices": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -51943,15 +51970,6 @@
       "apps/web/components"
     ]
   },
-  "Configure how invoices are emailed to this customer's accounts payable team": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/customer"
-    ]
-  },
   "Configure how long audit entries, the AI audit trail and raw EDI payloads are kept before the nightly purge jobs remove them.": {
     "sites": 1,
     "scope": [
@@ -61438,15 +61456,6 @@
       "apps/web/lib"
     ]
   },
-  "Customer invoice sender email is invalid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Customer invoices": {
     "sites": 1,
     "scope": [
@@ -65550,15 +65559,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Default message included in the email body above the invoice details. Supports {number}, {customer}, and {company}.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/customer"
     ]
   },
   "Default minimum charge": {
@@ -80264,15 +80264,6 @@
       "routes/organization"
     ]
   },
-  "Email subject used when sending invoices. Supports {number}, {customer}, and {company}.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/customer"
-    ]
-  },
   "Email that arrived on a monitored address, and what was made of it": {
     "sites": 1,
     "scope": [
@@ -85057,6 +85048,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Every To recipient is on the suppression list: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Every Tuesday · {0}": {
@@ -94071,7 +94071,7 @@
       "packages/shared/types"
     ]
   },
-  "Filename for the PDF invoice attachment. Supports {number}, {customer}, and {company}.": {
+  "Filename for the PDF invoice attachment. Supports {number}, {customer} and {company}.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -98260,15 +98260,6 @@
       "apps/web/lib"
     ]
   },
-  "From address": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/customer"
-    ]
-  },
   "From currency is required": {
     "sites": 2,
     "scope": [
@@ -98287,15 +98278,6 @@
       "go/other"
     ]
   },
-  "From email cannot be longer than 255 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "From email cannot be longer than 320 characters": {
     "sites": 1,
     "scope": [
@@ -98306,7 +98288,7 @@
     ]
   },
   "From email is required": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -98315,7 +98297,7 @@
     ]
   },
   "From email must be a valid email address": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -108934,15 +108916,6 @@
       "routes/admin"
     ]
   },
-  "Include Shipment Details": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/customer"
-    ]
-  },
   "Include Year": {
     "sites": 1,
     "scope": [
@@ -109013,6 +108986,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Include shipment details": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "Include shipment on this invoice": {
@@ -113230,6 +113212,15 @@
     ]
   },
   "Invoice {0} has payments or credits applied. Unapply them before voiding it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Invoice {0} is already being sent. Wait for that send to finish; if it has not finished within {1} minutes, you can send it again.": {
     "sites": 1,
     "scope": [
       "go"
@@ -119607,6 +119598,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "Leave empty to use your invoice email template. Text here replaces the template's message for this customer. Supports {number}, {customer}, {company}, {invoiceTotal} and {dueDate}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "Leave empty to use {0}'s default endpoint.": {
@@ -153575,15 +153575,6 @@
       "go/other"
     ]
   },
-  "Only draft invoices can be updated": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Only draft manual journals can be edited": {
     "sites": 1,
     "scope": [
@@ -172623,15 +172614,6 @@
       "routes/admin"
     ]
   },
-  "Primary recipient addresses for invoice delivery. Separate multiple addresses with commas.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/customer"
-    ]
-  },
   "Primary sequence components and delimiter behavior.": {
     "sites": 1,
     "scope": [
@@ -188298,6 +188280,15 @@
       "go/other"
     ]
   },
+  "Replaces the subject from your invoice email template. Supports {number}, {customer}, {company}, {invoiceTotal}, {dueDate}, {shipmentPro} and {shipmentBol}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Replacing a carrier already on the move, or overriding the new carrier's insurance warning, is a proposal a person decides; any other assignment runs once a person approves it.": {
     "sites": 1,
     "scope": [
@@ -190282,6 +190273,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "Required when invoices are emailed to this customer. Separate multiple addresses with commas.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "Required when marking the event a false positive.": {
@@ -233207,6 +233207,15 @@
       "routes/worker"
     ]
   },
+  "The memo and remittance instructions print on the posted invoice and can only be changed on a draft": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The message a customer receives with their invoice attached.": {
     "sites": 1,
     "scope": [
@@ -236857,15 +236866,6 @@
     ],
     "areas": [
       "routes/random-testing"
-    ]
-  },
-  "The sender address that appears on invoice emails. Must be a verified email domain in your organization's email settings.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/customer"
     ]
   },
   "The sender's own words, never the quoted thread": {
@@ -267605,6 +267605,15 @@
       "go/other"
     ]
   },
+  "Who receives this customer's invoices. Invoices are always sent from the sender on your organization's Billing email profile.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Who sees it": {
     "sites": 5,
     "scope": [
@@ -276430,15 +276439,6 @@
       "routes/customer"
     ]
   },
-  "e.g., billing@yourcompany.com": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/customer"
-    ]
-  },
   "e.g., controller@customer.com": {
     "sites": 1,
     "scope": [
@@ -278645,15 +278645,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "recipient is suppressed: {0}": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "recipient@example.com": {
@@ -285505,6 +285496,15 @@
       "routes/invoice"
     ]
   },
+  "{0} PDF is ready": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "{0} Runtime Config": {
     "sites": 1,
     "scope": [
@@ -286560,6 +286560,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "{0} could not be emailed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "{0} could not be re-rated with the current template": {
@@ -288912,6 +288921,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} is on the suppression list and would be skipped.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} is on · {1} now covered": {
@@ -293259,6 +293277,15 @@
       "go/other"
     ]
   },
+  "{0} was emailed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "{0} was never sent to {1}, so there is nothing to send again": {
     "sites": 1,
     "scope": [
@@ -293284,6 +293311,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} was only partly emailed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "{0} was rejected and cannot be sent": {

@@ -101,6 +101,13 @@ func (f *releaseFixture) expectCommonReleases(
 		})).
 		Return(released, nil).
 		Once()
+	f.invoiceRepo.EXPECT().
+		RevokeDocumentShareTokens(mock.Anything, invoiceports.RevokeInvoiceDocumentShareTokensRequest{
+			InvoiceID:  f.inv.ID,
+			TenantInfo: f.tenantInfo,
+		}).
+		Return(int64(1), nil).
+		Once()
 	f.orderRepo.EXPECT().
 		ClearChargesInvoice(mock.Anything, &orderports.ClearOrderChargesInvoiceRequest{TenantInfo: f.tenantInfo, InvoiceID: f.inv.ID}).
 		Return(1, nil).

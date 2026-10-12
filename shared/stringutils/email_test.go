@@ -57,3 +57,12 @@ func TestSplitEmailList(t *testing.T) {
 		),
 	)
 }
+
+func TestEmailDomain(t *testing.T) {
+	t.Parallel()
+
+	require.Equal(t, "trenova.example.com", EmailDomain(" Billing@Trenova.Example.COM "))
+	require.Equal(t, "example.com", EmailDomain("Billing <billing@example.com>"))
+	require.Empty(t, EmailDomain("not-an-address"))
+	require.Empty(t, EmailDomain(""))
+}

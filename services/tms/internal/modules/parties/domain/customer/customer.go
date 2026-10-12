@@ -147,7 +147,10 @@ func (c *Customer) Validate(multiErr *errortypes.MultiError) {
 	}
 
 	if c.EmailProfile != nil {
-		c.EmailProfile.Validate(multiErr.WithPrefix("emailProfile"))
+		c.EmailProfile.ValidateForDelivery(
+			multiErr.WithPrefix("emailProfile"),
+			c.BillingProfile == nil || c.BillingProfile.EmailInvoiceEnabled,
+		)
 	}
 }
 

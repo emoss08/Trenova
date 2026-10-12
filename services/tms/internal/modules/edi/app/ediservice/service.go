@@ -2,6 +2,7 @@ package ediservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -75,6 +76,7 @@ type Params struct {
 	OrderDerivation     orderports.OrderDerivationService
 	Metrics             *metrics.Registry             `optional:"true"`
 	Plans               platformplanports.PlanService `optional:"true"`
+	Realtime            agentports.RealtimeService    `optional:"true"`
 }
 
 type Service struct {
@@ -96,6 +98,7 @@ type Service struct {
 	carrierInvoiceRepo  ediports.EDICarrierInvoiceRepository
 	inboundFileRepo     ediports.EDIInboundFileRepository
 	invoiceRepo         invoiceports.InvoiceRepository
+	realtime            agentports.RealtimeService
 	shipmentEventRepo   shipmenteventports.ShipmentEventRepository
 	serviceFailureRepo  servicefailureports.ServiceFailureRepository
 	shipmentLinkRepo    ediports.EDIShipmentLinkRepository
@@ -149,6 +152,7 @@ func New(p Params) *Service {
 		carrierInvoiceRepo:  p.CarrierInvoiceRepo,
 		inboundFileRepo:     p.InboundFileRepo,
 		invoiceRepo:         p.InvoiceRepo,
+		realtime:            p.Realtime,
 		shipmentEventRepo:   p.ShipmentEventRepo,
 		serviceFailureRepo:  p.ServiceFailureRepo,
 		shipmentLinkRepo:    p.ShipmentLinkRepo,

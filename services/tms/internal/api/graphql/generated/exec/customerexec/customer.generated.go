@@ -1081,12 +1081,14 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "fromEmail",
-				NonNull:  true,
-				ChildErr: errNoChild2,
+				Name:       "fromEmail",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerEmailProfile)
-					return obj.FromEmail, nil
+					return gqlexec.Resolver[resolverCustomerEmailProfile](ec, "CustomerEmailProfile").FromEmail(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -1213,6 +1215,7 @@ var Shard = &gqlexec.Shard{
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "CustomerBillingProfile", Check: func(r any) bool { _, ok := r.(resolverCustomerBillingProfile); return ok }},
+		{Root: "CustomerEmailProfile", Check: func(r any) bool { _, ok := r.(resolverCustomerEmailProfile); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
 }
@@ -1232,6 +1235,10 @@ type resolverCustomerBillingProfile interface {
 	LateChargeRate(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	GracePeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
 	InvoiceAdjustmentSupportingDocumentPolicy(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerInvoiceAdjustmentSupportingDocumentPolicy, error)
+}
+
+type resolverCustomerEmailProfile interface {
+	FromEmail(ctx context.Context, obj *customer.CustomerEmailProfile) (string, error)
 }
 
 type resolverQuery interface {

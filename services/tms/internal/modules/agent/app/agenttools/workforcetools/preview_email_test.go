@@ -19,6 +19,7 @@ import (
 
 type fakeSenders struct {
 	suppressed []string
+	refused    bool
 }
 
 func (f fakeSenders) ResolveSender(
@@ -29,6 +30,7 @@ func (f fakeSenders) ResolveSender(
 		Email:      "ops@carrier.example",
 		Name:       "Carrier Operations",
 		Suppressed: f.suppressed,
+		Refused:    f.refused,
 	}, nil
 }
 
@@ -114,7 +116,7 @@ func TestEmailCustomerPreview_WarnsOfSuppressedRecipientsAndSensitiveText(t *tes
 	t.Parallel()
 
 	tool, _, _, _, _ := agenttoolstest.CustomerEmailFixture()
-	tool.Deps.Senders = fakeSenders{suppressed: []string{"ap@acme.example"}}
+	tool.Deps.Senders = fakeSenders{suppressed: []string{"ap@acme.example"}, refused: true}
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
 		"profileId":  pulid.MustNew("emp_").String(),
@@ -134,6 +136,26 @@ func TestEmailCustomerPreview_WarnsOfSuppressedRecipientsAndSensitiveText(t *tes
 		agent.PreviewWarningWouldFail,
 		agent.PreviewWarningSensitiveContent,
 	}, codes)
+}
+
+func TestEmailCustomerPreview_WarnsThatASuppressedCopyIsSkipped(t *testing.T) {
+	t.Parallel()
+
+	tool, _, _, _, _ := agenttoolstest.CustomerEmailFixture()
+	tool.Deps.Senders = fakeSenders{suppressed: []string{"cc@acme.example"}}
+	params := agenttoolstest.ExecuteParams(map[string]any{
+		"shipmentId": pulid.MustNew("shp_").String(),
+		"profileId":  pulid.MustNew("emp_").String(),
+		"subject":    "S12345 has departed",
+		"body":       "The truck left the yard.",
+	})
+	params.IdempotencyKey = "idem-4"
+
+	preview, err := tool.Preview(t.Context(), params)
+	require.NoError(t, err)
+	require.Len(t, preview.Warnings, 1)
+	assert.Equal(t, agent.PreviewWarningRecipientSkipped, preview.Warnings[0].Code)
+	assert.Equal(t, []string{"cc@acme.example"}, preview.Warnings[0].Args)
 }
 
 func TestRequestMissingDocsPreview_IsTheEmailExecuteSends(t *testing.T) {

@@ -87,7 +87,6 @@ const DEFAULT_VALUES: Customer = {
   emailProfile: {
     subject: "",
     comment: "",
-    fromEmail: "",
     toRecipients: "",
     ccRecipients: "",
     bccRecipients: "",

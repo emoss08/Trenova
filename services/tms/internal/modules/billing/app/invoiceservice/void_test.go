@@ -1,11 +1,12 @@
 package invoiceservice
 
 import (
+	"context"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceadjustmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/latechargeportsmock"
-	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -19,7 +20,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -183,6 +183,10 @@ func TestVoidInvoiceDraftRebillReleasesQueueItemsForRebilling(t *testing.T) {
 		Status: billingqueue.StatusApproved,
 	}
 	queueRepo := billingqueueportsmock.NewMockBillingQueueRepository(t)
+	repo.EXPECT().
+		RevokeDocumentShareTokens(mock.Anything, mock.Anything).
+		Return(int64(0), nil).
+		Once()
 	queueRepo.EXPECT().
 		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *billingqueueports.ReleaseForInvoiceRequest) bool {
 			return req.Rebill &&
@@ -224,6 +228,10 @@ func TestVoidInvoiceDraftDoNotRebillCancelsQueueItems(t *testing.T) {
 		Once()
 
 	queueRepo := billingqueueportsmock.NewMockBillingQueueRepository(t)
+	repo.EXPECT().
+		RevokeDocumentShareTokens(mock.Anything, mock.Anything).
+		Return(int64(0), nil).
+		Once()
 	queueRepo.EXPECT().
 		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *billingqueueports.ReleaseForInvoiceRequest) bool {
 			return !req.Rebill && req.InvoiceID == f.invoiceID
@@ -490,6 +498,10 @@ func TestVoidInvoiceProceedsWhenLateChargeMemosAreVoided(t *testing.T) {
 		Once()
 
 	queueRepo := billingqueueportsmock.NewMockBillingQueueRepository(t)
+	repo.EXPECT().
+		RevokeDocumentShareTokens(mock.Anything, mock.Anything).
+		Return(int64(0), nil).
+		Once()
 	queueRepo.EXPECT().ReleaseForInvoice(mock.Anything, mock.Anything).
 		Return([]*billingqueue.BillingQueueItem{}, nil).
 		Once()

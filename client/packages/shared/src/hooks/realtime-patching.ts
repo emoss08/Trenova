@@ -73,7 +73,6 @@ const RECORD_CHANGE_KEYS: Record<string, QueryKeyRoot[]> = {
   hazardous_material: ["hazardous-material-list"],
   hazmat_segregation_rule: ["hazmat-segregation-rule-list"],
   hold_reason: ["hold-reason-list"],
-  invoice: ["invoice-register"],
   journal_reversal: ["journal-reversal-list"],
   jurisdiction_rule: ["jurisdiction-rule-list"],
   jurisdiction_rule_override: ["jurisdiction-rule-override-list"],
@@ -220,6 +219,21 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   billing_queue: ["billing-queue-list", "billingQueue"],
   // A bulk approval's progress: the run and the items it is approving.
   "billing-queue-approval-run": ["billingQueue", "billing-queue-list"],
+  // Every change to an invoice: its own page (detail, send plan, email
+  // attempts), the lists and register that show it, the billing queue item it
+  // came from, and the receivables read from its balance.
+  invoice: [
+    "invoice",
+    "invoice-list",
+    "invoice-register",
+    "invoice-register-list",
+    "invoice-adjustment",
+    "billingQueue",
+    "billing-queue-list",
+    "ar",
+    "customerPayment",
+    "customer-payment-list",
+  ],
   "billing-transfer-run": [
     "billing-transfer-run",
     "billing-transfer-active-run",
@@ -295,6 +309,16 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   telematicsEvent: ["telematics"],
 };
 
+/**
+ * Caches a resource also reaches, but only where they are on screen. A
+ * shipment's or order's charges feed the allocated totals on its open billing
+ * queue items, which are rewritten without a billing queue event of their own.
+ */
+export const RESOURCE_ACTIVE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
+  shipments: ["billing-queue-list", "billingQueue"],
+  orders: ["billing-queue-list", "billingQueue"],
+};
+
 export const PATCHABLE_FIELDS_BY_RESOURCE: Record<string, Set<string>> = {
   shipments: new Set(["status", "proNumber", "moves", "updatedAt"]),
   users: new Set([
@@ -362,6 +386,8 @@ export interface Invalidation {
   roots: QueryKeyRoot[];
   /** Refetch only queries a screen is showing; the rest refetch when shown. */
   activeOnly: boolean;
+  /** Further roots that refetch only where they are on screen. */
+  activeRoots: QueryKeyRoot[];
 }
 
 /**
@@ -372,6 +398,10 @@ export interface Invalidation {
  * open Desk ~360 requests a minute until the API answered 429.
  */
 const ON_SCREEN_RESOURCES = new Set([
+  // A billing team sends, posts and applies payments all day; an invoice or
+  // queue event refetches the lists on screen and leaves the rest stale.
+  "invoice",
+  "billing_queue",
   "agent_proposal",
   "agent_plan",
   "agent_waits",
@@ -404,7 +434,7 @@ export function invalidationFor(event: ResourceInvalidationEvent): Invalidation 
   if (event.resource === "assistant_artifact") {
     const threadId = event.entity?.threadId;
     if (typeof threadId === "string" && threadId !== "") {
-      return { roots: [[...ARTIFACT_THREAD_PREFIX, threadId]], activeOnly: true };
+      return { roots: [[...ARTIFACT_THREAD_PREFIX, threadId]], activeOnly: true, activeRoots: [] };
     }
   }
   if (event.resource === "capture_batch" && event.action === "page.received") {
@@ -416,11 +446,12 @@ export function invalidationFor(event: ResourceInvalidationEvent): Invalidation 
     if (batchId) {
       roots.push(["capture", "batch", batchId]);
     }
-    return { roots, activeOnly: true };
+    return { roots, activeOnly: true, activeRoots: [] };
   }
   return {
     roots: RESOURCE_QUERY_KEY_MAP[event.resource] ?? [],
     activeOnly: ON_SCREEN_RESOURCES.has(event.resource),
+    activeRoots: RESOURCE_ACTIVE_QUERY_KEY_MAP[event.resource] ?? [],
   };
 }
 

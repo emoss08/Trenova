@@ -70,7 +70,6 @@ fragment CustomerEmailProfileFields on CustomerEmailProfile {
   customerId
   subject
   comment
-  fromEmail
   toRecipients
   ccRecipients
   bccRecipients

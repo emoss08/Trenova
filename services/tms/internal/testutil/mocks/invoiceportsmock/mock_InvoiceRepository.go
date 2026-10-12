@@ -76,7 +76,7 @@ type MockInvoiceRepository_CountPostedReconciliationDiscrepancies_Call struct {
 
 // CountPostedReconciliationDiscrepancies is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.CountPostedInvoiceReconciliationDiscrepanciesRequest
+//   - req invoiceports.CountPostedInvoiceReconciliationDiscrepanciesRequest
 func (_e *MockInvoiceRepository_Expecter) CountPostedReconciliationDiscrepancies(ctx any, req any) *MockInvoiceRepository_CountPostedReconciliationDiscrepancies_Call {
 	return &MockInvoiceRepository_CountPostedReconciliationDiscrepancies_Call{Call: _e.mock.On("CountPostedReconciliationDiscrepancies", ctx, req)}
 }
@@ -354,7 +354,7 @@ type MockInvoiceRepository_GetByBillingQueueItemID_Call struct {
 
 // GetByBillingQueueItemID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetInvoiceByBillingQueueItemIDRequest
+//   - req invoiceports.GetInvoiceByBillingQueueItemIDRequest
 func (_e *MockInvoiceRepository_Expecter) GetByBillingQueueItemID(ctx any, req any) *MockInvoiceRepository_GetByBillingQueueItemID_Call {
 	return &MockInvoiceRepository_GetByBillingQueueItemID_Call{Call: _e.mock.On("GetByBillingQueueItemID", ctx, req)}
 }
@@ -422,7 +422,7 @@ type MockInvoiceRepository_GetByID_Call struct {
 
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetInvoiceByIDRequest
+//   - req invoiceports.GetInvoiceByIDRequest
 func (_e *MockInvoiceRepository_Expecter) GetByID(ctx any, req any) *MockInvoiceRepository_GetByID_Call {
 	return &MockInvoiceRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
@@ -490,7 +490,7 @@ type MockInvoiceRepository_GetByIDs_Call struct {
 
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetInvoicesByIDsRequest
+//   - req invoiceports.GetInvoicesByIDsRequest
 func (_e *MockInvoiceRepository_Expecter) GetByIDs(ctx any, req any) *MockInvoiceRepository_GetByIDs_Call {
 	return &MockInvoiceRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
@@ -558,7 +558,7 @@ type MockInvoiceRepository_GetDocumentShareToken_Call struct {
 
 // GetDocumentShareToken is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetInvoiceDocumentShareTokenRequest
+//   - req invoiceports.GetInvoiceDocumentShareTokenRequest
 func (_e *MockInvoiceRepository_Expecter) GetDocumentShareToken(ctx any, req any) *MockInvoiceRepository_GetDocumentShareToken_Call {
 	return &MockInvoiceRepository_GetDocumentShareToken_Call{Call: _e.mock.On("GetDocumentShareToken", ctx, req)}
 }
@@ -626,7 +626,7 @@ type MockInvoiceRepository_List_Call struct {
 
 // List is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListInvoicesRequest
+//   - req *invoiceports.ListInvoicesRequest
 func (_e *MockInvoiceRepository_Expecter) List(ctx any, req any) *MockInvoiceRepository_List_Call {
 	return &MockInvoiceRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
@@ -694,7 +694,7 @@ type MockInvoiceRepository_ListAttachments_Call struct {
 
 // ListAttachments is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.ListInvoiceEmailAttemptsRequest
+//   - req invoiceports.ListInvoiceEmailAttemptsRequest
 func (_e *MockInvoiceRepository_Expecter) ListAttachments(ctx any, req any) *MockInvoiceRepository_ListAttachments_Call {
 	return &MockInvoiceRepository_ListAttachments_Call{Call: _e.mock.On("ListAttachments", ctx, req)}
 }
@@ -762,7 +762,7 @@ type MockInvoiceRepository_ListLineCharges_Call struct {
 
 // ListLineCharges is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListInvoiceLineChargesRequest
+//   - req *invoiceports.ListInvoiceLineChargesRequest
 func (_e *MockInvoiceRepository_Expecter) ListLineCharges(ctx any, req any) *MockInvoiceRepository_ListLineCharges_Call {
 	return &MockInvoiceRepository_ListLineCharges_Call{Call: _e.mock.On("ListLineCharges", ctx, req)}
 }
@@ -830,7 +830,7 @@ type MockInvoiceRepository_NetBilledByCharge_Call struct {
 
 // NetBilledByCharge is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.NetBilledByChargeRequest
+//   - req *invoiceports.NetBilledByChargeRequest
 func (_e *MockInvoiceRepository_Expecter) NetBilledByCharge(ctx any, req any) *MockInvoiceRepository_NetBilledByCharge_Call {
 	return &MockInvoiceRepository_NetBilledByCharge_Call{Call: _e.mock.On("NetBilledByCharge", ctx, req)}
 }
@@ -898,7 +898,7 @@ type MockInvoiceRepository_ListByShipmentIDs_Call struct {
 
 // ListByShipmentIDs is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.ListInvoicesByShipmentIDsRequest
+//   - req invoiceports.ListInvoicesByShipmentIDsRequest
 func (_e *MockInvoiceRepository_Expecter) ListByShipmentIDs(ctx any, req any) *MockInvoiceRepository_ListByShipmentIDs_Call {
 	return &MockInvoiceRepository_ListByShipmentIDs_Call{Call: _e.mock.On("ListByShipmentIDs", ctx, req)}
 }
@@ -966,7 +966,7 @@ type MockInvoiceRepository_ListConnection_Call struct {
 
 // ListConnection is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListInvoiceConnectionRequest
+//   - req *invoiceports.ListInvoiceConnectionRequest
 func (_e *MockInvoiceRepository_Expecter) ListConnection(ctx any, req any) *MockInvoiceRepository_ListConnection_Call {
 	return &MockInvoiceRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
 }
@@ -1034,7 +1034,7 @@ type MockInvoiceRepository_ListEmailAttempts_Call struct {
 
 // ListEmailAttempts is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.ListInvoiceEmailAttemptsRequest
+//   - req invoiceports.ListInvoiceEmailAttemptsRequest
 func (_e *MockInvoiceRepository_Expecter) ListEmailAttempts(ctx any, req any) *MockInvoiceRepository_ListEmailAttempts_Call {
 	return &MockInvoiceRepository_ListEmailAttempts_Call{Call: _e.mock.On("ListEmailAttempts", ctx, req)}
 }
@@ -1102,7 +1102,7 @@ type MockInvoiceRepository_LockForUpdate_Call struct {
 
 // LockForUpdate is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetInvoiceByIDRequest
+//   - req invoiceports.GetInvoiceByIDRequest
 func (_e *MockInvoiceRepository_Expecter) LockForUpdate(ctx any, req any) *MockInvoiceRepository_LockForUpdate_Call {
 	return &MockInvoiceRepository_LockForUpdate_Call{Call: _e.mock.On("LockForUpdate", ctx, req)}
 }
@@ -1162,7 +1162,7 @@ type MockInvoiceRepository_UpdateEDISendStatus_Call struct {
 
 // UpdateEDISendStatus is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.UpdateInvoiceEDISendStatusRequest
+//   - req invoiceports.UpdateInvoiceEDISendStatusRequest
 func (_e *MockInvoiceRepository_Expecter) UpdateEDISendStatus(ctx any, req any) *MockInvoiceRepository_UpdateEDISendStatus_Call {
 	return &MockInvoiceRepository_UpdateEDISendStatus_Call{Call: _e.mock.On("UpdateEDISendStatus", ctx, req)}
 }
@@ -1196,20 +1196,31 @@ func (_c *MockInvoiceRepository_UpdateEDISendStatus_Call) RunAndReturn(run func(
 }
 
 // SyncEmailAttemptsForMessage provides a mock function for the type MockInvoiceRepository
-func (_mock *MockInvoiceRepository) SyncEmailAttemptsForMessage(ctx context.Context, messageID pulid.ID, tenantInfo pagination.TenantInfo) error {
+func (_mock *MockInvoiceRepository) SyncEmailAttemptsForMessage(ctx context.Context, messageID pulid.ID, tenantInfo pagination.TenantInfo) ([]*invoice.Invoice, error) {
 	ret := _mock.Called(ctx, messageID, tenantInfo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SyncEmailAttemptsForMessage")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) error); ok {
+	var r0 []*invoice.Invoice
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) ([]*invoice.Invoice, error)); ok {
+		return returnFunc(ctx, messageID, tenantInfo)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) []*invoice.Invoice); ok {
 		r0 = returnFunc(ctx, messageID, tenantInfo)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*invoice.Invoice)
+		}
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pagination.TenantInfo) error); ok {
+		r1 = returnFunc(ctx, messageID, tenantInfo)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // MockInvoiceRepository_SyncEmailAttemptsForMessage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SyncEmailAttemptsForMessage'
@@ -1248,12 +1259,12 @@ func (_c *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call) Return(err error) *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call {
-	_c.Call.Return(err)
+func (_c *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call) Return(invoices []*invoice.Invoice, err error) *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call {
+	_c.Call.Return(invoices, err)
 	return _c
 }
 
-func (_c *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call) RunAndReturn(run func(ctx context.Context, messageID pulid.ID, tenantInfo pagination.TenantInfo) error) *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call {
+func (_c *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call) RunAndReturn(run func(ctx context.Context, messageID pulid.ID, tenantInfo pagination.TenantInfo) ([]*invoice.Invoice, error)) *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1429,7 +1440,7 @@ type MockInvoiceRepository_UpsertAttachments_Call struct {
 
 // UpsertAttachments is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.UpsertInvoiceAttachmentsRequest
+//   - req invoiceports.UpsertInvoiceAttachmentsRequest
 func (_e *MockInvoiceRepository_Expecter) UpsertAttachments(ctx any, req any) *MockInvoiceRepository_UpsertAttachments_Call {
 	return &MockInvoiceRepository_UpsertAttachments_Call{Call: _e.mock.On("UpsertAttachments", ctx, req)}
 }
@@ -1489,7 +1500,7 @@ type MockInvoiceRepository_StampExchangeRate_Call struct {
 
 // StampExchangeRate is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.StampExchangeRateRequest
+//   - req *kernelports.StampExchangeRateRequest
 func (_e *MockInvoiceRepository_Expecter) StampExchangeRate(ctx any, req any) *MockInvoiceRepository_StampExchangeRate_Call {
 	return &MockInvoiceRepository_StampExchangeRate_Call{Call: _e.mock.On("StampExchangeRate", ctx, req)}
 }
@@ -1518,6 +1529,74 @@ func (_c *MockInvoiceRepository_StampExchangeRate_Call) Return(err error) *MockI
 }
 
 func (_c *MockInvoiceRepository_StampExchangeRate_Call) RunAndReturn(run func(ctx context.Context, req *kernelports.StampExchangeRateRequest) error) *MockInvoiceRepository_StampExchangeRate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RevokeDocumentShareTokens provides a mock function for the type MockInvoiceRepository
+func (_mock *MockInvoiceRepository) RevokeDocumentShareTokens(ctx context.Context, req invoiceports.RevokeInvoiceDocumentShareTokensRequest) (int64, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RevokeDocumentShareTokens")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, invoiceports.RevokeInvoiceDocumentShareTokensRequest) (int64, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, invoiceports.RevokeInvoiceDocumentShareTokensRequest) int64); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(int64)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, invoiceports.RevokeInvoiceDocumentShareTokensRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceRepository_RevokeDocumentShareTokens_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RevokeDocumentShareTokens'
+type MockInvoiceRepository_RevokeDocumentShareTokens_Call struct {
+	*mock.Call
+}
+
+// RevokeDocumentShareTokens is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req invoiceports.RevokeInvoiceDocumentShareTokensRequest
+func (_e *MockInvoiceRepository_Expecter) RevokeDocumentShareTokens(ctx any, req any) *MockInvoiceRepository_RevokeDocumentShareTokens_Call {
+	return &MockInvoiceRepository_RevokeDocumentShareTokens_Call{Call: _e.mock.On("RevokeDocumentShareTokens", ctx, req)}
+}
+
+func (_c *MockInvoiceRepository_RevokeDocumentShareTokens_Call) Run(run func(ctx context.Context, req invoiceports.RevokeInvoiceDocumentShareTokensRequest)) *MockInvoiceRepository_RevokeDocumentShareTokens_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 invoiceports.RevokeInvoiceDocumentShareTokensRequest
+		if args[1] != nil {
+			arg1 = args[1].(invoiceports.RevokeInvoiceDocumentShareTokensRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceRepository_RevokeDocumentShareTokens_Call) Return(value int64, err error) *MockInvoiceRepository_RevokeDocumentShareTokens_Call {
+	_c.Call.Return(value, err)
+	return _c
+}
+
+func (_c *MockInvoiceRepository_RevokeDocumentShareTokens_Call) RunAndReturn(run func(ctx context.Context, req invoiceports.RevokeInvoiceDocumentShareTokensRequest) (int64, error)) *MockInvoiceRepository_RevokeDocumentShareTokens_Call {
 	_c.Call.Return(run)
 	return _c
 }
