@@ -133,6 +133,12 @@ function replyShape(t, r) {
     suggestedAddress: r.suggestedAddress,
     sentBy: user(t, r.sentById),
     sentAt: r.sentAt,
+    attachments: (r.attachments ?? []).map((a) => ({
+      documentId: a.documentId,
+      fileName: a.fileName,
+      contentType: a.contentType,
+      byteSize: a.byteSize,
+    })),
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };
@@ -489,6 +495,18 @@ export const TRIAGE_HANDLERS = {
     return { triageReplyTemplates: t.templates.map((x) => template(t, x)) };
   },
   RenderTriageReplyTemplate: (state, v) => ({ renderTriageReplyTemplate: model.renderTemplate(tri(state), v.templateId, v.messageId) }),
+  InboundReplyAttachables: (state, v) => ({
+    inboundReplyAttachables: model.replyAttachables(tri(state), v.messageId).map((doc) => ({
+      id: doc.id,
+      fileName: doc.fileName,
+      contentType: doc.contentType,
+      documentType: doc.documentType,
+      byteSize: doc.byteSize,
+      createdAt: doc.createdAt,
+      source: doc.source,
+    })),
+    inboundReplyAttachmentLimit: model.MAX_REPLY_ATTACHMENT_BYTES,
+  }),
   TriageStopTimes: (state, v) => {
     const t = tri(state);
     const stops = model.stopTimes(t, v.messageId);
@@ -634,7 +652,7 @@ export const TRIAGE_HANDLERS = {
   },
   SaveInboundReplyDraft: (state, v) => {
     const t = tri(state);
-    return { saveInboundReplyDraft: replyShape(t, model.saveDraft(t, v.messageId, v.subject, v.body)) };
+    return { saveInboundReplyDraft: replyShape(t, model.saveDraft(t, v.messageId, v.subject, v.body, v.documentIds)) };
   },
   DiscardInboundReplyDraft: (state, v) => {
     const t = tri(state);
@@ -909,6 +927,49 @@ function documentContent(state, path) {
   return { __raw: documentPdf(attachment), contentType: "application/pdf" };
 }
 
+function uploadDocument(state, _path, body) {
+  const t = state.triage;
+  const fields = body?.fields ?? {};
+  const file = body?.file;
+  try {
+    const doc = model.uploadDocument(t, {
+      fileName: file?.name ?? "",
+      contentType: file?.type ?? "",
+      byteSize: file?.size ?? 0,
+      resourceType: fields.resourceType,
+      resourceId: fields.resourceId,
+    });
+    return {
+      id: doc.id,
+      organizationId: ORG.id,
+      businessUnitId: ORG.businessUnitId ?? "bu_mock",
+      lineageId: doc.id,
+      versionNumber: 1,
+      isCurrentVersion: true,
+      fileName: doc.fileName,
+      originalName: doc.fileName,
+      fileSize: doc.byteSize,
+      fileType: doc.contentType,
+      storagePath: `${ORG.id}/${doc.resourceType}/${doc.fileName}`,
+      status: "Active",
+      resourceId: doc.resourceId,
+      resourceType: doc.resourceType,
+      processingProfile: "none",
+      isPublic: false,
+      uploadedById: USER.id,
+      previewStatus: "Pending",
+      contentStatus: "Pending",
+      hasExtractedText: false,
+      shipmentDraftStatus: "Unavailable",
+      version: 1,
+      createdAt: doc.createdAt,
+      updatedAt: doc.createdAt,
+    };
+  } catch (error) {
+    return { __status: 422, body: { title: error.message, status: 422, detail: error.message } };
+  }
+}
+
 function startTurn(state, path, body) {
   const t = state.triage;
   const threadId = /athr_mock_\d+/.exec(path)[0];
@@ -984,6 +1045,7 @@ export const TRIAGE_ROUTES = [
   ["POST", /^\/api\/v1\/assistant\/threads\/?$/, startThread],
   ["POST", /^\/api\/v1\/assistant\/threads\/athr_mock_\d+\/turns\/?$/, startTurn],
   ["GET", /^\/api\/v1\/documents\/[^/]+\/(view|download)\/?$/, documentContent],
+  ["POST", /^\/api\/v1\/documents\/upload\/?$/, uploadDocument],
   ["GET", /^\/api\/v1\/assistant\/turns\/aturn_mock_\d+\/stream\/?$/, followTurn],
   ["GET", /^\/api\/v1\/assistant\/threads\/athr_mock_\d+\/messages\/?$/, threadMessages],
   ["GET", /^\/api\/v1\/assistant\/threads\/athr_mock_\d+\/turns\/active\/?$/, () => ({ turn: null })],

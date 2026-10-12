@@ -1324,6 +1324,153 @@ export function reopenConflict(t, id, conflictId) {
   return m;
 }
 
+// --- reply attachments: documentmailservice (Resolve, Mailable) and inboundreplyservice.Attachables
+
+/** emailports.MaxAttachmentBytes: what fits in the smallest provider's message once base64-encoded. */
+export const MAX_REPLY_ATTACHMENT_BYTES = Math.floor((10 * 1024 * 1024 - 16 * 1024) / 4) * 3;
+const MAX_REPLY_ATTACHMENTS = 20;
+const SHIPMENT_DOCUMENT_FILES = {
+  "Bill of lading": { prefix: "BOL", byteSize: 182_000 },
+  "Proof of delivery": { prefix: "POD", byteSize: 241_000 },
+  "Rate confirmation": { prefix: "RateCon", byteSize: 96_000 },
+  Invoice: { prefix: "Invoice", byteSize: 88_000 },
+};
+const EXTRA_SHIPMENT_DOCUMENTS = {
+  shp_seedpay002: [
+    { fileName: "ELD_SEED-PAY-002_Oct3.pdf", documentType: "ELD record", byteSize: 214_000, detention: true },
+    { fileName: "GateLog_SEED-PAY-002_Oct3.jpg", documentType: "Gate log", byteSize: 1_640_000, contentType: "image/jpeg" },
+  ],
+};
+const CUSTOMER_DOCUMENTS = {
+  "Harborline Grocers": [{ fileName: "Harborline_detention_terms_2026.pdf", documentType: "Rate agreement", byteSize: 128_000 }],
+  "Crestline Retail": [{ fileName: "Crestline_routing_guide.pdf", documentType: "Routing guide", byteSize: 2_310_000 }],
+};
+
+function storedDocuments(t) {
+  if (t.documents) return t.documents;
+  t.documents = new Map();
+  const at = t.now() - 6 * DAY;
+  const add = (doc) => t.documents.set(doc.id, { contentType: "application/pdf", createdAt: at, ...doc });
+  for (const shipment of t.shipments.values()) {
+    for (const type of shipment.docs ?? []) {
+      const file = SHIPMENT_DOCUMENT_FILES[type] ?? { prefix: type.replace(/\s+/g, ""), byteSize: 64_000 };
+      add({ id: `doc_${shipment.id}_${file.prefix.toLowerCase()}`, fileName: `${file.prefix}_${shipment.proNumber}.pdf`, documentType: type, byteSize: file.byteSize, resourceType: "shipment", resourceId: shipment.id });
+    }
+    for (const [index, extra] of (EXTRA_SHIPMENT_DOCUMENTS[shipment.id] ?? []).entries()) {
+      add({ id: `doc_${shipment.id}_extra${index + 1}`, resourceType: "shipment", resourceId: shipment.id, ...extra, createdAt: t.now() - 4 * DAY });
+    }
+  }
+  for (const customer of t.customers.values()) {
+    for (const [index, extra] of (CUSTOMER_DOCUMENTS[customer.name] ?? []).entries()) {
+      add({ id: `doc_${customer.id}_${index + 1}`, resourceType: "customer", resourceId: customer.id, ...extra, createdAt: t.now() - 40 * DAY });
+    }
+  }
+  return t.documents;
+}
+
+function messageDocuments(t, m) {
+  return m.attachments.filter(readable).map((a) => ({
+    id: a.documentId,
+    fileName: a.fileName,
+    contentType: a.contentType,
+    documentType: a.reading?.documentType ?? "",
+    byteSize: a.byteSize,
+    createdAt: a.createdAt,
+    resourceType: "inbound_message",
+    resourceId: m.id,
+  }));
+}
+
+function documentById(t, id) {
+  const stored = storedDocuments(t).get(id);
+  if (stored) return stored;
+  for (const m of t.messages) {
+    const found = messageDocuments(t, m).find((doc) => doc.id === id);
+    if (found) return found;
+  }
+  return null;
+}
+
+function fileOf(doc) {
+  return { documentId: doc.id, fileName: doc.fileName, contentType: doc.contentType, byteSize: doc.byteSize };
+}
+
+function detentionRecordOf(t, shipmentId) {
+  return [...storedDocuments(t).values()].find((doc) => doc.resourceType === "shipment" && doc.resourceId === shipmentId && doc.detention) ?? null;
+}
+
+function humanBytes(bytes) {
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ["KB", "MB", "GB"];
+  let value = bytes / 1024;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  return `${value.toFixed(1)} ${units[unit]}`;
+}
+
+function resolveAttachments(t, documentIds, field = "documentIds") {
+  const ids = [...new Set(documentIds)];
+  if (ids.length > MAX_REPLY_ATTACHMENTS) throw invalid(field, `An email can carry at most ${MAX_REPLY_ATTACHMENTS} files`);
+  const files = ids.map((id) => {
+    const doc = documentById(t, id);
+    if (!doc) throw invalid(`${field}[${documentIds.indexOf(id)}]`, "This file no longer exists");
+    return fileOf(doc);
+  });
+  const total = files.reduce((sum, file) => sum + file.byteSize, 0);
+  if (total > MAX_REPLY_ATTACHMENT_BYTES) {
+    throw invalid(field, `These files add up to ${humanBytes(total)}; an email can carry at most ${humanBytes(MAX_REPLY_ATTACHMENT_BYTES)}`);
+  }
+  return files;
+}
+
+const ATTACHABLE_SOURCES = [
+  ["inbound_message", "Message"],
+  ["shipment", "Shipment"],
+  ["customer", "Customer"],
+  ["carrier", "Carrier"],
+];
+
+export function replyAttachables(t, messageId) {
+  const m = messageOf(t, messageId);
+  const records = { inbound_message: m.id, shipment: m.matchedShipmentId, customer: m.matchedCustomerId, carrier: m.matchedCarrierId };
+  const stored = [...storedDocuments(t).values()];
+  const out = [];
+  const seen = new Set();
+  for (const [resourceType, source] of ATTACHABLE_SOURCES) {
+    const resourceId = records[resourceType];
+    if (!resourceId) continue;
+    const docs = resourceType === "inbound_message" ? [...messageDocuments(t, m), ...stored.filter((doc) => doc.resourceType === resourceType && doc.resourceId === resourceId)] : stored.filter((doc) => doc.resourceType === resourceType && doc.resourceId === resourceId);
+    for (const doc of [...docs].sort((a, b) => b.createdAt - a.createdAt)) {
+      if (seen.has(doc.id)) continue;
+      seen.add(doc.id);
+      out.push({ ...doc, source });
+    }
+  }
+  return out;
+}
+
+/** POST /documents/upload/: the document route, kept to what a reply's upload needs. */
+export function uploadDocument(t, { fileName, contentType, byteSize, resourceType, resourceId }) {
+  if (!fileName) throw invalid("file", "Choose a file to upload", "REQUIRED");
+  if (!resourceType || !resourceId) throw invalid("resourceId", "Say what the file is for", "REQUIRED");
+  if (byteSize === 0) throw invalid("file", "File cannot be empty", "REQUIRED");
+  const doc = {
+    id: t.nextId("document", "doc"),
+    fileName,
+    contentType: contentType || "application/octet-stream",
+    documentType: "",
+    byteSize,
+    createdAt: t.now(),
+    resourceType,
+    resourceId,
+  };
+  storedDocuments(t).set(doc.id, doc);
+  return doc;
+}
+
 // --- replies
 
 function openDraft(m) {
@@ -1352,6 +1499,7 @@ function newReply(t, m, fields) {
     suggestedAddress: null,
     sentById: null,
     sentAt: null,
+    attachments: [],
     createdAt: now,
     updatedAt: now,
     ...fields,
@@ -1364,11 +1512,13 @@ function novaReplyBody(m) {
   return REPLY_DRAFTS[m.id] ?? DEFAULT_REPLY;
 }
 
-function writeNovaDraft(t, m, body = novaReplyBody(m)) {
+function writeNovaDraft(t, m, body = novaReplyBody(m), evidence = []) {
   const draft = openDraft(m);
+  const attachments = [...(draft?.attachments ?? [])];
+  for (const file of evidence) if (!attachments.some((a) => a.documentId === file.documentId)) attachments.push(file);
   const reply = draft
-    ? Object.assign(draft, { body, draftedByNova: true, status: "Draft", failureText: "", suggestedAddress: null, updatedAt: t.now() })
-    : newReply(t, m, { body, draftedByNova: true });
+    ? Object.assign(draft, { body, draftedByNova: true, status: "Draft", failureText: "", suggestedAddress: null, attachments, updatedAt: t.now() })
+    : newReply(t, m, { body, draftedByNova: true, attachments });
   log(t, m, "ReplyDrafted", { subject: reply.toAddress }, { kind: "Nova" });
   touch(t, m);
   return reply;
@@ -1380,11 +1530,15 @@ export async function draftReply(t, messageId) {
   return writeNovaDraft(t, m);
 }
 
-export function saveDraft(t, messageId, subject, body) {
+export function saveDraft(t, messageId, subject, body, documentIds) {
   const m = messageOf(t, messageId);
   if (!subject?.trim()) throw invalid("subject", "Subject is required", "REQUIRED");
+  if (!body?.trim()) throw invalid("body", "Write something before sending", "REQUIRED");
   const draft = openDraft(m);
-  const reply = draft ? Object.assign(draft, { subject, body, updatedAt: t.now() }) : newReply(t, m, { subject, body });
+  const attachments = documentIds == null ? draft?.attachments ?? [] : resolveAttachments(t, documentIds);
+  const reply = draft
+    ? Object.assign(draft, { subject, body, attachments, updatedAt: t.now() })
+    : newReply(t, m, { subject, body, attachments });
   touch(t, m);
   return reply;
 }
@@ -1405,6 +1559,7 @@ export async function sendReply(t, input) {
   if (!input.subject?.trim()) throw invalid("subject", "Subject is required", "REQUIRED");
   if (input.toAddress && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(input.toAddress)) throw invalid("toAddress", "That is not an email address");
   if (input.templateId) templateOf(t, input.templateId);
+  const attachments = resolveAttachments(t, input.documentIds ?? [], "input.documentIds");
   await new Promise((resolve) => t.later(600, resolve));
   const to = (input.toAddress ?? m.fromAddress).toLowerCase();
   const draft = openDraft(m);
@@ -1415,6 +1570,7 @@ export async function sendReply(t, input) {
     toAddress: to,
     templateId: input.templateId ?? null,
     draftedByNova: !!input.draftedByNova,
+    attachments,
     updatedAt: t.now(),
   });
   const refusal = REFUSING_SENDERS[to];
@@ -1423,7 +1579,7 @@ export async function sendReply(t, input) {
     log(t, m, "ReplyFailed", { subject: to, detail: refusal.failureText });
   } else {
     Object.assign(reply, { status: "Sent", failureText: "", suggestedAddress: null, sentById: ME_ID, sentAt: t.now() });
-    log(t, m, "Replied", { subject: reply.fromAddress, detail: to, recordId: reply.id });
+    log(t, m, "Replied", { subject: reply.fromAddress, detail: attachments.map((a) => a.fileName).join(", "), recordId: reply.id });
   }
   touch(t, m);
   return reply;
@@ -1636,7 +1792,12 @@ export function decideStops(t, messageId, decision) {
   m.actionState.stopsDecision = decision;
   m.actionState.stopsDecidedAt = t.now();
   log(t, m, "StopsDecided", { subject: decision, recordId: m.matchedShipmentId });
-  writeNovaDraft(t, m, STOPS_REPLIES[decision]);
+  if (decision === "StandBy") {
+    const record = detentionRecordOf(t, m.matchedShipmentId);
+    writeNovaDraft(t, m, record ? STOPS_REPLIES.StandBy : STOPS_REPLIES.StandByNoRecord, record ? [fileOf(record)] : []);
+  } else {
+    writeNovaDraft(t, m, STOPS_REPLIES[decision]);
+  }
   return m;
 }
 

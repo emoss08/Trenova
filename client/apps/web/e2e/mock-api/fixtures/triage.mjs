@@ -200,7 +200,8 @@ export const DEFAULT_REPLY = "Hi — thanks for this. We're on it and will confi
 // actions.jsx StopsX: the reply each stop-times decision drafts.
 export const STOPS_REPLIES = {
   Waive: "Hi — you're right. The ELD shows arrival at 10:40, 40 minutes after the 08:00–10:00 window, so we've removed the $185.00 detention from INV-20931. A corrected invoice follows today.\n\nThanks,\nTrenova Billing",
-  StandBy: "Hi — attached is the ELD record and gate log for SEED-PAY-002 on Oct 3 (ELD_SEED-PAY-002_Oct3.pdf). Happy to talk it through.\n\nThanks,\nTrenova Billing",
+  StandBy: "Hi — attached is the ELD record and gate log for SEED-PAY-002 on Oct 3. Happy to talk it through.\n\nThanks,\nTrenova Billing",
+  StandByNoRecord: "Hi — the ELD shows the truck arriving within the appointment window on Oct 3, so the detention stands. We can send that record if you'd like it.\n\nThanks,\nTrenova Billing",
 };
 // app.jsx sendReply: the EDI sender refuses replies.
 export const REFUSING_SENDERS = {

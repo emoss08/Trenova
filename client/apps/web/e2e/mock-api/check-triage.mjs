@@ -253,7 +253,42 @@ await op("SendInboundReply", { input: { messageId: "imsg_m3", subject: "Re", bod
 
 const decided = (await op("DecideInboundStops", { messageId: "imsg_m2", decision: "Waive" })).decideInboundStops;
 expect(decided.replyDraft?.body.includes("$185.00") && decided.actions[0].done, "waiving records the decision and drafts the reply");
+expect(decided.replyDraft?.attachments.length === 0, "the waiver's reply attaches nothing");
 await op("DiscardInboundReplyDraft", { messageId: "imsg_m2" });
+
+const attachables = (await op("InboundReplyAttachables", { messageId: "imsg_m2" }));
+const files = attachables.inboundReplyAttachables;
+expect(attachables.inboundReplyAttachmentLimit === 7_852_032, "the reply budget is the server's emailports.MaxAttachmentBytes");
+expect(files.some((f) => f.source === "Message" && f.fileName === "INV-20931.pdf"), "the dispute's own invoice can be attached");
+expect(files.some((f) => f.source === "Shipment" && f.fileName === "ELD_SEED-PAY-002_Oct3.pdf"), "the ELD record on SEED-PAY-002 can be attached");
+expect(files.some((f) => f.source === "Customer"), "the customer's documents can be attached");
+const standBy = (await op("DecideInboundStops", { messageId: "imsg_m2", decision: "StandBy" })).decideInboundStops;
+expect(standBy.replyDraft?.attachments.map((a) => a.fileName).join() === "ELD_SEED-PAY-002_Oct3.pdf", "standing by drafts the reply with the ELD record attached");
+const eld = standBy.replyDraft.attachments[0];
+const invoice = files.find((f) => f.fileName === "INV-20931.pdf");
+const kept = (await op("SaveInboundReplyDraft", { messageId: "imsg_m2", subject: "Re: detention", body: standBy.replyDraft.body })).saveInboundReplyDraft;
+expect(kept.attachments.length === 1, "saving without documentIds keeps the draft's files");
+const both = (await op("SaveInboundReplyDraft", { messageId: "imsg_m2", subject: "Re: detention", body: standBy.replyDraft.body, documentIds: [eld.documentId, invoice.id] })).saveInboundReplyDraft;
+expect(both.attachments.length === 2, "documentIds replaces the draft's files");
+await op("SaveInboundReplyDraft", { messageId: "imsg_m2", subject: "Re: detention", body: "x", documentIds: ["doc_missing"] }, { expectError: "INVALID" });
+const withFiles = (await op("SendInboundReply", { input: { messageId: "imsg_m2", subject: "Re: detention", body: standBy.replyDraft.body, draftedByNova: true, documentIds: [eld.documentId, invoice.id] } })).sendInboundReply;
+expect(withFiles.status === "Sent" && withFiles.attachments.length === 2, "the sent reply carries its files");
+const m2 = (await op("InboundMessage", { id: "imsg_m2" })).inboundMessage;
+expect(m2.activity.some((line) => line.kind === "Replied" && line.detail === "ELD_SEED-PAY-002_Oct3.pdf, INV-20931.pdf"), "the Replied line names the files");
+const refusedWithFiles = (await op("SendInboundReply", { input: { messageId: "imsg_m3", subject: "Re: status file", body: "Attached.", documentIds: [invoice.id] } })).sendInboundReply;
+expect(refusedWithFiles.status === "Failed" && refusedWithFiles.attachments.length === 1, "a refused reply keeps its files");
+const retriedWithFiles = (await op("SendInboundReply", { input: { messageId: "imsg_m3", subject: "Re: status file", body: "Attached.", toAddress: refusedWithFiles.suggestedAddress, documentIds: [invoice.id] } })).sendInboundReply;
+expect(retriedWithFiles.status === "Sent" && retriedWithFiles.attachments[0]?.fileName === "INV-20931.pdf", "the retry to the alternate carries the same files");
+const big = files.filter((f) => f.source === "Customer").map((f) => f.id);
+await op("SendInboundReply", { input: { messageId: "imsg_m2", subject: "Re", body: "Too much", documentIds: [...big, ...Array.from({ length: 21 }, (_, i) => `doc_x${i}`)] } }, { expectError: "INVALID" });
+const upload = new FormData();
+upload.append("file", new Blob(["%PDF-1.4 gate log"], { type: "application/pdf" }), "gate-log.pdf");
+upload.append("resourceType", "shipment");
+upload.append("resourceId", "shp_seedpay002");
+const uploaded = await (await fetch(`${MOCK}/api/v1/documents/upload/`, { method: "POST", body: upload })).json();
+expect(uploaded.originalName === "gate-log.pdf" && uploaded.fileSize === 17, "a file from the computer is stored as a shipment document");
+const after = (await op("InboundReplyAttachables", { messageId: "imsg_m2" })).inboundReplyAttachables;
+expect(after.some((f) => f.id === uploaded.id && f.source === "Shipment"), "the upload is attachable");
 expect((await op("DraftInboundMany", { messageIds: ["imsg_m1", "imsg_m6"] })).draftInboundMany === 1, "only m1's next step is Nova's to draft");
 
 await op("DraftInboundLoad", { messageId: "imsg_m8" });
