@@ -188,6 +188,7 @@ func (r *repository) UpsertDraft(ctx context.Context, entity *triage.Reply) (*tr
 		existing.ToAddress = entity.ToAddress
 		existing.FromAddress = entity.FromAddress
 		existing.CcAddresses = entity.CcAddresses
+		existing.Attachments = entity.Attachments
 		if entity.CreatedByID.IsNotNil() {
 			existing.CreatedByID = entity.CreatedByID
 		}

@@ -361,6 +361,7 @@ modules:
       - capturereleaseservice
       - captureservice
       - documentintelligenceservice
+      - documentmailservice
       - documentoperationsservice
       - documentpacketruleservice
       - documentparsingruleservice

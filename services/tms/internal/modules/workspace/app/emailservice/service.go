@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -520,6 +521,9 @@ func (s *Service) SendPersisted(
 	}
 	attachments, err := s.providerAttachments(ctx, req.TenantInfo, msg.ID)
 	if err != nil {
+		if errors.Is(err, ErrNonRetryableSend) {
+			return s.markFailed(ctx, msg, err)
+		}
 		return s.markFailed(ctx, msg, fmt.Errorf("%w: %w", ErrRetryableSend, err))
 	}
 
@@ -597,6 +601,20 @@ func (s *Service) persistAttachment(
 	if contentType == "" {
 		contentType = "application/octet-stream"
 	}
+	if !attachment.Seal.IsValid() {
+		return nil, errortypes.NewValidationError(
+			"attachments.seal",
+			errortypes.ErrInvalid,
+			"Attachment seal is not recognized",
+		)
+	}
+	if attachment.Seal != email.AttachmentSealNone && len(attachment.Content) > 0 {
+		return nil, errortypes.NewValidationError(
+			"attachments.seal",
+			errortypes.ErrInvalid,
+			"A sealed attachment must reference a stored object, not carry content",
+		)
+	}
 
 	objectKey := strings.TrimSpace(attachment.ObjectKey)
 	sizeBytes := attachment.SizeBytes
@@ -636,6 +654,7 @@ func (s *Service) persistAttachment(
 		ContentType:    contentType,
 		ObjectKey:      objectKey,
 		SizeBytes:      sizeBytes,
+		Seal:           attachment.Seal,
 	}, nil
 }
 
@@ -653,17 +672,9 @@ func (s *Service) providerAttachments(
 	}
 	result := make([]ProviderAttachment, 0, len(attachments))
 	for _, attachment := range attachments {
-		download, err := s.storage.Download(ctx, attachment.ObjectKey)
+		content, err := s.attachmentContent(ctx, attachment)
 		if err != nil {
 			return nil, err
-		}
-		content, err := io.ReadAll(download.Body)
-		closeErr := download.Body.Close()
-		if err != nil {
-			return nil, err
-		}
-		if closeErr != nil {
-			return nil, closeErr
 		}
 		result = append(result, ProviderAttachment{
 			FileName:    attachment.FileName,
@@ -672,6 +683,65 @@ func (s *Service) providerAttachments(
 		})
 	}
 	return result, nil
+}
+
+func (s *Service) attachmentContent(
+	ctx context.Context,
+	attachment *email.Attachment,
+) ([]byte, error) {
+	download, err := s.storage.Download(ctx, attachment.ObjectKey)
+	if err != nil {
+		return nil, err
+	}
+	content, err := io.ReadAll(download.Body)
+	closeErr := download.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	if closeErr != nil {
+		return nil, closeErr
+	}
+
+	switch attachment.Seal {
+	case email.AttachmentSealNone:
+		return content, nil
+	case email.AttachmentSealDocument:
+		return s.unsealDocument(attachment, content)
+	default:
+		return nil, fmt.Errorf(
+			"%w: attachment %s has an unknown seal %q",
+			ErrNonRetryableSend,
+			attachment.ID,
+			attachment.Seal,
+		)
+	}
+}
+
+func (s *Service) unsealDocument(attachment *email.Attachment, sealed []byte) ([]byte, error) {
+	if s.encryptionService == nil || !encryptionservice.IsEnvelope(string(sealed)) {
+		return nil, fmt.Errorf(
+			"%w: attachment %s is not a sealed document",
+			ErrNonRetryableSend,
+			attachment.ID,
+		)
+	}
+
+	content, err := s.encryptionService.DecryptBytesWithAAD(string(sealed), encryptionservice.AAD{
+		Purpose:        encryptionservice.PurposeDocument,
+		OrganizationID: attachment.OrganizationID,
+		BusinessUnitID: attachment.BusinessUnitID,
+		ResourceID:     attachment.ObjectKey,
+	})
+	if err != nil {
+		return nil, fmt.Errorf(
+			"%w: attachment %s could not be unsealed: %w",
+			ErrNonRetryableSend,
+			attachment.ID,
+			err,
+		)
+	}
+
+	return content, nil
 }
 
 func (s *Service) startSendWorkflow(

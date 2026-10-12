@@ -274,6 +274,7 @@ var ReplyColumns = struct {
 	ProviderMessageID buncolgen.Column // "provider_message_id" → qualified: "irpl.provider_message_id"
 	FailureText       buncolgen.Column // "failure_text" → qualified: "irpl.failure_text"
 	SuggestedAddress  buncolgen.Column // "suggested_address" → qualified: "irpl.suggested_address"
+	Attachments       buncolgen.Column // "attachments" → qualified: "irpl.attachments"
 	IdempotencyKey    buncolgen.Column // "idempotency_key" → qualified: "irpl.idempotency_key"
 	CreatedByID       buncolgen.Column // "created_by_id" → qualified: "irpl.created_by_id"
 	SentByID          buncolgen.Column // "sent_by_id" → qualified: "irpl.sent_by_id"
@@ -300,6 +301,7 @@ var ReplyColumns = struct {
 	ProviderMessageID: buncolgen.NewColumn("provider_message_id", "irpl"),
 	FailureText:       buncolgen.NewColumn("failure_text", "irpl"),
 	SuggestedAddress:  buncolgen.NewColumn("suggested_address", "irpl"),
+	Attachments:       buncolgen.NewColumn("attachments", "irpl"),
 	IdempotencyKey:    buncolgen.NewColumn("idempotency_key", "irpl"),
 	CreatedByID:       buncolgen.NewColumn("created_by_id", "irpl"),
 	SentByID:          buncolgen.NewColumn("sent_by_id", "irpl"),
@@ -332,6 +334,7 @@ var ReplyFieldMap = map[string]string{
 	"providerMessageId": "provider_message_id",
 	"failureText":       "failure_text",
 	"suggestedAddress":  "suggested_address",
+	"attachments":       "attachments",
 	"createdById":       "created_by_id",
 	"sentById":          "sent_by_id",
 	"sentAt":            "sent_at",
@@ -361,6 +364,7 @@ var ReplyInsertableColumns = []string{
 	"provider_message_id",
 	"failure_text",
 	"suggested_address",
+	"attachments",
 	"idempotency_key",
 	"created_by_id",
 	"sent_by_id",
@@ -438,6 +442,7 @@ var ReplyFilter = struct {
 	ProviderMessageID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerMessageId" → DB: "provider_message_id"
 	FailureText       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureText" → DB: "failure_text"
 	SuggestedAddress  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "suggestedAddress" → DB: "suggested_address"
+	Attachments       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attachments" → DB: "attachments"
 	CreatedByID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdById" → DB: "created_by_id"
 	SentByID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sentById" → DB: "sent_by_id"
 	SentAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sentAt" → DB: "sent_at"
@@ -498,6 +503,9 @@ var ReplyFilter = struct {
 	},
 	SuggestedAddress: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("suggestedAddress", op, value)
+	},
+	Attachments: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("attachments", op, value)
 	},
 	CreatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("createdById", op, value)

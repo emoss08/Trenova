@@ -38,31 +38,32 @@ func (s ReplyStatus) IsValid() bool {
 type Reply struct {
 	bun.BaseModel `bun:"table:inbound_replies,alias:irpl" json:"-"`
 
-	ID                pulid.ID    `json:"id"                bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID    pulid.ID    `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID    `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	MessageID         pulid.ID    `json:"messageId"         bun:"message_id,type:VARCHAR(100),notnull"`
-	MailboxID         pulid.ID    `json:"mailboxId"         bun:"mailbox_id,type:VARCHAR(100),notnull"`
-	ThreadKey         string      `json:"threadKey"         bun:"thread_key,type:VARCHAR(500),notnull"`
-	Status            ReplyStatus `json:"status"            bun:"status,type:VARCHAR(20),notnull"`
-	FromAddress       string      `json:"fromAddress"       bun:"from_address,type:VARCHAR(255),notnull"`
-	ToAddress         string      `json:"toAddress"         bun:"to_address,type:VARCHAR(255),notnull"`
-	CcAddresses       []string    `json:"ccAddresses"       bun:"cc_addresses,type:JSONB,nullzero"`
-	Subject           string      `json:"subject"           bun:"subject,type:VARCHAR(500),notnull"`
-	Body              string      `json:"body"              bun:"body,type:TEXT,notnull"`
-	DraftedByNova     bool        `json:"draftedByNova"     bun:"drafted_by_nova,type:BOOLEAN,notnull,default:false"`
-	TemplateID        pulid.ID    `json:"templateId"        bun:"template_id,type:VARCHAR(100),nullzero"`
-	MessageKey        string      `json:"messageKey"        bun:"message_key,type:VARCHAR(500),nullzero"`
-	ProviderMessageID string      `json:"providerMessageId" bun:"provider_message_id,type:VARCHAR(255),nullzero"`
-	FailureText       string      `json:"failureText"       bun:"failure_text,type:TEXT,nullzero"`
-	SuggestedAddress  string      `json:"suggestedAddress"  bun:"suggested_address,type:VARCHAR(255),nullzero"`
-	IdempotencyKey    string      `json:"-"                 bun:"idempotency_key,type:VARCHAR(255),nullzero"`
-	CreatedByID       pulid.ID    `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),nullzero"`
-	SentByID          pulid.ID    `json:"sentById"          bun:"sent_by_id,type:VARCHAR(100),nullzero"`
-	SentAt            int64       `json:"sentAt"            bun:"sent_at,type:BIGINT,nullzero"`
-	Version           int64       `json:"version"           bun:"version,type:BIGINT"`
-	CreatedAt         int64       `json:"createdAt"         bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt         int64       `json:"updatedAt"         bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                pulid.ID          `json:"id"                bun:"id,pk,type:VARCHAR(100)"`
+	BusinessUnitID    pulid.ID          `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID    pulid.ID          `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	MessageID         pulid.ID          `json:"messageId"         bun:"message_id,type:VARCHAR(100),notnull"`
+	MailboxID         pulid.ID          `json:"mailboxId"         bun:"mailbox_id,type:VARCHAR(100),notnull"`
+	ThreadKey         string            `json:"threadKey"         bun:"thread_key,type:VARCHAR(500),notnull"`
+	Status            ReplyStatus       `json:"status"            bun:"status,type:VARCHAR(20),notnull"`
+	FromAddress       string            `json:"fromAddress"       bun:"from_address,type:VARCHAR(255),notnull"`
+	ToAddress         string            `json:"toAddress"         bun:"to_address,type:VARCHAR(255),notnull"`
+	CcAddresses       []string          `json:"ccAddresses"       bun:"cc_addresses,type:JSONB,nullzero"`
+	Subject           string            `json:"subject"           bun:"subject,type:VARCHAR(500),notnull"`
+	Body              string            `json:"body"              bun:"body,type:TEXT,notnull"`
+	DraftedByNova     bool              `json:"draftedByNova"     bun:"drafted_by_nova,type:BOOLEAN,notnull,default:false"`
+	TemplateID        pulid.ID          `json:"templateId"        bun:"template_id,type:VARCHAR(100),nullzero"`
+	MessageKey        string            `json:"messageKey"        bun:"message_key,type:VARCHAR(500),nullzero"`
+	ProviderMessageID string            `json:"providerMessageId" bun:"provider_message_id,type:VARCHAR(255),nullzero"`
+	FailureText       string            `json:"failureText"       bun:"failure_text,type:TEXT,nullzero"`
+	SuggestedAddress  string            `json:"suggestedAddress"  bun:"suggested_address,type:VARCHAR(255),nullzero"`
+	Attachments       []ReplyAttachment `json:"attachments"       bun:"attachments,type:JSONB,nullzero"`
+	IdempotencyKey    string            `json:"-"                 bun:"idempotency_key,type:VARCHAR(255),nullzero"`
+	CreatedByID       pulid.ID          `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),nullzero"`
+	SentByID          pulid.ID          `json:"sentById"          bun:"sent_by_id,type:VARCHAR(100),nullzero"`
+	SentAt            int64             `json:"sentAt"            bun:"sent_at,type:BIGINT,nullzero"`
+	Version           int64             `json:"version"           bun:"version,type:BIGINT"`
+	CreatedAt         int64             `json:"createdAt"         bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt         int64             `json:"updatedAt"         bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
 func (r *Reply) Validate(multiErr *errortypes.MultiError) {
@@ -81,6 +82,31 @@ func (r *Reply) Validate(multiErr *errortypes.MultiError) {
 			validation.RuneLength(1, MaxReplyBodyLength),
 		),
 	))
+}
+
+type ReplyAttachment struct {
+	DocumentID  pulid.ID `json:"documentId"`
+	FileName    string   `json:"fileName"`
+	ContentType string   `json:"contentType"`
+	ByteSize    int64    `json:"byteSize"`
+}
+
+func (r *Reply) AttachmentDocumentIDs() []pulid.ID {
+	ids := make([]pulid.ID, 0, len(r.Attachments))
+	for i := range r.Attachments {
+		ids = append(ids, r.Attachments[i].DocumentID)
+	}
+
+	return ids
+}
+
+func (r *Reply) AttachmentNames() []string {
+	names := make([]string, 0, len(r.Attachments))
+	for i := range r.Attachments {
+		names = append(names, r.Attachments[i].FileName)
+	}
+
+	return names
 }
 
 func (r *Reply) Sent() bool {

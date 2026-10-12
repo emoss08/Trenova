@@ -33,11 +33,12 @@ type SendEmailRequest struct {
 }
 
 type EmailAttachment struct {
-	FileName    string `json:"fileName"`
-	ContentType string `json:"contentType"`
-	Content     []byte `json:"content,omitempty"`
-	ObjectKey   string `json:"objectKey,omitempty"`
-	SizeBytes   int64  `json:"sizeBytes,omitempty"`
+	FileName    string               `json:"fileName"`
+	ContentType string               `json:"contentType"`
+	Content     []byte               `json:"content,omitempty"`
+	ObjectKey   string               `json:"objectKey,omitempty"`
+	SizeBytes   int64                `json:"sizeBytes,omitempty"`
+	Seal        email.AttachmentSeal `json:"seal,omitempty"`
 }
 
 type SendPersistedEmailRequest struct {

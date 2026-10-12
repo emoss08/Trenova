@@ -179,8 +179,8 @@ func planAttachment(
 }
 
 func providerLimit(profile *email.Profile) int64 {
-	if profile != nil && profile.Provider == email.ProviderResend {
-		return resendMessageLimitBytes
+	if profile == nil {
+		return emailports.PostmarkMessageLimitBytes
 	}
-	return postmarkMessageLimitBytes
+	return emailports.MessageLimitBytes(profile.Provider)
 }
