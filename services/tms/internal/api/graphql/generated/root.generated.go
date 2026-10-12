@@ -10133,6 +10133,8 @@ enum BillingTransferRunScope {
   AllMatching
   "A second attempt at an earlier transfer."
   Retry
+  "Started by billing control on its own schedule, for shipments ready to bill."
+  Automatic
 }
 
 enum BillingTransferItemStatus {

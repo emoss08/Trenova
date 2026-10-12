@@ -285,6 +285,15 @@ type ListBillingTransferCandidateIDsRequest struct {
 	Status shipment.Status          `json:"status"`
 }
 
+// ListAutoTransferCandidateIDsRequest asks for the shipments an automatic
+// transfer may take now. ScanLimit bounds how many recently changed candidates
+// are evaluated to find them.
+type ListAutoTransferCandidateIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	Limit      int                   `json:"limit"`
+	ScanLimit  int                   `json:"scanLimit"`
+}
+
 type BillingTransferCandidateIDsResponse struct {
 	IDs        []pulid.ID `json:"ids"`
 	TotalCount int        `json:"totalCount"`
@@ -676,6 +685,10 @@ type ShipmentService interface {
 		ctx context.Context,
 		req *ListBillingTransferCandidateIDsRequest,
 	) (*BillingTransferCandidateIDsResponse, error)
+	ListAutoTransferCandidateIDs(
+		ctx context.Context,
+		req *ListAutoTransferCandidateIDsRequest,
+	) ([]pulid.ID, error)
 	// PlanBillingTransfers answers, for each shipment, what BulkTransferToBilling
 	// would do to it, by the same checks and without writing anything.
 	PlanBillingTransfers(

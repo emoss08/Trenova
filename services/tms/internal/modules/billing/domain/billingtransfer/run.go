@@ -145,7 +145,7 @@ func (r *BillingTransferRun) Validate(multiErr *errortypes.MultiError) {
 			// An AllMatching run is created before anything is counted: the
 			// workflow resolves its candidates. Only a run that named its
 			// shipments up front can be judged empty at this point.
-			validation.When(r.Scope == RunScopeSelected,
+			validation.When(r.Scope == RunScopeSelected || r.Scope == RunScopeAutomatic,
 				validation.Min(1).Error("A transfer must include at least one shipment"),
 			),
 		),

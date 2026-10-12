@@ -174,3 +174,65 @@ func (_c *MockBillingControlRepository_Update_Call) RunAndReturn(run func(ctx co
 	_c.Call.Return(run)
 	return _c
 }
+
+// ListAutomaticTransfer provides a mock function for the type MockBillingControlRepository
+func (_mock *MockBillingControlRepository) ListAutomaticTransfer(ctx context.Context) ([]*tenant.BillingControl, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListAutomaticTransfer")
+	}
+
+	var r0 []*tenant.BillingControl
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]*tenant.BillingControl, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []*tenant.BillingControl); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*tenant.BillingControl)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingControlRepository_ListAutomaticTransfer_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListAutomaticTransfer'
+type MockBillingControlRepository_ListAutomaticTransfer_Call struct {
+	*mock.Call
+}
+
+// ListAutomaticTransfer is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockBillingControlRepository_Expecter) ListAutomaticTransfer(ctx any) *MockBillingControlRepository_ListAutomaticTransfer_Call {
+	return &MockBillingControlRepository_ListAutomaticTransfer_Call{Call: _e.mock.On("ListAutomaticTransfer", ctx)}
+}
+
+func (_c *MockBillingControlRepository_ListAutomaticTransfer_Call) Run(run func(ctx context.Context)) *MockBillingControlRepository_ListAutomaticTransfer_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingControlRepository_ListAutomaticTransfer_Call) Return(value []*tenant.BillingControl, err error) *MockBillingControlRepository_ListAutomaticTransfer_Call {
+	_c.Call.Return(value, err)
+	return _c
+}
+
+func (_c *MockBillingControlRepository_ListAutomaticTransfer_Call) RunAndReturn(run func(ctx context.Context) ([]*tenant.BillingControl, error)) *MockBillingControlRepository_ListAutomaticTransfer_Call {
+	_c.Call.Return(run)
+	return _c
+}

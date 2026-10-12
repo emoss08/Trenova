@@ -1614,6 +1614,8 @@ export type BillingTransferRunItemsFilterInput = {
 export type BillingTransferRunScope =
   /** Everything matching a search, resolved when the run starts. */
   | 'AllMatching'
+  /** Started by billing control on its own schedule, for shipments ready to bill. */
+  | 'Automatic'
   /** A second attempt at an earlier transfer. */
   | 'Retry'
   /** The shipments were picked one by one. */
