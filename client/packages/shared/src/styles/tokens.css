@@ -1986,6 +1986,13 @@
   }
 }
 
+@utility field-focus-state {
+    outline: none;
+    border-color: var(--ring);
+    box-shadow: 0 0 0 var(--ring-width)
+      color-mix(in oklch, var(--ring) calc(var(--ring-opacity) * 100%), transparent);
+}
+
 /* Focus landed on a child and the wrapper draws the ring: a field with an affix,
    a composer, a number field's button group. */
 @utility ui-container-focus-ring {

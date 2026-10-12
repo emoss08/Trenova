@@ -154,6 +154,7 @@ export function SelectField<T extends FieldValues>({
                       "group flex h-7 w-full items-center justify-between whitespace-nowrap",
                       "ring-offset-background placeholder:text-muted-foreground px-1.5 py-1 text-xs outline-hidden select-none",
                       "cursor-default disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+                      "data-[pressed]:field-focus-state",
                       fieldState.invalid && fieldInvalidClass,
                       isReadOnly && "pointer-events-none cursor-not-allowed opacity-60",
                       warning?.show &&
