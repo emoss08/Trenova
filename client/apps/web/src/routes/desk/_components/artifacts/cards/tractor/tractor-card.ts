@@ -15,7 +15,6 @@ import {
 import type { CardCheckState, CardFact } from "../../record-card/record-card";
 import { cardDate, personName, type Person } from "../../record-card/record-card-values";
 
-const METERS_PER_MILE = 1609.344;
 /** A report newer than this is where the tractor is now; an older one is where it was. */
 export const LIVE_WINDOW_SECONDS = 15 * 60;
 /** Below this the tractor is standing, whatever the GPS jitter says. */
@@ -149,11 +148,6 @@ export function inspectionReading(
     };
   }
   return { state: "ok", text: t("No defects") };
-}
-
-/** Whole miles from the meters a GPS unit counts. */
-export function metersToMiles(meters: number): number {
-  return Math.round(meters / METERS_PER_MILE);
 }
 
 const COMPASS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;

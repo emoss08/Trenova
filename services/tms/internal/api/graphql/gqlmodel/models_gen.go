@@ -8758,6 +8758,8 @@ type ShipmentsInput struct {
 	TractorIds []string `json:"tractorIds,omitempty"`
 	// Only shipments with a live move assigned to one of these trailers.
 	TrailerIds []string `json:"trailerIds,omitempty"`
+	// Only shipments with a live move one of these workers drives, in either seat.
+	WorkerIds []string `json:"workerIds,omitempty"`
 }
 
 type SidebarActivityPreference struct {

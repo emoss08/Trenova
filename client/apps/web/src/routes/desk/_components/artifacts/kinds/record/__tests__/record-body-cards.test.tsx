@@ -31,6 +31,10 @@ vi.mock("../../../cards/trailer/desk-trailer", () => ({
   DeskTrailer: () => null,
   DeskTrailerArtifact: ({ recordId }: { recordId: string }) => <p>Trailer {recordId}</p>,
 }));
+vi.mock("../../../cards/worker/desk-worker", () => ({
+  DeskWorker: () => null,
+  DeskWorkerArtifact: ({ recordId }: { recordId: string }) => <p>Worker {recordId}</p>,
+}));
 vi.mock("../../../cards/tractor/desk-tractor", () => ({
   DeskTractor: () => null,
   DeskTractorArtifact: ({ recordId }: { recordId: string }) => <p>Tractor {recordId}</p>,
@@ -110,7 +114,7 @@ describe("a looked-up record with a card of its own", () => {
   });
 
   it("draws a record without a card as its fields", () => {
-    draw(card("worker", { recordId: "wrk_1" }));
+    draw(card("commodity", { recordId: "com_1" }));
 
     expect(screen.getByText("Reefer per mile")).toBeInTheDocument();
     expect(screen.queryByText(/Formula template|Billing item/)).not.toBeInTheDocument();
@@ -128,7 +132,7 @@ describe("a looked-up record with a card of its own", () => {
     expect(deskArtKind(artifact)).toBe("formula");
     expect(deskArtKindName("formula", t as never)).toBe("Formula template");
     expect(deskArtKind(card("billing_queue_item"))).toBe("bill");
-    expect(deskArtKind(card("worker"))).toBe("record");
+    expect(deskArtKind(card("commodity"))).toBe("record");
   });
 
   it("draws a shipment the agent looked up as the shipment card, with its own mark", async () => {
@@ -179,6 +183,16 @@ describe("a looked-up record with a card of its own", () => {
     expect(await screen.findByText("Trailer trl_1")).toBeInTheDocument();
     expect(deskArtKind(artifact)).toBe("trailer");
     expect(deskArtKindName("trailer", t as never)).toBe("Trailer");
+  });
+
+  it("draws a worker the agent looked up as the worker card, with its own mark", async () => {
+    const artifact = card("worker", { recordId: "wrk_1", tool: "get_worker" });
+
+    draw(artifact);
+
+    expect(await screen.findByText("Worker wrk_1")).toBeInTheDocument();
+    expect(deskArtKind(artifact)).toBe("worker");
+    expect(deskArtKindName("worker", t as never)).toBe("Worker");
   });
 
   it("reads only the record kinds it names, never a name every object has", () => {

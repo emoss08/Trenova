@@ -9,7 +9,6 @@ import {
   compassPoint,
   inspectionKind,
   inspectionReading,
-  metersToMiles,
   positionReading,
   tractorChecks,
   tractorFacts,
@@ -267,12 +266,7 @@ describe("inspectionReading", () => {
   });
 });
 
-describe("metersToMiles and compassPoint", () => {
-  it("turns meters into whole miles", () => {
-    expect(metersToMiles(1609.344)).toBe(1);
-    expect(metersToMiles(293_100_000)).toBe(182_124);
-  });
-
+describe("compassPoint", () => {
   it("names the nearest of eight points, wrapping round north", () => {
     expect(compassPoint(0)).toBe("N");
     expect(compassPoint(40)).toBe("NE");

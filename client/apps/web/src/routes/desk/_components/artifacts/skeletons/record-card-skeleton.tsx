@@ -221,6 +221,19 @@ export function CardFactGridSkeleton({ cells }: { cells: number }) {
   );
 }
 
+/** A `CardMeter` while it is read: its label and reading over the empty bar. */
+export function CardMeterSkeleton() {
+  return (
+    <div className="dk-rec-gauge">
+      <div className="dk-rec-gauge-h">
+        <SkeletonBar w="20%" className="dk-rec-sk-label" />
+        <SkeletonBar w="32%" className="dk-rec-sk-label" />
+      </div>
+      <i className="dk-sk dk-rec-meter" />
+    </div>
+  );
+}
+
 /** A filled block the card draws as one piece, such as a lane or a document tile. */
 export function CardBoxSkeleton({ height }: { height: number }) {
   return <i className="dk-sk dk-rec-sk-box" style={{ height: `${height}px` }} />;

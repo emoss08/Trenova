@@ -20810,6 +20810,10 @@ type Query {
   What needs attention, newest first, filtered to what this reader may see.
   """
   watchtowerItems(input: WatchtowerItemsInput!): WatchtowerItemConnection!
+  """
+  One worker, with the profile, state, fleet, manager and license state it is asked for.
+  """
+  worker(id: ID!): Worker
   workerAvailabilityPreferences(workerId: ID!): [WorkerAvailabilityPreference!]!
   workerBenefitEnrollments(openOnly: Boolean, workerId: ID!): [WorkerBenefitEnrollment!]!
   workerChecklist(id: ID!): WorkerChecklist!
@@ -25127,6 +25131,10 @@ input ShipmentsInput {
   tractorIds: [ID!]
   """Only shipments with a live move assigned to one of these trailers."""
   trailerIds: [ID!]
+  """
+  Only shipments with a live move one of these workers drives, in either seat.
+  """
+  workerIds: [ID!]
 }
 
 type SidebarActivityPreference {

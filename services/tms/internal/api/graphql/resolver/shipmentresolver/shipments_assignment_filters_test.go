@@ -83,6 +83,28 @@ func TestShipments_TractorIDsReachTheListOptions(t *testing.T) {
 	)
 }
 
+func TestShipments_TrailerAndWorkerIDsReachTheListOptions(t *testing.T) {
+	t.Parallel()
+
+	service := &listCapturingShipmentService{}
+	trailerID := pulid.MustNew("trl_")
+	workerID := pulid.MustNew("wrk_")
+
+	_, err := newShipmentListResolver(service).Shipments(
+		shipmentListContext(t),
+		gqlmodel.ShipmentsInput{
+			TrailerIds: []string{trailerID.String()},
+			WorkerIds:  []string{workerID.String()},
+		},
+	)
+	require.NoError(t, err)
+	require.Len(t, service.requests, 1)
+	options := service.requests[0].ShipmentOptions
+	assert.Equal(t, []pulid.ID{trailerID}, options.TrailerIDs)
+	assert.Equal(t, []pulid.ID{workerID}, options.WorkerIDs)
+	assert.Empty(t, options.TractorIDs)
+}
+
 func TestShipments_NoTractorIDsLeavesTheFilterOff(t *testing.T) {
 	t.Parallel()
 

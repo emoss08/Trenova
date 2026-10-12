@@ -44,6 +44,10 @@ export function deskCardArtifacts(anchor) {
     "trailer-tl-622": artifact("trailer-tl-622", "trailer", "trl_622", "Trailer TL-622"),
     "trailer-tl-700": artifact("trailer-tl-700", "trailer", "trl_700", "Trailer TL-700"),
     "trailer-tl-999": artifact("trailer-tl-999", "trailer", "trl_999", "Trailer TL-999"),
+    "worker-rosa": artifact("worker-rosa", "worker", "wrk_rosa", "Rosa Diaz"),
+    "worker-ana": artifact("worker-ana", "worker", "wrk_ana", "Ana Ruiz-Montenegro"),
+    "worker-jordan": artifact("worker-jordan", "worker", "wrk_new", "Jordan Lee"),
+    "worker-gone": artifact("worker-gone", "worker", "wrk_999", "Casey Morgan"),
   };
 }
 
@@ -259,7 +263,12 @@ export function deskTrailers(anchor) {
         equipmentType: { id: "et_dv", code: "DV53", description: "53' dry van" },
         equipmentManufacturer: { id: "em_wb", name: "Wabash" },
         fleetCode: { id: "fc_dal", code: "DAL" },
-        lastKnownLocation: { id: "loc_dal", name: "Dallas yard", latitude: 32.7801, longitude: -96.8005 },
+        lastKnownLocation: {
+          id: "loc_dal",
+          name: "Dallas yard",
+          latitude: 32.7801,
+          longitude: -96.8005,
+        },
       },
       documents: [
         ["Annual inspection 2026.pdf", "application/pdf", 288_400],
@@ -328,6 +337,218 @@ export function deskTrailers(anchor) {
   };
 }
 
+const HOUR_MS = HOUR * 1000;
+
+/**
+ * Three workers between them drawing every state the card has: Rosa Diaz is
+ * driving T-101 with most of her day left and a clean record; Ana
+ * Ruiz-Montenegro, an owner-operator, is held off the board with an expired
+ * medical card, a hazmat endorsement about to lapse, a missing port pass and a
+ * driving violation; Jordan Lee started this week with nothing on file.
+ */
+export function deskWorkers(anchor) {
+  const person = {
+    externalId: "",
+    assignmentBlocked: "",
+    canBeAssigned: true,
+    availableForDispatch: true,
+  };
+  const clocks = (drive, shift, cycle, rest) => ({
+    driveRemainingMs: drive,
+    driveLimitMs: 11 * HOUR_MS,
+    shiftRemainingMs: shift,
+    shiftLimitMs: 14 * HOUR_MS,
+    cycleRemainingMs: cycle,
+    cycleLimitMs: 70 * HOUR_MS,
+    breakRemainingMs: rest,
+    breakLimitMs: 8 * HOUR_MS,
+  });
+  const credential = (id, name, health, expiresAt, days, required = true) => ({
+    health,
+    daysUntilExpiry: days,
+    required,
+    credentialType: { id: `ct_${id}`, name, profileField: "" },
+    credential: expiresAt === undefined ? null : { id: `cr_${id}`, expiresAt },
+  });
+  return {
+    wrk_rosa: {
+      worker: {
+        ...person,
+        id: "wrk_rosa",
+        status: "Active",
+        type: "Employee",
+        driverType: "OTR",
+        firstName: "Rosa",
+        lastName: "Diaz",
+        phoneNumber: "(214) 555-0148",
+        email: "rosa.diaz@skyline-freight.example",
+        city: "Mesquite",
+        externalId: "EMP-1048",
+        createdAt: anchor - 4 * 365 * DAY,
+        state: { abbreviation: "TX" },
+        fleetCode: { id: "fc_dal", code: "DAL" },
+        manager: { id: "usr_mia", name: "Mia Chen" },
+        profile: {
+          licenseNumber: "TX40291187",
+          cdlClass: "A",
+          cdlRestrictions: "",
+          endorsement: "N",
+          licenseExpiry: anchor + 2 * 365 * DAY,
+          hazmatExpiry: null,
+          medicalCardExpiry: anchor + 214 * DAY,
+          twicExpiry: anchor + 3 * 365 * DAY,
+          physicalDueDate: anchor + 214 * DAY,
+          mvrDueDate: anchor + 120 * DAY,
+          hireDate: anchor - 4 * 365 * DAY,
+          isQualified: true,
+          disqualificationReason: "",
+          licenseState: { abbreviation: "TX" },
+        },
+      },
+      hos: {
+        state: {
+          dutyStatus: "driving",
+          ...clocks(6.75 * HOUR_MS, 8.5 * HOUR_MS, 41.25 * HOUR_MS, 2.5 * HOUR_MS),
+          currentTractorId: "tr_101",
+          rulesetCycle: "USA 70 hour / 8 day",
+          recordedAt: anchor - 3 * 60,
+        },
+        violations: [],
+      },
+      standing: { standing: "Good", concerns: [] },
+      credentials: [
+        credential("forklift", "Forklift operator", "Valid", anchor + 400 * DAY, 400),
+        credential("defensive", "Defensive driving course", "Valid", anchor + 160 * DAY, 160),
+      ],
+      documents: [
+        ["CDL Rosa Diaz.pdf", "application/pdf", 212_400],
+        ["Medical examiner certificate.pdf", "application/pdf", 98_300],
+      ],
+      shipments: 7,
+    },
+    wrk_ana: {
+      worker: {
+        ...person,
+        id: "wrk_ana",
+        status: "Active",
+        type: "Contractor",
+        driverType: "Regional",
+        firstName: "Ana",
+        lastName: "Ruiz-Montenegro",
+        phoneNumber: "(479) 555-0122",
+        email: "ana@ruizmontenegro-trucking.example",
+        city: "Springdale",
+        assignmentBlocked: "Medical card expired; held until a new certificate is on file",
+        canBeAssigned: false,
+        availableForDispatch: false,
+        createdAt: anchor - 6 * 365 * DAY,
+        state: { abbreviation: "AR" },
+        fleetCode: { id: "fc_lit", code: "LIT" },
+        manager: { id: "usr_omar", name: "Omar Haddad" },
+        profile: {
+          licenseNumber: "AR99120455",
+          cdlClass: "A",
+          cdlRestrictions: "L",
+          endorsement: "X",
+          licenseExpiry: anchor + 41 * DAY,
+          hazmatExpiry: anchor + 12 * DAY,
+          medicalCardExpiry: anchor - 4 * DAY,
+          twicExpiry: null,
+          physicalDueDate: anchor - 4 * DAY,
+          mvrDueDate: anchor + 18 * DAY,
+          hireDate: anchor - 6 * 365 * DAY,
+          isQualified: false,
+          disqualificationReason: "Medical examiner's certificate expired",
+          licenseState: { abbreviation: "AR" },
+        },
+      },
+      hos: {
+        state: {
+          dutyStatus: "offDuty",
+          ...clocks(0, 0.75 * HOUR_MS, 6.5 * HOUR_MS, 0),
+          currentTractorId: null,
+          rulesetCycle: "USA 70 hour / 8 day",
+          recordedAt: anchor - 9 * HOUR,
+        },
+        violations: [
+          {
+            violationType: "SHIFT_DRIVING",
+            description: "Drove 11 h 40 m in the shift, 40 m past the limit",
+            durationMs: 40 * 60_000,
+            violationStartAt: anchor - DAY - 4 * HOUR,
+          },
+          {
+            violationType: "BREAK",
+            description: "No 30-minute break before 8 hours of driving",
+            durationMs: 22 * 60_000,
+            violationStartAt: anchor - 5 * DAY,
+          },
+        ],
+      },
+      standing: {
+        standing: "Blocked",
+        concerns: [
+          {
+            severity: "Critical",
+            code: "not_assignable",
+            headline: "Cannot be assigned",
+            detail: "The worker is off the dispatch board until this is lifted.",
+          },
+          {
+            severity: "Critical",
+            code: "credentials_expired",
+            headline: "1 credential has expired",
+            detail: "The worker is not qualified to drive until these are renewed.",
+          },
+          {
+            severity: "Critical",
+            code: "open_safety_events",
+            headline: "2 safety events are open",
+            detail: "Review them with the driver and close them out.",
+          },
+          {
+            severity: "Warning",
+            code: "training_due",
+            headline: "Hazmat refresher due in 12 days",
+            detail: "Book the course before the endorsement lapses.",
+          },
+        ],
+      },
+      credentials: [
+        credential("port", "Port of Houston access", "Missing", undefined, null),
+        credential("reefer", "Reefer unit operation", "ExpiringSoon", anchor + 9 * DAY, 9),
+        credential("forklift", "Forklift operator", "Valid", anchor + 300 * DAY, 300),
+      ],
+      documents: [["Lease agreement 2026.pdf", "application/pdf", 520_100]],
+      shipments: 3,
+    },
+    wrk_new: {
+      worker: {
+        ...person,
+        id: "wrk_new",
+        status: "Active",
+        type: "Employee",
+        driverType: "Local",
+        firstName: "Jordan",
+        lastName: "Lee",
+        phoneNumber: "",
+        email: "",
+        city: "",
+        createdAt: anchor - 2 * DAY,
+        state: null,
+        fleetCode: null,
+        manager: null,
+        profile: null,
+      },
+      hos: { state: null, violations: [] },
+      standing: { standing: "Good", concerns: [] },
+      credentials: [],
+      documents: [],
+      shipments: 0,
+    },
+  };
+}
+
 /** A document filed on a tractor, as the documents API returns it. */
 export function deskDocument(resourceType, resourceId, [name, fileType, fileSize], index, anchor) {
   return {
@@ -363,14 +584,54 @@ export function deskDocument(resourceType, resourceId, [name, fileType, fileSize
 
 /** Who asked about which tractor, and what the agent answered, for each card's conversation. */
 const TURNS = {
-  "tractor-t-101": ["Where is T-101 right now, and is it due for anything?", "T-101 is rolling south on I-35E near Waxahachie at 61 mph with Rosa Diaz driving; its registration runs through May and its last pre-trip was clean. [Tractor T-101](artifact:art_tractor-t-101) has the rest."],
-  "tractor-t-207": ["Why is T-207 sitting?", "T-207 is at maintenance at Rush Truck Center in Oklahoma City: its last pre-trip found two defects still open, and its registration expires in nine days. [Tractor T-207](artifact:art_tractor-t-207) lays it out."],
-  "tractor-t-999": ["Show me T-999.", "I looked up T-999 a moment ago, but it has since been removed. [Tractor T-999](artifact:art_tractor-t-999) is what I found then."],
-  "trailer-tl-501": ["Where is TL-501 and is it due for inspection?", "TL-501 is at the Dallas yard, empty and available; its annual inspection is good until January and its registration runs through April. [Trailer TL-501](artifact:art_trailer-tl-501) has the details."],
-  "trailer-tl-622": ["Can we use TL-622 tomorrow?", "Not as it stands: TL-622 is out of service at the Tyson dock in Springdale, its annual inspection is overdue and its registration expired six days ago. [Trailer TL-622](artifact:art_trailer-tl-622) lists what needs clearing."],
-  "trailer-tl-700": ["Show me TL-700.", "TL-700 was added yesterday and nothing is on file for it yet. [Trailer TL-700](artifact:art_trailer-tl-700) shows what is there."],
-  "trailer-tl-999": ["Show me TL-999.", "TL-999 has been removed since I looked it up. [Trailer TL-999](artifact:art_trailer-tl-999) is what I found then."],
-  "tractor-t-318": ["Pull up T-318.", "T-318 joined the fleet two days ago and has nothing recorded against it yet: no GPS report, no inspections, no loads. [Tractor T-318](artifact:art_tractor-t-318) shows what is on file."],
+  "tractor-t-101": [
+    "Where is T-101 right now, and is it due for anything?",
+    "T-101 is rolling south on I-35E near Waxahachie at 61 mph with Rosa Diaz driving; its registration runs through May and its last pre-trip was clean. [Tractor T-101](artifact:art_tractor-t-101) has the rest.",
+  ],
+  "tractor-t-207": [
+    "Why is T-207 sitting?",
+    "T-207 is at maintenance at Rush Truck Center in Oklahoma City: its last pre-trip found two defects still open, and its registration expires in nine days. [Tractor T-207](artifact:art_tractor-t-207) lays it out.",
+  ],
+  "tractor-t-999": [
+    "Show me T-999.",
+    "I looked up T-999 a moment ago, but it has since been removed. [Tractor T-999](artifact:art_tractor-t-999) is what I found then.",
+  ],
+  "trailer-tl-501": [
+    "Where is TL-501 and is it due for inspection?",
+    "TL-501 is at the Dallas yard, empty and available; its annual inspection is good until January and its registration runs through April. [Trailer TL-501](artifact:art_trailer-tl-501) has the details.",
+  ],
+  "trailer-tl-622": [
+    "Can we use TL-622 tomorrow?",
+    "Not as it stands: TL-622 is out of service at the Tyson dock in Springdale, its annual inspection is overdue and its registration expired six days ago. [Trailer TL-622](artifact:art_trailer-tl-622) lists what needs clearing.",
+  ],
+  "trailer-tl-700": [
+    "Show me TL-700.",
+    "TL-700 was added yesterday and nothing is on file for it yet. [Trailer TL-700](artifact:art_trailer-tl-700) shows what is there.",
+  ],
+  "trailer-tl-999": [
+    "Show me TL-999.",
+    "TL-999 has been removed since I looked it up. [Trailer TL-999](artifact:art_trailer-tl-999) is what I found then.",
+  ],
+  "worker-rosa": [
+    "Can Rosa take another load today?",
+    "Yes: Rosa Diaz is driving T-101 with 6 h 45 m of drive time left and 41 h on her cycle, and nothing on her record needs attention. [Rosa Diaz](artifact:art_worker-rosa) has her clocks and papers.",
+  ],
+  "worker-ana": [
+    "Why is Ana off the board?",
+    "Ana Ruiz-Montenegro's medical card expired four days ago, so she is held until a new certificate is filed; her hazmat endorsement also lapses in 12 days and she has two open hours-of-service violations. [Ana Ruiz-Montenegro](artifact:art_worker-ana) lists all of it.",
+  ],
+  "worker-jordan": [
+    "Pull up Jordan Lee.",
+    "Jordan Lee started this week and has no driver profile, hours or loads on file yet. [Jordan Lee](artifact:art_worker-jordan) shows what is there.",
+  ],
+  "worker-gone": [
+    "Show me Casey Morgan.",
+    "Casey Morgan's record has been removed since I looked it up. [Casey Morgan](artifact:art_worker-gone) is what I found then.",
+  ],
+  "tractor-t-318": [
+    "Pull up T-318.",
+    "T-318 joined the fleet two days ago and has nothing recorded against it yet: no GPS report, no inspections, no loads. [Tractor T-318](artifact:art_tractor-t-318) shows what is on file.",
+  ],
 };
 
 /** The conversation a card's artifact sits in: the question and the reply that names it. */
@@ -396,8 +657,22 @@ export function deskThread(anchor, slug) {
       updatedAt: anchor - 4 * 60,
     },
     messages: [
-      { ...base, id: "msg_q", sequence: 1, role: "User", content: question, createdAt: anchor - 6 * 60 },
-      { ...base, id: "msg_desk_cards", sequence: 2, role: "Assistant", content: reply, createdAt: anchor - 5 * 60 },
+      {
+        ...base,
+        id: "msg_q",
+        sequence: 1,
+        role: "User",
+        content: question,
+        createdAt: anchor - 6 * 60,
+      },
+      {
+        ...base,
+        id: "msg_desk_cards",
+        sequence: 2,
+        role: "Assistant",
+        content: reply,
+        createdAt: anchor - 5 * 60,
+      },
     ],
   };
 }

@@ -6661,6 +6661,8 @@ export type ShipmentsInput = {
   tractorIds?: Array<string | number> | null | undefined;
   /** Only shipments with a live move assigned to one of these trailers. */
   trailerIds?: Array<string | number> | null | undefined;
+  /** Only shipments with a live move one of these workers drives, in either seat. */
+  workerIds?: Array<string | number> | null | undefined;
 };
 
 export type SidebarActivityPreferenceInput = {
@@ -15324,6 +15326,35 @@ export type AttachWorkerCredentialDocumentMutationVariables = Exact<{
 
 
 export type AttachWorkerCredentialDocumentMutation = { attachWorkerCredentialDocument: { ' $fragmentRefs'?: { 'WorkerCredentialFieldsFragment': WorkerCredentialFieldsFragment } } };
+
+export type DeskWorkerCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskWorkerCardQuery = { worker: { id: string, status: EntityStatus, type: WorkerType, driverType: DriverType, firstName: string, lastName: string, phoneNumber: string, email: string, city: string, externalId: string, assignmentBlocked: string, canBeAssigned: boolean, availableForDispatch: boolean, createdAt: number, state: { abbreviation: string } | null, fleetCode: { id: string, code: string } | null, manager: { id: string, name: string } | null, profile: { licenseNumber: string, cdlClass: CdlClass, cdlRestrictions: string, endorsement: EndorsementType, licenseExpiry: number, hazmatExpiry: number | null, medicalCardExpiry: number | null, twicExpiry: number | null, physicalDueDate: number | null, mvrDueDate: number | null, hireDate: number, isQualified: boolean, disqualificationReason: string, licenseState: { abbreviation: string } | null } | null } | null };
+
+export type DeskWorkerHosQueryVariables = Exact<{
+  workerId: string | number;
+  violations: number;
+}>;
+
+
+export type DeskWorkerHosQuery = { workerHosState: { dutyStatus: string | null, driveRemainingMs: number, driveLimitMs: number, shiftRemainingMs: number, shiftLimitMs: number, cycleRemainingMs: number, cycleLimitMs: number, breakRemainingMs: number, breakLimitMs: number, currentTractorId: string | null, rulesetCycle: string | null, recordedAt: number } | null, workerHosViolations: Array<{ violationType: string, description: string | null, durationMs: number, violationStartAt: number }> };
+
+export type DeskWorkerStandingQueryVariables = Exact<{
+  workerId: string | number;
+}>;
+
+
+export type DeskWorkerStandingQuery = { workerOverview: { standing: WorkerStanding, concerns: Array<{ severity: WorkerConcernSeverity, code: string, headline: string, detail: string }> } };
+
+export type DeskWorkerCredentialsQueryVariables = Exact<{
+  workerId: string | number;
+}>;
+
+
+export type DeskWorkerCredentialsQuery = { workerCredentialSummary: { items: Array<{ health: WorkerCredentialHealth, daysUntilExpiry: number | null, required: boolean, credentialType: { id: string, name: string, profileField: string | null }, credential: { id: string, expiresAt: number | null } | null }> } };
 
 export type DriverQualificationFileQueryVariables = Exact<{
   workerId: string | number;
@@ -26576,6 +26607,10 @@ export const UpdateWorkerCredentialDocument = {"__meta__":{"kind":"mutation","na
 export const VerifyWorkerCredentialDocument = {"__meta__":{"kind":"mutation","name":"VerifyWorkerCredential","hash":"sha256:0c01bb1bc452347831f5d0cad19075b7d183fafb2512c618ca4cb9341adce768"}} as unknown as TypedDocumentString<VerifyWorkerCredentialMutation, VerifyWorkerCredentialMutationVariables>;
 export const ArchiveWorkerCredentialDocument = {"__meta__":{"kind":"mutation","name":"ArchiveWorkerCredential","hash":"sha256:f2fb9b04e7db4c0c4d0e5ad5fae584f6b22821a0cb94431a0471da4d200f4591"}} as unknown as TypedDocumentString<ArchiveWorkerCredentialMutation, ArchiveWorkerCredentialMutationVariables>;
 export const AttachWorkerCredentialDocumentDocument = {"__meta__":{"kind":"mutation","name":"AttachWorkerCredentialDocument","hash":"sha256:c8fdce1ebd201267552bef9db629a8bac5798e0cf8dc4647efb93c4a0b4469e0"}} as unknown as TypedDocumentString<AttachWorkerCredentialDocumentMutation, AttachWorkerCredentialDocumentMutationVariables>;
+export const DeskWorkerCardDocument = {"__meta__":{"kind":"query","name":"DeskWorkerCard","hash":"sha256:6763db3f6248e12214d70b327693f51bcf290b9ec526b9a6db12d18874fb1287"}} as unknown as TypedDocumentString<DeskWorkerCardQuery, DeskWorkerCardQueryVariables>;
+export const DeskWorkerHosDocument = {"__meta__":{"kind":"query","name":"DeskWorkerHos","hash":"sha256:052f005b2bc8a4a4d757341f84b42a36d9dda1fbf297008fda59b01b2405a551"}} as unknown as TypedDocumentString<DeskWorkerHosQuery, DeskWorkerHosQueryVariables>;
+export const DeskWorkerStandingDocument = {"__meta__":{"kind":"query","name":"DeskWorkerStanding","hash":"sha256:5d3f4cbe57764e3d7c1b243f21d3d3c710ac6aeca4438a21988cd9c0afe9854e"}} as unknown as TypedDocumentString<DeskWorkerStandingQuery, DeskWorkerStandingQueryVariables>;
+export const DeskWorkerCredentialsDocument = {"__meta__":{"kind":"query","name":"DeskWorkerCredentials","hash":"sha256:bd9f70fe8574c0fbd1d423a03e71cb9f999fd4b5951a391a62dbfb57886f8480"}} as unknown as TypedDocumentString<DeskWorkerCredentialsQuery, DeskWorkerCredentialsQueryVariables>;
 export const DriverQualificationFileDocument = {"__meta__":{"kind":"query","name":"DriverQualificationFile","hash":"sha256:c327cd209c4906e271ec4c2f0d0467fcd9206ef1e6ba8f3c9390a1bb30ac9a01"}} as unknown as TypedDocumentString<DriverQualificationFileQuery, DriverQualificationFileQueryVariables>;
 export const OutstandingEmploymentVerificationsDocument = {"__meta__":{"kind":"query","name":"OutstandingEmploymentVerifications","hash":"sha256:acfb692dd34077cb99269bfc9fb5f58d281c2c77d5be71c225d894ba2d49dec2"}} as unknown as TypedDocumentString<OutstandingEmploymentVerificationsQuery, OutstandingEmploymentVerificationsQueryVariables>;
 export const DqfRetentionCandidatesDocument = {"__meta__":{"kind":"query","name":"DqfRetentionCandidates","hash":"sha256:3bbff8bf13ac7e808446b33d7476ca6da5ad3290af1d5bee5937188efd342d2c"}} as unknown as TypedDocumentString<DqfRetentionCandidatesQuery, DqfRetentionCandidatesQueryVariables>;

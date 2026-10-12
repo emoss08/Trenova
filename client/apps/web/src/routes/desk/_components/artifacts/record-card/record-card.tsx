@@ -498,6 +498,48 @@ export function CardMore({
   );
 }
 
+/**
+ * A share of something drawn as a meter under what it measures: the label on
+ * the left, the reading and its figure on the right, and a bar that turns as it
+ * nears its end. `share` is 0 to 1; past 1 the bar stays full.
+ */
+export function CardMeter({
+  label,
+  reading,
+  figure,
+  share,
+  state,
+}: {
+  label: string;
+  reading: ReactNode;
+  figure?: ReactNode;
+  share: number;
+  state: CardCheckState;
+}) {
+  const percent = Math.round(Math.min(1, Math.max(0, share)) * 100);
+  return (
+    <div className={cn("dk-rec-gauge", state !== "ok" && `dk-${state}`)}>
+      <div className="dk-rec-gauge-h">
+        <span>{label}</span>
+        <span>
+          {reading}
+          {figure !== undefined && <b>{figure}</b>}
+        </span>
+      </div>
+      <div
+        className="dk-rec-meter"
+        role="meter"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={percent}
+      >
+        <i style={{ width: `${percent}%` }} />
+      </div>
+    </div>
+  );
+}
+
 /** Rows standing in for a section's list while it is read. */
 export function CardSectionWait({ rows }: { rows: number }) {
   return (

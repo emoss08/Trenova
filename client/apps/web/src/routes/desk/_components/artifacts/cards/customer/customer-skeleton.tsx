@@ -3,6 +3,7 @@ import { useCardAccess } from "../../record-card/card-access";
 import {
   CardBarSkeleton,
   CardHeadSkeleton,
+  CardMeterSkeleton,
   CardRowsSkeleton,
   CardSectionSkeleton,
   RecordCardSkeleton,
@@ -67,13 +68,7 @@ export function DeskCustomerSkeleton({ stepper = false }: { stepper?: boolean })
         </CardSectionSkeleton>
       )}
       <CardSectionSkeleton title={52}>
-        <div className="dk-cu-credit">
-          <div className="dk-cu-credit-h">
-            <SkeletonBar w="20%" className="dk-rec-sk-label" />
-            <SkeletonBar w="32%" className="dk-rec-sk-label" />
-          </div>
-          <i className="dk-sk dk-cu-meter" />
-        </div>
+        <CardMeterSkeleton />
         <div className="dk-cu-terms">
           {Array.from({ length: TERM_CELLS }, (_, index) => (
             // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders

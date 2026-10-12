@@ -25,6 +25,7 @@ import {
   CardHead,
   CardIcon,
   CardLink,
+  CardMeter,
   CardRecordRow,
   CardSection,
   CardSectionError,
@@ -570,27 +571,14 @@ function CreditMeter({
   currency: string;
 }) {
   const t = useT();
-  const percent = Math.round(credit.share * 100);
   return (
-    <div className={cn("dk-cu-credit", `dk-${credit.state}`)}>
-      <div className="dk-cu-credit-h">
-        <span>{t("Credit used")}</span>
-        <span>
-          {t("{0} of {1}", money(used, currency), money(limit, currency))}
-          <b>{formatPercent(percent, 0)}</b>
-        </span>
-      </div>
-      <div
-        className="dk-cu-meter"
-        role="meter"
-        aria-label={t("Credit used")}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.min(percent, 100)}
-      >
-        <i style={{ width: `${Math.min(percent, 100)}%` }} />
-      </div>
-    </div>
+    <CardMeter
+      label={t("Credit used")}
+      reading={t("{0} of {1}", money(used, currency), money(limit, currency))}
+      figure={formatPercent(Math.round(credit.share * 100), 0)}
+      share={credit.share}
+      state={credit.state}
+    />
   );
 }
 

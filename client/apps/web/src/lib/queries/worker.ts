@@ -18,6 +18,12 @@ import type {
   WorkerPTO,
 } from "@trenova/shared/types/worker";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
+import {
+  fetchDeskWorker,
+  fetchWorkerCredentials,
+  fetchWorkerHos,
+  fetchWorkerStanding,
+} from "@/lib/graphql/worker-card";
 
 type WorkerPTOConnection = {
   edges?: Array<{ node: unknown }>;
@@ -91,6 +97,22 @@ export async function fetchWorkerPTOHistory(
 }
 
 export const worker = createQueryKeys("worker", {
+  card: (workerId: string) => ({
+    queryKey: ["card", workerId],
+    queryFn: ({ signal }) => fetchDeskWorker(workerId, { signal }),
+  }),
+  hos: (workerId: string, violations: number) => ({
+    queryKey: ["hos", workerId, violations],
+    queryFn: ({ signal }) => fetchWorkerHos(workerId, violations, { signal }),
+  }),
+  standing: (workerId: string) => ({
+    queryKey: ["standing", workerId],
+    queryFn: ({ signal }) => fetchWorkerStanding(workerId, { signal }),
+  }),
+  credentials: (workerId: string) => ({
+    queryKey: ["credentials", workerId],
+    queryFn: ({ signal }) => fetchWorkerCredentials(workerId, { signal }),
+  }),
   ptoHistory: (workerId: string) => ({
     queryKey: ["pto-history", workerId],
     queryFn: ({ signal }) => fetchWorkerPTOHistory(workerId, { signal }),

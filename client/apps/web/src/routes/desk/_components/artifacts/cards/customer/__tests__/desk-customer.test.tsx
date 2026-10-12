@@ -286,7 +286,7 @@ describe("DeskCustomer", () => {
       "aria-valuenow",
       "80",
     );
-    expect(bills.querySelector(".dk-cu-credit")).toHaveClass("dk-warn");
+    expect(bills.querySelector(".dk-rec-gauge")).toHaveClass("dk-warn");
     expect(within(bills).getByText("Net 30")).toBeInTheDocument();
     expect(within(bills).getByText("Weekly")).toBeInTheDocument();
     expect(within(bills).getByText("Per shipment · Email")).toBeInTheDocument();

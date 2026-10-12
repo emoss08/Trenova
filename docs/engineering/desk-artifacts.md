@@ -51,7 +51,9 @@ artifacts/
                           useRecordShipments in record-shipments.ts), where a
                           record is on a small still OpenStreetMap map
                           (card-where.tsx, the map lazily in still-map.tsx from
-                          map-tiles.ts), what falls due (card-due.tsx), what a
+                          map-tiles.ts), what falls due (card-due.tsx), a share
+                          drawn as a meter (CardMeter: credit used, drive time
+                          left), what a
                           tractor's and a trailer's cards read alike
                           (equipment.ts), and a record's documents
                           (card-documents.tsx, a rail drawn by document-rail.tsx
@@ -70,7 +72,7 @@ is drawn as a table and reads `kinds/table/`. Shared card styles are the `dk-rec
 `routes/desk/_styles/desk-v2.css`; a card's own styles take its own prefix
 (`dk-bi-*` for the billing item, `dk-ft-*` for the formula template, `dk-sh-*` for the
 shipment, `dk-cu-*` for the customer, `dk-ra-*` for the rate agreement, `dk-tr-*` for the
-tractor, `dk-tl-*` for the trailer).
+tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker).
 
 ## Lazy loading and skeletons
 
@@ -118,7 +120,8 @@ for loads with a live move assigned to it). One operation, `DeskRecordShipments`
 every scope a page at a time with the count on the first page only, and the next page is
 read on request. A new scope is a case in `scopeInput` (`lib/graphql/record-shipments.ts`)
 and, where the server cannot yet filter by it, a `ShipmentsInput` field
-(`tractorIds` and `trailerIds` match loads with a live move assigned to the unit).
+(`tractorIds`, `trailerIds` and `workerIds` match loads with a live move assigned to the
+unit or the driver).
 
 ## Where a record is
 

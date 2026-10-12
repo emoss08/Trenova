@@ -1,5 +1,5 @@
 {
-  "version": "sha256:37b655f58d8f238b568b35058edb965a8d3fd21b22892b88cb8b10a071279120",
+  "version": "sha256:32d3ae33bbd8043f1d47fdd7774f5cc45585e1936bacd4af25a94032a5a51e47",
   "modules": [
     {
       "id": "home",
@@ -17113,7 +17113,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     }
   ]
 }

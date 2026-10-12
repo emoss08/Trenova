@@ -34,6 +34,13 @@ const CARDS = [
     empty: "trailer-tl-700",
     gone: "trailer-tl-999",
   },
+  {
+    card: "worker",
+    loaded: "worker-rosa",
+    attention: "worker-ana",
+    empty: "worker-jordan",
+    gone: "worker-gone",
+  },
 ];
 
 function shotsFor({ card, loaded, attention, empty, gone }) {
@@ -42,7 +49,12 @@ function shotsFor({ card, loaded, attention, empty, gone }) {
   return [
     { name: `${card}-loaded-light`, path: pane(loaded), slug: loaded, colorScheme: "light" },
     { name: `${card}-loaded-dark`, path: pane(loaded), slug: loaded, colorScheme: "dark" },
-    { name: `${card}-attention-light`, path: pane(attention), slug: attention, colorScheme: "light" },
+    {
+      name: `${card}-attention-light`,
+      path: pane(attention),
+      slug: attention,
+      colorScheme: "light",
+    },
     { name: `${card}-attention-dark`, path: pane(attention), slug: attention, colorScheme: "dark" },
     { name: `${card}-empty-light`, path: pane(empty), slug: empty, colorScheme: "light" },
     { name: `${card}-empty-dark`, path: pane(empty), slug: empty, colorScheme: "dark" },

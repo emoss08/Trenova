@@ -5506,6 +5506,9 @@ th.dk-cb .dk-ax-cb:hover {
 .dk-ax-ki.dk-k-trailer {
   color: var(--accent-slate);
 }
+.dk-ax-ki.dk-k-worker {
+  color: var(--accent-rose);
+}
 /* The shipment card */
 .dk-sh-nowsec {
   padding: 16px 16px 4px;
@@ -6562,58 +6565,6 @@ th.dk-cb .dk-ax-cb:hover {
     transform: scaleY(1);
   }
 }
-/* credit used against the limit */
-.dk-cu-credit {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-.dk-cu-credit-h {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 12px;
-  color: var(--dsk-subtle);
-}
-.dk-cu-credit-h > span:last-child {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
-  font-family: var(--dk-plex);
-  font-feature-settings: "tnum";
-  color: var(--dsk-fg2);
-}
-.dk-cu-credit-h b {
-  font-weight: 600;
-  color: var(--dsk-fg);
-}
-.dk-cu-meter {
-  display: block;
-  height: 6px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: var(--dsk-sunken);
-}
-.dk-cu-meter > i {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--dsk-fg2);
-  transition: width 320ms var(--dk-settle);
-}
-.dk-cu-credit.dk-warn .dk-cu-meter > i {
-  background: var(--dsk-warn);
-}
-.dk-cu-credit.dk-warn b {
-  color: var(--dsk-warn-fg);
-}
-.dk-cu-credit.dk-bad .dk-cu-meter > i {
-  background: var(--danger);
-}
-.dk-cu-credit.dk-bad b {
-  color: var(--danger);
-}
 /* what every invoice must carry, as tags */
 .dk-cu-needs {
   display: flex;
@@ -6701,7 +6652,61 @@ th.dk-cb .dk-ax-cb:hover {
   .dk-cu-paid li > i {
     animation: none;
   }
-  .dk-cu-meter > i {
+}
+/* a share drawn as a meter under what it measures (credit used, drive time left) */
+.dk-rec-gauge {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.dk-rec-gauge-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-rec-gauge-h > span:last-child {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg2);
+}
+.dk-rec-gauge-h b {
+  font-weight: 600;
+  color: var(--dsk-fg);
+}
+.dk-rec-meter {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--dsk-sunken);
+}
+.dk-rec-meter > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--dsk-fg2);
+  transition: width 320ms var(--dk-settle);
+}
+.dk-rec-gauge.dk-warn .dk-rec-meter > i {
+  background: var(--dsk-warn);
+}
+.dk-rec-gauge.dk-warn b {
+  color: var(--dsk-warn-fg);
+}
+.dk-rec-gauge.dk-bad .dk-rec-meter > i {
+  background: var(--danger);
+}
+.dk-rec-gauge.dk-bad b {
+  color: var(--danger);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-rec-meter > i {
     transition: none;
   }
 }
@@ -6753,6 +6758,77 @@ th.dk-cb .dk-ax-cb:hover {
 }
 .dk-rec-amt .dk-tl-wait {
   color: var(--dsk-faint);
+}
+/* The worker card */
+.dk-wk {
+  container: dkwk / inline-size;
+}
+.dk-rec-amt .dk-wk-wait {
+  color: var(--dsk-faint);
+}
+.dk-rec-amt .dk-bad {
+  color: var(--danger);
+}
+/* why the worker is off the board, on a line of its own under the pill */
+.dk-wk-why {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--dsk-warn-fg);
+}
+/* the duty status over the clocks, and when telematics said so */
+.dk-wk-duty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-wk-duty b {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+/* the four clocks, two to a row */
+.dk-wk-clocks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 20px;
+}
+/* the latest violations, each with when and for how long on the right */
+.dk-wk-viol {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-wk-viol > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-wk-viol > li:first-child {
+  border-top: 0;
+}
+.dk-wk-viol .dk-rec-main > b {
+  color: var(--danger);
+}
+.dk-wk-viol-at {
+  font-size: 12px;
+  white-space: nowrap;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-subtle);
+}
+@container dkwk (max-width: 420px) {
+  .dk-wk-clocks {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 /* The rate agreement card */
 .dk-ra {

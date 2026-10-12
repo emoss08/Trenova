@@ -11,7 +11,7 @@ import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-qu
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn, formatPercent } from "@trenova/shared/lib/utils";
+import { cn, formatPercent, metersToMiles } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useCardAccess } from "../../record-card/card-access";
@@ -40,7 +40,6 @@ import { useListedRecords, type RecordArtifactProps } from "../registry";
 import {
   inspectionKind,
   inspectionReading,
-  metersToMiles,
   positionReading,
   tractorChecks,
   tractorFacts,
@@ -350,7 +349,7 @@ function OdometerFigure({
   }
   return (
     <>
-      <b key={meters}>{t("{0} mi", formatNumber(metersToMiles(meters)))}</b>
+      <b key={meters}>{t("{0} mi", formatNumber(Math.round(metersToMiles(meters))))}</b>
       <span>{t("on the odometer")}</span>
     </>
   );
@@ -486,7 +485,10 @@ function Inspections({
                     inspection.workerName?.trim() || t("Driver not matched"),
                     location ?? "",
                     inspection.odometerMeters
-                      ? t("{0} mi", formatNumber(metersToMiles(inspection.odometerMeters)))
+                      ? t(
+                          "{0} mi",
+                          formatNumber(Math.round(metersToMiles(inspection.odometerMeters))),
+                        )
                       : "",
                   ]
                     .filter(Boolean)

@@ -12,6 +12,7 @@ import { DeskFormulaTemplateSkeleton } from "../formula-template/formula-templat
 import { DeskShipmentSkeleton } from "../shipment/shipment-skeleton";
 import { DeskTractorSkeleton } from "../tractor/tractor-skeleton";
 import { DeskTrailerSkeleton } from "../trailer/trailer-skeleton";
+import { DeskWorkerSkeleton } from "../worker/worker-skeleton";
 import {
   InPlaceRecord,
   RecordArtifact,
@@ -43,6 +44,10 @@ vi.mock("../rate-agreement/desk-rate-agreement", () => ({
 vi.mock("../trailer/desk-trailer", () => ({
   DeskTrailer: () => <p>Trailer card</p>,
   DeskTrailerArtifact: () => <p>Trailer artifact</p>,
+}));
+vi.mock("../worker/desk-worker", () => ({
+  DeskWorker: () => <p>Worker card</p>,
+  DeskWorkerArtifact: () => <p>Worker artifact</p>,
 }));
 vi.mock("../tractor/desk-tractor", () => ({
   DeskTractor: () => <p>Tractor card</p>,
@@ -105,10 +110,12 @@ describe("the Desk's resource cards", () => {
     expect(recordCardFor("tractor")?.resource).toBe(Resource.Tractor);
     expect(recordCardFor("trailer")?.Skeleton).toBe(DeskTrailerSkeleton);
     expect(recordCardFor("trailer")?.resource).toBe(Resource.Trailer);
+    expect(recordCardFor("worker")?.Skeleton).toBe(DeskWorkerSkeleton);
+    expect(recordCardFor("worker")?.resource).toBe(Resource.Worker);
   });
 
   it("leaves a record without a card, or no record at all, to open its page", () => {
-    expect(recordCardFor("worker")).toBeNull();
+    expect(recordCardFor("commodity")).toBeNull();
     expect(recordCardFor("")).toBeNull();
     expect(recordCardFor("not_a_record")).toBeNull();
   });
@@ -121,6 +128,7 @@ describe("the Desk's resource cards", () => {
     const agreement = recordCardFor("rate_agreement");
     const tractor = recordCardFor("tractor");
     const trailer = recordCardFor("trailer");
+    const worker = recordCardFor("worker");
     const props = { recordId: "x_1", order: [], onSelect: vi.fn(), onBack: vi.fn() };
 
     draw(
@@ -153,6 +161,10 @@ describe("the Desk's resource cards", () => {
         {trailer && (
           <RecordArtifact entry={trailer} artifact={artifact} recordId="x_1" fallback={null} />
         )}
+        {worker && <InPlaceRecord entry={worker} {...props} />}
+        {worker && (
+          <RecordArtifact entry={worker} artifact={artifact} recordId="x_1" fallback={null} />
+        )}
       </>,
     );
 
@@ -170,6 +182,8 @@ describe("the Desk's resource cards", () => {
     expect(await screen.findByText("Tractor artifact")).toBeInTheDocument();
     expect(await screen.findByText("Trailer card")).toBeInTheDocument();
     expect(await screen.findByText("Trailer artifact")).toBeInTheDocument();
+    expect(await screen.findByText("Worker card")).toBeInTheDocument();
+    expect(await screen.findByText("Worker artifact")).toBeInTheDocument();
   });
 
   // A record opened in place takes over the pane its table or listing card was

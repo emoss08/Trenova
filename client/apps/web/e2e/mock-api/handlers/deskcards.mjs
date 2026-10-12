@@ -9,6 +9,7 @@ import {
   deskThread,
   deskTractors,
   deskTrailers,
+  deskWorkers,
 } from "../fixtures/desk-cards.mjs";
 import { hash } from "../state.mjs";
 
@@ -49,20 +50,27 @@ function trailerFixture(state, id) {
   return deskTrailers(state.anchor)[id] ?? null;
 }
 
-/** The board's shipments a unit moved: a fixed handful per tractor or trailer, newest pickup first. */
+function workerFixture(state, id) {
+  return deskWorkers(state.anchor)[id] ?? null;
+}
+
+/** The board's shipments a unit or worker moved: a fixed handful each, newest pickup first. */
 function unitShipments(state, unitId) {
-  const fixture = tractorFixture(state, unitId) ?? trailerFixture(state, unitId);
+  const fixture =
+    tractorFixture(state, unitId) ?? trailerFixture(state, unitId) ?? workerFixture(state, unitId);
   if (!fixture || empty(state)) return [];
   return [...state.shipments]
     .filter((shipment) => hash(shipment.id + unitId) % 4 === 0)
-    .sort((a, b) => b.moves[0].stops[0].scheduledWindowStart - a.moves[0].stops[0].scheduledWindowStart)
+    .sort(
+      (a, b) => b.moves[0].stops[0].scheduledWindowStart - a.moves[0].stops[0].scheduledWindowStart,
+    )
     .slice(0, fixture.shipments);
 }
 
 function recordShipments(state, variables) {
   if (held(state)) return HOLD;
   const input = variables.input ?? {};
-  const unitId = input.tractorIds?.[0] ?? input.trailerIds?.[0];
+  const unitId = input.tractorIds?.[0] ?? input.trailerIds?.[0] ?? input.workerIds?.[0];
   const all = unitId ? unitShipments(state, unitId) : [];
   const offset = input.after ? Number(Buffer.from(input.after, "base64url").toString()) : 0;
   const first = input.first ?? 20;
@@ -102,7 +110,7 @@ const DISPATCH_AGENT = {
   template: "dispatch",
   icon: "",
   accent: "",
-  toolNames: ["get_tractor", "list_tractors", "get_shipment"],
+  toolNames: ["get_tractor", "get_trailer", "get_worker", "list_tractors", "get_shipment"],
   systemKey: "",
   starters: [],
   delegates: [],
@@ -140,6 +148,35 @@ export const DESK_CARD_HANDLERS = {
     const fixture = trailerFixture(state, variables.id);
     return { trailer: fixture ? fixture.trailer : null };
   },
+  DeskWorkerCard: (state, variables) => {
+    if (held(state)) return HOLD;
+    const fixture = workerFixture(state, variables.id);
+    return { worker: fixture ? fixture.worker : null };
+  },
+  DeskWorkerHos: (state, variables) => {
+    if (held(state)) return HOLD;
+    const fixture = workerFixture(state, variables.workerId);
+    if (!fixture || empty(state)) return { workerHosState: null, workerHosViolations: [] };
+    return {
+      workerHosState: fixture.hos.state,
+      workerHosViolations: fixture.hos.violations.slice(0, variables.violations),
+    };
+  },
+  DeskWorkerStanding: (state, variables) => {
+    if (held(state)) return HOLD;
+    const fixture = workerFixture(state, variables.workerId);
+    return {
+      workerOverview:
+        fixture && !empty(state) ? fixture.standing : { standing: "Good", concerns: [] },
+    };
+  },
+  DeskWorkerCredentials: (state, variables) => {
+    if (held(state)) return HOLD;
+    const fixture = workerFixture(state, variables.workerId);
+    return {
+      workerCredentialSummary: { items: fixture && !empty(state) ? fixture.credentials : [] },
+    };
+  },
   DeskRecordShipments: recordShipments,
 };
 
@@ -154,7 +191,13 @@ export const DESK_CARD_ROUTES = [
     /^\/api\/v1\/assistant\/providers\/?$/,
     () => ({
       results: [
-        { id: "aip_main", name: "Claude", kind: "Anthropic", model: "claude-sonnet-5-5", trusted: true },
+        {
+          id: "aip_main",
+          name: "Claude",
+          kind: "Anthropic",
+          model: "claude-sonnet-5-5",
+          trusted: true,
+        },
       ],
     }),
   ],
@@ -163,7 +206,9 @@ export const DESK_CARD_ROUTES = [
     new RegExp(`^/api/v1/assistant/threads/${DESK_THREAD_ID}/artifacts/(art_[a-z0-9-]+)/?$`),
     (state, path) => {
       const id = path.match(/artifacts\/(art_[a-z0-9-]+)/)?.[1] ?? "";
-      const artifact = Object.values(deskCardArtifacts(state.anchor)).find((entry) => entry.id === id);
+      const artifact = Object.values(deskCardArtifacts(state.anchor)).find(
+        (entry) => entry.id === id,
+      );
       return { results: artifact ? [artifact] : [] };
     },
   ],
@@ -204,13 +249,20 @@ export const DESK_CARD_ROUTES = [
   ],
   [
     "GET",
-    /^\/api\/v1\/documents\/resource\/(tractor|trailer)\/([a-z0-9_]+)\/?$/,
+    /^\/api\/v1\/documents\/resource\/(tractor|trailer|worker)\/([a-z0-9_]+)\/?$/,
     (state, path) => {
       if (held(state)) return HOLD;
-      const [, kind, id] = path.match(/resource\/(tractor|trailer)\/([a-z0-9_]+)/) ?? [];
-      const fixture = kind === "tractor" ? tractorFixture(state, id) : trailerFixture(state, id);
+      const [, kind, id] = path.match(/resource\/(tractor|trailer|worker)\/([a-z0-9_]+)/) ?? [];
+      const fixture =
+        kind === "tractor"
+          ? tractorFixture(state, id)
+          : kind === "trailer"
+            ? trailerFixture(state, id)
+            : workerFixture(state, id);
       if (!fixture || empty(state)) return [];
-      return fixture.documents.map((file, index) => deskDocument(kind, id, file, index, state.anchor));
+      return fixture.documents.map((file, index) =>
+        deskDocument(kind, id, file, index, state.anchor),
+      );
     },
   ],
 ];

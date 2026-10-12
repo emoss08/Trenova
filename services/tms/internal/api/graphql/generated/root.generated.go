@@ -2724,6 +2724,7 @@ type QueryResolver interface {
 	WatchtowerItems(ctx context.Context, input gqlmodel.WatchtowerItemsInput) (*gqlmodel.WatchtowerItemConnection, error)
 	WatchtowerCounts(ctx context.Context) (*gqlmodel.WatchtowerCounts, error)
 	Workers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.WorkerConnection, error)
+	Worker(ctx context.Context, id string) (*worker.Worker, error)
 	WorkerPTOEntries(ctx context.Context, input gqlmodel.WorkerPTOEntriesInput) (*gqlmodel.WorkerPTOConnection, error)
 	UpcomingWorkerPTO(ctx context.Context, input gqlmodel.UpcomingWorkerPTOInput) (*gqlmodel.WorkerPTOConnection, error)
 	WorkerPTOChartData(ctx context.Context, input gqlmodel.WorkerPTOChartInput) ([]*workerports.PTOChartDataPoint, error)
@@ -27146,6 +27147,8 @@ input ShipmentsInput {
   tractorIds: [ID!]
   "Only shipments with a live move assigned to one of these trailers."
   trailerIds: [ID!]
+  "Only shipments with a live move one of these workers drives, in either seat."
+  workerIds: [ID!]
 }
 
 input ShipmentEventsInput {
@@ -29424,6 +29427,8 @@ input WorkerPTOChartInput {
 
 extend type Query {
   workers(input: DataTableConnectionInput!): WorkerConnection!
+  "One worker, with the profile, state, fleet, manager and license state it is asked for."
+  worker(id: ID!): Worker
   workerPTOEntries(input: WorkerPTOEntriesInput!): WorkerPTOConnection!
   upcomingWorkerPTO(input: UpcomingWorkerPTOInput!): WorkerPTOConnection!
   workerPTOChartData(input: WorkerPTOChartInput!): [PTOChartDataPoint!]!
