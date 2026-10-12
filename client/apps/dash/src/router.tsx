@@ -1,19 +1,11 @@
 import { RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
 import LoadingSkeleton from "@trenova/shared/components/loading-skeleton";
+import { requireSession, revalidateOnPathChange } from "@trenova/shared/lib/session-loader";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { createBrowserRouter, redirect, type LoaderFunction, type RouteObject } from "react-router";
 import { DashLayout } from "./_components/dash-layout";
 
-const dashProtectedLoader: LoaderFunction = async () => {
-  const { checkAuth } = useAuthStore.getState();
-  const isAuthenticated = await checkAuth();
-
-  if (!isAuthenticated) {
-    return redirect("/dash/login");
-  }
-
-  return null;
-};
+const dashProtectedLoader: LoaderFunction = () => requireSession("/dash/login");
 
 const dashGuestLoader: LoaderFunction = async () => {
   const { checkAuth } = useAuthStore.getState();
@@ -26,7 +18,7 @@ const dashGuestLoader: LoaderFunction = async () => {
   return null;
 };
 
-const routes: RouteObject[] = [
+export const routes: RouteObject[] = [
   {
     errorElement: <RouteErrorBoundary homePath="/dash" />,
     HydrateFallback: LoadingSkeleton,
@@ -49,6 +41,7 @@ const routes: RouteObject[] = [
       {
         element: <DashLayout />,
         loader: dashProtectedLoader,
+        shouldRevalidate: revalidateOnPathChange,
         children: [
           {
             path: "/dash",

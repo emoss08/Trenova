@@ -38,10 +38,13 @@ export const prefetch: RoutePrefetch = async () => {
     queries.attention.summary(),
   ];
 
-  if (
-    (await ensurePermissionManifest()) &&
-    usePermissionStore.getState().hasPermission(Resource.Shipment, Operation.Read)
-  ) {
+  // A manifest that cannot be loaded costs only the analytics warm-up; the page asks again.
+  const canReadShipments = await ensurePermissionManifest().then(
+    (loaded) =>
+      loaded && usePermissionStore.getState().hasPermission(Resource.Shipment, Operation.Read),
+    () => false,
+  );
+  if (canReadShipments) {
     list.push(analytics.get("shipment-management"));
   }
 
