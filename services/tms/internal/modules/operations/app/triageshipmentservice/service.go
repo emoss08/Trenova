@@ -72,7 +72,7 @@ type detentionDecider interface {
 	) (*detention.DetentionOccurrence, error)
 	WaiveUninvoiced(
 		ctx context.Context,
-		p detentionservice.WaiveParams,
+		p *detentionservice.WaiveParams,
 	) (*detention.DetentionOccurrence, error)
 	Dispute(
 		ctx context.Context,

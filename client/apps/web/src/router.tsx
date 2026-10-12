@@ -17,6 +17,7 @@ import { AppErrorLayout, AppLayout, OnboardingLayout } from "@/routes/app-layout
 import { DeskLoadingScreen } from "@/routes/desk/desk-loading-screen";
 import { DeskShellLayout } from "@/routes/desk/shell-layout";
 import { RootLayout } from "@/routes/root-layout";
+import type { RouteHandle } from "@/types/router";
 import { NotFoundRoute, RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
 import LoadingSkeleton from "@trenova/shared/components/loading-skeleton";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -92,6 +93,9 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/triage",
+            // Triage is a room inside the app: the header stays, and its own folder rail
+            // takes the sidebar's place and its fold.
+            handle: { frame: "room" } satisfies RouteHandle,
             loader: combineLoaders(
               protectedLoader,
               createPermissionLoader(Resource.InboundMessage, Operation.Read),

@@ -157,11 +157,6 @@ func (d StopsDecision) IsValid() bool {
 	return d == StopsDecisionWaive || d == StopsDecisionStandBy
 }
 
-func (s *ActionState) CreditPending() bool {
-	return s.StopsDecision == StopsDecisionWaive &&
-		s.DetentionWaiver != nil && s.DetentionWaiver.CreditPending
-}
-
 type ExceptionKind string
 
 const (
@@ -203,6 +198,11 @@ type ActionState struct {
 	CreatedShipmentAt int64            `json:"createdShipmentAt,omitempty"`
 	HandedOffTo       pulid.ID         `json:"handedOffTo,omitempty"`
 	HandedOffAt       int64            `json:"handedOffAt,omitempty"`
+}
+
+func (s *ActionState) CreditPending() bool {
+	return s.StopsDecision == StopsDecisionWaive &&
+		s.DetentionWaiver != nil && s.DetentionWaiver.CreditPending
 }
 
 type LoadFieldKey string

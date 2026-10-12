@@ -128,11 +128,7 @@ func (r *repository) SelectIDs(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
 		ids := make([]pulid.ID, 0, req.Limit)
 		dba := r.db.DBForContext(ctx)
-		query, err := selectIDsQuery(dba, req)
-		if err != nil {
-			return nil, err
-		}
-		if err = query.Scan(ctx, &ids); err != nil {
+		if err := selectIDsQuery(dba, req).Scan(ctx, &ids); err != nil {
 			return nil, err
 		}
 
@@ -143,7 +139,7 @@ func (r *repository) SelectIDs(
 func selectIDsQuery(
 	db bun.IDB,
 	req inboundmessageports.SelectInboundMessageIDsRequest,
-) (*bun.SelectQuery, error) {
+) *bun.SelectQuery {
 	cols := inboundmessagecol.InboundMessageColumns
 	folder := req.Folder
 	query := db.NewSelect().
@@ -160,7 +156,7 @@ func selectIDsQuery(
 		query = query.Order(term)
 	}
 
-	return query.Limit(int64(req.Limit)), nil
+	return query.Limit(int64(req.Limit))
 }
 
 func folderOrder(sort inboundmessageports.Sort) []string {

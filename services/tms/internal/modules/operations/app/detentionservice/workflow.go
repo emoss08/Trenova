@@ -351,7 +351,7 @@ func (s *Service) Waive(
 
 func (s *Service) WaiveUninvoiced(
 	ctx context.Context,
-	p WaiveParams,
+	p *WaiveParams,
 ) (*detention.DetentionOccurrence, error) {
 	if _, err := detention.WaiverReasonFromString(string(p.Reason)); err != nil {
 		return nil, errortypes.NewValidationError(
@@ -374,7 +374,7 @@ func (s *Service) WaiveUninvoiced(
 		return nil, err
 	}
 
-	return s.saveWaiver(ctx, &p, change, released)
+	return s.saveWaiver(ctx, p, change, released)
 }
 
 func (s *Service) saveWaiver(

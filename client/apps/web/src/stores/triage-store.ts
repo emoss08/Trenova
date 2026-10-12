@@ -61,8 +61,6 @@ type TriageState = {
   overlay: TriageOverlay | null;
   /** Whether the actions panel is showing beside the open message. */
   panelOpen: boolean;
-  /** Whether the folder rail is folded away. Kept per viewer. */
-  railCollapsed: boolean;
   /** What rows show under the subject. Kept per viewer. */
   rowMode: TriageRowMode;
   /** Whether the reader underlines the words Nova read a fact from. Kept per viewer. */
@@ -86,7 +84,6 @@ type TriageState = {
   closeOverlay: () => void;
   setPanelOpen: (open: boolean) => void;
   togglePanel: () => void;
-  toggleRail: () => void;
   setRowMode: (mode: TriageRowMode) => void;
   setUnderlineFacts: (underline: boolean) => void;
   setReaderCommands: (commands: ReaderCommands) => void;
@@ -154,7 +151,6 @@ export const useTriageStore = create<TriageState>()(
       arrivals: EMPTY,
       overlay: null,
       panelOpen: true,
-      railCollapsed: false,
       rowMode: "next",
       underlineFacts: false,
       readerCommands: {},
@@ -192,7 +188,6 @@ export const useTriageStore = create<TriageState>()(
       closeOverlay: () => set({ overlay: null }),
       setPanelOpen: (panelOpen) => set({ panelOpen }),
       togglePanel: () => set((state) => ({ panelOpen: !state.panelOpen })),
-      toggleRail: () => set((state) => ({ railCollapsed: !state.railCollapsed })),
       setRowMode: (rowMode) => set({ rowMode }),
       setUnderlineFacts: (underlineFacts) => set({ underlineFacts }),
       setReaderCommands: (readerCommands) => set({ readerCommands }),
@@ -215,7 +210,6 @@ export const useTriageStore = create<TriageState>()(
     {
       name: "trenova-triage",
       partialize: (state) => ({
-        railCollapsed: state.railCollapsed,
         rowMode: state.rowMode,
         underlineFacts: state.underlineFacts,
       }),

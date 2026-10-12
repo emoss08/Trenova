@@ -177,7 +177,7 @@ func (s *Service) waive(
 		return waivedOf(s.detention.Waive(ctx, params))
 	}
 	if occurrence.AdditionalChargeID == nil {
-		return waivedOf(s.detention.WaiveUninvoiced(ctx, params))
+		return waivedOf(s.detention.WaiveUninvoiced(ctx, &params))
 	}
 
 	credit, err := s.credits.CreditBilledCharge(ctx, &detentionports.CreditBilledDetentionRequest{
@@ -197,7 +197,7 @@ func (s *Service) waive(
 		return nil, err
 	}
 	if credit == nil {
-		return waivedOf(s.detention.WaiveUninvoiced(ctx, params))
+		return waivedOf(s.detention.WaiveUninvoiced(ctx, &params))
 	}
 
 	settled := settledOf(credit.Amount, credit.Currency)

@@ -1,3 +1,4 @@
+import { useClearOfLauncher } from "@/components/assistant/launcher-clearance";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { useWidthBelow } from "@/hooks/use-width-below";
 import { describeApiError } from "@/lib/api-error-message";
@@ -133,6 +134,7 @@ function ReaderView({
   const [adhocReply, setAdhocReply] = useState(false);
   const submits = useRef(new Map<string, () => void>());
   const primary = useRef<(() => void) | null>(null);
+  const clearOfLauncher = useClearOfLauncher();
 
   const key = stepsKey(message.actions);
   const [seenSteps, setSeenSteps] = useState<string | null>(null);
@@ -309,8 +311,9 @@ function ReaderView({
           </div>
         </div>
         <div
+          ref={clearOfLauncher}
           className={cn(
-            "pointer-events-none absolute inset-x-0 bottom-4.5 z-20 flex justify-center pr-16 pl-4 transition-[padding] duration-300 ease-settle",
+            "pointer-events-none absolute inset-x-0 bottom-4.5 z-20 flex justify-center px-4 transition-[padding] duration-300 ease-settle",
             rail && RAIL_OFFSET,
           )}
         >

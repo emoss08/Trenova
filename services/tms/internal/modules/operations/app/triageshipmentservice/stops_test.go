@@ -74,9 +74,9 @@ type fakeDecider struct {
 
 func (f *fakeDecider) WaiveUninvoiced(
 	_ context.Context,
-	p detentionservice.WaiveParams,
+	p *detentionservice.WaiveParams,
 ) (*detention.DetentionOccurrence, error) {
-	f.uninvoiced = append(f.uninvoiced, p)
+	f.uninvoiced = append(f.uninvoiced, *p)
 
 	return &detention.DetentionOccurrence{
 		ID:           p.OccurrenceID,

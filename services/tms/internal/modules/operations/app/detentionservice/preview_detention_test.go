@@ -313,13 +313,13 @@ func TestWaiveUninvoiced_ReleasesAStaleBilledCharge(t *testing.T) {
 	_, err := svc.Waive(t.Context(), params)
 	require.Error(t, err, "a billed charge is never waived without asking billing")
 
-	saved, err := svc.WaiveUninvoiced(t.Context(), params)
+	saved, err := svc.WaiveUninvoiced(t.Context(), &params)
 	require.NoError(t, err)
 	assert.Equal(t, detention.OccurrenceStatusWaived, saved.Status)
 	assert.True(t, saved.WaivedAmount.Equal(decimal.NewFromInt(425)))
 	require.NotNil(t, saved.WaivedByID)
 	assert.Equal(t, params.UserID, *saved.WaivedByID)
 
-	_, err = svc.WaiveUninvoiced(t.Context(), WaiveParams{OccurrenceID: stored.ID})
+	_, err = svc.WaiveUninvoiced(t.Context(), &WaiveParams{OccurrenceID: stored.ID})
 	require.Error(t, err, "a coded reason is still required")
 }

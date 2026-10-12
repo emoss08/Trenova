@@ -1,3 +1,4 @@
+import { useClearOfLauncher } from "@/components/assistant/launcher-clearance";
 import type { InboundMessageRow } from "@/lib/graphql/inbox";
 import { useTriageStore } from "@/stores/triage-store";
 import {
@@ -57,6 +58,7 @@ export function BulkBar({ messages }: { messages: readonly InboundMessageRow[] }
   const selected = useTriageStore((state) => state.selected);
   const setSelected = useTriageStore((state) => state.setSelected);
   const clear = useTriageStore((state) => state.clearSelection);
+  const clearOfLauncher = useClearOfLauncher();
 
   if (selected.size === 0) {
     return null;
@@ -72,7 +74,10 @@ export function BulkBar({ messages }: { messages: readonly InboundMessageRow[] }
   };
 
   return (
-    <div className="dark pointer-events-none absolute inset-x-3 bottom-3 z-20 flex justify-center">
+    <div
+      ref={clearOfLauncher}
+      className="dark pointer-events-none absolute inset-x-3 bottom-3 z-20 flex justify-center"
+    >
       <div
         role="toolbar"
         aria-label={t("Selected messages")}

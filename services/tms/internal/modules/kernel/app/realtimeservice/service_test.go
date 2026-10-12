@@ -151,11 +151,11 @@ func TestPublishResourceInvalidation_Validation(t *testing.T) {
 
 type stubBroker struct {
 	recordingPublisher
-	conn      *agentports.RealtimeConnection
-	connErr   error
-	allow     bool
-	released  []string
-	throttled []string
+	conn        *agentports.RealtimeConnection
+	connErr     error
+	allow       bool
+	released    []string
+	throttled   []string
 	joined      string
 	joinedState agentports.RealtimePresenceState
 	left        string

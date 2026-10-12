@@ -61,7 +61,7 @@ func TriageWakeWorkflow(ctx workflow.Context, payload *Payload) error {
 	for schedule.Open {
 		rescheduled, err := sleepUntil(ctx, reschedule, schedule.WakeAt)
 		if ctx.Err() != nil {
-			return nil
+			return nil //nolint:nilerr // a canceled wake ends cleanly; whoever canceled it settled the message
 		}
 		if err != nil {
 			return err

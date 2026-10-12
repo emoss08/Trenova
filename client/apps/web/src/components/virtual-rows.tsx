@@ -133,6 +133,26 @@ export function VirtualRows({
     rangeExtractor: stickyIndexes.length > 0 ? rangeExtractor : undefined,
   });
 
+  // A row is measured once the commit that attached it is over. Measured
+  // during it, a row above the viewport that is taller than its estimate
+  // moves the scroll position and asks React to flush the new positions at
+  // once, which React refuses mid-commit. A microtask still runs before the
+  // browser paints, so the corrected positions land in the same frame.
+  const measureRow = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (node === null) {
+        virtualizer.measureElement(null);
+        return;
+      }
+      queueMicrotask(() => {
+        if (node.isConnected) {
+          virtualizer.measureElement(node);
+        }
+      });
+    },
+    [virtualizer],
+  );
+
   useImperativeHandle(
     handleRef,
     () => ({
@@ -182,7 +202,7 @@ export function VirtualRows({
             <div
               key={item.key}
               data-index={item.index}
-              ref={virtualizer.measureElement}
+              ref={measureRow}
               className={cn(
                 pinned ? "sticky top-0 z-10" : "absolute inset-x-0 top-0",
                 rowClassName,

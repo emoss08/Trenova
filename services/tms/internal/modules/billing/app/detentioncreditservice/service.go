@@ -88,7 +88,7 @@ type Service struct {
 
 var _ detentionports.BilledDetentionCreditor = (*Service)(nil)
 
-func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
+func New(p Params) *Service {
 	return &Service{
 		l:           p.Logger.Named("service.detention-credit"),
 		invoices:    p.Invoices,

@@ -15,6 +15,7 @@ import { NotificationSheet } from "@/components/notification-center/notification
 import { useSidebarNavigation } from "@/hooks/use-sidebar-navigation";
 import { cn } from "@trenova/shared/lib/utils";
 import { ChevronDownIcon, DotsGridIcon } from "@trenova/shared/components/icons";
+import type { ReactNode } from "react";
 
 export const WORKSPACE_HEADER_HEIGHT_CLASS = "h-10";
 
@@ -56,9 +57,10 @@ function ModulesTrigger() {
  * The global strip of the workspace layout, in three zones: who you work as
  * and the map of the product on the left, search in the middle, and the
  * actions that apply everywhere on the right. Where you are is not its job;
- * the context bar above the page carries that.
+ * the context bar above the page carries that. A room, which has no context
+ * bar, leads it with the toggle for its own rail.
  */
-export function WorkspaceHeader() {
+export function WorkspaceHeader({ leading }: { leading?: ReactNode }) {
   return (
     <header
       className={cn(
@@ -67,6 +69,7 @@ export function WorkspaceHeader() {
       )}
     >
       <div className="flex min-w-0 items-center gap-1.5">
+        {leading}
         <div className="flex min-w-0 max-w-64 shrink items-center">
           <OrgSwitcher />
         </div>

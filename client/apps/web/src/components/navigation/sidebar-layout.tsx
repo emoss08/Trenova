@@ -7,6 +7,7 @@ import { isGlobalSearchEntityType } from "@/services/global-search";
 import { useRecentPagesStore } from "@/stores/recent-pages-store";
 import { useRecentRecordsStore } from "@/stores/recent-records-store";
 import { useUpdateStore } from "@/stores/update-store";
+import type { ShellFrame } from "@/types/router";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useEffect } from "react";
@@ -14,9 +15,11 @@ import { useLocation } from "react-router";
 import { AssistantWidget, useAssistantSideInset } from "../assistant/assistant-widget";
 import { CommandPaletteMount } from "../command-palette/command-palette-mount";
 import { edition } from "@/lib/edition";
-import { Header } from "../header";
+import { Header, SidebarToggle } from "../header";
 import { KeyboardShortcutsDialog } from "../keyboard-shortcuts-dialog";
 import { PageHeader, type PageHeaderProps } from "../page-header";
+import { ShellFrameContext, useRouteFrame, useShellFrame } from "./shell-frame";
+import { useSidebarFold } from "./sidebar-fold";
 import { findModuleForPath } from "./sidebar-model";
 import { UserSettingsHost } from "./user-settings-host";
 import { ClassicSidebar } from "./variants/classic-sidebar";
@@ -69,7 +72,8 @@ function useLayoutEffects() {
   const filteredModules = useFilteredNavigation();
   const fetchStatus = useUpdateStore((state) => state.fetchStatus);
   const setActiveModuleId = useNavigationStore((state) => state.setActiveModuleId);
-  const toggleSidebar = useNavigationStore((state) => state.toggleSidebar);
+  const setCompactSidebarOpen = useNavigationStore((state) => state.setCompactSidebarOpen);
+  const { toggle: toggleSidebar } = useSidebarFold();
 
   useEffect(() => {
     void fetchStatus();
@@ -81,6 +85,10 @@ function useLayoutEffects() {
       setActiveModuleId(matched.id);
     }
   }, [location.pathname, filteredModules, setActiveModuleId]);
+
+  useEffect(() => {
+    setCompactSidebarOpen(false);
+  }, [location.pathname, setCompactSidebarOpen]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -99,15 +107,25 @@ function useLayoutEffects() {
 
 const AppBanner = edition.slots.AppBanner;
 
-function WorkspaceShell({ children }: SidebarLayoutProps) {
+type ShellProps = SidebarLayoutProps & { frame: ShellFrame };
+
+/**
+ * A page sits under the module's sidebar and the bar that says where you
+ * are. A room keeps only the header: its own rail stands in the sidebar's
+ * place and folds with the same toggle, which moves to the header's leading
+ * edge, and with ⌘B.
+ */
+function WorkspaceShell({ children, frame }: ShellProps) {
+  const room = frame === "room";
+
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <AppBanner />
-      <WorkspaceHeader />
+      <WorkspaceHeader leading={room ? <SidebarToggle className="max-md:hidden" /> : undefined} />
       <div className="flex min-h-0 flex-1">
-        <WorkspaceSidebar />
+        {!room && <WorkspaceSidebar />}
         <div className="flex min-w-0 flex-1 flex-col">
-          <WorkspaceContextBar />
+          {!room && <WorkspaceContextBar />}
           <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
         </div>
       </div>
@@ -115,7 +133,7 @@ function WorkspaceShell({ children }: SidebarLayoutProps) {
   );
 }
 
-function ClassicShell({ children }: SidebarLayoutProps) {
+function ClassicShell({ children }: ShellProps) {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <AppBanner />
@@ -133,6 +151,7 @@ function ClassicShell({ children }: SidebarLayoutProps) {
 export function SidebarLayout({ children }: SidebarLayoutProps) {
   const variant = useNavigationStore((state) => state.sidebarVariant);
   const assistantSide = useAssistantSideInset();
+  const frame = useRouteFrame();
   useLayoutEffects();
 
   const Shell = variant === "classic" ? ClassicShell : WorkspaceShell;
@@ -146,7 +165,9 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       {/* With the assistant docked down one side, the page moves over for it
           rather than sitting under it. */}
       <div className="as-reflow" data-assistant-side={assistantSide ?? undefined}>
-        <Shell>{children}</Shell>
+        <ShellFrameContext.Provider value={frame}>
+          <Shell frame={frame}>{children}</Shell>
+        </ShellFrameContext.Provider>
       </div>
     </>
   );
@@ -172,6 +193,8 @@ export function PageLayout({
   fill = false,
   bleed = false,
 }: PageLayoutProps) {
+  const frame = useShellFrame();
+
   return (
     <div
       data-slot="page"
@@ -180,7 +203,7 @@ export function PageLayout({
         fill && "h-full",
       )}
     >
-      <PageHeader {...pageHeaderProps} />
+      <PageHeader {...pageHeaderProps} visuallyHidden={frame === "room"} />
       <div
         data-slot="page-body"
         data-bleed={bleed || undefined}

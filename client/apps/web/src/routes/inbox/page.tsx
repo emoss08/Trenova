@@ -11,16 +11,16 @@ import { queries } from "@/lib/queries";
 import { inboxMessagesQuery } from "@/lib/queries/inbox";
 import type { RoutePrefetch, RoutePrefetchEntry } from "@/lib/route-prefetch";
 import { knownRow } from "@/lib/triage/cache";
+import { useNavigationStore } from "@/stores/navigation-store";
 import { useTriageStore } from "@/stores/triage-store";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ContextMenuHost,
   isContextMenuOpen,
 } from "@trenova/shared/components/context-menu/context-menu-host";
-import { CheckIcon, LayoutLeftIcon } from "@trenova/shared/components/icons";
+import { CheckIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { getStartOfDay } from "@trenova/shared/lib/date";
@@ -192,9 +192,6 @@ export function TriagePage() {
     state.current = next;
   }, []);
 
-  const railCollapsed = useTriageStore((store) => store.railCollapsed);
-  const toggleRail = useTriageStore((store) => store.toggleRail);
-
   return (
     <PageLayout
       fill
@@ -203,25 +200,6 @@ export function TriagePage() {
         title: t("Triage"),
         description: t(
           "Messages from connected sources, what Nova did with them on its own, and what is left for a person, each with its next step",
-        ),
-        actions: (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  size="icon-sm"
-                  variant="quiet"
-                  className="hidden md:inline-flex"
-                  aria-label={railCollapsed ? t("Show folders") : t("Hide folders")}
-                  aria-pressed={!railCollapsed}
-                  onClick={toggleRail}
-                />
-              }
-            >
-              <LayoutLeftIcon aria-hidden className="size-4" />
-            </TooltipTrigger>
-            <TooltipContent>{railCollapsed ? t("Show folders") : t("Hide folders")}</TooltipContent>
-          </Tooltip>
         ),
       }}
     >
@@ -279,7 +257,7 @@ function TriageWorkspace({
   const listRef = useRef<VirtualRowsHandle>(null);
   const autoOpened = useRef<string | null>(null);
 
-  const railCollapsed = useTriageStore((store) => store.railCollapsed);
+  const railCollapsed = useNavigationStore((store) => store.sidebarCollapsed);
 
   const { folder, messageId: openId, search } = location;
   const counts = useTriageCounts().data;
@@ -620,6 +598,9 @@ function TriageWorkspace({
         )}
       >
         <div className="flex min-h-0 w-58 flex-1 flex-col">
+          <p aria-hidden className="px-4.25 pt-4 pb-1 text-base font-semibold tracking-tight">
+            {t("Triage")}
+          </p>
           <TriageSidebar
             folder={folder}
             onSelect={selectFolder}
