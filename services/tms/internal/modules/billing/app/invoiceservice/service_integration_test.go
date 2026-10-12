@@ -3,30 +3,26 @@
 package invoiceservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
-	"fmt"
 	"testing"
-	"time"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
-	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueuerepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
-	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalyearrepository"
-	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueuerepository"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -80,9 +76,6 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 	)
 	accountingRepo := accountingcontrolrepository.New(
 		accountingcontrolrepository.Params{DB: conn, Logger: logger},
-	)
-	fiscalYearRepo := fiscalyearrepository.New(
-		fiscalyearrepository.Params{DB: conn, Logger: logger},
 	)
 	fiscalPeriodRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: logger},
@@ -155,32 +148,7 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 	_, err = accountingRepo.Update(ctx, control)
 	require.NoError(t, err)
 
-	now := time.Now().UTC()
-	fy, err := fiscalYearRepo.Create(ctx, &fiscalyear.FiscalYear{
-		OrganizationID:        org.ID,
-		BusinessUnitID:        org.BusinessUnitID,
-		Status:                fiscalyear.StatusOpen,
-		Year:                  now.Year(),
-		Name:                  fmt.Sprintf("FY %d", now.Year()),
-		StartDate:             now.Add(-24 * time.Hour).Unix(),
-		EndDate:               now.Add(24 * time.Hour).Unix(),
-		IsCurrent:             true,
-		AllowAdjustingEntries: true,
-	})
-	require.NoError(t, err)
-	period, err := fiscalPeriodRepo.Create(ctx, &fiscalperiod.FiscalPeriod{
-		OrganizationID:        org.ID,
-		BusinessUnitID:        org.BusinessUnitID,
-		FiscalYearID:          fy.ID,
-		PeriodNumber:          1,
-		PeriodType:            fiscalperiod.PeriodTypeMonth,
-		Status:                fiscalperiod.StatusOpen,
-		Name:                  now.Format("January 2006"),
-		StartDate:             now.Add(-24 * time.Hour).Unix(),
-		EndDate:               now.Add(24 * time.Hour).Unix(),
-		AllowAdjustingEntries: true,
-	})
-	require.NoError(t, err)
+	_, period := seedtest.OpenFiscalPeriod(t, ctx, db, org.ID, org.BusinessUnitID)
 
 	queue := &billingqueue.BillingQueueItem{
 		OrganizationID:   org.ID,
@@ -374,9 +342,6 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 	accountingRepo := accountingcontrolrepository.New(
 		accountingcontrolrepository.Params{DB: conn, Logger: logger},
 	)
-	fiscalYearRepo := fiscalyearrepository.New(
-		fiscalyearrepository.Params{DB: conn, Logger: logger},
-	)
 	fiscalPeriodRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: logger},
 	)
@@ -450,38 +415,7 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 	_, err = accountingRepo.Update(ctx, control)
 	require.NoError(t, err)
 
-	now := time.Now().UTC()
-	fy, err := fiscalYearRepo.Create(
-		ctx,
-		&fiscalyear.FiscalYear{
-			OrganizationID:        org.ID,
-			BusinessUnitID:        org.BusinessUnitID,
-			Status:                fiscalyear.StatusOpen,
-			Year:                  now.Year(),
-			Name:                  fmt.Sprintf("FY %d", now.Year()),
-			StartDate:             now.Add(-24 * time.Hour).Unix(),
-			EndDate:               now.Add(24 * time.Hour).Unix(),
-			IsCurrent:             true,
-			AllowAdjustingEntries: true,
-		},
-	)
-	require.NoError(t, err)
-	period, err := fiscalPeriodRepo.Create(
-		ctx,
-		&fiscalperiod.FiscalPeriod{
-			OrganizationID:        org.ID,
-			BusinessUnitID:        org.BusinessUnitID,
-			FiscalYearID:          fy.ID,
-			PeriodNumber:          1,
-			PeriodType:            fiscalperiod.PeriodTypeMonth,
-			Status:                fiscalperiod.StatusOpen,
-			Name:                  now.Format("January 2006"),
-			StartDate:             now.Add(-24 * time.Hour).Unix(),
-			EndDate:               now.Add(24 * time.Hour).Unix(),
-			AllowAdjustingEntries: true,
-		},
-	)
-	require.NoError(t, err)
+	_, period := seedtest.OpenFiscalPeriod(t, ctx, db, org.ID, org.BusinessUnitID)
 
 	queue := &billingqueue.BillingQueueItem{
 		OrganizationID:   org.ID,

@@ -12,8 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalrepairservice"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -82,31 +80,7 @@ func TestRepairJournalsWritesTheMissingDriverPaymentJournal(t *testing.T) {
 		Exec(ctx)
 	require.NoError(t, err)
 
-	year := &fiscalyear.FiscalYear{
-		ID:             pulid.MustNew("fy_"),
-		OrganizationID: settlement.OrganizationID,
-		BusinessUnitID: settlement.BusinessUnitID,
-		Status:         fiscalyear.StatusOpen,
-		Year:           2099,
-		Name:           "Repair",
-		StartDate:      settlement.PaidAt - 86_400,
-		EndDate:        settlement.PaidAt + 86_400,
-	}
-	_, err = db.NewInsert().Model(year).Exec(ctx)
-	require.NoError(t, err)
-	_, err = db.NewInsert().Model(&fiscalperiod.FiscalPeriod{
-		ID:             pulid.MustNew("fp_"),
-		OrganizationID: settlement.OrganizationID,
-		BusinessUnitID: settlement.BusinessUnitID,
-		FiscalYearID:   year.ID,
-		PeriodNumber:   1,
-		PeriodType:     fiscalperiod.PeriodTypeMonth,
-		Status:         fiscalperiod.StatusOpen,
-		Name:           "Repair",
-		StartDate:      year.StartDate,
-		EndDate:        year.EndDate,
-	}).Exec(ctx)
-	require.NoError(t, err)
+	seedtest.OpenFiscalPeriod(t, ctx, db, settlement.OrganizationID, settlement.BusinessUnitID)
 
 	report, err := repairJournals(ctx, conn, settlement.OrganizationID, false)
 	require.NoError(t, err)

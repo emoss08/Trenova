@@ -6,15 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
-	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -76,10 +72,6 @@ func TestListJournalEntries(t *testing.T) {
 
 	conn := postgres.NewTestConnection(db)
 	repo := New(Params{DB: conn, Logger: zap.NewNop()})
-	fyRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: zap.NewNop()})
-	fpRepo := fiscalperiodrepository.New(
-		fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()},
-	)
 
 	var org struct{ ID, BusinessUnitID pulid.ID }
 	require.NoError(
@@ -102,35 +94,7 @@ func TestListJournalEntries(t *testing.T) {
 			Scan(ctx, &user),
 	)
 	nowTime := time.Now().UTC()
-	fy, err := fyRepo.Create(
-		ctx,
-		&fiscalyear.FiscalYear{
-			OrganizationID: org.ID,
-			BusinessUnitID: org.BusinessUnitID,
-			Status:         fiscalyear.StatusOpen,
-			Year:           nowTime.Year(),
-			Name:           "FY",
-			StartDate:      nowTime.Add(-24 * time.Hour).Unix(),
-			EndDate:        nowTime.Add(24 * time.Hour).Unix(),
-			IsCurrent:      true,
-		},
-	)
-	require.NoError(t, err)
-	fp, err := fpRepo.Create(
-		ctx,
-		&fiscalperiod.FiscalPeriod{
-			OrganizationID: org.ID,
-			BusinessUnitID: org.BusinessUnitID,
-			FiscalYearID:   fy.ID,
-			PeriodNumber:   1,
-			PeriodType:     fiscalperiod.PeriodTypeMonth,
-			Status:         fiscalperiod.StatusOpen,
-			Name:           "Period 1",
-			StartDate:      nowTime.Add(-24 * time.Hour).Unix(),
-			EndDate:        nowTime.Add(24 * time.Hour).Unix(),
-		},
-	)
-	require.NoError(t, err)
+	fy, fp := seedtest.OpenFiscalPeriod(t, ctx, db, org.ID, org.BusinessUnitID)
 
 	batchID := pulid.MustNew("jb_")
 	now := nowTime.Unix()

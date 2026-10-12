@@ -7,31 +7,28 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
-	"github.com/emoss08/trenova/internal/modules/billing/app/customerpaymentservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/bankreceiptbatchrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/bankreceiptrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/bankreceiptworkitemrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerpaymentrepository"
-	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
-	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
-	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
+	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/customerpaymentservice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -347,9 +344,6 @@ func createPostedCustomerPayment(
 	accountingRepo := accountingcontrolrepository.New(
 		accountingcontrolrepository.Params{DB: conn, Logger: logger},
 	)
-	fiscalYearRepo := fiscalyearrepository.New(
-		fiscalyearrepository.Params{DB: conn, Logger: logger},
-	)
 	fiscalPeriodRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: logger},
 	)
@@ -363,37 +357,7 @@ func createPostedCustomerPayment(
 	)
 
 	now := env.now
-	fy, err := fiscalYearRepo.Create(
-		env.ctx,
-		&fiscalyear.FiscalYear{
-			OrganizationID:        env.org.ID,
-			BusinessUnitID:        env.org.BusinessUnitID,
-			Status:                fiscalyear.StatusOpen,
-			Year:                  now.Year(),
-			Name:                  "FY",
-			StartDate:             now.Add(-24 * time.Hour).Unix(),
-			EndDate:               now.Add(24 * time.Hour).Unix(),
-			IsCurrent:             true,
-			AllowAdjustingEntries: true,
-		},
-	)
-	require.NoError(t, err)
-	period, err := fiscalPeriodRepo.Create(
-		env.ctx,
-		&fiscalperiod.FiscalPeriod{
-			OrganizationID:        env.org.ID,
-			BusinessUnitID:        env.org.BusinessUnitID,
-			FiscalYearID:          fy.ID,
-			PeriodNumber:          1,
-			PeriodType:            fiscalperiod.PeriodTypeMonth,
-			Status:                fiscalperiod.StatusOpen,
-			Name:                  "Period",
-			StartDate:             now.Add(-24 * time.Hour).Unix(),
-			EndDate:               now.Add(24 * time.Hour).Unix(),
-			AllowAdjustingEntries: true,
-		},
-	)
-	require.NoError(t, err)
+	_, period := seedtest.OpenFiscalPeriod(t, env.ctx, env.db, env.org.ID, env.org.BusinessUnitID)
 
 	queue := &billingqueue.BillingQueueItem{
 		OrganizationID:   env.org.ID,
@@ -404,7 +368,7 @@ func createPostedCustomerPayment(
 		Status:           billingqueue.StatusPosted,
 		BillType:         billingqueue.BillTypeInvoice,
 	}
-	_, err = env.db.NewInsert().Model(queue).Exec(env.ctx)
+	_, err := env.db.NewInsert().Model(queue).Exec(env.ctx)
 	require.NoError(t, err)
 	postedAt := now.Unix()
 	inv, err := invoiceRepo.Create(
