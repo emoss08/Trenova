@@ -210,6 +210,63 @@ hand-written JSON. Trenova keeps the transport around it
   `testdata/anthropic_wire`. A change to how a request is built is a diff to read
   there; `UPDATE_ANTHROPIC_WIRE=1` rewrites the files after a deliberate one.
 
+### Reaching Claude through a platform
+
+An Anthropic Messages provider names a `platform` (`aiprovider.Platform`, column
+`ai_providers.platform`) and, for anything but `Direct`, a `platform_settings` JSONB
+object (`aiprovider.PlatformSettings`): the way it signs in (`auth`) and the region,
+project, workspace, resource, access key ID, tenant and client ID that platform and
+way of signing in take. Check constraints keep the platform to its enum, to the
+Anthropic kind, and keep settings off a direct provider. The domain
+(`aiprovider/platform.go`) normalizes and validates every setting against a strict
+pattern, because each ends up in a host name or URL path, and derives the base URL
+when none is given:
+
+| Platform | Address | Signs in with |
+|---|---|---|
+| `Direct` | the provider's base URL | its API key |
+| `Bedrock` | `https://bedrock-mantle.{region}.api.aws/anthropic` | SigV4 (`bedrock-mantle`), a Bedrock API key as a bearer token, or the server's AWS identity |
+| `ClaudePlatformAWS` | `https://aws-external-anthropic.{region}.api.aws` | SigV4 (`aws-external-anthropic`), an API key, or the server's AWS identity; always the `anthropic-workspace-id` header |
+| `VertexAI` | `{region}-aiplatform.googleapis.com` (`global`, `us` and `eu` have their own hosts) | a service account key, or the server's Google identity |
+| `ClaudePlatformGoogleCloud` | `https://claude.googleapis.com/v1alpha/projects/{p}/locations/{loc}/workspaces/{w}/invoke` | a service account key, or the server's Google identity |
+| `Foundry` | `https://{resource}.services.ai.azure.com/anthropic` | an API key, or an Entra ID app registration's client secret |
+
+The adapter (`modeladapter/anthropicplatform.go`) signs requests in Trenova's own
+code, not with the SDK's platform packages, because those read credentials from the
+process environment. Each way of signing in is an SDK middleware registered last, so
+it runs innermost and signs the request exactly as it is sent; Vertex AI's middleware
+also moves the model from the body into the `:rawPredict`/`:streamRawPredict` path and
+sets `anthropic_version` to `vertex-2023-10-16`. Token sources and AWS credentials
+are cached in a 256-slot LRU keyed by a SHA-256 digest of the credential and its
+settings, so a rotated key is a new entry and no secret is a map key. A Google key
+must be a service account key (other credential files can make the server read files
+or call other addresses), loaded with its `token_uri` pinned to
+`https://oauth2.googleapis.com/token`. A token endpoint's 4xx becomes a final 401
+`TransportError`, not a retry.
+
+- **The server's own identity is opt-in.** `auth: Server` uses the AWS default chain
+  or Google application default credentials of the process. On a server shared by
+  many organizations that would let any organization spend the operator's cloud
+  account, so it works only when `ai.serverCloudCredentials` is true (default
+  false). The service refuses to save it otherwise, and every call checks it again
+  (`Call.ServerCredentialsAllowed`), so turning the setting off stops providers
+  already saved with it. Such a provider stores no key; saving one clears any.
+- **A credential stays with its target.** `aiprovider.SameCredentialTarget` compares
+  kind, platform, resolved settings and the base URL's origin. An update that changes
+  any of them without a new key is refused, and a draft test reuses the stored key
+  only for the target it was entered for. A service account key is fingerprinted by
+  its `private_key_id`, since every key file starts and ends alike.
+- **Not every platform lists models.** `Platform.ListsModels` is true for Direct and
+  both Claude Platforms; listing anywhere else returns `ErrModelsNotListed`, which the
+  prober reports as "type the model ID instead", and the editor skips the fetch.
+
+The catalog (`GET /ai-providers/catalog/`) describes each platform's settings, ways of
+signing in, which of those store a credential and whether it lists models, plus
+`serverCloudCredentials`, so the editor (`providers/platform-model.ts`) offers only
+what the server accepts and sends only the settings the chosen platform takes.
+`anthropicplatform_internal_test.go` checks every platform's address, headers and
+signature, re-verifying each SigV4 signature as AWS would.
+
 ### Thinking on Claude
 
 Claude models differ in how they are asked to think, and the Anthropic adapter reads which

@@ -181,6 +181,72 @@
             "domain": "anthropic.com"
         },
         {
+            "key": "bedrock-claude",
+            "label": "Claude on Amazon Bedrock",
+            "kind": "AnthropicMessages",
+            "baseUrl": "",
+            "structuredOutputMode": "JSONSchema",
+            "allowPrivateNetwork": false,
+            "requiresApiKey": true,
+            "selfHosted": false,
+            "exampleModel": "anthropic.claude-opus-5-5",
+            "domain": "aws.amazon.com",
+            "platform": "Bedrock"
+        },
+        {
+            "key": "vertex-claude",
+            "label": "Claude on Google Vertex AI",
+            "kind": "AnthropicMessages",
+            "baseUrl": "",
+            "structuredOutputMode": "JSONSchema",
+            "allowPrivateNetwork": false,
+            "requiresApiKey": true,
+            "selfHosted": false,
+            "exampleModel": "claude-opus-5-5",
+            "domain": "cloud.google.com",
+            "platform": "VertexAI"
+        },
+        {
+            "key": "claude-platform-aws",
+            "label": "Claude Platform on AWS",
+            "kind": "AnthropicMessages",
+            "baseUrl": "",
+            "structuredOutputMode": "JSONSchema",
+            "allowPrivateNetwork": false,
+            "requiresApiKey": true,
+            "selfHosted": false,
+            "exampleModel": "claude-opus-5-5",
+            "domain": "aws.amazon.com",
+            "platform": "ClaudePlatformAWS"
+        },
+        {
+            "key": "claude-platform-google-cloud",
+            "label": "Claude Platform on Google Cloud",
+            "kind": "AnthropicMessages",
+            "baseUrl": "",
+            "structuredOutputMode": "JSONSchema",
+            "allowPrivateNetwork": false,
+            "requiresApiKey": true,
+            "selfHosted": false,
+            "exampleModel": "claude-opus-5-5",
+            "domain": "cloud.google.com",
+            "platform": "ClaudePlatformGoogleCloud"
+        },
+        {
+            "key": "foundry-claude",
+            "label": "Claude on Microsoft Foundry",
+            "kind": "AnthropicMessages",
+            "baseUrl": "",
+            "structuredOutputMode": "JSONSchema",
+            "allowPrivateNetwork": false,
+            "requiresApiKey": true,
+            "selfHosted": false,
+            "exampleModel": "claude-opus-5-5",
+            "notes": "The model is your deployment's name, which is the model ID unless you renamed it.",
+            "domain": "azure.microsoft.com",
+            "platform": "Foundry"
+        },
+        {
             "key": "openai",
             "label": "OpenAI",
             "kind": "OpenAIResponses",
@@ -402,5 +468,136 @@
             "notes": "llama-server does not reliably honour response_format on its OpenAI-compatible route, so schemas are sent in the prompt instead.",
             "domain": "ggml.ai"
         }
-    ]
+    ],
+    "platforms": [
+        {
+            "platform": "Direct",
+            "settings": [],
+            "auths": [
+                {
+                    "auth": "ApiKey",
+                    "requiresCredential": true,
+                    "settings": []
+                }
+            ],
+            "listsModels": true
+        },
+        {
+            "platform": "Bedrock",
+            "settings": [
+                "region"
+            ],
+            "auths": [
+                {
+                    "auth": "AccessKey",
+                    "requiresCredential": true,
+                    "settings": [
+                        "accessKeyId"
+                    ]
+                },
+                {
+                    "auth": "ApiKey",
+                    "requiresCredential": true,
+                    "settings": []
+                },
+                {
+                    "auth": "Server",
+                    "requiresCredential": false,
+                    "settings": []
+                }
+            ],
+            "listsModels": false
+        },
+        {
+            "platform": "VertexAI",
+            "settings": [
+                "projectId",
+                "region"
+            ],
+            "auths": [
+                {
+                    "auth": "ServiceAccount",
+                    "requiresCredential": true,
+                    "settings": []
+                },
+                {
+                    "auth": "Server",
+                    "requiresCredential": false,
+                    "settings": []
+                }
+            ],
+            "listsModels": false
+        },
+        {
+            "platform": "ClaudePlatformAWS",
+            "settings": [
+                "region",
+                "workspaceId"
+            ],
+            "auths": [
+                {
+                    "auth": "AccessKey",
+                    "requiresCredential": true,
+                    "settings": [
+                        "accessKeyId"
+                    ]
+                },
+                {
+                    "auth": "ApiKey",
+                    "requiresCredential": true,
+                    "settings": []
+                },
+                {
+                    "auth": "Server",
+                    "requiresCredential": false,
+                    "settings": []
+                }
+            ],
+            "listsModels": true
+        },
+        {
+            "platform": "ClaudePlatformGoogleCloud",
+            "settings": [
+                "projectId",
+                "region",
+                "workspaceId"
+            ],
+            "auths": [
+                {
+                    "auth": "ServiceAccount",
+                    "requiresCredential": true,
+                    "settings": []
+                },
+                {
+                    "auth": "Server",
+                    "requiresCredential": false,
+                    "settings": []
+                }
+            ],
+            "listsModels": true
+        },
+        {
+            "platform": "Foundry",
+            "settings": [
+                "resource"
+            ],
+            "auths": [
+                {
+                    "auth": "ApiKey",
+                    "requiresCredential": true,
+                    "settings": []
+                },
+                {
+                    "auth": "EntraID",
+                    "requiresCredential": true,
+                    "settings": [
+                        "tenantId",
+                        "clientId"
+                    ]
+                }
+            ],
+            "listsModels": false
+        }
+    ],
+    "serverCloudCredentials": false
 }

@@ -505,7 +505,7 @@ export function ProviderEditor({
             layout="inline"
             required={requiresBaseUrl}
             label={t("Base URL")}
-            placeholder="https://api.example.com/v1"
+            placeholder={onPlatform ? undefined : "https://api.example.com/v1"}
             error={
               urlProblem === "private"
                 ? t(
@@ -582,7 +582,7 @@ export function ProviderEditor({
       ? [
           {
             id: "key",
-            label: onPlatform ? t("Credential") : t("API key"),
+            label: onPlatform ? t("Sign-in credential") : t("API key"),
             note: t("The credential Trenova signs each request with."),
             help: t(
               "A new key takes effect when you save. Keep the old one working for a day if other systems still use it.",

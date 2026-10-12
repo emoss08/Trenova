@@ -75,7 +75,7 @@ export const CREDENTIAL_LABELS: Record<AIProviderPlatformAuth, string> = defineL
   AccessKey: "Secret access key",
   ServiceAccount: "Service account key (JSON)",
   EntraID: "Client secret",
-  Server: "Credential",
+  Server: "Sign-in credential",
 });
 
 export const PLATFORM_SETTING_LABELS: Record<AIProviderPlatformSetting, string> = defineLabels({
@@ -93,7 +93,7 @@ export const PLATFORM_SETTING_DESCRIPTIONS: Record<AIProviderPlatformSetting, st
     region: "Where the platform serves Claude for you.",
     projectId: "The Google Cloud project Claude is enabled in.",
     workspaceId: "The Anthropic workspace requests are made in.",
-    resource: "The name in https://{resource}.services.ai.azure.com.",
+    resource: "The name before .services.ai.azure.com in its endpoint address.",
     accessKeyId: "The ID of the IAM access key, not its secret.",
     tenantId: "The Entra ID tenant ID, or its primary domain.",
     clientId: "The application (client) ID of the app registration.",

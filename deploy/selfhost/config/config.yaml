@@ -121,6 +121,10 @@ ai:
   # Organizations here belong to the operator, so a provider may point at a
   # model served on your own network (Ollama, vLLM and the like).
   privateNetworkProviders: true
+  # Turn on to let a Bedrock, Vertex AI or Claude Platform provider sign in
+  # as this server (its IAM role or Google application default credentials)
+  # instead of a stored key.
+  serverCloudCredentials: false
   documentExtraction: false
   ocrCommand: tesseract
   ocrLanguage: eng

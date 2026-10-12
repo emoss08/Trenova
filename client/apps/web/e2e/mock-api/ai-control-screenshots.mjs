@@ -251,7 +251,7 @@ const SHOTS = [
       await handles.getByRole("button", { name: "Assistant chat" }).click();
       await handles.getByRole("button", { name: "Document extraction" }).click();
       await page.waitForTimeout(900);
-      await page.locator("#es-tasks").scrollIntoViewIfNeeded();
+      await page.locator("#pe-tasks").scrollIntoViewIfNeeded();
       await page.waitForTimeout(400);
     },
   },
@@ -265,7 +265,7 @@ const SHOTS = [
       await page.getByRole("button", { name: "Edit connection" }).first().click();
       await page.waitForTimeout(700);
       await page.getByRole("textbox", { name: "Replace key" }).fill("sk-proj-new-key-9c1d");
-      await page.locator("#es-key").scrollIntoViewIfNeeded();
+      await page.locator("#pe-key").scrollIntoViewIfNeeded();
       await page.waitForTimeout(500);
     },
   },
@@ -278,7 +278,54 @@ const SHOTS = [
       await page.waitForTimeout(600);
       await page.getByRole("button", { name: "Edit connection" }).first().click();
       await page.waitForTimeout(700);
-      await page.locator("#es-limits").scrollIntoViewIfNeeded();
+      await page.locator("#pe-limits").scrollIntoViewIfNeeded();
+      await page.waitForTimeout(500);
+    },
+  },
+  {
+    name: "provider-editor-platform",
+    scenario: { aiProviders: "many" },
+    query: "?tab=providers",
+    act: async (page) => {
+      await page.getByRole("button", { name: /Show \d+ off/ }).click();
+      await page.waitForTimeout(500);
+      await page.locator(".pl-t", { hasText: "AWS Bedrock" }).click();
+      await page.waitForTimeout(600);
+      await page.getByRole("button", { name: "Edit connection" }).first().click();
+      await page.waitForTimeout(900);
+    },
+  },
+  {
+    name: "provider-editor-platform-key",
+    scenario: { aiProviders: "many" },
+    query: "?tab=providers",
+    act: async (page) => {
+      await page.getByRole("button", { name: /Show \d+ off/ }).click();
+      await page.waitForTimeout(500);
+      await page.locator(".pl-t", { hasText: "AWS Bedrock" }).click();
+      await page.waitForTimeout(600);
+      await page.getByRole("button", { name: "Edit connection" }).first().click();
+      await page.waitForTimeout(700);
+      await page.getByText("Sign-in credential", { exact: true }).scrollIntoViewIfNeeded();
+      await page.waitForTimeout(500);
+    },
+  },
+  {
+    name: "provider-create-vertex",
+    scenario: {},
+    query: "?tab=providers&panelType=create&panelEntityId=vertex-claude",
+  },
+  {
+    name: "provider-create-foundry-entra",
+    scenario: {},
+    query: "?tab=providers&panelType=create&panelEntityId=foundry-claude",
+    act: async (page) => {
+      await page
+        .locator("div.grid", { has: page.getByText("Sign in with", { exact: true }) })
+        .getByRole("button")
+        .click();
+      await page.waitForTimeout(300);
+      await page.getByRole("option", { name: /Microsoft Entra ID/ }).click();
       await page.waitForTimeout(500);
     },
   },

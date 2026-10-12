@@ -168,7 +168,7 @@ const PROVIDER_SPECS = {
     { key: "azure", name: "Azure OpenAI", kind: "OpenAIChat", model: "gpt-5.1", on: true, key2: true, trusted: true, base: "https://trenova.openai.azure.com/openai/v1", tasks: ["DocumentExtraction", "BillingDiagnosis", "AssistantChat"], priority: 30, price: [1.25, 10], test: [true, "Connected", 520, DAY], week: { calls: 412, failed: 1, ms: 980, tokens: 1100000 } },
     { key: "gemini", name: "Google Gemini", kind: "OpenAIChat", model: "gemini-3-flash", on: false, key2: true, base: "https://generativelanguage.googleapis.com/v1beta/openai", tasks: ["DailyBriefing"], priority: 40, test: [true, "Connected", 340, 4 * DAY] },
     { key: "mistral", name: "Mistral", kind: "OpenAIChat", model: "mistral-large-3", on: false, base: "https://api.mistral.ai/v1", tasks: [], priority: 50 },
-    { key: "bedrock", name: "AWS Bedrock", kind: "AnthropicMessages", model: "anthropic.claude-sonnet-5", on: false, key2: true, trusted: true, base: "https://bedrock-runtime.us-east-1.amazonaws.com", tasks: ["AssistantChat"], priority: 60, test: [false, "Access denied", 0, 5 * DAY] },
+    { key: "bedrock", name: "AWS Bedrock", kind: "AnthropicMessages", model: "anthropic.claude-sonnet-5", on: false, key2: true, trusted: true, platform: "Bedrock", platformSettings: { auth: "AccessKey", region: "us-east-1", projectId: "", workspaceId: "", accessKeyId: "AKIAIOSFODNN7EXAMPLE", resource: "", tenantId: "", clientId: "" }, tasks: ["AssistantChat"], priority: 60, test: [false, "Access denied", 0, 5 * DAY] },
   ],
   none: [],
 };
@@ -184,6 +184,8 @@ function buildProviders(anchor, mode) {
       name: spec.name,
       description: "",
       kind: spec.kind,
+      platform: spec.platform ?? "Direct",
+      platformSettings: spec.platformSettings ?? null,
       baseUrl: spec.base ?? "",
       model: spec.model,
       hasApiKey: !!spec.key2,
