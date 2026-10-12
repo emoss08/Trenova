@@ -234,12 +234,13 @@ func ensureExceptionHoldReason(ctx context.Context, tx bun.Tx, org *tenant.Organ
 	}
 
 	reason := &holdreason.HoldReason{
-		OrganizationID:       org.ID,
-		BusinessUnitID:       org.BusinessUnitID,
-		Type:                 holdreason.HoldTypeOperational,
-		Code:                 seedExceptionHoldTag,
-		Label:                "Overage, shortage or damage",
-		Description:          "Freight arrived short, over or damaged; billing waits until it is settled.",
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		Type:           holdreason.HoldTypeOperational,
+		Code:           seedExceptionHoldTag,
+		Label:          "Overage, shortage or damage",
+		Description: "Freight arrived short, over or damaged; " +
+			"billing waits until it is settled.",
 		DefaultSeverity:      holdreason.HoldSeverityBlocking,
 		DefaultBlocksBilling: true,
 		Active:               true,

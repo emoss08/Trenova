@@ -122,54 +122,18 @@ _Filled in as each area lands._
   the stored `search_vector` (word tokens; an address is one token) would not.
 - **Seeded dev data.** The prototype's Claims dispute arrives on Claims within the day while
   Claims has "received nothing in 7 days"; the seed puts the FreshHaul dispute on Intake and
-  leaves Claims' last message 7 days 2 hours old. Seeded attachments carry metadata only (no
-  document bytes in object storage), so an unfiled seeded attachment is not readable and offers no
-  "File" action; filed ones show as filed. The prototype's shipments and customers are mapped onto
-  the seeded ones (`SEED-PAY-*`, `SEED-SHP-*`; Acme, FreshHaul, GlobalTrade, Peak, Range), and
-  the second saved view searches "SEED-" rather than "S-10".
-
-### Intelligence
-
-- **Rules act once, when a message is first read.** The evaluator runs inside the settle step
-  (`ProcessMessage` → `applyRules`) for a message Nova read and left waiting on a person; it does
-  not sweep the existing queue when a rule is created or enabled. "Matches" on a new rule are a
-  preview of the last 30 days, not work it will do retroactively.
-- **One rule per message.** The most specific enabled rule that matches (an address over a
-  domain over a party over anyone; the oldest on a tie) is the one that acts, and it
-  claims the message (`handled_by_rule_id`). When its action cannot complete (no shipment to file
-  on, a reply already drafted, an assignee without access) the message waits on a person; later
-  rules are not tried and the rule's match count does not move.
-- **A rule never auto-files over an open duplicate.** While the message carries an unresolved
-  `DuplicateDocument` conflict, a filing rule leaves it for a person; the conflict card decides.
-- **Rule preview is bounded.** `triageRulePreview` reads the last 30 days and returns at most 50
-  samples (rejected ones first), with `total`/`matched` counted over the whole window. The design
-  implies every past match.
-- **Suggestions need five handlings at 90%.** A rule is suggested from a sender domain + kind that
-  people filed or ignored at least five times in 30 days with one outcome at least 90% of the
-  time, and only when no existing rule already covers it. "Handled" outcomes (replies, loads) are
-  not suggested: the action depends on the message.
-- **Accuracy is a percentage of corrections.** The briefing's "Nova read N, people corrected M"
-  is computed per local week (Monday start in the organization's time zone); the change is shown
-  only when both weeks had mail read.
-- **Who a sender is.** Customer is a customer whose email or domain matches; one with broker
-  vetting enabled is shown as Broker. Carrier is a carrier whose email or domain matches. Driver
-  is a worker whose email matches, or whose email domain matches when no customer or carrier
-  does. The design's "Shipper/Consignee" roles are not modelled.
-- **Facts are quoted, or dropped.** Nova's facts (`InboundMessage.facts`) are kept only when their
-  quote appears in the subject or body (case and whitespace ignored), at most 12, and only
-  `Warning` or `Neutral` tone. Flagging a fact marks it and records an AI correction; it does not
-  remove it.
-- **Corrections teach by sender domain.** Correcting a kind records a sender hint (domain + kind)
-  that the classifier is shown, as trusted context, for that sender's next three-most-corrected
-  kinds; there is no per-address hint.
-- **Conflicts are checked after reading, not live.** Duplicate documents (a rate con, POD, BOL or
-  invoice whose type is already on the matched shipment, with both amounts when the shipment has a
-  rate) and overlapping loads (a tender's lane and pickup day against the customer's open
-  shipments) are found by an activity after the message settles, and again whenever a person
-  re-checks it. A tender's multiple loads come from its draft's `loads[n]` fields.
-- **Resolving a duplicate as Replace swaps the document at filing time.** `ReplaceExisting` is
-  read by the filer, which replaces the existing document instead of adding one; `KeepBoth` files
-  normally. A conflict whose attachment is already filed cannot be changed.
+  leaves Claims' last message 7 days 2 hours old. Readable seeded attachments have a `documents`
+  row, a `document_contents` reading (and a shipment draft with a rate for rate cons, an AI
+  extraction for the carrier invoice), so filing, splitting, conflicts and load drafting have data;
+  the files themselves are not in object storage, so preview and download fail for them (each
+  row's description says so). The prototype's shipments and parties are mapped onto seeded ones:
+  the detention dispute is on `SEED-DET-008` (FreshHaul, a billed $1,200 detention with geofence
+  arrival and departure), the overlapping tender load repeats the lane and pickup day of the open
+  `SEED-SHP-001`, the carrier is Ironhorse Freight Lines, the driver is the seeded worker Carlos
+  Rivera, and Blue Ridge Brokerage is added as a broker customer (broker vetting on). The seed
+  also adds the `OSD` hold reason exception logging needs, routes `InboundClassification` to the
+  local model so Nova reads as on, and adds an address rule (FreshHaul claims assigned to Dana)
+  next to the prototype's four. The second saved view searches "SEED-" rather than "S-10".
 
 ## Performance
 

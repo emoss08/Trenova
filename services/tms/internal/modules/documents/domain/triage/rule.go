@@ -47,7 +47,7 @@ type Rule struct {
 	MailboxID      pulid.ID                      `json:"mailboxId"      bun:"mailbox_id,type:VARCHAR(100),nullzero"`
 	Action         inboundmessage.NovaAction     `json:"action"         bun:"action,type:VARCHAR(30),notnull"`
 	AssigneeID     pulid.ID                      `json:"assigneeId"     bun:"assignee_id,type:VARCHAR(100),nullzero"`
-	Enabled        bool                          `json:"enabled"        bun:"enabled,type:BOOLEAN,notnull,default:true"`
+	Enabled        bool                          `json:"enabled"        bun:"enabled,type:BOOLEAN,notnull"`
 	CreatedByID    pulid.ID                      `json:"createdById"    bun:"created_by_id,type:VARCHAR(100),nullzero"`
 	MatchCount     int64                         `json:"matchCount"     bun:"match_count,type:BIGINT,notnull,default:0"`
 	LastMatchedAt  int64                         `json:"lastMatchedAt"  bun:"last_matched_at,type:BIGINT,nullzero"`

@@ -11,8 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -49,7 +51,14 @@ func inboundRefs(t *testing.T) (*inboundSeedRefs, *seedMailboxes) {
 			Name: "Proof of Delivery",
 		},
 		"RATECONF": {ID: pulid.MustNew("dt_"), Code: "RATECONF", Name: "Rate Confirmation"},
+		"BOL":      {ID: pulid.MustNew("dt_"), Code: "BOL", Name: "Bill of Lading"},
 	}
+
+	carriers := make(map[string]*carrier.Carrier, len(seedInboundCarrierCodes))
+	for _, code := range seedInboundCarrierCodes {
+		carriers[code] = &carrier.Carrier{ID: pulid.MustNew("car_"), Code: code, Name: code}
+	}
+	pickupAt := inboundSeedTestNow + inboundSeedDay
 
 	org := orgStub(orgID, buID)
 	org.Timezone = "UTC"
@@ -63,6 +72,28 @@ func inboundRefs(t *testing.T) (*inboundSeedRefs, *seedMailboxes) {
 		},
 		customers: customers,
 		shipments: shipments,
+		broker: &customer.Customer{
+			ID:   pulid.MustNew("cus_"),
+			Code: seedBrokerCode,
+			Name: "Blue Ridge",
+		},
+		carriers: carriers,
+		driver: &worker.Worker{
+			ID:        pulid.MustNew("wrk_"),
+			FirstName: "Carlos",
+			LastName:  "Rivera",
+			Email:     seedDriverEmail,
+		},
+		lane: &seedLane{
+			shipment:         shipments[seedOpenLanePro],
+			origin:           "Los Angeles, CA",
+			originCity:       "Los Angeles",
+			originState:      "CA",
+			destination:      "Chicago, IL",
+			destinationCity:  "Chicago",
+			destinationState: "IL",
+			pickupAt:         pickupAt,
+		},
 		docTypes:  docTypes,
 		loc:       time.UTC,
 		now:       inboundSeedTestNow,
@@ -270,8 +301,15 @@ func TestInboundMessageSeed_NovaSettledTheDaysRoutineMailUnderRules(t *testing.T
 			paused++
 		}
 	}
-	assert.Equal(t, 4, len(rules))
-	assert.Equal(t, 1, paused, "one of the four rules is paused")
+	assert.Len(t, rules, 5)
+	assert.Equal(t, 1, paused, "one rule is paused")
+
+	scopes := map[triage.SenderScope]bool{}
+	for _, rule := range rules {
+		scopes[rule.SenderScope] = true
+	}
+	assert.True(t, scopes[triage.SenderDomain])
+	assert.True(t, scopes[triage.SenderAddress])
 }
 
 func TestInboundMessageSeed_ThreadsAndRepliesHangTogether(t *testing.T) {
@@ -301,6 +339,7 @@ func TestInboundMessageSeed_ThreadsAndRepliesHangTogether(t *testing.T) {
 	assert.Equal(t, 2, multi, "two conversations run to more than one message")
 	assert.Equal(t, 1, statuses[triage.ReplySent])
 	assert.Equal(t, 1, statuses[triage.ReplyDraft])
+	assert.Equal(t, 1, statuses[triage.ReplyFailed])
 }
 
 func TestInboundMessageSeed_ThreeCorrectionsThisWeekAndClaimsIsQuiet(t *testing.T) {
@@ -388,4 +427,101 @@ func TestMailboxSigningSecret_LeavesItUnsetWhenEncryptionIsOff(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Empty(t, sealed)
+}
+
+func TestInboundMessageSeed_EveryDeckGroupHasWork(t *testing.T) {
+	t.Parallel()
+
+	_, _, _, messages := seededTriage(t)
+
+	groups := map[triage.DeckGroup]int{}
+	for _, seeded := range messages {
+		message := seeded.message
+		if !message.IsWaiting() {
+			continue
+		}
+		message.Attachments = seeded.attachments
+		var reply *triage.Reply
+		if len(seeded.replies) > 0 {
+			reply = triage.LatestReply(seeded.replies)
+		}
+		group, _, ok := triage.GroupFor(message, triage.Actions(triage.ActionInput{
+			Message: message,
+			Reply:   reply,
+		}))
+		if ok {
+			groups[group]++
+		}
+	}
+
+	for _, group := range triage.AllDeckGroups() {
+		assert.Positivef(t, groups[group], "nothing waiting is in the %s group", group)
+	}
+}
+
+func TestInboundMessageSeed_TeachesASuggestionAndCarriesCorrections(t *testing.T) {
+	t.Parallel()
+
+	refs, _, rules, messages := seededTriage(t)
+
+	byHand := 0
+	flaggedThisWeek, flaggedLastWeek, corrections := 0, 0, 0
+	for _, seeded := range messages {
+		message := seeded.message
+		for _, activity := range seeded.activities {
+			if activity.Kind == triage.ActivityFiled && activity.ActorKind == triage.ActorPerson &&
+				message.SenderDomain == "blueridgebrokerage.example" &&
+				message.Classification == inboundmessage.ClassificationRateConfirmation {
+				byHand++
+			}
+			if activity.Kind == triage.ActivityFactFlagged {
+				if activity.CreatedAt >= refs.weekStart {
+					flaggedThisWeek++
+				} else {
+					flaggedLastWeek++
+				}
+			}
+		}
+		corrections += len(seeded.corrections)
+		for _, correction := range seeded.corrections {
+			assert.Equal(t, message.ID, correction.SourceID)
+		}
+	}
+
+	assert.GreaterOrEqual(t, byHand, 5,
+		"a sender's rate cons are filed by hand often enough to suggest a rule")
+	for _, rule := range rules {
+		assert.NotEqual(t, inboundmessage.ClassificationRateConfirmation, rule.Classification,
+			"no rule already covers the suggestion")
+	}
+	assert.Positive(t, flaggedThisWeek)
+	assert.Positive(t, flaggedLastWeek)
+	assert.Equal(t, len(seedCorrectionsThisWeek)+1, corrections)
+}
+
+func TestInboundMessageSeed_ReadableAttachmentsHaveADocumentAndAReading(t *testing.T) {
+	t.Parallel()
+
+	_, _, _, messages := seededTriage(t)
+
+	var extracted int
+	for _, seeded := range messages {
+		documents := make(map[pulid.ID]seededDocument, len(seeded.documents))
+		for _, staged := range seeded.documents {
+			documents[staged.document.ID] = staged
+			require.NotNil(t, staged.content)
+			assert.NotNil(t, staged.content.Findings(), "the reading has findings")
+			if staged.extraction != nil {
+				extracted++
+			}
+		}
+		for _, attachment := range seeded.attachments {
+			if attachment.DocumentID.IsNil() {
+				continue
+			}
+			_, ok := documents[attachment.DocumentID]
+			assert.Truef(t, ok, "%s points at a document the seed writes", attachment.FileName)
+		}
+	}
+	assert.Positive(t, extracted, "a carrier invoice has an AI extraction to queue for pay")
 }

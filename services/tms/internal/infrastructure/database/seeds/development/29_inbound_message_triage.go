@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/permissioncol"
@@ -12,16 +14,26 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/triagecol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aicorrectionservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/emailutils"
+	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 )
@@ -819,8 +831,8 @@ func (b *triageSeed) unreadableEDI() {
 		message: message,
 		body: "Hi — your status file 20260919-0441 arrived cut off after the first stop. " +
 			"Could you send it again?\n\nThanks,\nTrenova",
-		at:        failedAt,
-		failure:   "550 5.1.1 <edi@partnercarrier.example>: Recipient address rejected: " +
+		at: failedAt,
+		failure: "550 5.1.1 <edi@partnercarrier.example>: Recipient address rejected: " +
 			"this mailbox only sends.",
 		suggested: "ops@partnercarrier.example",
 		by:        b.refs.team.marcus,
@@ -1880,9 +1892,11 @@ func (b *triageSeed) correctedThisWeek() {
 				flagged(message, message.Facts[1], mail.by, correctedAt+5*inboundSeedMinute))
 		}
 		b.add(seededMessage{
-			message:     message,
-			activities:  activities,
-			corrections: []*aicorrection.Correction{b.aiCorrection(message, correction, mail.by, correctedAt)},
+			message:    message,
+			activities: activities,
+			corrections: []*aicorrection.Correction{
+				b.aiCorrection(message, correction, mail.by, correctedAt),
+			},
 		})
 	}
 }
@@ -1990,4 +2004,434 @@ func (b *triageSeed) claimsLastHeardFrom() {
 				"Sent the BOL notation to Acme claims."),
 		},
 	})
+}
+
+const (
+	seedAttachmentResource = "inbound_message"
+	seedBrokerSender       = "loads@blueridgebrokerage.example"
+	seedBrokerRateCons     = 11
+	seedPeopleToday        = 3
+	seedReadingConfidence  = 0.95
+)
+
+type seedFile struct {
+	name        string
+	contentType string
+	size        int64
+	pages       int
+}
+
+type seedStaging struct {
+	message    *inboundmessage.InboundMessage
+	attachment *inboundmessage.InboundAttachment
+	file       seedFile
+	resource   *shipment.Shipment
+	docType    *documenttype.DocumentType
+	kind       string
+	rate       string
+	fields     []documentcontent.FoundField
+	stops      []documentcontent.FoundStop
+	uploadedAt int64
+}
+
+func (b *triageSeed) stage(p seedStaging) seededDocument {
+	file := p.file
+	if p.attachment != nil {
+		file = seedFile{
+			name:        p.attachment.FileName,
+			contentType: p.attachment.ContentType,
+			size:        p.attachment.ByteSize,
+			pages:       p.attachment.PageCount,
+		}
+	}
+	file.pages = max(file.pages, 1)
+	at := p.uploadedAt
+	if at == 0 {
+		at = p.message.ReceivedAt + seedReadDelay
+	}
+
+	resourceType, resourceID := seedAttachmentResource, p.message.ID.String()
+	if p.resource != nil {
+		resourceType = inboundmessageports.DocumentResourceType
+		resourceID = p.resource.ID.String()
+	}
+
+	id := pulid.MustNew("doc_")
+	doc := &document.Document{
+		ID:               id,
+		OrganizationID:   b.refs.org.ID,
+		BusinessUnitID:   b.refs.org.BusinessUnitID,
+		LineageID:        id,
+		VersionNumber:    1,
+		IsCurrentVersion: true,
+		FileName:         id.String() + strings.ToLower(filepath.Ext(file.name)),
+		OriginalName:     file.name,
+		FileSize:         file.size,
+		FileType:         file.contentType,
+		StoragePath: fmt.Sprintf("%s/%s/%s%s", b.refs.org.ID, resourceType, id,
+			strings.ToLower(filepath.Ext(file.name))),
+		Status: document.StatusActive,
+		Description: "Development fixture: what the file says is recorded, " +
+			"but the file itself is not in storage.",
+		ResourceID:          resourceID,
+		ResourceType:        resourceType,
+		ProcessingProfile:   document.ProcessingProfileNone,
+		UploadedByID:        b.refs.admin.ID,
+		PreviewStatus:       document.PreviewStatusUnsupported,
+		ContentStatus:       document.ContentStatusExtracted,
+		ShipmentDraftStatus: document.ShipmentDraftStatusUnavailable,
+		DetectedKind:        p.kind,
+		HasExtractedText:    true,
+		CreatedAt:           at,
+		UpdatedAt:           at,
+	}
+	if p.docType != nil {
+		typeID := p.docType.ID
+		doc.DocumentTypeID = &typeID
+	}
+	if p.attachment != nil {
+		p.attachment.DocumentID = id
+	}
+
+	staged := seededDocument{
+		document: doc,
+		content:  b.reading(doc, p, at),
+	}
+	if p.rate != "" {
+		doc.ShipmentDraftStatus = document.ShipmentDraftStatusReady
+		staged.draft = &documentshipmentdraft.DocumentShipmentDraft{
+			ID:             pulid.MustNew("dsd_"),
+			DocumentID:     id,
+			OrganizationID: doc.OrganizationID,
+			BusinessUnitID: doc.BusinessUnitID,
+			Status:         documentshipmentdraft.StatusReady,
+			DocumentKind:   p.kind,
+			Confidence:     seedReadingConfidence,
+			DraftData: map[string]any{
+				"fields": map[string]any{
+					"rate": map[string]any{"value": p.rate},
+				},
+			},
+		}
+	}
+
+	return staged
+}
+
+func (b *triageSeed) reading(
+	doc *document.Document,
+	p seedStaging,
+	at int64,
+) *documentcontent.Content {
+	fields := make(map[string]documentcontent.FoundField, len(p.fields))
+	lines := make([]string, 0, len(p.fields))
+	for _, field := range p.fields {
+		fields[field.Key] = field
+		lines = append(lines, field.Label+": "+field.Value)
+	}
+	stops := p.stops
+	if stops == nil {
+		stops = []documentcontent.FoundStop{}
+	}
+	pages := 1
+	if p.attachment != nil {
+		pages = max(p.attachment.PageCount, 1)
+	}
+
+	return &documentcontent.Content{
+		ID:                       pulid.MustNew("dc_"),
+		DocumentID:               doc.ID,
+		OrganizationID:           doc.OrganizationID,
+		BusinessUnitID:           doc.BusinessUnitID,
+		Status:                   documentcontent.StatusExtracted,
+		ContentText:              strings.Join(lines, "\n"),
+		PageCount:                pages,
+		SourceKind:               documentcontent.SourceKindNative,
+		DetectedLanguage:         "en",
+		DetectedDocumentKind:     p.kind,
+		ClassificationConfidence: seedReadingConfidence,
+		StructuredData: map[string]any{
+			"intelligence": map[string]any{
+				"kind":          p.kind,
+				"reviewStatus":  "Ready",
+				"fields":        fields,
+				"stops":         stops,
+				"missingFields": []string{},
+				"conflicts":     []documentcontent.FoundConflict{},
+			},
+		},
+		LastExtractedAt: &at,
+	}
+}
+
+func (b *triageSeed) extracted(staged *seededDocument, at int64) {
+	doc := staged.document
+	staged.extraction = &documentaiextraction.Extraction{
+		ID:             pulid.MustNew("dae_"),
+		DocumentID:     doc.ID,
+		OrganizationID: doc.OrganizationID,
+		BusinessUnitID: doc.BusinessUnitID,
+		UserID:         b.refs.admin.ID,
+		ExtractedAt:    at,
+		RequestHash:    hashutils.SHA256Hex("seed-extraction:" + doc.ID.String()),
+		WorkflowID:     "seed-extraction-" + doc.ID.String(),
+		WorkflowRunID:  "seed",
+		ActivityID:     "seed",
+		TaskToken:      []byte{},
+		Model:          "qwen2.5:14b",
+		Status:         documentaiextraction.StatusCompleted,
+		SubmittedAt:    &at,
+		CompletedAt:    &at,
+	}
+}
+
+func (b *triageSeed) dateOnly(at int64) string {
+	return time.Unix(at, 0).In(b.refs.loc).Format(time.DateOnly)
+}
+
+func flaggedFact(key, label, value, quote string) inboundmessage.Fact {
+	f := fact(key, label, value, quote)
+	f.Flagged = true
+
+	return f
+}
+
+func flagged(
+	message *inboundmessage.InboundMessage,
+	f inboundmessage.Fact,
+	by *tenant.User,
+	at int64,
+) *triage.Activity {
+	return seedActivity(message, triage.ActivityFactFlagged, at).
+		ByPerson(by.ID).
+		About(f.Label, f.Value)
+}
+
+func (b *triageSeed) aiCorrection(
+	message *inboundmessage.InboundMessage,
+	correction seedCorrection,
+	by *tenant.User,
+	at int64,
+) *aicorrection.Correction {
+	return aicorrectionservice.InboundCorrectionEntity(&triageports.InboundCorrection{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: message.OrganizationID,
+			BuID:  message.BusinessUnitID,
+		},
+		MessageID:               message.ID,
+		CapturedByID:            by.ID,
+		SenderDomain:            message.SenderDomain,
+		PredictedClassification: correction.from,
+		ConfirmedClassification: correction.to,
+		PredictedConfidence:     message.Confidence,
+		Facts:                   message.Facts,
+		CapturedAt:              at,
+	})
+}
+
+func (b *triageSeed) carrierInvoiceWaiting() {
+	ship := b.shipment(seedDetentionPro)
+	ironhorse := b.refs.carriers["IHF"]
+	message := b.mail(seedMail{
+		mailbox:  b.boxes.intake,
+		key:      "ironhorse-invoice-ihf-7781",
+		from:     "ap@ironhorsefreight.example",
+		fromName: "Ironhorse Freight AP",
+		subject:  "Invoice IHF-7781 for " + seedDetentionPro,
+		body: "Invoice IHF-7781 attached for " + seedDetentionPro +
+			", linehaul plus two nights' detention. Net 30.",
+		receivedAt: b.minutesAgo(75),
+		class:      inboundmessage.ClassificationInvoice,
+		confidence: 0.95,
+	})
+	matched(message, ship, nil, "The invoice references "+seedDetentionPro+
+		", and the sender is "+ironhorse.Name+".")
+	message.MatchedCarrierID = ironhorse.ID
+	message.ReviewNote = "Carrier invoices are filed by the Billing rule only when they arrive " +
+		"on Billing; this one came to Intake."
+	message.Facts = []inboundmessage.Fact{
+		fact("invoice", "Invoice", "IHF-7781", "IHF-7781"),
+		fact("terms", "Terms", "Net 30", "Net 30"),
+	}
+
+	attachment := &inboundmessage.InboundAttachment{
+		ID:          pulid.MustNew("imsga_"),
+		FileName:    "IHF-7781.pdf",
+		ContentType: "application/pdf",
+		ByteSize:    81 * 1024,
+		Kind:        inboundmessage.AttachmentInvoice,
+		PageCount:   1,
+	}
+	staged := b.stage(seedStaging{
+		message:    message,
+		attachment: attachment,
+		docType:    b.docType("INVOICE"),
+		kind:       "Invoice",
+		fields: []documentcontent.FoundField{
+			{Key: "invoice_number", Label: "Invoice", Value: "IHF-7781", Confidence: 0.98},
+			{Key: "carrier", Label: "Carrier", Value: ironhorse.Name, Confidence: 0.96},
+			{Key: "total", Label: "Total", Value: "$2,180.00", Confidence: 0.97},
+			{Key: "terms", Label: "Terms", Value: "Net 30", Confidence: 0.9},
+		},
+	})
+	b.extracted(&staged, message.ReceivedAt+seedReadDelay)
+
+	b.add(seededMessage{
+		message:     message,
+		attachments: []*inboundmessage.InboundAttachment{attachment},
+		documents:   []seededDocument{staged},
+	})
+}
+
+func (b *triageSeed) brokerRateConsFiledByHand() {
+	rateCon := b.docType("RATECONF")
+	for i := range seedBrokerRateCons {
+		pro := seedRoutinePros[i%len(seedRoutinePros)]
+		ship := b.shipment(pro)
+		receivedAt := b.refs.now - int64(2+i*5/2)*inboundSeedDay - int64(i)*inboundSeedHour
+		fileName := fmt.Sprintf("RateCon_%s_%02d.pdf", pro, i+1)
+		message := b.mail(seedMail{
+			mailbox:    b.boxes.intake,
+			key:        fmt.Sprintf("broker-ratecon-%02d", i+1),
+			from:       seedBrokerSender,
+			fromName:   "Blue Ridge Brokerage",
+			subject:    "Rate con — " + pro,
+			body:       "Signed rate confirmation for " + pro + " attached.",
+			receivedAt: receivedAt,
+			class:      inboundmessage.ClassificationRateConfirmation,
+			confidence: 0.9,
+		})
+		matched(message, ship, b.refs.broker, "The PRO number "+pro+" is in the subject line.")
+		message.Status = inboundmessage.StatusActioned
+
+		attachment := &inboundmessage.InboundAttachment{
+			ID:          pulid.MustNew("imsga_"),
+			FileName:    fileName,
+			ContentType: "application/pdf",
+			ByteSize:    190 * 1024,
+			Kind:        inboundmessage.AttachmentRateConfirmation,
+			PageCount:   1,
+		}
+		filedAt := receivedAt + 20*inboundSeedMinute
+		activities := []*triage.Activity{
+			filed(seedFiling{
+				message:    message,
+				attachment: attachment,
+				shipment:   ship,
+				docType:    rateCon,
+				by:         b.refs.team.marcus,
+				at:         filedAt,
+			}),
+			settledBy(message, b.refs.team.marcus, filedAt+30, "Filed on "+pro+"."),
+		}
+		if i == 3 {
+			activities = append(activities, b.resolvedDuplicate(message, attachment, filedAt))
+		}
+
+		b.add(seededMessage{
+			message:     message,
+			attachments: []*inboundmessage.InboundAttachment{attachment},
+			activities:  activities,
+		})
+	}
+}
+
+func (b *triageSeed) resolvedDuplicate(
+	message *inboundmessage.InboundMessage,
+	attachment *inboundmessage.InboundAttachment,
+	at int64,
+) *triage.Activity {
+	message.Conflicts = []inboundmessage.Conflict{{
+		ID:                 seedDuplicatePrefix + attachment.ID.String(),
+		Kind:               inboundmessage.ConflictDuplicateDocument,
+		AttachmentID:       attachment.ID,
+		ExistingShipmentID: message.MatchedShipmentID,
+		ExistingFiledAt:    message.ReceivedAt - 2*inboundSeedDay,
+		ExistingAmount:     "1180.00",
+		NewAmount:          "1180.00",
+		Resolution:         inboundmessage.ConflictKeepBoth,
+		ResolvedAt:         at - 60,
+		ResolvedBy:         b.refs.team.marcus.ID,
+	}}
+
+	return seedActivity(message, triage.ActivityConflictResolved, at-60).
+		ByPerson(b.refs.team.marcus.ID).
+		About(string(inboundmessage.ConflictDuplicateDocument),
+			string(inboundmessage.ConflictKeepBoth))
+}
+
+func (b *triageSeed) settledByPeopleToday() {
+	type handled struct {
+		from     string
+		fromName string
+		subject  string
+		body     string
+		class    inboundmessage.Classification
+		status   inboundmessage.Status
+		by       *tenant.User
+		note     string
+		customer string
+	}
+	mails := []handled{
+		{
+			from:     "transport@peakdistributing.example",
+			fromName: "Peak Distributing",
+			subject:  "Dock hours this week",
+			body:     "Our dock closes at 15:00 on Friday this week.",
+			class:    inboundmessage.ClassificationStatusRequest,
+			status:   inboundmessage.StatusActioned,
+			by:       b.refs.team.priya,
+			note:     "Told dispatch about the early close.",
+			customer: "PEAK",
+		},
+		{
+			from:     "dispatch@rangelogistics.example",
+			fromName: "Range Logistics Dispatch",
+			subject:  "One more load Denver to Phoenix",
+			body:     "Can you take one more dry van Denver to Phoenix on Thursday?",
+			class:    inboundmessage.ClassificationTender,
+			status:   inboundmessage.StatusActioned,
+			by:       b.refs.team.marcus,
+			note:     "Built the load and confirmed.",
+			customer: "RNGE",
+		},
+		{
+			from:     "events@freightexpo.example",
+			fromName: "Freight Expo",
+			subject:  "Your booth at Freight Expo",
+			body:     "Reserve your booth at Freight Expo before Friday.",
+			class:    inboundmessage.ClassificationOther,
+			status:   inboundmessage.StatusIgnored,
+			by:       b.refs.team.dana,
+			note:     "Not for us.",
+		},
+	}
+
+	span := b.refs.now - b.refs.dayStart
+	for i, mail := range mails {
+		receivedAt := b.refs.dayStart + span*int64(i+1)/int64(seedPeopleToday+1)
+		message := b.mail(seedMail{
+			mailbox:    b.boxes.intake,
+			key:        fmt.Sprintf("today-by-hand-%d", i+1),
+			from:       mail.from,
+			fromName:   mail.fromName,
+			subject:    mail.subject,
+			body:       mail.body,
+			receivedAt: receivedAt,
+			class:      mail.class,
+			confidence: 0.86,
+		})
+		if mail.customer != "" {
+			matched(message, nil, b.customer(mail.customer),
+				"Sender domain "+message.SenderDomain+" belongs to "+
+					b.customer(mail.customer).Name+".")
+		}
+		message.Status = mail.status
+		settledAt := receivedAt + (b.refs.now-receivedAt)/2
+
+		b.add(seededMessage{
+			message:    message,
+			activities: []*triage.Activity{settledBy(message, mail.by, settledAt, mail.note)},
+		})
+	}
 }

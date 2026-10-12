@@ -2,7 +2,6 @@ import { recordPath } from "@/config/record-links";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
-import { conversationPath } from "@/lib/conversation-path";
 import {
   assignInboundMessages,
   blockInboundSender,
@@ -23,6 +22,9 @@ import {
   fileInboundMany,
   flagInboundFact,
   handOffTriage,
+  createInboundMailbox,
+  setInboundMailboxSigningSecret,
+  updateTriageRule,
   linkInboundMessage,
   logInboundException,
   readUnreadInboundMessages,
@@ -44,6 +46,8 @@ import {
   type InboundClassification,
   type InboundLinkedRecord,
   type InboundMailbox,
+  type InboundProvider,
+  type TriageHandOff,
   type InboundMessageFilter,
   type InboundMessageDetail,
   type InboundMessageRow,
@@ -64,15 +68,21 @@ import {
 import { queries } from "@/lib/queries";
 import { inbox } from "@/lib/queries/inbox";
 import { applyRows, folderMembership, knownRow, type MembershipContext } from "@/lib/triage/cache";
+import {
+  generatePostmarkCredentials,
+  postmarkSecret,
+  webhookUrl,
+} from "@/routes/admin/inbound-mailboxes/_components/webhook-url";
 import { apiService } from "@/services/api";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useTriageStore } from "@/stores/triage-store";
+import type { AssistantThread } from "@/types/assistant";
+import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { toSentenceFragment } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { createContext, useContext, useMemo } from "react";
-import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { classificationLabel } from "./classification";
 import { nextAfterLeaving } from "./keys";
@@ -83,6 +93,8 @@ import { useTriageNavigation } from "./triage-navigation";
 export const LEAVE_MS = 240;
 const TOAST_MS = 2400;
 const UNDO_TOAST_MS = 5000;
+/** The bar a reading must clear for a source connected from Triage to act on its own. */
+const CONNECT_MIN_CONFIDENCE = 0.8;
 
 /** A snooze until a time, or until something happens on the message's shipment. */
 export type SnoozeChoice =
@@ -132,13 +144,19 @@ export type TriageActions = {
   unlink: (id: string, record: InboundLinkedRecord) => void;
   file: (messageId: string, input: FileInboundAttachmentInput) => Promise<InboundMessageDetail>;
   unfile: (messageId: string, attachmentId: string) => void;
-  fileMany: (ids: readonly string[]) => void;
+  /**
+   * Files every message's documents on its matched shipment. It reports a
+   * refusal itself; the promise is for a caller that drew the change first
+   * (the briefing's deck) and has to put its own state back.
+   */
+  fileMany: (ids: readonly string[]) => Promise<number>;
   draftReply: (id: string) => Promise<InboundReply>;
   saveReplyDraft: (id: string, subject: string, body: string) => Promise<InboundReply>;
   discardReplyDraft: (id: string) => void;
   /** Sends once even if retried: the same reply resent after no answer reuses its key. */
   sendReply: (input: SendInboundReplyInput) => Promise<InboundReply>;
-  draftMany: (ids: readonly string[]) => void;
+  /** Has Nova draft each message's reply or load; reports a refusal itself, like `fileMany`. */
+  draftMany: (ids: readonly string[]) => Promise<number>;
   draftLoad: (id: string) => Promise<InboundMessageDetail>;
   discardLoad: (id: string) => void;
   /** Books the load once even if retried. */
@@ -152,18 +170,45 @@ export type TriageActions = {
   draftRule: (input: TriageRuleInput) => void;
   setRuleEnabled: (rule: TriageRule, enabled: boolean) => void;
   deleteRule: (rule: TriageRule) => void;
-  handOff: (to: TriageUser) => void;
+  /** Turns a filled-in rule on, as the add row and the briefing's suggestion do. */
+  createRule: (input: TriageRuleInput) => Promise<TriageRule>;
+  /** Saves a blank changed on a rule: the sentence changes at once and goes back on a refusal. */
+  updateRule: (rule: TriageRule, input: TriageRuleInput) => void;
+  /** Hands everything still waiting to the person on call; the briefing says so in place. */
+  handOff: (to: TriageUser) => Promise<TriageHandOff>;
   readUnread: () => void;
   sendTestEmail: (mailbox: InboundMailbox) => void;
+  /** Creates a source from the connect flow, which shows a refusal in place. */
+  connectSource: (input: ConnectSourceInput) => Promise<ConnectedSource>;
+  /** Sends Trenova's own test to a source; the connect flow waits for it and shows a refusal. */
+  testSource: (mailbox: InboundMailbox) => Promise<InboundMailbox>;
+  /** Opens a Desk conversation about a message with an agent, for the Desk hand-off. */
+  startDeskConversation: (
+    agentId: string,
+    message: Pick<InboundMessageRow, "id" | "subject">,
+  ) => Promise<AssistantThread>;
   createView: (name: string, query: string) => Promise<TriageView>;
   renameView: (view: TriageView, name: string) => void;
   deleteView: (view: TriageView) => void;
   copyLink: (id: string) => void;
   copyText: (text: string) => void;
   openInNewTab: (id: string) => void;
-  /** Hands the message to the agent the person last talked to, in a new Desk conversation. */
-  askInDesk: (message: Pick<InboundMessageRow, "id" | "subject">) => void;
+  /** Opens the Desk hand-off on the message and the steps still open on it. */
+  askInDesk: (message: Pick<InboundMessageRow, "id"> & Partial<Pick<InboundMessageRow, "actions">>) => void;
 };
+
+/** A new source as the connect flow names it. */
+export type ConnectSourceInput = {
+  name: string;
+  /** Where Trenova receives the forwarded mail. */
+  address: string;
+  /** The shared address people already send to, kept as the source's purpose. */
+  watch: string;
+  provider: InboundProvider;
+};
+
+/** The source made, and where its provider posts mail when the server said so. */
+export type ConnectedSource = { mailbox: InboundMailbox; webhookUrl: string | null };
 
 type RowPatch = (row: InboundMessageRow, context: MembershipContext) => InboundMessageRow;
 
@@ -219,14 +264,12 @@ export function useTriageActions(): TriageActions {
 export function useTriageActionsController(): TriageActions {
   const t = useT();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const navigation = useTriageNavigation();
   const timeZone = useUserTimezone();
   const reviewKey = useIdempotencyKey();
   const replyKey = useIdempotencyKey();
   const loadKey = useIdempotencyKey();
   const me = useAuthStore((state) => state.user);
-  const lastAgentId = useAssistantStore((state) => state.lastAgentId);
 
   return useMemo<TriageActions>(() => {
     const meId = me?.id ?? null;
@@ -656,16 +699,23 @@ export function useTriageActionsController(): TriageActions {
       unfile: (_, attachmentId) =>
         quiet(detailMutation(() => unfileInboundAttachment(attachmentId), t("Unfiled"))),
       fileMany: (ids) =>
-        void fileInboundMany(ids).then((result) => {
-          const known = new Map(
-            result.messages.map((row) => [row.id, knownRow(queryClient, row.id)] as const),
-          );
-          applyRows(queryClient, result.messages, known, context());
-          refreshSummaries(queryClient);
-          announce(
-            t("{0, plural, one {Filed # message} other {Filed # messages}}", result.affected),
-          );
-        }, fail),
+        fileInboundMany(ids).then(
+          (result) => {
+            const known = new Map(
+              result.messages.map((row) => [row.id, knownRow(queryClient, row.id)] as const),
+            );
+            applyRows(queryClient, result.messages, known, context());
+            refreshSummaries(queryClient);
+            announce(
+              t("{0, plural, one {Filed # message} other {Filed # messages}}", result.affected),
+            );
+            return result.affected;
+          },
+          (error: unknown) => {
+            fail(error);
+            throw error;
+          },
+        ),
       draftReply: (id) =>
         draftInboundReply(id).then(
           (reply) => {
@@ -702,15 +752,24 @@ export function useTriageActionsController(): TriageActions {
           },
         ),
       draftMany: (ids) =>
-        void draftInboundMany(ids).then(
-          (count) =>
+        draftInboundMany(ids).then(
+          (count) => {
             announce(
               t(
                 "{0, plural, one {Nova is drafting # message} other {Nova is drafting # messages}}",
                 count,
               ),
-            ),
-          fail,
+            );
+            void queryClient.invalidateQueries({
+              queryKey: inbox.briefing().queryKey,
+              refetchType: "active",
+            });
+            return count;
+          },
+          (error: unknown) => {
+            fail(error);
+            throw error;
+          },
         ),
       draftLoad: (id) => detailMutation(() => draftInboundLoad(id), undefined, false),
       discardLoad: (id) => quiet(detailMutation(() => discardInboundLoad(id))),
@@ -796,17 +855,65 @@ export function useTriageActionsController(): TriageActions {
             .then(() => queryClient.invalidateQueries({ queryKey: key }), fail);
         });
       },
+      createRule: (input) =>
+        createTriageRule(input).then(
+          (rule) => {
+            queryClient.setQueryData<TriageRule[]>(inbox.rules().queryKey, (rules) =>
+              rules === undefined ? rules : [rule, ...rules.filter((row) => row.id !== rule.id)],
+            );
+            void queryClient.invalidateQueries({ queryKey: inbox.rules().queryKey });
+            void queryClient.invalidateQueries({
+              queryKey: inbox.briefing().queryKey,
+              refetchType: "active",
+            });
+            announce(t("Rule on — Nova starts with the next match"));
+            return rule;
+          },
+          (error: unknown) => {
+            throw error;
+          },
+        ),
+      updateRule: (rule, input) => {
+        const key = inbox.rules().queryKey;
+        const optimistic: TriageRule = {
+          ...rule,
+          classification: input.classification,
+          senderScope: input.senderScope,
+          sender: input.sender ?? "",
+          mailboxId: input.mailboxId ?? null,
+          action: input.action,
+          assigneeId: input.assigneeId ?? null,
+          assignee: input.assigneeId === rule.assigneeId ? rule.assignee : null,
+        };
+        queryClient.setQueryData<TriageRule[]>(key, (rules) =>
+          rules?.map((row) => (row.id === rule.id ? optimistic : row)),
+        );
+        void updateTriageRule(rule.id, rule.version, { ...input, enabled: rule.enabled }).then(
+          (updated) => {
+            queryClient.setQueryData<TriageRule[]>(key, (rules) =>
+              rules?.map((row) => (row.id === updated.id ? updated : row)),
+            );
+            announce(t("Rule changed"));
+          },
+          (error: unknown) => {
+            queryClient.setQueryData<TriageRule[]>(key, (rules) =>
+              rules?.map((row) => (row.id === rule.id ? rule : row)),
+            );
+            void queryClient.invalidateQueries({ queryKey: key });
+            fail(error);
+          },
+        );
+      },
       handOff: (to) =>
-        void handOffTriage(to.id).then((result) => {
-          void queryClient.invalidateQueries({ queryKey: inbox._def });
-          announce(
-            t(
-              "{0, plural, one {Handed # message} other {Handed # messages}} to {1}",
-              result.affected,
-              result.to.name,
-            ),
-          );
-        }, fail),
+        handOffTriage(to.id).then(
+          (result) => {
+            void queryClient.invalidateQueries({ queryKey: inbox._def });
+            return result;
+          },
+          (error: unknown) => {
+            throw error;
+          },
+        ),
       readUnread: () =>
         void readUnreadInboundMessages().then((count) => {
           void queryClient.invalidateQueries({ queryKey: inbox._def });
@@ -825,6 +932,73 @@ export function useTriageActionsController(): TriageActions {
           );
         }, fail);
       },
+      connectSource: async ({ name, address, watch, provider }) => {
+        const watched = watch.trim();
+        const credentials = await createInboundMailbox(
+          {
+            name: name.trim(),
+            address: address.trim(),
+            provider,
+            purpose: watched === "" ? null : t("Forwarded from {0}", watched),
+            reviewPolicy: "ReviewBelowConfidence",
+            minConfidence: CONNECT_MIN_CONFIDENCE,
+            status: "Active",
+          },
+          null,
+          null,
+        );
+        let created = credentials.mailbox;
+        let url = webhookUrl(API_BASE_URL, window.location.origin, credentials.webhookPath);
+        if (provider === "Postmark") {
+          const postmark = generatePostmarkCredentials();
+          created = await setInboundMailboxSigningSecret(created.id, postmarkSecret(postmark));
+          url = webhookUrl(
+            API_BASE_URL,
+            window.location.origin,
+            credentials.webhookPath,
+            postmark,
+          );
+        }
+        queryClient.setQueryData<InboundMailbox[]>(inbox.mailboxes().queryKey, (rows) =>
+          rows === undefined ? [created] : [...rows.filter((row) => row.id !== created.id), created],
+        );
+        void queryClient.invalidateQueries({ queryKey: inbox.mailboxes().queryKey });
+        refreshSummaries(queryClient);
+        useTriageStore.getState().markSourceConnected(Math.floor(Date.now() / 1000));
+        return { mailbox: created, webhookUrl: url };
+      },
+      testSource: (mailbox) =>
+        sendInboundMailboxTest(mailbox.id).then(
+          (updated) => {
+            queryClient.setQueryData<InboundMailbox[]>(inbox.mailboxes().queryKey, (rows) =>
+              rows?.map((row) => (row.id === updated.id ? updated : row)),
+            );
+            return updated;
+          },
+          (error: unknown) => {
+            throw error;
+          },
+        ),
+      startDeskConversation: (agentId, message) =>
+        apiService.assistantService
+          .startThread(agentId, {
+            origin: "Desk",
+            title: message.subject.trim() === "" ? t("About an inbound message") : message.subject,
+            subjectType: "InboundMessage",
+            subjectId: message.id,
+          })
+          .then(
+            (thread) => {
+              useAssistantStore.getState().setLastAgentId(agentId);
+              void queryClient.invalidateQueries({
+                queryKey: queries.assistant.threads().queryKey,
+              });
+              return thread;
+            },
+            (error: unknown) => {
+              throw error;
+            },
+          ),
       createView: (name, query) =>
         createMyTriageView(name, query).then(
           (view) => {
@@ -888,37 +1062,14 @@ export function useTriageActionsController(): TriageActions {
       openInNewTab: (id) => {
         window.open(messageUrl(id), "_blank", "noopener,noreferrer");
       },
-      askInDesk: (message) => {
-        void queryClient
-          .fetchQuery(queries.assistant.myAgents())
-          .then((agents) => {
-            const agent = agents.find((row) => row.id === lastAgentId) ?? agents[0];
-            if (agent === undefined) {
-              toast.error(t("No agents are available to ask"));
-              return;
-            }
-            return apiService.assistantService
-              .startThread(agent.id, {
-                origin: "Desk",
-                title: message.subject === "" ? t("About an inbound message") : message.subject,
-                subjectType: "InboundMessage",
-                subjectId: message.id,
-              })
-              .then((thread) => navigate(conversationPath(thread.id)));
-          })
-          .catch((error: unknown) => handleMutationError({ error, resourceName: "Conversation" }));
-      },
+      askInDesk: (message) =>
+        useTriageStore.getState().openOverlay({
+          kind: "desk",
+          messageId: message.id,
+          openActionIds: (message.actions ?? [])
+            .filter((action) => !action.done)
+            .map((action) => action.id),
+        }),
     };
-  }, [
-    t,
-    queryClient,
-    navigate,
-    navigation,
-    timeZone,
-    reviewKey,
-    replyKey,
-    loadKey,
-    me,
-    lastAgentId,
-  ]);
+  }, [t, queryClient, navigation, timeZone, reviewKey, replyKey, loadKey, me]);
 }

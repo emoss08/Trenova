@@ -22,7 +22,12 @@ func (s *recordingSink) ShipmentDelivered(_ context.Context, _ pagination.Tenant
 	s.delivered = append(s.delivered, id)
 }
 
-func (s *recordingSink) DocumentAttached(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID) {
+func (s *recordingSink) DocumentAttached(
+	context.Context,
+	pagination.TenantInfo,
+	pulid.ID,
+	pulid.ID,
+) {
 }
 
 func (s *recordingSink) InvoicePaid(context.Context, pagination.TenantInfo, pulid.ID) {}
