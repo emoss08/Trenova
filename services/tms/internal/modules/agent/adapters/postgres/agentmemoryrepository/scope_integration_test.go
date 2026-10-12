@@ -135,3 +135,54 @@ func TestResolveSuggestion_ApprovesForTheScopeAsked(t *testing.T) {
 		assert.Equal(t, want, resolved.Scope)
 	}
 }
+
+func TestResolveSuggestion_RecordsAReviewOnlyWhenAPersonApproves(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	data := seedtest.SeedFullTestData(t, ctx, db)
+	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
+	agentID := pulid.MustNew("agdef_")
+	at := timeutils.NowUnix()
+
+	approve := func(content string, by pulid.ID) *agent.Memory {
+		t.Helper()
+
+		created, err := repo.Create(ctx, suggestedMemory(tenant, agentID,
+			agent.MemoryStatusSuggested, content))
+		require.NoError(t, err)
+
+		resolved, err := repo.ResolveSuggestion(ctx,
+			agentports.ResolveAgentMemorySuggestionRequest{
+				ID:         created.ID,
+				TenantInfo: tenant,
+				Status:     agent.MemoryStatusActive,
+				Kind:       created.Kind,
+				Content:    created.Content,
+				ByUserID:   by,
+				At:         at,
+				Version:    created.Version,
+			})
+		require.NoError(t, err)
+
+		stored, err := repo.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
+			ID:         resolved.ID,
+			TenantInfo: tenant,
+		})
+		require.NoError(t, err)
+
+		return stored
+	}
+
+	byPerson := approve("Quote fuel surcharge from the weekly index", data.User.ID)
+	require.NotNil(t, byPerson.ReviewedByUserID)
+	assert.Equal(t, data.User.ID, *byPerson.ReviewedByUserID)
+	require.NotNil(t, byPerson.ReviewedAt)
+	assert.Equal(t, at, *byPerson.ReviewedAt)
+
+	byNoOne := approve("Quote detention after two free hours", pulid.Nil)
+	assert.Nil(t, byNoOne.ReviewedByUserID)
+	assert.Nil(t, byNoOne.ReviewedAt)
+	assert.Equal(t, agent.MemoryStatusActive, byNoOne.Status)
+}
