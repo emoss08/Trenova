@@ -408,6 +408,9 @@ func applyTrailerRelations(
 	if includeRegistrationState {
 		q = q.Relation(rel.RegistrationState)
 	}
+	if includes.IncludeOwnerWorker {
+		q = q.Relation(rel.OwnerWorker, dbhelper.RelationColumns(includes.OwnerWorkerColumns))
+	}
 	if includeEquipmentType {
 		q = q.Relation(rel.EquipmentType, dbhelper.RelationColumns(includes.EquipmentTypeColumns))
 	}
@@ -470,6 +473,8 @@ func applyLastKnownLocationJoin(
 
 	return q.ColumnExpr("ec.current_location_id AS last_known_location_id").
 		ColumnExpr("COALESCE(lkl.name, '') AS last_known_location_name").
+		ColumnExpr("lkl.latitude AS last_known_location_latitude").
+		ColumnExpr("lkl.longitude AS last_known_location_longitude").
 		Join("LEFT JOIN equipment_continuity AS ec ON ec.equipment_id = tr.id AND ec.equipment_type = ? AND ec.organization_id = tr.organization_id AND ec.business_unit_id = tr.business_unit_id AND ec.is_current = TRUE", "Trailer").
 		Join("LEFT JOIN locations AS lkl ON lkl.id = ec.current_location_id AND lkl.organization_id = ec.organization_id AND lkl.business_unit_id = ec.business_unit_id")
 }

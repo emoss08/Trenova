@@ -302,6 +302,19 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNWorkerConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerConnection),
 			},
 			{
+				Name:       "worker",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "Worker",
+				Args:       field_Query_worker_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").Worker(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
+			},
+			{
 				Name:       "workerPTOEntries",
 				NonNull:    true,
 				IsResolver: true,
@@ -1518,6 +1531,7 @@ type resolverPTOChartDataPoint interface {
 
 type resolverQuery interface {
 	Workers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.WorkerConnection, error)
+	Worker(ctx context.Context, id string) (*worker.Worker, error)
 	WorkerPTOEntries(ctx context.Context, input gqlmodel.WorkerPTOEntriesInput) (*gqlmodel.WorkerPTOConnection, error)
 	UpcomingWorkerPTO(ctx context.Context, input gqlmodel.UpcomingWorkerPTOInput) (*gqlmodel.WorkerPTOConnection, error)
 	WorkerPTOChartData(ctx context.Context, input gqlmodel.WorkerPTOChartInput) ([]*workerports.PTOChartDataPoint, error)
@@ -1690,6 +1704,19 @@ func field_Query_workers_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_worker_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
 	return args, nil
 }
 

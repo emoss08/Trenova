@@ -2,8 +2,8 @@ import type { ARCustomerProfile } from "@/lib/graphql/accounts-receivable";
 import type {
   DeskCustomer as DeskCustomerRecord,
   DeskCustomerRateAgreement,
-  DeskCustomerShipment,
 } from "@/lib/graphql/customer-card";
+import type { RecordShipment } from "@/lib/graphql/record-shipments";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
@@ -21,8 +21,10 @@ const fetchers = vi.hoisted(() => ({
 
 vi.mock("@/lib/graphql/customer-card", () => ({
   fetchDeskCustomer: fetchers.customer,
-  fetchCustomerRecentShipments: fetchers.shipments,
   fetchCustomerRateAgreements: fetchers.agreements,
+}));
+vi.mock("@/lib/graphql/record-shipments", () => ({
+  fetchRecordShipments: fetchers.shipments,
 }));
 // The shipment card is its own chunk; here it stands in as what it was given,
 // with its way back.
@@ -167,7 +169,12 @@ const shipment = {
       ],
     },
   ],
-} as DeskCustomerShipment;
+} as RecordShipment;
+
+/** A first page of shipments as fetchRecordShipments returns it, with nothing after it. */
+function shipmentPage(rows: RecordShipment[], total: number) {
+  return { rows, total, endCursor: null, hasNextPage: false };
+}
 
 const agreement = {
   id: "ra_1",
@@ -218,7 +225,7 @@ beforeEach(() => {
   for (const fn of Object.values(fetchers)) fn.mockReset();
   fetchers.customer.mockResolvedValue(customer());
   fetchers.receivables.mockResolvedValue(receivables());
-  fetchers.shipments.mockResolvedValue({ rows: [shipment], total: 42 });
+  fetchers.shipments.mockResolvedValue(shipmentPage([shipment], 42));
   fetchers.agreements.mockResolvedValue({ rows: [agreement], total: 1 });
 });
 
@@ -279,7 +286,7 @@ describe("DeskCustomer", () => {
       "aria-valuenow",
       "80",
     );
-    expect(bills.querySelector(".dk-cu-credit")).toHaveClass("dk-warn");
+    expect(bills.querySelector(".dk-rec-gauge")).toHaveClass("dk-warn");
     expect(within(bills).getByText("Net 30")).toBeInTheDocument();
     expect(within(bills).getByText("Weekly")).toBeInTheDocument();
     expect(within(bills).getByText("Per shipment · Email")).toBeInTheDocument();
@@ -296,17 +303,20 @@ describe("DeskCustomer", () => {
     const row = await screen.findByRole("button", { name: /S26100090038417/ });
     expect(within(row).getByText(/Atlanta, GA/)).toHaveTextContent("Atlanta, GA → Dallas, TX");
     expect(within(section("Recent shipments")).getByText("42 shipments")).toBeInTheDocument();
-    expect(fetchers.shipments).toHaveBeenCalledWith("cus_1", 5, expect.anything());
+    expect(fetchers.shipments).toHaveBeenCalledWith(
+      { kind: "customer", id: "cus_1" },
+      { first: 5, after: null },
+      expect.anything(),
+    );
   });
 
   // A shipment the card lists opens as a table's row does: as the shipment's
   // own card, in the customer card's place, stepping through the shipments
   // listed, and the way back returns to the customer.
   it("opens a listed shipment in the card's place, and goes back to the customer", async () => {
-    fetchers.shipments.mockResolvedValue({
-      rows: [shipment, { ...shipment, id: "shp_2", proNumber: "S2" }],
-      total: 2,
-    });
+    fetchers.shipments.mockResolvedValue(
+      shipmentPage([shipment, { ...shipment, id: "shp_2", proNumber: "S2" }], 2),
+    );
     draw();
 
     fireEvent.click(await screen.findByRole("button", { name: /S26100090038417/ }));

@@ -452,6 +452,7 @@ type ResolverRoot interface {
 	RoutingGuideEntry() RoutingGuideEntryResolver
 	SafetyScorecard() SafetyScorecardResolver
 	ServiceFailure() ServiceFailureResolver
+	ServiceFailureShipment() ServiceFailureShipmentResolver
 	ServiceFailureStop() ServiceFailureStopResolver
 	SettlementControl() SettlementControlResolver
 	SettlementException() SettlementExceptionResolver
@@ -2650,7 +2651,7 @@ type QueryResolver interface {
 	WorkerPolicyCompliance(ctx context.Context, id string) (*gqlmodel.PolicyCompliance, error)
 	WorkerPolicyAcknowledgements(ctx context.Context, workerID string) ([]*worker.WorkerPolicyAcknowledgement, error)
 	ProfileChangeRequests(ctx context.Context, filter *gqlmodel.ProfileChangeFilterInput) ([]*worker.WorkerProfileChangeRequest, error)
-	ServiceFailures(ctx context.Context, input gqlmodel.DataTableConnectionInput, shipmentID *string) (*gqlmodel.ServiceFailureConnection, error)
+	ServiceFailures(ctx context.Context, input gqlmodel.DataTableConnectionInput, shipmentID *string, locationID *string) (*gqlmodel.ServiceFailureConnection, error)
 	ServiceFailure(ctx context.Context, id string) (*servicefailure.ServiceFailure, error)
 	ServiceFailureReasonCodes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ServiceFailureReasonCodeConnection, error)
 	ServiceFailureReasonCode(ctx context.Context, id string) (*servicefailure.ReasonCode, error)
@@ -2695,12 +2696,13 @@ type QueryResolver interface {
 	TelematicsFormMapping(ctx context.Context, id string) (*gqlmodel.TelematicsFormMapping, error)
 	ShipmentDriverFeasibility(ctx context.Context, shipmentID string) ([]*gqlmodel.DriverFeasibility, error)
 	VehiclePositions(ctx context.Context, maxAgeSeconds *int) ([]*gqlmodel.VehiclePosition, error)
+	VehiclePosition(ctx context.Context, tractorID string) (*gqlmodel.VehiclePosition, error)
 	WorkerHosStates(ctx context.Context, workerIds []string, limit *int) ([]*gqlmodel.WorkerHosState, error)
 	WorkerHosState(ctx context.Context, workerID string) (*gqlmodel.WorkerHosState, error)
 	WorkerHosViolations(ctx context.Context, workerID *string, since *int, limit *int) ([]*gqlmodel.WorkerHosViolation, error)
 	WorkerHosLogs(ctx context.Context, workerID string, startTime int, endTime int) ([]*gqlmodel.WorkerHosLogEntry, error)
 	WorkerHosDailyLogs(ctx context.Context, workerID string, startDate string, endDate string) ([]*gqlmodel.WorkerHosDailyLog, error)
-	VehicleInspections(ctx context.Context, tractorID *string, workerID *string, since *int, limit *int) ([]*gqlmodel.VehicleInspection, error)
+	VehicleInspections(ctx context.Context, tractorID *string, workerID *string, since *int, limit *int, before *int, beforeID *string) ([]*gqlmodel.VehicleInspection, error)
 	WorkerFormSubmissions(ctx context.Context, workerID string, startTime int, endTime int) ([]*gqlmodel.WorkerFormSubmission, error)
 	HosCertificationSummary(ctx context.Context, startDate string, endDate string) ([]*gqlmodel.HosCertificationSummary, error)
 	TelematicsStatus(ctx context.Context) (*gqlmodel.TelematicsStatus, error)
@@ -2723,6 +2725,7 @@ type QueryResolver interface {
 	WatchtowerItems(ctx context.Context, input gqlmodel.WatchtowerItemsInput) (*gqlmodel.WatchtowerItemConnection, error)
 	WatchtowerCounts(ctx context.Context) (*gqlmodel.WatchtowerCounts, error)
 	Workers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.WorkerConnection, error)
+	Worker(ctx context.Context, id string) (*worker.Worker, error)
 	WorkerPTOEntries(ctx context.Context, input gqlmodel.WorkerPTOEntriesInput) (*gqlmodel.WorkerPTOConnection, error)
 	UpcomingWorkerPTO(ctx context.Context, input gqlmodel.UpcomingWorkerPTOInput) (*gqlmodel.WorkerPTOConnection, error)
 	WorkerPTOChartData(ctx context.Context, input gqlmodel.WorkerPTOChartInput) ([]*workerports.PTOChartDataPoint, error)
@@ -2806,6 +2809,14 @@ type SafetyScorecardResolver interface {
 
 type ServiceFailureResolver interface {
 	StopType(ctx context.Context, obj *servicefailure.ServiceFailure) (gqlmodel.StopType, error)
+	CreatedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
+	ReviewedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
+	ResolvedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
+	VoidedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
+}
+
+type ServiceFailureShipmentResolver interface {
+	Customer(ctx context.Context, obj *shipment.Shipment) (*customer.Customer, error)
 }
 
 type ServiceFailureStopResolver interface {
@@ -3455,6 +3466,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"RoutingGuideEntry":                  func() any { return r.RoutingGuideEntry() },
 			"SafetyScorecard":                    func() any { return r.SafetyScorecard() },
 			"ServiceFailure":                     func() any { return r.ServiceFailure() },
+			"ServiceFailureShipment":             func() any { return r.ServiceFailureShipment() },
 			"ServiceFailureStop":                 func() any { return r.ServiceFailureStop() },
 			"SettlementControl":                  func() any { return r.SettlementControl() },
 			"SettlementException":                func() any { return r.SettlementException() },
@@ -14199,6 +14211,8 @@ input DetentionStatsInput {
   from: Timestamp!
   to: Timestamp!
   limit: Int
+  "Only the stops made at this location."
+  locationId: ID
 }
 
 extend type Query {
@@ -22264,6 +22278,9 @@ type Location {
 type LocationReference {
   id: ID!
   name: String!
+  "Where the location is, when it has been geocoded."
+  latitude: Float
+  longitude: Float
 }
 
 type LocationEdge {
@@ -25054,6 +25071,7 @@ type ServiceFailureShipment {
   id: ID!
   proNumber: String!
   bol: String
+  customer: Customer
 }
 
 type ServiceFailureStop {
@@ -25094,12 +25112,23 @@ type ServiceFailure {
   x12ReasonCodeOverride: String!
   x12ExceptionCode: String!
   detectedAt: Timestamp!
+  reviewedAt: Timestamp
+  resolvedAt: Timestamp
+  voidedAt: Timestamp
+  voidReason: String!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
   shipment: ServiceFailureShipment
   stop: ServiceFailureStop
   reasonCode: ServiceFailureReasonCode
+  """
+  Who logged the failure by hand; null for one detected or received.
+  """
+  createdBy: User
+  reviewedBy: User
+  resolvedBy: User
+  voidedBy: User
 }
 
 type ServiceFailureEdge {
@@ -25114,7 +25143,12 @@ type ServiceFailureConnection {
 }
 
 extend type Query {
-  serviceFailures(input: DataTableConnectionInput!, shipmentId: ID): ServiceFailureConnection!
+  serviceFailures(
+    input: DataTableConnectionInput!
+    shipmentId: ID
+    "Only failures at a stop made at this location."
+    locationId: ID
+  ): ServiceFailureConnection!
   serviceFailure(id: ID!): ServiceFailure
 }
 `, BuiltIn: false},
@@ -27138,6 +27172,16 @@ input ShipmentsInput {
   quickFilters: [ShipmentQuickFilterInput!]
   "IANA time zone for day and hour quick filters."
   timezone: String
+  "Only shipments with a live move assigned to one of these tractors."
+  tractorIds: [ID!]
+  "Only shipments with a live move assigned to one of these trailers."
+  trailerIds: [ID!]
+  "Only shipments with a live move one of these workers drives, in either seat."
+  workerIds: [ID!]
+  "Only shipments with a live stop at one of these locations."
+  stopLocationIds: [ID!]
+  "Only shipments with a live move tendered to one of these carriers."
+  carrierIds: [ID!]
 }
 
 input ShipmentEventsInput {
@@ -28191,12 +28235,25 @@ extend type Query {
   telematicsFormMapping(id: ID!): TelematicsFormMapping
   shipmentDriverFeasibility(shipmentId: ID!): [DriverFeasibility!]!
   vehiclePositions(maxAgeSeconds: Int): [VehiclePosition!]!
+  "One tractor's latest reported position, however old; null when the tractor has never reported one."
+  vehiclePosition(tractorId: ID!): VehiclePosition
   workerHosStates(workerIds: [ID!], limit: Int): [WorkerHosState!]!
   workerHosState(workerId: ID!): WorkerHosState
   workerHosViolations(workerId: ID, since: Timestamp, limit: Int): [WorkerHosViolation!]!
   workerHosLogs(workerId: ID!, startTime: Timestamp!, endTime: Timestamp!): [WorkerHosLogEntry!]!
   workerHosDailyLogs(workerId: ID!, startDate: String!, endDate: String!): [WorkerHosDailyLog!]!
-  vehicleInspections(tractorId: ID, workerId: ID, since: Timestamp, limit: Int): [VehicleInspection!]!
+  """
+  Inspections newest first. Pass the startedAt and id of the last one seen as
+  before and beforeId to read the next page.
+  """
+  vehicleInspections(
+    tractorId: ID
+    workerId: ID
+    since: Timestamp
+    limit: Int
+    before: Timestamp
+    beforeId: ID
+  ): [VehicleInspection!]!
   workerFormSubmissions(workerId: ID!, startTime: Timestamp!, endTime: Timestamp!): [WorkerFormSubmission!]!
   hosCertificationSummary(startDate: String!, endDate: String!): [HosCertificationSummary!]!
   telematicsStatus: TelematicsStatus!
@@ -28596,7 +28653,14 @@ extend type Mutation {
   voidPayrollExport(input: VoidPayrollExportInput!): PayrollExport!
 }
 `, BuiltIn: false},
-	{Name: "../schema/tractor.graphqls", Input: `type TractorEdge {
+	{Name: "../schema/tractor.graphqls", Input: `"Who owns a piece of equipment."
+enum EquipmentOwnershipType {
+  CompanyOwned
+  Leased
+  OwnerOperator
+}
+
+type TractorEdge {
   node: Tractor!
   cursor: String!
 }
@@ -28639,6 +28703,16 @@ type Tractor {
   Whether the tractor's miles and fuel enter the IFTA return.
   """
   iftaQualified: Boolean!
+  "Who owns the tractor: the company, a lessor, or the owner-operator who drives it."
+  ownershipType: EquipmentOwnershipType!
+  "The owner-operator who owns the tractor, when it is theirs."
+  ownerWorkerId: ID
+  "The lessor a leased tractor is leased from."
+  lessorName: String!
+  "The lessor's reference for the lease."
+  leaseReference: String!
+  "When the lease on a leased tractor ends."
+  leaseEndDate: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -28651,6 +28725,7 @@ type Tractor {
   state: UsState
   primaryWorker: Worker
   secondaryWorker: Worker
+  ownerWorker: Worker
   lastKnownLocation: LocationReference
 }
 
@@ -28790,6 +28865,16 @@ type Trailer {
   registrationExpiry: Timestamp
   lastKnownLocationId: ID
   lastKnownLocationName: String!
+  "Who owns the trailer: the company, a lessor, or an owner-operator."
+  ownershipType: EquipmentOwnershipType!
+  "The owner-operator who owns the trailer, when it is theirs."
+  ownerWorkerId: ID
+  "The lessor a leased trailer is leased from."
+  lessorName: String!
+  "The lessor's reference for the lease."
+  leaseReference: String!
+  "When the lease on a leased trailer ends."
+  leaseEndDate: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -28800,6 +28885,7 @@ type Trailer {
   equipmentManufacturer: EquipmentManufacturer
   fleetCode: FleetCode
   registrationState: UsState
+  ownerWorker: Worker
   lastKnownLocation: LocationReference
 }
 
@@ -29374,6 +29460,8 @@ input WorkerPTOChartInput {
 
 extend type Query {
   workers(input: DataTableConnectionInput!): WorkerConnection!
+  "One worker, with the profile, state, fleet, manager and license state it is asked for."
+  worker(id: ID!): Worker
   workerPTOEntries(input: WorkerPTOEntriesInput!): WorkerPTOConnection!
   upcomingWorkerPTO(input: UpcomingWorkerPTOInput!): WorkerPTOConnection!
   workerPTOChartData(input: WorkerPTOChartInput!): [PTOChartDataPoint!]!

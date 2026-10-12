@@ -19,6 +19,7 @@ import type {
 } from "@trenova/shared/types/rate";
 import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router";
+import { CardActivity } from "../../record-card/card-activity";
 import { useCardAccess } from "../../record-card/card-access";
 import {
   CardBar,
@@ -26,16 +27,20 @@ import {
   CardFacts,
   CardHead,
   CardIcon,
+  CardMeter,
   CardRecordRow,
   CardSection,
   CardSectionError,
   CardSectionWait,
   CardStatus,
   CardStepper,
+  CardUnreadable,
   CardTimeline,
   RecordCard,
 } from "../../record-card/record-card";
 import { cardDay, cardMoment, money, neighborsIn } from "../../record-card/record-card-values";
+import { useRecordActivity } from "../../record-card/record-activity";
+import { CardMeterSkeleton } from "../../skeletons/record-card-skeleton";
 import { useListedRecords, type RecordArtifactProps } from "../registry";
 import {
   accessorialTerms,
@@ -46,6 +51,7 @@ import {
   guardrails,
   lanePricing,
   laneTerms,
+  pricingGroups,
 } from "./rate-agreement-card";
 import { ApprovalPath, TermPanel } from "./rate-agreement-term";
 import { RATE_AGREEMENT_SECTIONS } from "./rate-agreement-sections";
@@ -60,6 +66,10 @@ const LANE_PAGE = 8;
 const BREAK_ROWS = 4;
 /** The versions the card lists. */
 const VERSION_ROWS = 4;
+/** The ways of pricing the rate structure draws before folding the rest into one. */
+export const PRICING_ROWS = 5;
+/** The activity entries the card reads at a time. */
+const ACTIVITY_ROWS = 5;
 
 /**
  * What the card is given: the agreement, and when it was opened from a table
@@ -106,18 +116,13 @@ export function DeskRateAgreement({
 
   if (!agreement) {
     return query.isError ? (
-      <RecordCard>
-        <CardHead
-          onBack={onBack}
-          backLabel={backLabel ?? t("Back to the table")}
-          kicker={[t("Rate agreement")]}
-          title={t("This rate agreement could not be read")}
-          subtitle={describeApiError(
-            query.error,
-            t("It may have been removed, or you may not be allowed to see it."),
-          )}
-        />
-      </RecordCard>
+      <CardUnreadable
+        kind={t("Rate agreement")}
+        title={t("This rate agreement could not be read")}
+        error={query.error}
+        onBack={onBack}
+        backLabel={backLabel}
+      />
     ) : (
       <DeskRateAgreementSkeleton stepper={onSelect !== undefined && order.length > 1} />
     );
@@ -163,6 +168,16 @@ function AgreementCard({
     ...queries.rateAgreement.pricing(recordId),
     enabled: access.pricing,
     retry: false,
+  });
+
+  const laneSummary = useQuery({
+    ...queries.rateAgreement.laneSummary(recordId),
+    retry: false,
+  });
+  const activity = useRecordActivity({
+    resourceId: recordId,
+    pageSize: ACTIVITY_ROWS,
+    enabled: access.activity,
   });
 
   const laneQuery = useInfiniteQuery({
@@ -322,6 +337,36 @@ function AgreementCard({
         </div>
       </CardSection>
 
+      <CardSection title={t("Rate structure")}>
+        {laneSummary.isError ? (
+          <CardSectionError>
+            {describeApiError(laneSummary.error, t("How the lanes are priced could not be read."))}
+          </CardSectionError>
+        ) : !laneSummary.data ? (
+          <div className="dk-ra-mix" aria-busy>
+            <CardMeterSkeleton />
+            <CardMeterSkeleton />
+          </div>
+        ) : laneSummary.data.count === 0 ? (
+          <p className="dk-ra-note">
+            {t("Once a lane prices freight, how each is priced shows here.")}
+          </p>
+        ) : (
+          <div className="dk-ra-mix">
+            {pricingGroups(laneSummary.data, { rows: PRICING_ROWS, currency }, t).map((group) => (
+              <CardMeter
+                key={group.key}
+                label={group.label}
+                reading={t("{0, plural, one {# lane} other {# lanes}}", group.lanes)}
+                figure={group.range ?? undefined}
+                share={group.share}
+                state="ok"
+              />
+            ))}
+          </div>
+        )}
+      </CardSection>
+
       <CardSection
         title={t("Lanes")}
         aside={
@@ -426,6 +471,13 @@ function AgreementCard({
           ))}
         </dl>
       </CardSection>
+
+      {access.activity && (
+        <CardActivity
+          activity={activity}
+          emptyText={t("Nothing has been done to this agreement yet.")}
+        />
+      )}
 
       {latestVersions.length > 0 && (
         <CardSection title={t("Versions")}>

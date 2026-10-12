@@ -19,6 +19,7 @@ import type {
   WorkerHosState,
   WorkerHosViolation,
 } from "@/lib/graphql/telematics";
+import { dutyStatusLabel } from "@/lib/hos";
 import { queries } from "@/lib/queries";
 import {
   formatClockDurationMs,
@@ -85,20 +86,23 @@ const SHIFT_LIMIT_MS = 14 * HOUR_MS;
 const CYCLE_LIMIT_MS = 70 * HOUR_MS;
 const BREAK_LIMIT_MS = 8 * HOUR_MS;
 
-const dutyStatusMeta: Record<string, { label: string; variant: BadgeVariant }> = {
-  driving: { label: "Driving", variant: "accent-emerald" },
-  onDuty: { label: "On duty", variant: "accent-amber" },
-  offDuty: { label: "Off duty", variant: "neutral" },
-  sleeperBed: { label: "Sleeper berth", variant: "accent-violet" },
-  yardMove: { label: "Yard move", variant: "accent-sky" },
-  personalConveyance: { label: "Personal conveyance", variant: "accent-teal" },
+const dutyStatusVariant: Record<string, BadgeVariant> = {
+  driving: "accent-emerald",
+  onDuty: "accent-amber",
+  offDuty: "neutral",
+  sleeperBed: "accent-violet",
+  yardMove: "accent-sky",
+  personalConveyance: "accent-teal",
 };
 
 function getDutyStatusMeta(dutyStatus: string | null): { label: string; variant: BadgeVariant } {
   if (!dutyStatus) {
     return { label: translate("Unknown"), variant: "neutral" };
   }
-  return dutyStatusMeta[dutyStatus] ?? { label: toTitleCase(dutyStatus), variant: "secondary" };
+  return {
+    label: dutyStatusLabel(dutyStatus),
+    variant: dutyStatusVariant[dutyStatus] ?? "secondary",
+  };
 }
 
 function limitLabel(limitMs: number): string {

@@ -29,6 +29,7 @@ type TractorRelationIncludes struct {
 	IncludeSecondaryWorkerState   bool     `json:"includeSecondaryWorkerState"`
 	IncludeSecondaryWorkerFleet   bool     `json:"includeSecondaryWorkerFleet"`
 	IncludeSecondaryWorkerManager bool     `json:"includeSecondaryWorkerManager"`
+	IncludeOwnerWorker            bool     `json:"includeOwnerWorker"`
 	IncludeLastKnownLocation      bool     `json:"includeLastKnownLocation"`
 	IncludeCustomFields           bool     `json:"includeCustomFields"`
 	TractorColumns                []string `json:"-"`
@@ -37,6 +38,7 @@ type TractorRelationIncludes struct {
 	FleetCodeColumns              []string `json:"-"`
 	PrimaryWorkerColumns          []string `json:"-"`
 	SecondaryWorkerColumns        []string `json:"-"`
+	OwnerWorkerColumns            []string `json:"-"`
 }
 
 func FullTractorRelationIncludes() TractorRelationIncludes {
@@ -59,6 +61,7 @@ func FullTractorRelationIncludes() TractorRelationIncludes {
 		IncludeSecondaryWorkerState:   true,
 		IncludeSecondaryWorkerFleet:   true,
 		IncludeSecondaryWorkerManager: true,
+		IncludeOwnerWorker:            true,
 		IncludeLastKnownLocation:      true,
 		IncludeCustomFields:           true,
 	}

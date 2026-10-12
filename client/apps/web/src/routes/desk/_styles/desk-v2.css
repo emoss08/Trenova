@@ -3911,6 +3911,7 @@ button.dk-dx-c:hover {
   display: flex;
   flex-direction: column;
   min-height: 100%;
+  container-type: inline-size;
 }
 .dk-rec-head {
   padding: 2px 16px 18px;
@@ -3951,6 +3952,9 @@ button.dk-dx-c:hover {
   display: flex;
   flex-direction: column;
   gap: 3px;
+}
+.dk-rec-who.dk-alone {
+  align-self: flex-start;
 }
 .dk-rec-who h2 {
   margin: 0;
@@ -4018,10 +4022,13 @@ button.dk-dx-c:hover {
   background: var(--dsk-ink);
   box-shadow: none;
 }
-.dk-rec-st.dk-hold {
+.dk-rec-st.dk-st-warn {
   color: var(--dsk-warn-fg);
   background: var(--dsk-warn-sub);
   box-shadow: none;
+}
+.dk-rec-st.dk-st-warn i {
+  background: var(--dsk-warn);
 }
 .dk-rec-sec {
   padding: 16px 16px 4px;
@@ -4085,6 +4092,10 @@ button.dk-dx-c:hover {
 .dk-rec-ck.dk-bad .dk-rec-ci {
   color: var(--dsk-ink-fg);
   background: var(--dsk-fg);
+}
+.dk-rec-ck.dk-info .dk-rec-ci {
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
 }
 .dk-rec-ck.dk-warn,
 .dk-rec-ck.dk-bad {
@@ -4274,7 +4285,7 @@ button.dk-dx-c:hover {
 .dk-rec-log {
   list-style: none;
   margin: 0;
-  padding: 0 0 12px;
+  padding: 0;
 }
 .dk-rec-log li {
   position: relative;
@@ -4292,6 +4303,9 @@ button.dk-dx-c:hover {
   bottom: 0;
   width: 1px;
   background: var(--dsk-b);
+}
+.dk-rec-log li:last-child {
+  padding-bottom: 0;
 }
 .dk-rec-log li:last-child::before {
   display: none;
@@ -4484,7 +4498,7 @@ button.dk-dx-c:hover {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 2px 0 12px;
+  padding: 2px 0 0;
 }
 .dk-rec-sk-log > div {
   display: grid;
@@ -4779,6 +4793,540 @@ a.dk-rec-doc:focus-visible {
     animation: none;
     transition: none;
   }
+}
+/* a person or a company as initials in a round mark */
+.dk-rec-av {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-rec-av.dk-sm {
+  width: 22px;
+  height: 22px;
+  font-size: 10px;
+}
+.dk-rec-av.dk-lg {
+  width: 44px;
+  height: 44px;
+  font-size: 15px;
+}
+.dk-rec-hrow > .dk-rec-av {
+  align-self: center;
+}
+.dk-rec-hrow > .dk-rec-av + .dk-rec-who {
+  flex: 1;
+}
+/* what one change changed, from what to what, under its sentence in a timeline */
+.dk-rec-diff {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 3px 0 2px;
+}
+.dk-rec-diff > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  font-size: 11.5px;
+}
+.dk-rec-diff dt {
+  color: var(--dsk-subtle);
+}
+.dk-rec-diff dd {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 6px;
+  margin: 0;
+  min-width: 0;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+}
+.dk-rec-diff s {
+  color: var(--dsk-faint);
+}
+.dk-rec-diff dd > span {
+  color: var(--dsk-faint);
+}
+.dk-rec-log li > :not(i) {
+  grid-column: 2;
+}
+.dk-rec-log li > i {
+  grid-row: span 3;
+}
+.dk-rec-diff b {
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+/* shipments as a ruled table, a load to a line under the column heads */
+.dk-rec-tbl {
+  display: flex;
+  flex-direction: column;
+}
+.dk-rec-tbl-h,
+.dk-rec-row.dk-rec-tbl-r {
+  display: grid;
+  grid-template-columns: minmax(84px, 0.9fr) minmax(0, 1.6fr) 56px 84px 84px;
+  align-items: center;
+  gap: 10px;
+}
+.dk-rec-tbl-h > span:last-child,
+.dk-rec-tbl-r > :last-child {
+  justify-self: end;
+}
+.dk-rec-tbl-h {
+  padding: 0 4px 6px;
+  border-bottom: 1px solid var(--dsk-b);
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-rec-tbl-h > span:nth-child(3),
+.dk-rec-tbl-h > span:nth-child(4) {
+  text-align: end;
+}
+.dk-rec-row.dk-rec-tbl-r {
+  padding: 8px 4px;
+  border-top: 0;
+  border-bottom: 1px solid var(--dsk-b-sub);
+  font-size: 12.5px;
+}
+.dk-rec-tbl-r > b {
+  font-weight: 500;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+}
+.dk-rec-tbl-r > .dk-rec-lane {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-rec-tbl-n {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  text-align: end;
+  white-space: nowrap;
+  color: var(--dsk-fg2);
+}
+@container (max-width: 520px) {
+  .dk-rec-tbl-h,
+  .dk-rec-row.dk-rec-tbl-r {
+    grid-template-columns: minmax(0, 1fr) 84px 84px;
+  }
+  .dk-rec-tbl-h > span:nth-child(2),
+  .dk-rec-tbl-h > span:nth-child(3),
+  .dk-rec-tbl-r > .dk-rec-lane,
+  .dk-rec-tbl-r > .dk-rec-tbl-n:nth-of-type(1) {
+    display: none;
+  }
+}
+/* shipments as a departures board, led by when each load picks up */
+.dk-rec-board {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dk-rec-row.dk-rec-board-r {
+  grid-template-columns: 76px minmax(0, 1fr) auto;
+  gap: 14px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--dsk-sunken);
+}
+.dk-rec-board-r:hover {
+  background: var(--dsk-hover);
+}
+.dk-rec-board-at {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-right: 12px;
+  border-right: 1px solid var(--dsk-b);
+}
+.dk-rec-board-at b {
+  font: 600 15px var(--dk-plex);
+  font-feature-settings: "tnum";
+  letter-spacing: -0.01em;
+  color: var(--dsk-fg);
+}
+.dk-rec-board-at span {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+/* an order's legs one after another down a line, each from its pickup to its delivery */
+.dk-rec-route {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-rec-route > li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 10px;
+  padding-bottom: 10px;
+}
+.dk-rec-route > li:last-child {
+  padding-bottom: 0;
+}
+.dk-rec-route > li::before {
+  content: "";
+  position: absolute;
+  left: 10.5px;
+  top: 34px;
+  bottom: 4px;
+  width: 1px;
+  background: var(--dsk-b);
+}
+.dk-rec-route > li:last-child::before {
+  display: none;
+}
+.dk-rec-route-n {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-top: 8px;
+  border-radius: 999px;
+  font: 600 11px var(--dk-plex);
+  color: var(--dsk-ink-fg);
+  background: var(--dsk-ink);
+}
+.dk-rec-row.dk-rec-route-r {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 14px;
+  padding: 8px 12px;
+  border: 1px solid var(--dsk-b);
+  border-radius: 10px;
+}
+.dk-rec-route-ends {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--dsk-fg);
+}
+.dk-rec-route-ends > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dk-rec-route-ends i {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1.5px var(--dsk-fg2);
+}
+.dk-rec-route-ends > span:last-child i {
+  background: var(--dsk-fg2);
+}
+.dk-rec-route-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  text-align: end;
+}
+.dk-rec-route-side b {
+  font: 500 12.5px var(--dk-plex);
+  font-feature-settings: "tnum";
+}
+@container (max-width: 520px) {
+  .dk-rec-row.dk-rec-route-r {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .dk-rec-route-r > :last-child {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+/* what a listed record's row carries: its name over a line, and what sits on the right */
+.dk-rec-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.dk-rec-main > b {
+  overflow: hidden;
+  font-weight: 500;
+  font-size: 12.5px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--dsk-fg);
+}
+.dk-rec-lane,
+.dk-rec-sub {
+  overflow: hidden;
+  font-size: 11.5px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--dsk-subtle);
+}
+.dk-rec-lane i {
+  font-style: normal;
+  color: var(--dsk-faint);
+}
+.dk-rec-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.dk-rec-side .dk-rec-sub {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+}
+/* where a record is: a small still map beside the place and how the record stands there (CardWhere) */
+.dk-rec-where {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  min-height: 112px;
+}
+.dk-rec-scope {
+  width: 112px;
+  height: 112px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-rec-at {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dk-rec-at > b {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--dsk-fg);
+  overflow-wrap: anywhere;
+}
+.dk-rec-at > b.dk-rec-unknown {
+  font-weight: 500;
+  color: var(--dsk-muted);
+}
+.dk-rec-motion {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--dsk-fg2);
+}
+.dk-rec-motion > i {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dsk-faint);
+}
+.dk-rec-where.dk-live .dk-rec-motion > i {
+  background: var(--dsk-success-fg);
+  box-shadow: 0 0 0 3px var(--dsk-success-sub);
+}
+.dk-rec-motion.dk-off {
+  color: var(--dsk-subtle);
+}
+.dk-rec-geo {
+  font: 11.5px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-subtle);
+}
+.dk-rec-left {
+  margin-top: 12px;
+}
+.dk-rec-left .dk-rec-main {
+  gap: 1px;
+}
+/* the still map of the last report: OpenStreetMap's tiles in greys, a dot on the spot */
+.dk-rec-map {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+.dk-rec-map-tiles {
+  position: absolute;
+  inset: 0;
+}
+.dk-rec-map-tiles img {
+  position: absolute;
+  max-width: none;
+  filter: grayscale(1) contrast(0.92) brightness(1.04);
+  animation: dk-rec-tile 320ms var(--dk-settle) both;
+}
+.dark .dk-rec-map-tiles img {
+  filter: grayscale(1) invert(1) contrast(0.86) brightness(0.92);
+}
+@keyframes dk-rec-tile {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.dk-rec-map-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: var(--dsk-fg);
+  box-shadow:
+    0 0 0 2px var(--dsk-card),
+    0 0 0 6px color-mix(in oklch, var(--dsk-fg) 16%, transparent);
+}
+.dk-rec-map-fence {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+.dk-rec-map-fence circle,
+.dk-rec-map-fence polygon {
+  fill: color-mix(in oklch, var(--dsk-fg) 10%, transparent);
+  stroke: color-mix(in oklch, var(--dsk-fg) 70%, transparent);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.dk-rec-map.dk-live .dk-rec-map-dot {
+  background: var(--dsk-success-fg);
+  box-shadow:
+    0 0 0 2px var(--dsk-card),
+    0 0 0 6px var(--dsk-success-sub);
+}
+.dk-rec-map-credit {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 1px 4px;
+  border-top-left-radius: 4px;
+  font-size: 8px;
+  line-height: 1.3;
+  color: var(--dsk-subtle);
+  background: color-mix(in oklch, var(--dsk-card) 82%, transparent);
+  text-decoration: none;
+  pointer-events: auto;
+}
+.dk-rec-map-credit:hover {
+  color: var(--dsk-fg);
+}
+.dk-rec-map-credit:focus-visible {
+  outline: 2px solid var(--dsk-ring);
+  outline-offset: -2px;
+}
+.dk-rec-nomap {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: var(--dsk-faint);
+}
+/* a record's facts, two to a row (CardFactGrid) */
+.dk-rec-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.dk-rec-facts > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 9px 12px;
+}
+.dk-rec-facts > div:nth-child(even) {
+  border-left: 1px solid var(--dsk-b-sub);
+}
+.dk-rec-facts > div:nth-child(n + 3) {
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-rec-facts dt {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-rec-facts dd {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--dsk-fg);
+  overflow-wrap: anywhere;
+}
+.dk-rec-ck.dk-rec-ck-wait {
+  background: transparent;
+}
+@container (max-width: 420px) {
+  .dk-rec-where {
+    grid-template-columns: 84px minmax(0, 1fr);
+    min-height: 84px;
+  }
+  .dk-rec-scope {
+    width: 84px;
+    height: 84px;
+  }
+  .dk-rec-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dk-rec-facts > div:nth-child(even) {
+    border-left: 0;
+  }
+  .dk-rec-facts > div:nth-child(n + 2) {
+    border-top: 1px solid var(--dsk-b-sub);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-rec-map-tiles img {
+    animation: none;
+  }
+}
+/* a section that has nothing to list says so in its place */
+.dk-rec-note {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--dsk-subtle);
+}
+/* the next page of a section's list, under it */
+.dk-rec-more {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
 }
 /* The formula template card */
 .dk-ft-code {
@@ -5239,6 +5787,27 @@ th.dk-cb .dk-ax-cb:hover {
 }
 .dk-ax-ki.dk-k-agreement {
   color: var(--accent-indigo);
+}
+.dk-ax-ki.dk-k-tractor {
+  color: var(--accent-sky);
+}
+.dk-ax-ki.dk-k-trailer {
+  color: var(--accent-slate);
+}
+.dk-ax-ki.dk-k-worker {
+  color: var(--accent-rose);
+}
+.dk-ax-ki.dk-k-location {
+  color: var(--accent-emerald);
+}
+.dk-ax-ki.dk-k-carrier {
+  color: var(--accent-amber);
+}
+.dk-ax-ki.dk-k-order {
+  color: var(--accent-teal);
+}
+.dk-ax-ki.dk-k-failure {
+  color: var(--warning);
 }
 /* The shipment card */
 .dk-sh-nowsec {
@@ -6121,9 +6690,8 @@ th.dk-cb .dk-ax-cb:hover {
   line-height: 1.5;
   color: var(--dsk-subtle);
 }
-.dk-cu-note + .dk-cu-terms,
-.dk-cu-stats + .dk-cu-note,
-.dk-cu-note + .dk-cu-stats {
+.dk-rec-stats + .dk-cu-note,
+.dk-cu-note + .dk-rec-stats {
   margin-top: 12px;
 }
 .dk-rec-amt .dk-cu-wait {
@@ -6197,55 +6765,18 @@ th.dk-cb .dk-ax-cb:hover {
   color: var(--dsk-faint);
 }
 /* figures and terms in one ruled block, four across or two in a narrow pane */
-.dk-cu-stats,
-.dk-cu-terms {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin: 14px 0 0;
-  border: 1px solid var(--dsk-b-sub);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.dk-cu-terms {
+.dk-rec-stats.dk-cu-terms {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-.dk-cu-stats > div,
-.dk-cu-terms > div {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-  padding: 9px 12px;
-  border-left: 1px solid var(--dsk-b-sub);
-}
-.dk-cu-stats > div:first-child,
 .dk-cu-terms > div:nth-child(odd) {
   border-left: 0;
 }
 .dk-cu-terms > div:nth-child(n + 3) {
   border-top: 1px solid var(--dsk-b-sub);
 }
-.dk-cu-stats dt,
-.dk-cu-terms dt {
-  font-size: 11px;
-  color: var(--dsk-subtle);
-}
-.dk-cu-stats dd,
-.dk-cu-terms dd {
-  margin: 0;
-  font-size: 12.5px;
-  line-height: 1.4;
-  color: var(--dsk-fg);
-}
-.dk-cu-stats dd {
-  font-family: var(--dk-plex);
-  font-feature-settings: "tnum";
-}
-.dk-cu-stats .dk-warn dd {
-  color: var(--dsk-warn-fg);
-}
-.dk-cu-stats .dk-bad dd {
-  color: var(--danger);
+.dk-rec-stats.dk-cu-terms dd {
+  font-family: inherit;
+  font-feature-settings: normal;
 }
 /* payments received, month by month, as short columns */
 .dk-cu-paid {
@@ -6296,58 +6827,6 @@ th.dk-cb .dk-ax-cb:hover {
     transform: scaleY(1);
   }
 }
-/* credit used against the limit */
-.dk-cu-credit {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-.dk-cu-credit-h {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 12px;
-  color: var(--dsk-subtle);
-}
-.dk-cu-credit-h > span:last-child {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
-  font-family: var(--dk-plex);
-  font-feature-settings: "tnum";
-  color: var(--dsk-fg2);
-}
-.dk-cu-credit-h b {
-  font-weight: 600;
-  color: var(--dsk-fg);
-}
-.dk-cu-meter {
-  display: block;
-  height: 6px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: var(--dsk-sunken);
-}
-.dk-cu-meter > i {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--dsk-fg2);
-  transition: width 320ms var(--dk-settle);
-}
-.dk-cu-credit.dk-warn .dk-cu-meter > i {
-  background: var(--dsk-warn);
-}
-.dk-cu-credit.dk-warn b {
-  color: var(--dsk-warn-fg);
-}
-.dk-cu-credit.dk-bad .dk-cu-meter > i {
-  background: var(--danger);
-}
-.dk-cu-credit.dk-bad b {
-  color: var(--danger);
-}
 /* what every invoice must carry, as tags */
 .dk-cu-needs {
   display: flex;
@@ -6385,49 +6864,13 @@ th.dk-cb .dk-ax-cb:hover {
 }
 .dk-cu-memo {
   margin: 12px 0 0;
-  padding: 2px 0 2px 12px;
-  border-left: 2px solid var(--dsk-b-strong);
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--dsk-sunken);
   font-size: 12.5px;
   line-height: 1.5;
   white-space: pre-line;
   color: var(--dsk-fg2);
-}
-/* what a customer's listed shipments and agreements carry */
-.dk-cu-main {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-.dk-cu-main > b {
-  overflow: hidden;
-  font-weight: 500;
-  font-size: 12.5px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  color: var(--dsk-fg);
-}
-.dk-cu-lane,
-.dk-cu-sub {
-  overflow: hidden;
-  font-size: 11.5px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  color: var(--dsk-subtle);
-}
-.dk-cu-lane i {
-  font-style: normal;
-  color: var(--dsk-faint);
-}
-.dk-cu-side {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-}
-.dk-cu-side .dk-cu-sub {
-  font-family: var(--dk-plex);
-  font-feature-settings: "tnum";
 }
 .dk-cu-window {
   font-size: 12px;
@@ -6444,20 +6887,11 @@ th.dk-cb .dk-ax-cb:hover {
   color: var(--danger);
 }
 @container dkcu (max-width: 520px) {
-  .dk-cu-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .dk-cu-stats > div:nth-child(odd) {
-    border-left: 0;
-  }
-  .dk-cu-stats > div:nth-child(n + 3) {
-    border-top: 1px solid var(--dsk-b-sub);
-  }
   .dk-cu-buckets {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     row-gap: 10px;
   }
-  .dk-cu-terms {
+  .dk-rec-stats.dk-cu-terms {
     grid-template-columns: minmax(0, 1fr);
   }
   .dk-cu-terms > div {
@@ -6472,7 +6906,2087 @@ th.dk-cb .dk-ax-cb:hover {
   .dk-cu-paid li > i {
     animation: none;
   }
-  .dk-cu-meter > i {
+}
+/* a record's way down a rail, a node per step (an agreement's approval, a failure's review) */
+.dk-rec-path {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-rec-path > li {
+  position: relative;
+  padding: 0 0 12px 30px;
+  animation: dk-nl 260ms var(--dk-settle) both;
+}
+.dk-rec-path > li:last-child {
+  padding-bottom: 0;
+}
+.dk-rec-path > li::before {
+  content: "";
+  position: absolute;
+  left: 8.5px;
+  top: 22px;
+  bottom: 0;
+  width: 1px;
+  background: var(--dsk-b);
+}
+.dk-rec-path > li:last-child::before {
+  display: none;
+}
+.dk-rec-path > li.dk-done::before {
+  background: color-mix(in srgb, var(--dsk-success) 55%, transparent);
+}
+.dk-rec-node {
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--dsk-on-solid);
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1.5px var(--dsk-b-strong);
+}
+.dk-rec-path > li.dk-done .dk-rec-node {
+  background: var(--dsk-success);
+  box-shadow: none;
+}
+.dk-rec-path > li.dk-now .dk-rec-node {
+  box-shadow:
+    inset 0 0 0 2px var(--dsk-blue),
+    0 0 0 3px var(--dsk-blue-sub);
+}
+.dk-rec-path > li.dk-now .dk-rec-node:empty::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dsk-blue);
+}
+.dk-rec-path > li.dk-held .dk-rec-node {
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+  box-shadow: inset 0 0 0 1.5px var(--dsk-warn);
+}
+.dk-rec-path > li.dk-closed .dk-rec-node {
+  color: var(--dsk-subtle);
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1.5px var(--dsk-b-strong);
+}
+.dk-rec-pb {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-top: 1px;
+}
+.dk-rec-pb > b {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-rec-path > li.dk-todo .dk-rec-pb > b {
+  color: var(--dsk-subtle);
+}
+.dk-rec-path > li.dk-held .dk-rec-pb > b {
+  color: var(--dsk-warn-fg);
+}
+.dk-rec-pb > span {
+  font: 11.5px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-subtle);
+}
+.dk-rec-review {
+  margin: 6px 0 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-line;
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-rec-path > li {
+    animation: none;
+  }
+}
+/* a share drawn as a meter under what it measures (credit used, drive time left) */
+.dk-rec-gauge {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.dk-rec-gauge-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-rec-gauge-h > span:last-child {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg2);
+}
+.dk-rec-gauge-h b {
+  font-weight: 600;
+  color: var(--dsk-fg);
+}
+.dk-rec-meter {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--dsk-sunken);
+}
+.dk-rec-meter > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--dsk-fg2);
+  transition: width 320ms var(--dk-settle);
+}
+.dk-rec-gauge.dk-warn .dk-rec-meter > i {
+  background: var(--dsk-warn);
+}
+.dk-rec-gauge.dk-warn b {
+  color: var(--dsk-warn-fg);
+}
+.dk-rec-gauge.dk-bad .dk-rec-meter > i {
+  background: var(--danger);
+}
+.dk-rec-gauge.dk-bad b {
+  color: var(--danger);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-rec-meter > i {
+    transition: none;
+  }
+}
+/* a record's figures side by side in a ruled strip (a customer's payment pace, a location's dwell) */
+.dk-rec-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 14px 0 0;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.dk-rec-sh + .dk-rec-stats {
+  margin-top: 0;
+}
+.dk-rec-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 9px 12px;
+  border-left: 1px solid var(--dsk-b-sub);
+}
+.dk-rec-stats > div:first-child {
+  border-left: 0;
+}
+.dk-rec-stats dt {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-rec-stats dd {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-rec-stats .dk-warn dd {
+  color: var(--dsk-warn-fg);
+}
+.dk-rec-stats .dk-bad dd {
+  color: var(--danger);
+}
+@container (max-width: 520px) {
+  .dk-rec-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dk-rec-stats > div:nth-child(odd) {
+    border-left: 0;
+  }
+  .dk-rec-stats > div:nth-child(n + 3) {
+    border-top: 1px solid var(--dsk-b-sub);
+  }
+}
+/* The tractor card */
+.dk-tr {
+  container: dktr / inline-size;
+}
+.dk-rec-amt .dk-tr-wait {
+  color: var(--dsk-faint);
+}
+/* the dashboard under the map: speed, heading, fuel, engine and the clock, a dial each */
+.dk-tr-dash {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--dsk-ink);
+  color: var(--dsk-ink-fg);
+}
+.dk-tr-dial {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 72px;
+  padding: 10px 6px;
+  text-align: center;
+}
+.dk-tr-dial + .dk-tr-dial {
+  box-shadow: inset 1px 0 0 color-mix(in oklch, var(--dsk-ink-fg) 14%, transparent);
+}
+.dk-tr-dial > b {
+  font: 600 20px var(--dk-plex);
+  font-feature-settings: "tnum";
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.dk-tr-dial > span {
+  font-size: 11px;
+  color: color-mix(in oklch, var(--dsk-ink-fg) 62%, transparent);
+}
+.dk-tr-dial.dk-tr-odo > b {
+  font-size: 15px;
+}
+.dk-tr-arrow {
+  fill: var(--dsk-ink-fg);
+  transition: transform 320ms var(--dk-settle);
+}
+.dk-tr-fuel {
+  font: 600 10px var(--dk-plex);
+  font-feature-settings: "tnum";
+}
+.dk-tr-dial > [role="meter"] svg circle:first-child {
+  color: color-mix(in oklch, var(--dsk-ink-fg) 18%, transparent);
+}
+.dk-tr-dial > [role="meter"] svg circle:last-child {
+  color: var(--dsk-ink-fg);
+}
+.dk-tr-dial > [role="meter"] svg circle.text-warning:last-child {
+  color: var(--dsk-warn);
+}
+.dk-tr-engine {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--dsk-ink-fg) 28%, transparent);
+}
+.dk-tr-engine.dk-on {
+  background: var(--dsk-success);
+  box-shadow: 0 0 0 4px color-mix(in oklch, var(--dsk-success) 28%, transparent);
+}
+.dk-tr-engine.dk-idle {
+  background: var(--dsk-warn);
+  box-shadow: 0 0 0 4px color-mix(in oklch, var(--dsk-warn) 28%, transparent);
+}
+.dk-tr-none {
+  color: color-mix(in oklch, var(--dsk-ink-fg) 40%, transparent);
+}
+/* who drives the tractor, each in a seat with their initials, side by side */
+.dk-tr-seats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+.dk-rec-row.dk-tr-seat {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 999px;
+}
+.dk-rec-row.dk-tr-seat:first-child {
+  border-top: 1px solid var(--dsk-b-sub);
+}
+/* the inspections as a log: when and what down the left, the verdict tagged on the right */
+.dk-tr-insp {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-tr-insp > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--dsk-b);
+  animation: dk-nl 260ms var(--dk-settle) both;
+}
+.dk-tr-insp > li:last-child {
+  border-bottom: 0;
+}
+.dk-tr-verdict {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  white-space: nowrap;
+  color: var(--dsk-subtle);
+  background: var(--dsk-sunken);
+}
+.dk-tr-verdict.dk-bad {
+  font-weight: 500;
+  color: var(--danger);
+  background: var(--dsk-warn-sub);
+}
+.dk-tr-verdict.dk-warn {
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+/* the tractor's own facts as a spec sheet: label, dotted leader, value */
+.dk-tr-spec {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 28px;
+  margin: 0;
+}
+.dk-tr-spec > div {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12.5px;
+}
+.dk-tr-spec dt {
+  flex: none;
+  color: var(--dsk-subtle);
+}
+.dk-tr-spec > div > i {
+  flex: 1;
+  min-width: 12px;
+  border-bottom: 1px dotted var(--dsk-b-strong);
+  transform: translateY(-3px);
+}
+.dk-tr-spec dd {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+@container dktr (max-width: 560px) {
+  .dk-tr-dash {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .dk-tr-dial:nth-child(n + 4) {
+    box-shadow: inset 0 1px 0 color-mix(in oklch, var(--dsk-ink-fg) 14%, transparent);
+  }
+  .dk-tr-spec {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-tr-insp > li {
+    animation: none;
+  }
+  .dk-tr-arrow {
+    transition: none;
+  }
+}
+/* The trailer card */
+.dk-tl {
+  container: dktl / inline-size;
+}
+.dk-rec-amt .dk-tl-wait {
+  color: var(--dsk-faint);
+}
+/* the service calendar: a season back and a year ahead, today and each date the papers hang on */
+.dk-tl-cal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.dk-tl-axis {
+  position: relative;
+  padding: 0 2px;
+}
+.dk-tl-axis-sk {
+  display: block;
+  height: 118px;
+  border-radius: 10px;
+}
+.dk-tl-months {
+  position: relative;
+  height: 16px;
+  margin-bottom: 44px;
+  border-bottom: 1px dashed var(--dsk-b);
+}
+.dk-tl-months > span {
+  position: absolute;
+  top: 0;
+  padding-left: 3px;
+  font-size: 10.5px;
+  white-space: nowrap;
+  color: var(--dsk-faint);
+}
+.dk-tl-months > span::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 2px;
+  height: 14px;
+  border-left: 1px solid var(--dsk-b);
+}
+.dk-tl-rail {
+  position: relative;
+  height: 8px;
+  margin-bottom: 44px;
+  border-radius: 999px;
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-tl-past {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: repeating-linear-gradient(-45deg, var(--dsk-b) 0 2px, transparent 2px 6px);
+}
+.dk-tl-today {
+  position: absolute;
+  top: -8px;
+  bottom: -8px;
+  width: 0;
+  border-left: 2px solid var(--dsk-fg);
+}
+.dk-tl-today > em {
+  position: absolute;
+  top: -18px;
+  left: 0;
+  transform: translateX(-50%);
+  font-style: normal;
+  font-size: 10.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--dsk-fg);
+}
+.dk-tl-mark {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+}
+.dk-tl-mark > i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 2.5px var(--dsk-fg2);
+}
+.dk-tl-mark > b,
+.dk-tl-mark > span {
+  position: absolute;
+  left: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.dk-tl-mark > b {
+  top: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-tl-mark > span {
+  top: 26px;
+  font: 10.5px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-subtle);
+}
+.dk-tl-mark.dk-low > b {
+  top: auto;
+  bottom: 24px;
+}
+.dk-tl-mark.dk-low > span {
+  top: auto;
+  bottom: 12px;
+}
+.dk-tl-mark.dk-start > b,
+.dk-tl-mark.dk-start > span {
+  transform: translateX(-6px);
+}
+.dk-tl-mark.dk-end > b,
+.dk-tl-mark.dk-end > span {
+  transform: translateX(calc(-100% + 6px));
+}
+.dk-tl-mark.dk-ok > i {
+  box-shadow: inset 0 0 0 2.5px var(--dsk-success);
+}
+.dk-tl-mark.dk-warn > i {
+  background: var(--dsk-warn);
+  box-shadow: none;
+}
+.dk-tl-mark.dk-bad > i {
+  background: var(--danger);
+  box-shadow: 0 0 0 3px var(--dsk-warn-sub);
+}
+.dk-tl-mark.dk-past > i {
+  background: var(--dsk-fg2);
+  box-shadow: none;
+}
+.dk-tl-mark.dk-before > i,
+.dk-tl-mark.dk-after > i {
+  border-radius: 2px;
+}
+.dk-tl-legend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-tl-legend > li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+}
+.dk-tl-legend > li > svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--dsk-success);
+}
+.dk-tl-legend > li.dk-warn > svg {
+  color: var(--dsk-warn-fg);
+}
+.dk-tl-legend > li.dk-bad > svg {
+  color: var(--danger);
+}
+.dk-tl-legend > li > span {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.dk-tl-legend b {
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-tl-legend > li > span > span {
+  color: var(--dsk-subtle);
+}
+.dk-tl-legend > li.dk-bad b {
+  color: var(--danger);
+}
+.dk-tl-legend > li.dk-warn b {
+  color: var(--dsk-warn-fg);
+}
+/* the owner-operator, with their initials */
+.dk-tl-owner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+/* the trailer's facts stamped on a data plate riveted to the frame */
+.dk-tl-plate {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 20px;
+  margin: 0;
+  padding: 18px 22px;
+  border: 1px solid var(--dsk-b-strong);
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at 9px 9px, var(--dsk-b-strong) 2.5px, transparent 3px),
+    radial-gradient(circle at calc(100% - 9px) 9px, var(--dsk-b-strong) 2.5px, transparent 3px),
+    radial-gradient(circle at 9px calc(100% - 9px), var(--dsk-b-strong) 2.5px, transparent 3px),
+    radial-gradient(
+      circle at calc(100% - 9px) calc(100% - 9px),
+      var(--dsk-b-strong) 2.5px,
+      transparent 3px
+    ),
+    var(--dsk-sunken);
+  box-shadow:
+    inset 0 0 0 3px var(--dsk-sunken),
+    inset 0 0 0 4px var(--dsk-b);
+}
+.dk-tl-plate > div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.dk-tl-plate dt {
+  font-size: 10.5px;
+  color: var(--dsk-subtle);
+}
+.dk-tl-plate dd {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 12.5px var(--dk-plex);
+  font-feature-settings: "tnum";
+  letter-spacing: 0.02em;
+  color: var(--dsk-fg);
+}
+@container dktl (max-width: 480px) {
+  .dk-tl-legend {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dk-tl-months > span:nth-child(even) {
+    visibility: hidden;
+  }
+}
+/* The worker card */
+.dk-wk {
+  container: dkwk / inline-size;
+}
+.dk-rec-amt .dk-wk-wait {
+  color: var(--dsk-faint);
+}
+.dk-rec-amt .dk-bad {
+  color: var(--danger);
+}
+/* why the worker is off the board, on a line of its own under the pill */
+.dk-wk-why {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--dsk-warn-fg);
+}
+/* the duty status over the clocks, and when telematics said so */
+.dk-wk-duty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-wk-duty b {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+/* the four clocks as rings, the time left inside each, as the worker's own page draws them */
+.dk-wk-rings {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.dk-wk-ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 14px 6px 12px;
+  border-radius: 12px;
+  background: var(--dsk-sunken);
+}
+.dk-wk-ring > [role="meter"] {
+  margin-bottom: 8px;
+}
+.dk-wk-ring-v {
+  font: 600 15px var(--dk-plex);
+  font-feature-settings: "tnum";
+  letter-spacing: -0.01em;
+  color: var(--dsk-fg);
+}
+.dk-wk-ring.dk-warn .dk-wk-ring-v {
+  color: var(--dsk-warn-fg);
+}
+.dk-wk-ring.dk-bad .dk-wk-ring-v {
+  color: var(--danger);
+}
+.dk-wk-ring > b {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+  text-align: center;
+}
+.dk-wk-ring > span {
+  font: 11px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-subtle);
+}
+.dk-wk-ring-sk {
+  width: 88px;
+  height: 88px;
+  margin-bottom: 8px;
+  border-radius: 999px;
+}
+/* the latest violations, a red rule down each, when and for how long on the right */
+.dk-wk-viol {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-wk-viol > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-wk-viol > li:first-child {
+  border-top: 0;
+}
+.dk-wk-viol .dk-rec-main > b {
+  color: var(--danger);
+}
+.dk-wk-viol-at {
+  font-size: 12px;
+  white-space: nowrap;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-subtle);
+}
+/* nothing stands against the worker: one quiet line, not a box */
+.dk-wk-clear {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--dsk-subtle);
+}
+.dk-wk-clear > svg {
+  color: var(--dsk-success);
+}
+.dk-wk-clear b {
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+/* the credentials as a wallet: a card each, its edge the colour of how it stands */
+.dk-wk-wallet {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-wk-wallet > li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  row-gap: 2px;
+  padding: 10px 12px 10px 10px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  background: var(--dsk-card);
+  animation: dk-nl 260ms var(--dk-settle) both;
+}
+.dk-wk-wallet-i {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border-radius: 999px;
+  color: var(--dsk-subtle);
+  background: var(--dsk-sunken);
+}
+.dk-wk-wallet > li.dk-ok .dk-wk-wallet-i {
+  color: var(--dsk-success-fg);
+  background: var(--dsk-success-sub);
+}
+.dk-wk-wallet > li.dk-warn .dk-wk-wallet-i {
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+.dk-wk-wallet > li.dk-bad .dk-wk-wallet-i {
+  color: var(--danger);
+  background: var(--dsk-warn-sub);
+}
+.dk-wk-wallet b {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-wk-wallet > li > span:last-child {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-wk-wallet > li.dk-warn > span:last-child {
+  color: var(--dsk-warn-fg);
+}
+.dk-wk-wallet > li.dk-bad > span:last-child {
+  color: var(--danger);
+}
+/* how to reach the worker, as ways to call or write, beside their record read down */
+.dk-wk-reach {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: 16px;
+}
+.dk-wk-ways {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dk-wk-way {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  color: var(--dsk-fg);
+  text-decoration: none;
+  background: var(--dsk-sunken);
+  transition: background 140ms;
+}
+a.dk-wk-way:hover {
+  background: var(--dsk-hover);
+}
+a.dk-wk-way:focus-visible {
+  outline: 2px solid var(--dsk-ring);
+  outline-offset: 1px;
+}
+.dk-wk-way > svg {
+  flex: none;
+  color: var(--dsk-subtle);
+}
+.dk-wk-way > span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.dk-wk-way em {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-wk-way b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.dk-wk-way.dk-off b {
+  font-weight: 400;
+  color: var(--dsk-faint);
+}
+.dk-wk-way-sk {
+  display: block;
+  height: 48px;
+  border-radius: 10px;
+}
+.dk-wk-record {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+  margin: 0;
+}
+.dk-wk-record > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dk-wk-record dt {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-wk-record dd {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12.5px;
+  color: var(--dsk-fg);
+}
+@container dkwk (max-width: 520px) {
+  .dk-wk-rings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dk-wk-reach {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-wk-wallet > li {
+    animation: none;
+  }
+}
+/* The location card */
+.dk-lo {
+  container: dklo / inline-size;
+}
+.dk-rec-amt .dk-lo-wait {
+  color: var(--dsk-faint);
+}
+.dk-rec-stats + .dk-lo-money {
+  margin-top: 10px;
+}
+.dk-lo-sk-money {
+  display: block;
+  margin-top: 12px;
+}
+/* what the facility offers and asks, a chip each under the map */
+.dk-lo-amen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-lo-amen > li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  color: var(--dsk-fg);
+  background: var(--dsk-sunken);
+}
+.dk-lo-amen > li > svg {
+  color: var(--dsk-success);
+}
+.dk-lo-amen > li.dk-off {
+  color: var(--dsk-subtle);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-lo-amen > li.dk-off > svg {
+  color: var(--dsk-faint);
+}
+/* how long trucks wait, on a ruler: the quicker half solid, the slow tail hatched, the average pinned */
+.dk-lo-dwell {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.dk-lo-ruler {
+  padding-top: 36px;
+}
+.dk-lo-ruler-sk {
+  display: block;
+  height: 84px;
+  border-radius: 10px;
+}
+.dk-lo-bar {
+  position: relative;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-lo-half,
+.dk-lo-tail {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+.dk-lo-half {
+  left: 0;
+  border-radius: 4px 0 0 4px;
+  background: var(--dsk-fg2);
+}
+.dk-lo-tail {
+  background: repeating-linear-gradient(-45deg, var(--dsk-fg2) 0 2px, transparent 2px 6px);
+}
+.dk-lo-pin {
+  position: absolute;
+  top: -36px;
+  bottom: -6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-left: 0;
+  transform: translateX(-50%);
+}
+.dk-lo-pin::after {
+  content: "";
+  position: absolute;
+  top: 30px;
+  bottom: 0;
+  left: 50%;
+  border-left: 1.5px solid var(--dsk-fg);
+}
+.dk-lo-pin > b {
+  font: 600 13px var(--dk-plex);
+  font-feature-settings: "tnum";
+  white-space: nowrap;
+  color: var(--dsk-fg);
+}
+.dk-lo-pin > em {
+  font-style: normal;
+  font-size: 10.5px;
+  white-space: nowrap;
+  color: var(--dsk-subtle);
+}
+.dk-lo-pin.dk-avg {
+  top: auto;
+  bottom: -38px;
+  flex-direction: column-reverse;
+}
+.dk-lo-pin.dk-avg::after {
+  top: 0;
+  bottom: 30px;
+  border-left-style: dashed;
+}
+.dk-lo-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 44px;
+  font: 10.5px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-faint);
+}
+.dk-lo-breach {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 8px;
+  row-gap: 6px;
+}
+.dk-lo-breach-sk {
+  display: block;
+  height: 36px;
+  border-radius: 8px;
+}
+.dk-lo-breach > b {
+  font: 600 18px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-lo-breach > span {
+  font-size: 12.5px;
+  color: var(--dsk-subtle);
+}
+.dk-lo-breach > i {
+  grid-column: 1 / -1;
+  display: block;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--dsk-sunken);
+}
+.dk-lo-breach > i > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--dsk-fg2);
+}
+.dk-lo-breach.dk-warn > b {
+  color: var(--dsk-warn-fg);
+}
+.dk-lo-breach.dk-warn > i > i {
+  background: var(--dsk-warn);
+}
+/* the detention policies written for it, a ticket each with the free time on its stub */
+.dk-lo-terms {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-lo-terms > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  border: 1px solid var(--dsk-b);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.dk-lo-terms > li > .dk-rec-main {
+  padding: 10px 12px;
+}
+.dk-lo-terms > li > .dk-lo-free {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-left: 1px dashed var(--dsk-b-strong);
+  background: var(--dsk-sunken);
+}
+.dk-lo-terms > li.dk-off {
+  color: var(--dsk-subtle);
+  border-style: dashed;
+}
+/* what is on file for the location, set as an address card */
+.dk-lo-file {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 12px 20px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--dsk-sunken);
+}
+.dk-lo-file-sk {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dk-lo-file address {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 20px;
+  border-right: 1px solid var(--dsk-b);
+  font-style: normal;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.dk-lo-file address b {
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-lo-file address b.dk-off {
+  font-weight: 400;
+  color: var(--dsk-faint);
+}
+.dk-lo-file address span {
+  color: var(--dsk-fg2);
+}
+.dk-lo-file dl {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+}
+.dk-lo-file dl > div {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 10px;
+  font-size: 12px;
+}
+.dk-lo-file dt {
+  color: var(--dsk-subtle);
+}
+.dk-lo-file dd {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--dsk-fg);
+}
+.dk-lo-file blockquote {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  white-space: pre-line;
+  color: var(--dsk-fg2);
+  background: var(--dsk-card);
+}
+@container dklo (max-width: 520px) {
+  .dk-lo-file {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dk-lo-file address {
+    padding-right: 0;
+    padding-bottom: 10px;
+    border-right: 0;
+    border-bottom: 1px solid var(--dsk-b);
+  }
+}
+.dk-lo-free,
+.dk-rec-fst {
+  font-size: 12px;
+  white-space: nowrap;
+  color: var(--dsk-subtle);
+}
+.dk-lo-free {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg2);
+}
+.dk-rec-fst.dk-warn {
+  color: var(--dsk-warn-fg);
+}
+.dk-rec-fst.dk-ok {
+  color: var(--dsk-success-fg);
+}
+/* The service failure card */
+.dk-rec-amt .dk-svf-late {
+  color: var(--dsk-warn-fg);
+}
+.dk-svf-resolved .dk-rec-amt .dk-svf-late,
+.dk-svf-voided .dk-rec-amt .dk-svf-late {
+  color: var(--dsk-fg2);
+}
+.dk-svf-cause {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dk-svf-cause-h {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+.dk-svf-cause-h b {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-svf-cause-h code {
+  font: 11.5px var(--dk-plex);
+  color: var(--dsk-subtle);
+}
+.dk-svf-tag {
+  padding: 1px 7px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+}
+.dk-svf-cause p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--dsk-fg2);
+}
+.dk-svf-cause p.dk-svf-missing {
+  color: var(--dsk-warn-fg);
+}
+.dk-svf-note {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-svf-note figcaption {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-svf-note blockquote {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  white-space: pre-line;
+  color: var(--dsk-fg);
+}
+.dk-svf-note.dk-internal {
+  background: var(--dsk-card);
+  box-shadow: none;
+  border: 1px dashed var(--dsk-b-strong);
+}
+/* the failure's clock along one track: each stretch as wide as it ran, each moment where two meet */
+.dk-svf {
+  container: dksvf / inline-size;
+}
+.dk-svf-clock {
+  display: flex;
+  margin: 0;
+  padding: 0 0 66px;
+  list-style: none;
+}
+.dk-svf-gap {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 120px;
+}
+.dk-svf-span {
+  align-self: center;
+  height: 22px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+  color: var(--dsk-subtle);
+}
+.dk-svf-gap.dk-grace .dk-svf-span {
+  color: var(--dsk-warn-fg);
+}
+.dk-svf-gap.dk-late .dk-svf-span {
+  font-weight: 500;
+  color: var(--danger);
+  background: color-mix(in oklch, var(--danger) 10%, var(--dsk-card));
+}
+.dk-svf-gap > i {
+  display: block;
+  height: 8px;
+  margin: 0 10px;
+  border-radius: 4px;
+  background: var(--dsk-b);
+}
+.dk-svf-gap.dk-early > i {
+  background: var(--dsk-b-strong);
+}
+.dk-svf-gap.dk-grace > i {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--dsk-warn) 0 3px,
+    var(--dsk-warn-sub) 3px 6px
+  );
+}
+.dk-svf-gap.dk-late > i {
+  background: var(--danger);
+}
+.dk-svf-ev {
+  position: relative;
+  flex: 0 0 0;
+  width: 0;
+}
+.dk-svf-ev > i {
+  position: absolute;
+  top: 27px;
+  left: -7px;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid var(--dsk-fg2);
+  background: var(--dsk-card);
+}
+.dk-svf-ev.dk-warn > i {
+  border-color: var(--dsk-warn);
+}
+.dk-svf-ev.dk-bad > i {
+  border-color: var(--danger);
+  background: var(--danger);
+}
+.dk-svf-at {
+  position: absolute;
+  top: 50px;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+.dk-svf-clock > .dk-svf-ev:first-child {
+  margin-left: 7px;
+}
+.dk-svf-clock > .dk-svf-ev:last-child {
+  margin-right: 7px;
+}
+.dk-svf-clock > .dk-svf-ev:first-child .dk-svf-at {
+  left: -7px;
+  align-items: flex-start;
+  transform: none;
+}
+.dk-svf-clock > .dk-svf-ev:last-child .dk-svf-at {
+  left: auto;
+  right: -7px;
+  align-items: flex-end;
+  transform: none;
+}
+.dk-svf-at b {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-svf-what {
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+.dk-svf-ev.dk-bad .dk-svf-what,
+.dk-svf-ev.dk-bad .dk-svf-at b {
+  color: var(--danger);
+}
+.dk-svf-day {
+  font-size: 11px;
+  color: var(--dsk-faint);
+}
+@container dksvf (max-width: 420px) {
+  .dk-svf-gap {
+    min-width: 96px;
+  }
+  .dk-svf-span {
+    padding: 3px 6px;
+    font-size: 11px;
+  }
+}
+/* the codes the 214 sends, a tile each with the code large */
+.dk-svf-edi {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.dk-svf-edi > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  background: var(--dsk-card);
+}
+.dk-svf-edi dt {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-svf-edi dd {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+}
+.dk-svf-edi code {
+  font-family: var(--dk-plex);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--dsk-fg);
+}
+.dk-svf-edi .dk-none code {
+  color: var(--dsk-faint);
+}
+.dk-svf-edi dd > span {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-svf-edi-sk {
+  height: 20px;
+  border-radius: 5px;
+}
+@container dksvf (max-width: 420px) {
+  .dk-svf-edi {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* The carrier card */
+.dk-ca {
+  container: dkca / inline-size;
+}
+.dk-rec-amt .dk-ca-wait {
+  color: var(--dsk-faint);
+}
+.dk-rec-amt .dk-warn {
+  color: var(--dsk-warn-fg);
+}
+.dk-ca-src {
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+/* whether the carrier can be tendered, as a verdict across the card in the colour of its answer */
+.dk-ca-verdict {
+  --dk-ca-tone: var(--dsk-b-strong);
+  --dk-ca-tone-fg: var(--dsk-fg2);
+  --dk-ca-tone-sub: var(--dsk-sunken);
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 12px;
+  background: var(--dsk-card);
+  overflow: hidden;
+}
+.dk-ca-verdict.dk-ok {
+  --dk-ca-tone: var(--dsk-success);
+  --dk-ca-tone-fg: var(--dsk-success-fg);
+  --dk-ca-tone-sub: var(--dsk-success-sub);
+}
+.dk-ca-verdict.dk-warn {
+  --dk-ca-tone: var(--dsk-warn);
+  --dk-ca-tone-fg: var(--dsk-warn-fg);
+  --dk-ca-tone-sub: var(--dsk-warn-sub);
+}
+.dk-ca-verdict.dk-bad {
+  --dk-ca-tone: var(--danger);
+  --dk-ca-tone-fg: var(--danger);
+  --dk-ca-tone-sub: color-mix(in oklch, var(--danger) 10%, var(--dsk-card));
+}
+.dk-ca-verdict-h {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 1px;
+  padding: 14px 16px;
+  background: var(--dk-ca-tone-sub);
+}
+.dk-ca-verdict-i {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  color: var(--dsk-on-solid);
+  background: var(--dk-ca-tone);
+}
+.dk-ca-verdict-h > b {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--dk-ca-tone-fg);
+}
+.dk-ca-verdict-h > span:last-child {
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-ca-verdict > ul {
+  margin: 0;
+  padding: 4px 16px 6px 58px;
+  list-style: none;
+}
+.dk-ca-verdict > ul > li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 9px 0;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-ca-verdict > ul > li:first-child {
+  border-top: 0;
+}
+.dk-ca-verdict > ul > li > svg {
+  position: absolute;
+  left: -27px;
+  top: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-ca-verdict > ul > li.dk-warn > svg {
+  color: var(--dsk-warn-fg);
+}
+.dk-ca-verdict > ul > li.dk-bad > svg {
+  color: var(--danger);
+}
+.dk-ca-verdict > ul > li > span {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.dk-ca-verdict > ul b {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-ca-verdict > ul b + span {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-ca-verdict-sk .dk-ca-verdict-h {
+  background: var(--dsk-sunken);
+}
+.dk-ca-verdict-sk .dk-rec-checks {
+  padding: 6px 16px;
+}
+/* the insurance as coverage tiles: each policy's cover large, its term in the colour of its standing */
+.dk-ca-cover {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-ca-cover > li {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px 12px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  background: var(--dsk-card);
+  animation: dk-nl 260ms var(--dk-settle) both;
+}
+.dk-ca-cover-k {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--dsk-subtle);
+}
+.dk-ca-cover > li > b {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--dsk-fg);
+}
+.dk-ca-cover-sk {
+  height: 20px;
+  margin: 2px 0;
+  border-radius: 5px;
+}
+.dk-ca-cover-by {
+  font-size: 12px;
+  color: var(--dsk-fg2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-ca-cover-to {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding-top: 6px;
+  margin-top: 3px;
+  border-top: 1px dashed var(--dsk-b-sub);
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-ca-cover > li.dk-warn .dk-ca-cover-to {
+  color: var(--dsk-warn-fg);
+}
+.dk-ca-cover > li.dk-bad .dk-ca-cover-to {
+  color: var(--danger);
+}
+.dk-ca-cover-to em {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-style: normal;
+  font-size: 10.5px;
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+/* the operating authority and safety rating, a pill each with a dot of how it stands */
+.dk-ca-auth {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+}
+.dk-ca-auth > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px 4px 9px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 999px;
+  background: var(--dsk-card);
+}
+.dk-ca-auth > div::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--dsk-b-strong);
+}
+.dk-ca-auth > div.dk-ok::before {
+  background: var(--dsk-success);
+}
+.dk-ca-auth > div.dk-warn::before {
+  background: var(--dsk-warn);
+}
+.dk-ca-auth > div.dk-bad {
+  border-color: color-mix(in oklch, var(--danger) 35%, var(--dsk-b-sub));
+}
+.dk-ca-auth > div.dk-bad::before {
+  background: var(--danger);
+}
+.dk-ca-auth dt {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-ca-auth dd {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-ca-auth-sk {
+  width: 112px;
+  height: 26px;
+  border-radius: 999px;
+}
+/* the CSA BASICs as columns risen to their percentile against the threshold that sets an alert */
+.dk-ca-chart {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(58px, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+  padding: 14px 12px 10px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  background: var(--dsk-card);
+}
+.dk-ca-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  text-align: center;
+}
+.dk-ca-col-bar {
+  position: relative;
+  width: 28px;
+  height: 96px;
+  margin-bottom: 4px;
+  border-radius: 6px 6px 2px 2px;
+  background: repeating-linear-gradient(
+    to top,
+    var(--dsk-sunken) 0 19px,
+    var(--dsk-b-sub) 19px 20px
+  );
+}
+.dk-ca-col-bar > i {
+  position: absolute;
+  inset: auto 0 0;
+  border-radius: 6px 6px 2px 2px;
+  background: var(--dsk-fg2);
+  transform-origin: bottom;
+  animation: dk-ca-rise 420ms var(--dk-settle) both;
+}
+.dk-ca-col.dk-ok .dk-ca-col-bar > i {
+  background: var(--dsk-success);
+}
+.dk-ca-col.dk-warn .dk-ca-col-bar > i {
+  background: var(--dsk-warn);
+}
+.dk-ca-col.dk-bad .dk-ca-col-bar > i {
+  background: var(--danger);
+}
+.dk-ca-col-bar > span {
+  position: absolute;
+  left: -5px;
+  right: -5px;
+  border-top: 1.5px dashed var(--dsk-fg);
+}
+.dk-ca-col > b {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-ca-col.dk-warn > b {
+  color: var(--dsk-warn-fg);
+}
+.dk-ca-col.dk-bad > b {
+  color: var(--danger);
+}
+.dk-ca-col > span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 10.5px;
+  line-height: 1.3;
+  color: var(--dsk-subtle);
+}
+@keyframes dk-ca-rise {
+  from {
+    transform: scaleY(0);
+  }
+}
+.dk-ca-nobasics {
+  margin-top: 12px;
+}
+/* the contacts, each with their initials, how to reach them, and their role on the right */
+.dk-ca-contacts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-ca-person {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  background: var(--dsk-card);
+}
+.dk-ca-role {
+  grid-column: 1 / -1;
+  justify-self: start;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+}
+.dk-ca-amt {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 12.5px;
+  color: var(--dsk-fg);
+}
+@container dkca (max-width: 420px) {
+  .dk-ca-verdict > ul {
+    padding-left: 16px;
+  }
+  .dk-ca-verdict > ul > li {
+    padding-left: 18px;
+  }
+  .dk-ca-verdict > ul > li > svg {
+    left: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-ca-col-bar > i,
+  .dk-ca-cover > li {
+    animation: none;
+  }
+}
+/* The order card */
+.dk-or {
+  container: dkor / inline-size;
+}
+.dk-rec-amt .dk-or-wait {
+  color: var(--dsk-faint);
+}
+/* the order's way from draft to closed as one track of named segments */
+.dk-or-track > ol {
+  display: flex;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-or-track > ol > li {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  height: 30px;
+  padding: 0 8px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
+}
+.dk-or-track > ol > li:first-child {
+  border-radius: 8px 3px 3px 8px;
+}
+.dk-or-track > ol > li:last-child {
+  border-radius: 3px 8px 8px 3px;
+}
+.dk-or-track > ol > li > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-or-track > ol > li.dk-done {
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+  box-shadow: none;
+}
+.dk-or-track > ol > li.dk-done > svg {
+  flex: none;
+  color: var(--dsk-success);
+}
+.dk-or-track > ol > li.dk-now {
+  flex-grow: 1.6;
+  font-weight: 500;
+  color: var(--dsk-ink-fg);
+  background: var(--dsk-ink);
+  box-shadow: none;
+}
+.dk-or-track > p {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-or-track.dk-off > ol > li {
+  color: var(--dsk-faint);
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+  text-decoration: line-through;
+}
+.dk-or-track.dk-off > ol > li > svg {
+  color: var(--dsk-faint);
+}
+.dk-or-canceled {
+  margin-bottom: 12px;
+}
+.dk-or-track-sk {
+  display: block;
+  height: 30px;
+  border-radius: 8px;
+}
+/* the charges as a ledger: invoiced against still to invoice, each line on a leader, the total */
+.dk-or-ledger {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.dk-or-billed > p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-or-billbar {
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--dsk-warn-sub);
+}
+.dk-or-billbar > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--dsk-fg2);
+  transition: width 320ms var(--dk-settle);
+}
+.dk-or-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+}
+.dk-or-key::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--dsk-warn-sub);
+  box-shadow: inset 0 0 0 1px var(--dsk-warn);
+}
+.dk-or-key.dk-done::before {
+  background: var(--dsk-fg2);
+}
+.dk-or-ledger > ul {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-or-ledger > ul > li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dk-or-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.dk-or-line > b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-or-line > i {
+  flex: 1;
+  min-width: 16px;
+  border-bottom: 1px dotted var(--dsk-b-strong);
+  transform: translateY(-3px);
+}
+.dk-or-amt {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 12.5px;
+  color: var(--dsk-fg);
+}
+.dk-or-ledger > ul > li.dk-done .dk-or-amt {
+  color: var(--dsk-fg2);
+}
+.dk-or-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid var(--dsk-fg);
+  font-size: 12.5px;
+  color: var(--dsk-fg2);
+}
+.dk-or-total > b {
+  font: 600 14px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+/* the order's numbers as references to quote, side by side on one strip */
+.dk-or-refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+.dk-or-refs > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px dashed var(--dsk-b-strong);
+  border-radius: 8px;
+}
+.dk-or-refs dt {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-or-refs dd {
+  margin: 0;
+  font: 500 12.5px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+@container dkor (max-width: 680px) {
+  .dk-or-track > ol > li.dk-done {
+    flex-grow: 0.45;
+    position: relative;
+  }
+  .dk-or-track > ol > li.dk-done > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}
+@container dkor (max-width: 520px) {
+  .dk-or-track > ol > li:not(.dk-now) > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .dk-or-track > ol > li {
+    position: relative;
+    padding: 0 4px;
+  }
+  .dk-or-track > ol > li.dk-now {
+    flex-grow: 4;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-or-billbar > i {
     transition: none;
   }
 }
@@ -6485,6 +8999,12 @@ th.dk-cb .dk-ax-cb:hover {
   font-size: 12.5px;
   line-height: 1.5;
   color: var(--dsk-subtle);
+}
+/* the rate structure: each way the agreement prices, as a share of its live lanes */
+.dk-ra-mix {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 .dk-rec-q .dk-ra-ok {
   color: var(--dsk-fg2);
@@ -6589,7 +9109,7 @@ th.dk-cb .dk-ax-cb:hover {
   transform-origin: left center;
   animation: dk-cu-grow 700ms var(--dk-settle) both;
 }
-.dk-ra-notice {
+.dk-ra-notice-zone {
   position: absolute;
   right: 0;
   top: 50%;
@@ -6602,7 +9122,7 @@ th.dk-cb .dk-ax-cb:hover {
     transparent 3px 6px
   );
 }
-.dk-ra-notice.dk-renews {
+.dk-ra-notice-zone.dk-renews {
   background: repeating-linear-gradient(
     -45deg,
     color-mix(in srgb, var(--dsk-success) 45%, transparent) 0 3px,
@@ -6662,107 +9182,6 @@ th.dk-cb .dk-ax-cb:hover {
   height: 6px;
   border-radius: 50%;
   background: var(--dk-ra-c);
-}
-/* the approval path down a rail, a node per step */
-.dk-ra-path {
-  margin: 14px 0 0;
-  padding: 0;
-  list-style: none;
-}
-.dk-ra-path > li {
-  position: relative;
-  padding: 0 0 12px 30px;
-  animation: dk-nl 260ms var(--dk-settle) both;
-}
-.dk-ra-path > li:last-child {
-  padding-bottom: 0;
-}
-.dk-ra-path > li::before {
-  content: "";
-  position: absolute;
-  left: 8.5px;
-  top: 22px;
-  bottom: 0;
-  width: 1px;
-  background: var(--dsk-b);
-}
-.dk-ra-path > li:last-child::before {
-  display: none;
-}
-.dk-ra-path > li.dk-done::before {
-  background: color-mix(in srgb, var(--dsk-success) 55%, transparent);
-}
-.dk-ra-node {
-  position: absolute;
-  left: 0;
-  top: 1px;
-  width: 18px;
-  height: 18px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: var(--dsk-on-solid);
-  background: var(--dsk-card);
-  box-shadow: inset 0 0 0 1.5px var(--dsk-b-strong);
-}
-.dk-ra-path > li.dk-done .dk-ra-node {
-  background: var(--dsk-success);
-  box-shadow: none;
-}
-.dk-ra-path > li.dk-now .dk-ra-node {
-  box-shadow:
-    inset 0 0 0 2px var(--dsk-blue),
-    0 0 0 3px var(--dsk-blue-sub);
-}
-.dk-ra-path > li.dk-now .dk-ra-node:empty::after {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--dsk-blue);
-}
-.dk-ra-path > li.dk-held .dk-ra-node {
-  color: var(--dsk-warn-fg);
-  background: var(--dsk-warn-sub);
-  box-shadow: inset 0 0 0 1.5px var(--dsk-warn);
-}
-.dk-ra-path > li.dk-closed .dk-ra-node {
-  color: var(--dsk-subtle);
-  background: var(--dsk-sunken);
-  box-shadow: inset 0 0 0 1.5px var(--dsk-b-strong);
-}
-.dk-ra-pb {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  padding-top: 1px;
-}
-.dk-ra-pb > b {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--dsk-fg);
-}
-.dk-ra-path > li.dk-todo .dk-ra-pb > b {
-  color: var(--dsk-subtle);
-}
-.dk-ra-path > li.dk-held .dk-ra-pb > b {
-  color: var(--dsk-warn-fg);
-}
-.dk-ra-pb > span {
-  font: 11.5px var(--dk-plex);
-  font-feature-settings: "tnum";
-  color: var(--dsk-subtle);
-}
-.dk-ra-review {
-  margin: 6px 0 0;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  line-height: 1.5;
-  white-space: pre-line;
-  color: var(--dsk-warn-fg);
-  background: var(--dsk-warn-sub);
 }
 .dk-rec-amt .dk-ra-wait {
   color: var(--dsk-faint);
@@ -6842,6 +9261,11 @@ th.dk-cb .dk-ax-cb:hover {
   font-size: 12px;
   white-space: nowrap;
   color: var(--dsk-fg2);
+}
+.dk-ra-price > span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
 }
 .dk-ra-price b {
   font: 600 12.5px var(--dk-plex);
@@ -6991,7 +9415,6 @@ button.dk-ra-tpl:hover {
 }
 @media (prefers-reduced-motion: reduce) {
   .dk-ra-done,
-  .dk-ra-path > li,
   .dk-ra-lane {
     animation: none;
   }

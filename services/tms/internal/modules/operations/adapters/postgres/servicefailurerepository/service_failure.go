@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/servicefailurecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -15,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -105,7 +105,7 @@ func (r *repository) applyCursorPageFilters(
 		return q, err
 	}
 
-	return applyShipmentFilter(q, req.ShipmentID), nil
+	return applyScopeFilters(q, req), nil
 }
 
 func (r *repository) applyTotalCountFilters(
@@ -119,15 +119,29 @@ func (r *repository) applyTotalCountFilters(
 		(*servicefailure.ServiceFailure)(nil),
 	)
 
-	return applyShipmentFilter(q, req.ShipmentID)
+	return applyScopeFilters(q, req)
 }
 
-func applyShipmentFilter(q *bun.SelectQuery, shipmentID *pulid.ID) *bun.SelectQuery {
-	if shipmentID == nil {
-		return q
+func applyScopeFilters(
+	q *bun.SelectQuery,
+	req *servicefailureports.ListServiceFailureConnectionRequest,
+) *bun.SelectQuery {
+	cols := servicefailurecol.ServiceFailureColumns
+	if req.ShipmentID != nil {
+		q = q.Where(cols.ShipmentID.Eq(), *req.ShipmentID)
+	}
+	if req.LocationID != nil {
+		stops := shipmentcol.StopColumns
+		q = q.Where("EXISTS (?)", q.DB().NewSelect().
+			TableExpr(shipmentcol.StopTable.Name+" AS "+shipmentcol.StopTable.Alias).
+			ColumnExpr("1").
+			Where(stops.ID.EqColumn(cols.StopID)).
+			Where(stops.OrganizationID.EqColumn(cols.OrganizationID)).
+			Where(stops.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
+			Where(stops.LocationID.Eq(), *req.LocationID))
 	}
 
-	return q.Where(servicefailurecol.ServiceFailureColumns.ShipmentID.Eq(), *shipmentID)
+	return q
 }
 
 func (r *repository) ListConnection(

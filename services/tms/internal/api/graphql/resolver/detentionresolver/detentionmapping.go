@@ -837,16 +837,22 @@ func invalidDetentionField(field string) error {
 func detentionStatsRequest(
 	input *gqlmodel.DetentionStatsInput,
 	tenantInfo pagination.TenantInfo,
-) *detentionports.DetentionStatsRequest {
+) (*detentionports.DetentionStatsRequest, error) {
+	locationID, err := base.OptionalID(input.LocationID)
+	if err != nil {
+		return nil, err
+	}
+
 	req := &detentionports.DetentionStatsRequest{
 		TenantInfo: tenantInfo,
 		From:       int64(input.From),
 		To:         int64(input.To),
+		LocationID: locationID,
 	}
 
 	if input.Limit != nil {
 		req.Limit = *input.Limit
 	}
 
-	return req
+	return req, nil
 }

@@ -217,12 +217,25 @@ extend type Query {
   telematicsFormMapping(id: ID!): TelematicsFormMapping
   shipmentDriverFeasibility(shipmentId: ID!): [DriverFeasibility!]!
   vehiclePositions(maxAgeSeconds: Int): [VehiclePosition!]!
+  "One tractor's latest reported position, however old; null when the tractor has never reported one."
+  vehiclePosition(tractorId: ID!): VehiclePosition
   workerHosStates(workerIds: [ID!], limit: Int): [WorkerHosState!]!
   workerHosState(workerId: ID!): WorkerHosState
   workerHosViolations(workerId: ID, since: Timestamp, limit: Int): [WorkerHosViolation!]!
   workerHosLogs(workerId: ID!, startTime: Timestamp!, endTime: Timestamp!): [WorkerHosLogEntry!]!
   workerHosDailyLogs(workerId: ID!, startDate: String!, endDate: String!): [WorkerHosDailyLog!]!
-  vehicleInspections(tractorId: ID, workerId: ID, since: Timestamp, limit: Int): [VehicleInspection!]!
+  """
+  Inspections newest first. Pass the startedAt and id of the last one seen as
+  before and beforeId to read the next page.
+  """
+  vehicleInspections(
+    tractorId: ID
+    workerId: ID
+    since: Timestamp
+    limit: Int
+    before: Timestamp
+    beforeId: ID
+  ): [VehicleInspection!]!
   workerFormSubmissions(workerId: ID!, startTime: Timestamp!, endTime: Timestamp!): [WorkerFormSubmission!]!
   hosCertificationSummary(startDate: String!, endDate: String!): [HosCertificationSummary!]!
   telematicsStatus: TelematicsStatus!

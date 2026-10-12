@@ -8,6 +8,7 @@ package workerresolver
 import (
 	"context"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
@@ -362,4 +363,22 @@ func (r *WorkerPTOResolver) BalanceAfterDays(ctx context.Context, obj *worker.Wo
 
 func (r *WorkerProfileResolver) LicenseStateID(ctx context.Context, obj *worker.WorkerProfile) (*string, error) {
 	return base.IDPtr(obj.LicenseStateID), nil
+}
+
+func (r *QueryResolver) Worker(ctx context.Context, id string) (*worker.Worker, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorker, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	workerID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.WorkerService.Get(ctx, workerByIDRequest(
+		func(path string) bool { return graphql.FieldRequested(ctx, path) },
+		workerID,
+		base.TenantInfo(authCtx),
+	))
 }

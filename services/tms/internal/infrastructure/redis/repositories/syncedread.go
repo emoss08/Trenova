@@ -128,7 +128,7 @@ func (r *workerCacheRepository) GetByID(
 	ctx context.Context,
 	req workerports.GetWorkerByIDRequest,
 ) (*worker.Worker, error) {
-	if req.IncludeProfile {
+	if req.IncludeProfile || req.IncludeFleetCode || req.IncludeManager {
 		return nil, customerports.ErrCacheMiss
 	}
 

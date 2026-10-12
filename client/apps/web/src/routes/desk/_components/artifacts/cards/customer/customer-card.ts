@@ -6,13 +6,8 @@ import {
   customerPaymentTermChoices,
   invoiceDeliveryChoices,
 } from "@/lib/choices";
-import type {
-  DeskCustomer,
-  DeskCustomerBilling,
-  DeskCustomerShipment,
-} from "@/lib/graphql/customer-card";
+import type { DeskCustomer, DeskCustomerBilling } from "@/lib/graphql/customer-card";
 import { cityStateLabel } from "@/lib/place";
-import { getDestinationStop, getOriginStop } from "@/lib/shipment-utils";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { CardCheckState, CardTone } from "../../record-card/record-card";
 
@@ -235,24 +230,4 @@ export function billingRules(billing: DeskCustomerBilling, t: TranslateFn): stri
       ? t("Billed in {0}", billing.billingCurrency)
       : "",
   ].filter((rule) => rule !== "");
-}
-
-/** A shipment's lane and when it picks up, from its first pickup and last delivery. */
-export type ShipmentLane = {
-  origin: string | null;
-  destination: string | null;
-  pickupAt: number | null;
-};
-
-export function shipmentLane(shipment: DeskCustomerShipment): ShipmentLane {
-  const origin = getOriginStop(shipment);
-  const destination = getDestinationStop(shipment);
-  return {
-    origin: cityStateLabel(origin?.location?.city, origin?.location?.state?.abbreviation),
-    destination: cityStateLabel(
-      destination?.location?.city,
-      destination?.location?.state?.abbreviation,
-    ),
-    pickupAt: origin?.scheduledWindowStart ?? null,
-  };
 }

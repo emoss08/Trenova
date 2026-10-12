@@ -1,6 +1,7 @@
 import { EXTENSION_ROUTES } from "./aiextensions.mjs";
 import { PROVIDER_ROUTES } from "./aiproviders.mjs";
 import { AI_ROUTES } from "./aicontrol.mjs";
+import { DESK_CARD_ROUTES } from "./deskcards.mjs";
 import { ORG, permissionManifest } from "../fixtures/session.mjs";
 import { SETTINGS_ROUTES } from "./settings.mjs";
 
@@ -10,6 +11,7 @@ const ROUTES = [
   ...PROVIDER_ROUTES,
   ...EXTENSION_ROUTES,
   ...AI_ROUTES,
+  ...DESK_CARD_ROUTES,
   ...SETTINGS_ROUTES,
   ["GET", /^\/api\/v1\/me\/permissions\/?$/, () => permissionManifest()],
   ["GET", /^\/api\/v1\/me\/permissions\/version\/?$/, () => ({ checksum: "mock", expiresAt: Math.floor(Date.now() / 1000) + 86400 })],

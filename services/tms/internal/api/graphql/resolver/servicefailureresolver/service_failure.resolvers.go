@@ -9,15 +9,18 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (r *QueryResolver) ServiceFailures(ctx context.Context, input gqlmodel.DataTableConnectionInput, shipmentID *string) (*gqlmodel.ServiceFailureConnection, error) {
+func (r *QueryResolver) ServiceFailures(ctx context.Context, input gqlmodel.DataTableConnectionInput, shipmentID *string, locationID *string) (*gqlmodel.ServiceFailureConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceServiceFailure, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -28,13 +31,13 @@ func (r *QueryResolver) ServiceFailures(ctx context.Context, input gqlmodel.Data
 		return nil, err
 	}
 
-	var shipmentFilter *pulid.ID
-	if shipmentID != nil && *shipmentID != "" {
-		parsed, parseErr := pulid.MustParse(*shipmentID)
-		if parseErr != nil {
-			return nil, parseErr
-		}
-		shipmentFilter = &parsed
+	shipmentFilter, err := base.OptionalPulid(shipmentID)
+	if err != nil {
+		return nil, err
+	}
+	locationFilter, err := base.OptionalPulid(locationID)
+	if err != nil {
+		return nil, err
 	}
 
 	result, err := r.ServiceFailureSvc.ListConnection(
@@ -43,6 +46,7 @@ func (r *QueryResolver) ServiceFailures(ctx context.Context, input gqlmodel.Data
 			Filter:     tableInput.Filter,
 			Cursor:     tableInput.Cursor,
 			ShipmentID: shipmentFilter,
+			LocationID: locationFilter,
 		},
 	)
 	if err != nil {
@@ -75,4 +79,43 @@ func (r *ServiceFailureResolver) StopType(ctx context.Context, obj *servicefailu
 
 func (r *ServiceFailureStopResolver) Type(ctx context.Context, obj *shipment.Stop) (gqlmodel.StopType, error) {
 	return gqlmodel.StopType(obj.Type), nil
+}
+
+func (r *ServiceFailureResolver) CreatedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error) {
+	return failureUser(ctx, obj.CreatedBy, obj.CreatedByID)
+}
+
+func (r *ServiceFailureResolver) ReviewedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error) {
+	return failureUser(ctx, obj.ReviewedBy, obj.ReviewedByID)
+}
+
+func (r *ServiceFailureResolver) ResolvedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error) {
+	return failureUser(ctx, obj.ResolvedBy, obj.ResolvedByID)
+}
+
+func (r *ServiceFailureResolver) VoidedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error) {
+	return failureUser(ctx, obj.VoidedBy, obj.VoidedByID)
+}
+
+func (r *ServiceFailureShipmentResolver) Customer(ctx context.Context, obj *shipment.Shipment) (*customer.Customer, error) {
+	if obj.CustomerID.IsNil() {
+		return nil, nil
+	}
+
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !r.HasPermission(ctx, authCtx, permission.ResourceCustomer, permission.OpRead) {
+		return nil, nil
+	}
+	if obj.Customer != nil {
+		return obj.Customer, nil
+	}
+
+	if err := base.RequireLoaders(ctx); err != nil {
+		return nil, err
+	}
+
+	return base.OptionalMatch(loaders.CustomerByID(ctx, obj.CustomerID.String()))
 }

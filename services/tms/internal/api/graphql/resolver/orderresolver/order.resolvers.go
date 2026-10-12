@@ -7,6 +7,8 @@ package orderresolver
 
 import (
 	"context"
+
+	"github.com/99designs/gqlgen/graphql"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
@@ -434,9 +436,9 @@ func (r *QueryResolver) Order(ctx context.Context, id string) (*order.Order, err
 		return nil, err
 	}
 
-	return r.OrderService.Get(ctx, orderports.GetOrderByIDRequest{
-		ID:              orderID,
-		TenantInfo:      base.TenantInfo(authCtx),
-		IncludeShipment: true,
-	})
+	return r.OrderService.Get(ctx, orderByIDRequest(
+		func(path string) bool { return graphql.FieldRequested(ctx, path) },
+		orderID,
+		base.TenantInfo(authCtx),
+	))
 }

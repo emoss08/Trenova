@@ -1,4 +1,5 @@
 import { checklistItemModeSchema, customCheckSchema } from "@/types/case-checklist";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 
 /** The most steps an organization may add to one checklist; the server holds the same. */
@@ -36,34 +37,38 @@ export const checklistEditorSchema = z.object({
         return;
       }
       if (custom.label.trim() === "") {
-        ctx.addIssue({ code: "custom", path: ["custom", "label"], message: "Name the step" });
+        ctx.addIssue({
+          code: "custom",
+          path: ["custom", "label"],
+          message: translate("Name the step"),
+        });
       }
       if (custom.label.length > 80) {
         ctx.addIssue({
           code: "custom",
           path: ["custom", "label"],
-          message: "A step's name can be at most 80 characters",
+          message: translate("A step's name can be at most 80 characters"),
         });
       }
       if (custom.check === "Document" && !custom.documentTypeId) {
         ctx.addIssue({
           code: "custom",
           path: ["custom", "documentTypeId"],
-          message: "Choose the document type that ticks it",
+          message: translate("Choose the document type that ticks it"),
         });
       }
       if (custom.stepLabel.length > 40) {
         ctx.addIssue({
           code: "custom",
           path: ["custom", "stepLabel"],
-          message: "A step's button can say at most 40 characters",
+          message: translate("A step's button can say at most 40 characters"),
         });
       }
       if (custom.prompt.length > 500) {
         ctx.addIssue({
           code: "custom",
           path: ["custom", "prompt"],
-          message: "What the step asks the agent can be at most 500 characters",
+          message: translate("What the step asks the agent can be at most 500 characters"),
         });
       }
     }),

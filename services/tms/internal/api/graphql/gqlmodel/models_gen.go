@@ -2962,6 +2962,8 @@ type DetentionStatsInput struct {
 	From  int  `json:"from"`
 	To    int  `json:"to"`
 	Limit *int `json:"limit,omitempty"`
+	// Only the stops made at this location.
+	LocationID *string `json:"locationId,omitempty"`
 }
 
 type DetentionTierInput struct {
@@ -5075,6 +5077,9 @@ type LocationEdge struct {
 type LocationReference struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
+	// Where the location is, when it has been geocoded.
+	Latitude  *float64 `json:"latitude,omitempty"`
+	Longitude *float64 `json:"longitude,omitempty"`
 }
 
 type ManualJournalConnection struct {
@@ -8751,6 +8756,16 @@ type ShipmentsInput struct {
 	QuickFilters    []*ShipmentQuickFilterInput `json:"quickFilters,omitempty"`
 	// IANA time zone for day and hour quick filters.
 	Timezone *string `json:"timezone,omitempty"`
+	// Only shipments with a live move assigned to one of these tractors.
+	TractorIds []string `json:"tractorIds,omitempty"`
+	// Only shipments with a live move assigned to one of these trailers.
+	TrailerIds []string `json:"trailerIds,omitempty"`
+	// Only shipments with a live move one of these workers drives, in either seat.
+	WorkerIds []string `json:"workerIds,omitempty"`
+	// Only shipments with a live stop at one of these locations.
+	StopLocationIds []string `json:"stopLocationIds,omitempty"`
+	// Only shipments with a live move tendered to one of these carriers.
+	CarrierIds []string `json:"carrierIds,omitempty"`
 }
 
 type SidebarActivityPreference struct {

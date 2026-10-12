@@ -1,6 +1,7 @@
 import { userSelectOptions } from "./settings.mjs";
 import { PROVIDER_HANDLERS } from "./aiproviders.mjs";
 import { AI_HANDLERS } from "./aicontrol.mjs";
+import { DESK_CARD_HANDLERS } from "./deskcards.mjs";
 import { hash, stageOf, stageRankOf, STAGE_RANKS } from "../state.mjs";
 
 const HOUR = 3600;
@@ -868,6 +869,7 @@ const HANDLERS = {
   ...SHELL_HANDLERS,
   ...PROVIDER_HANDLERS,
   ...AI_HANDLERS,
+  ...DESK_CARD_HANDLERS,
   ShipmentBoardTable: (state, v) => ({ shipments: shipmentConnection(state, v.input, v.includeTotalCount) }),
   ShipmentDetail: (state, v) => {
     const s = state.shipments.find((x) => x.id === v.id);
@@ -978,7 +980,9 @@ export function handleGraphQL(state, body) {
     return { known: false, payload: { data: null, errors: [{ message: `mock-api: no handler for ${body.operationName}`, extensions: { code: "MOCK_UNHANDLED" } }] } };
   }
   try {
-    return { known: true, payload: { data: handler(state, body.variables ?? {}) } };
+    const data = handler(state, body.variables ?? {});
+    if (data && data.__hold) return { known: true, hold: true };
+    return { known: true, payload: { data } };
   } catch (error) {
     return { known: true, payload: { data: null, errors: [{ message: String(error?.stack ?? error) }] } };
   }

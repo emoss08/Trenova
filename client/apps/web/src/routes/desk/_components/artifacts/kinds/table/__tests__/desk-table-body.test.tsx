@@ -209,11 +209,11 @@ describe("DeskTableBody with formula templates", () => {
     renderTable(
       artifact({
         display: 1,
-        tool: "list_workers",
-        entity: "workers",
-        recordEntity: "worker",
+        tool: "list_commodities",
+        entity: "commodities",
+        recordEntity: "commodity",
         columns: [{ key: "name", label: "Name", type: "text" }],
-        rows: [{ id: "wrk_1", name: "Avery Lane" }],
+        rows: [{ id: "com_1", name: "Avery Lane" }],
         rowCount: 1,
       }),
     );
@@ -221,7 +221,9 @@ describe("DeskTableBody with formula templates", () => {
     fireEvent.click(screen.getByText("Avery Lane"));
 
     expect(card.opened).toEqual([]);
-    expect(screen.getByTestId("where")).toHaveTextContent("/hr/workers");
+    expect(screen.getByTestId("where")).toHaveTextContent(
+      "/shipment-management/configuration-files/commodities",
+    );
   });
 });
 

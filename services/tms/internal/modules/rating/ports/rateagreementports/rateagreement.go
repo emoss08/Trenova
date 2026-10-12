@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 type ListRateAgreementRequest struct {
@@ -131,6 +132,22 @@ type RateAgreementLanePage struct {
 	Offset  int                                `json:"offset"`
 }
 
+type RateAgreementLaneSummary struct {
+	Groups []*LanePricingGroup `json:"groups"`
+	Count  int                 `json:"count"`
+}
+
+type LanePricingGroup struct {
+	FormulaTemplateID   *pulid.ID           `json:"formulaTemplateId"   bun:"formula_template_id"`
+	FormulaTemplateName string              `json:"formulaTemplateName" bun:"formula_template_name"`
+	RateMatrixID        *pulid.ID           `json:"rateMatrixId"        bun:"rate_matrix_id"`
+	RateMatrixName      string              `json:"rateMatrixName"      bun:"rate_matrix_name"`
+	Currency            string              `json:"currency"            bun:"currency"`
+	Lanes               int                 `json:"lanes"               bun:"lanes"`
+	MinRate             decimal.NullDecimal `json:"minRate"             bun:"min_rate"`
+	MaxRate             decimal.NullDecimal `json:"maxRate"             bun:"max_rate"`
+}
+
 type GetRateAgreementRuleByIDRequest struct {
 	RuleID     pulid.ID              `json:"ruleId"`
 	TenantInfo pagination.TenantInfo `json:"-"`
@@ -201,6 +218,10 @@ type RateAgreementRepository interface {
 		ctx context.Context,
 		req *ListRateAgreementLanesRequest,
 	) (*RateAgreementLanePage, error)
+	SummarizeLanes(
+		ctx context.Context,
+		req *ListRateAgreementLanesRequest,
+	) (*RateAgreementLaneSummary, error)
 	GetRuleByID(
 		ctx context.Context,
 		req *GetRateAgreementRuleByIDRequest,

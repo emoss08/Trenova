@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -373,6 +374,54 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
+				Name:     "ownershipType",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trailer.Trailer)
+					return obj.OwnershipType, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNEquipmentOwnershipType2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐOwnershipType),
+			},
+			{
+				Name:     "ownerWorkerId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trailer.Trailer)
+					return obj.OwnerWorkerID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "lessorName",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trailer.Trailer)
+					return obj.LessorName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "leaseReference",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trailer.Trailer)
+					return obj.LeaseReference, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "leaseEndDate",
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trailer.Trailer)
+					return obj.LeaseEndDate, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
 				Name:     "version",
 				NonNull:  true,
 				ChildErr: errNoChild3,
@@ -404,7 +453,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "customFields",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trailer.Trailer)
 					return obj.CustomFields, nil
@@ -470,6 +519,16 @@ var Shard = &gqlexec.Shard{
 					return obj.RegistrationState, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋusstateᚐUsState),
+			},
+			{
+				Name:      "ownerWorker",
+				HasChild:  true,
+				ChildType: "Worker",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trailer.Trailer)
+					return obj.OwnerWorker, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
 			},
 			{
 				Name:       "lastKnownLocation",
@@ -581,7 +640,8 @@ var (
 	errNoChild2 = errors.New("field of type String does not have child fields")
 	errNoChild3 = errors.New("field of type Int does not have child fields")
 	errNoChild4 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild5 = errors.New("field of type JSON does not have child fields")
+	errNoChild5 = errors.New("field of type EquipmentOwnershipType does not have child fields")
+	errNoChild6 = errors.New("field of type JSON does not have child fields")
 )
 
 func field_Mutation_createTrailer_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -1217,6 +1277,14 @@ func marshalNEquipmentContinuity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "EquipmentContinuity", v)
 }
 
+func marshalNEquipmentOwnershipType2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐOwnershipType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v domaintypes.OwnershipType) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNEquipmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐEquipmentStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v domaintypes.EquipmentStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -1333,6 +1401,14 @@ func marshalOFleetCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules�
 	return ec.MarshalType(ctx, sel, "FleetCode", v)
 }
 
+func marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
 func marshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -1391,6 +1467,13 @@ func marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋ
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "UsState", v)
+}
+
+func marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.Worker) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "Worker", v)
 }
 
 func marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *introspection.Schema) graphql.Marshaler {

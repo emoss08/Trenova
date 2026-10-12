@@ -373,6 +373,11 @@ func (h *Handler) statsRequest(c *gin.Context) *detentionports.DetentionStatsReq
 			req.Limit = parsed
 		}
 	}
+	if raw := helpers.QueryString(c, "locationId"); raw != "" {
+		if parsed, err := pulid.Parse(raw); err == nil {
+			req.LocationID = parsed
+		}
+	}
 
 	return req
 }

@@ -27,6 +27,30 @@ vi.mock("../../../cards/rate-agreement/desk-rate-agreement", () => ({
     <p>Rate agreement {recordId}</p>
   ),
 }));
+vi.mock("../../../cards/trailer/desk-trailer", () => ({
+  DeskTrailer: () => null,
+  DeskTrailerArtifact: ({ recordId }: { recordId: string }) => <p>Trailer {recordId}</p>,
+}));
+vi.mock("../../../cards/order/desk-order", () => ({
+  DeskOrder: () => null,
+  DeskOrderArtifact: ({ recordId }: { recordId: string }) => <p>Order {recordId}</p>,
+}));
+vi.mock("../../../cards/carrier/desk-carrier", () => ({
+  DeskCarrier: () => null,
+  DeskCarrierArtifact: ({ recordId }: { recordId: string }) => <p>Carrier {recordId}</p>,
+}));
+vi.mock("../../../cards/location/desk-location", () => ({
+  DeskLocation: () => null,
+  DeskLocationArtifact: ({ recordId }: { recordId: string }) => <p>Location {recordId}</p>,
+}));
+vi.mock("../../../cards/worker/desk-worker", () => ({
+  DeskWorker: () => null,
+  DeskWorkerArtifact: ({ recordId }: { recordId: string }) => <p>Worker {recordId}</p>,
+}));
+vi.mock("../../../cards/tractor/desk-tractor", () => ({
+  DeskTractor: () => null,
+  DeskTractorArtifact: ({ recordId }: { recordId: string }) => <p>Tractor {recordId}</p>,
+}));
 vi.mock("../../../cards/billing-queue-item/desk-billing-record", () => ({
   DeskBillingRecord: () => null,
   DeskBillingArtifact: ({ recordId, fallback }: { recordId: string; fallback: ReactNode }) => (
@@ -102,7 +126,7 @@ describe("a looked-up record with a card of its own", () => {
   });
 
   it("draws a record without a card as its fields", () => {
-    draw(card("worker", { recordId: "wrk_1" }));
+    draw(card("commodity", { recordId: "com_1" }));
 
     expect(screen.getByText("Reefer per mile")).toBeInTheDocument();
     expect(screen.queryByText(/Formula template|Billing item/)).not.toBeInTheDocument();
@@ -120,7 +144,7 @@ describe("a looked-up record with a card of its own", () => {
     expect(deskArtKind(artifact)).toBe("formula");
     expect(deskArtKindName("formula", t as never)).toBe("Formula template");
     expect(deskArtKind(card("billing_queue_item"))).toBe("bill");
-    expect(deskArtKind(card("worker"))).toBe("record");
+    expect(deskArtKind(card("commodity"))).toBe("record");
   });
 
   it("draws a shipment the agent looked up as the shipment card, with its own mark", async () => {
@@ -151,6 +175,66 @@ describe("a looked-up record with a card of its own", () => {
     expect(await screen.findByText("Rate agreement ra_1")).toBeInTheDocument();
     expect(deskArtKind(artifact)).toBe("agreement");
     expect(deskArtKindName("agreement", t as never)).toBe("Rate agreement");
+  });
+
+  it("draws a tractor the agent looked up as the tractor card, with its own mark", async () => {
+    const artifact = card("tractor", { recordId: "tr_1", tool: "get_tractor" });
+
+    draw(artifact);
+
+    expect(await screen.findByText("Tractor tr_1")).toBeInTheDocument();
+    expect(deskArtKind(artifact)).toBe("tractor");
+    expect(deskArtKindName("tractor", t as never)).toBe("Tractor");
+  });
+
+  it("draws a trailer the agent looked up as the trailer card, with its own mark", async () => {
+    const artifact = card("trailer", { recordId: "trl_1", tool: "get_trailer" });
+
+    draw(artifact);
+
+    expect(await screen.findByText("Trailer trl_1")).toBeInTheDocument();
+    expect(deskArtKind(artifact)).toBe("trailer");
+    expect(deskArtKindName("trailer", t as never)).toBe("Trailer");
+  });
+
+  it("draws a worker the agent looked up as the worker card, with its own mark", async () => {
+    const artifact = card("worker", { recordId: "wrk_1", tool: "get_worker" });
+
+    draw(artifact);
+
+    expect(await screen.findByText("Worker wrk_1")).toBeInTheDocument();
+    expect(deskArtKind(artifact)).toBe("worker");
+    expect(deskArtKindName("worker", t as never)).toBe("Worker");
+  });
+
+  it("draws a location the agent looked up as the location card, with its own mark", async () => {
+    const artifact = card("location", { recordId: "loc_1", tool: "get_location" });
+
+    draw(artifact);
+
+    expect(await screen.findByText("Location loc_1")).toBeInTheDocument();
+    expect(deskArtKind(artifact)).toBe("location");
+    expect(deskArtKindName("location", t as never)).toBe("Location");
+  });
+
+  it("draws a carrier the agent looked up as the carrier card, with its own mark", async () => {
+    const artifact = card("carrier", { recordId: "car_1", tool: "get_carrier" });
+
+    draw(artifact);
+
+    expect(await screen.findByText("Carrier car_1")).toBeInTheDocument();
+    expect(deskArtKind(artifact)).toBe("carrier");
+    expect(deskArtKindName("carrier", t as never)).toBe("Carrier");
+  });
+
+  it("draws an order the agent looked up as the order card, with its own mark", async () => {
+    const artifact = card("order", { recordId: "ord_1", tool: "get_order" });
+
+    draw(artifact);
+
+    expect(await screen.findByText("Order ord_1")).toBeInTheDocument();
+    expect(deskArtKind(artifact)).toBe("order");
+    expect(deskArtKindName("order", t as never)).toBe("Order");
   });
 
   it("reads only the record kinds it names, never a name every object has", () => {

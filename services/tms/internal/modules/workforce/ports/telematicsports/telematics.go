@@ -119,6 +119,8 @@ type ListVehicleInspectionsRequest struct {
 	WorkerID   pulid.ID
 	Since      int64
 	Limit      int
+	Before     int64
+	BeforeID   pulid.ID
 }
 
 type ListOpenStopReviewsRequest struct {

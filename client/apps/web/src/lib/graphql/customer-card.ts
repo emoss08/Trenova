@@ -1,16 +1,13 @@
 import {
   DeskCustomerCardDocument,
   DeskCustomerRateAgreementsDocument,
-  DeskCustomerShipmentsDocument,
   type DeskCustomerCardQuery,
   type DeskCustomerRateAgreementsQuery,
-  type DeskCustomerShipmentsQuery,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type DeskCustomer = NonNullable<DeskCustomerCardQuery["customer"]>;
 export type DeskCustomerBilling = NonNullable<DeskCustomer["billingProfile"]>;
-export type DeskCustomerShipment = DeskCustomerShipmentsQuery["shipments"]["edges"][number]["node"];
 export type DeskCustomerRateAgreement =
   DeskCustomerRateAgreementsQuery["rateAgreements"]["edges"][number]["node"];
 
@@ -36,29 +33,6 @@ export async function fetchDeskCustomer(
     throw new Error("Customer not found");
   }
   return data.customer;
-}
-
-/** A customer's latest shipments, newest first, each with its stops for the lane. */
-export async function fetchCustomerRecentShipments(
-  customerId: string,
-  limit: number,
-  options?: { signal?: AbortSignal },
-): Promise<CustomerRecent<DeskCustomerShipment>> {
-  const data = await requestGraphQL({
-    document: DeskCustomerShipmentsDocument,
-    operationName: "DeskCustomerShipments",
-    variables: {
-      input: {
-        first: limit,
-        expandShipmentDetails: true,
-        fieldFilters: [{ field: "customerId", operator: "eq", value: customerId }],
-        sort: [{ field: "createdAt", direction: "desc" }],
-      },
-    },
-    signal: options?.signal,
-  });
-  const rows = (data.shipments.edges ?? []).map((edge) => edge.node);
-  return { rows, total: data.shipments.totalCount ?? rows.length };
 }
 
 /** The rate agreements written for a customer, newest first. */

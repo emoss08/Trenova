@@ -11,6 +11,54 @@ const ICONS = {
       <circle cx="17" cy="17" r="1.6" />
     </>
   ),
+  tractor: (
+    <>
+      <path d="M4 16.5V9.5h6.5l2.5-3.5h3.5l3.5 4.5v6h-2" />
+      <path d="M13 6v5.5h7M4 16.5h3M11 16.5h3.5" />
+      <circle cx="9" cy="17" r="1.8" />
+      <circle cx="16.5" cy="17" r="1.8" />
+    </>
+  ),
+  trailer: (
+    <>
+      <path d="M3.5 6.5h14v9.5h-14zM17.5 13h3" />
+      <path d="M3.5 16h2M10.5 16h3" />
+      <circle cx="8" cy="17" r="1.8" />
+      <circle cx="13" cy="17" r="1.8" />
+    </>
+  ),
+  worker: (
+    <>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20.5c.6-3.9 3.3-6 7-6s6.4 2.1 7 6" />
+    </>
+  ),
+  location: (
+    <>
+      <path d="M12 20.5s-6-5.4-6-10.3a6 6 0 0 1 12 0c0 4.9-6 10.3-6 10.3z" />
+      <circle cx="12" cy="10" r="2.2" />
+    </>
+  ),
+  carrier: (
+    <>
+      <path d="M2.5 7.5h11v8h-11zM13.5 10h3.5l3 3v2.5h-6.5" />
+      <path d="M6 4.5h4.5M8.25 2.5v4" />
+      <circle cx="6.5" cy="17" r="1.6" />
+      <circle cx="16.5" cy="17" r="1.6" />
+    </>
+  ),
+  order: (
+    <>
+      <path d="M6.5 4.5h11v16h-11z" />
+      <path d="M9.5 3v3M14.5 3v3M9.5 10h5M9.5 13.5h5M9.5 17h3" />
+    </>
+  ),
+  failure: (
+    <>
+      <circle cx="10.5" cy="12.5" r="7.5" />
+      <path d="M10.5 8.5v4.2l2.8 1.8M19.5 4v5M19.5 12v.01" />
+    </>
+  ),
   agreement: (
     <>
       <path d="M6 3.5h12v17H6z" />
@@ -194,6 +242,13 @@ export type DeskArtKind =
   | "formula"
   | "shipment"
   | "customer"
+  | "tractor"
+  | "trailer"
+  | "worker"
+  | "location"
+  | "carrier"
+  | "order"
+  | "failure"
   | "agreement";
 
 const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
@@ -212,6 +267,13 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
   formula: "Formula template",
   shipment: "Shipment",
   customer: "Customer",
+  tractor: "Tractor",
+  trailer: "Trailer",
+  worker: "Worker",
+  location: "Location",
+  carrier: "Carrier",
+  order: "Order",
+  failure: "Service failure",
   agreement: "Rate agreement",
 });
 
@@ -219,14 +281,27 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
  * Records the Desk draws as a card of their own, each with its own mark: a
  * billing queue item as the item a biller reviews, a formula template as the
  * formula a biller reads, a shipment as the load a dispatcher follows, a
- * customer as the account an account manager or a biller keeps, a rate
- * agreement as the terms a pricing analyst holds freight to.
+ * customer as the account an account manager or a biller keeps, a tractor or a
+ * trailer as the unit a dispatcher or fleet manager runs, a worker as the
+ * driver a dispatcher or safety manager puts on loads, a location as the dock
+ * a planner sends trucks to, a carrier as the partner a carrier manager
+ * qualifies and pays, an order as the business a customer service rep and a
+ * biller follow from taken to billed, a service failure as the miss a customer
+ * service rep explains and settles, a rate agreement as the terms a pricing
+ * analyst holds freight to.
  */
 const CARD_KINDS: Readonly<Record<string, DeskArtKind>> = {
   billing_queue_item: "bill",
   formula_template: "formula",
   shipment: "shipment",
   customer: "customer",
+  tractor: "tractor",
+  trailer: "trailer",
+  worker: "worker",
+  location: "location",
+  carrier: "carrier",
+  order: "order",
+  service_failure: "failure",
   rate_agreement: "agreement",
 };
 
@@ -305,6 +380,20 @@ export function deskArtKindName(kind: DeskArtKind, t: TranslateFn): string {
       return t("Shipment");
     case "customer":
       return t("Customer");
+    case "tractor":
+      return t("Tractor");
+    case "trailer":
+      return t("Trailer");
+    case "worker":
+      return t("Worker");
+    case "location":
+      return t("Location");
+    case "carrier":
+      return t("Carrier");
+    case "order":
+      return t("Order");
+    case "failure":
+      return t("Service failure");
     case "agreement":
       return t("Rate agreement");
   }

@@ -1,0 +1,33 @@
+# The Desk's order card: where the order stands, who it is for, what it is
+# worth and the charges on it. Its legs are read a page at a time through
+# shipments, so this query leaves them out.
+query DeskOrderCard($id: ID!) {
+  order(id: $id) {
+    id
+    status
+    orderNumber
+    poNumber
+    bol
+    currencyCode
+    quotedAmount
+    baseAmount
+    totalAmount
+    createdAt
+    updatedAt
+    customer {
+      id
+      code
+      name
+    }
+    charges {
+      id
+      description
+      amount
+      invoiceId
+      invoicedAt
+      allocations {
+        id
+      }
+    }
+  }
+}
