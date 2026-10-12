@@ -71,12 +71,6 @@ note is updated when that lands.
 The spec's list of context providers is replaced by the real enum (Organization, Clock,
 User, Page, Tools, Memory).
 
-## SQLite migrations
-
-The spec asks for SQLite migrations alongside the PostgreSQL ones. Trenova is not using
-SQLite going forward, so this work adds none, and the ones added earlier in it were
-removed.
-
 ## Tune-ups (§8.10)
 
 - **Stored, not cached.** The spec says tune-ups are computed nightly and cached per tenant. They

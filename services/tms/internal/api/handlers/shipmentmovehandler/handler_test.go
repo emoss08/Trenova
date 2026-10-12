@@ -1,19 +1,24 @@
 package shipmentmovehandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"net/http"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentmovehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/trackingeventportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/idempotency"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
@@ -25,6 +30,19 @@ import (
 func setupShipmentMoveHandler(
 	t *testing.T,
 	service *shipmentportsmock.MockShipmentMoveService,
+) *shipmentmovehandler.Handler {
+	t.Helper()
+	return setupShipmentMoveHandlerWithTracking(
+		t,
+		service,
+		trackingeventportsmock.NewMockTrackingEventService(t),
+	)
+}
+
+func setupShipmentMoveHandlerWithTracking(
+	t *testing.T,
+	service *shipmentportsmock.MockShipmentMoveService,
+	tracking *trackingeventportsmock.MockTrackingEventService,
 ) *shipmentmovehandler.Handler {
 	t.Helper()
 
@@ -45,6 +63,7 @@ func setupShipmentMoveHandler(
 
 	return shipmentmovehandler.New(shipmentmovehandler.Params{
 		Service:              service,
+		TrackingEvents:       tracking,
 		ErrorHandler:         errorHandler,
 		PermissionMiddleware: pm,
 	})
@@ -93,33 +112,47 @@ func TestShipmentMoveHandler_BulkUpdateStatus_BadJSON(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
 }
 
+func recordActualPath(moveID, stopID pulid.ID) string {
+	return "/api/v1/shipment-moves/" + moveID.String() +
+		"/stops/" + stopID.String() +
+		"/record-actual/"
+}
+
 func TestShipmentMoveHandler_RecordStopActual_Success(t *testing.T) {
 	t.Parallel()
 
 	moveID := pulid.MustNew("sm_")
 	stopID := pulid.MustNew("stp_")
 	occurredAt := int64(1767787200)
-	service := shipmentportsmock.NewMockShipmentMoveService(t)
-	service.EXPECT().
-		RecordStopActual(mock.Anything, mock.MatchedBy(func(req *shipmentports.RecordStopActualRequest) bool {
-			return req.MoveID == moveID &&
-				req.StopID == stopID &&
-				req.TenantInfo.OrgID == testutil.TestOrgID &&
-				req.Action == shipmentports.StopActualActionArrive &&
-				req.OccurredAt != nil &&
-				*req.OccurredAt == occurredAt
-		})).
-		Return(&shipment.ShipmentMove{ID: moveID, Status: shipment.MoveStatusInTransit}, nil).
+	tracking := trackingeventportsmock.NewMockTrackingEventService(t)
+	tracking.EXPECT().
+		RecordReported(mock.Anything, mock.MatchedBy(
+			func(params *trackingeventports.RecordReportedStopEventParams) bool {
+				return params.MoveID == moveID &&
+					params.StopID == stopID &&
+					params.TenantInfo.OrgID == testutil.TestOrgID &&
+					params.Action == shipmentports.StopActualActionArrive &&
+					params.Source == trackingevent.SourceDispatcher &&
+					params.ReportedByID == testutil.TestUserID &&
+					params.SourceKey == "" &&
+					params.OccurredAt != nil &&
+					*params.OccurredAt == occurredAt
+			},
+		)).
+		Return(&trackingeventports.StopEventResult{
+			Move:    &shipment.ShipmentMove{ID: moveID, Status: shipment.MoveStatusInTransit},
+			Outcome: trackingevent.OutcomeApplied,
+		}, nil).
 		Once()
 
-	handler := setupShipmentMoveHandler(t, service)
+	handler := setupShipmentMoveHandlerWithTracking(
+		t,
+		shipmentportsmock.NewMockShipmentMoveService(t),
+		tracking,
+	)
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
-		WithPath(
-			"/api/v1/shipment-moves/" + moveID.String() +
-				"/stops/" + stopID.String() +
-				"/record-actual/",
-		).
+		WithPath(recordActualPath(moveID, stopID)).
 		WithDefaultAuthContext().
 		WithJSONBody(map[string]any{"action": "Arrive", "occurredAt": occurredAt})
 
@@ -134,32 +167,40 @@ func TestShipmentMoveHandler_RecordStopActual_Success(t *testing.T) {
 	require.Equal(t, shipment.MoveStatusInTransit, resp.Status)
 }
 
-func TestShipmentMoveHandler_RecordStopActual_DepartWithoutOccurredAt(t *testing.T) {
+func TestShipmentMoveHandler_RecordStopActual_UsesTheIdempotencyKey(t *testing.T) {
 	t.Parallel()
 
 	moveID := pulid.MustNew("sm_")
 	stopID := pulid.MustNew("stp_")
-	service := shipmentportsmock.NewMockShipmentMoveService(t)
-	service.EXPECT().
-		RecordStopActual(mock.Anything, mock.MatchedBy(func(req *shipmentports.RecordStopActualRequest) bool {
-			return req.MoveID == moveID &&
-				req.StopID == stopID &&
-				req.Action == shipmentports.StopActualActionDepart &&
-				req.OccurredAt == nil
-		})).
-		Return(&shipment.ShipmentMove{ID: moveID, Status: shipment.MoveStatusCompleted}, nil).
+	tracking := trackingeventportsmock.NewMockTrackingEventService(t)
+	tracking.EXPECT().
+		RecordReported(mock.Anything, mock.MatchedBy(
+			func(params *trackingeventports.RecordReportedStopEventParams) bool {
+				return params.SourceKey == "scoped-key" &&
+					params.Action == shipmentports.StopActualActionDepart &&
+					params.OccurredAt == nil
+			},
+		)).
+		Return(&trackingeventports.StopEventResult{
+			Move:     &shipment.ShipmentMove{ID: moveID, Status: shipment.MoveStatusCompleted},
+			Outcome:  trackingevent.OutcomeApplied,
+			Replayed: true,
+		}, nil).
 		Once()
 
-	handler := setupShipmentMoveHandler(t, service)
+	handler := setupShipmentMoveHandlerWithTracking(
+		t,
+		shipmentportsmock.NewMockShipmentMoveService(t),
+		tracking,
+	)
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
-		WithPath(
-			"/api/v1/shipment-moves/" + moveID.String() +
-				"/stops/" + stopID.String() +
-				"/record-actual/",
-		).
+		WithPath(recordActualPath(moveID, stopID)).
 		WithDefaultAuthContext().
 		WithJSONBody(map[string]any{"action": "Depart"})
+	ginCtx.Context.Request = ginCtx.Context.Request.WithContext(
+		idempotency.WithKey(ginCtx.Context.Request.Context(), "scoped-key"),
+	)
 
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
@@ -172,20 +213,20 @@ func TestShipmentMoveHandler_RecordStopActual_BusinessErrorPassthrough(t *testin
 
 	moveID := pulid.MustNew("sm_")
 	stopID := pulid.MustNew("stp_")
-	service := shipmentportsmock.NewMockShipmentMoveService(t)
-	service.EXPECT().
-		RecordStopActual(mock.Anything, mock.AnythingOfType("*shipmentports.RecordStopActualRequest")).
+	tracking := trackingeventportsmock.NewMockTrackingEventService(t)
+	tracking.EXPECT().
+		RecordReported(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewBusinessError("You've already arrived at this stop")).
 		Once()
 
-	handler := setupShipmentMoveHandler(t, service)
+	handler := setupShipmentMoveHandlerWithTracking(
+		t,
+		shipmentportsmock.NewMockShipmentMoveService(t),
+		tracking,
+	)
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
-		WithPath(
-			"/api/v1/shipment-moves/" + moveID.String() +
-				"/stops/" + stopID.String() +
-				"/record-actual/",
-		).
+		WithPath(recordActualPath(moveID, stopID)).
 		WithDefaultAuthContext().
 		WithJSONBody(map[string]any{"action": "Arrive"})
 

@@ -41,7 +41,7 @@ type Params struct {
 	AssignmentRepo      shipmentports.AssignmentRepository
 	ShipmentRepo        shipmentports.ShipmentRepository
 	ShipmentMoveRepo    shipmentports.ShipmentMoveRepository
-	ShipmentMoveService shipmentports.ShipmentMoveService
+	StopVisits          telematicsports.StopVisitRecorder
 	DispatchControlRepo dispatchcontrolports.DispatchControlRepository
 	CustomFieldValues   *customfieldservice.ValuesService
 	Logger              *zap.Logger
@@ -61,7 +61,7 @@ type Service struct {
 	assignmentRepo      shipmentports.AssignmentRepository
 	shipmentRepo        shipmentports.ShipmentRepository
 	shipmentMoveRepo    shipmentports.ShipmentMoveRepository
-	shipmentMoveService shipmentports.ShipmentMoveService
+	stopVisits          telematicsports.StopVisitRecorder
 	dispatchControlRepo dispatchcontrolports.DispatchControlRepository
 	customFieldValues   *customfieldservice.ValuesService
 	providerOverride    telematicsports.TelematicsProvider
@@ -82,7 +82,7 @@ func New(p Params) *Service { //nolint:gocritic // dependency injection
 		assignmentRepo:      p.AssignmentRepo,
 		shipmentRepo:        p.ShipmentRepo,
 		shipmentMoveRepo:    p.ShipmentMoveRepo,
-		shipmentMoveService: p.ShipmentMoveService,
+		stopVisits:          p.StopVisits,
 		dispatchControlRepo: p.DispatchControlRepo,
 		customFieldValues:   p.CustomFieldValues,
 		providerOverride:    p.ProviderOverride,

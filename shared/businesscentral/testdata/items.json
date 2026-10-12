@@ -1,0 +1,4 @@
+{"@odata.context": "https://api.businesscentral.dynamics.com/v2.0/6e1f2a3b-4c5d-4e6f-8a9b-0c1d2e3f4a5b/Production/api/v2.0/$metadata#companies(a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d)/items", "value": [
+  {"@odata.etag": "W/\"JzE5OzE=\"", "id": "44444444-5555-4666-8777-888888888881", "number": "1000", "displayName": "Linehaul", "type": "Service", "blocked": false, "unitPrice": 1250.5, "lastModifiedDateTime": "2026-07-15T09:30:00Z"},
+  {"@odata.etag": "W/\"JzE5OzI=\"", "id": "44444444-5555-4666-8777-888888888882", "number": "1001", "displayName": "Pallet", "type": "Inventory", "blocked": true, "unitPrice": 0, "lastModifiedDateTime": "2026-07-15T09:30:00Z"}
+]}

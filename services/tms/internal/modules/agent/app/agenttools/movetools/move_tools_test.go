@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,6 +35,39 @@ func (f *fakeMoveService) RecordStopActual(
 	return &shipment.ShipmentMove{ID: req.MoveID}, f.err
 }
 
+type movesReporter struct {
+	moves shipmentports.ShipmentMoveService
+	key   string
+	via   trackingevent.Source
+}
+
+func (r *movesReporter) RecordReported(
+	ctx context.Context,
+	params *trackingeventports.RecordReportedStopEventParams,
+) (*trackingeventports.StopEventResult, error) {
+	r.key = params.SourceKey
+	r.via = params.Source
+	move, err := r.moves.RecordStopActual(ctx, &shipmentports.RecordStopActualRequest{
+		TenantInfo: params.TenantInfo,
+		MoveID:     params.MoveID,
+		StopID:     params.StopID,
+		Action:     params.Action,
+		OccurredAt: params.OccurredAt,
+		DepartedAt: params.DepartedAt,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &trackingeventports.StopEventResult{Move: move}, nil
+}
+
+func reportsFor(moves shipmentports.ShipmentMoveService) stopReporter {
+	if moves == nil {
+		return nil
+	}
+	return &movesReporter{moves: moves}
+}
+
 /*
 Recording an arrival or a departure is what advances a shipment: the move's
 status, the stop's actuals and everything downstream of them follow from it.
@@ -45,7 +80,7 @@ func TestRecordStopActual_PassesTheActionThrough(t *testing.T) {
 
 	for _, action := range []string{"Arrive", "Depart"} {
 		moves := &fakeMoveService{}
-		tool := newRecordStopActualTool(moves, nil)
+		tool := newRecordStopActualTool(moves, reportsFor(moves), nil)
 
 		moveID := pulid.MustNew("smv_")
 		stopID := pulid.MustNew("stp_")
@@ -70,7 +105,7 @@ func TestRecordStopActual_RefusesAnActionItDoesNotKnow(t *testing.T) {
 	t.Parallel()
 
 	moves := &fakeMoveService{}
-	tool := newRecordStopActualTool(moves, nil)
+	tool := newRecordStopActualTool(moves, reportsFor(moves), nil)
 
 	err := tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"moveId": pulid.MustNew("smv_").String(),
@@ -91,7 +126,7 @@ func TestRecordStopActual_OnlySendsATimeWhenGivenOne(t *testing.T) {
 	t.Parallel()
 
 	moves := &fakeMoveService{}
-	tool := newRecordStopActualTool(moves, nil)
+	tool := newRecordStopActualTool(moves, reportsFor(moves), nil)
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"moveId": pulid.MustNew("smv_").String(),
@@ -108,7 +143,10 @@ func TestRecordStopActual_OnlySendsATimeWhenGivenOne(t *testing.T) {
 		"occurredAt": "2026-09-30T14:30",
 	})
 	params.Timezone = "America/Chicago"
-	require.NoError(t, newRecordStopActualTool(moves2, nil).Execute(t.Context(), params))
+	require.NoError(
+		t,
+		newRecordStopActualTool(moves2, reportsFor(moves2), nil).Execute(t.Context(), params),
+	)
 	require.NotNil(t, moves2.recorded.OccurredAt)
 	assert.Equal(t, agenttoolstest.LocalInstant(t, "America/Chicago", 2026, 9, 30, 14, 30),
 		*moves2.recorded.OccurredAt)
@@ -146,7 +184,10 @@ func TestRecordStopActual_ReadsATimeWhereTheStopIs(t *testing.T) {
 	})
 	params.Timezone = "America/New_York"
 
-	require.NoError(t, newRecordStopActualTool(moves, moveStops).Execute(t.Context(), params))
+	require.NoError(
+		t,
+		newRecordStopActualTool(moves, reportsFor(moves), moveStops).Execute(t.Context(), params),
+	)
 
 	require.NotNil(t, moves.recorded.OccurredAt)
 	assert.Equal(t, agenttoolstest.LocalInstant(t, "America/Los_Angeles", 2026, 9, 30, 6, 15),
@@ -158,7 +199,11 @@ func TestRecordStopActual_RefusesAUnixTimeOrAnOffset(t *testing.T) {
 
 	for _, occurredAt := range []any{float64(1789000000), "1789000000", "2026-09-30T14:30:00Z"} {
 		moves := &fakeMoveService{}
-		err := newRecordStopActualTool(moves, nil).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+		err := newRecordStopActualTool(
+			moves,
+			reportsFor(moves),
+			nil,
+		).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 			"moveId":     pulid.MustNew("smv_").String(),
 			"stopId":     pulid.MustNew("stp_").String(),
 			"action":     "Arrive",
@@ -177,7 +222,7 @@ func TestRecordStopActual_ScopesToTheActorTenant(t *testing.T) {
 	t.Parallel()
 
 	moves := &fakeMoveService{}
-	tool := newRecordStopActualTool(moves, nil)
+	tool := newRecordStopActualTool(moves, reportsFor(moves), nil)
 
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"moveId": pulid.MustNew("smv_").String(),
@@ -194,7 +239,7 @@ func TestRecordStopActual_RejectsAMismatchedActor(t *testing.T) {
 	t.Parallel()
 
 	moves := &fakeMoveService{}
-	tool := newRecordStopActualTool(moves, nil)
+	tool := newRecordStopActualTool(moves, reportsFor(moves), nil)
 
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"moveId": pulid.MustNew("smv_").String(),
@@ -212,10 +257,30 @@ func TestRecordStopActual_RejectsAMismatchedActor(t *testing.T) {
 func TestRecordStopActual_IsIrreversibleAndNeedsApproval(t *testing.T) {
 	t.Parallel()
 
-	tool := newRecordStopActualTool(nil, nil)
+	tool := newRecordStopActualTool(nil, reportsFor(nil), nil)
 
 	assert.False(t, tool.Policy().Reversible)
 	assert.Equal(t, agent.TierActWithApproval, tool.Policy().DefaultTier)
 	assert.Equal(t, permission.ResourceShipmentMove, tool.Policy().Resource)
 	assert.Equal(t, permission.OpUpdate, tool.Policy().Operation)
+}
+
+func TestRecordStopActual_ReportsAsTheAgentUnderTheCallKey(t *testing.T) {
+	t.Parallel()
+
+	moves := &fakeMoveService{}
+	reports := &movesReporter{moves: moves}
+	tool := newRecordStopActualTool(moves, reports, nil)
+	params := agenttoolstest.ExecuteParams(map[string]any{
+		"moveId": pulid.MustNew("smv_").String(),
+		"stopId": pulid.MustNew("stp_").String(),
+		"action": "Arrive",
+	})
+	params.IdempotencyKey = "run_1:call_7"
+
+	require.NoError(t, tool.Execute(t.Context(), params))
+
+	assert.Equal(t, trackingevent.SourceAgent, reports.via)
+	assert.Equal(t, "run_1:call_7", reports.key)
+	require.NotNil(t, moves.recorded)
 }

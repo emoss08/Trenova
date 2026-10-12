@@ -167,12 +167,14 @@ func externalShipmentStatusComment(
 }
 
 type RecordTenderedShipmentStatusRequest struct {
-	TenantInfo  pagination.TenantInfo
-	Offer       *tender.TenderOffer
-	StatusCode  string
-	ReasonCode  string
-	ReferenceID string
-	EventAt     int64
+	TenantInfo   pagination.TenantInfo
+	Offer        *tender.TenderOffer
+	StatusCode   string
+	ReasonCode   string
+	ReferenceID  string
+	EventAt      int64
+	Event        *edi.ShipmentStatusEvent
+	RawReference string
 }
 
 // RecordTenderedShipmentStatus applies a carrier 214 that matched an accepted
@@ -194,6 +196,16 @@ func (s *Service) RecordTenderedShipmentStatus(
 			"An accepted tender offer with its tender is required for status processing",
 		)
 	}
+	target, warnings, err := s.resolveTendered214Target(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if target != nil {
+		resolved := *req
+		resolved.EventAt = target.eventAt
+		req = &resolved
+	}
+
 	offer := req.Offer
 	shipmentID := offer.Tender.ShipmentID
 	metadata := map[string]any{
@@ -207,7 +219,7 @@ func (s *Service) RecordTenderedShipmentStatus(
 		ReferenceID: req.ReferenceID,
 		EventAt:     req.EventAt,
 	}, metadata)
-	if err := s.createSystemShipmentComment(
+	if err = s.createSystemShipmentComment(
 		ctx,
 		shipmentID,
 		req.TenantInfo,
@@ -216,10 +228,14 @@ func (s *Service) RecordTenderedShipmentStatus(
 	); err != nil {
 		return nil, err
 	}
-	if err := s.recordTenderedShipmentStatusEvent(ctx, req, shipmentID); err != nil {
+	if err = s.recordTenderedShipmentStatusEvent(ctx, req, shipmentID); err != nil {
 		return nil, err
 	}
-	return s.applyTendered214StopActuals(ctx, req)
+	applied, err := s.applyTendered214StopActuals(ctx, req, target)
+	if err != nil {
+		return nil, err
+	}
+	return append(warnings, applied...), nil
 }
 
 func (s *Service) recordTenderedShipmentStatusEvent(
@@ -285,6 +301,8 @@ func externalShipmentStatusDescription(statusCode string) string {
 		return "arrived at pickup location"
 	case "D1":
 		return "completed delivery"
+	case "CD":
+		return "departed delivery location"
 	case "A3", "SD":
 		return "shipment delayed"
 	case "A7":

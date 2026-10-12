@@ -4629,7 +4629,7 @@ func unmarshalInputRecordMyStopActionInput(ctx context.Context, ec *gqlexec.Exec
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"moveId", "stopId", "action"}
+	fieldsInOrder := [...]string{"moveId", "stopId", "action", "occurredAt", "clientEventId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4657,6 +4657,20 @@ func unmarshalInputRecordMyStopActionInput(ctx context.Context, ec *gqlexec.Exec
 				return it, err
 			}
 			it.Action = data
+		case "occurredAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("occurredAt"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OccurredAt = data
+		case "clientEventId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientEventId"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClientEventID = data
 		}
 	}
 	return it, nil

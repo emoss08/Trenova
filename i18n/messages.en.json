@@ -4394,6 +4394,15 @@
       "apps/web/components"
     ]
   },
+  "A departure time goes with an arrival": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A departure time goes with an arrival; record a departure on its own as Depart": {
     "sites": 1,
     "scope": [
@@ -6514,6 +6523,15 @@
     ]
   },
   "A plan is accepted or rejected as a whole; change a step by deciding it on its own": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A plan is required": {
     "sites": 1,
     "scope": [
       "go"
@@ -8739,6 +8757,15 @@
     "areas": [
       "go/other",
       "routes/desk"
+    ]
+  },
+  "A stop no longer on this shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "A stop outcome for review must name its move": {
@@ -13192,7 +13219,7 @@
     ]
   },
   "Action must be Arrive or Depart": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -17631,11 +17658,12 @@
     ]
   },
   "Agent": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "routes/agent-control",
       "routes/desk"
     ]
@@ -20138,6 +20166,15 @@
       "routes/accounting-inbound"
     ]
   },
+  "Already reported": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Also enroll carriers with a tender that is still open.": {
     "sites": 1,
     "scope": [
@@ -21597,6 +21634,15 @@
     ]
   },
   "An arrival time is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "An arrival time is required with a departure time": {
     "sites": 1,
     "scope": [
       "go"
@@ -26232,6 +26278,15 @@
       "apps/web/components"
     ]
   },
+  "Arrival": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Arrival recorded": {
     "sites": 2,
     "scope": [
@@ -26316,7 +26371,7 @@
     ]
   },
   "Arrive at this stop before departing": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -33605,6 +33660,15 @@
       "routes/pay-code"
     ]
   },
+  "Being created": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Being embedded now": {
     "sites": 1,
     "scope": [
@@ -37168,6 +37232,24 @@
       "apps/web/components"
     ]
   },
+  "Business Central journal lines cannot post to a customer or vendor or apply to an invoice, so Trenova's journals cannot be sent to Business Central as they are. Send documents instead.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Business Central's API does not let Trenova read posted payments or which invoices they paid, so payments recorded in Business Central are not brought in. An invoice paid there shows as a balance difference on the drift page.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Business Rule Violation": {
     "sites": 1,
     "scope": [
@@ -37286,7 +37368,7 @@
     ]
   },
   "Business unit ID is required": {
-    "sites": 48,
+    "sites": 50,
     "scope": [
       "go"
     ],
@@ -37304,7 +37386,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 134,
+    "sites": 135,
     "scope": [
       "go"
     ],
@@ -42911,6 +42993,15 @@
       "routes/desk"
     ]
   },
+  "Change subscriptions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Change sync settings and mappings": {
     "sites": 1,
     "scope": [
@@ -48087,6 +48178,15 @@
       "go/other"
     ]
   },
+  "Client event ID must be 128 characters or fewer with no spaces": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Client id cannot be longer than 255 characters": {
     "sites": 1,
     "scope": [
@@ -50918,7 +51018,7 @@
     ]
   },
   "Complete the earlier stops on this load first": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -53093,6 +53193,15 @@
       "routes/admin"
     ]
   },
+  "Connect your Microsoft Dynamics 365 Business Central company so Trenova can send and post the invoices, credit memos, payments and bills it records. Trenova keeps Business Central's webhook subscriptions renewed and raises a Watchtower item when the connection needs attention.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Connect your QuickBooks Online company so Trenova can keep your books in step with what it posts. Trenova checks the connection and raises a Watchtower item when it needs attention.": {
     "sites": 1,
     "scope": [
@@ -53293,6 +53402,15 @@
     ],
     "areas": [
       "routes/detention-desk"
+    ]
+  },
+  "Connecting Business Central": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Connecting QuickBooks Online": {
@@ -55608,6 +55726,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Copy the application (client) ID, add a client secret under Certificates & secrets, and enter both in this form.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Copy the client ID and client secret for the same environment into this form.": {
@@ -59130,6 +59257,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Create, renew and remove the webhook subscriptions accounting systems require": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Created": {
@@ -68135,6 +68271,15 @@
       "go/other"
     ]
   },
+  "Departure": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Departure cannot precede arrival": {
     "sites": 1,
     "scope": [
@@ -71425,6 +71570,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Dispatcher": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Display": {
@@ -75034,13 +75188,14 @@
     ]
   },
   "Driver": {
-    "sites": 47,
+    "sites": 48,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "apps/web/lib",
       "go/other",
       "packages/shared/lib",
@@ -77199,7 +77354,7 @@
     ]
   },
   "EDI": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -77207,6 +77362,7 @@
     "areas": [
       "apps/web/components",
       "apps/web/config",
+      "apps/web/hooks",
       "apps/web/lib",
       "go/other",
       "packages/shared/types",
@@ -85001,7 +85157,7 @@
       "routes/shipment"
     ]
   },
-  "Event time predates the arrival at this stop": {
+  "Event time is required": {
     "sites": 1,
     "scope": [
       "go"
@@ -85010,8 +85166,26 @@
       "go/other"
     ]
   },
-  "Event time predates the previous stop's departure": {
+  "Event time must be a valid timestamp": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Event time predates the arrival at this stop": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Event time predates the previous stop's departure": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -85478,6 +85652,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Every arrival and departure reported for this shipment, and whether it set the stop's times": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Every balance is derived on read, so the change applies to existing cases as well as new ones.": {
@@ -112103,7 +112286,7 @@
     ]
   },
   "Invalid shipment": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -117238,7 +117421,7 @@
     ]
   },
   "Kind is required": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "go"
     ],
@@ -117253,6 +117436,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Kind must be Arrival or Departure": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Kind must be custom or canned_fork": {
@@ -119192,8 +119384,17 @@
       "go/other"
     ]
   },
+  "Latitude is required with a longitude": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Latitude must be between -90 and 90": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -124965,8 +125166,17 @@
       "go/other"
     ]
   },
+  "Longitude is required with a latitude": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Longitude must be between -180 and 180": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -128264,6 +128474,15 @@
       "routes/routing-guide"
     ]
   },
+  "Match method is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Match mode": {
     "sites": 1,
     "scope": [
@@ -130886,6 +131105,15 @@
       "routes/admin"
     ]
   },
+  "Microsoft Entra app": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Microsoft Foundry": {
     "sites": 1,
     "scope": [
@@ -133500,7 +133728,7 @@
     ]
   },
   "Move ID is required": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -133654,6 +133882,15 @@
       "routes/shipment"
     ]
   },
+  "Move is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Move may go uncovered": {
     "sites": 1,
     "scope": [
@@ -133754,7 +133991,7 @@
     ]
   },
   "Move status transition from {0} to {1} is not allowed": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go"
     ],
@@ -137795,6 +138032,15 @@
       "apps/web/config"
     ]
   },
+  "Next renewal due": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Next review": {
     "sites": 1,
     "scope": [
@@ -138975,6 +139221,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "No arrivals or departures have been reported yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "No artifacts match “{0}”": {
@@ -147167,6 +147422,15 @@
       "routes/accounting-sync"
     ]
   },
+  "Not used": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Not used yet": {
     "sites": 2,
     "scope": [
@@ -150713,7 +150977,7 @@
     ]
   },
   "Occurred at cannot be in the future": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -150740,7 +151004,7 @@
     ]
   },
   "Occurred at must be a valid timestamp": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -158485,7 +158749,7 @@
     ]
   },
   "Organization ID is required": {
-    "sites": 51,
+    "sites": 53,
     "scope": [
       "go",
       "ts"
@@ -158599,7 +158863,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 133,
+    "sites": 134,
     "scope": [
       "go"
     ],
@@ -159797,7 +160061,16 @@
     ]
   },
   "Outcome is required": {
-    "sites": 3,
+    "sites": 4,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Outcome reason cannot be longer than 500 characters": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -165358,6 +165631,15 @@
     ],
     "areas": [
       "routes/accounting-inbound"
+    ]
+  },
+  "Payments recorded in {0} are not brought in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Payments recorded in {0} are not read. Record them in Trenova by hand so invoices and settlements show as paid.": {
@@ -179650,6 +179932,15 @@
       "routes/carrier"
     ]
   },
+  "Raw reference cannot be longer than 255 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Raw {0} before guardrails and rounding": {
     "sites": 1,
     "scope": [
@@ -182266,6 +182557,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Received time is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Received time must be a valid timestamp": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Received via {0} · {1}": {
@@ -185683,6 +185992,15 @@
       "go/other"
     ]
   },
+  "Register a multitenant web app in Microsoft Entra and add the delegated Dynamics 365 Business Central permission Financials.ReadWrite.All.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Registered DOT": {
     "sites": 1,
     "scope": [
@@ -186301,7 +186619,7 @@
     ]
   },
   "Rejected": {
-    "sites": 31,
+    "sites": 32,
     "scope": [
       "go",
       "ts"
@@ -189771,7 +190089,7 @@
     ]
   },
   "Request is required": {
-    "sites": 46,
+    "sites": 50,
     "scope": [
       "go"
     ],
@@ -211453,7 +211771,7 @@
     ]
   },
   "Shipment ID is required": {
-    "sites": 33,
+    "sites": 34,
     "scope": [
       "go",
       "ts"
@@ -212384,7 +212702,7 @@
     ]
   },
   "Shipment is required": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "go"
     ],
@@ -216853,7 +217171,7 @@
     ]
   },
   "Source is required": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -216861,6 +217179,24 @@
     "areas": [
       "go/other",
       "routes/bank-receipt-batch"
+    ]
+  },
+  "Source key cannot be longer than 255 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Source key is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Source kind is invalid": {
@@ -216909,6 +217245,24 @@
     ]
   },
   "Source message ID or payload is required for acknowledgment documents": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Source must be Dispatcher, Agent or Driver": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Source must be Telematics or EDI": {
     "sites": 1,
     "scope": [
       "go"
@@ -217071,6 +217425,15 @@
   },
   "Source shipment version cannot be negative": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Source status cannot be longer than 64 characters": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -220401,7 +220764,7 @@
     ]
   },
   "Stop ID is required": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -220518,7 +220881,7 @@
     ]
   },
   "Stop is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -220563,7 +220926,7 @@
     ]
   },
   "Stop not found on this load": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -220650,6 +221013,24 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Stop reports": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Stop reports could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Stop results": {
@@ -224718,15 +225099,25 @@
     ]
   },
   "Telematics": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "go/other",
       "packages/shared/types",
       "routes/tractor"
+    ]
+  },
+  "Telematics event is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Telematics forms": {
@@ -237870,7 +238261,7 @@
     ]
   },
   "The short pay write-off item is not mapped": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -238331,6 +238722,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "The stop times on this load did not settle": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The stops are still in the notice window — try again in a moment.": {
@@ -239343,7 +239743,7 @@
     ]
   },
   "The webhook body could not be read": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -243150,7 +243550,7 @@
     ]
   },
   "This load has been canceled": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -243558,6 +243958,15 @@
     ]
   },
   "This organization's trial has expired": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This outcome needs a reason": {
     "sites": 1,
     "scope": [
       "go"
@@ -244274,6 +244683,15 @@
       "go/other"
     ]
   },
+  "This report was already recorded for a different stop or action": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This report's definition could not be read": {
     "sites": 1,
     "scope": [
@@ -244506,6 +244924,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "This server has no public https address for {0} to send change notices to, so Trenova reads changes every five minutes instead.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "This server has no {0} of its own, so nobody can connect {1} until keys are entered again.": {
@@ -251000,6 +251427,24 @@
       "apps/web/components"
     ]
   },
+  "Trenova deletes its sign-in to {0}, removes its webhook subscriptions and stops reading from and writing to it. {1} offers no way for Trenova to withdraw the consent itself: to remove it, an administrator removes the {2} from Enterprise applications in Microsoft Entra. Nothing already in {1} is changed or deleted.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Trenova finishes the connection Microsoft just approved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Trenova finishes the connection QuickBooks Online just approved.": {
     "sites": 1,
     "scope": [
@@ -251088,6 +251533,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Trenova retries within the hour and reads changes every five minutes meanwhile.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Trenova revokes its access to {0} and stops reading from and writing to it. Nothing already in {1} is changed or deleted. You can connect again later.": {
@@ -253472,6 +253926,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Under Authentication, add a Web platform with the redirect URI below exactly as written. Entra accepts http://localhost while developing; anything else needs https.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Under Configuration, add the redirect URI below exactly as written. Xero accepts http://localhost while developing; anything else needs https.": {
@@ -257392,11 +257855,12 @@
     ]
   },
   "Used": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "routes/worker"
     ]
   },
@@ -261048,7 +261512,7 @@
     ]
   },
   "Void": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -261595,12 +262059,13 @@
     ]
   },
   "Waiting": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "routes/agent-control",
       "routes/desk",
       "routes/inbox",
@@ -268041,6 +268506,15 @@
     ]
   },
   "While {0} is connected, only the client secret and {1} can change.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "While {0} is connected, only the client secret can change.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -286432,6 +286906,15 @@
       "routes/inbox"
     ]
   },
+  "{0} Trenova retries within the hour and reads changes every five minutes meanwhile.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0} accepted": {
     "sites": 1,
     "scope": [
@@ -286514,11 +286997,12 @@
     ]
   },
   "{0} active": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/org-structure"
     ]
   },
@@ -288719,6 +289203,15 @@
       "apps/web/components"
     ]
   },
+  "{0} has no webhook setting to fill in: Trenova subscribes to its changes itself once a company is connected, and renews the subscriptions every few days.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0} has not been connected yet": {
     "sites": 3,
     "scope": [
@@ -289561,15 +290054,6 @@
     ]
   },
   "{0} is not available as a carrier intelligence provider": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "{0} is not available when running on {1}; configure database.driver=postgres to use this feature": {
     "sites": 1,
     "scope": [
       "go"
@@ -291280,6 +291764,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0} of Trenova's change subscriptions at {1} could not be kept": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0} of a 12 hour day": {

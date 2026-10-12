@@ -107,7 +107,6 @@
   "e.g. Today": "p. ej., Hoy",
   "{0, plural, one {# person with no position} other {# people with no position}}": "{0, plural, one {# persona sin puesto} other {# personas sin puesto}}",
   "{0, plural, one {# title nobody holds} other {# titles nobody holds}}": "{0, plural, one {# puesto que nadie ocupa} other {# puestos que nadie ocupa}}",
-  "{0} active": "{0} activos",
   "{0} active · {1} on record": "{0} activos · {1} registrados",
   "{0} archived": "{0} archivados",
   "{0} ending this week": "{0} terminan esta semana",

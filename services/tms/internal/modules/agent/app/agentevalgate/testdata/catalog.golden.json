@@ -4239,7 +4239,8 @@
             "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
             "enum": [
               "QuickBooksOnline",
-              "Xero"
+              "Xero",
+              "BusinessCentral"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -4339,7 +4340,8 @@
             "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
             "enum": [
               "QuickBooksOnline",
-              "Xero"
+              "Xero",
+              "BusinessCentral"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -4382,7 +4384,8 @@
             "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
             "enum": [
               "QuickBooksOnline",
-              "Xero"
+              "Xero",
+              "BusinessCentral"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -4451,7 +4454,8 @@
             "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
             "enum": [
               "QuickBooksOnline",
-              "Xero"
+              "Xero",
+              "BusinessCentral"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -5477,7 +5481,8 @@
             "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
             "enum": [
               "QuickBooksOnline",
-              "Xero"
+              "Xero",
+              "BusinessCentral"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -11558,7 +11563,8 @@
             "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
             "enum": [
               "QuickBooksOnline",
-              "Xero"
+              "Xero",
+              "BusinessCentral"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -11673,7 +11679,8 @@
             "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
             "enum": [
               "QuickBooksOnline",
-              "Xero"
+              "Xero",
+              "BusinessCentral"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -14575,7 +14582,8 @@
             "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
             "enum": [
               "QuickBooksOnline",
-              "Xero"
+              "Xero",
+              "BusinessCentral"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -14691,7 +14699,8 @@
             "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
             "enum": [
               "QuickBooksOnline",
-              "Xero"
+              "Xero",
+              "BusinessCentral"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -14746,7 +14755,8 @@
             "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
             "enum": [
               "QuickBooksOnline",
-              "Xero"
+              "Xero",
+              "BusinessCentral"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -14911,7 +14921,8 @@
             "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
             "enum": [
               "QuickBooksOnline",
-              "Xero"
+              "Xero",
+              "BusinessCentral"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -24036,7 +24047,8 @@
             "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
             "enum": [
               "QuickBooksOnline",
-              "Xero"
+              "Xero",
+              "BusinessCentral"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -27496,7 +27508,8 @@
             "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
             "enum": [
               "QuickBooksOnline",
-              "Xero"
+              "Xero",
+              "BusinessCentral"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -27942,7 +27955,8 @@
             "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
             "enum": [
               "QuickBooksOnline",
-              "Xero"
+              "Xero",
+              "BusinessCentral"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -28595,7 +28609,8 @@
             "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
             "enum": [
               "QuickBooksOnline",
-              "Xero"
+              "Xero",
+              "BusinessCentral"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -29721,7 +29736,8 @@
             "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
             "enum": [
               "QuickBooksOnline",
-              "Xero"
+              "Xero",
+              "BusinessCentral"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -29852,7 +29868,8 @@
             "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
             "enum": [
               "QuickBooksOnline",
-              "Xero"
+              "Xero",
+              "BusinessCentral"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -31852,7 +31869,8 @@
             "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
             "enum": [
               "QuickBooksOnline",
-              "Xero"
+              "Xero",
+              "BusinessCentral"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"

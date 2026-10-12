@@ -515,14 +515,16 @@ func syncTypeOf(applied accountingsync.AppliedObjectType) accountingsync.SyncObj
 }
 
 type linkTarget struct {
-	urlOf func(kind accountingsync.SyncObjectType, externalID string) string
+	urlOf func(link accountingsyncports.AccountingDocumentLink) string
 }
 
 func (s *Service) linkTarget(
 	ctx context.Context,
 	conn *accountingsync.AccountingConnection,
 ) *linkTarget {
-	target := &linkTarget{urlOf: func(accountingsync.SyncObjectType, string) string { return "" }}
+	target := &linkTarget{
+		urlOf: func(accountingsyncports.AccountingDocumentLink) string { return "" },
+	}
 	session, err := s.connService.Session(ctx, tenantOf(conn), conn.ID)
 	if err != nil {
 		s.l.Debug("linking without provider links: the connection cannot be used", zap.Error(err))
@@ -530,8 +532,8 @@ func (s *Service) linkTarget(
 	}
 	if writer, ok := session.Connector.(accountingsyncports.AccountingDocumentWriter); ok {
 		auth := accountingsyncports.DocumentAuthFor(session.Connection, session.AccessToken)
-		target.urlOf = func(kind accountingsync.SyncObjectType, externalID string) string {
-			return writer.DocumentURL(auth, kind, externalID)
+		target.urlOf = func(link accountingsyncports.AccountingDocumentLink) string {
+			return writer.DocumentURL(auth, link)
 		}
 	}
 	return target
@@ -564,10 +566,14 @@ func (s *Service) linkRecords(
 				continue
 			}
 			if !record.Link(&accountingsync.SyncLink{
-				ExternalID:  change.ExternalID,
-				ExternalURL: target.urlOf(objectType, change.ExternalID),
-				Resolution:  linkedText(p),
-				Combined:    combined,
+				ExternalID: change.ExternalID,
+				ExternalURL: target.urlOf(accountingsyncports.AccountingDocumentLink{
+					Kind:       objectType,
+					ExternalID: change.ExternalID,
+					DocNumber:  change.ExternalNumber,
+				}),
+				Resolution: linkedText(p),
+				Combined:   combined,
 			}, s.nowUnix()) {
 				continue
 			}

@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/migrations"
-	"github.com/emoss08/trenova/pkg/dbdialect"
+	"github.com/emoss08/trenova/pkg/pgvector"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -40,7 +40,7 @@ func runEnableVector(_ *cobra.Command, _ []string) error {
 	db := manager.GetDB()
 
 	if dryRun {
-		support, probeErr := dbdialect.ProbeVector(ctx, db)
+		support, probeErr := pgvector.ProbeVector(ctx, db)
 		if probeErr != nil {
 			return fmt.Errorf("failed to probe pgvector: %w", probeErr)
 		}
@@ -59,15 +59,14 @@ func runEnableVector(_ *cobra.Command, _ []string) error {
 	reportVectorSupport("Before", result.Before)
 	reportVectorSupport("After", result.After)
 
-	if cfg.Database.GetDialect().IsPostgres() {
-		added, reconcileErr := postgres.ReconcileRLS(ctx, db)
-		if reconcileErr != nil {
-			return fmt.Errorf("protect the vector tables with row-level security: %w", reconcileErr)
-		}
-		if added > 0 {
-			color.Cyan("→ Applied tenant isolation policies to %d new vector table(s)", added)
-		}
+	added, err := postgres.ReconcileRLS(ctx, db)
+	if err != nil {
+		return fmt.Errorf("protect the vector tables with row-level security: %w", err)
 	}
+	if added > 0 {
+		color.Cyan("→ Applied tenant isolation policies to %d new vector table(s)", added)
+	}
+
 	color.Green(
 		"✓ Semantic retrieval vector storage is ready. Running services pick it up within five minutes.",
 	)
@@ -75,7 +74,7 @@ func runEnableVector(_ *cobra.Command, _ []string) error {
 	return nil
 }
 
-func reportVectorSupport(label string, support dbdialect.VectorSupport) {
+func reportVectorSupport(label string, support pgvector.VectorSupport) {
 	version := support.ExtensionVersion
 	if version == "" {
 		version = "not installed"

@@ -240,6 +240,7 @@ function status(overrides: Partial<AccountingSyncStatus> = {}): AccountingSyncSt
     available: true,
     app: instanceApp,
     connection: null,
+    webhookSubscriptions: null,
     ...overrides,
   };
 }
@@ -1114,6 +1115,7 @@ describe("AccountingIntegrationModal for Xero", () => {
       available: true,
       app: instanceApp,
       connection: null,
+      webhookSubscriptions: null,
       ...overrides,
     };
   }

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -61,7 +60,7 @@ func NewTracker(db *bun.DB) *Tracker {
 }
 
 func (t *Tracker) Initialize(ctx context.Context) error {
-	statements, err := loadSchema(dbdialect.FromBun(t.db), seedHistorySchema)
+	statements, err := loadSchema(seedHistorySchema)
 	if err != nil {
 		return err
 	}

@@ -1111,7 +1111,6 @@
   "Use this when the action should not have been issued. It stops counting toward the next rung immediately; the row and your reason stay on the record.": "Utilícelo cuando la acción no debería haberse emitido. Deja de contar de inmediato para el siguiente escalón; la fila y su motivo permanecen en el registro.",
   "Use this when the item does not apply to this worker at all.": "Utilícelo cuando el elemento no se aplique en absoluto a este trabajador.",
   "Use this when the worker already meets the requirement another way — prior experience, an equivalent certificate, a grandfathered rule. The waiver satisfies the matrix and is kept in the audit log with your reason.": "Utilícelo cuando el trabajador ya cumpla el requisito por otra vía: experiencia previa, un certificado equivalente o una regla heredada. La exención satisface la matriz y se conserva en el registro de auditoría junto con su motivo.",
-  "Used": "Usado",
   "Used YTD": "Usado en el año",
   "Used when the request is made or chased by phone.": "Se utiliza cuando la solicitud se realiza o se reclama por teléfono.",
   "Used with the type's validity to suggest an expiry.": "Se utiliza junto con la vigencia del tipo para sugerir un vencimiento.",

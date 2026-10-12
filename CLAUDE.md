@@ -18,7 +18,6 @@ trenova/
 ├── dev/                   # Local environment: compose.yml, config/, samsara-sim, edi-partner-sim
 ├── deploy/                # Dockerfiles, self-host compose, Caddy, GTC routing, observability
 ├── tools/                 # Not shipped: extraction-finetune (Python), screenshots, smack, release
-├── scripts/dialect-convert # SQLite migration converter (goes away with SQLite)
 ├── docs/                  # engineering/, product-guide/, self-hosting/, notes/
 └── go.work                # Go workspace: services/tms, shared, dev/samsara-sim, dev/edi-partner-sim
 ```
@@ -453,6 +452,17 @@ GraphQL error releases the key. Shipment create also stores the scoped key under
 partial unique index, so it stays exactly-once when Redis is down. **Read
 [docs/engineering/idempotency.md](docs/engineering/idempotency.md) before changing the
 middleware, `pkg/idempotency`, or adding a write that must be safe to retry.**
+
+## Tracking Events
+
+A stop's actual arrival and departure are settled from `tracking_events`, one row per report
+from dispatchers, agents, drivers, telematics and EDI, applied in event-time order under the
+move lock so out-of-order and repeated reports give the same result. People's reports go
+through `TrackingEventService.RecordReported`, machine reports through `RecordObserved`; never
+call `RecordStopActual` for a new source. **Read
+[docs/engineering/tracking-events.md](docs/engineering/tracking-events.md) before changing
+`trackingevent`, `trackingeventservice`, `ReconcileStopActuals`, the telematics stop-visit
+path, the EDI 214 parser, or adding anything that records a stop actual.**
 
 ## AI Training Export
 
