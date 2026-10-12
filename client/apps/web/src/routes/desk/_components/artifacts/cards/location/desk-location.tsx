@@ -5,24 +5,20 @@ import {
   detentionPolicyStatusChoices,
   facilityTypeChoices,
   locationCategoryTypeChoices,
-  serviceFailureStatusChoices,
 } from "@/lib/choices";
 import type {
   DeskLocation as DeskLocationRecord,
   LocationDwell,
-  LocationFailure,
-  LocationFailuresPage,
   LocationPolicies,
 } from "@/lib/graphql/location-card";
 import { queries } from "@/lib/queries";
-import { locationFailuresQuery } from "@/lib/queries/location";
-import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useCardAccess } from "../../record-card/card-access";
-import { CardPagedList } from "../../record-card/card-paged-list";
+import { CardFailures } from "../../record-card/card-failures";
 import { CardShipments } from "../../record-card/card-shipments";
 import { CardWhere, mapPoint } from "../../record-card/card-where";
 import {
@@ -32,7 +28,6 @@ import {
   CardFacts,
   CardHead,
   CardIcon,
-  CardRecordRow,
   CardSection,
   CardSectionError,
   CardSectionWait,
@@ -42,19 +37,17 @@ import {
   CardUnreadable,
   RecordCard,
 } from "../../record-card/record-card";
-import { usePagedRows, type PagedRows } from "../../record-card/paged-rows";
-import { neighborsIn } from "../../record-card/record-card-values";
+import { cityLine, neighborsIn, waitText } from "../../record-card/record-card-values";
+import { useRecordFailures } from "../../record-card/record-failures";
 import { useRecordShipments } from "../../record-card/record-shipments";
 import { MAP_SIZE } from "../../record-card/still-map";
 import { useListedRecords, type RecordArtifactProps } from "../registry";
 import {
-  cityLine,
   DWELL_WINDOW_DAYS,
   dwellMoneyLine,
   dwellStats,
   dwellWindow,
   facilityTerms,
-  failureLine,
   geofenceLine,
   geofenceOutline,
   locationFacts,
@@ -63,7 +56,6 @@ import {
   policyFreeTime,
   policyScope,
   streetLine,
-  waitText,
 } from "./location-card";
 import { LOCATION_SECTIONS } from "./location-sections";
 import { DeskLocationSkeleton, DwellSkeleton } from "./location-skeleton";
@@ -178,13 +170,11 @@ function LocationCard({
     pageSize: SHIPMENT_ROWS,
     enabled: access.shipments,
   });
-  const failures = usePagedRows<LocationFailure, LocationFailuresPage>(
-    useInfiniteQuery({
-      ...locationFailuresQuery(id, FAILURE_ROWS),
-      retry: false,
-      enabled: access.failures,
-    }),
-  );
+  const failures = useRecordFailures({
+    scope: { kind: "location", id },
+    pageSize: FAILURE_ROWS,
+    enabled: access.failures,
+  });
 
   const standing = locationStanding(location.status, t);
   const neighbors = neighborsIn(order, id);
@@ -315,7 +305,12 @@ function LocationCard({
             ) : undefined
           }
         >
-          <Failures failures={failures} onOpen={listedFailures.open} />
+          <CardFailures
+            failures={failures}
+            scope="location"
+            onOpen={listedFailures.open}
+            emptyText={t("No service failure has been recorded here.")}
+          />
         </CardSection>
       )}
 
@@ -441,52 +436,5 @@ function Policies({
         </li>
       ))}
     </ul>
-  );
-}
-
-/** The service failures at the location's docks, newest first, a page at a time. */
-function Failures({
-  failures,
-  onOpen,
-}: {
-  failures: PagedRows<LocationFailure>;
-  onOpen: ((failureId: string) => void) | undefined;
-}) {
-  const t = useT();
-  return (
-    <CardPagedList
-      list={failures}
-      waitRows={2}
-      emptyText={t("No service failure has been recorded here.")}
-      errorText={t("The service failures could not be read.")}
-      nextErrorText={t("The next service failures could not be read.")}
-      loadingLabel={t("Reading more service failures…")}
-    >
-      {(rows) => (
-        <div className="dk-rec-list">
-          {rows.map((failure) => (
-            <CardRecordRow
-              key={failure.id}
-              to={recordPath("service_failure", failure.id)}
-              onOpen={onOpen && (() => onOpen(failure.id))}
-            >
-              <span className="dk-rec-main">
-                <b>{failure.number}</b>
-                <span className="dk-rec-sub">{failureLine(failure, t)}</span>
-              </span>
-              <span
-                className={cn(
-                  "dk-lo-fst",
-                  failure.status === "Open" && "dk-warn",
-                  failure.status === "Resolved" && "dk-ok",
-                )}
-              >
-                {choiceLabel(serviceFailureStatusChoices, failure.status)}
-              </span>
-            </CardRecordRow>
-          ))}
-        </div>
-      )}
-    </CardPagedList>
   );
 }

@@ -6,7 +6,11 @@ a document, a record. Most are drawn by kind (`table_view`, `entity_card`, …) 
 drawn for one kind of record and what a person reads it for: the billing queue
 item a biller reviews, the formula template a biller reads and prices, the
 shipment a dispatcher follows from pickup to delivery, the customer an account
-manager or a biller keeps, the rate agreement a pricing analyst holds freight to.
+manager or a biller keeps, the tractor and trailer a fleet manager runs, the driver a
+dispatcher puts on loads, the dock a planner sends trucks to, the carrier a carrier manager
+qualifies and pays, the order a customer service rep follows to billing, the service failure
+a customer service rep explains and settles, the rate agreement a pricing analyst holds
+freight to.
 
 ## Naming and linking artifacts
 
@@ -76,7 +80,11 @@ is drawn as a table and reads `kinds/table/`. Shared card styles are the `dk-rec
 `routes/desk/_styles/desk-v2.css`; a card's own styles take its own prefix
 (`dk-bi-*` for the billing item, `dk-ft-*` for the formula template, `dk-sh-*` for the
 shipment, `dk-cu-*` for the customer, `dk-ra-*` for the rate agreement, `dk-tr-*` for the
-tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order).
+tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure).
+Before taking a prefix or a modifier class, search every stylesheet the Desk loads, the
+Desk chat's `components/desk-chat/desk-chat.css` included: `dk-sf` is the chat's tool
+failures, and the status pill's warn tone once shared `dk-hold` with the hold-to-confirm
+button, which stretched every warn pill to the button's width.
 
 ## Lazy loading and skeletons
 
@@ -129,7 +137,19 @@ unit or the driver; `stopLocationIds` matches loads with a live stop at the loca
 `carrierIds` matches loads with a move tendered to the carrier and not canceled; an order's
 legs filter on `orderId`).
 
-Any other list a card reads a page at a time (a location's service failures, a carrier's
+A record's service failures are `CardFailures` over `useRecordFailures({ scope, pageSize,
+enabled })` (`record-card/record-failures.ts`), one operation, `DeskRecordFailures`, for every
+scope: `{ kind: "location", id }` reads the failures at stops made there and names each row's
+load, `{ kind: "shipment", id }` reads a load's failures and names each row's stop.
+`withoutFailure` leaves out the failure a card is about when it lists the rest of its load.
+
+A record's way through review or approval, step by step down a rail, is `CardPath`
+(`record-card/card-path.tsx`, with `CardPathSkeleton`): each step is done, where the record
+stands, or still to come; a closing step is held or closed; and a note (a reviewer's
+comment, why a failure was voided) sits on the step it was left at. The rate agreement's
+approval and the service failure's review are both drawn with it.
+
+Any other list a card reads a page at a time (a carrier's
 settlements, a record's activity) goes through `usePagedRows` (`record-card/paged-rows.ts`),
 which turns an infinite query into rows, a count and the next page, and is drawn by
 `CardPagedList` (`record-card/card-paged-list.tsx`), which holds the rows while the first page

@@ -452,6 +452,7 @@ type ResolverRoot interface {
 	RoutingGuideEntry() RoutingGuideEntryResolver
 	SafetyScorecard() SafetyScorecardResolver
 	ServiceFailure() ServiceFailureResolver
+	ServiceFailureShipment() ServiceFailureShipmentResolver
 	ServiceFailureStop() ServiceFailureStopResolver
 	SettlementControl() SettlementControlResolver
 	SettlementException() SettlementExceptionResolver
@@ -2808,6 +2809,14 @@ type SafetyScorecardResolver interface {
 
 type ServiceFailureResolver interface {
 	StopType(ctx context.Context, obj *servicefailure.ServiceFailure) (gqlmodel.StopType, error)
+	CreatedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
+	ReviewedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
+	ResolvedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
+	VoidedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
+}
+
+type ServiceFailureShipmentResolver interface {
+	Customer(ctx context.Context, obj *shipment.Shipment) (*customer.Customer, error)
 }
 
 type ServiceFailureStopResolver interface {
@@ -3457,6 +3466,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"RoutingGuideEntry":                  func() any { return r.RoutingGuideEntry() },
 			"SafetyScorecard":                    func() any { return r.SafetyScorecard() },
 			"ServiceFailure":                     func() any { return r.ServiceFailure() },
+			"ServiceFailureShipment":             func() any { return r.ServiceFailureShipment() },
 			"ServiceFailureStop":                 func() any { return r.ServiceFailureStop() },
 			"SettlementControl":                  func() any { return r.SettlementControl() },
 			"SettlementException":                func() any { return r.SettlementException() },
@@ -25061,6 +25071,7 @@ type ServiceFailureShipment {
   id: ID!
   proNumber: String!
   bol: String
+  customer: Customer
 }
 
 type ServiceFailureStop {
@@ -25101,12 +25112,23 @@ type ServiceFailure {
   x12ReasonCodeOverride: String!
   x12ExceptionCode: String!
   detectedAt: Timestamp!
+  reviewedAt: Timestamp
+  resolvedAt: Timestamp
+  voidedAt: Timestamp
+  voidReason: String!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
   shipment: ServiceFailureShipment
   stop: ServiceFailureStop
   reasonCode: ServiceFailureReasonCode
+  """
+  Who logged the failure by hand; null for one detected or received.
+  """
+  createdBy: User
+  reviewedBy: User
+  resolvedBy: User
+  voidedBy: User
 }
 
 type ServiceFailureEdge {

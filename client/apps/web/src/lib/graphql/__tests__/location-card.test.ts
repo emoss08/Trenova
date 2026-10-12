@@ -1,17 +1,11 @@
 import {
   DeskLocationCardDocument,
   DeskLocationDwellDocument,
-  DeskLocationFailuresDocument,
   DeskLocationPoliciesDocument,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  fetchDeskLocation,
-  fetchLocationDwell,
-  fetchLocationFailures,
-  fetchLocationPolicies,
-} from "../location-card";
+import { fetchDeskLocation, fetchLocationDwell, fetchLocationPolicies } from "../location-card";
 
 vi.mock("@trenova/shared/lib/graphql", () => ({
   requestGraphQL: vi.fn(),
@@ -41,19 +35,6 @@ function stat(locationId: string, avgDwellMinutes: number) {
     billedAmount: "450",
     waivedAmount: "0",
     disputeCount: 0,
-  };
-}
-
-function failure(id: string) {
-  return {
-    id,
-    number: id.toUpperCase(),
-    type: "LateDelivery",
-    status: "Open",
-    stopType: "Delivery",
-    lateMinutes: 45,
-    actualArrival: 1_791_720_000,
-    shipment: { id: "shp_1", proNumber: "S1" },
   };
 }
 
@@ -142,45 +123,5 @@ describe("fetchLocationPolicies", () => {
     } as never);
 
     expect((await fetchLocationPolicies("loc_1", 3)).total).toBe(2);
-  });
-});
-
-describe("fetchLocationFailures", () => {
-  it("reads the first page newest first with its count, and later pages without one", async () => {
-    requestGraphQLMock.mockResolvedValue({
-      serviceFailures: {
-        edges: [{ node: failure("sf_1") }],
-        pageInfo: { hasNextPage: true, endCursor: "c1" },
-        totalCount: 9,
-      },
-    } as never);
-
-    const first = await fetchLocationFailures("loc_1", { first: 5, after: null });
-
-    expect(first).toMatchObject({ total: 9, endCursor: "c1", hasNextPage: true });
-    expect(first.rows.map((row) => row.id)).toEqual(["sf_1"]);
-    expect(lastCall()).toMatchObject({
-      document: DeskLocationFailuresDocument,
-      variables: {
-        locationId: "loc_1",
-        input: { first: 5, after: null, sort: [{ field: "detectedAt", direction: "desc" }] },
-        includeTotalCount: true,
-      },
-    });
-
-    requestGraphQLMock.mockResolvedValue({
-      serviceFailures: {
-        edges: [{ node: failure("sf_2") }],
-        pageInfo: { hasNextPage: false, endCursor: null },
-      },
-    } as never);
-
-    const next = await fetchLocationFailures("loc_1", { first: 5, after: "c1" });
-
-    expect(next).toMatchObject({ total: null, endCursor: null, hasNextPage: false });
-    expect(lastCall().variables).toMatchObject({
-      includeTotalCount: false,
-      input: { after: "c1" },
-    });
   });
 });

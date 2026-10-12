@@ -22633,6 +22633,8 @@ type ServiceFailure {
   actualArrival: Timestamp!
   businessUnitId: ID!
   createdAt: Timestamp!
+  """Who logged the failure by hand; null for one detected or received."""
+  createdBy: User
   detectedAt: Timestamp!
   gracePeriodMinutes: Int!
   id: ID!
@@ -22644,6 +22646,10 @@ type ServiceFailure {
   organizationId: ID!
   reasonCode: ServiceFailureReasonCode
   reasonCodeId: ID
+  resolvedAt: Timestamp
+  resolvedBy: User
+  reviewedAt: Timestamp
+  reviewedBy: User
   scheduledCutoff: Timestamp!
   shipment: ServiceFailureShipment
   shipmentId: ID!
@@ -22656,6 +22662,9 @@ type ServiceFailure {
   type: ServiceFailureType!
   updatedAt: Timestamp!
   version: Int!
+  voidReason: String!
+  voidedAt: Timestamp
+  voidedBy: User
   x12ExceptionCode: String!
   x12ReasonCodeOverride: String!
   """
@@ -22733,6 +22742,7 @@ type ServiceFailureReasonCodeEdge {
 
 type ServiceFailureShipment {
   bol: String
+  customer: Customer
   id: ID!
   proNumber: String!
 }

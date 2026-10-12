@@ -289,7 +289,7 @@ describe("DeskRateAgreement", () => {
     const { container } = draw();
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading the rate agreement…");
-    expect(container.querySelector(".dk-rec-skel .dk-ra-path")).not.toBeNull();
+    expect(container.querySelector(".dk-rec-skel .dk-rec-path")).not.toBeNull();
     expect(container.querySelectorAll(".dk-rec-skel .dk-ra-mix .dk-rec-gauge")).toHaveLength(2);
     expect(container.querySelector(".dk-rec-skel .dk-rec-sk-log")).not.toBeNull();
 

@@ -1,19 +1,12 @@
-import type {
-  DeskLocation,
-  LocationDwell,
-  LocationFailure,
-  LocationPolicy,
-} from "@/lib/graphql/location-card";
+import type { DeskLocation, LocationDwell, LocationPolicy } from "@/lib/graphql/location-card";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describe, expect, it } from "vitest";
 import { outlineReach } from "../../../record-card/map-tiles";
 import {
-  cityLine,
   dwellMoneyLine,
   dwellStats,
   dwellWindow,
   facilityTerms,
-  failureLine,
   geofenceLine,
   geofenceOutline,
   LOCATION_ZOOM,
@@ -23,7 +16,6 @@ import {
   policyFreeTime,
   policyScope,
   streetLine,
-  waitText,
 } from "../location-card";
 
 const t = ((message: string, ...args: unknown[]) =>
@@ -117,24 +109,13 @@ describe("dwellWindow", () => {
   });
 });
 
-describe("waitText", () => {
-  it("reads minutes as hours and minutes, and never below none", () => {
-    expect(waitText(96)).toBe("1h 36m");
-    expect(waitText(80.4)).toBe("1h 20m");
-    expect(waitText(0)).toBe("0m");
-    expect(waitText(-5)).toBe("0m");
-  });
-});
-
 describe("address lines", () => {
-  it("joins the street lines and reads the city, state and postal code", () => {
+  it("joins the street lines", () => {
     expect(streetLine(location({ addressLine2: " Gate 4 " }))).toBe("1801 Commerce St, Gate 4");
-    expect(cityLine(location())).toBe("Dallas, TX 75201");
   });
 
   it("leaves out what is not on file", () => {
     expect(streetLine(location({ addressLine1: " ", addressLine2: "" }))).toBe("");
-    expect(cityLine(location({ state: null, postalCode: "" }))).toBe("Dallas");
   });
 });
 
@@ -252,25 +233,6 @@ describe("policies", () => {
         t,
       ),
     ).toMatch(/^One customer · Pickup, Split pickup · Appointment stops only · Through /u);
-  });
-});
-
-describe("failureLine", () => {
-  it("reads the kind, the load, how late and when", () => {
-    const failure = {
-      id: "sf_1",
-      number: "SF-1",
-      type: "LateDelivery",
-      status: "Open",
-      stopType: "Delivery",
-      lateMinutes: 45,
-      actualArrival: NOW,
-      shipment: { id: "shp_1", proNumber: "S2610-1366" },
-    } as LocationFailure;
-    expect(failureLine(failure, t)).toMatch(/^Late delivery · S2610-1366 · 45m late · /u);
-    expect(failureLine({ ...failure, lateMinutes: 0, shipment: null }, t)).toMatch(
-      /^Late delivery · [A-Z]/u,
-    );
   });
 });
 

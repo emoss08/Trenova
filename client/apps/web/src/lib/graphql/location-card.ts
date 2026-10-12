@@ -1,11 +1,9 @@
 import {
   DeskLocationCardDocument,
   DeskLocationDwellDocument,
-  DeskLocationFailuresDocument,
   DeskLocationPoliciesDocument,
   type DeskLocationCardQuery,
   type DeskLocationDwellQuery,
-  type DeskLocationFailuresQuery,
   type DeskLocationPoliciesQuery,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
@@ -14,18 +12,9 @@ export type DeskLocation = NonNullable<DeskLocationCardQuery["location"]>;
 export type LocationDwell = DeskLocationDwellQuery["detentionFacilityStats"][number];
 export type LocationPolicy =
   DeskLocationPoliciesQuery["detentionPolicies"]["edges"][number]["node"];
-export type LocationFailure = DeskLocationFailuresQuery["serviceFailures"]["edges"][number]["node"];
 
 /** A window of time the card reads a location's history over, in Unix seconds. */
 export type TimeWindow = { from: number; to: number };
-
-/** One page of the service failures at a location. `total` is read with the first page only. */
-export type LocationFailuresPage = {
-  rows: LocationFailure[];
-  total: number | null;
-  endCursor: string | null;
-  hasNextPage: boolean;
-};
 
 /** The policies the card reads for a location, and how many there are in all. */
 export type LocationPolicies = { rows: LocationPolicy[]; total: number };
@@ -89,34 +78,4 @@ export async function fetchLocationPolicies(
   });
   const rows = data.detentionPolicies.edges.map((edge) => edge.node);
   return { rows, total: data.detentionPolicies.totalCount ?? rows.length };
-}
-
-/** A page of the service failures at stops made at the location, newest first. */
-export async function fetchLocationFailures(
-  locationId: string,
-  page: { first: number; after: string | null },
-  options?: { signal?: AbortSignal },
-): Promise<LocationFailuresPage> {
-  const firstPage = page.after === null;
-  const data = await requestGraphQL({
-    document: DeskLocationFailuresDocument,
-    operationName: "DeskLocationFailures",
-    variables: {
-      locationId,
-      input: {
-        first: page.first,
-        after: page.after,
-        sort: [{ field: "detectedAt", direction: "desc" }],
-      },
-      includeTotalCount: firstPage,
-    },
-    signal: options?.signal,
-  });
-  const rows = data.serviceFailures.edges.map((edge) => edge.node);
-  return {
-    rows,
-    total: firstPage ? (data.serviceFailures.totalCount ?? rows.length) : null,
-    endCursor: data.serviceFailures.pageInfo.endCursor ?? null,
-    hasNextPage: data.serviceFailures.pageInfo.hasNextPage,
-  };
 }

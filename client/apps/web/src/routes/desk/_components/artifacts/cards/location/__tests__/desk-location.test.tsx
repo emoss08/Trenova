@@ -1,8 +1,8 @@
 import type {
   DeskLocation as DeskLocationRecord,
   LocationDwell,
-  LocationFailure,
 } from "@/lib/graphql/location-card";
+import type { RecordFailure } from "@/lib/graphql/record-failures";
 import type { RecordShipment } from "@/lib/graphql/record-shipments";
 import {
   FakeIntersectionObserver,
@@ -28,8 +28,8 @@ vi.mock("@/lib/graphql/location-card", () => ({
   fetchDeskLocation: fetchers.location,
   fetchLocationDwell: fetchers.dwell,
   fetchLocationPolicies: fetchers.policies,
-  fetchLocationFailures: fetchers.failures,
 }));
+vi.mock("@/lib/graphql/record-failures", () => ({ fetchRecordFailures: fetchers.failures }));
 vi.mock("@/lib/graphql/record-shipments", () => ({ fetchRecordShipments: fetchers.shipments }));
 // The shipment card is its own chunk; here it stands in as what it was given,
 // with its way back.
@@ -51,6 +51,25 @@ vi.mock("../../shipment/desk-shipment", () => ({
     </div>
   ),
   DeskShipmentArtifact: () => null,
+}));
+vi.mock("../../service-failure/desk-service-failure", () => ({
+  DeskServiceFailure: ({
+    recordId,
+    onBack,
+    backLabel,
+  }: {
+    recordId: string;
+    onBack: () => void;
+    backLabel?: string;
+  }) => (
+    <div>
+      <p>Service failure card {recordId}</p>
+      <button type="button" onClick={onBack}>
+        {backLabel}
+      </button>
+    </div>
+  ),
+  DeskServiceFailureArtifact: () => null,
 }));
 
 const DAY = 86_400;
@@ -112,7 +131,8 @@ const failure = {
   lateMinutes: 45,
   actualArrival: NOW - DAY,
   shipment: { id: "shp_9", proNumber: "S2610-1366" },
-} as LocationFailure;
+  stop: null,
+} as RecordFailure;
 
 const shipment = {
   id: "shp_1",
@@ -238,10 +258,12 @@ describe("DeskLocation", () => {
     const failures = section("Service failures");
     expect(await within(failures).findByText("SF-2610-0042")).toBeInTheDocument();
     expect(within(failures).getByText("3 failures")).toBeInTheDocument();
-    expect(within(failures).getByRole("link", { name: /SF-2610-0042/ })).toHaveAttribute(
-      "href",
-      expect.stringContaining("sf_1"),
-    );
+    fireEvent.click(within(failures).getByRole("button", { name: /SF-2610-0042/ }));
+    expect(await screen.findByText("Service failure card sf_1")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Back to Dallas yard" }));
+    expect(
+      await screen.findByRole("heading", { name: "Dallas yard", level: 2 }),
+    ).toBeInTheDocument();
   });
 
   it("draws the fence round the dot once the map comes into view", async () => {
@@ -301,7 +323,7 @@ describe("DeskLocation", () => {
 
     expect(await screen.findByText("SF-2610-0043")).toBeInTheDocument();
     expect(fetchers.failures).toHaveBeenLastCalledWith(
-      "loc_1",
+      { kind: "location", id: "loc_1" },
       { first: 5, after: "c1" },
       expect.anything(),
     );

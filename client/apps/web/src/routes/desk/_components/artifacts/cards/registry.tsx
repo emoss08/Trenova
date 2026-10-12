@@ -17,6 +17,7 @@ import { DeskWorkerSkeleton } from "./worker/worker-skeleton";
 import { DeskLocationSkeleton } from "./location/location-skeleton";
 import { DeskCarrierSkeleton } from "./carrier/carrier-skeleton";
 import { DeskOrderSkeleton } from "./order/order-skeleton";
+import { DeskServiceFailureSkeleton } from "./service-failure/service-failure-skeleton";
 
 /*
 The Desk's resource cards: a record drawn for what a person reads that kind of
@@ -68,6 +69,7 @@ const loadWorker = preloadable(() => import("./worker/desk-worker"));
 const loadLocation = preloadable(() => import("./location/desk-location"));
 const loadCarrier = preloadable(() => import("./carrier/desk-carrier"));
 const loadOrder = preloadable(() => import("./order/desk-order"));
+const loadServiceFailure = preloadable(() => import("./service-failure/desk-service-failure"));
 
 const RECORD_CARDS: Partial<Record<RecordEntityType, RecordCardEntry>> = {
   formula_template: {
@@ -135,6 +137,12 @@ const RECORD_CARDS: Partial<Record<RecordEntityType, RecordCardEntry>> = {
     Skeleton: DeskOrderSkeleton,
     inPlace: lazyComponent(loadOrder, (module) => module.DeskOrder),
     artifact: lazyComponent(loadOrder, (module) => module.DeskOrderArtifact),
+  },
+  service_failure: {
+    resource: Resource.ServiceFailure,
+    Skeleton: DeskServiceFailureSkeleton,
+    inPlace: lazyComponent(loadServiceFailure, (module) => module.DeskServiceFailure),
+    artifact: lazyComponent(loadServiceFailure, (module) => module.DeskServiceFailureArtifact),
   },
 };
 

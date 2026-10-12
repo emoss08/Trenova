@@ -69,6 +69,13 @@ const CARDS = [
     empty: "agreement-globex",
     gone: "agreement-gone",
   },
+  {
+    card: "service-failure",
+    loaded: "failure-tyson-appt",
+    attention: "failure-tyson-late",
+    empty: "failure-new",
+    gone: "failure-gone",
+  },
 ];
 
 function shotsFor({ card, loaded, attention, empty, gone }) {

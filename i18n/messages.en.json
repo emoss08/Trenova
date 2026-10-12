@@ -1146,6 +1146,33 @@
       "apps/web/lib"
     ]
   },
+  "214 exception code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "214 reason code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "214 status code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "24 Hour": {
     "sites": 1,
     "scope": [
@@ -25196,13 +25223,14 @@
     ]
   },
   "Arrived": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/inbox",
       "routes/service-failure",
       "template/detention.notice.email",
@@ -30500,7 +30528,7 @@
     ]
   },
   "BOL {0}": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -30705,7 +30733,7 @@
     ]
   },
   "Back to the table": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -30732,7 +30760,7 @@
     ]
   },
   "Back to {0}": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -40521,6 +40549,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Cause": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Cc": {
@@ -59867,6 +59904,15 @@
       "apps/web/lib"
     ]
   },
+  "Customer · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Customer's EDI trading partner": {
     "sites": 1,
     "scope": [
@@ -67019,7 +67065,7 @@
     ]
   },
   "Details": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -67067,7 +67113,7 @@
     ]
   },
   "Detected": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -67076,6 +67122,7 @@
       "apps/web/lib",
       "go/other",
       "routes/carrier-monitoring",
+      "routes/desk",
       "routes/service-failure"
     ]
   },
@@ -74084,6 +74131,15 @@
     ],
     "areas": [
       "routes/training-course"
+    ]
+  },
+  "Due by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Due date": {
@@ -95441,6 +95497,15 @@
       "apps/web/lib"
     ]
   },
+  "From the failure type": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "From the indexer's next round": {
     "sites": 1,
     "scope": [
@@ -98399,12 +98464,13 @@
     ]
   },
   "Grace": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Grace after expiry": {
@@ -107487,6 +107553,15 @@
       "routes/admin"
     ]
   },
+  "Internal note, kept off the customer's record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Internal notes": {
     "sites": 1,
     "scope": [
@@ -114246,13 +114321,14 @@
     ]
   },
   "Last changed": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin"
+      "routes/admin",
+      "routes/desk"
     ]
   },
   "Last checked": {
@@ -114854,6 +114930,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Late by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Late by minutes cannot be negative": {
@@ -118510,6 +118595,15 @@
       "go/other"
     ]
   },
+  "Load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Load (optional)": {
     "sites": 1,
     "scope": [
@@ -119720,6 +119814,15 @@
       "routes/ifta-return"
     ]
   },
+  "Loading the service failure…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Loading the shipment…": {
     "sites": 1,
     "scope": [
@@ -120544,6 +120647,15 @@
     ],
     "areas": [
       "routes/osha"
+    ]
+  },
+  "Logged by hand": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Login URL": {
@@ -122818,7 +122930,7 @@
     ]
   },
   "Map of {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -133051,6 +133163,15 @@
       "routes/worker"
     ]
   },
+  "Next failure": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Next frame": {
     "sites": 1,
     "scope": [
@@ -138575,6 +138696,24 @@
       "routes/desk"
     ]
   },
+  "No reason has been given yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "No reason was given.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No reason was recorded.": {
     "sites": 1,
     "scope": [
@@ -139669,7 +139808,7 @@
     ]
   },
   "No street address on file": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -140722,7 +140861,7 @@
     ]
   },
   "None": {
-    "sites": 48,
+    "sites": 49,
     "scope": [
       "go",
       "ts"
@@ -141575,7 +141714,7 @@
     ]
   },
   "Not geocoded": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -142046,6 +142185,15 @@
       "routes/desk"
     ]
   },
+  "Not reviewed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Not reviewed; every turn that reads it waits for approval to write": {
     "sites": 1,
     "scope": [
@@ -142349,7 +142497,7 @@
     ]
   },
   "Not yet": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -142425,7 +142573,7 @@
     ]
   },
   "Note": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -142436,6 +142584,7 @@
       "go/other",
       "packages/shared/lib",
       "routes/accounting-inbound",
+      "routes/desk",
       "routes/detention-desk",
       "routes/edi",
       "routes/fuel-purchase",
@@ -142828,6 +142977,15 @@
       "routes/ifta-return"
     ]
   },
+  "Nothing else has gone wrong on this load.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Nothing else stands against them": {
     "sites": 1,
     "scope": [
@@ -142919,6 +143077,15 @@
     ]
   },
   "Nothing has been done to this agreement yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Nothing has been done to this failure yet.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -144785,7 +144952,7 @@
     ]
   },
   "Number": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -150573,6 +150740,15 @@
       "routes/review-template"
     ]
   },
+  "Open service failure": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Open service failures": {
     "sites": 1,
     "scope": [
@@ -153700,6 +153876,15 @@
     "areas": [
       "routes/desk",
       "routes/worker"
+    ]
+  },
+  "Other failures on this load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Other illness": {
@@ -166333,6 +166518,15 @@
       "routes/worker"
     ]
   },
+  "Previous failure": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Previous frame": {
     "sites": 1,
     "scope": [
@@ -176093,6 +176287,24 @@
       "go/other"
     ]
   },
+  "Received from an integration": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Received over EDI": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Received via {0} · {1}": {
     "sites": 1,
     "scope": [
@@ -178112,12 +178324,13 @@
     ]
   },
   "Recorded {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Recorded, but not drawn against the entitlement — the case is not designated.": {
@@ -185419,7 +185632,7 @@
     ]
   },
   "Resolved": {
-    "sites": 25,
+    "sites": 26,
     "scope": [
       "go",
       "ts"
@@ -187716,7 +187929,7 @@
     ]
   },
   "Review": {
-    "sites": 18,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -187726,6 +187939,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/carrier-monitoring",
+      "routes/desk",
       "routes/driver-expense",
       "routes/fuel-purchase",
       "routes/service-failure",
@@ -188372,14 +188586,24 @@
       "routes/shipment"
     ]
   },
+  "Review, resolve or void it on its page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Reviewed": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/lib",
+      "routes/desk",
       "routes/driver-expense"
     ]
   },
@@ -201836,7 +202060,7 @@
     ]
   },
   "Service failure": {
-    "sites": 4,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -201845,6 +202069,7 @@
       "apps/web/config",
       "apps/web/lib",
       "go/other",
+      "routes/desk",
       "routes/service-failure"
     ]
   },
@@ -204364,7 +204589,7 @@
     ]
   },
   "Shipment": {
-    "sites": 37,
+    "sites": 38,
     "scope": [
       "go",
       "ts"
@@ -205852,7 +206077,7 @@
     ]
   },
   "Shipment {0}": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -209236,7 +209461,7 @@
     ]
   },
   "Source": {
-    "sites": 38,
+    "sites": 39,
     "scope": [
       "go",
       "ts"
@@ -209249,6 +209474,7 @@
       "routes/carrier-invoice-matching",
       "routes/carrier-monitoring",
       "routes/customer-ledger",
+      "routes/desk",
       "routes/edi",
       "routes/fuel-management",
       "routes/fuel-purchase",
@@ -212897,7 +213123,7 @@
     ]
   },
   "Stop": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -212909,6 +213135,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/billing-queue",
+      "routes/desk",
       "routes/service-failure",
       "template/rateconfirmation.pdf"
     ]
@@ -225690,6 +225917,15 @@
       "go/other"
     ]
   },
+  "The load this failure was recorded on is gone.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The load's weight, formatted for display.": {
     "sites": 1,
     "scope": [
@@ -236126,6 +236362,15 @@
       "routes/admin"
     ]
   },
+  "This service failure could not be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "This settlement does not belong to you": {
     "sites": 1,
     "scope": [
@@ -236387,6 +236632,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "This stop's location has not been geocoded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "This stops at {0} rows. Export as a report to get every row.": {
@@ -243748,7 +244002,7 @@
     ]
   },
   "Type": {
-    "sites": 57,
+    "sites": 58,
     "scope": [
       "go",
       "ts"
@@ -245799,6 +246053,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Unknown stop": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Unknown structured output mode": {
@@ -252379,7 +252642,7 @@
     ]
   },
   "Voided": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -252885,7 +253148,7 @@
     ]
   },
   "Waiting on a reviewer": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -253057,6 +253320,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Waiting to be resolved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Waiting to be settled: {0, plural, one {# cost event} other {# cost events}} across {1, plural, one {# carrier} other {# carriers}}. Generating builds one draft statement per carrier, with linehaul, fuel and accessorial cost lines pulled in on their own.": {
@@ -255252,12 +255524,13 @@
     ]
   },
   "What happened": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
+      "routes/desk",
       "routes/osha",
       "routes/worker"
     ]
@@ -257398,12 +257671,13 @@
     ]
   },
   "Where": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/fuel-purchase",
       "routes/osha",
       "routes/worker"
@@ -272664,6 +272938,15 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {# other} other {# others}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# out of budget} other {# out of budget}}": {
     "sites": 1,
     "scope": [
@@ -284378,6 +284661,15 @@
     ]
   },
   "{0}, revocation pending": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0}, stop {1}": {
     "sites": 1,
     "scope": [
       "ts"

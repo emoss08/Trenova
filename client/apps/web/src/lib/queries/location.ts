@@ -1,13 +1,11 @@
 import {
   fetchDeskLocation,
   fetchLocationDwell,
-  fetchLocationFailures,
   fetchLocationPolicies,
   type TimeWindow,
 } from "@/lib/graphql/location-card";
 import { apiService } from "@/services/api";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
-import { infiniteQueryOptions } from "@tanstack/react-query";
 
 export const location = createQueryKeys("location", {
   geofences: (limit = 100) => ({
@@ -29,18 +27,4 @@ export const location = createQueryKeys("location", {
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       fetchLocationPolicies(locationId, first, { signal }),
   }),
-  failures: (locationId: string) => ({
-    queryKey: ["failures", locationId],
-  }),
 });
-
-/** The service failures at a location, newest first, a page at a time. */
-export function locationFailuresQuery(locationId: string, pageSize: number) {
-  return infiniteQueryOptions({
-    queryKey: [...location.failures(locationId).queryKey, pageSize],
-    queryFn: ({ pageParam, signal }) =>
-      fetchLocationFailures(locationId, { first: pageSize, after: pageParam }, { signal }),
-    initialPageParam: null as string | null,
-    getNextPageParam: (last) => (last.hasNextPage && last.endCursor ? last.endCursor : undefined),
-  });
-}

@@ -6,6 +6,7 @@ import {
   DESK_RECORD_NAMES,
   DESK_THREAD_ID,
   deskRateAgreements,
+  deskServiceFailures,
   laneSummary,
   deskCardArtifacts,
   deskDocument,
@@ -70,6 +71,18 @@ function carrierFixture(state, id) {
 
 function orderFixture(state, id) {
   return deskOrders(state.anchor)[id] ?? null;
+}
+
+function failureFixture(state, id) {
+  return deskServiceFailures(state.anchor)[id] ?? null;
+}
+
+/** The fixture failure recorded on a shipment, whose load's failures the card lists. */
+function loadFailures(state, shipmentId) {
+  const fixture = Object.values(deskServiceFailures(state.anchor)).find(
+    (entry) => entry.failure.shipmentId === shipmentId,
+  );
+  return fixture ? fixture.loadFailures : [];
 }
 
 function agreementFixture(state, id) {
@@ -276,13 +289,20 @@ export const DESK_CARD_HANDLERS = {
       },
     };
   },
-  DeskLocationFailures: (state, variables) => {
+  DeskRecordFailures: (state, variables) => {
     if (held(state)) return HOLD;
-    const fixture = locationFixture(state, variables.locationId);
-    const rows = fixture && !empty(state) ? fixture.failures : [];
+    const rows = empty(state)
+      ? []
+      : variables.shipmentId
+        ? loadFailures(state, variables.shipmentId)
+        : (locationFixture(state, variables.locationId)?.failures ?? []);
     return {
       serviceFailures: connectionPage(rows, variables.input, variables.includeTotalCount),
     };
+  },
+  DeskServiceFailureCard: (state, variables) => {
+    if (held(state)) return HOLD;
+    return { serviceFailure: failureFixture(state, variables.id)?.failure ?? null };
   },
   DeskCarrierCard: (state, variables) => {
     if (held(state)) return HOLD;
@@ -358,7 +378,9 @@ export const DESK_CARD_HANDLERS = {
   DeskRecordActivity: (state, variables) => {
     if (held(state)) return HOLD;
     const fixture =
-      orderFixture(state, variables.resourceId) ?? agreementFixture(state, variables.resourceId);
+      orderFixture(state, variables.resourceId) ??
+      agreementFixture(state, variables.resourceId) ??
+      failureFixture(state, variables.resourceId);
     const rows = fixture && !empty(state) ? fixture.activity : [];
     return {
       auditEntriesByResourceId: connectionPage(rows, variables.input, variables.includeTotalCount),

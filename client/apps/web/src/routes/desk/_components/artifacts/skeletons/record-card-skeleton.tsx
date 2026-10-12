@@ -249,6 +249,24 @@ export function CardMeterSkeleton() {
   );
 }
 
+/** A `CardPath` while it is read: a ring per step beside its name and its line. */
+export function CardPathSkeleton({ steps }: { steps: number }) {
+  return (
+    <ol className="dk-rec-path">
+      {Array.from({ length: steps }, (_, index) => (
+        // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
+        <li key={index}>
+          <i className="dk-sk dk-rec-node" />
+          <div className="dk-rec-pb">
+            <SkeletonBar w="34%" className="dk-rec-sk-line" />
+            <SkeletonBar w="52%" className="dk-rec-sk-label" />
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 /** A filled block the card draws as one piece, such as a lane or a document tile. */
 export function CardBoxSkeleton({ height }: { height: number }) {
   return <i className="dk-sk dk-rec-sk-box" style={{ height: `${height}px` }} />;

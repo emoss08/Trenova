@@ -79,34 +79,3 @@ query DeskLocationPolicies($input: DataTableConnectionInput!) {
     }
   }
 }
-
-# The service failures at stops made at the location, newest first, a page at a
-# time. The count is read with the first page only.
-query DeskLocationFailures(
-  $locationId: ID!
-  $input: DataTableConnectionInput!
-  $includeTotalCount: Boolean!
-) {
-  serviceFailures(input: $input, locationId: $locationId) {
-    edges {
-      node {
-        id
-        number
-        type
-        status
-        stopType
-        lateMinutes
-        actualArrival
-        shipment {
-          id
-          proNumber
-        }
-      }
-    }
-    pageInfo {
-      hasNextPage
-      endCursor
-    }
-    totalCount @include(if: $includeTotalCount)
-  }
-}

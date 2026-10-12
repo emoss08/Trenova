@@ -13162,15 +13162,6 @@ export type DeskLocationPoliciesQueryVariables = Exact<{
 
 export type DeskLocationPoliciesQuery = { detentionPolicies: { totalCount: number | null, edges: Array<{ node: { id: string, name: string, code: string, status: DetentionPolicyStatus, priority: number, customerId: string | null, stopTypes: Array<StopType>, appointmentStopsOnly: boolean, billingFreeMinutes: number, pickupFreeMinutes: number | null, deliveryFreeMinutes: number | null, effectiveStartDate: number | null, effectiveEndDate: number | null } }> } };
 
-export type DeskLocationFailuresQueryVariables = Exact<{
-  locationId: string | number;
-  input: DataTableConnectionInput;
-  includeTotalCount: boolean;
-}>;
-
-
-export type DeskLocationFailuresQuery = { serviceFailures: { totalCount?: number | null, edges: Array<{ node: { id: string, number: string, type: ServiceFailureType, status: ServiceFailureStatus, stopType: StopType, lateMinutes: number, actualArrival: number, shipment: { id: string, proNumber: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
-
 export type LocationTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, locationCategoryId: string, stateId: string, status: EntityStatus, code: string, name: string, description: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, latitude: number | null, longitude: number | null, placeId: string, version: number, createdAt: number, updatedAt: number, state: { id: string, name: string, abbreviation: string } | null, locationCategory: { id: string, name: string, color: string } | null } & { ' $fragmentName'?: 'LocationTableRowFieldsFragment' };
 
 export type LocationTableQueryVariables = Exact<{
@@ -14263,6 +14254,23 @@ export type ServiceFailureReasonCodeTableQueryVariables = Exact<{
 
 
 export type ServiceFailureReasonCodeTableQuery = { serviceFailureReasonCodes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ServiceFailureReasonCodeTableRowFieldsFragment': ServiceFailureReasonCodeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DeskServiceFailureCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskServiceFailureCardQuery = { serviceFailure: { id: string, shipmentId: string, number: string, type: ServiceFailureType, source: ServiceFailureSource, status: ServiceFailureStatus, stopType: StopType, scheduledCutoff: number, actualArrival: number, gracePeriodMinutes: number, lateMinutes: number, notes: string, internalNotes: string, x12StatusCodeOverride: string, x12ReasonCodeOverride: string, x12ExceptionCode: string, detectedAt: number, reviewedAt: number | null, resolvedAt: number | null, voidedAt: number | null, voidReason: string, createdAt: number, updatedAt: number, createdBy: { id: string, name: string } | null, reviewedBy: { id: string, name: string } | null, resolvedBy: { id: string, name: string } | null, voidedBy: { id: string, name: string } | null, shipment: { id: string, proNumber: string, bol: string | null, customer: { id: string, code: string, name: string } | null } | null, stop: { id: string, type: StopType, sequence: number, location: { id: string, code: string, name: string, addressLine1: string, city: string, postalCode: string, latitude: number | null, longitude: number | null, state: { abbreviation: string } | null } | null } | null, reasonCode: { id: string, code: string, label: string, description: string, category: ServiceFailureReasonCategory } | null } | null };
+
+export type DeskRecordFailuresQueryVariables = Exact<{
+  locationId?: string | number | null | undefined;
+  shipmentId?: string | number | null | undefined;
+  input: DataTableConnectionInput;
+  includeTotalCount: boolean;
+}>;
+
+
+export type DeskRecordFailuresQuery = { serviceFailures: { totalCount?: number | null, edges: Array<{ node: { id: string, number: string, type: ServiceFailureType, status: ServiceFailureStatus, stopType: StopType, lateMinutes: number, actualArrival: number, shipment: { id: string, proNumber: string } | null, stop: { id: string, location: { id: string, name: string, city: string, state: { abbreviation: string } | null } | null } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type ServiceFailureTableRowFieldsFragment = { id: string, shipmentId: string, shipmentMoveId: string, number: string, type: ServiceFailureType, source: ServiceFailureSource, status: ServiceFailureStatus, stopType: StopType, stopId: string, scheduledCutoff: number, actualArrival: number, gracePeriodMinutes: number, lateMinutes: number, reasonCodeId: string | null, notes: string, internalNotes: string, x12StatusCodeOverride: string, x12ReasonCodeOverride: string, x12ExceptionCode: string, detectedAt: number, version: number, shipment: { id: string, proNumber: string, bol: string | null } | null, stop: { id: string, type: StopType, sequence: number, locationId: string, location: { id: string, name: string, code: string, city: string, state: { abbreviation: string } | null } | null } | null, reasonCode: { id: string, code: string, label: string } | null } & { ' $fragmentName'?: 'ServiceFailureTableRowFieldsFragment' };
 
@@ -26423,7 +26431,6 @@ export const LocationCategoryTableDocument = {"__meta__":{"kind":"query","name":
 export const DeskLocationCardDocument = {"__meta__":{"kind":"query","name":"DeskLocationCard","hash":"sha256:60f3d8fe71ac91442e6d7d08664494096af9b149530f463387d539942b9b33c2"}} as unknown as TypedDocumentString<DeskLocationCardQuery, DeskLocationCardQueryVariables>;
 export const DeskLocationDwellDocument = {"__meta__":{"kind":"query","name":"DeskLocationDwell","hash":"sha256:e20a73f20cd00cdb0229ddf91edab379cc659ec10c8c53d3c493d2500a1eed10"}} as unknown as TypedDocumentString<DeskLocationDwellQuery, DeskLocationDwellQueryVariables>;
 export const DeskLocationPoliciesDocument = {"__meta__":{"kind":"query","name":"DeskLocationPolicies","hash":"sha256:af2e7d401b0fca0f608c9c7d176fe5db6e6284a7e59d10d19b84909f5923dd2e"}} as unknown as TypedDocumentString<DeskLocationPoliciesQuery, DeskLocationPoliciesQueryVariables>;
-export const DeskLocationFailuresDocument = {"__meta__":{"kind":"query","name":"DeskLocationFailures","hash":"sha256:7038151a3337170fedb8624baf9a38b72bbae1d3a6469ea71935002bc5a4980b"}} as unknown as TypedDocumentString<DeskLocationFailuresQuery, DeskLocationFailuresQueryVariables>;
 export const LocationTableDocument = {"__meta__":{"kind":"query","name":"LocationTable","hash":"sha256:db0953dee7cb9ece4aa05feb18d26f2986a6636cc3ad0b168e41c7ece0e7bd43"}} as unknown as TypedDocumentString<LocationTableQuery, LocationTableQueryVariables>;
 export const ManualJournalTableDocument = {"__meta__":{"kind":"query","name":"ManualJournalTable","hash":"sha256:8cd46bc08994ea9aee268bf5b08a578d5a39f6d8628919ae255b58c350fabebf"}} as unknown as TypedDocumentString<ManualJournalTableQuery, ManualJournalTableQueryVariables>;
 export const NotificationListDocument = {"__meta__":{"kind":"query","name":"NotificationList","hash":"sha256:d495edf2331e2fb69b5bfd7c646882ba80f82d2b859e740d86606ece6b83aac5"}} as unknown as TypedDocumentString<NotificationListQuery, NotificationListQueryVariables>;
@@ -26565,6 +26572,8 @@ export const CreateWorkerPolicyDocument = {"__meta__":{"kind":"mutation","name":
 export const UpdateWorkerPolicyDocument = {"__meta__":{"kind":"mutation","name":"UpdateWorkerPolicy","hash":"sha256:d3f5e0446b95e5f7fdc703eedca4eb8c8a794d16c3491b3163e8fae37605e7dc"}} as unknown as TypedDocumentString<UpdateWorkerPolicyMutation, UpdateWorkerPolicyMutationVariables>;
 export const DecideProfileChangeDocument = {"__meta__":{"kind":"mutation","name":"DecideProfileChange","hash":"sha256:b9fbfae26045f2d782234256da0675b4132c549dd45627b12b64d0da7a15c767"}} as unknown as TypedDocumentString<DecideProfileChangeMutation, DecideProfileChangeMutationVariables>;
 export const ServiceFailureReasonCodeTableDocument = {"__meta__":{"kind":"query","name":"ServiceFailureReasonCodeTable","hash":"sha256:041698d7f51840151afa5a8fb10ceb205540001dc66ed1969c2366060585b3aa"}} as unknown as TypedDocumentString<ServiceFailureReasonCodeTableQuery, ServiceFailureReasonCodeTableQueryVariables>;
+export const DeskServiceFailureCardDocument = {"__meta__":{"kind":"query","name":"DeskServiceFailureCard","hash":"sha256:cf91522df33cf577a105a49de7c61a898d6442db2d0cb5db4791044e3841b4d9"}} as unknown as TypedDocumentString<DeskServiceFailureCardQuery, DeskServiceFailureCardQueryVariables>;
+export const DeskRecordFailuresDocument = {"__meta__":{"kind":"query","name":"DeskRecordFailures","hash":"sha256:73202f49b3a51561641b75de0472e21508dfd5b2b9b2befbce2a1e2bcda6977c"}} as unknown as TypedDocumentString<DeskRecordFailuresQuery, DeskRecordFailuresQueryVariables>;
 export const ServiceFailureTableDocument = {"__meta__":{"kind":"query","name":"ServiceFailureTable","hash":"sha256:802d21c82ae8c40acf8a3e43537d88efc7781983e248ad672961a74b46c52bd0"}} as unknown as TypedDocumentString<ServiceFailureTableQuery, ServiceFailureTableQueryVariables>;
 export const ServiceTypeTableDocument = {"__meta__":{"kind":"query","name":"ServiceTypeTable","hash":"sha256:ba2cc0fdc314c6c3e25d306f5ad63a4c09ac96b537a0bf60b874ea22eec70682"}} as unknown as TypedDocumentString<ServiceTypeTableQuery, ServiceTypeTableQueryVariables>;
 export const ShipmentTypeTableDocument = {"__meta__":{"kind":"query","name":"ShipmentTypeTable","hash":"sha256:2be2cf7c6760639a92a3977f36a489f31e14b4c27edae1049a9589cce837a534"}} as unknown as TypedDocumentString<ShipmentTypeTableQuery, ShipmentTypeTableQueryVariables>;

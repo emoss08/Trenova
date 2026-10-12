@@ -89,6 +89,30 @@ export function deskCardArtifacts(anchor) {
       "Globex spot rates 2027",
     ),
     "agreement-gone": artifact("agreement-gone", "rate_agreement", "ra_999", "Plains reefer rates"),
+    "failure-tyson-appt": artifact(
+      "failure-tyson-appt",
+      "service_failure",
+      "sf_tys2",
+      "Service failure SF-2610-0052",
+    ),
+    "failure-tyson-late": artifact(
+      "failure-tyson-late",
+      "service_failure",
+      "sf_tys1",
+      "Service failure SF-2610-0058",
+    ),
+    "failure-new": artifact(
+      "failure-new",
+      "service_failure",
+      "sf_new",
+      "Service failure SF-2610-0064",
+    ),
+    "failure-gone": artifact(
+      "failure-gone",
+      "service_failure",
+      "sf_999",
+      "Service failure SF-2608-0007",
+    ),
   };
 }
 
@@ -1562,6 +1586,220 @@ export function deskRateAgreements(anchor) {
   };
 }
 
+const TYSON_DC = {
+  id: "loc_tyson",
+  code: "TYS-SPD",
+  name: "Tyson Foods Distribution Center, Springdale",
+  addressLine1: "2200 W Don Tyson Pkwy",
+  city: "Springdale",
+  postalCode: "72762",
+  latitude: 36.1867,
+  longitude: -94.1288,
+  state: { abbreviation: "AR" },
+};
+const DALLAS_YARD = {
+  id: "loc_dal",
+  code: "DAL-YD",
+  name: "Dallas yard",
+  addressLine1: "1801 Commerce St",
+  city: "Dallas",
+  postalCode: "75201",
+  latitude: 32.7801,
+  longitude: -96.8005,
+  state: { abbreviation: "TX" },
+};
+const ACME_PLANT = {
+  id: "loc_acme2",
+  code: "ACME-RGR",
+  name: "Acme Plant 2",
+  addressLine1: "900 S 8th St",
+  city: "Rogers",
+  postalCode: "72756",
+  latitude: 36.3254,
+  longitude: -94.1185,
+  state: { abbreviation: "AR" },
+};
+const OVERFLOW_LOT = {
+  id: "loc_new",
+  code: "G7-LOT",
+  name: "Gate 7 overflow lot",
+  addressLine1: "",
+  city: "Irving",
+  postalCode: "75061",
+  latitude: null,
+  longitude: null,
+  state: { abbreviation: "TX" },
+};
+
+/**
+ * Three service failures that between them draw every state the card has:
+ * SF-2610-0052 is a missed appointment at Tyson's dock, reviewed and waiting to
+ * be resolved, with its reason, notes and another failure on the same load;
+ * SF-2610-0058 is a late delivery there still open with no reason given;
+ * SF-2610-0064 was logged by hand at an overflow lot that was never geocoded,
+ * with nothing else recorded.
+ */
+export function deskServiceFailures(anchor) {
+  const person = (id, name) => ({ id, name });
+  const mia = person("usr_mia", "Mia Chen");
+  const omar = person("usr_omar", "Omar Haddad");
+  const entry = (id, operation, hoursAgo, name, changes = null, comment = null) => ({
+    id,
+    operation,
+    timestamp: anchor - hoursAgo * HOUR,
+    changes,
+    comment,
+    principalType: name ? "session_user" : "system",
+    user: name ? { id: `usr_${id}`, name } : null,
+  });
+  const base = (id, overrides) => {
+    const arrived = overrides.actualArrival;
+    return {
+      id,
+      type: "LateDelivery",
+      source: "Detected",
+      status: "Open",
+      stopType: "Delivery",
+      gracePeriodMinutes: 30,
+      notes: "",
+      internalNotes: "",
+      x12StatusCodeOverride: "",
+      x12ReasonCodeOverride: "",
+      x12ExceptionCode: "",
+      detectedAt: arrived + 10 * 60,
+      reviewedAt: null,
+      resolvedAt: null,
+      voidedAt: null,
+      voidReason: "",
+      createdAt: arrived + 10 * 60,
+      updatedAt: arrived + 10 * 60,
+      createdBy: null,
+      reviewedBy: null,
+      resolvedBy: null,
+      voidedBy: null,
+      reasonCode: null,
+      scheduledCutoff: arrived - (overrides.lateMinutes + 30) * 60,
+      ...overrides,
+    };
+  };
+  const row = (failure) => ({
+    id: failure.id,
+    number: failure.number,
+    type: failure.type,
+    status: failure.status,
+    stopType: failure.stopType,
+    lateMinutes: failure.lateMinutes,
+    actualArrival: failure.actualArrival,
+    shipment: { id: failure.shipmentId, proNumber: failure.shipment?.proNumber ?? "" },
+    stop: failure.stop ? { id: failure.stop.id, location: failure.stop.location } : null,
+  });
+
+  const appointment = base("sf_tys2", {
+    number: "SF-2610-0052",
+    shipmentId: "shp_sf_tys2",
+    type: "AppointmentMissed",
+    status: "Reviewed",
+    actualArrival: anchor - 4 * DAY,
+    lateMinutes: 140,
+    notes: "Receiving closed the door at 13:40, twenty minutes before the posted cutoff.",
+    internalNotes:
+      "Third missed appointment at this dock this month. Raise it with the account manager.",
+    x12ReasonCodeOverride: "AG",
+    reviewedAt: anchor - 3 * DAY,
+    reviewedBy: omar,
+    updatedAt: anchor - 3 * DAY,
+    shipment: {
+      id: "shp_sf_tys2",
+      proNumber: "S2610-1342",
+      bol: "BOL-55087",
+      customer: { id: "cus_acme", code: "ACME", name: "Acme Foods" },
+    },
+    stop: { id: "stp_tys2", type: "Delivery", sequence: 3, location: TYSON_DC },
+    reasonCode: {
+      id: "rc_cns",
+      code: "CNS-DLY",
+      label: "Consignee delayed unloading",
+      description: "The consignee could not take the load inside its appointment window.",
+      category: "Consignee",
+    },
+  });
+  const earlierPickup = base("sf_acme9", {
+    number: "SF-2610-0049",
+    shipmentId: "shp_sf_tys2",
+    type: "LatePickup",
+    status: "Resolved",
+    stopType: "Pickup",
+    actualArrival: anchor - 5 * DAY,
+    lateMinutes: 40,
+    shipment: { id: "shp_sf_tys2", proNumber: "S2610-1342" },
+    stop: { id: "stp_acme9", type: "Pickup", sequence: 1, location: ACME_PLANT },
+  });
+  const late = base("sf_tys1", {
+    number: "SF-2610-0058",
+    shipmentId: "shp_sf_tys1",
+    actualArrival: anchor - 26 * HOUR,
+    lateMinutes: 95,
+    shipment: {
+      id: "shp_sf_tys1",
+      proNumber: "S2610-1366",
+      bol: null,
+      customer: { id: "cus_tyson", code: "TYSON", name: "Tyson Foods" },
+    },
+    stop: { id: "stp_tys1", type: "Delivery", sequence: 2, location: TYSON_DC },
+  });
+  const latePickup = base("sf_dal7", {
+    number: "SF-2610-0057",
+    shipmentId: "shp_sf_tys1",
+    type: "LatePickup",
+    stopType: "Pickup",
+    actualArrival: anchor - 30 * HOUR,
+    lateMinutes: 50,
+    shipment: { id: "shp_sf_tys1", proNumber: "S2610-1366" },
+    stop: { id: "stp_dal7", type: "Pickup", sequence: 1, location: DALLAS_YARD },
+  });
+  const logged = base("sf_new", {
+    number: "SF-2610-0064",
+    shipmentId: "shp_sf_new",
+    type: "MissedPickup",
+    source: "Manual",
+    stopType: "Pickup",
+    actualArrival: anchor - 3 * HOUR,
+    lateMinutes: 75,
+    createdBy: mia,
+    shipment: {
+      id: "shp_sf_new",
+      proNumber: "S2610-1402",
+      bol: null,
+      customer: { id: "cus_globex", code: "GLOBEX", name: "Globex Corporation" },
+    },
+    stop: { id: "stp_new", type: "Pickup", sequence: 1, location: OVERFLOW_LOT },
+  });
+
+  return {
+    sf_tys2: {
+      failure: appointment,
+      loadFailures: [row(appointment), row(earlierPickup)],
+      activity: [
+        entry("ae_sf1", "update", 72, "Omar Haddad", { status: { from: "Open", to: "Reviewed" } }),
+        entry("ae_sf2", "update", 74, "Omar Haddad", {
+          reasonCodeId: { from: null, to: "rc_cns" },
+          notes: { from: "", to: "Receiving closed the door" },
+        }),
+        entry("ae_sf3", "update", 75, "Mia Chen", {
+          internalNotes: { from: "", to: "Third missed appointment" },
+        }),
+        entry("ae_sf4", "create", 95, null),
+      ],
+    },
+    sf_tys1: {
+      failure: late,
+      loadFailures: [row(late), row(latePickup)],
+      activity: [entry("ae_sf5", "create", 26, null)],
+    },
+    sf_new: { failure: logged, loadFailures: [row(logged)], activity: [] },
+  };
+}
+
 /** A document filed on a tractor, as the documents API returns it. */
 export function deskDocument(resourceType, resourceId, [name, fileType, fileSize], index, anchor) {
   return {
@@ -1684,6 +1922,22 @@ const TURNS = {
   "order-draft": [
     "Pull up the Globex order from this morning.",
     "ORD-2610-0131 for Globex is still a draft, not priced and with no legs yet. [Order ORD-2610-0131](artifact:art_order-draft) shows what is there.",
+  ],
+  "failure-tyson-appt": [
+    "Why was the Tyson delivery on S2610-1342 flagged?",
+    "SF-2610-0052: the truck missed its appointment at Tyson's Springdale DC by 2 h 20 m. Omar reviewed it as the consignee delaying unloading, and it still needs resolving. The same load was also 40 m late at pickup. [Service failure SF-2610-0052](artifact:art_failure-tyson-appt) has the timeline.",
+  ],
+  "failure-tyson-late": [
+    "What's going on with the late delivery at Tyson yesterday?",
+    "SF-2610-0058 is still open: S2610-1366 arrived 1 h 35 m late at Tyson's DC and nobody has given a reason yet. [Service failure SF-2610-0058](artifact:art_failure-tyson-late) shows where it stands.",
+  ],
+  "failure-new": [
+    "Did Mia log the missed pickup at the overflow lot?",
+    "Yes, SF-2610-0064 was logged by hand three hours ago for S2610-1402; it has no reason or review yet. [Service failure SF-2610-0064](artifact:art_failure-new) shows what is there.",
+  ],
+  "failure-gone": [
+    "Pull up SF-2608-0007.",
+    "That service failure has been removed since I looked it up. [Service failure SF-2608-0007](artifact:art_failure-gone) is what I found then.",
   ],
   "agreement-acme": [
     "How is Acme's contract priced?",

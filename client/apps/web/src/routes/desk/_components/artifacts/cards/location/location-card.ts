@@ -1,18 +1,16 @@
-import { choiceLabel, serviceFailureTypeChoices, stopTypeChoices } from "@/lib/choices";
+import { choiceLabel, stopTypeChoices } from "@/lib/choices";
 import type {
   DeskLocation,
   LocationDwell,
-  LocationFailure,
   LocationPolicy,
   TimeWindow,
 } from "@/lib/graphql/location-card";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import { formatDurationFromSeconds } from "@trenova/shared/lib/date";
 import type { MapOutline } from "../../record-card/map-tiles";
 import { zoomToFit } from "../../record-card/map-tiles";
 import type { CardFact, CardStat, CardTone } from "../../record-card/record-card";
-import { cardDate, money } from "../../record-card/record-card-values";
+import { cardDate, money, waitText } from "../../record-card/record-card-values";
 
 const DAY = 86_400;
 const HOUR = 3_600;
@@ -36,27 +34,9 @@ export function dwellWindow(now: number): TimeWindow {
   return { from: to - DWELL_WINDOW_DAYS * DAY, to };
 }
 
-/** A wait in minutes, as the card reads it: "1h 36m", or "0m" for none. */
-export function waitText(minutes: number): string {
-  return formatDurationFromSeconds(Math.round(Math.max(0, minutes)) * 60);
-}
-
 /** The location's street address on one line, or "" when none is on file. */
 export function streetLine(location: Pick<DeskLocation, "addressLine1" | "addressLine2">): string {
   return [location.addressLine1.trim(), location.addressLine2.trim()].filter(Boolean).join(", ");
-}
-
-/** The city, state and postal code on one line: "Dallas, TX 75201". */
-export function cityLine(
-  location: Pick<DeskLocation, "city" | "postalCode"> & {
-    state?: { abbreviation: string } | null;
-  },
-): string {
-  const city = location.city.trim();
-  const region = [location.state?.abbreviation ?? "", location.postalCode.trim()]
-    .filter(Boolean)
-    .join(" ");
-  return [city, region].filter(Boolean).join(", ");
 }
 
 /** Whether the location takes trucks, as the card's pill says it. */
@@ -198,18 +178,6 @@ export function policyScope(policy: LocationPolicy, t: TranslateFn): string {
       : "",
     policy.appointmentStopsOnly ? t("Appointment stops only") : "",
     policy.effectiveEndDate ? t("Through {0}", cardDate(policy.effectiveEndDate)) : "",
-  ]
-    .filter(Boolean)
-    .join(" · ");
-}
-
-/** A service failure as one row reads it: its kind, the load, how late and when. */
-export function failureLine(failure: LocationFailure, t: TranslateFn): string {
-  return [
-    choiceLabel(serviceFailureTypeChoices, failure.type),
-    failure.shipment?.proNumber ?? "",
-    failure.lateMinutes > 0 ? t("{0} late", waitText(failure.lateMinutes)) : "",
-    cardDate(failure.actualArrival),
   ]
     .filter(Boolean)
     .join(" · ");

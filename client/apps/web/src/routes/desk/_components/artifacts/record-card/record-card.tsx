@@ -250,7 +250,7 @@ const TONE_CLASS: Record<CardTone, string> = {
   progress: "",
   success: "dk-s1",
   ink: "dk-s2",
-  warn: "dk-hold",
+  warn: "dk-st-warn",
   muted: "dk-off",
   draft: "dk-draft",
 };

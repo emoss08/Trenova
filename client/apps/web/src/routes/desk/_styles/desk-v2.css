@@ -4021,10 +4021,13 @@ button.dk-dx-c:hover {
   background: var(--dsk-ink);
   box-shadow: none;
 }
-.dk-rec-st.dk-hold {
+.dk-rec-st.dk-st-warn {
   color: var(--dsk-warn-fg);
   background: var(--dsk-warn-sub);
   box-shadow: none;
+}
+.dk-rec-st.dk-st-warn i {
+  background: var(--dsk-warn);
 }
 .dk-rec-sec {
   padding: 16px 16px 4px;
@@ -5540,6 +5543,9 @@ th.dk-cb .dk-ax-cb:hover {
 .dk-ax-ki.dk-k-order {
   color: var(--accent-teal);
 }
+.dk-ax-ki.dk-k-failure {
+  color: var(--warning);
+}
 /* The shipment card */
 .dk-sh-nowsec {
   padding: 16px 16px 4px;
@@ -6637,6 +6643,112 @@ th.dk-cb .dk-ax-cb:hover {
     animation: none;
   }
 }
+/* a record's way down a rail, a node per step (an agreement's approval, a failure's review) */
+.dk-rec-path {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-rec-path > li {
+  position: relative;
+  padding: 0 0 12px 30px;
+  animation: dk-nl 260ms var(--dk-settle) both;
+}
+.dk-rec-path > li:last-child {
+  padding-bottom: 0;
+}
+.dk-rec-path > li::before {
+  content: "";
+  position: absolute;
+  left: 8.5px;
+  top: 22px;
+  bottom: 0;
+  width: 1px;
+  background: var(--dsk-b);
+}
+.dk-rec-path > li:last-child::before {
+  display: none;
+}
+.dk-rec-path > li.dk-done::before {
+  background: color-mix(in srgb, var(--dsk-success) 55%, transparent);
+}
+.dk-rec-node {
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--dsk-on-solid);
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1.5px var(--dsk-b-strong);
+}
+.dk-rec-path > li.dk-done .dk-rec-node {
+  background: var(--dsk-success);
+  box-shadow: none;
+}
+.dk-rec-path > li.dk-now .dk-rec-node {
+  box-shadow:
+    inset 0 0 0 2px var(--dsk-blue),
+    0 0 0 3px var(--dsk-blue-sub);
+}
+.dk-rec-path > li.dk-now .dk-rec-node:empty::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dsk-blue);
+}
+.dk-rec-path > li.dk-held .dk-rec-node {
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+  box-shadow: inset 0 0 0 1.5px var(--dsk-warn);
+}
+.dk-rec-path > li.dk-closed .dk-rec-node {
+  color: var(--dsk-subtle);
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1.5px var(--dsk-b-strong);
+}
+.dk-rec-pb {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-top: 1px;
+}
+.dk-rec-pb > b {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-rec-path > li.dk-todo .dk-rec-pb > b {
+  color: var(--dsk-subtle);
+}
+.dk-rec-path > li.dk-held .dk-rec-pb > b {
+  color: var(--dsk-warn-fg);
+}
+.dk-rec-pb > span {
+  font: 11.5px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-subtle);
+}
+.dk-rec-review {
+  margin: 6px 0 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-line;
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-rec-path > li {
+    animation: none;
+  }
+}
 /* a share drawn as a meter under what it measures (credit used, drive time left) */
 .dk-rec-gauge {
   display: flex;
@@ -6901,7 +7013,7 @@ th.dk-cb .dk-ax-cb:hover {
   color: var(--dsk-subtle);
 }
 .dk-lo-free,
-.dk-lo-fst {
+.dk-rec-fst {
   font-size: 12px;
   white-space: nowrap;
   color: var(--dsk-subtle);
@@ -6911,11 +7023,80 @@ th.dk-cb .dk-ax-cb:hover {
   font-feature-settings: "tnum";
   color: var(--dsk-fg2);
 }
-.dk-lo-fst.dk-warn {
+.dk-rec-fst.dk-warn {
   color: var(--dsk-warn-fg);
 }
-.dk-lo-fst.dk-ok {
+.dk-rec-fst.dk-ok {
   color: var(--dsk-success-fg);
+}
+/* The service failure card */
+.dk-rec-amt .dk-svf-late {
+  color: var(--dsk-warn-fg);
+}
+.dk-svf-resolved .dk-rec-amt .dk-svf-late,
+.dk-svf-voided .dk-rec-amt .dk-svf-late {
+  color: var(--dsk-fg2);
+}
+.dk-svf-cause {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dk-svf-cause-h {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+.dk-svf-cause-h b {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-svf-cause-h code {
+  font: 11.5px var(--dk-plex);
+  color: var(--dsk-subtle);
+}
+.dk-svf-tag {
+  padding: 1px 7px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+}
+.dk-svf-cause p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--dsk-fg2);
+}
+.dk-svf-cause p.dk-svf-missing {
+  color: var(--dsk-warn-fg);
+}
+.dk-svf-note {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-svf-note figcaption {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-svf-note blockquote {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  white-space: pre-line;
+  color: var(--dsk-fg);
+}
+.dk-svf-note.dk-internal {
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
+  border-left: 2px solid var(--dsk-b-strong);
+  border-radius: 0 8px 8px 0;
 }
 /* The carrier card */
 .dk-ca {
@@ -7282,107 +7463,6 @@ th.dk-cb .dk-ax-cb:hover {
   border-radius: 50%;
   background: var(--dk-ra-c);
 }
-/* the approval path down a rail, a node per step */
-.dk-ra-path {
-  margin: 14px 0 0;
-  padding: 0;
-  list-style: none;
-}
-.dk-ra-path > li {
-  position: relative;
-  padding: 0 0 12px 30px;
-  animation: dk-nl 260ms var(--dk-settle) both;
-}
-.dk-ra-path > li:last-child {
-  padding-bottom: 0;
-}
-.dk-ra-path > li::before {
-  content: "";
-  position: absolute;
-  left: 8.5px;
-  top: 22px;
-  bottom: 0;
-  width: 1px;
-  background: var(--dsk-b);
-}
-.dk-ra-path > li:last-child::before {
-  display: none;
-}
-.dk-ra-path > li.dk-done::before {
-  background: color-mix(in srgb, var(--dsk-success) 55%, transparent);
-}
-.dk-ra-node {
-  position: absolute;
-  left: 0;
-  top: 1px;
-  width: 18px;
-  height: 18px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: var(--dsk-on-solid);
-  background: var(--dsk-card);
-  box-shadow: inset 0 0 0 1.5px var(--dsk-b-strong);
-}
-.dk-ra-path > li.dk-done .dk-ra-node {
-  background: var(--dsk-success);
-  box-shadow: none;
-}
-.dk-ra-path > li.dk-now .dk-ra-node {
-  box-shadow:
-    inset 0 0 0 2px var(--dsk-blue),
-    0 0 0 3px var(--dsk-blue-sub);
-}
-.dk-ra-path > li.dk-now .dk-ra-node:empty::after {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--dsk-blue);
-}
-.dk-ra-path > li.dk-held .dk-ra-node {
-  color: var(--dsk-warn-fg);
-  background: var(--dsk-warn-sub);
-  box-shadow: inset 0 0 0 1.5px var(--dsk-warn);
-}
-.dk-ra-path > li.dk-closed .dk-ra-node {
-  color: var(--dsk-subtle);
-  background: var(--dsk-sunken);
-  box-shadow: inset 0 0 0 1.5px var(--dsk-b-strong);
-}
-.dk-ra-pb {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  padding-top: 1px;
-}
-.dk-ra-pb > b {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--dsk-fg);
-}
-.dk-ra-path > li.dk-todo .dk-ra-pb > b {
-  color: var(--dsk-subtle);
-}
-.dk-ra-path > li.dk-held .dk-ra-pb > b {
-  color: var(--dsk-warn-fg);
-}
-.dk-ra-pb > span {
-  font: 11.5px var(--dk-plex);
-  font-feature-settings: "tnum";
-  color: var(--dsk-subtle);
-}
-.dk-ra-review {
-  margin: 6px 0 0;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  line-height: 1.5;
-  white-space: pre-line;
-  color: var(--dsk-warn-fg);
-  background: var(--dsk-warn-sub);
-}
 .dk-rec-amt .dk-ra-wait {
   color: var(--dsk-faint);
 }
@@ -7615,7 +7695,6 @@ button.dk-ra-tpl:hover {
 }
 @media (prefers-reduced-motion: reduce) {
   .dk-ra-done,
-  .dk-ra-path > li,
   .dk-ra-lane {
     animation: none;
   }

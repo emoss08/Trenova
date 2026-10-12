@@ -4,6 +4,7 @@ import {
   CardBarSkeleton,
   CardHeadSkeleton,
   CardMeterSkeleton,
+  CardPathSkeleton,
   CardRowsSkeleton,
   CardSectionSkeleton,
   CardTimelineSkeleton,
@@ -61,18 +62,7 @@ export function DeskRateAgreementSkeleton({ stepper = false }: { stepper?: boole
             <SkeletonBar w="96px" className="dk-rec-sk-pill" />
           </div>
         </div>
-        <ol className="dk-ra-path">
-          {Array.from({ length: STEPS }, (_, index) => (
-            // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
-            <li key={index}>
-              <i className="dk-sk dk-ra-node" />
-              <div className="dk-ra-pb">
-                <SkeletonBar w="34%" className="dk-rec-sk-line" />
-                <SkeletonBar w="52%" className="dk-rec-sk-label" />
-              </div>
-            </li>
-          ))}
-        </ol>
+        <CardPathSkeleton steps={STEPS} />
       </CardSectionSkeleton>
       <CardSectionSkeleton title={64}>
         <CardRowsSkeleton rows={PARTY_ROWS} />

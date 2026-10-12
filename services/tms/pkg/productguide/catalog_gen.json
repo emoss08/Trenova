@@ -1,5 +1,5 @@
 {
-  "version": "sha256:95f8ab3dd4096d35ac7a24dc5b42e7cd25a27e7c0d6e2932bbc7ab31395669ba",
+  "version": "sha256:8183c4609cb64b04701f2af56dec57498cf3e133d8471cb00d6c36e3fdfa469b",
   "modules": [
     {
       "id": "home",
@@ -17076,7 +17076,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "shipment",

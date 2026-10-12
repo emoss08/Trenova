@@ -9,11 +9,14 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -76,4 +79,43 @@ func (r *ServiceFailureResolver) StopType(ctx context.Context, obj *servicefailu
 
 func (r *ServiceFailureStopResolver) Type(ctx context.Context, obj *shipment.Stop) (gqlmodel.StopType, error) {
 	return gqlmodel.StopType(obj.Type), nil
+}
+
+func (r *ServiceFailureResolver) CreatedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error) {
+	return failureUser(ctx, obj.CreatedBy, obj.CreatedByID)
+}
+
+func (r *ServiceFailureResolver) ReviewedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error) {
+	return failureUser(ctx, obj.ReviewedBy, obj.ReviewedByID)
+}
+
+func (r *ServiceFailureResolver) ResolvedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error) {
+	return failureUser(ctx, obj.ResolvedBy, obj.ResolvedByID)
+}
+
+func (r *ServiceFailureResolver) VoidedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error) {
+	return failureUser(ctx, obj.VoidedBy, obj.VoidedByID)
+}
+
+func (r *ServiceFailureShipmentResolver) Customer(ctx context.Context, obj *shipment.Shipment) (*customer.Customer, error) {
+	if obj.CustomerID.IsNil() {
+		return nil, nil
+	}
+
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !r.HasPermission(ctx, authCtx, permission.ResourceCustomer, permission.OpRead) {
+		return nil, nil
+	}
+	if obj.Customer != nil {
+		return obj.Customer, nil
+	}
+
+	if err := base.RequireLoaders(ctx); err != nil {
+		return nil, err
+	}
+
+	return base.OptionalMatch(loaders.CustomerByID(ctx, obj.CustomerID.String()))
 }
