@@ -102183,15 +102183,6 @@
       "routes/carrier"
     ]
   },
-  "Hide folders": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
-    ]
-  },
   "Hide ineligible": {
     "sites": 1,
     "scope": [
@@ -208943,15 +208934,6 @@
       "routes/carrier"
     ]
   },
-  "Show folders": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
-    ]
-  },
   "Show historical queue records that already produced a posted invoice.": {
     "sites": 1,
     "scope": [
@@ -209590,7 +209572,7 @@
     ]
   },
   "Sidebar": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -245227,7 +245209,7 @@
     ]
   },
   "Triage": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
