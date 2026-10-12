@@ -1,5 +1,13 @@
-import { describe, expect, it } from "vitest";
-import { effectivePresence, groupPresence } from "../use-triage-presence";
+import { realtimeClient } from "@trenova/shared/services/realtime";
+import { act, renderHook } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  effectivePresence,
+  groupPresence,
+  PRESENCE_SETTLE_MS,
+  TRIAGE_PRESENCE_SCOPE,
+  useAnnouncePresence,
+} from "../use-triage-presence";
 
 describe("groupPresence", () => {
   const members = [
@@ -63,5 +71,45 @@ describe("effectivePresence", () => {
         { token: 3, messageId: "b", activity: "viewing" },
       ]),
     ).toEqual({ messageId: "b", activity: "viewing" });
+  });
+});
+
+describe("useAnnouncePresence", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it("tells the others only where a person settles, not every message they pass", () => {
+    const setScopeState = vi.spyOn(realtimeClient, "setScopeState").mockImplementation(() => {});
+    const { rerender, unmount } = renderHook(
+      ({ id }: { id: string }) => useAnnouncePresence(id, "viewing"),
+      { initialProps: { id: "imsg_1" } },
+    );
+    rerender({ id: "imsg_2" });
+    rerender({ id: "imsg_3" });
+    act(() => {
+      vi.advanceTimersByTime(PRESENCE_SETTLE_MS);
+    });
+
+    expect(setScopeState).toHaveBeenCalledTimes(1);
+    expect(setScopeState).toHaveBeenLastCalledWith(TRIAGE_PRESENCE_SCOPE, {
+      messageId: "imsg_3",
+      activity: "viewing",
+    });
+
+    unmount();
+    act(() => {
+      vi.advanceTimersByTime(PRESENCE_SETTLE_MS);
+    });
+    expect(setScopeState).toHaveBeenCalledTimes(2);
+    expect(setScopeState).toHaveBeenLastCalledWith(TRIAGE_PRESENCE_SCOPE, {
+      messageId: null,
+      activity: "viewing",
+    });
   });
 });

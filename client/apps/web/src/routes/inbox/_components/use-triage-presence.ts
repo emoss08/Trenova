@@ -12,6 +12,8 @@ import { create } from "zustand";
 export const TRIAGE_PRESENCE_SCOPE = "inbox:messages";
 /** Joins the scope (POST, with `{connectionId, messageId, activity}`) and leaves it (DELETE). */
 export const TRIAGE_PRESENCE_PATH = "/inbox/presence/";
+/** How long a person stays on a message before the others are told; passing through says nothing. */
+export const PRESENCE_SETTLE_MS = 300;
 
 export type TriagePresenceActivity = RealtimePresenceActivity;
 
@@ -37,6 +39,25 @@ const NOBODY: readonly TriagePresenceMember[] = [];
 const usePresenceStore = create<PresenceStore>(() => ({ byMessage: {}, announcements: [] }));
 
 let nextToken = 0;
+let publishTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * Tells the scope what this tab is doing once it has stayed put for
+ * PRESENCE_SETTLE_MS: stepping through a folder announces only where the
+ * person stops, so moving between messages costs no request per step.
+ */
+function schedulePublish(): void {
+  if (publishTimer !== null) {
+    clearTimeout(publishTimer);
+  }
+  publishTimer = setTimeout(() => {
+    publishTimer = null;
+    realtimeClient.setScopeState(
+      TRIAGE_PRESENCE_SCOPE,
+      effectivePresence(usePresenceStore.getState().announcements),
+    );
+  }, PRESENCE_SETTLE_MS);
+}
 
 /** Writing outranks reading: the composer open beside a reader says "writing". */
 export function effectivePresence(announcements: readonly Announcement[]): RealtimePresenceState {
@@ -159,22 +180,17 @@ export function useAnnouncePresence(
     }
     nextToken += 1;
     const token = nextToken;
-    const publish = () =>
-      realtimeClient.setScopeState(
-        TRIAGE_PRESENCE_SCOPE,
-        effectivePresence(usePresenceStore.getState().announcements),
-      );
 
     usePresenceStore.setState((state) => ({
       announcements: [...state.announcements, { token, messageId, activity }],
     }));
-    publish();
+    schedulePublish();
 
     return () => {
       usePresenceStore.setState((state) => ({
         announcements: state.announcements.filter((entry) => entry.token !== token),
       }));
-      publish();
+      schedulePublish();
     };
   }, [messageId, activity]);
 }
