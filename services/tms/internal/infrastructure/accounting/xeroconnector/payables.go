@@ -91,7 +91,10 @@ func (c *Connector) purchaseResult(
 		accountingsync.ExternalRefCreditDocument: strconv.FormatBool(written.credit),
 	}
 	if !written.credit {
-		if link := c.DocumentURL(written.auth, written.kind, written.externalID); link != "" {
+		if link := c.DocumentURL(written.auth, accountingsyncports.AccountingDocumentLink{
+			Kind:       written.kind,
+			ExternalID: written.externalID,
+		}); link != "" {
 			refs[accountingsync.ExternalRefURL] = link
 		}
 	}

@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
@@ -159,10 +158,6 @@ func averageDeadheadColumn() func(*bun.SelectQuery) *bun.SelectQuery {
 	asnCols := shipmentcol.AssignmentColumns
 
 	return func(q *bun.SelectQuery) *bun.SelectQuery {
-		if !dbdialect.FromBun(q.DB()).Supports(dbdialect.CapPostGIS) {
-			return q.ColumnExpr("NULL AS average_deadhead")
-		}
-
 		return q.ColumnExpr(buncolgen.Expr(
 			"COALESCE(AVG(ST_DistanceSphere(ST_MakePoint({0}, {1}), "+
 				"ST_MakePoint(orig.longitude, orig.latitude)) / ?) "+

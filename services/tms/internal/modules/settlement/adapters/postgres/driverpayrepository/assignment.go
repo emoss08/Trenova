@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -125,7 +126,7 @@ func (r *workerPayAssignmentRepository) ListForProfile(
 				Where("wpa.business_unit_id = ?", tenantInfo.BuID).
 				Where("wpa.pay_profile_id = ?", profileID).
 				Where(
-					"wpa.effective_to IS NULL OR wpa.effective_to > "+r.db.NowEpoch(),
+					"wpa.effective_to IS NULL OR wpa.effective_to > "+dbhelper.NowEpoch,
 				).
 				Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
 				Order("wpa.effective_from DESC").

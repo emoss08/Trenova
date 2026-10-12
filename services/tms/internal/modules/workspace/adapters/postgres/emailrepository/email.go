@@ -331,7 +331,7 @@ func (r *repository) UpsertAssignments(
 					Model(assignment).
 					On("CONFLICT (organization_id, business_unit_id, purpose) DO UPDATE").
 					Set("profile_id = EXCLUDED.profile_id").
-					Set("updated_at = " + r.db.NowEpoch()).
+					Set("updated_at = " + dbhelper.NowEpoch).
 					Returning("*").
 					Exec(ctx)
 				if err != nil {

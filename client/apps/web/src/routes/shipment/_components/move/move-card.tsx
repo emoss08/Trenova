@@ -17,6 +17,7 @@ import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { CarrierAssignmentCancelDialog } from "@/components/carrier-assignment/carrier-assignment-cancel-dialog";
 import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
 import { CarrierAssignmentStatusBadge } from "@trenova/shared/components/status-badge";
+import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { isActiveCarrierAssignment } from "@trenova/shared/types/shipment";
@@ -146,6 +147,7 @@ export function MoveCard({
     },
   });
 
+  const withIdempotencyKey = useIdempotencyKey();
   const recordStopActualMutation = useMutation({
     mutationFn: ({
       stopId,
@@ -155,11 +157,14 @@ export function MoveCard({
       stopId: string;
       action: StopActualAction;
       occurredAt?: number;
-    }) =>
-      apiService.assignmentService.recordStopActual(move.id!, stopId, {
-        action,
-        ...(occurredAt !== undefined ? { occurredAt } : {}),
-      }),
+    }) => {
+      const payload = { action, ...(occurredAt !== undefined ? { occurredAt } : {}) };
+      return withIdempotencyKey({ moveId: move.id, stopId, ...payload }, (idempotencyKey) =>
+        apiService.assignmentService.recordStopActual(move.id!, stopId, payload, {
+          idempotencyKey,
+        }),
+      );
+    },
     onSuccess: (updatedMove: ShipmentMove, variables) => {
       setValue(`moves.${moveIndex}.status`, updatedMove.status);
       setValue(`moves.${moveIndex}.stops`, updatedMove.stops);
@@ -167,6 +172,9 @@ export function MoveCard({
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
       if (move?.shipmentId) {
         void queryClient.invalidateQueries({ queryKey: ["shipment", move.shipmentId] });
+        void queryClient.invalidateQueries({
+          queryKey: queries.shipment.trackingEvents(move.shipmentId).queryKey,
+        });
       }
       toast.success(
         variables.action === "Arrive"

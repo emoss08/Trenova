@@ -18,7 +18,6 @@ require (
 	github.com/tetratelabs/wazero v1.12.0
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/sjson v1.2.5
-	github.com/uptrace/bun/dialect/sqlitedialect v1.3.0
 	github.com/vikstrous/dataloadgen v0.0.10
 	github.com/xuri/excelize/v2 v2.11.0
 	go.opentelemetry.io/otel/exporters/prometheus v0.69.0
@@ -26,7 +25,6 @@ require (
 	go.temporal.io/sdk/contrib/opentelemetry v0.8.1
 	go.temporal.io/sdk/contrib/workflowstreams v0.1.1
 	go.uber.org/goleak v1.3.0
-	modernc.org/sqlite v1.60.1
 )
 
 require (
@@ -136,6 +134,7 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
+	github.com/google/pprof v0.0.0-20260802141513-ef3492d7dac3 // indirect
 	github.com/google/s2a-go v0.1.11 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.23 // indirect
 	github.com/hhrutter/tiff v1.0.7 // indirect
@@ -147,11 +146,9 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.4.0 // indirect
 	github.com/mattn/go-runewidth v0.0.31 // indirect
 	github.com/mazznoer/csscolorparser v0.1.3 // indirect
-	github.com/ncruces/go-strftime v1.1.0 // indirect
 	github.com/nexus-rpc/nexus-proto-annotations v0.1.0 // indirect
 	github.com/pb33f/ordered-map/v2 v2.3.1 // indirect
 	github.com/prometheus/otlptranslator v1.0.0 // indirect
-	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/richardlehane/mscfb v1.0.9 // indirect
 	github.com/richardlehane/msoleps v1.0.6 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
@@ -177,9 +174,6 @@ require (
 	gonum.org/v1/plot v0.15.2 // indirect
 	google.golang.org/genproto v0.0.0-20261005182115-fad411399dd8 // indirect
 	gopkg.in/ini.v1 v1.67.3 // indirect
-	modernc.org/libc v1.77.1 // indirect
-	modernc.org/mathutil v1.7.1 // indirect
-	modernc.org/memory v1.12.1 // indirect
 	oss.terrastruct.com/d2 v0.5.1 // indirect
 	oss.terrastruct.com/util-go v0.0.0-20230604222829-11c3c60fec14 // indirect
 )

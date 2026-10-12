@@ -66,7 +66,6 @@ func newRLSFixture(t *testing.T, mode string) *rlsFixture {
 	cfg := &config.Config{
 		App: config.AppConfig{Name: "trenova-rls-test"},
 		Database: config.DatabaseConfig{
-			Driver:   "postgres",
 			Host:     parsed.Hostname(),
 			Port:     port,
 			Name:     strings.TrimPrefix(parsed.Path, "/"),

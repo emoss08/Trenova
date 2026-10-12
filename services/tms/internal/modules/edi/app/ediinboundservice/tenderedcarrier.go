@@ -90,6 +90,35 @@ func (s *Service) routeTenderedShipmentStatus(
 		}
 		return nil, err
 	}
+	warnings := make([]string, 0, len(details.events))
+	for index := range details.events {
+		event := &details.events[index]
+		eventWarnings, recordErr := s.recordTenderedStatusEvent(ctx, file, offer, details, event)
+		if recordErr != nil {
+			return nil, recordErr
+		}
+		warnings = append(warnings, eventWarnings...)
+	}
+	if len(warnings) == 0 {
+		return nil, nil
+	}
+	s.l.Info(
+		"EDI tendered carrier shipment status produced stop actual warnings",
+		zap.String("offerId", offer.ID.String()),
+		zap.String("fileId", file.ID.String()),
+		zap.Strings("warnings", warnings),
+	)
+	return warnings, nil
+}
+
+func (s *Service) recordTenderedStatusEvent(
+	ctx context.Context,
+	file *edi.EDIInboundFile,
+	offer *tender.TenderOffer,
+	details *shipmentStatusDetails,
+	event *edi.ShipmentStatusEvent,
+) ([]string, error) {
+	statusCode := statusEventCode(event)
 	warnings, err := s.ediService.RecordTenderedShipmentStatus(
 		ctx,
 		&ediservice.RecordTenderedShipmentStatusRequest{
@@ -97,11 +126,13 @@ func (s *Service) routeTenderedShipmentStatus(
 				OrgID: file.OrganizationID,
 				BuID:  file.BusinessUnitID,
 			},
-			Offer:       offer,
-			StatusCode:  details.statusCode,
-			ReasonCode:  details.reasonCode,
-			ReferenceID: details.referenceID,
-			EventAt:     details.eventAt,
+			Offer:        offer,
+			StatusCode:   statusCode,
+			ReasonCode:   statusEventReason(event),
+			ReferenceID:  details.referenceID,
+			EventAt:      event.EventAt,
+			Event:        event,
+			RawReference: statusEventReference(file, details, event),
 		},
 	)
 	if err != nil {
@@ -110,23 +141,17 @@ func (s *Service) routeTenderedShipmentStatus(
 				"EDI tendered carrier shipment status was not applied",
 				zap.String("offerId", offer.ID.String()),
 				zap.String("fileId", file.ID.String()),
+				zap.String("statusCode", statusCode),
 				zap.Error(err),
 			)
 			return []string{fmt.Sprintf(
-				"shipment status for tender offer %s was not applied: %s",
+				"shipment status %s for tender offer %s was not applied: %s",
+				statusCode,
 				offer.ID,
 				err.Error(),
 			)}, nil
 		}
 		return nil, err
-	}
-	if len(warnings) > 0 {
-		s.l.Info(
-			"EDI tendered carrier shipment status produced stop actual warnings",
-			zap.String("offerId", offer.ID.String()),
-			zap.String("fileId", file.ID.String()),
-			zap.Strings("warnings", warnings),
-		)
 	}
 	return warnings, nil
 }

@@ -53,7 +53,7 @@ type ControlPatch struct {
 	ExpectedVersion         *int64
 }
 
-func applyPatch[T any](field *T, opt Optional[T]) bool {
+func applyPatch[T any](field *T, opt optional.Value[T]) bool {
 	return opt.Apply(field)
 }
 

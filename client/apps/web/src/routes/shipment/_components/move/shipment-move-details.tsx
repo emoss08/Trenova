@@ -12,6 +12,7 @@ import { useState } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { MoveEditDialog } from "../shipment-move-edit-dialog";
 import { MoveCard } from "./move-card";
+import { StopReports } from "./stop-reports";
 
 type MoveDialogState = { open: false } | { open: true; moveIndex: number; isNew: boolean };
 
@@ -137,6 +138,7 @@ export default function ShipmentMoveDetails() {
           </div>
         )}
       </FormSection>
+      <StopReports />
       <MoveEditDialog
         state={moveDialog}
         onClose={handleDialogClose}

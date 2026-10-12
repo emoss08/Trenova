@@ -61,7 +61,6 @@ server:
     maxAge: 86400
 
 database:
-  driver: postgres
   host: postgres
   port: 5432
   name: trenova # from .env

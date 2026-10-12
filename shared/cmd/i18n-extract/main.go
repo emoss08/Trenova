@@ -44,9 +44,10 @@ var messageFields = map[string]struct{}{
 	"Summary":     {},
 	"Subject":     {},
 
-	"AppName":                 {},
-	"WebhookKeyLabel":         {},
-	"LedgerUnavailableReason": {},
+	"AppName":                  {},
+	"WebhookKeyLabel":          {},
+	"LedgerUnavailableReason":  {},
+	"InboundUnavailableReason": {},
 }
 
 var labelMethods = map[string]struct{}{
@@ -280,9 +281,6 @@ func discardedCalls(file *ast.File) map[*ast.CallExpr]bool {
 
 func (e *extractor) recordLabelMethod(fn *ast.FuncDecl, rel string) {
 	if fn.Recv == nil || fn.Body == nil || fn.Name == nil {
-		return
-	}
-	if strings.Contains(rel, "pkg/dbdialect") {
 		return
 	}
 	if _, wanted := labelMethods[fn.Name.Name]; !wanted {

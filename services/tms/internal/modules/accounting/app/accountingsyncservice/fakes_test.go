@@ -1132,10 +1132,9 @@ func (f *fakeWriter) DocumentLimits() accountingsyncports.AccountingDocumentLimi
 
 func (f *fakeWriter) DocumentURL(
 	_ accountingsyncports.AccountingDocumentAuth,
-	kind accountingsync.SyncObjectType,
-	externalID string,
+	link accountingsyncports.AccountingDocumentLink,
 ) string {
-	return "https://qbo.test/" + string(kind) + "/" + externalID
+	return "https://qbo.test/" + string(link.Kind) + "/" + link.ExternalID
 }
 
 func (f *fakeWriter) ClassifyDocumentError(err error) *accountingsync.SyncError {

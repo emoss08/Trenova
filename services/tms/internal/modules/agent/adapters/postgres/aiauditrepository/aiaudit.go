@@ -23,7 +23,6 @@ import (
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -51,10 +50,6 @@ func New(p Params) aiauditports.AIAuditRepository {
 		db: p.DB,
 		l:  p.Logger.Named("postgres.aiaudit-repository"),
 	}
-}
-
-func isPostgres(db bun.IDB) bool {
-	return db.Dialect().Name() == dialect.PG
 }
 
 // Append chains a tenant's new rows under the chain head's row lock: rows the
@@ -192,10 +187,8 @@ func (r *repository) lockHead(
 	head := new(aiaudit.AIAuditChainHead)
 	q := tx.NewSelect().
 		Model(head).
-		Apply(aiauditcol.AIAuditChainHeadApplyTenant(tenantInfo))
-	if isPostgres(tx) {
-		q = q.For("UPDATE")
-	}
+		Apply(aiauditcol.AIAuditChainHeadApplyTenant(tenantInfo)).
+		For("UPDATE")
 	if err := q.Scan(ctx); err != nil {
 		return nil, fmt.Errorf("lock AI audit chain head: %w", err)
 	}

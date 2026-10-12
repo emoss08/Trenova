@@ -323,7 +323,7 @@ func (r *payProfileRepository) CountActiveAssignments(
 			Where("wpa.organization_id = ?", tenantInfo.OrgID).
 			Where("wpa.business_unit_id = ?", tenantInfo.BuID).
 			Where("wpa.pay_profile_id = ?", profileID).
-			Where("wpa.effective_to IS NULL OR wpa.effective_to > " + r.db.NowEpoch()).
+			Where("wpa.effective_to IS NULL OR wpa.effective_to > " + dbhelper.NowEpoch).
 			Count(ctx)
 		if err != nil {
 			return 0, fmt.Errorf("count active pay assignments: %w", err)
@@ -350,7 +350,7 @@ func (r *payProfileRepository) CountActiveAssignmentsByIDs(
 					Where(cols.PayProfileID.In(), bun.In(req.ProfileIDs)).
 					WhereGroup(" OR ", func(og *bun.SelectQuery) *bun.SelectQuery {
 						return og.Where(cols.EffectiveTo.IsNull()).
-							WhereOr(cols.EffectiveTo.Gt(), bun.Safe(r.db.NowEpoch()))
+							WhereOr(cols.EffectiveTo.Gt(), bun.Safe(dbhelper.NowEpoch))
 					})
 			})
 

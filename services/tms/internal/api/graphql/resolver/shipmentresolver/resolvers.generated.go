@@ -7,6 +7,7 @@ import (
 	kernelports "github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	shipmenteventports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	trackingeventports "github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 )
 
 type Deps struct {
@@ -15,6 +16,7 @@ type Deps struct {
 	ShipmentService         shipmentports.ShipmentService
 	ShipmentCommentService  shipmentports.ShipmentCommentService
 	ShipmentEventService    shipmenteventports.ShipmentEventService
+	TrackingEventService    trackingeventports.TrackingEventService
 	ShipmentImportAssistant shipmentports.ShipmentImportAssistantService
 }
 

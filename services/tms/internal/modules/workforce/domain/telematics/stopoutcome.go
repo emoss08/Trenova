@@ -15,13 +15,18 @@ const (
 	StopOutcomeDuplicate = StopOutcome("Duplicate")
 	StopOutcomeUnmatched = StopOutcome("Unmatched")
 	StopOutcomeRefused   = StopOutcome("Refused")
+	StopOutcomePending   = StopOutcome("Pending")
 )
 
 const MaxStopOutcomeReasonLength = 500
 
 func (o StopOutcome) IsValid() bool {
 	switch o {
-	case StopOutcomeRecorded, StopOutcomeDuplicate, StopOutcomeUnmatched, StopOutcomeRefused:
+	case StopOutcomeRecorded,
+		StopOutcomeDuplicate,
+		StopOutcomeUnmatched,
+		StopOutcomeRefused,
+		StopOutcomePending:
 		return true
 	}
 	return false

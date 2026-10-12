@@ -81,6 +81,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carriercapacityservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
@@ -164,6 +165,7 @@ type Params struct {
 	ShipmentService              shipmentports.ShipmentService
 	ShipmentCommentService       shipmentports.ShipmentCommentService
 	ShipmentEventService         shipmenteventports.ShipmentEventService
+	TrackingEventService         trackingeventports.TrackingEventService
 	CarrierCapacityService       *carriercapacityservice.Service
 	CustomerUpdateService        *customerupdateservice.Service
 	BoardCapacity                shipmentports.ShipmentCapacityReader
@@ -377,6 +379,7 @@ type Services struct {
 	ShipmentService              shipmentports.ShipmentService
 	ShipmentCommentService       shipmentports.ShipmentCommentService
 	ShipmentEventService         shipmenteventports.ShipmentEventService
+	TrackingEventService         trackingeventports.TrackingEventService
 	CarrierCapacityService       *carriercapacityservice.Service
 	CustomerUpdateService        *customerupdateservice.Service
 	BoardCapacity                shipmentports.ShipmentCapacityReader
@@ -594,6 +597,7 @@ func newServices(p *Params) *Services {
 		ShipmentService:              p.ShipmentService,
 		ShipmentCommentService:       p.ShipmentCommentService,
 		ShipmentEventService:         p.ShipmentEventService,
+		TrackingEventService:         p.TrackingEventService,
 		CarrierCapacityService:       p.CarrierCapacityService,
 		CustomerUpdateService:        p.CustomerUpdateService,
 		BoardCapacity:                p.BoardCapacity,

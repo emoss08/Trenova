@@ -37,9 +37,24 @@ export const xeroVendor: AccountingVendor = {
   appKeysHelpUrl: "https://developer.xero.com/documentation/guides/oauth2/auth-flow/",
 };
 
+export const businessCentralVendor: AccountingVendor = {
+  system: "BusinessCentral",
+  name: "Business Central",
+  logoLight: "/integrations/logos/business-central-light.svg",
+  logoDark: "/integrations/logos/business-central-dark.svg",
+  docsUrl: "https://learn.microsoft.com/en-us/dynamics365/business-central/",
+  appName: "Microsoft Entra app",
+  developer: "Microsoft Entra",
+  developerPortalUrl:
+    "https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade",
+  appKeysHelpUrl:
+    "https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-develop-connect-apps",
+};
+
 const ACCOUNTING_VENDORS: Record<AccountingSystem, AccountingVendor> = {
   QuickBooksOnline: quickBooksVendor,
   Xero: xeroVendor,
+  BusinessCentral: businessCentralVendor,
 };
 
 export const accountingVendors: readonly AccountingVendor[] = Object.values(ACCOUNTING_VENDORS);

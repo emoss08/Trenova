@@ -125,10 +125,9 @@ func (f *fakeConnector) ReadChanges(
 
 func (f *fakeConnector) DocumentURL(
 	_ accountingsyncports.AccountingDocumentAuth,
-	kind accountingsync.SyncObjectType,
-	externalID string,
+	link accountingsyncports.AccountingDocumentLink,
 ) string {
-	return "https://books.example/" + string(kind) + "/" + externalID
+	return "https://books.example/" + string(link.Kind) + "/" + link.ExternalID
 }
 
 func (f *fakeConnector) ClassifyDocumentError(err error) *accountingsync.SyncError {
@@ -164,10 +163,9 @@ type writerConnector struct {
 
 func (w writerConnector) DocumentURL(
 	_ accountingsyncports.AccountingDocumentAuth,
-	kind accountingsync.SyncObjectType,
-	externalID string,
+	link accountingsyncports.AccountingDocumentLink,
 ) string {
-	return w.fakeConnector.DocumentURL(accountingsyncports.AccountingDocumentAuth{}, kind, externalID)
+	return w.fakeConnector.DocumentURL(accountingsyncports.AccountingDocumentAuth{}, link)
 }
 
 func (w writerConnector) ClassifyDocumentError(err error) *accountingsync.SyncError {

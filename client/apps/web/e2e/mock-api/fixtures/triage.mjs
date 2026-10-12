@@ -576,7 +576,7 @@ export function buildTriageWorld({ anchor, scenario }) {
 }
 
 /** The mail around the prototype's twelve: what Nova settled today, what people closed today, and Blue Ridge's history. */
-function historyMessages({ at, makeMessage, historyShipment }) {
+function historyMessages({ makeMessage, historyShipment }) {
   const out = [];
   const slots = NOVA_T.flatMap(([min, k]) => Array.from({ length: k }, (_, i) => min - i * 9))
     .sort((a, b) => a - b)
