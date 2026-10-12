@@ -114,6 +114,7 @@ export const assistant = createQueryKeys("assistant", {
       // The same page with each payload cut to what names and draws an
       // artifact in a list: what the Desk's transcript, counts and stack read.
       // The contents come with their lineage when one is shown.
+      // oxlint-disable-next-line @tanstack/query/exhaustive-deps -- the factory prefixes this key with the thread's, threadId included
       summary: {
         queryKey: null,
         queryFn: ({ signal }: { signal?: AbortSignal }) =>
@@ -125,11 +126,13 @@ export const assistant = createQueryKeys("assistant", {
       },
       // Every version of one lineage with its payload: what an artifact is
       // drawn from, and how one a link or the store names is found.
+      // oxlint-disable-next-line @tanstack/query/exhaustive-deps -- the factory prefixes this key with the thread's, threadId included
       lineage: (artifactId: string) => ({
         queryKey: [artifactId],
         queryFn: ({ signal }: { signal?: AbortSignal }) =>
           apiService.assistantService.artifactLineage(threadId, artifactId, { signal }),
       }),
+      // oxlint-disable-next-line @tanstack/query/exhaustive-deps -- the factory prefixes this key with the thread's, threadId included
       slug: (slug: string) => ({
         queryKey: [slug],
         queryFn: ({ signal }: { signal?: AbortSignal }) =>

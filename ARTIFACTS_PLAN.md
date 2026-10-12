@@ -345,3 +345,104 @@ versions. The brief's "rate structure and effective dates" is mostly there alrea
   - `pnpm lint`, `pnpm typecheck`, `pnpm lint:design`, `guide:generate`
   - `task gqlgen` and the projection, write-coverage and `gqlschema-diff` checks
 - **Screenshots.** Mock server and Playwright: loaded (light and dark), skeleton, empty.
+
+## 5. Final note: what was built
+
+Every card in section 3 is built, tested and screenshotted from the mock API
+(`node client/apps/web/e2e/mock-api/desk-cards-screenshots.mjs`). Each card lives in
+`cards/<kind>/` with its card, skeleton, sections map, pure helpers and `__tests__/`, and is
+registered in `cards/registry.tsx` and `desk-art-kinds.tsx`.
+
+### What moved to the shared record-card module
+
+Each part moved when a second card needed it:
+
+| Part | First used by | Moved when |
+|---|---|---|
+| `CardShipments` / `useRecordShipments` (one `DeskRecordShipments` operation, scoped by customer, tractor, trailer, worker, location, carrier or order) | customer | tractor |
+| `CardUnreadable`, `CardMore` | three cards repeated them | tractor |
+| `CardWhere` + the lazily loaded still OpenStreetMap map (`still-map.tsx`, `map-tiles.ts`), `CardDue`, `CardFactGrid`, the equipment helpers, `dueReading`, `personName`, `CardOpenLink` | tractor | trailer |
+| `CardMeter` | customer credit | worker HOS clocks |
+| `CardStats` | customer payment pace | location dwell |
+| the `info` check state | carrier advisories | (new shared state) |
+| `usePagedRows` / `CardPagedList` | shipments | location failures and carrier settlements |
+| `CardActivity` / `useRecordActivity` | order | rate agreement and service failure |
+| `CardFailures` / `useRecordFailures` (one `DeskRecordFailures` operation, scoped by location or shipment) | location | service failure |
+| `CardPath` | rate agreement approval | service failure review |
+| `waitText`, `cityLine`, `cardMomentAfter` | location | service failure |
+
+### What changed on the server
+
+All changes follow the modules' ports and adapters, and every root resolver keeps its
+permission check.
+
+- **Tractor and trailer.** These fields are new:
+  - `ownershipType`, `ownerWorker(Id)`, `lessorName`, `leaseReference`, `leaseEndDate`.
+  - `vehiclePosition(tractorId)`.
+  - `vehicleInspections` now pages by `before`/`beforeId`, with a stable sort.
+  - `LocationReference` now carries latitude and longitude, read in the join that already ran.
+- **Shipment filters.** `ShipmentsInput` gains `tractorIds`, `trailerIds` and `workerIds`
+  (loads with a live move assigned). It also gains `stopLocationIds` and `carrierIds`
+  (loads with a non-canceled carrier assignment).
+- **Worker.** `worker(id)` loads its fleet, manager and license state only when they are
+  selected.
+- **Location.**
+  - `DetentionStatsInput.locationId`, which also applies to the REST `locationId` parameter.
+  - `serviceFailures(locationId)`.
+  - The new agent tool `get_location`. The safety doc, tool catalog and prompt snapshots
+    were regenerated for it.
+- **Carrier.** `carrier(id)` uses selection-driven includes. `get_carrier` now returns the
+  insurance and contacts its description promised.
+- **Order.** `order(id)` loads customer, charges and legs only when they are selected. It
+  no longer loads every leg for the card.
+- **Rate agreement.** New endpoint `GET /rate-agreements/:id/lanes/summary/`. It groups live
+  lanes by formula template or rate table, with counts and rate ranges.
+- **Service failure.**
+  - New fields: `reviewedAt`, `resolvedAt`, `voidedAt`, `voidReason`, `createdBy`,
+    `reviewedBy`, `resolvedBy`, `voidedBy`.
+  - The people come from the relations `GetByID` already joins, otherwise from the user
+    dataloader.
+  - `ServiceFailureShipment.customer` goes through the customer loader, and only for
+    someone who may read customers.
+
+No per-row resolver reads a record by itself: every field that reads per parent row goes
+through a dataloader or an existing join. Schema diff: 0 breaking changes.
+
+### Defects found and fixed along the way
+
+These were found by looking at the screenshots:
+- A rate agreement inside its renewal notice pulled its whole term panel out of the card,
+  because two different things shared a class name.
+- An open-ended term that had not yet started drew "Today" 72% along its track.
+- A card head with no subtitle dropped its title away from the kicker.
+- Timelines doubled their bottom spacing.
+- A lane's rate ran into its template name.
+- Every warn status pill was stretched to 168px. It shared `dk-hold` with the Desk's
+  hold-to-confirm button.
+- The `lib/queries/assistant.ts` exhaustive-deps lint error was a false positive. The
+  factory prefixes each context key with the thread's. Each site now carries a disable
+  comment that says so.
+
+### Assumptions
+
+- **Maps.**
+  - The cards read OpenStreetMap's public tiles, at most four per map, lazily and only
+    when on screen. The CSP allows `tile.openstreetmap.org`.
+  - High-traffic production use should point `map-tiles.ts` at a tile server Trenova
+    runs or pays for, per OpenStreetMap's tile policy.
+- **Trailer.** A trailer's annual inspection is due twelve months after the last one
+  (49 CFR 396.17).
+- **Location.** A location's dwell is read over 90 days.
+- **Rate agreement.** The rate structure counts only live lanes: active and in effect now,
+  the same rule the lane list uses. Past five ways of pricing, the rest are folded into one
+  row.
+- **Service failure.**
+  - The card's "Late by" is the failure's stored `lateMinutes`.
+  - The card shows the internal note to anyone who may read the failure, as its edit page
+    does, labelled as kept off the customer's record.
+  - Every categorical accent is taken, so the kind's mark uses the warning tone.
+- **Translations.** The es, zh-CN and zh-TW translations of the new strings follow the
+  glossary and the existing catalogs. They were machine-written and deserve a native
+  reader's pass.
+- **Environment.** `pnpm typecheck` could not run through Turborepo here: it failed to
+  spawn child processes. Each package's `tsc -b` was run directly and all were clean.
