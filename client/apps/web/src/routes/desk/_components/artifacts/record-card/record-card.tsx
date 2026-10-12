@@ -52,6 +52,12 @@ const CARD_PATHS = {
     </>
   ),
   reset: <path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 4.5v4h4" />,
+  pin: (
+    <>
+      <path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z" />
+      <circle cx="12" cy="10" r="2.3" />
+    </>
+  ),
 } as const;
 
 export type CardIconName = keyof typeof CARD_PATHS;

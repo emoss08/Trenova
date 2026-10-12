@@ -4,9 +4,13 @@ import type {
   DeskTractorInspection,
   DeskTractorPosition,
 } from "@/lib/graphql/tractor-card";
+import {
+  FakeIntersectionObserver,
+  installIntersectionObserver,
+} from "@/test/intersection-observer";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -17,7 +21,6 @@ const fetchers = vi.hoisted(() => ({
   position: vi.fn(),
   inspections: vi.fn(),
   shipments: vi.fn(),
-  runtimeConfig: vi.fn(),
 }));
 
 vi.mock("@/lib/graphql/tractor-card", () => ({
@@ -27,9 +30,6 @@ vi.mock("@/lib/graphql/tractor-card", () => ({
 }));
 vi.mock("@/lib/graphql/record-shipments", () => ({
   fetchRecordShipments: fetchers.shipments,
-}));
-vi.mock("@/services/api", () => ({
-  apiService: { integrationService: { getRuntimeConfig: fetchers.runtimeConfig } },
 }));
 // The shipment card is its own chunk; here it stands in as what it was given,
 // with its way back.
@@ -185,13 +185,6 @@ beforeEach(() => {
     endCursor: null,
     hasNextPage: false,
   });
-  fetchers.runtimeConfig.mockResolvedValue({
-    enabled: false,
-    configured: false,
-    ready: false,
-    missingRequiredFields: ["apiKey"],
-    config: {},
-  });
 });
 
 afterEach(() => {
@@ -219,12 +212,47 @@ describe("DeskTractor", () => {
     const where = section("Where it is");
     expect(await within(where).findByText("I-35E near Waxahachie, TX")).toBeInTheDocument();
     expect(within(where).getByText("Moving 58 mph NE")).toBeInTheDocument();
-    expect(within(where).getByRole("img", { name: "Heading NE" })).toBeInTheDocument();
+
     expect(within(where).getByRole("link", { name: /Dallas yard/ })).toHaveAttribute(
       "href",
       expect.stringContaining("loc_1"),
     );
     expect(await screen.findByText("182,124 mi")).toBeInTheDocument();
+  });
+
+  it("reads the map only once its square comes within reach of the screen", async () => {
+    installIntersectionObserver();
+    try {
+      const { container } = draw();
+
+      await screen.findByText("I-35E near Waxahachie, TX");
+      expect(container.querySelector(".dk-tr-map")).toBeNull();
+      expect(container.querySelector('img[src*="openstreetmap"]')).toBeNull();
+
+      const square = container.querySelector(".dk-tr-scope");
+      if (!square) throw new Error("No map square");
+      act(() => FakeIntersectionObserver.show(square));
+
+      const map = await screen.findByRole(
+        "img",
+        { name: "Map of I-35E near Waxahachie, TX" },
+        { timeout: 3000 },
+      );
+      const tiles = map.querySelectorAll("img");
+      expect(tiles.length).toBeGreaterThan(0);
+      for (const tile of tiles) {
+        expect(tile.getAttribute("src")).toMatch(/^https:\/\/tile\.openstreetmap\.org\/12\//u);
+        expect(tile).toHaveAttribute("loading", "lazy");
+        expect(tile).toHaveAttribute("draggable", "false");
+      }
+      expect(within(map).getByRole("link", { name: "© OpenStreetMap" })).toHaveAttribute(
+        "href",
+        "https://www.openstreetmap.org/copyright",
+      );
+      expect(map).toHaveClass("dk-live");
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("checks what falls due, worst first, once the last inspection is read", async () => {
@@ -330,7 +358,8 @@ describe("DeskTractor", () => {
 
     expect(await screen.findByText("No GPS report from this tractor")).toBeInTheDocument();
     expect(screen.getByText("No known location yet")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "No heading reported" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "No position reported" })).toBeInTheDocument();
+    expect(document.querySelector(".dk-tr-map")).toBeNull();
     expect(screen.getByText("No odometer reading")).toBeInTheDocument();
     expect(screen.getByText("No VIN on file")).toBeInTheDocument();
     expect(

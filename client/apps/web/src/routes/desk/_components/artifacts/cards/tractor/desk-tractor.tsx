@@ -5,6 +5,7 @@ import type {
   DeskTractorInspection,
   DeskTractorPosition,
 } from "@/lib/graphql/tractor-card";
+import { useInView } from "@/hooks/use-in-view";
 import { lazyComponent } from "@/lib/lazy-component";
 import { queries } from "@/lib/queries";
 import { tractorInspectionsQuery } from "@/lib/queries/tractor";
@@ -41,7 +42,6 @@ import { useRecordShipments } from "../../record-card/record-shipments";
 import { SkeletonBar } from "../../skeletons/record-card-skeleton";
 import { useListedRecords, type RecordArtifactProps } from "../registry";
 import {
-  compassPoint,
   inspectionKind,
   inspectionReading,
   metersToMiles,
@@ -59,6 +59,9 @@ import { DeskTractorSkeleton } from "./tractor-skeleton";
 const SHIPMENT_ROWS = 5;
 /** The inspections the card reads at a time. */
 const INSPECTION_ROWS = 5;
+
+/** How far below the screen the map starts reading, so it is drawn as it scrolls in. */
+const MAP_READ_AHEAD = "240px 0px";
 
 const TractorMap = lazyComponent(
   () => import("./tractor-map"),
@@ -398,9 +401,10 @@ function OdometerFigure({
 }
 
 /**
- * Where the tractor is: a small map of its last report when Google Maps is set
- * up, or a dial of its heading, beside the place, how it is moving and when it
- * said so, and the location it last left in Trenova's own records.
+ * Where the tractor is: a small still map of its last report, beside the
+ * place, how it is moving and when it said so, and the location it last left
+ * in Trenova's own records. The map's code and tiles are read only once its
+ * square comes within reach of the screen.
  */
 function Whereabouts({
   position,
@@ -419,8 +423,7 @@ function Whereabouts({
   onOpenPlace: ((locationId: string) => void) | undefined;
 }) {
   const t = useT();
-  const maps = useQuery({ ...queries.integration.runtimeConfig("GoogleMaps"), retry: false });
-  const apiKey = maps.data?.ready ? maps.data.config.apiKey : undefined;
+  const [square, near] = useInView<HTMLDivElement>({ rootMargin: MAP_READ_AHEAD, once: true });
   const reading = position ? positionReading(position, now, t) : null;
   const place = reading?.place ?? (position ? null : (lastKnown?.name ?? null));
   const facts = position
@@ -435,18 +438,25 @@ function Whereabouts({
   return (
     <>
       <div className={cn("dk-tr-where", reading?.live && "dk-live")}>
-        <div className="dk-tr-scope">
-          {position && apiKey ? (
-            <Suspense fallback={<HeadingDial heading={position.headingDegrees} />}>
+        <div ref={square} className="dk-tr-scope">
+          {position && near ? (
+            <Suspense fallback={null}>
               <TractorMap.Component
-                apiKey={apiKey}
                 latitude={position.latitude}
                 longitude={position.longitude}
-                label={place ?? t("The tractor's last reported position")}
+                live={reading?.live ?? false}
+                label={
+                  place ? t("Map of {0}", place) : t("Map of the tractor's last reported position")
+                }
               />
             </Suspense>
           ) : (
-            <HeadingDial heading={position ? position.headingDegrees : null} />
+            !position &&
+            !pending && (
+              <span className="dk-tr-nomap" role="img" aria-label={t("No position reported")}>
+                <CardIcon name="pin" size={18} stroke={1.6} />
+              </span>
+            )
           )}
         </div>
         <div className="dk-tr-at">
@@ -502,45 +512,6 @@ function Whereabouts({
         </div>
       )}
     </>
-  );
-}
-
-const DIAL_TICKS = [0, 45, 90, 135, 180, 225, 270, 315] as const;
-
-/** The tractor's heading as a needle on a compass, or the bare compass when it has none. */
-function HeadingDial({ heading }: { heading: number | null }) {
-  const t = useT();
-  return (
-    <svg
-      className="dk-tr-dial"
-      viewBox="0 0 112 112"
-      role="img"
-      aria-label={
-        heading === null ? t("No heading reported") : t("Heading {0}", compassPoint(heading))
-      }
-    >
-      <circle className="dk-tr-dial-ring" cx="56" cy="56" r="44" />
-      {DIAL_TICKS.map((tick) => (
-        <line
-          key={tick}
-          className={cn("dk-tr-dial-tick", tick % 90 === 0 && "dk-major")}
-          x1="56"
-          y1={tick % 90 === 0 ? 14 : 17}
-          x2="56"
-          y2="22"
-          transform={`rotate(${tick} 56 56)`}
-        />
-      ))}
-      <text className="dk-tr-dial-n" x="56" y="34" textAnchor="middle">
-        N
-      </text>
-      {heading !== null && (
-        <g transform={`rotate(${heading} 56 56)`}>
-          <path className="dk-tr-needle" d="M56 26 L63 60 L56 54 L49 60 Z" />
-        </g>
-      )}
-      <circle className="dk-tr-dial-hub" cx="56" cy="56" r="3" />
-    </svg>
   );
 }
 

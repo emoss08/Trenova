@@ -1,42 +1,64 @@
-import { useMapId } from "@/hooks/use-map-id";
-import { AdvancedMarker, APIProvider, Map } from "@vis.gl/react-google-maps";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
+import { useMemo } from "react";
+import { mapTiles, OSM_COPYRIGHT_URL } from "./map-tiles";
 
-const ZOOM = 9;
+/** The map's side, in CSS pixels; the card's square holds it. */
+export const MAP_SIZE = 112;
+/** Close enough to read the town and the road, far enough to place them. */
+const ZOOM = 11;
 
 /**
- * Where the tractor last reported itself, as a small still map with its pin:
- * it shows the place, and a dispatcher who wants to pan opens the map on the
- * board. Its own chunk, read only when Google Maps is set up and there is a
- * position to show.
+ * Where the tractor last reported itself, as a small still map of
+ * OpenStreetMap's tiles with a dot on the spot. It is a picture, not a map to
+ * work in: nothing on it can be dragged, zoomed or clicked but the credit
+ * OpenStreetMap asks for. Its own chunk, mounted once the card's square comes
+ * into view; each tile is fetched by the browser as it is needed.
  */
 export function TractorMap({
-  apiKey,
   latitude,
   longitude,
+  live,
   label,
 }: {
-  apiKey: string;
   latitude: number;
   longitude: number;
+  /** The report is fresh, and the dot says so. */
+  live: boolean;
   label: string;
 }) {
-  const mapId = useMapId();
-  const position = { lat: latitude, lng: longitude };
+  const t = useT();
+  const tiles = useMemo(
+    () => mapTiles({ latitude, longitude, zoom: ZOOM, size: MAP_SIZE }),
+    [latitude, longitude],
+  );
   return (
-    <APIProvider apiKey={apiKey}>
-      <Map
-        className="size-full"
-        defaultCenter={position}
-        defaultZoom={ZOOM}
-        mapId={mapId}
-        disableDefaultUI
-        gestureHandling="none"
-        keyboardShortcuts={false}
-        clickableIcons={false}
-        aria-label={label}
+    <div className={cn("dk-tr-map", live && "dk-live")} role="img" aria-label={label}>
+      <div className="dk-tr-map-tiles" aria-hidden>
+        {tiles.map((tile) => (
+          <img
+            key={tile.key}
+            src={tile.url}
+            alt=""
+            width={tile.size}
+            height={tile.size}
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+            referrerPolicy="strict-origin-when-cross-origin"
+            style={{ left: tile.left, top: tile.top }}
+          />
+        ))}
+      </div>
+      <i className="dk-tr-map-dot" aria-hidden />
+      <a
+        className="dk-tr-map-credit"
+        href={OSM_COPYRIGHT_URL}
+        target="_blank"
+        rel="noreferrer noopener"
       >
-        <AdvancedMarker position={position} title={label} />
-      </Map>
-    </APIProvider>
+        {t("© OpenStreetMap")}
+      </a>
+    </div>
   );
 }
