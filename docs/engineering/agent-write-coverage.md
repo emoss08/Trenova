@@ -86,36 +86,36 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 78 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 262 |
-| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 32 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 50 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 89 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 268 |
+| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 35 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 52 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 94 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 51 |
-| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 44 |
-| `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 7 |
+| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 46 |
+| `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 8 |
 
 ## Totals
 
-1037 writes: 540 GraphQL mutations and 497 REST writes, after merging 72 REST routes into the mutation they duplicate.
+1081 writes: 582 GraphQL mutations and 499 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 388 |
-| Exempt | 646 |
+| Covered by a tool | 389 |
+| Exempt | 665 |
 | — Security | 78 |
-| — Configuration | 262 |
-| — User preference | 32 |
-| — Infrastructure | 50 |
-| — Agent administration | 89 |
+| — Configuration | 268 |
+| — User preference | 35 |
+| — Infrastructure | 52 |
+| — Agent administration | 94 |
 | — Counterparty | 33 |
 | — Read-only | 51 |
-| — Attestation | 44 |
-| — Duplicate | 7 |
-| **Pending** | **3** |
-| Total | 1037 |
+| — Attestation | 46 |
+| — Duplicate | 8 |
+| **Pending** | **27** |
+| Total | 1081 |
 
-Of the 391 writes an agent should be able to make, 388 have a tool (99%).
+Of the 416 writes an agent should be able to make, 389 have a tool (93%).
 
 ## Pending
 
@@ -126,6 +126,30 @@ The writes no tool performs yet, and what the tool would do.
 | billingqueue | `mutation releaseBillingQueueItem` | Take a billing queue item off hold and back to the status the hold found it in, the counterpart of hold_billing_queue_item. |
 | billingqueue | `mutation resolveBillingQueueIssue` | Settle one of a billing queue item's checks with one of the options the check offers. |
 | billingqueue | `mutation undoBillingQueueIssue` | Take back how a billing queue item's check was settled and put back any charge the settlement changed. |
+| inboundmessage | `mutation assignInboundMessages` | Assign inbound messages to a person, or take them off whoever has them. |
+| inboundmessage | `mutation handOffTriage` | Hand everything still waiting in Triage to the on-call person at the end of the day. |
+| inboundmessage | `mutation reopenInboundMessages` | Put settled inbound messages back in the Triage queue. |
+| inboundmessage | `mutation snoozeInboundMessages` | Snooze inbound messages until a time, a delivery, a document or a payment. |
+| inboundmessage | `mutation stopWaitingForInboundReply` | Bring an inbound message waiting on a reply back to the queue now. |
+| inboundmessage | `mutation unlinkInboundMessage` | Remove the shipment, customer or carrier an inbound message was linked to. |
+| inboundmessage | `mutation waitForInboundReply` | Park an inbound message until the sender replies on its thread, or until a time. |
+| inboundmessage | `mutation wakeInboundMessage` | Bring a snoozed inbound message back to the queue now. |
+| inboundreply | `mutation blockInboundSender` | Send a sender's future mail on a source straight to Ignored, and ignore the message. |
+| inboundreply | `mutation createInboundLoad` | Create the shipment a tender in Triage describes, from the fields a person checked. |
+| inboundreply | `mutation decideInboundStops` | Waive or stand by a disputed detention charge after checking the stop times, and draft the answer. |
+| inboundreply | `mutation discardInboundLoad` | Throw away the load Nova drafted from an inbound message. |
+| inboundreply | `mutation discardInboundReplyDraft` | Throw away the reply draft waiting on an inbound message. |
+| inboundreply | `mutation draftInboundLoad` | Have Nova read the load an inbound tender describes into a draft for a person to check. |
+| inboundreply | `mutation draftInboundMany` | Have Nova draft replies and loads for many inbound messages in the background. |
+| inboundreply | `mutation draftInboundReply` | Have Nova draft a reply to an inbound message for a person to review. |
+| inboundreply | `mutation fileInboundAttachment` | File an email attachment on a shipment as a typed document, whole or split into page ranges. |
+| inboundreply | `mutation fileInboundMany` | File every readable attachment of each inbound message on its matched shipment. |
+| inboundreply | `mutation logInboundException` | Log a shortage, overage or damage from a delivery on the shipment as a billing hold. |
+| inboundreply | `mutation saveInboundReplyDraft` | Save a person's reply to an inbound message as its draft. |
+| inboundreply | `mutation unblockInboundSender` | Let a blocked sender's mail on a source reach the queue again. |
+| inboundreply | `mutation unfileInboundAttachment` | Take an email attachment back off the shipment it was filed on. |
+| triage | `mutation reopenInboundConflict` | Reopen a settled duplicate-document or repeated-load conflict on a triage message |
+| triage | `mutation resolveInboundConflict` | Settle a duplicate-document or repeated-load conflict on a triage message: replace or keep the document on file, skip or confirm the load |
 
 ## By domain
 
@@ -216,7 +240,9 @@ The writes no tool performs yet, and what the tool would do.
 | iam | 14 | 0 | 14 | 0 |
 | ifta | 14 | 9 | 5 | 0 |
 | inbound | 1 | 0 | 1 | 0 |
-| inboundmessage | 7 | 2 | 5 | 0 |
+| inboundmessage | 23 | 2 | 13 | 8 |
+| inboundreply | 18 | 1 | 3 | 14 |
+| inboxpresence | 2 | 0 | 2 | 0 |
 | insight | 2 | 2 | 0 | 0 |
 | integration | 5 | 0 | 5 | 0 |
 | invoice | 12 | 11 | 1 | 0 |
@@ -281,6 +307,7 @@ The writes no tool performs yet, and what the tool would do.
 | timesheet | 7 | 2 | 5 | 0 |
 | tractor | 5 | 5 | 0 | 0 |
 | trailer | 5 | 5 | 0 | 0 |
+| triage | 8 | 0 | 6 | 2 |
 | user | 16 | 0 | 16 | 0 |
 | version | 1 | 0 | 1 | 0 |
 | watchtower | 3 | 1 | 2 | 0 |
@@ -306,7 +333,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `notify_driver` | driver_message | create |
 | `place_worker_dispatch_hold` | worker_dispatch_hold | create |
 | `raise_exception` | agent_exception | create |
-| `reply_to_inbound_message` | customer_communication | create |
 | `request_credential_renewal` | worker_credential | update |
 | `request_missing_docs` | customer_communication | create |
 
@@ -1346,13 +1372,59 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `mutation assignInboundMessages` | Pending: Assign inbound messages to a person, or take them off whoever has them. |
 | `mutation createInboundMailbox` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
+| `mutation createMyTriageView` | Exempt, user-preference: A saved search in one person's own Triage sidebar. |
+| `mutation deleteMyTriageView` | Exempt, user-preference: A saved search in one person's own Triage sidebar. |
+| `mutation handOffTriage` | Pending: Hand everything still waiting in Triage to the on-call person at the end of the day. |
 | `mutation linkInboundMessage` | Tool: `link_inbound_message` |
+| `mutation readUnreadInboundMessages` | Exempt, agent-administration: Sets Nova reading the backlog it never read; it switches an agent on rather than doing an agent's work. |
+| `mutation renameMyTriageView` | Exempt, user-preference: A saved search in one person's own Triage sidebar. |
+| `mutation reopenInboundMessages` | Pending: Put settled inbound messages back in the Triage queue. |
 | `mutation reviewInboundMessage` | Tool: `mark_inbound_message` |
+| `mutation reviewInboundMessages` | Exempt, duplicate: The bulk form of reviewInboundMessage; mark_inbound_message settles each message. |
 | `mutation rotateInboundMailboxToken` | Exempt, security: Replaces the secret that authenticates mail forwarded into the mailbox. |
+| `mutation sendInboundMailboxTest` | Exempt, configuration: Checks that a connected address receives mail while an administrator sets the mailbox up. |
 | `mutation setInboundMailboxApiKey` | Exempt, security: Sets the provider credential the mailbox reads forwarded mail's content with. |
 | `mutation setInboundMailboxSigningSecret` | Exempt, security: Sets the secret that authenticates mail forwarded into the mailbox. |
+| `mutation snoozeInboundMessages` | Pending: Snooze inbound messages until a time, a delivery, a document or a payment. |
+| `mutation stopWaitingForInboundReply` | Pending: Bring an inbound message waiting on a reply back to the queue now. |
+| `mutation unlinkInboundMessage` | Pending: Remove the shipment, customer or carrier an inbound message was linked to. |
 | `mutation updateInboundMailbox` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
+| `mutation updateTriageResponseTargets` | Exempt, configuration: How long each kind of message may wait is an organization-wide setting an administrator owns. |
+| `mutation updateTriageSettings` | Exempt, configuration: The on-call person and the end of the working day are organization-wide settings an administrator owns. |
+| `mutation waitForInboundReply` | Pending: Park an inbound message until the sender replies on its thread, or until a time. |
+| `mutation wakeInboundMessage` | Pending: Bring a snoozed inbound message back to the queue now. |
+
+### inboundreply
+
+| Write | Decision |
+| --- | --- |
+| `mutation blockInboundSender` | Pending: Send a sender's future mail on a source straight to Ignored, and ignore the message. |
+| `mutation createInboundLoad` | Pending: Create the shipment a tender in Triage describes, from the fields a person checked. |
+| `mutation createTriageReplyTemplate` | Exempt, configuration: Reply templates are organization-wide wording an administrator maintains; replies use them. |
+| `mutation decideInboundStops` | Pending: Waive or stand by a disputed detention charge after checking the stop times, and draft the answer. |
+| `mutation deleteTriageReplyTemplate` | Exempt, configuration: Reply templates are organization-wide wording an administrator maintains; replies use them. |
+| `mutation discardInboundLoad` | Pending: Throw away the load Nova drafted from an inbound message. |
+| `mutation discardInboundReplyDraft` | Pending: Throw away the reply draft waiting on an inbound message. |
+| `mutation draftInboundLoad` | Pending: Have Nova read the load an inbound tender describes into a draft for a person to check. |
+| `mutation draftInboundMany` | Pending: Have Nova draft replies and loads for many inbound messages in the background. |
+| `mutation draftInboundReply` | Pending: Have Nova draft a reply to an inbound message for a person to review. |
+| `mutation fileInboundAttachment` | Pending: File an email attachment on a shipment as a typed document, whole or split into page ranges. |
+| `mutation fileInboundMany` | Pending: File every readable attachment of each inbound message on its matched shipment. |
+| `mutation logInboundException` | Pending: Log a shortage, overage or damage from a delivery on the shipment as a billing hold. |
+| `mutation saveInboundReplyDraft` | Pending: Save a person's reply to an inbound message as its draft. |
+| `mutation sendInboundReply` | Tool: `reply_to_inbound_message` |
+| `mutation unblockInboundSender` | Pending: Let a blocked sender's mail on a source reach the queue again. |
+| `mutation unfileInboundAttachment` | Pending: Take an email attachment back off the shipment it was filed on. |
+| `mutation updateTriageReplyTemplate` | Exempt, configuration: Reply templates are organization-wide wording an administrator maintains; replies use them. |
+
+### inboxpresence
+
+| Write | Decision |
+| --- | --- |
+| `DELETE /api/v1/inbox/presence/`<br>inboxpresencehandler.leave | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
+| `POST /api/v1/inbox/presence/`<br>inboxpresencehandler.join | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
 
 ### insight
 
@@ -1991,6 +2063,19 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation locateTrailer`<br>twin `POST /api/v1/trailers/:trailerID/locate/` | Tool: `locate_trailer` |
 | `mutation patchTrailer`<br>twin `PATCH /api/v1/trailers/:trailerID/` | Tool: `update_trailer` |
 | `mutation updateTrailer`<br>twin `PUT /api/v1/trailers/:trailerID/` | Tool: `update_trailer` |
+
+### triage
+
+| Write | Decision |
+| --- | --- |
+| `mutation correctInboundClassification` | Exempt, attestation: A person's verdict on what Nova read; it trains Nova and the sender's hints, so an agent correcting it would grade its own reading. |
+| `mutation createTriageRule` | Exempt, agent-administration: Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent. |
+| `mutation deleteTriageRule` | Exempt, agent-administration: Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent. |
+| `mutation flagInboundFact` | Exempt, attestation: A person's verdict on what Nova read; it trains Nova, so an agent flagging it would grade its own reading. |
+| `mutation reopenInboundConflict` | Pending: Reopen a settled duplicate-document or repeated-load conflict on a triage message |
+| `mutation resolveInboundConflict` | Pending: Settle a duplicate-document or repeated-load conflict on a triage message: replace or keep the document on file, skip or confirm the load |
+| `mutation setTriageRuleEnabled` | Exempt, agent-administration: Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent. |
+| `mutation updateTriageRule` | Exempt, agent-administration: Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent. |
 
 ### user
 

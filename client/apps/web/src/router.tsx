@@ -91,15 +91,23 @@ export const routes: RouteObject[] = [
             },
           },
           {
-            path: "/inbox",
+            path: "/triage",
             loader: combineLoaders(
               protectedLoader,
               createPermissionLoader(Resource.InboundMessage, Operation.Read),
               createPrefetchLoader(lazyPrefetch(() => import("@/routes/inbox/page"))),
             ),
             async lazy() {
-              const { InboxPage } = await import("@/routes/inbox/page");
-              return { Component: InboxPage };
+              const { TriagePage } = await import("@/routes/inbox/page");
+              return { Component: TriagePage };
+            },
+          },
+          {
+            // Triage was the inbox; old links, notifications and bookmarks keep working.
+            path: "/inbox",
+            loader: ({ request }) => {
+              const { search } = new URL(request.url);
+              return redirect(`/triage${search}`);
             },
           },
           {

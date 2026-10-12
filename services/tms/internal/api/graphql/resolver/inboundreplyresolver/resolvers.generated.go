@@ -4,10 +4,16 @@ package inboundreplyresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	inboundreplyservice "github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
+	triagepeekservice "github.com/emoss08/trenova/internal/modules/documents/app/triagepeekservice"
+	triageworkservice "github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 )
 
 type Deps struct {
 	*base.Core
+	InboundReplyService *inboundreplyservice.Service
+	TriageWorkService   *triageworkservice.Service
+	TriagePeekService   *triagepeekservice.Service
 }
 
 type InboundAttachmentResolver struct{ *Deps }

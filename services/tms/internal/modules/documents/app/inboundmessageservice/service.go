@@ -10,18 +10,24 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/hashutils"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/webhooksig"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
@@ -98,6 +104,24 @@ type Params struct {
 	// a Resend message lands with its sender, recipients and subject and is
 	// sent to review saying its content could not be read.
 	ContentFetcher inboundmessageports.InboundContentFetcher `optional:"true"`
+
+	DB            kernelports.DBConnection
+	QueueRepo     inboundmessageports.TriageQueueRepository
+	MailboxState  inboundmessageports.TriageMailboxStateRepository
+	ActivityRepo  inboundmessageports.TriageActivityRepository
+	ViewRepo      inboundmessageports.TriageViewRepository
+	TargetRepo    inboundmessageports.TriageTargetRepository
+	SettingsRepo  inboundmessageports.TriageSettingsRepository
+	DocumentTypes inboundmessageports.InboundDocumentTypeFinder
+	Roles         permissionports.RoleRepository
+	Organizations tenantports.OrganizationRepository
+	Replies       inboundmessageports.InboundReplyReader        `optional:"true"`
+	RuleEvaluator inboundmessageports.TriageRuleEvaluator       `optional:"true"`
+	RuleTeacher   inboundmessageports.TriageRuleTeacher         `optional:"true"`
+	Hints         inboundmessageports.SenderHintProvider        `optional:"true"`
+	Briefing      inboundmessageports.TriageBriefingInvalidator `optional:"true"`
+	Wakes         inboundmessageports.TriageWakeScheduler       `optional:"true"`
+	Email         emailports.EmailService                       `optional:"true"`
 }
 
 // reviewNotifier is the slice of the notification service the inbox uses.
@@ -127,6 +151,25 @@ type Service struct {
 	notifier    reviewNotifier
 	indexer     agentports.RetrievalIndexer
 	fetcher     inboundmessageports.InboundContentFetcher
+
+	db            kernelports.DBConnection
+	queueRepo     inboundmessageports.TriageQueueRepository
+	mailboxState  inboundmessageports.TriageMailboxStateRepository
+	activityRepo  inboundmessageports.TriageActivityRepository
+	viewRepo      inboundmessageports.TriageViewRepository
+	targetRepo    inboundmessageports.TriageTargetRepository
+	settingsRepo  inboundmessageports.TriageSettingsRepository
+	documentTypes inboundmessageports.InboundDocumentTypeFinder
+	directory     assigneeDirectory
+	organizations organizationReader
+	replies       inboundmessageports.InboundReplyReader
+	ruleEvaluator inboundmessageports.TriageRuleEvaluator
+	ruleTeacher   inboundmessageports.TriageRuleTeacher
+	hints         inboundmessageports.SenderHintProvider
+	wakes         inboundmessageports.TriageWakeScheduler
+	email         emailports.EmailService
+	notify        *Notifier
+	now           func() int64
 }
 
 func New(p Params) *Service {
@@ -154,6 +197,30 @@ func New(p Params) *Service {
 		notifier:    notifier,
 		indexer:     p.Indexer,
 		fetcher:     p.ContentFetcher,
+
+		db:            p.DB,
+		queueRepo:     p.QueueRepo,
+		mailboxState:  p.MailboxState,
+		activityRepo:  p.ActivityRepo,
+		viewRepo:      p.ViewRepo,
+		targetRepo:    p.TargetRepo,
+		settingsRepo:  p.SettingsRepo,
+		documentTypes: p.DocumentTypes,
+		directory:     p.Roles,
+		organizations: p.Organizations,
+		replies:       p.Replies,
+		ruleEvaluator: p.RuleEvaluator,
+		ruleTeacher:   p.RuleTeacher,
+		hints:         p.Hints,
+		wakes:         p.Wakes,
+		email:         p.Email,
+		notify: newNotifier(notifierDeps{
+			logger:     p.Logger,
+			realtime:   p.Realtime,
+			watchtower: p.Watchtower,
+			briefing:   p.Briefing,
+		}),
+		now: timeutils.NowUnix,
 	}
 }
 
@@ -366,6 +433,25 @@ func (s *Service) stage(
 		return nil, multiErr
 	}
 
+	tenantInfo := pagination.TenantInfo{OrgID: mailbox.OrganizationID, BuID: mailbox.BusinessUnitID}
+	blocked := mailbox.Blocks(entity.FromAddress)
+	if blocked {
+		entity.Status = inboundmessage.StatusIgnored
+		entity.ReviewedAt = s.now()
+		entity.ReviewNote = blockedSenderNote
+	}
+	threadKey, err := s.threadKeyFor(ctx, threadLookup{
+		tenant:     tenantInfo,
+		ownKey:     inboundmessage.NormalizeMessageID(entity.MessageID),
+		inReplyTo:  entity.InReplyTo,
+		references: entity.References,
+	})
+	if err != nil {
+		s.l.Warn("could not find the thread an inbound message belongs to; it starts its own",
+			zap.String("mailboxId", mailbox.ID.String()), zap.Error(err))
+	}
+	entity.ThreadKey = threadKey
+
 	attachments := make([]*inboundmessage.InboundAttachment, 0, len(parsed.Attachments))
 	for _, attachment := range parsed.Attachments {
 		attachments = append(attachments, &inboundmessage.InboundAttachment{
@@ -385,16 +471,66 @@ func (s *Service) stage(
 	s.l.Info("received an inbound message",
 		zap.String("messageId", created.ID.String()),
 		zap.String("mailboxId", mailbox.ID.String()),
-		zap.Int("attachments", len(attachments)))
+		zap.Int("attachments", len(attachments)),
+		zap.Bool("blocked", blocked))
 
 	created.Mailbox = mailbox
+	s.markReceived(ctx, tenantInfo, mailbox, created.ReceivedAt)
+	s.recordArrival(ctx, mailbox, created, blocked)
+	s.notify.MessagesCreated(ctx, created)
+	if blocked {
+		return &ReceiveWebhookResult{MessageID: created.ID.String()}, nil
+	}
+
 	if !mailbox.Provider.FetchesContent() {
 		s.stageAttachments(ctx, created, parsed)
 	}
-	s.publishMessage(ctx, created, "created")
+	s.answerAwaiting(ctx, created)
 	s.startProcessing(ctx, created)
 
 	return &ReceiveWebhookResult{MessageID: created.ID.String()}, nil
+}
+
+const blockedSenderNote = "This sender is blocked on this address, so the message was ignored."
+
+func (s *Service) markReceived(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	mailbox *inboundmessage.Mailbox,
+	receivedAt int64,
+) {
+	if err := s.mailboxState.MarkReceived(ctx, inboundmessageports.MailboxReceivedRequest{
+		TenantInfo: tenantInfo,
+		MailboxID:  mailbox.ID,
+		ReceivedAt: receivedAt,
+	}); err != nil {
+		s.l.Warn("could not record when a mailbox last received mail",
+			zap.String("mailboxId", mailbox.ID.String()), zap.Error(err))
+	}
+}
+
+func (s *Service) recordArrival(
+	ctx context.Context,
+	mailbox *inboundmessage.Mailbox,
+	message *inboundmessage.InboundMessage,
+	blocked bool,
+) {
+	activities := make([]*triage.Activity, 0, 2)
+	if blocked {
+		activities = append(activities,
+			triage.NewActivity(message, triage.ActivityIgnored).About(message.FromAddress, "blocked"))
+	}
+	if activity := s.noteTestReceived(ctx, mailbox, message); activity != nil {
+		activities = append(activities, activity)
+	}
+	if len(activities) == 0 {
+		return
+	}
+
+	if err := s.activityRepo.Insert(ctx, activities); err != nil {
+		s.l.Warn("could not record what happened to an arriving message",
+			zap.String("messageId", message.ID.String()), zap.Error(err))
+	}
 }
 
 // storeRawBody keeps the whole message where the row cannot.
@@ -451,14 +587,33 @@ func (s *Service) startProcessing(ctx context.Context, message *inboundmessage.I
 		return
 	}
 
-	if _, err := s.workflows.StartWorkflow(
+	if err := s.startReading(ctx, message, readingWorkflow{
+		// Keyed by the message, so a redelivery that somehow got past the
+		// idempotency read cannot start a second reading of the same mail.
+		id:    "inbound-message/" + message.ID.String(),
+		reuse: enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
+	}); err != nil {
+		s.l.Warn("failed to start reading an inbound message; it stays at Received",
+			zap.String("messageId", message.ID.String()), zap.Error(err))
+	}
+}
+
+type readingWorkflow struct {
+	id    string
+	reuse enums.WorkflowIdReusePolicy
+}
+
+func (s *Service) startReading(
+	ctx context.Context,
+	message *inboundmessage.InboundMessage,
+	wf readingWorkflow,
+) error {
+	_, err := s.workflows.StartWorkflow(
 		ctx,
 		client.StartWorkflowOptions{
-			// Keyed by the message, so a redelivery that somehow got past the
-			// idempotency read cannot start a second reading of the same mail.
-			ID:                    "inbound-message/" + message.ID.String(),
+			ID:                    wf.id,
 			TaskQueue:             temporaltype.TaskQueueSystem.String(),
-			WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
+			WorkflowIDReusePolicy: wf.reuse,
 		},
 		temporaltype.ProcessInboundMessageWorkflowName,
 		&ProcessInboundMessagePayload{
@@ -468,8 +623,7 @@ func (s *Service) startProcessing(ctx context.Context, message *inboundmessage.I
 			},
 			MessageID: message.ID,
 		},
-	); err != nil {
-		s.l.Warn("failed to start reading an inbound message; it stays at Received",
-			zap.String("messageId", message.ID.String()), zap.Error(err))
-	}
+	)
+
+	return err
 }

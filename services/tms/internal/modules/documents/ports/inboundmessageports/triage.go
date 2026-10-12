@@ -360,6 +360,7 @@ type ShipmentPeek struct {
 	DriverName      string      `json:"driverName"`
 	Progress        float64     `json:"progress"`
 	Late            bool        `json:"late"`
+	LateMinutes     int         `json:"lateMinutes"`
 	ETA             *int64      `json:"eta"`
 	DeliveredAt     *int64      `json:"deliveredAt"`
 	Stops           []*PeekStop `json:"stops"`

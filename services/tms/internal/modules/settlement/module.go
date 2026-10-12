@@ -1,6 +1,7 @@
 package settlement
 
 import (
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/benefitrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/carrierinvoicematchrepository"
@@ -48,6 +49,9 @@ func SharedOptions() fx.Option {
 			carriersettlementservice.New,
 			func(s *carriersettlementservice.Service) carrierports.CarrierCostAccrual { return s },
 			func(s *carriersettlementservice.Service) carrierports.CarrierInvoiceAutoMatcher { return s },
+			func(s *carriersettlementservice.Service) inboundmessageports.TriageCarrierPayQueuer {
+				return s
+			},
 			func(s *carriersettlementservice.Service) carriersettlementports.CarrierSettlementPayer { return s },
 			func(s *driversettlementservice.Service) carriersettlementports.DriverSettlementPayer { return s },
 			fuelpurchaseservice.New,

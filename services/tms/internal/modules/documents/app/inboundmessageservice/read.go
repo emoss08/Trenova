@@ -8,6 +8,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -74,21 +75,55 @@ type LinkRequest struct {
 	Reason     string
 }
 
-// List reads the inbox newest arrival first. The cursor's own default is the
-// row's creation time, which is when the pipeline wrote it, so a message a
-// provider redelivered late would otherwise sit above one that arrived after it.
 func (s *Service) List(
 	ctx context.Context,
 	req *inboundmessageports.ListInboundMessagesRequest,
 ) (*pagination.CursorListResult[*inboundmessage.InboundMessage], error) {
-	if req.Filter != nil {
-		req.Filter.Sort = []domaintypes.SortField{
-			{Field: "receivedAt", Direction: dbtype.SortDirectionDesc},
-		}
-		req.Filter.Query = strings.TrimSpace(req.Filter.Query)
+	if err := PrepareList(req); err != nil {
+		return nil, err
 	}
 
 	return s.messageRepo.ListCursor(ctx, req)
+}
+
+func PrepareList(req *inboundmessageports.ListInboundMessagesRequest) error {
+	if req.Lane != "" && !req.Lane.IsValid() {
+		return errortypes.NewValidationError("lane", errortypes.ErrInvalid, "That folder does not exist")
+	}
+	if req.Sort != "" && !req.Sort.IsValid() {
+		return errortypes.NewValidationError("sort", errortypes.ErrInvalid,
+			"Sort by due or newest")
+	}
+	if req.Lane.NeedsViewer() && req.ViewerID.IsNil() {
+		return errortypes.NewValidationError("lane", errortypes.ErrInvalid,
+			"Assigned to me needs someone signed in")
+	}
+	if len(req.ThreadKey) > inboundmessage.MaxThreadKeyLength {
+		return errortypes.NewValidationError("threadKey", errortypes.ErrInvalid,
+			"That is not a thread")
+	}
+
+	req.Sort = req.Sort.OrDefault()
+	if req.ThreadKey != "" {
+		req.Sort = inboundmessageports.SortNewest
+	}
+	if req.Filter != nil {
+		req.Filter.Sort = SortFields(req.Sort)
+		req.Filter.Query = strings.TrimSpace(req.Filter.Query)
+	}
+
+	return nil
+}
+
+func SortFields(sort inboundmessageports.Sort) []domaintypes.SortField {
+	if sort == inboundmessageports.SortDue {
+		return []domaintypes.SortField{
+			{Field: "dueAt", Direction: dbtype.SortDirectionAsc},
+			{Field: "receivedAt", Direction: dbtype.SortDirectionDesc},
+		}
+	}
+
+	return []domaintypes.SortField{{Field: "receivedAt", Direction: dbtype.SortDirectionDesc}}
 }
 
 func (s *Service) GetByID(
@@ -105,44 +140,69 @@ func (s *Service) ListMailboxes(
 	return s.mailboxRepo.List(ctx, req)
 }
 
-// Counts reads the lanes in one pass. It counts every status rather than only
-// the waiting one, because a lane that is empty has to be shown as empty — a
-// missing count reads as a missing lane.
 func (s *Service) Counts(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
+	viewerID pulid.ID,
 ) (*Counts, error) {
 	rows, err := s.messageRepo.CountBreakdown(ctx, inboundmessageports.CountInboundMessagesRequest{
 		TenantInfo: tenantInfo,
+		ViewerID:   viewerID,
+		Now:        s.now(),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	byStatus := make(map[inboundmessage.Status]int, len(rows))
-	for _, row := range rows {
-		byStatus[row.Status] += row.Count
-	}
+	return FoldCounts(rows), nil
+}
 
-	counts := &Counts{
-		Waiting: byStatus[inboundmessage.StatusInReview] +
-			byStatus[inboundmessage.StatusQuarantined],
-		Handled:     byStatus[inboundmessage.StatusActioned],
-		Ignored:     byStatus[inboundmessage.StatusIgnored],
-		Quarantined: byStatus[inboundmessage.StatusQuarantined],
-	}
-	for _, count := range byStatus {
-		counts.Total += count
+func FoldCounts(rows []inboundmessageports.InboundMessageCount) *Counts {
+	counts := &Counts{}
+	for _, row := range rows {
+		counts.Total += row.Count
+		switch row.Status {
+		case inboundmessage.StatusReceived, inboundmessage.StatusProcessing,
+			inboundmessage.StatusClassified:
+			counts.Processing += row.Count
+		case inboundmessage.StatusActioned:
+			counts.Handled += row.Count
+		case inboundmessage.StatusIgnored:
+			counts.Ignored += row.Count
+		case inboundmessage.StatusInReview, inboundmessage.StatusQuarantined:
+			foldReview(counts, row)
+		}
 	}
 	counts.ByClassification = countByClassification(rows)
 	counts.ByMailbox = countByMailbox(rows)
 
-	return counts, nil
+	return counts
+}
+
+func foldReview(counts *Counts, row inboundmessageports.InboundMessageCount) {
+	if row.Status == inboundmessage.StatusQuarantined {
+		counts.Quarantined += row.Count
+	}
+
+	switch row.Parked {
+	case inboundmessage.ParkingSnoozed:
+		counts.Snoozed += row.Count
+	case inboundmessage.ParkingAwaitingReply:
+		counts.WaitingOnThem += row.Count
+	default:
+		counts.Waiting += row.Count
+		if row.Mine {
+			counts.AssignedToMe += row.Count
+		}
+		if row.Overdue {
+			counts.Overdue += row.Count
+		}
+	}
 }
 
 func waitingCount(row inboundmessageports.InboundMessageCount) int {
-	if row.Status == inboundmessage.StatusInReview ||
-		row.Status == inboundmessage.StatusQuarantined {
+	if (row.Status == inboundmessage.StatusInReview ||
+		row.Status == inboundmessage.StatusQuarantined) && row.Parked == "" {
 		return row.Count
 	}
 
@@ -217,19 +277,25 @@ func (s *Service) Review(
 		return nil, err
 	}
 
+	before := queueStateOf(message)
 	if err = ApplyReview(message, &req, timeutils.NowUnix()); err != nil {
 		return nil, err
 	}
+	message.DueAt = 0
 
 	updated, err := s.messageRepo.Update(ctx, message)
 	if err != nil {
 		return nil, err
 	}
 
-	// Off the tower: the item stood for work owed, and this is the moment it
-	// stops being owed.
-	s.project(ctx, updated)
-	s.publishMessage(ctx, updated, inboxRealtimeAction)
+	s.recordActivity(ctx, byPerson(
+		triage.NewActivity(updated, settleActivityKind(updated.Status)).About("", updated.ReviewNote),
+		req.ReviewerID,
+	))
+	s.afterQueueChange(ctx, req.TenantInfo, &transitionResult{
+		before:  map[pulid.ID]*inboundmessageports.QueueState{updated.ID: before},
+		changed: []*inboundmessageports.QueueState{queueStateOf(updated)},
+	})
 
 	return updated, nil
 }
@@ -262,11 +328,13 @@ func (s *Service) Link(
 		return nil, err
 	}
 
-	// Linking does not settle the message — somebody still has to say what to
-	// do about it — so the tower item is refreshed rather than resolved, and
-	// now carries the reason the link was made.
-	s.project(ctx, updated)
-	s.publishMessage(ctx, updated, inboxRealtimeAction)
+	linked := byPerson(
+		triage.NewActivity(updated, triage.ActivityLinked).About(updated.MatchReason, ""),
+		req.ReviewerID,
+	)
+	linked.RecordID = pulid.FirstNotNil(req.ShipmentID, req.CustomerID, req.CarrierID)
+	s.recordActivity(ctx, linked)
+	s.notify.MessagesChanged(ctx, updated)
 
 	return updated, nil
 }

@@ -25,9 +25,9 @@ function layoutsAbove(
  * frame of its own: someone who opened it had no sidebar, no header and no way
  * to anywhere else. It is a working page, so it wears the app's chrome.
  */
-describe("inbox route", () => {
+describe("triage route", () => {
   it("renders inside the app layout, so the sidebar is the way back", () => {
-    const layouts = layoutsAbove(routes, "/inbox");
+    const layouts = layoutsAbove(routes, "/triage");
 
     expect(layouts).not.toBeNull();
     expect(layouts).toContain(AppLayout);

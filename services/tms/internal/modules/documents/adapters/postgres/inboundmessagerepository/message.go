@@ -3,7 +3,9 @@ package inboundmessagerepository
 
 import (
 	"context"
+	"strings"
 
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -39,32 +41,152 @@ func New(p Params) inboundmessageports.InboundMessageRepository {
 	}
 }
 
-// narrow applies the filters the inbox lanes are built from. It is shared by
-// the offset and cursor lists so the two cannot drift into showing different
-// rows for the same lane.
+var needsReviewStatuses = []inboundmessage.Status{
+	inboundmessage.StatusInReview,
+	inboundmessage.StatusQuarantined,
+}
+
+type folderColumns struct {
+	alias             string
+	ID                buncolgen.Column
+	OrganizationID    buncolgen.Column
+	BusinessUnitID    buncolgen.Column
+	Status            buncolgen.Column
+	Classification    buncolgen.Column
+	MailboxID         buncolgen.Column
+	MatchedShipmentID buncolgen.Column
+	ReceivedAt        buncolgen.Column
+	ThreadKey         buncolgen.Column
+	OwnerID           buncolgen.Column
+	Parked            buncolgen.Column
+}
+
+func newFolderColumns(alias string) folderColumns {
+	cols := inboundmessagecol.InboundMessageColumns
+
+	return folderColumns{
+		alias:             alias,
+		ID:                cols.ID.WithAlias(alias),
+		OrganizationID:    cols.OrganizationID.WithAlias(alias),
+		BusinessUnitID:    cols.BusinessUnitID.WithAlias(alias),
+		Status:            cols.Status.WithAlias(alias),
+		Classification:    cols.Classification.WithAlias(alias),
+		MailboxID:         cols.MailboxID.WithAlias(alias),
+		MatchedShipmentID: cols.MatchedShipmentID.WithAlias(alias),
+		ReceivedAt:        cols.ReceivedAt.WithAlias(alias),
+		ThreadKey:         cols.ThreadKey.WithAlias(alias),
+		OwnerID:           cols.OwnerID.WithAlias(alias),
+		Parked:            cols.Parked.WithAlias(alias),
+	}
+}
+
+const newerAlias = "nwr"
+
+var (
+	folderCols = newFolderColumns(inboundmessagecol.InboundMessageTable.Alias)
+	newerCols  = newFolderColumns(newerAlias)
+)
+
 func narrow(
+	db bun.IDB,
 	sq *bun.SelectQuery,
 	req *inboundmessageports.ListInboundMessagesRequest,
 ) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
-
-	if len(req.Statuses) > 0 {
-		sq = sq.Where(cols.Status.In(), bun.In(req.Statuses))
+	sq = applyFolder(sq, req, folderCols)
+	if req.ThreadKey != "" {
+		sq = sq.Where(folderCols.ThreadKey.Eq(), req.ThreadKey)
 	}
-	if req.Classification != "" {
-		sq = sq.Where(cols.Classification.Eq(), req.Classification)
-	}
-	if req.MailboxID.IsNotNil() {
-		sq = sq.Where(cols.MailboxID.Eq(), req.MailboxID)
-	}
-	if req.ShipmentID.IsNotNil() {
-		sq = sq.Where(cols.MatchedShipmentID.Eq(), req.ShipmentID)
-	}
-	if req.Since > 0 {
-		sq = sq.Where(cols.ReceivedAt.Gte(), req.Since)
+	if req.CollapseThreads && req.ThreadKey == "" {
+		sq = sq.Where("NOT EXISTS (?)", newerInFolder(db, req))
 	}
 
 	return sq
+}
+
+func applyFolder(
+	sq *bun.SelectQuery,
+	req *inboundmessageports.ListInboundMessagesRequest,
+	c folderColumns,
+) *bun.SelectQuery {
+	sq = applyLane(sq, req.Lane, req.ViewerID, c)
+	if len(req.Statuses) > 0 {
+		sq = sq.Where(c.Status.In(), bun.List(req.Statuses))
+	}
+	if req.Classification != "" {
+		sq = sq.Where(c.Classification.Eq(), req.Classification)
+	}
+	if req.MailboxID.IsNotNil() {
+		sq = sq.Where(c.MailboxID.Eq(), req.MailboxID)
+	}
+	if req.ShipmentID.IsNotNil() {
+		sq = sq.Where(c.MatchedShipmentID.Eq(), req.ShipmentID)
+	}
+	if req.OwnerID.IsNotNil() {
+		sq = sq.Where(c.OwnerID.Eq(), req.OwnerID)
+	}
+	if req.Since > 0 {
+		sq = sq.Where(c.ReceivedAt.Gte(), req.Since)
+	}
+
+	return sq
+}
+
+func applyLane(
+	sq *bun.SelectQuery,
+	lane inboundmessageports.Lane,
+	viewerID pulid.ID,
+	c folderColumns,
+) *bun.SelectQuery {
+	switch lane {
+	case inboundmessageports.LaneWaiting:
+		return sq.Where(c.Status.In(), bun.List(needsReviewStatuses)).Where(c.Parked.IsNull())
+	case inboundmessageports.LaneAssignedToMe:
+		return sq.Where(c.Status.In(), bun.List(needsReviewStatuses)).
+			Where(c.Parked.IsNull()).
+			Where(c.OwnerID.Eq(), viewerID)
+	case inboundmessageports.LaneWaitingOnThem:
+		return sq.Where(c.Parked.Eq(), inboundmessage.ParkingAwaitingReply)
+	case inboundmessageports.LaneSnoozed:
+		return sq.Where(c.Parked.Eq(), inboundmessage.ParkingSnoozed)
+	case inboundmessageports.LaneHandled:
+		return sq.Where(c.Status.Eq(), inboundmessage.StatusActioned)
+	case inboundmessageports.LaneIgnored:
+		return sq.Where(c.Status.Eq(), inboundmessage.StatusIgnored)
+	default:
+		return sq
+	}
+}
+
+func newerInFolder(
+	db bun.IDB,
+	req *inboundmessageports.ListInboundMessagesRequest,
+) *bun.SelectQuery {
+	probe := db.NewSelect().
+		TableExpr(inboundmessagecol.InboundMessageTable.As(newerAlias)).
+		ColumnExpr("1").
+		Where(newerCols.OrganizationID.EqColumn(folderCols.OrganizationID)).
+		Where(newerCols.BusinessUnitID.EqColumn(folderCols.BusinessUnitID)).
+		Where(newerCols.ThreadKey.EqColumn(folderCols.ThreadKey)).
+		Where(buncolgen.Expr(
+			"({0} > {1} OR ({0} = {1} AND {2} > {3}))",
+			newerCols.ReceivedAt, folderCols.ReceivedAt, newerCols.ID, folderCols.ID,
+		))
+	probe = applyFolder(probe, req, newerCols)
+	if req.Filter != nil && strings.TrimSpace(req.Filter.Query) != "" {
+		probe = searchPredicate(probe, newerAlias, req.Filter.Query)
+	}
+
+	return probe
+}
+
+func searchPredicate(sq *bun.SelectQuery, alias, query string) *bun.SelectQuery {
+	entity := (*inboundmessage.InboundMessage)(nil)
+	fieldConfig := querybuilder.GetFieldConfiguration(entity)
+
+	return querybuilder.NewWithPostgresSearch(sq, alias, fieldConfig, entity).
+		WithPredicatesOnly().
+		ApplyTextSearchFilter(query, querybuilder.ExtractSearchFields(fieldConfig)).
+		GetQuery()
 }
 
 func (r *repository) List(
@@ -78,10 +200,8 @@ func (r *repository) List(
 			entities := make([]*inboundmessage.InboundMessage, 0, req.Filter.Pagination.SafeLimit())
 			cols := inboundmessagecol.InboundMessageColumns
 
-			query := narrow(
-				r.db.DBForContext(ctx).NewSelect().Model(&entities).Relation("Mailbox"),
-				req,
-			)
+			dba := r.db.DBForContext(ctx)
+			query := narrow(dba, dba.NewSelect().Model(&entities).Relation("Mailbox"), req)
 
 			total, err := querybuilder.ApplyFilters(
 				query, "imsg", req.Filter, (*inboundmessage.InboundMessage)(nil),
@@ -106,7 +226,7 @@ func (r *repository) ListCursor(
 	ctx context.Context,
 	req *inboundmessageports.ListInboundMessagesRequest,
 ) (*pagination.CursorListResult[*inboundmessage.InboundMessage], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*inboundmessage.InboundMessage], error) {
@@ -118,8 +238,11 @@ func (r *repository) ListCursor(
 					NewSelect().
 					Model((*inboundmessage.InboundMessage)(nil)).
 					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return narrow(querybuilder.ApplyFiltersWithoutSort(
-							sq, "imsg", req.Filter, (*inboundmessage.InboundMessage)(nil),
+						return narrow(dba, querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							inboundmessagecol.InboundMessageTable.Alias,
+							req.Filter,
+							(*inboundmessage.InboundMessage)(nil),
 						), req)
 					}).
 					Count(ctx)
@@ -141,7 +264,7 @@ func (r *repository) ListCursor(
 					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 						sq, applyErr := querybuilder.ApplyCursorFilters(
 							sq,
-							"imsg",
+							inboundmessagecol.InboundMessageTable.Alias,
 							req.Filter,
 							req.Cursor,
 							(*inboundmessage.InboundMessage)(nil),
@@ -150,7 +273,7 @@ func (r *repository) ListCursor(
 							return sq, applyErr
 						}
 
-						return narrow(sq, req), nil
+						return narrow(dba, sq, req), nil
 					},
 				},
 			)
@@ -372,16 +495,23 @@ func countBreakdownQuery(
 	req inboundmessageports.CountInboundMessagesRequest,
 ) *bun.SelectQuery {
 	cols := inboundmessagecol.InboundMessageColumns
+	classification := cols.Classification.Expr("COALESCE({}, '')")
+	parked := cols.Parked.Expr("COALESCE({}, '')")
+	mine := cols.OwnerID.Expr("COALESCE({} = ?, FALSE)")
+	overdue := cols.DueAt.Expr("COALESCE({} < ?, FALSE)")
 
 	query := db.NewSelect().
 		Model((*inboundmessage.InboundMessage)(nil)).
 		ColumnExpr(cols.Status.Qualified()).
-		ColumnExpr("COALESCE(?, '') AS classification", bun.Safe(cols.Classification.Qualified())).
+		ColumnExpr(classification+" AS classification").
 		ColumnExpr(cols.MailboxID.Qualified()).
-		ColumnExpr("COUNT(*) AS count").
+		ColumnExpr(parked+" AS parked").
+		ColumnExpr(mine+" AS mine", req.ViewerID.String()).
+		ColumnExpr(overdue+" AS overdue", req.Now).
+		ColumnExpr(buncolgen.Count("count")).
 		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo))
 	if len(req.Statuses) > 0 {
-		query = query.Where(cols.Status.In(), bun.In(req.Statuses))
+		query = query.Where(cols.Status.In(), bun.List(req.Statuses))
 	}
 	if req.Since > 0 {
 		query = query.Where(cols.ReceivedAt.Gte(), req.Since)
@@ -389,8 +519,11 @@ func countBreakdownQuery(
 
 	return query.
 		GroupExpr(cols.Status.Qualified()).
-		GroupExpr(cols.Classification.Qualified()).
-		GroupExpr(cols.MailboxID.Qualified())
+		GroupExpr(classification).
+		GroupExpr(cols.MailboxID.Qualified()).
+		GroupExpr(parked).
+		GroupExpr(mine, req.ViewerID.String()).
+		GroupExpr(overdue, req.Now)
 }
 
 // CountAttachmentsByMessageIDs answers the paperclip on a page of list rows in

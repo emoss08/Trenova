@@ -381,6 +381,7 @@ modules:
       - extractionshadowjobs
       - inboundjobs
       - thumbnailjobs
+      - triagewakejobs
     repository:
       - capturerepository
       - documentaiextractionrepository
@@ -493,6 +494,7 @@ modules:
       - shipmenttracking
       - shipmentwatchlistservice
       - tenderservice
+      - triagedeliveryrelay
       - weatheralertservice
     job:
       - detentionjobs

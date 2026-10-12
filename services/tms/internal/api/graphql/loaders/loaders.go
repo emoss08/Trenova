@@ -18,7 +18,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
@@ -104,7 +107,18 @@ type FactoryParams struct {
 	CarrierIntelSnapshotByCustomerID          *CarrierIntelSnapshotByCustomerIDLoaderFactory
 	CarrierIntelOpenEventCount                *CarrierIntelOpenEventCountLoaderFactory
 	InboundAttachmentCount                    *InboundAttachmentCountLoaderFactory
+	InboundThreadCount                        *InboundThreadCountLoaderFactory
+	InboundActivitiesByMessageID              *InboundActivitiesByMessageIDLoaderFactory
+	DocumentTypeNameByID                      *DocumentTypeNameByIDLoaderFactory
+	TriageViewWaitingCount                    *TriageViewWaitingCountLoaderFactory
+	TriageRuleMonthMatches                    *TriageRuleMonthMatchesLoaderFactory
+	TriageSampleByMessageID                   *TriageSampleByMessageIDLoaderFactory
+	InboundMailboxByID                        *InboundMailboxByIDLoaderFactory
 	ShipmentSummaryByID                       *ShipmentSummaryByIDLoaderFactory
+	InboundAttachmentsByMessageID             *InboundAttachmentsByMessageIDLoaderFactory
+	InboundAttachmentByID                     *InboundAttachmentByIDLoaderFactory
+	InboundReply                              *InboundReplyLoaderFactory
+	InboundDocumentReading                    *InboundDocumentReadingLoaderFactory
 	CaptureRecordLabel                        *CaptureRecordLabelLoaderFactory
 	CarrierMonitoringEnrollmentByCarrierID    *CarrierMonitoringEnrollmentByCarrierIDLoaderFactory
 	AuditEntriesByAIAuditEventID              *AuditEntriesByAIAuditEventIDLoaderFactory
@@ -168,7 +182,18 @@ type Factory struct {
 	carrierIntelSnapshotByCustomerID          *CarrierIntelSnapshotByCustomerIDLoaderFactory
 	carrierIntelOpenEventCount                *CarrierIntelOpenEventCountLoaderFactory
 	inboundAttachmentCount                    *InboundAttachmentCountLoaderFactory
+	inboundThreadCount                        *InboundThreadCountLoaderFactory
+	inboundActivitiesByMessageID              *InboundActivitiesByMessageIDLoaderFactory
+	documentTypeNameByID                      *DocumentTypeNameByIDLoaderFactory
+	triageViewWaitingCount                    *TriageViewWaitingCountLoaderFactory
+	triageRuleMonthMatches                    *TriageRuleMonthMatchesLoaderFactory
+	triageSampleByMessageID                   *TriageSampleByMessageIDLoaderFactory
+	inboundMailboxByID                        *InboundMailboxByIDLoaderFactory
 	shipmentSummaryByID                       *ShipmentSummaryByIDLoaderFactory
+	inboundAttachmentsByMessageID             *InboundAttachmentsByMessageIDLoaderFactory
+	inboundAttachmentByID                     *InboundAttachmentByIDLoaderFactory
+	inboundReply                              *InboundReplyLoaderFactory
+	inboundDocumentReading                    *InboundDocumentReadingLoaderFactory
 	captureRecordLabel                        *CaptureRecordLabelLoaderFactory
 	carrierMonitoringEnrollmentByCarrierID    *CarrierMonitoringEnrollmentByCarrierIDLoaderFactory
 	auditEntriesByAIAuditEventID              *AuditEntriesByAIAuditEventIDLoaderFactory
@@ -232,7 +257,21 @@ type set struct {
 	carrierIntelSnapshotByCustomerID          *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot]
 	carrierIntelOpenEventCount                *dataloadgen.Loader[string, int]
 	inboundAttachmentCount                    *dataloadgen.Loader[string, int]
+	inboundThreadCount                        *dataloadgen.Loader[string, int]
+	inboundActivitiesByMessageID              *dataloadgen.Loader[string, []*triage.Activity]
+	documentTypeNameByID                      *dataloadgen.Loader[string, string]
+	triageViewWaitingCount                    *dataloadgen.Loader[string, int]
+	triageRuleMonthMatches                    *dataloadgen.Loader[string, int]
+	triageSampleByMessageID                   *dataloadgen.Loader[string, *inboundmessageports.Sample]
+	inboundMailboxByID                        *dataloadgen.Loader[string, *inboundmessage.Mailbox]
 	shipmentSummaryByID                       *dataloadgen.Loader[string, *shipmentports.ShipmentSummary]
+	inboundAttachmentsByMessageID             *dataloadgen.Loader[string, []*inboundmessage.InboundAttachment]
+	inboundAttachmentByID                     *dataloadgen.Loader[string, *inboundmessage.InboundAttachment]
+	inboundLatestReplyByMessageID             *dataloadgen.Loader[string, *triage.Reply]
+	inboundReplyDraftByMessageID              *dataloadgen.Loader[string, *triage.Reply]
+	inboundRepliesByMessageID                 *dataloadgen.Loader[string, []*triage.Reply]
+	inboundReplyByID                          *dataloadgen.Loader[string, *triage.Reply]
+	inboundDocumentReadingByDocumentID        *dataloadgen.Loader[string, *inboundmessageports.DocumentReading]
 	captureRecordLabel                        *dataloadgen.Loader[string, *captureports.CaptureRecordLabel]
 	carrierMonitoringEnrollmentByCarrierID    *dataloadgen.Loader[string, []*carrierintel.CarrierMonitoringEnrollment]
 	auditEntriesByAIAuditEventID              *dataloadgen.Loader[string, []*audit.Entry]
@@ -300,7 +339,18 @@ func NewFactory(p FactoryParams) *Factory {
 		carrierIntelSnapshotByCustomerID:          p.CarrierIntelSnapshotByCustomerID,
 		carrierIntelOpenEventCount:                p.CarrierIntelOpenEventCount,
 		inboundAttachmentCount:                    p.InboundAttachmentCount,
+		inboundThreadCount:                        p.InboundThreadCount,
+		inboundActivitiesByMessageID:              p.InboundActivitiesByMessageID,
+		documentTypeNameByID:                      p.DocumentTypeNameByID,
+		triageViewWaitingCount:                    p.TriageViewWaitingCount,
+		triageRuleMonthMatches:                    p.TriageRuleMonthMatches,
+		triageSampleByMessageID:                   p.TriageSampleByMessageID,
+		inboundMailboxByID:                        p.InboundMailboxByID,
 		shipmentSummaryByID:                       p.ShipmentSummaryByID,
+		inboundAttachmentsByMessageID:             p.InboundAttachmentsByMessageID,
+		inboundAttachmentByID:                     p.InboundAttachmentByID,
+		inboundReply:                              p.InboundReply,
+		inboundDocumentReading:                    p.InboundDocumentReading,
 		captureRecordLabel:                        p.CaptureRecordLabel,
 		carrierMonitoringEnrollmentByCarrierID:    p.CarrierMonitoringEnrollmentByCarrierID,
 		auditEntriesByAIAuditEventID:              p.AuditEntriesByAIAuditEventID,
@@ -452,8 +502,43 @@ func newSet(f *Factory, tenantInfo pagination.TenantInfo) *set {
 		inboundAttachmentCount: newInboundAttachmentCountLoader(f.inboundAttachmentCount,
 			tenantInfo,
 		),
+		inboundThreadCount: newInboundThreadCountLoader(f.inboundThreadCount, tenantInfo),
+		inboundActivitiesByMessageID: newInboundActivitiesByMessageIDLoader(
+			f.inboundActivitiesByMessageID,
+			tenantInfo,
+		),
+		documentTypeNameByID: newDocumentTypeNameByIDLoader(f.documentTypeNameByID, tenantInfo),
+		triageViewWaitingCount: newTriageViewWaitingCountLoader(
+			f.triageViewWaitingCount,
+			tenantInfo,
+		),
+		triageRuleMonthMatches: newTriageRuleMonthMatchesLoader(
+			f.triageRuleMonthMatches,
+			tenantInfo,
+		),
+		triageSampleByMessageID: newTriageSampleByMessageIDLoader(
+			f.triageSampleByMessageID,
+			tenantInfo,
+		),
+		inboundMailboxByID:  newInboundMailboxByIDLoader(f.inboundMailboxByID, tenantInfo),
 		shipmentSummaryByID: newShipmentSummaryByIDLoader(f.shipmentSummaryByID, tenantInfo),
-		captureRecordLabel:  newCaptureRecordLabelLoader(f.captureRecordLabel, tenantInfo),
+		inboundAttachmentsByMessageID: newInboundAttachmentsByMessageIDLoader(
+			f.inboundAttachmentsByMessageID,
+			tenantInfo,
+		),
+		inboundAttachmentByID: newInboundAttachmentByIDLoader(f.inboundAttachmentByID, tenantInfo),
+		inboundLatestReplyByMessageID: newInboundLatestReplyByMessageIDLoader(
+			f.inboundReply,
+			tenantInfo,
+		),
+		inboundReplyDraftByMessageID: newInboundReplyDraftByMessageIDLoader(f.inboundReply, tenantInfo),
+		inboundRepliesByMessageID:    newInboundRepliesByMessageIDLoader(f.inboundReply, tenantInfo),
+		inboundReplyByID:             newInboundReplyByIDLoader(f.inboundReply, tenantInfo),
+		inboundDocumentReadingByDocumentID: newInboundDocumentReadingByDocumentIDLoader(
+			f.inboundDocumentReading,
+			tenantInfo,
+		),
+		captureRecordLabel: newCaptureRecordLabelLoader(f.captureRecordLabel, tenantInfo),
 		carrierMonitoringEnrollmentByCarrierID: newCarrierMonitoringEnrollmentByCarrierIDLoader(
 			f.carrierMonitoringEnrollmentByCarrierID,
 			tenantInfo,

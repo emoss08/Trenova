@@ -1801,25 +1801,114 @@ writes:
     reason: "An inbound webhook a provider calls with a signed token, not a person."
 
   # inboundmessage
+  "mutation assignInboundMessages":
+    pending: "Assign inbound messages to a person, or take them off whoever has them."
   "mutation createInboundMailbox":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
+  "mutation createMyTriageView":
+    exempt: user-preference
+    reason: "A saved search in one person's own Triage sidebar."
+  "mutation deleteMyTriageView":
+    exempt: user-preference
+    reason: "A saved search in one person's own Triage sidebar."
+  "mutation handOffTriage":
+    pending: "Hand everything still waiting in Triage to the on-call person at the end of the day."
   "mutation linkInboundMessage":
     tools: [link_inbound_message]
+  "mutation readUnreadInboundMessages":
+    exempt: agent-administration
+    reason: "Sets Nova reading the backlog it never read; it switches an agent on rather than doing an agent's work."
+  "mutation renameMyTriageView":
+    exempt: user-preference
+    reason: "A saved search in one person's own Triage sidebar."
+  "mutation reopenInboundMessages":
+    pending: "Put settled inbound messages back in the Triage queue."
   "mutation reviewInboundMessage":
     tools: [mark_inbound_message]
+  "mutation reviewInboundMessages":
+    exempt: duplicate
+    reason: "The bulk form of reviewInboundMessage; mark_inbound_message settles each message."
   "mutation rotateInboundMailboxToken":
     exempt: security
     reason: "Replaces the secret that authenticates mail forwarded into the mailbox."
+  "mutation sendInboundMailboxTest":
+    exempt: configuration
+    reason: "Checks that a connected address receives mail while an administrator sets the mailbox up."
   "mutation setInboundMailboxApiKey":
     exempt: security
     reason: "Sets the provider credential the mailbox reads forwarded mail's content with."
   "mutation setInboundMailboxSigningSecret":
     exempt: security
     reason: "Sets the secret that authenticates mail forwarded into the mailbox."
+  "mutation snoozeInboundMessages":
+    pending: "Snooze inbound messages until a time, a delivery, a document or a payment."
+  "mutation stopWaitingForInboundReply":
+    pending: "Bring an inbound message waiting on a reply back to the queue now."
+  "mutation unlinkInboundMessage":
+    pending: "Remove the shipment, customer or carrier an inbound message was linked to."
   "mutation updateInboundMailbox":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
+  "mutation updateTriageResponseTargets":
+    exempt: configuration
+    reason: "How long each kind of message may wait is an organization-wide setting an administrator owns."
+  "mutation updateTriageSettings":
+    exempt: configuration
+    reason: "The on-call person and the end of the working day are organization-wide settings an administrator owns."
+  "mutation waitForInboundReply":
+    pending: "Park an inbound message until the sender replies on its thread, or until a time."
+  "mutation wakeInboundMessage":
+    pending: "Bring a snoozed inbound message back to the queue now."
+
+  # inboundreply
+  "mutation blockInboundSender":
+    pending: "Send a sender's future mail on a source straight to Ignored, and ignore the message."
+  "mutation createInboundLoad":
+    pending: "Create the shipment a tender in Triage describes, from the fields a person checked."
+  "mutation createTriageReplyTemplate":
+    exempt: configuration
+    reason: "Reply templates are organization-wide wording an administrator maintains; replies use them."
+  "mutation decideInboundStops":
+    pending: "Waive or stand by a disputed detention charge after checking the stop times, and draft the answer."
+  "mutation deleteTriageReplyTemplate":
+    exempt: configuration
+    reason: "Reply templates are organization-wide wording an administrator maintains; replies use them."
+  "mutation discardInboundLoad":
+    pending: "Throw away the load Nova drafted from an inbound message."
+  "mutation discardInboundReplyDraft":
+    pending: "Throw away the reply draft waiting on an inbound message."
+  "mutation draftInboundLoad":
+    pending: "Have Nova read the load an inbound tender describes into a draft for a person to check."
+  "mutation draftInboundMany":
+    pending: "Have Nova draft replies and loads for many inbound messages in the background."
+  "mutation draftInboundReply":
+    pending: "Have Nova draft a reply to an inbound message for a person to review."
+  "mutation fileInboundAttachment":
+    pending: "File an email attachment on a shipment as a typed document, whole or split into page ranges."
+  "mutation fileInboundMany":
+    pending: "File every readable attachment of each inbound message on its matched shipment."
+  "mutation logInboundException":
+    pending: "Log a shortage, overage or damage from a delivery on the shipment as a billing hold."
+  "mutation saveInboundReplyDraft":
+    pending: "Save a person's reply to an inbound message as its draft."
+  "mutation sendInboundReply":
+    tools: [reply_to_inbound_message]
+  "mutation unblockInboundSender":
+    pending: "Let a blocked sender's mail on a source reach the queue again."
+  "mutation unfileInboundAttachment":
+    pending: "Take an email attachment back off the shipment it was filed on."
+  "mutation updateTriageReplyTemplate":
+    exempt: configuration
+    reason: "Reply templates are organization-wide wording an administrator maintains; replies use them."
+
+  # inboxpresence
+  "DELETE /api/v1/inbox/presence/":
+    exempt: infrastructure
+    reason: "Presence and typing signals a browser sends while a person is on the page."
+  "POST /api/v1/inbox/presence/":
+    exempt: infrastructure
+    reason: "Presence and typing signals a browser sends while a person is on the page."
 
   # insight
   "POST /api/v1/insights/:insightID/dismiss/":
@@ -2757,6 +2846,30 @@ writes:
     tools: [update_trailer]
   "mutation updateTrailer":
     tools: [update_trailer]
+
+  # triage
+  "mutation correctInboundClassification":
+    exempt: attestation
+    reason: "A person's verdict on what Nova read; it trains Nova and the sender's hints, so an agent correcting it would grade its own reading."
+  "mutation createTriageRule":
+    exempt: agent-administration
+    reason: "Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent."
+  "mutation deleteTriageRule":
+    exempt: agent-administration
+    reason: "Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent."
+  "mutation flagInboundFact":
+    exempt: attestation
+    reason: "A person's verdict on what Nova read; it trains Nova, so an agent flagging it would grade its own reading."
+  "mutation reopenInboundConflict":
+    pending: "Reopen a settled duplicate-document or repeated-load conflict on a triage message"
+  "mutation resolveInboundConflict":
+    pending: "Settle a duplicate-document or repeated-load conflict on a triage message: replace or keep the document on file, skip or confirm the load"
+  "mutation setTriageRuleEnabled":
+    exempt: agent-administration
+    reason: "Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent."
+  "mutation updateTriageRule":
+    exempt: agent-administration
+    reason: "Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent."
 
   # user
   "DELETE /api/v1/users/me/profile-picture/":

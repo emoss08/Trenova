@@ -6,10 +6,26 @@ export type RealtimeConnectionState = "connecting" | "connected" | "disconnected
 
 export const REALTIME_USERS_SCOPE = "users";
 
+/** What a member is doing in a scope that tracks it: reading a record, or writing to it. */
+export type RealtimePresenceActivity = "viewing" | "writing";
+
+/**
+ * A member's own state in a scope that carries one, such as the message a
+ * Triage reader has open. It rides on the join, so a change is a join again
+ * and reaches everyone as an `enter`.
+ */
+export interface RealtimePresenceState {
+  messageId: string | null;
+  activity: RealtimePresenceActivity;
+}
+
 export interface RealtimePresenceMember {
   userId: string;
   connectionId: string;
   name: string;
+  /** The record the member has open, in a scope that tracks it. */
+  messageId?: string | null;
+  activity?: RealtimePresenceActivity;
 }
 
 export interface RealtimeTypingEvent {
@@ -41,6 +57,8 @@ interface PresenceEvent {
   userId: string;
   connectionId: string;
   name?: string;
+  messageId?: string | null;
+  activity?: string;
 }
 
 interface PresenceSnapshot {
@@ -54,6 +72,8 @@ interface ScopeState {
   /** How many callers hold a join on this scope; zero means watched but not joined. */
   joins: number;
   joinPath: string | null;
+  /** This tab's own state in the scope, sent with every join. */
+  state: RealtimePresenceState | null;
 }
 
 const STREAM_PATH = "/realtime/stream/";
@@ -81,6 +101,15 @@ function parseJSON(data: string): unknown {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
+}
+
+function presenceActivity(value: unknown): RealtimePresenceActivity | undefined {
+  return value === "viewing" || value === "writing" ? value : undefined;
+}
+
+function presenceMessageId(value: unknown): string | null | undefined {
+  if (value === null) return null;
+  return typeof value === "string" ? (value === "" ? null : value) : undefined;
 }
 
 /**
@@ -200,10 +229,17 @@ export class RealtimeClient {
    * counted, so two components on one scope share one membership, and they are
    * replayed on every reconnect because a new stream is a new connection.
    */
-  public joinScope(scope: string, joinPath: string): () => void {
+  public joinScope(
+    scope: string,
+    joinPath: string,
+    presence?: RealtimePresenceState,
+  ): () => void {
     const state = this.scopeState(scope);
     state.joins += 1;
     state.joinPath = joinPath;
+    if (presence !== undefined) {
+      state.state = presence;
+    }
     if (state.joins === 1 && this.connectionId) {
       void this.sendJoin(scope, joinPath, this.connectionId);
     }
@@ -218,6 +254,7 @@ export class RealtimeClient {
       const connectionId = this.connectionId;
       const path = state.joinPath;
       state.joinPath = null;
+      state.state = null;
       state.members.clear();
       this.notifyScope(scope);
       this.pruneScope(scope);
@@ -227,6 +264,28 @@ export class RealtimeClient {
           .catch(() => undefined);
       }
     };
+  }
+
+  /**
+   * Changes this tab's own state in a joined scope — the message it has open,
+   * whether it is writing — and tells the scope at once. The latest state is
+   * what every later join, including the one after a reconnect, sends.
+   */
+  public setScopeState(scope: string, presence: RealtimePresenceState): void {
+    const state = this.scopes.get(scope);
+    if (!state) return;
+    const current = state.state;
+    if (
+      current !== null &&
+      current.messageId === presence.messageId &&
+      current.activity === presence.activity
+    ) {
+      return;
+    }
+    state.state = presence;
+    if (state.joins > 0 && state.joinPath && this.connectionId) {
+      void this.sendJoin(scope, state.joinPath, this.connectionId);
+    }
   }
 
   /** Tells a joined scope the user is typing, or has stopped. Best effort by design. */
@@ -399,6 +458,18 @@ export class RealtimeClient {
     }
   }
 
+  private toMember(member: RealtimePresenceMember): RealtimePresenceMember {
+    const messageId = presenceMessageId(member.messageId);
+    const activity = presenceActivity(member.activity);
+    return {
+      userId: member.userId,
+      connectionId: member.connectionId,
+      name: member.name ?? "",
+      ...(messageId === undefined ? {} : { messageId }),
+      ...(activity === undefined ? {} : { activity }),
+    };
+  }
+
   private onSnapshot(payload: unknown): void {
     if (!isRecord(payload) || typeof payload.scope !== "string") return;
     const snapshot = payload as unknown as PresenceSnapshot;
@@ -418,18 +489,24 @@ export class RealtimeClient {
     if (event.action === "leave") {
       if (!state.members.delete(event.connectionId)) return;
     } else {
-      state.members.set(event.connectionId, {
-        userId: event.userId,
-        connectionId: event.connectionId,
-        name: event.name ?? "",
-      });
+      state.members.set(
+        event.connectionId,
+        this.toMember({
+          userId: event.userId,
+          connectionId: event.connectionId,
+          name: event.name ?? "",
+          messageId: event.messageId,
+          activity: presenceActivity(event.activity),
+        }),
+      );
     }
     this.notifyScope(event.scope);
   }
 
   private async sendJoin(scope: string, path: string, connectionId: string): Promise<void> {
     try {
-      const snapshot = await api.post<PresenceSnapshot>(path, { connectionId });
+      const presence = this.scopes.get(scope)?.state ?? null;
+      const snapshot = await api.post<PresenceSnapshot>(path, { connectionId, ...presence });
       const state = this.scopes.get(scope);
       if (!state || state.joins === 0 || this.connectionId !== connectionId) {
         return;
@@ -444,7 +521,9 @@ export class RealtimeClient {
   private replaceMembers(scope: string, members: RealtimePresenceMember[]): void {
     const state = this.scopes.get(scope);
     if (!state) return;
-    state.members = new Map(members.map((member) => [member.connectionId, member]));
+    state.members = new Map(
+      members.map((member) => [member.connectionId, this.toMember(member)]),
+    );
     this.notifyScope(scope);
   }
 
@@ -460,7 +539,7 @@ export class RealtimeClient {
   private scopeState(scope: string): ScopeState {
     let state = this.scopes.get(scope);
     if (!state) {
-      state = { members: new Map(), listeners: new Set(), joins: 0, joinPath: null };
+      state = { members: new Map(), listeners: new Set(), joins: 0, joinPath: null, state: null };
       this.scopes.set(scope, state);
     }
     return state;

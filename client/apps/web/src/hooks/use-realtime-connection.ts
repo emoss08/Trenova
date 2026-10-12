@@ -31,6 +31,9 @@ import {
 } from "@/lib/shipment-comment-realtime";
 import { isOtherUsersTurnEvent } from "@/lib/assistant-turn-realtime";
 import { boundCaseRecords, CASE_QUERY_ROOTS, touchesCase } from "@/lib/case-realtime";
+import { createInboundMessagePatcher, isInboundMessageEvent } from "@/lib/triage/realtime";
+import { senderName } from "@/lib/triage/message-state";
+import { useTriageStore } from "@/stores/triage-store";
 import type { ThreadPages } from "@/lib/thread-list";
 import { parseReplyReady } from "@/components/assistant/reply-ready";
 import { announceReplyReady } from "@/components/assistant/reply-ready-toast";
@@ -80,6 +83,22 @@ export function useRealtimeConnection() {
     const pendingKeys = pendingKeysRef.current;
     const lastFlushedAt = new Map<string, number>();
     let disposed = false;
+
+    // A message that arrives while Triage is open joins its folder with an
+    // entry of its own and a word about who it is from; anywhere else it only
+    // moves the counts.
+    const inboundMessages = createInboundMessagePatcher({
+      queryClient,
+      meId: user.id,
+      onArrival: (message) => {
+        const triage = useTriageStore.getState();
+        if (triage.mounted === 0) {
+          return;
+        }
+        triage.markArrival(message.id);
+        toast(t("New from {0}", senderName(message)));
+      },
+    });
 
     // Refetches every pending root not refetched within the last
     // MIN_REFETCH_INTERVAL_MS, and comes back for the rest when their
@@ -278,6 +297,11 @@ export function useRealtimeConnection() {
         enqueueInvalidation(CASE_QUERY_ROOTS);
       }
 
+      if (isInboundMessageEvent(evt)) {
+        inboundMessages.handle(evt);
+        return;
+      }
+
       if (isShipmentCommentEvent(evt)) {
         handleShipmentCommentEvent(queryClient, evt, user.id);
         return;
@@ -326,6 +350,7 @@ export function useRealtimeConnection() {
 
     return () => {
       disposed = true;
+      inboundMessages.dispose();
       offState();
       offResource();
       offReset();

@@ -61,15 +61,21 @@ type CountInboundMessagesRequest struct {
 	TenantInfo pagination.TenantInfo   `json:"tenantInfo"`
 	Statuses   []inboundmessage.Status `json:"statuses"`
 	Since      int64                   `json:"since"`
+	ViewerID   pulid.ID                `json:"-"`
+	Now        int64                   `json:"-"`
 }
 
 // InboundMessageCount is one cell of the inbox's census: how many messages share
-// a status, a reading and a mailbox. The service folds these into lanes, kinds
-// and mailboxes, so one aggregate answers all three.
+// a status, a reading, a mailbox, a parking, whether the viewer owns them and
+// whether they are past due. The service folds these into lanes, kinds and
+// mailboxes, so one aggregate answers all of them.
 type InboundMessageCount struct {
 	Status         inboundmessage.Status         `bun:"status"`
 	Classification inboundmessage.Classification `bun:"classification"`
 	MailboxID      pulid.ID                      `bun:"mailbox_id"`
+	Parked         inboundmessage.Parking        `bun:"parked"`
+	Mine           bool                          `bun:"mine"`
+	Overdue        bool                          `bun:"overdue"`
 	Count          int                           `bun:"count"`
 }
 
@@ -148,6 +154,18 @@ type InboundMessageRepository interface {
 		ctx context.Context,
 		messageID pulid.ID,
 		tenantInfo pagination.TenantInfo,
+	) ([]*inboundmessage.InboundAttachment, error)
+	ListAttachmentsByMessageIDs(
+		ctx context.Context,
+		req ListAttachmentsByMessageIDsRequest,
+	) (map[pulid.ID][]*inboundmessage.InboundAttachment, error)
+	GetAttachmentByID(
+		ctx context.Context,
+		req GetInboundAttachmentRequest,
+	) (*inboundmessage.InboundAttachment, error)
+	GetAttachmentsByIDs(
+		ctx context.Context,
+		req GetInboundAttachmentsRequest,
 	) ([]*inboundmessage.InboundAttachment, error)
 	CountBreakdown(
 		ctx context.Context,

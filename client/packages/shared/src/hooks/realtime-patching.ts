@@ -169,12 +169,18 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   // list and every filtered variant of it.
   watchtower: ["watchtower", "attention"],
   briefings: ["briefing"],
-  // Every inbox write: the lanes, their counts and the open message move
-  // together. Mailbox administration is not a message and is left alone.
+  // Every Triage write: the folders, their counts, the open message, its
+  // thread, the saved views' waiting numbers and the briefing move together.
+  // The web app patches a named message in place (lib/triage/realtime.ts);
+  // these roots are what a bulk notice or a reset refreshes. Mailbox
+  // administration is not a message and is left alone.
   inbound_message: [
     ["inbox", "messages"],
     ["inbox", "counts"],
     ["inbox", "message"],
+    ["inbox", "thread"],
+    ["inbox", "views"],
+    ["inbox", "briefing"],
   ],
   // A batch moving is the intake queue, the open batch and, since a request's
   // progress is announced under the same resource, the requests a record's

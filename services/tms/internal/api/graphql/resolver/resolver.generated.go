@@ -728,7 +728,10 @@ func FromServices(s *Services) *Resolver {
 		InboundMessageService: s.InboundMessageService,
 	}
 	inboundreplyDeps := &inboundreplyresolver.Deps{
-		Core: s.Core,
+		Core:                s.Core,
+		InboundReplyService: s.InboundReplyService,
+		TriageWorkService:   s.TriageWorkService,
+		TriagePeekService:   s.TriagePeekService,
 	}
 	invoiceDeps := &invoiceresolver.Deps{
 		Core:            s.Core,
@@ -975,7 +978,11 @@ func FromServices(s *Services) *Resolver {
 		TrailerService: s.TrailerService,
 	}
 	triageDeps := &triageresolver.Deps{
-		Core: s.Core,
+		Core:                    s.Core,
+		TriageRuleService:       s.TriageRuleService,
+		TriageBriefingService:   s.TriageBriefingService,
+		TriageCorrectionService: s.TriageCorrectionService,
+		TriageConflictService:   s.TriageConflictService,
 	}
 	userDeps := &userresolver.Deps{
 		Core:        s.Core,

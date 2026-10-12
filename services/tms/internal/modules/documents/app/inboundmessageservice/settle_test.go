@@ -3,8 +3,8 @@ package inboundmessageservice_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

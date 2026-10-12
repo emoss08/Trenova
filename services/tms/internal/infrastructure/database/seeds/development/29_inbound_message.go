@@ -4,17 +4,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/documenttypecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,32 +27,35 @@ import (
 )
 
 const (
-	inboundSeedHour = int64(3600)
-	inboundSeedDay  = 24 * inboundSeedHour
+	inboundSeedMinute = int64(60)
+	inboundSeedHour   = 60 * inboundSeedMinute
+	inboundSeedDay    = 24 * inboundSeedHour
 
-	// SeedInboundMailboxToken is the webhook token the seeded mailbox listens
-	// on. A real mailbox shows its token once and stores only the hash; this
-	// one is published here so a developer can post a delivery to it without
-	// rotating anything. The seed runs in development only, and the token is
-	// the same in every checkout — so it identifies nothing worth protecting.
-	SeedInboundMailboxToken = "trenova-development-inbound-token"
-	// SeedInboundMailboxAddress is where the seeded mail is addressed.
-	SeedInboundMailboxAddress = "intake@dev.trenova.app"
-	// SeedInboundMailboxSigningSecret is the seeded mailbox's Svix signing
-	// secret, published for the same reason as the token: so a developer can
-	// sign a delivery with webhooksig.SignSvix and post it. It is stored sealed
-	// with the configured encryption key, like any other mailbox's.
+	SeedInboundMailboxToken         = "trenova-development-inbound-token"
+	SeedInboundMailboxAddress       = "intake@dev.trenova.app"
 	SeedInboundMailboxSigningSecret = "whsec_dHJlbm92YS1kZXZlbG9wbWVudC1pbmJvdW5kLXNpZ25pbmcta2V5" // #nosec G101 -- a published development fixture, not a credential.
+
+	seedBillingMailboxToken   = "trenova-development-billing-token"
+	seedBillingMailboxAddress = "ap@dev.trenova.app"
+	seedClaimsMailboxToken    = "trenova-development-claims-token"
+	seedClaimsMailboxAddress  = "claims@dev.trenova.app"
+	seedOldMessagePrefix      = "seed-inbound-%"
 )
+
+var seedInboundShipmentPros = []string{
+	"SEED-PAY-001",
+	"SEED-PAY-002",
+	"SEED-SHP-002",
+	"SEED-SHP-003",
+	"SEED-SHP-005",
+}
+
+var seedInboundDocumentTypeCodes = []string{"INVOICE", documenttype.CodePOD, "RATECONF"}
 
 type stringSealer interface {
 	EncryptString(value string) (string, error)
 }
 
-// mailboxSigningSecret seals the development signing secret. With no key
-// configured there is nothing to seal with, so the mailbox is seeded without
-// one and refuses deliveries — the safe default — rather than the seed failing
-// or storing the secret in the clear.
 func mailboxSigningSecret(sealer stringSealer) (string, error) {
 	sealed, err := sealer.EncryptString(SeedInboundMailboxSigningSecret)
 	if errors.Is(err, encryptionservice.ErrKeyManagerDisabled) {
@@ -65,31 +72,20 @@ type InboundMessageSeed struct {
 	seedhelpers.BaseSeed
 }
 
-// InboundMessageSeed writes one monitored address and the mail that came to
-// it: a tender waiting on a person, a rate confirmation the desk matched and
-// handled, a proof of delivery with its attachment read, a status request
-// answered without anybody looking, a message that failed mid-pipeline, and
-// one nobody could make sense of.
-//
-// Between them the inbox has something in every lane — waiting, handled,
-// ignored and quarantined — and the watchtower has items to show, because the
-// ones that need a person are exactly the ones that project onto it.
-//
-// The classifications and confidences are written rather than computed: this
-// seed exists to show what the pages look like without a provider being
-// reachable. Real mail arriving on the same mailbox is classified for real.
-//
-// Depends on:
-//   - Shipment: the loads the messages are matched to
 func NewInboundMessageSeed() *InboundMessageSeed {
 	seed := &InboundMessageSeed{}
 	seed.BaseSeed = *seedhelpers.NewBaseSeed(
 		"InboundMessage",
-		"1.0.0",
-		"Seeds a monitored mailbox and mail in every lane of the inbox",
+		"2.0.0",
+		"Seeds three monitored addresses and a Triage queue in every state the design shows",
 		[]common.Environment{common.EnvDevelopment},
 	)
-	seed.SetDependencies(seedhelpers.SeedShipment)
+	seed.SetDependencies(
+		seedhelpers.SeedShipment,
+		seedhelpers.SeedDriverPay,
+		seedhelpers.SeedDocumentType,
+		seedhelpers.SeedOrganizationRoles,
+	)
 
 	return seed
 }
@@ -97,9 +93,25 @@ func NewInboundMessageSeed() *InboundMessageSeed {
 type inboundSeedRefs struct {
 	org       *tenant.Organization
 	admin     *tenant.User
-	customers []*customer.Customer
-	shipments []*shipment.Shipment
+	team      seedTeam
+	customers map[string]*customer.Customer
+	shipments map[string]*shipment.Shipment
+	docTypes  map[string]pulid.ID
 	now       int64
+	dayStart  int64
+	weekStart int64
+}
+
+type seedTeam struct {
+	dana   *tenant.User
+	marcus *tenant.User
+	priya  *tenant.User
+}
+
+type seedMailboxes struct {
+	intake  *inboundmessage.Mailbox
+	billing *inboundmessage.Mailbox
+	claims  *inboundmessage.Mailbox
 }
 
 func (s *InboundMessageSeed) Run(ctx context.Context, tx bun.Tx) error {
@@ -109,11 +121,6 @@ func (s *InboundMessageSeed) Run(ctx context.Context, tx bun.Tx) error {
 		s.Name(),
 		nil,
 		func(ctx context.Context, tx bun.Tx, sc *seedhelpers.SeedContext) error {
-			refs, err := s.loadRefs(ctx, tx, sc)
-			if err != nil {
-				return err
-			}
-
 			secret, err := mailboxSigningSecret(
 				encryptionservice.New(encryptionservice.Params{Config: sc.Config()}),
 			)
@@ -122,93 +129,55 @@ func (s *InboundMessageSeed) Run(ctx context.Context, tx bun.Tx) error {
 			}
 			if secret == "" {
 				sc.Logger().Warn(
-					"no encryption key is configured, so the seeded mailbox has no signing secret and will refuse deliveries",
+					"no encryption key is configured, so the seeded mailboxes have no signing secret and will refuse deliveries",
 				)
 			}
 
-			cols := inboundmessagecol.MailboxColumns
-			count, err := tx.NewSelect().
-				Model((*inboundmessage.Mailbox)(nil)).
-				Where(cols.OrganizationID.Eq(), refs.org.ID).
-				Where(cols.BusinessUnitID.Eq(), refs.org.BusinessUnitID).
-				Count(ctx)
+			org, err := sc.GetDefaultOrganization(ctx)
 			if err != nil {
-				return fmt.Errorf("count existing mailboxes: %w", err)
+				return err
 			}
-			if count > 0 {
-				return s.backfillSigningSecret(ctx, tx, refs, secret)
+			seeded, err := triageAlreadySeeded(ctx, tx, org)
+			if err != nil {
+				return err
+			}
+			if seeded {
+				return backfillSigningSecret(ctx, tx, org, secret)
 			}
 
-			mailbox, err := s.insertMailbox(ctx, tx, refs, secret)
+			refs, err := s.loadRefs(ctx, tx, sc, org)
+			if err != nil {
+				return err
+			}
+			if err = retireFirstEditionSeed(ctx, tx, org); err != nil {
+				return err
+			}
+
+			boxes, err := s.insertMailboxes(ctx, tx, refs, secret)
 			if err != nil {
 				return err
 			}
 
-			return s.insertMessages(ctx, tx, refs, mailbox)
+			return s.insertTriage(ctx, tx, refs, boxes)
 		},
 	)
 }
 
-func (s *InboundMessageSeed) loadRefs(
-	ctx context.Context,
-	tx bun.Tx,
-	sc *seedhelpers.SeedContext,
-) (*inboundSeedRefs, error) {
-	org, err := sc.GetDefaultOrganization(ctx)
-	if err != nil {
-		return nil, err
-	}
-	admin, err := sc.GetUserByUsername(ctx, "admin")
-	if err != nil {
-		return nil, fmt.Errorf("get admin user: %w", err)
-	}
+func triageAlreadySeeded(ctx context.Context, tx bun.Tx, org *tenant.Organization) (bool, error) {
+	cols := inboundmessagecol.MailboxColumns
 
-	refs := &inboundSeedRefs{org: org, admin: admin, now: timeutils.NowUnix()}
-
-	customerCols := customercol.CustomerColumns
-	refs.customers = make([]*customer.Customer, 0, 2)
-	if err = tx.NewSelect().
-		Model(&refs.customers).
-		Where(customerCols.OrganizationID.Eq(), org.ID).
-		Where(customerCols.BusinessUnitID.Eq(), org.BusinessUnitID).
-		Order(customerCols.Name.OrderAsc()).
-		Limit(2).
-		Scan(ctx); err != nil {
-		return nil, fmt.Errorf("load customers: %w", err)
-	}
-	if len(refs.customers) < 2 {
-		return nil, fmt.Errorf("need two seeded customers: %w", seedhelpers.ErrEntityNotFound)
-	}
-
-	shipmentCols := shipmentcol.ShipmentColumns
-	refs.shipments = make([]*shipment.Shipment, 0, 3)
-	if err = tx.NewSelect().
-		Model(&refs.shipments).
-		Where(shipmentCols.OrganizationID.Eq(), org.ID).
-		Where(shipmentCols.BusinessUnitID.Eq(), org.BusinessUnitID).
-		Order(shipmentCols.ProNumber.OrderAsc()).
-		Limit(3).
-		Scan(ctx); err != nil {
-		return nil, fmt.Errorf("load shipments: %w", err)
-	}
-	if len(refs.shipments) < 3 {
-		return nil, fmt.Errorf("need three seeded shipments: %w", seedhelpers.ErrEntityNotFound)
-	}
-
-	return refs, nil
+	return tx.NewSelect().
+		Model((*inboundmessage.Mailbox)(nil)).
+		Where(cols.OrganizationID.Eq(), org.ID).
+		Where(cols.BusinessUnitID.Eq(), org.BusinessUnitID).
+		Where(cols.TokenHash.Eq(), hashutils.SHA256Hex(seedBillingMailboxToken)).
+		Exists(ctx)
 }
 
-// insertMailbox writes the address in the middle policy — act when the reading
-// is confident, ask when it is not. AlwaysReview would leave every seeded
-// message in one lane, and AutoHandle would leave none of them waiting, so
-// neither would show what the inbox is for.
-// backfillSigningSecret gives the seeded mailbox a secret in a database seeded
-// before it had one, so re-running the seed makes it able to receive mail. A
-// secret somebody has since set is left alone.
-func (s *InboundMessageSeed) backfillSigningSecret(
+func backfillSigningSecret(
 	ctx context.Context,
 	tx bun.Tx,
-	refs *inboundSeedRefs,
+	org *tenant.Organization,
 	secret string,
 ) error {
 	if secret == "" {
@@ -219,257 +188,326 @@ func (s *InboundMessageSeed) backfillSigningSecret(
 	if _, err := tx.NewUpdate().
 		Model((*inboundmessage.Mailbox)(nil)).
 		Set(cols.SigningSecret.Set(), secret).
-		Where(cols.OrganizationID.Eq(), refs.org.ID).
-		Where(cols.BusinessUnitID.Eq(), refs.org.BusinessUnitID).
-		Where(cols.TokenHash.Eq(), hashutils.SHA256Hex(SeedInboundMailboxToken)).
+		Where(cols.OrganizationID.Eq(), org.ID).
+		Where(cols.BusinessUnitID.Eq(), org.BusinessUnitID).
+		Where(cols.TokenHash.In(), bun.List([]string{
+			hashutils.SHA256Hex(SeedInboundMailboxToken),
+			hashutils.SHA256Hex(seedBillingMailboxToken),
+			hashutils.SHA256Hex(seedClaimsMailboxToken),
+		})).
 		Where(cols.SigningSecret.IsNull()).
 		Exec(ctx); err != nil {
-		return fmt.Errorf("backfill the mailbox signing secret: %w", err)
+		return fmt.Errorf("backfill the mailbox signing secrets: %w", err)
 	}
 
 	return nil
 }
 
-func (s *InboundMessageSeed) insertMailbox(
+func retireFirstEditionSeed(ctx context.Context, tx bun.Tx, org *tenant.Organization) error {
+	mailboxCols := inboundmessagecol.MailboxColumns
+	if _, err := tx.NewDelete().
+		Model((*inboundmessage.Mailbox)(nil)).
+		Where(mailboxCols.OrganizationID.Eq(), org.ID).
+		Where(mailboxCols.BusinessUnitID.Eq(), org.BusinessUnitID).
+		Where(mailboxCols.TokenHash.Eq(), hashutils.SHA256Hex(SeedInboundMailboxToken)).
+		Exec(ctx); err != nil {
+		return fmt.Errorf("retire the first seeded mailbox: %w", err)
+	}
+
+	return nil
+}
+
+func (s *InboundMessageSeed) loadRefs(
+	ctx context.Context,
+	tx bun.Tx,
+	sc *seedhelpers.SeedContext,
+	org *tenant.Organization,
+) (*inboundSeedRefs, error) {
+	admin, err := sc.GetUserByUsername(ctx, "admin")
+	if err != nil {
+		return nil, fmt.Errorf("get admin user: %w", err)
+	}
+
+	now := timeutils.NowUnix()
+	loc, err := time.LoadLocation(org.Timezone)
+	if err != nil {
+		loc = time.UTC
+	}
+	refs := &inboundSeedRefs{
+		org:       org,
+		admin:     admin,
+		now:       now,
+		dayStart:  timeutils.DayStart(now, loc),
+		weekStart: timeutils.WeekStart(now, loc),
+	}
+
+	if refs.customers, err = loadSeedCustomers(ctx, tx, org); err != nil {
+		return nil, err
+	}
+	if refs.shipments, err = loadSeedShipments(ctx, tx, org); err != nil {
+		return nil, err
+	}
+	if refs.docTypes, err = loadSeedDocumentTypes(ctx, tx, org); err != nil {
+		return nil, err
+	}
+	if refs.team, err = seedTeammates(ctx, tx, sc, org, admin, s.Name()); err != nil {
+		return nil, err
+	}
+
+	return refs, nil
+}
+
+func loadSeedCustomers(
+	ctx context.Context,
+	tx bun.Tx,
+	org *tenant.Organization,
+) (map[string]*customer.Customer, error) {
+	cols := customercol.CustomerColumns
+	rows := make([]*customer.Customer, 0, 8)
+	if err := tx.NewSelect().
+		Model(&rows).
+		Where(cols.OrganizationID.Eq(), org.ID).
+		Where(cols.BusinessUnitID.Eq(), org.BusinessUnitID).
+		Where(cols.Code.In(), bun.List([]string{"ACME", "FRSH", "GLBL", "RNGE", "PEAK"})).
+		Scan(ctx); err != nil {
+		return nil, fmt.Errorf("load customers: %w", err)
+	}
+
+	byCode := make(map[string]*customer.Customer, len(rows))
+	for _, row := range rows {
+		byCode[row.Code] = row
+	}
+	for _, code := range []string{"ACME", "FRSH", "GLBL", "RNGE", "PEAK"} {
+		if _, ok := byCode[code]; !ok {
+			return nil, fmt.Errorf("need seeded customer %s: %w", code, seedhelpers.ErrEntityNotFound)
+		}
+	}
+
+	return byCode, nil
+}
+
+func loadSeedShipments(
+	ctx context.Context,
+	tx bun.Tx,
+	org *tenant.Organization,
+) (map[string]*shipment.Shipment, error) {
+	cols := shipmentcol.ShipmentColumns
+	rows := make([]*shipment.Shipment, 0, len(seedInboundShipmentPros))
+	if err := tx.NewSelect().
+		Model(&rows).
+		Where(cols.OrganizationID.Eq(), org.ID).
+		Where(cols.BusinessUnitID.Eq(), org.BusinessUnitID).
+		Where(cols.ProNumber.In(), bun.List(seedInboundShipmentPros)).
+		Scan(ctx); err != nil {
+		return nil, fmt.Errorf("load shipments: %w", err)
+	}
+
+	byPro := make(map[string]*shipment.Shipment, len(rows))
+	for _, row := range rows {
+		byPro[row.ProNumber] = row
+	}
+	for _, pro := range seedInboundShipmentPros {
+		if _, ok := byPro[pro]; !ok {
+			return nil, fmt.Errorf("need seeded shipment %s: %w", pro, seedhelpers.ErrEntityNotFound)
+		}
+	}
+
+	return byPro, nil
+}
+
+func loadSeedDocumentTypes(
+	ctx context.Context,
+	tx bun.Tx,
+	org *tenant.Organization,
+) (map[string]pulid.ID, error) {
+	cols := documenttypecol.DocumentTypeColumns
+	rows := make([]*documenttype.DocumentType, 0, len(seedInboundDocumentTypeCodes))
+	if err := tx.NewSelect().
+		Model(&rows).
+		Where(cols.OrganizationID.Eq(), org.ID).
+		Where(cols.BusinessUnitID.Eq(), org.BusinessUnitID).
+		Where(cols.Code.In(), bun.List(seedInboundDocumentTypeCodes)).
+		Scan(ctx); err != nil {
+		return nil, fmt.Errorf("load document types: %w", err)
+	}
+
+	byCode := make(map[string]pulid.ID, len(rows))
+	for _, row := range rows {
+		byCode[row.Code] = row.ID
+	}
+	for _, code := range seedInboundDocumentTypeCodes {
+		if _, ok := byCode[code]; !ok {
+			return nil, fmt.Errorf("need document type %s: %w", code, seedhelpers.ErrEntityNotFound)
+		}
+	}
+
+	return byCode, nil
+}
+
+func (s *InboundMessageSeed) insertMailboxes(
 	ctx context.Context,
 	tx bun.Tx,
 	refs *inboundSeedRefs,
 	secret string,
-) (*inboundmessage.Mailbox, error) {
-	mailbox := &inboundmessage.Mailbox{
-		ID:             pulid.MustNew("imbx_"),
-		OrganizationID: refs.org.ID,
-		BusinessUnitID: refs.org.BusinessUnitID,
-		Name:           "Intake",
-		Address:        SeedInboundMailboxAddress,
-		Provider:       inboundmessage.ProviderResend,
-		TokenHash:      hashutils.SHA256Hex(SeedInboundMailboxToken),
-		Purpose:        "Tenders, rate confirmations, PODs and status requests",
-		ReviewPolicy:   inboundmessage.ReviewBelowConfidence,
-		MinConfidence:  0.75,
-		Status:         inboundmessage.MailboxActive,
-		SigningSecret:  secret,
+) (*seedMailboxes, error) {
+	boxes := seedMailboxesFor(refs, secret)
+	for _, mailbox := range []*inboundmessage.Mailbox{boxes.intake, boxes.billing, boxes.claims} {
+		if _, err := tx.NewInsert().Model(mailbox).Exec(ctx); err != nil {
+			return nil, fmt.Errorf("insert mailbox %s: %w", mailbox.Name, err)
+		}
 	}
 
-	if _, err := tx.NewInsert().Model(mailbox).Exec(ctx); err != nil {
-		return nil, fmt.Errorf("insert mailbox: %w", err)
+	return boxes, nil
+}
+
+func seedMailboxesFor(refs *inboundSeedRefs, secret string) *seedMailboxes {
+	mailbox := func(name, address, token, purpose string) *inboundmessage.Mailbox {
+		return &inboundmessage.Mailbox{
+			ID:             pulid.MustNew("imbx_"),
+			OrganizationID: refs.org.ID,
+			BusinessUnitID: refs.org.BusinessUnitID,
+			Name:           name,
+			Address:        address,
+			Provider:       inboundmessage.ProviderResend,
+			TokenHash:      hashutils.SHA256Hex(token),
+			Purpose:        purpose,
+			ReviewPolicy:   inboundmessage.ReviewBelowConfidence,
+			MinConfidence:  0.75,
+			Status:         inboundmessage.MailboxActive,
+			SigningSecret:  secret,
+		}
 	}
 
-	return mailbox, nil
+	intake := mailbox("Intake", SeedInboundMailboxAddress, SeedInboundMailboxToken,
+		"Tenders, rate confirmations, PODs and status requests")
+	intake.BlockedSenders = []string{"deals.loadblaster.example"}
+
+	billing := mailbox("Billing", seedBillingMailboxAddress, seedBillingMailboxToken,
+		"Carrier invoices and payment questions")
+	billing.MinConfidence = 0.85
+	billing.TestSentAt = refs.now - 3*inboundSeedDay
+	billing.TestReceivedAt = refs.now - 3*inboundSeedDay + 40
+
+	claims := mailbox("Claims", seedClaimsMailboxAddress, seedClaimsMailboxToken,
+		"Detention disputes, shortages and damage claims")
+	claims.ReviewPolicy = inboundmessage.ReviewAlways
+	claims.MinConfidence = 0
+	claims.LastReceivedAt = refs.now - 7*inboundSeedDay - 2*inboundSeedHour
+
+	return &seedMailboxes{intake: intake, billing: billing, claims: claims}
 }
 
-// seededMessage is one piece of mail and the files that came with it, so the
-// attachment rows are written beside the message that carried them rather than
-// in a second pass that could drift out of step.
-type seededMessage struct {
-	message     *inboundmessage.InboundMessage
-	attachments []*inboundmessage.InboundAttachment
-}
-
-func (s *InboundMessageSeed) insertMessages(
+func (s *InboundMessageSeed) insertTriage(
 	ctx context.Context,
 	tx bun.Tx,
 	refs *inboundSeedRefs,
-	mailbox *inboundmessage.Mailbox,
+	boxes *seedMailboxes,
 ) error {
-	for _, seeded := range s.messages(refs, mailbox) {
-		if _, err := tx.NewInsert().Model(seeded.message).Exec(ctx); err != nil {
-			return fmt.Errorf("insert message %q: %w", seeded.message.Subject, err)
+	rules := seedRules(refs, boxes)
+	if len(rules) > 0 {
+		if _, err := tx.NewInsert().Model(&rules).Exec(ctx); err != nil {
+			return fmt.Errorf("insert triage rules: %w", err)
 		}
-		if len(seeded.attachments) == 0 {
-			continue
-		}
-		for _, attachment := range seeded.attachments {
-			attachment.MessageID = seeded.message.ID
-			attachment.OrganizationID = seeded.message.OrganizationID
-			attachment.BusinessUnitID = seeded.message.BusinessUnitID
-		}
-		if _, err := tx.NewInsert().Model(&seeded.attachments).Exec(ctx); err != nil {
-			return fmt.Errorf("insert attachments for %q: %w", seeded.message.Subject, err)
+	}
+
+	templates := seedReplyTemplates(refs)
+	if _, err := tx.NewInsert().Model(&templates).Exec(ctx); err != nil {
+		return fmt.Errorf("insert reply templates: %w", err)
+	}
+
+	messages := s.messages(refs, boxes, seedRuleSet(rules), templates)
+	if err := insertSeededMessages(ctx, tx, messages); err != nil {
+		return err
+	}
+	if err := markRuleMatches(ctx, tx, rules, messages); err != nil {
+		return err
+	}
+	if err := markMailboxesReceived(ctx, tx, boxes, messages); err != nil {
+		return err
+	}
+
+	extras := []any{
+		triageSettingsFor(refs),
+		ptrSlice(seedViews(refs)),
+		ptrSlice(seedSenderHints(refs)),
+	}
+	for _, model := range extras {
+		if _, err := tx.NewInsert().Model(model).Exec(ctx); err != nil {
+			return fmt.Errorf("insert triage fixtures: %w", err)
 		}
 	}
 
 	return nil
 }
 
-//nolint:funlen // One literal per message; splitting it would hide the set.
-func (s *InboundMessageSeed) messages(
-	refs *inboundSeedRefs,
-	mailbox *inboundmessage.Mailbox,
-) []seededMessage {
-	base := func(
-		providerID string,
-		from string,
-		fromName string,
-		subject string,
-		body string,
-		receivedAt int64,
-	) *inboundmessage.InboundMessage {
-		return &inboundmessage.InboundMessage{
-			ID:                pulid.MustNew("imsg_"),
-			OrganizationID:    refs.org.ID,
-			BusinessUnitID:    refs.org.BusinessUnitID,
-			MailboxID:         mailbox.ID,
-			ProviderMessageID: providerID,
-			MessageID:         "<" + providerID + "@mail.example.com>",
-			FromAddress:       from,
-			FromName:          fromName,
-			ToAddresses:       []string{mailbox.Address},
-			Subject:           subject,
-			TextBody:          body,
-			ReceivedAt:        receivedAt,
+func ptrSlice[T any](items []T) *[]T {
+	return &items
+}
+
+func insertSeededMessages(ctx context.Context, tx bun.Tx, messages []seededMessage) error {
+	activities := make([]*triage.Activity, 0, len(messages)*3)
+	replies := make([]*triage.Reply, 0, 2)
+	for _, seeded := range messages {
+		if _, err := tx.NewInsert().Model(seeded.message).Exec(ctx); err != nil {
+			return fmt.Errorf("insert message %q: %w", seeded.message.Subject, err)
+		}
+		if len(seeded.attachments) > 0 {
+			for _, attachment := range seeded.attachments {
+				attachment.MessageID = seeded.message.ID
+				attachment.OrganizationID = seeded.message.OrganizationID
+				attachment.BusinessUnitID = seeded.message.BusinessUnitID
+			}
+			if _, err := tx.NewInsert().Model(&seeded.attachments).Exec(ctx); err != nil {
+				return fmt.Errorf("insert attachments for %q: %w", seeded.message.Subject, err)
+			}
+		}
+		activities = append(activities, seeded.activities...)
+		replies = append(replies, seeded.replies...)
+	}
+
+	if len(replies) > 0 {
+		if _, err := tx.NewInsert().Model(&replies).Exec(ctx); err != nil {
+			return fmt.Errorf("insert replies: %w", err)
+		}
+	}
+	if len(activities) > 0 {
+		if _, err := tx.NewInsert().Model(&activities).Exec(ctx); err != nil {
+			return fmt.Errorf("insert activities: %w", err)
 		}
 	}
 
-	tender := base(
-		"seed-inbound-tender",
-		"dispatch@northwindfoods.example",
-		"Northwind Foods Dispatch",
-		"New load: Chicago IL to Columbus OH, pickup Thursday 08:00",
-		"Hi team — we have a dry van load ready Thursday morning. 42,000 lbs, "+
-			"no appointment needed at origin, delivery is a 2-hour window. "+
-			"Rate confirmation to follow once you accept.",
-		refs.now-2*inboundSeedHour,
-	)
-	tender.Classification = inboundmessage.ClassificationTender
-	tender.Confidence = 0.68
-	tender.Status = inboundmessage.StatusInReview
-	tender.MatchedCustomerID = refs.customers[0].ID
-	tender.MatchReason = "Sender domain matches " + refs.customers[0].Name
-	tender.ReviewNote = "Creating a load is not something a desk does on its own."
+	return nil
+}
 
-	rateCon := base(
-		"seed-inbound-ratecon",
-		"rates@northwindfoods.example",
-		"Northwind Foods Rates",
-		"Rate confirmation "+refs.shipments[0].ProNumber,
-		"Attached is the signed rate confirmation for "+refs.shipments[0].ProNumber+".",
-		refs.now-6*inboundSeedHour,
-	)
-	rateCon.Classification = inboundmessage.ClassificationRateConfirmation
-	rateCon.Confidence = 0.94
-	rateCon.Status = inboundmessage.StatusActioned
-	rateCon.MatchedCustomerID = refs.customers[0].ID
-	rateCon.MatchedShipmentID = refs.shipments[0].ID
-	rateCon.MatchReason = "Pro number " + refs.shipments[0].ProNumber + " in the subject"
-	rateCon.ReviewedBy = refs.admin.ID
-	rateCon.ReviewedAt = refs.now - 5*inboundSeedHour
-
-	pod := base(
-		"seed-inbound-pod",
-		"driver.settlement@partnercarrier.example",
-		"Partner Carrier Settlement",
-		"POD for "+refs.shipments[1].ProNumber,
-		"Delivered 14:22 yesterday, signed by R. Alvarez. Signed bill attached.",
-		refs.now-inboundSeedDay,
-	)
-	pod.Classification = inboundmessage.ClassificationProofOfDelivery
-	pod.Confidence = 0.91
-	pod.Status = inboundmessage.StatusActioned
-	pod.MatchedShipmentID = refs.shipments[1].ID
-	pod.MatchReason = "Pro number " + refs.shipments[1].ProNumber + " in the subject"
-
-	statusRequest := base(
-		"seed-inbound-status",
-		"ap@harborlinegrocers.example",
-		"Harborline Grocers",
-		"Where is "+refs.shipments[2].ProNumber+"?",
-		"Customer is asking for an ETA on this one. Any update?",
-		refs.now-90*60,
-	)
-	statusRequest.Classification = inboundmessage.ClassificationStatusRequest
-	statusRequest.Confidence = 0.96
-	statusRequest.Status = inboundmessage.StatusActioned
-	statusRequest.MatchedCustomerID = refs.customers[1].ID
-	statusRequest.MatchedShipmentID = refs.shipments[2].ID
-	statusRequest.MatchReason = "Pro number " + refs.shipments[2].ProNumber + " in the subject"
-	statusRequest.ReviewNote = "Answered from tracking; nobody had to look at it."
-
-	dispute := base(
-		"seed-inbound-detention",
-		"claims@harborlinegrocers.example",
-		"Harborline Grocers Claims",
-		"Disputing detention on "+refs.shipments[1].ProNumber,
-		"We show the driver arriving 40 minutes after the appointment window, "+
-			"so we will not be paying the detention on this load.",
-		refs.now-4*inboundSeedHour,
-	)
-	dispute.Classification = inboundmessage.ClassificationDetentionDispute
-	dispute.Confidence = 0.81
-	dispute.Status = inboundmessage.StatusInReview
-	dispute.MatchedCustomerID = refs.customers[1].ID
-	dispute.MatchedShipmentID = refs.shipments[1].ID
-	dispute.MatchReason = "Pro number " + refs.shipments[1].ProNumber + " in the subject"
-	dispute.ReviewNote = "A charge is being disputed; that is a person's call."
-
-	// A message that failed mid-pipeline. It is in review rather than left at
-	// Received on purpose: Received reads as still being worked on, and that is
-	// the state nobody goes and checks.
-	failed := base(
-		"seed-inbound-failed",
-		"edi@partnercarrier.example",
-		"Partner Carrier EDI",
-		"Automated: load status file 20260919-0441",
-		"This message body was truncated by the sending system.",
-		refs.now-8*inboundSeedHour,
-	)
-	failed.Status = inboundmessage.StatusInReview
-	failed.FailureCode = "SETTLE_FAILED"
-	failed.FailureText = "The classifier could not be reached after four attempts."
-	failed.ReviewNote = "This message could not be processed, so it is waiting on a person."
-
-	unreadable := base(
-		"seed-inbound-unreadable",
-		"noreply@unknownsender.example",
-		"",
-		"(no subject)",
-		"",
-		refs.now-3*inboundSeedDay,
-	)
-	unreadable.Classification = inboundmessage.ClassificationOther
-	unreadable.Confidence = 0.22
-	unreadable.Status = inboundmessage.StatusQuarantined
-	unreadable.SpamScore = 7.4
-	unreadable.ReviewNote = "Nothing in this message says what it is about."
-
-	return []seededMessage{
-		{message: tender},
-		{
-			message: rateCon,
-			attachments: []*inboundmessage.InboundAttachment{{
-				ID:          pulid.MustNew("imsga_"),
-				FileName:    "rate-confirmation-" + refs.shipments[0].ProNumber + ".pdf",
-				ContentType: "application/pdf",
-				ByteSize:    184_320,
-				Kind:        inboundmessage.AttachmentRateConfirmation,
-			}},
-		},
-		{
-			message: pod,
-			attachments: []*inboundmessage.InboundAttachment{
-				{
-					ID:          pulid.MustNew("imsga_"),
-					FileName:    "signed-bol-" + refs.shipments[1].ProNumber + ".pdf",
-					ContentType: "application/pdf",
-					ByteSize:    221_184,
-					Kind:        inboundmessage.AttachmentProofOfDelivery,
-				},
-				// A file the pipeline could not read. It leaves a reason on its
-				// own row rather than vanishing, because its absence is what
-				// makes the message incomplete.
-				{
-					ID:          pulid.MustNew("imsga_"),
-					FileName:    "trailer-photo.heic",
-					ContentType: "image/heic",
-					ByteSize:    2_097_152,
-					Kind:        inboundmessage.AttachmentUnknown,
-					FailureText: "This file type cannot be uploaded.",
-				},
-			},
-		},
-		{message: statusRequest},
-		{message: dispute},
-		{message: failed},
-		{message: unreadable},
+func markMailboxesReceived(
+	ctx context.Context,
+	tx bun.Tx,
+	boxes *seedMailboxes,
+	messages []seededMessage,
+) error {
+	latest := make(map[pulid.ID]int64, 3)
+	for _, seeded := range messages {
+		if seeded.message.ReceivedAt > latest[seeded.message.MailboxID] {
+			latest[seeded.message.MailboxID] = seeded.message.ReceivedAt
+		}
 	}
+
+	cols := inboundmessagecol.MailboxColumns
+	for _, mailbox := range []*inboundmessage.Mailbox{boxes.intake, boxes.billing, boxes.claims} {
+		at, ok := latest[mailbox.ID]
+		if !ok {
+			continue
+		}
+		if _, err := tx.NewUpdate().
+			Model((*inboundmessage.Mailbox)(nil)).
+			Set(cols.LastReceivedAt.SetExpr("GREATEST(COALESCE({}, 0), ?::bigint)"), at).
+			Where(cols.ID.Eq(), mailbox.ID).
+			Where(cols.OrganizationID.Eq(), mailbox.OrganizationID).
+			Where(cols.BusinessUnitID.Eq(), mailbox.BusinessUnitID).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("mark mailbox %s received: %w", mailbox.Name, err)
+		}
+	}
+
+	return nil
 }

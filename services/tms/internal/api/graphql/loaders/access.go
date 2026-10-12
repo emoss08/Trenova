@@ -19,7 +19,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -1122,6 +1125,66 @@ func (f *InboundAttachmentCountLoaderFactory) Attach(
 	})
 }
 
+func InboundThreadCount(ctx context.Context, threadKey string) (int, error) {
+	return load(ctx, threadKey, func(s *set) *dataloadgen.Loader[string, int] {
+		return s.inboundThreadCount
+	})
+}
+
+func (f *InboundThreadCountLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.inboundThreadCount = newInboundThreadCountLoader(f, tenantInfo)
+	})
+}
+
+func InboundActivitiesByMessageID(ctx context.Context, key string) ([]*triage.Activity, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, []*triage.Activity] {
+		return s.inboundActivitiesByMessageID
+	})
+}
+
+func (f *InboundActivitiesByMessageIDLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.inboundActivitiesByMessageID = newInboundActivitiesByMessageIDLoader(f, tenantInfo)
+	})
+}
+
+func DocumentTypeNameByID(ctx context.Context, key string) (string, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, string] {
+		return s.documentTypeNameByID
+	})
+}
+
+func (f *DocumentTypeNameByIDLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.documentTypeNameByID = newDocumentTypeNameByIDLoader(f, tenantInfo)
+	})
+}
+
+func TriageViewWaitingCount(ctx context.Context, key string) (int, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, int] {
+		return s.triageViewWaitingCount
+	})
+}
+
+func (f *TriageViewWaitingCountLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.triageViewWaitingCount = newTriageViewWaitingCountLoader(f, tenantInfo)
+	})
+}
+
 func ShipmentSummaryByID(ctx context.Context, key string) (*shipmentports.ShipmentSummary, error) {
 	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *shipmentports.ShipmentSummary] {
 		return s.shipmentSummaryByID
@@ -1208,5 +1271,137 @@ func (f *SubsetLabelsLoaderFactory) Attach(
 ) context.Context {
 	return attach(ctx, func(s *set) {
 		s.subsetLabels = newSubsetLabelsLoader(f, tenantInfo)
+	})
+}
+
+func TriageRuleMonthMatches(ctx context.Context, key string) (int, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, int] {
+		return s.triageRuleMonthMatches
+	})
+}
+
+func (f *TriageRuleMonthMatchesLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.triageRuleMonthMatches = newTriageRuleMonthMatchesLoader(f, tenantInfo)
+	})
+}
+
+func TriageSampleByMessageID(ctx context.Context, key string) (*inboundmessageports.Sample, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *inboundmessageports.Sample] {
+		return s.triageSampleByMessageID
+	})
+}
+
+func (f *TriageSampleByMessageIDLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.triageSampleByMessageID = newTriageSampleByMessageIDLoader(f, tenantInfo)
+	})
+}
+
+func InboundMailboxByID(ctx context.Context, key string) (*inboundmessage.Mailbox, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *inboundmessage.Mailbox] {
+		return s.inboundMailboxByID
+	})
+}
+
+func (f *InboundMailboxByIDLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.inboundMailboxByID = newInboundMailboxByIDLoader(f, tenantInfo)
+	})
+}
+
+func InboundAttachmentsByMessageID(
+	ctx context.Context,
+	key string,
+) ([]*inboundmessage.InboundAttachment, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, []*inboundmessage.InboundAttachment] {
+		return s.inboundAttachmentsByMessageID
+	})
+}
+
+func (f *InboundAttachmentsByMessageIDLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.inboundAttachmentsByMessageID = newInboundAttachmentsByMessageIDLoader(f, tenantInfo)
+	})
+}
+
+func InboundAttachmentByID(ctx context.Context, key string) (*inboundmessage.InboundAttachment, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *inboundmessage.InboundAttachment] {
+		return s.inboundAttachmentByID
+	})
+}
+
+func (f *InboundAttachmentByIDLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.inboundAttachmentByID = newInboundAttachmentByIDLoader(f, tenantInfo)
+	})
+}
+
+func InboundLatestReplyByMessageID(ctx context.Context, key string) (*triage.Reply, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *triage.Reply] {
+		return s.inboundLatestReplyByMessageID
+	})
+}
+
+func InboundReplyDraftByMessageID(ctx context.Context, key string) (*triage.Reply, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *triage.Reply] {
+		return s.inboundReplyDraftByMessageID
+	})
+}
+
+func InboundRepliesByMessageID(ctx context.Context, key string) ([]*triage.Reply, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, []*triage.Reply] {
+		return s.inboundRepliesByMessageID
+	})
+}
+
+func InboundReplyByID(ctx context.Context, key string) (*triage.Reply, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *triage.Reply] {
+		return s.inboundReplyByID
+	})
+}
+
+func (f *InboundReplyLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.inboundLatestReplyByMessageID = newInboundLatestReplyByMessageIDLoader(f, tenantInfo)
+		s.inboundReplyDraftByMessageID = newInboundReplyDraftByMessageIDLoader(f, tenantInfo)
+		s.inboundRepliesByMessageID = newInboundRepliesByMessageIDLoader(f, tenantInfo)
+		s.inboundReplyByID = newInboundReplyByIDLoader(f, tenantInfo)
+	})
+}
+
+func InboundDocumentReadingByDocumentID(
+	ctx context.Context,
+	key string,
+) (*inboundmessageports.DocumentReading, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *inboundmessageports.DocumentReading] {
+		return s.inboundDocumentReadingByDocumentID
+	})
+}
+
+func (f *InboundDocumentReadingLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.inboundDocumentReadingByDocumentID = newInboundDocumentReadingByDocumentIDLoader(f, tenantInfo)
 	})
 }

@@ -298,6 +298,8 @@ func SharedOptions() fx.Option {
 			agentmemoryservice.New,
 			agentreflectionservice.New,
 			aicorrectionservice.New,
+			aicorrectionservice.NewInboundRecorder,
+			aiproviderservice.NewInboundReadiness,
 			aifeedbackservice.New,
 			aifeedbackservice.AsService,
 			aifeedbackservice.AsMaintenance,

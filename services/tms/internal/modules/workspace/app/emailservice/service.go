@@ -48,7 +48,8 @@ type Params struct {
 	AuditService       auditports.AuditService
 	WorkflowStarter    kernelports.WorkflowStarter
 	Storage            kernelports.Client
-	Plans              platformplanports.PlanService `optional:"true"`
+	Plans              platformplanports.PlanService     `optional:"true"`
+	Observers          []emailports.EmailMessageObserver `group:"email_message_observers"`
 }
 
 type Service struct {
@@ -63,6 +64,7 @@ type Service struct {
 	workflowStarter    kernelports.WorkflowStarter
 	storage            kernelports.Client
 	plans              platformplanports.PlanService
+	observers          []emailports.EmailMessageObserver
 }
 
 type HandleProviderEventParams struct {
@@ -88,6 +90,7 @@ func New(p Params) *Service {
 		workflowStarter: p.WorkflowStarter,
 		storage:         p.Storage,
 		plans:           p.Plans,
+		observers:       p.Observers,
 	}
 }
 
@@ -549,7 +552,7 @@ func (s *Service) SendPersisted(
 	if err != nil {
 		return nil, err
 	}
-	s.syncInvoiceAttempts(ctx, msg)
+	s.messageChanged(ctx, msg, nil)
 	return msg, nil
 }
 
@@ -774,7 +777,7 @@ func (s *Service) HandleProviderEvent(
 	if _, err = s.repo.UpdateMessage(ctx, msg); err != nil {
 		return err
 	}
-	s.syncInvoiceAttempts(ctx, msg)
+	s.messageChanged(ctx, msg, event)
 	if params.SuppressionReason != "" {
 		_, err = s.repo.CreateSuppression(ctx, &email.Suppression{
 			BusinessUnitID: tenantInfo.BuID,
@@ -929,8 +932,18 @@ func (s *Service) markFailed(
 	if updateErr != nil {
 		return nil, updateErr
 	}
-	s.syncInvoiceAttempts(ctx, updated)
+	s.messageChanged(ctx, updated, nil)
 	return updated, err
+}
+
+func (s *Service) messageChanged(ctx context.Context, msg *email.Message, event *email.Event) {
+	s.syncInvoiceAttempts(ctx, msg)
+	if msg == nil {
+		return
+	}
+	for _, observer := range s.observers {
+		observer.EmailMessageChanged(ctx, emailports.EmailMessageChange{Message: msg, Event: event})
+	}
 }
 
 func (s *Service) syncInvoiceAttempts(ctx context.Context, msg *email.Message) {

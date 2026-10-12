@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -77,6 +78,7 @@ type Params struct {
 	Encryption           *encryptionservice.Service
 	Realtime             agentports.RealtimeService
 	AICorrections        aicorrectionports.AICorrectionService `optional:"true"`
+	Triage               inboundmessageports.TriageEventSink   `optional:"true"`
 }
 
 type Service struct {
@@ -101,6 +103,7 @@ type Service struct {
 	encryption           *encryptionservice.Service
 	realtime             agentports.RealtimeService
 	aiCorrections        aicorrectionports.AICorrectionService
+	triage               inboundmessageports.TriageEventSink
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -141,6 +144,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		encryption:           p.Encryption,
 		realtime:             p.Realtime,
 		aiCorrections:        p.AICorrections,
+		triage:               p.Triage,
 	}
 }
 
@@ -364,6 +368,7 @@ func (s *Service) Upload(
 		s.deleteSearchProjection(ctx, lineageInfo)
 	}
 	s.syncSearchProjection(ctx, log, createdDoc, "")
+	inboundmessageports.AnnounceDocumentAttached(ctx, s.triage, createdDoc)
 
 	if s.thumbnailGenerator.SupportsThumbnail(contentType) {
 		s.startThumbnailWorkflow(ctx, log, createdDoc)

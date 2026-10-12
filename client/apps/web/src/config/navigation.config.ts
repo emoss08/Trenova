@@ -52,17 +52,18 @@ const deskModule: NavModule = {
   navigation: [],
 };
 
-// The inbox is its own module rather than a page under the Desk. What arrives
-// by email is work coming in from outside, which is a different thing from the
-// conversations and decisions the Desk holds, and a dispatcher opens one
-// without wanting the other.
+// Triage (once the inbox) is its own module rather than a page under the Desk.
+// What arrives from a connected source is work coming in from outside, which
+// is a different thing from the conversations and decisions the Desk holds,
+// and a dispatcher opens one without wanting the other. The old address still
+// belongs to it while it redirects.
 const inboxModule: NavModule = {
   id: "inbox",
-  label: "Inbox",
+  label: "Triage",
   icon: Inbox01Icon,
-  description: "Mail that arrived on a monitored address, and what was made of it",
-  basePath: "/inbox",
-  routePrefixes: ["/inbox"],
+  description: "Messages from connected sources, what Nova did with them, and what is left for you",
+  basePath: "/triage",
+  routePrefixes: ["/triage", "/inbox"],
   hideSecondarySidebar: true,
   resource: Resource.InboundMessage,
   navigation: [],

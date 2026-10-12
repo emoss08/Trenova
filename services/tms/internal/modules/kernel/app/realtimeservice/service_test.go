@@ -156,9 +156,10 @@ type stubBroker struct {
 	allow     bool
 	released  []string
 	throttled []string
-	joined    string
-	left      string
-	subscribe *agentports.RealtimeSubscribeRequest
+	joined      string
+	joinedState agentports.RealtimePresenceState
+	left        string
+	subscribe   *agentports.RealtimeSubscribeRequest
 }
 
 func (b *stubBroker) Subscribe(
@@ -177,8 +178,10 @@ func (b *stubBroker) JoinPresence(
 	_ context.Context,
 	_ *agentports.RealtimeConnection,
 	scope string,
+	state agentports.RealtimePresenceState,
 ) (*agentports.RealtimePresenceSnapshot, error) {
 	b.joined = scope
+	b.joinedState = state
 	return &agentports.RealtimePresenceSnapshot{Scope: scope}, nil
 }
 
@@ -359,4 +362,40 @@ func TestGateway_TypingIsThrottledAndStampedWithTheCaller(t *testing.T) {
 	}))
 	require.Len(t, f.broker.enqueued, 2, "a stop is never throttled")
 	assert.Len(t, f.broker.released, 1)
+}
+
+func TestGateway_JoinCarriesPresenceState(t *testing.T) {
+	t.Parallel()
+
+	f := newGatewayFixture(t)
+	req := f.scope("inbox:messages")
+	req.State = agentports.RealtimePresenceState{
+		MessageID: "imsg_01J00000000000000000000000",
+		Activity:  agentports.RealtimeActivityWriting,
+	}
+
+	_, err := f.gateway.JoinPresence(t.Context(), &req)
+	require.NoError(t, err)
+	assert.Equal(t, "inbox:messages", f.broker.joined)
+	assert.Equal(t, req.State, f.broker.joinedState)
+}
+
+func TestGateway_ValidatesPresenceState(t *testing.T) {
+	t.Parallel()
+
+	for name, state := range map[string]agentports.RealtimePresenceState{
+		"bad message id":         {MessageID: "not an id", Activity: agentports.RealtimeActivityViewing},
+		"unknown activity":       {MessageID: "imsg_01J00000000000000000000000", Activity: "typing"},
+		"activity without a msg": {Activity: agentports.RealtimeActivityViewing},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			f := newGatewayFixture(t)
+			req := f.scope("inbox:messages")
+			req.State = state
+			_, err := f.gateway.JoinPresence(t.Context(), &req)
+			require.Error(t, err)
+			assert.Empty(t, f.broker.joined)
+		})
+	}
 }

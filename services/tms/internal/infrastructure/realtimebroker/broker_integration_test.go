@@ -314,14 +314,14 @@ func TestBroker_ScopedEventsReachOnlyJoinedConnections(t *testing.T) {
 	viewer := subscribe(t, b, viewerConn, false, "")
 	outsider := subscribe(t, b, tn.conn(pulid.MustNew("usr_"), false), false, "")
 
-	snapshot, err := b.JoinPresence(t.Context(), viewerConn, scope)
+	snapshot, err := b.JoinPresence(t.Context(), viewerConn, scope, agentports.RealtimePresenceState{})
 	require.NoError(t, err)
 	require.Len(t, snapshot.Members, 1)
 	nextOf(t, viewer, agentports.RealtimeEventPresence)
 
 	typistConn := tn.conn(pulid.MustNew("usr_"), false)
 	_ = subscribe(t, b, typistConn, false, "")
-	_, err = b.JoinPresence(t.Context(), typistConn, scope)
+	_, err = b.JoinPresence(t.Context(), typistConn, scope, agentports.RealtimePresenceState{})
 	require.NoError(t, err)
 
 	b.Enqueue(&agentports.RealtimeEnvelope{
