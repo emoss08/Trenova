@@ -153,6 +153,20 @@ func TestSendWithoutOutboundEmailFails(t *testing.T) {
 	assert.Equal(t, failureNoOutbound, reply.FailureText)
 }
 
+func TestSendWithoutAnEmailProfileSaysSoToAPerson(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	f.email.err = errortypes.NewBusinessError("No email profile for agents").
+		WithInternal(emailports.ErrNoEmailProfile)
+
+	reply, err := f.service.Send(t.Context(), sendRequest(f, ""))
+	require.NoError(t, err)
+
+	assert.Equal(t, triage.ReplyFailed, reply.Status)
+	assert.Equal(t, failureNoProfile, reply.FailureText)
+}
+
 func TestSendToAlternateAddress(t *testing.T) {
 	t.Parallel()
 

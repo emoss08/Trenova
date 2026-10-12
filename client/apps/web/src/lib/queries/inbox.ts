@@ -121,6 +121,11 @@ export const inbox = createQueryKeys("inbox", {
     queryKey: [messageId],
     queryFn: ({ signal }: QueryContext) => fetchTriageStopTimes(messageId, { signal }),
   }),
+  filingShipments: () => ({
+    queryKey: ["filingShipments"],
+    queryFn: ({ signal }: QueryContext) =>
+      fetchGraphQLSelectOptions({ resource: "SHIPMENT", initialLimit: 20 }, { signal }),
+  }),
   documentTypes: () => ({
     queryKey: ["documentTypes"],
     queryFn: ({ signal }: QueryContext) =>

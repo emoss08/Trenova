@@ -27,6 +27,7 @@ const (
 	replySubjectPrefix       = "Re: "
 
 	failureNoOutbound  = "Outbound email is not set up on this installation, so the reply was not sent."
+	failureNoProfile   = "No email profile is set up for this organization, so the reply was not sent. An administrator can add one in the email settings."
 	failureUnqueued    = "Trenova could not hand the reply to the email provider. Try sending it again."
 	failureBounced     = "The receiving server refused it."
 	failureComplained  = "The recipient marked it as spam."
@@ -218,6 +219,8 @@ func threadHeaders(message *inboundmessage.InboundMessage, reply *triage.Reply) 
 
 func sendFailureText(err error) string {
 	switch {
+	case errors.Is(err, emailports.ErrNoEmailProfile):
+		return failureNoProfile
 	case errors.Is(err, kernelports.ErrWorkflowStarterDisabled):
 		return failureUnqueued
 	case errortypes.IsMultiError(err), errortypes.IsBusinessError(err),

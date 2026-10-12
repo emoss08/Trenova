@@ -75,12 +75,7 @@ func (s *Service) File(
 		})
 	}
 
-	if req.DocumentTypeID.IsNil() {
-		return nil, errortypes.NewValidationError(
-			"documentTypeId", errortypes.ErrRequired, "Choose what to file it as",
-		)
-	}
-	docType, err := s.documentType(ctx, req.TenantInfo, req.DocumentTypeID, "documentTypeId")
+	docType, err := s.fileAs(ctx, req, attachment)
 	if err != nil {
 		return nil, err
 	}
@@ -136,6 +131,33 @@ func (s *Service) requireShipment(
 	}
 
 	return nil
+}
+
+func (s *Service) fileAs(
+	ctx context.Context,
+	req *FileRequest,
+	attachment *inboundmessage.InboundAttachment,
+) (*documenttype.DocumentType, error) {
+	if req.DocumentTypeID.IsNotNil() {
+		return s.documentType(ctx, req.TenantInfo, req.DocumentTypeID, "documentTypeId")
+	}
+
+	docType, err := s.typeForKind(
+		ctx,
+		req.TenantInfo,
+		attachment.Kind,
+		make(map[inboundmessage.AttachmentKind]*documenttype.DocumentType, 1),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if docType == nil {
+		return nil, errortypes.NewValidationError(
+			"documentTypeId", errortypes.ErrRequired, "Choose what to file it as",
+		)
+	}
+
+	return docType, nil
 }
 
 func (s *Service) documentType(

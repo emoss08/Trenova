@@ -8,6 +8,7 @@ import {
   correctInboundClassification,
   createInboundLoad,
   createMyTriageView,
+  createTriageReplyTemplate,
   createTriageRule,
   decideInboundStops,
   deleteMyTriageView,
@@ -58,6 +59,7 @@ import {
   type SendInboundReplyInput,
   type TriageConflictResolution,
   type TriageLoadFieldInput,
+  type TriageReplyTemplate,
   type TriageRuleAction,
   type TriageRule,
   type TriageRuleInput,
@@ -161,7 +163,7 @@ export type TriageActions = {
   discardLoad: (id: string) => void;
   /** Books the load once even if retried. */
   createLoad: (id: string, fields: TriageLoadFieldInput[]) => Promise<InboundMessageDetail>;
-  logException: (id: string, input: LogInboundExceptionInput) => void;
+  logException: (id: string, input: LogInboundExceptionInput) => Promise<InboundMessageDetail>;
   blockSender: (id: string) => void;
   decideStops: (id: string, decision: TriageStopsDecision) => Promise<InboundMessageDetail>;
   resolveConflict: (id: string, conflictId: string, resolution: TriageConflictResolution) => void;
@@ -191,7 +193,10 @@ export type TriageActions = {
   renameView: (view: TriageView, name: string) => void;
   deleteView: (view: TriageView) => void;
   copyLink: (id: string) => void;
-  copyText: (text: string) => void;
+  /** Copies text and says so; `announce` replaces "Copied …" for text too long to repeat. */
+  copyText: (text: string, announce?: string) => void;
+  /** Saves a reply as a template the whole organization can fill in. */
+  saveTemplate: (name: string, body: string) => Promise<TriageReplyTemplate>;
   openInNewTab: (id: string) => void;
   /** Opens the Desk hand-off on the message and the steps still open on it. */
   askInDesk: (message: Pick<InboundMessageRow, "id"> & Partial<Pick<InboundMessageRow, "actions">>) => void;
@@ -783,7 +788,7 @@ export function useTriageActionsController(): TriageActions {
           false,
         ),
       logException: (id, input) =>
-        quiet(detailMutation(() => logInboundException(id, input), t("Exception logged"))),
+        detailMutation(() => logInboundException(id, input), t("Exception logged"), false),
       blockSender: (id) =>
         void optimistic({
           ids: [id],
@@ -880,9 +885,10 @@ export function useTriageActionsController(): TriageActions {
           classification: input.classification,
           senderScope: input.senderScope,
           sender: input.sender ?? "",
-          mailboxId: input.mailboxId ?? null,
+          mailboxId: input.mailboxId === undefined || input.mailboxId === null ? null : String(input.mailboxId),
           action: input.action,
-          assigneeId: input.assigneeId ?? null,
+          assigneeId:
+            input.assigneeId === undefined || input.assigneeId === null ? null : String(input.assigneeId),
           assignee: input.assigneeId === rule.assigneeId ? rule.assignee : null,
         };
         queryClient.setQueryData<TriageRule[]>(key, (rules) =>
@@ -1058,7 +1064,21 @@ export function useTriageActionsController(): TriageActions {
         });
       },
       copyLink: (id) => copy(messageUrl(id), t("Link copied")),
-      copyText: (text) => copy(text, t("Copied {0}", text)),
+      copyText: (text, announced) => copy(text, announced ?? t("Copied {0}", text)),
+      saveTemplate: (name, body) =>
+        createTriageReplyTemplate({ name, body }).then(
+          (template) => {
+            queryClient.setQueryData<TriageReplyTemplate[]>(
+              inbox.templates().queryKey,
+              (templates) => [...(templates ?? []), template],
+            );
+            void queryClient.invalidateQueries({ queryKey: inbox.templates().queryKey });
+            return template;
+          },
+          (error: unknown) => {
+            throw error;
+          },
+        ),
       openInNewTab: (id) => {
         window.open(messageUrl(id), "_blank", "noopener,noreferrer");
       },

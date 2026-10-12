@@ -219,11 +219,11 @@ func applyPatch(
 	if patch.Owner != nil {
 		query = query.Set(cols.OwnerID.Set(), *patch.Owner)
 	}
-	if patch.Unpark {
-		query = clearParking(query)
-	}
-	if patch.Park != nil {
+	switch {
+	case patch.Park != nil:
 		query = applyParkPatch(query, patch.Park, now)
+	case patch.Unpark:
+		query = clearParking(query)
 	}
 	query = applyDuePatch(query, patch)
 	if patch.ClearHandled {
@@ -294,11 +294,17 @@ func applyParkPatch(
 	now int64,
 ) *bun.UpdateQuery {
 	cols := inboundmessagecol.InboundMessageColumns
-	query = clearParking(query).Set(cols.Parked.Set(), park.Parking)
+	query = query.Set(cols.Parked.Set(), park.Parking)
 	if park.Parking == inboundmessage.ParkingAwaitingReply {
 		return query.
 			Set(cols.AwaitingSince.Set(), now).
-			Set(cols.AwaitingUntil.Set(), park.AwaitingUntil)
+			Set(cols.AwaitingUntil.Set(), park.AwaitingUntil).
+			Set(cols.SnoozedUntil.SetNull()).
+			Set(cols.SnoozeEvent.SetNull()).
+			Set(cols.SnoozeWatchID.SetNull()).
+			Set(cols.SnoozeDocumentTypeID.SetNull()).
+			Set(cols.SnoozedAt.SetNull()).
+			Set(cols.SnoozedBy.SetNull())
 	}
 
 	query = query.
@@ -306,12 +312,14 @@ func applyParkPatch(
 		Set(cols.SnoozeEvent.Set(), stringutils.NilIfEmpty(park.SnoozeEvent)).
 		Set(cols.SnoozeDocumentTypeID.Set(), park.DocumentTypeID).
 		Set(cols.SnoozedAt.Set(), now).
-		Set(cols.SnoozedBy.Set(), park.By)
+		Set(cols.SnoozedBy.Set(), park.By).
+		Set(cols.AwaitingSince.SetNull()).
+		Set(cols.AwaitingUntil.SetNull())
 	if park.WatchShipment {
-		query = query.Set(cols.SnoozeWatchID.SetExpr(cols.MatchedShipmentID.Bare()))
+		return query.Set(cols.SnoozeWatchID.SetExpr(cols.MatchedShipmentID.Bare()))
 	}
 
-	return query
+	return query.Set(cols.SnoozeWatchID.SetNull())
 }
 
 func applyDuePatch(

@@ -13,6 +13,8 @@ var ErrRetryableEmailSend = errors.New("retryable email provider failure")
 
 var ErrNonRetryableEmailSend = errors.New("non-retryable email provider failure")
 
+var ErrNoEmailProfile = errors.New("no email profile is set up")
+
 type SendEmailRequest struct {
 	TenantInfo     pagination.TenantInfo `json:"-"`
 	ProfileID      pulid.ID              `json:"profileId"`

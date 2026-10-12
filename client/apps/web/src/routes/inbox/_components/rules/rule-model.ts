@@ -83,7 +83,7 @@ export function draftFromSeed(seed: RuleSeed | null): RuleDraft {
   return {
     classification: seed.classification ?? null,
     sender,
-    mailboxId: seed.mailboxId ?? null,
+    mailboxId: seed.mailboxId === undefined || seed.mailboxId === null ? null : String(seed.mailboxId),
     action: seed.action ?? null,
     assigneeId: null,
   };

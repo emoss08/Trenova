@@ -4,6 +4,7 @@ import {
   downloadJsonFile,
   downloadTextFile,
   formatCurrency,
+  formatCurrencyWhole,
   formatFileSize,
   formatLocation,
   getNameInitials,
@@ -369,5 +370,14 @@ describe("formatFileSize", () => {
     expect(formatFileSize(512)).toBe("512 B");
     expect(formatFileSize(1536)).toBe("1.5 KB");
     expect(formatFileSize(150 * 1024 * 1024)).toBe("150 MB");
+  });
+});
+
+describe("formatCurrencyWhole", () => {
+  it("drops the cents when there are none, and keeps both digits when there are", () => {
+    expect(formatCurrencyWhole(185)).toBe("$185");
+    expect(formatCurrencyWhole(1180)).toBe("$1,180");
+    expect(formatCurrencyWhole(185.5)).toBe("$185.50");
+    expect(formatCurrencyWhole(0)).toBe("$0");
   });
 });

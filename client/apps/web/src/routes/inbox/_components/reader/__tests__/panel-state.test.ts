@@ -84,6 +84,26 @@ describe("panelReducer", () => {
     });
   });
 
+  it("keeps why a draft failed until the next draft starts", () => {
+    const loading = panelReducer(INITIAL_PANEL, {
+      type: "draftStarted",
+      draft: "reply",
+      stepId: "reply",
+    });
+    const failed = panelReducer(loading, {
+      type: "draftSettled",
+      draft: "reply",
+      error: "Nova is turned off",
+    });
+    expect(failed).toMatchObject({
+      drafting: { reply: false },
+      errors: { reply: "Nova is turned off", load: null },
+    });
+    const again = panelReducer(failed, { type: "draftStarted", draft: "reply", stepId: "reply" });
+    expect(again.errors.reply).toBeNull();
+    expect(panelReducer(again, { type: "draftSettled", draft: "reply" }).errors.reply).toBeNull();
+  });
+
   it("opens and closes the phone sheet without touching the open step", () => {
     const open: PanelState = { ...INITIAL_PANEL, open: "reply" };
     const sheet = panelReducer(open, { type: "sheet", open: true });

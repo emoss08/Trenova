@@ -917,7 +917,7 @@ func noEmailProfile() error {
 	return errortypes.NewBusinessError(
 		"No email profile is set up for this organization, so nothing can be emailed until " +
 			"an admin adds one in the email settings. Say so, and offer another way to reach them",
-	)
+	).WithInternal(emailports.ErrNoEmailProfile)
 }
 
 func (s *Service) markFailed(

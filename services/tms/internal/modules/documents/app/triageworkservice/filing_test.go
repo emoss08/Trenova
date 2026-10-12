@@ -49,14 +49,41 @@ func TestFileWholeAttachesToShipment(t *testing.T) {
 	assert.Contains(t, f.notifier.changed, f.message.ID)
 }
 
-func TestFileRequiresTypeAndShipment(t *testing.T) {
+func TestFileWithoutATypeFilesAsWhatItWasReadAs(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture()
 
 	_, err := f.service.File(t.Context(), &FileRequest{
 		TenantInfo:   testTenant,
+		UserID:       testUserID,
 		AttachmentID: f.attachment.ID,
+		ShipmentID:   f.shipmentID,
+	})
+	require.NoError(t, err)
+
+	doc := f.docRepo.docs[f.attachment.DocumentID]
+	require.NotNil(t, doc.DocumentTypeID)
+	assert.Equal(t, f.pod.ID, *doc.DocumentTypeID)
+	assert.Equal(t, "Proof of Delivery", f.storedAttachment().FiledAs)
+}
+
+func TestFileRequiresTypeAndShipment(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	unknown := &inboundmessage.InboundAttachment{
+		ID:         pulid.MustNew("iatt_"),
+		MessageID:  f.message.ID,
+		DocumentID: pulid.MustNew("doc_"),
+		FileName:   "scan.pdf",
+		Kind:       inboundmessage.AttachmentUnknown,
+	}
+	f.messages.attachments[unknown.ID] = unknown
+
+	_, err := f.service.File(t.Context(), &FileRequest{
+		TenantInfo:   testTenant,
+		AttachmentID: unknown.ID,
 		ShipmentID:   f.shipmentID,
 	})
 	require.Error(t, err)

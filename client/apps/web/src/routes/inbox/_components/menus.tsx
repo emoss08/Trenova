@@ -24,6 +24,7 @@ import {
   RefreshCw01Icon,
   Send01Icon,
   User01Icon,
+  XCloseIcon,
   ZapIcon,
 } from "@trenova/shared/components/icons";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
@@ -104,6 +105,124 @@ export type RowMenuInput = {
   link: (id: string) => void;
 };
 
+/** The events one message can sleep until, each snoozing the given ids. */
+export function eventSnoozeEntries({
+  t,
+  actions,
+  message,
+  ids,
+  documentTypes,
+}: {
+  t: TranslateFn;
+  actions: TriageActions;
+  message: Pick<InboundMessageRow, "matchedShipment" | "classification">;
+  ids: readonly string[];
+  documentTypes: readonly SelectOption[];
+}): ContextMenuEntry[] {
+  return eventSnoozeOptions(message).flatMap((option): ContextMenuEntry[] => {
+    switch (option.event) {
+      case "ShipmentDelivered":
+        return [
+          {
+            id: "delivered",
+            label: t("Until {0} delivers", option.proNumber),
+            icon: ZapIcon,
+            onSelect: () => actions.snooze(ids, { kind: "event", event: "ShipmentDelivered" }),
+          },
+        ];
+      case "InvoicePaid":
+        return [
+          {
+            id: "paid",
+            label: t("Until the invoice is paid"),
+            icon: ZapIcon,
+            onSelect: () => actions.snooze(ids, { kind: "event", event: "InvoicePaid" }),
+          },
+        ];
+      case "DocumentAttached":
+        return documentTypes.length === 0
+          ? []
+          : [
+              {
+                id: "document",
+                label: t("Until a document is attached"),
+                icon: ZapIcon,
+                submenu: documentTypes.map((type) => ({
+                  id: type.id,
+                  label: type.label,
+                  onSelect: () =>
+                    actions.snooze(ids, {
+                      kind: "event",
+                      event: "DocumentAttached",
+                      documentTypeId: type.id,
+                      documentTypeName: type.label,
+                    }),
+                })),
+              },
+            ];
+    }
+  });
+}
+
+/**
+ * Who the given messages can go to: you, then the team with how much each
+ * already has waiting, then nobody. The current owner, when there is one,
+ * says so on its row.
+ */
+export function assigneeEntries({
+  t,
+  actions,
+  ids,
+  meId,
+  assignees,
+  ownerId,
+}: {
+  t: TranslateFn;
+  actions: TriageActions;
+  ids: readonly string[];
+  meId: string | null;
+  assignees: readonly TriageAssignee[];
+  ownerId: string | null;
+}): ContextMenuEntry[] {
+  const current = t("Has it now");
+  const waitingHint = (assignee: TriageAssignee) =>
+    assignee.waiting > 0
+      ? t("{0, plural, one {# waiting} other {# waiting}}", assignee.waiting)
+      : undefined;
+
+  return [
+    ...(meId === null
+      ? []
+      : [
+          {
+            id: "me",
+            label: t("Me"),
+            icon: User01Icon,
+            hint: ownerId === meId ? current : undefined,
+            onSelect: () => actions.assignToMe(ids),
+          },
+        ]),
+    ...assignees
+      .filter((assignee) => assignee.user.id !== meId)
+      .map((assignee) => ({
+        id: assignee.user.id,
+        label: assignee.user.name,
+        leading: <Initials name={assignee.user.name} />,
+        hint: assignee.user.id === ownerId ? current : waitingHint(assignee),
+        onSelect: () => actions.assign(ids, assignee.user),
+      })),
+    { type: "separator" },
+    ownerId === null
+      ? { id: "nobody", label: t("Nobody"), onSelect: () => actions.assign(ids, null) }
+      : {
+          id: "nobody",
+          label: t("Unassign"),
+          icon: XCloseIcon,
+          onSelect: () => actions.assign(ids, null),
+        },
+  ];
+}
+
 /** A row's menu, or the selection's when the row is part of one. */
 export function rowMenu({
   t,
@@ -129,78 +248,17 @@ export function rowMenu({
   );
 
   const events = single
-    ? eventSnoozeOptions(message).flatMap((option): ContextMenuEntry[] => {
-        switch (option.event) {
-          case "ShipmentDelivered":
-            return [
-              {
-                id: "delivered",
-                label: t("Until {0} delivers", option.proNumber),
-                icon: ZapIcon,
-                onSelect: () =>
-                  actions.snooze(waitingIds, { kind: "event", event: "ShipmentDelivered" }),
-              },
-            ];
-          case "InvoicePaid":
-            return [
-              {
-                id: "paid",
-                label: t("Until the invoice is paid"),
-                icon: ZapIcon,
-                onSelect: () => actions.snooze(waitingIds, { kind: "event", event: "InvoicePaid" }),
-              },
-            ];
-          case "DocumentAttached":
-            return documentTypes.length === 0
-              ? []
-              : [
-                  {
-                    id: "document",
-                    label: t("Until a document is attached"),
-                    icon: ZapIcon,
-                    submenu: documentTypes.map((type) => ({
-                      id: type.id,
-                      label: type.label,
-                      onSelect: () =>
-                        actions.snooze(waitingIds, {
-                          kind: "event",
-                          event: "DocumentAttached",
-                          documentTypeId: type.id,
-                          documentTypeName: type.label,
-                        }),
-                    })),
-                  },
-                ];
-        }
-      })
+    ? eventSnoozeEntries({ t, actions, message, ids: waitingIds, documentTypes })
     : [];
 
-  const assigneeRows: ContextMenuEntry[] = [
-    ...(meId === null
-      ? []
-      : [
-          {
-            id: "me",
-            label: t("Me"),
-            icon: User01Icon,
-            onSelect: () => actions.assignToMe(waitingIds),
-          },
-        ]),
-    ...assignees
-      .filter((assignee) => assignee.user.id !== meId)
-      .map((assignee) => ({
-        id: assignee.user.id,
-        label: assignee.user.name,
-        leading: <Initials name={assignee.user.name} />,
-        hint:
-          assignee.waiting > 0
-            ? t("{0, plural, one {# waiting} other {# waiting}}", assignee.waiting)
-            : undefined,
-        onSelect: () => actions.assign(waitingIds, assignee.user),
-      })),
-    { type: "separator" },
-    { id: "nobody", label: t("Nobody"), onSelect: () => actions.assign(waitingIds, null) },
-  ];
+  const assigneeRows = assigneeEntries({
+    t,
+    actions,
+    ids: waitingIds,
+    meId,
+    assignees,
+    ownerId: single ? message.ownerId : null,
+  });
 
   return {
     title: many

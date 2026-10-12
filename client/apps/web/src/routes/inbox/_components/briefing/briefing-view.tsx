@@ -1,16 +1,33 @@
-import type { TriageBriefing } from "@/lib/graphql/inbox";
-import { senderName } from "@/lib/triage/message-state";
+import "../../_styles/triage-briefing.css";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { useRichT } from "@trenova/shared/i18n/rich";
+import type { TriageBriefing, TriageRuleInput } from "@/lib/graphql/inbox";
+import { useTriageStore } from "@/stores/triage-store";
+import { CheckIcon } from "@trenova/shared/components/icons";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
-import { USER_FORMATTERS, actionCopy } from "../action-copy";
-import { CLASSIFICATION_DOT } from "../classification";
-import { dueSpan, dueText } from "../due";
-import { WAITING, type TriageFolder } from "../folders";
-import { useTriageBriefing } from "../use-triage-data";
+import { formatUnixTime } from "@trenova/shared/lib/date";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import { Operation, Resource } from "@trenova/shared/types/permission";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import type { TriageFolder } from "../folders";
+import { useTriageActions } from "../use-triage-actions";
+import { useTriageBriefing, useTriageCounts } from "../use-triage-data";
+import {
+  deckEntries,
+  firstDayStage,
+  novaLine,
+  ringProgress,
+  type DeckEntry,
+  type DeckGroup,
+} from "./briefing-model";
+import { CarryingOver } from "./carrying-over";
+import { Deck, DeckChips, type DeckChip } from "./deck";
+import { FirstDay } from "./first-day";
+import { FooterPills } from "./footer-pills";
+import { Motes } from "./motes";
+import { NovaLineText } from "./nova-line";
+import { Ring } from "./ring";
+import { River } from "./river";
+import { usePausedWhenAway } from "./use-briefing-motion";
 
 /**
  * The Briefing's contract with the page: it opens messages and folders
@@ -24,142 +41,287 @@ export type BriefingViewProps = {
   onOpenFolder: (folder: TriageFolder) => void;
 };
 
-type DeckCard = TriageBriefing["deck"][number];
+/** How long a card takes to leave the stack after "File all". */
+const FLY_MS = 420;
+/** How long "Done reading" shows before the first briefing. */
+const DONE_READING_MS = 1100;
 
-function deckTitle(t: ReturnType<typeof useT>, card: DeckCard): string {
-  switch (card.group) {
-    case "File":
-      return t("{0, plural, one {# document to file} other {# documents to file}}", card.count);
-    case "Draft":
-      return t(
-        "{0, plural, one {# draft Nova can write} other {# drafts Nova can write}}",
-        card.count,
-      );
-    case "Decide":
-      return t("{0, plural, one {# needs your call} other {# need your call}}", card.count);
-    case "Link":
-      return t("{0, plural, one {# without a record} other {# without a record}}", card.count);
-    case "Held":
-      return t("{0, plural, one {# held back} other {# held back}}", card.count);
-  }
-}
+type Filed = { ids: string[]; count: number };
 
-function BriefingSkeleton() {
+function Stage({
+  on,
+  delay,
+  className,
+  children,
+}: {
+  on: boolean;
+  delay: number;
+  className?: string;
+  children: ReactNode;
+}) {
   return (
-    <div aria-busy="true" className="mx-auto flex w-full max-w-180 flex-col gap-5 px-8 pt-12">
-      <Skeleton className="size-20 rounded-full" />
-      <Skeleton className="h-6 w-3/4" />
-      <Skeleton className="h-6 w-1/2" />
-      <Skeleton className="h-40 w-full" />
+    <div
+      className={["tb-stage", className].filter(Boolean).join(" ")}
+      data-on={on}
+      style={{ "--tb-delay": `${delay}ms` } as CSSProperties}
+    >
+      {on && children}
     </div>
   );
 }
 
 /**
- * Triage's landing page: how much is left for you, what Nova took care of,
- * and the work grouped by what it needs. The ring, the river, the deck's
- * own treatment and the footer pills are built on this.
+ * Triage's landing page: how much is left for you and how the day has gone,
+ * what Nova handled, and the work left grouped by what it needs, one card at
+ * a time. On a first day it is the way in; at the end of the day it is what
+ * carries over and who it is handed to.
  */
 export function BriefingView({ onOpenMessage, onOpenFolder }: BriefingViewProps) {
-  const t = useT();
-  const rt = useRichT();
-  const now = useNowSeconds();
-  const query = useTriageBriefing();
-  const briefing = query.data;
+  const root = useRef<HTMLDivElement>(null);
+  const paused = usePausedWhenAway(root);
+  const briefing = useTriageBriefing().data;
+  const counts = useTriageCounts().data;
+  const now = useNowSeconds(30_000);
+  const connectedAt = useTriageStore((store) => store.sourceConnectedAt);
+  const canConnect = usePermissionStore((store) =>
+    store.hasPermission(Resource.InboundMailbox, Operation.Create),
+  );
+  const [finished, setFinished] = useState(false);
 
-  if (briefing === undefined) {
-    return <BriefingSkeleton />;
-  }
+  const stage =
+    briefing === undefined
+      ? null
+      : firstDayStage({
+          firstDay: briefing.firstDay,
+          connectedAt,
+          counts: { total: counts?.total ?? 0, processing: counts?.processing ?? 0 },
+          now,
+          finished,
+        });
 
-  const longest = briefing.longestWaiting;
+  useEffect(() => {
+    if (stage !== "done") {
+      return;
+    }
+    const timer = setTimeout(() => setFinished(true), DONE_READING_MS);
+    return () => clearTimeout(timer);
+  }, [stage]);
+
+  const openConnect = () => useTriageStore.getState().openOverlay({ kind: "connect", mailboxId: null });
 
   return (
-    <div className="scrollbar-overlay min-h-0 flex-1 overflow-y-auto">
-      <div className="animate-rise mx-auto flex w-full max-w-180 flex-col gap-6 px-8 pt-12 pb-16">
-        <button
-          type="button"
-          onClick={() => onOpenFolder(WAITING)}
-          className="ui-focus-ring border-border flex size-20 flex-col items-center justify-center rounded-full border-4"
-        >
-          <span className="text-3xl font-semibold tabular-nums">{briefing.waiting}</span>
-          <span className="text-foreground-subtle text-2xs">{t("for you")}</span>
-        </button>
+    <div
+      ref={root}
+      data-paused={paused}
+      className="tb-briefing scrollbar-overlay relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto"
+    >
+      <Motes />
+      {stage !== null && stage !== "briefing" ? (
+        <FirstDay stage={stage} counts={counts} canConnect={canConnect} onConnect={openConnect} />
+      ) : (
+        <BriefingMain
+          briefing={briefing}
+          now={now}
+          onOpenMessage={onOpenMessage}
+          onOpenFolder={onOpenFolder}
+        />
+      )}
+    </div>
+  );
+}
 
-        <p className="text-foreground-muted text-xl leading-snug">
-          {rt(
-            "I took care of <b>{0}</b> today. <b>{1}</b> are yours.",
-            { b: (chunks) => <b className="text-foreground font-semibold">{chunks}</b> },
-            briefing.handledByNovaToday,
-            briefing.waiting,
-          )}{" "}
-          {longest !== null && (
-            <button
-              type="button"
-              onClick={() => onOpenMessage(longest.messageId)}
-              className="ui-focus-ring text-warning underline underline-offset-4"
-            >
-              {t("{0} has waited longest.", senderName(longest))}
-            </button>
-          )}{" "}
-          {briefing.estimateMinutes > 0 &&
-            t(
-              "{0, plural, one {About # minute of work.} other {About # minutes of work.}}",
-              briefing.estimateMinutes,
-            )}
-        </p>
+function BriefingMain({
+  briefing,
+  now,
+  onOpenMessage,
+  onOpenFolder,
+}: {
+  briefing: TriageBriefing | undefined;
+  now: number;
+  onOpenMessage: (id: string) => void;
+  onOpenFolder: (folder: TriageFolder) => void;
+}) {
+  const t = useT();
+  const actions = useTriageActions();
+  const counts = useTriageCounts().data;
+  const [filed, setFiled] = useState<Filed | null>(null);
+  const [drafting, setDrafting] = useState<readonly string[] | null>(null);
+  const [flying, setFlying] = useState<DeckGroup | null>(null);
+  const ready = briefing !== undefined;
 
-        <div className="flex flex-col gap-3">
-          {briefing.deck.map((card) => (
-            <section
-              key={card.group}
-              aria-label={deckTitle(t, card)}
-              className="border-border bg-card rounded-lg border px-5 py-4"
-            >
-              <h2 className="text-lg font-semibold">{deckTitle(t, card)}</h2>
-              <ul className="mt-2 flex flex-col">
-                {card.items.map((item) => (
-                  <li key={item.messageId}>
-                    <button
-                      type="button"
-                      onClick={() => onOpenMessage(item.messageId)}
-                      className="ui-focus-ring hover:bg-surface-hover flex w-full items-center gap-3 rounded-md px-2 py-1.5 text-left"
-                    >
-                      <span
-                        aria-hidden
-                        className={cn(
-                          "size-2 shrink-0 rounded-full",
-                          CLASSIFICATION_DOT[item.classification ?? "Other"],
-                        )}
-                      />
-                      <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="truncate text-sm font-medium">{senderName(item)}</span>
-                        <span className="text-foreground-subtle truncate text-xs">
-                          {item.action === null
-                            ? item.subject
-                            : actionCopy(t, item.action, item, USER_FORMATTERS).title}
-                        </span>
-                      </span>
-                      {item.dueAt !== null && (
-                        <span className="text-foreground-subtle font-mono text-xs tabular-nums">
-                          {dueText(t, dueSpan(item.dueAt, now))}
-                        </span>
-                      )}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-          {briefing.deck.length === 0 && (
-            <div className="flex flex-col items-start gap-2">
-              <p className="text-foreground-muted text-sm">{t("Nothing is waiting on you.")}</p>
-              <Button size="sm" variant="outline" onClick={() => onOpenFolder(WAITING)}>
-                {t("Open Waiting on you")}
-              </Button>
-            </div>
-          )}
+  const serverDrafts = briefing?.deck.find((card) => card.group === "Draft")?.messageIds;
+  const draftsDone =
+    drafting !== null &&
+    briefing !== undefined &&
+    !drafting.some((id) => serverDrafts?.includes(id) ?? false);
+
+  const acted = useMemo(() => {
+    const ids = new Set(filed?.ids ?? []);
+    if (draftsDone && drafting !== null) {
+      for (const id of drafting) {
+        ids.add(id);
+      }
+    }
+    return ids;
+  }, [filed, drafting, draftsDone]);
+
+  const entries = useMemo(
+    () => (briefing === undefined ? [] : deckEntries(briefing.deck, acted)),
+    [briefing, acted],
+  );
+
+  const chips: DeckChip[] = [];
+  if (filed !== null) {
+    chips.push({
+      group: "File",
+      label: t("{0, plural, one {Filed # document} other {Filed # documents}}", filed.count),
+      firstId: filed.ids[0] ?? null,
+      busy: false,
+    });
+  }
+  if (draftsDone && drafting !== null) {
+    chips.push({
+      group: "Draft",
+      label: t("{0, plural, one {# draft ready} other {# drafts ready}}", drafting.length),
+      firstId: drafting[0] ?? null,
+      busy: false,
+    });
+  }
+
+  const act = (entry: DeckEntry) => {
+    const first = entry.messageIds[0];
+    switch (entry.group) {
+      case "File": {
+        const ids = entry.messageIds;
+        setFlying("File");
+        setTimeout(() => {
+          setFlying(null);
+          setFiled((current) => ({
+            ids: [...(current?.ids ?? []), ...ids],
+            count: (current?.count ?? 0) + ids.length,
+          }));
+        }, FLY_MS);
+        actions.fileMany(ids).catch(() => {
+          setFiled((current) => {
+            if (current === null) {
+              return current;
+            }
+            const left = current.ids.filter((id) => !ids.includes(id));
+            return left.length === 0 ? null : { ids: left, count: left.length };
+          });
+        });
+        return;
+      }
+      case "Draft": {
+        const ids = entry.messageIds;
+        setDrafting(ids);
+        actions.draftMany(ids).catch(() => setDrafting(null));
+        return;
+      }
+      case "Link":
+        if (first !== undefined) {
+          onOpenMessage(first);
+          useTriageStore.getState().openOverlay({ kind: "link", messageId: first });
+        }
+        return;
+      case "Decide":
+      case "Held":
+        if (first !== undefined) {
+          onOpenMessage(first);
+        }
+        return;
+    }
+  };
+
+  const preview = (input: TriageRuleInput) =>
+    useTriageStore.getState().openOverlay({ kind: "ruleMatches", target: { input } });
+
+  const line =
+    briefing === undefined
+      ? null
+      : novaLine({ ...briefing, onCall: briefing.onCall ?? null });
+  const cleared = briefing?.yours.filter((point) => point.done).length ?? 0;
+  const endOfDay = briefing?.phase === "EndOfDay";
+
+  return (
+    <div className="relative mx-auto flex w-full max-w-220 flex-col gap-7.5 px-8 pt-11 pb-18 @max-2xl:gap-6 @max-2xl:px-4 @max-2xl:pt-6">
+      <header className="flex items-center gap-7 @max-2xl:flex-col @max-2xl:items-start @max-2xl:gap-4">
+        <Ring
+          progress={briefing === undefined ? 0 : ringProgress(cleared, briefing.waiting)}
+          count={briefing?.waiting ?? 0}
+          busy={!ready}
+        />
+        <div className="min-w-0 flex-1">
+          <div className="text-foreground-subtle flex items-center gap-2 text-sm">
+            <b className="text-foreground font-medium">{t("Nova")}</b>
+            <span className="text-2xs font-mono tabular-nums">{formatUnixTime(now)}</span>
+          </div>
+          <NovaLineText line={line} now={now} onOpenMessage={onOpenMessage} />
         </div>
-      </div>
+      </header>
+
+      <Stage on={ready} delay={80}>
+        {briefing !== undefined && (
+          <River briefing={briefing} now={now} onOpenMessage={onOpenMessage} />
+        )}
+      </Stage>
+
+      <Stage on={ready} delay={260} className="flex min-h-84 flex-col items-center gap-3.5 @max-2xl:min-h-0">
+        {briefing !== undefined &&
+          (endOfDay ? (
+            <CarryingOver
+              items={briefing.carryOver}
+              onCall={briefing.onCall ?? null}
+              now={now}
+              onOpenMessage={onOpenMessage}
+              onHandOff={actions.handOff}
+            />
+          ) : entries.length > 0 ? (
+            <Deck
+              entries={entries}
+              now={now}
+              drafting={drafting !== null && !draftsDone}
+              flying={flying}
+              onAct={act}
+              onOpenMessage={onOpenMessage}
+            />
+          ) : (
+            <div className="animate-confirm flex flex-col items-center gap-2 py-12 text-center">
+              <span className="bg-success-subtle text-success flex size-11 items-center justify-center rounded-full">
+                <CheckIcon aria-hidden className="size-5" strokeWidth={2.4} />
+              </span>
+              <b className="text-lg font-semibold">{t("Nothing left in the deck")}</b>
+              <span className="text-foreground-subtle text-base">
+                {t(
+                  "{0, plural, one {Nova is watching # source} other {Nova is watching # sources}}",
+                  briefing.activeSources,
+                )}
+              </span>
+            </div>
+          ))}
+        {!endOfDay && (
+          <DeckChips
+            chips={chips}
+            onOpen={(chip) => {
+              if (chip.firstId !== null) {
+                onOpenMessage(chip.firstId);
+              }
+            }}
+          />
+        )}
+      </Stage>
+
+      <Stage on={ready} delay={460}>
+        {briefing !== undefined && (
+          <FooterPills
+            briefing={briefing}
+            counts={counts}
+            onOpenFolder={onOpenFolder}
+            onPreview={preview}
+            onTeach={actions.createRule}
+          />
+        )}
+      </Stage>
     </div>
   );
 }

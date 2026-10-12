@@ -13,6 +13,8 @@ export type PanelState = {
   open: string | null;
   /** Nova is writing these, so the step shows the draft arriving and the bar waits. */
   drafting: Readonly<Record<DraftKind, boolean>>;
+  /** Why Nova's last draft of each kind failed, shown in its step until the next try. */
+  errors: Readonly<Record<DraftKind, string | null>>;
   /** The actions sheet on a phone. */
   sheet: boolean;
   /** Each step's done flag as last seen, to tell a step that just finished. */
@@ -24,7 +26,7 @@ export type PanelEvent =
   | { type: "open"; id: string }
   | { type: "close" }
   | { type: "draftStarted"; draft: DraftKind; stepId: string }
-  | { type: "draftSettled"; draft: DraftKind }
+  | { type: "draftSettled"; draft: DraftKind; error?: string }
   /** The message's steps as the server now says they are. */
   | { type: "stepsChanged"; steps: readonly Pick<TriageAction, "id" | "done">[] }
   | { type: "sheet"; open: boolean };
@@ -46,6 +48,7 @@ export type StepStart = "link" | "draftLoad" | "draftReply" | "compose" | "toggl
 export const INITIAL_PANEL: PanelState = {
   open: null,
   drafting: { load: false, reply: false },
+  errors: { load: null, reply: null },
   sheet: false,
   done: new Map(),
 };
@@ -70,10 +73,15 @@ export function panelReducer(state: PanelState, event: PanelEvent): PanelState {
         ...state,
         open: event.stepId,
         drafting: { ...state.drafting, [event.draft]: true },
+        errors: { ...state.errors, [event.draft]: null },
       };
     case "draftSettled":
       return state.drafting[event.draft]
-        ? { ...state, drafting: { ...state.drafting, [event.draft]: false } }
+        ? {
+            ...state,
+            drafting: { ...state.drafting, [event.draft]: false },
+            errors: { ...state.errors, [event.draft]: event.error ?? null },
+          }
         : state;
     case "stepsChanged": {
       if (sameDone(state.done, event.steps)) {

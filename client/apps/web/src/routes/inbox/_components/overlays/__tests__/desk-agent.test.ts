@@ -47,15 +47,15 @@ describe("which agent a message is handed to", () => {
       id: "a_carrier_desk",
       name: "Carrier desk",
       description: "Books carriers on open loads",
-      template: "",
+      template: null,
       toolNames: ["send_invoice"],
     };
     expect(pickAgentFor([BILLING, carrierDesk], "Tender")?.id).toBe("a_carrier_desk");
   });
 
   it("falls back to the agent last asked when none fits, then to the first", () => {
-    const general: AgentLike = { id: "a_g", name: "Helper", description: "", template: "", toolNames: [] };
-    const other: AgentLike = { id: "a_o", name: "Ops", description: "", template: "", toolNames: [] };
+    const general: AgentLike = { id: "a_g", name: "Helper", description: "", template: null, toolNames: [] };
+    const other: AgentLike = { id: "a_o", name: "Ops", description: "", template: null, toolNames: [] };
     expect(pickAgentFor([general, other], "Invoice", "a_o")?.id).toBe("a_o");
     expect(pickAgentFor([general, other], "Invoice", "a_missing")?.id).toBe("a_g");
   });

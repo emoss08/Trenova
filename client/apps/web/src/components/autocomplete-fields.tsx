@@ -814,6 +814,46 @@ export function ShipmentAutocompleteField<T extends FieldValues>({
   );
 }
 
+type ShipmentAutocompleteProps = {
+  label: string;
+  /** The chosen shipment's id; empty for none. */
+  value: string;
+  onValueChange: (value: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  triggerClassName?: string;
+};
+
+/** A shipment searched by PRO, BOL or lane, outside a form. Clearing it leaves the value empty. */
+export function ShipmentAutocomplete({
+  label,
+  value,
+  onValueChange,
+  placeholder,
+  disabled,
+  triggerClassName,
+}: ShipmentAutocompleteProps) {
+  return (
+    <Autocomplete<GraphQLSelectOption, FieldValues>
+      graphql={shipmentSelectOptionsGraphQL}
+      label={label}
+      value={value || null}
+      onChange={(nextValue: string | number | null | undefined) =>
+        onValueChange(nextValue ? String(nextValue) : "")
+      }
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <EDIOptionStack primary={option.label} secondary={option.description || ""} />
+      )}
+      placeholder={placeholder}
+      disabled={!!disabled}
+      clearable
+      triggerClassName={triggerClassName}
+    />
+  );
+}
+
 export function OrderAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {

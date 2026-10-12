@@ -205,3 +205,46 @@ export function carryOverRows(items: readonly DeckItem[]): DeckItem[] {
     return a.dueAt - b.dueAt;
   });
 }
+
+/** How long after connecting a source with nothing waiting the first day stops saying it is reading. */
+const QUIET_AFTER_SECONDS = 20;
+
+export type FirstDayStage = "empty" | "reading" | "quiet" | "done" | "briefing";
+
+export type FirstDayInput = {
+  firstDay: boolean;
+  /** When a source was connected from this page, if one was. */
+  connectedAt: number | null;
+  counts: { total: number; processing: number };
+  now: number;
+  /** The "done reading" beat has been shown. */
+  finished: boolean;
+};
+
+/**
+ * Where the first day stands: nothing connected yet; the backlog being read
+ * after a source was connected here (with a live count by kind); nothing was
+ * waiting at the address; done reading; then the ordinary briefing.
+ */
+export function firstDayStage({
+  firstDay,
+  connectedAt,
+  counts,
+  now,
+  finished,
+}: FirstDayInput): FirstDayStage {
+  if (connectedAt === null) {
+    if (!firstDay) {
+      return "briefing";
+    }
+    return counts.processing > 0 ? "reading" : "empty";
+  }
+  if (counts.processing > 0) {
+    return "reading";
+  }
+  if (counts.total === 0) {
+    return now - connectedAt >= QUIET_AFTER_SECONDS ? "quiet" : "reading";
+  }
+
+  return finished ? "briefing" : "done";
+}
