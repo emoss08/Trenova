@@ -55,6 +55,8 @@ export type ToolSegment = {
   why?: StepRationale | null;
   /** The person's other agents a find_tools answer named as holding what this agent lacks. */
   handOffAgents?: readonly string[];
+  /** The records the call's result described, as the server read them from it. */
+  records?: readonly AssistantEntityRef[];
 };
 
 export type TurnRetry = {
@@ -235,9 +237,34 @@ function finishTool(segments: TurnSegment[], data: ToolFinishedData): TurnSegmen
           verdict: data.verdict,
           handOffAgents:
             data.handOffAgents && data.handOffAgents.length > 0 ? data.handOffAgents : undefined,
+          records: data.records && data.records.length > 0 ? data.records : undefined,
         }
       : segment,
   );
+}
+
+/**
+ * Every record the turn's own finished calls described, first named first and
+ * each once. These are what an answer was built from: they come from the
+ * tools' results, never from reading the reply's words.
+ */
+export function turnCitedRecords(segments: readonly TurnSegment[]): AssistantEntityRef[] {
+  const seen = new Set<string>();
+  const records: AssistantEntityRef[] = [];
+  for (const segment of segments) {
+    if (segment.kind !== "tool" || segment.status !== "done" || !segment.records) {
+      continue;
+    }
+    for (const record of segment.records) {
+      const key = `${record.type}:${record.id}`;
+      if (record.label.trim() === "" || seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      records.push(record);
+    }
+  }
+  return records;
 }
 
 /** No agent is named. One shared value, so a reader keyed on it does not run again. */

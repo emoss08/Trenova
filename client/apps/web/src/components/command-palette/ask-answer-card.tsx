@@ -1,123 +1,271 @@
-import { currentActivity, stepsFromSegments } from "@/components/assistant/activity";
-import { useT } from "@trenova/shared/i18n/use-t";
+import {
+  describeActivity,
+  groupActivity,
+  stepsFromSegments,
+} from "@/components/assistant/activity";
+import { turnCitedRecords, type TurnState } from "@/components/assistant/turn-stream";
+import { DeskProse } from "@/components/desk-chat/conversation/desk-turns";
+import { MarkdownLinkContext, type MarkdownLinkRenderer } from "@/components/elements/ai-markdown";
+import type { AssistantEntityRef } from "@/types/assistant";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { DeskProse } from "@/components/desk-chat/conversation/desk-turns";
-import type { TurnState } from "@/components/assistant/turn-stream";
-import { LayoutAlt02Icon, SquareIcon } from "@trenova/shared/components/icons";
+import {
+  CheckIcon,
+  Copy01Icon,
+  CornerDownLeftIcon,
+  LayoutAlt02Icon,
+  SquareIcon,
+} from "@trenova/shared/components/icons";
+import { useCallback, useMemo } from "react";
+import { CITE_HREF_PREFIX, linkCitedRecords } from "./cited-text";
+import { ShortcutKeys } from "./palette-parts";
+
+type AnswerPhase = "working" | "answering" | "done" | "refused" | "error";
+
+function phaseOf(turn: TurnState, text: string): AnswerPhase {
+  switch (turn.status) {
+    case "done":
+      return "done";
+    case "refused":
+      return "refused";
+    case "error":
+      return "error";
+    case "streaming":
+      return text === "" ? "working" : "answering";
+    default:
+      return text === "" ? "working" : "answering";
+  }
+}
+
+function answerText(turn: TurnState): string {
+  return turn.segments
+    .flatMap((segment) => (segment.kind === "text" ? [segment.text] : []))
+    .join("\n\n");
+}
+
+/** The words of the answer, for the clipboard, without the chips' links. */
+export function plainAnswer(turn: TurnState): string {
+  return answerText(turn).trim();
+}
+
+/** The records an answer was built from, as its tools returned them. */
+export function answerSources(turn: TurnState | null): AssistantEntityRef[] {
+  return turn ? turnCitedRecords(turn.segments) : [];
+}
+
+function RecordChip({
+  record,
+  children,
+  onPeek,
+  onOpen,
+}: {
+  record: AssistantEntityRef;
+  children: React.ReactNode;
+  onPeek: (record: AssistantEntityRef | null) => void;
+  onOpen: (record: AssistantEntityRef) => void;
+}) {
+  return (
+    <button
+      type="button"
+      tabIndex={-1}
+      onMouseDown={(event) => event.preventDefault()}
+      onMouseEnter={() => onPeek(record)}
+      onMouseLeave={() => onPeek(null)}
+      onFocus={() => onPeek(record)}
+      onBlur={() => onPeek(null)}
+      onClick={() => onOpen(record)}
+      className="border-border bg-card text-foreground hover:bg-surface-hover mx-px inline-flex h-5 max-w-56 items-center rounded-[5px] border px-1.5 align-[1px] font-mono text-sm leading-none transition-colors"
+    >
+      <span className="truncate">{children}</span>
+    </button>
+  );
+}
 
 /**
- * The answer to a quick question, inside the palette. It streams the way a
- * thread's turn does and, once a thread exists, offers to continue in the
- * Desk. What it does not do is pretend to be a conversation: one question,
- * one answer, and a door to the place where the rest can happen.
+ * Nova's answer to a quick question, at the head of the list. It shows the
+ * turn's own steps while it works, then streams the answer with every record
+ * it used drawn as a chip: hover one to look at it beside the list, click it
+ * to open it. Which records are chips comes from the tools' results, so a
+ * record the model only named is never made to look checked.
  */
 export function AskAnswerCard({
   question,
   turn,
+  subject,
   onAsk,
   onStop,
-  onOpenInDesk,
+  onContinue,
+  onCopy,
+  onFollowUp,
+  onPeek,
+  onOpenRecord,
+  mac,
   className,
 }: {
   question: string;
-  turn: TurnState | null;
+  turn: TurnState;
+  subject: string | null;
   onAsk: () => void;
   onStop: () => void;
-  onOpenInDesk: () => void;
+  onContinue: () => void;
+  onCopy: () => void;
+  onFollowUp: () => void;
+  onPeek: (record: AssistantEntityRef | null) => void;
+  onOpenRecord: (record: AssistantEntityRef) => void;
+  mac: boolean;
   className?: string;
 }) {
   const t = useT();
-  const active =
-    turn !== null &&
-    (turn.status === "guarding" || turn.status === "streaming" || turn.status === "working");
-  const text =
-    turn?.segments
-      .flatMap((segment) => (segment.kind === "text" ? [segment.text] : []))
-      .join("\n\n") ?? "";
-  // What the agent did or is doing, in the words of what it did: an opened
-  // page reads as opened, never as a record looked up.
-  const activity = turn ? currentActivity(stepsFromSegments(turn.segments), t) : null;
-  const canOpen = turn !== null && (turn.thread !== null || turn.result !== null);
-  const answered = turn !== null && turn.userContent === question;
+  const text = answerText(turn);
+  const phase = phaseOf(turn, text);
+  const busy = phase === "working" || phase === "answering";
+  const steps = useMemo(
+    () =>
+      groupActivity(stepsFromSegments(turn.segments)).map((group) => describeActivity(group, t)),
+    [t, turn.segments],
+  );
+  const sources = useMemo(() => turnCitedRecords(turn.segments), [turn.segments]);
+  const linked = useMemo(() => linkCitedRecords(text, sources), [sources, text]);
+
+  const renderLink = useCallback<MarkdownLinkRenderer>(
+    (href, children) => {
+      if (!href.startsWith(CITE_HREF_PREFIX)) {
+        return null;
+      }
+      const record = linked.records.get(href);
+      return record ? (
+        <RecordChip record={record} onPeek={onPeek} onOpen={onOpenRecord}>
+          {children}
+        </RecordChip>
+      ) : null;
+    },
+    [linked.records, onOpenRecord, onPeek],
+  );
+
+  const status =
+    phase === "working"
+      ? t("Working…")
+      : phase === "answering"
+        ? t("Answering")
+        : phase === "done"
+          ? t("Answered from your records")
+          : phase === "refused"
+            ? t("Couldn't answer that")
+            : t("Something went wrong");
 
   return (
     <section
-      aria-label={t("Ask the assistant")}
-      className={cn("border-border bg-card mx-2 mt-2 rounded-lg border", className)}
+      aria-label={t("Nova's answer")}
+      aria-busy={busy}
+      data-busy={busy}
+      onMouseDown={(event) => event.preventDefault()}
+      className={cn(
+        "cp-spectrum rounded-surface border-border-subtle bg-surface-hover/40 mx-0.5 mt-1 mb-2 flex flex-col gap-1.5 border px-3.5 py-3",
+        className,
+      )}
     >
-      <header className="flex items-center gap-2 px-3 py-2 text-xs">
-        <AssistMark className="text-muted-foreground size-3.5" />
-        <span className="text-muted-foreground min-w-0 flex-1 truncate">
-          {answered ? question : t("Ask: {0}", question)}
-        </span>
-        {!answered && (
-          <span className="text-muted-foreground flex items-center gap-1">
-            <Kbd>Enter</Kbd> {t("to ask")}
-          </span>
+      <header className="flex h-5 items-center gap-1.5 text-sm">
+        <AssistMark
+          className={cn("text-foreground size-3.5 shrink-0 translate-y-px", busy && "cp-mark-busy")}
+        />
+        <span className="text-foreground font-semibold">{t("Nova")}</span>
+        <span className="text-foreground-subtle truncate">{status}</span>
+        <span className="flex-1" />
+        {subject && (
+          <span className="text-foreground-muted truncate font-mono text-xs">{subject}</span>
         )}
-        {active && (
+        {busy && (
           <Button
-            size="xs"
+            type="button"
+            size="icon-xs"
             variant="ghost"
+            tabIndex={-1}
             onClick={onStop}
             aria-label={t("Stop")}
-            className="text-muted-foreground"
+            className="text-foreground-subtle"
           >
-            <SquareIcon className="size-3 fill-current" />
+            <SquareIcon className="size-2.5 fill-current" />
           </Button>
         )}
       </header>
+      <p className="text-foreground-subtle text-base">{question}</p>
 
-      {answered && turn && (
-        <div className="border-border flex flex-col gap-2 border-t px-3 py-2.5">
-          {turn.status === "guarding" && (
-            <p className="text-muted-foreground flex items-center gap-2 text-xs">
-              <Spinner className="size-3" /> {t("Checking the question…")}
-            </p>
-          )}
-          {activity && (
-            <p className="text-muted-foreground truncate text-xs">
-              {activity.phrase}
-              {activity.detail !== "" && (
-                <span className="text-foreground-subtle"> · {activity.detail}</span>
+      {text === "" && steps.length > 0 && (
+        <ul className="flex flex-col gap-1">
+          {steps.map((step, index) => (
+            <li key={index} className="text-foreground-muted flex items-center gap-2 text-sm">
+              {step.state === "running" ? (
+                <Spinner className="size-3 shrink-0" />
+              ) : (
+                <CheckIcon
+                  className={cn(
+                    "size-3 shrink-0",
+                    step.state === "failed" ? "text-danger" : "text-foreground-subtle",
+                  )}
+                  strokeWidth={2}
+                />
               )}
-            </p>
-          )}
-          {text !== "" && <DeskProse content={text} streaming={turn.status === "streaming"} />}
-          {turn.status === "working" && text === "" && (
-            <p className="text-muted-foreground flex items-center gap-2 text-xs">
-              <Spinner className="size-3" /> {t("Working…")}
-            </p>
-          )}
-          {turn.status === "refused" && turn.refusal && (
-            <p className="text-warning-foreground text-sm">{turn.refusal.message}</p>
-          )}
-          {turn.status === "error" && turn.error && (
-            <p className="text-danger-foreground text-sm">{turn.error}</p>
-          )}
-          {turn.status === "error" && (
-            <div>
-              <Button size="xs" variant="outline" onClick={onAsk}>
-                {t("Ask again")}
-              </Button>
-            </div>
-          )}
-          {canOpen && (
-            <div className="flex items-center gap-2 pt-1">
-              <Button size="xs" variant="outline" onClick={onOpenInDesk}>
-                <LayoutAlt02Icon className="size-3.5" />
-                {t("Open in Desk")}
-              </Button>
-              <span className="text-muted-foreground text-xs">
-                {t("Continue the conversation with room for what it produces.")}
+              <span className="truncate">
+                {step.phrase}
+                {step.detail !== "" && (
+                  <span className="text-foreground-subtle"> · {step.detail}</span>
+                )}
               </span>
-            </div>
-          )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {text === "" && steps.length === 0 && busy && (
+        <p className="text-foreground-muted flex items-center gap-2 text-sm">
+          <Spinner className="size-3" />
+          {turn.status === "guarding" ? t("Checking the question…") : t("Reading your records…")}
+        </p>
+      )}
+
+      {text !== "" && (
+        <MarkdownLinkContext value={renderLink}>
+          <div className="text-foreground text-base leading-[1.6]">
+            <DeskProse content={linked.text} streaming={phase === "answering"} />
+          </div>
+        </MarkdownLinkContext>
+      )}
+
+      {phase === "refused" && turn.refusal && (
+        <p className="text-foreground-muted text-base">{turn.refusal.message}</p>
+      )}
+      {phase === "error" && (
+        <div className="flex flex-col items-start gap-2">
+          {turn.error && <p className="text-foreground-muted text-base">{turn.error}</p>}
+          <Button type="button" size="xs" variant="outline" tabIndex={-1} onClick={onAsk}>
+            {t("Ask again")}
+          </Button>
         </div>
+      )}
+
+      {phase === "done" && (
+        <footer className="border-border-subtle mt-1 flex flex-nowrap items-center gap-1 border-t pt-2.5 whitespace-nowrap">
+          <Button type="button" size="xs" variant="outline" tabIndex={-1} onClick={onContinue}>
+            <LayoutAlt02Icon className="size-3.5" />
+            {t("Continue in Desk")}
+            <ShortcutKeys keys={[mac ? "⌘" : "Ctrl", "↵"]} className="ml-0.5" />
+          </Button>
+          <Button type="button" size="xs" variant="ghost" tabIndex={-1} onClick={onCopy}>
+            <Copy01Icon className="size-3.5" />
+            {t("Copy")}
+          </Button>
+          <Button type="button" size="xs" variant="ghost" tabIndex={-1} onClick={onFollowUp}>
+            <CornerDownLeftIcon className="size-3.5" />
+            {t("Follow up")}
+          </Button>
+          {sources.length > 0 && (
+            <span className="text-foreground-subtle ml-auto hidden truncate text-sm sm:inline">
+              {t("Hover a record to look at it")}
+            </span>
+          )}
+        </footer>
       )}
     </section>
   );

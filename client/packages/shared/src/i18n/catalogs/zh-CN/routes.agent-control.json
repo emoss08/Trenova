@@ -337,7 +337,6 @@
   "Checked every night on its own.": "每晚自动验证。",
   "Checking the chain from the last sealed row…": "正在从最后一条已封存的记录开始检查链…",
   "Checking which tools have earned it…": "正在检查哪些工具已达标…",
-  "Choose": "选择",
   "Choose a candidate and turn the rollout on to send it a share of real documents.": "选择候选项并开启推出，即可将一部分真实文件交给它。",
   "Choose a candidate provider to start shadowing production extraction.": "选择候选提供商，以开始影子运行生产环境提取。",
   "Choose a provider": "选择提供商",

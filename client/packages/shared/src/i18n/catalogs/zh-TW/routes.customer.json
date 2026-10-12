@@ -55,6 +55,7 @@
   "Core identifiers used across the system to reference this customer": "系統中用於參照此客戶的核心識別資訊",
   "Count late only on appointment stops": "僅在預約停靠點計算遲到",
   "Credit management": "信用管理",
+  "Credit status": "信用狀態",
   "Cross-check all applied rates against this customer's contracted rate agreements before invoicing. Mismatches will block billing and flag for review.": "開立發票前，將所有套用的費率與此客戶的合約費率協議交叉查核。不符者將封鎖帳務並標記為待審查。",
   "Currency used on all invoices for this customer. Determines how amounts are formatted and displayed on billing documents.": "此客戶所有發票所使用的幣別。決定金額在帳務文件上的格式與顯示方式。",
   "Current unpaid invoice total. Automatically updated as invoices are generated and payments received.": "目前未付發票總額。會隨發票開立與收款自動更新。",

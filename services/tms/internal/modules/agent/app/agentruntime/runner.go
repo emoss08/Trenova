@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -671,6 +672,10 @@ func (s *Service) recordToolResult(
 	t.keepShown(&outcome)
 	effect := s.ToolEffect(call.Name)
 	summary := summarizeOutcome(call, outcome)
+	var records []agent.EntityRef
+	if !outcome.failed {
+		records = citedRecords(outcome.content)
+	}
 
 	fx.Emit(kernelports.StreamEvent{
 		Event: agentports.AssistantEventToolFinished,
@@ -684,6 +689,7 @@ func (s *Service) recordToolResult(
 			Summary:       summary,
 			Verdict:       outcome.verdict,
 			HandOffAgents: outcome.handOff,
+			Records:       records,
 		},
 	})
 

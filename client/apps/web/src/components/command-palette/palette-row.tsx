@@ -1,324 +1,401 @@
-import { resolveNotificationDescriptor } from "@/components/notification-center/notification-registry";
-import { formatTimestamp } from "@/lib/notification-helpers";
-import { ShipmentStatusBadge, StatusBadge } from "@trenova/shared/components/status-badge";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
-import { Badge } from "@trenova/shared/components/ui/badge";
+import { useNow } from "@trenova/shared/hooks/use-now";
 import { CommandItem } from "@trenova/shared/components/ui/command";
-import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn, getNameInitials } from "@trenova/shared/lib/utils";
-import { shipmentStatusSchema } from "@trenova/shared/types/shipment";
+import { formatCompactAge, formatUnixDateTimeShort } from "@trenova/shared/lib/date";
+import { cn, formatCurrency, getNameInitials } from "@trenova/shared/lib/utils";
 import {
   AlertCircleIcon,
+  ArrowRightIcon,
   CheckIcon,
-  ChevronRightIcon,
   Pin01Icon,
 } from "@trenova/shared/components/icons";
-import { memo, useMemo } from "react";
-import { BRAND_TILE_CLASS, NEUTRAL_TILE_CLASS, PALETTE_ENTITIES } from "./palette-entities";
-import type { PaletteItem, PaletteRecord } from "./palette-model";
-import { PaletteTile } from "./palette-tile";
+import { memo } from "react";
+import { DANGER_TILE_CLASS, PALETTE_ENTITY_ICONS } from "./palette-entities";
+import {
+  documentKind,
+  MATCH_SOURCE_LABELS,
+  shipmentBol,
+  shipmentLane,
+  TRAIL_SEPARATOR,
+  workerRole,
+} from "./palette-fields";
+import type { PaletteItem, PaletteMatch, PaletteRecord } from "./palette-model";
+import {
+  ContextLine,
+  CountChip,
+  MatchText,
+  PaletteTile,
+  ShortcutKeys,
+  StatusLabel,
+} from "./palette-parts";
+import { recordStatus } from "./palette-status";
 
-const ATTENTION_TILE: Record<string, string> = {
-  info: "bg-info-subtle text-info-subtle-foreground ring-info-border",
-  warning: "bg-warning-subtle text-warning-subtle-foreground ring-warning-border",
-  danger: "bg-danger-subtle text-danger-subtle-foreground ring-danger-border",
-};
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function ranges(match: PaletteMatch | undefined, key: string) {
+  return match?.highlights[key];
 }
 
-/**
- * The text with every typed term underlined where it landed. A quiet mark,
- * not a fill: the row's own selection is the loud thing on screen.
- */
-export const MatchText = memo(function MatchText({
+function Title({
   text,
-  query,
+  match,
+  mono = false,
   className,
 }: {
   text: string;
-  query: string;
+  match?: PaletteMatch;
+  mono?: boolean;
   className?: string;
 }) {
-  const parts = useMemo(() => {
-    const terms = query
-      .trim()
-      .split(/\s+/)
-      .filter((term) => term.length > 0)
-      .sort((a, b) => b.length - a.length)
-      .map(escapeRegExp);
-    if (terms.length === 0 || text === "") {
-      return null;
-    }
-    return text.split(new RegExp(`(${terms.join("|")})`, "gi"));
-  }, [query, text]);
-
-  if (!parts) {
-    return <span className={className}>{text}</span>;
-  }
-
   return (
-    <span className={className}>
-      {parts.map((part, index) =>
-        index % 2 === 1 ? (
-          <mark
-            key={index}
-            className="decoration-highlight bg-transparent text-inherit underline decoration-2 underline-offset-[3px]"
-          >
-            {part}
-          </mark>
-        ) : (
-          part
-        ),
+    <MatchText
+      text={text}
+      ranges={ranges(match, "title")}
+      className={cn(
+        "text-foreground truncate text-base font-medium",
+        mono && "font-mono",
+        className,
       )}
-    </span>
-  );
-});
-
-function Dot() {
-  return (
-    <span aria-hidden className="text-border-strong">
-      ·
-    </span>
+    />
   );
 }
 
-function Meta({ parts }: { parts: (React.ReactNode | null | undefined | false)[] }) {
-  const present = parts.filter((part): part is React.ReactNode => Boolean(part));
-  if (present.length === 0) {
+/** "Keyword assistant" or "Driver Leon Park": why a row matched when the field is not on screen. */
+function MatchSource({ match }: { match?: PaletteMatch }) {
+  const via = match?.via;
+  if (!via) {
     return null;
   }
+  const label = Object.hasOwn(MATCH_SOURCE_LABELS, via.label)
+    ? MATCH_SOURCE_LABELS[via.label as keyof typeof MATCH_SOURCE_LABELS]
+    : via.label;
   return (
-    <span className="text-foreground-subtle flex min-w-0 items-center gap-1.5 truncate text-xs">
-      {present.map((part, index) => (
-        <span key={index} className="flex min-w-0 items-center gap-1.5">
-          {index > 0 && <Dot />}
-          <span className="truncate">{part}</span>
-        </span>
-      ))}
+    <span className="border-border text-foreground-subtle inline-flex h-4 max-w-44 shrink-0 items-center gap-1 truncate rounded-[4px] border px-1 text-2xs">
+      {label}
+      <MatchText text={via.text} ranges={via.ranges} className="text-foreground-muted truncate" />
     </span>
   );
 }
 
-function RecordStatus({ record }: { record: PaletteRecord }) {
-  const status = record.metadata.status;
-  if (!status) {
+function openBalance(record: PaletteRecord): string | null {
+  const balance = record.metadata.openBalance;
+  if (balance === undefined) {
     return null;
   }
-  if (record.entityType === "shipment") {
-    const parsed = shipmentStatusSchema.safeParse(status);
-    return parsed.success ? <ShipmentStatusBadge status={parsed.data} /> : null;
-  }
-  if (record.entityType === "customer" || record.entityType === "worker") {
-    return <StatusBadge status={status} />;
-  }
-  return null;
+  const amount = Number(balance);
+  return Number.isFinite(amount)
+    ? formatCurrency(amount, record.metadata.currencyCode || "USD")
+    : null;
 }
 
-function RecordBody({ record, query }: { record: PaletteRecord; query: string }) {
+function RecordContext({ record, match }: { record: PaletteRecord; match?: PaletteMatch }) {
   const t = useT();
-  const entity = PALETTE_ENTITIES[record.entityType];
   const meta = record.metadata;
+  switch (record.entityType) {
+    case "shipment": {
+      const bolRanges = ranges(match, "bol");
+      return (
+        <ContextLine
+          parts={[
+            meta.customerName && (
+              <MatchText
+                key="customer"
+                text={meta.customerName}
+                ranges={ranges(match, "customer")}
+                className="text-foreground-muted"
+              />
+            ),
+            shipmentLane(record) && (
+              <MatchText key="lane" text={shipmentLane(record)} ranges={ranges(match, "lane")} />
+            ),
+            bolRanges && (
+              <MatchText
+                key="bol"
+                text={shipmentBol(record)}
+                ranges={bolRanges}
+                className="text-foreground-muted"
+              />
+            ),
+          ]}
+        />
+      );
+    }
+    case "customer": {
+      const balance = openBalance(record);
+      return (
+        <ContextLine
+          parts={[
+            (meta.code ?? record.subtitle) && (
+              <MatchText
+                key="code"
+                text={meta.code ?? record.subtitle ?? ""}
+                ranges={ranges(match, "code")}
+                className="text-foreground-muted font-mono"
+              />
+            ),
+            meta.city && <MatchText key="city" text={meta.city} ranges={ranges(match, "city")} />,
+            balance && (
+              <span key="balance" className="text-foreground-muted">
+                {t("{0} open", balance)}
+              </span>
+            ),
+          ]}
+        />
+      );
+    }
+    case "worker":
+      return (
+        <ContextLine
+          parts={[
+            meta.externalId && (
+              <MatchText
+                key="id"
+                text={meta.externalId}
+                ranges={ranges(match, "id")}
+                className="text-foreground-muted font-mono"
+              />
+            ),
+            workerRole(record) && (
+              <MatchText key="role" text={workerRole(record)} ranges={ranges(match, "role")} />
+            ),
+            meta.city && <MatchText key="home" text={meta.city} ranges={ranges(match, "home")} />,
+            meta.currentLoad && (
+              <span key="load" className="text-foreground-muted font-mono">
+                {meta.currentLoad}
+              </span>
+            ),
+          ]}
+        />
+      );
+    case "document": {
+      const received = Number(meta.receivedAt);
+      return (
+        <ContextLine
+          parts={[
+            documentKind(record) && (
+              <MatchText
+                key="type"
+                text={documentKind(record)}
+                ranges={ranges(match, "type")}
+                className="text-foreground-muted"
+              />
+            ),
+            meta.attachedLabel && (
+              <MatchText
+                key="record"
+                text={meta.attachedLabel}
+                ranges={ranges(match, "record")}
+                className="font-mono"
+              />
+            ),
+            Number.isFinite(received) && received > 0 && (
+              <span key="received">{formatUnixDateTimeShort(received)}</span>
+            ),
+          ]}
+        />
+      );
+    }
+  }
+}
 
-  const details: React.ReactNode[] =
-    record.entityType === "shipment"
-      ? [
-          meta.customerName && (
-            <MatchText
-              key="customer"
-              text={
-                meta.customerCode
-                  ? `${meta.customerName} (${meta.customerCode})`
-                  : meta.customerName
-              }
-              query={query}
-            />
-          ),
-          meta.bol && <MatchText key="bol" text={t("BOL {0}", meta.bol)} query={query} />,
-          meta.serviceTypeCode,
-        ]
-      : [record.subtitle && <MatchText key="subtitle" text={record.subtitle} query={query} />];
+function TwoLines({ children }: { children: React.ReactNode }) {
+  return <span className="flex min-w-0 flex-1 flex-col gap-px">{children}</span>;
+}
 
+function End({ children }: { children: React.ReactNode }) {
+  return <span className="flex shrink-0 items-center gap-2">{children}</span>;
+}
+
+function SelectedKey({ show }: { show: boolean }) {
+  if (!show) {
+    return null;
+  }
+  return (
+    <ShortcutKeys
+      keys={["↵"]}
+      className="hidden shrink-0 group-data-[selected=true]/row:inline-flex"
+    />
+  );
+}
+
+function RecordRow({ item }: { item: Extract<PaletteItem, { kind: "record" }> }) {
+  const t = useT();
+  const now = useNow();
+  const { record, match } = item;
+  const status = recordStatus(record, t);
+  const mono = record.entityType === "shipment" || record.entityType === "document";
   return (
     <>
       <PaletteTile
-        icon={entity.icon}
+        icon={PALETTE_ENTITY_ICONS[record.entityType]}
         initials={record.entityType === "worker" ? getNameInitials(record.title) : undefined}
-        className={entity.tileClass}
       />
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span className="flex min-w-0 items-center gap-2">
-          <MatchText text={record.title} query={query} className="truncate font-medium" />
-          <span className="text-2xs text-foreground-subtle shrink-0">{t(entity.label)}</span>
-        </span>
-        <Meta parts={details} />
-      </span>
-      <span className="flex shrink-0 items-center gap-2">
-        <RecordStatus record={record} />
-      </span>
+      <TwoLines>
+        <Title text={record.title} match={match} mono={mono} />
+        <RecordContext record={record} match={match} />
+      </TwoLines>
+      <End>
+        <MatchSource match={match} />
+        {item.visitedAt !== undefined && (
+          <span className="text-foreground-faint font-mono text-xs tabular-nums">
+            {formatCompactAge(now - item.visitedAt / 1000)}
+          </span>
+        )}
+        {status && <StatusLabel label={status.label} state={status.state} />}
+        <SelectedKey show />
+      </End>
     </>
   );
 }
 
-function Trail({ trail, query }: { trail: string; query: string }) {
-  const segments = trail.split(" > ");
-  return (
-    <span className="text-foreground-subtle flex min-w-0 items-center gap-0.5 truncate text-xs">
-      {segments.map((segment, index) => (
-        <span key={`${segment}-${index}`} className="flex min-w-0 items-center gap-0.5">
-          {index > 0 && <ChevronRightIcon aria-hidden className="size-3 shrink-0 opacity-60" />}
-          <MatchText text={segment} query={query} className="truncate" />
-        </span>
-      ))}
-    </span>
-  );
-}
-
-export function ShortcutKeys({ keys, className }: { keys: readonly string[]; className?: string }) {
-  return (
-    <KbdGroup className={className}>
-      {keys.map((key) => (
-        <Kbd key={key}>{key}</Kbd>
-      ))}
-    </KbdGroup>
-  );
-}
-
-function RowBody({ item, query }: { item: PaletteItem; query: string }) {
+function RowBody({ item }: { item: PaletteItem }) {
   const t = useT();
 
   switch (item.kind) {
     case "record":
-      return <RecordBody record={item.record} query={query} />;
-    case "page":
+      return <RecordRow item={item} />;
+    case "page": {
+      const { page, match } = item;
+      const trail = page.trail.map((segment) => t(segment)).join(TRAIL_SEPARATOR);
       return (
         <>
-          <PaletteTile icon={item.page.icon} className={NEUTRAL_TILE_CLASS} />
-          <span className="flex min-w-0 flex-1 flex-col">
-            <MatchText text={t(item.page.title)} query={query} className="truncate font-medium" />
-            <Trail trail={item.page.trail} query={query} />
-          </span>
-          {item.pinned && (
-            <Pin01Icon
-              aria-label={t("Pinned")}
-              className="text-foreground-subtle size-3.5 shrink-0"
+          <PaletteTile icon={page.icon} />
+          <TwoLines>
+            <Title text={t(page.title)} match={match} />
+            <ContextLine
+              parts={[
+                trail ? (
+                  <MatchText key="trail" text={trail} ranges={ranges(match, "trail")} />
+                ) : (
+                  t("Workspace")
+                ),
+              ]}
             />
-          )}
+          </TwoLines>
+          <End>
+            <MatchSource match={match} />
+            {item.pinned && (
+              <Pin01Icon aria-label={t("Pinned")} className="text-foreground-subtle size-3.5" />
+            )}
+            <SelectedKey show />
+          </End>
         </>
       );
+    }
     case "command": {
-      const { command } = item;
+      const { command, match } = item;
       return (
         <>
           <PaletteTile
             icon={command.icon}
-            className={
-              command.group === "create" || command.group === "assistant"
-                ? BRAND_TILE_CLASS
-                : NEUTRAL_TILE_CLASS
-            }
+            className={command.destructive ? DANGER_TILE_CLASS : undefined}
           />
-          <span className="flex min-w-0 flex-1 flex-col">
-            <MatchText
+          <TwoLines>
+            <Title
               text={command.label}
-              query={query}
-              className={cn("truncate font-medium", command.destructive && "text-danger")}
+              match={match}
+              className={command.destructive ? "text-danger" : undefined}
             />
-            <span className="text-foreground-subtle truncate text-xs">{command.description}</span>
-          </span>
-          {command.checked && (
-            <CheckIcon aria-label={t("Current")} className="text-brand size-4 shrink-0" />
-          )}
-          {command.shortcut && <ShortcutKeys keys={command.shortcut} className="shrink-0" />}
+            <ContextLine
+              parts={[
+                <MatchText
+                  key="description"
+                  text={command.description}
+                  ranges={ranges(match, "description")}
+                />,
+              ]}
+            />
+          </TwoLines>
+          <End>
+            <MatchSource match={match} />
+            {command.checked && (
+              <CheckIcon aria-label={t("Current")} className="text-foreground size-4" />
+            )}
+            {command.shortcut ? <ShortcutKeys keys={command.shortcut} /> : <SelectedKey show />}
+          </End>
         </>
       );
     }
     case "attention":
       return (
         <>
-          <PaletteTile
-            icon={AlertCircleIcon}
-            className={ATTENTION_TILE[item.attention.tone] ?? NEUTRAL_TILE_CLASS}
-          />
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate font-medium">{item.attention.label}</span>
-            <span className="text-foreground-subtle truncate text-xs">{item.attention.module}</span>
-          </span>
-          <Badge variant={item.attention.tone} className="tabular-nums">
-            {item.attention.count.toLocaleString()}
-          </Badge>
+          <PaletteTile icon={AlertCircleIcon} />
+          <TwoLines>
+            <span className="text-foreground truncate text-base font-medium">
+              {item.attention.label}
+            </span>
+            <ContextLine parts={[item.attention.module]} />
+          </TwoLines>
+          <End>
+            <CountChip value={item.attention.count} />
+            <SelectedKey show />
+          </End>
         </>
       );
-    case "notification": {
-      const descriptor = resolveNotificationDescriptor(item.notification);
-      return (
-        <>
-          <PaletteTile
-            icon={descriptor.icon}
-            className={cn(NEUTRAL_TILE_CLASS, descriptor.tileClass, descriptor.iconClass)}
-          />
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate font-medium">{item.notification.title}</span>
-            {!descriptor.hideMessage && item.notification.message && (
-              <span className="text-foreground-subtle truncate text-xs">
-                {item.notification.message}
-              </span>
-            )}
-          </span>
-          <span className="text-2xs text-foreground-subtle shrink-0 tabular-nums">
-            {formatTimestamp(item.notification.createdAt)}
-          </span>
-        </>
-      );
-    }
     case "ask":
       return (
         <>
-          <PaletteTile icon={AssistMark} className={BRAND_TILE_CLASS} />
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate font-medium">{t("Ask the assistant")}</span>
-            <span className="text-foreground-subtle truncate text-xs">{item.question}</span>
+          <PaletteTile icon={AssistMark} className="text-foreground" />
+          <TwoLines>
+            <span className="text-foreground truncate text-base font-medium">
+              {item.subject ? item.question : t("Ask Nova")}
+            </span>
+            <ContextLine
+              parts={[
+                item.subject ? t("About {0}", item.subject.label) : t("“{0}”", item.question),
+              ]}
+            />
+          </TwoLines>
+          <End>
+            <SelectedKey show />
+          </End>
+        </>
+      );
+    case "widen":
+      return (
+        <>
+          <PaletteTile icon={ArrowRightIcon} />
+          <span className="text-foreground min-w-0 flex-1 truncate text-base font-medium">
+            {t("Search everything for “{0}”", item.query)}
           </span>
-          <ShortcutKeys keys={["↵"]} className="shrink-0" />
+          <End>
+            <SelectedKey show />
+          </End>
         </>
       );
   }
 }
 
+function isSingleLine(item: PaletteItem): boolean {
+  return item.kind === "widen";
+}
+
 /**
- * One row, whatever it stands for. Every kind shares the anatomy — a tile
- * naming what it is, a title, a line of context, and whatever it needs on
- * the right — so a list that mixes records, pages and commands still reads
- * as one list.
+ * One row, whatever it stands for. Every kind shares the anatomy — a neutral
+ * tile, a title, one line of context, and what it needs on the right — so a
+ * list that mixes records, pages and commands still reads as one list. The
+ * selection is drawn by the list as one sliding fill, so a row draws no
+ * selected background or bar of its own.
  */
 export const PaletteRow = memo(function PaletteRow({
   item,
-  query,
   onSelect,
-  onHover,
 }: {
   item: PaletteItem;
-  query: string;
   onSelect: (item: PaletteItem) => void;
-  onHover?: (item: PaletteItem) => void;
 }) {
   return (
     <CommandItem
       value={item.key}
       onSelect={() => onSelect(item)}
-      onPointerMove={onHover ? () => onHover(item) : undefined}
       data-kind={item.kind}
+      data-palette-row=""
       className={cn(
-        "group/row rounded-control relative h-auto min-h-11 gap-3 px-2.5 py-1.5 text-sm",
-        "ease-swift transition-colors duration-100",
-        "data-[selected=true]:bg-surface-selected",
-        "before:bg-brand before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:opacity-0 before:transition-opacity",
-        "data-[selected=true]:before:opacity-100",
+        "group/row rounded-surface relative z-1 h-auto scroll-mt-9 scroll-mb-2 gap-3 px-2.5 text-base",
+        "data-[selected=true]:bg-transparent",
+        isSingleLine(item) ? "min-h-9 py-1" : "min-h-11.5 py-1.5",
       )}
     >
-      <RowBody item={item} query={query} />
+      <RowBody item={item} />
     </CommandItem>
   );
 });
