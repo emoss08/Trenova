@@ -374,6 +374,13 @@ for (const shot of SHOTS) {
       isMobile: viewport === PHONE,
       hasTouch: viewport === PHONE,
     });
+    // The app calls the API at localhost:8080 in development; a mock started elsewhere
+    // (MOCK_API_URL) takes those calls instead, so a fresh mock never fights a stale one.
+    if (new URL(MOCK).host !== "localhost:8080") {
+      await page.route(/^http:\/\/localhost:8080\//, (route) =>
+        route.continue({ url: route.request().url().replace("localhost:8080", new URL(MOCK).host) }),
+      );
+    }
     await page.clock.install({ time: new Date(scenario.triageAnchor * 1000) });
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("console", (message) => {

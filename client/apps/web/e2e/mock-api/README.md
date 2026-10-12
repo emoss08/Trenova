@@ -171,7 +171,8 @@ read, the shortcuts sheet, the bulk selection bar, the snoozed and waiting-on-th
 end-of-day carry-over and hand-off. Steps find controls by role and by the prototype's words
 ("File all", "Turn on", "Hand off to Marcus"), so they hold as the markup changes; a step that
 cannot be done is printed under its shot and the rest carry on. `STEP_MS` (default 4000) bounds
-each step's wait.
+each step's wait. With `MOCK_API_URL` set to a mock on another port, the browser's calls to
+`localhost:8080` are sent there too, so a fresh mock can be used while another one runs.
 
 AI control has its own walkthrough, the same way:
 
