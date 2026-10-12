@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"sync"
+	"sync/atomic"
 
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
@@ -49,8 +51,19 @@ type Params struct {
 	AuditService       auditports.AuditService
 	WorkflowStarter    kernelports.WorkflowStarter
 	Storage            kernelports.Client
-	Plans              platformplanports.PlanService     `optional:"true"`
-	Observers          []emailports.EmailMessageObserver `                group:"email_message_observers"`
+	Plans              platformplanports.PlanService `optional:"true"`
+}
+
+// ObserverParams are the observers told when a message changes. They are
+// registered once the graph is built rather than taken by New: an observer may
+// itself depend, through its own dependencies, on sending email, and taking it
+// at construction made the email service depend on everything each observer
+// depends on.
+type ObserverParams struct {
+	fx.In
+
+	Email     *Service
+	Observers []emailports.EmailMessageObserver `group:"email_message_observers"`
 }
 
 type Service struct {
@@ -65,7 +78,8 @@ type Service struct {
 	workflowStarter    kernelports.WorkflowStarter
 	storage            kernelports.Client
 	plans              platformplanports.PlanService
-	observers          []emailports.EmailMessageObserver
+	observers          atomic.Pointer[[]emailports.EmailMessageObserver]
+	observersMu        sync.Mutex
 }
 
 type HandleProviderEventParams struct {
@@ -91,8 +105,31 @@ func New(p Params) *Service {
 		workflowStarter: p.WorkflowStarter,
 		storage:         p.Storage,
 		plans:           p.Plans,
-		observers:       p.Observers,
 	}
+}
+
+// RegisterObservers hands the email service the observers the graph provides.
+func RegisterObservers(p ObserverParams) {
+	p.Email.Observe(p.Observers...)
+}
+
+// Observe adds observers told of every message change from now on.
+func (s *Service) Observe(observers ...emailports.EmailMessageObserver) {
+	if len(observers) == 0 {
+		return
+	}
+
+	s.observersMu.Lock()
+	defer s.observersMu.Unlock()
+
+	var current []emailports.EmailMessageObserver
+	if loaded := s.observers.Load(); loaded != nil {
+		current = *loaded
+	}
+	next := make([]emailports.EmailMessageObserver, 0, len(current)+len(observers))
+	next = append(next, current...)
+	next = append(next, observers...)
+	s.observers.Store(&next)
 }
 
 func (s *Service) ListProfiles(
@@ -1011,7 +1048,11 @@ func (s *Service) messageChanged(ctx context.Context, msg *email.Message, event 
 	if msg == nil {
 		return
 	}
-	for _, observer := range s.observers {
+	observers := s.observers.Load()
+	if observers == nil {
+		return
+	}
+	for _, observer := range *observers {
 		observer.EmailMessageChanged(ctx, emailports.EmailMessageChange{Message: msg, Event: event})
 	}
 }
