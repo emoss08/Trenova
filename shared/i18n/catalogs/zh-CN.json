@@ -9930,7 +9930,6 @@
   "{0} is not an id": "{0} 不是 id",
   "{0} is not available": "{0} 不可用",
   "{0} is not available as a carrier intelligence provider": "{0} 不可用作承运商情报提供商",
-  "{0} is not available when running on {1}; configure database.driver=postgres to use this feature": "在 {1} 上运行时无法使用 {0}；请配置 database.driver=postgres 以使用此功能",
   "{0} is not connected for this organization": "本组织尚未连接 {0}",
   "{0} is not connected. A person must connect it from the integrations page.": "{0} 尚未连接。必须由人员从集成服务页面进行连接。",
   "{0} is not held by a closed period, so it keeps its date": "{0} 并非因关账期间而搁置，因此保留原日期",

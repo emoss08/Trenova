@@ -1,4 +1,3 @@
-// dialect:postgres-only — collections analytics bucket dates with date_trunc.
 package accountsreceivablerepository
 
 import (

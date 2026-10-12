@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -554,7 +555,7 @@ func (r *repository) StampExport(
 			Set("payroll_export_id = ?", req.ExportID).
 			Set("status = ?", req.Status).
 			Set("version = version + 1").
-			Set("updated_at = ?", bun.Safe(r.db.NowEpoch())).
+			Set("updated_at = ?", bun.Safe(dbhelper.NowEpoch)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 				return workercol.TimesheetScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.In(), bun.List(req.TimesheetIDs)).
@@ -625,7 +626,7 @@ func (r *repository) ClearExport(
 			Set("payroll_export_id = NULL").
 			Set("status = ?", worker.TimesheetApproved).
 			Set("version = version + 1").
-			Set("updated_at = ?", bun.Safe(r.db.NowEpoch())).
+			Set("updated_at = ?", bun.Safe(dbhelper.NowEpoch)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 				return workercol.TimesheetScopeTenantUpdate(uq, tenantInfo).
 					Where(cols.PayrollExportID.Eq(), exportID)
