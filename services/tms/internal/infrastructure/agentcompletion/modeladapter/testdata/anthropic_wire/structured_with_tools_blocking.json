@@ -1,7 +1,7 @@
 {
   "method": "POST",
   "path": "/v1/messages",
-  "query": "",
+  "query": "beta=true",
   "headers": {
     "Anthropic-Version": "2023-06-01",
     "Content-Type": "application/json",

@@ -186,6 +186,30 @@ keep a small ceiling from ending every turn partway through a tool call:
 The retry is one more model activity, so it is behind the `agent-loop-cut-off-call-retry`
 gate, asked only of a completion that meets the condition.
 
+### Speaking to Claude
+
+The Anthropic adapter builds and reads every request with the official Go SDK
+(`github.com/anthropics/anthropic-sdk-go`), on its beta Messages surface, so the
+request types cover every block, tool and beta the API has and a new one needs no
+hand-written JSON. Trenova keeps the transport around it
+(`modeladapter/anthropicclient.go`):
+
+- **Nothing from the environment.** The SDK's default client reads `ANTHROPIC_*`
+  credentials, base URL, a saved profile and custom headers from the process. On a
+  server that hosts many organizations those would reach every provider an
+  operator configured, so the service is built from the provider's key, address and
+  the router's HTTP client alone.
+- **No retries underneath the router.** The SDK makes one attempt. Retries, rests
+  and failover stay with the router and the workflow, which count each attempt.
+- **Failures read the same as every protocol.** A middleware turns a reply that is
+  not 2xx into the shared `TransportError` (status, retryability, message,
+  Retry-After) and wraps a stream in the idle guard. An error event inside a stream
+  becomes the same retryable or final failure as before.
+- **Pinned on the wire.** `anthropicwire_internal_test.go` keeps the exact method,
+  path, headers and body for each family of model and thinking setting under
+  `testdata/anthropic_wire`. A change to how a request is built is a diff to read
+  there; `UPDATE_ANTHROPIC_WIRE=1` rewrites the files after a deliberate one.
+
 ### Thinking on Claude
 
 Claude models differ in how they are asked to think, and the Anthropic adapter reads which
@@ -1395,8 +1419,9 @@ A provider reuses the start of a prompt only while it is the same bytes, so a
 request is laid out stable first:
 
 - **Bytes.** Every request body, the tools and the replayed tool-call arguments
-  included, is encoded with sorted keys (`modeladapter.requestJSON`); a map in
-  Go's random order made every request different.
+  included, is encoded with sorted keys (`modeladapter.requestJSON`, and the
+  SDK's encoder for Anthropic); a map in Go's random order made every request
+  different. `TestRequests_AreTheSameBytesEveryTime` holds every protocol to it.
 - **System prompt.** `BuildSystemPromptParts` writes what every turn of an agent
   shares first and the turn's own part after it. The shared part is, in order:
   the identity line (the agent's name and description), Trenova's rules

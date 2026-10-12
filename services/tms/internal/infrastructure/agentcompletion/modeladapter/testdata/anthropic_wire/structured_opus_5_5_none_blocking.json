@@ -1,7 +1,7 @@
 {
   "method": "POST",
   "path": "/v1/messages",
-  "query": "",
+  "query": "beta=true",
   "headers": {
     "Anthropic-Beta": "thinking-binding-controls-2026-08-01",
     "Anthropic-Version": "2023-06-01",

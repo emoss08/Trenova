@@ -21,6 +21,7 @@ import (
 )
 
 const (
+	anthropicVersion     = "2023-06-01"
 	maxModelListBytes    = 16 << 20
 	anthropicModelsLimit = 1000
 	maxAnthropicPages    = 10

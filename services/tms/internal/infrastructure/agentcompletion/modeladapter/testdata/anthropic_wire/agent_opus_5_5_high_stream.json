@@ -1,7 +1,7 @@
 {
   "method": "POST",
   "path": "/v1/messages",
-  "query": "",
+  "query": "beta=true",
   "headers": {
     "Anthropic-Beta": "thinking-binding-controls-2026-08-01",
     "Anthropic-Version": "2023-06-01",
@@ -44,7 +44,12 @@
       {
         "content": [
           {
-            "content": "{\"status\":\"InTransit\"}",
+            "content": [
+              {
+                "text": "{\"status\":\"InTransit\"}",
+                "type": "text"
+              }
+            ],
             "tool_use_id": "call_1",
             "type": "tool_result"
           }
@@ -100,7 +105,12 @@
       {
         "content": [
           {
-            "content": "{\"status\":\"Delivered\"}",
+            "content": [
+              {
+                "text": "{\"status\":\"Delivered\"}",
+                "type": "text"
+              }
+            ],
             "tool_use_id": "call_2",
             "type": "tool_result"
           }
@@ -113,7 +123,12 @@
             "cache_control": {
               "type": "ephemeral"
             },
-            "content": "not found",
+            "content": [
+              {
+                "text": "not found",
+                "type": "text"
+              }
+            ],
             "is_error": true,
             "tool_use_id": "call_3",
             "type": "tool_result"
