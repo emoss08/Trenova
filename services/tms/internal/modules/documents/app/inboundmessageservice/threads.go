@@ -21,7 +21,7 @@ type threadLookup struct {
 	references []string
 }
 
-func (s *Service) threadKeyFor(ctx context.Context, lookup threadLookup) (string, error) {
+func (s *Service) threadKeyFor(ctx context.Context, lookup *threadLookup) (string, error) {
 	candidates := inboundmessage.ThreadCandidates(lookup.inReplyTo, lookup.references)
 	if lookup.ownKey != "" {
 		candidates = removeKey(candidates, lookup.ownKey)
@@ -46,26 +46,36 @@ func (s *Service) threadKeyFor(ctx context.Context, lookup threadLookup) (string
 		}
 	}
 
-	if s.replies != nil {
-		earlier := candidates
-		if first >= 0 {
-			earlier = candidates[:first]
-		}
-		if len(earlier) > 0 {
-			key, found, rErr := s.replies.ThreadKeyForMessageKeys(ctx, lookup.tenant, earlier)
-			if rErr != nil {
-				return "", rErr
-			}
-			if found && key != "" {
-				return key, nil
-			}
-		}
+	earlier := candidates
+	if first >= 0 {
+		earlier = candidates[:first]
+	}
+	key, err := s.replyThreadKey(ctx, lookup.tenant, earlier)
+	if err != nil || key != "" {
+		return key, err
 	}
 	if first >= 0 {
 		return known[candidates[first]], nil
 	}
 
 	return "", nil
+}
+
+func (s *Service) replyThreadKey(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	messageKeys []string,
+) (string, error) {
+	if s.replies == nil || len(messageKeys) == 0 {
+		return "", nil
+	}
+
+	key, found, err := s.replies.ThreadKeyForMessageKeys(ctx, tenantInfo, messageKeys)
+	if err != nil || !found {
+		return "", err
+	}
+
+	return key, nil
 }
 
 func removeKey(candidates []string, key string) []string {
@@ -80,7 +90,7 @@ func removeKey(candidates []string, key string) []string {
 }
 
 func (s *Service) joinThread(ctx context.Context, message *inboundmessage.InboundMessage) {
-	key, err := s.threadKeyFor(ctx, threadLookup{
+	key, err := s.threadKeyFor(ctx, &threadLookup{
 		tenant:     tenantOfMessage(message),
 		ownKey:     inboundmessage.NormalizeMessageID(message.MessageID),
 		inReplyTo:  message.InReplyTo,

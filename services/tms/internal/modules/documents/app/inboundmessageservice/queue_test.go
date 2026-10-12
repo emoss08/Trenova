@@ -164,7 +164,7 @@ func TestThreadKeyFor_FollowsTheFirstKnownMessageNamed(t *testing.T) {
 	fakes.queue.threadKeys["older@acme.example"] = "thread-older"
 	fakes.queue.threadKeys["parent@acme.example"] = "thread-parent"
 
-	key, err := svc.threadKeyFor(t.Context(), threadLookup{
+	key, err := svc.threadKeyFor(t.Context(), &threadLookup{
 		tenant:     queueTenant,
 		ownKey:     "child@acme.example",
 		inReplyTo:  "<Parent@Acme.example>",
@@ -173,14 +173,14 @@ func TestThreadKeyFor_FollowsTheFirstKnownMessageNamed(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "thread-parent", key, "In-Reply-To is the closest relative")
 
-	key, err = svc.threadKeyFor(t.Context(), threadLookup{
+	key, err = svc.threadKeyFor(t.Context(), &threadLookup{
 		tenant:     queueTenant,
 		references: []string{"<older@acme.example>", "<unknown@acme.example>"},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "thread-older", key, "references are read newest first")
 
-	key, err = svc.threadKeyFor(t.Context(), threadLookup{tenant: queueTenant})
+	key, err = svc.threadKeyFor(t.Context(), &threadLookup{tenant: queueTenant})
 	require.NoError(t, err)
 	assert.Empty(t, key, "a message naming nothing starts its own thread")
 }
@@ -192,7 +192,7 @@ func TestThreadKeyFor_PrefersOurReplyWhenItIsCloserThanAKnownMessage(t *testing.
 	svc, fakes := withQueue(&Service{replies: replies})
 	fakes.queue.threadKeys["original@acme.example"] = "thread-original"
 
-	key, err := svc.threadKeyFor(t.Context(), threadLookup{
+	key, err := svc.threadKeyFor(t.Context(), &threadLookup{
 		tenant:     queueTenant,
 		inReplyTo:  "<reply@trenova.example>",
 		references: []string{"<original@acme.example>", "<reply@trenova.example>"},

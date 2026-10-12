@@ -163,7 +163,8 @@ func (s *Service) Counts(
 
 func FoldCounts(rows []inboundmessageports.InboundMessageCount) *Counts {
 	counts := &Counts{}
-	for _, row := range rows {
+	for i := range rows {
+		row := &rows[i]
 		counts.Total += row.Count
 		switch row.Status {
 		case inboundmessage.StatusReceived, inboundmessage.StatusProcessing,
@@ -183,7 +184,7 @@ func FoldCounts(rows []inboundmessageports.InboundMessageCount) *Counts {
 	return counts
 }
 
-func foldReview(counts *Counts, row inboundmessageports.InboundMessageCount) {
+func foldReview(counts *Counts, row *inboundmessageports.InboundMessageCount) {
 	if row.Status == inboundmessage.StatusQuarantined {
 		counts.Quarantined += row.Count
 	}

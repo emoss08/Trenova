@@ -440,7 +440,7 @@ func (s *Service) stage(
 		entity.ReviewedAt = s.now()
 		entity.ReviewNote = blockedSenderNote
 	}
-	threadKey, err := s.threadKeyFor(ctx, threadLookup{
+	threadKey, err := s.threadKeyFor(ctx, &threadLookup{
 		tenant:     tenantInfo,
 		ownKey:     inboundmessage.NormalizeMessageID(entity.MessageID),
 		inReplyTo:  entity.InReplyTo,
