@@ -15,6 +15,10 @@ export const SCENARIO_DEFAULTS = {
   aiProviders: process.env.MOCK_AI_PROVIDERS ?? "configured",
   // every agent paused in shadow
   aiPaused: process.env.MOCK_AI_PAUSED === "1",
+  // Desk resource cards: full | empty | hold (every card request left open, for the skeleton)
+  desk: process.env.MOCK_DESK ?? "full",
+  // the card the Desk cards conversation holds
+  deskSlug: process.env.MOCK_DESK_SLUG ?? "tractor-t-101",
 };
 
 const STAGE_RANK = { Late: 1, NeedsCoverage: 2, Moving: 3, Scheduled: 4, Delivered: 5, Canceled: 6 };

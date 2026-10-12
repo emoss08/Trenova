@@ -38,6 +38,8 @@ anchor. A scenario is set from the environment when the server starts, or at any
 | `listRows` | number | `3` | Rows on the hazardous materials list, for checking a short and a long list page |
 | `aiProviders` | `configured` \| `many` \| `none` | `configured` | AI control: the prototype's three providers (one failing), five cloud providers, or none |
 | `aiPaused` | `true` \| `false` | `false` | Every agent paused in shadow |
+| `desk` | `full` \| `empty` \| `hold` | `full` | Desk resource cards: the fixture, every section empty, or every card request left open (the skeleton) |
+| `deskSlug` | an artifact slug | `tractor-t-101` | The card the Desk cards conversation (`thr_desk_cards`) holds |
 
 ```bash
 curl -X POST localhost:8080/__mock/scenario \
@@ -47,7 +49,8 @@ curl -X POST localhost:8080/__mock/scenario \
 
 `GET /__mock/scenario` returns the current scenario and its anchor (Unix seconds).
 Environment equivalents: `MOCK_BOARD`, `MOCK_AI=0`, `MOCK_OPERATION_TYPE`, `MOCK_HOS=0`,
-`MOCK_MAPS=1`, `MOCK_LIST_ROWS`, `MOCK_AI_PROVIDERS`, `MOCK_AI_PAUSED=1`.
+`MOCK_MAPS=1`, `MOCK_LIST_ROWS`, `MOCK_AI_PROVIDERS`, `MOCK_AI_PAUSED=1`, `MOCK_DESK`,
+`MOCK_DESK_SLUG`.
 
 The board briefing is stored the way the server stores it: written on the first read of a
 scenario, read unchanged after that, and written again (its `generation` going up) only once
@@ -95,6 +98,20 @@ Regenerate them after the registry changes with a throwaway test that marshals
 `aiproviderhandler`'s catalog, `agentextensionservice.ListCatalog`,
 `agentdefinitionservice.buildToolCatalog` (parameters stripped) and `agent.KnownEvents()`.
 
+The Desk's resource cards have their own walkthrough:
+
+```bash
+node e2e/mock-api/desk-cards-screenshots.mjs [outDir] [name,name,...]
+```
+
+It opens each card where people see it, beside the conversation that looked the record up
+(`/desk/c/thr_desk_cards/a/<slug>`), and on its own page at full length (`…/page`), and shoots
+it loaded in light and dark, with something wrong on it, empty, as its skeleton, unreadable and
+in a 1000px window. It writes to `e2e/mock-api/screenshots/desk-cards` by default. The records
+are in `fixtures/desk-cards.mjs`: each card has a conversation for the record loaded, one with
+something to flag, one with nothing on file and one that is gone. A new card adds its records
+there, its operations to `handlers/deskcards.mjs`, and an entry to `CARDS` in the walkthrough.
+
 ## Layout
 
 ```
@@ -103,10 +120,13 @@ state.mjs             Scenario defaults, stage mapping and the mutable board sta
 fixtures/board.mjs    Shipments, drivers and carriers ported from the design prototype
 fixtures/session.mjs  Signed-in user and permission manifest
 fixtures/aicontrol.mjs  Agents, providers, runs, usage and tune-ups for AI control
+fixtures/desk-cards.mjs  The records the Desk's resource cards draw, and their conversations
 fixtures/ai/          Catalogs dumped from the Go service
 handlers/rest.mjs     REST routes the shell and board call
 handlers/graphql.mjs  GraphQL operations, keyed by operation name
 handlers/aicontrol.mjs  AI control's GraphQL operations and REST routes
+handlers/deskcards.mjs  The Desk cards conversation and each card's GraphQL operations
 screenshots.mjs       Playwright walkthrough of every board scenario
 ai-control-screenshots.mjs  Playwright walkthrough of AI control
+desk-cards-screenshots.mjs  Playwright walkthrough of the Desk's resource cards
 ```

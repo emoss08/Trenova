@@ -6597,14 +6597,14 @@ th.dk-cb .dk-ax-cb:hover {
   font: 600 9px var(--dk-plex);
   fill: var(--dsk-subtle);
 }
-.dk-tr-needle path {
-  fill: var(--dsk-fg);
-}
-.dk-tr-where.dk-live .dk-tr-needle path {
-  fill: var(--dsk-success-fg);
-}
 .dk-tr-needle {
+  fill: var(--dsk-fg);
+  transform-box: fill-box;
+  transform-origin: center;
   animation: dk-pop 240ms var(--dk-spring) both;
+}
+.dk-tr-where.dk-live .dk-tr-needle {
+  fill: var(--dsk-success-fg);
 }
 .dk-tr-dial-hub {
   fill: var(--dsk-card);

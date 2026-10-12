@@ -1,6 +1,7 @@
 import { EXTENSION_ROUTES } from "./aiextensions.mjs";
 import { PROVIDER_ROUTES } from "./aiproviders.mjs";
 import { AI_ROUTES } from "./aicontrol.mjs";
+import { DESK_CARD_ROUTES } from "./deskcards.mjs";
 import { ORG, permissionManifest, USER } from "../fixtures/session.mjs";
 
 const EMPTY_PAGE = { results: [], count: 0, next: null, prev: null };
@@ -9,6 +10,7 @@ const ROUTES = [
   ...PROVIDER_ROUTES,
   ...EXTENSION_ROUTES,
   ...AI_ROUTES,
+  ...DESK_CARD_ROUTES,
   ["GET", /^\/api\/v1\/users\/me\/?$/, () => USER],
   ["GET", /^\/api\/v1\/me\/permissions\/?$/, () => permissionManifest()],
   ["GET", /^\/api\/v1\/me\/permissions\/version\/?$/, () => ({ checksum: "mock", expiresAt: Math.floor(Date.now() / 1000) + 86400 })],
@@ -55,6 +57,7 @@ export function handleRest(state, { method, path, body }) {
     if (routeMethod === method && pattern.test(path)) {
       const payload = handler(state, path, body);
       if (payload && payload.__stream) return { known: true, stream: true };
+      if (payload && payload.__hold) return { known: true, hold: true };
       if (payload && payload.__sse) return { known: true, sse: payload.__sse };
       if (payload && payload.__status) {
         return { known: true, status: payload.__status, payload: payload.body };

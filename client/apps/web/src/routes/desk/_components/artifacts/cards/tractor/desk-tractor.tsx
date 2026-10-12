@@ -535,8 +535,8 @@ function HeadingDial({ heading }: { heading: number | null }) {
         N
       </text>
       {heading !== null && (
-        <g className="dk-tr-needle" transform={`rotate(${heading} 56 56)`}>
-          <path d="M56 26 L63 60 L56 54 L49 60 Z" />
+        <g transform={`rotate(${heading} 56 56)`}>
+          <path className="dk-tr-needle" d="M56 26 L63 60 L56 54 L49 60 Z" />
         </g>
       )}
       <circle className="dk-tr-dial-hub" cx="56" cy="56" r="3" />
