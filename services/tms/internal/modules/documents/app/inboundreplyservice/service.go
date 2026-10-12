@@ -72,9 +72,8 @@ func newTracker(p *TrackerParams) *tracker {
 	}
 }
 
-func NewEmailObserver(
-	p TrackerParams,
-) emailports.EmailMessageObserver { //nolint:gocritic // fx params are passed by value
+//nolint:gocritic // fx params are passed by value
+func NewEmailObserver(p TrackerParams) emailports.EmailMessageObserver {
 	return newTracker(&p)
 }
 

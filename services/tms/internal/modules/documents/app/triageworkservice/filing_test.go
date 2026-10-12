@@ -117,7 +117,7 @@ func TestFileReplacesExistingThenUnfileRestores(t *testing.T) {
 	existingID := pulid.MustNew("doc_")
 	f.docRepo.docs[existingID] = &document.Document{ID: existingID, Status: document.StatusActive}
 	f.messages.messages[f.message.ID].Conflicts = []inboundmessage.Conflict{{
-		ID:                 "c1",
+		ID:                 "dup:" + f.attachment.ID.String(),
 		Kind:               inboundmessage.ConflictDuplicateDocument,
 		AttachmentID:       f.attachment.ID,
 		ExistingDocumentID: existingID,
@@ -159,7 +159,7 @@ func TestReplaceExistingWithoutKnownDocumentArchivesCurrent(t *testing.T) {
 	f.docRepo.docs[currentID] = &document.Document{ID: currentID, Status: document.StatusActive}
 	f.work.current = []pulid.ID{currentID, f.attachment.DocumentID}
 	f.messages.messages[f.message.ID].Conflicts = []inboundmessage.Conflict{{
-		ID:           "c1",
+		ID:           "dup:" + f.attachment.ID.String(),
 		Kind:         inboundmessage.ConflictDuplicateDocument,
 		AttachmentID: f.attachment.ID,
 		Resolution:   inboundmessage.ConflictReplaceExisting,
@@ -242,4 +242,31 @@ func TestFileOnMatchedShipmentByNova(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, filed)
 	assert.True(t, f.storedAttachment().FiledBy.IsNil())
+}
+
+func TestFileKeepsExistingUnlessReplaceChosen(t *testing.T) {
+	t.Parallel()
+
+	for _, resolution := range []inboundmessage.ConflictResolution{"", inboundmessage.ConflictKeepBoth} {
+		f := newFixture()
+		existingID := pulid.MustNew("doc_")
+		f.docRepo.docs[existingID] = &document.Document{ID: existingID, Status: document.StatusActive}
+		f.messages.messages[f.message.ID].Conflicts = []inboundmessage.Conflict{{
+			ID:                 "dup:" + f.attachment.ID.String(),
+			Kind:               inboundmessage.ConflictDuplicateDocument,
+			AttachmentID:       f.attachment.ID,
+			ExistingDocumentID: existingID,
+			Resolution:         resolution,
+		}}
+
+		_, err := f.service.File(t.Context(), &FileRequest{
+			TenantInfo:     testTenant,
+			AttachmentID:   f.attachment.ID,
+			ShipmentID:     f.shipmentID,
+			DocumentTypeID: f.pod.ID,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, document.StatusActive, f.docRepo.docs[existingID].Status, string(resolution))
+		assert.NotContains(t, f.recorder.find(triage.ActivityFiled).Detail, "replacing")
+	}
 }
