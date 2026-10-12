@@ -1,3 +1,4 @@
+import { deliverToDesktop } from "@/lib/desktop-notifications";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { downloadReportRun } from "@/hooks/use-reports";
 import { aiAuditExportNotice, downloadAIAuditExport } from "@/lib/ai-audit-exports";
@@ -202,6 +203,13 @@ export function useRealtimeConnection() {
               t,
             });
           } else if (isForCurrentUser && notif.title) {
+            deliverToDesktop(notif, () => {
+              const link = notif.data?.link;
+              if (typeof link === "string" && link.startsWith("/")) {
+                void navigateRef.current(link);
+              }
+            });
+
             const runId =
               notif.eventType === "report_run_completed" && typeof notif.data?.runId === "string"
                 ? notif.data.runId

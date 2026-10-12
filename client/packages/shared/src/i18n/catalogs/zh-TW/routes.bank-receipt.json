@@ -1,6 +1,5 @@
 {
   "Active work items": "進行中的工作項目",
-  "Bank receipt reconciliation": "銀行入帳核對",
   "Failed to match receipt": "無法比對此入帳紀錄",
   "Match imported bank receipts to customer payments and resolve exceptions.": "將匯入的銀行入帳與客戶付款比對，並處理例外。",
   "Match suggestions": "比對建議",

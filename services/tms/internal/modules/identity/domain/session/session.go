@@ -37,6 +37,8 @@ type Session struct {
 	// request needs it to render errors, and a session already in flight must not pay for
 	// a user lookup to find out what language to answer in.
 	Locale         string       `json:"locale,omitempty"`
+	IPAddress      string       `json:"ipAddress,omitempty"`
+	UserAgent      string       `json:"userAgent,omitempty"`
 	LastAccessedAt int64        `json:"lastAccessedAt"`
 	ExpiresAt      int64        `json:"expiresAt"`
 	CreatedAt      int64        `json:"createdAt"`
@@ -59,6 +61,8 @@ type NewSessionRequest struct {
 	IsPortalUser          bool
 	MustChangePassword    bool
 	Locale                string
+	IPAddress             string
+	UserAgent             string
 }
 
 func NewSession(req *NewSessionRequest) *Session {
@@ -94,6 +98,8 @@ func NewSession(req *NewSessionRequest) *Session {
 		IsPortalUser:          req.IsPortalUser,
 		MustChangePassword:    req.MustChangePassword,
 		Locale:                req.Locale,
+		IPAddress:             req.IPAddress,
+		UserAgent:             req.UserAgent,
 		LastAccessedAt:        now,
 		ExpiresAt:             req.ExpiresAt,
 		CreatedAt:             now,
@@ -107,6 +113,12 @@ func (s *Session) IsValid() bool {
 
 func (s *Session) IsExpired() bool {
 	return s.ExpiresAt < timeutils.NowUnix()
+}
+
+const lastAccessedResolution = 5 * time.Minute
+
+func (s *Session) NeedsTouch(now int64) bool {
+	return now-s.LastAccessedAt >= int64(lastAccessedResolution/time.Second)
 }
 
 func (s *Session) UpdateLastAccessedAt() {

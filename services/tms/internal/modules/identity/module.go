@@ -79,6 +79,7 @@ func SharedOptions() fx.Option {
 			onboardingrepository.New,
 			iamrepository.New,
 			iamrepository.NewAuthEventRepository,
+			iamrepository.NewAuthEventHistoryRepository,
 			iamrepository.NewMFARepository,
 			ssoconfigrepository.New,
 			ssoidentitylinkrepository.New,

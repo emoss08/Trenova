@@ -7,6 +7,7 @@ import { queryClient } from "@/lib/query-client";
 import { RootErrorBoundary } from "@trenova/shared/components/error-boundary";
 import { ThemeProvider } from "@trenova/shared/components/theme-provider";
 import { Toaster } from "@trenova/shared/components/ui/toaster";
+import { MotionPreferenceProvider } from "@/components/motion-preference-provider";
 import { I18nProvider } from "@trenova/shared/i18n/provider";
 import { registerCatalogSource } from "@trenova/shared/i18n/runtime";
 import { setPartialErrorReporter, setSessionExpiryHandler } from "@trenova/shared/lib/graphql";
@@ -130,7 +131,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <NuqsAdapter processUrlSearchParams={normalizeSearchParams}>
           <ThemeProvider defaultTheme="system" storageKey="trenova-ui-theme">
-            <LocalizedApp>{children}</LocalizedApp>
+            <MotionPreferenceProvider>
+              <LocalizedApp>{children}</LocalizedApp>
+            </MotionPreferenceProvider>
             {/*<ReactQueryDevtools
               buttonPosition="bottom-left"
               initialIsOpen={false}

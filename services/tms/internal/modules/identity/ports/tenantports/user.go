@@ -86,6 +86,11 @@ type UpdateUserPasswordRequest struct {
 	MustChangePassword bool
 }
 
+type UpdateUserColumnsRequest struct {
+	Entity  *tenant.User
+	Columns []string
+}
+
 type UserRepository interface {
 	List(ctx context.Context, req *ListUsersRequest) (*pagination.ListResult[*tenant.User], error)
 	ListConnection(
@@ -123,6 +128,7 @@ type UserRepository interface {
 	UpdateCurrentOrganization(ctx context.Context, userID, orgID, buID pulid.ID) error
 	GetUserOrganizationSummaries(ctx context.Context, userID pulid.ID) ([]OrgSummary, error)
 	Update(ctx context.Context, entity *tenant.User) (*tenant.User, error)
+	UpdateColumns(ctx context.Context, req UpdateUserColumnsRequest) (*tenant.User, error)
 	UpdatePassword(ctx context.Context, req UpdateUserPasswordRequest) error
 	BulkUpdateStatus(
 		ctx context.Context,

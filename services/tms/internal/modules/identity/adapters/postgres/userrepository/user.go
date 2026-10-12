@@ -753,6 +753,7 @@ func (ur *repository) UpdatePassword(
 			Model((*tenant.User)(nil)).
 			Set("password = ?", req.Password).
 			Set("must_change_password = ?", req.MustChangePassword).
+			Set(tenantcol.UserColumns.PasswordChangedAt.Set(), timeutils.NowUnix()).
 			Set("updated_at = ?", timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 				return uq.Where("usr.id = ?", req.UserID).

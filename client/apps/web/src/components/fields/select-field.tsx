@@ -28,7 +28,7 @@ export type BaseSelectFieldProps = {
   options?: SelectOption[];
   groups?: SelectOptionGroup[];
   label?: string;
-  description?: string;
+  description?: React.ReactNode;
   isReadOnly?: boolean;
   isBoolean?: boolean;
   isInvalid?: boolean;

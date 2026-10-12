@@ -11,6 +11,13 @@ func (e *Notification) GetStaticFieldMap() map[string]string {
 	return notificationcol.NotificationFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Preference].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [notificationcol.PreferenceFieldMap] instead of parsing struct tags via reflection.
+func (e *Preference) GetStaticFieldMap() map[string]string {
+	return notificationcol.PreferenceFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PushSubscription].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [notificationcol.PushSubscriptionFieldMap] instead of parsing struct tags via reflection.

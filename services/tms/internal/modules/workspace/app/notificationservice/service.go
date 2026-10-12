@@ -2,11 +2,16 @@ package notificationservice
 
 import (
 	"context"
+	"strings"
+	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/webpushservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,25 +27,43 @@ type Params struct {
 	Realtime agentports.RealtimeService
 	WebPush  *webpushservice.Service `optional:"true"`
 	// Roles answers who may read a resource, for NotifyPermitted.
-	Roles permissionports.RoleRepository `optional:"true"`
+	Roles       permissionports.RoleRepository         `optional:"true"`
+	Users       tenantports.UserRepository             `optional:"true"`
+	Preferences notificationports.PreferenceRepository `optional:"true"`
+	Email       emailports.EmailService                `optional:"true"`
+	Config      *config.Config                         `optional:"true"`
 }
 
 type Service struct {
-	l        *zap.Logger
-	repo     notificationports.NotificationRepository
-	realtime agentports.RealtimeService
-	webPush  *webpushservice.Service
-	roles    permissionports.RoleRepository
+	l           *zap.Logger
+	repo        notificationports.NotificationRepository
+	realtime    agentports.RealtimeService
+	webPush     *webpushservice.Service
+	roles       permissionports.RoleRepository
+	users       tenantports.UserRepository
+	preferences notificationports.PreferenceRepository
+	email       emailports.EmailService
+	webBaseURL  string
+	now         func() time.Time
 }
 
 func New(p Params) *Service {
-	return &Service{
-		l:        p.Logger.Named("service.notification"),
-		repo:     p.Repo,
-		realtime: p.Realtime,
-		webPush:  p.WebPush,
-		roles:    p.Roles,
+	svc := &Service{
+		l:           p.Logger.Named("service.notification"),
+		repo:        p.Repo,
+		realtime:    p.Realtime,
+		webPush:     p.WebPush,
+		roles:       p.Roles,
+		users:       p.Users,
+		preferences: p.Preferences,
+		email:       p.Email,
+		now:         time.Now,
 	}
+	if p.Config != nil {
+		svc.webBaseURL = strings.TrimRight(p.Config.App.GetWebBaseURL(), "/")
+	}
+
+	return svc
 }
 
 func (s *Service) ExistsRecent(
@@ -55,6 +78,14 @@ func (s *Service) Create(
 	entity *notification.Notification,
 ) (*notification.Notification, error) {
 	log := s.l.With(zap.String("operation", "Create"))
+
+	now := s.now()
+	to := s.loadRecipient(ctx, entity, now)
+	var decision notification.DeliveryDecision
+	if to != nil {
+		decision = to.decide(entity, now)
+		stampDecision(entity, decision)
+	}
 
 	created, err := s.repo.Create(ctx, entity)
 	if err != nil {
@@ -82,7 +113,13 @@ func (s *Service) Create(
 		log.Warn("failed to publish realtime notification", zap.Error(pubErr))
 	}
 
-	s.sendWebPush(ctx, created)
+	if to == nil {
+		s.sendWebPush(ctx, created)
+		return created, nil
+	}
+
+	s.deliverOutside(ctx, created, to, decision)
+	s.handOff(ctx, created, to, now)
 
 	return created, nil
 }

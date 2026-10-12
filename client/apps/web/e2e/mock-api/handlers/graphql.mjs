@@ -1,3 +1,4 @@
+import { userSelectOptions } from "./settings.mjs";
 import { PROVIDER_HANDLERS } from "./aiproviders.mjs";
 import { AI_HANDLERS } from "./aicontrol.mjs";
 import { hash, stageOf, stageRankOf, STAGE_RANKS } from "../state.mjs";
@@ -842,6 +843,10 @@ const EMPTY_CONNECTION = {
 };
 
 const SHELL_HANDLERS = {
+  SelectOptions: (state, v) =>
+    v.input?.resource === "USER"
+      ? userSelectOptions(state, v.input)
+      : { selectOptions: { totalCount: 0, pageInfo: { hasNextPage: false, endCursor: null }, edges: [] } },
   MyAgents: () => ({ myAgents: EMPTY_CONNECTION }),
   AttentionSummary: () => ({
     attentionSummary: {

@@ -83,6 +83,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategoryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/notificationpreferencehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/onboardinghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/orderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
@@ -168,6 +169,7 @@ type RouterParams struct {
 	OnboardingHandler               *onboardinghandler.Handler
 	DriverPortalHandler             *driverportalhandler.Handler
 	PushHandler                     *pushhandler.Handler
+	NotificationPreferenceHandler   *notificationpreferencehandler.Handler
 	BankReceiptHandler              *bankreceipthandler.Handler
 	BankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
 	BankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
@@ -307,6 +309,7 @@ type Router struct {
 	onboardingHandler               *onboardinghandler.Handler
 	driverPortalHandler             *driverportalhandler.Handler
 	pushHandler                     *pushhandler.Handler
+	notificationPreferenceHandler   *notificationpreferencehandler.Handler
 	bankReceiptHandler              *bankreceipthandler.Handler
 	bankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
 	bankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
@@ -448,6 +451,7 @@ func NewRouter(p RouterParams) *Router {
 		onboardingHandler:               p.OnboardingHandler,
 		driverPortalHandler:             p.DriverPortalHandler,
 		pushHandler:                     p.PushHandler,
+		notificationPreferenceHandler:   p.NotificationPreferenceHandler,
 		bankReceiptHandler:              p.BankReceiptHandler,
 		bankReceiptBatchHandler:         p.BankReceiptBatchHandler,
 		bankReceiptWorkItemHandler:      p.BankReceiptWorkItemHandler,
@@ -651,6 +655,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 
 	r.driverPortalHandler.RegisterProtectedRoutes(protected)
 	r.pushHandler.RegisterRoutes(protected)
+	r.notificationPreferenceHandler.RegisterRoutes(protected)
 	r.organizationHandler.RegisterRoutes(protected)
 	r.onboardingHandler.RegisterRoutes(protected)
 	r.dataRetentionHandler.RegisterRoutes(protected)

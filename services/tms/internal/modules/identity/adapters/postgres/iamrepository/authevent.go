@@ -54,3 +54,41 @@ func (r *authEventRepository) DeleteBefore(ctx context.Context, before int64) (i
 			Where(iamcol.AuthEventColumns.OccurredAt.Lt(), before)
 	})
 }
+
+const maxSignInHistory = 50
+
+func NewAuthEventHistoryRepository(p Params) iamports.AuthEventHistoryRepository {
+	return &authEventRepository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.auth-event-history-repository"),
+	}
+}
+
+func (r *authEventRepository) ListSignInsForUser(
+	ctx context.Context,
+	req iamports.ListUserSignInsRequest,
+) ([]*iam.AuthEvent, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*iam.AuthEvent, error) {
+		cols := iamcol.AuthEventColumns
+		limit := req.Limit
+		if limit <= 0 || limit > maxSignInHistory {
+			limit = maxSignInHistory
+		}
+
+		entities := make([]*iam.AuthEvent, 0, limit)
+		err := r.db.DBForContext(ctx).NewSelect().
+			Model(&entities).
+			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+			Where(cols.UserID.Eq(), req.TenantInfo.UserID).
+			Where(cols.Provider.NotIn(), bun.List(iamports.NonSignInAuthEventProviders())).
+			Order(cols.OccurredAt.OrderDesc()).
+			Limit(int64(limit)).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list sign-ins for user", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
