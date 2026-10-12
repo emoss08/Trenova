@@ -16,12 +16,14 @@ const DefaultContextWindow = 128_000
 // Vertex, or as a dated snapshot.
 //
 // Where a family's input and output share a window, the figure is what is
-// left for input, because the input is what a conversation fills.
+// left for input, because the input is what a conversation fills. A Claude id
+// this can read takes its window from ParseClaudeModel; the claude entry here
+// is for the older and aliased ids it cannot.
 var contextWindows = []struct {
 	pattern *regexp.Regexp
 	tokens  int
 }{
-	{regexp.MustCompile(`claude`), 200_000},
+	{regexp.MustCompile(`claude`), claudeWindow},
 	{regexp.MustCompile(`gpt-4\.1`), 1_047_576},
 	{regexp.MustCompile(`gpt-5`), 272_000},
 	{regexp.MustCompile(`gpt-4o|gpt-4-turbo`), 128_000},
@@ -49,6 +51,9 @@ func KnownContextWindow(model string) (int, bool) {
 	id := strings.ToLower(strings.TrimSpace(model))
 	if id == "" {
 		return 0, false
+	}
+	if claude, ok := ParseClaudeModel(id); ok {
+		return claude.ContextWindow(), true
 	}
 	for _, window := range contextWindows {
 		if window.pattern.MatchString(id) {

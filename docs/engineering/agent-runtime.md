@@ -317,6 +317,19 @@ than any it names takes the newest known constraints.
   `trenova.ai.thinking_dropped`. A value that keeps appearing is the harness editing a
   conversation it should hold still.
 
+### How big a model's context is
+
+Compaction and the run overflow guard work from the provider's context window: the one
+an operator configured (filled from the model list when an endpoint reports it), and
+otherwise the one its model id names (`aiprovider.ContextWindowFor`). A Claude id in any
+endpoint's form is read by `aiprovider.ParseClaudeModel`, which the adapter's thinking
+rules use too: Opus and Sonnet from 4.6, Haiku from 5.5, and every Fable and Mythos get
+1,000,000 tokens; earlier Claude models, ids it cannot read, and a family it does not know
+get 200,000, since erring small only compacts sooner. A conversation compacts itself at
+`conversation.AutoCompactShare` (85%) of that window, so on a million-token model a thread
+can grow to about 850,000 tokens first. An organization that would rather pay for less
+context per call configures a smaller window on the provider; it always wins over the id.
+
 OpenAI-compatible servers that do not parse a model's tool-call template return it as text.
 The chat adapter lifts it (`modeladapter.liftInlineToolCalls`): a whole GLM call
 (`<tool_call>name<arg_key>k</arg_key><arg_value>v</arg_value>…</tool_call>`, each value
