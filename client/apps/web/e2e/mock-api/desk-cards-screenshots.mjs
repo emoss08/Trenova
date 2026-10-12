@@ -41,6 +41,13 @@ const CARDS = [
     empty: "worker-jordan",
     gone: "worker-gone",
   },
+  {
+    card: "location",
+    loaded: "location-dallas",
+    attention: "location-tyson",
+    empty: "location-new",
+    gone: "location-gone",
+  },
 ];
 
 function shotsFor({ card, loaded, attention, empty, gone }) {

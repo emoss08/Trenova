@@ -727,7 +727,6 @@
   "May read restricted records like pay and medical files.": "可读取薪酬、医疗档案等受限记录。",
   "May take tasks that read sensitive records": "可承接会读取敏感记录的任务",
   "May take tasks that read sensitive records, like billing diagnosis.": "可以接手读取敏感记录的任务，例如账单诊断。",
-  "Median": "中位数",
   "Median response": "响应中位数",
   "Members": "集合成员",
   "Memories": "记忆",

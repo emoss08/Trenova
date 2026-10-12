@@ -33,6 +33,12 @@ const ICONS = {
       <path d="M5 20.5c.6-3.9 3.3-6 7-6s6.4 2.1 7 6" />
     </>
   ),
+  location: (
+    <>
+      <path d="M12 20.5s-6-5.4-6-10.3a6 6 0 0 1 12 0c0 4.9-6 10.3-6 10.3z" />
+      <circle cx="12" cy="10" r="2.2" />
+    </>
+  ),
   agreement: (
     <>
       <path d="M6 3.5h12v17H6z" />
@@ -219,6 +225,7 @@ export type DeskArtKind =
   | "tractor"
   | "trailer"
   | "worker"
+  | "location"
   | "agreement";
 
 const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
@@ -240,6 +247,7 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
   tractor: "Tractor",
   trailer: "Trailer",
   worker: "Worker",
+  location: "Location",
   agreement: "Rate agreement",
 });
 
@@ -249,7 +257,8 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
  * formula a biller reads, a shipment as the load a dispatcher follows, a
  * customer as the account an account manager or a biller keeps, a tractor or a
  * trailer as the unit a dispatcher or fleet manager runs, a worker as the
- * driver a dispatcher or safety manager puts on loads, a rate agreement as
+ * driver a dispatcher or safety manager puts on loads, a location as the dock
+ * a planner sends trucks to, a rate agreement as
  * the terms a pricing analyst holds freight to.
  */
 const CARD_KINDS: Readonly<Record<string, DeskArtKind>> = {
@@ -260,6 +269,7 @@ const CARD_KINDS: Readonly<Record<string, DeskArtKind>> = {
   tractor: "tractor",
   trailer: "trailer",
   worker: "worker",
+  location: "location",
   rate_agreement: "agreement",
 };
 
@@ -344,6 +354,8 @@ export function deskArtKindName(kind: DeskArtKind, t: TranslateFn): string {
       return t("Trailer");
     case "worker":
       return t("Worker");
+    case "location":
+      return t("Location");
     case "agreement":
       return t("Rate agreement");
   }

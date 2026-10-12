@@ -51,9 +51,11 @@ artifacts/
                           useRecordShipments in record-shipments.ts), where a
                           record is on a small still OpenStreetMap map
                           (card-where.tsx, the map lazily in still-map.tsx from
-                          map-tiles.ts), what falls due (card-due.tsx), a share
+                          map-tiles.ts, with a location's fence drawn round
+                          the dot), what falls due (card-due.tsx), a share
                           drawn as a meter (CardMeter: credit used, drive time
-                          left), what a
+                          left), figures in a ruled strip (CardStats: payment
+                          pace, dwell), what a
                           tractor's and a trailer's cards read alike
                           (equipment.ts), and a record's documents
                           (card-documents.tsx, a rail drawn by document-rail.tsx
@@ -72,7 +74,7 @@ is drawn as a table and reads `kinds/table/`. Shared card styles are the `dk-rec
 `routes/desk/_styles/desk-v2.css`; a card's own styles take its own prefix
 (`dk-bi-*` for the billing item, `dk-ft-*` for the formula template, `dk-sh-*` for the
 shipment, `dk-cu-*` for the customer, `dk-ra-*` for the rate agreement, `dk-tr-*` for the
-tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker).
+tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location).
 
 ## Lazy loading and skeletons
 
@@ -121,7 +123,7 @@ every scope a page at a time with the count on the first page only, and the next
 read on request. A new scope is a case in `scopeInput` (`lib/graphql/record-shipments.ts`)
 and, where the server cannot yet filter by it, a `ShipmentsInput` field
 (`tractorIds`, `trailerIds` and `workerIds` match loads with a live move assigned to the
-unit or the driver).
+unit or the driver; `stopLocationIds` matches loads with a live stop at the location).
 
 ## Where a record is
 
@@ -132,6 +134,11 @@ moves or takes a click but the credit OpenStreetMap asks for. Its code is its ow
 at most four tiles, each lazily; a record with no coordinates shows a bare pin in the same
 square. Tiles come from `tile.openstreetmap.org` (`OSM_TILE_URL` in `map-tiles.ts`), which the
 Caddy CSP allows.
+
+A place with a fence passes it as `outline` (a circle by its radius, or the corners drawn for
+it) with a `zoom`; the map draws the fence in ink over the tiles, projected the same way the
+tiles are laid (`projectOnMap`), and `zoomToFit` picks the closest zoom that keeps the whole
+fence in view. A fence too small to see beside the dot is left off.
 
 ## Records a card lists
 

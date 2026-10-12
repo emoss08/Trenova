@@ -131,3 +131,36 @@ func TestShipments_RejectsAMalformedTractorID(t *testing.T) {
 	require.Error(t, err)
 	assert.Empty(t, service.requests)
 }
+
+func TestShipments_StopLocationIDsReachTheListOptions(t *testing.T) {
+	t.Parallel()
+
+	service := &listCapturingShipmentService{}
+	locationA := pulid.MustNew("loc_")
+	locationB := pulid.MustNew("loc_")
+
+	_, err := newShipmentListResolver(service).Shipments(
+		shipmentListContext(t),
+		gqlmodel.ShipmentsInput{
+			StopLocationIds: []string{locationA.String(), locationB.String()},
+		},
+	)
+	require.NoError(t, err)
+	require.Len(t, service.requests, 1)
+	options := service.requests[0].ShipmentOptions
+	assert.Equal(t, []pulid.ID{locationA, locationB}, options.StopLocationIDs)
+	assert.Empty(t, options.TractorIDs)
+}
+
+func TestShipments_RejectsAMalformedStopLocationID(t *testing.T) {
+	t.Parallel()
+
+	service := &listCapturingShipmentService{}
+
+	_, err := newShipmentListResolver(service).Shipments(
+		shipmentListContext(t),
+		gqlmodel.ShipmentsInput{StopLocationIds: []string{"dallas-yard"}},
+	)
+	require.Error(t, err)
+	assert.Empty(t, service.requests)
+}

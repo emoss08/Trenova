@@ -221,6 +221,21 @@ export function CardFactGridSkeleton({ cells }: { cells: number }) {
   );
 }
 
+/** A `CardStats` strip while it is read: a label over a figure in each cell. */
+export function CardStatsSkeleton({ cells, className }: { cells: number; className?: string }) {
+  return (
+    <div className={cn("dk-rec-stats", className)}>
+      {Array.from({ length: cells }, (_, index) => (
+        // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
+        <div key={index}>
+          <SkeletonBar w="46%" className="dk-rec-sk-label" />
+          <SkeletonBar w="64%" className="dk-rec-sk-line" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** A `CardMeter` while it is read: its label and reading over the empty bar. */
 export function CardMeterSkeleton() {
   return (

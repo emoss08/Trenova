@@ -3048,6 +3048,8 @@ export type DetentionScoreBand =
 export type DetentionStatsInput = {
   from: number;
   limit?: number | null | undefined;
+  /** Only the stops made at this location. */
+  locationId?: string | number | null | undefined;
   to: number;
 };
 
@@ -4577,6 +4579,12 @@ export type LocationCategoryType =
   | 'Terminal'
   | 'TruckStop'
   | 'Warehouse';
+
+export type LocationGeofenceType =
+  | 'auto'
+  | 'circle'
+  | 'draw'
+  | 'rectangle';
 
 export type ManualJournalStatus =
   | 'Approved'
@@ -6655,6 +6663,8 @@ export type ShipmentsInput = {
   quickFilters?: Array<ShipmentQuickFilterInput> | null | undefined;
   sort?: Array<SortFieldInput> | null | undefined;
   status?: string | null | undefined;
+  /** Only shipments with a live stop at one of these locations. */
+  stopLocationIds?: Array<string | number> | null | undefined;
   /** IANA time zone for day and hour quick filters. */
   timezone?: string | null | undefined;
   /** Only shipments with a live move assigned to one of these tractors. */
@@ -13097,6 +13107,38 @@ export type LocationCategoryTableQueryVariables = Exact<{
 
 
 export type LocationCategoryTableQuery = { locationCategories: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'LocationCategoryTableRowFieldsFragment': LocationCategoryTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DeskLocationCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskLocationCardQuery = { location: { id: string, status: EntityStatus, code: string, name: string, description: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, timezone: string, isGeocoded: boolean, latitude: number | null, longitude: number | null, geofenceType: LocationGeofenceType, geofenceRadiusMeters: number | null, createdAt: number, geofenceVertices: Array<{ latitude: number, longitude: number }>, state: { abbreviation: string } | null, locationCategory: { id: string, name: string, type: LocationCategoryType, facilityType: FacilityType | null, hasSecureParking: boolean, requiresAppointment: boolean, allowsOvernight: boolean, hasRestroom: boolean } | null } | null };
+
+export type DeskLocationDwellQueryVariables = Exact<{
+  locationId: string | number;
+  from: number;
+  to: number;
+}>;
+
+
+export type DeskLocationDwellQuery = { detentionFacilityStats: Array<{ locationId: string, stopCount: number, breachCount: number, avgDwellMinutes: number, medianDwellMinutes: number, p90DwellMinutes: number, billedAmount: string, waivedAmount: string, disputeCount: number }> };
+
+export type DeskLocationPoliciesQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type DeskLocationPoliciesQuery = { detentionPolicies: { totalCount: number | null, edges: Array<{ node: { id: string, name: string, code: string, status: DetentionPolicyStatus, priority: number, customerId: string | null, stopTypes: Array<StopType>, appointmentStopsOnly: boolean, billingFreeMinutes: number, pickupFreeMinutes: number | null, deliveryFreeMinutes: number | null, effectiveStartDate: number | null, effectiveEndDate: number | null } }> } };
+
+export type DeskLocationFailuresQueryVariables = Exact<{
+  locationId: string | number;
+  input: DataTableConnectionInput;
+  includeTotalCount: boolean;
+}>;
+
+
+export type DeskLocationFailuresQuery = { serviceFailures: { totalCount?: number | null, edges: Array<{ node: { id: string, number: string, type: ServiceFailureType, status: ServiceFailureStatus, stopType: StopType, lateMinutes: number, actualArrival: number, shipment: { id: string, proNumber: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type LocationTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, locationCategoryId: string, stateId: string, status: EntityStatus, code: string, name: string, description: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, latitude: number | null, longitude: number | null, placeId: string, version: number, createdAt: number, updatedAt: number, state: { id: string, name: string, abbreviation: string } | null, locationCategory: { id: string, name: string, color: string } | null } & { ' $fragmentName'?: 'LocationTableRowFieldsFragment' };
 
@@ -26327,6 +26369,10 @@ export const JournalReversalTableDocument = {"__meta__":{"kind":"query","name":"
 export const JurisdictionRuleOverrideTableDocument = {"__meta__":{"kind":"query","name":"JurisdictionRuleOverrideTable","hash":"sha256:308688c1ff8677796acd9575f32c4ad0d890bbee12abccbf63e5c3ec5804c11e"}} as unknown as TypedDocumentString<JurisdictionRuleOverrideTableQuery, JurisdictionRuleOverrideTableQueryVariables>;
 export const JurisdictionRuleTableDocument = {"__meta__":{"kind":"query","name":"JurisdictionRuleTable","hash":"sha256:d4c8d8690aaf40f0f90a9fb47da5503d91df2371c1a129a4f12eae53e42f09e8"}} as unknown as TypedDocumentString<JurisdictionRuleTableQuery, JurisdictionRuleTableQueryVariables>;
 export const LocationCategoryTableDocument = {"__meta__":{"kind":"query","name":"LocationCategoryTable","hash":"sha256:5ca16e1292c673eceb32a9d1189fe4af156f3ffa10b7088854e40761fbf5e1bf"}} as unknown as TypedDocumentString<LocationCategoryTableQuery, LocationCategoryTableQueryVariables>;
+export const DeskLocationCardDocument = {"__meta__":{"kind":"query","name":"DeskLocationCard","hash":"sha256:60f3d8fe71ac91442e6d7d08664494096af9b149530f463387d539942b9b33c2"}} as unknown as TypedDocumentString<DeskLocationCardQuery, DeskLocationCardQueryVariables>;
+export const DeskLocationDwellDocument = {"__meta__":{"kind":"query","name":"DeskLocationDwell","hash":"sha256:e20a73f20cd00cdb0229ddf91edab379cc659ec10c8c53d3c493d2500a1eed10"}} as unknown as TypedDocumentString<DeskLocationDwellQuery, DeskLocationDwellQueryVariables>;
+export const DeskLocationPoliciesDocument = {"__meta__":{"kind":"query","name":"DeskLocationPolicies","hash":"sha256:af2e7d401b0fca0f608c9c7d176fe5db6e6284a7e59d10d19b84909f5923dd2e"}} as unknown as TypedDocumentString<DeskLocationPoliciesQuery, DeskLocationPoliciesQueryVariables>;
+export const DeskLocationFailuresDocument = {"__meta__":{"kind":"query","name":"DeskLocationFailures","hash":"sha256:7038151a3337170fedb8624baf9a38b72bbae1d3a6469ea71935002bc5a4980b"}} as unknown as TypedDocumentString<DeskLocationFailuresQuery, DeskLocationFailuresQueryVariables>;
 export const LocationTableDocument = {"__meta__":{"kind":"query","name":"LocationTable","hash":"sha256:db0953dee7cb9ece4aa05feb18d26f2986a6636cc3ad0b168e41c7ece0e7bd43"}} as unknown as TypedDocumentString<LocationTableQuery, LocationTableQueryVariables>;
 export const ManualJournalTableDocument = {"__meta__":{"kind":"query","name":"ManualJournalTable","hash":"sha256:8cd46bc08994ea9aee268bf5b08a578d5a39f6d8628919ae255b58c350fabebf"}} as unknown as TypedDocumentString<ManualJournalTableQuery, ManualJournalTableQueryVariables>;
 export const NotificationListDocument = {"__meta__":{"kind":"query","name":"NotificationList","hash":"sha256:d495edf2331e2fb69b5bfd7c646882ba80f82d2b859e740d86606ece6b83aac5"}} as unknown as TypedDocumentString<NotificationListQuery, NotificationListQueryVariables>;

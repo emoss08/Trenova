@@ -121,3 +121,29 @@ describe("fetchRecordShipments for a trailer", () => {
     expect(lastCall().variables.input).not.toHaveProperty("fieldFilters");
   });
 });
+
+describe("fetchRecordShipments for a worker or a location", () => {
+  it("reads the loads a worker drove by their assignments", async () => {
+    requestGraphQLMock.mockResolvedValue({
+      shipments: { edges: [], pageInfo: { hasNextPage: false, endCursor: null }, totalCount: 0 },
+    } as never);
+
+    await fetchRecordShipments({ kind: "worker", id: "wrk_1" }, { first: 5, after: null });
+
+    expect(lastCall().variables.input).toMatchObject({ workerIds: ["wrk_1"] });
+    expect(lastCall().variables.input).not.toHaveProperty("stopLocationIds");
+    expect(lastCall().variables.input).not.toHaveProperty("fieldFilters");
+  });
+
+  it("reads the loads with a stop at a location", async () => {
+    requestGraphQLMock.mockResolvedValue({
+      shipments: { edges: [], pageInfo: { hasNextPage: false, endCursor: null }, totalCount: 0 },
+    } as never);
+
+    await fetchRecordShipments({ kind: "location", id: "loc_1" }, { first: 5, after: null });
+
+    expect(lastCall().variables.input).toMatchObject({ stopLocationIds: ["loc_1"] });
+    expect(lastCall().variables.input).not.toHaveProperty("workerIds");
+    expect(lastCall().variables.input).not.toHaveProperty("fieldFilters");
+  });
+});

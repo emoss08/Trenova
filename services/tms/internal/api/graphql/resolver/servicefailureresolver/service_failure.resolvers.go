@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (r *QueryResolver) ServiceFailures(ctx context.Context, input gqlmodel.DataTableConnectionInput, shipmentID *string) (*gqlmodel.ServiceFailureConnection, error) {
+func (r *QueryResolver) ServiceFailures(ctx context.Context, input gqlmodel.DataTableConnectionInput, shipmentID *string, locationID *string) (*gqlmodel.ServiceFailureConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceServiceFailure, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -28,13 +28,13 @@ func (r *QueryResolver) ServiceFailures(ctx context.Context, input gqlmodel.Data
 		return nil, err
 	}
 
-	var shipmentFilter *pulid.ID
-	if shipmentID != nil && *shipmentID != "" {
-		parsed, parseErr := pulid.MustParse(*shipmentID)
-		if parseErr != nil {
-			return nil, parseErr
-		}
-		shipmentFilter = &parsed
+	shipmentFilter, err := base.OptionalPulid(shipmentID)
+	if err != nil {
+		return nil, err
+	}
+	locationFilter, err := base.OptionalPulid(locationID)
+	if err != nil {
+		return nil, err
 	}
 
 	result, err := r.ServiceFailureSvc.ListConnection(
@@ -43,6 +43,7 @@ func (r *QueryResolver) ServiceFailures(ctx context.Context, input gqlmodel.Data
 			Filter:     tableInput.Filter,
 			Cursor:     tableInput.Cursor,
 			ShipmentID: shipmentFilter,
+			LocationID: locationFilter,
 		},
 	)
 	if err != nil {

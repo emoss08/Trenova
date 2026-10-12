@@ -4,6 +4,7 @@ import { lazyComponent } from "@/lib/lazy-component";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Suspense, type ReactNode } from "react";
+import type { MapOutline } from "./map-tiles";
 import { CardFacts, CardIcon, CardSectionError, CardSectionWait } from "./record-card";
 
 /** How far below the screen the map starts reading, so it is drawn as it scrolls in. */
@@ -51,10 +52,16 @@ export function CardWhere({
   noMapLabel,
   error,
   errorText,
+  zoom,
+  outline,
   children,
 }: {
   /** Where to put the dot; null when the place has no coordinates. */
   point: MapPoint | null;
+  /** How close the map reads; the town when not given. */
+  zoom?: number;
+  /** A fence drawn round the dot, such as a location's geofence. */
+  outline?: MapOutline | null;
   /** The place is where the record is now, not where it was. */
   live?: boolean;
   /** The place is still being read. */
@@ -90,6 +97,8 @@ export function CardWhere({
                 longitude={point.longitude}
                 live={live}
                 label={mapLabel}
+                zoom={zoom}
+                outline={outline}
               />
             </Suspense>
           ) : (

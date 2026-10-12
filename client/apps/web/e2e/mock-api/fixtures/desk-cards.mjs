@@ -48,6 +48,10 @@ export function deskCardArtifacts(anchor) {
     "worker-ana": artifact("worker-ana", "worker", "wrk_ana", "Ana Ruiz-Montenegro"),
     "worker-jordan": artifact("worker-jordan", "worker", "wrk_new", "Jordan Lee"),
     "worker-gone": artifact("worker-gone", "worker", "wrk_999", "Casey Morgan"),
+    "location-dallas": artifact("location-dallas", "location", "loc_dal", "Dallas yard"),
+    "location-tyson": artifact("location-tyson", "location", "loc_tyson", "Tyson Foods DC"),
+    "location-new": artifact("location-new", "location", "loc_new", "Gate 7 overflow lot"),
+    "location-gone": artifact("location-gone", "location", "loc_999", "Old Fort Worth yard"),
   };
 }
 
@@ -549,6 +553,199 @@ export function deskWorkers(anchor) {
   };
 }
 
+/**
+ * Three locations between them drawing every state the card has: the Dallas
+ * yard is the company's own terminal with a round fence, short waits and its
+ * own detention terms; the Tyson distribution center in Springdale takes
+ * trucks by appointment behind a drawn fence, keeps them long and has a run of
+ * late deliveries; the Gate 7 lot was added this week with no address, no
+ * coordinates and nothing recorded at it.
+ */
+export function deskLocations(anchor) {
+  const category = (name, type, facilityType, flags) => ({
+    id: `lc_${type.toLowerCase()}`,
+    name,
+    type,
+    facilityType,
+    hasSecureParking: false,
+    requiresAppointment: false,
+    allowsOvernight: false,
+    hasRestroom: false,
+    ...flags,
+  });
+  const policy = (id, name, overrides) => ({
+    id,
+    name,
+    code: id.toUpperCase(),
+    status: "Active",
+    priority: 10,
+    customerId: null,
+    stopTypes: [],
+    appointmentStopsOnly: false,
+    billingFreeMinutes: 120,
+    pickupFreeMinutes: null,
+    deliveryFreeMinutes: null,
+    effectiveStartDate: null,
+    effectiveEndDate: null,
+    ...overrides,
+  });
+  const failure = (id, number, type, status, lateMinutes, daysAgo, proNumber) => ({
+    id,
+    number,
+    type,
+    status,
+    stopType: type.includes("Pickup") ? "Pickup" : "Delivery",
+    lateMinutes,
+    actualArrival: anchor - daysAgo * DAY,
+    shipment: { id: `shp_${id}`, proNumber },
+  });
+  return {
+    loc_dal: {
+      location: {
+        id: "loc_dal",
+        status: "Active",
+        code: "DAL-YD",
+        name: "Dallas yard",
+        description: "Drop yard and fuel island. Gate code changes monthly; ask dispatch.",
+        addressLine1: "1801 Commerce St",
+        addressLine2: "",
+        city: "Dallas",
+        postalCode: "75201",
+        timezone: "America/Chicago",
+        isGeocoded: true,
+        latitude: 32.7801,
+        longitude: -96.8005,
+        geofenceType: "circle",
+        geofenceRadiusMeters: 250,
+        geofenceVertices: [],
+        createdAt: anchor - 4 * 365 * DAY,
+        state: { abbreviation: "TX" },
+        locationCategory: category("Company terminal", "Terminal", null, {
+          hasSecureParking: true,
+          allowsOvernight: true,
+          hasRestroom: true,
+        }),
+      },
+      dwell: {
+        locationId: "loc_dal",
+        stopCount: 142,
+        breachCount: 9,
+        avgDwellMinutes: 48,
+        medianDwellMinutes: 41,
+        p90DwellMinutes: 96,
+        billedAmount: "675.0000",
+        waivedAmount: "0.0000",
+        disputeCount: 0,
+      },
+      policies: [
+        policy("dp_dal", "Dallas yard standard", {
+          pickupFreeMinutes: 60,
+          deliveryFreeMinutes: 90,
+        }),
+      ],
+      failures: [
+        failure("sf_dal1", "SF-2610-0031", "LatePickup", "Resolved", 25, 12, "S2610-1251"),
+      ],
+      shipments: 8,
+    },
+    loc_tyson: {
+      location: {
+        id: "loc_tyson",
+        status: "Active",
+        code: "TYS-SPD",
+        name: "Tyson Foods Distribution Center, Springdale",
+        description: "Receiving closes at 14:00. Lumper fees paid at the window.",
+        addressLine1: "2200 W Don Tyson Pkwy",
+        addressLine2: "Dock 14",
+        city: "Springdale",
+        postalCode: "72762",
+        timezone: "America/Chicago",
+        isGeocoded: true,
+        latitude: 36.1867,
+        longitude: -94.1288,
+        geofenceType: "draw",
+        geofenceRadiusMeters: null,
+        geofenceVertices: [
+          { latitude: 36.1884, longitude: -94.1315 },
+          { latitude: 36.1886, longitude: -94.1262 },
+          { latitude: 36.1851, longitude: -94.1258 },
+          { latitude: 36.1849, longitude: -94.1291 },
+          { latitude: 36.1862, longitude: -94.1318 },
+        ],
+        createdAt: anchor - 6 * 365 * DAY,
+        state: { abbreviation: "AR" },
+        locationCategory: category("Customer DC", "DistributionCenter", "ColdStorage", {
+          requiresAppointment: true,
+          hasRestroom: true,
+        }),
+      },
+      dwell: {
+        locationId: "loc_tyson",
+        stopCount: 64,
+        breachCount: 27,
+        avgDwellMinutes: 171,
+        medianDwellMinutes: 148,
+        p90DwellMinutes: 312,
+        billedAmount: "4860.0000",
+        waivedAmount: "520.0000",
+        disputeCount: 3,
+      },
+      policies: [
+        policy("dp_tys_app", "Tyson appointment loads", {
+          customerId: "cus_tyson",
+          stopTypes: ["Delivery"],
+          appointmentStopsOnly: true,
+          billingFreeMinutes: 90,
+          priority: 30,
+        }),
+        policy("dp_tys", "Tyson Springdale", { billingFreeMinutes: 120, priority: 20 }),
+        policy("dp_tys_old", "Tyson Springdale (2025)", {
+          status: "Inactive",
+          priority: 5,
+          effectiveEndDate: anchor - 120 * DAY,
+        }),
+      ],
+      policyTotal: 4,
+      failures: [
+        failure("sf_tys1", "SF-2610-0058", "LateDelivery", "Open", 95, 1, "S2610-1366"),
+        failure("sf_tys2", "SF-2610-0052", "AppointmentMissed", "Reviewed", 140, 4, "S2610-1342"),
+        failure("sf_tys3", "SF-2610-0047", "LateDelivery", "Open", 55, 9, "S2610-1307"),
+        failure("sf_tys4", "SF-2609-0391", "LateDelivery", "Resolved", 35, 22, "S2609-1180"),
+        failure("sf_tys5", "SF-2609-0377", "MissedDelivery", "Voided", 0, 30, "S2609-1132"),
+        failure("sf_tys6", "SF-2609-0350", "LateDelivery", "Resolved", 70, 41, "S2609-1077"),
+      ],
+      shipments: 5,
+    },
+    loc_new: {
+      location: {
+        id: "loc_new",
+        status: "Active",
+        code: "G7-LOT",
+        name: "Gate 7 overflow lot",
+        description: "",
+        addressLine1: "",
+        addressLine2: "",
+        city: "",
+        postalCode: "",
+        timezone: "",
+        isGeocoded: false,
+        latitude: null,
+        longitude: null,
+        geofenceType: "auto",
+        geofenceRadiusMeters: null,
+        geofenceVertices: [],
+        createdAt: anchor - 2 * DAY,
+        state: null,
+        locationCategory: null,
+      },
+      dwell: null,
+      policies: [],
+      failures: [],
+      shipments: 0,
+    },
+  };
+}
+
 /** A document filed on a tractor, as the documents API returns it. */
 export function deskDocument(resourceType, resourceId, [name, fileType, fileSize], index, anchor) {
   return {
@@ -627,6 +824,22 @@ const TURNS = {
   "worker-gone": [
     "Show me Casey Morgan.",
     "Casey Morgan's record has been removed since I looked it up. [Casey Morgan](artifact:art_worker-gone) is what I found then.",
+  ],
+  "location-dallas": [
+    "How long do trucks wait at the Dallas yard?",
+    "Not long: over the last 90 days trucks spent 48 minutes on average at the Dallas yard, and only 9 of 142 stops ran past free time. [Dallas yard](artifact:art_location-dallas) has the figures and its detention terms.",
+  ],
+  "location-tyson": [
+    "Is the Tyson DC in Springdale a problem?",
+    "It is the slowest dock we serve: trucks wait 2 h 51 m on average and 27 of 64 stops ran past free time, with three late deliveries open. [Tyson Foods Distribution Center, Springdale](artifact:art_location-tyson) lays out the waits, the terms and the failures.",
+  ],
+  "location-new": [
+    "Pull up the Gate 7 overflow lot.",
+    "The Gate 7 overflow lot was added two days ago and has no address or coordinates yet, and no load has stopped there. [Gate 7 overflow lot](artifact:art_location-new) shows what is on file.",
+  ],
+  "location-gone": [
+    "Show me the old Fort Worth yard.",
+    "The old Fort Worth yard has been removed since I looked it up. [Old Fort Worth yard](artifact:art_location-gone) is what I found then.",
   ],
   "tractor-t-318": [
     "Pull up T-318.",

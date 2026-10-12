@@ -8,14 +8,16 @@ import { requestGraphQL } from "@trenova/shared/lib/graphql";
 export type RecordShipment = DeskRecordShipmentsQuery["shipments"]["edges"][number]["node"];
 
 /**
- * The record a card lists shipments for: a customer's freight, or the loads a
- * tractor pulled, a trailer carried or a worker drove on any of their moves.
+ * The record a card lists shipments for: a customer's freight, the loads a
+ * tractor pulled, a trailer carried or a worker drove on any of their moves, or
+ * the loads with a stop at a location.
  */
 export type ShipmentScope =
   | { kind: "customer"; id: string }
   | { kind: "tractor"; id: string }
   | { kind: "trailer"; id: string }
-  | { kind: "worker"; id: string };
+  | { kind: "worker"; id: string }
+  | { kind: "location"; id: string };
 
 /** One page of a record's shipments, newest first. `total` is read with the first page only. */
 export type RecordShipmentsPage = {
@@ -27,7 +29,10 @@ export type RecordShipmentsPage = {
 
 function scopeInput(
   scope: ShipmentScope,
-): Pick<ShipmentsInput, "fieldFilters" | "tractorIds" | "trailerIds" | "workerIds"> {
+): Pick<
+  ShipmentsInput,
+  "fieldFilters" | "tractorIds" | "trailerIds" | "workerIds" | "stopLocationIds"
+> {
   switch (scope.kind) {
     case "customer":
       return { fieldFilters: [{ field: "customerId", operator: "eq", value: scope.id }] };
@@ -37,6 +42,8 @@ function scopeInput(
       return { trailerIds: [scope.id] };
     case "worker":
       return { workerIds: [scope.id] };
+    case "location":
+      return { stopLocationIds: [scope.id] };
   }
 }
 

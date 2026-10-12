@@ -4930,6 +4930,18 @@ a.dk-rec-doc:focus-visible {
     0 0 0 2px var(--dsk-card),
     0 0 0 6px color-mix(in oklch, var(--dsk-fg) 16%, transparent);
 }
+.dk-rec-map-fence {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+.dk-rec-map-fence circle,
+.dk-rec-map-fence polygon {
+  fill: color-mix(in oklch, var(--dsk-fg) 10%, transparent);
+  stroke: color-mix(in oklch, var(--dsk-fg) 70%, transparent);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
 .dk-rec-map.dk-live .dk-rec-map-dot {
   background: var(--dsk-success-fg);
   box-shadow:
@@ -5508,6 +5520,9 @@ th.dk-cb .dk-ax-cb:hover {
 }
 .dk-ax-ki.dk-k-worker {
   color: var(--accent-rose);
+}
+.dk-ax-ki.dk-k-location {
+  color: var(--accent-emerald);
 }
 /* The shipment card */
 .dk-sh-nowsec {
@@ -6390,9 +6405,8 @@ th.dk-cb .dk-ax-cb:hover {
   line-height: 1.5;
   color: var(--dsk-subtle);
 }
-.dk-cu-note + .dk-cu-terms,
-.dk-cu-stats + .dk-cu-note,
-.dk-cu-note + .dk-cu-stats {
+.dk-rec-stats + .dk-cu-note,
+.dk-cu-note + .dk-rec-stats {
   margin-top: 12px;
 }
 .dk-rec-amt .dk-cu-wait {
@@ -6466,55 +6480,18 @@ th.dk-cb .dk-ax-cb:hover {
   color: var(--dsk-faint);
 }
 /* figures and terms in one ruled block, four across or two in a narrow pane */
-.dk-cu-stats,
-.dk-cu-terms {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin: 14px 0 0;
-  border: 1px solid var(--dsk-b-sub);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.dk-cu-terms {
+.dk-rec-stats.dk-cu-terms {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-.dk-cu-stats > div,
-.dk-cu-terms > div {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-  padding: 9px 12px;
-  border-left: 1px solid var(--dsk-b-sub);
-}
-.dk-cu-stats > div:first-child,
 .dk-cu-terms > div:nth-child(odd) {
   border-left: 0;
 }
 .dk-cu-terms > div:nth-child(n + 3) {
   border-top: 1px solid var(--dsk-b-sub);
 }
-.dk-cu-stats dt,
-.dk-cu-terms dt {
-  font-size: 11px;
-  color: var(--dsk-subtle);
-}
-.dk-cu-stats dd,
-.dk-cu-terms dd {
-  margin: 0;
-  font-size: 12.5px;
-  line-height: 1.4;
-  color: var(--dsk-fg);
-}
-.dk-cu-stats dd {
-  font-family: var(--dk-plex);
-  font-feature-settings: "tnum";
-}
-.dk-cu-stats .dk-warn dd {
-  color: var(--dsk-warn-fg);
-}
-.dk-cu-stats .dk-bad dd {
-  color: var(--danger);
+.dk-rec-stats.dk-cu-terms dd {
+  font-family: inherit;
+  font-feature-settings: normal;
 }
 /* payments received, month by month, as short columns */
 .dk-cu-paid {
@@ -6624,20 +6601,11 @@ th.dk-cb .dk-ax-cb:hover {
   color: var(--danger);
 }
 @container dkcu (max-width: 520px) {
-  .dk-cu-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .dk-cu-stats > div:nth-child(odd) {
-    border-left: 0;
-  }
-  .dk-cu-stats > div:nth-child(n + 3) {
-    border-top: 1px solid var(--dsk-b-sub);
-  }
   .dk-cu-buckets {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     row-gap: 10px;
   }
-  .dk-cu-terms {
+  .dk-rec-stats.dk-cu-terms {
     grid-template-columns: minmax(0, 1fr);
   }
   .dk-cu-terms > div {
@@ -6708,6 +6676,58 @@ th.dk-cb .dk-ax-cb:hover {
 @media (prefers-reduced-motion: reduce) {
   .dk-rec-meter > i {
     transition: none;
+  }
+}
+/* a record's figures side by side in a ruled strip (a customer's payment pace, a location's dwell) */
+.dk-rec-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 14px 0 0;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.dk-rec-sh + .dk-rec-stats {
+  margin-top: 0;
+}
+.dk-rec-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 9px 12px;
+  border-left: 1px solid var(--dsk-b-sub);
+}
+.dk-rec-stats > div:first-child {
+  border-left: 0;
+}
+.dk-rec-stats dt {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-rec-stats dd {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-rec-stats .dk-warn dd {
+  color: var(--dsk-warn-fg);
+}
+.dk-rec-stats .dk-bad dd {
+  color: var(--danger);
+}
+@container (max-width: 520px) {
+  .dk-rec-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dk-rec-stats > div:nth-child(odd) {
+    border-left: 0;
+  }
+  .dk-rec-stats > div:nth-child(n + 3) {
+    border-top: 1px solid var(--dsk-b-sub);
   }
 }
 /* The tractor card */
@@ -6829,6 +6849,57 @@ th.dk-cb .dk-ax-cb:hover {
   .dk-wk-clocks {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+/* The location card */
+.dk-lo {
+  container: dklo / inline-size;
+}
+.dk-rec-amt .dk-lo-wait {
+  color: var(--dsk-faint);
+}
+.dk-rec-stats + .dk-lo-money {
+  margin-top: 10px;
+}
+.dk-lo-sk-money {
+  display: block;
+  margin-top: 12px;
+}
+/* the detention policies written for it, each with the free time it grants on the right */
+.dk-lo-terms {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-lo-terms > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-lo-terms > li:first-child {
+  border-top: 0;
+}
+.dk-lo-terms > li.dk-off {
+  color: var(--dsk-subtle);
+}
+.dk-lo-free,
+.dk-lo-fst {
+  font-size: 12px;
+  white-space: nowrap;
+  color: var(--dsk-subtle);
+}
+.dk-lo-free {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg2);
+}
+.dk-lo-fst.dk-warn {
+  color: var(--dsk-warn-fg);
+}
+.dk-lo-fst.dk-ok {
+  color: var(--dsk-success-fg);
 }
 /* The rate agreement card */
 .dk-ra {

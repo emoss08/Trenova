@@ -327,6 +327,29 @@ export function CardFactGrid({ facts }: { facts: readonly CardFact[] }) {
   );
 }
 
+/** One figure a card reads about its record, marked when it is close to or past a line. */
+export type CardStat = { key: string; label: string; value: ReactNode; state?: CardCheckState };
+
+/** A record's figures side by side in a ruled strip, four to a row and two in a narrow card. */
+export function CardStats({
+  stats,
+  className,
+}: {
+  stats: readonly CardStat[];
+  className?: string;
+}) {
+  return (
+    <dl className={cn("dk-rec-stats", className)}>
+      {stats.map((stat) => (
+        <div key={stat.key} className={cn(stat.state && stat.state !== "ok" && `dk-${stat.state}`)}>
+          <dt>{stat.label}</dt>
+          <dd>{stat.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 /** The bordered list a card's checks sit in. */
 export function CardChecks({ children }: { children: ReactNode }) {
   return <div className="dk-rec-checks">{children}</div>;

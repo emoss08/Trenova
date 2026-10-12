@@ -13062,6 +13062,45 @@
       }
     },
     {
+      "name": "get_location",
+      "description": "Retrieve one location by id, with its address, coordinates, geofence, timezone and category (appointments, parking, overnight). Use list_locations first when you have a name, a code or a city.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "locationId": {
+            "description": "The location's id, from list_locations.",
+            "type": "string",
+            "x-recordOf": "location"
+          }
+        },
+        "required": [
+          "locationId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "location",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "get_manual_journal",
       "description": "Retrieve one manual journal request by id with its lines, the account each posts to and its debit or credit. It also says who approved, rejected or cancelled it and why. Use list_manual_journals first when you have a number.",
       "parameters": {

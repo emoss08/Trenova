@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -214,12 +215,40 @@ func newGetTrailerTool(
 	}, permissions)
 }
 
+const (
+	locationEntity  = "location"
+	locationIDParam = "locationId"
+)
+
+func newGetLocationTool(
+	repo locationports.LocationRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
+	return newGetTool(&getSpec{
+		name:     "get_location",
+		entity:   locationEntity,
+		resource: permission.ResourceLocation,
+		summary: "Retrieve one location by id, with its address, coordinates, geofence, " +
+			"timezone and category (appointments, parking, overnight). Use list_locations " +
+			"first when you have a name, a code or a city.",
+		paramName: locationIDParam,
+		idSource:  "from list_locations",
+		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
+			return repo.GetByID(ctx, locationports.GetLocationByIDRequest{
+				ID:         id,
+				TenantInfo: tenant,
+			})
+		},
+	}, permissions)
+}
+
 func getCatalogSpecs() []getSpec {
 	return []getSpec{
 		specOfGet(newGetCustomerTool(nil, nil)),
 		specOfGet(newGetCarrierTool(nil, nil)),
 		specOfGet(newGetTractorTool(nil, nil)),
 		specOfGet(newGetTrailerTool(nil, nil)),
+		specOfGet(newGetLocationTool(nil, nil)),
 		specOfGet(newGetDetentionOccurrenceTool(nil, nil, nil)),
 		specOfGet(newGetServiceFailureTool(nil, nil)),
 		specOfGet(newGetFormulaTemplateTool(nil, nil)),

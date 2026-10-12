@@ -2650,7 +2650,7 @@ type QueryResolver interface {
 	WorkerPolicyCompliance(ctx context.Context, id string) (*gqlmodel.PolicyCompliance, error)
 	WorkerPolicyAcknowledgements(ctx context.Context, workerID string) ([]*worker.WorkerPolicyAcknowledgement, error)
 	ProfileChangeRequests(ctx context.Context, filter *gqlmodel.ProfileChangeFilterInput) ([]*worker.WorkerProfileChangeRequest, error)
-	ServiceFailures(ctx context.Context, input gqlmodel.DataTableConnectionInput, shipmentID *string) (*gqlmodel.ServiceFailureConnection, error)
+	ServiceFailures(ctx context.Context, input gqlmodel.DataTableConnectionInput, shipmentID *string, locationID *string) (*gqlmodel.ServiceFailureConnection, error)
 	ServiceFailure(ctx context.Context, id string) (*servicefailure.ServiceFailure, error)
 	ServiceFailureReasonCodes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ServiceFailureReasonCodeConnection, error)
 	ServiceFailureReasonCode(ctx context.Context, id string) (*servicefailure.ReasonCode, error)
@@ -14201,6 +14201,8 @@ input DetentionStatsInput {
   from: Timestamp!
   to: Timestamp!
   limit: Int
+  "Only the stops made at this location."
+  locationId: ID
 }
 
 extend type Query {
@@ -25119,7 +25121,12 @@ type ServiceFailureConnection {
 }
 
 extend type Query {
-  serviceFailures(input: DataTableConnectionInput!, shipmentId: ID): ServiceFailureConnection!
+  serviceFailures(
+    input: DataTableConnectionInput!
+    shipmentId: ID
+    "Only failures at a stop made at this location."
+    locationId: ID
+  ): ServiceFailureConnection!
   serviceFailure(id: ID!): ServiceFailure
 }
 `, BuiltIn: false},
@@ -27149,6 +27156,8 @@ input ShipmentsInput {
   trailerIds: [ID!]
   "Only shipments with a live move one of these workers drives, in either seat."
   workerIds: [ID!]
+  "Only shipments with a live stop at one of these locations."
+  stopLocationIds: [ID!]
 }
 
 input ShipmentEventsInput {

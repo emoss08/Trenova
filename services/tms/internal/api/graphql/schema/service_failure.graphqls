@@ -85,6 +85,11 @@ type ServiceFailureConnection {
 }
 
 extend type Query {
-  serviceFailures(input: DataTableConnectionInput!, shipmentId: ID): ServiceFailureConnection!
+  serviceFailures(
+    input: DataTableConnectionInput!
+    shipmentId: ID
+    "Only failures at a stop made at this location."
+    locationId: ID
+  ): ServiceFailureConnection!
   serviceFailure(id: ID!): ServiceFailure
 }

@@ -88,4 +88,49 @@ describe("CardWhere", () => {
     expect(container.querySelector(".dk-rec-geo")).toHaveTextContent("Fuel 64%");
     expect(container.querySelectorAll(".dk-rec-geo .dk-rec-q > span")).toHaveLength(1);
   });
+
+  it("draws a location's fence round the dot, at the zoom it was given", async () => {
+    const { container } = draw({ zoom: 15, outline: { kind: "circle", radiusMeters: 150 } });
+    const square = container.querySelector(".dk-rec-scope");
+    if (!square) throw new Error("No map square");
+    act(() => FakeIntersectionObserver.show(square));
+
+    const map = await screen.findByRole("img", { name: "Map of Dallas yard" }, { timeout: 3000 });
+    const ring = map.querySelector(".dk-rec-map-fence circle");
+    expect(ring).not.toBeNull();
+    expect(Number(ring?.getAttribute("r"))).toBeGreaterThan(10);
+    expect(map.querySelector("img")?.getAttribute("src")).toMatch(/\/16\/\d+\/\d+\.png$/u);
+  });
+
+  it("draws a fence drawn by hand as its outline", async () => {
+    const { container } = draw({
+      zoom: 15,
+      outline: {
+        kind: "polygon",
+        vertices: [
+          { latitude: 32.7777, longitude: -96.7985 },
+          { latitude: 32.7777, longitude: -96.7955 },
+          { latitude: 32.7757, longitude: -96.7955 },
+          { latitude: 32.7757, longitude: -96.7985 },
+        ],
+      },
+    });
+    const square = container.querySelector(".dk-rec-scope");
+    if (!square) throw new Error("No map square");
+    act(() => FakeIntersectionObserver.show(square));
+
+    const map = await screen.findByRole("img", { name: "Map of Dallas yard" }, { timeout: 3000 });
+    const outline = map.querySelector(".dk-rec-map-fence polygon");
+    expect(outline?.getAttribute("points")?.split(" ")).toHaveLength(4);
+  });
+
+  it("leaves a fence too small to see beside the dot off the map", async () => {
+    const { container } = draw({ outline: { kind: "circle", radiusMeters: 20 } });
+    const square = container.querySelector(".dk-rec-scope");
+    if (!square) throw new Error("No map square");
+    act(() => FakeIntersectionObserver.show(square));
+
+    const map = await screen.findByRole("img", { name: "Map of Dallas yard" }, { timeout: 3000 });
+    expect(map.querySelector(".dk-rec-map-fence")).toBeNull();
+  });
 });

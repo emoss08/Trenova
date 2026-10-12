@@ -1,0 +1,112 @@
+# The Desk's location card: where the place is, its fence and what kind of
+# facility it is, without the organization and business unit the edit panel
+# loads.
+query DeskLocationCard($id: ID!) {
+  location(id: $id) {
+    id
+    status
+    code
+    name
+    description
+    addressLine1
+    addressLine2
+    city
+    postalCode
+    timezone
+    isGeocoded
+    latitude
+    longitude
+    geofenceType
+    geofenceRadiusMeters
+    geofenceVertices {
+      latitude
+      longitude
+    }
+    createdAt
+    state {
+      abbreviation
+    }
+    locationCategory {
+      id
+      name
+      type
+      facilityType
+      hasSecureParking
+      requiresAppointment
+      allowsOvernight
+      hasRestroom
+    }
+  }
+}
+
+# How long trucks waited at the location over a window, from the detention
+# record of every closed stop made there.
+query DeskLocationDwell($locationId: ID!, $from: Timestamp!, $to: Timestamp!) {
+  detentionFacilityStats(input: { from: $from, to: $to, locationId: $locationId, limit: 1 }) {
+    locationId
+    stopCount
+    breachCount
+    avgDwellMinutes
+    medianDwellMinutes
+    p90DwellMinutes
+    billedAmount
+    waivedAmount
+    disputeCount
+  }
+}
+
+# The detention policies written for the location itself, highest priority
+# first, and how many there are in all.
+query DeskLocationPolicies($input: DataTableConnectionInput!) {
+  detentionPolicies(input: $input) {
+    totalCount
+    edges {
+      node {
+        id
+        name
+        code
+        status
+        priority
+        customerId
+        stopTypes
+        appointmentStopsOnly
+        billingFreeMinutes
+        pickupFreeMinutes
+        deliveryFreeMinutes
+        effectiveStartDate
+        effectiveEndDate
+      }
+    }
+  }
+}
+
+# The service failures at stops made at the location, newest first, a page at a
+# time. The count is read with the first page only.
+query DeskLocationFailures(
+  $locationId: ID!
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean!
+) {
+  serviceFailures(input: $input, locationId: $locationId) {
+    edges {
+      node {
+        id
+        number
+        type
+        status
+        stopType
+        lateMinutes
+        actualArrival
+        shipment {
+          id
+          proNumber
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount @include(if: $includeTotalCount)
+  }
+}

@@ -31,6 +31,10 @@ vi.mock("../../../cards/trailer/desk-trailer", () => ({
   DeskTrailer: () => null,
   DeskTrailerArtifact: ({ recordId }: { recordId: string }) => <p>Trailer {recordId}</p>,
 }));
+vi.mock("../../../cards/location/desk-location", () => ({
+  DeskLocation: () => null,
+  DeskLocationArtifact: ({ recordId }: { recordId: string }) => <p>Location {recordId}</p>,
+}));
 vi.mock("../../../cards/worker/desk-worker", () => ({
   DeskWorker: () => null,
   DeskWorkerArtifact: ({ recordId }: { recordId: string }) => <p>Worker {recordId}</p>,
@@ -193,6 +197,16 @@ describe("a looked-up record with a card of its own", () => {
     expect(await screen.findByText("Worker wrk_1")).toBeInTheDocument();
     expect(deskArtKind(artifact)).toBe("worker");
     expect(deskArtKindName("worker", t as never)).toBe("Worker");
+  });
+
+  it("draws a location the agent looked up as the location card, with its own mark", async () => {
+    const artifact = card("location", { recordId: "loc_1", tool: "get_location" });
+
+    draw(artifact);
+
+    expect(await screen.findByText("Location loc_1")).toBeInTheDocument();
+    expect(deskArtKind(artifact)).toBe("location");
+    expect(deskArtKindName("location", t as never)).toBe("Location");
   });
 
   it("reads only the record kinds it names, never a name every object has", () => {

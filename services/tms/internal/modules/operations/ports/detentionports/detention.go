@@ -349,6 +349,7 @@ type DetentionStatsRequest struct {
 	From       int64
 	To         int64
 	Limit      int
+	LocationID pulid.ID
 }
 
 type FacilityDetentionStat struct {

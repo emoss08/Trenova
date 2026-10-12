@@ -37,7 +37,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_serviceFailures_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ServiceFailures(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["shipmentId"].(*string))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").ServiceFailures(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["shipmentId"].(*string), fc.Args["locationId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNServiceFailureConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐServiceFailureConnection),
 			},
@@ -488,7 +488,7 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverQuery interface {
-	ServiceFailures(ctx context.Context, input gqlmodel.DataTableConnectionInput, shipmentID *string) (*gqlmodel.ServiceFailureConnection, error)
+	ServiceFailures(ctx context.Context, input gqlmodel.DataTableConnectionInput, shipmentID *string, locationID *string) (*gqlmodel.ServiceFailureConnection, error)
 	ServiceFailure(ctx context.Context, id string) (*servicefailure.ServiceFailure, error)
 }
 
@@ -512,7 +512,7 @@ var (
 )
 
 func field_Query_serviceFailures_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 2)
+	args := make(map[string]any, 3)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
 			return unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, ec, v)
@@ -529,6 +529,14 @@ func field_Query_serviceFailures_args(ctx context.Context, ec *gqlexec.Exec, raw
 		return nil, err
 	}
 	args["shipmentId"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "locationId",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["locationId"] = arg2
 	return args, nil
 }
 

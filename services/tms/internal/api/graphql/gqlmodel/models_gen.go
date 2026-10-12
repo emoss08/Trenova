@@ -2962,6 +2962,8 @@ type DetentionStatsInput struct {
 	From  int  `json:"from"`
 	To    int  `json:"to"`
 	Limit *int `json:"limit,omitempty"`
+	// Only the stops made at this location.
+	LocationID *string `json:"locationId,omitempty"`
 }
 
 type DetentionTierInput struct {
@@ -8760,6 +8762,8 @@ type ShipmentsInput struct {
 	TrailerIds []string `json:"trailerIds,omitempty"`
 	// Only shipments with a live move one of these workers drives, in either seat.
 	WorkerIds []string `json:"workerIds,omitempty"`
+	// Only shipments with a live stop at one of these locations.
+	StopLocationIds []string `json:"stopLocationIds,omitempty"`
 }
 
 type SidebarActivityPreference struct {

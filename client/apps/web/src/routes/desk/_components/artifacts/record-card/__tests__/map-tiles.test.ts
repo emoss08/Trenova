@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { mapTiles, OSM_TILE_URL } from "../map-tiles";
+import {
+  mapTiles,
+  metersPerPixel,
+  OSM_TILE_URL,
+  outlineReach,
+  projectOnMap,
+  zoomToFit,
+} from "../map-tiles";
 
 describe("mapTiles", () => {
   it("reads tiles a level deeper and draws them at half size, the point in the middle", () => {
@@ -74,5 +81,71 @@ describe("mapTiles", () => {
     });
     expect(tiles[0]?.url).toMatch(/^https:\/\/tiles\.example\.com\/2\/\d\/\d@2x\.png$/u);
     expect(OSM_TILE_URL).toContain("{z}/{x}/{y}");
+  });
+});
+
+describe("metersPerPixel", () => {
+  it("reads the ground a pixel covers, halving with each zoom and narrowing toward the poles", () => {
+    expect(metersPerPixel(0, 0)).toBeCloseTo(156_543.03, 1);
+    expect(metersPerPixel(0, 11)).toBeCloseTo(156_543.03 / 2048, 3);
+    expect(metersPerPixel(60, 11)).toBeCloseTo(metersPerPixel(0, 11) / 2, 3);
+  });
+});
+
+describe("projectOnMap", () => {
+  const center = { latitude: 32.7801, longitude: -96.8005 };
+
+  it("puts the centre in the middle and a point east of it to the right, north of it above", () => {
+    const [middle, east, north] = projectOnMap(center, 14, 112, [
+      center,
+      { latitude: center.latitude, longitude: center.longitude + 0.002 },
+      { latitude: center.latitude + 0.002, longitude: center.longitude },
+    ]);
+    expect(middle).toEqual({ x: 56, y: 56 });
+    expect(east?.x).toBeGreaterThan(56);
+    expect(east?.y).toBeCloseTo(56, 6);
+    expect(north?.y).toBeLessThan(56);
+    expect(north?.x).toBeCloseTo(56, 6);
+  });
+
+  it("places a point across the antimeridian on the near side", () => {
+    const [west] = projectOnMap({ latitude: 0, longitude: 179.999 }, 10, 112, [
+      { latitude: 0, longitude: -179.999 },
+    ]);
+    expect(west?.x).toBeGreaterThan(56);
+    expect(west?.x).toBeLessThan(80);
+  });
+});
+
+describe("zoomToFit", () => {
+  const center = { latitude: 32.7801, longitude: -96.8005 };
+
+  it("reads as close as the fence allows, keeping it inside the map with room round it", () => {
+    const outline = { kind: "circle", radiusMeters: 250 } as const;
+    const zoom = zoomToFit({ center, outline, size: 112, min: 11, max: 17 });
+
+    expect(outlineReach(center, zoom, outline) * 2).toBeLessThanOrEqual(112 * 0.72);
+    expect(outlineReach(center, zoom + 1, outline) * 2).toBeGreaterThan(112 * 0.72);
+  });
+
+  it("measures a drawn fence by its farthest corner", () => {
+    const outline = {
+      kind: "polygon",
+      vertices: [
+        { latitude: 32.781, longitude: -96.802 },
+        { latitude: 32.781, longitude: -96.799 },
+        { latitude: 32.779, longitude: -96.799 },
+      ],
+    } as const;
+    const zoom = zoomToFit({ center, outline, size: 112, min: 11, max: 17 });
+
+    expect(zoom).toBeGreaterThan(11);
+    expect(zoom).toBeLessThan(17);
+    expect(outlineReach(center, zoom, outline) * 2).toBeLessThanOrEqual(112 * 0.72);
+  });
+
+  it("stops at the farthest zoom it is allowed when the fence is wider still", () => {
+    const outline = { kind: "circle", radiusMeters: 80_000 } as const;
+    expect(zoomToFit({ center, outline, size: 112, min: 11, max: 17 })).toBe(11);
   });
 });

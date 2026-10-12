@@ -30,6 +30,7 @@ import {
   CardSection,
   CardSectionError,
   CardSectionWait,
+  CardStats,
   CardStatus,
   CardStepper,
   CardUnreadable,
@@ -428,40 +429,44 @@ function Receivables({
         <p className="dk-cu-note">{t("Nothing is open. Every invoice is paid.")}</p>
       )}
 
-      <dl className="dk-cu-stats">
-        <div className={cn(pace && `dk-${pace}`)}>
-          <dt>{t("Pays in")}</dt>
-          <dd>
-            {snapshot.avgDaysToPay > 0
-              ? t("{0, plural, one {# day} other {# days}}", Math.round(snapshot.avgDaysToPay))
-              : "—"}
-          </dd>
-        </div>
-        <div>
-          <dt>{t("DSO")}</dt>
-          <dd>
-            {profile.dsoDays > 0
-              ? t("{0, plural, one {# day} other {# days}}", Math.round(profile.dsoDays))
-              : "—"}
-          </dd>
-        </div>
-        <div>
-          <dt>{t("Last payment")}</dt>
-          <dd>
-            {snapshot.lastPaymentDate > 0
-              ? t(
-                  "{0} on {1}",
-                  minorMoney(snapshot.lastPaymentMinor),
-                  cardDay(snapshot.lastPaymentDate),
-                )
-              : t("None yet")}
-          </dd>
-        </div>
-        <div>
-          <dt>{t("Billed, 91 days")}</dt>
-          <dd>{minorMoney(snapshot.billedTrailing91Minor)}</dd>
-        </div>
-      </dl>
+      <CardStats
+        stats={[
+          {
+            key: "pace",
+            label: t("Pays in"),
+            value:
+              snapshot.avgDaysToPay > 0
+                ? t("{0, plural, one {# day} other {# days}}", Math.round(snapshot.avgDaysToPay))
+                : "—",
+            state: pace ?? undefined,
+          },
+          {
+            key: "dso",
+            label: t("DSO"),
+            value:
+              profile.dsoDays > 0
+                ? t("{0, plural, one {# day} other {# days}}", Math.round(profile.dsoDays))
+                : "—",
+          },
+          {
+            key: "last",
+            label: t("Last payment"),
+            value:
+              snapshot.lastPaymentDate > 0
+                ? t(
+                    "{0} on {1}",
+                    minorMoney(snapshot.lastPaymentMinor),
+                    cardDay(snapshot.lastPaymentDate),
+                  )
+                : t("None yet"),
+          },
+          {
+            key: "billed",
+            label: t("Billed, 91 days"),
+            value: minorMoney(snapshot.billedTrailing91Minor),
+          },
+        ]}
+      />
 
       {snapshot.unappliedCashMinor > 0 && (
         <p className="dk-cu-note">
@@ -523,14 +528,7 @@ function Billing({
         <p className="dk-cu-note">{t("No credit limit is set.")}</p>
       )}
 
-      <dl className="dk-cu-terms">
-        {billingTerms(billing, t).map((term) => (
-          <div key={term.key}>
-            <dt>{term.label}</dt>
-            <dd>{term.value}</dd>
-          </div>
-        ))}
-      </dl>
+      <CardStats className="dk-cu-terms" stats={billingTerms(billing, t)} />
 
       <div className="dk-cu-needs">
         <span>{t("Every invoice needs")}</span>

@@ -104,6 +104,7 @@ func coreToolProviders() []any {
 		newGetCarrierTool,
 		newGetTractorTool,
 		newGetTrailerTool,
+		newGetLocationTool,
 		newGetInvoiceTool,
 		newGetInvoicesTool,
 		newListBillingQueueItemsTool,

@@ -353,10 +353,12 @@ func (r *QueryResolver) DetentionFacilityStats(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	stats, err := r.DetentionService.FacilityProfiles(
-		ctx,
-		detentionStatsRequest(&input, base.TenantInfo(authCtx)),
-	)
+	req, err := detentionStatsRequest(&input, base.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	stats, err := r.DetentionService.FacilityProfiles(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -378,10 +380,12 @@ func (r *QueryResolver) DetentionCustomerStats(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	stats, err := r.DetentionService.CustomerProfiles(
-		ctx,
-		detentionStatsRequest(&input, base.TenantInfo(authCtx)),
-	)
+	req, err := detentionStatsRequest(&input, base.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	stats, err := r.DetentionService.CustomerProfiles(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -403,10 +407,12 @@ func (r *QueryResolver) DetentionWaiverStats(ctx context.Context, input gqlmodel
 		return nil, err
 	}
 
-	stats, err := r.DetentionService.WaiverLeakage(
-		ctx,
-		detentionStatsRequest(&input, base.TenantInfo(authCtx)),
-	)
+	req, err := detentionStatsRequest(&input, base.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	stats, err := r.DetentionService.WaiverLeakage(ctx, req)
 	if err != nil {
 		return nil, err
 	}

@@ -1864,6 +1864,8 @@ input ShipmentsInput {
   trailerIds: [ID!]
   "Only shipments with a live move one of these workers drives, in either seat."
   workerIds: [ID!]
+  "Only shipments with a live stop at one of these locations."
+  stopLocationIds: [ID!]
 }
 
 input ShipmentEventsInput {
