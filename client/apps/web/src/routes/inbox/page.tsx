@@ -26,6 +26,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { getStartOfDay } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { useSettledValue } from "@trenova/shared/hooks/use-settled-value";
 import {
   lazy,
   Suspense,
@@ -56,7 +57,13 @@ import {
   type QueueFolder,
   type TriageFolder,
 } from "./_components/folders";
-import { stepFrom, useTriageKeys, type TriageCommand } from "./_components/keys";
+import {
+  loadAheadOfReader,
+  STEP_SETTLE_MS,
+  stepFrom,
+  useTriageKeys,
+  type TriageCommand,
+} from "./_components/keys";
 import { buildListItems } from "./_components/list/list-items";
 import {
   ConnectFirstSource,
@@ -319,6 +326,14 @@ function TriageWorkspace({
     [update],
   );
 
+  const readAhead = loadAheadOfReader(orderedIds, openId, pages.hasNextPage);
+  const { fetchNextPage } = pages;
+  useEffect(() => {
+    if (readAhead) {
+      fetchNextPage();
+    }
+  }, [readAhead, fetchNextPage]);
+
   const folderKeyValue = folderKey(folder);
   useEffect(() => {
     if (
@@ -336,17 +351,23 @@ function TriageWorkspace({
   }, [wide, queueFolder, openId, pages.isLoading, orderedIds, folderKeyValue, openMessage]);
 
   useEffect(() => {
-    if (openId === null) {
+    if (openId !== null) {
+      listRef.current?.scrollToKey(openId);
+    }
+  }, [openId]);
+
+  const settledOpenId = useSettledValue(openId, STEP_SETTLE_MS);
+  useEffect(() => {
+    if (settledOpenId === null) {
       return;
     }
-    listRef.current?.scrollToKey(openId);
-    const index = orderedIds.indexOf(openId);
+    const index = orderedIds.indexOf(settledOpenId);
     for (const neighbour of [orderedIds[index + 1], orderedIds[index - 1]]) {
       if (neighbour !== undefined) {
         prefetchMessage(neighbour);
       }
     }
-  }, [openId, orderedIds, prefetchMessage]);
+  }, [settledOpenId, orderedIds, prefetchMessage]);
 
   const handlers = useMemo<RowHandlers>(
     () => ({
@@ -680,7 +701,12 @@ function TriageWorkspace({
                   <Reader
                     key={openId}
                     messageId={openId}
-                    position={{ index: position, total: orderedIds.length }}
+                    position={{
+                      index: position,
+                      total: orderedIds.length,
+                      more: pages.hasNextPage,
+                    }}
+                    settled={openId === settledOpenId}
                     onClose={() => openMessage(null)}
                     onStep={(direction) => {
                       const next = stepFrom(orderedIds, openId, direction);

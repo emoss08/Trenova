@@ -151,6 +151,30 @@ export function resolveTriageKey(press: KeyPress, context: KeyContext): TriageCo
 }
 
 /** Where the open message moves on J or K: the first at either end when nothing is open. */
+/** How long the reader stays on a message before it is fetched and its neighbours read ahead. */
+export const STEP_SETTLE_MS = 150;
+
+/** How many rows before the last loaded one the reader asks for the folder's next page. */
+export const STEP_READ_AHEAD = 10;
+
+/**
+ * Whether the folder's next page should be fetched for the reader: the open
+ * message is within STEP_READ_AHEAD rows of the end of what is loaded and
+ * the folder has more, so stepping on never stops at a page boundary.
+ */
+export function loadAheadOfReader(
+  ids: readonly string[],
+  openId: string | null,
+  hasMore: boolean,
+): boolean {
+  if (!hasMore || openId === null) {
+    return false;
+  }
+  const index = ids.indexOf(openId);
+
+  return index !== -1 && ids.length - index <= STEP_READ_AHEAD;
+}
+
 export function stepFrom(
   ids: readonly string[],
   openId: string | null,

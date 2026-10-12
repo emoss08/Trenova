@@ -43,8 +43,13 @@ import { SentReplies } from "./sent-replies";
  */
 export type ReaderProps = {
   messageId: string;
-  /** Where the open message sits in the folder: 1-based, and how many the folder holds. */
-  position: { index: number; total: number };
+  /**
+   * Where the open message sits in the folder: 1-based, how many rows are
+   * loaded, and whether the folder holds more than that.
+   */
+  position: { index: number; total: number; more: boolean };
+  /** Whether the person has stopped on this message; one passed over is shown only if cached. */
+  settled: boolean;
   onClose: () => void;
   /** J/K from the toolbar's arrows: the next (1) or previous (-1) message. */
   onStep: (direction: 1 | -1) => void;
@@ -121,7 +126,7 @@ function ReaderView({
   position,
   onClose,
   onStep,
-}: Omit<ReaderProps, "messageId"> & { message: InboundMessageDetail }) {
+}: Omit<ReaderProps, "messageId" | "settled"> & { message: InboundMessageDetail }) {
   const t = useT();
   const actions = useTriageActions();
   const now = useNowSeconds();
@@ -343,8 +348,8 @@ function ReaderView({
  * that went out and what happened to it — beside the steps it asks for, each
  * finished in place, and under a bar that does the next one.
  */
-export function Reader({ messageId, position, onClose, onStep }: ReaderProps) {
-  const query = useQuery(queries.inbox.message(messageId));
+export function Reader({ messageId, position, settled, onClose, onStep }: ReaderProps) {
+  const query = useQuery({ ...queries.inbox.message(messageId), enabled: settled });
   useAnnouncePresence(messageId, "viewing");
   const message = query.data;
 

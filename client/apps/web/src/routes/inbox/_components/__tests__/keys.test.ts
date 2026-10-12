@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  STEP_READ_AHEAD,
   TRIAGE_KEYMAP,
+  loadAheadOfReader,
   nextAfterLeaving,
   resolveTriageKey,
   stepFrom,
@@ -102,6 +104,19 @@ describe("moving through a folder", () => {
     expect(stepFrom(ids, "m1", -1)).toBe("m1");
     expect(stepFrom(ids, "gone", 1)).toBe("m1");
     expect(stepFrom([], null, 1)).toBeNull();
+  });
+
+  it("fetches the folder's next page before the reader reaches the last loaded row", () => {
+    const loaded = Array.from({ length: 40 }, (_, index) => `m${index + 1}`);
+    const nearEnd = loaded[loaded.length - STEP_READ_AHEAD];
+    const farFromEnd = loaded[loaded.length - STEP_READ_AHEAD - 1];
+
+    expect(loadAheadOfReader(loaded, nearEnd, true)).toBe(true);
+    expect(loadAheadOfReader(loaded, "m40", true)).toBe(true);
+    expect(loadAheadOfReader(loaded, farFromEnd, true)).toBe(false);
+    expect(loadAheadOfReader(loaded, "m40", false)).toBe(false);
+    expect(loadAheadOfReader(loaded, null, true)).toBe(false);
+    expect(loadAheadOfReader(loaded, "not-loaded", true)).toBe(false);
   });
 
   it("moves the reader past every message that is leaving with the open one", () => {

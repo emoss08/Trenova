@@ -85,7 +85,7 @@ function PresenceChip({ messageId }: { messageId: string }) {
 
 export type ReaderToolbarProps = {
   message: InboundMessageDetail;
-  position: { index: number; total: number };
+  position: { index: number; total: number; more: boolean };
   onClose: () => void;
   onStep: (direction: 1 | -1) => void;
   /** Steps still open, shown on the panel toggle. */
@@ -256,7 +256,7 @@ export function ReaderToolbar({
           size="icon-sm"
           variant="quiet"
           aria-label={t("Next message")}
-          disabled={position.index < 1 || position.index >= position.total}
+          disabled={position.index < 1 || (position.index >= position.total && !position.more)}
           onClick={() => onStep(1)}
         >
           <ArrowDownIcon aria-hidden className="size-3.5" />
@@ -264,7 +264,9 @@ export function ReaderToolbar({
       </ToolButton>
       {position.index > 0 && position.total > 0 && (
         <span className="text-foreground-subtle mx-1 font-mono text-xs whitespace-nowrap tabular-nums">
-          {t("{0} / {1}", position.index, position.total)}
+          {position.more
+            ? t("{0} / {1}+", position.index, position.total)
+            : t("{0} / {1}", position.index, position.total)}
         </span>
       )}
       <span className="flex-1" />
