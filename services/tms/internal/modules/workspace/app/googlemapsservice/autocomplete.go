@@ -138,12 +138,12 @@ func (s *autoCompleteService) resolveClient(
 		ctx, req.TenantInfo, integration.TypeGoogleMaps,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %w", kernelports.ErrPlaceLookupUnavailable, err)
 	}
 
 	apiKey := cfg.Config["apiKey"]
 	if apiKey == "" {
-		return nil, ErrMissingAPIKey
+		return nil, fmt.Errorf("%w: %w", kernelports.ErrPlaceLookupUnavailable, ErrMissingAPIKey)
 	}
 
 	client, err := maps.NewClient(maps.WithAPIKey(apiKey))

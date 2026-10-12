@@ -89,11 +89,12 @@ func Validate(fields Fields, params ValidateParams) {
 
 	switch fields.GeofenceType {
 	case TypeAuto, TypeCircle:
-		if params.Coordinates.Longitude == nil || params.Coordinates.Latitude == nil {
+		if fields.GeofenceType == TypeCircle &&
+			(params.Coordinates.Longitude == nil || params.Coordinates.Latitude == nil) {
 			multiErr.Add(
 				"geofenceType",
 				errortypes.ErrInvalid,
-				"A geocoded {0} is required for automatic and circular geofences",
+				"A geocoded {0} is required for a circular geofence",
 				geocodedSubject(params.GeocodedSubject),
 			)
 		}

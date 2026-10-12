@@ -2,10 +2,13 @@ package kernelports
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
+
+var ErrPlaceLookupUnavailable = errors.New("no address lookup is connected")
 
 type AutoCompleteService interface {
 	GetPlaceDetails(

@@ -43,7 +43,7 @@ func TestNormalize(t *testing.T) {
 func TestValidate(t *testing.T) {
 	t.Parallel()
 
-	t.Run("auto geofence requires coordinates", func(t *testing.T) {
+	t.Run("auto geofence waits for coordinates", func(t *testing.T) {
 		t.Parallel()
 
 		radius := 100.0
@@ -52,6 +52,27 @@ func TestValidate(t *testing.T) {
 		Validate(
 			Fields{
 				GeofenceType:         TypeAuto,
+				GeofenceRadiusMeters: &radius,
+			},
+			ValidateParams{
+				GeocodedSubject:  "location",
+				ValidationErrors: multiErr,
+			},
+		)
+
+		assert.False(t, multiErr.HasErrors(),
+			"a location not yet geocoded is saved; its geofence starts when it is")
+	})
+
+	t.Run("circle geofence requires coordinates", func(t *testing.T) {
+		t.Parallel()
+
+		radius := 100.0
+		multiErr := errortypes.NewMultiError()
+
+		Validate(
+			Fields{
+				GeofenceType:         TypeCircle,
 				GeofenceRadiusMeters: &radius,
 			},
 			ValidateParams{

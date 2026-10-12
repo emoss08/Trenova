@@ -5,6 +5,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/postgis"
@@ -130,4 +132,28 @@ func paginationRequest(
 			BuID:  buID,
 		},
 	}
+}
+
+func TestApplyLocationGeofenceLeavesAnUnplacedAutoGeofenceEmpty(t *testing.T) {
+	t.Parallel()
+
+	db, _, err := sqlmock.New()
+	require.NoError(t, err)
+	bunDB := bun.NewDB(db, pgdialect.New())
+	t.Cleanup(func() { _ = bunDB.Close() })
+
+	radius := geofence.DefaultRadiusMeters
+	unplaced := &location.Location{GeofenceType: geofence.TypeAuto, GeofenceRadiusMeters: &radius}
+
+	insert := bunDB.NewInsert().Model(unplaced)
+	require.NoError(t, applyLocationGeofence(insert, nil, unplaced))
+	assert.NotContains(t, insert.String(), "ST_", "nothing is drawn until the location is placed")
+
+	update := bunDB.NewUpdate().Model(unplaced).WherePK()
+	require.NoError(t, applyLocationGeofence(nil, update, unplaced))
+	assert.Contains(t, update.String(), "geofence_geometry = NULL")
+
+	circle := &location.Location{GeofenceType: geofence.TypeCircle, GeofenceRadiusMeters: &radius}
+	require.Error(t, applyLocationGeofence(bunDB.NewInsert().Model(circle), nil, circle),
+		"a circle is drawn around a point, so it still needs one")
 }

@@ -213,7 +213,15 @@ func applyLocationGeofence(
 ) error {
 	switch entity.GeofenceType {
 	case geofence.TypeAuto, geofence.TypeCircle:
-		if entity.Longitude == nil || entity.Latitude == nil || entity.GeofenceRadiusMeters == nil {
+		unplaced := entity.Longitude == nil || entity.Latitude == nil
+		if unplaced && entity.GeofenceType == geofence.TypeAuto {
+			if updateQuery != nil {
+				updateQuery.Set("geofence_geometry = NULL")
+			}
+
+			return nil
+		}
+		if unplaced || entity.GeofenceRadiusMeters == nil {
 			return errors.New("circle geofences require longitude, latitude, and radius")
 		}
 
