@@ -1,55 +1,226 @@
-import { resolveNotificationDescriptor } from "@/components/notification-center/notification-registry";
-import { formatTimestamp } from "@/lib/notification-helpers";
-import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
-import { Badge } from "@trenova/shared/components/ui/badge";
-import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
-import { AlertCircleIcon } from "@trenova/shared/components/icons";
-import { lazy, Suspense } from "react";
+import { useNow } from "@trenova/shared/hooks/use-now";
+import { formatCompactAge } from "@trenova/shared/lib/date";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { usePageGlance } from "../../page-glance";
 import { commandGroupLabel } from "../../palette-commands";
-import { BRAND_TILE_CLASS, NEUTRAL_TILE_CLASS } from "../../palette-entities";
+import type { ActionContext } from "../../palette-actions";
 import type {
   PaletteAction,
+  PaletteAttention,
   PaletteCommand,
   PaletteIntent,
   PaletteItem,
+  PalettePage,
+  PaletteRecord,
 } from "../../palette-model";
-import { ShortcutKeys } from "../../palette-row";
+import { ShortcutKeys } from "../../palette-parts";
+import type { RecentPaletteRecord } from "../../palette-sections";
 import { CustomerPreview } from "./customer-preview";
 import { DocumentPreview } from "./document-preview";
-import { PreviewFrame, PreviewMessage, PreviewSection, PreviewSkeleton } from "./preview-frame";
+import {
+  PreviewFields,
+  PreviewFrame,
+  PreviewHead,
+  PreviewSection,
+  PreviewSource,
+  PreviewStats,
+  RelatedRow,
+  StatePill,
+} from "./preview-frame";
+import { RecordLink } from "./record-link";
+import { ShipmentPreview } from "./shipment-preview";
+import { SOURCE_DETAILS_SHOWN, SourceRecord } from "./source-records";
 import { WorkerPreview } from "./worker-preview";
 
-// The shipment preview draws a route map; Google Maps loads only when a
-// shipment is actually previewed.
-const ShipmentPreview = lazy(() =>
-  import("../shipment/shipment-preview").then((module) => ({ default: module.ShipmentPreview })),
-);
+const RECENT_ON_PAGE = 3;
 
-interface PreviewProps {
-  actions: readonly PaletteAction[];
+export interface PreviewContext {
   onRun: (intent: PaletteIntent) => void;
+  onNavigate: (href: string) => void;
+  onOpenRecord: (record: PaletteRecord) => void;
+  onMore: () => void;
+  recentRecords: readonly RecentPaletteRecord[];
+  relatedCommands: ActionContext["relatedCommands"];
+  pinnedUrls: ReadonlySet<string>;
 }
 
-function Tips() {
+function PagePreview({ page, context }: { page: PalettePage; context: PreviewContext }) {
+  const t = useT();
+  const glance = usePageGlance(page.glance);
+  const related = context.relatedCommands(page.href);
+  const recent = page.recordType
+    ? context.recentRecords
+        .filter(({ record }) => record.entityType === page.recordType)
+        .slice(0, RECENT_ON_PAGE)
+    : [];
+  const pinned = context.pinnedUrls.has(page.href);
+  const now = useNow();
+  const trail = page.trail.map((segment) => t(segment));
+
+  return (
+    <>
+      <PreviewSource kind="page" facts={[page.module ? t(page.module) : null]} />
+      <PreviewHead
+        title={t(page.title)}
+        subtitle={trail.length > 0 ? trail.join(" / ") : t("Workspace")}
+        status={pinned ? <StatePill label={t("Pinned")} /> : undefined}
+      />
+      <PreviewStats items={glance.stats} />
+      {related.length > 0 && (
+        <PreviewSection label={t("Start something here")}>
+          <div className="flex flex-col">
+            {related.map((command) => (
+              <RelatedRow
+                key={command.id}
+                icon={command.icon}
+                title={command.label}
+                note={command.shortcut ? <ShortcutKeys keys={command.shortcut} /> : undefined}
+                onOpen={() => context.onRun(command.intent)}
+              />
+            ))}
+          </div>
+        </PreviewSection>
+      )}
+      {recent.length > 0 && (
+        <PreviewSection label={t("You were just in")}>
+          <div className="flex flex-col">
+            {recent.map(({ record, visitedAt }) => (
+              <RecordLink
+                key={record.id}
+                record={record}
+                note={t("{0} ago", formatCompactAge(now - visitedAt / 1000))}
+                onOpen={context.onOpenRecord}
+              />
+            ))}
+          </div>
+        </PreviewSection>
+      )}
+      <PreviewFields
+        rows={[
+          {
+            label: t("Address"),
+            value: <span className="font-mono text-sm break-all">{page.href}</span>,
+          },
+        ]}
+      />
+    </>
+  );
+}
+
+function CommandPreview({ command }: { command: PaletteCommand }) {
+  const t = useT();
+  return (
+    <>
+      <PreviewSource kind="command" facts={[commandGroupLabel(command.group, t)]} />
+      <PreviewHead
+        title={command.label}
+        subtitle={command.description}
+        status={command.checked ? <StatePill label={t("Current")} state="ok" /> : undefined}
+      />
+      {command.shortcut && (
+        <PreviewFields
+          rows={[{ label: t("Shortcut"), value: <ShortcutKeys keys={command.shortcut} /> }]}
+        />
+      )}
+    </>
+  );
+}
+
+function AttentionPreview({ attention }: { attention: PaletteAttention }) {
+  const t = useT();
+  return (
+    <>
+      <PreviewSource kind="queue" facts={[attention.module, t("Refreshes every minute")]} />
+      <PreviewHead title={attention.label} subtitle={attention.reason || undefined} />
+      <PreviewStats
+        items={[
+          {
+            label: t("Waiting on you"),
+            value: attention.count.toLocaleString(),
+            state:
+              attention.tone === "danger"
+                ? "bad"
+                : attention.tone === "warning"
+                  ? "warn"
+                  : "neutral",
+          },
+        ]}
+      />
+    </>
+  );
+}
+
+function AskPreview({ item }: { item: Extract<PaletteItem, { kind: "ask" }> }) {
+  const t = useT();
+  return (
+    <>
+      <PreviewSource kind="nova" facts={[t("Answers from your records")]} />
+      <PreviewHead
+        title={t("Ask Nova")}
+        subtitle={item.subject ? t("About {0}", item.subject.label) : undefined}
+      />
+      <blockquote className="bg-sunken rounded-surface text-foreground px-3.5 py-3 text-base">
+        {item.question}
+      </blockquote>
+      <p className="text-foreground-muted text-base leading-relaxed">
+        {t(
+          "The answer streams in above your results, with every record it used linked. Hover one to look at it here; continue in the Desk to keep going.",
+        )}
+      </p>
+    </>
+  );
+}
+
+function SourcesPreview({
+  records,
+  onOpen,
+}: {
+  records: readonly PaletteRecord[];
+  onOpen: (record: PaletteRecord) => void;
+}) {
+  const t = useT();
+  return (
+    <>
+      <PreviewSource
+        kind="nova"
+        facts={[t("{0, plural, one {# record used} other {# records used}}", records.length)]}
+      />
+      <PreviewHead title={t("What Nova read")} subtitle={t("Every record linked in the answer")} />
+      <PreviewSection label={t("Sources")}>
+        <div className="flex flex-col">
+          {records.map((record, index) => (
+            <SourceRecord
+              key={`${record.entityType}:${record.id}`}
+              record={record}
+              detailed={index < SOURCE_DETAILS_SHOWN}
+              onOpen={onOpen}
+            />
+          ))}
+        </div>
+      </PreviewSection>
+    </>
+  );
+}
+
+function Tips({ mac }: { mac: boolean }) {
   const t = useT();
   const tips: { keys: string[]; label: string }[] = [
-    {
-      keys: ["@"],
-      label: t("Search one kind of record: @shipment, @customer, @worker, @document"),
-    },
-    { keys: ["?"], label: t("End with a question mark to ask the assistant") },
-    { keys: ["Tab"], label: t("Switch between records, pages and commands") },
-    { keys: ["→"], label: t("See everything you can do with the selected row") },
+    { keys: ["@"], label: t("Narrow to one kind: @shipment, @customer, @worker, @doc") },
+    { keys: [">"], label: t("Start with > to run a command") },
+    { keys: ["?"], label: t("End with a question mark to ask Nova") },
+    { keys: [mac ? "⌘" : "Ctrl", "K"], label: t("Everything you can do with the selected row") },
   ];
   return (
-    <div className="flex h-full flex-col justify-center gap-4 px-6">
-      <p className="text-foreground text-sm font-medium">{t("Get around faster")}</p>
-      <ul className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4 pt-2">
+      <p className="text-foreground-faint flex items-center gap-1.5 font-mono text-2xs uppercase">
+        <AssistMark className="size-3" />
+        {t("Get around faster")}
+      </p>
+      <ul className="flex flex-col gap-3.5">
         {tips.map((tip) => (
-          <li key={tip.label} className="text-foreground-muted flex items-start gap-3 text-xs">
-            <ShortcutKeys keys={tip.keys} className="shrink-0" />
+          <li key={tip.label} className="text-foreground-muted flex items-start gap-3 text-base">
+            <ShortcutKeys keys={tip.keys} className="w-14 shrink-0" />
             <span>{tip.label}</span>
           </li>
         ))}
@@ -58,190 +229,88 @@ function Tips() {
   );
 }
 
-function CommandPreview({ command, actions, onRun }: PreviewProps & { command: PaletteCommand }) {
-  const t = useT();
-  const tile =
-    command.group === "create" || command.group === "assistant"
-      ? BRAND_TILE_CLASS
-      : NEUTRAL_TILE_CLASS;
-  return (
-    <PreviewFrame
-      icon={command.icon}
-      tileClass={tile}
-      title={command.label}
-      subtitle={commandGroupLabel(command.group, t)}
-      badge={command.checked ? <Badge variant="brand">{t("Current")}</Badge> : undefined}
-      actions={actions}
-      onRun={onRun}
-    >
-      <p className="text-foreground-muted text-sm">{command.description}</p>
-      {command.shortcut && (
-        <PreviewSection title={t("Shortcut")}>
-          <ShortcutKeys keys={command.shortcut} />
-        </PreviewSection>
-      )}
-    </PreviewFrame>
-  );
+function RecordBody({ record, context }: { record: PaletteRecord; context: PreviewContext }) {
+  const props = { record, onNavigate: context.onNavigate };
+  switch (record.entityType) {
+    case "shipment":
+      return <ShipmentPreview {...props} />;
+    case "customer":
+      return <CustomerPreview {...props} />;
+    case "worker":
+      return <WorkerPreview {...props} />;
+    case "document":
+      return <DocumentPreview {...props} />;
+  }
+}
+
+function PreviewBody({
+  item,
+  sources,
+  context,
+  mac,
+}: {
+  item: PaletteItem | null;
+  sources: readonly PaletteRecord[];
+  context: PreviewContext;
+  mac: boolean;
+}) {
+  if (!item) {
+    return sources.length > 0 ? (
+      <SourcesPreview records={sources} onOpen={context.onOpenRecord} />
+    ) : (
+      <Tips mac={mac} />
+    );
+  }
+  switch (item.kind) {
+    case "record":
+      return <RecordBody record={item.record} context={context} />;
+    case "page":
+      return <PagePreview page={item.page} context={context} />;
+    case "command":
+      return <CommandPreview command={item.command} />;
+    case "attention":
+      return <AttentionPreview attention={item.attention} />;
+    case "ask":
+      return <AskPreview item={item} />;
+    case "widen":
+      return <Tips mac={mac} />;
+  }
+}
+
+function bodyKey(item: PaletteItem | null, sources: readonly PaletteRecord[]): string {
+  if (item) {
+    return item.kind === "record" ? `record:${item.record.entityType}:${item.record.id}` : item.key;
+  }
+  return sources.length > 0 ? "sources" : "tips";
 }
 
 /**
- * The right-hand pane: a live look at whatever row is selected. Records load
- * their own data; everything else is described from what the palette
- * already holds.
+ * The right-hand pane: a live look at whatever row is selected, a record
+ * hovered in an answer, or, after an answer with nothing selected, the
+ * records it was built from. Records load their own data; everything else is
+ * described from what the palette already holds.
  */
 export function PalettePreview({
   item,
+  sources,
   actions,
-  onRun,
-  relatedCommands,
-}: PreviewProps & {
+  context,
+  mac,
+}: {
   item: PaletteItem | null;
-  relatedCommands: (href: string) => readonly PaletteCommand[];
+  sources: readonly PaletteRecord[];
+  actions: readonly PaletteAction[];
+  context: PreviewContext;
+  mac: boolean;
 }) {
-  const t = useT();
-
-  if (!item) {
-    return <Tips />;
-  }
-
-  switch (item.kind) {
-    case "record": {
-      const props = { record: item.record, actions, onRun };
-      switch (item.record.entityType) {
-        case "shipment":
-          return (
-            <Suspense fallback={<PreviewSkeleton />}>
-              <ShipmentPreview key={item.record.id} {...props} />
-            </Suspense>
-          );
-        case "customer":
-          return <CustomerPreview key={item.record.id} {...props} />;
-        case "worker":
-          return <WorkerPreview key={item.record.id} {...props} />;
-        case "document":
-          return <DocumentPreview key={item.record.id} {...props} />;
-      }
-      return null;
-    }
-    case "page": {
-      const related = relatedCommands(item.page.href);
-      return (
-        <PreviewFrame
-          key={item.key}
-          icon={item.page.icon}
-          tileClass={NEUTRAL_TILE_CLASS}
-          title={t(item.page.title)}
-          subtitle={item.page.module ? t(item.page.module) : item.page.href}
-          badge={item.pinned ? <Badge variant="neutral">{t("Pinned")}</Badge> : undefined}
-          actions={actions}
-          onRun={onRun}
-        >
-          <DescriptionList layout="inline">
-            <DescriptionItem label={t("Location")}>
-              {item.page.trail.split(" > ").join(" / ")}
-            </DescriptionItem>
-            <DescriptionItem label={t("Address")}>
-              <span className="font-mono text-xs break-all">{item.page.href}</span>
-            </DescriptionItem>
-          </DescriptionList>
-          {related.length > 0 && (
-            <PreviewSection title={t("Start something here")}>
-              <ul className="flex flex-col gap-1">
-                {related.map((command) => (
-                  <li key={command.id}>
-                    <button
-                      type="button"
-                      tabIndex={-1}
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => onRun(command.intent)}
-                      className="ui-press rounded-control hover:bg-surface-hover flex w-full items-center gap-2 px-2 py-1.5 text-left text-sm transition-colors"
-                    >
-                      <command.icon className="text-foreground-subtle size-3.5" />
-                      {command.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </PreviewSection>
-          )}
-        </PreviewFrame>
-      );
-    }
-    case "command":
-      return (
-        <CommandPreview key={item.key} command={item.command} actions={actions} onRun={onRun} />
-      );
-    case "attention":
-      return (
-        <PreviewFrame
-          key={item.key}
-          icon={AlertCircleIcon}
-          tileClass={NEUTRAL_TILE_CLASS}
-          title={item.attention.label}
-          subtitle={item.attention.module}
-          actions={actions}
-          onRun={onRun}
-        >
-          <div className="flex items-baseline gap-2">
-            <span className="text-foreground text-3xl font-semibold tabular-nums">
-              {item.attention.count.toLocaleString()}
-            </span>
-            <Badge variant={item.attention.tone}>
-              {t("{0, plural, one {# item waiting} other {# items waiting}}", item.attention.count)}
-            </Badge>
-          </div>
-          <p className="text-foreground-muted text-sm">
-            {t("Counts refresh every minute. Open the queue to work through them.")}
-          </p>
-        </PreviewFrame>
-      );
-    case "notification": {
-      const descriptor = resolveNotificationDescriptor(item.notification);
-      return (
-        <PreviewFrame
-          key={item.key}
-          icon={descriptor.icon}
-          tileClass={cn(NEUTRAL_TILE_CLASS, descriptor.tileClass, descriptor.iconClass)}
-          title={item.notification.title}
-          subtitle={`${t(descriptor.category)} · ${formatTimestamp(item.notification.createdAt)}`}
-          badge={
-            item.notification.readAt === null ? (
-              <Badge variant="brand">{t("Unread")}</Badge>
-            ) : undefined
-          }
-          actions={actions}
-          onRun={onRun}
-        >
-          {item.notification.message ? (
-            <p className="text-foreground text-sm whitespace-pre-line">
-              {item.notification.message}
-            </p>
-          ) : (
-            <PreviewMessage>{t("No further detail.")}</PreviewMessage>
-          )}
-        </PreviewFrame>
-      );
-    }
-    case "ask":
-      return (
-        <PreviewFrame
-          key={item.key}
-          icon={AssistMark}
-          tileClass={BRAND_TILE_CLASS}
-          title={t("Ask the assistant")}
-          subtitle={t("Answers from your own records, right here")}
-          actions={actions}
-          onRun={onRun}
-        >
-          <p className="text-foreground-muted text-sm">
-            {t(
-              "Press Enter to ask. The answer streams in above the results; open it in the Desk to keep the conversation going.",
-            )}
-          </p>
-          <blockquote className="rounded-surface bg-sunken text-foreground ring-border-subtle px-3 py-2 text-sm ring-1">
-            {item.question}
-          </blockquote>
-        </PreviewFrame>
-      );
-  }
+  return (
+    <PreviewFrame
+      key={bodyKey(item, sources)}
+      actions={actions}
+      onRun={context.onRun}
+      onMore={context.onMore}
+    >
+      <PreviewBody item={item} sources={sources} context={context} mac={mac} />
+    </PreviewFrame>
+  );
 }

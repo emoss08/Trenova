@@ -55,6 +55,8 @@ export interface NavItem {
   /** Shows the entry only on an install running in this platform mode. */
   platformMode?: PlatformMode;
   badge?: NavItemBadgeKind;
+  /** Other words people use for the page, which the command palette also matches. */
+  keywords?: readonly string[];
 }
 
 export type NavGroupKind = "configuration";
@@ -105,6 +107,8 @@ export interface NavModule {
   capability?: OrganizationCapabilityType;
   planCapability?: PlanCapabilityType;
   platformMode?: PlatformMode;
+  /** Other words people use for the module, which the command palette also matches. */
+  keywords?: readonly string[];
 }
 
 export interface NavigationConfig {

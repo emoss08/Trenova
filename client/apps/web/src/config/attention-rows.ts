@@ -56,7 +56,7 @@ export const ATTENTION_ROWS: AttentionRowConfig[] = [
   {
     key: "agentDecisions",
     label: "Decisions waiting",
-    module: "desk",
+    module: "Desk",
     path: "/desk/decisions",
     tone: "warning",
   },

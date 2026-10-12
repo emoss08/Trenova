@@ -4,18 +4,18 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/types/search"
 	"github.com/sourcegraph/conc/pool"
@@ -29,16 +29,22 @@ type Params struct {
 	Logger       *zap.Logger
 	Config       *config.Config
 	SearchRepo   customerports.SearchRepository
-	ShipmentRepo shipmentports.ShipmentRepository
+	ShipmentRead shipmentports.ShipmentSearchCardReader
 	Permissions  permissionports.PermissionEngine
+	States       usstateports.UsStateRepository        `optional:"true"`
+	Balances     kernelports.CustomerOpenBalanceReader `optional:"true"`
+	RecordLabels captureports.CaptureRecordFinder      `optional:"true"`
 }
 
 type Service struct {
 	logger       *zap.Logger
 	config       *config.SearchConfig
 	searchRepo   customerports.SearchRepository
-	shipmentRepo shipmentports.ShipmentRepository
+	shipmentRead shipmentports.ShipmentSearchCardReader
 	permissions  permissionports.PermissionEngine
+	states       usstateports.UsStateRepository
+	balances     kernelports.CustomerOpenBalanceReader
+	recordLabels captureports.CaptureRecordFinder
 }
 
 var _ kernelports.GlobalSearchService = (*Service)(nil)
@@ -57,9 +63,19 @@ func New(p Params) kernelports.GlobalSearchService {
 		logger:       p.Logger.Named("service.global-search"),
 		config:       p.Config.GetSearchConfig(),
 		searchRepo:   p.SearchRepo,
-		shipmentRepo: p.ShipmentRepo,
+		shipmentRead: p.ShipmentRead,
 		permissions:  p.Permissions,
+		states:       p.States,
+		balances:     p.Balances,
+		recordLabels: p.RecordLabels,
 	}
+}
+
+type indexResult struct {
+	definition entitySearchDefinition
+	hits       []*kernelports.GlobalSearchHit
+	documents  []map[string]any
+	total      int
 }
 
 func (s *Service) Search(
@@ -67,7 +83,7 @@ func (s *Service) Search(
 	req *kernelports.GlobalSearchRequest,
 ) (*kernelports.GlobalSearchResult, error) {
 	query := strings.TrimSpace(req.Query)
-	if query == "" {
+	if query == "" && len(req.EntityTypes) != 1 {
 		return &kernelports.GlobalSearchResult{
 			Query:  "",
 			Groups: []*kernelports.GlobalSearchGroup{},
@@ -80,24 +96,61 @@ func (s *Service) Search(
 		}, nil
 	}
 
-	allowed, err := s.allowedDefinitions(ctx, req)
+	access, err := s.resolveAccess(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	groups := make([]*kernelports.GlobalSearchGroup, 0, len(allowed))
-	results := make([]*kernelports.GlobalSearchGroup, len(allowed))
 	limit := limitForRequest(req.Limit, s.config.GetDefaultLimit())
+	results := s.searchIndexes(ctx, req, access.definitions, query, limit)
+
+	enricher := &hitEnricher{
+		service: s,
+		req:     req,
+		access:  access,
+		limit:   limit,
+		results: results,
+	}
+	enricher.run(ctx)
+
+	groups := make([]*kernelports.GlobalSearchGroup, 0, len(results))
+	for _, result := range results {
+		if result == nil || len(result.hits) == 0 {
+			continue
+		}
+		groups = append(groups, &kernelports.GlobalSearchGroup{
+			EntityType: result.definition.entityType,
+			Label:      result.definition.label,
+			Total:      max(result.total, len(result.hits)),
+			Hits:       result.hits,
+		})
+	}
+
+	return &kernelports.GlobalSearchResult{
+		Query:  query,
+		Groups: groups,
+	}, nil
+}
+
+func (s *Service) searchIndexes(
+	ctx context.Context,
+	req *kernelports.GlobalSearchRequest,
+	definitions []entitySearchDefinition,
+	query string,
+	limit int,
+) []*indexResult {
+	results := make([]*indexResult, len(definitions))
 	filter := tenantFilter(req)
 
-	searchPool := pool.New().WithContext(ctx).WithMaxGoroutines(len(allowed))
-	for idx, definition := range allowed {
+	searchPool := pool.New().WithContext(ctx).WithMaxGoroutines(max(1, len(definitions)))
+	for idx, definition := range definitions {
+		results[idx] = &indexResult{definition: definition}
 		if definition.index == "" {
 			continue
 		}
 
 		searchPool.Go(func(c context.Context) error {
-			documents, searchErr := s.searchRepo.Search(c, customerports.SearchRequest{
+			page, searchErr := s.searchRepo.SearchPage(c, customerports.SearchRequest{
 				Index:  definition.index,
 				Query:  query,
 				Limit:  limit,
@@ -112,113 +165,40 @@ func (s *Service) Search(
 				)
 				return nil
 			}
-
-			hits := s.mapHits(definition, documents)
-			if len(hits) == 0 {
+			if page == nil {
 				return nil
 			}
 
-			results[idx] = &kernelports.GlobalSearchGroup{
-				EntityType: definition.entityType,
-				Label:      definition.label,
-				Hits:       hits,
-			}
+			results[idx].documents = page.Documents
+			results[idx].hits = s.mapHits(definition, page.Documents)
+			results[idx].total = page.EstimatedTotal - (len(page.Documents) - len(results[idx].hits))
 			return nil
 		})
 	}
 	_ = searchPool.Wait()
 
-	for _, result := range results {
-		if result != nil {
-			groups = append(groups, result)
-		}
-	}
-
-	s.enrichShipmentHits(ctx, req.TenantInfo, groups)
-
-	return &kernelports.GlobalSearchResult{
-		Query:  query,
-		Groups: groups,
-	}, nil
+	return results
 }
 
-func (s *Service) enrichShipmentHits(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	groups []*kernelports.GlobalSearchGroup,
-) {
-	var shipmentHits []*kernelports.GlobalSearchHit
-	for _, group := range groups {
-		if group.EntityType == search.EntityTypeShipment {
-			shipmentHits = append(shipmentHits, group.Hits...)
-		}
-	}
-
-	if len(shipmentHits) == 0 {
-		return
-	}
-
-	ids := make([]pulid.ID, 0, len(shipmentHits))
-	for _, hit := range shipmentHits {
-		parsed, parseErr := pulid.Parse(hit.ID)
-		if parseErr == nil {
-			ids = append(ids, parsed)
-		}
-	}
-
-	if len(ids) == 0 {
-		return
-	}
-
-	shipments, err := s.shipmentRepo.GetByIDs(ctx, &shipmentports.GetShipmentsByIDsRequest{
-		TenantInfo:  tenantInfo,
-		ShipmentIDs: ids,
-	})
-	if err != nil {
-		s.logger.Warn("failed to enrich shipment search hits", zap.Error(err))
-		return
-	}
-
-	byID := make(map[string]*shipment.Shipment, len(shipments))
-	for _, sp := range shipments {
-		byID[sp.ID.String()] = sp
-	}
-
-	for _, hit := range shipmentHits {
-		sp, ok := byID[hit.ID]
-		if !ok {
-			continue
-		}
-
-		if hit.Metadata == nil {
-			hit.Metadata = make(map[string]string)
-		}
-
-		hit.Metadata["proNumber"] = sp.ProNumber
-		hit.Metadata["status"] = string(sp.Status)
-
-		if sp.BOL != "" {
-			hit.Metadata["bol"] = sp.BOL
-		}
-
-		if sp.Customer != nil {
-			hit.Metadata["customerName"] = sp.Customer.Name
-			hit.Metadata["customerCode"] = sp.Customer.Code
-		}
-
-		if sp.ServiceType != nil {
-			hit.Metadata["serviceTypeCode"] = sp.ServiceType.Code
-		}
-	}
+type searchAccess struct {
+	definitions []entitySearchDefinition
+	readable    map[permission.Resource]bool
 }
 
-func (s *Service) allowedDefinitions(
+func (a *searchAccess) canRead(resource permission.Resource) bool {
+	return a.readable[resource]
+}
+
+// resolveAccess checks, in one batch, every index the request may search and
+// every kind of record a hit may describe in its context line. A hit never
+// names a record the person could not open themselves.
+func (s *Service) resolveAccess(
 	ctx context.Context,
 	req *kernelports.GlobalSearchRequest,
-) ([]entitySearchDefinition, error) {
+) (*searchAccess, error) {
 	definitions := s.definitions()
 	if len(req.EntityTypes) > 0 {
-		filtered := definitions[:0]
+		filtered := make([]entitySearchDefinition, 0, len(definitions))
 		for _, definition := range definitions {
 			if slices.Contains(req.EntityTypes, definition.entityType) {
 				filtered = append(filtered, definition)
@@ -227,10 +207,21 @@ func (s *Service) allowedDefinitions(
 		definitions = filtered
 	}
 
-	checks := make([]permissionports.ResourceOperationCheck, 0, len(definitions))
-	for _, definition := range definitions {
+	resources := []permission.Resource{
+		permission.ResourceShipment,
+		permission.ResourceCustomer,
+		permission.ResourceWorker,
+		permission.ResourceDocument,
+		permission.ResourceAccountsReceivable,
+		permission.ResourceTractor,
+		permission.ResourceTrailer,
+		permission.ResourceCarrier,
+	}
+
+	checks := make([]permissionports.ResourceOperationCheck, 0, len(resources))
+	for _, resource := range resources {
 		checks = append(checks, permissionports.ResourceOperationCheck{
-			Resource:  definition.resource.String(),
+			Resource:  resource.String(),
 			Operation: permission.OpRead,
 		})
 	}
@@ -248,14 +239,19 @@ func (s *Service) allowedDefinitions(
 		return nil, fmt.Errorf("check search permissions: %w", err)
 	}
 
+	readable := make(map[permission.Resource]bool, len(resources))
+	for idx, resource := range resources {
+		readable[resource] = idx < len(result.Results) && result.Results[idx].Allowed
+	}
+
 	allowed := make([]entitySearchDefinition, 0, len(definitions))
-	for idx, definition := range definitions {
-		if idx < len(result.Results) && result.Results[idx].Allowed {
+	for _, definition := range definitions {
+		if readable[definition.resource] {
 			allowed = append(allowed, definition)
 		}
 	}
 
-	return allowed, nil
+	return &searchAccess{definitions: allowed, readable: readable}, nil
 }
 
 func (s *Service) definitions() []entitySearchDefinition {
@@ -310,85 +306,128 @@ func mapHit(entityType search.EntityType, document map[string]any) *kernelports.
 
 	switch entityType {
 	case search.EntityTypeShipment:
-		title := stringutils.FirstNonEmpty(
-			stringValue(document, "pro_number"),
-			stringValue(document, "bol"),
-			id,
-		)
-		return &kernelports.GlobalSearchHit{
-			ID:         id,
-			EntityType: entityType,
-			Title:      title,
-			Href:       recordHref("shipment", id),
-			Metadata: map[string]string{
-				"status": stringutils.FirstNonEmpty(stringValue(document, "status"), "Unknown"),
-			},
-		}
+		return shipmentHit(id, document)
 	case search.EntityTypeCustomer:
-		title := stringutils.FirstNonEmpty(
-			stringValue(document, "name"),
-			stringValue(document, "code"),
-			id,
-		)
-		subtitle := stringutils.FirstNonEmpty(
-			stringValue(document, "code"),
-			stringValue(document, "city"),
-		)
-		return &kernelports.GlobalSearchHit{
-			ID:         id,
-			EntityType: entityType,
-			Title:      title,
-			Subtitle:   subtitle,
-			Href:       recordHref("customer", id),
-			Metadata: map[string]string{
-				"status": stringutils.FirstNonEmpty(stringValue(document, "status"), "Unknown"),
-			},
-		}
+		return customerHit(id, document)
 	case search.EntityTypeWorker:
-		title := strings.TrimSpace(
-			stringValue(document, "first_name") + " " + stringValue(document, "last_name"),
-		)
-		title = stringutils.FirstNonEmpty(title, id)
-		subtitle := stringutils.FirstNonEmpty(
-			stringValue(document, "type"),
-			stringValue(document, "status"),
-		)
-		return &kernelports.GlobalSearchHit{
-			ID:         id,
-			EntityType: entityType,
-			Title:      title,
-			Subtitle:   subtitle,
-			Href:       recordHref("worker", id),
-			Metadata: map[string]string{
-				"status": stringutils.FirstNonEmpty(stringValue(document, "status"), "Unknown"),
-			},
-		}
+		return workerHit(id, document)
 	case search.EntityTypeDocument:
-		title := stringutils.FirstNonEmpty(
-			stringValue(document, "original_name"),
-			stringValue(document, "file_name"),
-			id,
-		)
-		subtitle := stringutils.FirstNonEmpty(
-			stringValue(document, "resource_type"),
-			stringValue(document, "status"),
-		)
-		href := documentHref(document)
-		if href == "" {
-			return nil
-		}
-		return &kernelports.GlobalSearchHit{
-			ID:         id,
-			EntityType: entityType,
-			Title:      title,
-			Subtitle:   subtitle,
-			Href:       href,
-			Metadata: map[string]string{
-				"resourceType": stringValue(document, "resource_type"),
-			},
-		}
+		return documentHit(id, document)
 	default:
 		return nil
+	}
+}
+
+func shipmentHit(id string, document map[string]any) *kernelports.GlobalSearchHit {
+	title := stringutils.FirstNonEmpty(
+		stringValue(document, "pro_number"),
+		stringValue(document, "bol"),
+		id,
+	)
+	metadata := map[string]string{
+		"status": stringutils.FirstNonEmpty(stringValue(document, "status"), "Unknown"),
+	}
+	putIfPresent(metadata, "proNumber", stringValue(document, "pro_number"))
+	putIfPresent(metadata, "bol", stringValue(document, "bol"))
+
+	return &kernelports.GlobalSearchHit{
+		ID:         id,
+		EntityType: search.EntityTypeShipment,
+		Title:      title,
+		Href:       recordHref("shipment", id),
+		Metadata:   metadata,
+	}
+}
+
+func customerHit(id string, document map[string]any) *kernelports.GlobalSearchHit {
+	title := stringutils.FirstNonEmpty(
+		stringValue(document, "name"),
+		stringValue(document, "code"),
+		id,
+	)
+	subtitle := stringutils.FirstNonEmpty(
+		stringValue(document, "code"),
+		stringValue(document, "city"),
+	)
+	metadata := map[string]string{
+		"status": stringutils.FirstNonEmpty(stringValue(document, "status"), "Unknown"),
+	}
+	putIfPresent(metadata, "code", stringValue(document, "code"))
+	putIfPresent(metadata, "city", stringValue(document, "city"))
+
+	return &kernelports.GlobalSearchHit{
+		ID:         id,
+		EntityType: search.EntityTypeCustomer,
+		Title:      title,
+		Subtitle:   subtitle,
+		Href:       recordHref("customer", id),
+		Metadata:   metadata,
+	}
+}
+
+func workerHit(id string, document map[string]any) *kernelports.GlobalSearchHit {
+	title := strings.TrimSpace(
+		stringValue(document, "first_name") + " " + stringValue(document, "last_name"),
+	)
+	title = stringutils.FirstNonEmpty(title, id)
+	subtitle := stringutils.FirstNonEmpty(
+		stringValue(document, "type"),
+		stringValue(document, "status"),
+	)
+	metadata := map[string]string{
+		"status": stringutils.FirstNonEmpty(stringValue(document, "status"), "Unknown"),
+	}
+	putIfPresent(metadata, "externalId", stringValue(document, "external_id"))
+	putIfPresent(metadata, "workerType", stringValue(document, "type"))
+	putIfPresent(metadata, "driverType", stringValue(document, "driver_type"))
+	putIfPresent(metadata, "city", stringValue(document, "city"))
+	putIfPresent(metadata, "availableForDispatch", stringValue(document, "available_for_dispatch"))
+
+	return &kernelports.GlobalSearchHit{
+		ID:         id,
+		EntityType: search.EntityTypeWorker,
+		Title:      title,
+		Subtitle:   subtitle,
+		Href:       recordHref("worker", id),
+		Metadata:   metadata,
+	}
+}
+
+func documentHit(id string, document map[string]any) *kernelports.GlobalSearchHit {
+	title := stringutils.FirstNonEmpty(
+		stringValue(document, "original_name"),
+		stringValue(document, "file_name"),
+		id,
+	)
+	subtitle := stringutils.FirstNonEmpty(
+		stringValue(document, "resource_type"),
+		stringValue(document, "status"),
+	)
+	href := documentHref(document)
+	if href == "" {
+		return nil
+	}
+	metadata := map[string]string{
+		"resourceType": stringValue(document, "resource_type"),
+	}
+	putIfPresent(metadata, "resourceId", stringValue(document, "resource_id"))
+	putIfPresent(metadata, "status", stringValue(document, "status"))
+	putIfPresent(metadata, "detectedKind", stringValue(document, "detected_kind"))
+	putIfPresent(metadata, "receivedAt", stringValue(document, "created_at"))
+
+	return &kernelports.GlobalSearchHit{
+		ID:         id,
+		EntityType: search.EntityTypeDocument,
+		Title:      title,
+		Subtitle:   subtitle,
+		Href:       href,
+		Metadata:   metadata,
+	}
+}
+
+func putIfPresent(metadata map[string]string, key, value string) {
+	if value != "" {
+		metadata[key] = value
 	}
 }
 
@@ -435,6 +474,8 @@ func stringValue(document map[string]any, key string) string {
 		return typed
 	case []byte:
 		return stringutils.DecodeByteString(typed)
+	case float64:
+		return strconv.FormatFloat(typed, 'f', -1, 64)
 	default:
 		return fmt.Sprint(typed)
 	}

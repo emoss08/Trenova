@@ -25,6 +25,24 @@ describe("search entity filter helpers", () => {
     });
   });
 
+  it("opens a mention only at the start of a word, so an email address is a search", () => {
+    expect(getMentionState("dispatch@acme").mentionOpen).toBe(false);
+    expect(getMentionState("late @lo")).toEqual({
+      activeFilter: null,
+      mentionOpen: true,
+      mentionText: "lo",
+    });
+  });
+
+  it("reaches pages, commands and the loads and drivers people call them", () => {
+    expect(resolveEntityAlias("load")).toBe("shipment");
+    expect(resolveEntityAlias("driver")).toBe("worker");
+    expect(resolveEntityAlias("doc")).toBe("document");
+    expect(resolveEntityAlias("pages")).toBe("pages");
+    expect(resolveEntityAlias("cmd")).toBe("commands");
+    expect(filterMentionOptions("p").map((option) => option.key)).toEqual(["pages"]);
+  });
+
   it("filters mention options by aliases", () => {
     expect(filterMentionOptions("cust").map((option) => option.key)).toEqual(["customer"]);
   });
