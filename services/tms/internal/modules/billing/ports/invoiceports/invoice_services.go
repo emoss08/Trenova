@@ -439,6 +439,63 @@ type InvoiceService interface {
 		entity *invoice.Invoice,
 		actor *permissionports.RequestActor,
 	) error
+	PreviewPostSummary(
+		ctx context.Context,
+		req *PostInvoiceRequest,
+		actor *permissionports.RequestActor,
+	) (*InvoicePostPreview, error)
+}
+
+// InvoicePostPreview is what posting an invoice would do, for the person
+// about to post it: the ledger entry it books, the records it moves, where
+// it goes next, or why it would be refused.
+type InvoicePostPreview struct {
+	InvoiceID    pulid.ID `json:"invoiceId"`
+	Number       string   `json:"number"`
+	BillToName   string   `json:"billToName"`
+	CurrencyCode string   `json:"currencyCode"`
+	TotalMinor   int64    `json:"totalMinor"`
+	// Refusals are why Post would refuse the invoice as it stands; nothing
+	// else is planned when there are any.
+	Refusals      []string `json:"refusals"`
+	AlreadyPosted bool     `json:"alreadyPosted"`
+	// Journal is nil when the organization's accounting control books no
+	// entry for this invoice.
+	Journal         *InvoicePostJournal          `json:"journal"`
+	ShipmentsBilled []string                     `json:"shipmentsBilled"`
+	QueueItemPosted bool                         `json:"queueItemPosted"`
+	AccountingSync  []InvoicePostSyncDestination `json:"accountingSync"`
+	EDI             *InvoicePostEDI              `json:"edi"`
+}
+
+type InvoicePostJournal struct {
+	AccountingDate   int64                    `json:"accountingDate"`
+	EntryStatus      string                   `json:"entryStatus"`
+	RequiresApproval bool                     `json:"requiresApproval"`
+	Lines            []InvoicePostJournalLine `json:"lines"`
+}
+
+type InvoicePostJournalLine struct {
+	GLAccountID pulid.ID `json:"glAccountId"`
+	AccountCode string   `json:"accountCode"`
+	AccountName string   `json:"accountName"`
+	Description string   `json:"description"`
+	DebitMinor  int64    `json:"debitMinor"`
+	CreditMinor int64    `json:"creditMinor"`
+}
+
+type InvoicePostSyncDestination struct {
+	Integration   string `json:"integration"`
+	Company       string `json:"company"`
+	AwaitsRelease bool   `json:"awaitsRelease"`
+}
+
+// InvoicePostEDI is the outbound 210 posting would queue; WillSend is false
+// when the customer sends 210s by hand or a blocker stands in the way.
+type InvoicePostEDI struct {
+	PartnerName string   `json:"partnerName"`
+	WillSend    bool     `json:"willSend"`
+	Blockers    []string `json:"blockers"`
 }
 
 // InvoiceEDISendPlan is whether an invoice's outbound 210 can go, where it

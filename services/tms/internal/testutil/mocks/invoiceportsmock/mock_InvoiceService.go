@@ -1941,3 +1941,77 @@ func (_c *MockInvoiceService_ReportAutoPostFailure_Call) RunAndReturn(run func(c
 	_c.Call.Return(run)
 	return _c
 }
+
+// PreviewPostSummary provides a mock function for the type MockInvoiceService
+func (_mock *MockInvoiceService) PreviewPostSummary(ctx context.Context, req *invoiceports.PostInvoiceRequest, actor *permissionports.RequestActor) (*invoiceports.InvoicePostPreview, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewPostSummary")
+	}
+
+	var r0 *invoiceports.InvoicePostPreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.PostInvoiceRequest, *permissionports.RequestActor) (*invoiceports.InvoicePostPreview, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.PostInvoiceRequest, *permissionports.RequestActor) *invoiceports.InvoicePostPreview); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*invoiceports.InvoicePostPreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceports.PostInvoiceRequest, *permissionports.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceService_PreviewPostSummary_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewPostSummary'
+type MockInvoiceService_PreviewPostSummary_Call struct {
+	*mock.Call
+}
+
+// PreviewPostSummary is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *invoiceports.PostInvoiceRequest
+//   - actor *permissionports.RequestActor
+func (_e *MockInvoiceService_Expecter) PreviewPostSummary(ctx any, req any, actor any) *MockInvoiceService_PreviewPostSummary_Call {
+	return &MockInvoiceService_PreviewPostSummary_Call{Call: _e.mock.On("PreviewPostSummary", ctx, req, actor)}
+}
+
+func (_c *MockInvoiceService_PreviewPostSummary_Call) Run(run func(ctx context.Context, req *invoiceports.PostInvoiceRequest, actor *permissionports.RequestActor)) *MockInvoiceService_PreviewPostSummary_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *invoiceports.PostInvoiceRequest
+		if args[1] != nil {
+			arg1 = args[1].(*invoiceports.PostInvoiceRequest)
+		}
+		var arg2 *permissionports.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*permissionports.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceService_PreviewPostSummary_Call) Return(value *invoiceports.InvoicePostPreview, err error) *MockInvoiceService_PreviewPostSummary_Call {
+	_c.Call.Return(value, err)
+	return _c
+}
+
+func (_c *MockInvoiceService_PreviewPostSummary_Call) RunAndReturn(run func(ctx context.Context, req *invoiceports.PostInvoiceRequest, actor *permissionports.RequestActor) (*invoiceports.InvoicePostPreview, error)) *MockInvoiceService_PreviewPostSummary_Call {
+	_c.Call.Return(run)
+	return _c
+}

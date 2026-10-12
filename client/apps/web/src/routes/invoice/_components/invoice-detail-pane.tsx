@@ -27,7 +27,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/compon
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useInvoiceDeliveryToasts } from "@/hooks/use-invoice-delivery-toasts";
-import { usePostInvoice } from "@/hooks/use-post-invoice";
 import type { InvoiceArContext } from "@/lib/graphql/invoice";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
@@ -55,6 +54,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import { lazy, useEffect, useMemo, useRef, useState } from "react";
+import { InvoicePostDialog } from "./invoice-post-dialog";
 import { toast } from "sonner";
 import { BillingQueueDocumentsTab } from "../../billing-queue/_components/billing-queue-documents-tab";
 import { InvoiceActionsMenu } from "./invoice-actions-menu";
@@ -118,7 +118,7 @@ export default function InvoiceDetailPane({
     enabled: Boolean(latestAdjustment?.id),
   });
 
-  const { mutate: postInvoice, isPending: isPosting } = usePostInvoice();
+  const [postDialogOpen, setPostDialogOpen] = useState(false);
 
   if (!selectedInvoiceId) {
     return (
@@ -174,11 +174,14 @@ export default function InvoiceDetailPane({
                 {t("Posted")}
               </span>
             ) : isVoided ? null : (
-              <Button size="sm" onClick={() => postInvoice(invoice.id)} disabled={isPosting}>
+              <Button size="sm" onClick={() => setPostDialogOpen(true)}>
                 <Send01Icon className="size-3.5" />
                 {t("Post invoice")}
               </Button>
             )}
+            {postDialogOpen ? (
+              <InvoicePostDialog invoiceId={invoice.id} open onOpenChange={setPostDialogOpen} />
+            ) : null}
             <InvoiceShareDialog invoice={invoice} />
             {isVoided ? null : <InvoiceAdjustmentPanel invoice={invoice} />}
             <InvoiceActionsMenu invoice={invoice} arContext={arContext} />

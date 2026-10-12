@@ -11985,7 +11985,7 @@
     ]
   },
   "Account": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -11994,6 +11994,7 @@
       "apps/web/components",
       "apps/web/hooks",
       "go/other",
+      "routes/invoice",
       "routes/journal-entry",
       "routes/trial-balance"
     ]
@@ -24752,6 +24753,15 @@
       "routes/invoice-approval"
     ]
   },
+  "Approval undone; nothing was changed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Approval workflow cannot be longer than 255 characters": {
     "sites": 1,
     "scope": [
@@ -25288,11 +25298,12 @@
     ]
   },
   "Approve {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/desk"
     ]
   },
@@ -25502,6 +25513,15 @@
       "apps/web/components"
     ]
   },
+  "Approved {0} of {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Approved, but {0} didn't go through": {
     "sites": 1,
     "scope": [
@@ -25636,6 +25656,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Approving them makes you their biller. You can approve only the items that already have a biller instead.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Approving user is required": {
@@ -27453,6 +27482,15 @@
       "routes/billing-queue"
     ]
   },
+  "Assign a biller to review {0, plural, one {# billing queue item} other {# billing queue items}}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Assign a course": {
     "sites": 1,
     "scope": [
@@ -27544,7 +27582,7 @@
     ]
   },
   "Assign biller": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -27635,11 +27673,12 @@
     ]
   },
   "Assign me and approve {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/desk"
     ]
   },
@@ -31869,7 +31908,7 @@
     ]
   },
   "Back": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "ts"
     ],
@@ -36080,6 +36119,24 @@
       "packages/shared/components"
     ]
   },
+  "Booked on {0} and held for approval before it reaches the ledger.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Booked on {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Books Value (Minor)": {
     "sites": 1,
     "scope": [
@@ -38290,7 +38347,7 @@
     ]
   },
   "Cancel": {
-    "sites": 282,
+    "sites": 284,
     "scope": [
       "ts"
     ],
@@ -38523,6 +38580,15 @@
     ]
   },
   "Cancel item": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "Cancel items": {
     "sites": 1,
     "scope": [
       "ts"
@@ -38771,11 +38837,12 @@
     ]
   },
   "Cancel {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/worker"
     ]
   },
@@ -38786,6 +38853,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Cancel {0} billing queue items": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Cancel {0}?": {
@@ -44477,6 +44553,15 @@
       "apps/web/components"
     ]
   },
+  "Checking what posting this invoice would do...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Checking which tools have earned it…": {
     "sites": 1,
     "scope": [
@@ -48852,6 +48937,15 @@
     ]
   },
   "Closed {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Closes its billing queue item as posted": {
     "sites": 1,
     "scope": [
       "ts"
@@ -59549,7 +59643,7 @@
     ]
   },
   "Credit": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -64129,7 +64223,7 @@
     ]
   },
   "Debit": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -64138,6 +64232,7 @@
       "apps/web/components",
       "go/other",
       "routes/customer-ledger",
+      "routes/invoice",
       "routes/journal-entry",
       "routes/trial-balance"
     ]
@@ -78340,6 +78435,15 @@
       "routes/admin"
     ]
   },
+  "Each invoice is emailed to the recipients on its customer's billing profile. Invoices that already went out are not sent again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Each invoice itemises every shipment's charges.": {
     "sites": 1,
     "scope": [
@@ -78365,6 +78469,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Each item is checked again before it is approved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Each item is scored 1–5. Weights decide the share of the overall score — currently {0} in total.": {
@@ -90814,7 +90927,7 @@
     ]
   },
   "Failed to cancel item": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -103862,6 +103975,15 @@
       "routes/desk"
     ]
   },
+  "Held {0}; {1} could not be held": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Hello {0},": {
     "sites": 12,
     "scope": [
@@ -104874,6 +104996,15 @@
       "routes/driver-pay-event"
     ]
   },
+  "Hold {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Holding account credited for the unapplied portion of customer payments until it is applied to invoices. Required to record customer payments.": {
     "sites": 1,
     "scope": [
@@ -104891,6 +105022,15 @@
     "areas": [
       "routes/fleet-safety",
       "routes/insights"
+    ]
+  },
+  "Holding...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Holds what this conversation needs": {
@@ -119955,6 +120095,15 @@
       "routes/worker"
     ]
   },
+  "Ledger entry": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Ledger entry type is invalid": {
     "sites": 1,
     "scope": [
@@ -127862,6 +128011,15 @@
       "apps/web/components"
     ]
   },
+  "Marks shipment {0} invoiced": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Marks the course complete on the date given. Recurring courses get their expiry from the course's validity.": {
     "sites": 1,
     "scope": [
@@ -127878,6 +128036,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Marks {0} shipments invoiced": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Maryland (MD)": {
@@ -154817,11 +154984,12 @@
     ]
   },
   "Only the {0} with a biller": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/desk"
     ]
   },
@@ -170551,7 +170719,16 @@
     ]
   },
   "Post invoice": {
-    "sites": 2,
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Post invoice?": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -170653,12 +170830,14 @@
     ]
   },
   "Post {0}": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/billing-queue",
+      "routes/desk",
+      "routes/invoice"
     ]
   },
   "Post {0}.": {
@@ -170668,6 +170847,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Post {0}?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Post-accident": {
@@ -171026,6 +171214,16 @@
       "routes/fuel-feed-run"
     ]
   },
+  "Posted {0}; {1} could not be posted": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue",
+      "routes/invoice"
+    ]
+  },
   "Posting accounts": {
     "sites": 1,
     "scope": [
@@ -171033,6 +171231,15 @@
     ],
     "areas": [
       "routes/carrier-settlement-control"
+    ]
+  },
+  "Posting also": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Posting is unavailable": {
@@ -171062,12 +171269,23 @@
       "routes/journal-entry"
     ]
   },
-  "Posting...": {
-    "sites": 3,
+  "Posting writes each invoice to the ledger and delivers it as its customer's billing profile says. A posted invoice can only be corrected by an adjustment.": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Posting...": {
+    "sites": 6,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue",
+      "routes/invoice",
       "routes/journal-reversal",
       "routes/journal-review",
       "routes/worker"
@@ -176924,6 +177142,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Queues it for {0} ({1}), where it waits to be released": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Queues posted documents dated in the range that were never queued, such as those posted before sync was turned on. Documents already queued are left alone.": {
@@ -204439,6 +204666,24 @@
       "routes/order"
     ]
   },
+  "Select all items": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "Select all loaded invoices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Select all shown shipments": {
     "sites": 1,
     "scope": [
@@ -206206,7 +206451,7 @@
     ]
   },
   "Select {0}": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -206214,6 +206459,7 @@
       "apps/web/components",
       "routes/billing-queue",
       "routes/carrier-monitoring",
+      "routes/invoice",
       "routes/late-charges"
     ]
   },
@@ -207227,6 +207473,15 @@
       "routes/desk"
     ]
   },
+  "Send {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Send {0} the ETA": {
     "sites": 1,
     "scope": [
@@ -207480,8 +207735,17 @@
       "routes/inbox"
     ]
   },
+  "Sending {0}; {1} could not be sent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Sending...": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -207490,6 +207754,7 @@
       "routes/admin",
       "routes/dispatch-console",
       "routes/formula-template",
+      "routes/invoice",
       "routes/organization",
       "routes/shipment",
       "routes/worker"
@@ -207513,6 +207778,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Sends an EDI 210 to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Sends as your message": {
@@ -222903,6 +223177,15 @@
       "routes/detention-desk"
     ]
   },
+  "Syncs it to {0} ({1})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "System": {
     "sites": 11,
     "scope": [
@@ -227019,6 +227302,15 @@
       "routes/worker"
     ]
   },
+  "The 210 to {0} won't go": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "The ACH trace or check number so the payment can be reconciled with the bank.": {
     "sites": 1,
     "scope": [
@@ -227935,6 +228227,15 @@
     ],
     "areas": [
       "routes/invoice-approval"
+    ]
+  },
+  "The approval run failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "The approved parameters are a JSON object": {
@@ -235234,6 +235535,15 @@
       "routes/org-structure"
     ]
   },
+  "The post could not be checked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "The preview couldn't be compiled": {
     "sites": 1,
     "scope": [
@@ -239971,6 +240281,15 @@
       "go/other"
     ]
   },
+  "These items will be removed from the billing queue.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "These limits are shared by every organization on the platform, not just yours. To hold your fleet to something stricter, record a carrier override instead. Changing any limit below clears the verification on this rule.": {
     "sites": 1,
     "scope": [
@@ -242406,6 +242725,15 @@
       "routes/invoice"
     ]
   },
+  "This invoice can't be posted yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "This invoice does not currently have shipment context loaded for document review.": {
     "sites": 1,
     "scope": [
@@ -242422,6 +242750,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "This invoice is already posted.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "This invoice is linked to a carrier in the master and can be matched against its assignments.": {
@@ -251350,7 +251687,7 @@
     ]
   },
   "Try again": {
-    "sites": 54,
+    "sites": 55,
     "scope": [
       "ts"
     ],
@@ -251367,6 +251704,7 @@
       "routes/detention-intelligence",
       "routes/inbox",
       "routes/intake",
+      "routes/invoice",
       "routes/onboarding",
       "routes/rate-confirmation-public",
       "routes/shipment",
@@ -253290,7 +253628,7 @@
     ]
   },
   "Undo": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -253298,6 +253636,7 @@
       "apps/web/components",
       "apps/web/hooks",
       "routes/agent-control",
+      "routes/billing-queue",
       "routes/desk",
       "routes/dispatch-console",
       "routes/inbox",
@@ -272433,6 +272772,15 @@
       "routes/auth"
     ]
   },
+  "Your accounting settings book no ledger entry when an invoice posts.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Your administrator manages this home screen": {
     "sites": 1,
     "scope": [
@@ -281931,6 +282279,15 @@
       "routes/billing-queue"
     ]
   },
+  "{0, plural, one {# invoice loaded} other {# invoices loaded}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "{0, plural, one {# invoice under the customer's minimum is skipped, and its shipments roll into next period.} other {# invoices under the customer's minimum are skipped, and their shipments roll into next period.}}": {
     "sites": 1,
     "scope": [
@@ -281958,6 +282315,25 @@
       "apps/web/components",
       "routes/accounting-dashboard",
       "routes/home"
+    ]
+  },
+  "{0, plural, one {# invoice} other {# invoices}} could not be posted": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue",
+      "routes/invoice"
+    ]
+  },
+  "{0, plural, one {# invoice} other {# invoices}} could not be sent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "{0, plural, one {# invoice} other {# invoices}} · avg {1}d late": {
@@ -281997,11 +282373,12 @@
     ]
   },
   "{0, plural, one {# item has no biller} other {# items have no biller}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/desk"
     ]
   },
@@ -282023,15 +282400,70 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# item wasn't approved — open it to see why} other {# items weren't approved — open them to see why}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "{0, plural, one {# item} other {# items}}": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/ar-open-items",
+      "routes/billing-queue",
       "routes/desk"
+    ]
+  },
+  "{0, plural, one {# item} other {# items}} assigned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "{0, plural, one {# item} other {# items}} canceled": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "{0, plural, one {# item} other {# items}} could not be assigned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "{0, plural, one {# item} other {# items}} could not be canceled": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "{0, plural, one {# item} other {# items}} could not be held": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "{0, plural, one {# item} other {# items}} to rate. It stays a draft until you submit it.": {
@@ -283217,6 +283649,24 @@
       "routes/carrier-monitoring"
     ]
   },
+  "{0, plural, one {# selected invoice is left out because it isn't a draft.} other {# selected invoices are left out because they aren't drafts.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "{0, plural, one {# selected invoice is left out because it isn't posted or already went out.} other {# selected invoices are left out because they aren't posted or already went out.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "{0, plural, one {# selected} other {# selected}}": {
     "sites": 2,
     "scope": [
@@ -284008,6 +284458,24 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {Approved # item} other {Approved # items}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "{0, plural, one {Approving # item} other {Approving # items}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "{0, plural, one {Archive # formula template?} other {Archive # formula templates?}}": {
     "sites": 1,
     "scope": [
@@ -284675,6 +285143,25 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {Post # invoice?} other {Post # invoices?}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "{0, plural, one {Posted # invoice} other {Posted # invoices}}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue",
+      "routes/invoice"
+    ]
+  },
   "{0, plural, one {Priced # load} other {Priced # loads}}, last {1}": {
     "sites": 1,
     "scope": [
@@ -284709,6 +285196,15 @@
     ],
     "areas": [
       "routes/ifta-tax-rate"
+    ]
+  },
+  "{0, plural, one {Put # item on hold} other {Put # items on hold}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "{0, plural, one {Quality score, last # run} other {Quality score, last # runs}}": {
@@ -284819,6 +285315,15 @@
       "routes/detention-desk"
     ]
   },
+  "{0, plural, one {Send # invoice?} other {Send # invoices?}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "{0, plural, one {Send # notice} other {Send # notices}}": {
     "sites": 1,
     "scope": [
@@ -284835,6 +285340,15 @@
     ],
     "areas": [
       "routes/detention-desk"
+    ]
+  },
+  "{0, plural, one {Sending # invoice} other {Sending # invoices}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "{0, plural, one {Shipments are created # day ahead of pickup.} other {Shipments are created # days ahead of pickup.}}": {
@@ -286292,6 +286806,15 @@
       "routes/shipment"
     ]
   },
+  "{0} assigned; {1} could not be assigned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "{0} at delivery": {
     "sites": 1,
     "scope": [
@@ -286600,6 +287123,15 @@
     ],
     "areas": [
       "routes/carrier-sourcing"
+    ]
+  },
+  "{0} canceled; {1} could not be canceled": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "{0} cancelled": {
@@ -291127,12 +291659,14 @@
     ]
   },
   "{0} of {1} selected": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/auth"
+      "routes/auth",
+      "routes/billing-queue",
+      "routes/invoice"
     ]
   },
   "{0} of {1} settled": {
@@ -293223,6 +293757,15 @@
       "routes/desk",
       "routes/time-attendance",
       "template/invoice.email"
+    ]
+  },
+  "{0} to {1}. Once posted, it can only be corrected by an adjustment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "{0} today · {1} this week": {

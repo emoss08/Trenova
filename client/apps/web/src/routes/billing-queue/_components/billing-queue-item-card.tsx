@@ -27,6 +27,8 @@ export function BillingQueueItemCard({
   onAssignBiller,
   onHold,
   onCancel,
+  checked,
+  onCheckedChange,
 }: {
   item: BillingQueueItem;
   isSelected: boolean;
@@ -34,6 +36,8 @@ export function BillingQueueItemCard({
   onAssignBiller: () => void;
   onHold: () => void;
   onCancel: () => void;
+  checked?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
 }) {
   const t = useT();
 
@@ -103,6 +107,9 @@ export function BillingQueueItemCard({
           }
           isSelected={isSelected}
           onClick={onClick}
+          checked={checked}
+          onCheckedChange={onCheckedChange}
+          checkLabel={t("Select {0}", proNumber)}
         />
       </ContextMenuTrigger>
       <ContextMenuContent>

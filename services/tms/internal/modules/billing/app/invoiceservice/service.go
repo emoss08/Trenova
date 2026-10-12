@@ -4,6 +4,7 @@ package invoiceservice
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -105,6 +106,7 @@ type Params struct {
 	LateChargeRepo              latechargeports.LateChargeRepository         `optional:"true"`
 	AccountingSync              accountingsyncports.AccountingSyncEnqueuer   `optional:"true"`
 	EmailSenders                emailports.EmailSenderResolver               `optional:"true"`
+	GLAccounts                  glaccountports.GLAccountRepository           `optional:"true"`
 	Config                      *config.Config                               `optional:"true"`
 }
 
@@ -151,6 +153,7 @@ type Service struct {
 	lateChargeRepo              latechargeports.LateChargeRepository
 	accountingSync              accountingsyncports.AccountingSyncEnqueuer
 	emailSenders                emailports.EmailSenderResolver
+	glAccounts                  glaccountports.GLAccountRepository
 	webBaseURL                  string
 }
 
@@ -228,6 +231,7 @@ func NewService(p Params) *Service { //nolint:gocritic // mirrors New
 		lateChargeRepo:              p.LateChargeRepo,
 		accountingSync:              p.AccountingSync,
 		emailSenders:                p.EmailSenders,
+		glAccounts:                  p.GLAccounts,
 		webBaseURL:                  webBaseURL(p.Config),
 	}
 }
