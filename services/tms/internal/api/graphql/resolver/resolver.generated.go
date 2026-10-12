@@ -911,6 +911,7 @@ func FromServices(s *Services) *Resolver {
 		ShipmentService:         s.ShipmentService,
 		ShipmentCommentService:  s.ShipmentCommentService,
 		ShipmentEventService:    s.ShipmentEventService,
+		TrackingEventService:    s.TrackingEventService,
 		ShipmentImportAssistant: s.ShipmentImportAssistant,
 	}
 	shipmentboardDeps := &shipmentboardresolver.Deps{

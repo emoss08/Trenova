@@ -8750,6 +8750,15 @@
       "routes/desk"
     ]
   },
+  "A stop no longer on this shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "A stop outcome for review must name its move": {
     "sites": 1,
     "scope": [
@@ -17612,11 +17621,12 @@
     ]
   },
   "Agent": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "routes/agent-control",
       "routes/desk"
     ]
@@ -20117,6 +20127,15 @@
     ],
     "areas": [
       "routes/accounting-inbound"
+    ]
+  },
+  "Already reported": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Also enroll carriers with a tender that is still open.": {
@@ -26192,6 +26211,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Arrival": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Arrival recorded": {
@@ -68002,6 +68030,15 @@
       "go/other"
     ]
   },
+  "Departure": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Departure cannot precede arrival": {
     "sites": 1,
     "scope": [
@@ -71292,6 +71329,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Dispatcher": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Display": {
@@ -74901,13 +74947,14 @@
     ]
   },
   "Driver": {
-    "sites": 47,
+    "sites": 48,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "apps/web/lib",
       "go/other",
       "packages/shared/lib",
@@ -77066,7 +77113,7 @@
     ]
   },
   "EDI": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -77074,6 +77121,7 @@
     "areas": [
       "apps/web/components",
       "apps/web/config",
+      "apps/web/hooks",
       "apps/web/lib",
       "go/other",
       "packages/shared/types",
@@ -85327,6 +85375,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Every arrival and departure reported for this shipment, and whether it set the stop's times": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Every balance is derived on read, so the change applies to existing cases as well as new ones.": {
@@ -111907,7 +111964,7 @@
     ]
   },
   "Invalid shipment": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -138708,6 +138765,15 @@
       "routes/agent-control"
     ]
   },
+  "No arrivals or departures have been reported yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "No artifacts match “{0}”": {
     "sites": 1,
     "scope": [
@@ -146887,6 +146953,15 @@
     ],
     "areas": [
       "routes/accounting-sync"
+    ]
+  },
+  "Not used": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Not used yet": {
@@ -185998,7 +186073,7 @@
     ]
   },
   "Rejected": {
-    "sites": 31,
+    "sites": 32,
     "scope": [
       "go",
       "ts"
@@ -220291,6 +220366,24 @@
       "routes/edi"
     ]
   },
+  "Stop reports": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Stop reports could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Stop results": {
     "sites": 1,
     "scope": [
@@ -224348,12 +224441,13 @@
     ]
   },
   "Telematics": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "go/other",
       "packages/shared/types",
       "routes/tractor"
@@ -256955,11 +257049,12 @@
     ]
   },
   "Used": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "routes/worker"
     ]
   },
@@ -261158,12 +261253,13 @@
     ]
   },
   "Waiting": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "routes/agent-control",
       "routes/desk",
       "routes/inbox",
