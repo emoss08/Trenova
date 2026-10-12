@@ -211,6 +211,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -2787,6 +2788,7 @@ type QueryResolver interface {
 	ServiceTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ServiceTypeConnection, error)
 	ServiceType(ctx context.Context, id string) (*servicetype.ServiceType, error)
 	Shipments(ctx context.Context, input gqlmodel.ShipmentsInput) (*gqlmodel.ShipmentConnection, error)
+	ShipmentTrackingEvents(ctx context.Context, shipmentID string) ([]*trackingevent.TrackingEvent, error)
 	Shipment(ctx context.Context, id string, expandShipmentDetails *bool, status *string) (*gqlmodel.Shipment, error)
 	UnassignedShipments(ctx context.Context, first *int, after *string) (*gqlmodel.ShipmentConnection, error)
 	ShipmentComments(ctx context.Context, shipmentID string, first *int, after *string, filter *gqlmodel.ShipmentCommentsFilterInput) (*gqlmodel.ShipmentCommentConnection, error)
@@ -15789,6 +15791,10 @@ input RecordMyStopActionInput {
   moveId: ID!
   stopId: ID!
   action: PortalStopAction!
+  "When it happened on the device. Omitted means when the server receives it."
+  occurredAt: Timestamp
+  "An id the device makes once per tap, so a resend after a dropped connection is recorded once."
+  clientEventId: String
 }
 
 input CreateSettlementDisputeInput {
@@ -28192,8 +28198,69 @@ input ShipmentAnalyticsInput {
   include: String
 }
 
+"Who reported a stop arrival or departure."
+enum TrackingEventSource {
+  Dispatcher
+  Agent
+  Driver
+  Telematics
+  EDI
+}
+
+"How a reported visit was tied to its stop."
+enum TrackingMatchMethod {
+  Direct
+  StopReference
+  Location
+  StopRole
+  Inferred
+}
+
+"What became of a reported visit when the stop's times were settled."
+enum TrackingEventOutcome {
+  Applied
+  Pending
+  Duplicate
+  Superseded
+  Refused
+}
+
+enum StopVisitKind {
+  Arrival
+  Departure
+}
+
+"""
+One report of a truck arriving at or leaving a stop, from any source. A stop's
+actual times are settled from all of its reports in event-time order.
+"""
+type TrackingEvent {
+  id: ID!
+  shipmentId: ID!
+  shipmentMoveId: ID!
+  stopId: ID!
+  source: TrackingEventSource!
+  kind: StopVisitKind!
+  matchMethod: TrackingMatchMethod!
+  "When it happened, as the source reported it."
+  eventAt: Timestamp!
+  "When Trenova received it."
+  receivedAt: Timestamp!
+  latitude: Float
+  longitude: Float
+  "The source's own status code, such as an EDI 214 AT7 code or a telematics event type."
+  sourceStatus: String
+  "Where the report came from, such as the inbound EDI file or telematics event."
+  rawReference: String
+  reportedById: ID
+  outcome: TrackingEventOutcome!
+  outcomeReason: String
+}
+
 extend type Query {
   shipments(input: ShipmentsInput!): ShipmentConnection!
+  "Every reported arrival and departure on a shipment's stops, newest first."
+  shipmentTrackingEvents(shipmentId: ID!): [TrackingEvent!]!
   shipment(id: ID!, expandShipmentDetails: Boolean = false, status: String): Shipment
   unassignedShipments(first: Int = 20, after: String): ShipmentConnection!
   shipmentComments(shipmentId: ID!, first: Int = 20, after: String, filter: ShipmentCommentsFilterInput): ShipmentCommentConnection!

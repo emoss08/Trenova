@@ -90,6 +90,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/telematicscol"
 	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/tendercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/trackingeventcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/trailercol"
 	"github.com/emoss08/trenova/pkg/buncolgen/triagecol"
@@ -607,6 +608,8 @@ var TenderOfferSpec TypeSpec
 var TimeClockEntrySpec TypeSpec
 
 var TimesheetSpec TypeSpec
+
+var TrackingEventSpec TypeSpec
 
 var TractorSpec TypeSpec
 
@@ -24546,6 +24549,81 @@ func init() {
 			{
 				Name:    "entries",
 				Special: "entries",
+			},
+		},
+	}
+
+	TrackingEventSpec = TypeSpec{
+		TypeName: "TrackingEvent",
+		FieldMap: trackingeventcol.TrackingEventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "shipmentMoveId",
+				FieldMapKey: "shipmentMoveId",
+			},
+			{
+				Name:        "stopId",
+				FieldMapKey: "stopId",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "matchMethod",
+				FieldMapKey: "matchMethod",
+			},
+			{
+				Name:        "eventAt",
+				FieldMapKey: "eventAt",
+			},
+			{
+				Name:        "receivedAt",
+				FieldMapKey: "receivedAt",
+			},
+			{
+				Name:        "latitude",
+				FieldMapKey: "latitude",
+			},
+			{
+				Name:        "longitude",
+				FieldMapKey: "longitude",
+			},
+			{
+				Name:        "sourceStatus",
+				FieldMapKey: "sourceStatus",
+			},
+			{
+				Name:        "rawReference",
+				FieldMapKey: "rawReference",
+			},
+			{
+				Name:        "reportedById",
+				FieldMapKey: "reportedById",
+			},
+			{
+				Name:        "outcome",
+				FieldMapKey: "outcome",
+			},
+			{
+				Name:        "outcomeReason",
+				FieldMapKey: "outcomeReason",
 			},
 		},
 	}

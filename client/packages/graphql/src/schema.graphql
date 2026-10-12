@@ -21314,6 +21314,10 @@ type Query {
   shipmentQuickFilterCounts(input: ShipmentBoardScopeInput!): [ShipmentQuickFilterCount!]!
   shipmentStageSummary(input: ShipmentBoardScopeInput!): [ShipmentStageSummary!]!
   shipmentSuggestions(timezone: String!): ShipmentSuggestionQueue!
+  """
+  Every reported arrival and departure on a shipment's stops, newest first.
+  """
+  shipmentTrackingEvents(shipmentId: ID!): [TrackingEvent!]!
   shipmentType(id: ID!): ShipmentType
   shipmentTypes(input: DataTableConnectionInput!): ShipmentTypeConnection!
   shipmentUIPolicy: ShipmentUIPolicy!
@@ -21841,7 +21845,15 @@ input RecordLeaveDayInput {
 
 input RecordMyStopActionInput {
   action: PortalStopAction!
+  """
+  An id the device makes once per tap, so a resend after a dropped connection is recorded once.
+  """
+  clientEventId: String
   moveId: ID!
+  """
+  When it happened on the device. Omitted means when the server receives it.
+  """
+  occurredAt: Timestamp
   stopId: ID!
 }
 
@@ -25901,6 +25913,11 @@ enum StopType {
   SplitPickup
 }
 
+enum StopVisitKind {
+  Arrival
+  Departure
+}
+
 type StoredMileage {
   businessUnit: BusinessUnit
   businessUnitId: ID!
@@ -26419,6 +26436,64 @@ type TotalCompensation {
   grossPayMinor: Int!
   planYear: Int!
   totalCompensationMinor: Int!
+}
+
+"""
+One report of a truck arriving at or leaving a stop, from any source. A stop's
+actual times are settled from all of its reports in event-time order.
+"""
+type TrackingEvent {
+  """When it happened, as the source reported it."""
+  eventAt: Timestamp!
+  id: ID!
+  kind: StopVisitKind!
+  latitude: Float
+  longitude: Float
+  matchMethod: TrackingMatchMethod!
+  outcome: TrackingEventOutcome!
+  outcomeReason: String
+  """
+  Where the report came from, such as the inbound EDI file or telematics event.
+  """
+  rawReference: String
+  """When Trenova received it."""
+  receivedAt: Timestamp!
+  reportedById: ID
+  shipmentId: ID!
+  shipmentMoveId: ID!
+  source: TrackingEventSource!
+  """
+  The source's own status code, such as an EDI 214 AT7 code or a telematics event type.
+  """
+  sourceStatus: String
+  stopId: ID!
+}
+
+"""What became of a reported visit when the stop's times were settled."""
+enum TrackingEventOutcome {
+  Applied
+  Duplicate
+  Pending
+  Refused
+  Superseded
+}
+
+"""Who reported a stop arrival or departure."""
+enum TrackingEventSource {
+  Agent
+  Dispatcher
+  Driver
+  EDI
+  Telematics
+}
+
+"""How a reported visit was tied to its stop."""
+enum TrackingMatchMethod {
+  Direct
+  Inferred
+  Location
+  StopReference
+  StopRole
 }
 
 type Tractor {

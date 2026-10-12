@@ -17,8 +17,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/idempotency"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -1182,4 +1184,21 @@ func (r *ShipmentResolver) Eta(ctx context.Context, obj *gqlmodel.Shipment) (*gq
 	}
 
 	return shipmentEtaToModel(eta), nil
+}
+
+func (r *QueryResolver) ShipmentTrackingEvents(ctx context.Context, shipmentID string) ([]*trackingevent.TrackingEvent, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	parsedShipmentID, err := pulid.MustParse(shipmentID)
+	if err != nil {
+		return nil, errortypes.NewValidationError("shipmentId", errortypes.ErrInvalid, "Invalid shipment")
+	}
+
+	return r.TrackingEventService.ListForShipment(ctx, &trackingeventports.ListTrackingEventsByShipmentRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		ShipmentID: parsedShipmentID,
+	})
 }

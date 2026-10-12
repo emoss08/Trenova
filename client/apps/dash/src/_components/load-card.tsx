@@ -14,6 +14,7 @@ import { ArrowRightIcon } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
 import { Link } from "react-router";
 import { toast } from "sonner";
+import { stopTap, type StopTap } from "../lib/stop-tap";
 import { LoadStatusBadge } from "./portal-badges";
 import {
   destinationStop,
@@ -151,8 +152,7 @@ export function StopTimeline({
 
   const queryClient = useQueryClient();
   const checkIn = useMutation({
-    mutationFn: ({ stopId, action }: { stopId: string; action: PortalStopAction }) =>
-      recordMyStopAction({ moveId: moveId ?? "", stopId, action }),
+    mutationFn: (tap: StopTap) => recordMyStopAction({ moveId: moveId ?? "", ...tap }),
     onSuccess: async (_, variables) => {
       toast.success(
         variables.action === "Arrive"
@@ -216,7 +216,7 @@ export function StopTimeline({
                 <button
                   type="button"
                   disabled={checkIn.isPending}
-                  onClick={() => checkIn.mutate({ stopId: stop.id, action })}
+                  onClick={() => checkIn.mutate(stopTap(stop.id, action))}
                   className={cn(
                     "mt-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors disabled:opacity-60",
                     action === "Arrive"

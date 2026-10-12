@@ -5120,3 +5120,18 @@ models:
   AccountingAuthorizationStart:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingAuthorizationStart
+  TrackingEvent:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent.TrackingEvent
+  TrackingEventSource:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent.Source
+  TrackingMatchMethod:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent.MatchMethod
+  TrackingEventOutcome:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent.Outcome
+  StopVisitKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.VisitKind

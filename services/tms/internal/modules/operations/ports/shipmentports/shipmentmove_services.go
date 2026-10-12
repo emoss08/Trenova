@@ -4,7 +4,25 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 )
+
+type StopActualPlanner func(
+	ctx context.Context,
+	move *shipment.ShipmentMove,
+) ([]shipment.StopActualChange, error)
+
+type ReconcileStopActualsRequest struct {
+	TenantInfo pagination.TenantInfo
+	MoveID     pulid.ID
+	Plan       StopActualPlanner
+}
+
+type ReconcileStopActualsResult struct {
+	Move    *shipment.ShipmentMove
+	Changes []shipment.StopActualChange
+}
 
 type StopActualPlan struct {
 	Before *shipment.ShipmentMove
@@ -39,6 +57,10 @@ type ShipmentMoveService interface {
 		ctx context.Context,
 		req *RecordStopActualRequest,
 	) (*StopActualPlan, error)
+	ReconcileStopActuals(
+		ctx context.Context,
+		req *ReconcileStopActualsRequest,
+	) (*ReconcileStopActualsResult, error)
 	BulkUpdateStatus(
 		ctx context.Context,
 		req *BulkUpdateMoveStatusRequest,

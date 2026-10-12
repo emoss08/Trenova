@@ -7,8 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/idempotency"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -19,21 +22,24 @@ type Params struct {
 	fx.In
 
 	Service              shipmentports.ShipmentMoveService
+	TrackingEvents       trackingeventports.TrackingEventService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service shipmentports.ShipmentMoveService
-	eh      *helpers.ErrorHandler
-	pm      *middleware.PermissionMiddleware
+	service        shipmentports.ShipmentMoveService
+	trackingEvents trackingeventports.TrackingEventService
+	eh             *helpers.ErrorHandler
+	pm             *middleware.PermissionMiddleware
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service: p.Service,
-		eh:      p.ErrorHandler,
-		pm:      p.PermissionMiddleware,
+		service:        p.Service,
+		trackingEvents: p.TrackingEvents,
+		eh:             p.ErrorHandler,
+		pm:             p.PermissionMiddleware,
 	}
 }
 
@@ -199,14 +205,19 @@ func (h *Handler) recordStopActual(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.RecordStopActual(
-		c.Request.Context(),
-		&shipmentports.RecordStopActualRequest{
-			TenantInfo: pagination.FromAuthAsUser(authCtx),
-			MoveID:     moveID,
-			StopID:     stopID,
-			Action:     shipmentports.StopActualAction(body.Action),
-			OccurredAt: body.OccurredAt,
+	ctx := c.Request.Context()
+	sourceKey, _ := idempotency.KeyFrom(ctx)
+	result, err := h.trackingEvents.RecordReported(
+		ctx,
+		&trackingeventports.RecordReportedStopEventParams{
+			TenantInfo:   pagination.FromAuthAsUser(authCtx),
+			MoveID:       moveID,
+			StopID:       stopID,
+			Action:       shipmentports.StopActualAction(body.Action),
+			OccurredAt:   body.OccurredAt,
+			Source:       trackingevent.SourceDispatcher,
+			SourceKey:    sourceKey,
+			ReportedByID: authCtx.UserID,
 		},
 	)
 	if err != nil {
@@ -214,7 +225,7 @@ func (h *Handler) recordStopActual(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	c.JSON(http.StatusOK, result.Move)
 }
 
 // @Summary Split a shipment move
