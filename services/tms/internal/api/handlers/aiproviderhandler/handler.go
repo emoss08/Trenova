@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -24,19 +25,27 @@ type Params struct {
 	Service              agentports.AIProviderService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
+	Config               *config.Config `optional:"true"`
 }
 
 type Handler struct {
 	service agentports.AIProviderService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
+	ai      *config.AIConfig
 }
 
 func New(p Params) *Handler {
+	var ai *config.AIConfig
+	if p.Config != nil {
+		ai = p.Config.GetAIConfig()
+	}
+
 	return &Handler{
 		service: p.Service,
 		eh:      p.ErrorHandler,
 		pm:      p.PermissionMiddleware,
+		ai:      ai,
 	}
 }
 
@@ -123,6 +132,8 @@ type saveProviderRequest struct {
 	StructuredOutputMode     aiprovider.StructuredOutputMode `json:"structuredOutputMode"`
 	ReasoningEffort          aiprovider.ReasoningEffort      `json:"reasoningEffort"`
 	ThinkingStyle            aiprovider.ThinkingStyle        `json:"thinkingStyle"`
+	Platform                 aiprovider.Platform             `json:"platform"`
+	PlatformSettings         *aiprovider.PlatformSettings    `json:"platformSettings"`
 	ExtraBody                map[string]any                  `json:"extraBody"`
 	InputCostPerMillion      *decimal.Decimal                `json:"inputCostPerMillion"`
 	OutputCostPerMillion     *decimal.Decimal                `json:"outputCostPerMillion"`
@@ -160,6 +171,8 @@ func (r *saveProviderRequest) toServiceRequest(
 		StructuredOutputMode:     r.StructuredOutputMode,
 		ReasoningEffort:          r.ReasoningEffort,
 		ThinkingStyle:            r.ThinkingStyle,
+		Platform:                 r.Platform,
+		PlatformSettings:         r.PlatformSettings,
 		ExtraBody:                r.ExtraBody,
 		InputCostPerMillion:      r.InputCostPerMillion,
 		OutputCostPerMillion:     r.OutputCostPerMillion,
@@ -286,5 +299,10 @@ func (h *Handler) catalog(c *gin.Context) {
 		"tasks":                taskDescriptors(),
 		"embeddingDimensions":  aiprovider.AllowedEmbeddingDimensions(),
 		"embeddingInputStyles": embeddingInputStyleDescriptors(),
+		"platforms":            platformDescriptors(),
+		// serverCloudCredentials says whether a platform provider may sign in
+		// with this server's own cloud identity, so the editor offers it only
+		// where saving it would be accepted.
+		"serverCloudCredentials": h.ai.ServerCloudCredentialsAllowed(),
 	})
 }

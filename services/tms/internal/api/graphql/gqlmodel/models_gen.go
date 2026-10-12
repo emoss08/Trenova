@@ -221,11 +221,14 @@ type AIProviderEdge struct {
 // An endpoint as an editor holds it, before it is saved. With providerId and no
 // apiKey, the provider's stored key is used.
 type AIProviderEndpointInput struct {
-	ProviderID          *string         `json:"providerId,omitempty"`
-	Kind                aiprovider.Kind `json:"kind"`
-	BaseURL             string          `json:"baseUrl"`
-	APIKey              *string         `json:"apiKey,omitempty"`
-	AllowPrivateNetwork bool            `json:"allowPrivateNetwork"`
+	ProviderID *string         `json:"providerId,omitempty"`
+	Kind       aiprovider.Kind `json:"kind"`
+	// Where an Anthropic Messages endpoint reaches Claude. Omitted calls the base URL directly.
+	Platform            *aiprovider.Platform             `json:"platform,omitempty"`
+	PlatformSettings    *AIProviderPlatformSettingsInput `json:"platformSettings,omitempty"`
+	BaseURL             string                           `json:"baseUrl"`
+	APIKey              *string                          `json:"apiKey,omitempty"`
+	AllowPrivateNetwork bool                             `json:"allowPrivateNetwork"`
 }
 
 // One model an endpoint says it serves.
@@ -259,6 +262,17 @@ type AIProviderPatchInput struct {
 	OutputCostPerMillion     graphql.Omittable[*string] `json:"outputCostPerMillion,omitempty"`
 	CacheReadCostPerMillion  graphql.Omittable[*string] `json:"cacheReadCostPerMillion,omitempty"`
 	CacheWriteCostPerMillion graphql.Omittable[*string] `json:"cacheWriteCostPerMillion,omitempty"`
+}
+
+type AIProviderPlatformSettingsInput struct {
+	Auth        *aiprovider.PlatformAuth `json:"auth,omitempty"`
+	Region      *string                  `json:"region,omitempty"`
+	ProjectID   *string                  `json:"projectId,omitempty"`
+	WorkspaceID *string                  `json:"workspaceId,omitempty"`
+	AccessKeyID *string                  `json:"accessKeyId,omitempty"`
+	Resource    *string                  `json:"resource,omitempty"`
+	TenantID    *string                  `json:"tenantId,omitempty"`
+	ClientID    *string                  `json:"clientId,omitempty"`
 }
 
 // A provider as its editor holds it, reduced to what decides where tasks go.

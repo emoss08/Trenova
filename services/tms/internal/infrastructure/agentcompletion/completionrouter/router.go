@@ -522,9 +522,10 @@ func (s *Service) callFor(
 	}
 
 	return &modeladapter.Call{
-		Provider: provider,
-		APIKey:   apiKey,
-		Client:   s.clientFor(provider),
+		Provider:                 provider,
+		APIKey:                   apiKey,
+		Client:                   s.clientFor(provider),
+		ServerCredentialsAllowed: s.ai.ServerCloudCredentialsAllowed(),
 		Request: &modeladapter.Request{
 			// A provider that cannot enforce the schema on the wire is given it in
 			// the prompt instead, so every candidate sees the same requirements.
@@ -641,7 +642,7 @@ func (s *Service) wait(ctx context.Context, wait time.Duration) error {
 func (s *Service) resolveAPIKey(provider *aiprovider.Provider) (string, error) {
 	stored := strings.TrimSpace(provider.APIKey)
 	if stored == "" {
-		if provider.Kind.RequiresAPIKey() {
+		if provider.RequiresCredential() {
 			return "", errortypes.NewBusinessError(
 				"AI provider {0} has no API key configured", provider.Name,
 			)

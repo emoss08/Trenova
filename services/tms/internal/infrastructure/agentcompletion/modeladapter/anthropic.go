@@ -24,12 +24,15 @@ const (
 	anthropicRedactedBlock = "redacted_thinking"
 )
 
-type anthropicAdapter struct{}
+type anthropicAdapter struct {
+	credentials *platformCredentials
+}
 
-// NewAnthropicAdapter speaks the Anthropic Messages API. Bedrock's mantle
-// endpoint serves this same shape, so pointing a provider's base URL there needs
-// no separate adapter.
-func NewAnthropicAdapter() Adapter { return anthropicAdapter{} }
+// NewAnthropicAdapter speaks the Anthropic Messages API, called directly or
+// through the platform a provider names.
+func NewAnthropicAdapter() Adapter {
+	return anthropicAdapter{credentials: newPlatformCredentials()}
+}
 
 func (anthropicAdapter) Kind() aiprovider.Kind { return aiprovider.KindAnthropicMessages }
 
@@ -169,8 +172,11 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 	params := anthropicParams(call)
 	applyOutputSchema(&params, call)
 
-	message, err := anthropicMessages(call, false).
-		New(ctx, params, anthropicBlockingOptions(call)...)
+	service, err := anthropicMessages(ctx, call, false, a.credentials)
+	if err != nil {
+		return nil, err
+	}
+	message, err := service.New(ctx, params, anthropicBlockingOptions(call)...)
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +289,11 @@ func (a anthropicAdapter) Stream(
 ) (*Response, error) {
 	params := anthropicParams(call)
 
-	stream := anthropicMessages(call, true).NewStreaming(ctx, params)
+	service, err := anthropicMessages(ctx, call, true, a.credentials)
+	if err != nil {
+		return nil, err
+	}
+	stream := service.NewStreaming(ctx, params)
 	defer func() { _ = stream.Close() }()
 
 	var (
@@ -354,7 +364,7 @@ func (a anthropicAdapter) Stream(
 			})
 		}
 	}
-	err := anthropicStreamFailure(stream.Err())
+	err = anthropicStreamFailure(stream.Err())
 	if err == nil && stopReason == "" && !messageStopped {
 		err = errStreamCut
 	}

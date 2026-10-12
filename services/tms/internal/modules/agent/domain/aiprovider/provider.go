@@ -99,6 +99,11 @@ type Provider struct {
 	// ThinkingStyle says how a Claude model behind an id the adapter cannot
 	// read takes thinking. Auto reads the id.
 	ThinkingStyle ThinkingStyle `json:"thinkingStyle" bun:"thinking_style,type:VARCHAR(50),notnull,nullzero,default:'Auto'"`
+	// Platform is the service an Anthropic Messages provider reaches Claude
+	// through, and PlatformSettings what that service needs besides the
+	// credential. Every other kind is called directly.
+	Platform         Platform          `json:"platform"         bun:"platform,type:VARCHAR(50),notnull,nullzero,default:'Direct'"`
+	PlatformSettings *PlatformSettings `json:"platformSettings" bun:"platform_settings,type:JSONB,nullzero"`
 
 	// ExtraBody is merged into the request an OpenAI-compatible endpoint
 	// receives, for the fields that are the server's own rather than the
@@ -401,13 +406,15 @@ func (p *Provider) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	}
 }
 
-// ResolvedBaseURL is the endpoint this provider actually calls.
+// ResolvedBaseURL is the endpoint this provider actually calls. A platform's
+// address is built from its settings unless one is entered, such as a private
+// endpoint.
 func (p *Provider) ResolvedBaseURL() string {
 	if trimmed := strings.TrimRight(strings.TrimSpace(p.BaseURL), "/"); trimmed != "" {
 		return trimmed
 	}
 
-	return p.Kind.DefaultBaseURL()
+	return p.platformBaseURL()
 }
 
 // Host is the host this provider is reached at, or empty when its address
@@ -723,6 +730,7 @@ func (p *Provider) Validate(multiErr *errortypes.MultiError) {
 		),
 	))
 
+	p.validatePlatform(multiErr)
 	p.validateTasks(multiErr)
 	p.validateEmbedding(multiErr)
 	p.validateEndpoint(multiErr)
@@ -860,6 +868,7 @@ func (p *Provider) applyDefaults() {
 	if p.ThinkingStyle == "" {
 		p.ThinkingStyle = ThinkingStyleAuto
 	}
+	p.NormalizePlatformSettings()
 	if p.EmbeddingInputStyle == "" {
 		p.EmbeddingInputStyle = EmbeddingInputStyleNone
 	}
@@ -942,6 +951,8 @@ func (p *Provider) ValidateEndpoint(multiErr *errortypes.MultiError) {
 		multiErr.Add("kind", errortypes.ErrInvalid, "Unknown provider kind")
 		return
 	}
+	p.NormalizePlatformSettings()
+	p.validatePlatform(multiErr)
 	p.validateEndpoint(multiErr)
 }
 
@@ -951,6 +962,9 @@ func (p *Provider) validateEndpoint(multiErr *errortypes.MultiError) {
 	}
 
 	baseURL := p.ResolvedBaseURL()
+	if baseURL == "" && p.ResolvedPlatform() != PlatformDirect {
+		return
+	}
 	if baseURL == "" {
 		multiErr.Add(
 			"baseUrl",
@@ -966,7 +980,7 @@ func (p *Provider) validateEndpoint(multiErr *errortypes.MultiError) {
 		multiErr.Add("baseUrl", errortypes.ErrInvalid, endpointErrorMessage(err))
 	}
 
-	if p.Kind.RequiresAPIKey() && strings.TrimSpace(p.APIKey) == "" {
+	if p.RequiresCredential() && strings.TrimSpace(p.APIKey) == "" {
 		multiErr.Add("apiKey", errortypes.ErrRequired, "API key is required for this provider")
 	}
 }

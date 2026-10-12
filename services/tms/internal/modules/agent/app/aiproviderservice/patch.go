@@ -23,7 +23,19 @@ func (s *Service) Patch(
 		)
 	}
 
-	edits, err := s.patchEdits(req, actor)
+	var stored *aiprovider.Provider
+	if req.APIKey.Set {
+		loaded, err := s.repo.GetByID(ctx, agentports.GetAIProviderByIDRequest{
+			ID:         req.ID,
+			TenantInfo: req.TenantInfo,
+		})
+		if err != nil {
+			return nil, err
+		}
+		stored = loaded
+	}
+
+	edits, err := s.patchEdits(req, stored, actor)
 	if err != nil {
 		return nil, err
 	}
@@ -58,6 +70,7 @@ type providerEdit func(*aiprovider.Provider)
 
 func (s *Service) patchEdits(
 	req *agentports.PatchAIProviderRequest,
+	stored *aiprovider.Provider,
 	actor *permissionports.RequestActor,
 ) ([]providerEdit, error) {
 	multiErr := errortypes.NewMultiError()
@@ -108,7 +121,11 @@ func (s *Service) patchEdits(
 		if req.APIKey.Value != nil {
 			incoming = *req.APIKey.Value
 		}
-		replacement, err := s.keyReplacement(&keyChange{incoming: incoming, actor: actor})
+		replacement, err := s.keyReplacement(&keyChange{
+			incoming: incoming,
+			actor:    actor,
+			provider: stored,
+		})
 		if err != nil {
 			return nil, err
 		}

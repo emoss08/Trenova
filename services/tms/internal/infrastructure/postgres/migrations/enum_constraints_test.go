@@ -340,6 +340,10 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(aiprovider.AllThinkingStyles()),
 		},
 		{
+			name:   "ck_ai_providers_platform",
+			values: stringsOf(aiprovider.AllPlatforms()),
+		},
+		{
 			name:   "ck_ai_providers_on_cap",
 			values: stringsOf(aiprovider.AllCapActions()),
 		},

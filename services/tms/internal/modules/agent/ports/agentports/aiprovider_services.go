@@ -27,6 +27,10 @@ type SaveAIProviderRequest struct {
 	StructuredOutputMode aiprovider.StructuredOutputMode
 	ReasoningEffort      aiprovider.ReasoningEffort
 	ThinkingStyle        aiprovider.ThinkingStyle
+	// Platform and PlatformSettings say where an Anthropic Messages provider
+	// reaches Claude and how it signs in there.
+	Platform         aiprovider.Platform
+	PlatformSettings *aiprovider.PlatformSettings
 	// ExtraBody carries the vendor request fields this endpoint needs that
 	// the protocol does not define.
 	ExtraBody            map[string]any
@@ -82,6 +86,8 @@ type PatchAIProviderRequest struct {
 type AIProviderEndpoint struct {
 	ProviderID          pulid.ID
 	Kind                aiprovider.Kind
+	Platform            aiprovider.Platform
+	PlatformSettings    *aiprovider.PlatformSettings
 	BaseURL             string
 	APIKey              *string
 	AllowPrivateNetwork bool
@@ -95,10 +101,12 @@ type ListAIProviderModelsRequest struct {
 // SealedAIProviderEndpoint is an endpoint in the form it crosses to a
 // worker: its key encrypted, so the job's history never holds the secret.
 type SealedAIProviderEndpoint struct {
-	Kind                aiprovider.Kind `json:"kind"`
-	BaseURL             string          `json:"baseUrl"`
-	SealedAPIKey        string          `json:"sealedApiKey"`
-	AllowPrivateNetwork bool            `json:"allowPrivateNetwork"`
+	Kind                aiprovider.Kind              `json:"kind"`
+	Platform            aiprovider.Platform          `json:"platform,omitempty"`
+	PlatformSettings    *aiprovider.PlatformSettings `json:"platformSettings,omitempty"`
+	BaseURL             string                       `json:"baseUrl"`
+	SealedAPIKey        string                       `json:"sealedApiKey"`
+	AllowPrivateNetwork bool                         `json:"allowPrivateNetwork"`
 }
 
 // ProbeAIProviderModelsRequest asks a sealed endpoint for its models.

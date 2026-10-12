@@ -232,7 +232,7 @@ func (s *Service) Facts(
 
 func awaitingKey(providers []*aiprovider.Provider) *aicontrolsummary.ProviderRef {
 	for _, provider := range providers {
-		if provider.Kind.RequiresAPIKey() && !provider.HasAPIKey {
+		if provider.RequiresCredential() && !provider.HasAPIKey {
 			return &aicontrolsummary.ProviderRef{ProviderID: provider.ID, Name: provider.Name}
 		}
 	}

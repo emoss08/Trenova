@@ -487,10 +487,11 @@ func (s *Service) attemptChat(
 	}
 
 	call := &modeladapter.Call{
-		Provider:     provider,
-		Client:       s.clientFor(provider),
-		StreamClient: s.streamClientFor(provider),
-		StreamIdle:   s.ai.GetStreamIdleTimeout(),
+		Provider:                 provider,
+		Client:                   s.clientFor(provider),
+		StreamClient:             s.streamClientFor(provider),
+		StreamIdle:               s.ai.GetStreamIdleTimeout(),
+		ServerCredentialsAllowed: s.ai.ServerCloudCredentialsAllowed(),
 		Request: &modeladapter.Request{
 			System:       req.System,
 			SystemStable: req.SystemStable,

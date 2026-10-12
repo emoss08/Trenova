@@ -9,6 +9,7 @@ import (
 
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
+	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
 // anthropicBlockingTimeout bounds a blocking call whose HTTP client has no
@@ -21,26 +22,43 @@ const anthropicBlockingTimeout = 10 * time.Minute
 // server would reach every provider an operator configured, so none of that
 // is used. Retries stay with the router and the workflow, which count every
 // attempt, and the HTTP client is the router's, whose dialer enforces the
-// provider's egress policy.
-func anthropicMessages(call *Call, stream bool) *anthropic.BetaMessageService {
+// provider's egress policy. The provider's platform adds how it signs in,
+// after Trenova's own transport, so a signature covers the request as sent.
+func anthropicMessages(
+	ctx context.Context,
+	call *Call,
+	stream bool,
+	creds *platformCredentials,
+) (*anthropic.BetaMessageService, error) {
+	baseURL := call.Provider.ResolvedBaseURL()
+	if baseURL == "" {
+		return nil, errortypes.NewBusinessError(
+			"This provider has no address to call; check its platform settings",
+		)
+	}
+
+	platformOpts, err := creds.platformOptions(ctx, call)
+	if err != nil {
+		return nil, err
+	}
+
 	client := call.Client
 	if stream {
 		client = call.streamHTTPClient()
 	}
 
-	opts := []option.RequestOption{
-		option.WithBaseURL(call.Provider.ResolvedBaseURL()),
+	opts := make([]option.RequestOption, 0, len(platformOpts)+4)
+	opts = append(opts,
+		option.WithBaseURL(baseURL),
 		option.WithHTTPClient(client),
 		option.WithMaxRetries(0),
 		option.WithMiddleware(anthropicTransport(call, stream)),
-	}
-	if call.APIKey != "" {
-		opts = append(opts, option.WithAPIKey(call.APIKey))
-	}
+	)
+	opts = append(opts, platformOpts...)
 
 	service := anthropic.NewBetaMessageService(opts...)
 
-	return &service
+	return &service, nil
 }
 
 func anthropicBlockingOptions(call *Call) []option.RequestOption {

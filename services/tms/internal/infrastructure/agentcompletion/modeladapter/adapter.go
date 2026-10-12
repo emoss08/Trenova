@@ -114,6 +114,10 @@ type Call struct {
 	// protocol carries it. Optional; a call without one still reads the
 	// thinking into the Response, it just does not show it as it happens.
 	Reasoning StreamSink
+	// ServerCredentialsAllowed lets a provider sign in to its platform with
+	// the server's own cloud identity. The server's configuration says; a
+	// provider saved while it allowed that is refused once it no longer does.
+	ServerCredentialsAllowed bool
 }
 
 // think hands a piece of thinking to the reasoning sink, if there is one.

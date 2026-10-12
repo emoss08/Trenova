@@ -153,11 +153,12 @@ func (s *Service) PollBackground(
 	}
 
 	result, err := runner.Poll(ctx, &modeladapter.Call{
-		Provider:     provider,
-		APIKey:       apiKey,
-		Client:       s.clientFor(provider),
-		StreamClient: s.streamClientFor(provider),
-		StreamIdle:   s.ai.GetStreamIdleTimeout(),
+		Provider:                 provider,
+		APIKey:                   apiKey,
+		Client:                   s.clientFor(provider),
+		StreamClient:             s.streamClientFor(provider),
+		StreamIdle:               s.ai.GetStreamIdleTimeout(),
+		ServerCredentialsAllowed: s.ai.ServerCloudCredentialsAllowed(),
 	}, handle)
 	if err != nil {
 		return nil, err
