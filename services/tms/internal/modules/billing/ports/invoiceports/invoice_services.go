@@ -58,6 +58,11 @@ type VoidInvoiceRequest struct {
 	Disposition invoice.VoidDisposition
 }
 
+type DiscardDraftForReviewRequest struct {
+	BillingQueueItemID pulid.ID
+	TenantInfo         pagination.TenantInfo
+}
+
 type VoidInvoiceResult struct {
 	Invoice *invoice.Invoice `json:"invoice"`
 	// AdjustmentID is the full reversal a posted void went through.
@@ -344,6 +349,11 @@ type InvoiceService interface {
 		req *CreateInvoiceFromOrderRequest,
 		actor *permissionports.RequestActor,
 	) (*CreateInvoicesResult, error)
+	DiscardDraftForReview(
+		ctx context.Context,
+		req *DiscardDraftForReviewRequest,
+		actor *permissionports.RequestActor,
+	) error
 	VoidInvoice(
 		ctx context.Context,
 		req *VoidInvoiceRequest,

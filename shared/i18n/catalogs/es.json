@@ -4403,6 +4403,7 @@
   "Invoice {0} has payments or credits applied. Unapply them before voiding it": "La factura {0} tiene pagos o créditos aplicados. Desaplíquelos antes de anularla",
   "Invoice {0} is already being sent. Wait for that send to finish; if it has not finished within {1} minutes, you can send it again.": "La factura {0} ya se está enviando. Espere a que termine ese envío; si no ha terminado en {1} minutos, puede enviarla de nuevo.",
   "Invoice {0} is already voided": "La factura {0} ya está anulada",
+  "Invoice {0} is already {1}; void it to send the freight back to review": "La factura {0} ya está en estado {1}; anúlela para devolver el flete a revisión",
   "Invoice {0} is attached ({1}).": "Se adjunta la factura {0} ({1}).",
   "Invoice {0} is attached.": "Se adjunta la factura {0}.",
   "Invoice {0} is not posted": "La factura {0} no está contabilizada",

@@ -745,6 +745,11 @@ func (s *service) UpdateStatus(
 			return transitionErr
 		}
 
+		entity, getErr = s.discardStaleDraft(txCtx, entity, req, actor)
+		if getErr != nil {
+			return getErr
+		}
+
 		if req.NewStatus == billingqueue.StatusApproved {
 			if holdErr := s.guardDetentionHolds(txCtx, entity, req.TenantInfo); holdErr != nil {
 				return holdErr
@@ -824,6 +829,38 @@ func (s *service) UpdateStatus(
 	s.projectToWatchtower(ctx, updated)
 
 	return updated, nil
+}
+
+// discardStaleDraft voids the draft an approved item produced when the item
+// goes back to review, then rereads the item: releasing the draft renumbers it
+// and bumps its version.
+func (s *service) discardStaleDraft(
+	ctx context.Context,
+	entity *billingqueue.BillingQueueItem,
+	req *billingqueueports.UpdateBillingQueueStatusRequest,
+	actor *permissionports.RequestActor,
+) (*billingqueue.BillingQueueItem, error) {
+	if s.invoiceSvc == nil ||
+		entity.Status != billingqueue.StatusApproved ||
+		req.NewStatus != billingqueue.StatusInReview {
+		return entity, nil
+	}
+
+	if err := s.invoiceSvc.DiscardDraftForReview(
+		ctx,
+		&invoiceports.DiscardDraftForReviewRequest{
+			BillingQueueItemID: entity.ID,
+			TenantInfo:         req.TenantInfo,
+		},
+		actor,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.repo.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
+		ItemID:     entity.ID,
+		TenantInfo: req.TenantInfo,
+	})
 }
 
 func (s *service) publishStatusAgentEvent(

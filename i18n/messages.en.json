@@ -113294,6 +113294,15 @@
       "go/other"
     ]
   },
+  "Invoice {0} is already {1}; void it to send the freight back to review": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Invoice {0} is attached ({1}).": {
     "sites": 2,
     "scope": [
@@ -193084,6 +193093,15 @@
       "routes/billing-queue"
     ]
   },
+  "Returned to review": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Returned to work": {
     "sites": 2,
     "scope": [
@@ -219604,15 +219622,6 @@
       "routes/billing-queue"
     ]
   },
-  "Status updated to in review": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/billing-queue"
-    ]
-  },
   "Status updated to on hold": {
     "sites": 1,
     "scope": [
@@ -230690,6 +230699,15 @@
     ],
     "areas": [
       "template/report.delivery.email"
+    ]
+  },
+  "The draft invoice is voided and a new one is built from the corrected charges when you approve again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "The draft is computed from the miles, fuel and rates on file now. Recompute it whenever late data lands.": {
