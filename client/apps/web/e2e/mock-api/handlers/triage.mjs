@@ -804,7 +804,101 @@ function thread(state, threadId, body = {}) {
     pinnedFacts: [],
     subjectType: body.subjectType ?? "",
     subjectId: body.subjectId ?? null,
+    version: 1,
+    createdAt: now,
+    updatedAt: now,
   };
+}
+
+// --- the Desk hand-off: a conversation about a message, answered from the queue's own state
+
+const STEP_WORDS = {
+  File: (a) => `file ${a.attachment?.fileName?.replace(/\.[a-z0-9]{2,5}$/i, "") ?? "the attachment"}`,
+  BuildLoad: () => "build the load",
+  Reply: () => "answer them",
+  CheckStops: () => "check the stop times",
+  LogException: () => "log the exception",
+  BlockSender: () => "block the sender",
+  Link: () => "say which record it's about",
+};
+
+function deskAnswer(t, thread) {
+  const m = thread.subjectId ? t.messages.find((row) => row.id === thread.subjectId) : null;
+  if (!m) return "Tell me which message you mean and I'll take it from there.";
+  const open = model.actionsOf(m).filter((a) => !a.done);
+  const kind = (m.classification ?? "message").replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+  const sender = m.fromName || m.fromAddress;
+  const shipment = m.matchedShipmentId ? t.shipments.get(m.matchedShipmentId) : null;
+  const about = shipment ? ` about **${shipment.proNumber}**` : "";
+  if (open.length === 0) {
+    return `This is a ${kind} from ${sender}${about}. Everything it asked for is done — I can mark it handled, or draft a follow-up.`;
+  }
+  const first = (STEP_WORDS[open[0].kind] ?? (() => "the next step"))(open[0]);
+  const left = open.length === 1 ? "One thing is left" : `${open.length} things are left`;
+  return `This is a ${kind} from ${sender}${about}. ${left}. The first is **${first}** — want me to start there?`;
+}
+
+function deskMessage(t, thread, role, content, sequence, at, mentions) {
+  return {
+    id: `amsg_${thread.id}_${sequence}`,
+    threadId: thread.id,
+    sequence,
+    role,
+    kind: "Message",
+    content,
+    mentions: mentions ?? null,
+    model: role === "Assistant" ? "mock" : "",
+    inputTokens: 0,
+    outputTokens: 0,
+    createdAt: at,
+  };
+}
+
+function startTurn(state, path, body) {
+  const t = state.triage;
+  const threadId = /athr_mock_\d+/.exec(path)[0];
+  const thread = t.assistantThreads.get(threadId);
+  if (!thread) return { __status: 404, body: { title: "Not found", status: 404 } };
+  t.assistantMessages ??= new Map();
+  t.assistantTurns ??= new Map();
+  const messages = t.assistantMessages.get(threadId) ?? [];
+  const user = deskMessage(t, thread, "User", body?.content ?? "", messages.length + 1, t.now(), body?.mentions);
+  messages.push(user);
+  t.assistantMessages.set(threadId, messages);
+  const turnId = `aturn_mock_${t.assistantTurns.size + 1}`;
+  t.assistantTurns.set(turnId, { threadId, content: user.content, user });
+  return { turnId, threadId, streamUrl: `/assistant/turns/${turnId}/stream/`, status: "Running" };
+}
+
+function followTurn(state, path) {
+  const t = state.triage;
+  const turnId = /aturn_mock_\d+/.exec(path)[0];
+  const turn = t.assistantTurns?.get(turnId);
+  if (!turn) return { __status: 404, body: { title: "Not found", status: 404 } };
+  const thread = t.assistantThreads.get(turn.threadId);
+  const messages = t.assistantMessages.get(turn.threadId);
+  const answer = turn.content.startsWith("Help me finish")
+    ? deskAnswer(t, thread)
+    : "On it — I'll keep this in the conversation so the next person can see what happened.";
+  if (!turn.reply) {
+    turn.reply = deskMessage(t, thread, "Assistant", answer, messages.length + 1, t.now() + 2, null);
+    messages.push(turn.reply);
+    thread.lastMessageAt = turn.reply.createdAt;
+  }
+  const words = answer.split(/(?<= )/);
+  const frames = [{ event: "accepted", data: { content: turn.content }, delay: 400 }];
+  for (let i = 0; i < words.length; i += 3) {
+    frames.push({ event: "delta", data: { text: words.slice(i, i + 3).join("") }, delay: i === 0 ? 900 : 60 });
+  }
+  frames.push({ event: "message", data: { content: answer, model: "mock" }, delay: 40 });
+  frames.push({ event: "done", data: { thread, messages: [turn.user, turn.reply], reply: answer, refused: false }, delay: 40 });
+  return { __sse: frames };
+}
+
+function threadMessages(state, path) {
+  const threadId = /athr_mock_\d+/.exec(path)[0];
+  const results = state.triage.assistantMessages?.get(threadId) ?? [];
+  return { results, hasMore: false, total: results.length, limit: 50 };
 }
 
 function startThread(state, _path, body) {
@@ -833,6 +927,10 @@ export const TRIAGE_ROUTES = [
   ["DELETE", /^\/api\/v1\/inbox\/presence(\/[^/]+)?\/?$/, leavePresence],
   ["POST", /^\/api\/v1\/inbox\/typing\/?$/, typing],
   ["POST", /^\/api\/v1\/assistant\/threads\/?$/, startThread],
+  ["POST", /^\/api\/v1\/assistant\/threads\/athr_mock_\d+\/turns\/?$/, startTurn],
+  ["GET", /^\/api\/v1\/assistant\/turns\/aturn_mock_\d+\/stream\/?$/, followTurn],
+  ["GET", /^\/api\/v1\/assistant\/threads\/athr_mock_\d+\/messages\/?$/, threadMessages],
+  ["GET", /^\/api\/v1\/assistant\/threads\/athr_mock_\d+\/turns\/active\/?$/, () => ({ turn: null })],
   ["GET", /^\/api\/v1\/assistant\/threads\/athr_mock_\d+\/?$/, (state, path) => {
     const id = /athr_mock_\d+/.exec(path)[0];
     return state.triage.assistantThreads.get(id) ?? { __status: 404, body: { title: "Not found", status: 404 } };

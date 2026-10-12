@@ -5,6 +5,7 @@ import type {
   TriageRuleAction,
 } from "@/lib/graphql/inbox";
 import type { SelectOption } from "@/lib/graphql/select-options";
+import { documentTypeName } from "@/lib/triage/document-types";
 import { isAwaitingReply, isSnoozed, senderName } from "@/lib/triage/message-state";
 import type {
   ContextMenuEntries,
@@ -149,13 +150,13 @@ export function eventSnoozeEntries({
                 icon: ZapIcon,
                 submenu: documentTypes.map((type) => ({
                   id: type.id,
-                  label: type.label,
+                  label: documentTypeName(type),
                   onSelect: () =>
                     actions.snooze(ids, {
                       kind: "event",
                       event: "DocumentAttached",
                       documentTypeId: type.id,
-                      documentTypeName: type.label,
+                      documentTypeName: documentTypeName(type),
                     }),
                 })),
               },

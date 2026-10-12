@@ -41,10 +41,11 @@ function ToolButton({
   shortcut?: string;
   children: ReactElement;
 }) {
+  const t = useT();
   return (
     <Tooltip>
       <TooltipTrigger render={children} />
-      <TooltipContent>{shortcut === undefined ? label : `${label} (${shortcut})`}</TooltipContent>
+      <TooltipContent>{shortcut === undefined ? label : t("{0} ({1})", label, shortcut)}</TooltipContent>
     </Tooltip>
   );
 }
@@ -260,7 +261,7 @@ export function ReaderToolbar({
         </Button>
       </ToolButton>
       {position.index > 0 && position.total > 0 && (
-        <span className="text-foreground-subtle mx-1 font-mono text-xs tabular-nums">
+        <span className="text-foreground-subtle mx-1 font-mono text-xs whitespace-nowrap tabular-nums">
           {t("{0} / {1}", position.index, position.total)}
         </span>
       )}
@@ -280,12 +281,12 @@ export function ReaderToolbar({
               <span className="border-border-strong text-foreground-subtle flex size-5 items-center justify-center rounded-full border border-dashed">
                 <User01Icon aria-hidden className="size-3" />
               </span>
-              <span className="@max-[640px]/reader:sr-only">{t("Assign")}</span>
+              <span className="@max-[520px]/reader:sr-only">{t("Assign")}</span>
             </>
           ) : (
             <>
               <PersonAvatar name={owner.name} />
-              <span className="@max-[640px]/reader:sr-only">
+              <span className="@max-[520px]/reader:sr-only">
                 {owner.id === meId ? t("You") : (owner.name.split(/\s+/)[0] ?? owner.name)}
               </span>
             </>

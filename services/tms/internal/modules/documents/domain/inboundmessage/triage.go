@@ -155,6 +155,11 @@ func (d StopsDecision) IsValid() bool {
 	return d == StopsDecisionWaive || d == StopsDecisionStandBy
 }
 
+func (s *ActionState) CreditPending() bool {
+	return s.StopsDecision == StopsDecisionWaive &&
+		s.DetentionWaiver != nil && s.DetentionWaiver.CreditPending
+}
+
 type ExceptionKind string
 
 const (
@@ -172,17 +177,30 @@ func (k ExceptionKind) IsValid() bool {
 	}
 }
 
+type DetentionWaiver struct {
+	Amount            string   `json:"amount,omitempty"`
+	Currency          string   `json:"currency,omitempty"`
+	InvoiceNumbers    []string `json:"invoiceNumbers,omitempty"`
+	CreditMemoNumbers []string `json:"creditMemoNumbers,omitempty"`
+	CreditPending     bool     `json:"creditPending,omitempty"`
+}
+
+func (w *DetentionWaiver) Credited() bool {
+	return w != nil && len(w.InvoiceNumbers) > 0
+}
+
 type ActionState struct {
-	StopsDecision     StopsDecision `json:"stopsDecision,omitempty"`
-	StopsDecidedAt    int64         `json:"stopsDecidedAt,omitempty"`
-	ExceptionKind     ExceptionKind `json:"exceptionKind,omitempty"`
-	ExceptionLoggedAt int64         `json:"exceptionLoggedAt,omitempty"`
-	SenderBlockedAt   int64         `json:"senderBlockedAt,omitempty"`
-	LinkedAt          int64         `json:"linkedAt,omitempty"`
-	CreatedShipmentID pulid.ID      `json:"createdShipmentId,omitempty"`
-	CreatedShipmentAt int64         `json:"createdShipmentAt,omitempty"`
-	HandedOffTo       pulid.ID      `json:"handedOffTo,omitempty"`
-	HandedOffAt       int64         `json:"handedOffAt,omitempty"`
+	StopsDecision     StopsDecision    `json:"stopsDecision,omitempty"`
+	StopsDecidedAt    int64            `json:"stopsDecidedAt,omitempty"`
+	DetentionWaiver   *DetentionWaiver `json:"detentionWaiver,omitempty"`
+	ExceptionKind     ExceptionKind    `json:"exceptionKind,omitempty"`
+	ExceptionLoggedAt int64            `json:"exceptionLoggedAt,omitempty"`
+	SenderBlockedAt   int64            `json:"senderBlockedAt,omitempty"`
+	LinkedAt          int64            `json:"linkedAt,omitempty"`
+	CreatedShipmentID pulid.ID         `json:"createdShipmentId,omitempty"`
+	CreatedShipmentAt int64            `json:"createdShipmentAt,omitempty"`
+	HandedOffTo       pulid.ID         `json:"handedOffTo,omitempty"`
+	HandedOffAt       int64            `json:"handedOffAt,omitempty"`
 }
 
 type LoadFieldKey string

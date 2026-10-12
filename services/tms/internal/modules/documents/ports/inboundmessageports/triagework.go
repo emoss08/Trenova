@@ -83,6 +83,7 @@ type TriageExceptionLogger interface {
 
 type SettleTriageDetentionRequest struct {
 	TenantInfo pagination.TenantInfo
+	Actor      *permissionports.RequestActor
 	ShipmentID pulid.ID
 	Decision   inboundmessage.StopsDecision
 	Note       string
@@ -90,9 +91,16 @@ type SettleTriageDetentionRequest struct {
 }
 
 type SettledTriageDetention struct {
-	Amount   string
-	Currency string
-	Settled  bool
+	Amount            string
+	Currency          string
+	Settled           bool
+	InvoiceNumbers    []string
+	CreditMemoNumbers []string
+	CreditPending     bool
+}
+
+func (s *SettledTriageDetention) Credited() bool {
+	return s != nil && len(s.InvoiceNumbers) > 0
 }
 
 type TriageDetentionSettler interface {

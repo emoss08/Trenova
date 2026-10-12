@@ -21,6 +21,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, toSentenceFragment } from "@trenova/shared/lib/utils";
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
+import { useTriageStore } from "@/stores/triage-store";
 import { USER_FORMATTERS } from "../action-copy";
 import { CLASSIFICATION_DOT, classificationLabel } from "../classification";
 import { LANE_ICON, laneLabel, mailboxName } from "../folder-labels";
@@ -42,7 +43,7 @@ import {
 } from "../use-triage-data";
 import { useTriageActions } from "../use-triage-actions";
 
-/** Where a source's settings and a new source live until Triage has its own flow for them. */
+/** Where a source's settings live: the mailbox administration page. */
 const SOURCES_PATH = "/admin/inbound-mailboxes";
 
 export type TriageSidebarProps = {
@@ -68,6 +69,8 @@ export function TriageSidebar({ folder, onSelect, onShortcuts }: TriageSidebarPr
   const views = useTriageViews().data ?? [];
   const rules = useTriageRules().data ?? [];
   const [renaming, setRenaming] = useState<string | null>(null);
+  const openConnect = () =>
+    useTriageStore.getState().openOverlay({ kind: "connect", mailboxId: null });
 
   const kinds = (counts?.byClassification ?? []).filter((row) => row.waiting > 0);
   const waitingByMailbox = new Map(
@@ -133,7 +136,10 @@ export function TriageSidebar({ folder, onSelect, onShortcuts }: TriageSidebarPr
                     id: "rule",
                     label: t("Make a rule for {0}", toSentenceFragment(title)),
                     icon: ZapIcon,
-                    onSelect: () => onSelect(RULES),
+                    onSelect: () => {
+                      useTriageStore.getState().seedRule({ classification: row.classification });
+                      onSelect(RULES);
+                    },
                   },
                 ])
               }
@@ -193,7 +199,7 @@ export function TriageSidebar({ folder, onSelect, onShortcuts }: TriageSidebarPr
             mailboxes.length > 0 ? (
               <button
                 type="button"
-                onClick={() => navigate(SOURCES_PATH)}
+                onClick={openConnect}
                 className="ui-focus-ring text-foreground-subtle hover:text-foreground rounded-sm text-xs"
               >
                 {t("Add")}
@@ -206,7 +212,7 @@ export function TriageSidebar({ folder, onSelect, onShortcuts }: TriageSidebarPr
         {mailboxes.length === 0 ? (
           <button
             type="button"
-            onClick={() => navigate(SOURCES_PATH)}
+            onClick={openConnect}
             className="ui-focus-ring border-border-strong text-foreground-muted hover:bg-surface-hover hover:text-foreground flex h-7.5 items-center gap-2.5 rounded-md border border-dashed px-2.5 text-base"
           >
             <PlusIcon aria-hidden className="size-3.5" />

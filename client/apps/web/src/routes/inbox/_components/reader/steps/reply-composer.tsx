@@ -9,7 +9,9 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
+import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
+import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, useMemo, useReducer, useState } from "react";
 import { PersonAvatar } from "../../person-avatar";
@@ -43,18 +45,18 @@ function latestOutcome(replies: readonly Reply[]): ReplyOutcome | null {
   return null;
 }
 
-function replySubject(message: InboundMessageDetail, fallback: string): string {
+function replySubject(t: TranslateFn, message: InboundMessageDetail): string {
   const subject = message.subject.trim();
   if (subject === "") {
-    return `Re: ${fallback}`;
+    return t("Re: your email");
   }
 
-  return REPLY_PREFIX.test(subject) ? subject : `Re: ${subject}`;
+  return REPLY_PREFIX.test(subject) ? subject : t("Re: {0}", subject);
 }
 
 /** Someone else is writing a reply to this message right now. */
 function WritingToo({ messageId }: { messageId: string }) {
-  const t = useT();
+  const rt = useRichT();
   const writers = useMessagePresence(messageId).filter((member) => member.activity === "writing");
   const first = writers[0];
   if (first === undefined) {
@@ -68,8 +70,11 @@ function WritingToo({ messageId }: { messageId: string }) {
     >
       <PersonAvatar name={first.name} size="xs" present />
       <span className="min-w-0 flex-1 truncate">
-        <span className="font-semibold">{first.name.split(/\s+/)[0]}</span>{" "}
-        {t("is writing a reply too")}
+        {rt(
+          "<b>{0}</b> is writing a reply too",
+          { b: (chunks) => <span className="font-semibold">{chunks}</span> },
+          first.name.split(/\s+/)[0] ?? first.name,
+        )}
       </span>
       <span aria-hidden className="flex gap-0.75">
         <span className="animate-breathe size-1 rounded-full bg-current" />
@@ -180,7 +185,9 @@ function TemplatesMenu({
               >
                 <span className="text-sm font-medium">{template.name}</span>
                 <span className="text-foreground-subtle w-full truncate text-xs">
-                  {firstLine.length > PREVIEW_LENGTH ? `${firstLine.slice(0, PREVIEW_LENGTH)}…` : firstLine}
+                  {firstLine.length > PREVIEW_LENGTH
+                    ? t("{0}…", firstLine.slice(0, PREVIEW_LENGTH))
+                    : firstLine}
                 </span>
               </button>
             );
@@ -268,6 +275,7 @@ export function ReplyComposer({
   action: TriageAction | null;
 }) {
   const t = useT();
+  const rt = useRichT();
   const actions = useTriageActions();
   const panel = useReaderPanel();
   const drafting = panel.state.drafting.reply;
@@ -283,7 +291,7 @@ export function ReplyComposer({
   const [focused, setFocused] = useState(false);
   const draftKey = draft === null ? null : `${draft.id}:${draft.updatedAt}`;
   const [syncedKey, setSyncedKey] = useState(draftKey);
-  const subject = draft?.subject || replySubject(message, t("your email"));
+  const subject = draft?.subject || replySubject(t, message);
 
   if (draftKey !== syncedKey) {
     setSyncedKey(draftKey);
@@ -399,7 +407,11 @@ export function ReplyComposer({
       )}
       {state.phase === "failed" && (
         <StepError>
-          <span className="font-semibold">{t("Didn't send.")}</span> {state.failure.failureText}
+          {rt(
+            "<b>Didn't send.</b> {0}",
+            { b: (chunks) => <span className="font-semibold">{chunks}</span> },
+            state.failure.failureText,
+          )}
         </StepError>
       )}
       {error !== null && <StepError>{error}</StepError>}

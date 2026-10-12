@@ -27,11 +27,6 @@ export const buttonVariants = cva(
         quiet:
           "text-muted-foreground hover:bg-surface-hover hover:text-foreground active:bg-surface-active",
         link: "text-brand underline-offset-4 hover:underline active:scale-100",
-        /**
-         * Nova does the step: a flat violet, never a gradient, so Nova's own work
-         * reads as Nova's and never as a tone or the primary ink.
-         */
-        nova: "border border-accent-violet-border bg-accent-violet-subtle text-accent-violet-on-subtle hover:border-accent-violet active:bg-accent-violet-subtle",
         /** No fill and no colour of its own: the control's classes say how it looks. */
         bare: "",
       },

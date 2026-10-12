@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/fx"
 )
@@ -158,6 +159,7 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 						triageports.InboundCorrectionRecorder,
 						triageports.InboundModelAvailability,
 						triageports.TenderOverlapFinder,
+						detentionports.BilledDetentionCreditor,
 					) {
 					},
 				),

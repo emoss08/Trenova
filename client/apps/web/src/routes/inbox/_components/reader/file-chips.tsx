@@ -2,6 +2,7 @@ import type { InboundAttachment, InboundMessageDetail } from "@/lib/graphql/inbo
 import type { SelectOption } from "@/lib/graphql/select-options";
 import { queries } from "@/lib/queries";
 import { inboxReferenceQuery } from "@/lib/queries/inbox";
+import { documentTypeName, documentTypeNamed } from "@/lib/triage/document-types";
 import { apiService } from "@/services/api";
 import { useTriageStore } from "@/stores/triage-store";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,6 +30,7 @@ import { useTriageDocumentTypes } from "../use-triage-data";
 import { useReaderPanel } from "./reader-panel";
 
 const EXTENSION = /\.([a-z0-9]{2,5})$/i;
+const REFUSED_PREFIX = /^refused:\s*/i;
 const IMAGE_EXTENSIONS: ReadonlySet<string> = new Set(["jpg", "jpeg", "png", "gif", "heic", "webp", "tif", "tiff"]);
 
 function extensionOf(fileName: string): string {
@@ -40,9 +42,9 @@ function laneOf(option: SelectOption): string | undefined {
 }
 
 /** What Nova read from a file, as lines a person can paste: "Rate: $1,240.00". */
-export function readingText(attachment: InboundAttachment): string {
+export function readingText(t: TranslateFn, attachment: InboundAttachment): string {
   return (attachment.reading?.fields ?? [])
-    .map((field) => `${field.label}: ${field.value}`)
+    .map((field) => t("{0}: {1}", field.label, field.value))
     .join("\n");
 }
 
@@ -51,12 +53,9 @@ export function readTypeId(
   attachment: InboundAttachment,
   documentTypes: readonly SelectOption[],
 ): string | null {
-  const name = (attachment.reading?.documentType ?? attachment.filedAs ?? "").trim().toLowerCase();
-  if (name === "") {
-    return null;
-  }
+  const name = attachment.reading?.documentType ?? attachment.filedAs ?? "";
 
-  return documentTypes.find((type) => type.label.trim().toLowerCase() === name)?.id ?? null;
+  return documentTypeNamed(documentTypes, name)?.id ?? null;
 }
 
 async function download(t: TranslateFn, documentId: string) {
@@ -92,7 +91,7 @@ export function attachmentMenu({
   const documentId = attachment.documentId;
   const typeId = readTypeId(attachment, documentTypes);
   const filed = attachment.filedShipmentId !== null;
-  const reading = readingText(attachment);
+  const reading = readingText(t, attachment);
   const file = (shipmentId: string, documentTypeId: string | null) => {
     void actions
       .file(message.id, { attachmentId: attachment.id, shipmentId, documentTypeId })
@@ -144,7 +143,7 @@ export function attachmentMenu({
             onShipment({
               id: matched.id,
               label: matched.proNumber,
-              hint: `${matched.originCity} → ${matched.destinationCity}`,
+              hint: t("{0} → {1}", matched.originCity, matched.destinationCity),
             }),
           { type: "header", label: t("Other shipments") },
           ...shipments
@@ -165,7 +164,7 @@ export function attachmentMenu({
         disabled: documentId === null || filed || matched === null || documentTypes.length === 0,
         submenu: documentTypes.map((type) => ({
           id: type.id,
-          label: type.label,
+          label: documentTypeName(type),
           onSelect: () => {
             if (matched !== null) {
               file(matched.id, type.id);
@@ -256,7 +255,10 @@ function FileChip({
 
   let status: string;
   if (refused) {
-    status = t("Refused · {0}", toSentenceFragment(attachment.failureText.trim()));
+    status = t(
+      "Refused · {0}",
+      toSentenceFragment(attachment.failureText.trim().replace(REFUSED_PREFIX, "")),
+    );
   } else if (filed !== null) {
     status = t("Filed on {0}", filed.proNumber);
   } else {

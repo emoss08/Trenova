@@ -1,3 +1,4 @@
+import { useNowSeconds } from "@/hooks/use-now-seconds";
 import type { InboundMessageDetail, InboundSenderRole } from "@/lib/graphql/inbox";
 import { queries } from "@/lib/queries";
 import { senderName } from "@/lib/triage/message-state";
@@ -57,7 +58,7 @@ function SenderCardBody({ message }: { message: InboundMessageDetail }) {
   const query = useQuery(queries.inbox.senderProfile(message.id));
   const profile = query.data;
   const name = senderName(message);
-  const now = Math.floor(Date.now() / 1000);
+  const now = useNowSeconds();
 
   return (
     <div className="flex w-75 flex-col gap-2 p-0.5">

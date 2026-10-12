@@ -59,6 +59,12 @@ describe("activityLine", () => {
     expect(
       line({ kind: "Assigned", actorKind: "System", actor: null, subject: "Marcus Lee" }),
     ).toBe("Assigned to Marcus Lee");
+    expect(line({ kind: "Assigned", actor: ME, subject: ME.name, recordId: ME.id })).toBe(
+      "You took it",
+    );
+    expect(line({ kind: "Assigned", subject: DANA.name, recordId: DANA.id })).toBe(
+      "Dana Whitfield took it",
+    );
     expect(line({ kind: "Unassigned", subject: "Marcus Lee" })).toBe(
       "Dana Whitfield took it off Marcus Lee",
     );

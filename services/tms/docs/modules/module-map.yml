@@ -649,6 +649,7 @@ modules:
       - costingservice
       - customerpaymentservice
       - detentionbillingservice
+      - detentioncreditservice
       - invoiceadjustmentservice
       - invoicedisputeservice
       - invoiceledger

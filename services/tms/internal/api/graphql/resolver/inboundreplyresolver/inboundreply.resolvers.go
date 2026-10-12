@@ -8,6 +8,7 @@ package inboundreplyresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
@@ -468,6 +469,7 @@ func (r *MutationResolver) DecideInboundStops(ctx context.Context, messageID str
 	return r.TriageWorkService.DecideStops(ctx, &triageworkservice.DecideStopsRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
+		Actor:      actorutil.FromAuthContext(authCtx),
 		MessageID:  id,
 		Decision:   decision,
 	})

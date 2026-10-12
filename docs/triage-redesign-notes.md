@@ -106,6 +106,39 @@ _Filled in as each area lands._
 - **Sending does not park the message as waiting on them.** The design moves a replied message
   to "Waiting on them" automatically; the queue core parks a message only when asked, so the
   client sends the park after a successful send if the reply asks a question.
+- **Waiving a billed detention charge credits the invoice.** The detention domain still refuses
+  to waive a billed occurrence ("issue an adjustment instead"), so `decideInboundStops(Waive)`
+  asks billing first, through `detentionports.BilledDetentionCreditor` (declared in operations,
+  provided by `billing/app/detentioncreditservice` from `billing/module.go`). Billing reads
+  what the standing invoices still bill of the occurrence's shipment charge
+  (`NetBilledByCharge`):
+  - Nothing billed (the charge was never invoiced, or every invoice that billed it was voided
+    or credited): the occurrence is waived as before. One still marked `Billed` with no invoice
+    behind it (older data, the dev seed's `SEED-DET-008`) is released and waived in one write
+    (`detentionservice.WaiveUninvoiced`), with both steps on its evidence chain.
+  - Billed: the person needs `invoice:update` (the permission the invoice adjustment routes
+    check), otherwise the mutation is refused with an authorization error. For every posted,
+    non-credit-memo invoice with a line for the charge, billing submits a `CreditOnly`
+    adjustment through `InvoiceAdjustmentService.Submit` for what is left to credit of those
+    lines, with the organization's adjustment policy applied unchanged: when the policy needs
+    an approver it lands `PendingApproval`, exactly as a person's submit from billing would.
+    The adjustment carries the waiver (`metadata.detentionWaivers`, never bound from a request
+    body); when it executes, now or on approval, the detention billing sync waives the
+    occurrence instead of only releasing it, so the charge ends `Waived` with its reason and
+    amount, not `Approved`. The idempotency key is per occurrence, invoice and attempt, so a
+    second click returns the credit already waiting, and a rejected or failed credit lets the
+    next attempt submit a new one.
+  - Refused: a draft invoice, a preview error (policy, period, attachments) or a failed
+    execution comes back as a field error on `decision`, "Invoice INV-… could not be credited
+    for the waived detention: …", and nothing on the message changes.
+  The message records what happened in `actionState.detentionWaiver` (amount, invoices, credit
+  memos, pending) and the activity detail ("185.00 USD, credited on INV-20931 by CM-00012", or
+  "… credit on INV-20931 waits for approval"). Nova's reply follows it: removed before
+  invoicing, credited with the credit memo to follow, or a credit being processed (never
+  claimed as issued). Standing by is refused while the credit waits for approval, and deciding
+  the same way twice changes nothing unless a credit is still pending. The design's "a
+  corrected invoice follows" is a credit memo here; a credit-only adjustment issues no
+  replacement invoice.
 
 ### Queue core
 

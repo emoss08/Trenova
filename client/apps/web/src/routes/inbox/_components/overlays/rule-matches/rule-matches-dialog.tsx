@@ -29,6 +29,7 @@ type Match = TriageRulePreview["matches"][number];
 type Mismatch = NonNullable<Match["mismatch"]>;
 
 const ROW_HEIGHT = 44;
+const NO_INPUT: TriageRuleInput = { classification: "Other", senderScope: "Anyone", action: "Ignore" };
 
 function mismatchText(t: TranslateFn, mismatch: Mismatch): string {
   switch (mismatch) {
@@ -68,11 +69,16 @@ export function RuleMatchesDialog({
   const t = useT();
   const rules = useTriageRules().data;
   const mailboxes = useTriageMailboxes().data;
-  const preview = useQuery(
-    "input" in target
-      ? queries.inbox.rulePreview(target.input)
-      : queries.inbox.ruleMatches(target.ruleId),
-  );
+  const drafted = "input" in target;
+  const previewQuery = useQuery({
+    ...queries.inbox.rulePreview(drafted ? target.input : NO_INPUT),
+    enabled: drafted,
+  });
+  const matchesQuery = useQuery({
+    ...queries.inbox.ruleMatches(drafted ? "" : target.ruleId),
+    enabled: !drafted,
+  });
+  const preview = drafted ? previewQuery : matchesQuery;
   const rule = ruleOf(target, rules);
   const data = preview.data;
 

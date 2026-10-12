@@ -295,6 +295,7 @@ func (s *Service) changeBlockedSenders(
 type DecideStopsRequest struct {
 	TenantInfo pagination.TenantInfo
 	UserID     pulid.ID
+	Actor      *permissionports.RequestActor
 	MessageID  pulid.ID
 	Decision   inboundmessage.StopsDecision
 }
@@ -323,13 +324,26 @@ func (s *Service) DecideStops(
 	if message.MatchedShipmentID.IsNil() {
 		return nil, errortypes.NewBusinessError("Link the message to its shipment first")
 	}
+	pending := message.ActionState.CreditPending()
+	if message.ActionState.StopsDecision == req.Decision && !pending {
+		return s.refreshed(ctx, req.TenantInfo, message.ID)
+	}
+	if pending && req.Decision == inboundmessage.StopsDecisionStandBy {
+		return nil, errortypes.NewValidationError(
+			"decision",
+			errortypes.ErrInvalidOperation,
+			"The credit for this detention on {0} is waiting for approval in billing. Reject it there before standing by the charge.",
+			strings.Join(message.ActionState.DetentionWaiver.InvoiceNumbers, ", "),
+		)
+	}
 
-	detail := ""
+	settled := &inboundmessageports.SettledTriageDetention{}
 	if s.detention != nil {
-		settled, settleErr := s.detention.SettleDetention(
+		settled, err = s.detention.SettleDetention(
 			ctx,
 			&inboundmessageports.SettleTriageDetentionRequest{
 				TenantInfo: req.TenantInfo,
+				Actor:      req.Actor,
 				ShipmentID: message.MatchedShipmentID,
 				Decision:   req.Decision,
 				Note: fmt.Sprintf(
@@ -339,11 +353,8 @@ func (s *Service) DecideStops(
 				UserID: req.UserID,
 			},
 		)
-		if settleErr != nil {
-			return nil, settleErr
-		}
-		if settled != nil && settled.Settled && settled.Amount != "" {
-			detail = strings.TrimSpace(settled.Amount + " " + settled.Currency)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -355,6 +366,7 @@ func (s *Service) DecideStops(
 		func(m *inboundmessage.InboundMessage) error {
 			m.ActionState.StopsDecision = req.Decision
 			m.ActionState.StopsDecidedAt = now
+			m.ActionState.DetentionWaiver = waiverOf(req.Decision, settled)
 
 			return nil
 		},
@@ -364,7 +376,7 @@ func (s *Service) DecideStops(
 	}
 
 	activity := personActivity(updated, triage.ActivityStopsDecided, req.UserID).
-		About(string(req.Decision), detail)
+		About(string(req.Decision), stopsDetail(settled))
 	activity.RecordID = message.MatchedShipmentID
 	s.record(ctx, activity)
 
@@ -374,4 +386,43 @@ func (s *Service) DecideStops(
 	}
 
 	return s.refreshed(ctx, req.TenantInfo, updated.ID)
+}
+
+func waiverOf(
+	decision inboundmessage.StopsDecision,
+	settled *inboundmessageports.SettledTriageDetention,
+) *inboundmessage.DetentionWaiver {
+	if decision != inboundmessage.StopsDecisionWaive || settled == nil || !settled.Settled {
+		return nil
+	}
+
+	return &inboundmessage.DetentionWaiver{
+		Amount:            settled.Amount,
+		Currency:          settled.Currency,
+		InvoiceNumbers:    settled.InvoiceNumbers,
+		CreditMemoNumbers: settled.CreditMemoNumbers,
+		CreditPending:     settled.CreditPending,
+	}
+}
+
+func stopsDetail(settled *inboundmessageports.SettledTriageDetention) string {
+	if settled == nil || !settled.Settled || settled.Amount == "" {
+		return ""
+	}
+
+	amount := strings.TrimSpace(settled.Amount + " " + settled.Currency)
+	if !settled.Credited() {
+		return amount
+	}
+
+	invoices := strings.Join(settled.InvoiceNumbers, ", ")
+	if settled.CreditPending {
+		return amount + ", credit on " + invoices + " waits for approval"
+	}
+	if len(settled.CreditMemoNumbers) > 0 {
+		return amount + ", credited on " + invoices + " by " +
+			strings.Join(settled.CreditMemoNumbers, ", ")
+	}
+
+	return amount + ", credited on " + invoices
 }

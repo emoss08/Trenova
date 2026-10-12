@@ -70,6 +70,10 @@ type detentionDecider interface {
 		ctx context.Context,
 		p detentionservice.WaiveParams,
 	) (*detention.DetentionOccurrence, error)
+	WaiveUninvoiced(
+		ctx context.Context,
+		p detentionservice.WaiveParams,
+	) (*detention.DetentionOccurrence, error)
 	Dispute(
 		ctx context.Context,
 		p detentionservice.DisputeParams,
@@ -88,6 +92,7 @@ type Params struct {
 	Comments    shipmentports.ShipmentCommentService
 	Occurrences detentionports.DetentionOccurrenceRepository
 	Detention   *detentionservice.Service
+	Credits     detentionports.BilledDetentionCreditor `optional:"true"`
 }
 
 type Service struct {
@@ -100,6 +105,7 @@ type Service struct {
 	comments    commentCreator
 	occurrences occurrenceReader
 	detention   detentionDecider
+	credits     detentionports.BilledDetentionCreditor
 	now         func() int64
 }
 
@@ -114,6 +120,7 @@ func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 		comments:    p.Comments,
 		occurrences: p.Occurrences,
 		detention:   p.Detention,
+		credits:     p.Credits,
 		now:         timeutils.NowUnix,
 	}
 }

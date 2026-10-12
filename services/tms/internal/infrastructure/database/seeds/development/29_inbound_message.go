@@ -446,12 +446,8 @@ func (s *InboundMessageSeed) insertTriage(
 ) error {
 	rules := seedRules(refs, boxes)
 	if len(rules) > 0 {
-		paused := pausedRules(rules)
 		if _, err := tx.NewInsert().Model(&rules).Exec(ctx); err != nil {
 			return fmt.Errorf("insert triage rules: %w", err)
-		}
-		if err := pauseRules(ctx, tx, paused); err != nil {
-			return err
 		}
 	}
 

@@ -425,35 +425,6 @@ func seedSenderHints(refs *inboundSeedRefs) []*triage.SenderHint {
 	return append(hints, hint(seedCorrectionLastWeek, refs.lastWeekCorrectedAt()))
 }
 
-func pausedRules(rules []*triage.Rule) []*triage.Rule {
-	paused := make([]*triage.Rule, 0, 1)
-	for _, rule := range rules {
-		if !rule.Enabled {
-			paused = append(paused, rule)
-		}
-	}
-
-	return paused
-}
-
-func pauseRules(ctx context.Context, tx bun.Tx, paused []*triage.Rule) error {
-	cols := triagecol.RuleColumns
-	for _, rule := range paused {
-		rule.Enabled = false
-		if _, err := tx.NewUpdate().
-			Model((*triage.Rule)(nil)).
-			Set(cols.Enabled.Set(), false).
-			Where(cols.ID.Eq(), rule.ID).
-			Where(cols.OrganizationID.Eq(), rule.OrganizationID).
-			Where(cols.BusinessUnitID.Eq(), rule.BusinessUnitID).
-			Exec(ctx); err != nil {
-			return fmt.Errorf("pause rule %s: %w", rule.ID, err)
-		}
-	}
-
-	return nil
-}
-
 func matchedBy(rule *triage.Rule, message *inboundmessage.InboundMessage) bool {
 	if rule.Action == inboundmessage.NovaActionAssign {
 		return rule.Covers(message) && message.OwnerID == rule.AssigneeID

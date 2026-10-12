@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 const (
@@ -48,14 +49,23 @@ func (s *Service) disputedOccurrence(
 
 	var chosen *detention.DetentionOccurrence
 	for _, occurrence := range occurrences {
-		if chosen == nil || occurrence.BillableAmount.GreaterThan(chosen.BillableAmount) ||
-			(occurrence.BillableAmount.Equal(chosen.BillableAmount) &&
-				occurrence.ClockStartAt > chosen.ClockStartAt) {
+		if chosen == nil {
+			chosen = occurrence
+
+			continue
+		}
+		amount, chosenAmount := disputedAmount(occurrence), disputedAmount(chosen)
+		if amount.GreaterThan(chosenAmount) ||
+			(amount.Equal(chosenAmount) && occurrence.ClockStartAt > chosen.ClockStartAt) {
 			chosen = occurrence
 		}
 	}
 
 	return chosen, nil
+}
+
+func disputedAmount(occurrence *detention.DetentionOccurrence) decimal.Decimal {
+	return occurrence.BillableAmount.Add(occurrence.WaivedAmount)
 }
 
 func (s *Service) StopTimes(
@@ -128,38 +138,91 @@ func (s *Service) SettleDetention(
 		return &inboundmessageports.SettledTriageDetention{}, nil
 	}
 
-	var settled *detention.DetentionOccurrence
 	switch req.Decision {
 	case inboundmessage.StopsDecisionWaive:
-		settled, err = s.detention.Waive(ctx, detentionservice.WaiveParams{
-			OccurrenceID: occurrence.ID,
-			TenantInfo:   req.TenantInfo,
-			Reason:       detention.WaiverReasonOther,
-			Note:         req.Note,
-			UserID:       req.UserID,
-		})
+		return s.waive(ctx, req, occurrence)
 	case inboundmessage.StopsDecisionStandBy:
-		settled, err = s.detention.Dispute(ctx, detentionservice.DisputeParams{
+		settled, disputeErr := s.detention.Dispute(ctx, detentionservice.DisputeParams{
 			OccurrenceID: occurrence.ID,
 			TenantInfo:   req.TenantInfo,
 			Note:         req.Note,
 			UserID:       req.UserID,
 		})
+		if disputeErr != nil {
+			return nil, disputeErr
+		}
+
+		return settledOf(settled.BillableAmount, settled.Currency), nil
 	default:
 		return &inboundmessageports.SettledTriageDetention{}, nil
 	}
+}
+
+func (s *Service) waive(
+	ctx context.Context,
+	req *inboundmessageports.SettleTriageDetentionRequest,
+	occurrence *detention.DetentionOccurrence,
+) (*inboundmessageports.SettledTriageDetention, error) {
+	params := detentionservice.WaiveParams{
+		OccurrenceID: occurrence.ID,
+		TenantInfo:   req.TenantInfo,
+		Reason:       detention.WaiverReasonOther,
+		Note:         req.Note,
+		UserID:       req.UserID,
+	}
+	if occurrence.Status == detention.OccurrenceStatusWaived {
+		return settledOf(occurrence.WaivedAmount, occurrence.Currency), nil
+	}
+	if s.credits == nil {
+		return waivedOf(s.detention.Waive(ctx, params))
+	}
+	if occurrence.AdditionalChargeID == nil {
+		return waivedOf(s.detention.WaiveUninvoiced(ctx, params))
+	}
+
+	credit, err := s.credits.CreditBilledCharge(ctx, &detentionports.CreditBilledDetentionRequest{
+		TenantInfo: req.TenantInfo,
+		Actor:      req.Actor,
+		ShipmentID: occurrence.ShipmentID,
+		ChargeID:   *occurrence.AdditionalChargeID,
+		Reason:     "Detention waived: " + req.Note,
+		Waiver: detentionports.DetentionWaiver{
+			OccurrenceID: occurrence.ID,
+			Reason:       params.Reason,
+			Note:         req.Note,
+			RequestedBy:  req.UserID,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if credit == nil {
+		return waivedOf(s.detention.WaiveUninvoiced(ctx, params))
+	}
+
+	settled := settledOf(credit.Amount, credit.Currency)
+	settled.InvoiceNumbers = credit.InvoiceNumbers()
+	settled.CreditMemoNumbers = credit.CreditMemoNumbers()
+	settled.CreditPending = credit.Pending()
+
+	return settled, nil
+}
+
+func waivedOf(
+	waived *detention.DetentionOccurrence,
+	err error,
+) (*inboundmessageports.SettledTriageDetention, error) {
 	if err != nil {
 		return nil, err
 	}
 
-	amount := settled.BillableAmount
-	if req.Decision == inboundmessage.StopsDecisionWaive {
-		amount = settled.WaivedAmount
-	}
+	return settledOf(waived.WaivedAmount, waived.Currency), nil
+}
 
+func settledOf(amount decimal.Decimal, currency string) *inboundmessageports.SettledTriageDetention {
 	return &inboundmessageports.SettledTriageDetention{
 		Amount:   amount.StringFixed(amountPlaces),
-		Currency: settled.Currency,
+		Currency: currency,
 		Settled:  true,
-	}, nil
+	}
 }

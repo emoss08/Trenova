@@ -1,32 +1,36 @@
-import type { InboundMessageDetail, TriageAction } from "@/lib/graphql/inbox";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
+import { useWidthBelow } from "@/hooks/use-width-below";
+import { describeApiError } from "@/lib/api-error-message";
+import type { InboundMessageDetail, TriageAction } from "@/lib/graphql/inbox";
 import { queries } from "@/lib/queries";
-import { isSnoozed, senderName } from "@/lib/triage/message-state";
 import { useTriageStore } from "@/stores/triage-store";
 import { useQuery } from "@tanstack/react-query";
-import {
-  ArchiveIcon,
-  ArrowDownIcon,
-  ArrowUpIcon,
-  CheckIcon,
-  ClockIcon,
-  PaperclipIcon,
-  XCloseIcon,
-} from "@trenova/shared/components/icons";
-import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Kbd, kbdOnSolidClassName } from "@trenova/shared/components/ui/kbd";
-import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerTitle,
+} from "@trenova/shared/components/ui/drawer";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatSecondsAgo, formatUnixTime } from "@trenova/shared/lib/date";
-import { cn, getNameInitials } from "@trenova/shared/lib/utils";
-import { useEffect, useMemo, useState } from "react";
-import { USER_FORMATTERS, actionCopy, nextOpenAction, snoozeText } from "../action-copy";
-import { CLASSIFICATION_VARIANT, classificationLabel } from "../classification";
-import { splitQuotedBody } from "../quoted-body";
+import { cn } from "@trenova/shared/lib/utils";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { useAnnouncePresence } from "../use-triage-presence";
 import { useTriageActions } from "../use-triage-actions";
+import { ActionBar } from "./action-bar";
+import { actionBarMode } from "./action-bar-mode";
+import { ActionsPanel } from "./actions-panel";
+import { ActivityTrace } from "./activity-trace";
+import { FileChips } from "./file-chips";
+import { MessageBody } from "./message-body";
+import { MessageChips, SettledReceipt } from "./message-chips";
+import { MessageHeader } from "./message-header";
+import { INITIAL_PANEL, panelReducer, stepStart, type DraftKind } from "./panel-state";
+import { ReaderPanelProvider, type ReaderPanel } from "./reader-panel";
+import { ReaderToolbar } from "./reader-toolbar";
+import { SentReplies } from "./sent-replies";
 
 /**
  * The reader's contract with the page.
@@ -60,292 +64,291 @@ export function useRegisterReaderCommands(commands: {
   }, [doNextStep, reply]);
 }
 
+/** Beside the message from this width; above its body below it. */
+const RAIL_WIDTH = 1041;
+/** Below this width the panel is a sheet opened from the action bar. */
+const COMPACT_WIDTH = 560;
+/** What the action bar shifts left by when the rail is beside the message, to sit under the words. */
+const RAIL_OFFSET = "pr-89";
+
 function ReaderSkeleton() {
   return (
-    <div aria-busy="true" className="mx-auto flex w-full max-w-170 flex-col gap-4 px-8 pt-7">
-      <Skeleton className="h-6 w-2/3" />
+    <div aria-busy="true" className="mx-auto flex w-full max-w-170 flex-col gap-4 px-8 pt-18">
+      <Skeleton className="h-7 w-2/3" />
       <div className="flex items-center gap-3">
-        <Skeleton className="size-7 rounded-full" />
+        <Skeleton className="size-6 rounded-full" />
         <Skeleton className="h-3.5 w-48" />
       </div>
-      <Skeleton className="h-24 w-full" />
+      <Skeleton className="h-6 w-40 rounded-full" />
+      <Skeleton className="h-28 w-full" />
     </div>
   );
 }
 
-function ActionLine({
-  message,
-  action,
-  number,
-}: {
-  message: InboundMessageDetail;
-  action: TriageAction;
-  number: number;
-}) {
+function ReaderError({ error, onRetry, onClose }: { error: unknown; onRetry: () => void; onClose: () => void }) {
   const t = useT();
-  const copy = actionCopy(t, action, message, USER_FORMATTERS);
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
+      <p className="text-base font-semibold">{t("This message could not be opened")}</p>
+      <p className="text-foreground-subtle max-w-sm text-sm">{describeApiError(error)}</p>
+      <div className="mt-2 flex gap-2">
+        <Button size="sm" variant="outline" onClick={onClose}>
+          {t("Close")}
+        </Button>
+        <Button size="sm" onClick={onRetry}>
+          {t("Try again")}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function stepsKey(actions: readonly TriageAction[]): string {
+  return actions.map((action) => `${action.id}:${action.done ? 1 : 0}`).join("|");
+}
+
+function ReaderView({
+  message,
+  position,
+  onClose,
+  onStep,
+}: Omit<ReaderProps, "messageId"> & { message: InboundMessageDetail }) {
+  const t = useT();
+  const actions = useTriageActions();
+  const now = useNowSeconds();
+  const rootRef = useRef<HTMLElement>(null);
+  const narrow = useWidthBelow(rootRef, RAIL_WIDTH);
+  const compact = useWidthBelow(rootRef, COMPACT_WIDTH);
+  const panelOpen = useTriageStore((store) => store.panelOpen);
+  const [state, dispatch] = useReducer(panelReducer, INITIAL_PANEL);
+  const [splitRequested, setSplitRequested] = useState<string | null>(null);
+  const [adhocReply, setAdhocReply] = useState(false);
+  const submits = useRef(new Map<string, () => void>());
+  const primary = useRef<(() => void) | null>(null);
+
+  const key = stepsKey(message.actions);
+  const [seenSteps, setSeenSteps] = useState<string | null>(null);
+  if (key !== seenSteps) {
+    setSeenSteps(key);
+    dispatch({ type: "stepsChanged", steps: message.actions });
+  }
+
+  const showPanel = useLatestCallback(() => {
+    if (compact) {
+      dispatch({ type: "sheet", open: true });
+    } else if (!useTriageStore.getState().panelOpen) {
+      useTriageStore.getState().setPanelOpen(true);
+    }
+  });
+
+  const draft = useLatestCallback((kind: DraftKind) => {
+    const step = message.actions.find((action) =>
+      kind === "load" ? action.kind === "BuildLoad" : action.kind === "Reply",
+    );
+    if (kind === "reply" && step === undefined) {
+      setAdhocReply(true);
+    }
+    showPanel();
+    dispatch({ type: "draftStarted", draft: kind, stepId: step?.id ?? kind });
+    const run = kind === "load" ? actions.draftLoad(message.id) : actions.draftReply(message.id);
+    run.then(
+      () => dispatch({ type: "draftSettled", draft: kind }),
+      (failure: unknown) =>
+        dispatch({ type: "draftSettled", draft: kind, error: describeApiError(failure) }),
+    );
+  });
+
+  const start = useLatestCallback((action: TriageAction) => {
+    const how = stepStart(action, {
+      hasLoadDraft: message.loadDraft !== null,
+      hasReplyDraft: message.replyDraft !== null,
+      replyInFlight: action.reply?.status === "Failed" || action.reply?.status === "Sending",
+    });
+    if (how === "link") {
+      useTriageStore.getState().openOverlay({ kind: "link", messageId: message.id });
+      return;
+    }
+    showPanel();
+    switch (how) {
+      case "draftLoad":
+        draft("load");
+        return;
+      case "draftReply":
+        draft("reply");
+        return;
+      case "compose":
+        dispatch({ type: "open", id: action.id });
+        return;
+      case "toggle":
+        dispatch({ type: "toggle", id: action.id });
+    }
+  });
+
+  const openFile = useLatestCallback((attachmentId: string, split: boolean) => {
+    const stepId = `file:${attachmentId}`;
+    if (!message.actions.some((action) => action.id === stepId)) {
+      useTriageStore
+        .getState()
+        .openOverlay({ kind: "doc", messageId: message.id, attachmentId });
+      return;
+    }
+    setSplitRequested(split ? attachmentId : null);
+    showPanel();
+    dispatch({ type: "open", id: stepId });
+  });
+
+  const openReply = useLatestCallback(() => {
+    const step = message.actions.find((action) => action.kind === "Reply");
+    if (step === undefined) {
+      setAdhocReply(true);
+    }
+    showPanel();
+    dispatch({ type: "open", id: step?.id ?? "reply" });
+  });
+
+  const registerSubmit = useCallback((stepId: string, submit: (() => void) | null) => {
+    if (submit === null) {
+      submits.current.delete(stepId);
+    } else {
+      submits.current.set(stepId, submit);
+    }
+  }, []);
+
+  const doNextStep = useLatestCallback(() => {
+    const open = state.open === null ? undefined : submits.current.get(state.open);
+    if (open !== undefined) {
+      open();
+      return;
+    }
+    primary.current?.();
+  });
+
+  const runNext = useLatestCallback(() => {
+    const mode = actionBarMode(message, state.drafting);
+    if (mode.kind !== "next" || mode.busy) {
+      return;
+    }
+    const open = state.open === mode.action.id ? submits.current.get(mode.action.id) : undefined;
+    if (open !== undefined) {
+      open();
+      return;
+    }
+    start(mode.action);
+  });
+
+  useRegisterReaderCommands({ doNextStep, reply: openReply });
+
+  const panel = useMemo<ReaderPanel>(
+    () => ({
+      state,
+      dispatch,
+      start,
+      draftReply: () => draft("reply"),
+      draftLoad: () => draft("load"),
+      registerSubmit,
+      openFile,
+      splitRequested,
+      adhocReply,
+      openReply,
+      compact,
+    }),
+    [state, start, draft, registerSubmit, openFile, splitRequested, adhocReply, openReply, compact],
+  );
+
+  const openSteps = message.actions.filter((action) => !action.done).length;
+  const rail = !narrow && panelOpen;
+  const inline = narrow && !compact && panelOpen;
 
   return (
-    <li className="flex items-start gap-3 py-2">
-      <span
-        className={cn(
-          "mt-0.5 flex size-4.5 shrink-0 items-center justify-center rounded-full border font-mono text-2xs",
-          action.done
-            ? "bg-success border-success text-foreground-on-solid"
-            : "border-border-strong text-foreground-subtle",
-        )}
+    <ReaderPanelProvider value={panel}>
+      <article
+        ref={rootRef}
+        aria-label={message.subject === "" ? t("(no subject)") : message.subject}
+        className="@container/reader relative flex min-h-0 flex-1 flex-col"
       >
-        {action.done ? <CheckIcon className="size-2.5" strokeWidth={3} /> : number}
-      </span>
-      <span className="flex min-w-0 flex-col">
-        <span className={cn("text-sm font-medium", action.done && "text-foreground-muted")}>
-          {copy.title}
-        </span>
-        <span className="text-foreground-subtle truncate text-xs">{copy.detail}</span>
-      </span>
-    </li>
+        <ReaderToolbar
+          message={message}
+          position={position}
+          onClose={onClose}
+          onStep={onStep}
+          openSteps={openSteps}
+          panelShown={compact ? state.sheet : panelOpen}
+          onTogglePanel={() =>
+            compact
+              ? dispatch({ type: "sheet", open: !state.sheet })
+              : useTriageStore.getState().togglePanel()
+          }
+          onReply={openReply}
+        />
+        <div className="scrollbar-overlay min-h-0 flex-1 overflow-y-auto">
+          <div
+            className={cn(
+              "animate-rise px-5 pt-6 pb-36 sm:px-8",
+              rail
+                ? "grid grid-cols-[minmax(0,640px)_300px] justify-center gap-x-14"
+                : cn("mx-auto flex flex-col", inline ? "max-w-186" : "max-w-170"),
+            )}
+          >
+            <div className="flex min-w-0 flex-col gap-5">
+              <MessageHeader message={message} now={now} />
+              <MessageChips message={message} />
+              {inline && <ActionsPanel message={message} placement="inline" />}
+              <SettledReceipt message={message} />
+              <MessageBody message={message} />
+              <FileChips message={message} />
+              <SentReplies message={message} />
+              <ActivityTrace activity={message.activity} now={now} />
+            </div>
+            {rail && <ActionsPanel message={message} placement="rail" />}
+          </div>
+        </div>
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-x-0 bottom-4.5 z-20 flex justify-center pr-16 pl-4 transition-[padding] duration-300 ease-settle",
+            rail && RAIL_OFFSET,
+          )}
+        >
+          <ActionBar message={message} onPrimary={runNext} primaryRef={primary} />
+        </div>
+        {compact && (
+          <Drawer
+            open={state.sheet}
+            onOpenChange={(open) => dispatch({ type: "sheet", open })}
+          >
+            <DrawerContent className="bg-raised max-h-[78%] rounded-t-2xl">
+              <DrawerTitle className="sr-only">{t("Actions and information")}</DrawerTitle>
+              <DrawerDescription className="sr-only">
+                {t("The steps this message asks for, and what it tells you")}
+              </DrawerDescription>
+              <div className="overflow-y-auto px-4 pt-3 pb-6">
+                <ActionsPanel message={message} placement="sheet" />
+              </div>
+            </DrawerContent>
+          </Drawer>
+        )}
+      </article>
+    </ReaderPanelProvider>
   );
 }
 
 /**
- * One message, open: its subject, who sent it and when, what Nova read it as,
- * the steps it asks for, the words with the quoted thread folded away, and
- * its files. The actions panel, the floating action bar and the composer are
- * built on this column.
+ * One message, open: its subject and thread, who sent it and what Nova read
+ * it as, the words with what Nova read underlined, its files, the replies
+ * that went out and what happened to it — beside the steps it asks for, each
+ * finished in place, and under a bar that does the next one.
  */
 export function Reader({ messageId, position, onClose, onStep }: ReaderProps) {
-  const t = useT();
-  const actions = useTriageActions();
-  const openOverlay = useTriageStore((state) => state.openOverlay);
   const query = useQuery(queries.inbox.message(messageId));
-  const message = query.data;
-  const [showQuoted, setShowQuoted] = useState(false);
-  const now = useNowSeconds();
   useAnnouncePresence(messageId, "viewing");
+  const message = query.data;
 
-  const body = useMemo(() => splitQuotedBody(message?.textBody ?? ""), [message?.textBody]);
-  const next = message === undefined ? null : nextOpenAction(message.actions);
-
-  useRegisterReaderCommands({
-    doNextStep: useMemo(() => {
-      if (message === undefined || next === null) {
-        return undefined;
-      }
-      return () => {
-        switch (next.kind) {
-          case "Link":
-            openOverlay({ kind: "link", messageId: message.id });
-            return;
-          case "BlockSender":
-            actions.blockSender(message.id);
-            return;
-          case "File":
-            if (next.attachment !== null && next.shipment !== null) {
-              void actions
-                .file(message.id, {
-                  attachmentId: next.attachment.id,
-                  shipmentId: next.shipment.id,
-                })
-                .catch(() => undefined);
-            }
-            return;
-          case "BuildLoad":
-            void actions.draftLoad(message.id).catch(() => undefined);
-            return;
-          case "Reply":
-            void actions.draftReply(message.id).catch(() => undefined);
-            return;
-          case "CheckStops":
-          case "LogException":
-            return;
-        }
-      };
-    }, [message, next, actions, openOverlay]),
-    reply: useMemo(
-      () =>
-        message === undefined || message.replyDraft !== null
-          ? undefined
-          : () => void actions.draftReply(message.id).catch(() => undefined),
-      [message, actions],
-    ),
-  });
-
-  if (query.isLoading || message === undefined) {
-    return <ReaderSkeleton />;
+  if (message === undefined) {
+    return query.isError ? (
+      <ReaderError error={query.error} onRetry={() => void query.refetch()} onClose={onClose} />
+    ) : (
+      <ReaderSkeleton />
+    );
   }
 
-  const classification = message.classification ?? "Other";
-  const waiting = message.needsReview;
-
-  return (
-    <article aria-label={message.subject} className="flex min-h-0 flex-1 flex-col">
-      <div className="flex h-11 shrink-0 items-center gap-0.5 px-3">
-        <Button size="icon-sm" variant="quiet" aria-label={t("Close")} onClick={onClose}>
-          <XCloseIcon aria-hidden className="size-3.5" />
-        </Button>
-        <Button
-          size="icon-sm"
-          variant="quiet"
-          aria-label={t("Previous message")}
-          disabled={position.index <= 1}
-          onClick={() => onStep(-1)}
-        >
-          <ArrowUpIcon aria-hidden className="size-3.5" />
-        </Button>
-        <Button
-          size="icon-sm"
-          variant="quiet"
-          aria-label={t("Next message")}
-          disabled={position.index >= position.total}
-          onClick={() => onStep(1)}
-        >
-          <ArrowDownIcon aria-hidden className="size-3.5" />
-        </Button>
-        {position.total > 0 && position.index > 0 && (
-          <span className="text-foreground-subtle mx-1 font-mono text-xs tabular-nums">
-            {t("{0} / {1}", position.index, position.total)}
-          </span>
-        )}
-      </div>
-
-      <div className="scrollbar-overlay min-h-0 flex-1 overflow-y-auto">
-        <div className="animate-rise mx-auto flex w-full max-w-170 flex-col gap-5 px-5 pt-5 pb-32 sm:px-8">
-          <h1 className="text-2xl font-semibold">
-            {message.subject === "" ? t("(no subject)") : message.subject}
-          </h1>
-          <div className="flex items-center gap-3">
-            <span className="bg-muted text-foreground-muted flex size-7 shrink-0 items-center justify-center rounded-full text-2xs font-semibold">
-              {getNameInitials(senderName(message), "?")}
-            </span>
-            <span className="flex min-w-0 flex-1 items-baseline gap-2">
-              <span className="truncate text-base font-medium">{senderName(message)}</span>
-              {message.fromName.trim() !== "" && (
-                <span className="text-foreground-subtle truncate text-sm">
-                  {message.fromAddress}
-                </span>
-              )}
-            </span>
-            <span className="text-foreground-subtle shrink-0 font-mono text-xs tabular-nums">
-              {t(
-                "{0} · {1}",
-                formatUnixTime(message.receivedAt),
-                formatSecondsAgo(now - message.receivedAt),
-              )}
-            </span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-1.5">
-            <Badge variant={CLASSIFICATION_VARIANT[classification]}>
-              {classificationLabel(t, classification)}
-            </Badge>
-            {message.matchedShipment === null && message.matchedCustomer === null && (
-              <Badge variant="neutral" appearance="outline">
-                {t("Not linked")}
-              </Badge>
-            )}
-            {message.owner !== null && (
-              <Badge variant="neutral" appearance="outline">
-                {message.owner.name}
-              </Badge>
-            )}
-            {message.snooze !== null && isSnoozed(message) && (
-              <Badge variant="warning">
-                <ClockIcon aria-hidden className="size-3" />
-                {snoozeText(t, message.snooze, USER_FORMATTERS)}
-              </Badge>
-            )}
-          </div>
-
-          {message.actions.length > 0 && (
-            <section
-              aria-label={t("Actions")}
-              className="border-border-subtle bg-card rounded-lg border px-4 py-3"
-            >
-              <div className="text-foreground-subtle flex items-center justify-between text-xs font-medium">
-                <span>{t("Actions")}</span>
-                <span className="font-mono tabular-nums">
-                  {t(
-                    "{0}/{1}",
-                    message.actions.filter((action) => action.done).length,
-                    message.actions.length,
-                  )}
-                </span>
-              </div>
-              <ol className="mt-1">
-                {message.actions.map((action, index) => (
-                  <ActionLine
-                    key={action.id}
-                    message={message}
-                    action={action}
-                    number={index + 1}
-                  />
-                ))}
-              </ol>
-            </section>
-          )}
-
-          <div className="text-base leading-relaxed wrap-anywhere whitespace-pre-wrap">
-            {body.own}
-          </div>
-          {body.quoted !== "" && (
-            <div>
-              <Button size="xs" variant="ghost" onClick={() => setShowQuoted((value) => !value)}>
-                {showQuoted ? t("Hide the quoted thread") : t("Show the quoted thread")}
-              </Button>
-              {showQuoted && (
-                <div className="text-foreground-muted border-border mt-2 border-l-2 pl-3 text-sm whitespace-pre-wrap">
-                  {body.quoted}
-                </div>
-              )}
-            </div>
-          )}
-
-          {message.attachments.length > 0 && (
-            <ul className="flex flex-wrap gap-1.5">
-              {message.attachments.map((attachment) => (
-                <li
-                  key={attachment.id}
-                  className="border-border text-foreground-muted flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs"
-                >
-                  <PaperclipIcon aria-hidden className="size-3" />
-                  {attachment.fileName}
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {message.replyDraft !== null && (
-            <section className="border-border-subtle rounded-lg border px-4 py-3">
-              <div className="text-foreground-subtle mb-2 flex items-center gap-1.5 text-xs font-medium">
-                {message.replyDraft.draftedByNova ? (
-                  <>
-                    <NovaMark className="size-3" />
-                    {t("Drafted by Nova")}
-                  </>
-                ) : (
-                  t("Reply draft")
-                )}
-              </div>
-              <p className="text-sm whitespace-pre-wrap">{message.replyDraft.body}</p>
-            </section>
-          )}
-        </div>
-      </div>
-
-      {waiting && (
-        <div className="flex shrink-0 items-center justify-end gap-1.5 px-6 pb-4">
-          <Button size="sm" variant="ghost" onClick={() => actions.ignore([message.id])}>
-            <ArchiveIcon aria-hidden className="size-3.5" />
-            {t("Ignore")}
-            <Kbd>#</Kbd>
-          </Button>
-          <Button size="sm" onClick={() => actions.handle([message.id])}>
-            <CheckIcon aria-hidden className="size-3.5" />
-            {t("Mark handled")}
-            <Kbd className={kbdOnSolidClassName}>E</Kbd>
-          </Button>
-        </div>
-      )}
-    </article>
-  );
+  return <ReaderView message={message} position={position} onClose={onClose} onStep={onStep} />;
 }

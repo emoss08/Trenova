@@ -275,7 +275,16 @@ export function LoadStep({
         <dl className="flex flex-col text-sm">
           {[
             [t("Shipment"), created.proNumber],
-            [t("Lane"), `${created.originCity}, ${created.originState} → ${created.destinationCity}, ${created.destinationState}`],
+            [
+              t("Lane"),
+              t(
+                "{0}, {1} → {2}, {3}",
+                created.originCity,
+                created.originState,
+                created.destinationCity,
+                created.destinationState,
+              ),
+            ],
             [t("BOL"), created.bol === "" ? "—" : created.bol],
           ].map(([label, value]) => (
             <div key={label} className="flex justify-between gap-2.5 py-1">

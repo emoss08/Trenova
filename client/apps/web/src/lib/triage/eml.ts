@@ -22,7 +22,12 @@ const FIRST_PRINTABLE = 0x20;
 
 /** The text without control characters, which no file name may hold. */
 function withoutControls(value: string): string {
-  return [...value].map((character) => (character.charCodeAt(0) < FIRST_PRINTABLE ? " " : character)).join("");
+  let clean = "";
+  for (let index = 0; index < value.length; index += 1) {
+    clean += value.charCodeAt(index) < FIRST_PRINTABLE ? " " : value[index];
+  }
+
+  return clean;
 }
 
 /** A header value on one line: a stored value can never start a header of its own. */
@@ -56,6 +61,7 @@ function rfc2822Date(seconds: number): string {
 }
 
 export function messageEml(message: EmlMessage): string {
+  // i18n-ignore: mail headers are the RFC 5322 protocol, not interface text
   const headers = [
     `From: ${mailbox(message.fromName, message.fromAddress)}`,
     `To: ${message.toAddresses.map(oneLine).join(", ")}`,

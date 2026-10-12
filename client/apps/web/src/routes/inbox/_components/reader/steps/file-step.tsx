@@ -2,6 +2,7 @@ import { ShipmentAutocomplete } from "@/components/autocomplete-fields";
 import type { InboundAttachment, InboundMessageDetail, TriageAction } from "@/lib/graphql/inbox";
 import type { SelectOption } from "@/lib/graphql/select-options";
 import { describeApiError } from "@/lib/api-error-message";
+import { documentTypeName, documentTypeNamed } from "@/lib/triage/document-types";
 import { useTriageStore } from "@/stores/triage-store";
 import { CheckIcon, EyeIcon, LayersThree01Icon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -24,12 +25,8 @@ import { StepBody, StepError, StepField, StepFooter } from "./step-parts";
 
 /** The value a page's type select uses for "Don't file". */
 const SKIP = "__skip";
+const NO_TYPES: readonly SelectOption[] = [];
 
-function typeIdNamed(documentTypes: readonly SelectOption[], name: string): string | null {
-  const wanted = name.trim().toLowerCase();
-
-  return documentTypes.find((type) => type.label.trim().toLowerCase() === wanted)?.id ?? null;
-}
 
 function TypeSelect({
   label,
@@ -48,7 +45,7 @@ function TypeSelect({
 }) {
   const t = useT();
   const items = [
-    ...documentTypes.map((type) => ({ value: type.id, label: type.label })),
+    ...documentTypes.map((type) => ({ value: type.id, label: documentTypeName(type) })),
     ...(allowSkip ? [{ value: SKIP, label: t("Don't file") }] : []),
   ];
 
@@ -124,7 +121,7 @@ export function FileStep({
 }) {
   const t = useT();
   const actions = useTriageActions();
-  const documentTypes = useTriageDocumentTypes().data?.results ?? [];
+  const documentTypes = useTriageDocumentTypes().data?.results ?? NO_TYPES;
   const pages = attachment.pages;
   const canSplit = pages.length > 1;
   const [split, setSplit] = useState(initialSplit && canSplit);
@@ -144,7 +141,7 @@ export function FileStep({
         if (chosen !== undefined) {
           return chosen === SKIP ? null : chosen;
         }
-        return typeIdNamed(documentTypes, page.suggestedType);
+        return documentTypeNamed(documentTypes, page.suggestedType)?.id ?? null;
       }),
     [pages, pageTypes, documentTypes],
   );

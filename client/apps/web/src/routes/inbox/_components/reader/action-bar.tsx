@@ -18,10 +18,13 @@ import { Kbd, kbdOnSolidClassName } from "@trenova/shared/components/ui/kbd";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
+import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { classificationLabel } from "../classification";
 import { cn, toSentenceFragment } from "@trenova/shared/lib/utils";
-import { useState, type ReactNode } from "react";
+import { novaButtonClass } from "@trenova/shared/lib/variants/nova";
+import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
+import { useEffect, useState, type ReactNode, type RefObject } from "react";
 import { USER_FORMATTERS, actionCopy, ruleActionPhrase } from "../action-copy";
 import { tomorrowMorning } from "../snooze-times";
 import { useTriageActions } from "../use-triage-actions";
@@ -68,6 +71,7 @@ function noteText(t: TranslateFn, note: WhyNote, mailbox: string): string {
 
 function WhyRowView({ row }: { row: WhyRow }) {
   const t = useT();
+  const rt = useRichT();
   const line = (icon: ReactNode, text: ReactNode) => (
     <div className="text-foreground-muted flex items-center gap-2.5 p-1.5 text-base leading-normal">
       {icon}
@@ -105,10 +109,18 @@ function WhyRowView({ row }: { row: WhyRow }) {
             style={{ left: `${bar}%` }}
           />
         </span>,
-        <>
-          <span className="text-foreground font-medium">{t("{0}% sure", percent)}</span>
-          {row.under && t(" — under this mailbox's {0}% bar", bar)}
-        </>,
+        row.under
+          ? rt(
+              "<b>{0}% sure</b> — under this mailbox's {1}% bar",
+              { b: (chunks) => <span className="text-foreground font-medium">{chunks}</span> },
+              percent,
+              bar,
+            )
+          : rt(
+              "<b>{0}% sure</b>",
+              { b: (chunks) => <span className="text-foreground font-medium">{chunks}</span> },
+              percent,
+            ),
       );
     }
     case "note":
@@ -195,11 +207,13 @@ function teachTitle(
 export function ActionBar({
   message,
   onPrimary,
-  onNext,
+  primaryRef,
 }: {
   message: InboundMessageDetail;
-  /** ↵ and the primary button: submit the open step, or start the next one. */
+  /** The primary button of a next step: submit the open step, or start the next one. */
   onPrimary: () => void;
+  /** Where the bar leaves what its primary button does, for ↵ to press. */
+  primaryRef: RefObject<(() => void) | null>;
 }) {
   const t = useT();
   const actions = useTriageActions();
@@ -209,10 +223,6 @@ export function ActionBar({
   const [note, setNote] = useState("");
   const [teach, setTeach] = useState(false);
   const mode = actionBarMode(message, panel.state.drafting);
-  if (mode.kind === "none") {
-    return null;
-  }
-
   const ids = [message.id];
   const total = message.actions.length;
   const doneCount = message.actions.filter((step) => step.done).length;
@@ -227,6 +237,35 @@ export function ActionBar({
   const canWait =
     message.awaitingReply === null &&
     message.replies.some((reply) => reply.status === "Sent");
+  const ignoreHeld = () =>
+    actions.ignore(ids, { note: t("Phishing — sender not on the allow list.") });
+
+  const press = useLatestCallback(() => {
+    switch (mode.kind) {
+      case "next":
+        onPrimary();
+        return;
+      case "held":
+        ignoreHeld();
+        return;
+      case "done":
+      case "waiting":
+        handle();
+        return;
+      case "none":
+        return;
+    }
+  });
+  useEffect(() => {
+    primaryRef.current = noting ? null : press;
+    return () => {
+      primaryRef.current = null;
+    };
+  }, [primaryRef, press, noting]);
+
+  if (mode.kind === "none") {
+    return null;
+  }
 
   const openMore = (button: HTMLElement) =>
     openMenuFrom(
@@ -345,9 +384,7 @@ export function ActionBar({
         </Button>
         <Button
           className="h-8.5 rounded-lg"
-          onClick={() =>
-            actions.ignore(ids, { note: t("Phishing — sender not on the allow list.") })
-          }
+          onClick={ignoreHeld}
         >
           {t("Ignore")}
           <Kbd className={kbdOnSolidClassName}>↵</Kbd>
@@ -382,9 +419,9 @@ export function ActionBar({
     main = (
       <>
         <Button
-          variant={nova ? "nova" : "default"}
+          variant={nova ? "bare" : "default"}
           disabled={mode.busy}
-          className="h-8.5 rounded-lg"
+          className={cn("h-8.5 rounded-lg", nova && novaButtonClass)}
           onClick={onPrimary}
         >
           {primaryLabel(t, mode.primary)}

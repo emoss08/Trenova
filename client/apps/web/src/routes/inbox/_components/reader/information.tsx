@@ -1,5 +1,6 @@
 import { recordPath } from "@/config/record-links";
 import type { InboundMessageDetail, InboundShipmentRef } from "@/lib/graphql/inbox";
+import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { queries } from "@/lib/queries";
 import { useTriageStore } from "@/stores/triage-store";
 import { useQuery } from "@tanstack/react-query";
@@ -17,6 +18,7 @@ import {
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   formatUnixDateTimeShort,
@@ -29,8 +31,8 @@ import { useTriageActions } from "../use-triage-actions";
 
 const DAY = 86_400;
 
-function lane(shipment: InboundShipmentRef): string {
-  return `${shipment.originCity} → ${shipment.destinationCity}`;
+function lane(t: TranslateFn, shipment: InboundShipmentRef): string {
+  return t("{0} → {1}", shipment.originCity, shipment.destinationCity);
 }
 
 function RowIcon({ children, open }: { children: React.ReactNode; open?: boolean }) {
@@ -53,7 +55,7 @@ function ShipmentRow({ message, shipment }: { message: InboundMessageDetail; shi
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const peek = useQuery(queries.inbox.shipmentPeek(shipment.id)).data;
-  const now = Math.floor(Date.now() / 1000);
+  const now = useNowSeconds();
   const openPeek = () =>
     useTriageStore
       .getState()
@@ -69,7 +71,7 @@ function ShipmentRow({ message, shipment }: { message: InboundMessageDetail; shi
 
   const trigger = useContextMenuTrigger(() => ({
     title: shipment.proNumber,
-    subtitle: lane(shipment),
+    subtitle: lane(t, shipment),
     entries: [
       {
         id: "open",
@@ -136,7 +138,7 @@ function ShipmentRow({ message, shipment }: { message: InboundMessageDetail; shi
         <span className="flex min-w-0 flex-1 flex-col leading-snug">
           <span className="truncate font-mono text-base font-medium">{shipment.proNumber}</span>
           <span className="text-foreground-subtle truncate text-xs">
-            {lane(shipment)}
+            {lane(t, shipment)}
             {meta !== null && (
               <span className={cn(peek?.late === true && "text-warning")}>{t(" · {0}", meta)}</span>
             )}
@@ -268,7 +270,7 @@ function Fact({ messageId, fact }: { messageId: string; fact: FactCell }) {
         id: "copy-labelled",
         label: t("Copy as “{0}: …”", fact.label),
         icon: Copy01Icon,
-        onSelect: () => actions.copyText(`${fact.label}: ${fact.value}`),
+        onSelect: () => actions.copyText(t("{0}: {1}", fact.label, fact.value)),
       },
       fact.key !== null && { type: "separator" },
       fact.key !== null && {

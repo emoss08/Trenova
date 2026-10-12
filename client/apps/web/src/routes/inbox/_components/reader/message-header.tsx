@@ -93,7 +93,7 @@ function OlderInThread({ message, now }: { message: InboundMessageDetail; now: n
     () =>
       (query.data ?? [])
         .filter((row) => row.id !== message.id && row.receivedAt <= message.receivedAt)
-        .toSorted((a, b) => a.receivedAt - b.receivedAt),
+        .sort((a, b) => a.receivedAt - b.receivedAt),
     [query.data, message.id, message.receivedAt],
   );
   if (older.length === 0) {

@@ -335,7 +335,7 @@
     ]
   },
   "(no subject)": {
-    "sites": 3,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -1126,6 +1126,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "204 tenders, 214 status, 210 invoices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "210 Freight invoice": {
@@ -2018,6 +2027,33 @@
       "apps/web/components"
     ]
   },
+  "<b>Didn't send.</b> {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "<b>One is</b> yours — <ref>{0}</ref> has waited longest.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "<b>One is</b> yours.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "<b>{0, plural, one {# run} other {# runs}}</b> today, <f>{1} failed</f>.": {
     "sites": 1,
     "scope": [
@@ -2045,6 +2081,42 @@
       "routes/agent-control"
     ]
   },
+  "<b>{0} are</b> yours — <ref>{1}</ref> has waited longest.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "<b>{0} are</b> yours.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "<b>{0}% sure</b>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "<b>{0}% sure</b> — under this mailbox's {1}% bar": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "<b>{0}</b> accounts for {1}% of everything forgiven — {2} across {3, plural, one {# waiver} other {# waivers}}.": {
     "sites": 1,
     "scope": [
@@ -2052,6 +2124,15 @@
     ],
     "areas": [
       "routes/detention-intelligence"
+    ]
+  },
+  "<b>{0}</b> is writing a reply too": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "<b>{0}</b> reaches {1, plural, one {# person} other {# people}}. They will fall back to the next home screen that matches them. This cannot be undone.": {
@@ -2079,6 +2160,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "<b>{0}</b> {1, plural, one {carries} other {carry}} over to tomorrow — <b>{2}</b> is on overnight.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "<b>{0}</b> {1, plural, one {carries} other {carry}} over to tomorrow.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "<e>{0, plural, one {# exception is} other {# exceptions are}}</e> still open.": {
@@ -3251,6 +3350,15 @@
       "go/other"
     ]
   },
+  "A charge is a person's call.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "A charge is over the rate con": {
     "sites": 1,
     "scope": [
@@ -3362,7 +3470,7 @@
     ]
   },
   "A coded waiver reason is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -4461,6 +4569,15 @@
       "go/other"
     ]
   },
+  "A domain or an address": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "A driver": {
     "sites": 2,
     "scope": [
@@ -5264,6 +5381,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A load already on the board has the same lane and day.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "A load exceeding any of these needs a permit in this state": {
@@ -6109,6 +6235,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "A person did something else": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "A person holds one position, so this replaces any title they hold now.": {
@@ -7023,6 +7158,15 @@
       "apps/web/components"
     ]
   },
+  "A reply to {0} didn't send": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "A reply was rated unhelpful": {
     "sites": 1,
     "scope": [
@@ -7414,6 +7558,15 @@
       "go/other"
     ]
   },
+  "A rule acted on it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "A rule cannot outlast its agreement": {
     "sites": 1,
     "scope": [
@@ -7430,6 +7583,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A rule had Nova {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "A rule must name the argument it checks": {
@@ -7836,6 +7998,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "A shared address — dispatch@, pod@, ap@": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "A sheet that routes a scanned stack here, from any scanner": {
@@ -8587,6 +8758,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A teammate": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "A teammate mentioned you": {
@@ -9455,6 +9635,15 @@
       "go/other"
     ]
   },
+  "A {0} for {1} is already on file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "A {0} has been added to your record.": {
     "sites": 1,
     "scope": [
@@ -9462,6 +9651,15 @@
     ],
     "areas": [
       "template/notification.dash.disciplinary_issued"
+    ]
+  },
+  "A {0} is already on file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "A {0} mailbox receives whole messages and needs no API key": {
@@ -12533,12 +12731,13 @@
     ]
   },
   "Act": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/inbox"
     ]
   },
   "Act on at most {0} records at a time": {
@@ -12629,7 +12828,7 @@
     ]
   },
   "Actions": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "ts"
     ],
@@ -12644,6 +12843,15 @@
       "routes/random-testing",
       "routes/shipment",
       "routes/worker"
+    ]
+  },
+  "Actions and information": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Actions for case {0}": {
@@ -13400,6 +13608,15 @@
       "apps/web/components"
     ]
   },
+  "Add a forwarding rule for every message to the address above, and keep a copy in the original inbox.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Add a golden case first": {
     "sites": 1,
     "scope": [
@@ -13839,7 +14056,7 @@
     ]
   },
   "Add a source": {
-    "sites": 2,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -15557,6 +15774,15 @@
       "routes/agent-control"
     ]
   },
+  "Adding a source needs mailbox access, which administrators have. Ask one to add it, or to give you access.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Adding...": {
     "sites": 1,
     "scope": [
@@ -15723,7 +15949,7 @@
     ]
   },
   "Address": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -15735,6 +15961,7 @@
       "routes/agent-control",
       "routes/customer",
       "routes/edi",
+      "routes/inbox",
       "routes/onboarding",
       "routes/shipment",
       "template/rateconfirmation.pdf"
@@ -16062,6 +16289,24 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Adds {0} exception to the shipment so billing holds the invoice until it's settled.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Adds {0} exception to {1} so billing holds the invoice until it's settled.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Adjust PTO balance": {
@@ -17351,6 +17596,15 @@
       "go/other"
     ]
   },
+  "Agents can make mistakes. Check important details before you act on them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Agents can't answer until a provider is connected.": {
     "sites": 1,
     "scope": [
@@ -18233,6 +18487,15 @@
       "apps/web/components"
     ]
   },
+  "All filled in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "All fleets": {
     "sites": 1,
     "scope": [
@@ -18681,6 +18944,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "All {0} done": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "All {0} standard templates exist in your organization.": {
@@ -21426,6 +21698,15 @@
       "go/other"
     ]
   },
+  "An invoice still bills this detention charge, but none of its lines can be credited. Adjust the invoice in billing.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "An invoiced order charge cannot be changed": {
     "sites": 1,
     "scope": [
@@ -21896,6 +22177,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Another address at the sender": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Another attempt is scheduled": {
@@ -22635,6 +22925,15 @@
       "apps/web/lib",
       "packages/shared/lib",
       "routes/desk"
+    ]
+  },
+  "Anywhere freight work arrives. Nova reads all of it the same way.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Apartment, suite, or unit number (optional).": {
@@ -23612,6 +23911,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Appointment window": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Appointment {0}": {
@@ -25321,7 +25629,7 @@
     ]
   },
   "Arrived": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -25332,6 +25640,15 @@
       "routes/service-failure",
       "template/detention.notice.email",
       "template/detention.notice.pdf"
+    ]
+  },
+  "Arrived ({0})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Arrived at {0}": {
@@ -25443,6 +25760,15 @@
       "apps/web/components",
       "routes/desk",
       "routes/invoice-adjustment-batch"
+    ]
+  },
+  "As": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "As Of": {
@@ -25725,6 +26051,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Ask an administrator to add a source; adding one needs mailbox access.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Ask an agent in Desk": {
@@ -26397,7 +26732,7 @@
     ]
   },
   "Assign": {
-    "sites": 15,
+    "sites": 17,
     "scope": [
       "ts"
     ],
@@ -26767,6 +27102,15 @@
       "go/other"
     ]
   },
+  "Assign to": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Assign to at most 500 workers at a time": {
     "sites": 1,
     "scope": [
@@ -27062,7 +27406,7 @@
     ]
   },
   "Assigned to you": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -27071,7 +27415,7 @@
     ]
   },
   "Assigned to {0}": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -30586,7 +30930,7 @@
     ]
   },
   "BOL": {
-    "sites": 16,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -30599,6 +30943,7 @@
       "routes/billing-queue",
       "routes/carrier-invoice-matching",
       "routes/desk",
+      "routes/inbox",
       "routes/invoice",
       "routes/order",
       "routes/shipment"
@@ -30701,7 +31046,7 @@
     ]
   },
   "Back": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -30711,9 +31056,19 @@
       "routes/auth",
       "routes/billing-queue",
       "routes/desk",
+      "routes/inbox",
       "routes/journal-entry",
       "routes/onboarding",
       "routes/worker"
+    ]
+  },
+  "Back from snooze": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Back in Waiting on you": {
@@ -30958,6 +31313,33 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Back: a document was attached": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Back: the invoice was paid": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Back: the shipment delivered": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Backend validation rule": {
@@ -34413,7 +34795,7 @@
     ]
   },
   "Block and ignore": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -35325,7 +35707,7 @@
     ]
   },
   "Broker": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -35334,6 +35716,7 @@
       "apps/web/components",
       "apps/web/lib",
       "go/other",
+      "routes/inbox",
       "routes/rate-confirmation-public"
     ]
   },
@@ -36210,6 +36593,15 @@
       "apps/web/components"
     ]
   },
+  "By {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "By {0} · {1}": {
     "sites": 2,
     "scope": [
@@ -36987,7 +37379,7 @@
     ]
   },
   "Cancel": {
-    "sites": 278,
+    "sites": 281,
     "scope": [
       "ts"
     ],
@@ -38836,7 +39228,7 @@
     ]
   },
   "Carrier": {
-    "sites": 42,
+    "sites": 43,
     "scope": [
       "go",
       "ts"
@@ -38858,6 +39250,7 @@
       "routes/carrier-sourcing",
       "routes/desk",
       "routes/dispatch-console",
+      "routes/inbox",
       "routes/osha",
       "routes/rate-agreement",
       "routes/routing-guide",
@@ -40141,6 +40534,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Carrying over": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Carryover": {
@@ -42972,6 +43374,15 @@
       "routes/agent-control"
     ]
   },
+  "Checked in at gate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Checked the product guide": {
     "sites": 1,
     "scope": [
@@ -43653,6 +44064,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Choose a type": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Choose a value": {
@@ -46612,7 +47032,7 @@
     ]
   },
   "Close": {
-    "sites": 50,
+    "sites": 56,
     "scope": [
       "ts"
     ],
@@ -48606,7 +49026,7 @@
     ]
   },
   "Commodity": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -48617,6 +49037,7 @@
       "routes/agent-control",
       "routes/commodity",
       "routes/edi",
+      "routes/inbox",
       "routes/reports",
       "routes/shipment"
     ]
@@ -51526,6 +51947,15 @@
       "routes/agent-control"
     ]
   },
+  "Connected — nothing was waiting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Connected, but the model returned a different dimension than configured": {
     "sites": 1,
     "scope": [
@@ -52425,7 +52855,7 @@
     ]
   },
   "Continue": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -52433,6 +52863,7 @@
       "apps/web/components",
       "routes/admin",
       "routes/auth",
+      "routes/inbox",
       "routes/onboarding"
     ]
   },
@@ -53481,7 +53912,7 @@
     ]
   },
   "Copy": {
-    "sites": 13,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -53492,6 +53923,7 @@
       "routes/desk",
       "routes/detention-desk",
       "routes/edi",
+      "routes/inbox",
       "routes/invoice"
     ]
   },
@@ -53505,21 +53937,32 @@
     ]
   },
   "Copy BOL": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/inbox"
+    ]
+  },
+  "Copy PO": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/inbox"
     ]
   },
   "Copy PRO": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/inbox"
     ]
   },
   "Copy PRO number": {
@@ -53613,6 +54056,15 @@
       "routes/desk"
     ]
   },
+  "Copy as “{0}: …”": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Copy cell": {
     "sites": 1,
     "scope": [
@@ -53677,7 +54129,7 @@
     ]
   },
   "Copy link": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -53961,6 +54413,15 @@
       "routes/agent-control"
     ]
   },
+  "Copy value": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Copy webhook URL": {
     "sites": 3,
     "scope": [
@@ -53968,6 +54429,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Copy what Nova read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Copy what arrived": {
@@ -54274,6 +54744,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Corrected — Nova will remember": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Correction": {
@@ -54958,6 +55437,15 @@
       "routes/intake"
     ]
   },
+  "Could not load what is known about this sender.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Could not move it": {
     "sites": 1,
     "scope": [
@@ -54974,6 +55462,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Could not reach Trenova. Check the connection and try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Could not reach the endpoint": {
@@ -55505,6 +56002,15 @@
     ],
     "areas": [
       "packages/shared/hooks"
+    ]
+  },
+  "Couldn't save the draft — it is still here": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Couldn't send reply": {
@@ -56332,7 +56838,7 @@
     ]
   },
   "Create": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -56344,6 +56850,7 @@
       "go/other",
       "routes/admin",
       "routes/agent-control",
+      "routes/inbox",
       "routes/random-testing"
     ]
   },
@@ -57511,6 +58018,15 @@
       "routes/invoice"
     ]
   },
+  "Creating a load is not something Nova does on its own.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Creating invoice...": {
     "sites": 1,
     "scope": [
@@ -57558,6 +58074,15 @@
       "routes/edi",
       "routes/journal-reversal",
       "routes/worker"
+    ]
+  },
+  "Creating…": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Credential": {
@@ -59430,7 +59955,7 @@
     ]
   },
   "Customer": {
-    "sites": 73,
+    "sites": 79,
     "scope": [
       "go",
       "ts"
@@ -60000,6 +60525,15 @@
       "go/other"
     ]
   },
+  "Customer portals": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Customer praise": {
     "sites": 1,
     "scope": [
@@ -60073,12 +60607,13 @@
     ]
   },
   "Customer since {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/inbox"
     ]
   },
   "Customer statement": {
@@ -60134,6 +60669,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Customer · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Customer's EDI trading partner": {
@@ -60948,6 +61492,15 @@
       "routes/routing-guide"
     ]
   },
+  "Damaged": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Dark": {
     "sites": 4,
     "scope": [
@@ -61259,7 +61812,7 @@
     ]
   },
   "Date": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
       "go",
       "ts"
@@ -61279,6 +61832,7 @@
       "routes/edi",
       "routes/escrow-account",
       "routes/holiday",
+      "routes/inbox",
       "routes/invoice",
       "routes/osha",
       "routes/shipment",
@@ -61301,6 +61855,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Date and time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Date and time of the purchase": {
@@ -65272,6 +65835,15 @@
       "go/other"
     ]
   },
+  "Delete rule": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Delete rule set": {
     "sites": 2,
     "scope": [
@@ -65608,7 +66180,7 @@
     ]
   },
   "Delivered": {
-    "sites": 10,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -65621,6 +66193,7 @@
       "routes/desk",
       "routes/detention-desk",
       "routes/home",
+      "routes/inbox",
       "routes/shipment"
     ]
   },
@@ -65643,12 +66216,13 @@
     ]
   },
   "Delivered {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/desk",
+      "routes/inbox",
       "routes/shipment"
     ]
   },
@@ -65680,7 +66254,7 @@
     ]
   },
   "Delivery": {
-    "sites": 26,
+    "sites": 28,
     "scope": [
       "go",
       "ts"
@@ -65695,6 +66269,7 @@
       "routes/agent-control",
       "routes/desk",
       "routes/edi",
+      "routes/inbox",
       "routes/invoice",
       "routes/reports",
       "routes/shipment",
@@ -66839,14 +67414,15 @@
     ]
   },
   "Desk": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/config",
-      "routes/desk"
+      "routes/desk",
+      "routes/inbox"
     ]
   },
   "Desk agent": {
@@ -66931,7 +67507,7 @@
     ]
   },
   "Destination": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -66940,6 +67516,7 @@
       "apps/web/components",
       "go/other",
       "packages/shared/types",
+      "routes/inbox",
       "routes/rate-agreement",
       "routes/tender-offer-public",
       "template/tender.offer.email"
@@ -67616,6 +68193,15 @@
     ]
   },
   "Detention components must use the PerHour method": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Detention decision": {
     "sites": 1,
     "scope": [
       "go"
@@ -68648,7 +69234,7 @@
     ]
   },
   "Discard": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -68658,6 +69244,7 @@
       "routes/desk",
       "routes/fuel-purchase",
       "routes/home",
+      "routes/inbox",
       "routes/intake",
       "routes/rate-agreement",
       "routes/shipment"
@@ -69256,7 +69843,7 @@
     ]
   },
   "Dispatch": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -69267,6 +69854,7 @@
       "go/other",
       "packages/shared/lib",
       "packages/shared/types",
+      "routes/inbox",
       "routes/worker"
     ]
   },
@@ -69870,6 +70458,15 @@
       "apps/web/components",
       "apps/web/config",
       "routes/invoice"
+    ]
+  },
+  "Disputes, exceptions — anything with money on it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Disqualification Reason": {
@@ -70610,6 +71207,15 @@
       "go/other"
     ]
   },
+  "Do it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Do it now": {
     "sites": 1,
     "scope": [
@@ -70664,6 +71270,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Do this on its own next time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Do you have a SCAC code or USDOT number? Both are optional — add them now or skip.": {
@@ -70739,7 +71354,7 @@
     ]
   },
   "Document": {
-    "sites": 34,
+    "sites": 36,
     "scope": [
       "go",
       "ts"
@@ -71917,6 +72532,15 @@
       "routes/admin"
     ]
   },
+  "Don't file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Donations": {
     "sites": 1,
     "scope": [
@@ -71927,7 +72551,7 @@
     ]
   },
   "Done": {
-    "sites": 28,
+    "sites": 32,
     "scope": [
       "ts"
     ],
@@ -71946,6 +72570,15 @@
       "routes/invoice-adjustment-batch",
       "routes/rate-agreement",
       "routes/shipment"
+    ]
+  },
+  "Done reading": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Done scanning": {
@@ -72016,7 +72649,7 @@
     ]
   },
   "Download": {
-    "sites": 14,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -72026,6 +72659,7 @@
       "routes/agent-control",
       "routes/carrier",
       "routes/edi",
+      "routes/inbox",
       "routes/reports",
       "routes/shipment"
     ]
@@ -72055,6 +72689,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Download as .eml": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Download as PDF": {
@@ -72197,7 +72840,7 @@
     ]
   },
   "Draft": {
-    "sites": 41,
+    "sites": 42,
     "scope": [
       "go",
       "ts"
@@ -72212,6 +72855,7 @@
       "routes/admin",
       "routes/carrier-settlement-workspace",
       "routes/desk",
+      "routes/inbox",
       "routes/jurisdiction-rule",
       "routes/late-charges",
       "routes/osha",
@@ -72254,6 +72898,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Draft all": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Draft at most {0} messages at once": {
@@ -72511,15 +73164,6 @@
       "routes/desk"
     ]
   },
-  "Drafted by Nova": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
-    ]
-  },
   "Drafted here, signed off by the worker in Dash, then closed and scheduled again.": {
     "sites": 1,
     "scope": [
@@ -72554,6 +73198,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Drafting…": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Drafts can only be cloned from active or certified template versions": {
@@ -72924,7 +73577,7 @@
     ]
   },
   "Driver": {
-    "sites": 44,
+    "sites": 47,
     "scope": [
       "go",
       "ts"
@@ -72942,6 +73595,7 @@
       "routes/escrow-account",
       "routes/fuel-card",
       "routes/fuel-purchase",
+      "routes/inbox",
       "routes/pay-advance",
       "routes/pay-profile",
       "routes/recurring-deduction",
@@ -74000,6 +74654,15 @@
       "routes/dash-control"
     ]
   },
+  "Drivers texting photos and updates": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Drivers upload renewed CDLs, medical cards, and other DQ-file documents from their phone.": {
     "sites": 1,
     "scope": [
@@ -75006,7 +75669,7 @@
     ]
   },
   "EDI": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -75019,6 +75682,7 @@
       "packages/shared/types",
       "routes/agent-control",
       "routes/desk",
+      "routes/inbox",
       "routes/invoice",
       "routes/invoice-register",
       "routes/shipment"
@@ -76020,12 +76684,13 @@
     ]
   },
   "ETA": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/inbox",
       "routes/shipment"
     ]
   },
@@ -76039,13 +76704,23 @@
     ]
   },
   "ETA {0}": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/desk",
+      "routes/inbox",
       "routes/shipment"
+    ]
+  },
+  "ETA {0} · running late": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "ETA/out-of-route distance profile is required": {
@@ -76311,6 +76986,15 @@
       "routes/agent-control"
     ]
   },
+  "Each one names its PRO. One tap files them all.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Each payment waits on the payments from the books page until someone applies or ignores it.": {
     "sites": 1,
     "scope": [
@@ -76507,6 +77191,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Earlier in this thread": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Earlier kinds": {
@@ -77706,7 +78399,7 @@
     ]
   },
   "Email": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -77721,6 +78414,7 @@
       "routes/auth",
       "routes/carrier",
       "routes/desk",
+      "routes/inbox",
       "routes/worker"
     ]
   },
@@ -81360,7 +82054,7 @@
     ]
   },
   "Equipment": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -81370,6 +82064,7 @@
       "apps/web/lib",
       "packages/shared/lib",
       "packages/shared/types",
+      "routes/inbox",
       "routes/tender-offer-public",
       "template/tender.offer.email"
     ]
@@ -82939,6 +83634,15 @@
       "go/other"
     ]
   },
+  "Every address mail arrives on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Every affected lane is closed out and succeeded at the new rate from the effective date. The old rates stay in history, and nothing moves until you have read the preview.": {
     "sites": 1,
     "scope": [
@@ -84319,6 +85023,24 @@
       "routes/policies"
     ]
   },
+  "Everyone at this domain": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Everyone at this domain, once they write": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Everyone in your organization": {
     "sites": 1,
     "scope": [
@@ -84528,6 +85250,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Everything on {0} waits for a person.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Everything the driver owes, bundled into one notice. Range over it; empty on every kind but the digest.": {
@@ -91221,7 +91952,7 @@
     ]
   },
   "File": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -91258,6 +91989,33 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "File all": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "File as": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "File as one document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "File at most {0} messages at once": {
@@ -91394,6 +92152,24 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "File on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "File on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "File onto": {
@@ -91649,8 +92425,17 @@
       "routes/worker"
     ]
   },
+  "Filed on {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Filed on {0} as {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -91667,6 +92452,15 @@
       "routes/ifta-return"
     ]
   },
+  "Filed {0} at {1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Filed {0} · {1}": {
     "sites": 1,
     "scope": [
@@ -91674,6 +92468,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "Filed {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Filed. The next review is scheduled from the template cadence.": {
@@ -91713,12 +92516,13 @@
     ]
   },
   "Files": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/inbox"
     ]
   },
   "Files & scanning": {
@@ -91777,6 +92581,15 @@
       "go/other"
     ]
   },
+  "Filing a document on a shipment waits for a person on {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Filing reference": {
     "sites": 1,
     "scope": [
@@ -91813,6 +92626,15 @@
       "apps/web/components"
     ]
   },
+  "Filing…": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Fill a watchtower from what the sources report open": {
     "sites": 1,
     "scope": [
@@ -91838,6 +92660,24 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Fill in from this message": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Fill in the blanks — it reads like a sentence because it is one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Fill in the contact email and timezone on the Details tab.": {
@@ -91874,6 +92714,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Fill it in by hand below, or ask again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Fill out the form below to create a new Location.": {
@@ -92474,6 +93323,15 @@
     ]
   },
   "Find a shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Find a shipment…": {
     "sites": 1,
     "scope": [
       "ts"
@@ -93357,6 +94215,15 @@
       "routes/reports"
     ]
   },
+  "Fix": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Fix ID": {
     "sites": 1,
     "scope": [
@@ -93634,6 +94501,15 @@
     ],
     "areas": [
       "routes/settlement-control"
+    ]
+  },
+  "Flagged as wrong": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Flagged {0}": {
@@ -95038,6 +95914,15 @@
       "routes/time-attendance"
     ]
   },
+  "Forward": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Forward anything to {0} and it shows up here, already read.": {
     "sites": 1,
     "scope": [
@@ -95048,6 +95933,15 @@
     ]
   },
   "Forward it to Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Forwarded from {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -95909,12 +96803,22 @@
     ]
   },
   "From {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk",
+      "routes/inbox"
+    ]
+  },
+  "From {0} to {1}": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/inbox"
     ]
   },
   "From {0} · {1}": {
@@ -96990,6 +97894,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Future mail from {0} goes straight to Ignored.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Future mail goes straight to Ignored": {
@@ -98586,6 +99499,24 @@
       "routes/agent-control"
     ]
   },
+  "Going through the day": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Going through the day…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Golden case": {
     "sites": 1,
     "scope": [
@@ -98727,6 +99658,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Google Workspace": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Google cloud console.": {
@@ -99600,6 +100540,15 @@
       "go/other"
     ]
   },
+  "Hand it to Nova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Hand it to someone": {
     "sites": 1,
     "scope": [
@@ -99636,6 +100585,15 @@
       "routes/desk"
     ]
   },
+  "Hand off to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Hand over": {
     "sites": 1,
     "scope": [
@@ -99645,6 +100603,15 @@
       "routes/time-attendance"
     ]
   },
+  "Hand the message and its actions to one of your agents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Hand the message and its open steps to one of your agents": {
     "sites": 1,
     "scope": [
@@ -99652,6 +100619,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Hand this message to one of your agents in Desk": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Hand to next": {
@@ -99709,12 +100685,13 @@
     ]
   },
   "Handed off to {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/inbox"
     ]
   },
   "Handed out": {
@@ -99724,6 +100701,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "Handed over": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Handed over from {0}": {
@@ -99751,6 +100737,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Handed to {0} · {1, plural, one {they'll see it first thing} other {they'll see them first thing}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Handed-off task": {
@@ -99789,8 +100784,35 @@
       "api/handlers"
     ]
   },
+  "Handing off…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Handled": {
     "sites": 5,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Handled by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Handled, with a note": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -99952,6 +100974,15 @@
       "routes/hazmat-segregation-rule"
     ]
   },
+  "Has it now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Has its own": {
     "sites": 1,
     "scope": [
@@ -100024,8 +101055,17 @@
       "routes/inbox"
     ]
   },
-  "Have Nova draft it": {
+  "Have Nova do it": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Have Nova draft it": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -100731,7 +101771,7 @@
     ]
   },
   "Held back — looks like phishing": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -100928,6 +101968,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Help me finish this one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Help me fix these one at a time.": {
@@ -101134,6 +102183,15 @@
       "apps/web/components"
     ]
   },
+  "Hide earlier thread": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Hide fields": {
     "sites": 1,
     "scope": [
@@ -101231,15 +102289,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Hide the quoted thread": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
     ]
   },
   "Hide the waiting messages": {
@@ -102839,11 +103888,12 @@
     ]
   },
   "How many": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/inbox",
       "routes/worker"
     ]
   },
@@ -103746,7 +104796,16 @@
       "apps/dash/_components"
     ]
   },
-  "I took care of <b>{0}</b> today. <b>{1}</b> are yours.": {
+  "I sent it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "I took care of <b>{0}</b> today.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -104473,7 +105532,7 @@
     ]
   },
   "Ignore": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -104532,6 +105591,15 @@
     ],
     "areas": [
       "routes/accounting-inbound"
+    ]
+  },
+  "Ignored by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Ignored instructions": {
@@ -105143,6 +106211,15 @@
       "go/other"
     ]
   },
+  "In Gmail settings for the shared address, open Forwarding, add the address above, confirm it, and keep Gmail's copy in the inbox.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "In Postmark, create a server webhook endpoint over HTTPS and use this URL:": {
     "sites": 1,
     "scope": [
@@ -105336,6 +106413,15 @@
       "apps/web/components"
     ]
   },
+  "In the Exchange admin center, open the shared mailbox, turn on forwarding to the address above, and keep a copy in the mailbox.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "In the books": {
     "sites": 2,
     "scope": [
@@ -105373,7 +106459,7 @@
     ]
   },
   "In transit": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -105383,6 +106469,7 @@
       "apps/web/lib",
       "packages/shared/components",
       "routes/home",
+      "routes/inbox",
       "routes/shipment"
     ]
   },
@@ -105402,6 +106489,24 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "In your email provider, forward <b>{0}</b> to this address. Keep a copy in the original inbox.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "In your email provider, forward the shared address to this one. Keep a copy in the original inbox.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "In {0}": {
@@ -106499,6 +107604,15 @@
       "routes/edi"
     ]
   },
+  "Information": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Informational": {
     "sites": 1,
     "scope": [
@@ -107191,14 +108305,15 @@
     ]
   },
   "Instructions": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/inbox"
     ]
   },
   "Instructions and contact information for safe handling and emergency response.": {
@@ -110118,6 +111233,24 @@
       "go/other"
     ]
   },
+  "Invoice {0} bills this detention charge and is still a draft. Take the charge off the draft invoice, then waive it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Invoice {0} could not be credited for the waived detention: {1}": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Invoice {0} for {1} is waiting for you to review.": {
     "sites": 1,
     "scope": [
@@ -111153,6 +112286,15 @@
       "routes/agent-control"
     ]
   },
+  "It shows up here the moment it lands on {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "It starts as a draft. Submit it for review when it is ready.": {
     "sites": 1,
     "scope": [
@@ -111295,6 +112437,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "It's a new load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "It's in simulation, so nothing is written.": {
@@ -112718,6 +113869,15 @@
       "apps/web/components"
     ]
   },
+  "Keep both": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Keep card": {
     "sites": 1,
     "scope": [
@@ -113239,6 +114399,15 @@
       "go/other"
     ]
   },
+  "Keeping both": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Keeping in mind": {
     "sites": 1,
     "scope": [
@@ -113713,13 +114882,14 @@
     ]
   },
   "Keyboard shortcuts": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "apps/web/config"
+      "apps/web/config",
+      "routes/inbox"
     ]
   },
   "Keyboard shortcuts ({0})": {
@@ -113785,6 +114955,15 @@
       "go/other"
     ]
   },
+  "Kind looks wrong": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Kind must be custom or canned_fork": {
     "sites": 1,
     "scope": [
@@ -113792,6 +114971,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Kind of exception": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Kind of message": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Kind of message is required": {
@@ -113810,6 +115007,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Kind of source": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Known Host Key": {
@@ -114171,7 +115377,7 @@
     ]
   },
   "Lane": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -114179,6 +115385,7 @@
       "apps/web/components",
       "routes/admin",
       "routes/carrier-sourcing",
+      "routes/inbox",
       "routes/rate-agreement",
       "routes/recurring-shipment",
       "routes/routing-guide",
@@ -114432,12 +115639,13 @@
     ]
   },
   "Last 30 days": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
+      "routes/inbox",
       "routes/intake"
     ]
   },
@@ -115173,6 +116381,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Last: {0} · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Late": {
@@ -117999,7 +119216,7 @@
     ]
   },
   "Link": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -118046,7 +119263,7 @@
     ]
   },
   "Link by hand": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -118073,7 +119290,7 @@
     ]
   },
   "Link copied": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -118172,6 +119389,15 @@
     ],
     "areas": [
       "routes/carrier-invoice-matching"
+    ]
+  },
+  "Link the message to a shipment to file this.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Link the message to its shipment before logging an exception": {
@@ -119252,6 +120478,24 @@
       "routes/dash-control"
     ]
   },
+  "Load {0} is new": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Load {0} may already exist": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Load {0} was taken off your schedule.": {
     "sites": 1,
     "scope": [
@@ -120248,7 +121492,7 @@
     ]
   },
   "Loading…": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -120256,11 +121500,12 @@
       "apps/web/components",
       "routes/agent-control",
       "routes/desk",
+      "routes/inbox",
       "routes/shipment"
     ]
   },
   "Loads": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -120269,7 +121514,17 @@
       "apps/dash/routes",
       "apps/web/components",
       "routes/carrier-settlement",
-      "routes/driver-settlement"
+      "routes/driver-settlement",
+      "routes/inbox"
+    ]
+  },
+  "Loads and replies. Nothing is sent or created until you look.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Loads cannot be created from messages on this installation": {
@@ -120288,6 +121543,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Loads posted on a shipper's site": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Loads to pay ({0}/{1})": {
@@ -120884,7 +122148,7 @@
     ]
   },
   "Log exception": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -120971,6 +122235,15 @@
     ],
     "areas": [
       "routes/osha"
+    ]
+  },
+  "Logging…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Login URL": {
@@ -121400,6 +122673,15 @@
       "apps/web/components"
     ]
   },
+  "Looking back over the last 30 days…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Looking for your computers…": {
     "sites": 1,
     "scope": [
@@ -121407,6 +122689,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Looking it up and drafting…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Looking things up…": {
@@ -121436,6 +122727,15 @@
       "routes/onboarding"
     ]
   },
+  "Looks like phishing. Ignore unless you know them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Looks like we hit a snag. Please try again later.": {
     "sites": 1,
     "scope": [
@@ -121443,6 +122743,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Looks right": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Loop cannot be longer than 50 characters": {
@@ -123680,12 +124989,21 @@
     ]
   },
   "Mark handled": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
+      "routes/inbox"
+    ]
+  },
+  "Mark handled (E)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/inbox"
     ]
   },
@@ -124417,7 +125735,7 @@
     ]
   },
   "Matched": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -124429,6 +125747,7 @@
       "routes/admin",
       "routes/bank-receipt",
       "routes/bank-receipt-batch",
+      "routes/inbox",
       "routes/reconciliation-summary"
     ]
   },
@@ -126361,7 +127680,7 @@
     ]
   },
   "Message": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -126544,7 +127863,7 @@
     ]
   },
   "Messages": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -126580,6 +127899,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Messages it matched": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Messages sent to drivers on their phone through the Dash app": {
@@ -126797,6 +128125,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Microsoft 365": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Microsoft Entra ID": {
@@ -129094,14 +130431,15 @@
     ]
   },
   "More": {
-    "sites": 4,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/components",
       "routes/agent-control",
-      "routes/desk"
+      "routes/desk",
+      "routes/inbox"
     ]
   },
   "More actions": {
@@ -129349,12 +130687,13 @@
     ]
   },
   "Move": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/carrier-monitoring"
+      "routes/carrier-monitoring",
+      "routes/inbox"
     ]
   },
   "Move ID": {
@@ -129984,6 +131323,15 @@
     "areas": [
       "apps/web/lib",
       "routes/desk"
+    ]
+  },
+  "Moving is opening.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Multi currency": {
@@ -130723,12 +132071,13 @@
     ]
   },
   "Name it": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/capture"
+      "routes/capture",
+      "routes/inbox"
     ]
   },
   "Name must be 255 characters or less": {
@@ -131166,6 +132515,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Named after the source, on the domain your other sources use.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Named groupings of geography that lane rules and rate matrices are written against": {
@@ -133055,6 +134413,15 @@
       "packages/shared/components"
     ]
   },
+  "New rule": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "New scan profile": {
     "sites": 1,
     "scope": [
@@ -133265,13 +134632,14 @@
     ]
   },
   "Next": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/desk"
+      "routes/desk",
+      "routes/inbox"
     ]
   },
   "Next (J)": {
@@ -133362,6 +134730,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Next card": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Next check": {
@@ -133608,7 +134985,7 @@
     ]
   },
   "Next step": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -133717,12 +135094,13 @@
     ]
   },
   "Next: {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/inbox"
     ]
   },
   "Next: {0} at {1}": {
@@ -134016,6 +135394,15 @@
     "areas": [
       "routes/carrier-settlement-workspace",
       "routes/settlement-workspace"
+    ]
+  },
+  "No PRO, PO or known sender to match on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "No PTO data available for the selected period": {
@@ -134518,13 +135905,12 @@
     ]
   },
   "No agents are available to ask": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk",
-      "routes/inbox"
+      "routes/desk"
     ]
   },
   "No agents are available to talk to yet.": {
@@ -136285,6 +137671,15 @@
       "routes/organization"
     ]
   },
+  "No email profile is set up for this organization, so a test cannot be sent. An administrator can add one in the email settings, or send any email to this address yourself.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "No email profile is set up for this organization, so nothing can be emailed until an admin adds one in the email settings. Say so, and offer another way to reach them": {
     "sites": 1,
     "scope": [
@@ -137378,6 +138773,15 @@
       "routes/insights"
     ]
   },
+  "No longer has a due time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "No longer prices freight": {
     "sites": 1,
     "scope": [
@@ -137394,6 +138798,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "No mail from them yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "No mailboxes yet": {
@@ -137520,6 +138933,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "No matching shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "No matching templates.": {
@@ -138326,6 +139748,15 @@
       "routes/intake"
     ]
   },
+  "No preview for this file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "No preview was recorded when this was decided; the parameters it was proposed with are shown.": {
     "sites": 1,
     "scope": [
@@ -138831,6 +140262,15 @@
     ],
     "areas": [
       "routes/carrier-settlement"
+    ]
+  },
+  "No reply from {0} — back in the queue": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "No report matches “{0}”.": {
@@ -139863,6 +141303,15 @@
       "routes/edi"
     ]
   },
+  "No templates yet. Save a reply as one below.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "No tender summary": {
     "sites": 1,
     "scope": [
@@ -140416,6 +141865,15 @@
       "routes/my-team"
     ]
   },
+  "Nobody can be assigned messages": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Nobody decided on the original, so this says nothing yet.": {
     "sites": 1,
     "scope": [
@@ -140542,6 +142000,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Nobody is on call tonight. Set someone in Triage settings to hand these off.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Nobody is on your team.": {
@@ -141005,12 +142472,13 @@
     ]
   },
   "None yet": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/inbox"
     ]
   },
   "Normal": {
@@ -141839,6 +143307,15 @@
       "apps/web/components"
     ]
   },
+  "Not phishing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Not picked up": {
     "sites": 1,
     "scope": [
@@ -141917,7 +143394,7 @@
     ]
   },
   "Not read": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -141926,7 +143403,7 @@
     ]
   },
   "Not read yet": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -142010,11 +143487,12 @@
     ]
   },
   "Not recorded": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/inbox",
       "routes/osha"
     ]
   },
@@ -142436,7 +143914,7 @@
     ]
   },
   "Note": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -142452,6 +143930,7 @@
       "routes/fuel-purchase",
       "routes/holiday",
       "routes/ifta-return",
+      "routes/inbox",
       "routes/invoice",
       "routes/time-attendance",
       "routes/worker",
@@ -142496,6 +143975,15 @@
     "areas": [
       "go/other",
       "routes/worker"
+    ]
+  },
+  "Note for billing (optional)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Note from {0}": {
@@ -142766,6 +144254,15 @@
       "routes/agent-control"
     ]
   },
+  "Nothing carries over.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Nothing changed": {
     "sites": 1,
     "scope": [
@@ -142863,6 +144360,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Nothing filed yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Nothing generated yet. Runs appear here as the schedule fires.": {
@@ -143027,6 +144533,15 @@
       "routes/agent-control"
     ]
   },
+  "Nothing has come in yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Nothing has happened yet.": {
     "sites": 1,
     "scope": [
@@ -143101,6 +144616,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Nothing in the last 30 days would have matched.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Nothing in the latest vetting asks for a manual review.": {
@@ -143284,15 +144808,6 @@
       "routes/admin"
     ]
   },
-  "Nothing is waiting on you.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
-    ]
-  },
   "Nothing is waiting to be filed": {
     "sites": 1,
     "scope": [
@@ -143311,6 +144826,24 @@
       "routes/dispatch-console"
     ]
   },
+  "Nothing left for you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Nothing left in the deck": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Nothing left to do — the file is complete.": {
     "sites": 1,
     "scope": [
@@ -143321,7 +144854,7 @@
     ]
   },
   "Nothing matches": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -143333,6 +144866,7 @@
       "routes/carrier-monitoring",
       "routes/carrier-sourcing",
       "routes/home",
+      "routes/inbox",
       "routes/shipment"
     ]
   },
@@ -143864,6 +145398,15 @@
       "routes/worker"
     ]
   },
+  "Nothing structured on this file.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Nothing that creates a load or moves money is ever done without a person.": {
     "sites": 1,
     "scope": [
@@ -143961,6 +145504,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "Nothing to do": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Nothing to file: every page is set aside": {
@@ -144195,6 +145747,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Nothing was sitting at the address. New mail shows up here, already read, as it arrives.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Nothing was waived in this window. Every accrued detention charge stood.": {
@@ -144615,12 +146176,13 @@
     ]
   },
   "Nova": {
-    "sites": 4,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
+      "routes/inbox",
       "routes/onboarding"
     ]
   },
@@ -144732,6 +146294,15 @@
       "go/other"
     ]
   },
+  "Nova drafts replies but never sends one on its own.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Nova drafts the name, instructions, trigger and tools, and you adjust from there.": {
     "sites": 1,
     "scope": [
@@ -144741,7 +146312,88 @@
       "routes/agent-control"
     ]
   },
+  "Nova files and queues {0} from {1} now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Nova files {0} from {1} now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Nova handles {0} from {1} now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Nova has not read this file.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Nova ignores {0} from {1} now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Nova is drafting the load…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Nova is drafting…": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Nova is off": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Nova is off, so nothing was pulled out of this message. You can still reply, link and handle it by hand.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Nova learns from it": {
     "sites": 1,
     "scope": [
       "ts"
@@ -144768,6 +146420,105 @@
       "routes/agent-control"
     ]
   },
+  "Nova read it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Nova read it as a detention dispute": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Nova read it as a proof of delivery": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Nova read it as a rate confirmation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Nova read it as a status request": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Nova read it as a tender": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Nova read it as an invoice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Nova read it as something else": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Nova read this as {0}. It's actually…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Nova reads the backlog": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Nova replied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Nova should…": {
     "sites": 1,
     "scope": [
@@ -144784,6 +146535,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Nova was off when it arrived, so nothing was read from it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Nova's draft is ready": {
@@ -144811,6 +146571,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Now due {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Nowhere": {
@@ -146177,7 +147946,7 @@
     ]
   },
   "On": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "ts"
     ],
@@ -146187,7 +147956,8 @@
       "routes/admin",
       "routes/agent-control",
       "routes/carrier-invoice-matching",
-      "routes/desk"
+      "routes/desk",
+      "routes/inbox"
     ]
   },
   "On / off": {
@@ -146340,7 +148110,7 @@
     ]
   },
   "On file": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -146349,7 +148119,17 @@
       "apps/web/components",
       "go/other",
       "packages/shared/lib",
-      "routes/desk"
+      "routes/desk",
+      "routes/inbox"
+    ]
+  },
+  "On file at {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "On for drivers who work seven-day schedules. Off counts only Monday–Friday against a request and skips observed holidays.": {
@@ -146879,6 +148659,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "One is already on file.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "One is past its deadline — leave can be denied once it is.": {
@@ -149549,6 +151338,15 @@
       "routes/agent-control"
     ]
   },
+  "Only this address": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Only tools it held": {
     "sites": 1,
     "scope": [
@@ -149622,7 +151420,7 @@
     ]
   },
   "Open": {
-    "sites": 60,
+    "sites": 62,
     "scope": [
       "go",
       "ts"
@@ -149788,15 +151586,6 @@
     ],
     "areas": [
       "routes/onboarding"
-    ]
-  },
-  "Open Waiting on you": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
     ]
   },
   "Open a case": {
@@ -150085,13 +151874,14 @@
     ]
   },
   "Open customer": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/desk"
+      "routes/desk",
+      "routes/inbox"
     ]
   },
   "Open customer ledger": {
@@ -150312,12 +152102,13 @@
     ]
   },
   "Open in Desk": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/inbox"
     ]
   },
   "Open in Formula Studio": {
@@ -150345,6 +152136,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Open in Shipments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Open in Trenova": {
@@ -150670,7 +152470,7 @@
     ]
   },
   "Open shipment": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -150678,6 +152478,7 @@
       "apps/web/components",
       "routes/desk",
       "routes/edi",
+      "routes/inbox",
       "routes/invoice"
     ]
   },
@@ -151111,7 +152912,7 @@
     ]
   },
   "Open {0}": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "ts"
     ],
@@ -151119,6 +152920,7 @@
       "apps/web/components",
       "routes/carrier-sourcing",
       "routes/desk",
+      "routes/inbox",
       "routes/journal-entry",
       "routes/random-testing",
       "routes/shipment",
@@ -152540,6 +154342,15 @@
       "routes/shipment"
     ]
   },
+  "Or until something happens": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Or within share": {
     "sites": 1,
     "scope": [
@@ -153243,7 +155054,7 @@
     ]
   },
   "Origin": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -153252,6 +155063,7 @@
       "apps/web/components",
       "go/other",
       "packages/shared/types",
+      "routes/inbox",
       "routes/rate-agreement",
       "routes/tender-offer-public",
       "template/tender.offer.email"
@@ -153681,7 +155493,7 @@
     ]
   },
   "Other": {
-    "sites": 55,
+    "sites": 56,
     "scope": [
       "go",
       "ts"
@@ -153823,6 +155635,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Other shipments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Other timezone": {
@@ -154380,6 +156201,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Over": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Over target": {
@@ -155458,6 +157288,15 @@
       "apps/web/components"
     ]
   },
+  "PO": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "PO Number": {
     "sites": 2,
     "scope": [
@@ -155533,6 +157372,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "PODs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "PRO": {
@@ -156115,7 +157963,7 @@
     ]
   },
   "Page {0}": {
-    "sites": 11,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -156123,6 +157971,7 @@
       "apps/web/components",
       "routes/admin",
       "routes/desk",
+      "routes/inbox",
       "routes/intake",
       "routes/shipment"
     ]
@@ -156134,6 +157983,15 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "Page {0} as": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Page {0} is missing": {
@@ -156164,13 +158022,14 @@
     ]
   },
   "Pages": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/inbox"
     ]
   },
   "Pages appear here as they arrive": {
@@ -156299,6 +158158,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Pages {0}–{1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Paid": {
@@ -159784,6 +161652,15 @@
       "routes/worker"
     ]
   },
+  "Peek": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Peg price": {
     "sites": 2,
     "scope": [
@@ -161587,6 +163464,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Phishing — sender not on the allow list.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Phone": {
     "sites": 15,
     "scope": [
@@ -162359,6 +164245,15 @@
       "routes/home"
     ]
   },
+  "Picked up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Picked up after a wait": {
     "sites": 1,
     "scope": [
@@ -162441,7 +164336,7 @@
     ]
   },
   "Pickup": {
-    "sites": 17,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -162455,6 +164350,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/desk",
+      "routes/inbox",
       "routes/shipment",
       "routes/tender-offer-public"
     ]
@@ -163812,6 +165708,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Point a shared address at Triage — dispatch@, pod@, ap@. Nova reads what's already sitting there, so your first briefing isn't empty.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Point {0} at this address": {
@@ -165381,6 +167286,15 @@
       "routes/admin"
     ]
   },
+  "Pounds": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Power function": {
     "sites": 1,
     "scope": [
@@ -165986,7 +167900,7 @@
     ]
   },
   "Preview": {
-    "sites": 13,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -166248,13 +168162,14 @@
     ]
   },
   "Previous": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/desk"
+      "routes/desk",
+      "routes/inbox"
     ]
   },
   "Previous (K)": {
@@ -166309,6 +168224,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Previous card": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Previous customer": {
@@ -171781,7 +173705,7 @@
     ]
   },
   "Rate": {
-    "sites": 28,
+    "sites": 29,
     "scope": [
       "go",
       "ts"
@@ -171798,6 +173722,7 @@
       "routes/dispatch-console",
       "routes/ifta-return",
       "routes/ifta-tax-rate",
+      "routes/inbox",
       "routes/late-charges",
       "routes/rate-agreement",
       "routes/routing-guide",
@@ -172138,6 +174063,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Rate con to follow": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Rate confirmation": {
@@ -173724,6 +175658,24 @@
       "routes/admin"
     ]
   },
+  "Re: your email": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Re: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Reached its lifetime cap and stopped permanently.": {
     "sites": 4,
     "scope": [
@@ -174031,6 +175983,15 @@
       "apps/web/lib"
     ]
   },
+  "Read from the message": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Read from the model": {
     "sites": 1,
     "scope": [
@@ -174050,7 +176011,7 @@
     ]
   },
   "Read from {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -174147,6 +176108,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Read so far, by kind": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Read the board": {
@@ -174246,6 +176216,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Read wrong? Correct it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Read your home page": {
@@ -174528,6 +176507,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Reading what was already waiting…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Reading {0} again": {
@@ -175990,12 +177978,13 @@
     ]
   },
   "Recent": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/inbox"
     ]
   },
   "Recent Activity": {
@@ -176757,6 +178746,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Reconnect {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Reconstructed": {
@@ -178696,7 +180694,7 @@
     ]
   },
   "Reference": {
-    "sites": 29,
+    "sites": 30,
     "scope": [
       "go",
       "ts"
@@ -178714,6 +180712,7 @@
       "routes/edi",
       "routes/formula-template",
       "routes/fuel-purchase",
+      "routes/inbox",
       "routes/journal-entry",
       "routes/pay-advance",
       "routes/worker"
@@ -179203,6 +181202,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Refused · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Regenerate": {
@@ -181665,7 +183673,7 @@
     ]
   },
   "Reopen": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -182156,6 +184164,15 @@
       "routes/cost-control"
     ]
   },
+  "Replace the old one": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Replaced": {
     "sites": 1,
     "scope": [
@@ -182311,6 +184328,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Replacing the {0} on file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Replacing the {0} on {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Replay a rate agreement against historical shipments and report what it would have charged": {
@@ -182514,7 +184549,7 @@
     ]
   },
   "Reply": {
-    "sites": 4,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -182522,16 +184557,8 @@
       "apps/web/components",
       "apps/web/config",
       "routes/agent-control",
+      "routes/inbox",
       "routes/shipment"
-    ]
-  },
-  "Reply draft": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
     ]
   },
   "Reply sent": {
@@ -182616,7 +184643,7 @@
     ]
   },
   "Reply to {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -184698,6 +186725,15 @@
       "routes/admin"
     ]
   },
+  "Resend signs what it posts: add its signing secret in <a>Source settings</a> before mail is read.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Resend webhook setup": {
     "sites": 1,
     "scope": [
@@ -185653,6 +187689,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Respond by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Response action is invalid": {
@@ -187540,7 +189585,7 @@
     ]
   },
   "Review": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -187552,6 +189597,7 @@
       "routes/carrier-monitoring",
       "routes/driver-expense",
       "routes/fuel-purchase",
+      "routes/inbox",
       "routes/service-failure",
       "routes/shipment"
     ]
@@ -187754,6 +189800,15 @@
       "routes/admin"
     ]
   },
+  "Review draft": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Review draft invoices, confirm billing details, and post completed charges": {
     "sites": 1,
     "scope": [
@@ -187927,7 +189982,7 @@
     ]
   },
   "Review reply": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -189611,7 +191666,7 @@
     ]
   },
   "Route": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -189622,6 +191677,7 @@
       "routes/billing-queue",
       "routes/desk",
       "routes/edi",
+      "routes/inbox",
       "routes/invoice",
       "routes/shipment"
     ]
@@ -190179,6 +192235,15 @@
       "routes/admin"
     ]
   },
+  "Rule changed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Rule changes apply going forward": {
     "sites": 1,
     "scope": [
@@ -190260,6 +192325,15 @@
       "routes/admin"
     ]
   },
+  "Rule on — Nova starts with the next match": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Rule set": {
     "sites": 1,
     "scope": [
@@ -190332,8 +192406,17 @@
       "routes/pto-policy"
     ]
   },
+  "Rule: {0} from {1} → {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Rules": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -190350,6 +192433,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Rules for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Rules only": {
@@ -191053,13 +193145,14 @@
     ]
   },
   "Running late": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/inbox",
       "routes/shipment"
     ]
   },
@@ -193237,6 +195330,15 @@
       "apps/web/components"
     ]
   },
+  "Save this as a template": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Save tile": {
     "sites": 1,
     "scope": [
@@ -193355,6 +195457,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "Saved for the team": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Saved on the rescinded row so an auditor can see why the action was withdrawn.": {
@@ -194035,6 +196146,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Say who to hand it to.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Say why both sides stay as they are": {
@@ -195538,7 +197658,7 @@
     ]
   },
   "Search": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -195546,7 +197666,8 @@
       "apps/web/components",
       "apps/web/config",
       "routes/desk",
-      "routes/edi"
+      "routes/edi",
+      "routes/inbox"
     ]
   },
   "Search JSON...": {
@@ -197152,6 +199273,15 @@
       "routes/agent-control"
     ]
   },
+  "See them": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "See what a customer has accumulated this period, which invoices it becomes, and bill it early if you have to.": {
     "sites": 1,
     "scope": [
@@ -197159,6 +199289,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "See what it matched": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "See who is approving in whose place": {
@@ -199926,13 +202065,14 @@
     ]
   },
   "Send": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/detention-desk",
+      "routes/inbox",
       "routes/invoice",
       "routes/onboarding",
       "routes/shipment"
@@ -200056,7 +202196,7 @@
     ]
   },
   "Send a test email": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -200089,6 +202229,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Send any email to the address. We'll wait for it here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Send anyway": {
@@ -200591,6 +202740,15 @@
       "routes/formula-template"
     ]
   },
+  "Send there": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Send this agreement to a reviewer for approval before it can price shipments.": {
     "sites": 1,
     "scope": [
@@ -200616,6 +202774,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Send to another address": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Send to at most 50 people": {
@@ -200652,6 +202819,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Send to {0}@ instead": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Send true or false": {
@@ -200925,6 +203101,15 @@
       "apps/web/hooks"
     ]
   },
+  "Sending to {0}…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Sending...": {
     "sites": 12,
     "scope": [
@@ -200941,7 +203126,7 @@
     ]
   },
   "Sending…": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -201345,6 +203530,15 @@
     ],
     "areas": [
       "routes/accounting-drift"
+    ]
+  },
+  "Sent. Waiting for it to arrive…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Separate invoice for each": {
@@ -204429,7 +206623,7 @@
     ]
   },
   "Shipment": {
-    "sites": 38,
+    "sites": 43,
     "scope": [
       "go",
       "ts"
@@ -206041,7 +208235,7 @@
     ]
   },
   "Shipments": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -206055,6 +208249,7 @@
       "routes/billing-queue",
       "routes/desk",
       "routes/formula-template",
+      "routes/inbox",
       "routes/invoice",
       "routes/rate-agreement",
       "routes/shipment",
@@ -206160,6 +208355,15 @@
       "routes/billing-queue"
     ]
   },
+  "Shipments this week": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Shipments this would have moved": {
     "sites": 1,
     "scope": [
@@ -206259,11 +208463,12 @@
     ]
   },
   "Short": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/inbox",
       "routes/random-testing"
     ]
   },
@@ -206498,7 +208703,7 @@
     ]
   },
   "Shortcuts": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -206829,6 +209034,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Show me the plan for what's left.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Show on the board": {
     "sites": 1,
     "scope": [
@@ -206955,7 +209169,7 @@
       "apps/web/config"
     ]
   },
-  "Show the quoted thread": {
+  "Show the plan": {
     "sites": 1,
     "scope": [
       "ts"
@@ -207934,13 +210148,14 @@
     ]
   },
   "Since {0}": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
+      "routes/inbox",
       "routes/my-team",
       "routes/time-attendance"
     ]
@@ -208158,6 +210373,15 @@
       "routes/worker"
     ]
   },
+  "Skip load {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Skip surcharge until price arrives": {
     "sites": 1,
     "scope": [
@@ -208271,6 +210495,24 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Skipping load {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Skipping load {0} — it's {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Skips the snapshot cache and always calls the provider, even when the current snapshot is still fresh.": {
@@ -208621,7 +210863,7 @@
     ]
   },
   "Snooze": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -208649,12 +210891,13 @@
     ]
   },
   "Snooze until": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/inbox"
     ]
   },
   "Snooze until a time or until something happens, not both": {
@@ -208695,7 +210938,7 @@
     ]
   },
   "Snoozed": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -208738,6 +210981,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Snoozed {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Snoozed · {0}": {
@@ -208987,7 +211239,7 @@
     ]
   },
   "Someone": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -208995,6 +211247,7 @@
       "routes/agent-control",
       "routes/desk",
       "routes/home",
+      "routes/inbox",
       "routes/org-structure",
       "routes/shipment"
     ]
@@ -209160,6 +211413,15 @@
     "areas": [
       "apps/web/components",
       "routes/admin"
+    ]
+  },
+  "Soon": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Soonest clock to run out first": {
@@ -209390,6 +211652,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Sorting, matching to shipments, and setting aside anything that needs a person.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Source": {
@@ -210318,6 +212589,15 @@
       "routes/shipment"
     ]
   },
+  "Split pages": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Split percent": {
     "sites": 1,
     "scope": [
@@ -210559,6 +212839,15 @@
       "go/other"
     ]
   },
+  "Spot-check": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Spreads work by weekly miles, move count, and open assignments.": {
     "sites": 1,
     "scope": [
@@ -210794,6 +213083,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Stand by it, send the log": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Standard": {
@@ -211040,12 +213338,13 @@
     ]
   },
   "Start": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/edi",
+      "routes/inbox",
       "routes/worker"
     ]
   },
@@ -212982,6 +215281,15 @@
       "routes/agent-control"
     ]
   },
+  "Steps done": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Steps you set": {
     "sites": 1,
     "scope": [
@@ -213476,6 +215784,15 @@
       "routes/detention-policy"
     ]
   },
+  "Stop underlining what Nova read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Stop visit is required with a stop outcome": {
     "sites": 1,
     "scope": [
@@ -213495,7 +215812,7 @@
     ]
   },
   "Stop waiting": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -213957,6 +216274,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Street address or city, state": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Street address payments are mailed to.": {
@@ -216428,6 +218754,24 @@
       "routes/org-structure"
     ]
   },
+  "Taken off {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Takes a couple of minutes. Nothing changes for the people already using this address.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Takes about a minute": {
     "sites": 1,
     "scope": [
@@ -217917,12 +220261,13 @@
     ]
   },
   "Templates": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/edi"
+      "routes/edi",
+      "routes/inbox"
     ]
   },
   "Templates duplicated successfully": {
@@ -218779,13 +221124,14 @@
     ]
   },
   "Test": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
-      "routes/edi"
+      "routes/edi",
+      "routes/inbox"
     ]
   },
   "Test accounting connection": {
@@ -218851,6 +221197,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Test email arrived": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Test email arrived on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Test email queued": {
@@ -219100,6 +221464,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Texts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Thank you — the dispatcher has been notified of your response.": {
@@ -219352,6 +221725,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "That didn't go through. Try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "That document type does not exist": {
@@ -219798,6 +222180,15 @@
       "apps/web/lib"
     ]
   },
+  "That's everything. <b>You're clear</b> — I'll bring the next one here when it lands.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "That's everything. Please check everything below before I create your workspace. If anything's wrong, click the line to fix it.": {
     "sites": 1,
     "scope": [
@@ -220219,6 +222610,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "The address your email provider receives Trenova's mail on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "The adjustment does not belong to invoice {0}": {
@@ -222581,6 +224981,24 @@
       "go/other"
     ]
   },
+  "The credit for invoice {0} is still a draft. Submit it in billing.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The credit for this detention on {0} is waiting for approval in billing. Reject it there before standing by the charge.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The currency code behind the amount.": {
     "sites": 1,
     "scope": [
@@ -224505,13 +226923,14 @@
     ]
   },
   "The file could not be downloaded": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/hooks",
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/inbox"
     ]
   },
   "The file could not be downloaded.": {
@@ -225378,6 +227797,15 @@
       "apps/web/lib"
     ]
   },
+  "The invoices that bill this detention charge have nothing left to credit. Check the adjustments waiting in billing.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The issue date on the permit, not the day it was keyed in.": {
     "sites": 1,
     "scope": [
@@ -226106,6 +228534,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The message has no text.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "The message is longer than a preview keeps; the rest is not shown.": {
@@ -230450,6 +232887,15 @@
       "go/other"
     ]
   },
+  "The steps this message asks for, and what it tells you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "The stop actuals and move status have been updated.": {
     "sites": 1,
     "scope": [
@@ -230457,6 +232903,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "The stop times could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "The stops are still in the notice window — try again in a moment.": {
@@ -231034,6 +233489,69 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "The truck arrived at {0}, but there's no appointment window on record to measure it against.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "The truck arrived inside the window and was held {0}, so the charge stands.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "The truck arrived inside the window.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "The truck arrived {0} after the window, but the customer pays detention on a late arrival too, so the charge can stand.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "The truck arrived {0} after the window, but {1} pays detention on a late arrival too, so the charge can stand.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "The truck arrived {0} after the window. The customer only pays detention on an on-time arrival, so the charge is unlikely to stand.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "The truck arrived {0} after the window. {1} only pays detention on an on-time arrival, so the charge is unlikely to stand.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "The truck stop or station, as it appears on the receipt.": {
@@ -232009,6 +234527,15 @@
       "go/other"
     ]
   },
+  "There are no stop times on record for this shipment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "There are none to pick yet.": {
     "sites": 1,
     "scope": [
@@ -232161,6 +234688,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "There's no arrival time on record for {0}, so the stop times can't settle it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "These are invisible in the revenue total, and they are usually why a tariff prices differently from how it was written.": {
@@ -232377,6 +234913,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "They replied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "They show on the rota with no rostered days until they are.": {
@@ -233688,6 +236233,15 @@
       "routes/rate-agreement"
     ]
   },
+  "This detention charge has been put up for credit too many times. Adjust the invoice in billing.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This difference could not be loaded.": {
     "sites": 1,
     "scope": [
@@ -234238,6 +236792,24 @@
       "go/other"
     ]
   },
+  "This file was not kept, so it can't be filed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "This file was not kept, so there is no preview": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "This file was not read, so it cannot be filed. Ask the sender for it again.": {
     "sites": 1,
     "scope": [
@@ -234707,6 +237279,15 @@
       "go/other"
     ]
   },
+  "This is wrong": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "This item cannot be approved until each charge is approved or waived on the detention desk.": {
     "sites": 1,
     "scope": [
@@ -235065,6 +237646,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "This message could not be opened": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "This message has been handed to the reply under way. Stop the reply to take it back.": {
@@ -236927,12 +239517,13 @@
     ]
   },
   "This week": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/types",
+      "routes/inbox",
       "routes/time-attendance"
     ]
   },
@@ -238798,12 +241389,13 @@
     ]
   },
   "To {0}": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "routes/detention-desk",
+      "routes/inbox"
     ]
   },
   "Today": {
@@ -238838,6 +241430,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "Today so far": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Today · {0}": {
@@ -242608,6 +245209,15 @@
       "routes/accounting-inbound"
     ]
   },
+  "Trenova receives it at": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Trenova revokes its access to {0} and stops reading from and writing to it. Nothing already in {1} is changed or deleted. You can connect again later.": {
     "sites": 1,
     "scope": [
@@ -243187,7 +245797,7 @@
     ]
   },
   "Try again": {
-    "sites": 48,
+    "sites": 51,
     "scope": [
       "ts"
     ],
@@ -243202,6 +245812,7 @@
       "routes/desk",
       "routes/detention-desk",
       "routes/detention-intelligence",
+      "routes/inbox",
       "routes/intake",
       "routes/onboarding",
       "routes/rate-confirmation-public",
@@ -243543,13 +246154,14 @@
     ]
   },
   "Turn on": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/inbox"
     ]
   },
   "Turn on Nova": {
@@ -243705,6 +246317,15 @@
     ],
     "areas": [
       "routes/onboarding"
+    ]
+  },
+  "Turning on…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Turns and miles per trailer with last activity — find trailers sitting idle or over-cycled": {
@@ -243888,6 +246509,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Type a domain, like acme.com, or an address": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Type a page name in <kbd/> to jump anywhere": {
@@ -244648,18 +247278,19 @@
     ]
   },
   "Unassign": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "routes/admin",
+      "routes/inbox",
       "routes/shipment"
     ]
   },
   "Unassigned": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -245067,6 +247698,15 @@
       "packages/shared/components"
     ]
   },
+  "Underline what Nova read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Underscore (_)": {
     "sites": 1,
     "scope": [
@@ -245077,7 +247717,7 @@
     ]
   },
   "Undo": {
-    "sites": 16,
+    "sites": 18,
     "scope": [
       "ts"
     ],
@@ -245210,6 +247850,15 @@
       "routes/edi"
     ]
   },
+  "Unfile": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Unfiled": {
     "sites": 1,
     "scope": [
@@ -245256,7 +247905,7 @@
     ]
   },
   "Unit": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -245266,6 +247915,7 @@
       "routes/billing-queue",
       "routes/detention-policy",
       "routes/fuel-purchase",
+      "routes/inbox",
       "routes/rate-agreement",
       "routes/shipment",
       "routes/worker"
@@ -245874,6 +248524,15 @@
       "routes/edi"
     ]
   },
+  "Unknown sender": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Unknown severity": {
     "sites": 1,
     "scope": [
@@ -246075,7 +248734,25 @@
       "routes/recurring-shipment"
     ]
   },
+  "Unlink": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Unlinked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Unloaded and out": {
     "sites": 1,
     "scope": [
       "ts"
@@ -249160,6 +251837,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Usually sends": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Utah (UT)": {
@@ -252788,6 +255474,15 @@
       "apps/web/components"
     ]
   },
+  "Wait for reply": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Wait for someone to apply them": {
     "sites": 1,
     "scope": [
@@ -252795,6 +255490,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "Wait for their reply": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Wait for this transfer to finish before retrying it": {
@@ -252872,6 +255576,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Waiting for it to arrive…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Waiting for release": {
@@ -253029,6 +255742,15 @@
       "apps/web/components"
     ]
   },
+  "Waiting in Triage": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Waiting on a reply": {
     "sites": 1,
     "scope": [
@@ -253129,7 +255851,7 @@
     ]
   },
   "Waiting on them": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -253169,6 +255891,15 @@
     ]
   },
   "Waiting on {0} to reply": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Waiting on {0} · back {1} if no reply": {
     "sites": 1,
     "scope": [
       "ts"
@@ -253350,6 +256081,15 @@
       "apps/web/components"
     ]
   },
+  "Waive it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Waive it or send the log": {
     "sites": 1,
     "scope": [
@@ -253396,11 +256136,12 @@
     ]
   },
   "Waive {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/inbox",
       "routes/worker"
     ]
   },
@@ -253472,6 +256213,15 @@
       "routes/detention-desk"
     ]
   },
+  "Waiving a billed detention charge credits the invoice, which needs permission to update invoices": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Waiving does not make the movement legal. It records that your organization accepts the compliance risk and releases the dispatch block. Your reason is the audit trail if the load is stopped.": {
     "sites": 1,
     "scope": [
@@ -253509,8 +256259,17 @@
       "routes/worker"
     ]
   },
+  "Waiving…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Wake it now": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -254321,6 +257080,15 @@
       "routes/admin"
     ]
   },
+  "Webhook address copied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Webhook endpoint": {
     "sites": 1,
     "scope": [
@@ -254479,6 +257247,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Week of": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Week of {0}": {
@@ -254729,7 +257506,7 @@
     ]
   },
   "Weight": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
       "go",
       "ts"
@@ -254743,6 +257520,7 @@
       "routes/agent-control",
       "routes/desk",
       "routes/edi",
+      "routes/inbox",
       "routes/review-template",
       "routes/shipment",
       "routes/tender-offer-public",
@@ -255108,6 +257886,24 @@
       "go/other"
     ]
   },
+  "What Nova read": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "What Nova should do": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "What Trenova read this document as": {
     "sites": 1,
     "scope": [
@@ -255407,12 +258203,13 @@
     ]
   },
   "What happened": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
+      "routes/inbox",
       "routes/osha",
       "routes/worker"
     ]
@@ -255577,6 +258374,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "What is left, by what it needs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "What is picking up today?": {
@@ -255808,6 +258614,15 @@
       "routes/accounting-drift"
     ]
   },
+  "What it would have handled": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "What it would post could not be worked out.": {
     "sites": 1,
     "scope": [
@@ -255815,6 +258630,15 @@
     ],
     "areas": [
       "routes/accounting-inbound"
+    ]
+  },
+  "What kind of message is this?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "What made the agent look back": {
@@ -256764,6 +259588,24 @@
       "routes/jurisdiction-rule"
     ]
   },
+  "What you did": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "What you did, so nobody does it twice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "What you see when you open Desk.": {
     "sites": 1,
     "scope": [
@@ -256848,6 +259690,51 @@
       "routes/worker"
     ]
   },
+  "When <k>anything else</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>hand it</a> to <p>{2}</p>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "When <k>anything else</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>{2}</a>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "When <k>something</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>hand it</a> to <p>{2}</p>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "When <k>something</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>{2}</a>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "When <u>something</u> arrives, Nova should <u>do something</u>…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "When ClassA and ClassB are the same, specific different hazardous materials must be specified": {
     "sites": 1,
     "scope": [
@@ -256866,7 +259753,88 @@
       "routes/desk"
     ]
   },
-  "When a <b>{0}</b> arrives from <b>{1}</b> on <b>{2}</b>, Nova should <b>{3}</b>.": {
+  "When a <k>detention dispute</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>hand it</a> to <p>{2}</p>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "When a <k>detention dispute</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>{2}</a>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "When a <k>proof of delivery</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>hand it</a> to <p>{2}</p>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "When a <k>proof of delivery</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>{2}</a>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "When a <k>rate confirmation</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>hand it</a> to <p>{2}</p>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "When a <k>rate confirmation</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>{2}</a>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "When a <k>status request</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>hand it</a> to <p>{2}</p>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "When a <k>status request</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>{2}</a>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "When a <k>tender</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>hand it</a> to <p>{2}</p>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "When a <k>tender</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>{2}</a>.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -256891,6 +259859,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "When an <k>invoice</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>hand it</a> to <p>{2}</p>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "When an <k>invoice</k> arrives from <s>{0}</s> on <m>{1}</m>, Nova should <a>{2}</a>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "When an agent makes a table, record or draft.": {
@@ -258374,6 +261360,15 @@
       "routes/accounting-mapping"
     ]
   },
+  "Which address should Nova watch?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Which billing queue items have been blocked the longest?": {
     "sites": 1,
     "scope": [
@@ -258725,6 +261720,15 @@
       "apps/web/components"
     ]
   },
+  "Which source": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Which stage this notice is: Warning, Started, Update, or Final. Required, because one template covers all four and the recipient must be able to tell them apart.": {
     "sites": 1,
     "scope": [
@@ -259015,6 +262019,15 @@
       "routes/fuel-card"
     ]
   },
+  "Who it comes from": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Who it is for": {
     "sites": 2,
     "scope": [
@@ -259148,6 +262161,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Who to hand it to": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Who to show": {
@@ -259450,6 +262472,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Why it's waiting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Why only the last four": {
@@ -260372,6 +263403,15 @@
       "routes/reconciliation-summary"
     ]
   },
+  "Work on it in Desk": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Work out a shipment's move miles again from its stops through the organization's distance profile and routing provider, and save them. Use it after its stops changed and the miles on the board look wrong. It changes the miles only; the charges follow them the next time the shipment is rated.": {
     "sites": 1,
     "scope": [
@@ -260443,15 +263483,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Work the queue without leaving the keyboard.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
     ]
   },
   "Worked examples priced by the same engine that bills real shipments.": {
@@ -261286,6 +264317,15 @@
       "routes/edi"
     ]
   },
+  "Wrapping up. I handled <b>{0}</b> and you closed <b>{1}</b>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Wraps a status update an agent composed for a customer — a delay, a revised arrival, a delivery confirmation — in your own letterhead and signature.": {
     "sites": 1,
     "scope": [
@@ -261377,7 +264417,7 @@
     ]
   },
   "Write back from the source's address": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -261521,6 +264561,15 @@
     ]
   },
   "Write the reply": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Write to {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -262201,6 +265250,24 @@
       "routes/desk"
     ]
   },
+  "Yes, do it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Yes, open it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Yes, with key {0}": {
     "sites": 1,
     "scope": [
@@ -262243,7 +265310,7 @@
     ]
   },
   "You": {
-    "sites": 9,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -262251,6 +265318,7 @@
       "apps/dash/_components",
       "routes/agent-control",
       "routes/desk",
+      "routes/inbox",
       "routes/shipment"
     ]
   },
@@ -262848,6 +265916,15 @@
       "apps/dash/routes"
     ]
   },
+  "You don't have permission to do that.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "You don't have permission to import carriers.": {
     "sites": 1,
     "scope": [
@@ -262901,6 +265978,24 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "You filed {0} of {1} {2} from {3} by hand": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "You handled {0} of {1} {2} from {3} the same way by hand": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "You haul freight with your own trucks and drivers. Dispatch, fleet, hours of service and driver pay lead the product.": {
@@ -262966,6 +266061,15 @@
       "routes/worker"
     ]
   },
+  "You have no agents to ask yet. An administrator sets them up in AI control.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "You have no saved dashboards yet.": {
     "sites": 1,
     "scope": [
@@ -263012,6 +266116,15 @@
       "routes/home"
     ]
   },
+  "You ignored {0} of {1} {2} from {3} by hand": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "You no longer have access to the {0} this conversation is about.": {
     "sites": 1,
     "scope": [
@@ -263028,6 +266141,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "You replied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "You run your own fleet and broker loads to partner carriers. Every part of the product is turned on.": {
@@ -263645,6 +266767,24 @@
       "apps/web/components"
     ]
   },
+  "Your first briefing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "Your first briefing is ready.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Your fleet manager reviews requests — you'll get a notification either way.": {
     "sites": 1,
     "scope": [
@@ -263697,6 +266837,15 @@
     ],
     "areas": [
       "apps/dash/routes"
+    ]
+  },
+  "Your mail provider posts this source's mail to": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Your manager has finished \"{0}\".": {
@@ -264012,6 +267161,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Your reply to {0} didn't send": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Your request was already sent today": {
@@ -264547,6 +267705,15 @@
       "routes/reports"
     ]
   },
+  "a damage": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "a delay on the road": {
     "sites": 1,
     "scope": [
@@ -264554,6 +267721,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "a detention dispute": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "a full profile": {
@@ -264583,6 +267759,15 @@
       "apps/web/components"
     ]
   },
+  "a proof of delivery": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "a rate agreement": {
     "sites": 1,
     "scope": [
@@ -264590,6 +267775,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "a rate confirmation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "a shipment": {
@@ -264601,8 +267795,35 @@
       "routes/shipment"
     ]
   },
+  "a shortage": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "a source": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "a status request": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "a teammate": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -264610,6 +267831,15 @@
       "routes/carrier-monitoring",
       "routes/inbox",
       "routes/shipment"
+    ]
+  },
+  "a tender": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "a week on average": {
@@ -264720,6 +267950,15 @@
       "go/other"
     ]
   },
+  "all look right": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "amount must be greater than zero": {
     "sites": 1,
     "scope": [
@@ -264745,6 +267984,24 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "an invoice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "an overage": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "and agree to it.": {
@@ -264777,7 +268034,7 @@
     ]
   },
   "any carrier": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -264786,7 +268043,7 @@
     ]
   },
   "any customer": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -264795,7 +268052,7 @@
     ]
   },
   "any source": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -264810,6 +268067,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "anything else": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "applied — {0} became {1}.": {
@@ -265258,6 +268524,15 @@
       "go/other"
     ]
   },
+  "coming back later": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "company.com, contractor.com": {
     "sites": 2,
     "scope": [
@@ -265474,6 +268749,15 @@
       "apps/web/components"
     ]
   },
+  "detention disputes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "did not apply.": {
     "sites": 1,
     "scope": [
@@ -265519,6 +268803,24 @@
       "routes/dispatch-console"
     ]
   },
+  "dispatch@inbound.yourcompany.com": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "dispatch@yourcompany.com": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "distance calculation service is not configured": {
     "sites": 3,
     "scope": [
@@ -265526,6 +268828,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "do something": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "document not found": {
@@ -265547,6 +268858,15 @@
     ]
   },
   "draft the load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "drafted by Nova": {
     "sites": 1,
     "scope": [
       "ts"
@@ -267878,7 +271198,7 @@
     ]
   },
   "for now": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -268006,7 +271326,7 @@
     ]
   },
   "hand it to someone": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -268021,6 +271341,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "handled by Nova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "head v{0}": {
@@ -268240,6 +271569,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "invoices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "issued {0}": {
@@ -268588,6 +271926,15 @@
       "routes/detention-intelligence"
     ]
   },
+  "messages in 90 days": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "min of {0}": {
     "sites": 1,
     "scope": [
@@ -268793,6 +272140,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "no target": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "no task tools": {
@@ -269358,6 +272714,15 @@
       "apps/web/components"
     ]
   },
+  "other messages": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "outside text": {
     "sites": 1,
     "scope": [
@@ -269401,6 +272766,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "pallets, cases, pieces": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "pass ≥ {0}%": {
@@ -269584,6 +272958,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "rate cons": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "read content written outside the organization": {
@@ -270065,6 +273448,15 @@
       "api/graphql"
     ]
   },
+  "status requests": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "still holds": {
     "sites": 1,
     "scope": [
@@ -270155,6 +273547,15 @@
       "go/other"
     ]
   },
+  "tenders": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "tenders@yourcompany.com": {
     "sites": 1,
     "scope": [
@@ -270193,12 +273594,22 @@
       "apps/web/components"
     ]
   },
-  "the customer": {
+  "the carrier": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/inbox"
+    ]
+  },
+  "the customer": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox",
       "routes/shipment"
     ]
   },
@@ -270236,6 +273647,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "the shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "the system": {
@@ -270365,6 +273785,15 @@
       "apps/web/components"
     ]
   },
+  "this month": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "this policy": {
     "sites": 1,
     "scope": [
@@ -270372,6 +273801,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "this stop": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "throttled": {
@@ -270655,7 +274093,7 @@
     ]
   },
   "until a document is attached": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -270664,7 +274102,7 @@
     ]
   },
   "until a {0} is attached": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -270682,7 +274120,7 @@
     ]
   },
   "until the invoice is paid": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -270691,7 +274129,7 @@
     ]
   },
   "until the shipment delivers": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -270700,11 +274138,12 @@
     ]
   },
   "until {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/inbox",
       "routes/my-team"
     ]
   },
@@ -271196,6 +274635,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "your usual reply time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{\"LTL\":\"M\"}": {
@@ -272115,6 +275563,15 @@
       "routes/inbox"
     ]
   },
+  "{0, plural, one {# draft ready} other {# drafts ready}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0, plural, one {# driver} other {# drivers}}": {
     "sites": 3,
     "scope": [
@@ -272168,6 +275625,15 @@
     ],
     "areas": [
       "routes/recurring-earning"
+    ]
+  },
+  "{0, plural, one {# empty — fine for a draft} other {# empty — fine for a draft}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0, plural, one {# error detected} other {# errors detected}}": {
@@ -272382,12 +275848,22 @@
     ]
   },
   "{0, plural, one {# hour} other {# hours}}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib",
+      "routes/inbox"
+    ]
+  },
+  "{0, plural, one {# hour} other {# hours}} {1, plural, one {# minute} other {# minutes}}": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "routes/inbox"
     ]
   },
   "{0, plural, one {# in-app recipient} other {# in-app recipients}}": {
@@ -272547,6 +276023,15 @@
       "packages/shared/lib"
     ]
   },
+  "{0, plural, one {# left for you} other {# left for you}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0, plural, one {# legacy exact match} other {# legacy exact matches}}": {
     "sites": 1,
     "scope": [
@@ -272620,6 +276105,15 @@
       "routes/shipment"
     ]
   },
+  "{0, plural, one {# looks off} other {# look off}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0, plural, one {# member line has no published rate, so finalizing is refused.} other {# member lines have no published rate, so finalizing is refused.}} Publish the missing rates, recompute, then finalize.": {
     "sites": 1,
     "scope": [
@@ -272690,6 +276184,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "{0, plural, one {# minute} other {# minutes}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0, plural, one {# missing requirement} other {# missing requirements}}": {
@@ -272946,13 +276449,14 @@
     ]
   },
   "{0, plural, one {# page} other {# pages}}": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/desk",
+      "routes/inbox",
       "routes/intake"
     ]
   },
@@ -274241,6 +277745,15 @@
       "routes/admin"
     ]
   },
+  "{0, plural, one {# would have needed a person — narrow the sender to avoid it} other {# would have needed a person — narrow the sender to avoid them}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0, plural, one {# year in} other {# years in}}": {
     "sites": 1,
     "scope": [
@@ -274284,6 +277797,15 @@
     ],
     "areas": [
       "routes/benefits"
+    ]
+  },
+  "{0, plural, one {+ # more} other {+ # more}}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0, plural, one {+# pt} other {+# pts}}": {
@@ -274511,6 +278033,15 @@
       "apps/web/hooks"
     ]
   },
+  "{0, plural, one {Copied # field} other {Copied # fields}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0, plural, one {Cover sheet downloaded; open it to print} other {# cover sheets downloaded; open them to print}}": {
     "sites": 1,
     "scope": [
@@ -274683,12 +278214,22 @@
     ]
   },
   "{0, plural, one {File # document} other {File # documents}}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox",
+      "routes/intake"
+    ]
+  },
+  "{0, plural, one {Filed # document} other {Filed # documents}}": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/intake"
+      "routes/inbox"
     ]
   },
   "{0, plural, one {Filed # message} other {Filed # messages}}": {
@@ -274743,15 +278284,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "{0, plural, one {Handed # message} other {Handed # messages}} to {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
     ]
   },
   "{0, plural, one {Held by # agent} other {Held by # agents}}": {
@@ -274935,6 +278467,15 @@
     ]
   },
   "{0, plural, one {Nova is reading # message} other {Nova is reading # messages}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0, plural, one {Nova is watching # source} other {Nova is watching # sources}}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -275224,6 +278765,15 @@
   },
   "{0, plural, one {Snoozed # message} other {Snoozed # messages}}": {
     "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0, plural, one {Split into # document} other {Split into # documents}}": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -275574,6 +279124,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {Would have handled # message} other {Would have handled # messages}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0, plural, one {You stopped it after # word.} other {You stopped it after # words.}}": {
     "sites": 1,
     "scope": [
@@ -275599,6 +279158,33 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "{0, plural, one {correction this week} other {corrections this week}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0, plural, one {correction this week} other {corrections this week}} · reading accuracy down {1}%": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0, plural, one {correction this week} other {corrections this week}} · reading accuracy up {1}%": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0, plural, one {driver} other {drivers}} ready for {1, plural, one {# uncovered load} other {# uncovered loads}}": {
@@ -275653,6 +279239,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {message last month would have matched} other {messages last month would have matched}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0, plural, one {min # stop} other {min # stops}}": {
@@ -276159,6 +279754,33 @@
       "packages/shared/lib"
     ]
   },
+  "{0} This one says the same.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} This one says {1} — {2} less.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} This one says {1} — {2} more.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0} accepted": {
     "sites": 1,
     "scope": [
@@ -276515,6 +280137,15 @@
       "routes/worker"
     ]
   },
+  "{0} assigned it to {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0} assigned to {1}": {
     "sites": 1,
     "scope": [
@@ -276722,6 +280353,15 @@
     ],
     "areas": [
       "routes/recurring-shipment"
+    ]
+  },
+  "{0} blocked {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} budget": {
@@ -277081,6 +280721,33 @@
       "routes/agent-control"
     ]
   },
+  "{0} corrected it to {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} corrected it: {1} → {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} corrected the kind": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0} could not be re-rated with the current template": {
     "sites": 1,
     "scope": [
@@ -277189,6 +280856,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} created {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} created, {1} skipped, {2} failed": {
@@ -277527,6 +281203,33 @@
       "routes/settlement-workspace"
     ]
   },
+  "{0} drafted a reply": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} drafted the load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} drafted the load from {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0} drive · {1} on-duty · {2} mi": {
     "sites": 1,
     "scope": [
@@ -277851,6 +281554,24 @@
       "routes/shipment"
     ]
   },
+  "{0} filed {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} filed {1} as {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0} files can't be sent · remove them to send the rest": {
     "sites": 1,
     "scope": [
@@ -277903,6 +281624,15 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "{0} flagged “{1}” as wrong": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} for drug testing and {1} for alcohol, from {2, plural, one {# driver} other {# drivers}}.": {
@@ -277995,6 +281725,15 @@
       "routes/time-attendance"
     ]
   },
+  "{0} from {1} on {2} → {3} · last 30 days": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0} from {1}, refreshed with {2} {3}": {
     "sites": 1,
     "scope": [
@@ -278048,6 +281787,15 @@
     "areas": [
       "routes/agent-control",
       "routes/worker"
+    ]
+  },
+  "{0} handed it off to {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} handled this shift": {
@@ -278240,6 +281988,15 @@
       "go/other"
     ]
   },
+  "{0} has not received mail yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0} has not reported its scanners yet.": {
     "sites": 1,
     "scope": [
@@ -278301,15 +282058,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "{0} has waited longest.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
     ]
   },
   "{0} has {1} changes that have been waiting {2} hours for someone to decide. Nothing runs until one of you does.": {
@@ -278427,6 +282175,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} ignored it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} ignored it — {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} imported as {1}": {
@@ -278736,6 +282502,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} is connected. New mail on {1} shows up in Waiting on you.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} is connected. New mail shows up in Waiting on you.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} is currently unavailable and no fallback provider could answer. Try again shortly": {
@@ -279474,7 +283258,7 @@
     ]
   },
   "{0} is viewing": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -279491,8 +283275,17 @@
       "routes/inbox"
     ]
   },
-  "{0} is writing a reply": {
+  "{0} is waiting on {1} to reply": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} is writing a reply": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -279525,6 +283318,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} is {1} → {2} on the same day.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} is {1}% through · {2}/{3} required settled{4}": {
@@ -279597,6 +283399,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "{0} kept both documents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} kept off the log": {
@@ -279777,6 +283588,24 @@
       "apps/web/lib"
     ]
   },
+  "{0} linked it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} linked it: {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0} live": {
     "sites": 1,
     "scope": [
@@ -279811,6 +283640,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} logged {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} login did not return an ID token": {
@@ -279868,6 +283706,33 @@
       "routes/detention-intelligence"
     ]
   },
+  "{0} made a rule": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} made a rule for {1}: Nova should {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} made a rule: Nova should {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0} margin": {
     "sites": 2,
     "scope": [
@@ -279893,6 +283758,24 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "{0} marked it handled": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} marked it handled — {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} marked paid, {1} failed": {
@@ -281300,7 +285183,7 @@
       "apps/web/components"
     ]
   },
-  "{0} on · {1} handled this month": {
+  "{0} on · {1, plural, one {# handled this month} other {# handled this month}}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -282014,6 +285897,24 @@
       "template/notification.dash.credential_expiring"
     ]
   },
+  "{0} reopened it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} reopened the conflict": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0} repeated": {
     "sites": 1,
     "scope": [
@@ -282021,6 +285922,33 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} replaced the document on file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} replied": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} replied from {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} replied to your comment": {
@@ -282331,6 +286259,15 @@
       "routes/my-team"
     ]
   },
+  "{0} said it's a new load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0} saved": {
     "sites": 2,
     "scope": [
@@ -282464,6 +286401,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "{0} settled the conflict": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} settled {1, plural, one {stop} other {stops}} across {2, plural, one {# facility} other {# facilities}} · {3}% ran past free time": {
@@ -282611,6 +286557,24 @@
       "routes/agent-control"
     ]
   },
+  "{0} skipped the load already on the board": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} snoozed it {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0} source cannot be used with transaction set {1}; expected {2}": {
     "sites": 1,
     "scope": [
@@ -282618,6 +286582,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} split {1} into {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} started": {
@@ -282692,6 +286665,15 @@
       "routes/policies"
     ]
   },
+  "{0} stood by the detention charge": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0} stop #{1}": {
     "sites": 1,
     "scope": [
@@ -282699,6 +286681,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} stopped receiving mail": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} stopped waiting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} stops": {
@@ -282829,15 +286829,6 @@
       "routes/agent-control"
     ]
   },
-  "{0} this month": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
-    ]
-  },
   "{0} this resource": {
     "sites": 1,
     "scope": [
@@ -282959,6 +286950,15 @@
       "routes/agent-control"
     ]
   },
+  "{0} took it off {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0} tools": {
     "sites": 3,
     "scope": [
@@ -283059,6 +287059,15 @@
       "apps/web/components"
     ]
   },
+  "{0} unassigned it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0} unchanged": {
     "sites": 1,
     "scope": [
@@ -283084,6 +287093,33 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0} unfiled {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} unfiled {1}: {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} unlinked {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} unresolved": {
@@ -283268,6 +287304,24 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "{0} waived the detention": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} waived the detention ({1})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} was created, but {1} was mapped to {2} meanwhile; map it again if that is wrong": {
@@ -283466,6 +287520,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0} woke it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} words": {
@@ -283801,6 +287864,24 @@
       "routes/benefits"
     ]
   },
+  "{0} · filed on {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "{0} · flagged as wrong": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0} · from {1}": {
     "sites": 2,
     "scope": [
@@ -284081,6 +288162,15 @@
     ],
     "areas": [
       "routes/service-failure"
+    ]
+  },
+  "{0} · {1, plural, one {# page} other {# pages}} · from {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} · {1, plural, one {# place} other {# places}}": {
@@ -284558,11 +288648,12 @@
     ]
   },
   "{0}% sure": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/inbox",
       "routes/intake"
     ]
   },
@@ -284618,6 +288709,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0}'s reply to {1} didn't send": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0}+ results": {
@@ -284937,6 +289037,15 @@
       "apps/web/lib"
     ]
   },
+  "{0}<n> — {1}</n>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0}M in · {1}M out": {
     "sites": 1,
     "scope": [
@@ -284947,7 +289056,7 @@
     ]
   },
   "{0}d": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -284957,6 +289066,7 @@
       "routes/customer-ledger",
       "routes/customer-statement",
       "routes/document-packet-rule",
+      "routes/inbox",
       "routes/scheduling"
     ]
   },
@@ -285068,6 +289178,15 @@
       "routes/shipment"
     ]
   },
+  "{0}h": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0}h ago": {
     "sites": 1,
     "scope": [
@@ -285114,12 +289233,13 @@
     ]
   },
   "{0}m": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/desk",
+      "routes/inbox",
       "routes/time-attendance"
     ]
   },
@@ -285348,6 +289468,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "~{0} min": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "~{0} per lookup": {
@@ -286191,6 +290320,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "··· Earlier thread": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "– now": {

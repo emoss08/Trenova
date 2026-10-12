@@ -15,7 +15,9 @@ import { useReaderPanel } from "./reader-panel";
 function Checklist({ message }: { message: InboundMessageDetail }) {
   const t = useT();
   const panel = useReaderPanel();
-  const steps = message.actions;
+  const steps = message.needsReview
+    ? message.actions
+    : message.actions.filter((step) => step.done);
   const done = steps.filter((step) => step.done).length;
   const adhoc = panel.adhocReply && !steps.some((step) => step.kind === "Reply");
   if (steps.length === 0 && !adhoc) {
@@ -77,7 +79,7 @@ export function ActionsPanel({
         "flex min-w-0 flex-col",
         placement === "rail" && "sticky top-0 gap-6.5 self-start pt-1.5",
         placement === "inline" &&
-          "bg-surface-hover border-border-subtle gap-4.5 rounded-xl border px-4 py-3.5",
+          "bg-card border-border-subtle gap-4.5 rounded-xl border px-4 py-3.5",
         placement === "sheet" && "gap-6",
       )}
     >

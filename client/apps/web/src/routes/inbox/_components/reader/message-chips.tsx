@@ -8,6 +8,7 @@ import {
   Link01Icon,
   Send01Icon,
 } from "@trenova/shared/components/icons";
+import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import { cn, toSentenceFragment } from "@trenova/shared/lib/utils";
@@ -131,6 +132,7 @@ export function MessageChips({ message }: { message: InboundMessageDetail }) {
 /** "Handled by you · Oct 7, 1:39 PM — note", with Reopen, on a settled message. */
 export function SettledReceipt({ message }: { message: InboundMessageDetail }) {
   const t = useT();
+  const rt = useRichT();
   const actions = useTriageActions();
   const meId = useAuthStore((state) => state.user?.id ?? null);
   if (message.needsReview || (message.status !== "Actioned" && message.status !== "Ignored")) {
@@ -149,15 +151,23 @@ export function SettledReceipt({ message }: { message: InboundMessageDetail }) {
   const line =
     message.status === "Actioned" ? t("Handled by {0}", by) : t("Ignored by {0}", by);
   const note = message.reviewNote.trim();
+  const stamped =
+    message.reviewedAt === null
+      ? line
+      : t("{0} · {1}", line, formatUnixDateTimeShort(message.reviewedAt));
 
   return (
     <div className="text-success flex items-start gap-2 text-base leading-normal">
       <CheckIcon aria-hidden className="mt-1 size-3 shrink-0" strokeWidth={2.4} />
       <span className="min-w-0 flex-1">
-        {message.reviewedAt === null
-          ? line
-          : t("{0} · {1}", line, formatUnixDateTimeShort(message.reviewedAt))}
-        {note !== "" && <span className="text-foreground-subtle">{t(" — {0}", note)}</span>}
+        {note === ""
+          ? stamped
+          : rt(
+              "{0}<n> — {1}</n>",
+              { n: (chunks) => <span className="text-foreground-subtle">{chunks}</span> },
+              stamped,
+              note,
+            )}
       </span>
       <button
         type="button"

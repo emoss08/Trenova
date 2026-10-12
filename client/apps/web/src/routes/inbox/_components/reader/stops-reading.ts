@@ -46,12 +46,15 @@ function duration(t: TranslateFn, minutes: number): string {
   if (hours === 0) {
     return t("{0, plural, one {# minute} other {# minutes}}", rest);
   }
-  const hourPart = t("{0, plural, one {# hour} other {# hours}}", hours);
   if (rest === 0) {
-    return hourPart;
+    return t("{0, plural, one {# hour} other {# hours}}", hours);
   }
 
-  return t("{0} {1}", hourPart, t("{0, plural, one {# minute} other {# minutes}}", rest));
+  return t(
+    "{0, plural, one {# hour} other {# hours}} {1, plural, one {# minute} other {# minutes}}",
+    hours,
+    rest,
+  );
 }
 
 function arrivalLabel(t: TranslateFn, source: string): string {

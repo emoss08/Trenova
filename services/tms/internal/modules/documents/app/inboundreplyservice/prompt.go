@@ -49,12 +49,84 @@ var purposeInstructions = map[triage.ReplyPurpose]string{
 	triage.ReplySendEta:       "Give the current status and ETA of the load in one or two sentences.",
 }
 
-var decisionInstructions = map[inboundmessage.StopsDecision]string{
-	inboundmessage.StopsDecisionWaive: "The team decided to waive the detention. Apologise briefly, " +
-		"say the charge has been removed and that a corrected invoice follows.",
-	inboundmessage.StopsDecisionStandBy: "The team stands by the detention charge. Explain it politely " +
+const (
+	waiveInstruction = "The team decided to waive the detention. Apologise briefly " +
+		"and say the charge has been removed."
+	waiveUnbilledInstruction = "The team decided to waive the detention before it was invoiced. " +
+		"Apologise briefly and say the charge has been removed and will not appear on the invoice."
+	waiveCreditedInstruction = "The team decided to waive the detention, which had already been " +
+		"invoiced. Apologise briefly, say the charge has been credited on the invoice named in " +
+		"the detention decision, and that the credit memo follows today."
+	waivePendingInstruction = "The team decided to waive the detention, which had already been " +
+		"invoiced. Apologise briefly and say a credit for it on the invoice named in the detention " +
+		"decision is being processed and the credit memo follows once it is approved. Do not say the " +
+		"credit has already been issued."
+	standByInstruction = "The team stands by the detention charge. Explain it politely " +
 		"with the arrival, check-in and departure times, say the gate and ELD record backs them, " +
-		"and offer to talk it through.",
+		"and offer to talk it through."
+)
+
+func decisionInstruction(state *inboundmessage.ActionState) string {
+	switch state.StopsDecision {
+	case inboundmessage.StopsDecisionStandBy:
+		return standByInstruction
+	case inboundmessage.StopsDecisionWaive:
+		waiver := state.DetentionWaiver
+		switch {
+		case waiver == nil:
+			return waiveInstruction
+		case waiver.Credited() && waiver.CreditPending:
+			return waivePendingInstruction
+		case waiver.Credited():
+			return waiveCreditedInstruction
+		default:
+			return waiveUnbilledInstruction
+		}
+	default:
+		return ""
+	}
+}
+
+func decisionFacts(state *inboundmessage.ActionState) string {
+	if state.StopsDecision == "" {
+		return ""
+	}
+
+	lines := make([]string, 0, 5)
+	add := func(label, value string) {
+		if strings.TrimSpace(value) != "" {
+			lines = append(lines, label+": "+value)
+		}
+	}
+	if state.StopsDecision == inboundmessage.StopsDecisionStandBy {
+		add("Decision", "stand by the charge")
+
+		return strings.Join(lines, "\n")
+	}
+
+	add("Decision", "waive the charge")
+	waiver := state.DetentionWaiver
+	if waiver == nil {
+		return strings.Join(lines, "\n")
+	}
+	add("Amount waived", strings.TrimSpace(waiver.Amount+" "+waiver.Currency))
+	if !waiver.Credited() {
+		add("Invoiced", "no, it was removed before invoicing")
+
+		return strings.Join(lines, "\n")
+	}
+	invoices := strings.Join(waiver.InvoiceNumbers, ", ")
+	if waiver.CreditPending {
+		add("Invoice to credit", invoices)
+		add("Credit status", "waiting for approval in billing")
+
+		return strings.Join(lines, "\n")
+	}
+	add("Invoice credited", invoices)
+	add("Credit memo", strings.Join(waiver.CreditMemoNumbers, ", "))
+	add("Credit status", "issued")
+
+	return strings.Join(lines, "\n")
 }
 
 type replyPayload struct {
@@ -129,6 +201,11 @@ func replyContextSections(mc *messageContext) agentports.DelimitedContext {
 			Title: "Stop times", Trusted: true, Content: stops,
 		})
 	}
+	if decision := decisionFacts(&mc.message.ActionState); decision != "" {
+		sections = append(sections, agentports.ContextSection{
+			Title: "Detention decision", Trusted: true, Content: decision,
+		})
+	}
 
 	return agentports.DelimitedContext{Sections: append(
 		sections,
@@ -166,7 +243,7 @@ func taskFor(mc *messageContext) string {
 			lines = append(lines, "The refused file is "+action.RefusedFileName+".")
 		}
 	}
-	if decision, ok := decisionInstructions[mc.message.ActionState.StopsDecision]; ok {
+	if decision := decisionInstruction(&mc.message.ActionState); decision != "" {
 		lines = append(lines, decision)
 	}
 	if len(lines) == 0 {

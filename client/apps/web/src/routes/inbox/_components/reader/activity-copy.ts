@@ -143,6 +143,13 @@ export function activityLine(
 
   switch (activity.kind) {
     case "Assigned": {
+      if (
+        activity.actorKind === "Person" &&
+        activity.actor !== null &&
+        activity.actor.id === activity.recordId
+      ) {
+        return activity.actor.id === meId ? t("You took it") : t("{0} took it", activity.actor.name);
+      }
       const to = activity.recordId !== null && activity.recordId === meId ? t("you") : subject;
       return actor === null ? t("Assigned to {0}", to) : t("{0} assigned it to {1}", actor, to);
     }

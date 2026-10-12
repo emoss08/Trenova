@@ -12,7 +12,7 @@ import { inboxMessagesQuery } from "@/lib/queries/inbox";
 import type { RoutePrefetch, RoutePrefetchEntry } from "@/lib/route-prefetch";
 import { knownRow } from "@/lib/triage/cache";
 import { useTriageStore } from "@/stores/triage-store";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ContextMenuHost,
   isContextMenuOpen,
@@ -57,7 +57,6 @@ import {
   type TriageFolder,
 } from "./_components/folders";
 import { stepFrom, useTriageKeys, type TriageCommand } from "./_components/keys";
-import { LinkMessageDialog } from "./_components/link-dialog";
 import { buildListItems } from "./_components/list/list-items";
 import {
   ConnectFirstSource,
@@ -69,7 +68,7 @@ import {
 import { TriageList } from "./_components/list/triage-list";
 import type { RowHandlers } from "./_components/list/triage-row";
 import { rowMenu } from "./_components/menus";
-import { ShortcutsSheet } from "./_components/shortcuts-sheet";
+import { TriageOverlayHost } from "./_components/overlays/overlay-host";
 import { LaneStrip } from "./_components/sidebar/lane-strip";
 import { TriageSidebar } from "./_components/sidebar/triage-sidebar";
 import { TriageNavigationContext, type TriageNavigation } from "./_components/triage-navigation";
@@ -105,7 +104,6 @@ const Reader = lazy(() =>
 /** Where the reader sits beside the list rather than in its place. */
 const WIDE_QUERY = "(min-width: 1024px)";
 const AI_CONTROL_PATH = "/admin/agent-control";
-const SOURCES_PATH = "/admin/inbound-mailboxes";
 
 /**
  * Warms what the page reads on mount: the counts, the sources and views the
@@ -281,8 +279,6 @@ function TriageWorkspace({
   const listRef = useRef<VirtualRowsHandle>(null);
   const autoOpened = useRef<string | null>(null);
 
-  const overlay = useTriageStore((store) => store.overlay);
-  const closeOverlay = useTriageStore((store) => store.closeOverlay);
   const railCollapsed = useTriageStore((store) => store.railCollapsed);
 
   const { folder, messageId: openId, search } = location;
@@ -552,7 +548,13 @@ function TriageWorkspace({
       );
     }
     if (mailboxesQuery.isSuccess && mailboxes.length === 0) {
-      return <ConnectFirstSource onAdd={() => navigate(SOURCES_PATH)} />;
+      return (
+        <ConnectFirstSource
+          onAdd={() =>
+            useTriageStore.getState().openOverlay({ kind: "connect", mailboxId: null })
+          }
+        />
+      );
     }
     if (counts !== undefined && counts.total === 0 && mailboxes.length > 0) {
       return <FirstMessage mailbox={mailbox ?? mailboxes[0]} />;
@@ -715,10 +717,7 @@ function TriageWorkspace({
         )}
       </div>
 
-      {overlay?.kind === "link" && (
-        <LinkOverlay messageId={overlay.messageId} onClose={closeOverlay} />
-      )}
-      <ShortcutsSheet open={overlay?.kind === "shortcuts"} onClose={closeOverlay} />
+      <TriageOverlayHost />
     </div>
   );
 }
@@ -728,26 +727,6 @@ function navigationOpenInQueue(
   id: string,
 ) {
   update((current) => messageParams(folderParams(current, WAITING), id));
-}
-
-function LinkOverlay({ messageId, onClose }: { messageId: string; onClose: () => void }) {
-  const message = useQuery(queries.inbox.message(messageId)).data;
-  if (message === undefined) {
-    return null;
-  }
-
-  return (
-    <LinkMessageDialog
-      message={message}
-      open
-      onOpenChange={(open) => {
-        if (!open) {
-          onClose();
-        }
-      }}
-      onLinked={onClose}
-    />
-  );
 }
 
 function NothingOpen({

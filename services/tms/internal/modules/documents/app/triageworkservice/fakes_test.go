@@ -449,6 +449,8 @@ func (f *fakeExceptions) LogException(_ context.Context, req *inboundmessageport
 
 type fakeDetention struct {
 	requests []*inboundmessageports.SettleTriageDetentionRequest
+	settled  *inboundmessageports.SettledTriageDetention
+	err      error
 }
 
 func (f *fakeDetention) SettleDetention(
@@ -456,6 +458,12 @@ func (f *fakeDetention) SettleDetention(
 	req *inboundmessageports.SettleTriageDetentionRequest,
 ) (*inboundmessageports.SettledTriageDetention, error) {
 	f.requests = append(f.requests, req)
+	if f.err != nil {
+		return nil, f.err
+	}
+	if f.settled != nil {
+		return f.settled, nil
+	}
 
 	return &inboundmessageports.SettledTriageDetention{Amount: "150.00", Currency: "USD", Settled: true}, nil
 }
