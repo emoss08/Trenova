@@ -7,17 +7,17 @@ import type {
   DeskCustomer as DeskCustomerRecord,
   DeskCustomerBilling,
   DeskCustomerRateAgreement,
-  DeskCustomerShipment,
 } from "@/lib/graphql/customer-card";
 import { queries } from "@/lib/queries";
 import { agreementTypeLabel, agreementWindow, orderedAgreements } from "@/lib/rate-agreement";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { ShipmentStatusBadge } from "@trenova/shared/components/status-badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, formatPercent } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useCardAccess } from "../../record-card/card-access";
+import { CardShipments } from "../../record-card/card-shipments";
+import { useRecordShipments } from "../../record-card/record-shipments";
 import {
   CardBar,
   CardBarHint,
@@ -31,6 +31,7 @@ import {
   CardSectionWait,
   CardStatus,
   CardStepper,
+  CardUnreadable,
   RecordCard,
 } from "../../record-card/record-card";
 import {
@@ -51,13 +52,12 @@ import {
   customerAddress,
   invoiceNeeds,
   payPace,
-  shipmentLane,
   type CreditUse,
 } from "./customer-card";
 import { CUSTOMER_SECTIONS } from "./customer-sections";
 import { DeskCustomerSkeleton } from "./customer-skeleton";
 
-/** The shipments the card lists; the customer's page holds the rest. */
+/** The shipments the card reads at a time; the next page is read on request. */
 const SHIPMENT_ROWS = 5;
 /** The rate agreements the card lists. */
 const AGREEMENT_ROWS = 4;
@@ -108,18 +108,13 @@ export function DeskCustomer({
 
   if (!customer) {
     return query.isError ? (
-      <RecordCard>
-        <CardHead
-          onBack={onBack}
-          backLabel={backLabel ?? t("Back to the table")}
-          kicker={[t("Customer")]}
-          title={t("This customer could not be read")}
-          subtitle={describeApiError(
-            query.error,
-            t("It may have been removed, or you may not be allowed to see it."),
-          )}
-        />
-      </RecordCard>
+      <CardUnreadable
+        kind={t("Customer")}
+        title={t("This customer could not be read")}
+        error={query.error}
+        onBack={onBack}
+        backLabel={backLabel}
+      />
     ) : (
       <DeskCustomerSkeleton stepper={onSelect !== undefined && order.length > 1} />
     );
@@ -164,10 +159,10 @@ function CustomerCard({
     enabled: access.receivables,
     retry: false,
   });
-  const shipments = useQuery({
-    ...queries.customer.recentShipments(id, SHIPMENT_ROWS),
+  const shipments = useRecordShipments({
+    scope: { kind: "customer", id },
+    pageSize: SHIPMENT_ROWS,
     enabled: access.shipments,
-    retry: false,
   });
   const agreements = useQuery({
     ...queries.customer.rateAgreements(id, AGREEMENT_ROWS),
@@ -175,10 +170,6 @@ function CustomerCard({
     retry: false,
   });
 
-  const shipmentIds = useMemo(
-    () => shipments.data?.rows.map((shipment) => shipment.id) ?? NO_ROWS,
-    [shipments.data],
-  );
   const agreementRows = useMemo(
     () => orderedAgreements(agreements.data?.rows ?? []),
     [agreements.data],
@@ -187,7 +178,7 @@ function CustomerCard({
   const backToCustomer = t("Back to {0}", customer.name);
   const listedShipments = useListedRecords({
     entity: "shipment",
-    order: shipmentIds,
+    order: shipments.ids,
     backLabel: backToCustomer,
   });
   const listedAgreements = useListedRecords({
@@ -293,23 +284,12 @@ function CustomerCard({
       </CardSection>
 
       {access.shipments && (
-        <CardSection
+        <CardShipments
           title={t("Recent shipments")}
-          aside={
-            shipments.data && shipments.data.total > 0 ? (
-              <span>
-                {t("{0, plural, one {# shipment} other {# shipments}}", shipments.data.total)}
-              </span>
-            ) : undefined
-          }
-        >
-          <RecentShipments
-            rows={shipments.data?.rows}
-            onOpen={listedShipments.open}
-            pending={shipments.isPending}
-            error={shipments.error}
-          />
-        </CardSection>
+          shipments={shipments}
+          onOpen={listedShipments.open}
+          emptyText={t("No shipments yet.")}
+        />
       )}
 
       {access.agreements && (
@@ -614,66 +594,6 @@ function CreditMeter({
   );
 }
 
-/** The customer's latest freight: each load's lane, pickup, status and charge. */
-function RecentShipments({
-  rows,
-  onOpen,
-  pending,
-  error,
-}: {
-  rows: DeskCustomerShipment[] | undefined;
-  /** Opens a shipment in the card's place; absent, each row links to the shipment's page. */
-  onOpen: ((shipmentId: string) => void) | undefined;
-  pending: boolean;
-  error: unknown;
-}) {
-  const t = useT();
-  if (error && !rows) {
-    return (
-      <CardSectionError>
-        {describeApiError(error, t("The shipments could not be read."))}
-      </CardSectionError>
-    );
-  }
-  if (pending || !rows) {
-    return <CardSectionWait rows={3} />;
-  }
-  if (rows.length === 0) {
-    return <p className="dk-cu-note">{t("No shipments yet.")}</p>;
-  }
-  return (
-    <div className="dk-rec-list">
-      {rows.map((shipment) => {
-        const lane = shipmentLane(shipment);
-        return (
-          <CardRecordRow
-            key={shipment.id}
-            to={recordPath("shipment", shipment.id)}
-            onOpen={onOpen && (() => onOpen(shipment.id))}
-          >
-            <span className="dk-cu-main">
-              <b>{shipment.proNumber}</b>
-              <span className="dk-cu-lane">
-                {lane.origin ?? t("No pickup")}
-                <i aria-hidden> → </i>
-                {lane.destination ?? t("No delivery")}
-              </span>
-            </span>
-            <span className="dk-cu-side">
-              <ShipmentStatusBadge status={shipment.status} />
-              <span className="dk-cu-sub">
-                {[cardDay(lane.pickupAt), money(shipment.totalChargeAmount)]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </span>
-            </span>
-          </CardRecordRow>
-        );
-      })}
-    </div>
-  );
-}
-
 /** The agreements that price the customer's freight, the ones in force first. */
 function RateAgreements({
   rows,
@@ -718,9 +638,9 @@ function RateAgreements({
             to={recordPath("rate_agreement", agreement.id)}
             onOpen={onOpen && (() => onOpen(agreement.id))}
           >
-            <span className="dk-cu-main">
+            <span className="dk-rec-main">
               <b>{agreement.name}</b>
-              <span className="dk-cu-sub">
+              <span className="dk-rec-sub">
                 {[agreement.code, agreementTypeLabel(agreement.agreementType)].join(" · ")}
               </span>
             </span>

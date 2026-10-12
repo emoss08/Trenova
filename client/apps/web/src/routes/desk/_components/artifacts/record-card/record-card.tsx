@@ -1,3 +1,4 @@
+import { describeApiError } from "@/lib/api-error-message";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -146,6 +147,42 @@ export function CardHead({
       </div>
       {meta && <div className="dk-rec-meta">{meta}</div>}
     </div>
+  );
+}
+
+/**
+ * A card whose record could not be read: what kind of record it was, that it
+ * could not be read and why, and the way back to where it was opened from.
+ */
+export function CardUnreadable({
+  kind,
+  title,
+  error,
+  onBack,
+  backLabel,
+}: {
+  /** The record's kind, in the kicker. */
+  kind: string;
+  /** "This tractor could not be read", in the record's own words. */
+  title: string;
+  error: unknown;
+  onBack?: () => void;
+  backLabel?: string;
+}) {
+  const t = useT();
+  return (
+    <RecordCard>
+      <CardHead
+        onBack={onBack}
+        backLabel={backLabel ?? t("Back to the table")}
+        kicker={[kind]}
+        title={title}
+        subtitle={describeApiError(
+          error,
+          t("It may have been removed, or you may not be allowed to see it."),
+        )}
+      />
+    </RecordCard>
   );
 }
 
@@ -383,6 +420,34 @@ export function CardSectionError({ children }: { children: ReactNode }) {
     <div className="dk-ax-warn">
       <CardIcon name="warn" size={13} />
       <span>{children}</span>
+    </div>
+  );
+}
+
+/**
+ * The foot of a list that has more to read: how many are shown, and the way to
+ * read the next page, which says so while it is read.
+ */
+export function CardMore({
+  shown,
+  onMore,
+  loading,
+  label,
+  loadingLabel,
+}: {
+  /** How many are shown, and of how many when that is known. */
+  shown: ReactNode;
+  onMore: () => void;
+  loading: boolean;
+  label: string;
+  loadingLabel: string;
+}) {
+  return (
+    <div className="dk-rec-more">
+      <span>{shown}</span>
+      <Button variant="quiet" size="xs" disabled={loading} onClick={onMore}>
+        {loading ? loadingLabel : label}
+      </Button>
     </div>
   );
 }

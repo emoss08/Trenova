@@ -4780,6 +4780,60 @@ a.dk-rec-doc:focus-visible {
     transition: none;
   }
 }
+/* what a listed record's row carries: its name over a line, and what sits on the right */
+.dk-rec-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.dk-rec-main > b {
+  overflow: hidden;
+  font-weight: 500;
+  font-size: 12.5px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--dsk-fg);
+}
+.dk-rec-lane,
+.dk-rec-sub {
+  overflow: hidden;
+  font-size: 11.5px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--dsk-subtle);
+}
+.dk-rec-lane i {
+  font-style: normal;
+  color: var(--dsk-faint);
+}
+.dk-rec-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.dk-rec-side .dk-rec-sub {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+}
+/* a section that has nothing to list says so in its place */
+.dk-rec-note {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--dsk-subtle);
+}
+/* the next page of a section's list, under it */
+.dk-rec-more {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
 /* The formula template card */
 .dk-ft-code {
   margin: 0;
@@ -5239,6 +5293,9 @@ th.dk-cb .dk-ax-cb:hover {
 }
 .dk-ax-ki.dk-k-agreement {
   color: var(--accent-indigo);
+}
+.dk-ax-ki.dk-k-tractor {
+  color: var(--accent-sky);
 }
 /* The shipment card */
 .dk-sh-nowsec {
@@ -6392,43 +6449,6 @@ th.dk-cb .dk-ax-cb:hover {
   white-space: pre-line;
   color: var(--dsk-fg2);
 }
-/* what a customer's listed shipments and agreements carry */
-.dk-cu-main {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-.dk-cu-main > b {
-  overflow: hidden;
-  font-weight: 500;
-  font-size: 12.5px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  color: var(--dsk-fg);
-}
-.dk-cu-lane,
-.dk-cu-sub {
-  overflow: hidden;
-  font-size: 11.5px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  color: var(--dsk-subtle);
-}
-.dk-cu-lane i {
-  font-style: normal;
-  color: var(--dsk-faint);
-}
-.dk-cu-side {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-}
-.dk-cu-side .dk-cu-sub {
-  font-family: var(--dk-plex);
-  font-feature-settings: "tnum";
-}
 .dk-cu-window {
   font-size: 12px;
   white-space: nowrap;
@@ -6474,6 +6494,212 @@ th.dk-cb .dk-ax-cb:hover {
   }
   .dk-cu-meter > i {
     transition: none;
+  }
+}
+/* The tractor card */
+.dk-tr {
+  container: dktr / inline-size;
+}
+.dk-rec-amt .dk-tr-wait {
+  color: var(--dsk-faint);
+}
+/* where it is: the map or its heading dial beside the place and how it moves */
+.dk-tr-where {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  min-height: 112px;
+}
+.dk-tr-scope {
+  width: 112px;
+  height: 112px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-tr-at {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dk-tr-at > b {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--dsk-fg);
+  overflow-wrap: anywhere;
+}
+.dk-tr-at > b.dk-tr-unknown {
+  font-weight: 500;
+  color: var(--dsk-muted);
+}
+.dk-tr-motion {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--dsk-fg2);
+}
+.dk-tr-motion > i {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dsk-faint);
+}
+.dk-tr-where.dk-live .dk-tr-motion > i {
+  background: var(--dsk-success-fg);
+  box-shadow: 0 0 0 3px var(--dsk-success-sub);
+}
+.dk-tr-motion.dk-off {
+  color: var(--dsk-subtle);
+}
+.dk-tr-geo {
+  font: 11.5px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-subtle);
+}
+.dk-tr-left {
+  margin-top: 12px;
+}
+.dk-tr-left .dk-rec-main {
+  gap: 1px;
+}
+/* the heading dial, drawn when there is no map */
+.dk-tr-dial {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.dk-tr-dial-ring {
+  fill: var(--dsk-card);
+  stroke: var(--dsk-b);
+  stroke-width: 1;
+}
+.dk-tr-dial-tick {
+  stroke: var(--dsk-b-strong);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+}
+.dk-tr-dial-tick.dk-major {
+  stroke: var(--dsk-subtle);
+  stroke-width: 1.6;
+}
+.dk-tr-dial-n {
+  font: 600 9px var(--dk-plex);
+  fill: var(--dsk-subtle);
+}
+.dk-tr-needle path {
+  fill: var(--dsk-fg);
+}
+.dk-tr-where.dk-live .dk-tr-needle path {
+  fill: var(--dsk-success-fg);
+}
+.dk-tr-needle {
+  animation: dk-pop 240ms var(--dk-spring) both;
+}
+.dk-tr-dial-hub {
+  fill: var(--dsk-card);
+  stroke: var(--dsk-subtle);
+  stroke-width: 1.4;
+}
+/* the inspections, each a row with its verdict on the right */
+.dk-tr-insp {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-tr-insp > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-top: 1px solid var(--dsk-b-sub);
+  animation: dk-nl 260ms var(--dk-settle) both;
+}
+.dk-tr-insp > li:first-child {
+  border-top: 0;
+}
+.dk-tr-verdict {
+  font-size: 12px;
+  white-space: nowrap;
+  color: var(--dsk-subtle);
+}
+.dk-tr-verdict.dk-bad {
+  font-weight: 500;
+  color: var(--danger);
+}
+.dk-tr-verdict.dk-warn {
+  color: var(--dsk-warn-fg);
+}
+.dk-rec-ck.dk-tr-ck-wait {
+  background: transparent;
+}
+/* what the tractor is, two facts to a row */
+.dk-tr-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.dk-tr-facts > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 9px 12px;
+}
+.dk-tr-facts > div:nth-child(even) {
+  border-left: 1px solid var(--dsk-b-sub);
+}
+.dk-tr-facts > div:nth-child(n + 3) {
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-tr-facts dt {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-tr-facts dd {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--dsk-fg);
+  overflow-wrap: anywhere;
+}
+@container dktr (max-width: 420px) {
+  .dk-tr-where {
+    grid-template-columns: 84px minmax(0, 1fr);
+    min-height: 84px;
+  }
+  .dk-tr-scope {
+    width: 84px;
+    height: 84px;
+  }
+  .dk-tr-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dk-tr-facts > div:nth-child(even) {
+    border-left: 0;
+  }
+  .dk-tr-facts > div:nth-child(n + 2) {
+    border-top: 1px solid var(--dsk-b-sub);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-tr-needle,
+  .dk-tr-insp > li {
+    animation: none;
   }
 }
 /* The rate agreement card */

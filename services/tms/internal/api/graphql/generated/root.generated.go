@@ -2695,12 +2695,13 @@ type QueryResolver interface {
 	TelematicsFormMapping(ctx context.Context, id string) (*gqlmodel.TelematicsFormMapping, error)
 	ShipmentDriverFeasibility(ctx context.Context, shipmentID string) ([]*gqlmodel.DriverFeasibility, error)
 	VehiclePositions(ctx context.Context, maxAgeSeconds *int) ([]*gqlmodel.VehiclePosition, error)
+	VehiclePosition(ctx context.Context, tractorID string) (*gqlmodel.VehiclePosition, error)
 	WorkerHosStates(ctx context.Context, workerIds []string, limit *int) ([]*gqlmodel.WorkerHosState, error)
 	WorkerHosState(ctx context.Context, workerID string) (*gqlmodel.WorkerHosState, error)
 	WorkerHosViolations(ctx context.Context, workerID *string, since *int, limit *int) ([]*gqlmodel.WorkerHosViolation, error)
 	WorkerHosLogs(ctx context.Context, workerID string, startTime int, endTime int) ([]*gqlmodel.WorkerHosLogEntry, error)
 	WorkerHosDailyLogs(ctx context.Context, workerID string, startDate string, endDate string) ([]*gqlmodel.WorkerHosDailyLog, error)
-	VehicleInspections(ctx context.Context, tractorID *string, workerID *string, since *int, limit *int) ([]*gqlmodel.VehicleInspection, error)
+	VehicleInspections(ctx context.Context, tractorID *string, workerID *string, since *int, limit *int, before *int, beforeID *string) ([]*gqlmodel.VehicleInspection, error)
 	WorkerFormSubmissions(ctx context.Context, workerID string, startTime int, endTime int) ([]*gqlmodel.WorkerFormSubmission, error)
 	HosCertificationSummary(ctx context.Context, startDate string, endDate string) ([]*gqlmodel.HosCertificationSummary, error)
 	TelematicsStatus(ctx context.Context) (*gqlmodel.TelematicsStatus, error)
@@ -27138,6 +27139,8 @@ input ShipmentsInput {
   quickFilters: [ShipmentQuickFilterInput!]
   "IANA time zone for day and hour quick filters."
   timezone: String
+  "Only shipments with a live move assigned to one of these tractors."
+  tractorIds: [ID!]
 }
 
 input ShipmentEventsInput {
@@ -28191,12 +28194,25 @@ extend type Query {
   telematicsFormMapping(id: ID!): TelematicsFormMapping
   shipmentDriverFeasibility(shipmentId: ID!): [DriverFeasibility!]!
   vehiclePositions(maxAgeSeconds: Int): [VehiclePosition!]!
+  "One tractor's latest reported position, however old; null when the tractor has never reported one."
+  vehiclePosition(tractorId: ID!): VehiclePosition
   workerHosStates(workerIds: [ID!], limit: Int): [WorkerHosState!]!
   workerHosState(workerId: ID!): WorkerHosState
   workerHosViolations(workerId: ID, since: Timestamp, limit: Int): [WorkerHosViolation!]!
   workerHosLogs(workerId: ID!, startTime: Timestamp!, endTime: Timestamp!): [WorkerHosLogEntry!]!
   workerHosDailyLogs(workerId: ID!, startDate: String!, endDate: String!): [WorkerHosDailyLog!]!
-  vehicleInspections(tractorId: ID, workerId: ID, since: Timestamp, limit: Int): [VehicleInspection!]!
+  """
+  Inspections newest first. Pass the startedAt and id of the last one seen as
+  before and beforeId to read the next page.
+  """
+  vehicleInspections(
+    tractorId: ID
+    workerId: ID
+    since: Timestamp
+    limit: Int
+    before: Timestamp
+    beforeId: ID
+  ): [VehicleInspection!]!
   workerFormSubmissions(workerId: ID!, startTime: Timestamp!, endTime: Timestamp!): [WorkerFormSubmission!]!
   hosCertificationSummary(startDate: String!, endDate: String!): [HosCertificationSummary!]!
   telematicsStatus: TelematicsStatus!
@@ -28596,7 +28612,14 @@ extend type Mutation {
   voidPayrollExport(input: VoidPayrollExportInput!): PayrollExport!
 }
 `, BuiltIn: false},
-	{Name: "../schema/tractor.graphqls", Input: `type TractorEdge {
+	{Name: "../schema/tractor.graphqls", Input: `"Who owns a piece of equipment."
+enum EquipmentOwnershipType {
+  CompanyOwned
+  Leased
+  OwnerOperator
+}
+
+type TractorEdge {
   node: Tractor!
   cursor: String!
 }
@@ -28639,6 +28662,16 @@ type Tractor {
   Whether the tractor's miles and fuel enter the IFTA return.
   """
   iftaQualified: Boolean!
+  "Who owns the tractor: the company, a lessor, or the owner-operator who drives it."
+  ownershipType: EquipmentOwnershipType!
+  "The owner-operator who owns the tractor, when it is theirs."
+  ownerWorkerId: ID
+  "The lessor a leased tractor is leased from."
+  lessorName: String!
+  "The lessor's reference for the lease."
+  leaseReference: String!
+  "When the lease on a leased tractor ends."
+  leaseEndDate: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -28651,6 +28684,7 @@ type Tractor {
   state: UsState
   primaryWorker: Worker
   secondaryWorker: Worker
+  ownerWorker: Worker
   lastKnownLocation: LocationReference
 }
 

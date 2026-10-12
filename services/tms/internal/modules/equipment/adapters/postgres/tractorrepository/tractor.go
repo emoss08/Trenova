@@ -454,6 +454,9 @@ func applyTractorRelations(
 			dbhelper.RelationColumns(includes.SecondaryWorkerColumns),
 		)
 	}
+	if includes.IncludeOwnerWorker {
+		q = q.Relation(rel.OwnerWorker, dbhelper.RelationColumns(includes.OwnerWorkerColumns))
+	}
 	if includePrimaryWorker && includes.IncludeTenantDetails {
 		q = q.Relation(buncolgen.Rel(rel.PrimaryWorker, workerRel.BusinessUnit)).
 			Relation(buncolgen.Rel(rel.PrimaryWorker, workerRel.Organization)).

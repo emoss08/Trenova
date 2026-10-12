@@ -61,6 +61,7 @@ import { recurringShipment } from "./recurring-shipment";
 import { shipment } from "./shipment";
 import { shipmentBoard } from "./shipment-board";
 import { shipmentControl } from "./shipment-control";
+import { tractor } from "./tractor";
 import { homeLayout } from "./home-layout";
 import { sidebarPreferences } from "./sidebar-preferences";
 import { notification } from "@trenova/shared/lib/queries/notification";
@@ -117,6 +118,7 @@ const operationsQueries = mergeQueryKeys(
   documentParsingRule,
   location,
   shipment,
+  tractor,
   shipmentBoard,
   rateQuote,
   recurringShipment,

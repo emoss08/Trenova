@@ -44,10 +44,13 @@ artifacts/
                           report, document, extraction, record, rate, diff, plan,
                           email, view, decision, each with its __tests__/
   record-card/            the parts every card is built from: head, stepper, status,
-                          sections, checks, timeline, bottom bar (record-card.tsx),
+                          sections, checks, timeline, a list's next page, the
+                          "could not be read" head, bottom bar (record-card.tsx),
                           money, moments and table stepping (record-card-values.ts),
-                          and a record's documents (card-documents.tsx, a rail
-                          drawn by document-rail.tsx from record-documents.ts)
+                          a record's shipments, paged (card-shipments.tsx, read by
+                          useRecordShipments in record-shipments.ts), and a
+                          record's documents (card-documents.tsx, a rail drawn by
+                          document-rail.tsx from record-documents.ts)
   skeletons/              the parts every card's skeleton is built from
   cards/
     registry.tsx          the resource cards, in place and as artifacts
@@ -61,7 +64,8 @@ kinds or two cards use moves to `kinds/artifact-body-parts.tsx`, `record-card/` 
 is drawn as a table and reads `kinds/table/`. Shared card styles are the `dk-rec-*` classes in
 `routes/desk/_styles/desk-v2.css`; a card's own styles take its own prefix
 (`dk-bi-*` for the billing item, `dk-ft-*` for the formula template, `dk-sh-*` for the
-shipment, `dk-cu-*` for the customer, `dk-ra-*` for the rate agreement).
+shipment, `dk-cu-*` for the customer, `dk-ra-*` for the rate agreement, `dk-tr-*` for the
+tractor).
 
 ## Lazy loading and skeletons
 
@@ -96,7 +100,19 @@ section's outline out of the skeleton the same way, so nothing moves when the ca
 lands. `CardDocuments` and `CardDocumentsSkeleton` already do this for documents.
 
 A section the person may read but that fails to load says so in its own place
-(`describeApiError`), and the rest of the card stands.
+(`describeApiError`), and the rest of the card stands. A card whose own record cannot be
+read draws `CardUnreadable` with the way back.
+
+## A record's shipments
+
+A card that lists the shipments of its record (a customer's freight, the loads a tractor
+pulled) reads them with `useRecordShipments({ scope, pageSize, enabled })` and draws them
+with `CardShipments`. The scope says how the record owns them (`{ kind: "customer", id }`
+filters on the customer; `{ kind: "tractor", id }` asks `shipments(input: { tractorIds })`
+for loads with a live move assigned to it). One operation, `DeskRecordShipments`, reads
+every scope a page at a time with the count on the first page only, and the next page is
+read on request. A new scope is a case in `scopeInput` (`lib/graphql/record-shipments.ts`)
+and, where the server cannot yet filter by it, a `ShipmentsInput` field.
 
 ## Records a card lists
 

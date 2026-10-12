@@ -11,6 +11,14 @@ const ICONS = {
       <circle cx="17" cy="17" r="1.6" />
     </>
   ),
+  tractor: (
+    <>
+      <path d="M4 16.5V9.5h6.5l2.5-3.5h3.5l3.5 4.5v6h-2" />
+      <path d="M13 6v5.5h7M4 16.5h3M11 16.5h3.5" />
+      <circle cx="9" cy="17" r="1.8" />
+      <circle cx="16.5" cy="17" r="1.8" />
+    </>
+  ),
   agreement: (
     <>
       <path d="M6 3.5h12v17H6z" />
@@ -194,6 +202,7 @@ export type DeskArtKind =
   | "formula"
   | "shipment"
   | "customer"
+  | "tractor"
   | "agreement";
 
 const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
@@ -212,6 +221,7 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
   formula: "Formula template",
   shipment: "Shipment",
   customer: "Customer",
+  tractor: "Tractor",
   agreement: "Rate agreement",
 });
 
@@ -219,14 +229,16 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
  * Records the Desk draws as a card of their own, each with its own mark: a
  * billing queue item as the item a biller reviews, a formula template as the
  * formula a biller reads, a shipment as the load a dispatcher follows, a
- * customer as the account an account manager or a biller keeps, a rate
- * agreement as the terms a pricing analyst holds freight to.
+ * customer as the account an account manager or a biller keeps, a tractor as
+ * the unit a dispatcher or fleet manager runs, a rate agreement as the terms a
+ * pricing analyst holds freight to.
  */
 const CARD_KINDS: Readonly<Record<string, DeskArtKind>> = {
   billing_queue_item: "bill",
   formula_template: "formula",
   shipment: "shipment",
   customer: "customer",
+  tractor: "tractor",
   rate_agreement: "agreement",
 };
 
@@ -305,6 +317,8 @@ export function deskArtKindName(kind: DeskArtKind, t: TranslateFn): string {
       return t("Shipment");
     case "customer":
       return t("Customer");
+    case "tractor":
+      return t("Tractor");
     case "agreement":
       return t("Rate agreement");
   }

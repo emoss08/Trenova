@@ -8751,6 +8751,8 @@ type ShipmentsInput struct {
 	QuickFilters    []*ShipmentQuickFilterInput `json:"quickFilters,omitempty"`
 	// IANA time zone for day and hour quick filters.
 	Timezone *string `json:"timezone,omitempty"`
+	// Only shipments with a live move assigned to one of these tractors.
+	TractorIds []string `json:"tractorIds,omitempty"`
 }
 
 type SidebarActivityPreference struct {

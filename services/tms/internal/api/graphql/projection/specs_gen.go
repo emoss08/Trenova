@@ -24309,6 +24309,26 @@ func init() {
 				FieldMapKey: "iftaQualified",
 			},
 			{
+				Name:        "ownershipType",
+				FieldMapKey: "ownershipType",
+			},
+			{
+				Name:        "ownerWorkerId",
+				FieldMapKey: "ownerWorkerId",
+			},
+			{
+				Name:        "lessorName",
+				FieldMapKey: "lessorName",
+			},
+			{
+				Name:        "leaseReference",
+				FieldMapKey: "leaseReference",
+			},
+			{
+				Name:        "leaseEndDate",
+				FieldMapKey: "leaseEndDate",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -24383,6 +24403,13 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 					Gate:   "workerDetails",
+				},
+			},
+			{
+				Name:        "ownerWorker",
+				FieldMapKey: "ownerWorkerId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
 				},
 			},
 			{

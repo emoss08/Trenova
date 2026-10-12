@@ -1277,7 +1277,6 @@
   "Stop after": "停止日期",
   "Stop below production's accuracy by (pts)": "低於正式環境準確度時停止 (百分點)",
   "Stop rollout": "停止推出",
-  "Stopped": "已停止",
   "Stopped at {0} of {1}": "已於 {0}／{1} 停止",
   "Stopped by a guard": "已由防護機制停止",
   "Stopped by a person": "已由人員停止",

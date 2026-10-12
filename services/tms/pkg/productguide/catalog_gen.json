@@ -1,5 +1,5 @@
 {
-  "version": "sha256:be89aac2373a38fe324966d1e1d2017e3997780388e55ec5566acd983c1b45d9",
+  "version": "sha256:56c9203a63043dd70ba4d218b83a942d5f76599a28d95c36cb47f590a209b611",
   "modules": [
     {
       "id": "home",
@@ -17093,7 +17093,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "trailer",

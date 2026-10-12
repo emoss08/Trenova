@@ -54,6 +54,7 @@ func tractorRelationIncludesForFields(
 	)
 	primaryWorkerSelection, primaryWorkerSelected := selection.Relations["primaryWorker"]
 	secondaryWorkerSelection, secondaryWorkerSelected := selection.Relations["secondaryWorker"]
+	_, ownerWorkerSelected := selection.Relations["ownerWorker"]
 
 	includes := tractorports.TractorRelationIncludes{
 		IncludeBusinessUnit:           selection.HasRelation("businessUnit"),
@@ -70,6 +71,7 @@ func tractorRelationIncludesForFields(
 		IncludeSecondaryWorkerState:   secondaryWorkerSelection.Selection.HasRelation("state"),
 		IncludeSecondaryWorkerFleet:   secondaryWorkerSelection.Selection.HasRelation("fleetCode"),
 		IncludeSecondaryWorkerManager: secondaryWorkerSelection.Selection.HasRelation("manager"),
+		IncludeOwnerWorker:            ownerWorkerSelected,
 		IncludeLastKnownLocation:      selection.HasSpecial("lastKnownLocation"),
 		IncludeCustomFields:           selection.HasSpecial("customFields"),
 		TractorColumns:                selection.Columns,
@@ -88,6 +90,9 @@ func tractorRelationIncludesForFields(
 	}
 	if includes.IncludeSecondaryWorker {
 		includes.SecondaryWorkerColumns = selection.RelationColumns("secondaryWorker")
+	}
+	if includes.IncludeOwnerWorker {
+		includes.OwnerWorkerColumns = selection.RelationColumns("ownerWorker")
 	}
 
 	return includes

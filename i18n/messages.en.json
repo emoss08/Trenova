@@ -27628,12 +27628,13 @@
     ]
   },
   "At maintenance": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/desk"
     ]
   },
   "At most": {
@@ -29789,7 +29790,7 @@
     ]
   },
   "Available": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -29798,7 +29799,8 @@
       "apps/web/components",
       "apps/web/lib",
       "go/other",
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "routes/desk"
     ]
   },
   "Available For Dispatch": {
@@ -30597,7 +30599,7 @@
     ]
   },
   "Back to the table": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -30624,7 +30626,7 @@
     ]
   },
   "Back to {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -41064,6 +41066,15 @@
       "apps/web/components"
     ]
   },
+  "Change status, drivers and registration on the tractor's page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Change sync settings and mappings": {
     "sites": 1,
     "scope": [
@@ -46849,12 +46860,13 @@
     ]
   },
   "Co-driver": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/dash/_components"
+      "apps/dash/_components",
+      "routes/desk"
     ]
   },
   "Coached on the job; a supervisor records the result.": {
@@ -48491,6 +48503,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "Company owned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Company profile": {
@@ -66743,7 +66764,7 @@
     ]
   },
   "Details": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -66753,6 +66774,7 @@
       "routes/admin",
       "routes/billing-queue",
       "routes/carrier-monitoring",
+      "routes/desk",
       "routes/edi",
       "routes/hold-reason",
       "routes/service-failure-reason-code",
@@ -72289,6 +72311,15 @@
       "routes/shipment"
     ]
   },
+  "Driven by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Driver": {
     "sites": 44,
     "scope": [
@@ -72808,6 +72839,15 @@
       "packages/shared/types"
     ]
   },
+  "Driver not matched": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Driver out-of-service": {
     "sites": 1,
     "scope": [
@@ -73175,12 +73215,13 @@
     ]
   },
   "Drivers": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/fleet-safety",
       "routes/org-structure",
       "routes/pay-profile"
@@ -73698,7 +73739,7 @@
     ]
   },
   "Due": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -78979,12 +79020,22 @@
     ]
   },
   "Ended {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "routes/desk"
+    ]
+  },
+  "Ended {0} · {1}": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "routes/desk"
     ]
   },
   "Ending": {
@@ -85397,12 +85448,13 @@
     ]
   },
   "Expired {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/lib",
+      "routes/desk",
       "routes/worker"
     ]
   },
@@ -86766,7 +86818,7 @@
     ]
   },
   "External ID": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -86774,7 +86826,8 @@
     "areas": [
       "go/other",
       "routes/carrier",
-      "routes/customer"
+      "routes/customer",
+      "routes/desk"
     ]
   },
   "External card ID cannot exceed 100 characters": {
@@ -93172,6 +93225,15 @@
       "routes/carrier-sourcing"
     ]
   },
+  "Fleet {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Fleet: {0}": {
     "sites": 2,
     "scope": [
@@ -95167,7 +95229,7 @@
     ]
   },
   "Fuel": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -95808,11 +95870,12 @@
     ]
   },
   "Fuel {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/shipment"
     ]
   },
@@ -99715,6 +99778,15 @@
       "go/other"
     ]
   },
+  "Heading {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Headings or labels in the document that indicate this rule applies. The parser looks for these strings as section boundaries.": {
     "sites": 1,
     "scope": [
@@ -103521,6 +103593,15 @@
       "routes/admin"
     ]
   },
+  "Idling": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "If <b>{0}</b> has an account, a reset link is on its way. It works once and expires shortly, so use it soon.": {
     "sites": 1,
     "scope": [
@@ -104445,6 +104526,15 @@
     ],
     "areas": [
       "routes/accounting-drift"
+    ]
+  },
+  "In the fleet since": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "In the hat": {
@@ -106064,12 +106154,13 @@
     ]
   },
   "Inspection": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/types"
+      "packages/shared/types",
+      "routes/desk"
     ]
   },
   "Inspection level is 1 to 6": {
@@ -106127,7 +106218,7 @@
     ]
   },
   "Inspections": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -106135,6 +106226,7 @@
       "apps/dash/_components",
       "apps/web/components",
       "packages/shared/lib",
+      "routes/desk",
       "routes/tractor",
       "routes/worker"
     ]
@@ -110005,6 +110097,24 @@
       "routes/accounting-inbound"
     ]
   },
+  "It cannot be dispatched until it is put back in service.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "It cannot be dispatched until maintenance releases it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "It carries the mailbox's token, which is stored only as a hash and cannot be shown again. Lose it and you rotate for a new one.": {
     "sites": 1,
     "scope": [
@@ -110204,7 +110314,7 @@
     ]
   },
   "It may have been removed, or you may not be allowed to see it.": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -113856,6 +113966,15 @@
       "routes/fuel-card"
     ]
   },
+  "Last inspection": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Last inspection date": {
     "sites": 4,
     "scope": [
@@ -113863,6 +113982,15 @@
     ],
     "areas": [
       "routes/trailer"
+    ]
+  },
+  "Last inspection found it unsafe": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Last interest": {
@@ -113908,6 +114036,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "Last move left it at": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Last name": {
@@ -114913,6 +115050,15 @@
       "routes/agent-control"
     ]
   },
+  "Lease": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Lease End Date": {
     "sites": 2,
     "scope": [
@@ -114931,13 +115077,34 @@
       "go/other"
     ]
   },
-  "Leased": {
-    "sites": 2,
+  "Lease ended": {
+    "sites": 1,
     "scope": [
-      "go"
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "routes/desk"
+    ]
+  },
+  "Lease ends in {0, plural, one {# day} other {# days}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Leased": {
+    "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "go/other",
+      "routes/desk"
     ]
   },
   "Leave": {
@@ -119134,6 +119301,15 @@
       "routes/reconciliation-summary"
     ]
   },
+  "Loading the tractor…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Loading the transfer...": {
     "sites": 1,
     "scope": [
@@ -122072,12 +122248,14 @@
     ]
   },
   "Manufacturer": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/desk"
     ]
   },
   "Map": {
@@ -124756,6 +124934,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Mechanic": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Median": {
@@ -128857,6 +129044,15 @@
       "routes/desk"
     ]
   },
+  "Moving {0} mph {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Multi currency": {
     "sites": 1,
     "scope": [
@@ -132493,6 +132689,15 @@
       "routes/desk"
     ]
   },
+  "Next tractor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Next try": {
     "sites": 1,
     "scope": [
@@ -132822,6 +133027,15 @@
       "routes/desk"
     ]
   },
+  "No GPS report from this tractor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No HOS data for any drivers yet.": {
     "sites": 1,
     "scope": [
@@ -132974,6 +133188,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "No VIN on file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No accessorial charges": {
@@ -134674,11 +134897,12 @@
     ]
   },
   "No defects": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/tractor"
     ]
   },
@@ -134979,6 +135203,33 @@
     ],
     "areas": [
       "routes/driver-expense"
+    ]
+  },
+  "No driver has inspected this tractor through telematics.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "No driver inspection on record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "No driver is assigned to this tractor.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No driver or carrier yet": {
@@ -135329,6 +135580,15 @@
       "apps/dash/_components",
       "packages/shared/lib",
       "routes/worker"
+    ]
+  },
+  "No expiry on file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No expiry recorded": {
@@ -135745,6 +136005,15 @@
       "routes/hazmat-segregation-rule"
     ]
   },
+  "No heading reported": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No hire dates on record": {
     "sites": 1,
     "scope": [
@@ -136006,6 +136275,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "No known location yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No lane activity": {
@@ -136642,6 +136920,15 @@
     ],
     "areas": [
       "routes/table-change-alert"
+    ]
+  },
+  "No odometer reading": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No offers on this tender.": {
@@ -139605,7 +139892,7 @@
     ]
   },
   "None": {
-    "sites": 39,
+    "sites": 40,
     "scope": [
       "go",
       "ts"
@@ -139827,12 +140114,13 @@
     ]
   },
   "None on file": {
-    "sites": 1,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "None required": {
@@ -141630,6 +141918,15 @@
     ],
     "areas": [
       "routes/random-testing"
+    ]
+  },
+  "Nothing due": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Nothing dwelling past threshold.": {
@@ -144232,13 +144529,14 @@
     ]
   },
   "Odometer": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/desk",
       "routes/fuel-purchase"
     ]
   },
@@ -149722,6 +150020,15 @@
       "routes/agent-control"
     ]
   },
+  "Open tractor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Open watchtower items": {
     "sites": 1,
     "scope": [
@@ -152669,13 +152976,14 @@
     ]
   },
   "Out of service": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "packages/shared/types",
+      "routes/desk",
       "routes/fleet-safety",
       "routes/worker"
     ]
@@ -153738,14 +154046,24 @@
     ]
   },
   "Owner-operator": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/hooks",
       "apps/web/lib",
-      "packages/shared/components"
+      "packages/shared/components",
+      "routes/desk"
+    ]
+  },
+  "Owner-operator and primary driver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Owner-operator escrow accounts and ledgers": {
@@ -153856,6 +154174,15 @@
     "areas": [
       "routes/order",
       "routes/shipment"
+    ]
+  },
+  "Ownership": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Ownership Type": {
@@ -161728,6 +162055,15 @@
       "routes/rate-zone"
     ]
   },
+  "Placed by its last move, not by GPS": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Places": {
     "sites": 2,
     "scope": [
@@ -162079,12 +162415,13 @@
     ]
   },
   "Plate": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Plate number": {
@@ -163511,6 +163848,15 @@
       "routes/admin"
     ]
   },
+  "Post-trip": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Postal Code": {
     "sites": 6,
     "scope": [
@@ -164125,6 +164471,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Pre-trip": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Precipitation": {
@@ -165019,6 +165374,15 @@
       "routes/desk"
     ]
   },
+  "Previous tractor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Previous value": {
     "sites": 1,
     "scope": [
@@ -165496,6 +165860,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Primary driver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Primary email address used for tenders and rate confirmations.": {
@@ -173006,6 +173379,24 @@
       "routes/desk"
     ]
   },
+  "Reading more shipments…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Reading older inspections…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Reading page": {
     "sites": 1,
     "scope": [
@@ -173022,6 +173413,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Reading the last inspection…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Reading the lineage…": {
@@ -174664,7 +175064,7 @@
     ]
   },
   "Recent shipments": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -177894,6 +178294,15 @@
       "apps/web/components"
     ]
   },
+  "Registration": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Registration Expiry": {
     "sites": 2,
     "scope": [
@@ -177921,6 +178330,24 @@
       "go/other"
     ]
   },
+  "Registration expired": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Registration expires in {0, plural, one {# day} other {# days}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Registration expiry": {
     "sites": 4,
     "scope": [
@@ -177942,11 +178369,12 @@
     ]
   },
   "Registration number": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/tractor",
       "routes/trailer"
     ]
@@ -181472,6 +181900,15 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "Reported {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Reporting & Analytics": {
@@ -205044,6 +205481,24 @@
       "routes/dispatch-console"
     ]
   },
+  "Show more": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Show older": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Show on the board": {
     "sites": 1,
     "scope": [
@@ -206935,7 +207390,7 @@
     ]
   },
   "Sold": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -206943,7 +207398,8 @@
     "areas": [
       "apps/web/components",
       "apps/web/lib",
-      "go/other"
+      "go/other",
+      "routes/desk"
     ]
   },
   "Some carriers were not offered": {
@@ -207291,6 +207747,15 @@
     "areas": [
       "apps/web/components",
       "routes/admin"
+    ]
+  },
+  "Somewhere without an address": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Soonest clock to run out first": {
@@ -209094,6 +209559,15 @@
     ],
     "areas": [
       "routes/recurring-earning"
+    ]
+  },
+  "Standing, engine on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Star a page from its header to keep it here.": {
@@ -211583,12 +212057,13 @@
     ]
   },
   "Stopped": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/desk"
     ]
   },
   "Stopped at {0} of {1}": {
@@ -223210,6 +223685,15 @@
       "routes/osha"
     ]
   },
+  "The inspections could not be read.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The insurer or provider that underwrites the plan, shown on the plan card.": {
     "sites": 1,
     "scope": [
@@ -224680,6 +225164,15 @@
       "go/other"
     ]
   },
+  "The next shipments could not be read.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The nightly replay of each agent's golden set": {
     "sites": 1,
     "scope": [
@@ -224840,6 +225333,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The older inspections could not be read.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The one qualifying reason this case covers; open another case for a different reason.": {
@@ -228821,6 +229323,33 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The tractor has not reported a position": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The tractor's last reported position": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "The tractor's position could not be read.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The tractor, jurisdiction or move referenced by this entry does not exist": {
@@ -234593,6 +235122,24 @@
       "go/other"
     ]
   },
+  "This tractor could not be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "This tractor has not pulled a load yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "This transfer has already finished": {
     "sites": 1,
     "scope": [
@@ -235211,12 +235758,22 @@
     ]
   },
   "Through {0}": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "routes/desk"
+    ]
+  },
+  "Through {0} · {1}": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "routes/desk"
     ]
   },
   "Throughput by facility — stops handled, pieces, weight, and the average time trucks spend on site": {
@@ -238573,7 +239130,7 @@
     ]
   },
   "Tractor": {
-    "sites": 33,
+    "sites": 36,
     "scope": [
       "go",
       "ts"
@@ -243978,6 +244535,15 @@
       "routes/scheduling"
     ]
   },
+  "Unnamed worker": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Unnotified behavior is invalid": {
     "sites": 1,
     "scope": [
@@ -244228,12 +244794,13 @@
     ]
   },
   "Unsafe": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/tractor"
     ]
   },
@@ -246939,7 +247506,7 @@
     ]
   },
   "VIN": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -246947,6 +247514,7 @@
     "areas": [
       "apps/web/components",
       "go/other",
+      "routes/desk",
       "routes/tractor",
       "routes/trailer"
     ]
@@ -246970,12 +247538,13 @@
     ]
   },
   "VIN {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Vacation": {
@@ -251396,6 +251965,15 @@
       "apps/web/components"
     ]
   },
+  "Was idling": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Was modified": {
     "sites": 1,
     "scope": [
@@ -251403,6 +251981,33 @@
     ],
     "areas": [
       "routes/table-change-alert"
+    ]
+  },
+  "Was moving {0} mph {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Was standing, engine on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Was stopped": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Was {0} when proposed": {
@@ -255360,6 +255965,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Where it is": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Where it runs. Choosing one fills in its usual settings.": {
@@ -266624,6 +267238,15 @@
       "routes/reports"
     ]
   },
+  "on the odometer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "on time": {
     "sites": 1,
     "scope": [
@@ -269352,6 +269975,15 @@
       "routes/recurring-deduction"
     ]
   },
+  "{0, plural, one {# defect fixed} other {# defects fixed}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# defect} other {# defects}}": {
     "sites": 1,
     "scope": [
@@ -270229,6 +270861,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# needs a look} other {# need a look}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# needs} other {# need}} attention": {
     "sites": 2,
     "scope": [
@@ -270281,6 +270922,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0, plural, one {# open defect} other {# open defects}}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# open invoice} other {# open invoices}}": {
@@ -277198,7 +277848,7 @@
     ]
   },
   "{0} mi": {
-    "sites": 14,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -278253,7 +278903,7 @@
     ]
   },
   "{0} of {1} shown": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -279786,6 +280436,15 @@
       "routes/shipment"
     ]
   },
+  "{0} shown": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} shp": {
     "sites": 1,
     "scope": [
@@ -280949,6 +281608,15 @@
       "apps/dash/_components"
     ]
   },
+  "{0} · IFTA": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} · OpenID connect": {
     "sites": 2,
     "scope": [
@@ -281093,6 +281761,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "{0} · not on IFTA": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} · off": {

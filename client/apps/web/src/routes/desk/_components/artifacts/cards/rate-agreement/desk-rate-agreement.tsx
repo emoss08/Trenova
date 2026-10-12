@@ -32,6 +32,7 @@ import {
   CardSectionWait,
   CardStatus,
   CardStepper,
+  CardUnreadable,
   CardTimeline,
   RecordCard,
 } from "../../record-card/record-card";
@@ -106,18 +107,13 @@ export function DeskRateAgreement({
 
   if (!agreement) {
     return query.isError ? (
-      <RecordCard>
-        <CardHead
-          onBack={onBack}
-          backLabel={backLabel ?? t("Back to the table")}
-          kicker={[t("Rate agreement")]}
-          title={t("This rate agreement could not be read")}
-          subtitle={describeApiError(
-            query.error,
-            t("It may have been removed, or you may not be allowed to see it."),
-          )}
-        />
-      </RecordCard>
+      <CardUnreadable
+        kind={t("Rate agreement")}
+        title={t("This rate agreement could not be read")}
+        error={query.error}
+        onBack={onBack}
+        backLabel={backLabel}
+      />
     ) : (
       <DeskRateAgreementSkeleton stepper={onSelect !== undefined && order.length > 1} />
     );
@@ -268,7 +264,9 @@ function AgreementCard({
             <CardFacts>
               {[
                 agreement.status === "Active" ? (
-                  <span className={cn(runs.state && `dk-ra-${runs.state}`)}>{runs.text}</span>
+                  <span key="runs" className={cn(runs.state && `dk-ra-${runs.state}`)}>
+                    {runs.text}
+                  </span>
                 ) : (
                   ""
                 ),

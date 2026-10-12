@@ -12869,6 +12869,13 @@ input EquipmentManufacturerPatchInput {
   version: Int @goField(omittable: true)
 }
 
+"""Who owns a piece of equipment."""
+enum EquipmentOwnershipType {
+  CompanyOwned
+  Leased
+  OwnerOperator
+}
+
 enum EquipmentStatus {
   AtMaintenance
   Available
@@ -20785,7 +20792,15 @@ type Query {
   upcomingWorkerPTO(input: UpcomingWorkerPTOInput!): WorkerPTOConnection!
   user(id: ID!): User
   users(input: DataTableConnectionInput!): UserConnection!
-  vehicleInspections(limit: Int, since: Timestamp, tractorId: ID, workerId: ID): [VehicleInspection!]!
+  """
+  Inspections newest first. Pass the startedAt and id of the last one seen as
+  before and beforeId to read the next page.
+  """
+  vehicleInspections(before: Timestamp, beforeId: ID, limit: Int, since: Timestamp, tractorId: ID, workerId: ID): [VehicleInspection!]!
+  """
+  One tractor's latest reported position, however old; null when the tractor has never reported one.
+  """
+  vehiclePosition(tractorId: ID!): VehiclePosition
   vehiclePositions(maxAgeSeconds: Int): [VehiclePosition!]!
   watchtowerCounts: WatchtowerCounts!
   """
@@ -25105,6 +25120,8 @@ input ShipmentsInput {
   status: String
   """IANA time zone for day and hour quick filters."""
   timezone: String
+  """Only shipments with a live move assigned to one of these tractors."""
+  tractorIds: [ID!]
 }
 
 type SidebarActivityPreference {
@@ -25792,11 +25809,24 @@ type Tractor {
   lastKnownLocation: LocationReference
   lastKnownLocationId: ID
   lastKnownLocationName: String!
+  """When the lease on a leased tractor ends."""
+  leaseEndDate: Timestamp
+  """The lessor's reference for the lease."""
+  leaseReference: String!
+  """The lessor a leased tractor is leased from."""
+  lessorName: String!
   licensePlateNumber: String!
   make: String!
   model: String!
   organization: Organization
   organizationId: ID!
+  ownerWorker: Worker
+  """The owner-operator who owns the tractor, when it is theirs."""
+  ownerWorkerId: ID
+  """
+  Who owns the tractor: the company, a lessor, or the owner-operator who drives it.
+  """
+  ownershipType: EquipmentOwnershipType!
   primaryWorker: Worker
   primaryWorkerId: ID!
   registrationExpiry: Timestamp

@@ -94,6 +94,9 @@ models:
   EntityStatus:
     model:
       - github.com/emoss08/trenova/pkg/domaintypes.Status
+  EquipmentOwnershipType:
+    model:
+      - github.com/emoss08/trenova/pkg/domaintypes.OwnershipType
   EquipmentStatus:
     model:
       - github.com/emoss08/trenova/pkg/domaintypes.EquipmentStatus

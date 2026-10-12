@@ -1,0 +1,628 @@
+import { recordPath } from "@/config/record-links";
+import { describeApiError } from "@/lib/api-error-message";
+import type {
+  DeskTractor as DeskTractorRecord,
+  DeskTractorInspection,
+  DeskTractorPosition,
+} from "@/lib/graphql/tractor-card";
+import { lazyComponent } from "@/lib/lazy-component";
+import { queries } from "@/lib/queries";
+import { tractorInspectionsQuery } from "@/lib/queries/tractor";
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { formatSecondsAgo } from "@trenova/shared/lib/date";
+import { formatNumber } from "@trenova/shared/i18n/format";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { cn, formatPercent } from "@trenova/shared/lib/utils";
+import { Suspense, useMemo, useState } from "react";
+import { Link } from "react-router";
+import { useCardAccess } from "../../record-card/card-access";
+import { CardDocuments } from "../../record-card/card-documents";
+import { CardShipments } from "../../record-card/card-shipments";
+import {
+  CardBar,
+  CardBarHint,
+  CardCheck,
+  CardChecks,
+  CardFacts,
+  CardHead,
+  CardIcon,
+  CardMore,
+  CardRecordRow,
+  CardSection,
+  CardSectionError,
+  CardSectionWait,
+  CardStatus,
+  CardStepper,
+  CardUnreadable,
+  RecordCard,
+} from "../../record-card/record-card";
+import { cardDate, neighborsIn } from "../../record-card/record-card-values";
+import { useRecordShipments } from "../../record-card/record-shipments";
+import { SkeletonBar } from "../../skeletons/record-card-skeleton";
+import { useListedRecords, type RecordArtifactProps } from "../registry";
+import {
+  compassPoint,
+  inspectionKind,
+  inspectionReading,
+  metersToMiles,
+  positionReading,
+  tractorChecks,
+  tractorFacts,
+  tractorName,
+  tractorPeople,
+  tractorStanding,
+} from "./tractor-card";
+import { TRACTOR_SECTIONS } from "./tractor-sections";
+import { DeskTractorSkeleton } from "./tractor-skeleton";
+
+/** The shipments the card reads at a time; the next page is read on request. */
+const SHIPMENT_ROWS = 5;
+/** The inspections the card reads at a time. */
+const INSPECTION_ROWS = 5;
+
+const TractorMap = lazyComponent(
+  () => import("./tractor-map"),
+  (module) => module.TractorMap,
+);
+
+/**
+ * What the card is given: the tractor, and when it was opened from a table or
+ * from a card that lists it, the rows in the order shown, how to step to
+ * another, and the way back.
+ */
+export type TractorCardProps = {
+  recordId: string;
+  order?: readonly string[];
+  onSelect?: (recordId: string) => void;
+  onBack?: () => void;
+  /** What the way back says; the table, unless the tractor was opened from another card. */
+  backLabel?: string;
+};
+
+const NO_ROWS: readonly string[] = [];
+const NO_INSPECTIONS: readonly DeskTractorInspection[] = [];
+
+/**
+ * One tractor as a dispatcher or a fleet manager reads it, opened from a
+ * table's row or looked up by the agent: whether it can run and where it is
+ * now, what falls due on it, who drives and owns it, the loads it pulled, its
+ * drivers' inspections and what it is. It reads; changing its status, drivers
+ * and registration stays on the tractor's page, one click away.
+ *
+ * The card steps through the rows it was opened from in the order shown.
+ */
+export function DeskTractor({
+  recordId,
+  order = NO_ROWS,
+  onSelect,
+  onBack,
+  backLabel,
+}: TractorCardProps) {
+  const t = useT();
+  const query = useQuery({
+    ...queries.tractor.card(recordId),
+    retry: false,
+    placeholderData: keepPreviousData,
+  });
+  const tractor = query.data;
+
+  if (!tractor) {
+    return query.isError ? (
+      <CardUnreadable
+        kind={t("Tractor")}
+        title={t("This tractor could not be read")}
+        error={query.error}
+        onBack={onBack}
+        backLabel={backLabel}
+      />
+    ) : (
+      <DeskTractorSkeleton stepper={onSelect !== undefined && order.length > 1} />
+    );
+  }
+
+  return (
+    <TractorCard
+      key={tractor.id}
+      tractor={tractor}
+      order={order}
+      onSelect={onSelect}
+      onBack={onBack}
+      backLabel={backLabel}
+    />
+  );
+}
+
+/**
+ * The tractor as an artifact of its own, when the agent looked it up: the same
+ * card, with nothing to step through and nowhere to go back to.
+ */
+export function DeskTractorArtifact({ recordId }: RecordArtifactProps) {
+  return <DeskTractor recordId={recordId} />;
+}
+
+function TractorCard({
+  tractor,
+  order,
+  onSelect,
+  onBack,
+  backLabel,
+}: Required<Pick<TractorCardProps, "order">> &
+  Omit<TractorCardProps, "order" | "recordId"> & { tractor: DeskTractorRecord }) {
+  const t = useT();
+  const access = useCardAccess(TRACTOR_SECTIONS);
+  const [now] = useState(() => Math.floor(Date.now() / 1000));
+  const id = tractor.id;
+
+  const position = useQuery({ ...queries.tractor.position(id), retry: false });
+  const inspections = useInfiniteQuery({
+    ...tractorInspectionsQuery(id, INSPECTION_ROWS),
+    retry: false,
+  });
+  const shipments = useRecordShipments({
+    scope: { kind: "tractor", id },
+    pageSize: SHIPMENT_ROWS,
+    enabled: access.shipments,
+  });
+
+  const inspectionRows = useMemo(
+    () => inspections.data?.pages.flatMap((page) => page.rows) ?? NO_INSPECTIONS,
+    [inspections.data],
+  );
+  // Undefined while the inspections are read, null once they are known to be none.
+  const latest = inspections.data ? (inspectionRows[0] ?? null) : undefined;
+  const checks = tractorChecks(tractor, latest, now, t);
+  const people = tractorPeople(tractor, t);
+  const peopleIds = useMemo(() => people.map((person) => person.id), [people]);
+  const standing = tractorStanding(tractor.status, t);
+  const neighbors = neighborsIn(order, id);
+  const name = tractorName(tractor);
+
+  const backToTractor = t("Back to {0}", tractor.code);
+  const listedShipments = useListedRecords({
+    entity: "shipment",
+    order: shipments.ids,
+    backLabel: backToTractor,
+  });
+  const listedPeople = useListedRecords({
+    entity: "worker",
+    order: peopleIds,
+    backLabel: backToTractor,
+  });
+  const lastKnown = tractor.lastKnownLocation;
+  const lastKnownIds = useMemo(() => (lastKnown ? [lastKnown.id] : NO_ROWS), [lastKnown]);
+  const listedPlace = useListedRecords({
+    entity: "location",
+    order: lastKnownIds,
+    backLabel: backToTractor,
+  });
+
+  // A listed record opened from the card takes the card's place, and its way
+  // back returns here.
+  const opened = listedShipments.opened ?? listedPeople.opened ?? listedPlace.opened;
+  if (opened) {
+    return opened;
+  }
+
+  return (
+    <RecordCard className={cn("dk-tr", `dk-tr-${standing.tone}`)}>
+      <CardHead
+        onBack={onBack}
+        backLabel={backLabel ?? t("Back to the table")}
+        kicker={[
+          tractor.code,
+          ...(tractor.equipmentType ? [tractor.equipmentType.code] : []),
+          ...(tractor.fleetCode ? [t("Fleet {0}", tractor.fleetCode.code)] : []),
+        ]}
+        stepper={
+          onSelect &&
+          order.length > 1 && (
+            <CardStepper
+              neighbors={neighbors}
+              onStep={onSelect}
+              previousLabel={t("Previous tractor")}
+              nextLabel={t("Next tractor")}
+            />
+          )
+        }
+        title={name}
+        subtitle={tractor.vin.trim() ? t("VIN {0}", tractor.vin.trim()) : t("No VIN on file")}
+        figure={<OdometerFigure position={position.data} pending={position.isPending} />}
+        meta={
+          <>
+            <CardStatus key={standing.label} tone={standing.tone} mark={standing.mark}>
+              {standing.label}
+            </CardStatus>
+            <CardFacts>
+              {[
+                people[0] ? t("Driven by {0}", people[0].name) : "",
+                tractor.ownershipType === "OwnerOperator"
+                  ? t("Owner-operator")
+                  : tractor.ownershipType === "Leased"
+                    ? t("Leased")
+                    : "",
+                tractor.equipmentType?.description ?? "",
+              ]}
+            </CardFacts>
+          </>
+        }
+      />
+
+      <CardSection
+        title={t("Where it is")}
+        aside={
+          position.data ? (
+            <span className={cn(positionReading(position.data, now, t).live && "dk-ok")}>
+              {t("Reported {0}", formatSecondsAgo(now - position.data.recordedAt))}
+            </span>
+          ) : undefined
+        }
+      >
+        <Whereabouts
+          position={position.data}
+          pending={position.isPending}
+          error={position.error}
+          now={now}
+          lastKnown={lastKnown ?? null}
+          onOpenPlace={listedPlace.open}
+        />
+      </CardSection>
+
+      <CardSection
+        title={t("Due")}
+        aside={
+          checks.some((check) => check.state !== "ok") ? (
+            <span className="dk-warn">
+              {t(
+                "{0, plural, one {# needs a look} other {# need a look}}",
+                checks.filter((check) => check.state !== "ok").length,
+              )}
+            </span>
+          ) : (
+            <span className="dk-ok">{t("Nothing due")}</span>
+          )
+        }
+      >
+        <CardChecks>
+          {checks.map((check) => (
+            <CardCheck
+              key={check.key}
+              state={check.state}
+              title={check.title}
+              detail={check.detail}
+            />
+          ))}
+          {latest === undefined && inspections.isPending && (
+            <div className="dk-rec-ck dk-tr-ck-wait" aria-busy>
+              <i className="dk-sk dk-rec-sk-mark" />
+              <span className="dk-rec-sk-ckb">
+                <SkeletonBar w="30%" className="dk-rec-sk-line" />
+                <span className="sr-only">{t("Reading the last inspection…")}</span>
+              </span>
+            </div>
+          )}
+        </CardChecks>
+      </CardSection>
+
+      <CardSection title={t("Drivers")}>
+        {people.length > 0 ? (
+          <div className="dk-rec-list">
+            {people.map((person) => (
+              <CardRecordRow
+                key={person.key}
+                to={recordPath("worker", person.id)}
+                onOpen={listedPeople.open && (() => listedPeople.open?.(person.id))}
+              >
+                <span className="dk-rec-main">
+                  <b>{person.name}</b>
+                  <span className="dk-rec-sub">{person.role}</span>
+                </span>
+                <CardIcon name="forward" size={12} />
+              </CardRecordRow>
+            ))}
+          </div>
+        ) : (
+          <p className="dk-rec-note">{t("No driver is assigned to this tractor.")}</p>
+        )}
+      </CardSection>
+
+      {access.shipments && (
+        <CardShipments
+          title={t("Recent shipments")}
+          shipments={shipments}
+          onOpen={listedShipments.open}
+          emptyText={t("This tractor has not pulled a load yet.")}
+        />
+      )}
+
+      <CardSection title={t("Inspections")}>
+        <Inspections
+          rows={inspections.data ? inspectionRows : undefined}
+          pending={inspections.isPending}
+          error={inspections.error}
+          hasMore={inspections.hasNextPage}
+          loadingMore={inspections.isFetchingNextPage}
+          onMore={() => void inspections.fetchNextPage()}
+        />
+      </CardSection>
+
+      <CardSection title={t("Details")}>
+        <dl className="dk-tr-facts">
+          {tractorFacts(tractor, t).map((fact) => (
+            <div key={fact.key}>
+              <dt>{fact.label}</dt>
+              <dd>{fact.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </CardSection>
+
+      <CardDocuments resourceType="tractor" resourceId={id} manageTo={recordPath("tractor", id)} />
+
+      <CardBar>
+        <CardBarHint>
+          {t("Change status, drivers and registration on the tractor's page")}
+        </CardBarHint>
+        <Link className="dk-ax-btn dk-ink" to={recordPath("tractor", id)}>
+          <CardIcon name="ext" size={13} />
+          {t("Open tractor")}
+        </Link>
+      </CardBar>
+    </RecordCard>
+  );
+}
+
+/** The miles on the tractor's clock at its last report, at the head of the card. */
+function OdometerFigure({
+  position,
+  pending,
+}: {
+  position: DeskTractorPosition | null | undefined;
+  pending: boolean;
+}) {
+  const t = useT();
+  const meters = position?.odometerMeters;
+  if (pending || meters === null || meters === undefined) {
+    return (
+      <>
+        <b className="dk-tr-wait">—</b>
+        <span>{pending ? t("Odometer") : t("No odometer reading")}</span>
+      </>
+    );
+  }
+  return (
+    <>
+      <b key={meters}>{t("{0} mi", formatNumber(metersToMiles(meters)))}</b>
+      <span>{t("on the odometer")}</span>
+    </>
+  );
+}
+
+/**
+ * Where the tractor is: a small map of its last report when Google Maps is set
+ * up, or a dial of its heading, beside the place, how it is moving and when it
+ * said so, and the location it last left in Trenova's own records.
+ */
+function Whereabouts({
+  position,
+  pending,
+  error,
+  now,
+  lastKnown,
+  onOpenPlace,
+}: {
+  position: DeskTractorPosition | null | undefined;
+  pending: boolean;
+  error: unknown;
+  now: number;
+  lastKnown: { id: string; name: string } | null;
+  /** Opens the last known location in the card's place; absent, it links to its page. */
+  onOpenPlace: ((locationId: string) => void) | undefined;
+}) {
+  const t = useT();
+  const maps = useQuery({ ...queries.integration.runtimeConfig("GoogleMaps"), retry: false });
+  const apiKey = maps.data?.ready ? maps.data.config.apiKey : undefined;
+  const reading = position ? positionReading(position, now, t) : null;
+  const place = reading?.place ?? (position ? null : (lastKnown?.name ?? null));
+  const facts = position
+    ? [
+        position.fuelPercent !== null && position.fuelPercent !== undefined
+          ? t("Fuel {0}", formatPercent(position.fuelPercent, 0))
+          : "",
+        t("{0}, {1}", position.latitude.toFixed(4), position.longitude.toFixed(4)),
+      ]
+    : [];
+
+  return (
+    <>
+      <div className={cn("dk-tr-where", reading?.live && "dk-live")}>
+        <div className="dk-tr-scope">
+          {position && apiKey ? (
+            <Suspense fallback={<HeadingDial heading={position.headingDegrees} />}>
+              <TractorMap.Component
+                apiKey={apiKey}
+                latitude={position.latitude}
+                longitude={position.longitude}
+                label={place ?? t("The tractor's last reported position")}
+              />
+            </Suspense>
+          ) : (
+            <HeadingDial heading={position ? position.headingDegrees : null} />
+          )}
+        </div>
+        <div className="dk-tr-at">
+          {pending ? (
+            <CardSectionWait rows={2} />
+          ) : (
+            <>
+              <b className={cn(!place && "dk-tr-unknown")}>
+                {place ??
+                  (position
+                    ? t("Somewhere without an address")
+                    : t("No GPS report from this tractor"))}
+              </b>
+              {reading ? (
+                <span className="dk-tr-motion">
+                  <i aria-hidden />
+                  {reading.motion}
+                </span>
+              ) : (
+                <span className="dk-tr-motion dk-off">
+                  <i aria-hidden />
+                  {lastKnown
+                    ? t("Placed by its last move, not by GPS")
+                    : t("No known location yet")}
+                </span>
+              )}
+              {facts.length > 0 && (
+                <span className="dk-tr-geo">
+                  <CardFacts>{facts}</CardFacts>
+                </span>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+      {error !== null && error !== undefined && (
+        <CardSectionError>
+          {describeApiError(error, t("The tractor's position could not be read."))}
+        </CardSectionError>
+      )}
+      {lastKnown && position && (
+        <div className="dk-rec-list dk-tr-left">
+          <CardRecordRow
+            to={recordPath("location", lastKnown.id)}
+            onOpen={onOpenPlace && (() => onOpenPlace(lastKnown.id))}
+          >
+            <span className="dk-rec-main">
+              <span className="dk-rec-sub">{t("Last move left it at")}</span>
+              <b>{lastKnown.name}</b>
+            </span>
+            <CardIcon name="forward" size={12} />
+          </CardRecordRow>
+        </div>
+      )}
+    </>
+  );
+}
+
+const DIAL_TICKS = [0, 45, 90, 135, 180, 225, 270, 315] as const;
+
+/** The tractor's heading as a needle on a compass, or the bare compass when it has none. */
+function HeadingDial({ heading }: { heading: number | null }) {
+  const t = useT();
+  return (
+    <svg
+      className="dk-tr-dial"
+      viewBox="0 0 112 112"
+      role="img"
+      aria-label={
+        heading === null ? t("No heading reported") : t("Heading {0}", compassPoint(heading))
+      }
+    >
+      <circle className="dk-tr-dial-ring" cx="56" cy="56" r="44" />
+      {DIAL_TICKS.map((tick) => (
+        <line
+          key={tick}
+          className={cn("dk-tr-dial-tick", tick % 90 === 0 && "dk-major")}
+          x1="56"
+          y1={tick % 90 === 0 ? 14 : 17}
+          x2="56"
+          y2="22"
+          transform={`rotate(${tick} 56 56)`}
+        />
+      ))}
+      <text className="dk-tr-dial-n" x="56" y="34" textAnchor="middle">
+        N
+      </text>
+      {heading !== null && (
+        <g className="dk-tr-needle" transform={`rotate(${heading} 56 56)`}>
+          <path d="M56 26 L63 60 L56 54 L49 60 Z" />
+        </g>
+      )}
+      <circle className="dk-tr-dial-hub" cx="56" cy="56" r="3" />
+    </svg>
+  );
+}
+
+/** The drivers' inspections of the tractor, newest first, a page at a time. */
+function Inspections({
+  rows,
+  pending,
+  error,
+  hasMore,
+  loadingMore,
+  onMore,
+}: {
+  rows: readonly DeskTractorInspection[] | undefined;
+  pending: boolean;
+  error: unknown;
+  hasMore: boolean;
+  loadingMore: boolean;
+  onMore: () => void;
+}) {
+  const t = useT();
+  if (error && !rows) {
+    return (
+      <CardSectionError>
+        {describeApiError(error, t("The inspections could not be read."))}
+      </CardSectionError>
+    );
+  }
+  if (pending || !rows) {
+    return <CardSectionWait rows={3} />;
+  }
+  if (rows.length === 0) {
+    return (
+      <p className="dk-rec-note">{t("No driver has inspected this tractor through telematics.")}</p>
+    );
+  }
+  return (
+    <>
+      <ol className="dk-rec-list dk-tr-insp">
+        {rows.map((inspection) => {
+          const reading = inspectionReading(inspection, t);
+          const location = inspection.location?.trim();
+          return (
+            <li key={inspection.id}>
+              <span className="dk-rec-main">
+                <b>
+                  {t(
+                    "{0} · {1}",
+                    inspectionKind(inspection.inspectionType, t),
+                    cardDate(inspection.startedAt),
+                  )}
+                </b>
+                <span className="dk-rec-sub">
+                  {[
+                    inspection.workerName?.trim() || t("Driver not matched"),
+                    location ?? "",
+                    inspection.odometerMeters
+                      ? t("{0} mi", formatNumber(metersToMiles(inspection.odometerMeters)))
+                      : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+              </span>
+              <span className={cn("dk-tr-verdict", `dk-${reading.state}`)}>{reading.text}</span>
+            </li>
+          );
+        })}
+      </ol>
+      {hasMore && (
+        <CardMore
+          shown={t("{0} shown", rows.length)}
+          onMore={onMore}
+          loading={loadingMore}
+          label={t("Show older")}
+          loadingLabel={t("Reading older inspections…")}
+        />
+      )}
+      {error !== null && error !== undefined && (
+        <CardSectionError>
+          {describeApiError(error, t("The older inspections could not be read."))}
+        </CardSectionError>
+      )}
+    </>
+  );
+}

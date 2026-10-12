@@ -704,10 +704,16 @@ func (r *QueryResolver) Shipments(ctx context.Context, input gqlmodel.ShipmentsI
 		return nil, err
 	}
 
+	tractorIDs, err := base.ParseIDs(input.TractorIds)
+	if err != nil {
+		return nil, err
+	}
+
 	result, err := r.ShipmentService.List(ctx, &shipmentports.ListShipmentsRequest{
 		Filter: connection.Filter,
 		Cursor: connection.Cursor,
 		ShipmentOptions: shipmentports.ShipmentOptions{
+			TractorIDs:              tractorIDs,
 			ExpandShipmentDetails:   base.BoolValue(input.ExpandShipmentDetails),
 			Status:                  base.StringValue(input.Status),
 			ActivityWindowStart:     base.Int64Value(input.ActivityWindowStart),

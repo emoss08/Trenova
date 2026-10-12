@@ -87,7 +87,10 @@ import type {
   ServiceFailureReasonCategory,
   ServiceFailureReasonCodeAppliesTo,
 } from "@/types/service-failure-reason-code";
-import type { CarrierIntelRiskLevel } from "@trenova/graphql/generated/graphql";
+import type {
+  CarrierIntelRiskLevel,
+  EquipmentOwnershipType,
+} from "@trenova/graphql/generated/graphql";
 import type { AccessorialChargeMethod, RateUnit } from "@trenova/shared/types/accessorial-charge";
 import type { BillingQueueStatus, ExceptionReasonCode } from "@trenova/shared/types/billing-queue";
 import type {
@@ -2466,6 +2469,13 @@ export const fuelCardStatusChoices = [
     color: "var(--danger)",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<FuelCardStatus>>;
+
+/** Who owns a tractor or trailer, as the equipment pages name it. */
+export const equipmentOwnershipChoices = [
+  { value: "CompanyOwned", label: "Company owned" },
+  { value: "Leased", label: "Leased" },
+  { value: "OwnerOperator", label: "Owner-operator" },
+] satisfies ReadonlyArray<GenericSelectOption<EquipmentOwnershipType>>;
 
 export const fuelPurchaseSourceChoices = fuelPurchaseSourceSchema.options.map((value) => ({
   label: sourceLabels(FUEL_PURCHASE_SOURCE_LABELS)[value],
