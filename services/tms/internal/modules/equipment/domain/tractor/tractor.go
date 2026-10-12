@@ -33,37 +33,39 @@ type Tractor struct {
 	bun.BaseModel             `bun:"table:tractors,alias:trac" json:"-"`
 	pagination.CursorValueSet `bun:",embed"                    json:"-"`
 
-	ID                      pulid.ID                    `json:"id"                      bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID          pulid.ID                    `json:"businessUnitId"          bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	OrganizationID          pulid.ID                    `json:"organizationId"          bun:"organization_id,type:VARCHAR(100),notnull,pk"`
-	PrimaryWorkerID         pulid.ID                    `json:"primaryWorkerId"         bun:"primary_worker_id,type:VARCHAR(100),notnull"`
-	EquipmentTypeID         pulid.ID                    `json:"equipmentTypeId"         bun:"equipment_type_id,type:VARCHAR(100),notnull"`
-	EquipmentManufacturerID pulid.ID                    `json:"equipmentManufacturerId" bun:"equipment_manufacturer_id,type:VARCHAR(100),notnull"`
-	StateID                 pulid.ID                    `json:"stateId"                 bun:"state_id,type:VARCHAR(100),nullzero"`
-	FleetCodeID             pulid.ID                    `json:"fleetCodeId"             bun:"fleet_code_id,type:VARCHAR(100),nullzero"`
-	SecondaryWorkerID       pulid.ID                    `json:"secondaryWorkerId"       bun:"secondary_worker_id,type:VARCHAR(100),nullzero"`
-	Status                  domaintypes.EquipmentStatus `json:"status"                  bun:"status,type:equipment_status_enum,notnull,default:'Available'"`
-	Code                    string                      `json:"code"                    bun:"code,type:VARCHAR(50),notnull"`
-	Model                   string                      `json:"model"                   bun:"model,type:VARCHAR(50),nullzero"`
-	Make                    string                      `json:"make"                    bun:"make,type:VARCHAR(50),nullzero"`
-	Year                    *int                        `json:"year"                    bun:"year,type:INT,nullzero"`
-	LicensePlateNumber      string                      `json:"licensePlateNumber"      bun:"license_plate_number,type:VARCHAR(50),nullzero"`
-	RegistrationNumber      string                      `json:"registrationNumber"      bun:"registration_number,type:VARCHAR(50),nullzero"`
-	RegistrationExpiry      *int64                      `json:"registrationExpiry"      bun:"registration_expiry,type:BIGINT,nullzero"`
-	FuelType                domaintypes.IFTAFuelType    `json:"fuelType"                bun:"fuel_type,type:ifta_fuel_type_enum,notnull"`
-	IFTAQualified           bool                        `json:"iftaQualified"           bun:"ifta_qualified,type:BOOLEAN,notnull"`
-	Vin                     string                      `json:"vin"                     bun:"vin,type:vin_code_optional,nullzero"`
-	ExternalID              string                      `json:"externalId"              bun:"external_id,type:TEXT,nullzero"`
-	OwnershipType           domaintypes.OwnershipType   `json:"ownershipType"           bun:"ownership_type,type:VARCHAR(50),notnull,default:'CompanyOwned'"`
-	OwnerWorkerID           *pulid.ID                   `json:"ownerWorkerId"           bun:"owner_worker_id,type:VARCHAR(100),nullzero"`
-	LessorName              string                      `json:"lessorName"              bun:"lessor_name,type:VARCHAR(150),nullzero"`
-	LeaseReference          string                      `json:"leaseReference"          bun:"lease_reference,type:VARCHAR(100),nullzero"`
-	LeaseEndDate            *int64                      `json:"leaseEndDate"            bun:"lease_end_date,type:BIGINT,nullzero"`
-	LastKnownLocationID     pulid.ID                    `json:"lastKnownLocationId"     bun:"last_known_location_id,type:VARCHAR(100),scanonly"`
-	LastKnownLocationName   string                      `json:"lastKnownLocationName"   bun:"last_known_location_name,type:VARCHAR(255),scanonly"`
-	Version                 int64                       `json:"version"                 bun:"version,type:BIGINT"`
-	CreatedAt               int64                       `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt               int64                       `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                         pulid.ID                    `json:"id"                      bun:"id,type:VARCHAR(100),pk,notnull"`
+	BusinessUnitID             pulid.ID                    `json:"businessUnitId"          bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
+	OrganizationID             pulid.ID                    `json:"organizationId"          bun:"organization_id,type:VARCHAR(100),notnull,pk"`
+	PrimaryWorkerID            pulid.ID                    `json:"primaryWorkerId"         bun:"primary_worker_id,type:VARCHAR(100),notnull"`
+	EquipmentTypeID            pulid.ID                    `json:"equipmentTypeId"         bun:"equipment_type_id,type:VARCHAR(100),notnull"`
+	EquipmentManufacturerID    pulid.ID                    `json:"equipmentManufacturerId" bun:"equipment_manufacturer_id,type:VARCHAR(100),notnull"`
+	StateID                    pulid.ID                    `json:"stateId"                 bun:"state_id,type:VARCHAR(100),nullzero"`
+	FleetCodeID                pulid.ID                    `json:"fleetCodeId"             bun:"fleet_code_id,type:VARCHAR(100),nullzero"`
+	SecondaryWorkerID          pulid.ID                    `json:"secondaryWorkerId"       bun:"secondary_worker_id,type:VARCHAR(100),nullzero"`
+	Status                     domaintypes.EquipmentStatus `json:"status"                  bun:"status,type:equipment_status_enum,notnull,default:'Available'"`
+	Code                       string                      `json:"code"                    bun:"code,type:VARCHAR(50),notnull"`
+	Model                      string                      `json:"model"                   bun:"model,type:VARCHAR(50),nullzero"`
+	Make                       string                      `json:"make"                    bun:"make,type:VARCHAR(50),nullzero"`
+	Year                       *int                        `json:"year"                    bun:"year,type:INT,nullzero"`
+	LicensePlateNumber         string                      `json:"licensePlateNumber"      bun:"license_plate_number,type:VARCHAR(50),nullzero"`
+	RegistrationNumber         string                      `json:"registrationNumber"      bun:"registration_number,type:VARCHAR(50),nullzero"`
+	RegistrationExpiry         *int64                      `json:"registrationExpiry"      bun:"registration_expiry,type:BIGINT,nullzero"`
+	FuelType                   domaintypes.IFTAFuelType    `json:"fuelType"                bun:"fuel_type,type:ifta_fuel_type_enum,notnull"`
+	IFTAQualified              bool                        `json:"iftaQualified"           bun:"ifta_qualified,type:BOOLEAN,notnull"`
+	Vin                        string                      `json:"vin"                     bun:"vin,type:vin_code_optional,nullzero"`
+	ExternalID                 string                      `json:"externalId"              bun:"external_id,type:TEXT,nullzero"`
+	OwnershipType              domaintypes.OwnershipType   `json:"ownershipType"           bun:"ownership_type,type:VARCHAR(50),notnull,default:'CompanyOwned'"`
+	OwnerWorkerID              *pulid.ID                   `json:"ownerWorkerId"           bun:"owner_worker_id,type:VARCHAR(100),nullzero"`
+	LessorName                 string                      `json:"lessorName"              bun:"lessor_name,type:VARCHAR(150),nullzero"`
+	LeaseReference             string                      `json:"leaseReference"          bun:"lease_reference,type:VARCHAR(100),nullzero"`
+	LeaseEndDate               *int64                      `json:"leaseEndDate"            bun:"lease_end_date,type:BIGINT,nullzero"`
+	LastKnownLocationID        pulid.ID                    `json:"lastKnownLocationId"     bun:"last_known_location_id,type:VARCHAR(100),scanonly"`
+	LastKnownLocationName      string                      `json:"lastKnownLocationName"   bun:"last_known_location_name,type:VARCHAR(255),scanonly"`
+	LastKnownLocationLatitude  *float64                    `json:"lastKnownLocationLatitude" bun:"last_known_location_latitude,type:FLOAT,scanonly"`
+	LastKnownLocationLongitude *float64                    `json:"lastKnownLocationLongitude" bun:"last_known_location_longitude,type:FLOAT,scanonly"`
+	Version                    int64                       `json:"version"                 bun:"version,type:BIGINT"`
+	CreatedAt                  int64                       `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt                  int64                       `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	CustomFields map[string]any `json:"customFields,omitempty" bun:"-"`
 

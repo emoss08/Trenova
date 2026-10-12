@@ -50,69 +50,73 @@ var TractorTable = buncolgen.TableInfo{
 //	q.Where(TractorColumns.ID.Eq(), id)           // WHERE trac.id = ?
 //	q.Order(TractorColumns.CreatedAt.OrderDesc())  // ORDER BY trac.created_at DESC
 var TractorColumns = struct {
-	ID                      buncolgen.Column // "id" → qualified: "trac.id"
-	BusinessUnitID          buncolgen.Column // "business_unit_id" → qualified: "trac.business_unit_id"
-	OrganizationID          buncolgen.Column // "organization_id" → qualified: "trac.organization_id"
-	PrimaryWorkerID         buncolgen.Column // "primary_worker_id" → qualified: "trac.primary_worker_id"
-	EquipmentTypeID         buncolgen.Column // "equipment_type_id" → qualified: "trac.equipment_type_id"
-	EquipmentManufacturerID buncolgen.Column // "equipment_manufacturer_id" → qualified: "trac.equipment_manufacturer_id"
-	StateID                 buncolgen.Column // "state_id" → qualified: "trac.state_id"
-	FleetCodeID             buncolgen.Column // "fleet_code_id" → qualified: "trac.fleet_code_id"
-	SecondaryWorkerID       buncolgen.Column // "secondary_worker_id" → qualified: "trac.secondary_worker_id"
-	Status                  buncolgen.Column // "status" → qualified: "trac.status"
-	Code                    buncolgen.Column // "code" → qualified: "trac.code"
-	Model                   buncolgen.Column // "model" → qualified: "trac.model"
-	Make                    buncolgen.Column // "make" → qualified: "trac.make"
-	Year                    buncolgen.Column // "year" → qualified: "trac.year"
-	LicensePlateNumber      buncolgen.Column // "license_plate_number" → qualified: "trac.license_plate_number"
-	RegistrationNumber      buncolgen.Column // "registration_number" → qualified: "trac.registration_number"
-	RegistrationExpiry      buncolgen.Column // "registration_expiry" → qualified: "trac.registration_expiry"
-	FuelType                buncolgen.Column // "fuel_type" → qualified: "trac.fuel_type"
-	IFTAQualified           buncolgen.Column // "ifta_qualified" → qualified: "trac.ifta_qualified"
-	Vin                     buncolgen.Column // "vin" → qualified: "trac.vin"
-	ExternalID              buncolgen.Column // "external_id" → qualified: "trac.external_id"
-	OwnershipType           buncolgen.Column // "ownership_type" → qualified: "trac.ownership_type"
-	OwnerWorkerID           buncolgen.Column // "owner_worker_id" → qualified: "trac.owner_worker_id"
-	LessorName              buncolgen.Column // "lessor_name" → qualified: "trac.lessor_name"
-	LeaseReference          buncolgen.Column // "lease_reference" → qualified: "trac.lease_reference"
-	LeaseEndDate            buncolgen.Column // "lease_end_date" → qualified: "trac.lease_end_date"
-	LastKnownLocationID     buncolgen.Column // "last_known_location_id" → qualified: "trac.last_known_location_id"
-	LastKnownLocationName   buncolgen.Column // "last_known_location_name" → qualified: "trac.last_known_location_name"
-	Version                 buncolgen.Column // "version" → qualified: "trac.version"
-	CreatedAt               buncolgen.Column // "created_at" → qualified: "trac.created_at"
-	UpdatedAt               buncolgen.Column // "updated_at" → qualified: "trac.updated_at"
+	ID                         buncolgen.Column // "id" → qualified: "trac.id"
+	BusinessUnitID             buncolgen.Column // "business_unit_id" → qualified: "trac.business_unit_id"
+	OrganizationID             buncolgen.Column // "organization_id" → qualified: "trac.organization_id"
+	PrimaryWorkerID            buncolgen.Column // "primary_worker_id" → qualified: "trac.primary_worker_id"
+	EquipmentTypeID            buncolgen.Column // "equipment_type_id" → qualified: "trac.equipment_type_id"
+	EquipmentManufacturerID    buncolgen.Column // "equipment_manufacturer_id" → qualified: "trac.equipment_manufacturer_id"
+	StateID                    buncolgen.Column // "state_id" → qualified: "trac.state_id"
+	FleetCodeID                buncolgen.Column // "fleet_code_id" → qualified: "trac.fleet_code_id"
+	SecondaryWorkerID          buncolgen.Column // "secondary_worker_id" → qualified: "trac.secondary_worker_id"
+	Status                     buncolgen.Column // "status" → qualified: "trac.status"
+	Code                       buncolgen.Column // "code" → qualified: "trac.code"
+	Model                      buncolgen.Column // "model" → qualified: "trac.model"
+	Make                       buncolgen.Column // "make" → qualified: "trac.make"
+	Year                       buncolgen.Column // "year" → qualified: "trac.year"
+	LicensePlateNumber         buncolgen.Column // "license_plate_number" → qualified: "trac.license_plate_number"
+	RegistrationNumber         buncolgen.Column // "registration_number" → qualified: "trac.registration_number"
+	RegistrationExpiry         buncolgen.Column // "registration_expiry" → qualified: "trac.registration_expiry"
+	FuelType                   buncolgen.Column // "fuel_type" → qualified: "trac.fuel_type"
+	IFTAQualified              buncolgen.Column // "ifta_qualified" → qualified: "trac.ifta_qualified"
+	Vin                        buncolgen.Column // "vin" → qualified: "trac.vin"
+	ExternalID                 buncolgen.Column // "external_id" → qualified: "trac.external_id"
+	OwnershipType              buncolgen.Column // "ownership_type" → qualified: "trac.ownership_type"
+	OwnerWorkerID              buncolgen.Column // "owner_worker_id" → qualified: "trac.owner_worker_id"
+	LessorName                 buncolgen.Column // "lessor_name" → qualified: "trac.lessor_name"
+	LeaseReference             buncolgen.Column // "lease_reference" → qualified: "trac.lease_reference"
+	LeaseEndDate               buncolgen.Column // "lease_end_date" → qualified: "trac.lease_end_date"
+	LastKnownLocationID        buncolgen.Column // "last_known_location_id" → qualified: "trac.last_known_location_id"
+	LastKnownLocationName      buncolgen.Column // "last_known_location_name" → qualified: "trac.last_known_location_name"
+	LastKnownLocationLatitude  buncolgen.Column // "last_known_location_latitude" → qualified: "trac.last_known_location_latitude"
+	LastKnownLocationLongitude buncolgen.Column // "last_known_location_longitude" → qualified: "trac.last_known_location_longitude"
+	Version                    buncolgen.Column // "version" → qualified: "trac.version"
+	CreatedAt                  buncolgen.Column // "created_at" → qualified: "trac.created_at"
+	UpdatedAt                  buncolgen.Column // "updated_at" → qualified: "trac.updated_at"
 }{
-	ID:                      buncolgen.NewColumn("id", "trac"),
-	BusinessUnitID:          buncolgen.NewColumn("business_unit_id", "trac"),
-	OrganizationID:          buncolgen.NewColumn("organization_id", "trac"),
-	PrimaryWorkerID:         buncolgen.NewColumn("primary_worker_id", "trac"),
-	EquipmentTypeID:         buncolgen.NewColumn("equipment_type_id", "trac"),
-	EquipmentManufacturerID: buncolgen.NewColumn("equipment_manufacturer_id", "trac"),
-	StateID:                 buncolgen.NewColumn("state_id", "trac"),
-	FleetCodeID:             buncolgen.NewColumn("fleet_code_id", "trac"),
-	SecondaryWorkerID:       buncolgen.NewColumn("secondary_worker_id", "trac"),
-	Status:                  buncolgen.NewColumn("status", "trac"),
-	Code:                    buncolgen.NewColumn("code", "trac"),
-	Model:                   buncolgen.NewColumn("model", "trac"),
-	Make:                    buncolgen.NewColumn("make", "trac"),
-	Year:                    buncolgen.NewColumn("year", "trac"),
-	LicensePlateNumber:      buncolgen.NewColumn("license_plate_number", "trac"),
-	RegistrationNumber:      buncolgen.NewColumn("registration_number", "trac"),
-	RegistrationExpiry:      buncolgen.NewColumn("registration_expiry", "trac"),
-	FuelType:                buncolgen.NewColumn("fuel_type", "trac"),
-	IFTAQualified:           buncolgen.NewColumn("ifta_qualified", "trac"),
-	Vin:                     buncolgen.NewColumn("vin", "trac"),
-	ExternalID:              buncolgen.NewColumn("external_id", "trac"),
-	OwnershipType:           buncolgen.NewColumn("ownership_type", "trac"),
-	OwnerWorkerID:           buncolgen.NewColumn("owner_worker_id", "trac"),
-	LessorName:              buncolgen.NewColumn("lessor_name", "trac"),
-	LeaseReference:          buncolgen.NewColumn("lease_reference", "trac"),
-	LeaseEndDate:            buncolgen.NewColumn("lease_end_date", "trac"),
-	LastKnownLocationID:     buncolgen.NewColumn("last_known_location_id", "trac"),
-	LastKnownLocationName:   buncolgen.NewColumn("last_known_location_name", "trac"),
-	Version:                 buncolgen.NewColumn("version", "trac"),
-	CreatedAt:               buncolgen.NewColumn("created_at", "trac"),
-	UpdatedAt:               buncolgen.NewColumn("updated_at", "trac"),
+	ID:                         buncolgen.NewColumn("id", "trac"),
+	BusinessUnitID:             buncolgen.NewColumn("business_unit_id", "trac"),
+	OrganizationID:             buncolgen.NewColumn("organization_id", "trac"),
+	PrimaryWorkerID:            buncolgen.NewColumn("primary_worker_id", "trac"),
+	EquipmentTypeID:            buncolgen.NewColumn("equipment_type_id", "trac"),
+	EquipmentManufacturerID:    buncolgen.NewColumn("equipment_manufacturer_id", "trac"),
+	StateID:                    buncolgen.NewColumn("state_id", "trac"),
+	FleetCodeID:                buncolgen.NewColumn("fleet_code_id", "trac"),
+	SecondaryWorkerID:          buncolgen.NewColumn("secondary_worker_id", "trac"),
+	Status:                     buncolgen.NewColumn("status", "trac"),
+	Code:                       buncolgen.NewColumn("code", "trac"),
+	Model:                      buncolgen.NewColumn("model", "trac"),
+	Make:                       buncolgen.NewColumn("make", "trac"),
+	Year:                       buncolgen.NewColumn("year", "trac"),
+	LicensePlateNumber:         buncolgen.NewColumn("license_plate_number", "trac"),
+	RegistrationNumber:         buncolgen.NewColumn("registration_number", "trac"),
+	RegistrationExpiry:         buncolgen.NewColumn("registration_expiry", "trac"),
+	FuelType:                   buncolgen.NewColumn("fuel_type", "trac"),
+	IFTAQualified:              buncolgen.NewColumn("ifta_qualified", "trac"),
+	Vin:                        buncolgen.NewColumn("vin", "trac"),
+	ExternalID:                 buncolgen.NewColumn("external_id", "trac"),
+	OwnershipType:              buncolgen.NewColumn("ownership_type", "trac"),
+	OwnerWorkerID:              buncolgen.NewColumn("owner_worker_id", "trac"),
+	LessorName:                 buncolgen.NewColumn("lessor_name", "trac"),
+	LeaseReference:             buncolgen.NewColumn("lease_reference", "trac"),
+	LeaseEndDate:               buncolgen.NewColumn("lease_end_date", "trac"),
+	LastKnownLocationID:        buncolgen.NewColumn("last_known_location_id", "trac"),
+	LastKnownLocationName:      buncolgen.NewColumn("last_known_location_name", "trac"),
+	LastKnownLocationLatitude:  buncolgen.NewColumn("last_known_location_latitude", "trac"),
+	LastKnownLocationLongitude: buncolgen.NewColumn("last_known_location_longitude", "trac"),
+	Version:                    buncolgen.NewColumn("version", "trac"),
+	CreatedAt:                  buncolgen.NewColumn("created_at", "trac"),
+	UpdatedAt:                  buncolgen.NewColumn("updated_at", "trac"),
 }
 
 // TractorFieldMap maps JSON API field names to database column names.
@@ -120,37 +124,39 @@ var TractorColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Tractor.GetStaticFieldMap().
 var TractorFieldMap = map[string]string{
-	"id":                      "id",
-	"businessUnitId":          "business_unit_id",
-	"organizationId":          "organization_id",
-	"primaryWorkerId":         "primary_worker_id",
-	"equipmentTypeId":         "equipment_type_id",
-	"equipmentManufacturerId": "equipment_manufacturer_id",
-	"stateId":                 "state_id",
-	"fleetCodeId":             "fleet_code_id",
-	"secondaryWorkerId":       "secondary_worker_id",
-	"status":                  "status",
-	"code":                    "code",
-	"model":                   "model",
-	"make":                    "make",
-	"year":                    "year",
-	"licensePlateNumber":      "license_plate_number",
-	"registrationNumber":      "registration_number",
-	"registrationExpiry":      "registration_expiry",
-	"fuelType":                "fuel_type",
-	"iftaQualified":           "ifta_qualified",
-	"vin":                     "vin",
-	"externalId":              "external_id",
-	"ownershipType":           "ownership_type",
-	"ownerWorkerId":           "owner_worker_id",
-	"lessorName":              "lessor_name",
-	"leaseReference":          "lease_reference",
-	"leaseEndDate":            "lease_end_date",
-	"lastKnownLocationId":     "last_known_location_id",
-	"lastKnownLocationName":   "last_known_location_name",
-	"version":                 "version",
-	"createdAt":               "created_at",
-	"updatedAt":               "updated_at",
+	"id":                         "id",
+	"businessUnitId":             "business_unit_id",
+	"organizationId":             "organization_id",
+	"primaryWorkerId":            "primary_worker_id",
+	"equipmentTypeId":            "equipment_type_id",
+	"equipmentManufacturerId":    "equipment_manufacturer_id",
+	"stateId":                    "state_id",
+	"fleetCodeId":                "fleet_code_id",
+	"secondaryWorkerId":          "secondary_worker_id",
+	"status":                     "status",
+	"code":                       "code",
+	"model":                      "model",
+	"make":                       "make",
+	"year":                       "year",
+	"licensePlateNumber":         "license_plate_number",
+	"registrationNumber":         "registration_number",
+	"registrationExpiry":         "registration_expiry",
+	"fuelType":                   "fuel_type",
+	"iftaQualified":              "ifta_qualified",
+	"vin":                        "vin",
+	"externalId":                 "external_id",
+	"ownershipType":              "ownership_type",
+	"ownerWorkerId":              "owner_worker_id",
+	"lessorName":                 "lessor_name",
+	"leaseReference":             "lease_reference",
+	"leaseEndDate":               "lease_end_date",
+	"lastKnownLocationId":        "last_known_location_id",
+	"lastKnownLocationName":      "last_known_location_name",
+	"lastKnownLocationLatitude":  "last_known_location_latitude",
+	"lastKnownLocationLongitude": "last_known_location_longitude",
+	"version":                    "version",
+	"createdAt":                  "created_at",
+	"updatedAt":                  "updated_at",
 }
 
 // TractorInsertableColumns lists column names suitable for INSERT statements on the "tractors" table.

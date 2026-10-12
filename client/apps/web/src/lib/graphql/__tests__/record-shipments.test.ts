@@ -107,3 +107,17 @@ describe("fetchRecordShipments", () => {
     expect(page.total).toBe(1);
   });
 });
+
+describe("fetchRecordShipments for a trailer", () => {
+  it("reads the loads a trailer carried by its assignments", async () => {
+    requestGraphQLMock.mockResolvedValue({
+      shipments: { edges: [], pageInfo: { hasNextPage: false, endCursor: null }, totalCount: 0 },
+    } as never);
+
+    await fetchRecordShipments({ kind: "trailer", id: "trl_1" }, { first: 5, after: null });
+
+    expect(lastCall().variables.input).toMatchObject({ trailerIds: ["trl_1"] });
+    expect(lastCall().variables.input).not.toHaveProperty("tractorIds");
+    expect(lastCall().variables.input).not.toHaveProperty("fieldFilters");
+  });
+});

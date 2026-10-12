@@ -5,8 +5,6 @@ import type {
   DeskTractorInspection,
   DeskTractorPosition,
 } from "@/lib/graphql/tractor-card";
-import { useInView } from "@/hooks/use-in-view";
-import { lazyComponent } from "@/lib/lazy-component";
 import { queries } from "@/lib/queries";
 import { tractorInspectionsQuery } from "@/lib/queries/tractor";
 import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
@@ -14,7 +12,7 @@ import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, formatPercent } from "@trenova/shared/lib/utils";
-import { Suspense, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useCardAccess } from "../../record-card/card-access";
 import { CardDocuments } from "../../record-card/card-documents";
@@ -22,8 +20,7 @@ import { CardShipments } from "../../record-card/card-shipments";
 import {
   CardBar,
   CardBarHint,
-  CardCheck,
-  CardChecks,
+  CardFactGrid,
   CardFacts,
   CardHead,
   CardIcon,
@@ -39,7 +36,6 @@ import {
 } from "../../record-card/record-card";
 import { cardDate, neighborsIn } from "../../record-card/record-card-values";
 import { useRecordShipments } from "../../record-card/record-shipments";
-import { SkeletonBar } from "../../skeletons/record-card-skeleton";
 import { useListedRecords, type RecordArtifactProps } from "../registry";
 import {
   inspectionKind,
@@ -48,10 +44,11 @@ import {
   positionReading,
   tractorChecks,
   tractorFacts,
-  tractorName,
   tractorPeople,
-  tractorStanding,
 } from "./tractor-card";
+import { CardDue } from "../../record-card/card-due";
+import { CardWhere, mapPoint } from "../../record-card/card-where";
+import { equipmentName, equipmentStanding } from "../../record-card/equipment";
 import { TRACTOR_SECTIONS } from "./tractor-sections";
 import { DeskTractorSkeleton } from "./tractor-skeleton";
 
@@ -59,14 +56,6 @@ import { DeskTractorSkeleton } from "./tractor-skeleton";
 const SHIPMENT_ROWS = 5;
 /** The inspections the card reads at a time. */
 const INSPECTION_ROWS = 5;
-
-/** How far below the screen the map starts reading, so it is drawn as it scrolls in. */
-const MAP_READ_AHEAD = "240px 0px";
-
-const TractorMap = lazyComponent(
-  () => import("./tractor-map"),
-  (module) => module.TractorMap,
-);
 
 /**
  * What the card is given: the tractor, and when it was opened from a table or
@@ -176,9 +165,9 @@ function TractorCard({
   const checks = tractorChecks(tractor, latest, now, t);
   const people = tractorPeople(tractor, t);
   const peopleIds = useMemo(() => people.map((person) => person.id), [people]);
-  const standing = tractorStanding(tractor.status, t);
+  const standing = equipmentStanding(tractor.status, t);
   const neighbors = neighborsIn(order, id);
-  const name = tractorName(tractor);
+  const name = equipmentName(tractor);
 
   const backToTractor = t("Back to {0}", tractor.code);
   const listedShipments = useListedRecords({
@@ -265,46 +254,20 @@ function TractorCard({
           pending={position.isPending}
           error={position.error}
           now={now}
-          lastKnown={lastKnown ?? null}
+          lastKnown={lastKnown}
           onOpenPlace={listedPlace.open}
         />
       </CardSection>
 
-      <CardSection
+      <CardDue
         title={t("Due")}
-        aside={
-          checks.some((check) => check.state !== "ok") ? (
-            <span className="dk-warn">
-              {t(
-                "{0, plural, one {# needs a look} other {# need a look}}",
-                checks.filter((check) => check.state !== "ok").length,
-              )}
-            </span>
-          ) : (
-            <span className="dk-ok">{t("Nothing due")}</span>
-          )
+        checks={checks}
+        waiting={
+          latest === undefined && inspections.isPending
+            ? t("Reading the last inspection…")
+            : undefined
         }
-      >
-        <CardChecks>
-          {checks.map((check) => (
-            <CardCheck
-              key={check.key}
-              state={check.state}
-              title={check.title}
-              detail={check.detail}
-            />
-          ))}
-          {latest === undefined && inspections.isPending && (
-            <div className="dk-rec-ck dk-tr-ck-wait" aria-busy>
-              <i className="dk-sk dk-rec-sk-mark" />
-              <span className="dk-rec-sk-ckb">
-                <SkeletonBar w="30%" className="dk-rec-sk-line" />
-                <span className="sr-only">{t("Reading the last inspection…")}</span>
-              </span>
-            </div>
-          )}
-        </CardChecks>
-      </CardSection>
+      />
 
       <CardSection title={t("Drivers")}>
         {people.length > 0 ? (
@@ -349,14 +312,7 @@ function TractorCard({
       </CardSection>
 
       <CardSection title={t("Details")}>
-        <dl className="dk-tr-facts">
-          {tractorFacts(tractor, t).map((fact) => (
-            <div key={fact.key}>
-              <dt>{fact.label}</dt>
-              <dd>{fact.value}</dd>
-            </div>
-          ))}
-        </dl>
+        <CardFactGrid facts={tractorFacts(tractor, t)} />
       </CardSection>
 
       <CardDocuments resourceType="tractor" resourceId={id} manageTo={recordPath("tractor", id)} />
@@ -401,10 +357,9 @@ function OdometerFigure({
 }
 
 /**
- * Where the tractor is: a small still map of its last report, beside the
- * place, how it is moving and when it said so, and the location it last left
- * in Trenova's own records. The map's code and tiles are read only once its
- * square comes within reach of the screen.
+ * Where the tractor is: its last GPS report on a small still map, how it was
+ * moving and when it said so, and the location its last move left it at in
+ * Trenova's own records. With no GPS the map shows that location, muted.
  */
 function Whereabouts({
   position,
@@ -418,87 +373,50 @@ function Whereabouts({
   pending: boolean;
   error: unknown;
   now: number;
-  lastKnown: { id: string; name: string } | null;
+  lastKnown: DeskTractorRecord["lastKnownLocation"];
   /** Opens the last known location in the card's place; absent, it links to its page. */
   onOpenPlace: ((locationId: string) => void) | undefined;
 }) {
   const t = useT();
-  const [square, near] = useInView<HTMLDivElement>({ rootMargin: MAP_READ_AHEAD, once: true });
   const reading = position ? positionReading(position, now, t) : null;
-  const place = reading?.place ?? (position ? null : (lastKnown?.name ?? null));
-  const facts = position
-    ? [
-        position.fuelPercent !== null && position.fuelPercent !== undefined
-          ? t("Fuel {0}", formatPercent(position.fuelPercent, 0))
-          : "",
-        t("{0}, {1}", position.latitude.toFixed(4), position.longitude.toFixed(4)),
-      ]
-    : [];
-
+  const place = reading ? reading.place : (lastKnown?.name ?? null);
+  const point = position
+    ? mapPoint(position.latitude, position.longitude)
+    : mapPoint(lastKnown?.latitude, lastKnown?.longitude);
   return (
-    <>
-      <div className={cn("dk-tr-where", reading?.live && "dk-live")}>
-        <div ref={square} className="dk-tr-scope">
-          {position && near ? (
-            <Suspense fallback={null}>
-              <TractorMap.Component
-                latitude={position.latitude}
-                longitude={position.longitude}
-                live={reading?.live ?? false}
-                label={
-                  place ? t("Map of {0}", place) : t("Map of the tractor's last reported position")
-                }
-              />
-            </Suspense>
-          ) : (
-            !position &&
-            !pending && (
-              <span className="dk-tr-nomap" role="img" aria-label={t("No position reported")}>
-                <CardIcon name="pin" size={18} stroke={1.6} />
-              </span>
-            )
-          )}
-        </div>
-        <div className="dk-tr-at">
-          {pending ? (
-            <CardSectionWait rows={2} />
-          ) : (
-            <>
-              <b className={cn(!place && "dk-tr-unknown")}>
-                {place ??
-                  (position
-                    ? t("Somewhere without an address")
-                    : t("No GPS report from this tractor"))}
-              </b>
-              {reading ? (
-                <span className="dk-tr-motion">
-                  <i aria-hidden />
-                  {reading.motion}
-                </span>
-              ) : (
-                <span className="dk-tr-motion dk-off">
-                  <i aria-hidden />
-                  {lastKnown
-                    ? t("Placed by its last move, not by GPS")
-                    : t("No known location yet")}
-                </span>
-              )}
-              {facts.length > 0 && (
-                <span className="dk-tr-geo">
-                  <CardFacts>{facts}</CardFacts>
-                </span>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-      {error !== null && error !== undefined && (
-        <CardSectionError>
-          {describeApiError(error, t("The tractor's position could not be read."))}
-        </CardSectionError>
-      )}
+    <CardWhere
+      point={point}
+      live={reading?.live ?? false}
+      pending={pending}
+      place={place}
+      placeMissing={
+        position ? t("Somewhere without an address") : t("No GPS report from this tractor")
+      }
+      line={
+        reading
+          ? reading.motion
+          : lastKnown
+            ? t("Placed by its last move, not by GPS")
+            : t("No known location yet")
+      }
+      lineOff={!reading}
+      facts={
+        position
+          ? [
+              position.fuelPercent !== null && position.fuelPercent !== undefined
+                ? t("Fuel {0}", formatPercent(position.fuelPercent, 0))
+                : "",
+              t("{0}, {1}", position.latitude.toFixed(4), position.longitude.toFixed(4)),
+            ]
+          : []
+      }
+      mapLabel={place ? t("Map of {0}", place) : t("Map of the tractor's last reported position")}
+      noMapLabel={t("No position reported")}
+      error={error}
+      errorText={t("The tractor's position could not be read.")}
+    >
       {lastKnown && position && (
-        <div className="dk-rec-list dk-tr-left">
+        <div className="dk-rec-list dk-rec-left">
           <CardRecordRow
             to={recordPath("location", lastKnown.id)}
             onOpen={onOpenPlace && (() => onOpenPlace(lastKnown.id))}
@@ -511,7 +429,7 @@ function Whereabouts({
           </CardRecordRow>
         </div>
       )}
-    </>
+    </CardWhere>
   );
 }
 

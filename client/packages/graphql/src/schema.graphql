@@ -17065,6 +17065,9 @@ enum LocationGeofenceType {
 
 type LocationReference {
   id: ID!
+  """Where the location is, when it has been geocoded."""
+  latitude: Float
+  longitude: Float
   name: String!
 }
 
@@ -25122,6 +25125,8 @@ input ShipmentsInput {
   timezone: String
   """Only shipments with a live move assigned to one of these tractors."""
   tractorIds: [ID!]
+  """Only shipments with a live move assigned to one of these trailers."""
+  trailerIds: [ID!]
 }
 
 type SidebarActivityPreference {
@@ -25938,12 +25943,23 @@ type Trailer {
   lastKnownLocation: LocationReference
   lastKnownLocationId: ID
   lastKnownLocationName: String!
+  """When the lease on a leased trailer ends."""
+  leaseEndDate: Timestamp
+  """The lessor's reference for the lease."""
+  leaseReference: String!
+  """The lessor a leased trailer is leased from."""
+  lessorName: String!
   licensePlateNumber: String!
   make: String!
   maxLoadWeight: Int
   model: String!
   organization: Organization
   organizationId: ID!
+  ownerWorker: Worker
+  """The owner-operator who owns the trailer, when it is theirs."""
+  ownerWorkerId: ID
+  """Who owns the trailer: the company, a lessor, or an owner-operator."""
+  ownershipType: EquipmentOwnershipType!
   registrationExpiry: Timestamp
   registrationNumber: String!
   registrationState: UsState

@@ -9,9 +9,12 @@ export type RecordShipment = DeskRecordShipmentsQuery["shipments"]["edges"][numb
 
 /**
  * The record a card lists shipments for: a customer's freight, or the loads a
- * tractor pulled on any of its moves.
+ * tractor pulled or a trailer carried on any of their moves.
  */
-export type ShipmentScope = { kind: "customer"; id: string } | { kind: "tractor"; id: string };
+export type ShipmentScope =
+  | { kind: "customer"; id: string }
+  | { kind: "tractor"; id: string }
+  | { kind: "trailer"; id: string };
 
 /** One page of a record's shipments, newest first. `total` is read with the first page only. */
 export type RecordShipmentsPage = {
@@ -21,12 +24,16 @@ export type RecordShipmentsPage = {
   hasNextPage: boolean;
 };
 
-function scopeInput(scope: ShipmentScope): Pick<ShipmentsInput, "fieldFilters" | "tractorIds"> {
+function scopeInput(
+  scope: ShipmentScope,
+): Pick<ShipmentsInput, "fieldFilters" | "tractorIds" | "trailerIds"> {
   switch (scope.kind) {
     case "customer":
       return { fieldFilters: [{ field: "customerId", operator: "eq", value: scope.id }] };
     case "tractor":
       return { tractorIds: [scope.id] };
+    case "trailer":
+      return { trailerIds: [scope.id] };
   }
 }
 

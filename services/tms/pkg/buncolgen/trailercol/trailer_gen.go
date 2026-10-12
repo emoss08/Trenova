@@ -50,69 +50,73 @@ var TrailerTable = buncolgen.TableInfo{
 //	q.Where(TrailerColumns.ID.Eq(), id)           // WHERE tr.id = ?
 //	q.Order(TrailerColumns.CreatedAt.OrderDesc())  // ORDER BY tr.created_at DESC
 var TrailerColumns = struct {
-	ID                      buncolgen.Column // "id" → qualified: "tr.id"
-	BusinessUnitID          buncolgen.Column // "business_unit_id" → qualified: "tr.business_unit_id"
-	OrganizationID          buncolgen.Column // "organization_id" → qualified: "tr.organization_id"
-	EquipmentTypeID         buncolgen.Column // "equipment_type_id" → qualified: "tr.equipment_type_id"
-	EquipmentManufacturerID buncolgen.Column // "equipment_manufacturer_id" → qualified: "tr.equipment_manufacturer_id"
-	RegistrationStateID     buncolgen.Column // "registration_state_id" → qualified: "tr.registration_state_id"
-	FleetCodeID             buncolgen.Column // "fleet_code_id" → qualified: "tr.fleet_code_id"
-	Status                  buncolgen.Column // "status" → qualified: "tr.status"
-	Code                    buncolgen.Column // "code" → qualified: "tr.code"
-	Model                   buncolgen.Column // "model" → qualified: "tr.model"
-	Make                    buncolgen.Column // "make" → qualified: "tr.make"
-	Year                    buncolgen.Column // "year" → qualified: "tr.year"
-	LicensePlateNumber      buncolgen.Column // "license_plate_number" → qualified: "tr.license_plate_number"
-	Vin                     buncolgen.Column // "vin" → qualified: "tr.vin"
-	ExternalID              buncolgen.Column // "external_id" → qualified: "tr.external_id"
-	RegistrationNumber      buncolgen.Column // "registration_number" → qualified: "tr.registration_number"
-	MaxLoadWeight           buncolgen.Column // "max_load_weight" → qualified: "tr.max_load_weight"
-	OwnershipType           buncolgen.Column // "ownership_type" → qualified: "tr.ownership_type"
-	OwnerWorkerID           buncolgen.Column // "owner_worker_id" → qualified: "tr.owner_worker_id"
-	LessorName              buncolgen.Column // "lessor_name" → qualified: "tr.lessor_name"
-	LeaseReference          buncolgen.Column // "lease_reference" → qualified: "tr.lease_reference"
-	LeaseEndDate            buncolgen.Column // "lease_end_date" → qualified: "tr.lease_end_date"
-	LastInspectionDate      buncolgen.Column // "last_inspection_date" → qualified: "tr.last_inspection_date"
-	RegistrationExpiry      buncolgen.Column // "registration_expiry" → qualified: "tr.registration_expiry"
-	LastKnownLocationID     buncolgen.Column // "last_known_location_id" → qualified: "tr.last_known_location_id"
-	LastKnownLocationName   buncolgen.Column // "last_known_location_name" → qualified: "tr.last_known_location_name"
-	SearchVector            buncolgen.Column // "search_vector" → qualified: "tr.search_vector"
-	Rank                    buncolgen.Column // "rank" → qualified: "tr.rank"
-	Version                 buncolgen.Column // "version" → qualified: "tr.version"
-	CreatedAt               buncolgen.Column // "created_at" → qualified: "tr.created_at"
-	UpdatedAt               buncolgen.Column // "updated_at" → qualified: "tr.updated_at"
+	ID                         buncolgen.Column // "id" → qualified: "tr.id"
+	BusinessUnitID             buncolgen.Column // "business_unit_id" → qualified: "tr.business_unit_id"
+	OrganizationID             buncolgen.Column // "organization_id" → qualified: "tr.organization_id"
+	EquipmentTypeID            buncolgen.Column // "equipment_type_id" → qualified: "tr.equipment_type_id"
+	EquipmentManufacturerID    buncolgen.Column // "equipment_manufacturer_id" → qualified: "tr.equipment_manufacturer_id"
+	RegistrationStateID        buncolgen.Column // "registration_state_id" → qualified: "tr.registration_state_id"
+	FleetCodeID                buncolgen.Column // "fleet_code_id" → qualified: "tr.fleet_code_id"
+	Status                     buncolgen.Column // "status" → qualified: "tr.status"
+	Code                       buncolgen.Column // "code" → qualified: "tr.code"
+	Model                      buncolgen.Column // "model" → qualified: "tr.model"
+	Make                       buncolgen.Column // "make" → qualified: "tr.make"
+	Year                       buncolgen.Column // "year" → qualified: "tr.year"
+	LicensePlateNumber         buncolgen.Column // "license_plate_number" → qualified: "tr.license_plate_number"
+	Vin                        buncolgen.Column // "vin" → qualified: "tr.vin"
+	ExternalID                 buncolgen.Column // "external_id" → qualified: "tr.external_id"
+	RegistrationNumber         buncolgen.Column // "registration_number" → qualified: "tr.registration_number"
+	MaxLoadWeight              buncolgen.Column // "max_load_weight" → qualified: "tr.max_load_weight"
+	OwnershipType              buncolgen.Column // "ownership_type" → qualified: "tr.ownership_type"
+	OwnerWorkerID              buncolgen.Column // "owner_worker_id" → qualified: "tr.owner_worker_id"
+	LessorName                 buncolgen.Column // "lessor_name" → qualified: "tr.lessor_name"
+	LeaseReference             buncolgen.Column // "lease_reference" → qualified: "tr.lease_reference"
+	LeaseEndDate               buncolgen.Column // "lease_end_date" → qualified: "tr.lease_end_date"
+	LastInspectionDate         buncolgen.Column // "last_inspection_date" → qualified: "tr.last_inspection_date"
+	RegistrationExpiry         buncolgen.Column // "registration_expiry" → qualified: "tr.registration_expiry"
+	LastKnownLocationID        buncolgen.Column // "last_known_location_id" → qualified: "tr.last_known_location_id"
+	LastKnownLocationName      buncolgen.Column // "last_known_location_name" → qualified: "tr.last_known_location_name"
+	LastKnownLocationLatitude  buncolgen.Column // "last_known_location_latitude" → qualified: "tr.last_known_location_latitude"
+	LastKnownLocationLongitude buncolgen.Column // "last_known_location_longitude" → qualified: "tr.last_known_location_longitude"
+	SearchVector               buncolgen.Column // "search_vector" → qualified: "tr.search_vector"
+	Rank                       buncolgen.Column // "rank" → qualified: "tr.rank"
+	Version                    buncolgen.Column // "version" → qualified: "tr.version"
+	CreatedAt                  buncolgen.Column // "created_at" → qualified: "tr.created_at"
+	UpdatedAt                  buncolgen.Column // "updated_at" → qualified: "tr.updated_at"
 }{
-	ID:                      buncolgen.NewColumn("id", "tr"),
-	BusinessUnitID:          buncolgen.NewColumn("business_unit_id", "tr"),
-	OrganizationID:          buncolgen.NewColumn("organization_id", "tr"),
-	EquipmentTypeID:         buncolgen.NewColumn("equipment_type_id", "tr"),
-	EquipmentManufacturerID: buncolgen.NewColumn("equipment_manufacturer_id", "tr"),
-	RegistrationStateID:     buncolgen.NewColumn("registration_state_id", "tr"),
-	FleetCodeID:             buncolgen.NewColumn("fleet_code_id", "tr"),
-	Status:                  buncolgen.NewColumn("status", "tr"),
-	Code:                    buncolgen.NewColumn("code", "tr"),
-	Model:                   buncolgen.NewColumn("model", "tr"),
-	Make:                    buncolgen.NewColumn("make", "tr"),
-	Year:                    buncolgen.NewColumn("year", "tr"),
-	LicensePlateNumber:      buncolgen.NewColumn("license_plate_number", "tr"),
-	Vin:                     buncolgen.NewColumn("vin", "tr"),
-	ExternalID:              buncolgen.NewColumn("external_id", "tr"),
-	RegistrationNumber:      buncolgen.NewColumn("registration_number", "tr"),
-	MaxLoadWeight:           buncolgen.NewColumn("max_load_weight", "tr"),
-	OwnershipType:           buncolgen.NewColumn("ownership_type", "tr"),
-	OwnerWorkerID:           buncolgen.NewColumn("owner_worker_id", "tr"),
-	LessorName:              buncolgen.NewColumn("lessor_name", "tr"),
-	LeaseReference:          buncolgen.NewColumn("lease_reference", "tr"),
-	LeaseEndDate:            buncolgen.NewColumn("lease_end_date", "tr"),
-	LastInspectionDate:      buncolgen.NewColumn("last_inspection_date", "tr"),
-	RegistrationExpiry:      buncolgen.NewColumn("registration_expiry", "tr"),
-	LastKnownLocationID:     buncolgen.NewColumn("last_known_location_id", "tr"),
-	LastKnownLocationName:   buncolgen.NewColumn("last_known_location_name", "tr"),
-	SearchVector:            buncolgen.NewColumn("search_vector", "tr"),
-	Rank:                    buncolgen.NewColumn("rank", "tr"),
-	Version:                 buncolgen.NewColumn("version", "tr"),
-	CreatedAt:               buncolgen.NewColumn("created_at", "tr"),
-	UpdatedAt:               buncolgen.NewColumn("updated_at", "tr"),
+	ID:                         buncolgen.NewColumn("id", "tr"),
+	BusinessUnitID:             buncolgen.NewColumn("business_unit_id", "tr"),
+	OrganizationID:             buncolgen.NewColumn("organization_id", "tr"),
+	EquipmentTypeID:            buncolgen.NewColumn("equipment_type_id", "tr"),
+	EquipmentManufacturerID:    buncolgen.NewColumn("equipment_manufacturer_id", "tr"),
+	RegistrationStateID:        buncolgen.NewColumn("registration_state_id", "tr"),
+	FleetCodeID:                buncolgen.NewColumn("fleet_code_id", "tr"),
+	Status:                     buncolgen.NewColumn("status", "tr"),
+	Code:                       buncolgen.NewColumn("code", "tr"),
+	Model:                      buncolgen.NewColumn("model", "tr"),
+	Make:                       buncolgen.NewColumn("make", "tr"),
+	Year:                       buncolgen.NewColumn("year", "tr"),
+	LicensePlateNumber:         buncolgen.NewColumn("license_plate_number", "tr"),
+	Vin:                        buncolgen.NewColumn("vin", "tr"),
+	ExternalID:                 buncolgen.NewColumn("external_id", "tr"),
+	RegistrationNumber:         buncolgen.NewColumn("registration_number", "tr"),
+	MaxLoadWeight:              buncolgen.NewColumn("max_load_weight", "tr"),
+	OwnershipType:              buncolgen.NewColumn("ownership_type", "tr"),
+	OwnerWorkerID:              buncolgen.NewColumn("owner_worker_id", "tr"),
+	LessorName:                 buncolgen.NewColumn("lessor_name", "tr"),
+	LeaseReference:             buncolgen.NewColumn("lease_reference", "tr"),
+	LeaseEndDate:               buncolgen.NewColumn("lease_end_date", "tr"),
+	LastInspectionDate:         buncolgen.NewColumn("last_inspection_date", "tr"),
+	RegistrationExpiry:         buncolgen.NewColumn("registration_expiry", "tr"),
+	LastKnownLocationID:        buncolgen.NewColumn("last_known_location_id", "tr"),
+	LastKnownLocationName:      buncolgen.NewColumn("last_known_location_name", "tr"),
+	LastKnownLocationLatitude:  buncolgen.NewColumn("last_known_location_latitude", "tr"),
+	LastKnownLocationLongitude: buncolgen.NewColumn("last_known_location_longitude", "tr"),
+	SearchVector:               buncolgen.NewColumn("search_vector", "tr"),
+	Rank:                       buncolgen.NewColumn("rank", "tr"),
+	Version:                    buncolgen.NewColumn("version", "tr"),
+	CreatedAt:                  buncolgen.NewColumn("created_at", "tr"),
+	UpdatedAt:                  buncolgen.NewColumn("updated_at", "tr"),
 }
 
 // TrailerFieldMap maps JSON API field names to database column names.
@@ -120,35 +124,37 @@ var TrailerColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Trailer.GetStaticFieldMap().
 var TrailerFieldMap = map[string]string{
-	"id":                      "id",
-	"businessUnitId":          "business_unit_id",
-	"organizationId":          "organization_id",
-	"equipmentTypeId":         "equipment_type_id",
-	"equipmentManufacturerId": "equipment_manufacturer_id",
-	"registrationStateId":     "registration_state_id",
-	"fleetCodeId":             "fleet_code_id",
-	"status":                  "status",
-	"code":                    "code",
-	"model":                   "model",
-	"make":                    "make",
-	"year":                    "year",
-	"licensePlateNumber":      "license_plate_number",
-	"vin":                     "vin",
-	"externalId":              "external_id",
-	"registrationNumber":      "registration_number",
-	"maxLoadWeight":           "max_load_weight",
-	"ownershipType":           "ownership_type",
-	"ownerWorkerId":           "owner_worker_id",
-	"lessorName":              "lessor_name",
-	"leaseReference":          "lease_reference",
-	"leaseEndDate":            "lease_end_date",
-	"lastInspectionDate":      "last_inspection_date",
-	"registrationExpiry":      "registration_expiry",
-	"lastKnownLocationId":     "last_known_location_id",
-	"lastKnownLocationName":   "last_known_location_name",
-	"version":                 "version",
-	"createdAt":               "created_at",
-	"updatedAt":               "updated_at",
+	"id":                         "id",
+	"businessUnitId":             "business_unit_id",
+	"organizationId":             "organization_id",
+	"equipmentTypeId":            "equipment_type_id",
+	"equipmentManufacturerId":    "equipment_manufacturer_id",
+	"registrationStateId":        "registration_state_id",
+	"fleetCodeId":                "fleet_code_id",
+	"status":                     "status",
+	"code":                       "code",
+	"model":                      "model",
+	"make":                       "make",
+	"year":                       "year",
+	"licensePlateNumber":         "license_plate_number",
+	"vin":                        "vin",
+	"externalId":                 "external_id",
+	"registrationNumber":         "registration_number",
+	"maxLoadWeight":              "max_load_weight",
+	"ownershipType":              "ownership_type",
+	"ownerWorkerId":              "owner_worker_id",
+	"lessorName":                 "lessor_name",
+	"leaseReference":             "lease_reference",
+	"leaseEndDate":               "lease_end_date",
+	"lastInspectionDate":         "last_inspection_date",
+	"registrationExpiry":         "registration_expiry",
+	"lastKnownLocationId":        "last_known_location_id",
+	"lastKnownLocationName":      "last_known_location_name",
+	"lastKnownLocationLatitude":  "last_known_location_latitude",
+	"lastKnownLocationLongitude": "last_known_location_longitude",
+	"version":                    "version",
+	"createdAt":                  "created_at",
+	"updatedAt":                  "updated_at",
 }
 
 // TrailerInsertableColumns lists column names suitable for INSERT statements on the "trailers" table.
@@ -195,6 +201,7 @@ var TrailerRelations = struct {
 	EquipmentManufacturer string
 	FleetCode             string
 	RegistrationState     string
+	OwnerWorker           string
 }{
 	BusinessUnit:          "BusinessUnit",
 	Organization:          "Organization",
@@ -202,6 +209,7 @@ var TrailerRelations = struct {
 	EquipmentManufacturer: "EquipmentManufacturer",
 	FleetCode:             "FleetCode",
 	RegistrationState:     "RegistrationState",
+	OwnerWorker:           "OwnerWorker",
 }
 
 // TrailerScopeTenant restricts a query to a single tenant by adding:

@@ -40,6 +40,10 @@ export function deskCardArtifacts(anchor) {
     "tractor-t-207": artifact("tractor-t-207", "tractor", "tr_207", "Tractor T-207"),
     "tractor-t-318": artifact("tractor-t-318", "tractor", "tr_318", "Tractor T-318"),
     "tractor-t-999": artifact("tractor-t-999", "tractor", "tr_999", "Tractor T-999"),
+    "trailer-tl-501": artifact("trailer-tl-501", "trailer", "trl_501", "Trailer TL-501"),
+    "trailer-tl-622": artifact("trailer-tl-622", "trailer", "trl_622", "Trailer TL-622"),
+    "trailer-tl-700": artifact("trailer-tl-700", "trailer", "trl_700", "Trailer TL-700"),
+    "trailer-tl-999": artifact("trailer-tl-999", "trailer", "trl_999", "Trailer TL-999"),
   };
 }
 
@@ -218,6 +222,112 @@ export function deskTractors(anchor) {
   };
 }
 
+/**
+ * Three trailers between them drawing every state the card has: TL-501 sits at
+ * the Dallas yard, inspected and registered; TL-622 is a leased reefer out of
+ * service at a customer's dock with its annual inspection overdue and an
+ * owner-operator's name on it; TL-700 is new with nothing on file.
+ */
+export function deskTrailers(anchor) {
+  const base = {
+    externalId: "",
+    lessorName: "",
+    leaseReference: "",
+    leaseEndDate: null,
+    ownerWorker: null,
+  };
+  return {
+    trl_501: {
+      trailer: {
+        ...base,
+        id: "trl_501",
+        code: "TL-501",
+        status: "Available",
+        make: "Wabash",
+        model: "DuraPlate 53'",
+        year: 2022,
+        vin: "1JJV532D8NL501501",
+        licensePlateNumber: "TX-T5501",
+        registrationNumber: "REG-T5501",
+        registrationExpiry: anchor + 188 * DAY,
+        lastInspectionDate: anchor - 97 * DAY,
+        maxLoadWeight: 45000,
+        externalId: "SKY-501",
+        ownershipType: "CompanyOwned",
+        createdAt: anchor - 3 * 365 * DAY,
+        registrationState: { abbreviation: "TX" },
+        equipmentType: { id: "et_dv", code: "DV53", description: "53' dry van" },
+        equipmentManufacturer: { id: "em_wb", name: "Wabash" },
+        fleetCode: { id: "fc_dal", code: "DAL" },
+        lastKnownLocation: { id: "loc_dal", name: "Dallas yard", latitude: 32.7801, longitude: -96.8005 },
+      },
+      documents: [
+        ["Annual inspection 2026.pdf", "application/pdf", 288_400],
+        ["Registration TL-501.pdf", "application/pdf", 141_900],
+      ],
+      shipments: 6,
+    },
+    trl_622: {
+      trailer: {
+        ...base,
+        id: "trl_622",
+        code: "TL-622",
+        status: "OutOfService",
+        make: "Utility",
+        model: "3000R Reefer",
+        year: 2017,
+        vin: "1UYVS2538HU622622",
+        licensePlateNumber: "AR-R6220",
+        registrationNumber: "REG-R6220",
+        registrationExpiry: anchor - 6 * DAY,
+        lastInspectionDate: anchor - 402 * DAY,
+        maxLoadWeight: 43500,
+        ownershipType: "OwnerOperator",
+        ownerWorker: { id: "wrk_ana", firstName: "Ana", lastName: "Ruiz-Montenegro" },
+        createdAt: anchor - 5 * 365 * DAY,
+        registrationState: { abbreviation: "AR" },
+        equipmentType: { id: "et_rf", code: "RF53", description: "53' reefer" },
+        equipmentManufacturer: { id: "em_ut", name: "Utility Trailer Manufacturing" },
+        fleetCode: { id: "fc_lit", code: "LIT" },
+        lastKnownLocation: {
+          id: "loc_tyson",
+          name: "Tyson Foods Distribution Center, Dock 14, Springdale",
+          latitude: 36.1867,
+          longitude: -94.1288,
+        },
+      },
+      documents: [["Reefer unit service record.pdf", "application/pdf", 402_000]],
+      shipments: 2,
+    },
+    trl_700: {
+      trailer: {
+        ...base,
+        id: "trl_700",
+        code: "TL-700",
+        status: "Available",
+        make: "",
+        model: "",
+        year: null,
+        vin: "",
+        licensePlateNumber: "",
+        registrationNumber: "",
+        registrationExpiry: null,
+        lastInspectionDate: null,
+        maxLoadWeight: null,
+        ownershipType: "CompanyOwned",
+        createdAt: anchor - DAY,
+        registrationState: null,
+        equipmentType: { id: "et_fb", code: "FB48", description: "48' flatbed" },
+        equipmentManufacturer: null,
+        fleetCode: null,
+        lastKnownLocation: null,
+      },
+      documents: [],
+      shipments: 0,
+    },
+  };
+}
+
 /** A document filed on a tractor, as the documents API returns it. */
 export function deskDocument(resourceType, resourceId, [name, fileType, fileSize], index, anchor) {
   return {
@@ -256,6 +366,10 @@ const TURNS = {
   "tractor-t-101": ["Where is T-101 right now, and is it due for anything?", "T-101 is rolling south on I-35E near Waxahachie at 61 mph with Rosa Diaz driving; its registration runs through May and its last pre-trip was clean. [Tractor T-101](artifact:art_tractor-t-101) has the rest."],
   "tractor-t-207": ["Why is T-207 sitting?", "T-207 is at maintenance at Rush Truck Center in Oklahoma City: its last pre-trip found two defects still open, and its registration expires in nine days. [Tractor T-207](artifact:art_tractor-t-207) lays it out."],
   "tractor-t-999": ["Show me T-999.", "I looked up T-999 a moment ago, but it has since been removed. [Tractor T-999](artifact:art_tractor-t-999) is what I found then."],
+  "trailer-tl-501": ["Where is TL-501 and is it due for inspection?", "TL-501 is at the Dallas yard, empty and available; its annual inspection is good until January and its registration runs through April. [Trailer TL-501](artifact:art_trailer-tl-501) has the details."],
+  "trailer-tl-622": ["Can we use TL-622 tomorrow?", "Not as it stands: TL-622 is out of service at the Tyson dock in Springdale, its annual inspection is overdue and its registration expired six days ago. [Trailer TL-622](artifact:art_trailer-tl-622) lists what needs clearing."],
+  "trailer-tl-700": ["Show me TL-700.", "TL-700 was added yesterday and nothing is on file for it yet. [Trailer TL-700](artifact:art_trailer-tl-700) shows what is there."],
+  "trailer-tl-999": ["Show me TL-999.", "TL-999 has been removed since I looked it up. [Trailer TL-999](artifact:art_trailer-tl-999) is what I found then."],
   "tractor-t-318": ["Pull up T-318.", "T-318 joined the fleet two days ago and has nothing recorded against it yet: no GPS report, no inspections, no loads. [Tractor T-318](artifact:art_tractor-t-318) shows what is on file."],
 };
 

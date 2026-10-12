@@ -196,8 +196,8 @@ describe("DeskTractor", () => {
     const { container } = draw();
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading the tractor…");
-    expect(container.querySelector(".dk-rec-skel .dk-tr-where")).not.toBeNull();
-    expect(container.querySelector(".dk-rec-skel .dk-tr-facts")).not.toBeNull();
+    expect(container.querySelector(".dk-rec-skel .dk-rec-where")).not.toBeNull();
+    expect(container.querySelector(".dk-rec-skel .dk-rec-facts")).not.toBeNull();
 
     expect(
       await screen.findByRole("heading", { name: "2022 Freightliner Cascadia", level: 2 }),
@@ -226,10 +226,10 @@ describe("DeskTractor", () => {
       const { container } = draw();
 
       await screen.findByText("I-35E near Waxahachie, TX");
-      expect(container.querySelector(".dk-tr-map")).toBeNull();
+      expect(container.querySelector(".dk-rec-map")).toBeNull();
       expect(container.querySelector('img[src*="openstreetmap"]')).toBeNull();
 
-      const square = container.querySelector(".dk-tr-scope");
+      const square = container.querySelector(".dk-rec-scope");
       if (!square) throw new Error("No map square");
       act(() => FakeIntersectionObserver.show(square));
 
@@ -359,7 +359,7 @@ describe("DeskTractor", () => {
     expect(await screen.findByText("No GPS report from this tractor")).toBeInTheDocument();
     expect(screen.getByText("No known location yet")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "No position reported" })).toBeInTheDocument();
-    expect(document.querySelector(".dk-tr-map")).toBeNull();
+    expect(document.querySelector(".dk-rec-map")).toBeNull();
     expect(screen.getByText("No odometer reading")).toBeInTheDocument();
     expect(screen.getByText("No VIN on file")).toBeInTheDocument();
     expect(
@@ -384,7 +384,7 @@ describe("DeskTractor", () => {
     const { container } = draw();
 
     expect(await screen.findByText("Was stopped")).toBeInTheDocument();
-    expect(container.querySelector(".dk-tr-where.dk-live")).toBeNull();
+    expect(container.querySelector(".dk-rec-where.dk-live")).toBeNull();
   });
 
   it("says the tractor could not be read, with the way back", async () => {
@@ -452,7 +452,7 @@ describe("DeskTractor", () => {
     ).toBeInTheDocument();
     const place = await screen.findByText(longPlace);
     expect(place.tagName).toBe("B");
-    expect(place.closest(".dk-tr-at")).not.toBeNull();
+    expect(place.closest(".dk-rec-at")).not.toBeNull();
   });
 
   it("steps through the table's rows from its head", async () => {

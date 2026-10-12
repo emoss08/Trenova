@@ -24516,6 +24516,26 @@ func init() {
 				Special: "lastKnownLocation",
 			},
 			{
+				Name:        "ownershipType",
+				FieldMapKey: "ownershipType",
+			},
+			{
+				Name:        "ownerWorkerId",
+				FieldMapKey: "ownerWorkerId",
+			},
+			{
+				Name:        "lessorName",
+				FieldMapKey: "lessorName",
+			},
+			{
+				Name:        "leaseReference",
+				FieldMapKey: "leaseReference",
+			},
+			{
+				Name:        "leaseEndDate",
+				FieldMapKey: "leaseEndDate",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -24574,6 +24594,13 @@ func init() {
 				FieldMapKey: "registrationStateId",
 				Relation: &RelationSpec{
 					Target: &UsStateSpec,
+				},
+			},
+			{
+				Name:        "ownerWorker",
+				FieldMapKey: "ownerWorkerId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
 				},
 			},
 			{

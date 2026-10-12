@@ -8,6 +8,7 @@ import {
   deskDocument,
   deskThread,
   deskTractors,
+  deskTrailers,
 } from "../fixtures/desk-cards.mjs";
 import { hash } from "../state.mjs";
 
@@ -44,12 +45,16 @@ function recordShipmentNode(shipment) {
   };
 }
 
-/** The board's shipments a tractor pulled: a fixed handful per tractor, newest pickup first. */
-function tractorShipments(state, tractorId) {
-  const fixture = tractorFixture(state, tractorId);
+function trailerFixture(state, id) {
+  return deskTrailers(state.anchor)[id] ?? null;
+}
+
+/** The board's shipments a unit moved: a fixed handful per tractor or trailer, newest pickup first. */
+function unitShipments(state, unitId) {
+  const fixture = tractorFixture(state, unitId) ?? trailerFixture(state, unitId);
   if (!fixture || empty(state)) return [];
   return [...state.shipments]
-    .filter((shipment) => hash(shipment.id + tractorId) % 4 === 0)
+    .filter((shipment) => hash(shipment.id + unitId) % 4 === 0)
     .sort((a, b) => b.moves[0].stops[0].scheduledWindowStart - a.moves[0].stops[0].scheduledWindowStart)
     .slice(0, fixture.shipments);
 }
@@ -57,8 +62,8 @@ function tractorShipments(state, tractorId) {
 function recordShipments(state, variables) {
   if (held(state)) return HOLD;
   const input = variables.input ?? {};
-  const tractorId = input.tractorIds?.[0];
-  const all = tractorId ? tractorShipments(state, tractorId) : [];
+  const unitId = input.tractorIds?.[0] ?? input.trailerIds?.[0];
+  const all = unitId ? unitShipments(state, unitId) : [];
   const offset = input.after ? Number(Buffer.from(input.after, "base64url").toString()) : 0;
   const first = input.first ?? 20;
   const page = all.slice(offset, offset + first);
@@ -130,6 +135,11 @@ export const DESK_CARD_HANDLERS = {
     return { vehiclePosition: fixture && !empty(state) ? fixture.position : null };
   },
   DeskTractorInspections: tractorInspections,
+  DeskTrailerCard: (state, variables) => {
+    if (held(state)) return HOLD;
+    const fixture = trailerFixture(state, variables.id);
+    return { trailer: fixture ? fixture.trailer : null };
+  },
   DeskRecordShipments: recordShipments,
 };
 
@@ -194,13 +204,13 @@ export const DESK_CARD_ROUTES = [
   ],
   [
     "GET",
-    /^\/api\/v1\/documents\/resource\/tractor\/([a-z0-9_]+)\/?$/,
+    /^\/api\/v1\/documents\/resource\/(tractor|trailer)\/([a-z0-9_]+)\/?$/,
     (state, path) => {
       if (held(state)) return HOLD;
-      const id = path.match(/tractor\/([a-z0-9_]+)/)?.[1] ?? "";
-      const fixture = tractorFixture(state, id);
+      const [, kind, id] = path.match(/resource\/(tractor|trailer)\/([a-z0-9_]+)/) ?? [];
+      const fixture = kind === "tractor" ? tractorFixture(state, id) : trailerFixture(state, id);
       if (!fixture || empty(state)) return [];
-      return fixture.documents.map((file, index) => deskDocument("tractor", id, file, index, state.anchor));
+      return fixture.documents.map((file, index) => deskDocument(kind, id, file, index, state.anchor));
     },
   ],
 ];

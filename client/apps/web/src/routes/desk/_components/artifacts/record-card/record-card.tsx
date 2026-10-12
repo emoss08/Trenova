@@ -310,6 +310,23 @@ export function CardSection({
   );
 }
 
+/** One fact a card lists about its record: what it is and what it says. */
+export type CardFact = { key: string; label: string; value: ReactNode };
+
+/** A record's facts, two to a row, in a ruled grid: the plate, the VIN, who owns it. */
+export function CardFactGrid({ facts }: { facts: readonly CardFact[] }) {
+  return (
+    <dl className="dk-rec-facts">
+      {facts.map((fact) => (
+        <div key={fact.key}>
+          <dt>{fact.label}</dt>
+          <dd>{fact.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 /** The bordered list a card's checks sit in. */
 export function CardChecks({ children }: { children: ReactNode }) {
   return <div className="dk-rec-checks">{children}</div>;
@@ -388,6 +405,29 @@ export function CardLink({ to, children }: { to: string; children: ReactNode }) 
       {children}
       <CardIcon name="ext" size={11} />
     </Link>
+  );
+}
+
+/**
+ * A way to a record beside a section's title: opened in the card's place when
+ * its kind has a card here (`onOpen`), or a link to its page when it does not.
+ */
+export function CardOpenLink({
+  to,
+  onOpen,
+  children,
+}: {
+  to: string;
+  onOpen?: () => void;
+  children: ReactNode;
+}) {
+  return onOpen ? (
+    <Button variant="bare" size="bare" className="dk-rec-lnk" onClick={onOpen}>
+      {children}
+      <CardIcon name="forward" size={11} />
+    </Button>
+  ) : (
+    <CardLink to={to}>{children}</CardLink>
   );
 }
 

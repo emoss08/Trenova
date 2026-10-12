@@ -27,6 +27,7 @@ type ShipmentOptions struct {
 	StopEachOf       [][]pulid.ID               `form:"-" json:"-" query:"-"`
 	WorkerIDs        []pulid.ID                 `form:"-" json:"-" query:"-"`
 	TractorIDs       []pulid.ID                 `form:"-" json:"-" query:"-"`
+	TrailerIDs       []pulid.ID                 `form:"-" json:"-" query:"-"`
 	CommodityIDs     []pulid.ID                 `form:"-" json:"-" query:"-"`
 	ShipmentTypeIDs  []pulid.ID                 `form:"-" json:"-" query:"-"`
 	QuickFilters     []shipment.QuickFilterSpec `form:"-" json:"-" query:"-"`

@@ -192,6 +192,35 @@ export function CardChecksSkeleton({ rows }: { rows: readonly (readonly [number,
   );
 }
 
+/** Where a record is (CardWhere): the map's square beside the place's lines. */
+export function CardWhereSkeleton() {
+  return (
+    <div className="dk-rec-where">
+      <i className="dk-sk dk-rec-scope" />
+      <div className="dk-rec-at">
+        <SkeletonBar w="62%" className="dk-rec-sk-line" />
+        <SkeletonBar w="44%" className="dk-rec-sk-label" />
+        <SkeletonBar w="52%" className="dk-rec-sk-label" />
+      </div>
+    </div>
+  );
+}
+
+/** A record's facts (CardFactGrid): a label over a value, two to a row. */
+export function CardFactGridSkeleton({ cells }: { cells: number }) {
+  return (
+    <div className="dk-rec-facts">
+      {Array.from({ length: cells }, (_, index) => (
+        // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
+        <div key={index}>
+          <SkeletonBar w="40%" className="dk-rec-sk-label" />
+          <SkeletonBar w="68%" className="dk-rec-sk-line" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** A filled block the card draws as one piece, such as a lane or a document tile. */
 export function CardBoxSkeleton({ height }: { height: number }) {
   return <i className="dk-sk dk-rec-sk-box" style={{ height: `${height}px` }} />;

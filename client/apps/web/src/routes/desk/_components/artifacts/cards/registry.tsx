@@ -12,6 +12,7 @@ import { DeskRateAgreementSkeleton } from "./rate-agreement/rate-agreement-skele
 import { DeskFormulaTemplateSkeleton } from "./formula-template/formula-template-skeleton";
 import { DeskShipmentSkeleton } from "./shipment/shipment-skeleton";
 import { DeskTractorSkeleton } from "./tractor/tractor-skeleton";
+import { DeskTrailerSkeleton } from "./trailer/trailer-skeleton";
 
 /*
 The Desk's resource cards: a record drawn for what a person reads that kind of
@@ -58,6 +59,7 @@ const loadShipment = preloadable(() => import("./shipment/desk-shipment"));
 const loadCustomer = preloadable(() => import("./customer/desk-customer"));
 const loadRateAgreement = preloadable(() => import("./rate-agreement/desk-rate-agreement"));
 const loadTractor = preloadable(() => import("./tractor/desk-tractor"));
+const loadTrailer = preloadable(() => import("./trailer/desk-trailer"));
 
 const RECORD_CARDS: Partial<Record<RecordEntityType, RecordCardEntry>> = {
   formula_template: {
@@ -95,6 +97,12 @@ const RECORD_CARDS: Partial<Record<RecordEntityType, RecordCardEntry>> = {
     Skeleton: DeskTractorSkeleton,
     inPlace: lazyComponent(loadTractor, (module) => module.DeskTractor),
     artifact: lazyComponent(loadTractor, (module) => module.DeskTractorArtifact),
+  },
+  trailer: {
+    resource: Resource.Trailer,
+    Skeleton: DeskTrailerSkeleton,
+    inPlace: lazyComponent(loadTrailer, (module) => module.DeskTrailer),
+    artifact: lazyComponent(loadTrailer, (module) => module.DeskTrailerArtifact),
   },
 };
 

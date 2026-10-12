@@ -152,7 +152,9 @@ func tractorLastKnownLocationReference(entity *tractor.Tractor) *gqlmodel.Locati
 	}
 
 	return &gqlmodel.LocationReference{
-		ID:   entity.LastKnownLocationID.String(),
-		Name: entity.LastKnownLocationName,
+		ID:        entity.LastKnownLocationID.String(),
+		Name:      entity.LastKnownLocationName,
+		Latitude:  entity.LastKnownLocationLatitude,
+		Longitude: entity.LastKnownLocationLongitude,
 	}
 }

@@ -708,12 +708,17 @@ func (r *QueryResolver) Shipments(ctx context.Context, input gqlmodel.ShipmentsI
 	if err != nil {
 		return nil, err
 	}
+	trailerIDs, err := base.ParseIDs(input.TrailerIds)
+	if err != nil {
+		return nil, err
+	}
 
 	result, err := r.ShipmentService.List(ctx, &shipmentports.ListShipmentsRequest{
 		Filter: connection.Filter,
 		Cursor: connection.Cursor,
 		ShipmentOptions: shipmentports.ShipmentOptions{
 			TractorIDs:              tractorIDs,
+			TrailerIDs:              trailerIDs,
 			ExpandShipmentDetails:   base.BoolValue(input.ExpandShipmentDetails),
 			Status:                  base.StringValue(input.Status),
 			ActivityWindowStart:     base.Int64Value(input.ActivityWindowStart),

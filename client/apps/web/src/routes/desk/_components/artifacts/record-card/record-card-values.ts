@@ -51,6 +51,19 @@ export function cardMonth(seconds: number | null | undefined): string {
   });
 }
 
+const DAY_SECONDS = 86_400;
+
+/** When something falls due, against now: past, close (inside the notice), or comfortably off. */
+export type DueReading = { state: "ok" | "warn" | "bad"; days: number };
+
+/** Whole days until `at` from `now`, and whether that is past, inside the notice or beyond it. */
+export function dueReading(at: number, now: number, noticeDays: number): DueReading {
+  const days = Math.ceil((at - now) / DAY_SECONDS);
+  if (at <= now) return { state: "bad", days };
+  if (days <= noticeDays) return { state: "warn", days };
+  return { state: "ok", days };
+}
+
 /** Where a record sits in the list it was opened from, and the ones either side. */
 export type Neighbors = {
   prevId?: string | null;
@@ -70,4 +83,16 @@ export function neighborsIn(order: readonly string[], id: string): Neighbors {
     position: at + 1,
     total: order.length,
   };
+}
+
+/** A person as a record names them: a first and a last name, either possibly blank. */
+export type Person = { firstName: string; lastName: string } | null | undefined;
+
+/** A person's name as a card writes it; empty for none. */
+export function personName(person: Person): string {
+  if (!person) return "";
+  return [person.firstName, person.lastName]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(" ");
 }

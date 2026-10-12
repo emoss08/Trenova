@@ -55,6 +55,8 @@ query DeskTractorCard($id: ID!) {
     lastKnownLocation {
       id
       name
+      latitude
+      longitude
     }
   }
 }

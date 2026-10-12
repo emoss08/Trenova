@@ -4817,6 +4817,212 @@ a.dk-rec-doc:focus-visible {
   font-family: var(--dk-plex);
   font-feature-settings: "tnum";
 }
+/* where a record is: a small still map beside the place and how the record stands there (CardWhere) */
+.dk-rec-where {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  min-height: 112px;
+}
+.dk-rec-scope {
+  width: 112px;
+  height: 112px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-rec-at {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dk-rec-at > b {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--dsk-fg);
+  overflow-wrap: anywhere;
+}
+.dk-rec-at > b.dk-rec-unknown {
+  font-weight: 500;
+  color: var(--dsk-muted);
+}
+.dk-rec-motion {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--dsk-fg2);
+}
+.dk-rec-motion > i {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dsk-faint);
+}
+.dk-rec-where.dk-live .dk-rec-motion > i {
+  background: var(--dsk-success-fg);
+  box-shadow: 0 0 0 3px var(--dsk-success-sub);
+}
+.dk-rec-motion.dk-off {
+  color: var(--dsk-subtle);
+}
+.dk-rec-geo {
+  font: 11.5px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-subtle);
+}
+.dk-rec-left {
+  margin-top: 12px;
+}
+.dk-rec-left .dk-rec-main {
+  gap: 1px;
+}
+/* the still map of the last report: OpenStreetMap's tiles in greys, a dot on the spot */
+.dk-rec-map {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+.dk-rec-map-tiles {
+  position: absolute;
+  inset: 0;
+}
+.dk-rec-map-tiles img {
+  position: absolute;
+  max-width: none;
+  filter: grayscale(1) contrast(0.92) brightness(1.04);
+  animation: dk-rec-tile 320ms var(--dk-settle) both;
+}
+.dark .dk-rec-map-tiles img {
+  filter: grayscale(1) invert(1) contrast(0.86) brightness(0.92);
+}
+@keyframes dk-rec-tile {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.dk-rec-map-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: var(--dsk-fg);
+  box-shadow:
+    0 0 0 2px var(--dsk-card),
+    0 0 0 6px color-mix(in oklch, var(--dsk-fg) 16%, transparent);
+}
+.dk-rec-map.dk-live .dk-rec-map-dot {
+  background: var(--dsk-success-fg);
+  box-shadow:
+    0 0 0 2px var(--dsk-card),
+    0 0 0 6px var(--dsk-success-sub);
+}
+.dk-rec-map-credit {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 1px 4px;
+  border-top-left-radius: 4px;
+  font-size: 8px;
+  line-height: 1.3;
+  color: var(--dsk-subtle);
+  background: color-mix(in oklch, var(--dsk-card) 82%, transparent);
+  text-decoration: none;
+  pointer-events: auto;
+}
+.dk-rec-map-credit:hover {
+  color: var(--dsk-fg);
+}
+.dk-rec-map-credit:focus-visible {
+  outline: 2px solid var(--dsk-ring);
+  outline-offset: -2px;
+}
+.dk-rec-nomap {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: var(--dsk-faint);
+}
+/* a record's facts, two to a row (CardFactGrid) */
+.dk-rec-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.dk-rec-facts > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 9px 12px;
+}
+.dk-rec-facts > div:nth-child(even) {
+  border-left: 1px solid var(--dsk-b-sub);
+}
+.dk-rec-facts > div:nth-child(n + 3) {
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-rec-facts dt {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-rec-facts dd {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--dsk-fg);
+  overflow-wrap: anywhere;
+}
+.dk-rec-ck.dk-rec-ck-wait {
+  background: transparent;
+}
+@container (max-width: 420px) {
+  .dk-rec-where {
+    grid-template-columns: 84px minmax(0, 1fr);
+    min-height: 84px;
+  }
+  .dk-rec-scope {
+    width: 84px;
+    height: 84px;
+  }
+  .dk-rec-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dk-rec-facts > div:nth-child(even) {
+    border-left: 0;
+  }
+  .dk-rec-facts > div:nth-child(n + 2) {
+    border-top: 1px solid var(--dsk-b-sub);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-rec-map-tiles img {
+    animation: none;
+  }
+}
 /* a section that has nothing to list says so in its place */
 .dk-rec-note {
   margin: 0;
@@ -5296,6 +5502,9 @@ th.dk-cb .dk-ax-cb:hover {
 }
 .dk-ax-ki.dk-k-tractor {
   color: var(--accent-sky);
+}
+.dk-ax-ki.dk-k-trailer {
+  color: var(--accent-slate);
 }
 /* The shipment card */
 .dk-sh-nowsec {
@@ -6503,152 +6712,6 @@ th.dk-cb .dk-ax-cb:hover {
 .dk-rec-amt .dk-tr-wait {
   color: var(--dsk-faint);
 }
-/* where it is: the map or its heading dial beside the place and how it moves */
-.dk-tr-where {
-  display: grid;
-  grid-template-columns: 112px minmax(0, 1fr);
-  align-items: center;
-  gap: 14px;
-  min-height: 112px;
-}
-.dk-tr-scope {
-  width: 112px;
-  height: 112px;
-  overflow: hidden;
-  border-radius: 12px;
-  background: var(--dsk-sunken);
-  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
-}
-.dk-tr-at {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.dk-tr-at > b {
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.35;
-  letter-spacing: -0.01em;
-  color: var(--dsk-fg);
-  overflow-wrap: anywhere;
-}
-.dk-tr-at > b.dk-tr-unknown {
-  font-weight: 500;
-  color: var(--dsk-muted);
-}
-.dk-tr-motion {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12.5px;
-  color: var(--dsk-fg2);
-}
-.dk-tr-motion > i {
-  flex: none;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--dsk-faint);
-}
-.dk-tr-where.dk-live .dk-tr-motion > i {
-  background: var(--dsk-success-fg);
-  box-shadow: 0 0 0 3px var(--dsk-success-sub);
-}
-.dk-tr-motion.dk-off {
-  color: var(--dsk-subtle);
-}
-.dk-tr-geo {
-  font: 11.5px var(--dk-plex);
-  font-feature-settings: "tnum";
-  color: var(--dsk-subtle);
-}
-.dk-tr-left {
-  margin-top: 12px;
-}
-.dk-tr-left .dk-rec-main {
-  gap: 1px;
-}
-/* the still map of the last report: OpenStreetMap's tiles in greys, a dot on the spot */
-.dk-tr-map {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  pointer-events: none;
-  user-select: none;
-}
-.dk-tr-map-tiles {
-  position: absolute;
-  inset: 0;
-}
-.dk-tr-map-tiles img {
-  position: absolute;
-  max-width: none;
-  filter: grayscale(1) contrast(0.92) brightness(1.04);
-  animation: dk-tr-tile 320ms var(--dk-settle) both;
-}
-.dark .dk-tr-map-tiles img {
-  filter: grayscale(1) invert(1) contrast(0.86) brightness(0.92);
-}
-@keyframes dk-tr-tile {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-.dk-tr-map-dot {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 10px;
-  height: 10px;
-  margin: -5px 0 0 -5px;
-  border-radius: 50%;
-  background: var(--dsk-fg);
-  box-shadow:
-    0 0 0 2px var(--dsk-card),
-    0 0 0 6px color-mix(in oklch, var(--dsk-fg) 16%, transparent);
-}
-.dk-tr-map.dk-live .dk-tr-map-dot {
-  background: var(--dsk-success-fg);
-  box-shadow:
-    0 0 0 2px var(--dsk-card),
-    0 0 0 6px var(--dsk-success-sub);
-}
-.dk-tr-map-credit {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  padding: 1px 4px;
-  border-top-left-radius: 4px;
-  font-size: 8px;
-  line-height: 1.3;
-  color: var(--dsk-subtle);
-  background: color-mix(in oklch, var(--dsk-card) 82%, transparent);
-  text-decoration: none;
-  pointer-events: auto;
-}
-.dk-tr-map-credit:hover {
-  color: var(--dsk-fg);
-}
-.dk-tr-map-credit:focus-visible {
-  outline: 2px solid var(--dsk-ring);
-  outline-offset: -2px;
-}
-.dk-tr-nomap {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 100%;
-  color: var(--dsk-faint);
-}
 /* the inspections, each a row with its verdict on the right */
 .dk-tr-insp {
   margin: 0;
@@ -6679,66 +6742,17 @@ th.dk-cb .dk-ax-cb:hover {
 .dk-tr-verdict.dk-warn {
   color: var(--dsk-warn-fg);
 }
-.dk-rec-ck.dk-tr-ck-wait {
-  background: transparent;
-}
-/* what the tractor is, two facts to a row */
-.dk-tr-facts {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin: 0;
-  border: 1px solid var(--dsk-b-sub);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.dk-tr-facts > div {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-  padding: 9px 12px;
-}
-.dk-tr-facts > div:nth-child(even) {
-  border-left: 1px solid var(--dsk-b-sub);
-}
-.dk-tr-facts > div:nth-child(n + 3) {
-  border-top: 1px solid var(--dsk-b-sub);
-}
-.dk-tr-facts dt {
-  font-size: 11px;
-  color: var(--dsk-subtle);
-}
-.dk-tr-facts dd {
-  margin: 0;
-  font-size: 12.5px;
-  line-height: 1.4;
-  color: var(--dsk-fg);
-  overflow-wrap: anywhere;
-}
-@container dktr (max-width: 420px) {
-  .dk-tr-where {
-    grid-template-columns: 84px minmax(0, 1fr);
-    min-height: 84px;
-  }
-  .dk-tr-scope {
-    width: 84px;
-    height: 84px;
-  }
-  .dk-tr-facts {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .dk-tr-facts > div:nth-child(even) {
-    border-left: 0;
-  }
-  .dk-tr-facts > div:nth-child(n + 2) {
-    border-top: 1px solid var(--dsk-b-sub);
-  }
-}
 @media (prefers-reduced-motion: reduce) {
-  .dk-tr-map-tiles img,
   .dk-tr-insp > li {
     animation: none;
   }
+}
+/* The trailer card */
+.dk-tl {
+  container: dktl / inline-size;
+}
+.dk-rec-amt .dk-tl-wait {
+  color: var(--dsk-faint);
 }
 /* The rate agreement card */
 .dk-ra {

@@ -27,6 +27,13 @@ const CARDS = [
     empty: "tractor-t-318",
     gone: "tractor-t-999",
   },
+  {
+    card: "trailer",
+    loaded: "trailer-tl-501",
+    attention: "trailer-tl-622",
+    empty: "trailer-tl-700",
+    gone: "trailer-tl-999",
+  },
 ];
 
 function shotsFor({ card, loaded, attention, empty, gone }) {

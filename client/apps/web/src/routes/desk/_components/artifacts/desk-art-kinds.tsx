@@ -19,6 +19,14 @@ const ICONS = {
       <circle cx="16.5" cy="17" r="1.8" />
     </>
   ),
+  trailer: (
+    <>
+      <path d="M3.5 6.5h14v9.5h-14zM17.5 13h3" />
+      <path d="M3.5 16h2M10.5 16h3" />
+      <circle cx="8" cy="17" r="1.8" />
+      <circle cx="13" cy="17" r="1.8" />
+    </>
+  ),
   agreement: (
     <>
       <path d="M6 3.5h12v17H6z" />
@@ -203,6 +211,7 @@ export type DeskArtKind =
   | "shipment"
   | "customer"
   | "tractor"
+  | "trailer"
   | "agreement";
 
 const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
@@ -222,6 +231,7 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
   shipment: "Shipment",
   customer: "Customer",
   tractor: "Tractor",
+  trailer: "Trailer",
   agreement: "Rate agreement",
 });
 
@@ -229,9 +239,9 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
  * Records the Desk draws as a card of their own, each with its own mark: a
  * billing queue item as the item a biller reviews, a formula template as the
  * formula a biller reads, a shipment as the load a dispatcher follows, a
- * customer as the account an account manager or a biller keeps, a tractor as
- * the unit a dispatcher or fleet manager runs, a rate agreement as the terms a
- * pricing analyst holds freight to.
+ * customer as the account an account manager or a biller keeps, a tractor or a
+ * trailer as the unit a dispatcher or fleet manager runs, a rate agreement as
+ * the terms a pricing analyst holds freight to.
  */
 const CARD_KINDS: Readonly<Record<string, DeskArtKind>> = {
   billing_queue_item: "bill",
@@ -239,6 +249,7 @@ const CARD_KINDS: Readonly<Record<string, DeskArtKind>> = {
   shipment: "shipment",
   customer: "customer",
   tractor: "tractor",
+  trailer: "trailer",
   rate_agreement: "agreement",
 };
 
@@ -319,6 +330,8 @@ export function deskArtKindName(kind: DeskArtKind, t: TranslateFn): string {
       return t("Customer");
     case "tractor":
       return t("Tractor");
+    case "trailer":
+      return t("Trailer");
     case "agreement":
       return t("Rate agreement");
   }

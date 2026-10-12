@@ -22265,6 +22265,9 @@ type Location {
 type LocationReference {
   id: ID!
   name: String!
+  "Where the location is, when it has been geocoded."
+  latitude: Float
+  longitude: Float
 }
 
 type LocationEdge {
@@ -27141,6 +27144,8 @@ input ShipmentsInput {
   timezone: String
   "Only shipments with a live move assigned to one of these tractors."
   tractorIds: [ID!]
+  "Only shipments with a live move assigned to one of these trailers."
+  trailerIds: [ID!]
 }
 
 input ShipmentEventsInput {
@@ -28824,6 +28829,16 @@ type Trailer {
   registrationExpiry: Timestamp
   lastKnownLocationId: ID
   lastKnownLocationName: String!
+  "Who owns the trailer: the company, a lessor, or an owner-operator."
+  ownershipType: EquipmentOwnershipType!
+  "The owner-operator who owns the trailer, when it is theirs."
+  ownerWorkerId: ID
+  "The lessor a leased trailer is leased from."
+  lessorName: String!
+  "The lessor's reference for the lease."
+  leaseReference: String!
+  "When the lease on a leased trailer ends."
+  leaseEndDate: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -28834,6 +28849,7 @@ type Trailer {
   equipmentManufacturer: EquipmentManufacturer
   fleetCode: FleetCode
   registrationState: UsState
+  ownerWorker: Worker
   lastKnownLocation: LocationReference
 }
 

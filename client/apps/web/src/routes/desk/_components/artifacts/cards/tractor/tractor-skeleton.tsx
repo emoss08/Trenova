@@ -4,11 +4,12 @@ import {
   CardBarSkeleton,
   CardChecksSkeleton,
   CardDocumentsSkeleton,
+  CardFactGridSkeleton,
   CardHeadSkeleton,
   CardRowsSkeleton,
   CardSectionSkeleton,
+  CardWhereSkeleton,
   RecordCardSkeleton,
-  SkeletonBar,
 } from "../../skeletons/record-card-skeleton";
 import { TRACTOR_SECTIONS } from "./tractor-sections";
 
@@ -50,14 +51,7 @@ export function DeskTractorSkeleton({ stepper = false }: { stepper?: boolean }) 
         meta={[118, 84]}
       />
       <CardSectionSkeleton title={72} aside={96}>
-        <div className="dk-tr-where">
-          <i className="dk-sk dk-tr-scope" />
-          <div className="dk-tr-at">
-            <SkeletonBar w="62%" className="dk-rec-sk-line" />
-            <SkeletonBar w="44%" className="dk-rec-sk-label" />
-            <SkeletonBar w="52%" className="dk-rec-sk-label" />
-          </div>
-        </div>
+        <CardWhereSkeleton />
       </CardSectionSkeleton>
       <CardSectionSkeleton title={32} aside={72}>
         <CardChecksSkeleton rows={CHECK_ROWS} />
@@ -74,15 +68,7 @@ export function DeskTractorSkeleton({ stepper = false }: { stepper?: boolean }) 
         <CardRowsSkeleton rows={INSPECTION_ROWS} trailing={72} />
       </CardSectionSkeleton>
       <CardSectionSkeleton title={48}>
-        <div className="dk-tr-facts">
-          {Array.from({ length: FACT_CELLS }, (_, index) => (
-            // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
-            <div key={index}>
-              <SkeletonBar w="40%" className="dk-rec-sk-label" />
-              <SkeletonBar w="68%" className="dk-rec-sk-line" />
-            </div>
-          ))}
-        </div>
+        <CardFactGridSkeleton cells={FACT_CELLS} />
       </CardSectionSkeleton>
       <CardDocumentsSkeleton />
       <CardBarSkeleton actions={[116]} />

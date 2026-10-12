@@ -115,3 +115,22 @@ func TestApplyShipmentOptionFilters_WorkerIDsStillMatchEitherSeat(t *testing.T) 
 	)
 	assert.NotContains(t, sql, "tractor_id")
 }
+
+func TestApplyShipmentOptionFilters_TrailerIDsMatchLiveAssignments(t *testing.T) {
+	t.Parallel()
+
+	repo, _ := newCancelTestRepository(t)
+	dba := repo.db.DB()
+	trailerID := pulid.MustNew("trl_")
+
+	q := dba.NewSelect().Model((*shipment.Shipment)(nil))
+	q = applyShipmentOptionFilters(q, dba, shipmentports.ShipmentOptions{
+		TrailerIDs: []pulid.ID{trailerID},
+	})
+
+	sql := q.String()
+	assert.Contains(t, sql, `JOIN "assignments" AS "a_wrk"`)
+	assert.Contains(t, sql, "a_wrk.archived_at IS NULL")
+	assert.Contains(t, sql, "a_wrk.trailer_id IN ('"+trailerID.String()+"')")
+	assert.NotContains(t, sql, "tractor_id")
+}

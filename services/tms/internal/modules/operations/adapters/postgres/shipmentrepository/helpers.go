@@ -199,6 +199,9 @@ func applyShipmentOptionFilters(
 	if len(opts.TractorIDs) > 0 {
 		q = q.Where("EXISTS (?)", assignedTractorPredicate(dba, opts.TractorIDs))
 	}
+	if len(opts.TrailerIDs) > 0 {
+		q = q.Where("EXISTS (?)", assignedTrailerPredicate(dba, opts.TrailerIDs))
+	}
 	if len(opts.CommodityIDs) > 0 {
 		q = q.Where("EXISTS (?)", commodityPredicate(dba, opts.CommodityIDs))
 	}
@@ -232,6 +235,10 @@ func assignedWorkerPredicate(dba bun.IDB, workerIDs []pulid.ID) *bun.SelectQuery
 
 func assignedTractorPredicate(dba bun.IDB, tractorIDs []pulid.ID) *bun.SelectQuery {
 	return liveAssignmentPredicate(dba).Where("a_wrk.tractor_id IN (?)", bun.List(tractorIDs))
+}
+
+func assignedTrailerPredicate(dba bun.IDB, trailerIDs []pulid.ID) *bun.SelectQuery {
+	return liveAssignmentPredicate(dba).Where("a_wrk.trailer_id IN (?)", bun.List(trailerIDs))
 }
 
 func liveAssignmentPredicate(dba bun.IDB) *bun.SelectQuery {

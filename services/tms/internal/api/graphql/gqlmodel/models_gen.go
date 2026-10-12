@@ -5075,6 +5075,9 @@ type LocationEdge struct {
 type LocationReference struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
+	// Where the location is, when it has been geocoded.
+	Latitude  *float64 `json:"latitude,omitempty"`
+	Longitude *float64 `json:"longitude,omitempty"`
 }
 
 type ManualJournalConnection struct {
@@ -8753,6 +8756,8 @@ type ShipmentsInput struct {
 	Timezone *string `json:"timezone,omitempty"`
 	// Only shipments with a live move assigned to one of these tractors.
 	TractorIds []string `json:"tractorIds,omitempty"`
+	// Only shipments with a live move assigned to one of these trailers.
+	TrailerIds []string `json:"trailerIds,omitempty"`
 }
 
 type SidebarActivityPreference struct {

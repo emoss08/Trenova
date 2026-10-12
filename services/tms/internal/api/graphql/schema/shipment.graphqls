@@ -1860,6 +1860,8 @@ input ShipmentsInput {
   timezone: String
   "Only shipments with a live move assigned to one of these tractors."
   tractorIds: [ID!]
+  "Only shipments with a live move assigned to one of these trailers."
+  trailerIds: [ID!]
 }
 
 input ShipmentEventsInput {

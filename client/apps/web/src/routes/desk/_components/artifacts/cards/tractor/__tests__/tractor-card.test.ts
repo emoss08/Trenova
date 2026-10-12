@@ -7,17 +7,13 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describe, expect, it } from "vitest";
 import {
   compassPoint,
-  dueReading,
   inspectionKind,
   inspectionReading,
   metersToMiles,
-  personName,
   positionReading,
   tractorChecks,
   tractorFacts,
-  tractorName,
   tractorPeople,
-  tractorStanding,
 } from "../tractor-card";
 
 /** Fills a message's numbered places the way the catalog would, plurals read by their count. */
@@ -97,38 +93,6 @@ function position(overrides: Partial<DeskTractorPosition> = {}): DeskTractorPosi
   };
 }
 
-describe("tractorStanding", () => {
-  it("reads each status as the card draws it", () => {
-    expect(tractorStanding("Available", t)).toEqual({
-      label: "Available",
-      tone: "success",
-      mark: "dot",
-    });
-    expect(tractorStanding("AtMaintenance", t).mark).toBe("pause");
-    expect(tractorStanding("OutOfService", t)).toMatchObject({ tone: "warn", mark: "pause" });
-    expect(tractorStanding("Sold", t).tone).toBe("muted");
-  });
-});
-
-describe("tractorName", () => {
-  it("names the tractor by year, make and model", () => {
-    expect(tractorName(tractor())).toBe("2022 Freightliner Cascadia");
-  });
-
-  it("leaves out what is not on file, and falls back to the code", () => {
-    expect(tractorName(tractor({ year: null, model: "  " }))).toBe("Freightliner");
-    expect(tractorName(tractor({ year: null, make: "", model: "" }))).toBe("T-101");
-  });
-});
-
-describe("personName", () => {
-  it("joins the names it has", () => {
-    expect(personName({ firstName: " Rosa ", lastName: "Diaz" })).toBe("Rosa Diaz");
-    expect(personName({ firstName: "", lastName: "Diaz" })).toBe("Diaz");
-    expect(personName(null)).toBe("");
-  });
-});
-
 describe("tractorPeople", () => {
   it("lists the driver and co-driver", () => {
     const people = tractorPeople(
@@ -195,16 +159,6 @@ describe("tractorPeople", () => {
       t,
     );
     expect(people[0]?.name).toBe("Unnamed worker");
-  });
-});
-
-describe("dueReading", () => {
-  it("is overdue on and after the day, close inside the notice, and fine before", () => {
-    expect(dueReading(NOW, NOW, 30).state).toBe("bad");
-    expect(dueReading(NOW - DAY, NOW, 30)).toEqual({ state: "bad", days: -1 });
-    expect(dueReading(NOW + 30 * DAY, NOW, 30)).toEqual({ state: "warn", days: 30 });
-    expect(dueReading(NOW + 31 * DAY, NOW, 30)).toEqual({ state: "ok", days: 31 });
-    expect(dueReading(NOW + 1, NOW, 30)).toEqual({ state: "warn", days: 1 });
   });
 });
 
