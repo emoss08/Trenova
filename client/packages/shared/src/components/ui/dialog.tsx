@@ -37,7 +37,7 @@ function DialogOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) 
   );
 }
 
-type DialogSize = "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+type DialogSize = "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "fullscreen";
 
 const DIALOG_SIZE: Record<DialogSize, string> = {
   xs: "sm:max-w-[22.5rem]",
@@ -46,6 +46,10 @@ const DIALOG_SIZE: Record<DialogSize, string> = {
   lg: "sm:max-w-2xl",
   xl: "sm:max-w-4xl",
   "2xl": "sm:max-w-6xl",
+  // A whole screen of its own over the app: no radius, no frame, and it rises a few
+  // pixels into place rather than zooming, the way a page would.
+  fullscreen:
+    "inset-0 top-0 left-0 h-dvh w-screen max-w-none translate-x-0 translate-y-0 gap-0 rounded-none p-0 ring-0 sm:max-w-none duration-240 data-open:zoom-in-[0.985] data-open:slide-in-from-bottom-1.5 data-closed:duration-180 data-closed:ease-in data-closed:zoom-out-[0.985] data-closed:slide-out-to-bottom-1.5",
 };
 
 function DialogContent({

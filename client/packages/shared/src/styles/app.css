@@ -837,3 +837,15 @@
     animation: none;
   }
 }
+
+/* The person asked Trenova for less movement in Settings. Every animation and
+   transition finishes at once, wherever it was declared, the same as the
+   operating system's own reduced-motion setting would ask of a well-made page. */
+html[data-reduce-motion="true"] *,
+html[data-reduce-motion="true"] *::before,
+html[data-reduce-motion="true"] *::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+  scroll-behavior: auto !important;
+}

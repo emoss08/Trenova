@@ -19,6 +19,7 @@ import {
   deskWorkers,
 } from "../fixtures/desk-cards.mjs";
 import { hash } from "../state.mjs";
+import { userSelectOptions } from "./settings.mjs";
 
 const HOLD = { __hold: true };
 
@@ -358,6 +359,7 @@ export const DESK_CARD_HANDLERS = {
     };
   },
   SelectOptions: (state, variables) => {
+    if (variables.input?.resource === "USER") return userSelectOptions(state, variables.input);
     const ids = variables.input?.ids ?? [];
     const nodes = ids
       .filter((id) => DESK_RECORD_NAMES[id])

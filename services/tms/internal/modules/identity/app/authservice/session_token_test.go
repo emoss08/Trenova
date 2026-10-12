@@ -22,7 +22,44 @@ func storedSession(id pulid.ID, secretHash string) *session.Session {
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		ExpiresAt:      time.Now().Add(time.Hour).Unix(),
+		LastAccessedAt: time.Now().Unix(),
 	}
+}
+
+func TestAuthenticateSession_RecordsWhenAQuietSessionIsSeenAgain(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	sessionID := pulid.MustNew("ses_")
+	issued, err := sessiontoken.Issue(sessionID)
+	require.NoError(t, err)
+	stored := storedSession(sessionID, issued.SecretHash)
+	stored.LastAccessedAt = time.Now().Add(-time.Hour).Unix()
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).Return(stored, nil)
+	deps.sessionRepo.On("Touch", mock.Anything, sessionID, mock.AnythingOfType("int64")).Return(nil)
+
+	sess, err := deps.svc.AuthenticateSession(t.Context(), issued.Token)
+
+	require.NoError(t, err)
+	assert.WithinDuration(t, time.Now(), time.Unix(sess.LastAccessedAt, 0), 5*time.Second)
+	deps.sessionRepo.AssertCalled(t, "Touch", mock.Anything, sessionID, mock.AnythingOfType("int64"))
+}
+
+func TestAuthenticateSession_DoesNotWriteForEveryRequest(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	sessionID := pulid.MustNew("ses_")
+	issued, err := sessiontoken.Issue(sessionID)
+	require.NoError(t, err)
+	stored := storedSession(sessionID, issued.SecretHash)
+	stored.LastAccessedAt = time.Now().Add(-time.Minute).Unix()
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).Return(stored, nil)
+
+	_, err = deps.svc.AuthenticateSession(t.Context(), issued.Token)
+
+	require.NoError(t, err)
+	deps.sessionRepo.AssertNotCalled(t, "Touch", mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestLogin_IssuesASessionTokenWhoseSecretIsStoredOnlyAsAHash(t *testing.T) {

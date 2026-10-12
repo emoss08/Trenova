@@ -112,6 +112,20 @@ are in `fixtures/desk-cards.mjs`: each card has a conversation for the record lo
 something to flag, one with nothing on file and one that is gone. A new card adds its records
 there, its operations to `handlers/deskcards.mjs`, and an entry to `CARDS` in the walkthrough.
 
+Settings has its own walkthrough, the same way:
+
+```bash
+node e2e/mock-api/settings-screenshots.mjs [outDir] [name,name,...]
+```
+
+It opens the fullscreen Settings dialog over the shipments board with ⌘⇧S and captures each
+section in light and dark, the Away sub-rows, an expanded notification category, the Saved ·
+Undo toast, a pause, the inline password change, ⌘K search and its jump, an 800px width and the
+page left as it was after Escape. Writes are stateful: the profile, availability, notification
+preferences and sessions the dialog saves are what it reads back. The password change accepts
+`correct-horse` as the current password. It writes to `e2e/mock-api/screenshots/settings` by
+default.
+
 ## Layout
 
 ```
@@ -121,12 +135,15 @@ fixtures/board.mjs    Shipments, drivers and carriers ported from the design pro
 fixtures/session.mjs  Signed-in user and permission manifest
 fixtures/aicontrol.mjs  Agents, providers, runs, usage and tune-ups for AI control
 fixtures/desk-cards.mjs  The records the Desk's resource cards draw, and their conversations
+fixtures/settings.mjs   The signed-in person's settings, sessions, sign-ins and teammates
 fixtures/ai/          Catalogs dumped from the Go service
 handlers/rest.mjs     REST routes the shell and board call
 handlers/graphql.mjs  GraphQL operations, keyed by operation name
 handlers/aicontrol.mjs  AI control's GraphQL operations and REST routes
 handlers/deskcards.mjs  The Desk cards conversation and each card's GraphQL operations
+handlers/settings.mjs   Settings' REST routes and the user select options
 screenshots.mjs       Playwright walkthrough of every board scenario
 ai-control-screenshots.mjs  Playwright walkthrough of AI control
 desk-cards-screenshots.mjs  Playwright walkthrough of the Desk's resource cards
+settings-screenshots.mjs    Playwright walkthrough of Settings
 ```

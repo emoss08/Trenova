@@ -1,423 +1,305 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import { DEFAULT_LOCALE } from "@trenova/shared/i18n/generated/locales";
-import { SelectField } from "@/components/fields/select-field";
-import { SensitiveField } from "@/components/fields/sensitive-field";
-import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
-import { TwoFactorSection } from "@/components/navigation/two-factor-section";
-import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
-import { useApiMutation } from "@/hooks/use-api-mutation";
-import { timeFormatChoices, timezoneGroupedChoices } from "@/lib/choices";
-import { validateCroppableImage } from "@/lib/images/crop-image";
-import { IMAGE_UPLOAD_ACCEPT, profilePictureCropConfig } from "@/lib/images/upload-config";
-import { queries } from "@/lib/queries";
-import { apiService } from "@/services/api";
-import { useQueryClient } from "@tanstack/react-query";
+import { stripAppTitle } from "@/components/assistant/page-context";
+import { useSignOut } from "@/hooks/use-sign-out";
+import { useAppDialogsStore, type SettingsSection } from "@/stores/app-dialogs-store";
+import { useMotionPreferenceStore } from "@/stores/motion-preference-store";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
-import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { Separator } from "@trenova/shared/components/ui/separator";
-import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import type { ChangeMyPassword, UpdateMySettings, User } from "@trenova/shared/types/user";
+import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
+import { Toaster } from "@trenova/shared/components/ui/toaster";
 import {
-  Camera01Icon,
-  Globe02Icon,
-  Key01Icon,
-  Mail01Icon,
-  ShieldTickIcon,
-  Trash01Icon,
+  BellOff01Icon,
+  LogOut01Icon,
+  Settings01Icon,
+  XCloseIcon,
 } from "@trenova/shared/components/icons";
-import type { ChangeEvent, ComponentType } from "react";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { useNow } from "@trenova/shared/hooks/use-now";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { translate } from "@trenova/shared/i18n/runtime";
+import { queries } from "@/lib/queries";
+import { NotificationsSection } from "./user-settings/notifications-section";
+import { PreferencesSection } from "./user-settings/preferences-section";
+import { ProfileSection } from "./user-settings/profile-section";
+import { SecuritySection } from "./user-settings/security-section";
+import {
+  SETTINGS_PREVIEW_TOASTER_ID,
+  SETTINGS_TOASTER_ID,
+  SettingsFeedbackProvider,
+  useSettingsFeedback,
+} from "./user-settings/settings-feedback";
+import { SettingsHero } from "./user-settings/settings-hero";
+import { SETTINGS_SECTION_META } from "./user-settings/settings-index";
+import {
+  SettingsSection as Section,
+  settingsRowId,
+  settingsSectionId,
+} from "./user-settings/settings-layout";
+import { SettingsSearch } from "./user-settings/settings-search";
+import { useProfilePicture } from "./user-settings/use-profile-picture";
 
 type UserSettingsDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-function SectionHeader({
-  icon: Icon,
-  title,
-  description,
-}: {
-  icon: ComponentType<{ className?: string }>;
-  title: string;
-  description: string;
-}) {
+const FLASH_MS = 1600;
+const SPY_OFFSET_PX = 160;
+
+function useIsPaused(): boolean {
+  const now = useNow("minute");
+  const { data } = useQuery({ ...queries.user.myNotificationPreferences(), staleTime: 30_000 });
+  return Boolean(data?.pausedUntil && data.pausedUntil > now);
+}
+
+function SavedStatus() {
+  const t = useT();
+  const { pulsing } = useSettingsFeedback();
+
   return (
-    <div className="flex items-center gap-3">
-      <div className="bg-muted flex size-8 shrink-0 items-center justify-center rounded-lg">
-        <Icon className="text-muted-foreground size-4" />
+    <span
+      role="status"
+      className={cn(
+        "text-foreground-subtle flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs transition-colors duration-200",
+        pulsing && "bg-success-subtle text-success-foreground",
+      )}
+    >
+      <span aria-hidden className="bg-success size-1.5 rounded-full" />
+      {pulsing ? t("Saved") : t("All changes saved")}
+    </span>
+  );
+}
+
+function flash(element: HTMLElement) {
+  if (useMotionPreferenceStore.getState().reduceMotion) {
+    return;
+  }
+  element.animate(
+    [
+      { backgroundColor: "var(--brand-subtle)" },
+      { backgroundColor: "var(--brand-subtle)", offset: 0.3 },
+      { backgroundColor: "transparent" },
+    ],
+    { duration: FLASH_MS, easing: "cubic-bezier(0.16, 1, 0.3, 1)" },
+  );
+}
+
+function SettingsShell({ pageTitle }: { pageTitle: string }) {
+  const t = useT();
+  const signOut = useSignOut();
+  const mainRef = useRef<HTMLDivElement>(null);
+  const [current, setCurrent] = useState<SettingsSection>("profile");
+  const requestedSection = useAppDialogsStore((state) => state.settingsSection);
+  const clearSettingsSection = useAppDialogsStore((state) => state.clearSettingsSection);
+  const paused = useIsPaused();
+  const picture = useProfilePicture();
+
+  const jump = useCallback((section: SettingsSection, row?: string) => {
+    const main = mainRef.current;
+    if (!main) return;
+    const target =
+      (row ? document.getElementById(settingsRowId(row)) : null) ??
+      document.getElementById(settingsSectionId(section));
+    if (!target) return;
+
+    const top =
+      target.getBoundingClientRect().top - main.getBoundingClientRect().top + main.scrollTop;
+    main.scrollTo({ top: Math.max(0, top - (row ? 90 : 12)) });
+    if (row) flash(target);
+  }, []);
+
+  useEffect(() => {
+    if (!requestedSection) return;
+    const frame = window.requestAnimationFrame(() => {
+      jump(requestedSection);
+      clearSettingsSection();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [clearSettingsSection, jump, requestedSection]);
+
+  const onScroll = () => {
+    const main = mainRef.current;
+    if (!main) return;
+    let next: SettingsSection = SETTINGS_SECTION_META[0].id;
+    for (const meta of SETTINGS_SECTION_META) {
+      const element = document.getElementById(settingsSectionId(meta.id));
+      if (element && element.offsetTop - main.scrollTop < SPY_OFFSET_PX) {
+        next = meta.id;
+      }
+    }
+    if (main.scrollTop + main.clientHeight >= main.scrollHeight - 4) {
+      next = SETTINGS_SECTION_META[SETTINGS_SECTION_META.length - 1].id;
+    }
+    setCurrent(next);
+  };
+
+  return (
+    <div className="bg-background text-foreground grid h-dvh grid-rows-[52px_minmax(0,1fr)]">
+      <header className="border-border-subtle flex items-center gap-2.5 border-b px-4">
+        <span
+          aria-hidden
+          className="bg-ink text-ink-foreground grid size-6 place-items-center rounded-md"
+        >
+          <Settings01Icon className="size-3.5" />
+        </span>
+        <div className="flex min-w-0 items-baseline gap-1.5 text-sm">
+          <DialogTitle className="text-sm font-medium">{t("Settings")}</DialogTitle>
+          {pageTitle ? (
+            <span className="text-foreground-subtle truncate text-xs">
+              {t("over {0}", pageTitle)}
+            </span>
+          ) : null}
+        </div>
+        <span className="flex-1" />
+        <SavedStatus />
+        <DialogClose
+          render={
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t("Close settings")}
+              title={t("Close · Esc")}
+            />
+          }
+        >
+          <XCloseIcon className="size-4" />
+        </DialogClose>
+      </header>
+
+      <div className="grid min-h-0 grid-cols-1 min-[900px]:grid-cols-[248px_minmax(0,1fr)]">
+        <nav
+          aria-label={t("Settings sections")}
+          className="border-border-subtle hidden min-h-0 flex-col gap-0.5 overflow-y-auto border-r px-3 py-4 min-[900px]:flex"
+        >
+          <SettingsSearch onJump={(result) => jump(result.section, result.row)} />
+          {SETTINGS_SECTION_META.map((meta) => {
+            const Icon = meta.icon;
+            const active = current === meta.id;
+            return (
+              <Button
+                key={meta.id}
+                type="button"
+                variant="bare"
+                size="bare"
+                aria-current={active ? "true" : undefined}
+                onClick={() => jump(meta.id)}
+                className={cn(
+                  "text-muted-foreground hover:bg-surface-hover hover:text-foreground flex h-8.5 w-full items-center justify-start gap-2.5 rounded-md px-2.5 text-sm transition-colors",
+                  active && "bg-surface-hover text-foreground font-medium",
+                )}
+              >
+                <Icon className="size-3.75" />
+                {t(meta.label)}
+                {meta.id === "notifications" ? (
+                  paused ? (
+                    <span
+                      className="bg-warning ml-auto size-1.75 rounded-full"
+                      title={t("Paused")}
+                      aria-label={t("Paused")}
+                    />
+                  ) : (
+                    <Badge variant="brand" className="ml-auto h-4 px-1.5 text-2xs">
+                      {t("New")}
+                    </Badge>
+                  )
+                ) : null}
+              </Button>
+            );
+          })}
+          <div className="text-foreground-subtle mt-auto flex flex-col gap-2 px-2.5 pt-3 pb-1 text-xs">
+            <span className="flex items-center gap-1.5">
+              <KbdGroup>
+                <Kbd>⌘</Kbd>
+                <Kbd>⇧</Kbd>
+                <Kbd>S</Kbd>
+              </KbdGroup>
+              {t("opens Settings anywhere")}
+            </span>
+            <Button
+              type="button"
+              variant="quiet"
+              size="sm"
+              className="hover:text-danger-foreground -ml-2 w-fit"
+              onClick={() => void signOut()}
+            >
+              <LogOut01Icon className="size-3.5" />
+              {t("Log out")}
+            </Button>
+          </div>
+        </nav>
+
+        <div
+          ref={mainRef}
+          onScroll={onScroll}
+          tabIndex={-1}
+          className="min-h-0 overflow-y-auto scroll-smooth outline-none"
+          data-testid="user-settings-scroller"
+        >
+          <div className="mx-auto max-w-200 px-4.5 pt-6 pb-25 min-[900px]:px-8 min-[900px]:pt-9 min-[900px]:pb-30">
+            <SettingsHero picture={picture} onStatusClick={() => jump("profile", "availability")} />
+            {SETTINGS_SECTION_META.map((meta) => (
+              <Section
+                key={meta.id}
+                id={meta.id}
+                title={t(meta.label)}
+                description={t(meta.description)}
+                badge={meta.id === "notifications" && paused ? <PausedBadge /> : undefined}
+              >
+                {meta.id === "profile" ? <ProfileSection picture={picture} /> : null}
+                {meta.id === "preferences" ? <PreferencesSection /> : null}
+                {meta.id === "notifications" ? <NotificationsSection /> : null}
+                {meta.id === "security" ? <SecuritySection /> : null}
+              </Section>
+            ))}
+          </div>
+        </div>
       </div>
-      <div>
-        <h3 className="text-sm leading-none font-medium">{title}</h3>
-        <p className="text-muted-foreground mt-1 text-xs">{description}</p>
-      </div>
+      {picture.element}
     </div>
   );
 }
 
+function PausedBadge() {
+  const t = useT();
+  return (
+    <Badge variant="warning">
+      <BellOff01Icon />
+      {t("Paused")}
+    </Badge>
+  );
+}
+
+/**
+ * Settings, as a whole screen over the page the person was on. The page stays mounted
+ * underneath; closing returns to it exactly as it was.
+ */
 export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogProps) {
   const t = useT();
-
-  const user = useAuthStore((s) => s.user);
-  const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [isCropOpen, setIsCropOpen] = useState(false);
-  const [isRemovingProfilePicture, setIsRemovingProfilePicture] = useState(false);
-
-  const settingsForm = useForm<UpdateMySettings>({
-    defaultValues: {
-      timezone: user?.timezone ?? "",
-      timeFormat: user?.timeFormat ?? "12-hour",
-      locale: user?.locale ?? DEFAULT_LOCALE,
-    },
-  });
-
-  const passwordForm = useForm<ChangeMyPassword>({
-    defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    },
-  });
-
-  useEffect(() => {
-    settingsForm.reset({
-      timezone: user?.timezone ?? "",
-      timeFormat: user?.timeFormat ?? "12-hour",
-      locale: user?.locale ?? DEFAULT_LOCALE,
-    });
-  }, [settingsForm, user]);
-
-  const { mutateAsync: updateSettings } = useApiMutation<
-    User,
-    UpdateMySettings,
-    unknown,
-    UpdateMySettings
-  >({
-    mutationFn: (values) => apiService.userService.updateMySettings(values),
-    resourceName: "User Settings",
-    form: settingsForm,
-    onSuccess: (updatedUser) => {
-      useAuthStore.getState().setUser(updatedUser);
-      toast.success(t("Settings updated"), {
-        description: t("Your profile settings have been saved."),
-      });
-    },
-  });
-
-  const { mutateAsync: changePassword } = useApiMutation<
-    User,
-    ChangeMyPassword,
-    unknown,
-    ChangeMyPassword
-  >({
-    mutationFn: (values) => apiService.userService.changeMyPassword(values),
-    resourceName: "Change Password",
-    form: passwordForm,
-    onSuccess: () => {
-      toast.success(t("Password changed"), {
-        description: t("Your password has been updated successfully."),
-      });
-    },
-  });
-
-  const handleClose = useCallback(() => {
-    onOpenChange(false);
-    passwordForm.reset();
-    setPendingFile(null);
-    setIsCropOpen(false);
-  }, [onOpenChange, passwordForm]);
-
-  const syncUserSettings = useCallback(
-    async (updatedUser: User) => {
-      useAuthStore.getState().setUser(updatedUser);
-      if (updatedUser.id) {
-        await Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: queries.user.profilePicture(updatedUser.id, "thumbnail").queryKey,
-          }),
-          queryClient.invalidateQueries({
-            queryKey: queries.user.profilePicture(updatedUser.id, "full").queryKey,
-          }),
-        ]);
-      }
-    },
-    [queryClient],
-  );
-
-  const handleFileSelection = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const selectedFile = event.target.files?.[0];
-      event.target.value = "";
-      if (!selectedFile) {
-        return;
-      }
-
-      try {
-        validateCroppableImage(selectedFile, "profile pictures");
-        setPendingFile(selectedFile);
-        setIsCropOpen(true);
-      } catch (error) {
-        toast.error(t("Unsupported profile picture"), {
-          description:
-            error instanceof Error
-              ? error.message
-              : translate("Please choose a JPG, PNG, or WEBP file."),
-        });
-      }
-    },
-    [t],
-  );
-
-  const handleProfilePictureUpload = useCallback(
-    async (file: File) => {
-      const updatedUser = await apiService.userService.uploadMyProfilePicture(file);
-      await syncUserSettings(updatedUser);
-      toast.success(t("Profile picture updated"));
-    },
-    [syncUserSettings, t],
-  );
-
-  const handleRemoveProfilePicture = useCallback(async () => {
-    if (isRemovingProfilePicture) {
-      return;
-    }
-
-    setIsRemovingProfilePicture(true);
-    try {
-      const updatedUser = await apiService.userService.deleteMyProfilePicture();
-      await syncUserSettings(updatedUser);
-      toast.success(t("Profile picture removed"));
-    } catch (error) {
-      toast.error(t("Failed to remove profile picture"), {
-        description: error instanceof Error ? error.message : translate("Please try again."),
-      });
-    }
-
-    setIsRemovingProfilePicture(false);
-  }, [isRemovingProfilePicture, syncUserSettings, t]);
-
-  const onSubmit = useCallback(async () => {
-    const settingsValid = await settingsForm.trigger();
-    const hasPasswordInput =
-      passwordForm.getValues("currentPassword") ||
-      passwordForm.getValues("newPassword") ||
-      passwordForm.getValues("confirmPassword");
-
-    const passwordValid = hasPasswordInput ? await passwordForm.trigger() : true;
-
-    if (!settingsValid || !passwordValid) return;
-
-    await updateSettings(settingsForm.getValues());
-
-    if (hasPasswordInput) {
-      await changePassword(passwordForm.getValues());
-      passwordForm.reset();
-    }
-
-    handleClose();
-  }, [settingsForm, passwordForm, updateSettings, changePassword, handleClose]);
-
-  const isSubmitting = settingsForm.formState.isSubmitting || passwordForm.formState.isSubmitting;
+  const pageTitle = open ? stripAppTitle(document.title) : "";
 
   return (
-    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
-      <DialogContent size="md">
-        <DialogHeader>
-          <DialogTitle>{t("Settings")}</DialogTitle>
-          <DialogDescription>{t("Manage your preferences and security.")}</DialogDescription>
-        </DialogHeader>
-
-        <div className="bg-sidebar flex items-center gap-4 rounded-md border p-4">
-          <ResolvedUserAvatar
-            size="lg"
-            userId={user?.id}
-            name={user?.name}
-            profilePicUrl={user?.profilePicUrl}
-            thumbnailUrl={user?.thumbnailUrl}
-            fallbackClassName="rounded-md bg-sidebar-accent text-sm font-semibold text-sidebar-accent-foreground"
-          />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">{user?.name}</p>
-            <p className="text-muted-foreground truncate text-xs">@{user?.username}</p>
-            <div className="text-muted-foreground mt-1 flex items-center gap-1.5 text-xs">
-              <Mail01Icon className="size-3 shrink-0" />
-              <span className="truncate">{user?.emailAddress}</span>
-            </div>
-          </div>
-          <div className="flex shrink-0 gap-2 self-start">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Camera01Icon className="size-4" />
-              {user?.profilePicUrl ? t("Change") : t("Upload")}
-            </Button>
-            {user?.profilePicUrl ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => void handleRemoveProfilePicture()}
-                disabled={isRemovingProfilePicture}
-                aria-label={t("Remove profile picture")}
-              >
-                <Trash01Icon className="size-4" />
-              </Button>
-            ) : null}
-          </div>
-        </div>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={IMAGE_UPLOAD_ACCEPT}
-          className="hidden"
-          onChange={handleFileSelection}
-        />
-
-        <Separator />
-
-        <div className="space-y-5">
-          <div className="space-y-3">
-            <SectionHeader
-              icon={Globe02Icon}
-              title={t("Preferences")}
-              description={t("Configure your regional and display settings.")}
-            />
-            <Form onSubmit={(e) => e.preventDefault()}>
-              <FormGroup cols={2}>
-                <FormControl>
-                  <SelectField
-                    control={settingsForm.control}
-                    rules={{ required: true }}
-                    name="timezone"
-                    label={t("Timezone")}
-                    placeholder={t("Select timezone")}
-                    groups={timezoneGroupedChoices}
-                    // isReadOnly={isDisabled}
-                    renderOption={(option) => (
-                      <span className="flex w-full items-center justify-between gap-3">
-                        <span>{t(option.label)}</span>
-                        {option.description && (
-                          <span className="text-muted-foreground text-xs">
-                            {t(option.description)}
-                          </span>
-                        )}
-                      </span>
-                    )}
-                  />
-                </FormControl>
-                <FormControl>
-                  <SelectField
-                    control={settingsForm.control}
-                    name="timeFormat"
-                    label={t("Time format")}
-                    options={timeFormatChoices}
-                    rules={{ required: translate("Time format is required") }}
-                  />
-                </FormControl>
-              </FormGroup>
-            </Form>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-3">
-            <SectionHeader
-              icon={Key01Icon}
-              title={t("Change password")}
-              description={t("Leave blank to keep your current password.")}
-            />
-            <Form onSubmit={(e) => e.preventDefault()}>
-              <FormGroup cols={1}>
-                <FormControl>
-                  <SensitiveField
-                    control={passwordForm.control}
-                    name="currentPassword"
-                    label={t("Current password")}
-                    placeholder={t("Enter current password")}
-                  />
-                </FormControl>
-              </FormGroup>
-              <FormGroup cols={2} className="mt-2">
-                <FormControl>
-                  <SensitiveField
-                    control={passwordForm.control}
-                    name="newPassword"
-                    label={t("New password")}
-                    placeholder={t("Enter new password")}
-                  />
-                </FormControl>
-                <FormControl>
-                  <SensitiveField
-                    control={passwordForm.control}
-                    name="confirmPassword"
-                    label={t("Confirm password")}
-                    placeholder={t("Confirm new password")}
-                  />
-                </FormControl>
-              </FormGroup>
-            </Form>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-3">
-            <SectionHeader
-              icon={ShieldTickIcon}
-              title={t("Two-factor authentication")}
-              description={t("Ask for a code from an authenticator app when you sign in.")}
-            />
-            <TwoFactorSection />
-          </div>
-        </div>
-
-        <Separator />
-
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={handleClose}>
-            {t("Cancel")}
-          </Button>
-          <Button
-            type="button"
-            onClick={onSubmit}
-            isLoading={isSubmitting}
-            loadingText={t("Saving...")}
-          >
-            {t("Save changes")}
-          </Button>
-        </DialogFooter>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        size="fullscreen"
+        showCloseButton={false}
+        aria-label={t("Settings")}
+        className="block"
+        initialFocus={() =>
+          document.querySelector<HTMLElement>("[data-testid=user-settings-scroller]")
+        }
+      >
+        <SettingsFeedbackProvider>
+          <SettingsShell pageTitle={pageTitle} />
+        </SettingsFeedbackProvider>
+        <Toaster id={SETTINGS_TOASTER_ID} position="bottom-center" />
+        <Toaster id={SETTINGS_PREVIEW_TOASTER_ID} position="top-right" offset={64} />
       </DialogContent>
-
-      <ImageCropUploadDialog
-        open={isCropOpen}
-        file={pendingFile}
-        title={t("Crop profile picture")}
-        description={t(
-          "Adjust your image before uploading. Profile pictures are cropped to a square.",
-        )}
-        {...profilePictureCropConfig}
-        confirmLabel={t("Upload picture")}
-        onClose={() => {
-          setIsCropOpen(false);
-          setPendingFile(null);
-        }}
-        onConfirm={handleProfilePictureUpload}
-      />
     </Dialog>
   );
 }

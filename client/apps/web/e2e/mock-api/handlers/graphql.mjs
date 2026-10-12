@@ -1,3 +1,4 @@
+import { userSelectOptions } from "./settings.mjs";
 import { PROVIDER_HANDLERS } from "./aiproviders.mjs";
 import { AI_HANDLERS } from "./aicontrol.mjs";
 import { DESK_CARD_HANDLERS } from "./deskcards.mjs";
@@ -843,6 +844,11 @@ const EMPTY_CONNECTION = {
 };
 
 const SHELL_HANDLERS = {
+  SelectOptions: (state, v) =>
+    v.input?.resource === "USER"
+      ? userSelectOptions(state, v.input)
+      : { selectOptions: { totalCount: 0, pageInfo: { hasNextPage: false, endCursor: null }, edges: [] } },
+  MyAgents: () => ({ myAgents: EMPTY_CONNECTION }),
   AttentionSummary: () => ({
     attentionSummary: {
       billingQueue: 0,

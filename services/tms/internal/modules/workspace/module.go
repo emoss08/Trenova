@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/emailrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/homelayoutrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/integrationrepository"
+	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/notificationpreferencerepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/notificationrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/pagefavoriterepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/pushsubscriptionrepository"
@@ -30,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/googlemapsservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationpreferenceservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/pagefavoriteservice"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
@@ -72,6 +74,7 @@ func SharedOptions() fx.Option {
 			tcasubscriptionrepository.New,
 			tcaallowlistrepository.New,
 			notificationrepository.New,
+			notificationpreferencerepository.New,
 			customfieldservice.NewValidator,
 			customfieldservice.NewValuesValidator,
 			emailservice.NewValidator,
@@ -102,6 +105,7 @@ func SharedOptions() fx.Option {
 			googlemapsservice.NewAutoCompleteService,
 			dataentrycontrolservice.New,
 			notificationservice.New,
+			notificationpreferenceservice.New,
 			tablechangealertservice.New,
 			tablechangealertservice.NewConsumer,
 			integrationservice.New,

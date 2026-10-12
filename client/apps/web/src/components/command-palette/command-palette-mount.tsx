@@ -1,4 +1,5 @@
 import { whenIdle } from "@/lib/when-idle";
+import { useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { lazy, Suspense, useEffect, useState } from "react";
@@ -33,6 +34,8 @@ export function CommandPaletteMount() {
   useHotkey(
     "Mod+K",
     () => {
+      // Settings has its own ⌘K, which finds a setting; the palette stays out of its way.
+      if (useAppDialogsStore.getState().active === "settings") return;
       void preloadCommandPalette();
       toggleOpen();
     },
