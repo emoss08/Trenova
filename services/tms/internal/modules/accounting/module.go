@@ -42,6 +42,7 @@ func SharedOptions() fx.Option {
 			glbalancerepository.New,
 			accountingsyncrepository.NewConnectionRepository,
 			accountingsyncrepository.NewAppCredentialRepository,
+			accountingsyncrepository.NewSubscriptionRepository,
 			accountingsyncrepository.NewReferenceRepository,
 			accountingsyncrepository.NewMappingRepository,
 			accountingsyncrepository.NewSyncRecordRepository,

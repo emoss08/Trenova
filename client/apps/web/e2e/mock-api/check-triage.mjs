@@ -6,7 +6,7 @@
 //   node e2e/mock-api/check-triage.mjs            (mock on :8080, or MOCK_API_URL)
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { buildSchema, getNamedType, isEnumType, isListType, isNonNullType, isScalarType, Kind, parse } from "graphql";
+import { buildSchema, isEnumType, isListType, isNonNullType, isScalarType, Kind, parse } from "graphql";
 
 const MOCK = process.env.MOCK_API_URL ?? "http://localhost:8080";
 const GRAPHQL_SRC = fileURLToPath(new URL("../../../../packages/graphql/src/", import.meta.url));

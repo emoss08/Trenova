@@ -263,9 +263,14 @@ const CONNECTION_PHASES: Record<AccountingConnectionStatus, StatusPhase> = {
 const AUTHORIZE_HOSTS: Record<AccountingSystem, readonly string[]> = {
   QuickBooksOnline: ["appcenter.intuit.com"],
   Xero: ["login.xero.com"],
+  BusinessCentral: ["login.microsoftonline.com"],
 };
 
-export const ACCOUNTING_SYSTEMS: readonly AccountingSystem[] = ["QuickBooksOnline", "Xero"];
+export const ACCOUNTING_SYSTEMS: readonly AccountingSystem[] = [
+  "QuickBooksOnline",
+  "Xero",
+  "BusinessCentral",
+];
 
 export const DEFAULT_ACCOUNTING_SYSTEM: AccountingSystem = "QuickBooksOnline";
 

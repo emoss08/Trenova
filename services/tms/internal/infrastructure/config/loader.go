@@ -287,6 +287,22 @@ func (l *Loader) bindAccountingEnv() {
 	_ = l.viper.BindEnv("accounting.xero.clientSecret", "TRENOVA_XERO_CLIENT_SECRET")
 	_ = l.viper.BindEnv("accounting.xero.webhookKey", "TRENOVA_XERO_WEBHOOK_KEY")
 	_ = l.viper.BindEnv("accounting.xero.redirectUrl", "TRENOVA_XERO_REDIRECT_URL")
+	_ = l.viper.BindEnv(
+		"accounting.businessCentral.clientId",
+		"TRENOVA_BUSINESSCENTRAL_CLIENT_ID",
+	)
+	_ = l.viper.BindEnv(
+		"accounting.businessCentral.clientSecret",
+		"TRENOVA_BUSINESSCENTRAL_CLIENT_SECRET",
+	)
+	_ = l.viper.BindEnv(
+		"accounting.businessCentral.redirectUrl",
+		"TRENOVA_BUSINESSCENTRAL_REDIRECT_URL",
+	)
+	_ = l.viper.BindEnv(
+		"accounting.businessCentral.webhookBaseUrl",
+		"TRENOVA_BUSINESSCENTRAL_WEBHOOK_BASE_URL",
+	)
 }
 
 func (l *Loader) setDefaults() { //nolint:funlen // sets default configs

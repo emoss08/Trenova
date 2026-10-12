@@ -5631,6 +5631,7 @@
   "{0} HOS": "剩余工时 {0}",
   "{0} Runtime Config": "{0} 运行时配置",
   "{0} Selected": "已选择 {0} 项",
+  "{0} active": "{0} 个有效",
   "{0} added": "新增 {0}",
   "{0} after the window closes": "时间窗口结束后 {0}",
   "{0} allows files up to {1}. This one is larger.": "{0} 允许的文件最大为 {1}。此文件超出限制。",
