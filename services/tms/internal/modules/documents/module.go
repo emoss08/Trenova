@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/redis/triagecache"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/conversationfileservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentintelligenceservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentmailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentoperationsservice"
@@ -123,6 +124,7 @@ func SharedOptions() fx.Option {
 			documentsearchprojectionservice.New,
 			documentservice.New,
 			func(s *documentservice.Service) documentports.InvoiceDocumentService { return s },
+			conversationfileservice.New,
 			func(s *documentservice.Service) documentports.DocumentStore { return s },
 			fx.Annotate(
 				documentmailservice.New,

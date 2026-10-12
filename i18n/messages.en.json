@@ -2501,6 +2501,15 @@
       "go/other"
     ]
   },
+  "A JSON key file for a service account allowed to call Claude.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A KPI tile needs the column whose number it shows": {
     "sites": 1,
     "scope": [
@@ -5349,6 +5358,15 @@
       "routes/agent-control"
     ]
   },
+  "A key the platform issued.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A known provider identifier used by providerFingerprints match rules. Simulates what the document intelligence pipeline would detect.": {
     "sites": 1,
     "scope": [
@@ -6767,7 +6785,25 @@
       "api/graphql"
     ]
   },
+  "A provider called directly takes no platform settings": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A provider in this tune-up no longer exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A provider that uses the server's credentials stores no key": {
     "sites": 1,
     "scope": [
       "go"
@@ -8120,6 +8156,15 @@
     ]
   },
   "A series supports at most {0} blackout dates": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A service account key is a few kilobytes at most": {
     "sites": 1,
     "scope": [
       "go"
@@ -10647,7 +10692,7 @@
     ]
   },
   "API key": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -11553,6 +11598,15 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "Access key ID": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Access must be Everyone or Roles": {
@@ -15638,6 +15692,15 @@
       "routes/admin"
     ]
   },
+  "Add the access key ID": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Add the average headcount and the hours worked": {
     "sites": 1,
     "scope": [
@@ -15674,6 +15737,15 @@
       "routes/carrier"
     ]
   },
+  "Add the client ID": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Add the customer's DOT number": {
     "sites": 1,
     "scope": [
@@ -15701,6 +15773,42 @@
       "routes/holiday"
     ]
   },
+  "Add the project ID": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Add the region": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Add the resource name": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Add the tenant ID": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Add the vetted standard rating library (per mile, per CWT, ...).": {
     "sites": 1,
     "scope": [
@@ -15708,6 +15816,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Add the workspace ID": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Add this pay event to the selected draft settlement": {
@@ -20166,12 +20283,14 @@
     ]
   },
   "Amazon Bedrock": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "api/handlers"
+      "api/handlers",
+      "routes/agent-control"
     ]
   },
   "Amend": {
@@ -20704,6 +20823,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "An access key ID and its secret; each request is signed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "An accessorial allocation cannot target an order charge": {
@@ -21285,6 +21413,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "An app registration's client ID and secret.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "An applied change must record when it was applied": {
@@ -23014,7 +23151,7 @@
       "api/handlers"
     ]
   },
-  "Anthropic's API, and any endpoint serving the same shape such as Amazon Bedrock.": {
+  "Anthropic's API, called directly or through Amazon Bedrock, Google Vertex AI, Claude Platform on AWS or Google Cloud, or Microsoft Foundry.": {
     "sites": 1,
     "scope": [
       "go"
@@ -44968,6 +45105,15 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "Choose another way to sign in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Choose at least one agent": {
     "sites": 1,
     "scope": [
@@ -47143,6 +47289,82 @@
       "packages/shared/types"
     ]
   },
+  "Claude Platform on AWS": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "api/handlers",
+      "routes/agent-control"
+    ]
+  },
+  "Claude Platform on Google Cloud": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "api/handlers",
+      "routes/agent-control"
+    ]
+  },
+  "Claude as a Vertex AI model in your Google Cloud project.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Claude deployed in your Microsoft Foundry resource.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Claude on Amazon Bedrock": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "Claude on Google Vertex AI": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "Claude on Microsoft Foundry": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "Claude through your AWS account's Bedrock.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Clean": {
     "sites": 1,
     "scope": [
@@ -47653,14 +47875,15 @@
     ]
   },
   "Client ID": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
-      "routes/admin"
+      "routes/admin",
+      "routes/agent-control"
     ]
   },
   "Client ID can only contain letters, numbers, dots, dashes and underscores": {
@@ -47743,12 +47966,13 @@
     ]
   },
   "Client secret": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/agent-control"
     ]
   },
   "Client secret is required": {
@@ -69986,11 +70210,12 @@
     ]
   },
   "Direct": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/my-team"
     ]
   },
@@ -72780,6 +73005,15 @@
     ]
   },
   "Document link is no longer available": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Document not found": {
     "sites": 1,
     "scope": [
       "go"
@@ -82582,6 +82816,24 @@
       "go/other"
     ]
   },
+  "Enter the Entra ID tenant ID, or its primary domain": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Enter the Foundry resource name, or the endpoint's address": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Enter the address you sign in with and we'll send you a link to choose a new password.": {
     "sites": 1,
     "scope": [
@@ -82703,6 +82955,24 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Enter the resource name or the endpoint's address, not both": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Enter the secret access key AWS gave you": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Enter the six-digit code": {
@@ -97390,6 +97660,15 @@
       "apps/web/components"
     ]
   },
+  "Foundry takes a resource name, not a region": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Four axes is the limit. Origin zone, destination zone, weight break and class covers every published tariff we have seen, and a fifth would make the grid unreadable.": {
     "sites": 1,
     "scope": [
@@ -101134,6 +101413,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Google Vertex AI": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Google Workspace": {
@@ -105096,6 +105384,15 @@
       "apps/web/components"
     ]
   },
+  "How Trenova proves who it is to the platform.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "How Trenova tells where one document ends and the next begins. Pages it splits on are set aside.": {
     "sites": 1,
     "scope": [
@@ -106426,6 +106723,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "IAM access key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "ID": {
@@ -116451,7 +116757,7 @@
     ]
   },
   "Key": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -119304,6 +119610,15 @@
     ]
   },
   "Leave empty to use {0}'s default endpoint.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Leave empty to use {0}'s endpoint for these settings.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -130184,13 +130499,14 @@
     ]
   },
   "Microsoft Entra ID": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin"
+      "routes/admin",
+      "routes/agent-control"
     ]
   },
   "Microsoft Entra ID SSO configuration is required": {
@@ -130209,6 +130525,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Microsoft Foundry": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Microsoft logo": {
@@ -136237,6 +136562,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "New key file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "New key ••••{0}": {
@@ -152013,6 +152347,15 @@
       "go/other"
     ]
   },
+  "Only Claude Platform on AWS and on Google Cloud take a workspace": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Only Closed fiscal periods can be reopened. Current status: {0}": {
     "sites": 1,
     "scope": [
@@ -152059,6 +152402,15 @@
     ]
   },
   "Only FMCSA QCMobile can be used as a fallback provider": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only Foundry takes a resource name": {
     "sites": 1,
     "scope": [
       "go"
@@ -152158,6 +152510,15 @@
     ]
   },
   "Only a Billed order can be closed; this order is {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only a Google Cloud platform takes a project": {
     "sites": 1,
     "scope": [
       "go"
@@ -152598,6 +152959,15 @@
       "go/other"
     ]
   },
+  "Only a service account key is accepted; other Google credential files can make the server read files or call other addresses": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Only a shipment invoice item can have its charges reassigned": {
     "sites": 1,
     "scope": [
@@ -152877,7 +153247,43 @@
       "routes/reports"
     ]
   },
+  "Only an Anthropic Messages provider is reached through a platform": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only an Anthropic Messages provider takes platform settings": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only an Entra ID sign-in takes a tenant and client ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Only an IFTA fuel type carries a tax rate": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only an access key sign-in takes an access key ID": {
     "sites": 1,
     "scope": [
       "go"
@@ -162775,6 +163181,24 @@
       "routes/admin"
     ]
   },
+  "Paste the service account key file Google Cloud gave you, in JSON": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Paste the whole JSON key file. Stored encrypted and never shown again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Paste these values from your Microsoft Entra ID app registration.": {
     "sites": 1,
     "scope": [
@@ -168651,6 +169075,15 @@
       "routes/desk"
     ]
   },
+  "Platform": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Platform availability": {
     "sites": 1,
     "scope": [
@@ -168667,6 +169100,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Platform is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Platform settings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Please choose a JPG, PNG, or WEBP file.": {
@@ -173245,12 +173696,14 @@
     ]
   },
   "Project ID": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/agent-control"
     ]
   },
   "Projected": {
@@ -184732,13 +185185,14 @@
     ]
   },
   "Region": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "routes/admin",
+      "routes/agent-control",
       "routes/fuel-management",
       "routes/shipment"
     ]
@@ -186829,12 +187283,13 @@
     ]
   },
   "Removed": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/formula-template"
     ]
   },
@@ -187624,6 +188079,15 @@
     ]
   },
   "Replace key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Replace key file": {
     "sites": 1,
     "scope": [
       "ts"
@@ -191162,6 +191626,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Resource name": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Resource type": {
@@ -202608,6 +203081,15 @@
       "routes/tractor"
     ]
   },
+  "Secret access key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Secret hash is required": {
     "sites": 1,
     "scope": [
@@ -207725,6 +208207,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Service account key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Service account key (JSON)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Service calendar": {
@@ -213514,6 +214014,15 @@
       "routes/auth"
     ]
   },
+  "Sign in with": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Sign in with the account your organization set up for you.": {
     "sites": 1,
     "scope": [
@@ -213612,6 +214121,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Sign-in credential": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Sign-in refused": {
@@ -224334,6 +224852,15 @@
       "apps/web/hooks"
     ]
   },
+  "Tenant ID": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Tenant ID is required": {
     "sites": 1,
     "scope": [
@@ -226288,6 +226815,15 @@
       "go/other"
     ]
   },
+  "The Anthropic workspace requests are made in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The BOL is the bill of lading number for the shipment.": {
     "sites": 1,
     "scope": [
@@ -226304,6 +226840,24 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "The Claude API, run by Anthropic and billed through AWS.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The Claude API, run by Anthropic and billed through Google Cloud.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The DOT number or broker vetting setting has unsaved changes. Save the customer before vetting so the new values are used.": {
@@ -226334,6 +226888,15 @@
     ]
   },
   "The Embedding task now routes to {0}. Every source is indexed under it before searches move to it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The Entra ID tenant ID, or its primary domain.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -226396,6 +226959,15 @@
       "routes/customer-payments"
     ]
   },
+  "The Google Cloud project Claude is enabled in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The HHS-certified laboratory that analysed the specimen.": {
     "sites": 1,
     "scope": [
@@ -226403,6 +226975,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "The ID of the IAM access key, not its secret.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The ID of the posted journal entry you want to reverse.": {
@@ -227008,6 +227589,15 @@
       "go/other"
     ]
   },
+  "The application (client) ID of the app registration.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The applied total exceeds the payment amount.": {
     "sites": 1,
     "scope": [
@@ -227312,6 +227902,15 @@
     ],
     "areas": [
       "routes/bank-receipt-batch"
+    ]
+  },
+  "The base URL, with an API key.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The base rate must be greater than zero; a carrier is never covered for nothing": {
@@ -231716,6 +232315,15 @@
       "routes/desk"
     ]
   },
+  "The identity of the server Trenova runs on, such as its IAM role. Nothing is stored.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The import assistant is not available on this server": {
     "sites": 1,
     "scope": [
@@ -231966,6 +232574,24 @@
     ],
     "areas": [
       "routes/fuel-purchase"
+    ]
+  },
+  "The key cannot contain spaces or line breaks": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The key must get its tokens from Google at {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The kind of cover this is; plans are grouped by it on the benefits page.": {
@@ -233049,6 +233675,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "The name before .services.ai.azure.com in its endpoint address.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The name dispatchers and drivers see on the rota and on assignments.": {
@@ -236285,6 +236920,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "The service account key is missing its email, key id or private key": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The service failures could not be read.": {
@@ -242534,6 +243178,24 @@
       "go/other"
     ]
   },
+  "This platform does not list its models. Type the ID it gives Claude.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "This platform does not sign in that way": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This pool has already been drawn for that period": {
     "sites": 1,
     "scope": [
@@ -242606,6 +243268,15 @@
     "areas": [
       "go/other",
       "routes/agent-control"
+    ]
+  },
+  "This provider has no address to call; check its platform settings": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This provider takes it first": {
@@ -243188,6 +243859,15 @@
       "go/other"
     ]
   },
+  "This server does not let providers sign in with its own cloud credentials": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This server has no {0} of its own, so nobody can connect {1} until keys are entered again.": {
     "sites": 1,
     "scope": [
@@ -243197,6 +243877,15 @@
       "routes/admin"
     ]
   },
+  "This server no longer lets providers use its own credentials. Choose another way to sign in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "This server's app": {
     "sites": 1,
     "scope": [
@@ -243204,6 +243893,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "This server's credentials": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "This service failure could not be read": {
@@ -249784,6 +250482,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Trenova signs in as the server it runs on, such as its IAM role or attached service account. No credential is stored, and a saved one is removed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Trenova · now": {
@@ -265573,6 +266280,15 @@
       "routes/agent-control"
     ]
   },
+  "Where requests reach Claude.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Where requests to this provider are sent.": {
     "sites": 1,
     "scope": [
@@ -265670,6 +266386,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Where the platform serves Claude for you.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Where the policy text lives": {
@@ -269051,6 +269776,15 @@
       "apps/web/components",
       "apps/web/config",
       "routes/desk"
+    ]
+  },
+  "Workspace ID": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Worse": {
@@ -278582,6 +279316,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "the stored credential is not a usable Google service account key": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "the system": {

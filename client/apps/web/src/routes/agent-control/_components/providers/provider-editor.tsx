@@ -6,6 +6,7 @@ import {
   type AIProviderRow,
   type AIProviderWithLimits,
   type AITaskRoute,
+  type AIProviderEndpoint,
 } from "@/lib/graphql/ai-provider";
 import { queries } from "@/lib/queries";
 import { FormCreatePanel } from "@/components/form-create-panel";
@@ -18,6 +19,7 @@ import { SegmentedField } from "@/components/fields/segmented-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { JsonEditorField } from "@/components/fields/json-editor-field";
+import { SensitiveTextareaField } from "@/components/fields/sensitive-textarea-field";
 import { apiService } from "@/services/api";
 import type {
   AIProviderCatalog,
@@ -67,6 +69,7 @@ import {
   useFormContext,
   useWatch,
   type Control,
+  type FieldErrors,
   type FieldPath,
   type Resolver,
 } from "react-hook-form";
@@ -81,16 +84,29 @@ import { ConfirmDialog } from "../kit/modal";
 import {
   cachePriceDefault,
   draftTestInput,
+  editorKeyRequired,
+  editorPlatformPayload,
   editorProblem,
+  editorSignIn,
   editorValuesFromPreset,
   editorValuesFromProvider,
   providerEditorSchema,
   reportsCacheWrites,
   routingDraft,
+  signsInAsServer,
   toSaveRequest,
+  type EditorProblem,
   type KeyRule,
+  type PlatformCatalog,
   type ProviderEditorValues,
 } from "./provider-editor-model";
+import { PlatformFields } from "./platform-fields";
+import {
+  CREDENTIAL_LABELS,
+  PLATFORM_LABELS,
+  platformSettingsSummary,
+  takesPlatform,
+} from "./platform-model";
 import {
   baseUrlProblem,
   formatContext,
@@ -118,6 +134,8 @@ const PAGE_BUTTON =
   "ui-focus-ring hover:bg-foreground/5 hover:text-foreground inline-flex size-6 items-center justify-center rounded-md transition-colors disabled:pointer-events-none disabled:opacity-40";
 /** The panels cache what they save under this key; nothing else reads it. */
 const EDITOR_QUERY_KEY = "ai-provider-editor";
+/** The shape of a Google service account key file, not words to translate. */
+const SERVICE_ACCOUNT_PLACEHOLDER = '{ "type": "service_account", "project_id": "…", … }';
 
 /** A saved provider as its editor holds it: the form's values, named by the provider. */
 type ProviderEditorRow = ProviderEditorValues & { id: string };
@@ -168,10 +186,17 @@ export function ProviderEditor({
   const [preset, setPreset] = useState<AIProviderPreset | null>(
     target.kind === "create" ? target.preset : null,
   );
+  const platformCatalog = useMemo<PlatformCatalog>(
+    () => ({
+      platforms: catalog.platforms,
+      serverCloudCredentials: catalog.serverCloudCredentials,
+    }),
+    [catalog.platforms, catalog.serverCloudCredentials],
+  );
   const [loaded] = useState(() =>
     target.kind === "edit"
       ? editorValuesFromProvider(target.provider)
-      : editorValuesFromPreset(target.preset, providers),
+      : editorValuesFromPreset(target.preset, providers, platformCatalog),
   );
   const resolver = useMemo<Resolver<ProviderEditorValues>>(() => {
     const schema = zodResolver(providerEditorSchema) as Resolver<ProviderEditorValues>;
@@ -179,23 +204,24 @@ export function ProviderEditor({
       const result = await schema(draft, context, options);
       const problem = editorProblem(draft, {
         create: target.kind === "create",
-        keyRequired: keyRequired(draft.kind) || Boolean(preset?.requiresApiKey),
+        keyRequired: editorKeyRequired(draft, {
+          catalog: platformCatalog,
+          kindRequiresKey: keyRequired(draft.kind) || Boolean(preset?.requiresApiKey),
+        }),
         hasStoredKey: target.kind === "edit" && Boolean(target.provider.hasApiKey),
         requiresBaseUrl:
           catalog.kinds.find((entry) => entry.kind === draft.kind)?.requiresBaseUrl ?? false,
+        catalog: platformCatalog,
       });
-      if (!problem || problem.field in result.errors) {
+      if (!problem || hasFieldError(result.errors, problem.field)) {
         return result;
       }
       return {
         values: {},
-        errors: {
-          ...result.errors,
-          [problem.field]: { type: "validate", message: problem.message },
-        },
+        errors: withFieldError(result.errors, problem),
       };
     };
-  }, [catalog.kinds, keyRequired, preset, target]);
+  }, [catalog.kinds, keyRequired, platformCatalog, preset, target]);
   const form = useForm<ProviderEditorValues>({
     resolver,
     defaultValues: loaded,
@@ -231,18 +257,29 @@ export function ProviderEditor({
       if (!next || next.key === preset?.key) return;
       setPreset(next);
       setRan(null);
-      form.reset(editorValuesFromPreset(next, providers));
+      form.reset(editorValuesFromPreset(next, providers, platformCatalog));
       onPresetChange?.(next.key);
     },
-    [catalog.presets, form, onPresetChange, preset?.key, providers],
+    [catalog.presets, form, onPresetChange, platformCatalog, preset?.key, providers],
   );
   const presetNeedsKey = Boolean(preset?.requiresApiKey);
-  const keyMandatory = keyRequired(values.kind) || presetNeedsKey;
-  const needsKeyField = keyField({
-    mandatory: keyMandatory,
-    hasStoredKey: Boolean(saved?.hasApiKey),
-    baseUrl: values.baseUrl,
+  const signIn = editorSignIn(values, platformCatalog);
+  const onPlatform = signIn.platform !== "Direct";
+  const serverAuth = signsInAsServer(values, platformCatalog);
+  const keyMandatory = editorKeyRequired(values, {
+    catalog: platformCatalog,
+    kindRequiresKey: keyRequired(values.kind) || presetNeedsKey,
   });
+  // Signing in as the server stores no credential, so there is no key to show or ask for.
+  const needsKeyField =
+    !serverAuth &&
+    keyField({
+      mandatory: keyMandatory,
+      hasStoredKey: Boolean(saved?.hasApiKey),
+      baseUrl: values.baseUrl,
+    });
+  const credentialLabel = onPlatform && signIn.auth !== "" ? CREDENTIAL_LABELS[signIn.auth] : null;
+  const serviceAccountKey = onPlatform && signIn.auth === "ServiceAccount";
   const hasStoredKey = Boolean(saved?.hasApiKey);
   const requiresBaseUrl =
     catalog.kinds.find((entry) => entry.kind === values.kind)?.requiresBaseUrl ?? false;
@@ -252,6 +289,7 @@ export function ProviderEditor({
   );
   const connection = [
     values.kind,
+    JSON.stringify(editorPlatformPayload(values, platformCatalog)),
     values.baseUrl,
     values.model,
     values.apiKey,
@@ -262,7 +300,11 @@ export function ProviderEditor({
 
   const save = useCallback(
     async (next: ProviderEditorValues) => {
-      const request = toSaveRequest(next, { editing: !create, enable: testOk });
+      const request = toSaveRequest(next, {
+        editing: !create,
+        enable: testOk,
+        catalog: platformCatalog,
+      });
       const result = saved
         ? await apiService.aiProviderService.update(saved.id, request)
         : await apiService.aiProviderService.create(request);
@@ -278,14 +320,16 @@ export function ProviderEditor({
       }
       return result;
     },
-    [create, form, queryClient, saved, testOk],
+    [create, form, platformCatalog, queryClient, saved, testOk],
   );
 
   const runTest = async () => {
     const tested = connection;
     setRan({ connection: tested, test: { state: "run" } });
     try {
-      const result = await testAIProviderDraft(draftTestInput(values, saved?.id ?? null));
+      const result = await testAIProviderDraft(
+        draftTestInput(values, saved?.id ?? null, platformCatalog),
+      );
       setRan({ connection: tested, test: { state: "done", result } });
     } catch (error: unknown) {
       setRan({
@@ -306,7 +350,12 @@ export function ProviderEditor({
     }
   };
 
-  const models = useEndpointModels(form.control, saved?.id ?? null, !create || !needsKeyField);
+  const models = useEndpointModels(
+    form.control,
+    saved?.id ?? null,
+    !create || !needsKeyField,
+    platformCatalog,
+  );
 
   const index = saved ? providers.findIndex((provider) => provider.id === saved.id) : -1;
   const taskLabel = useCallback(
@@ -316,14 +365,26 @@ export function ProviderEditor({
   const changeFields: ChangeFields = {
     name: { label: t("Name") },
     kind: { label: t("Kind"), format: (value) => kindLabel(String(value)) },
+    platform: {
+      label: t("Platform"),
+      format: (value) => PLATFORM_LABELS[value as keyof typeof PLATFORM_LABELS] ?? String(value),
+    },
+    platformSettings: {
+      label: t("Platform settings"),
+      format: (value) => platformSettingsSummary(value as ProviderEditorValues["platformSettings"]),
+    },
     baseUrl: { label: t("Base URL") },
     model: { label: t("Model") },
     apiKey: {
-      label: t("API key"),
+      label: credentialLabel ?? t("API key"),
       format: (value) =>
         typeof value === "string" && value !== ""
-          ? t("New key ••••{0}", value.slice(-4))
-          : t("Unchanged"),
+          ? serviceAccountKey
+            ? t("New key file")
+            : t("New key ••••{0}", value.slice(-4))
+          : serverAuth && hasStoredKey
+            ? t("Removed")
+            : t("Unchanged"),
     },
     keepPreviousKey: { label: t("Keep old key 24h") },
     tasks: { label: t("Handles"), item: taskLabel },
@@ -364,6 +425,7 @@ export function ProviderEditor({
       keyRequired: keyMandatory,
       hasStoredKey,
       requiresBaseUrl,
+      catalog: platformCatalog,
     })?.message ?? null;
 
   const urlProblem = baseUrlProblem(values.baseUrl, values.allowPrivateNetwork);
@@ -386,7 +448,7 @@ export function ProviderEditor({
       id: "conn",
       label: t("Connection"),
       note: t("Where requests go and which API answers them."),
-      keys: ["name", "kind", "baseUrl"],
+      keys: ["name", "kind", "platform", "platformSettings", "baseUrl"],
       warning:
         urlProblem === "private"
           ? t(
@@ -435,12 +497,15 @@ export function ProviderEditor({
             triggerClassName={aicFieldTrigger}
             layout="inline"
           />
+          {takesPlatform(values.kind) && (
+            <PlatformFields catalog={platformCatalog} savedAuth={loaded.platformSettings.auth} />
+          )}
           <EditorTextInput
             name="baseUrl"
             layout="inline"
             required={requiresBaseUrl}
             label={t("Base URL")}
-            placeholder="https://api.example.com/v1"
+            placeholder={onPlatform ? undefined : "https://api.example.com/v1"}
             error={
               urlProblem === "private"
                 ? t(
@@ -454,7 +519,12 @@ export function ProviderEditor({
               values.baseUrl.trim() === ""
                 ? requiresBaseUrl
                   ? t("This kind of endpoint has no default; give its address.")
-                  : t("Leave empty to use {0}'s default endpoint.", kindLabel(values.kind))
+                  : onPlatform
+                    ? t(
+                        "Leave empty to use {0}'s endpoint for these settings.",
+                        PLATFORM_LABELS[signIn.platform],
+                      )
+                    : t("Leave empty to use {0}'s default endpoint.", kindLabel(values.kind))
                 : t("Where requests to this provider are sent.")
             }
           />
@@ -485,7 +555,7 @@ export function ProviderEditor({
         "Fetch the list to see what this endpoint actually serves. When it reports a model's context window and price, they're filled in for you.",
       ),
       keys: ["model"],
-      actions: (
+      actions: models.unlisted ? undefined : (
         <Button
           type="button"
           size="sm"
@@ -512,7 +582,7 @@ export function ProviderEditor({
       ? [
           {
             id: "key",
-            label: t("API key"),
+            label: onPlatform ? t("Sign-in credential") : t("API key"),
             note: t("The credential Trenova signs each request with."),
             help: t(
               "A new key takes effect when you save. Keep the old one working for a day if other systems still use it.",
@@ -521,17 +591,35 @@ export function ProviderEditor({
             content: (
               <div className={FIELD_STACK}>
                 {saved?.apiKey && values.apiKey === "" && <StoredKey info={saved.apiKey} />}
-                <InputField<ProviderEditorValues>
-                  control={form.control}
-                  name="apiKey"
-                  rules={keyMandatory && !hasStoredKey ? { required: true } : undefined}
-                  type="password"
-                  autoComplete="new-password"
-                  label={hasStoredKey ? t("Replace key") : t("Key")}
-                  description={t("Stored encrypted and never shown again.")}
-                  placeholder={keyPlaceholder(values.kind, values.baseUrl) ?? t("API key")}
-                  inputClassProps={cn(aicFieldTrigger, "font-mono")}
-                />
+                {serviceAccountKey ? (
+                  <SensitiveTextareaField<ProviderEditorValues>
+                    control={form.control}
+                    name="apiKey"
+                    rules={keyMandatory && !hasStoredKey ? { required: true } : undefined}
+                    label={hasStoredKey ? t("Replace key file") : (credentialLabel ?? t("Key"))}
+                    description={t(
+                      "Paste the whole JSON key file. Stored encrypted and never shown again.",
+                    )}
+                    placeholder={SERVICE_ACCOUNT_PLACEHOLDER}
+                    className="font-mono"
+                  />
+                ) : (
+                  <InputField<ProviderEditorValues>
+                    control={form.control}
+                    name="apiKey"
+                    rules={keyMandatory && !hasStoredKey ? { required: true } : undefined}
+                    type="password"
+                    autoComplete="new-password"
+                    label={hasStoredKey ? t("Replace key") : (credentialLabel ?? t("Key"))}
+                    description={t("Stored encrypted and never shown again.")}
+                    placeholder={
+                      (onPlatform ? null : keyPlaceholder(values.kind, values.baseUrl)) ??
+                      credentialLabel ??
+                      t("API key")
+                    }
+                    inputClassProps={cn(aicFieldTrigger, "font-mono")}
+                  />
+                )}
                 {hasStoredKey && values.apiKey !== "" && (
                   <SwitchRow<ProviderEditorValues>
                     control={form.control}
@@ -1067,42 +1155,53 @@ type EndpointModels = {
   list: AIProviderModelOption[] | undefined;
   fetching: boolean;
   error: string | null;
+  /** The platform serves models it does not list, so the ID is typed. */
+  unlisted: boolean;
   fetch: () => void;
 };
+
+type AskedEndpoint = { key: string; endpoint: AIProviderEndpoint };
 
 /**
  * The models the endpoint as typed says it serves. Nothing is asked until someone fetches,
  * or at once for a new endpoint on a person's own network, and a list fetched for an
- * address that has since changed is put away rather than offered for the new one.
+ * address that has since changed is put away rather than offered for the new one. A
+ * platform that lists no models is never asked.
  */
 function useEndpointModels(
   control: Control<ProviderEditorValues>,
   providerId: string | null,
   autoFetch: boolean,
+  catalog: PlatformCatalog,
 ): EndpointModels {
   const t = useT();
-  const [kind, baseUrl, apiKey, allowPrivateNetwork] = useWatch({
+  const [kind, platform, platformSettings, baseUrl, apiKey, allowPrivateNetwork] = useWatch({
     control,
-    name: ["kind", "baseUrl", "apiKey", "allowPrivateNetwork"],
+    name: ["kind", "platform", "platformSettings", "baseUrl", "apiKey", "allowPrivateNetwork"],
   });
-  const endpoint = useMemo(
-    () => ({
-      providerId,
-      kind,
-      baseUrl: baseUrl.trim(),
-      apiKey: apiKey.trim() === "" ? null : apiKey.trim(),
-      allowPrivateNetwork,
-    }),
-    [allowPrivateNetwork, apiKey, baseUrl, kind, providerId],
+  const draft = { kind, platform, platformSettings };
+  const signIn = editorSignIn(draft, catalog);
+  const unlisted = signIn.platform !== "Direct" && !signIn.descriptor?.listsModels;
+  const key = signsInAsServer(draft, catalog) ? "" : apiKey.trim();
+  const endpoint: AIProviderEndpoint = {
+    providerId,
+    kind,
+    ...editorPlatformPayload(draft, catalog),
+    baseUrl: baseUrl.trim(),
+    apiKey: key === "" ? null : key,
+    allowPrivateNetwork,
+  };
+  const endpointKey = JSON.stringify(endpoint);
+  const [asked, setAsked] = useState<AskedEndpoint | null>(
+    autoFetch && !unlisted ? { key: endpointKey, endpoint } : null,
   );
-  const [asked, setAsked] = useState<typeof endpoint | null>(autoFetch ? endpoint : null);
   const query = useQuery({
-    ...queries.aiProvider.models(asked ?? endpoint),
-    enabled: asked !== null,
+    ...queries.aiProvider.models(asked?.endpoint ?? endpoint),
+    enabled: asked !== null && !unlisted,
     staleTime: 60_000,
     retry: false,
   });
-  const current = asked !== null && asked === endpoint;
+  const current = !unlisted && asked !== null && asked.key === endpointKey;
 
   return {
     list: current ? query.data : undefined,
@@ -1113,12 +1212,14 @@ function useEndpointModels(
           ? query.error.message
           : t("The endpoint did not answer")
         : null,
+    unlisted,
     fetch: () => {
-      if (asked === endpoint) {
+      if (unlisted) return;
+      if (asked?.key === endpointKey) {
         void query.refetch();
         return;
       }
-      setAsked(endpoint);
+      setAsked({ key: endpointKey, endpoint });
     },
   };
 }
@@ -1145,7 +1246,11 @@ function ModelSection({ models, local }: { models: EndpointModels; local: boolea
             ? t("The endpoint lists no models. Type the ID it serves.")
             : undefined)
         }
-        description={t("Or fetch the list this provider actually serves.")}
+        description={
+          models.unlisted
+            ? t("This platform does not list its models. Type the ID it gives Claude.")
+            : t("Or fetch the list this provider actually serves.")
+        }
       />
     </div>
   );
@@ -1596,4 +1701,28 @@ function AdvancedFields({ catalog }: { catalog: AIProviderCatalog }) {
       />
     </div>
   );
+}
+
+/** Whether the resolver already holds an error for a field, which may be nested. */
+function hasFieldError(errors: FieldErrors<ProviderEditorValues>, field: EditorProblem["field"]) {
+  const [head, child] = field.split(".") as [keyof ProviderEditorValues, string | undefined];
+  const entry = errors[head];
+  if (child === undefined) return entry !== undefined;
+  return entry !== undefined && child in entry;
+}
+
+/** The resolver's errors with the editor's own problem added at its field's path. */
+function withFieldError(
+  errors: FieldErrors<ProviderEditorValues>,
+  problem: EditorProblem,
+): FieldErrors<ProviderEditorValues> {
+  const error = { type: "validate", message: problem.message };
+  const [head, child] = problem.field.split(".") as [
+    keyof ProviderEditorValues,
+    string | undefined,
+  ];
+  if (child === undefined) {
+    return { ...errors, [head]: error };
+  }
+  return { ...errors, platformSettings: { ...errors.platformSettings, [child]: error } };
 }

@@ -118,6 +118,10 @@ Keywords: attach, upload, add a document, send a PDF, rate confirmation, BOL, sp
 1. Select **Attach files** (the plus at the bottom left of the box), then **Upload from computer**. You can also press ⌘U (Ctrl+U), or drag files anywhere onto the Desk and drop them on the box.
 2. Each file shows above the text while it uploads. Select **Remove** to take one off, or **Try again** if an upload failed.
 3. Type your question and send it. If you send files with no text, the agent is asked what is in them.
+4. When the agent answers through Claude, it reads a PDF or a photo (JPEG, PNG, GIF or WebP) as the
+   file itself, so its layout, tables, stamps, signatures and handwriting count, not only the text
+   read from it. A PDF of up to 600 pages (100 on Claude Haiku 4.5) goes this way. Other files, and
+   any agent answering through another provider, read the text Trenova read from the file.
 
 ### Scan paper into a message
 Keywords: scan, scanner, paperwork, scan a BOL, scan a POD, Trenova Capture

@@ -121,6 +121,14 @@ ai:
   # Organizations here belong to the operator, so a provider may point at a
   # model served on your own network (Ollama, vLLM and the like).
   privateNetworkProviders: true
+  # Turn on to let a Bedrock, Vertex AI or Claude Platform provider sign in
+  # as this server (its IAM role or Google application default credentials)
+  # instead of a stored key.
+  serverCloudCredentials: false
+  # Turn on to have the Claude API say, for each agent turn's model call,
+  # where its prompt stopped matching the call before it. The answer is
+  # logged and traced. Only providers calling the Claude API directly ask.
+  cacheDiagnostics: false
   documentExtraction: false
   ocrCommand: tesseract
   ocrLanguage: eng

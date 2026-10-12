@@ -125,6 +125,10 @@ func attemptUsage(attempt *usageAttempt, cost *decimal.Decimal) *aitrace.Usage {
 	usage.ReasoningTokens = int64(outcome.ReasoningTokens)
 	usage.Truncated = outcome.Truncated
 	usage.ThinkingDropped = int64(outcome.ThinkingDropped)
+	if diagnosis := outcome.CacheDiagnosis; diagnosis != nil {
+		usage.CacheMissReason = diagnosis.Reason
+		usage.CacheMissedTokens = int64(diagnosis.MissedTokens)
+	}
 	if outcome.FinishReason != "" {
 		usage.FinishReasons = []string{outcome.FinishReason}
 	}

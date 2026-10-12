@@ -163,13 +163,12 @@ func TestToAnthropicMessages_ReplaysSignedThinkingAheadOfToolCalls(t *testing.T)
 	require.Len(t, messages, 3)
 	blocks := messages[1].Content
 	require.Len(t, blocks, 3)
-	assert.Equal(t, "thinking", blocks[0].Type)
-	require.NotNil(t, blocks[0].Thinking)
-	assert.Equal(t, "Hold seems right.", *blocks[0].Thinking)
-	assert.Equal(t, "sig_1", blocks[0].Signature)
-	assert.Equal(t, "redacted_thinking", blocks[1].Type)
-	assert.Equal(t, "blob", blocks[1].Data)
-	assert.Equal(t, "tool_use", blocks[2].Type)
+	require.NotNil(t, blocks[0].OfThinking)
+	assert.Equal(t, "Hold seems right.", blocks[0].OfThinking.Thinking)
+	assert.Equal(t, "sig_1", blocks[0].OfThinking.Signature)
+	require.NotNil(t, blocks[1].OfRedactedThinking)
+	assert.Equal(t, "blob", blocks[1].OfRedactedThinking.Data)
+	assert.NotNil(t, blocks[2].OfToolUse)
 }
 
 // A signed thinking block whose summary came back empty still carries the
@@ -217,7 +216,7 @@ func TestToAnthropicMessages_DoesNotReplayUnsignedThinking(t *testing.T) {
 
 	require.Len(t, messages, 1)
 	require.Len(t, messages[0].Content, 1)
-	assert.Equal(t, "text", messages[0].Content[0].Type)
+	assert.NotNil(t, messages[0].Content[0].OfText)
 }
 
 // DeepSeek-shaped servers stream the chain of thought as reasoning_content,

@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/secretutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -341,7 +340,7 @@ func (s *Service) tidyKey(
 		return
 	}
 	if provider.NeedsKeyFingerprint() && apiKey != "" {
-		fingerprint := secretutils.FingerprintOf(apiKey)
+		fingerprint := secretutils.FingerprintOf(provider.CredentialFingerprintSubject(apiKey))
 		if err := s.keys.RecordFingerprint(ctx, agentports.RecordAIProviderKeyFingerprintRequest{
 			ID:         provider.ID,
 			TenantInfo: tenantInfo,
@@ -368,14 +367,20 @@ func (s *Service) apply(
 	req *agentports.SaveAIProviderRequest,
 	actor *permissionports.RequestActor,
 ) error {
-	// A replaced key is kept as a fallback only for the endpoint it was
-	// entered for; kept across a move, it would be sent somewhere new.
-	sameEndpoint := provider.Kind == req.Kind &&
-		httpsafe.SameOrigin(provider.BaseURL, strings.TrimSpace(req.BaseURL))
+	before := provider.ConnectionSnapshot()
 	provider.Name = strings.TrimSpace(req.Name)
 	provider.Description = strings.TrimSpace(req.Description)
 	provider.Kind = req.Kind
 	provider.BaseURL = strings.TrimSpace(req.BaseURL)
+	provider.Platform = req.Platform
+	provider.PlatformSettings = clonePlatformSettings(req.PlatformSettings)
+	provider.NormalizePlatformSettings()
+	if err := s.checkServerCredentials(provider); err != nil {
+		return err
+	}
+	// A replaced key is kept as a fallback only for the place and identity it
+	// was entered for; kept across a move, it would be sent somewhere new.
+	sameEndpoint := aiprovider.SameCredentialTarget(before, provider)
 	provider.Model = strings.TrimSpace(req.Model)
 	if err := s.checkPrivateNetwork(req.AllowPrivateNetwork); err != nil {
 		return err
@@ -422,7 +427,17 @@ func (s *Service) apply(
 		incoming:     *req.APIKey,
 		keepPrevious: req.KeepPreviousKey && sameEndpoint,
 		actor:        actor,
+		provider:     provider,
 	})
+}
+
+func clonePlatformSettings(settings *aiprovider.PlatformSettings) *aiprovider.PlatformSettings {
+	if settings == nil {
+		return nil
+	}
+	clone := *settings
+
+	return &clone
 }
 
 // applyLimits copies the limits, taking the default for one left at zero.
@@ -453,10 +468,24 @@ func (s *Service) checkPrivateNetwork(allow bool) error {
 	return nil
 }
 
+func (s *Service) checkServerCredentials(provider *aiprovider.Provider) error {
+	if provider.UsesServerCredentials() && !s.ai.ServerCloudCredentialsAllowed() {
+		return errortypes.NewValidationError(
+			"platformSettings.auth", errortypes.ErrForbidden,
+			"This server does not let providers sign in with its own cloud credentials",
+		)
+	}
+
+	return nil
+}
+
 type keyChange struct {
 	incoming     string
 	keepPrevious bool
 	actor        *permissionports.RequestActor
+	// provider is the provider the key is for, already on its platform, so
+	// the key is checked against the way that platform signs in.
+	provider *aiprovider.Provider
 }
 
 // replaceKey stores a new credential, or clears it when the new one is
@@ -484,13 +513,23 @@ func (s *Service) keyReplacement(change *keyChange) (aiprovider.KeyReplacement, 
 		return replacement, nil
 	}
 
+	subject := incoming
+	if change.provider != nil {
+		multiErr := errortypes.NewMultiError()
+		change.provider.ValidateCredential(incoming, multiErr)
+		if multiErr.HasErrors() {
+			return replacement, multiErr
+		}
+		subject = change.provider.CredentialFingerprintSubject(incoming)
+	}
+
 	encrypted, err := s.encryption.EncryptString(incoming)
 	if err != nil {
 		return replacement, errortypes.NewBusinessError(
 			"failed to encrypt the credential for this AI provider",
 		).WithInternal(err)
 	}
-	fingerprint := secretutils.FingerprintOf(incoming)
+	fingerprint := secretutils.FingerprintOf(subject)
 	replacement.Encrypted = encrypted
 	replacement.Prefix = fingerprint.Prefix
 	replacement.LastFour = fingerprint.LastFour
@@ -499,7 +538,8 @@ func (s *Service) keyReplacement(change *keyChange) (aiprovider.KeyReplacement, 
 }
 
 // keptKeyForNewEndpoint reports a save that moves a provider to a different
-// server, or a different kind of API, while leaving its stored key in place.
+// server, kind of API, platform, region or identity while leaving its stored
+// key in place.
 func keptKeyForNewEndpoint(
 	existing, updated *aiprovider.Provider,
 	req *agentports.SaveAIProviderRequest,
@@ -508,7 +548,7 @@ func keptKeyForNewEndpoint(
 		return false
 	}
 
-	return existing.Kind != updated.Kind || !httpsafe.SameOrigin(existing.BaseURL, updated.BaseURL)
+	return !aiprovider.SameCredentialTarget(existing, updated)
 }
 
 func (s *Service) decryptAPIKey(provider *aiprovider.Provider) (string, error) {

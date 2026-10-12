@@ -111,6 +111,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/dispatchautoassignservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/narrator"
+	"github.com/emoss08/trenova/internal/modules/agent/app/messagefileservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/productguideservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalpreviewservice"
@@ -160,6 +161,7 @@ func SharedOptions() fx.Option {
 		)),
 		fx.Provide(
 			assistantcaserepository.New,
+			messagefileservice.New,
 			casechecklistrepository.New,
 			roleagentgrantrepository.New,
 			agentmemorysubjectrepository.New,

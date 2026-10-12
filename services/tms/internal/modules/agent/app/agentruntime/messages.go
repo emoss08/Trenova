@@ -142,10 +142,12 @@ func replayHistoryWithFiles(
 			// ordinal is not shifted by a call that was left out.
 			ledger.noteCalls(msg)
 			messages = append(messages, agentports.Message{
-				Role:      agentports.RoleAssistant,
-				Content:   msg.Content,
-				ToolCalls: fromToolCallRecords(calls),
-				Reasoning: msg.Reasoning,
+				Role:          agentports.RoleAssistant,
+				Content:       msg.Content,
+				ToolCalls:     fromToolCallRecords(calls),
+				Reasoning:     msg.Reasoning,
+				ReplyID:       msg.ProviderMessageID,
+				ReplyProvider: msg.ProviderID,
 			})
 		case conversation.RoleTool:
 			if _, answers := open[msg.ToolCallID]; !answers {
@@ -446,4 +448,41 @@ func earlierAttachments(
 	}
 
 	return attachments
+}
+
+// messageFiles are the files the person attached to the turn's message, each
+// with where its entry sits in the message's content and the entry that
+// replaces it when the model is sent the file itself. A model that does not
+// read files reads the content as it is.
+func messageFiles(
+	content string,
+	attachments []agentdefinition.RuntimeAttachment,
+	rendered *agentdefinition.RenderedAttachments,
+) []agentports.MessageFile {
+	if len(attachments) == 0 || len(rendered.Entries) != len(attachments) {
+		return nil
+	}
+
+	files := make([]agentports.MessageFile, 0, len(attachments))
+	for idx := range attachments {
+		attachment := &attachments[idx]
+		if attachment.DocumentID == "" {
+			continue
+		}
+		file := agentports.MessageFile{
+			DocumentID:  attachment.DocumentID,
+			FileName:    attachment.FileName,
+			ContentType: attachment.ContentType,
+			Size:        attachment.FileSize,
+			PageCount:   attachment.PageCount,
+			NativeEntry: rendered.NativeEntries[idx],
+		}
+		if start := strings.Index(content, rendered.Entries[idx]); start >= 0 {
+			file.EntryStart = start
+			file.EntryEnd = start + len(rendered.Entries[idx])
+		}
+		files = append(files, file)
+	}
+
+	return files
 }

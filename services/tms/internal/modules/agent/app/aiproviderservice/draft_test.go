@@ -157,13 +157,13 @@ func TestPatchEdits_RefusesToClearARequiredSwitch(t *testing.T) {
 
 	_, err := svc.patchEdits(&agentports.PatchAIProviderRequest{
 		Enabled: optional.Some[*bool](nil),
-	}, nil)
+	}, nil, nil)
 	require.Error(t, err)
 
 	off := false
 	edits, err := svc.patchEdits(&agentports.PatchAIProviderRequest{
 		Enabled: optional.Some(&off),
-	}, nil)
+	}, nil, nil)
 	require.NoError(t, err)
 	provider := &aiprovider.Provider{Enabled: true, Trusted: true}
 	for _, edit := range edits {
@@ -250,7 +250,7 @@ func TestPatchEdits_SetsAndClearsCachePrices(t *testing.T) {
 
 	edits, err := svc.patchEdits(&agentports.PatchAIProviderRequest{
 		CacheReadCostPerMillion: optional.Some(&read),
-	}, nil)
+	}, nil, nil)
 	require.NoError(t, err)
 	provider := &aiprovider.Provider{CacheWriteCostPerMillion: &write}
 	for _, edit := range edits {
@@ -262,7 +262,7 @@ func TestPatchEdits_SetsAndClearsCachePrices(t *testing.T) {
 
 	edits, err = svc.patchEdits(&agentports.PatchAIProviderRequest{
 		CacheWriteCostPerMillion: optional.Some[*decimal.Decimal](nil),
-	}, nil)
+	}, nil, nil)
 	require.NoError(t, err)
 	for _, edit := range edits {
 		edit(provider)

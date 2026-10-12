@@ -48,6 +48,27 @@ Keywords: add LLM, model endpoint, OpenAI, API key, gateway, self-hosted model, 
 7. Select **Test draft**, then **Save & close**. A provider whose test connected is saved turned
    on; one that has not passed a test is saved off until it does.
 
+### Reach Claude through your cloud account
+Keywords: Amazon Bedrock, AWS Bedrock, Google Vertex AI, Vertex, Microsoft Foundry, Azure, Claude Platform on AWS, Claude Platform on Google Cloud, cloud marketplace, IAM role, service account, Entra ID, workload identity, bill through AWS, bill through Google Cloud
+1. Open [AI control](/admin/agent-control) and select **Providers**, then **New provider**.
+2. Under **Provider**, choose Claude on Amazon Bedrock, Claude on Google Vertex AI, Claude
+   Platform on AWS, Claude Platform on Google Cloud or Claude on Microsoft Foundry. Choosing
+   Anthropic and then a **Platform** does the same.
+3. Under **Sign in with**, choose how Trenova proves who it is: an **IAM access key** or an
+   **API key** on AWS, a **Service account key** on Google Cloud, or an **API key** or
+   **Microsoft Entra ID** on Foundry. **This server's credentials** appears only where the
+   server's operator allows it, and uses the server's own identity, such as its IAM role, so
+   nothing is stored.
+4. Fill in the settings the platform asks for, such as **Region**, **Project ID**,
+   **Workspace ID**, **Resource name**, **Access key ID**, **Tenant ID** or **Client ID**.
+   Leave **Base URL** empty to use the platform's own address for those settings.
+5. Under **Sign-in credential**, paste the **Secret access key**, the **Client secret**, the key,
+   or the whole JSON file under **Service account key (JSON)**.
+6. Type the **Model ID** the platform gives Claude. Amazon Bedrock, Google Vertex AI and
+   Microsoft Foundry do not list their models; the Claude Platforms do, so **Fetch models**
+   works there.
+7. Select **Test draft**, then **Save & close**.
+
 ### Order providers and route tasks
 Keywords: provider priority, fallback, routing, which provider, reorder providers, assign task
 1. Open [AI control](/admin/agent-control) and select **Providers**.
@@ -531,6 +552,13 @@ A memory holds up to 4,000 characters. Each prompt carries only as much memory a
 recorded about the record the conversation is about. When the organization keeps close to 5,000
 active memories, the Memory section warns that fewer of them reach each prompt; retire what no
 longer holds.
+
+A provider on a cloud platform keeps its credential for the region, project, workspace and
+identity it was entered for. Change any of them, or the platform, and the editor asks for the
+credential again; the saved one is never sent somewhere it was not entered for. Signing in with
+the server's own credentials is off unless the server's operator turns it on, because on a
+server shared by several organizations it would spend the operator's cloud account; choosing it
+removes any credential the provider had saved.
 
 Opening the page needs read access to AI control. Each section in the rail appears only for
 people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions,

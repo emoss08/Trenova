@@ -48,14 +48,16 @@ func (f *fakeProviderRepo) MarkTested(
 type fakeProber struct {
 	result *agentports.TestAIProviderResult
 	seen   string
+	probed *aiprovider.Provider
 }
 
 func (f *fakeProber) Probe(
 	_ context.Context,
-	_ *aiprovider.Provider,
+	provider *aiprovider.Provider,
 	apiKey string,
 ) *agentports.TestAIProviderResult {
 	f.seen = apiKey
+	f.probed = provider
 	return f.result
 }
 

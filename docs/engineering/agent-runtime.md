@@ -91,6 +91,23 @@ over a `Turn`) from workflow code, through the `TurnEffects` seam:
   runs; `TestEveryActionToolValidatesBeforeFiling` lists the few that cannot,
   with the reason. All of it happens inside the activity, so no workflow
   command changes and no version gate is needed.
+- **A reply's reads run together.** Consecutive calls to tools that only look
+  something up (registered query tools whose effect is `lookup`, taken into
+  `TurnState.Reads` when the turn opens) are scheduled as activities before the
+  loop waits on any, up to `maxConcurrentReads` (8) at once, and settled in the
+  order the model asked, so the transcript, the stream and the model read the
+  calls' order whatever order they finish in (`concurrentreads.go`). Each read
+  is held to every check the loop makes before a dispatch as it joins, with the
+  waiting reads counted against the budget; anything else (a write, a refusal,
+  a call identical to a waiting one, a second call to the same `get_` tool,
+  whose card is bunched with the first by call id) settles the batch first and
+  takes the ordinary path. A read in a batch is dispatched with the taint and
+  outside-content flags the turn had when the batch started, which a query tool
+  never reads; a write after it always waits for the batch. In process
+  (`localEffects`, the red-team harness) the reads run one after another, since
+  a request's context may carry a transaction. Behind
+  `agent-loop-concurrent-reads`, asked only when a second read would join, and
+  a turn state without `Reads` runs every call on its own.
 - `find_tools` and `publish_artifact` are activities of their own. Call ids
   are minted through `workflow.SideEffect`, so a replay reads back the same id.
   An id an adapter made up from the call's position (Ollama, and an
@@ -186,6 +203,123 @@ keep a small ceiling from ending every turn partway through a tool call:
 The retry is one more model activity, so it is behind the `agent-loop-cut-off-call-retry`
 gate, asked only of a completion that meets the condition.
 
+### Speaking to Claude
+
+The Anthropic adapter builds and reads every request with the official Go SDK
+(`github.com/anthropics/anthropic-sdk-go`), on its beta Messages surface, so the
+request types cover every block, tool and beta the API has and a new one needs no
+hand-written JSON. Trenova keeps the transport around it
+(`modeladapter/anthropicclient.go`):
+
+- **Nothing from the environment.** The SDK's default client reads `ANTHROPIC_*`
+  credentials, base URL, a saved profile and custom headers from the process. On a
+  server that hosts many organizations those would reach every provider an
+  operator configured, so the service is built from the provider's key, address and
+  the router's HTTP client alone.
+- **No retries underneath the router.** The SDK makes one attempt. Retries, rests
+  and failover stay with the router and the workflow, which count each attempt.
+- **Failures read the same as every protocol.** A middleware turns a reply that is
+  not 2xx into the shared `TransportError` (status, retryability, message,
+  Retry-After) and wraps a stream in the idle guard. An error event inside a stream
+  becomes the same retryable or final failure as before.
+- **One turn's results travel together.** `toAnthropicMessages` puts the results of the
+  calls one assistant turn made into a single user message, in order, with any text that
+  follows them after the last result, as the API asks. Sent one per message they read as
+  serial work and teach the model to stop calling tools in parallel.
+- **Pinned on the wire.** `anthropicwire_internal_test.go` keeps the exact method,
+  path, headers and body for each family of model and thinking setting under
+  `testdata/anthropic_wire`. A change to how a request is built is a diff to read
+  there; `UPDATE_ANTHROPIC_WIRE=1` rewrites the files after a deliberate one.
+
+### Reaching Claude through a platform
+
+An Anthropic Messages provider names a `platform` (`aiprovider.Platform`, column
+`ai_providers.platform`) and, for anything but `Direct`, a `platform_settings` JSONB
+object (`aiprovider.PlatformSettings`): the way it signs in (`auth`) and the region,
+project, workspace, resource, access key ID, tenant and client ID that platform and
+way of signing in take. Check constraints keep the platform to its enum, to the
+Anthropic kind, and keep settings off a direct provider. The domain
+(`aiprovider/platform.go`) normalizes and validates every setting against a strict
+pattern, because each ends up in a host name or URL path, and derives the base URL
+when none is given:
+
+| Platform | Address | Signs in with |
+|---|---|---|
+| `Direct` | the provider's base URL | its API key |
+| `Bedrock` | `https://bedrock-mantle.{region}.api.aws/anthropic` | SigV4 (`bedrock-mantle`), a Bedrock API key as a bearer token, or the server's AWS identity |
+| `ClaudePlatformAWS` | `https://aws-external-anthropic.{region}.api.aws` | SigV4 (`aws-external-anthropic`), an API key, or the server's AWS identity; always the `anthropic-workspace-id` header |
+| `VertexAI` | `{region}-aiplatform.googleapis.com` (`global`, `us` and `eu` have their own hosts) | a service account key, or the server's Google identity |
+| `ClaudePlatformGoogleCloud` | `https://claude.googleapis.com/v1alpha/projects/{p}/locations/{loc}/workspaces/{w}/invoke` | a service account key, or the server's Google identity |
+| `Foundry` | `https://{resource}.services.ai.azure.com/anthropic` | an API key, or an Entra ID app registration's client secret |
+
+The adapter (`modeladapter/anthropicplatform.go`) signs requests in Trenova's own
+code, not with the SDK's platform packages, because those read credentials from the
+process environment. Each way of signing in is an SDK middleware registered last, so
+it runs innermost and signs the request exactly as it is sent; Vertex AI's middleware
+also moves the model from the body into the `:rawPredict`/`:streamRawPredict` path and
+sets `anthropic_version` to `vertex-2023-10-16`. Token sources and AWS credentials
+are cached in a 256-slot LRU keyed by a SHA-256 digest of the credential and its
+settings, so a rotated key is a new entry and no secret is a map key. A Google key
+must be a service account key (other credential files can make the server read files
+or call other addresses), loaded with its `token_uri` pinned to
+`https://oauth2.googleapis.com/token`. A token endpoint's 4xx becomes a final 401
+`TransportError`, not a retry.
+
+- **The server's own identity is opt-in.** `auth: Server` uses the AWS default chain
+  or Google application default credentials of the process. On a server shared by
+  many organizations that would let any organization spend the operator's cloud
+  account, so it works only when `ai.serverCloudCredentials` is true (default
+  false). The service refuses to save it otherwise, and every call checks it again
+  (`Call.ServerCredentialsAllowed`), so turning the setting off stops providers
+  already saved with it. Such a provider stores no key; saving one clears any.
+- **A credential stays with its target.** `aiprovider.SameCredentialTarget` compares
+  kind, platform, resolved settings and the base URL's origin. An update that changes
+  any of them without a new key is refused, and a draft test reuses the stored key
+  only for the target it was entered for. A service account key is fingerprinted by
+  its `private_key_id`, since every key file starts and ends alike.
+- **Not every platform lists models.** `Platform.ListsModels` is true for Direct and
+  both Claude Platforms; listing anywhere else returns `ErrModelsNotListed`, which the
+  prober reports as "type the model ID instead", and the editor skips the fetch.
+
+The catalog (`GET /ai-providers/catalog/`) describes each platform's settings, ways of
+signing in, which of those store a credential and whether it lists models, plus
+`serverCloudCredentials`, so the editor (`providers/platform-model.ts`) offers only
+what the server accepts and sends only the settings the chosen platform takes.
+`anthropicplatform_internal_test.go` checks every platform's address, headers and
+signature, re-verifying each SigV4 signature as AWS would.
+
+### Why a prompt cache missed
+
+`ai.cacheDiagnostics` (default false) has every agent chat call to a provider on the
+Claude API itself (`aiprovider.Provider.OnClaudeAPI`: Direct platform at
+`api.anthropic.com`) ask the API where its prompt stopped matching the call before
+it. Claude Platform on AWS and Google Cloud, Bedrock, Vertex AI, Foundry and gateways
+do not take the field, and one-shot completions have no call before them, so neither
+asks.
+
+The API keeps a short-lived fingerprint only of a call that asked, so every call
+sends `diagnostics`: `previous_message_id` null when there is nothing to name, else
+the id of the last reply this provider gave in the conversation
+(`modeladapter.previousReply`). That id travels on the assistant message
+(`agentports.Message.ReplyID`/`ReplyProvider`, from
+`ChatCompletionResult.ProviderMessageID`) and is saved in
+`assistant_messages.provider_message_id`, so a turn's first call names the last call
+of the turn before. A reply from another provider is passed over; one from this
+provider without an id (saved before the column) leaves nothing to name. Grounding
+and placement retries resend the rejected reply with its id; a hand-off or tool round
+the server wrote has none.
+
+The adapter reads `diagnostics` off the message, or off `message_start` on a stream,
+into `Response.CacheDiagnosis`: the reason (`model_changed`, `system_changed`,
+`tools_changed`, `messages_changed`, `previous_message_not_found`, `unavailable`, or
+`pending` when the comparison had not finished) and, for a change, the estimated
+tokens after the divergence. The router (`noteCacheDiagnosis`) logs a changed prompt
+at info, with the provider, model, cache counts, organization, agent, thread and run,
+and anything else at debug, and puts the reason on the attempt's span. A changed
+prompt is the harness's to fix: the most likely places are history replay shortening
+older tool results and anything per-turn written ahead of a cache breakpoint.
+Diagnostics never fail a call.
+
 ### Thinking on Claude
 
 Claude models differ in how they are asked to think, and the Anthropic adapter reads which
@@ -235,6 +369,54 @@ than any it names takes the newest known constraints.
   `Response.ThinkingDropped`, and the attempt span carries it as
   `trenova.ai.thinking_dropped`. A value that keeps appearing is the harness editing a
   conversation it should hold still.
+
+### Files the person attached
+
+A turn's user message carries the files attached to it as references
+(`agentports.Message.Files`): the document id, name, type, size, pages, and
+where the file's entry sits in the attachments block (`EntryStart`/`EntryEnd`),
+with the entry that replaces it when the file itself is sent (`NativeEntry`,
+rendered by `agentdefinition.RenderAttachments`). Only the current message's
+files are carried; an earlier message's are named in the replay and read with
+`read_attachment`, and a delegate's task carries none. Bytes never cross a
+durable boundary.
+
+The Anthropic adapter reads them at call time (`modeladapter/anthropicfiles.go`)
+through `Call.Files`, which the router binds to the request's tenant from
+`agentports.MessageFileReader` (`messagefileservice`, over the documents module's
+`conversationfileservice`, which decrypts through `storedobject` and finds only a
+conversation's documents; no view is recorded, as for document intelligence).
+`aiprovider.Provider.FileInput` decides who reads files: an Anthropic Messages
+provider whose model id reads as Claude, because the same protocol fronts other
+vendors' models that refuse a document block. A PDF goes as a `document` block
+(titled with the file name, its id as context) and a JPEG, PNG, GIF or WebP as an
+`image` block after a line naming it, ahead of the message's text, and the file's
+entry is swapped for one that says the file is attached, so its extracted text is
+not paid for twice. Swaps run last first and only where the span still opens with
+the file's `AttachmentEntryLead`.
+
+Anything else goes as its text, and `Response.Files` says why, which the router
+logs: a type the model does not read, an image over 3.75 MB, a PDF past 100 pages
+(600 on a million-token model), the request's files past 20 MB together, a PDF that
+will not open (counted and checked with `kernelports.PDFReader` when the worker has
+one), or a file that could not be read. A request the provider refuses with a 400 or
+413 while carrying files is sent once more without them, before anything has
+streamed. The reader keeps up to eight files of 8 MB or less for ten minutes, keyed
+by tenant and document, since every model call of a turn sends the same files.
+OpenAI and Ollama providers read the text as before.
+
+### How big a model's context is
+
+Compaction and the run overflow guard work from the provider's context window: the one
+an operator configured (filled from the model list when an endpoint reports it), and
+otherwise the one its model id names (`aiprovider.ContextWindowFor`). A Claude id in any
+endpoint's form is read by `aiprovider.ParseClaudeModel`, which the adapter's thinking
+rules use too: Opus and Sonnet from 4.6, Haiku from 5.5, and every Fable and Mythos get
+1,000,000 tokens; earlier Claude models, ids it cannot read, and a family it does not know
+get 200,000, since erring small only compacts sooner. A conversation compacts itself at
+`conversation.AutoCompactShare` (85%) of that window, so on a million-token model a thread
+can grow to about 850,000 tokens first. An organization that would rather pay for less
+context per call configures a smaller window on the provider; it always wins over the id.
 
 OpenAI-compatible servers that do not parse a model's tool-call template return it as text.
 The chat adapter lifts it (`modeladapter.liftInlineToolCalls`): a whole GLM call
@@ -1395,8 +1577,9 @@ A provider reuses the start of a prompt only while it is the same bytes, so a
 request is laid out stable first:
 
 - **Bytes.** Every request body, the tools and the replayed tool-call arguments
-  included, is encoded with sorted keys (`modeladapter.requestJSON`); a map in
-  Go's random order made every request different.
+  included, is encoded with sorted keys (`modeladapter.requestJSON`, and the
+  SDK's encoder for Anthropic); a map in Go's random order made every request
+  different. `TestRequests_AreTheSameBytesEveryTime` holds every protocol to it.
 - **System prompt.** `BuildSystemPromptParts` writes what every turn of an agent
   shares first and the turn's own part after it. The shared part is, in order:
   the identity line (the agent's name and description), Trenova's rules
@@ -1869,6 +2052,7 @@ before the change:
 | `agent-loop-interjections` | a turn never reads what the person said while it worked, nor checks its records for changes; a steer waits in the queue and is sent as the next message | nothing; the check itself is the only cost, and it is asked only when a steer is waiting or a check of the records is due |
 | `agent-loop-fresh-synthesized-call-ids` | a call whose id the adapter synthesized keeps it unless the replayed conversation already holds it | nothing; the check itself is the only cost, and it is asked only of a completion that carries a synthesized id |
 | `agent-loop-unshown-ask` | an `ask_user` call the runtime refused is an ordinary result that counts as asked: the turn may end in silence after it, and the same question is refused as repeated | nothing; the check itself is the only cost, and it is asked only of an ask the runtime refused |
+| `agent-loop-concurrent-reads` | each read is dispatched and settled before the next call of the reply starts | nothing; the check itself is the only cost, and it is asked only when a second read would join a batch |
 | `document-ai-extraction-timer-poll` | `extractWithTaskToken` | `SubmitAndAwaitDocumentAIExtractionActivity`, `PollPendingDocumentAIExtractionsWorkflow` and its schedule, task tokens on `document_ai_extractions` |
 | none: the workflow is retired whole | `ImportAssistantTurnWorkflow` on `agent-chat-queue`, which no route starts any more | the workflow, its activities and registry in `importassistantjobs`, `workflow_test.go`, and the turn machinery in `shipmentimportassistantservice` (the tool loop, `toolGrants`, `persistConversationTurn`); delete them once no `ImportAssistantTurnWorkflow` execution is open |
 

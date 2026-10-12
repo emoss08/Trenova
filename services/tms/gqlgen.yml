@@ -2319,6 +2319,15 @@ models:
   AIThinkingStyle:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.ThinkingStyle
+  AIProviderPlatform:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.Platform
+  AIProviderPlatformAuth:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.PlatformAuth
+  AIProviderPlatformSettings:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.PlatformSettings
   AIRetrievalSourceType:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval.SourceType

@@ -51,6 +51,9 @@ type Params struct {
 	Spend agentports.AIProviderSpendService  `optional:"true"`
 	Slots agentports.ProviderSlotRepository  `optional:"true"`
 	Keys  agentports.AIProviderKeyRepository `optional:"true"`
+	// Files reads the files a person attached, for a model that reads files
+	// itself. Optional: without it every file is read as its text.
+	Files agentports.MessageFileReader `optional:"true"`
 }
 
 type Service struct {
@@ -70,6 +73,8 @@ type Service struct {
 	// limits holds each provider to its cap, its calls at once and its
 	// timeout.
 	limits *providerLimits
+	// files reads attached files for a model that reads files itself.
+	files agentports.MessageFileReader
 	// pause waits out a backoff. It is a field so tests can count the waits
 	// instead of sitting through them.
 	pause func(ctx context.Context, wait time.Duration) error
@@ -103,6 +108,7 @@ func newService(p Params) *Service {
 		adapters:      modeladapter.NewRegistry(),
 		health:        newProviderHealth(nil).share(p.Breakers, logger),
 		limits:        newProviderLimits(&p),
+		files:         p.Files,
 		pause:         pauseFor,
 		clients:       make(map[bool]*http.Client, 2),
 		streamClients: make(map[bool]*http.Client, 2),
@@ -181,6 +187,7 @@ type runOutcome struct {
 	FinishReason     string
 	Truncated        bool
 	ThinkingDropped  int
+	CacheDiagnosis   *modeladapter.CacheDiagnosis
 	ProviderID       pulid.ID
 	ProviderKind     aiprovider.Kind
 	LatencyMs        int64
@@ -522,9 +529,10 @@ func (s *Service) callFor(
 	}
 
 	return &modeladapter.Call{
-		Provider: provider,
-		APIKey:   apiKey,
-		Client:   s.clientFor(provider),
+		Provider:                 provider,
+		APIKey:                   apiKey,
+		Client:                   s.clientFor(provider),
+		ServerCredentialsAllowed: s.ai.ServerCloudCredentialsAllowed(),
 		Request: &modeladapter.Request{
 			// A provider that cannot enforce the schema on the wire is given it in
 			// the prompt instead, so every candidate sees the same requirements.
@@ -641,7 +649,7 @@ func (s *Service) wait(ctx context.Context, wait time.Duration) error {
 func (s *Service) resolveAPIKey(provider *aiprovider.Provider) (string, error) {
 	stored := strings.TrimSpace(provider.APIKey)
 	if stored == "" {
-		if provider.Kind.RequiresAPIKey() {
+		if provider.RequiresCredential() {
 			return "", errortypes.NewBusinessError(
 				"AI provider {0} has no API key configured", provider.Name,
 			)

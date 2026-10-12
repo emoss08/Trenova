@@ -659,6 +659,12 @@ type AIProvider {
   organizationId: ID!
   """USD per million output tokens; null means unknown."""
   outputCostPerMillion: Decimal
+  """Where an Anthropic Messages provider reaches Claude."""
+  platform: AIProviderPlatform!
+  """
+  What the platform needs besides the credential. Null for a provider called directly.
+  """
+  platformSettings: AIProviderPlatformSettings
   priority: Int!
   reasoningEffort: AIReasoningEffort!
   structuredOutputMode: AIStructuredOutputMode!
@@ -727,6 +733,11 @@ input AIProviderEndpointInput {
   apiKey: String
   baseUrl: String!
   kind: AIProviderKind!
+  """
+  Where an Anthropic Messages endpoint reaches Claude. Omitted calls the base URL directly.
+  """
+  platform: AIProviderPlatform
+  platformSettings: AIProviderPlatformSettingsInput
   providerId: ID
 }
 
@@ -802,6 +813,79 @@ input AIProviderPatchInput {
   outputCostPerMillion: Decimal @goField(omittable: true)
   tasks: [AITask!] @goField(omittable: true)
   trusted: Boolean @goField(omittable: true)
+}
+
+"""
+Where an Anthropic Messages provider reaches Claude. Direct calls the base URL
+with the API key, which every other kind always does.
+"""
+enum AIProviderPlatform {
+  """Amazon Bedrock's Messages endpoint."""
+  Bedrock
+  """
+  Claude Platform on AWS: the Claude API run by Anthropic, billed through AWS.
+  """
+  ClaudePlatformAWS
+  """Claude Platform on Google Cloud."""
+  ClaudePlatformGoogleCloud
+  Direct
+  """Microsoft Foundry."""
+  Foundry
+  """Google Vertex AI's Anthropic publisher models."""
+  VertexAI
+}
+
+"""How a request to a platform proves who sent it."""
+enum AIProviderPlatformAuth {
+  """Signed with an IAM access key; the secret access key is stored."""
+  AccessKey
+  """The stored key: an Anthropic, Bedrock or Foundry API key."""
+  ApiKey
+  """
+  Tokens from Microsoft Entra ID for an app registration; its client secret is stored.
+  """
+  EntraID
+  """
+  The cloud credentials of the server Trenova runs on, where the server allows it. Nothing is stored.
+  """
+  Server
+  """Tokens from a Google service account key, which is stored."""
+  ServiceAccount
+}
+
+"""
+What a platform needs besides its credential. None of it is secret; a setting
+the platform does not take is empty.
+"""
+type AIProviderPlatformSettings {
+  """The IAM access key that signs requests."""
+  accessKeyId: String!
+  auth: AIProviderPlatformAuth!
+  """The Entra ID app registration's client ID."""
+  clientId: String!
+  """The Google Cloud project."""
+  projectId: String!
+  """The AWS region, the Vertex AI region or the Google Cloud location."""
+  region: String!
+  """The Foundry resource name."""
+  resource: String!
+  """The Entra ID tenant."""
+  tenantId: String!
+  """
+  The Anthropic workspace, for Claude Platform on AWS and on Google Cloud.
+  """
+  workspaceId: String!
+}
+
+input AIProviderPlatformSettingsInput {
+  accessKeyId: String
+  auth: AIProviderPlatformAuth
+  clientId: String
+  projectId: String
+  region: String
+  resource: String
+  tenantId: String
+  workspaceId: String
 }
 
 """

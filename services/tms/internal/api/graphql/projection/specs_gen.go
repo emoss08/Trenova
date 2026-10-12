@@ -1449,6 +1449,14 @@ func init() {
 				FieldMapKey: "thinkingStyle",
 			},
 			{
+				Name:        "platform",
+				FieldMapKey: "platform",
+			},
+			{
+				Name:        "platformSettings",
+				FieldMapKey: "platformSettings",
+			},
+			{
 				Name:        "extraBody",
 				FieldMapKey: "extraBody",
 			},

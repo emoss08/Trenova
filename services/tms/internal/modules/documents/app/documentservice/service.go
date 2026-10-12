@@ -12,6 +12,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	workflowstarterservice "github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
@@ -537,7 +539,7 @@ func (s *Service) documentUploadBody(
 
 	encrypted, err := s.encryption.EncryptBytesWithAAD(
 		plaintext,
-		documentStorageAAD(tenantInfo, storagePath),
+		storedobject.AAD(tenantInfo, storagePath),
 	)
 	if err != nil {
 		return nil, "", 0, errortypes.NewBusinessError("Failed to encrypt document").
@@ -782,7 +784,7 @@ func (s *Service) GetPreviewContent(
 	body, err := s.readStoredObject(
 		ctx,
 		doc.PreviewStoragePath,
-		documentStorageAAD(req.TenantInfo, doc.PreviewStoragePath),
+		storedobject.AAD(req.TenantInfo, doc.PreviewStoragePath),
 	)
 	if err != nil {
 		return nil, err
@@ -803,7 +805,7 @@ func (s *Service) readDocumentObject(
 	tenantInfo pagination.TenantInfo,
 	storagePath string,
 ) ([]byte, error) {
-	return s.readStoredObject(ctx, storagePath, documentStorageAAD(tenantInfo, doc.StoragePath))
+	return s.readStoredObject(ctx, storagePath, storedobject.AAD(tenantInfo, doc.StoragePath))
 }
 
 func (s *Service) readStoredObject(
@@ -811,31 +813,7 @@ func (s *Service) readStoredObject(
 	storagePath string,
 	aad encryptionservice.AAD,
 ) ([]byte, error) {
-	download, err := s.storage.Download(ctx, storagePath)
-	if err != nil {
-		return nil, errortypes.NewDatabaseError("Failed to download document").WithInternal(err)
-	}
-	if download == nil || download.Body == nil {
-		return nil, errortypes.NewDatabaseError("Failed to download document")
-	}
-	defer download.Body.Close()
-
-	data, err := io.ReadAll(download.Body)
-	if err != nil {
-		return nil, errortypes.NewDatabaseError("Failed to read document").WithInternal(err)
-	}
-	if s.encryption == nil {
-		return nil, errortypes.NewBusinessError("Document encryption is not configured")
-	}
-	if !encryptionservice.IsEnvelope(string(data)) {
-		return nil, errortypes.NewBusinessError("Stored document is not encrypted")
-	}
-
-	plaintext, err := s.encryption.DecryptBytesWithAAD(string(data), aad)
-	if err != nil {
-		return nil, errortypes.NewBusinessError("Failed to decrypt document").WithInternal(err)
-	}
-	return plaintext, nil
+	return storedobject.Read(ctx, s.storage, s.encryption, storagePath, aad)
 }
 
 func viewContentDisposition(doc *document.Document) string {
@@ -853,18 +831,6 @@ func isActiveContentType(contentType string) bool {
 		return true
 	default:
 		return false
-	}
-}
-
-func documentStorageAAD(
-	tenantInfo pagination.TenantInfo,
-	storagePath string,
-) encryptionservice.AAD {
-	return encryptionservice.AAD{
-		Purpose:        encryptionservice.PurposeDocument,
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		ResourceID:     storagePath,
 	}
 }
 

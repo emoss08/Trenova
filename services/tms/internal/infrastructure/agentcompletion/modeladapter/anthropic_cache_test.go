@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/stretchr/testify/assert"
@@ -23,15 +24,14 @@ The mark goes at the end because what is cached is everything up to it.
 func TestCachedTools_MarksTheEndOfTheSchemas(t *testing.T) {
 	t.Parallel()
 
-	tools := cachedTools([]anthropicTool{
+	tools := cachedTools(toAnthropicTools([]ToolSpec{
 		{Name: "list_workers"},
 		{Name: "list_shipments"},
-	})
+	}))
 
 	require.Len(t, tools, 2)
-	assert.Nil(t, tools[0].CacheControl, "only the last tool closes the prefix")
-	require.NotNil(t, tools[1].CacheControl)
-	assert.Equal(t, "ephemeral", tools[1].CacheControl.Type)
+	assert.NotContains(t, wireMap(t, tools[0]), "cache_control", "only the last tool closes the prefix")
+	assert.Equal(t, map[string]any{"type": "ephemeral"}, wireMap(t, tools[1])["cache_control"])
 }
 
 func TestCachedSystem_MarksTheSystemPrompt(t *testing.T) {
@@ -40,9 +40,10 @@ func TestCachedSystem_MarksTheSystemPrompt(t *testing.T) {
 	blocks := cachedSystem("You are an agent inside Trenova.", 0)
 
 	require.Len(t, blocks, 1)
-	assert.Equal(t, "text", blocks[0].Type)
-	assert.Equal(t, "You are an agent inside Trenova.", blocks[0].Text)
-	require.NotNil(t, blocks[0].CacheControl)
+	block := wireMap(t, blocks[0])
+	assert.Equal(t, "text", block["type"])
+	assert.Equal(t, "You are an agent inside Trenova.", block["text"])
+	assert.Equal(t, map[string]any{"type": "ephemeral"}, block["cache_control"])
 }
 
 // A breakpoint on nothing still costs a cache write, so an empty tool list or
@@ -59,39 +60,27 @@ func TestCachedPrefix_MarksNothingWhenThereIsNothingToCache(t *testing.T) {
 func TestAnthropicRequest_SendsSystemAsBlocksCarryingTheBreakpoint(t *testing.T) {
 	t.Parallel()
 
-	body := anthropicRequest{
+	body := wireMap(t, anthropic.BetaMessageNewParams{
 		Model:     "claude-test",
 		MaxTokens: 1024,
 		System:    cachedSystem("Be brief.", 0),
-		Tools:     cachedTools([]anthropicTool{{Name: "list_workers"}}),
-	}
+		Tools:     cachedTools(toAnthropicTools([]ToolSpec{{Name: "list_workers"}})),
+	})
 
-	encoded, err := sonic.Marshal(body)
-	require.NoError(t, err)
+	system, ok := body["system"].([]any)
+	require.True(t, ok)
+	require.Len(t, system, 1)
+	block, ok := system[0].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "Be brief.", block["text"])
+	assert.Equal(t, map[string]any{"type": "ephemeral"}, block["cache_control"])
 
-	var decoded struct {
-		System []struct {
-			Type         string `json:"type"`
-			Text         string `json:"text"`
-			CacheControl *struct {
-				Type string `json:"type"`
-			} `json:"cache_control"`
-		} `json:"system"`
-		Tools []struct {
-			CacheControl *struct {
-				Type string `json:"type"`
-			} `json:"cache_control"`
-		} `json:"tools"`
-	}
-	require.NoError(t, sonic.Unmarshal(encoded, &decoded))
-
-	require.Len(t, decoded.System, 1)
-	assert.Equal(t, "Be brief.", decoded.System[0].Text)
-	require.NotNil(t, decoded.System[0].CacheControl)
-	assert.Equal(t, "ephemeral", decoded.System[0].CacheControl.Type)
-
-	require.Len(t, decoded.Tools, 1)
-	require.NotNil(t, decoded.Tools[0].CacheControl)
+	tools, ok := body["tools"].([]any)
+	require.True(t, ok)
+	require.Len(t, tools, 1)
+	tool, ok := tools[0].(map[string]any)
+	require.True(t, ok)
+	assert.Contains(t, tool, "cache_control")
 }
 
 /*
@@ -107,9 +96,9 @@ func TestCachedSystem_MarksTheEndOfTheSharedPart(t *testing.T) {
 
 	require.Len(t, blocks, 2)
 	assert.Equal(t, "Rules that never change.", blocks[0].Text)
-	require.NotNil(t, blocks[0].CacheControl)
+	assert.Contains(t, wireMap(t, blocks[0]), "cache_control")
 	assert.Equal(t, "\n\nToday is Friday.", blocks[1].Text)
-	assert.Nil(t, blocks[1].CacheControl)
+	assert.NotContains(t, wireMap(t, blocks[1]), "cache_control")
 }
 
 func TestCachedSystem_KeepsOneBlockWithoutASharedPart(t *testing.T) {
@@ -119,7 +108,7 @@ func TestCachedSystem_KeepsOneBlockWithoutASharedPart(t *testing.T) {
 		blocks := cachedSystem("Be brief.", stable)
 		require.Len(t, blocks, 1, "stable=%d", stable)
 		assert.Equal(t, "Be brief.", blocks[0].Text)
-		require.NotNil(t, blocks[0].CacheControl)
+		assert.Contains(t, wireMap(t, blocks[0]), "cache_control", "stable=%d", stable)
 	}
 }
 
@@ -146,7 +135,7 @@ func TestCachedConversation_MarksOnlyTheLastBlock(t *testing.T) {
 	for idx, message := range messages {
 		for blockIdx, block := range message.Content {
 			last := idx == len(messages)-1 && blockIdx == len(message.Content)-1
-			if block.CacheControl != nil {
+			if _, ok := wireMap(t, block)["cache_control"]; ok {
 				marked++
 				assert.True(t, last, "only the last block of the conversation is marked")
 			}
@@ -173,4 +162,16 @@ func TestAnthropicRequest_StaysWithinTheMarkLimit(t *testing.T) {
 	encoded, err := sonic.Marshal(*captured)
 	require.NoError(t, err)
 	assert.Equal(t, 3, strings.Count(string(encoded), `"cache_control"`))
+}
+
+// wireMap is v as it goes on the wire.
+func wireMap(t *testing.T, v any) map[string]any {
+	t.Helper()
+
+	encoded, err := sonic.Marshal(v)
+	require.NoError(t, err)
+	decoded := map[string]any{}
+	require.NoError(t, sonic.Unmarshal(encoded, &decoded))
+
+	return decoded
 }

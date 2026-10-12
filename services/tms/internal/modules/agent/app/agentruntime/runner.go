@@ -244,27 +244,30 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 
 		liftRationales(completion.ToolCalls)
 		assistantTurn := conversation.Message{
-			Role:         conversation.RoleAssistant,
-			Content:      completion.Text,
-			ToolCalls:    toToolCallRecords(completion.ToolCalls),
-			Reasoning:    completion.Reasoning,
-			Model:        completion.ModelIdentifier,
-			ProviderID:   completion.ProviderID,
-			FallbackFrom: fallbackOf(completion),
-			InputTokens:  completion.InputTokens,
-			OutputTokens: completion.OutputTokens,
-			LatencyMs:    completion.LatencyMs,
-			CostUSD:      completion.CostUSD,
-			CreatedAt:    fx.Now(),
+			Role:              conversation.RoleAssistant,
+			Content:           completion.Text,
+			ToolCalls:         toToolCallRecords(completion.ToolCalls),
+			Reasoning:         completion.Reasoning,
+			Model:             completion.ModelIdentifier,
+			ProviderID:        completion.ProviderID,
+			FallbackFrom:      fallbackOf(completion),
+			InputTokens:       completion.InputTokens,
+			OutputTokens:      completion.OutputTokens,
+			LatencyMs:         completion.LatencyMs,
+			CostUSD:           completion.CostUSD,
+			CreatedAt:         fx.Now(),
+			ProviderMessageID: completion.ProviderMessageID,
 		}
 		result.Messages = append(result.Messages, assistantTurn)
 		// The thinking goes back with the calls it produced. Anthropic and the
 		// Responses API both refuse a tool result whose reasoning is missing.
 		t.messages = append(t.messages, agentports.Message{
-			Role:      agentports.RoleAssistant,
-			Content:   completion.Text,
-			ToolCalls: completion.ToolCalls,
-			Reasoning: completion.Reasoning,
+			Role:          agentports.RoleAssistant,
+			Content:       completion.Text,
+			ToolCalls:     completion.ToolCalls,
+			Reasoning:     completion.Reasoning,
+			ReplyID:       completion.ProviderMessageID,
+			ReplyProvider: completion.ProviderID,
 		})
 		fx.Emit(kernelports.StreamEvent{
 			Event: agentports.AssistantEventMessage,
@@ -277,17 +280,31 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 			},
 		})
 
+		batch := &readBatch{}
 		for _, call := range completion.ToolCalls {
-			fx.Emit(kernelports.StreamEvent{
-				Event: agentports.AssistantEventToolStarted,
-				Data: agentports.AssistantToolStartedEvent{
-					CallID:    call.ID,
-					Name:      call.Name,
-					Arguments: call.Arguments,
-					Effect:    s.ToolEffect(call.Name),
-					Why:       call.Why,
-				},
-			})
+			check := &joinCheck{
+				call:   call,
+				used:   result.ToolCallsUsed,
+				budget: budget,
+				stuck:  stuck,
+			}
+			key, joins := t.joins(fx, batch, check)
+			if !joins && batch.size() > 0 {
+				// The waiting reads settle first; with them settled the call
+				// may start a batch of its own.
+				s.settleReads(t, fx, batch)
+				check.used = result.ToolCallsUsed
+				key, joins = t.joins(fx, batch, check)
+			}
+			if joins {
+				s.emitToolStarted(fx, &call)
+				s.load(tools, call.Name)
+				batch.calls = append(batch.calls, t.dispatchCall(&call, completion.Text))
+				batch.keys = append(batch.keys, key)
+				continue
+			}
+
+			s.emitToolStarted(fx, &call)
 
 			// Arguments that did not parse are not arguments. The tool used to
 			// run on the empty map that stood in for them, and a list tool given
@@ -476,38 +493,11 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 				continue
 			}
 
-			earlier := t.earlier(call.Name)
-			outcome := fx.Dispatch(t, DispatchCall{
-				Call:                 call,
-				CompletionText:       completion.Text,
-				ProposedSoFar:        unwithdrawn(result.Actions),
-				Ordinal:              t.counts.next(call),
-				AfterExternalContent: t.external,
-				Taint:                result.Taint,
-				Earlier:              earlier,
-			}).internal()
-			outcome.dispatched = true
-			if !outcome.failed {
-				outcome.content += fanOutNote(call.Name, len(earlier)+1)
-			}
-			if outcome.failed {
-				t.repeats.record(call, outcome.content)
-			} else {
-				t.repeats.ran(call)
-			}
-			if !outcome.failed && ReadsExternalContent(call.Name) {
-				t.external = true
-			}
-			t.absorbTaint(fx, outcome.taint)
-			t.noteMemories(fx, &outcome)
-			result.ToolCallsUsed++
-			s.recordToolResult(t, fx, call, outcome)
-			if !outcome.failed {
-				t.noteToolMemories(fx, call.Name)
-				t.noteShown(&call)
-				t.noteWorld(fx, &call, &outcome)
-			}
+			dispatch := t.dispatchCall(&call, completion.Text)
+			outcome := fx.Dispatch(t, dispatch)
+			s.settleDispatched(t, fx, &dispatch, &outcome)
 		}
+		s.settleReads(t, fx, batch)
 
 		s.logger.Debug("agent tool iteration",
 			zap.String("agent", definition.Name),
@@ -542,6 +532,67 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 	fx.Emit(deltaEvent(ending))
 
 	return result, nil
+}
+
+func (s *Service) emitToolStarted(effects TurnEffects, call *agentports.ToolCall) {
+	effects.Emit(kernelports.StreamEvent{
+		Event: agentports.AssistantEventToolStarted,
+		Data: agentports.AssistantToolStartedEvent{
+			CallID:    call.ID,
+			Name:      call.Name,
+			Arguments: call.Arguments,
+			Effect:    s.ToolEffect(call.Name),
+			Why:       call.Why,
+		},
+	})
+}
+
+// dispatchCall is a call the loop has decided to make, with what the turn
+// knew when it decided.
+func (t *Turn) dispatchCall(call *agentports.ToolCall, completionText string) DispatchCall {
+	return DispatchCall{
+		Call:                 *call,
+		CompletionText:       completionText,
+		ProposedSoFar:        unwithdrawn(t.result.Actions),
+		Ordinal:              t.counts.next(*call),
+		AfterExternalContent: t.external,
+		Taint:                t.result.Taint,
+		Earlier:              t.earlier(call.Name),
+	}
+}
+
+// settleDispatched folds what a dispatched call came to into the turn: the
+// repeat guard, what it read from outside, the memories it touched, the
+// budget, the transcript and what the person was shown.
+func (s *Service) settleDispatched(
+	t *Turn,
+	effects TurnEffects,
+	dispatch *DispatchCall,
+	reported *ToolOutcome,
+) {
+	call := dispatch.Call
+	outcome := reported.internal()
+	outcome.dispatched = true
+	if !outcome.failed {
+		outcome.content += fanOutNote(call.Name, len(dispatch.Earlier)+1)
+	}
+	if outcome.failed {
+		t.repeats.record(call, outcome.content)
+	} else {
+		t.repeats.ran(call)
+	}
+	if !outcome.failed && ReadsExternalContent(call.Name) {
+		t.external = true
+	}
+	t.absorbTaint(effects, outcome.taint)
+	t.noteMemories(effects, &outcome)
+	t.result.ToolCallsUsed++
+	s.recordToolResult(t, effects, call, outcome)
+	if !outcome.failed {
+		t.noteToolMemories(effects, call.Name)
+		t.noteShown(&call)
+		t.noteWorld(effects, &call, &outcome)
+	}
 }
 
 // maxLoopRefusalChars bounds what a loop refusal keeps of what the model
@@ -742,18 +793,19 @@ func (s *Service) finish(
 
 	result.Reply = reply
 	message := conversation.Message{
-		Role:         conversation.RoleAssistant,
-		Content:      reply,
-		Reasoning:    completion.Reasoning,
-		Model:        completion.ModelIdentifier,
-		ProviderID:   completion.ProviderID,
-		Truncated:    completion.Truncated,
-		FallbackFrom: fallbackOf(completion),
-		InputTokens:  completion.InputTokens,
-		OutputTokens: completion.OutputTokens,
-		LatencyMs:    completion.LatencyMs,
-		CostUSD:      completion.CostUSD,
-		CreatedAt:    fx.Now(),
+		Role:              conversation.RoleAssistant,
+		Content:           reply,
+		Reasoning:         completion.Reasoning,
+		Model:             completion.ModelIdentifier,
+		ProviderID:        completion.ProviderID,
+		Truncated:         completion.Truncated,
+		FallbackFrom:      fallbackOf(completion),
+		InputTokens:       completion.InputTokens,
+		OutputTokens:      completion.OutputTokens,
+		LatencyMs:         completion.LatencyMs,
+		CostUSD:           completion.CostUSD,
+		CreatedAt:         fx.Now(),
+		ProviderMessageID: completion.ProviderMessageID,
 	}
 	if outputDecision.Altered {
 		message.ScopeStage = string(outputDecision.Stage)

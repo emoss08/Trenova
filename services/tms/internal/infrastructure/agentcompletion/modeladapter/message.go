@@ -19,6 +19,10 @@ type (
 	// off the wire is what the message stores and what the next call replays.
 	ReasoningTrace = conversation.ReasoningTrace
 	CutOffToolCall = agentports.CutOffToolCall
+	// MessageFile is a file a user message carries, and MessageFileContent
+	// its bytes as read for a model that reads files itself.
+	MessageFile        = agentports.MessageFile
+	MessageFileContent = agentports.MessageFileContent
 )
 
 const (

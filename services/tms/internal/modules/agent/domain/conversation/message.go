@@ -123,6 +123,10 @@ type Message struct {
 	ProviderID   pulid.ID      `json:"providerId"        bun:"provider_id,type:VARCHAR(100),nullzero"`
 	InputTokens  int           `json:"inputTokens"       bun:"input_tokens,type:INTEGER,notnull,default:0"`
 	OutputTokens int           `json:"outputTokens"      bun:"output_tokens,type:INTEGER,notnull,default:0"`
+	// ProviderMessageID is the provider's own id for this reply, which the
+	// next call to the same provider names when it asks the Claude API why
+	// its prompt cache missed.
+	ProviderMessageID string `json:"providerMessageId,omitempty" bun:"provider_message_id,type:VARCHAR(200),nullzero"`
 	// LatencyMs is how long the model took to answer this turn; CostUSD is
 	// what it cost at the provider's price, nil where no price is configured.
 	LatencyMs int64            `json:"latencyMs" bun:"latency_ms,type:BIGINT,nullzero"`

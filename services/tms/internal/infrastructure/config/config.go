@@ -839,7 +839,20 @@ type AIConfig struct {
 	// many organizations sets it false, because otherwise any of their
 	// administrators can make the server call into its own network.
 	PrivateNetworkProviders *bool `mapstructure:"privateNetworkProviders"`
-	MaxRetries              int   `mapstructure:"maxRetries"              validate:"omitempty,min=0,max=10"`
+	// ServerCloudCredentials lets a provider on Amazon Bedrock, Vertex AI or
+	// Claude Platform on AWS or Google Cloud sign in with this server's own
+	// cloud identity (an IAM role, application default credentials) instead
+	// of a key stored for it. Off unless set: on a server that hosts many
+	// organizations it would let any of their administrators spend the
+	// operator's cloud account.
+	ServerCloudCredentials bool `mapstructure:"serverCloudCredentials"`
+	// CacheDiagnostics asks the Claude API, on each agent turn's model call,
+	// where the prompt stopped matching the call before it, and logs and
+	// traces the answer. Off unless set: it is for an operator chasing cache
+	// misses, and the API keeps a fingerprint of each request it is asked
+	// about for a short while.
+	CacheDiagnostics bool `mapstructure:"cacheDiagnostics"`
+	MaxRetries       int  `mapstructure:"maxRetries"       validate:"omitempty,min=0,max=10"`
 	// ModelPriceReference fills in a model's price, when the provider's own
 	// model list gives none, from OpenRouter's public catalog, marked as an
 	// estimate. It is a pointer so an absent key keeps it on; a deployment that
@@ -911,6 +924,18 @@ const AIEnabledKey = "ai.enabled"
 // on a private or loopback address.
 func (c *AIConfig) PrivateNetworkProvidersAllowed() bool {
 	return c == nil || c.PrivateNetworkProviders == nil || *c.PrivateNetworkProviders
+}
+
+// ServerCloudCredentialsAllowed reports whether a provider may sign in with
+// the server's own cloud credentials.
+func (c *AIConfig) ServerCloudCredentialsAllowed() bool {
+	return c != nil && c.ServerCloudCredentials
+}
+
+// CacheDiagnosticsEnabled reports whether model calls ask the Claude API why
+// their prompt cache missed.
+func (c *AIConfig) CacheDiagnosticsEnabled() bool {
+	return c != nil && c.CacheDiagnostics
 }
 
 func (c *AIConfig) AIEnabled() bool {

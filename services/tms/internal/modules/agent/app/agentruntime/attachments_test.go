@@ -156,3 +156,85 @@ func TestReplayHistory_ShowsARecentFileWithItsTextAndAnOldOneByName(t *testing.T
 	assert.Contains(t, messages[0].Content, "- id: "+old.String())
 	assert.Contains(t, messages[6].Content, "<file_text>\nSHIPPER#1:   Harbor Line Cold Storage")
 }
+
+/*
+The files go on the message as references, each with where its entry stands in
+the message once every line the turn adds in front of it is there, so a model
+that reads files can swap the entry for the file. A clock line or an anchor
+added ahead of the block must not leave the offsets pointing at the wrong text.
+*/
+func TestOpenTurn_CarriesEachFileAndWhereItsEntryStands(t *testing.T) {
+	t.Parallel()
+
+	pdf := pulid.MustNew("doc_").String()
+	photo := pulid.MustNew("doc_").String()
+	definition := testDefinition()
+	definition.ContextProviders = append(definition.ContextProviders, agentdefinition.ContextClock)
+	turn := attachmentRuntime().OpenTurn(t.Context(), &agentports.RunRequest{
+		Definition: definition,
+		Actor:      testActor(),
+		Input:      "Check these",
+		Context: agentdefinition.RuntimeContext{
+			Timezone: "America/Chicago",
+			Attachments: []agentdefinition.RuntimeAttachment{
+				{
+					DocumentID:  pdf,
+					FileName:    "ratecon.pdf",
+					ContentType: "application/pdf",
+					FileSize:    48_213,
+					PageCount:   2,
+					Reading:     agentdefinition.AttachmentReadingDone,
+					Text:        "Linehaul $2,400.",
+				},
+				{
+					DocumentID:  photo,
+					FileName:    "seal.png",
+					ContentType: "image/png",
+					FileSize:    912_004,
+					Reading:     agentdefinition.AttachmentReadingFailed,
+				},
+			},
+		},
+	})
+
+	asked := turn.messages[len(turn.messages)-1]
+	require.Len(t, asked.Files, 2)
+	assert.Equal(t, agentports.MessageFile{
+		DocumentID:  pdf,
+		FileName:    "ratecon.pdf",
+		ContentType: "application/pdf",
+		Size:        48_213,
+		PageCount:   2,
+		EntryStart:  asked.Files[0].EntryStart,
+		EntryEnd:    asked.Files[0].EntryEnd,
+		NativeEntry: asked.Files[0].NativeEntry,
+	}, asked.Files[0])
+	for _, file := range asked.Files {
+		entry := asked.Content[file.EntryStart:file.EntryEnd]
+		assert.True(t, strings.HasPrefix(entry, agentdefinition.AttachmentEntryLead(file.DocumentID)))
+		assert.True(t, strings.HasPrefix(file.NativeEntry, agentdefinition.AttachmentEntryLead(file.DocumentID)))
+	}
+	assert.Contains(t, asked.Content[asked.Files[0].EntryStart:asked.Files[0].EntryEnd], "Linehaul $2,400.")
+	assert.Positive(t, asked.Files[0].EntryStart, "the clock line stands ahead of the block")
+}
+
+// A task handed to another agent is not given the person's files.
+func TestOpenTurn_GivesADelegatedTaskNoFiles(t *testing.T) {
+	t.Parallel()
+
+	turn := attachmentRuntime().OpenTurn(t.Context(), &agentports.RunRequest{
+		Definition: testDefinition(),
+		Actor:      testActor(),
+		Input:      "Summarize the rate",
+		Delegation: &agentports.Delegation{CallID: "call_1", StepScope: "scope"},
+		Context: agentdefinition.RuntimeContext{
+			Attachments: []agentdefinition.RuntimeAttachment{{
+				DocumentID:  pulid.MustNew("doc_").String(),
+				FileName:    "ratecon.pdf",
+				ContentType: "application/pdf",
+			}},
+		},
+	})
+
+	assert.Empty(t, turn.messages[len(turn.messages)-1].Files)
+}

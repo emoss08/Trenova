@@ -3,16 +3,19 @@ package modeladapter
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"regexp"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/anthropics/anthropic-sdk-go"
+	"github.com/anthropics/anthropic-sdk-go/option"
+	"github.com/anthropics/anthropic-sdk-go/packages/param"
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -35,6 +38,9 @@ type ModelsCall struct {
 	Provider *aiprovider.Provider
 	APIKey   string
 	Client   *http.Client
+	// ServerCredentialsAllowed lets a provider sign in to its platform with
+	// the server's own cloud identity.
+	ServerCredentialsAllowed bool
 }
 
 type ModelInfo struct {
@@ -133,49 +139,107 @@ func getBody(
 	return payload, nil
 }
 
-type anthropicModelsPage struct {
-	Data []struct {
-		ID          string `json:"id"`
-		DisplayName string `json:"display_name"`
-		CreatedAt   string `json:"created_at"`
-	} `json:"data"`
-	HasMore bool   `json:"has_more"`
-	LastID  string `json:"last_id"`
-}
+// ErrModelsNotListed is a platform that serves no Models API: Bedrock,
+// Vertex AI and Foundry name their models their own way, so the model ID is
+// typed instead.
+var ErrModelsNotListed = errors.New("this platform does not list its models")
 
+// listAnthropicModels reads the Models API through the provider's platform,
+// signed in the same way its calls are. The window each model reports is the
+// one it has; a model that reports none takes the one its id is known by.
 func listAnthropicModels(ctx context.Context, call *ModelsCall) ([]ModelInfo, error) {
-	headers := map[string]string{
-		"x-api-key":         call.APIKey,
-		"anthropic-version": anthropicVersion,
+	if !call.Provider.ResolvedPlatform().ListsModels() {
+		return nil, ErrModelsNotListed
 	}
-	models := make([]ModelInfo, 0, 16)
-	after := ""
-	for range maxAnthropicPages {
-		query := url.Values{"limit": {strconv.Itoa(anthropicModelsLimit)}}
-		if after != "" {
-			query.Set("after_id", after)
-		}
 
-		var page anthropicModelsPage
-		endpoint := call.Provider.ResolvedBaseURL() + "/v1/models?" + query.Encode()
-		if err := getModelList(ctx, call.Client, endpoint, headers, &page); err != nil {
-			return nil, err
+	adapterCall := &Call{
+		Provider:                 call.Provider,
+		APIKey:                   call.APIKey,
+		Client:                   call.Client,
+		ServerCredentialsAllowed: call.ServerCredentialsAllowed,
+	}
+	baseURL := call.Provider.ResolvedBaseURL()
+	if baseURL == "" {
+		return nil, errors.New("this provider has no address to list models at")
+	}
+	platformOpts, err := newPlatformCredentials().platformOptions(ctx, adapterCall)
+	if err != nil {
+		return nil, err
+	}
+
+	opts := make([]option.RequestOption, 0, len(platformOpts)+4)
+	opts = append(opts,
+		option.WithBaseURL(baseURL),
+		option.WithHTTPClient(call.Client),
+		option.WithMaxRetries(0),
+		option.WithMiddleware(
+			anthropicTransport(adapterCall, false),
+			capResponseBody(maxModelListBytes),
+		),
+	)
+	opts = append(opts, platformOpts...)
+	service := anthropic.NewModelService(opts...)
+
+	pager := service.ListAutoPaging(ctx, anthropic.ModelListParams{
+		Limit: param.NewOpt[int64](anthropicModelsLimit),
+	})
+	models := make([]ModelInfo, 0, 16)
+	for pager.Next() && len(models) < anthropicModelsLimit*maxAnthropicPages {
+		item := pager.Current()
+		info := ModelInfo{
+			ID:          item.ID,
+			DisplayName: item.DisplayName,
+			CreatedAt:   positiveUnix(item.CreatedAt.Unix()),
 		}
-		for _, item := range page.Data {
-			models = append(models, withKnownWindow(ModelInfo{
-				ID:          item.ID,
-				DisplayName: item.DisplayName,
-				CreatedAt:   unixFromRFC3339(item.CreatedAt),
-			}))
+		if item.MaxInputTokens > 0 {
+			info.ContextWindow = int(item.MaxInputTokens)
 		}
-		if !page.HasMore || page.LastID == "" || page.LastID == after {
-			break
-		}
-		after = page.LastID
+		models = append(models, withKnownWindow(info))
+	}
+	if err = pager.Err(); err != nil {
+		return nil, err
 	}
 
 	return dedupeModels(models), nil
 }
+
+// capResponseBody stops reading a reply past limit bytes: an endpoint that
+// sends without end is broken, and must not use up the worker's memory.
+func capResponseBody(limit int64) option.Middleware {
+	return func(req *http.Request, next option.MiddlewareNext) (*http.Response, error) {
+		resp, err := next(req)
+		if err != nil || resp == nil {
+			return resp, err
+		}
+		resp.Body = &cappedBody{body: resp.Body, remaining: limit + 1, limit: limit}
+
+		return resp, nil
+	}
+}
+
+type cappedBody struct {
+	body      io.ReadCloser
+	remaining int64
+	limit     int64
+}
+
+func (c *cappedBody) Read(p []byte) (int, error) {
+	if c.remaining <= 0 {
+		return 0, fmt.Errorf("the provider's model list is larger than %d bytes", c.limit)
+	}
+	if int64(len(p)) > c.remaining {
+		p = p[:c.remaining]
+	}
+	n, err := c.body.Read(p)
+	c.remaining -= int64(n)
+	if c.remaining <= 0 && err == nil {
+		return n, fmt.Errorf("the provider's model list is larger than %d bytes", c.limit)
+	}
+
+	return n, err
+}
+
+func (c *cappedBody) Close() error { return c.body.Close() }
 
 type openAIModelEntry struct {
 	ID               string         `json:"id"`

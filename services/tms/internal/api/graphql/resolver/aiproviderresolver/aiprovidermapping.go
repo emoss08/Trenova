@@ -85,13 +85,43 @@ func endpointFromInput(
 		return agentports.AIProviderEndpoint{}, err
 	}
 
-	return agentports.AIProviderEndpoint{
+	endpoint := agentports.AIProviderEndpoint{
 		ProviderID:          providerID,
 		Kind:                input.Kind,
+		Platform:            aiprovider.PlatformDirect,
+		PlatformSettings:    platformSettingsFromInput(input.PlatformSettings),
 		BaseURL:             input.BaseURL,
 		APIKey:              input.APIKey,
 		AllowPrivateNetwork: input.AllowPrivateNetwork,
-	}, nil
+	}
+	if input.Platform != nil {
+		endpoint.Platform = *input.Platform
+	}
+
+	return endpoint, nil
+}
+
+func platformSettingsFromInput(
+	input *gqlmodel.AIProviderPlatformSettingsInput,
+) *aiprovider.PlatformSettings {
+	if input == nil {
+		return nil
+	}
+
+	settings := &aiprovider.PlatformSettings{
+		Region:      base.StringValue(input.Region),
+		ProjectID:   base.StringValue(input.ProjectID),
+		WorkspaceID: base.StringValue(input.WorkspaceID),
+		AccessKeyID: base.StringValue(input.AccessKeyID),
+		Resource:    base.StringValue(input.Resource),
+		TenantID:    base.StringValue(input.TenantID),
+		ClientID:    base.StringValue(input.ClientID),
+	}
+	if input.Auth != nil {
+		settings.Auth = *input.Auth
+	}
+
+	return settings
 }
 
 func patchFromInput(

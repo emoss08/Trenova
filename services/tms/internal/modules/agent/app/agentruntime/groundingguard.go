@@ -84,7 +84,12 @@ func (s *Service) reground(
 		})
 		fx.Emit(regroundedEvent(agentports.RegroundRewrite, finding, groundingRetryReason))
 		t.messages = append(t.messages,
-			agentports.Message{Role: agentports.RoleAssistant, Content: completion.Text},
+			agentports.Message{
+				Role:          agentports.RoleAssistant,
+				Content:       completion.Text,
+				ReplyID:       completion.ProviderMessageID,
+				ReplyProvider: completion.ProviderID,
+			},
 			agentports.Message{Role: agentports.RoleUser, Content: finding.correction()},
 		)
 
