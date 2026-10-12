@@ -4870,15 +4870,18 @@ a.dk-rec-doc:focus-visible {
 }
 /* shipments as a ruled table, a load to a line under the column heads */
 .dk-rec-tbl {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns:
+    minmax(84px, max-content) minmax(0, 1fr) minmax(56px, max-content)
+    minmax(84px, max-content) minmax(84px, max-content);
+  column-gap: 10px;
 }
 .dk-rec-tbl-h,
 .dk-rec-row.dk-rec-tbl-r {
   display: grid;
-  grid-template-columns: minmax(84px, 0.9fr) minmax(0, 1.6fr) 56px 84px 84px;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
   align-items: center;
-  gap: 10px;
 }
 .dk-rec-tbl-h > span:last-child,
 .dk-rec-tbl-r > :last-child {
@@ -4918,14 +4921,18 @@ a.dk-rec-doc:focus-visible {
   color: var(--dsk-fg2);
 }
 @container (max-width: 520px) {
-  .dk-rec-tbl-h,
-  .dk-rec-row.dk-rec-tbl-r {
-    grid-template-columns: minmax(0, 1fr) 84px 84px;
+  .dk-rec-tbl {
+    grid-template-columns: minmax(0, 1fr) minmax(84px, max-content) minmax(84px, max-content);
+  }
+  .dk-rec-tbl-r > b {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .dk-rec-tbl-h > span:nth-child(2),
   .dk-rec-tbl-h > span:nth-child(3),
   .dk-rec-tbl-r > .dk-rec-lane,
-  .dk-rec-tbl-r > .dk-rec-tbl-n:nth-of-type(1) {
+  .dk-rec-tbl-r > .dk-rec-lane + .dk-rec-tbl-n {
     display: none;
   }
 }
