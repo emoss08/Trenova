@@ -1881,6 +1881,30 @@
   color: var(--dsk-faint);
   padding: 18px 10px 8px;
 }
+.dk-sb-gt {
+  display: flex;
+  width: 100%;
+  gap: 6px;
+  text-align: left;
+  border-radius: 6px;
+  transition: color 140ms;
+}
+.dk-sb-gt:hover {
+  color: var(--dsk-muted);
+}
+.dk-sb-gc {
+  margin-block: -1px;
+  transform: rotate(90deg);
+  transition: transform 260ms var(--dk-spring);
+}
+.dk-sb-gt[aria-expanded="false"] .dk-sb-gc {
+  transform: rotate(0deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-sb-gc {
+    transition: none;
+  }
+}
 .dk-sb-dot {
   width: 14px;
   display: grid;

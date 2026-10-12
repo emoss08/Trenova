@@ -109,6 +109,11 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 		)
 	}
 
+	waivers, err := detentionWaiversOf(adjustment)
+	if err != nil {
+		return nil, err
+	}
+
 	lockedInvoice, err := s.repo.LockInvoiceForUpdate(
 		ctx,
 		invoiceadjustmentports.LockInvoiceAdjustmentRequest{
@@ -317,13 +322,12 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 		if err = s.voidReversedInvoice(ctx, adjustment, lockedInvoice, actor, now); err != nil {
 			return nil, err
 		}
-	} else if err = s.syncDetentionBilling(
-		ctx,
-		lockedInvoice,
-		actor,
-		creditMemoInvoice,
-		replacementInvoice,
-	); err != nil {
+	} else if err = s.syncDetentionBilling(ctx, &detentionSync{
+		source:    lockedInvoice,
+		actor:     actor,
+		waivers:   waivers,
+		documents: []*invoice.Invoice{creditMemoInvoice, replacementInvoice},
+	}); err != nil {
 		return nil, err
 	}
 

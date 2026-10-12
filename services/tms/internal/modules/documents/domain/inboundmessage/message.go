@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/emailutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -86,6 +87,29 @@ type InboundMessage struct {
 	FailureCode string   `json:"failureCode" bun:"failure_code,type:VARCHAR(100),nullzero"`
 	FailureText string   `json:"failureText" bun:"failure_text,type:TEXT,nullzero"`
 
+	MessageKey              string      `json:"messageKey"              bun:"message_key,type:VARCHAR(500),nullzero"`
+	ThreadKey               string      `json:"threadKey"               bun:"thread_key,type:VARCHAR(500),notnull"`
+	SenderDomain            string      `json:"senderDomain"            bun:"sender_domain,type:VARCHAR(255),notnull"`
+	OwnerID                 pulid.ID    `json:"ownerId"                 bun:"owner_id,type:VARCHAR(100),nullzero"`
+	DueAt                   int64       `json:"dueAt"                   bun:"due_at,type:BIGINT,nullzero"`
+	Parked                  Parking     `json:"parked"                  bun:"parked,type:VARCHAR(20),nullzero"`
+	SnoozedUntil            int64       `json:"snoozedUntil"            bun:"snoozed_until,type:BIGINT,nullzero"`
+	SnoozeEvent             SnoozeEvent `json:"snoozeEvent"             bun:"snooze_event,type:VARCHAR(30),nullzero"`
+	SnoozeWatchID           pulid.ID    `json:"snoozeWatchId"           bun:"snooze_watch_id,type:VARCHAR(100),nullzero"`
+	SnoozeDocumentTypeID    pulid.ID    `json:"snoozeDocumentTypeId"    bun:"snooze_document_type_id,type:VARCHAR(100),nullzero"`
+	SnoozedAt               int64       `json:"snoozedAt"               bun:"snoozed_at,type:BIGINT,nullzero"`
+	SnoozedBy               pulid.ID    `json:"snoozedBy"               bun:"snoozed_by,type:VARCHAR(100),nullzero"`
+	AwaitingSince           int64       `json:"awaitingSince"           bun:"awaiting_since,type:BIGINT,nullzero"`
+	AwaitingUntil           int64       `json:"awaitingUntil"           bun:"awaiting_until,type:BIGINT,nullzero"`
+	NovaRead                bool        `json:"novaRead"                bun:"nova_read,type:BOOLEAN,notnull,default:false"`
+	HandledByRuleID         pulid.ID    `json:"handledByRuleId"         bun:"handled_by_rule_id,type:VARCHAR(100),nullzero"`
+	HandledAction           NovaAction  `json:"handledAction"           bun:"handled_action,type:VARCHAR(30),nullzero"`
+	ClassificationCorrected bool        `json:"classificationCorrected" bun:"classification_corrected,type:BOOLEAN,notnull,default:false"`
+	Facts                   []Fact      `json:"facts"                   bun:"facts,type:JSONB,nullzero"`
+	Conflicts               []Conflict  `json:"conflicts"               bun:"conflicts,type:JSONB,nullzero"`
+	ActionState             ActionState `json:"actionState"             bun:"action_state,type:JSONB,notnull,default:'{}'"`
+	LoadDraft               *LoadDraft  `json:"loadDraft"               bun:"load_draft,type:JSONB,nullzero"`
+
 	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
@@ -130,6 +154,63 @@ func (m *InboundMessage) NeedsReview() bool {
 	return m.Status == StatusInReview || m.Status == StatusQuarantined
 }
 
+func (m *InboundMessage) IsWaiting() bool {
+	return m.NeedsReview() && m.Parked == ""
+}
+
+func (m *InboundMessage) IsSnoozed() bool {
+	return m.NeedsReview() && m.Parked == ParkingSnoozed
+}
+
+func (m *InboundMessage) IsAwaitingReply() bool {
+	return m.NeedsReview() && m.Parked == ParkingAwaitingReply
+}
+
+func (m *InboundMessage) Snooze(snooze Snooze, now int64) {
+	m.Parked = ParkingSnoozed
+	m.SnoozedUntil = snooze.Until
+	m.SnoozeEvent = snooze.Event
+	m.SnoozeWatchID = snooze.WatchID
+	m.SnoozeDocumentTypeID = snooze.DocumentTypeID
+	m.SnoozedAt = now
+	m.SnoozedBy = snooze.By
+	m.AwaitingSince = 0
+	m.AwaitingUntil = 0
+}
+
+func (m *InboundMessage) AwaitReply(until, now int64) {
+	m.Unpark()
+	m.Parked = ParkingAwaitingReply
+	m.AwaitingSince = now
+	m.AwaitingUntil = until
+}
+
+func (m *InboundMessage) Unpark() {
+	m.Parked = ""
+	m.SnoozedUntil = 0
+	m.SnoozeEvent = ""
+	m.SnoozeWatchID = pulid.Nil
+	m.SnoozeDocumentTypeID = pulid.Nil
+	m.SnoozedAt = 0
+	m.SnoozedBy = pulid.Nil
+	m.AwaitingSince = 0
+	m.AwaitingUntil = 0
+}
+
+func (m *InboundMessage) ApplyResponseTarget(minutes int) {
+	if minutes <= 0 {
+		m.DueAt = 0
+
+		return
+	}
+	m.DueAt = m.ReceivedAt + int64(minutes)*60
+}
+
+func (m *InboundMessage) HasRecord() bool {
+	return m.MatchedShipmentID.IsNotNil() || m.MatchedCustomerID.IsNotNil() ||
+		m.MatchedCarrierID.IsNotNil()
+}
+
 func (m *InboundMessage) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	m.MessageID = stringutils.StripNUL(m.MessageID)
 	m.InReplyTo = stringutils.StripNUL(m.InReplyTo)
@@ -137,14 +218,19 @@ func (m *InboundMessage) BeforeAppendModel(_ context.Context, query bun.Query) e
 	m.Subject = stringutils.StripNUL(m.Subject)
 	m.TextBody = stringutils.StripNUL(m.TextBody)
 	m.FailureText = stringutils.StripNUL(m.FailureText)
+	if _, ok := query.(*bun.InsertQuery); ok && m.ID.IsNil() {
+		m.ID = pulid.MustNew("imsg_")
+	}
+	m.SenderDomain = emailutils.Domain(m.FromAddress)
+	m.MessageKey = NormalizeMessageID(m.MessageID)
+	if m.ThreadKey == "" {
+		m.ThreadKey = DeriveThreadKey(m.MessageID, m.ID)
+	}
 
 	now := timeutils.NowUnix()
 
 	switch query.(type) {
 	case *bun.InsertQuery:
-		if m.ID.IsNil() {
-			m.ID = pulid.MustNew("imsg_")
-		}
 		if m.Status == "" {
 			m.Status = StatusReceived
 		}
@@ -214,8 +300,24 @@ type InboundAttachment struct {
 	DraftID         pulid.ID `json:"draftId"         bun:"draft_id,type:VARCHAR(100),nullzero"`
 	FailureText     string   `json:"failureText"     bun:"failure_text,type:TEXT,nullzero"`
 
+	FiledShipmentID pulid.ID         `json:"filedShipmentId" bun:"filed_shipment_id,type:VARCHAR(100),nullzero"`
+	FiledAs         string           `json:"filedAs"         bun:"filed_as,type:VARCHAR(100),nullzero"`
+	FiledAt         int64            `json:"filedAt"         bun:"filed_at,type:BIGINT,nullzero"`
+	FiledBy         pulid.ID         `json:"filedBy"         bun:"filed_by,type:VARCHAR(100),nullzero"`
+	PageCount       int              `json:"pageCount"       bun:"page_count,type:INTEGER,notnull,default:0"`
+	Pages           []AttachmentPage `json:"pages"           bun:"pages,type:JSONB,nullzero"`
+	SplitDocuments  []SplitDocument  `json:"splitDocuments"  bun:"split_documents,type:JSONB,nullzero"`
+
 	CreatedAt int64 `json:"createdAt" bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+}
+
+func (a *InboundAttachment) Readable() bool {
+	return a.FailureText == "" && a.DocumentID.IsNotNil()
+}
+
+func (a *InboundAttachment) Filed() bool {
+	return a.FiledShipmentID.IsNotNil() || len(a.SplitDocuments) > 0
 }
 
 func (a *InboundAttachment) Validate(multiErr *errortypes.MultiError) {

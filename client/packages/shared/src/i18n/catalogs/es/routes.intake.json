@@ -94,7 +94,6 @@
   "{0, plural, one {# stack is waiting to be filed} other {# stacks are waiting to be filed}}": "{0, plural, one {# lote espera archivarse} other {# lotes esperan archivarse}}",
   "{0, plural, one {# stack} other {# stacks}}": "{0, plural, one {# lote} other {# lotes}}",
   "{0, plural, one {Deleted in # day} other {Deleted in # days}}": "{0, plural, one {Se elimina en # día} other {Se elimina en # días}}",
-  "{0, plural, one {File # document} other {File # documents}}": "{0, plural, one {Archivar # documento} other {Archivar # documentos}}",
   "{0, plural, one {Filing # document} other {Filing # documents}}": "{0, plural, one {Archivando # documento} other {Archivando # documentos}}",
   "{0, plural, one {Its page moves} other {Its # pages move}} to Set aside. From there you can drag them into another document, or leave them to be deleted with the stack's other unfiled pages.": "{0, plural, one {Su página pasa} other {Sus # páginas pasan}} a Apartar. Desde allí puede arrastrarlas a otro documento o dejarlas para que se eliminen con las demás páginas sin archivar del lote.",
   "{0, plural, one {The # document already filed stays on its record.} other {The # documents already filed stay on their records.}} Every other page is deleted.": "{0, plural, one {El # documento ya archivado permanece en su registro.} other {Los # documentos ya archivados permanecen en sus registros.}} Todas las demás páginas se eliminan.",

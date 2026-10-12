@@ -32,6 +32,19 @@ type SyncDetentionInvoiceBillingRequest struct {
 	InvoiceNumber string
 	Event         DetentionBillingEvent
 	ActorUserID   pulid.ID
+	Waivers       []DetentionWaiver
+}
+
+func (r *SyncDetentionInvoiceBillingRequest) WaiverFor(
+	occurrenceID pulid.ID,
+) (DetentionWaiver, bool) {
+	for _, waiver := range r.Waivers {
+		if waiver.OccurrenceID == occurrenceID {
+			return waiver, true
+		}
+	}
+
+	return DetentionWaiver{}, false
 }
 
 // DetentionBillingService keeps detention charges and invoices in step: a

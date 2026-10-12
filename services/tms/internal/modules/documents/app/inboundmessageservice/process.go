@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -89,6 +90,8 @@ func (s *Service) ProcessMessage(
 
 	message.Classification = classification.Class
 	message.Confidence = classification.Confidence
+	message.Facts = classification.Facts
+	message.NovaRead = classification.Narrated
 	message.Status = outcome.Status
 	message.MatchedCustomerID = match.CustomerID
 	message.MatchedCarrierID = match.CarrierID
@@ -103,6 +106,14 @@ func (s *Service) ProcessMessage(
 		message.ReviewedAt = 0
 	}
 
+	targets, err := s.Targets(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	ApplyDue(message, targets)
+	applied := s.applyRules(ctx, message)
+	ApplyDue(message, targets)
+
 	updated, err := s.messageRepo.Update(ctx, message)
 	if err != nil {
 		return nil, err
@@ -114,8 +125,8 @@ func (s *Service) ProcessMessage(
 		zap.String("status", string(updated.Status)),
 		zap.Bool("handled", outcome.Handle))
 
-	s.project(ctx, updated)
-	s.publishMessage(ctx, updated, inboxRealtimeAction)
+	s.recordReading(ctx, updated, applied)
+	s.notify.MessagesChanged(ctx, updated)
 	s.notifyNeedsReview(ctx, updated)
 	s.queueForRetrieval(ctx, updated)
 	s.announce(ctx, updated)
@@ -152,21 +163,88 @@ func (s *Service) MarkFailed(
 		return nil
 	}
 
+	targets, err := s.Targets(ctx, tenantInfo)
+	if err != nil {
+		return err
+	}
+
 	message.Status = inboundmessage.StatusInReview
 	message.FailureCode = code
 	message.FailureText = reason
 	message.ReviewNote = "This message could not be processed, so it is waiting on a person."
 	message.UpdatedAt = timeutils.NowUnix()
+	ApplyDue(message, targets)
 
 	updated, err := s.messageRepo.Update(ctx, message)
 	if err != nil {
 		return err
 	}
 
-	s.project(ctx, updated)
-	s.publishMessage(ctx, updated, inboxRealtimeAction)
+	s.notify.MessagesChanged(ctx, updated)
 	s.notifyNeedsReview(ctx, updated)
 	s.queueForRetrieval(ctx, updated)
 
 	return nil
+}
+
+func ApplyDue(message *inboundmessage.InboundMessage, targets triage.Targets) {
+	if message.NeedsReview() {
+		if message.DueAt == 0 {
+			message.ApplyResponseTarget(targets.For(message.Classification))
+		}
+
+		return
+	}
+
+	message.DueAt = 0
+	message.Unpark()
+}
+
+func (s *Service) applyRules(
+	ctx context.Context,
+	message *inboundmessage.InboundMessage,
+) *inboundmessageports.RuleApplication {
+	if s.ruleEvaluator == nil || !message.IsWaiting() {
+		return nil
+	}
+
+	applied, err := s.ruleEvaluator.ApplyRules(ctx, message)
+	if err != nil {
+		s.l.Warn("could not apply the organization's rules; the message waits on a person",
+			zap.String("messageId", message.ID.String()), zap.Error(err))
+
+		return nil
+	}
+
+	return applied
+}
+
+func (s *Service) recordReading(
+	ctx context.Context,
+	message *inboundmessage.InboundMessage,
+	applied *inboundmessageports.RuleApplication,
+) {
+	activities := make([]*triage.Activity, 0, 2)
+	if message.NovaRead {
+		read := triage.NewActivity(message, triage.ActivityNovaRead).
+			ByNova().
+			About(string(message.Classification), "")
+		read.ToClassification = message.Classification
+		activities = append(activities, read)
+	}
+	if applied != nil && applied.Rule != nil {
+		rule := triage.NewActivity(message, triage.ActivityRuleApplied).
+			ByNova().
+			About(string(applied.Rule.Action), message.SenderDomain)
+		rule.RecordID = applied.Rule.ID
+		activities = append(activities, rule)
+	}
+	if len(activities) == 0 {
+		return
+	}
+
+	if err := s.activityRepo.Insert(ctx, activities); err != nil {
+		s.l.Warn("could not record what Nova did with a message",
+			zap.String("messageId", message.ID.String()), zap.Error(err))
+	}
 }

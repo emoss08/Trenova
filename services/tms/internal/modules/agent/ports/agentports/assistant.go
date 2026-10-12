@@ -843,6 +843,10 @@ type AssistantService interface {
 		ctx context.Context,
 		req ListThreadsRequest,
 	) (*ThreadPage, error)
+	CountThreadShelves(
+		ctx context.Context,
+		req *CountThreadShelvesRequest,
+	) (*ThreadShelfCounts, error)
 	GetThread(
 		ctx context.Context,
 		req GetThreadRequest,

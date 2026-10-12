@@ -2,7 +2,7 @@ import type { ResourceInvalidationEvent } from "@trenova/shared/hooks/realtime-p
 import type { ThreadPages } from "@/lib/thread-list";
 import type { AssistantThread } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
-import { boundCaseRecords, touchesCase } from "../case-realtime";
+import { boundCaseRecords, boundCaseRecordsIn, mayTouchCase, touchesCase } from "../case-realtime";
 
 function event(overrides: Partial<ResourceInvalidationEvent>): ResourceInvalidationEvent {
   return { organizationId: "org", businessUnitId: "bu", resource: "shipments", ...overrides };
@@ -88,5 +88,38 @@ describe("touchesCase", () => {
     expect(touchesCase(event({ recordId: "shp_plain" }), bound)).toBe(false);
     expect(touchesCase(event({ resource: "workers", recordId: "shp_case" }), bound)).toBe(false);
     expect(touchesCase(event({ recordId: "shp_case" }), new Set())).toBe(false);
+  });
+});
+
+/**
+ * The rail reads each shelf as a list of its own, so a case about a record
+ * may be held by any of them; a change to its record reaches it whichever.
+ */
+describe("boundCaseRecordsIn", () => {
+  const list = (subjectId: string): ThreadPages => ({
+    pages: [{ items: [caseThread(subjectId)], nextCursor: "" }],
+    pageParams: [""],
+  });
+
+  it("reads the records of the cases every list holds", () => {
+    const bound = boundCaseRecordsIn([list("shp_today"), list("shp_older")]);
+
+    expect([...bound].sort()).toEqual(["shp_older", "shp_today"]);
+    expect(touchesCase(event({ recordId: "shp_older" }), bound)).toBe(true);
+  });
+
+  it("reads one list as that list, and none as none", () => {
+    const only = list("shp_one");
+
+    expect(boundCaseRecordsIn([only])).toBe(boundCaseRecords(only));
+    expect(boundCaseRecordsIn([]).size).toBe(0);
+  });
+});
+
+describe("mayTouchCase", () => {
+  it("passes only the kinds of record a case is about or reads", () => {
+    expect(mayTouchCase(event({ resource: "shipments" }))).toBe(true);
+    expect(mayTouchCase(event({ resource: "document" }))).toBe(true);
+    expect(mayTouchCase(event({ resource: "workers" }))).toBe(false);
   });
 });

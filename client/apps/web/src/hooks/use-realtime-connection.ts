@@ -31,8 +31,16 @@ import {
   isShipmentCommentEvent,
 } from "@/lib/shipment-comment-realtime";
 import { isOtherUsersTurnEvent } from "@/lib/assistant-turn-realtime";
-import { boundCaseRecords, CASE_QUERY_ROOTS, touchesCase } from "@/lib/case-realtime";
-import type { ThreadPages } from "@/lib/thread-list";
+import {
+  boundCaseRecordsIn,
+  CASE_QUERY_ROOTS,
+  mayTouchCase,
+  touchesCase,
+} from "@/lib/case-realtime";
+import { cachedThreadLists } from "@/lib/thread-list";
+import { createInboundMessagePatcher, isInboundMessageEvent } from "@/lib/triage/realtime";
+import { senderName } from "@/lib/triage/message-state";
+import { useTriageStore } from "@/stores/triage-store";
 import { parseReplyReady } from "@/components/assistant/reply-ready";
 import { announceReplyReady } from "@/components/assistant/reply-ready-toast";
 import { releaseTurnReaders } from "@/components/assistant/turn-readers";
@@ -81,6 +89,22 @@ export function useRealtimeConnection() {
     const pendingKeys = pendingKeysRef.current;
     const lastFlushedAt = new Map<string, number>();
     let disposed = false;
+
+    // A message that arrives while Triage is open joins its folder with an
+    // entry of its own and a word about who it is from; anywhere else it only
+    // moves the counts.
+    const inboundMessages = createInboundMessagePatcher({
+      queryClient,
+      meId: user.id,
+      onArrival: (message) => {
+        const triage = useTriageStore.getState();
+        if (triage.mounted === 0) {
+          return;
+        }
+        triage.markArrival(message.id);
+        toast(t("New from {0}", senderName(message)));
+      },
+    });
 
     // Refetches every pending root not refetched within the last
     // MIN_REFETCH_INTERVAL_MS, and comes back for the rest when their
@@ -281,9 +305,16 @@ export function useRealtimeConnection() {
 
       // A change to the record a Desk case is about can settle the case or
       // tick its checklist, whatever else the event moves.
-      const threads = queryClient.getQueryData<ThreadPages>(queries.assistant.threads().queryKey);
-      if (touchesCase(evt, boundCaseRecords(threads))) {
+      if (
+        mayTouchCase(evt) &&
+        touchesCase(evt, boundCaseRecordsIn(cachedThreadLists(queryClient)))
+      ) {
         enqueueInvalidation(CASE_QUERY_ROOTS);
+      }
+
+      if (isInboundMessageEvent(evt)) {
+        inboundMessages.handle(evt);
+        return;
       }
 
       if (isShipmentCommentEvent(evt)) {
@@ -334,6 +365,7 @@ export function useRealtimeConnection() {
 
     return () => {
       disposed = true;
+      inboundMessages.dispose();
       offState();
       offResource();
       offReset();

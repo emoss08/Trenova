@@ -209,7 +209,7 @@ linters:
       # gqlgen writes every resolver signature, with input objects by value, and
       # rewrites it on each regeneration; the shape is not ours to change.
       - path: internal/api/graphql/resolver/.*\.resolvers\.go
-        text: 'hugeParam'
+        text: 'hugeParam|paramTypeCombine'
         linters:
           - gocritic
     paths:

@@ -95,7 +95,7 @@ func (g *Gateway) JoinPresence(
 		return nil, err
 	}
 
-	return g.broker.JoinPresence(ctx, conn, req.Scope)
+	return g.broker.JoinPresence(ctx, conn, req.Scope, req.State)
 }
 
 func (g *Gateway) LeavePresence(ctx context.Context, req *agentports.RealtimeScopeRequest) error {
@@ -218,6 +218,8 @@ func validateScopeRequest(req *agentports.RealtimeScopeRequest) error {
 		multiErr.Add("scope", errortypes.ErrInvalid, "Scope is invalid")
 	}
 
+	validatePresenceState(req.State, multiErr)
+
 	if req.UserID.IsNil() || req.OrganizationID.IsNil() || req.BusinessUnitID.IsNil() {
 		return errortypes.NewAuthenticationError("A signed-in user is required for live updates")
 	}
@@ -227,6 +229,29 @@ func validateScopeRequest(req *agentports.RealtimeScopeRequest) error {
 	}
 
 	return nil
+}
+
+func validatePresenceState(
+	state agentports.RealtimePresenceState,
+	multiErr *errortypes.MultiError,
+) {
+	if state.MessageID != "" && !pulid.LooksLike(state.MessageID) {
+		multiErr.Add("messageId", errortypes.ErrInvalid, "Message ID is invalid")
+	}
+
+	switch state.Activity {
+	case "":
+	case agentports.RealtimeActivityViewing, agentports.RealtimeActivityWriting:
+		if state.MessageID == "" {
+			multiErr.Add(
+				"activity",
+				errortypes.ErrInvalid,
+				"An activity needs the message it is on",
+			)
+		}
+	default:
+		multiErr.Add("activity", errortypes.ErrInvalid, "Activity must be viewing or writing")
+	}
 }
 
 // validScope keeps a scope to the characters its Redis keys and presence index

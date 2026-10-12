@@ -31,18 +31,21 @@ func (s *Service) ApplyCreditMemo(
 	}
 
 	var applied []*customerpayment.CreditMemoApplication
+	var settled []*invoice.Invoice
 	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		plan, txErr := s.planCreditApplication(txCtx, req, actor, s.invoiceRepo.LockForUpdate)
 		if txErr != nil {
 			return txErr
 		}
 
+		settled = make([]*invoice.Invoice, 0, len(plan.targets))
 		for idx, target := range plan.targets {
 			updatedTarget, updateErr := s.invoiceRepo.Update(txCtx, target)
 			if updateErr != nil {
 				return updateErr
 			}
 			s.logInvoiceAudit(plan.targetsBefore[idx], updatedTarget, actor.UserID)
+			settled = append(settled, updatedTarget)
 		}
 
 		updatedMemo, txErr := s.invoiceRepo.Update(txCtx, plan.memo)
@@ -72,6 +75,9 @@ func (s *Service) ApplyCreditMemo(
 	})
 	if err != nil {
 		return nil, err
+	}
+	for _, target := range settled {
+		s.wakeTriageOnPaid(ctx, target)
 	}
 
 	return applied, nil

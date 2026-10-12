@@ -3,6 +3,7 @@ package documentservice_test
 import (
 	"context"
 	"errors"
+	"io"
 	"testing"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -1636,4 +1638,71 @@ func TestUnit_PlanDelete_CountsEveryVersionOfALineage(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, 2, plan.FileCount())
+}
+
+func TestUnit_Store_StoresSealedBytesAsADocument(t *testing.T) {
+	t.Parallel()
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	typeID := pulid.MustNew("dt_")
+	var uploaded *kernelports.UploadParams
+
+	repo := &mockDocRepo{
+		CreateFn: func(_ context.Context, entity *document.Document) (*document.Document, error) {
+			return entity, nil
+		},
+	}
+	sc := &mockStorageClient{
+		UploadFn: func(_ context.Context, params *kernelports.UploadParams) (*kernelports.FileInfo, error) {
+			uploaded = params
+			return &kernelports.FileInfo{Key: params.Key}, nil
+		},
+	}
+	deps := newUnitTestService(t, repo, sc)
+
+	content := []byte("%PDF-1.7 detention record")
+	doc, err := deps.svc.Store(t.Context(), &documentports.StoreDocumentRequest{
+		TenantInfo:     pagination.TenantInfo{OrgID: orgID, BuID: buID},
+		Content:        content,
+		FileName:       "detention-record.pdf",
+		ContentType:    "application/pdf",
+		ResourceType:   "shipment",
+		ResourceID:     "shp_1",
+		DocumentTypeID: typeID,
+		Description:    "Detention record",
+		Tags:           []string{"detention"},
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, doc)
+	assert.Equal(t, "detention-record.pdf", doc.OriginalName)
+	assert.Equal(t, int64(len(content)), doc.FileSize)
+	assert.Equal(t, "shipment", doc.ResourceType)
+	require.NotNil(t, doc.DocumentTypeID)
+	assert.Equal(t, typeID, *doc.DocumentTypeID)
+	assert.Equal(t, document.ProcessingProfileNone, doc.ProcessingProfile)
+	require.NotNil(t, uploaded)
+	stored, err := io.ReadAll(uploaded.Body)
+	require.NoError(t, err)
+	assert.True(t, encryptionservice.IsEnvelope(string(stored)))
+	assert.Equal(t, doc.StoragePath, uploaded.Key)
+}
+
+func TestUnit_Store_RefusesAFileTheValidatorRefuses(t *testing.T) {
+	t.Parallel()
+
+	deps := newUnitTestService(t, &mockDocRepo{}, &mockStorageClient{})
+
+	doc, err := deps.svc.Store(t.Context(), &documentports.StoreDocumentRequest{
+		TenantInfo:   pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		Content:      []byte("MZ"),
+		FileName:     "record.exe",
+		ContentType:  "application/x-msdownload",
+		ResourceType: "shipment",
+		ResourceID:   "shp_1",
+	})
+
+	require.Error(t, err)
+	assert.Nil(t, doc)
 }

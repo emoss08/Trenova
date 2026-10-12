@@ -1,3 +1,4 @@
+import { DESK_SHELF_KEYS, type DeskShelfKey } from "@/components/desk-chat/rail/desk-threads";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -56,7 +57,10 @@ interface DeskSettingsState {
   settings: DeskSettings;
   /** What this person last searched the Desk for, newest first. */
   recentSearches: string[];
+  /** The rail's shelves this person has folded away. */
+  collapsedShelves: DeskShelfKey[];
   rememberSearch: (query: string) => void;
+  toggleShelf: (key: DeskShelfKey) => void;
   set: <K extends keyof DeskSettings>(key: K, value: DeskSettings[K]) => void;
   reset: () => void;
 }
@@ -75,17 +79,31 @@ export const useDeskSettingsStore = create<DeskSettingsState>()(
             ...state.recentSearches.filter((past) => past.toLowerCase() !== query.toLowerCase()),
           ].slice(0, RECENT_SEARCH_LIMIT),
         })),
+      collapsedShelves: [],
+      toggleShelf: (key) =>
+        set((state) => ({
+          collapsedShelves: state.collapsedShelves.includes(key)
+            ? state.collapsedShelves.filter((shelf) => shelf !== key)
+            : [...state.collapsedShelves, key],
+        })),
     }),
     {
       name: "trenova-desk-settings",
       version: 1,
-      partialize: (state) => ({ settings: state.settings, recentSearches: state.recentSearches }),
+      partialize: (state) => ({
+        settings: state.settings,
+        recentSearches: state.recentSearches,
+        collapsedShelves: state.collapsedShelves,
+      }),
       merge: (persisted, current) => {
         const saved = persisted as Partial<DeskSettingsState> | undefined;
         return {
           ...current,
           settings: { ...DESK_SETTINGS_DEFAULTS, ...saved?.settings },
           recentSearches: Array.isArray(saved?.recentSearches) ? saved.recentSearches : [],
+          collapsedShelves: Array.isArray(saved?.collapsedShelves)
+            ? DESK_SHELF_KEYS.filter((key) => saved.collapsedShelves?.includes(key))
+            : [],
         };
       },
     },

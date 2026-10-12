@@ -5,46 +5,16 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
-
-// project puts a message on the watchtower, or takes it off.
-//
-// Only a message waiting on a person belongs there. One the desk answered by
-// itself is work that happened rather than work owed, and leaving it on the
-// feed would bury the ones that are actually waiting — so settling a message
-// resolves its item as readily as it raises one.
-func (s *Service) project(ctx context.Context, message *inboundmessage.InboundMessage) {
-	if s.watchtower == nil {
-		return
-	}
-
-	tenantInfo := pagination.TenantInfo{
-		OrgID: message.OrganizationID,
-		BuID:  message.BusinessUnitID,
-	}
-
-	if !message.NeedsReview() {
-		s.watchtower.Resolve(
-			ctx, tenantInfo, watchtower.SourceInboundMessage, message.ID.String(),
-		)
-
-		return
-	}
-
-	s.watchtower.Upsert(ctx, watchtowersources.DescribeInboundMessage(message))
-}
 
 // announce tells the desks a message was read.
 //
@@ -93,34 +63,6 @@ const (
 	inboxNoticeSource   = "inbox"
 	inboxRealtimeAction = "updated"
 )
-
-// publish tells an open inbox that a message changed, so a lane, a count or a
-// reading pane moves without a reload.
-func (s *Service) publish(ctx context.Context, orgID, buID, messageID pulid.ID, action string) {
-	if s.realtime == nil {
-		return
-	}
-
-	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		ActorType:      permissionports.PrincipalTypeSystem,
-		Resource:       permission.ResourceInboundMessage.String(),
-		Action:         action,
-		RecordID:       messageID,
-	}); err != nil {
-		s.l.Warn("inbox invalidation lost",
-			zap.String("messageId", messageID.String()), zap.Error(err))
-	}
-}
-
-func (s *Service) publishMessage(
-	ctx context.Context,
-	message *inboundmessage.InboundMessage,
-	action string,
-) {
-	s.publish(ctx, message.OrganizationID, message.BusinessUnitID, message.ID, action)
-}
 
 // notifyNeedsReview tells the people who read the inbox that a message is
 // waiting on them, in the words the watchtower uses for the same message.

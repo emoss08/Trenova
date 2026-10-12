@@ -40,6 +40,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentpacketruleservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documenttemplateservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/triagebriefingservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/triagecorrectionservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/triagepeekservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/triageruleservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
@@ -308,6 +315,13 @@ type Params struct {
 	AgentToolRuleService         agentports.AgentToolRuleService
 	WatchtowerService            watchtowerports.WatchtowerService
 	InboundMessageService        *inboundmessageservice.Service
+	InboundReplyService          *inboundreplyservice.Service
+	TriageWorkService            *triageworkservice.Service
+	TriagePeekService            *triagepeekservice.Service
+	TriageRuleService            *triageruleservice.Service
+	TriageBriefingService        *triagebriefingservice.Service
+	TriageCorrectionService      *triagecorrectionservice.Service
+	TriageConflictService        *triageconflictservice.Service
 	CaptureService               *captureservice.Service
 	CaptureReleaseService        *capturereleaseservice.Service
 	AgentScorecardService        agentports.AgentScorecardService
@@ -512,6 +526,13 @@ type Services struct {
 	AgentToolRuleService         agentports.AgentToolRuleService
 	WatchtowerService            watchtowerports.WatchtowerService
 	InboundMessageService        *inboundmessageservice.Service
+	InboundReplyService          *inboundreplyservice.Service
+	TriageWorkService            *triageworkservice.Service
+	TriagePeekService            *triagepeekservice.Service
+	TriageRuleService            *triageruleservice.Service
+	TriageBriefingService        *triagebriefingservice.Service
+	TriageCorrectionService      *triagecorrectionservice.Service
+	TriageConflictService        *triageconflictservice.Service
 	CaptureService               *captureservice.Service
 	CaptureReleaseService        *capturereleaseservice.Service
 	AgentScorecardService        agentports.AgentScorecardService
@@ -722,6 +743,13 @@ func newServices(p *Params) *Services {
 		AgentToolRuleService:         p.AgentToolRuleService,
 		WatchtowerService:            p.WatchtowerService,
 		InboundMessageService:        p.InboundMessageService,
+		InboundReplyService:          p.InboundReplyService,
+		TriageWorkService:            p.TriageWorkService,
+		TriagePeekService:            p.TriagePeekService,
+		TriageRuleService:            p.TriageRuleService,
+		TriageBriefingService:        p.TriageBriefingService,
+		TriageCorrectionService:      p.TriageCorrectionService,
+		TriageConflictService:        p.TriageConflictService,
 		CaptureService:               p.CaptureService,
 		CaptureReleaseService:        p.CaptureReleaseService,
 		AgentScorecardService:        p.AgentScorecardService,

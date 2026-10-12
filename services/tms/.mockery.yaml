@@ -180,6 +180,9 @@ packages:
   github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/documents/ports/triageports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/edi/ports/ediports:
     config:
       all: true

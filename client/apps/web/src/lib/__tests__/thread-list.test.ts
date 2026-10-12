@@ -3,12 +3,17 @@ import type { AssistantThread, AssistantThreadPage } from "@/types/assistant";
 import { InfiniteQueryObserver, QueryClient } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { waitFor } from "@testing-library/react";
+import type { ThreadListFilter } from "@/services/assistant";
 import {
+  cachedThreadLists,
   cachedThreads,
+  findCachedThread,
   noteThreadsInView,
   removeCachedThread,
   THREAD_PAGE_SIZE,
   threadListQuery,
+  threadShelfCountsQuery,
+  threadShelfQuery,
   threadsOf,
   updateCachedThread,
   type ThreadPages,
@@ -20,13 +25,18 @@ const listThreads = vi.hoisted(() =>
       limit?: number;
       cursor?: string;
       until?: string;
+      filter?: ThreadListFilter;
       signal?: AbortSignal;
     }) => Promise<unknown>
   >(),
 );
 
+const countThreadShelves = vi.hoisted(() =>
+  vi.fn<(edges: readonly number[], options: { signal?: AbortSignal }) => Promise<unknown>>(),
+);
+
 vi.mock("@/services/api", () => ({
-  apiService: { assistantService: { listThreads } },
+  apiService: { assistantService: { listThreads, countThreadShelves } },
 }));
 
 function thread(id: string, overrides: Partial<AssistantThread> = {}): AssistantThread {
@@ -264,6 +274,135 @@ describe("refreshing a long list", () => {
 
     expect(cachedThreads(queryClient).some((item) => item.id === id(120))).toBe(false);
     expect(cachedThreads(queryClient)).toHaveLength(149);
+    stop();
+  });
+});
+
+/**
+ * Each shelf of the rail is a list of its own, read from the server only for
+ * its range. It sits under the list's key, so whatever refreshes, rewrites or
+ * empties the list does the same to every shelf, and leaves the counts kept
+ * beside them alone.
+ */
+describe("shelves", () => {
+  const today: ThreadListFilter = { pinned: false, touchedFrom: 1_000 };
+  const older: ThreadListFilter = { pinned: false, touchedBefore: 500 };
+  const shelfKey = (filter: ThreadListFilter) =>
+    queries.assistant.threads()._ctx.shelf(filter).queryKey;
+
+  it("reads a shelf's pages with its range, under the list's key", async () => {
+    listThreads
+      .mockResolvedValueOnce({ items: [thread("a")], nextCursor: "c1" })
+      .mockResolvedValueOnce({ items: [thread("b")], nextCursor: "" });
+
+    await queryClient.fetchInfiniteQuery({ ...threadShelfQuery(today), pages: 2 });
+
+    expect(listThreads).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ cursor: "", filter: today, limit: THREAD_PAGE_SIZE }),
+    );
+    expect(listThreads).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ cursor: "c1", filter: today }),
+    );
+    expect(shelfKey(today).slice(0, 3)).toEqual(queries.assistant.threads().queryKey);
+  });
+
+  it("keeps each shelf apart from the others and from the whole list", async () => {
+    listThreads.mockImplementation(({ filter }) =>
+      Promise.resolve({
+        items: [thread(filter === undefined ? "whole" : filter === today ? "today" : "older")],
+        nextCursor: "",
+      }),
+    );
+
+    await queryClient.fetchInfiniteQuery(threadListQuery());
+    await queryClient.fetchInfiniteQuery(threadShelfQuery(today));
+    await queryClient.fetchInfiniteQuery(threadShelfQuery(older));
+
+    expect(threadsOf(queryClient.getQueryData(shelfKey(today))).map((item) => item.id)).toEqual([
+      "today",
+    ]);
+    expect(threadsOf(queryClient.getQueryData(shelfKey(older))).map((item) => item.id)).toEqual([
+      "older",
+    ]);
+    expect(cachedThreadLists(queryClient)).toHaveLength(3);
+  });
+
+  it("reads the counts for the edges given and keeps them under the list's key", async () => {
+    countThreadShelves.mockResolvedValueOnce({ pinned: 2, bands: [1, 0, 3, 4, 5] });
+
+    const counts = await queryClient.fetchQuery(threadShelfCountsQuery([4, 3, 2, 1]));
+
+    expect(countThreadShelves).toHaveBeenCalledWith([4, 3, 2, 1], expect.anything());
+    expect(counts).toEqual({ pinned: 2, bands: [1, 0, 3, 4, 5] });
+    expect(queries.assistant.threads()._ctx.shelfCounts([4, 3, 2, 1]).queryKey.slice(0, 3)).toEqual(
+      queries.assistant.threads().queryKey,
+    );
+  });
+
+  it("rewrites and removes a conversation on every shelf that holds it, and not the counts", () => {
+    const counts = { pinned: 0, bands: [1, 0, 0, 0, 1] };
+    queryClient.setQueryData(shelfKey(today), pages([thread("a"), thread("b")]));
+    queryClient.setQueryData(shelfKey(older), pages([thread("b")]));
+    queryClient.setQueryData(queries.assistant.threads()._ctx.shelfCounts([2, 1]).queryKey, counts);
+
+    updateCachedThread(queryClient, "b", (item) => ({ ...item, title: "renamed" }));
+
+    expect(threadsOf(queryClient.getQueryData(shelfKey(today)))[1].title).toBe("renamed");
+    expect(threadsOf(queryClient.getQueryData(shelfKey(older)))[0].title).toBe("renamed");
+
+    removeCachedThread(queryClient, "b");
+
+    expect(threadsOf(queryClient.getQueryData(shelfKey(today))).map((item) => item.id)).toEqual([
+      "a",
+    ]);
+    expect(threadsOf(queryClient.getQueryData(shelfKey(older)))).toEqual([]);
+    expect(
+      queryClient.getQueryData(queries.assistant.threads()._ctx.shelfCounts([2, 1]).queryKey),
+    ).toBe(counts);
+  });
+
+  it("knows every conversation any list holds, each once", () => {
+    queryClient.setQueryData(queries.assistant.threads().queryKey, pages([thread("a")]));
+    queryClient.setQueryData(shelfKey(today), pages([thread("a"), thread("b")]));
+    queryClient.setQueryData(shelfKey(older), pages([thread("c", { title: "far back" })]));
+
+    expect(cachedThreads(queryClient).map((item) => item.id)).toEqual(["a", "b", "c"]);
+    expect(findCachedThread(queryClient, "c")?.title).toBe("far back");
+    expect(findCachedThread(queryClient, "missing")).toBeNull();
+    expect(findCachedThread(queryClient, null)).toBeNull();
+  });
+
+  it("reads a shelf's page left behind once one of its conversations comes into view", async () => {
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime: Number.POSITIVE_INFINITY } },
+    });
+    const server = Array.from({ length: 120 }, (_, index) => thread(`o${index}`));
+    listThreads.mockImplementation(({ cursor = "", until, limit = THREAD_PAGE_SIZE }) => {
+      const start = cursor === "" ? 0 : server.findIndex((item) => item.id === cursor) + 1;
+      if (until) {
+        const end = server.findIndex((item) => item.id === until);
+        return Promise.resolve({ items: server.slice(start, end + 1), nextCursor: until });
+      }
+      const items = server.slice(start, start + limit);
+      const more = start + limit < server.length;
+      return Promise.resolve({ items, nextCursor: more ? (items.at(-1)?.id ?? "") : "" });
+    });
+    await queryClient.fetchInfiniteQuery({ ...threadShelfQuery(older), pages: 2 });
+    const observer = new InfiniteQueryObserver(queryClient, threadShelfQuery(older));
+    const stop = observer.subscribe(() => undefined);
+    noteThreadsInView(queryClient, []);
+    await queryClient.refetchQueries({ queryKey: shelfKey(older), exact: true });
+    listThreads.mockClear();
+
+    noteThreadsInView(queryClient, ["o60"]);
+
+    await waitFor(() =>
+      expect(listThreads).toHaveBeenCalledWith(
+        expect.objectContaining({ cursor: "o49", until: "o99", filter: older }),
+      ),
+    );
     stop();
   });
 });

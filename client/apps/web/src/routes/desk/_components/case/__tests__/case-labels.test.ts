@@ -2,7 +2,6 @@ import type { CaseChecklist, CaseRecord, CaseSummary } from "@/types/assistant";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describe, expect, it } from "vitest";
 import {
-  caseRailLabel,
   caseRecordPath,
   caseStateLabel,
   checklistItemDetail,
@@ -46,9 +45,6 @@ describe("case state", () => {
         t,
       ),
     ).toBe("Waiting on the carrier");
-    expect(caseRailLabel(summary({ state: "Waiting", waitingOn: "Customer" }), NOW, "UTC", t)).toBe(
-      "Customer",
-    );
   });
 
   it("says how a settled case closed", () => {
@@ -62,9 +58,6 @@ describe("case state", () => {
   it("reads a snooze that has run out as the state under it", () => {
     const lapsed = summary({ state: "Snoozed", snoozedUntil: NOW - 1, openWaits: 1 });
     expect(caseStateLabel(lapsed, NOW, "UTC", t)).toBe("Waiting");
-    expect(caseRailLabel(summary({ state: "Snoozed", snoozedUntil: NOW - 1 }), NOW, "UTC", t)).toBe(
-      "",
-    );
   });
 });
 

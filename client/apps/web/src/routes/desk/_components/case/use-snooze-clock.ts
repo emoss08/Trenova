@@ -39,15 +39,3 @@ export function useSnoozeClock(wakeAt: number | null | undefined, onWake?: () =>
 
   return now;
 }
-
-/** The soonest of several snoozes still to end, or null when none is. */
-export function nextWake(snoozes: Iterable<number | null | undefined>, now: number): number | null {
-  let soonest: number | null = null;
-  for (const until of snoozes) {
-    if (until && until > now && (soonest === null || until < soonest)) {
-      soonest = until;
-    }
-  }
-
-  return soonest;
-}

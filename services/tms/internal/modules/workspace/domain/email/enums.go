@@ -75,6 +75,22 @@ const (
 	SuppressionReasonManual          SuppressionReason = "Manual"
 )
 
+type AttachmentSeal string
+
+const (
+	AttachmentSealNone     AttachmentSeal = ""
+	AttachmentSealDocument AttachmentSeal = "Document"
+)
+
+func (v AttachmentSeal) IsValid() bool {
+	switch v {
+	case AttachmentSealNone, AttachmentSealDocument:
+		return true
+	default:
+		return false
+	}
+}
+
 func Purposes() []Purpose {
 	return []Purpose{
 		PurposeGeneral,

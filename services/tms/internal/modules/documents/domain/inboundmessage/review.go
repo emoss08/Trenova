@@ -12,4 +12,7 @@ func (m *InboundMessage) ApplyReview(status Status, reviewerID pulid.ID, note st
 	if note != "" {
 		m.ReviewNote = note
 	}
+	if !m.NeedsReview() {
+		m.Unpark()
+	}
 }

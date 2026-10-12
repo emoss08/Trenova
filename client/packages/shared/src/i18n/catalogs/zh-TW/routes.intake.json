@@ -94,7 +94,6 @@
   "{0, plural, one {# stack is waiting to be filed} other {# stacks are waiting to be filed}}": "{0, plural, other {# 個批次等待歸檔}}",
   "{0, plural, one {# stack} other {# stacks}}": "{0, plural, other {# 個批次}}",
   "{0, plural, one {Deleted in # day} other {Deleted in # days}}": "{0, plural, other {# 天後刪除}}",
-  "{0, plural, one {File # document} other {File # documents}}": "{0, plural, other {歸檔 # 份文件}}",
   "{0, plural, one {Filing # document} other {Filing # documents}}": "{0, plural, other {正在歸檔 # 份文件}}",
   "{0, plural, one {Its page moves} other {Its # pages move}} to Set aside. From there you can drag them into another document, or leave them to be deleted with the stack's other unfiled pages.": "{0, plural, other {其 # 個頁面將移至}}「擱置」。您可以從那裡將它們拖入其他文件，或保留在那裡，隨該批次其他未歸檔的頁面一起刪除。",
   "{0, plural, one {The # document already filed stays on its record.} other {The # documents already filed stay on their records.}} Every other page is deleted.": "{0, plural, other {已歸檔的 # 份文件會保留在其記錄上。}}其餘頁面都會被刪除。",

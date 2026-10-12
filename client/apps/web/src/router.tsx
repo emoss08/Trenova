@@ -17,8 +17,14 @@ import { AppErrorLayout, AppLayout, OnboardingLayout } from "@/routes/app-layout
 import { DeskLoadingScreen } from "@/routes/desk/desk-loading-screen";
 import { DeskShellLayout } from "@/routes/desk/shell-layout";
 import { RootLayout } from "@/routes/root-layout";
+import type { RouteHandle } from "@/types/router";
 import { NotFoundRoute, RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
 import LoadingSkeleton from "@trenova/shared/components/loading-skeleton";
+import {
+  pathScopedLoader,
+  requireSession,
+  withPathScopedRevalidation,
+} from "@trenova/shared/lib/session-loader";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -29,13 +35,11 @@ import { AdminLayout } from "./routes/admin-layout";
 // first one that returns a redirect decides.
 const editionProtectedLoader = combineLoaders(...edition.protectedLoaders);
 
-const protectedLoader: LoaderFunction = async (args) => {
+const protectedLoader: LoaderFunction = pathScopedLoader(async (args) => {
   const { request } = args;
-  const { checkAuth } = useAuthStore.getState();
-  const isAuthenticated = await checkAuth();
-
-  if (!isAuthenticated) {
-    return redirect("/login");
+  const sessionRedirect = await requireSession("/login");
+  if (sessionRedirect) {
+    return sessionRedirect;
   }
 
   // A cloud organization that has not finished the welcome wizard is sent to it from
@@ -46,7 +50,7 @@ const protectedLoader: LoaderFunction = async (args) => {
   }
 
   return editionProtectedLoader(args);
-};
+});
 
 // The wizard is only for an organization that still owes it. Anybody else who opens
 // the address — a completed organization, a self-hosted install — goes home.
@@ -66,7 +70,9 @@ const guestLoader: LoaderFunction = async () => {
   return null;
 };
 
-export const routes: RouteObject[] = [
+// Every route behind the session or permission gate revalidates only when its path
+// changes; see revalidateOnPathChange.
+export const routes: RouteObject[] = withPathScopedRevalidation([
   {
     element: <RootLayout />,
     errorElement: <RouteErrorBoundary />,
@@ -91,15 +97,26 @@ export const routes: RouteObject[] = [
             },
           },
           {
-            path: "/inbox",
+            path: "/triage",
+            // Triage is a room inside the app: the header stays, and its own folder rail
+            // takes the sidebar's place and its fold.
+            handle: { frame: "room" } satisfies RouteHandle,
             loader: combineLoaders(
               protectedLoader,
               createPermissionLoader(Resource.InboundMessage, Operation.Read),
               createPrefetchLoader(lazyPrefetch(() => import("@/routes/inbox/page"))),
             ),
             async lazy() {
-              const { InboxPage } = await import("@/routes/inbox/page");
-              return { Component: InboxPage };
+              const { TriagePage } = await import("@/routes/inbox/page");
+              return { Component: TriagePage };
+            },
+          },
+          {
+            // Triage was the inbox; old links, notifications and bookmarks keep working.
+            path: "/inbox",
+            loader: ({ request }) => {
+              const { search } = new URL(request.url);
+              return redirect(`/triage${search}`);
             },
           },
           {
@@ -2255,6 +2272,6 @@ export const routes: RouteObject[] = [
       },
     ],
   },
-];
+]);
 
 export const router = createBrowserRouter(withRouteCatalogs(routes));

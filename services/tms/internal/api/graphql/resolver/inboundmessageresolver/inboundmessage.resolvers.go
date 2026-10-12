@@ -15,13 +15,18 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/inboundhandler"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 func (r *InboundAttachmentResolver) DocumentID(ctx context.Context, obj *inboundmessage.InboundAttachment) (*string, error) {
@@ -115,23 +120,7 @@ func (r *InboundMessageResolver) Preview(ctx context.Context, obj *inboundmessag
 // MatchedShipment is shown only to a reader who could open the shipment. A
 // match to a load somebody cannot see is left absent rather than leaked.
 func (r *InboundMessageResolver) MatchedShipment(ctx context.Context, obj *inboundmessage.InboundMessage) (*shipmentports.ShipmentSummary, error) {
-	if obj.MatchedShipmentID.IsNil() {
-		return nil, nil
-	}
-
-	authCtx, err := r.RequireAuth(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if !r.HasPermission(ctx, authCtx, permission.ResourceShipment, permission.OpRead) {
-		return nil, nil
-	}
-
-	if err := base.RequireLoaders(ctx); err != nil {
-		return nil, err
-	}
-
-	return base.OptionalMatch(loaders.ShipmentSummaryByID(ctx, obj.MatchedShipmentID.String()))
+	return r.visibleShipment(ctx, obj.MatchedShipmentID)
 }
 
 func (r *InboundMessageResolver) MatchedCustomer(ctx context.Context, obj *inboundmessage.InboundMessage) (*customer.Customer, error) {
@@ -304,11 +293,7 @@ func (r *QueryResolver) InboundMessages(ctx context.Context, input gqlmodel.Inbo
 	if input.First != nil {
 		first = *input.First
 	}
-	after := ""
-	if input.After != nil {
-		after = *input.After
-	}
-	cursor, err := pagination.NewCursorInfo(first, after)
+	cursor, err := pagination.NewCursorInfo(first, stringutils.FromPtr(input.After))
 	if err != nil {
 		return nil, err
 	}
@@ -316,29 +301,15 @@ func (r *QueryResolver) InboundMessages(ctx context.Context, input gqlmodel.Inbo
 	// the counts query, which is one aggregate; paging the lane does not.
 	cursor.IncludeTotalCount = base.ConnectionFieldRequested(ctx, base.ConnectionTotalCountField)
 
-	tenant := base.TenantInfo(authCtx)
-	req := &inboundmessageports.ListInboundMessagesRequest{
-		Filter: &pagination.QueryOptions{
-			TenantInfo: tenant,
-			Cursor:     cursor,
-			UseCursor:  true,
-			Query:      stringutils.FromPtr(input.Query),
-		},
-		Cursor:   cursor,
-		Statuses: input.Statuses,
-	}
-	if input.Classification != nil {
-		req.Classification = *input.Classification
-	}
-	if req.MailboxID, err = base.OptionalID(input.MailboxID); err != nil {
+	req, err := folderRequest(
+		&input, base.TenantInfo(authCtx), actorutil.FromAuthContext(authCtx).UserID,
+	)
+	if err != nil {
 		return nil, err
 	}
-	if req.ShipmentID, err = base.OptionalID(input.ShipmentID); err != nil {
-		return nil, err
-	}
-	if input.Since != nil {
-		req.Since = int64(*input.Since)
-	}
+	req.Cursor = cursor
+	req.Filter.Cursor = cursor
+	req.Filter.UseCursor = true
 
 	result, err := r.InboundMessageService.List(ctx, req)
 	if err != nil {
@@ -376,7 +347,9 @@ func (r *QueryResolver) InboundMessageCounts(ctx context.Context) (*inboundmessa
 		return nil, err
 	}
 
-	return r.InboundMessageService.Counts(ctx, base.TenantInfo(authCtx))
+	return r.InboundMessageService.Counts(
+		ctx, base.TenantInfo(authCtx), actorutil.FromAuthContext(authCtx).UserID,
+	)
 }
 
 // InboundMailboxes is read under the mailbox's own permission, not the
@@ -425,4 +398,584 @@ func (r *MutationResolver) SetInboundMailboxAPIKey(ctx context.Context, id strin
 		ID:     mailboxID,
 		APIKey: apiKey,
 	})
+}
+
+func (r *InboundActivityResolver) Actor(ctx context.Context, obj *triage.Activity) (*tenant.User, error) {
+	if obj.ActorKind != triage.ActorPerson {
+		return nil, nil
+	}
+
+	return base.OptionalMatch(base.LoadUser(ctx, obj.ActorID))
+}
+
+func (r *InboundActivityResolver) Until(ctx context.Context, obj *triage.Activity) (*int, error) {
+	return unixPtr(obj.Until), nil
+}
+
+func (r *InboundActivityResolver) FromClassification(ctx context.Context, obj *triage.Activity) (*inboundmessage.Classification, error) {
+	return stringutils.NilIfEmpty(obj.FromClassification), nil
+}
+
+func (r *InboundActivityResolver) ToClassification(ctx context.Context, obj *triage.Activity) (*inboundmessage.Classification, error) {
+	return stringutils.NilIfEmpty(obj.ToClassification), nil
+}
+
+func (r *InboundActivityResolver) RecordID(ctx context.Context, obj *triage.Activity) (*string, error) {
+	return inboundOptionalID(obj.RecordID), nil
+}
+
+func (r *InboundAttachmentResolver) FiledShipmentID(ctx context.Context, obj *inboundmessage.InboundAttachment) (*string, error) {
+	return inboundOptionalID(obj.FiledShipmentID), nil
+}
+
+func (r *InboundAttachmentResolver) FiledShipment(ctx context.Context, obj *inboundmessage.InboundAttachment) (*shipmentports.ShipmentSummary, error) {
+	return r.visibleShipment(ctx, obj.FiledShipmentID)
+}
+
+func (r *InboundAttachmentResolver) FiledAs(ctx context.Context, obj *inboundmessage.InboundAttachment) (*string, error) {
+	return base.NonEmptyPtr(obj.FiledAs), nil
+}
+
+func (r *InboundAttachmentResolver) FiledAt(ctx context.Context, obj *inboundmessage.InboundAttachment) (*int, error) {
+	return unixPtr(obj.FiledAt), nil
+}
+
+func (r *InboundAttachmentResolver) Pages(ctx context.Context, obj *inboundmessage.InboundAttachment) ([]*inboundmessage.AttachmentPage, error) {
+	return sliceutils.Pointers(obj.Pages), nil
+}
+
+func (r *InboundAttachmentResolver) SplitDocuments(ctx context.Context, obj *inboundmessage.InboundAttachment) ([]*inboundmessage.SplitDocument, error) {
+	return sliceutils.Pointers(obj.SplitDocuments), nil
+}
+
+func (r *InboundMailboxResolver) LastReceivedAt(ctx context.Context, obj *inboundmessage.Mailbox) (*int, error) {
+	return unixPtr(obj.LastReceivedAt), nil
+}
+
+func (r *InboundMailboxResolver) Health(ctx context.Context, obj *inboundmessage.Mailbox) (inboundmessage.SourceHealth, error) {
+	return obj.Health(timeutils.NowUnix()), nil
+}
+
+func (r *InboundMailboxResolver) TestSentAt(ctx context.Context, obj *inboundmessage.Mailbox) (*int, error) {
+	return unixPtr(obj.TestSentAt), nil
+}
+
+func (r *InboundMailboxResolver) TestReceivedAt(ctx context.Context, obj *inboundmessage.Mailbox) (*int, error) {
+	return unixPtr(obj.TestReceivedAt), nil
+}
+
+func (r *InboundMailboxResolver) BlockedSenders(ctx context.Context, obj *inboundmessage.Mailbox) ([]string, error) {
+	if obj.BlockedSenders == nil {
+		return []string{}, nil
+	}
+
+	return obj.BlockedSenders, nil
+}
+
+func (r *InboundMessageResolver) ThreadCount(ctx context.Context, obj *inboundmessage.InboundMessage) (int, error) {
+	if obj.ThreadKey == "" {
+		return 1, nil
+	}
+	if err := base.RequireLoaders(ctx); err != nil {
+		return 0, err
+	}
+
+	count, err := loaders.InboundThreadCount(ctx, obj.ThreadKey)
+	if err != nil {
+		return 0, err
+	}
+
+	return max(count, 1), nil
+}
+
+func (r *InboundMessageResolver) OwnerID(ctx context.Context, obj *inboundmessage.InboundMessage) (*string, error) {
+	return inboundOptionalID(obj.OwnerID), nil
+}
+
+func (r *InboundMessageResolver) Owner(ctx context.Context, obj *inboundmessage.InboundMessage) (*tenant.User, error) {
+	return base.OptionalMatch(base.LoadUser(ctx, obj.OwnerID))
+}
+
+func (r *InboundMessageResolver) DueAt(ctx context.Context, obj *inboundmessage.InboundMessage) (*int, error) {
+	if !obj.NeedsReview() {
+		return nil, nil
+	}
+
+	return unixPtr(obj.DueAt), nil
+}
+
+func (r *InboundMessageResolver) ResponseTargetMinutes(ctx context.Context, obj *inboundmessage.InboundMessage) (int, error) {
+	return responseTargetMinutes(obj), nil
+}
+
+func (r *InboundMessageResolver) Snooze(ctx context.Context, obj *inboundmessage.InboundMessage) (*inboundmessageports.SnoozeView, error) {
+	return snoozeView(obj), nil
+}
+
+func (r *InboundMessageResolver) AwaitingReply(ctx context.Context, obj *inboundmessage.InboundMessage) (*inboundmessageports.AwaitingReplyView, error) {
+	if !obj.IsAwaitingReply() {
+		return nil, nil
+	}
+
+	return &inboundmessageports.AwaitingReplyView{Since: obj.AwaitingSince, Until: obj.AwaitingUntil}, nil
+}
+
+func (r *InboundMessageResolver) HandledByNova(ctx context.Context, obj *inboundmessage.InboundMessage) (bool, error) {
+	return handledByNova(obj), nil
+}
+
+func (r *InboundMessageResolver) HandledByRuleID(ctx context.Context, obj *inboundmessage.InboundMessage) (*string, error) {
+	return inboundOptionalID(obj.HandledByRuleID), nil
+}
+
+func (r *InboundMessageResolver) HandledAction(ctx context.Context, obj *inboundmessage.InboundMessage) (*inboundmessage.NovaAction, error) {
+	return stringutils.NilIfEmpty(obj.HandledAction), nil
+}
+
+func (r *InboundMessageResolver) Reviewer(ctx context.Context, obj *inboundmessage.InboundMessage) (*tenant.User, error) {
+	return base.OptionalMatch(base.LoadUser(ctx, obj.ReviewedBy))
+}
+
+func (r *InboundMessageResolver) Activity(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*triage.Activity, error) {
+	if err := base.RequireLoaders(ctx); err != nil {
+		return nil, err
+	}
+
+	return loaders.InboundActivitiesByMessageID(ctx, obj.ID.String())
+}
+
+func (r *InboundSnoozeResolver) WatchShipment(ctx context.Context, obj *inboundmessageports.SnoozeView) (*shipmentports.ShipmentSummary, error) {
+	return r.visibleShipment(ctx, obj.WatchShipmentID)
+}
+
+func (r *InboundSnoozeResolver) DocumentTypeName(ctx context.Context, obj *inboundmessageports.SnoozeView) (*string, error) {
+	if obj.DocumentTypeID == nil || obj.DocumentTypeID.IsNil() {
+		return nil, nil
+	}
+	if err := base.RequireLoaders(ctx); err != nil {
+		return nil, err
+	}
+
+	name, err := loaders.DocumentTypeNameByID(ctx, obj.DocumentTypeID.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return base.NonEmptyPtr(name), nil
+}
+
+func (r *InboundSnoozeResolver) SnoozedBy(ctx context.Context, obj *inboundmessageports.SnoozeView) (*tenant.User, error) {
+	return base.OptionalMatch(base.LoadUser(ctx, obj.SnoozedBy))
+}
+
+func (r *InboundSplitDocumentResolver) DocumentID(ctx context.Context, obj *inboundmessage.SplitDocument) (string, error) {
+	return obj.DocumentID.String(), nil
+}
+
+func (r *MutationResolver) ReviewInboundMessages(ctx context.Context, selection gqlmodel.TriageSelectionInput, input gqlmodel.BulkReviewInboundMessagesInput) (*inboundmessageports.BulkResult, error) {
+	authCtx, err := r.RequirePermission(
+		ctx, permission.ResourceInboundMessage, permission.OpUpdate,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if input.Teach != nil &&
+		!r.HasPermission(ctx, authCtx, permission.ResourceInboundMessage, permission.OpManage) {
+		return nil, errortypes.NewAuthorizationError(
+			"Turning on a rule needs the manage permission on Triage",
+		)
+	}
+
+	tenantInfo := base.TenantInfo(authCtx)
+	actorID := actorutil.FromAuthContext(authCtx).UserID
+	chosen, err := selectionOf(selection, tenantInfo, actorID)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &inboundmessageservice.BulkReviewRequest{
+		TenantInfo: tenantInfo,
+		ActorID:    actorID,
+		Selection:  chosen,
+		Status:     input.Status,
+		Note:       stringutils.FromPtr(input.Note),
+	}
+	if input.Teach != nil {
+		req.Teach = *input.Teach
+	}
+
+	return r.InboundMessageService.ReviewMany(ctx, req)
+}
+
+func (r *MutationResolver) ReopenInboundMessages(ctx context.Context, selection gqlmodel.TriageSelectionInput) (*inboundmessageports.BulkResult, error) {
+	authCtx, err := r.RequirePermission(
+		ctx, permission.ResourceInboundMessage, permission.OpUpdate,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	tenantInfo := base.TenantInfo(authCtx)
+	actorID := actorutil.FromAuthContext(authCtx).UserID
+	chosen, err := selectionOf(selection, tenantInfo, actorID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InboundMessageService.Reopen(ctx, &inboundmessageservice.ReopenRequest{
+		TenantInfo: tenantInfo,
+		ActorID:    actorID,
+		Selection:  chosen,
+	})
+}
+
+func (r *MutationResolver) AssignInboundMessages(ctx context.Context, selection gqlmodel.TriageSelectionInput, ownerID *string) (*inboundmessageports.BulkResult, error) {
+	authCtx, err := r.RequirePermission(
+		ctx, permission.ResourceInboundMessage, permission.OpUpdate,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	owner, err := base.OptionalID(ownerID)
+	if err != nil {
+		return nil, err
+	}
+	tenantInfo := base.TenantInfo(authCtx)
+	actorID := actorutil.FromAuthContext(authCtx).UserID
+	chosen, err := selectionOf(selection, tenantInfo, actorID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InboundMessageService.Assign(ctx, &inboundmessageservice.AssignRequest{
+		TenantInfo: tenantInfo,
+		ActorID:    actorID,
+		Selection:  chosen,
+		OwnerID:    owner,
+		CanAssignOthers: r.HasPermission(
+			ctx, authCtx, permission.ResourceInboundMessage, permission.OpAssign,
+		),
+	})
+}
+
+func (r *MutationResolver) SnoozeInboundMessages(ctx context.Context, selection gqlmodel.TriageSelectionInput, input gqlmodel.SnoozeInboundMessagesInput) (*inboundmessageports.BulkResult, error) {
+	authCtx, err := r.RequirePermission(
+		ctx, permission.ResourceInboundMessage, permission.OpUpdate,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	tenantInfo := base.TenantInfo(authCtx)
+	actorID := actorutil.FromAuthContext(authCtx).UserID
+	chosen, err := selectionOf(selection, tenantInfo, actorID)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &inboundmessageservice.SnoozeRequest{
+		TenantInfo: tenantInfo,
+		ActorID:    actorID,
+		Selection:  chosen,
+		Until:      base.Int64Value(input.Until),
+	}
+	if input.Event != nil {
+		req.Event = *input.Event
+	}
+	if req.DocumentTypeID, err = base.OptionalID(input.DocumentTypeID); err != nil {
+		return nil, err
+	}
+
+	return r.InboundMessageService.Snooze(ctx, req)
+}
+
+func (r *MutationResolver) WakeInboundMessage(ctx context.Context, id string) (*inboundmessage.InboundMessage, error) {
+	req, err := r.messageAction(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InboundMessageService.Wake(ctx, req)
+}
+
+func (r *MutationResolver) WaitForInboundReply(ctx context.Context, id string, until int) (*inboundmessage.InboundMessage, error) {
+	req, err := r.messageAction(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InboundMessageService.WaitForReply(ctx, &inboundmessageservice.WaitForReplyRequest{
+		TenantInfo: req.TenantInfo,
+		ActorID:    req.ActorID,
+		MessageID:  req.MessageID,
+		Until:      int64(until),
+	})
+}
+
+func (r *MutationResolver) StopWaitingForInboundReply(ctx context.Context, id string) (*inboundmessage.InboundMessage, error) {
+	req, err := r.messageAction(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InboundMessageService.StopWaiting(ctx, req)
+}
+
+func (r *MutationResolver) UnlinkInboundMessage(ctx context.Context, id string, record gqlmodel.InboundLinkedRecord) (*inboundmessage.InboundMessage, error) {
+	req, err := r.messageAction(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InboundMessageService.Unlink(ctx, &inboundmessageservice.UnlinkRequest{
+		TenantInfo: req.TenantInfo,
+		ActorID:    req.ActorID,
+		MessageID:  req.MessageID,
+		Record:     inboundmessageservice.LinkedRecord(record),
+	})
+}
+
+func (r *MutationResolver) SendInboundMailboxTest(ctx context.Context, id string) (*inboundmessage.Mailbox, error) {
+	authCtx, err := r.RequirePermission(
+		ctx, permission.ResourceInboundMailbox, permission.OpUpdate,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	mailboxID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InboundMessageService.SendMailboxTest(ctx, inboundmessageservice.MailboxActionRequest{
+		Actor: actorutil.FromAuthContext(authCtx),
+		ID:    mailboxID,
+	})
+}
+
+func (r *MutationResolver) HandOffTriage(ctx context.Context, toUserID string) (*inboundmessageports.HandOffResult, error) {
+	authCtx, err := r.RequirePermission(
+		ctx, permission.ResourceInboundMessage, permission.OpAssign,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	to, err := pulid.MustParse(toUserID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InboundMessageService.HandOff(ctx, &inboundmessageservice.HandOffRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		ActorID:    actorutil.FromAuthContext(authCtx).UserID,
+		ToUserID:   to,
+	})
+}
+
+func (r *MutationResolver) ReadUnreadInboundMessages(ctx context.Context) (int, error) {
+	authCtx, err := r.RequirePermission(
+		ctx, permission.ResourceInboundMessage, permission.OpUpdate,
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return r.InboundMessageService.ReadUnread(ctx, base.TenantInfo(authCtx))
+}
+
+func (r *MutationResolver) CreateMyTriageView(ctx context.Context, name string, query string) (*triage.View, error) {
+	authCtx, err := r.requireViewer(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InboundMessageService.CreateView(ctx, &inboundmessageservice.CreateViewRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		UserID:     authCtx.UserID,
+		Name:       name,
+		Query:      query,
+	})
+}
+
+func (r *MutationResolver) RenameMyTriageView(ctx context.Context, id string, name string) (*triage.View, error) {
+	authCtx, err := r.requireViewer(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	viewID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InboundMessageService.RenameView(ctx, &inboundmessageservice.RenameViewRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		UserID:     authCtx.UserID,
+		ID:         viewID,
+		Name:       name,
+	})
+}
+
+func (r *MutationResolver) DeleteMyTriageView(ctx context.Context, id string) (bool, error) {
+	authCtx, err := r.requireViewer(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	viewID, err := pulid.MustParse(id)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.InboundMessageService.DeleteView(ctx, &inboundmessageservice.ViewRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		UserID:     authCtx.UserID,
+		ID:         viewID,
+	}); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *MutationResolver) UpdateTriageResponseTargets(ctx context.Context, input []*gqlmodel.TriageResponseTargetInput) ([]*inboundmessageports.ResponseTargetView, error) {
+	authCtx, err := r.RequirePermission(
+		ctx, permission.ResourceInboundMessage, permission.OpManage,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	changes := make([]inboundmessageservice.TargetChange, 0, len(input))
+	for _, change := range input {
+		if change == nil {
+			continue
+		}
+		changes = append(changes, inboundmessageservice.TargetChange{
+			Classification: change.Classification,
+			Minutes:        change.Minutes,
+		})
+	}
+
+	return r.InboundMessageService.UpdateResponseTargets(ctx, &inboundmessageservice.UpdateTargetsRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		ActorID:    actorutil.FromAuthContext(authCtx).UserID,
+		Changes:    changes,
+	})
+}
+
+func (r *MutationResolver) UpdateTriageSettings(ctx context.Context, input gqlmodel.TriageSettingsInput) (*triage.Settings, error) {
+	authCtx, err := r.RequirePermission(
+		ctx, permission.ResourceInboundMessage, permission.OpManage,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	onCall, err := base.OptionalID(input.OnCallUserID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InboundMessageService.UpdateSettings(ctx, &inboundmessageservice.UpdateSettingsRequest{
+		TenantInfo:     base.TenantInfo(authCtx),
+		OnCallUserID:   onCall,
+		EndOfDayMinute: input.EndOfDayMinute,
+		Version:        int64(input.Version),
+	})
+}
+
+func (r *QueryResolver) InboundThread(ctx context.Context, threadKey string) ([]*inboundmessage.InboundMessage, error) {
+	authCtx, err := r.RequirePermission(
+		ctx, permission.ResourceInboundMessage, permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InboundMessageService.Thread(ctx, base.TenantInfo(authCtx), threadKey)
+}
+
+func (r *QueryResolver) MyTriageViews(ctx context.Context) ([]*triage.View, error) {
+	authCtx, err := r.requireViewer(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InboundMessageService.MyViews(ctx, base.TenantInfo(authCtx), authCtx.UserID)
+}
+
+func (r *QueryResolver) TriageResponseTargets(ctx context.Context) ([]*inboundmessageports.ResponseTargetView, error) {
+	authCtx, err := r.RequirePermission(
+		ctx, permission.ResourceInboundMessage, permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InboundMessageService.ResponseTargets(ctx, base.TenantInfo(authCtx))
+}
+
+func (r *QueryResolver) TriageSettings(ctx context.Context) (*triage.Settings, error) {
+	authCtx, err := r.RequirePermission(
+		ctx, permission.ResourceInboundMessage, permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InboundMessageService.Settings(ctx, base.TenantInfo(authCtx))
+}
+
+func (r *QueryResolver) TriageAssignees(ctx context.Context) ([]*inboundmessageports.AssigneeView, error) {
+	authCtx, err := r.RequirePermission(
+		ctx, permission.ResourceInboundMessage, permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InboundMessageService.Assignees(ctx, base.TenantInfo(authCtx))
+}
+
+func (r *TriageAssigneeResolver) User(ctx context.Context, obj *inboundmessageports.AssigneeView) (*tenant.User, error) {
+	if err := base.RequireLoaders(ctx); err != nil {
+		return nil, err
+	}
+
+	return loaders.UserByID(ctx, obj.UserID.String())
+}
+
+func (r *TriageHandOffResolver) To(ctx context.Context, obj *inboundmessageports.HandOffResult) (*tenant.User, error) {
+	if err := base.RequireLoaders(ctx); err != nil {
+		return nil, err
+	}
+
+	return loaders.UserByID(ctx, obj.ToUserID.String())
+}
+
+func (r *TriageSettingsResolver) OnCallUser(ctx context.Context, obj *triage.Settings) (*tenant.User, error) {
+	return base.OptionalMatch(base.LoadUser(ctx, obj.OnCallUserID))
+}
+
+func (r *TriageSettingsResolver) OnCallUserID(ctx context.Context, obj *triage.Settings) (*string, error) {
+	return inboundOptionalID(obj.OnCallUserID), nil
+}
+
+func (r *TriageSettingsResolver) Timezone(ctx context.Context, obj *triage.Settings) (string, error) {
+	return r.InboundMessageService.OrganizationTimezone(ctx, pagination.TenantInfo{
+		OrgID: obj.OrganizationID,
+		BuID:  obj.BusinessUnitID,
+	})
+}
+
+func (r *TriageViewResolver) Waiting(ctx context.Context, obj *triage.View) (int, error) {
+	if err := base.RequireLoaders(ctx); err != nil {
+		return 0, err
+	}
+
+	return loaders.TriageViewWaitingCount(ctx, obj.ID.String())
 }

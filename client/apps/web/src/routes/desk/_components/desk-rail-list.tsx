@@ -1,10 +1,11 @@
 "use no memo";
 import { deskRailRowKey, type DeskRailRow } from "@/components/desk-chat/rail/desk-rail-rows";
+import { DESK_SHELF_KEYS, type DeskShelfKey } from "@/components/desk-chat/rail/desk-threads";
 import { RailKnobCard, useRailKnob, type RailKnob } from "@/components/desk-chat/rail/rail-parts";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
-/** Rows from the place the next page arrives at which it is asked for. */
+/** Rows from the place a shelf's next page arrives at which it is asked for. */
 const PREFETCH_ROWS = 15;
 const OVERSCAN = 12;
 /** A first window tall enough for a rail before the list is measured. */
@@ -16,15 +17,6 @@ const ROW_ESTIMATE: Record<DeskRailRow["kind"], number> = {
   more: 30,
 };
 
-/** Where the rail's conversations come from, a page at a time. */
-export type DeskRailPaging = {
-  hasMore: boolean;
-  loadingMore: boolean;
-  /** The last page asked for could not be read; it is asked for again only on request. */
-  failed: boolean;
-  loadMore: () => void;
-};
-
 type DeskRailListProps = {
   /** The `data-k` of the current place or conversation, which the raised card sits behind. */
   activeKey: string;
@@ -32,8 +24,9 @@ type DeskRailListProps = {
   nav: ReactNode;
   rows: readonly DeskRailRow[];
   renderRow: (row: DeskRailRow) => ReactNode;
-  paging: DeskRailPaging;
-  /** Shown below the places when there are no conversations at all. */
+  /** Reads the next page of an open shelf, as the reader nears where it arrives. */
+  onLoadMore: (shelf: DeskShelfKey) => void;
+  /** Shown below the places when there are no conversations at all; null while that is not known. */
   empty: ReactNode;
   /** Told which conversations are drawn, overscan included, and told none when the list goes. */
   onThreadsInView?: (threadIds: readonly string[]) => void;
@@ -42,7 +35,8 @@ type DeskRailListProps = {
 /**
  * The rail's scrolling body: the places, then the conversations, of which
  * only the rows near the viewport are mounted however many have been read.
- * The next page is asked for before the reader reaches the place it arrives.
+ * Each open shelf's next page is asked for before the reader reaches the
+ * place it arrives.
  *
  * The raised card behind the current row is placed from the virtualizer's
  * measurements rather than from the row's element, so it stays put while
@@ -54,7 +48,7 @@ export function DeskRailList({
   nav,
   rows,
   renderRow,
-  paging,
+  onLoadMore,
   empty,
   onThreadsInView,
 }: DeskRailListProps) {
@@ -79,12 +73,12 @@ export function DeskRailList({
     return () => observer.disconnect();
   }, []);
 
-  let moreIndex = -1;
   let activeIndex = -1;
   for (let index = 0; index < rows.length; index += 1) {
-    const key = deskRailRowKey(rows[index]);
-    if (key === activeKey) activeIndex = index;
-    if (rows[index].kind === "more") moreIndex = index;
+    if (deskRailRowKey(rows[index]) === activeKey) {
+      activeIndex = index;
+      break;
+    }
   }
 
   const virtualizer = useVirtualizer({
@@ -100,20 +94,28 @@ export function DeskRailList({
   const totalSize = virtualizer.getTotalSize();
   const lastInView = items.at(-1)?.index ?? -1;
 
-  // Checked again whenever the rows change: a request made while the whole
-  // list is being read again is dropped, and the reader may not scroll again.
-  const { hasMore, loadingMore, failed, loadMore } = paging;
-  useEffect(() => {
-    if (
-      moreIndex >= 0 &&
-      hasMore &&
-      !loadingMore &&
-      !failed &&
-      lastInView >= moreIndex - PREFETCH_ROWS
-    ) {
-      loadMore();
+  // The shelves whose next page arrives near what is drawn. Checked again
+  // whenever the rows change: a request made while a shelf is being read
+  // again is dropped, and the reader may not scroll again.
+  const nearing: DeskShelfKey[] = [];
+  for (let index = 0; index < rows.length && index <= lastInView + PREFETCH_ROWS; index += 1) {
+    const row = rows[index];
+    if (row.kind === "more" && !row.loading && !row.failed) {
+      nearing.push(row.shelf);
     }
-  }, [failed, hasMore, lastInView, loadMore, loadingMore, moreIndex, rows]);
+  }
+  const nearingKey = nearing.join(",");
+  useEffect(() => {
+    if (nearingKey === "") {
+      return;
+    }
+    const named = nearingKey.split(",");
+    for (const shelf of DESK_SHELF_KEYS) {
+      if (named.includes(shelf)) {
+        onLoadMore(shelf);
+      }
+    }
+  }, [nearingKey, onLoadMore, rows]);
 
   const drawnThreads: string[] = [];
   for (const item of items) {

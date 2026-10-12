@@ -42,7 +42,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
@@ -1430,6 +1432,14 @@ type BulkEditSelectionInput struct {
 	Filter *DataTableConnectionInput `json:"filter,omitempty"`
 	// The table's own list options beyond filters, such as the shipment board's quick filters.
 	Options map[string]any `json:"options,omitempty"`
+}
+
+type BulkReviewInboundMessagesInput struct {
+	// Actioned or Ignored.
+	Status inboundmessage.Status `json:"status"`
+	Note   *string               `json:"note,omitempty"`
+	// Turn on a rule that does this on its own next time, for one message's kind, sender domain and source.
+	Teach *inboundmessage.NovaAction `json:"teach,omitempty"`
 }
 
 type BulkSettlementActionInput struct {
@@ -4053,6 +4063,15 @@ type FileCaptureItemsEntryInput struct {
 	Version int `json:"version"`
 }
 
+type FileInboundAttachmentInput struct {
+	AttachmentID string `json:"attachmentId"`
+	ShipmentID   string `json:"shipmentId"`
+	// The document type id to file it as. Ignored when pages are given.
+	DocumentTypeID *string `json:"documentTypeId,omitempty"`
+	// File page ranges as separate documents instead of the whole file.
+	Pages []*InboundAttachmentPagesInput `json:"pages,omitempty"`
+}
+
 type FilterGroupInput struct {
 	Filters []*FieldFilterInput `json:"filters"`
 }
@@ -4855,6 +4874,14 @@ type ImportSourcedCarrierInput struct {
 	EnrollMonitoring *bool   `json:"enrollMonitoring,omitempty"`
 }
 
+// A page range of a file, filed as its own document.
+type InboundAttachmentPagesInput struct {
+	FromPage int `json:"fromPage"`
+	ToPage   int `json:"toPage"`
+	// The document type id to file the range as.
+	DocumentTypeID string `json:"documentTypeId"`
+}
+
 type InboundMailboxInput struct {
 	Name         string                      `json:"name"`
 	Address      string                      `json:"address"`
@@ -4880,6 +4907,15 @@ type InboundMessageEdge struct {
 type InboundMessagesInput struct {
 	First *int    `json:"first,omitempty"`
 	After *string `json:"after,omitempty"`
+	// The folder. Absent keeps the older status filter.
+	Lane *inboundmessageports.Lane `json:"lane,omitempty"`
+	Sort *inboundmessageports.Sort `json:"sort,omitempty"`
+	// Show one row per thread: the newest message of it in the folder.
+	CollapseThreads *bool `json:"collapseThreads,omitempty"`
+	// Only one thread, newest first.
+	ThreadKey *string `json:"threadKey,omitempty"`
+	// Only messages assigned to this person.
+	OwnerID *string `json:"ownerId,omitempty"`
 	// Only these statuses; empty is every status.
 	Statuses       []inboundmessage.Status        `json:"statuses,omitempty"`
 	Classification *inboundmessage.Classification `json:"classification,omitempty"`
@@ -5094,6 +5130,14 @@ type LocationReference struct {
 	// Where the location is, when it has been geocoded.
 	Latitude  *float64 `json:"latitude,omitempty"`
 	Longitude *float64 `json:"longitude,omitempty"`
+}
+
+type LogInboundExceptionInput struct {
+	Kind     inboundmessage.ExceptionKind `json:"kind"`
+	Quantity int                          `json:"quantity"`
+	// What was short, over or damaged: pallets, cases, pieces.
+	Unit string  `json:"unit"`
+	Note *string `json:"note,omitempty"`
 }
 
 type ManualJournalConnection struct {
@@ -6851,6 +6895,19 @@ type SelectOptionsInput struct {
 	Offset   *int                 `json:"offset,omitempty"`
 	Ids      []string             `json:"ids,omitempty"`
 	Filters  map[string]any       `json:"filters,omitempty"`
+}
+
+type SendInboundReplyInput struct {
+	MessageID string `json:"messageId"`
+	Subject   string `json:"subject"`
+	Body      string `json:"body"`
+	// Another address to send to instead of the sender, after a refusal.
+	ToAddress  *string `json:"toAddress,omitempty"`
+	TemplateID *string `json:"templateId,omitempty"`
+	// The body is Nova's draft, sent as written or after edits.
+	DraftedByNova *bool `json:"draftedByNova,omitempty"`
+	// Documents to attach, from inboundReplyAttachables.
+	DocumentIds []string `json:"documentIds,omitempty"`
 }
 
 type SendTestMessageTemplateInput struct {
@@ -8849,6 +8906,14 @@ type SkipAccountingSyncInput struct {
 	Reason string `json:"reason"`
 }
 
+type SnoozeInboundMessagesInput struct {
+	// Until a time. Exactly one of until and event is set.
+	Until *int                        `json:"until,omitempty"`
+	Event *inboundmessage.SnoozeEvent `json:"event,omitempty"`
+	// The document type DocumentAttached waits for.
+	DocumentTypeID *string `json:"documentTypeId,omitempty"`
+}
+
 type SortFieldInput struct {
 	Field     string `json:"field"`
 	Direction string `json:"direction"`
@@ -9320,6 +9385,45 @@ type TransitionTimesheetInput struct {
 	ID     string                 `json:"id"`
 	Status worker.TimesheetStatus `json:"status"`
 	Note   *string                `json:"note,omitempty"`
+}
+
+type TriageLoadFieldInput struct {
+	Key   inboundmessage.LoadFieldKey `json:"key"`
+	Value string                      `json:"value"`
+}
+
+type TriageReplyTemplateInput struct {
+	Name string `json:"name"`
+	Body string `json:"body"`
+}
+
+type TriageResponseTargetInput struct {
+	Classification inboundmessage.Classification `json:"classification"`
+	// Minutes, or null to go back to the default.
+	Minutes *int `json:"minutes,omitempty"`
+}
+
+type TriageRuleInput struct {
+	Classification inboundmessage.Classification `json:"classification"`
+	SenderScope    triage.SenderScope            `json:"senderScope"`
+	Sender         *string                       `json:"sender,omitempty"`
+	MailboxID      *string                       `json:"mailboxId,omitempty"`
+	Action         inboundmessage.NovaAction     `json:"action"`
+	AssigneeID     *string                       `json:"assigneeId,omitempty"`
+	Enabled        *bool                         `json:"enabled,omitempty"`
+}
+
+// Which messages a bulk change applies to: named ones, or everything in a folder.
+type TriageSelectionInput struct {
+	Ids []string `json:"ids,omitempty"`
+	// Everything in this folder, up to the server's bound.
+	Folder *InboundMessagesInput `json:"folder,omitempty"`
+}
+
+type TriageSettingsInput struct {
+	OnCallUserID   *string `json:"onCallUserId,omitempty"`
+	EndOfDayMinute int     `json:"endOfDayMinute"`
+	Version        int     `json:"version"`
 }
 
 type UnapplyCreditMemoApplicationInput struct {
@@ -11401,6 +11505,64 @@ func (e *HomeLayoutSource) UnmarshalJSON(b []byte) error {
 }
 
 func (e HomeLayoutSource) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// The record a message was linked to, to unlink.
+type InboundLinkedRecord string
+
+const (
+	InboundLinkedRecordShipment InboundLinkedRecord = "Shipment"
+	InboundLinkedRecordCustomer InboundLinkedRecord = "Customer"
+	InboundLinkedRecordCarrier  InboundLinkedRecord = "Carrier"
+)
+
+var AllInboundLinkedRecord = []InboundLinkedRecord{
+	InboundLinkedRecordShipment,
+	InboundLinkedRecordCustomer,
+	InboundLinkedRecordCarrier,
+}
+
+func (e InboundLinkedRecord) IsValid() bool {
+	switch e {
+	case InboundLinkedRecordShipment, InboundLinkedRecordCustomer, InboundLinkedRecordCarrier:
+		return true
+	}
+	return false
+}
+
+func (e InboundLinkedRecord) String() string {
+	return string(e)
+}
+
+func (e *InboundLinkedRecord) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = InboundLinkedRecord(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid InboundLinkedRecord", str)
+	}
+	return nil
+}
+
+func (e InboundLinkedRecord) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *InboundLinkedRecord) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e InboundLinkedRecord) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { snoozePresets, wallClockInputToUnix } from "../case-snooze";
-import { nextWake } from "../use-snooze-clock";
 
 // Wednesday 2026-09-16 15:00 in New York (19:00 UTC).
 const NOW = Date.UTC(2026, 8, 16, 19, 0, 0) / 1000;
@@ -23,12 +22,5 @@ describe("wallClockInputToUnix", () => {
     );
     expect(wallClockInputToUnix("", ZONE)).toBeNull();
     expect(wallClockInputToUnix("tomorrow", ZONE)).toBeNull();
-  });
-});
-
-describe("nextWake", () => {
-  it("is the soonest snooze still to end", () => {
-    expect(nextWake([null, NOW - 5, NOW + 90, NOW + 30, undefined], NOW)).toBe(NOW + 30);
-    expect(nextWake([NOW - 5], NOW)).toBeNull();
   });
 });

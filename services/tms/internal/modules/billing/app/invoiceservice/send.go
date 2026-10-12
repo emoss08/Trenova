@@ -80,7 +80,7 @@ func (s *Service) PlanSend(
 		ProviderLimitBytes: providerLimit(profile),
 		EstimatedBodyBytes: int64(
 			len(wording.Subject.Value)+len(body),
-		) + defaultBodyOverheadBytes,
+		) + emailports.BodyAllowanceBytes,
 		Parts:                make([]*invoiceports.InvoiceSendPlanPart, 0),
 		Warnings:             make([]string, 0),
 		Errors:               make([]string, 0),

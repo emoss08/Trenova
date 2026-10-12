@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/customerpaymentservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/detentionbillingservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/detentioncreditservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicedisputeservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicerunservice"
@@ -45,6 +46,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"go.uber.org/fx"
 )
 
@@ -101,6 +103,8 @@ func SharedOptions() fx.Option {
 			func(s *accountingdriftservice.Service) accountingsyncports.AccountingDriftRechecker { return s },
 			func(s *accountingdriftservice.Service) accountingsyncports.AccountingDriftService { return s },
 			invoiceadjustmentservice.New,
+			detentioncreditservice.New,
+			func(s *detentioncreditservice.Service) detentionports.BilledDetentionCreditor { return s },
 			invoiceservice.NewService,
 			func(s *invoiceservice.Service) invoiceports.InvoiceService { return s },
 			invoicerunservice.New,

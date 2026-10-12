@@ -667,7 +667,6 @@
   "Template version activated": "Versión de la plantilla activada",
   "Template version archived": "Versión de la plantilla archivada",
   "Template version certified": "Versión de la plantilla certificada",
-  "Templates": "Plantillas",
   "Test case": "Caso de prueba",
   "The EDI document type that seeds the template direction and transaction set.": "El tipo de documento EDI que determina la dirección y el conjunto de transacciones de la plantilla.",
   "The EDI operations summary could not be loaded. Retry shortly or check the API logs.": "No se pudo cargar el resumen de operaciones EDI. Vuelva a intentarlo en breve o revise los registros de la API.",

@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/thumbnailjobs/thumbnailcontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -66,6 +67,7 @@ type Params struct {
 	DocTypeRepo        documenttypeports.DocumentTypeRepository
 	Redis              *goredis.Client `optional:"true"`
 	Encryption         *encryptionservice.Service
+	Triage             inboundmessageports.TriageEventSink `optional:"true"`
 }
 
 type Service struct {
@@ -82,6 +84,7 @@ type Service struct {
 	docTypeRepo        documenttypeports.DocumentTypeRepository
 	redis              *goredis.Client
 	encryption         *encryptionservice.Service
+	triage             inboundmessageports.TriageEventSink
 }
 
 //nolint:gocritic // dependency injection param
@@ -100,6 +103,7 @@ func New(p Params) *Service {
 		docTypeRepo:        p.DocTypeRepo,
 		redis:              p.Redis,
 		encryption:         p.Encryption,
+		triage:             p.Triage,
 	}
 }
 
@@ -819,6 +823,7 @@ func (s *Service) runSynchronousFinalization(
 		s.startThumbnailWorkflow(ctx, createdDoc)
 	}
 	s.recordDocumentUploadUsage(ctx, createdDoc, req.TenantInfo, &req.Actor)
+	inboundmessageports.AnnounceDocumentAttached(ctx, s.triage, createdDoc)
 
 	return createdDoc, nil
 }

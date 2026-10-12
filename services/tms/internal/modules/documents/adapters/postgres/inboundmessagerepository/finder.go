@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
 	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/documenttypecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -13,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -279,4 +281,38 @@ func onlyOneOf(found map[pulid.ID]struct{}) (pulid.ID, bool, error) {
 	}
 
 	return pulid.Nil, false, nil
+}
+
+func (f *RecordFinder) DocumentTypeNames(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	ids []pulid.ID,
+) (map[pulid.ID]string, error) {
+	return dbtx.Read(ctx, f.db, func(ctx context.Context) (map[pulid.ID]string, error) {
+		names := make(map[pulid.ID]string, len(ids))
+		if len(ids) == 0 {
+			return names, nil
+		}
+
+		rows := make([]struct {
+			ID   pulid.ID `bun:"id"`
+			Name string   `bun:"name"`
+		}, 0, len(ids))
+		cols := documenttypecol.DocumentTypeColumns
+		if err := f.db.DBForContext(ctx).
+			NewSelect().
+			Model((*documenttype.DocumentType)(nil)).
+			ColumnExpr(cols.ID.Qualified()).
+			ColumnExpr(cols.Name.Qualified()).
+			Apply(documenttypecol.DocumentTypeApplyTenant(tenantInfo)).
+			Where(cols.ID.In(), bun.List(ids)).
+			Scan(ctx, &rows); err != nil {
+			return nil, err
+		}
+		for _, row := range rows {
+			names[row.ID] = row.Name
+		}
+
+		return names, nil
+	})
 }

@@ -153,6 +153,18 @@ export function formatCurrency(num: number, currency: string = "USD"): string {
   }).format(num);
 }
 
+/** Money without cents when it has none ("$1,180", "$185.50"), for a sentence or a button. */
+export function formatCurrencyWhole(num: number, currency: string = "USD"): string {
+  const whole = Number.isInteger(num);
+
+  return numberFormatter({
+    style: "currency",
+    currency: currency,
+    minimumFractionDigits: whole ? 0 : 2,
+    maximumFractionDigits: whole ? 0 : 2,
+  }).format(num);
+}
+
 export function formatCompactCurrency(num: number, currency: string = "USD"): string {
   return numberFormatter({
     style: "currency",

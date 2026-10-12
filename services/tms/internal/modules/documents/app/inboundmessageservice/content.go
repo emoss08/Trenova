@@ -88,7 +88,7 @@ func (s *Service) fetchContent(
 	}
 
 	s.stageFetchedAttachments(ctx, updated, content, tenantInfo)
-	s.publishMessage(ctx, updated, inboxRealtimeAction)
+	s.notify.MessagesChanged(ctx, updated)
 
 	s.l.Info("read an inbound message's content from its provider",
 		zap.String("messageId", updated.ID.String()),
@@ -149,6 +149,7 @@ func (s *Service) applyContent(
 	if len(content.References) > 0 {
 		message.References = content.References
 	}
+	s.joinThread(ctx, message)
 
 	attachments := message.Attachments
 	mailbox := message.Mailbox
@@ -159,6 +160,7 @@ func (s *Service) applyContent(
 	}
 	updated.Attachments = attachments
 	updated.Mailbox = mailbox
+	s.answerAwaiting(ctx, updated)
 
 	return updated, nil
 }
