@@ -101,7 +101,11 @@ _Filled in as each area lands._
   returns the reply as `Sending` unless the provider answered at once. `Sent` or `Failed` (a
   bounce, complaint or suppression included) lands through an email observer
   (`emailports.EmailMessageObserver`) and reaches the list as a realtime invalidation. The
-  design shows "Sent" immediately.
+  design shows "Sent" immediately. Observers are handed to the email service by
+  `emailservice.RegisterObservers` once the graph is built, not taken by its constructor: the
+  reply tracker reaches the notification service through the triage notifier and the
+  watchtower projector, and the notification service sends email, so a constructor parameter
+  made a dependency cycle that stopped every process from starting.
 - **A refused recipient suggests an alternate only when one is known**: the most recent other
   address at the same domain that wrote in or was replied to in the last 90 days. With none,
   `suggestedAddress` is null and the client should offer the address field.
