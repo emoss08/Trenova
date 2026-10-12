@@ -7,7 +7,7 @@ import type {
   AgentToolPolicy,
 } from "@/lib/graphql/agent-safety";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import { resourceLabel } from "../agents/tool-catalog";
+import { resourceLabel } from "@/lib/resource-label";
 
 /** Every class in the order the organization is left: nowhere first, money last. */
 export const EGRESS_ORDER: readonly AgentEgressClass[] = [

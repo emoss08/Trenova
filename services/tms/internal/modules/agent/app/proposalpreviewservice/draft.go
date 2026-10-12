@@ -287,7 +287,7 @@ func (s *Service) snapshot(ctx context.Context, in *snapshotInput) (*snapshotRes
 		}
 
 		if in.labelled && result.previewErr == nil && result.preview != nil {
-			result.labels = s.labels(txCtx, &in.params, result.preview)
+			result.labels = s.labels(txCtx, tenantOfParams(&in.params), result.preview.Changes)
 		}
 		result.done = true
 
@@ -464,13 +464,13 @@ func staleWarning(staleness *agent.PreviewStaleness, resource string) agent.Prev
 	}
 }
 
-// labels reads the label of every record the preview names, in one query per
-// resource, inside the same snapshot. A label that cannot be read leaves the
+// labels reads the label of every record the changes name and do not yet
+// label, in one query per resource. A label that cannot be read leaves the
 // record named by nothing, never by its id.
 func (s *Service) labels(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
-	preview *agent.ToolPreview,
+	tenant pagination.TenantInfo,
+	changes []agent.RecordChange,
 ) agentports.RecordLabels {
 	if s.labeler == nil {
 		return nil
@@ -482,25 +482,26 @@ func (s *Service) labels(
 			refs[resource] = append(refs[resource], id)
 		}
 	}
-	for i := range preview.Changes {
-		change := &preview.Changes[i]
+	addRef := func(ref *agent.PreviewRef) {
+		if ref != nil && ref.Label == "" {
+			add(ref.Resource, ref.ID)
+		}
+	}
+	for i := range changes {
+		change := &changes[i]
 		if change.Label == "" {
 			add(change.Resource, change.EntityID)
 		}
 		for j := range change.Fields {
-			if ref := change.Fields[j].BeforeRef; ref != nil {
-				add(ref.Resource, ref.ID)
-			}
-			if ref := change.Fields[j].AfterRef; ref != nil {
-				add(ref.Resource, ref.ID)
-			}
+			addRef(change.Fields[j].BeforeRef)
+			addRef(change.Fields[j].AfterRef)
 		}
 	}
 	if len(refs) == 0 {
 		return nil
 	}
 
-	labels, err := s.labeler.Labels(ctx, tenantOfParams(params), refs)
+	labels, err := s.labeler.Labels(ctx, tenant, refs)
 	if err != nil {
 		s.l.Warn("could not read the labels of the records a preview names", zap.Error(err))
 
