@@ -1,6 +1,6 @@
-# The command palette's customer preview: who the customer is and where they
-# stand on credit, without the rest of the billing and email profiles the edit
-# panel loads.
+# The command palette's customer preview: who the customer is, where they
+# stand on credit and who their invoices go to, without the rest of the
+# billing and email profiles the edit panel loads.
 query CommandPaletteCustomerPreview($id: ID!) {
   customer(id: $id) {
     id
@@ -21,6 +21,9 @@ query CommandPaletteCustomerPreview($id: ID!) {
       creditBalance
       invoiceDelivery
       billingCycle
+    }
+    emailProfile {
+      toRecipients
     }
   }
 }

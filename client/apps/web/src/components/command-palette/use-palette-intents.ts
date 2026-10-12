@@ -18,13 +18,19 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import type { PaletteIntent } from "./palette-model";
+import type { PaletteCopyKind, PaletteIntent, PaletteTheme } from "./palette-model";
 
 interface IntentRunnerOptions {
   /** Closes the palette and forgets what was typed. */
   close: () => void;
   /** Turns the palette into a question about one record. */
   askAbout: (subject: AssistantEntityRef) => void;
+  /**
+   * Says what an intent that leaves the palette open just did. The palette
+   * shows it in its footer, where the person is looking; without one, a
+   * toast says it.
+   */
+  confirm?: (message: string) => void;
 }
 
 function absoluteUrl(href: string): string {
@@ -40,7 +46,7 @@ function openInNewTab(url: string): void {
  * that changes the screen closes the palette first, so a dialog it opens is
  * not stacked under a dialog that is still leaving.
  */
-export function usePaletteIntentRunner({ close, askAbout }: IntentRunnerOptions) {
+export function usePaletteIntentRunner({ close, askAbout, confirm }: IntentRunnerOptions) {
   const t = useT();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -52,26 +58,73 @@ export function usePaletteIntentRunner({ close, askAbout }: IntentRunnerOptions)
   const markAllRead = useMarkAllNotificationsRead();
   const markRead = useNotificationAction("read");
 
+  const say = useCallback(
+    (message: string) => {
+      if (confirm) {
+        confirm(message);
+      } else {
+        toast.success(message);
+      }
+    },
+    [confirm],
+  );
+
   const { mutate: togglePin } = useApiMutation({
     mutationFn: (values: { pageUrl: string; pageTitle: string }) =>
       apiService.pageFavoriteService.togglePageFavorite(values),
     resourceName: "Page Favorite",
     onSuccess: (result) => {
-      toast.success(result.favorited ? t("Pinned") : t("Unpinned"));
+      say(result.favorited ? t("Pinned to home") : t("Unpinned from home"));
       void queryClient.invalidateQueries({ queryKey: queries.pageFavorite._def });
     },
   });
 
+  const copiedMessage = useCallback(
+    (what: PaletteCopyKind | "link") => {
+      switch (what) {
+        case "link":
+          return t("Link copied");
+        case "pro":
+          return t("PRO number copied");
+        case "bol":
+          return t("BOL copied");
+        case "name":
+          return t("Name copied");
+        case "file-name":
+          return t("File name copied");
+        case "answer":
+          return t("Answer copied");
+        case "text":
+          return t("Copied to clipboard");
+      }
+    },
+    [t],
+  );
+
+  const themeMessage = useCallback(
+    (theme: PaletteTheme) => {
+      switch (theme) {
+        case "light":
+          return t("Light theme on");
+        case "dark":
+          return t("Dark theme on");
+        case "system":
+          return t("Matching your system theme");
+      }
+    },
+    [t],
+  );
+
   const copyText = useCallback(
-    async (text: string) => {
+    async (text: string, what: PaletteCopyKind | "link") => {
       const copied = await copy(text, { withToast: false });
       if (copied) {
-        toast.success(t("Copied to clipboard"));
+        say(copiedMessage(what));
       } else {
         toast.error(t("Couldn't copy to the clipboard"));
       }
     },
-    [copy, t],
+    [copiedMessage, copy, say, t],
   );
 
   return useCallback(
@@ -86,10 +139,10 @@ export function usePaletteIntentRunner({ close, askAbout }: IntentRunnerOptions)
           close();
           return;
         case "copy":
-          void copyText(intent.text);
+          void copyText(intent.text, intent.what);
           return;
         case "copy-link":
-          void copyText(absoluteUrl(intent.href));
+          void copyText(absoluteUrl(intent.href), "link");
           return;
         case "toggle-pin":
           togglePin({ pageUrl: intent.pageUrl, pageTitle: intent.pageTitle });
@@ -99,7 +152,7 @@ export function usePaletteIntentRunner({ close, askAbout }: IntentRunnerOptions)
           return;
         case "set-theme":
           setTheme(intent.theme);
-          close();
+          say(themeMessage(intent.theme));
           return;
         case "sign-out":
           close();
@@ -124,6 +177,7 @@ export function usePaletteIntentRunner({ close, askAbout }: IntentRunnerOptions)
           return;
         case "mark-notification-read":
           markRead.mutate([intent.notificationId]);
+          say(t("Marked as read"));
           return;
         case "mark-all-notifications-read":
           markAllRead.mutate();
@@ -143,8 +197,11 @@ export function usePaletteIntentRunner({ close, askAbout }: IntentRunnerOptions)
       markRead,
       navigate,
       openDialog,
+      say,
       setTheme,
       signOut,
+      t,
+      themeMessage,
       togglePin,
       toggleSidebar,
     ],

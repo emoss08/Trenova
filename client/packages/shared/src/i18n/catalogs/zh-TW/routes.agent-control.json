@@ -337,7 +337,6 @@
   "Checked every night on its own.": "每晚自動驗證。",
   "Checking the chain from the last sealed row…": "正在從最後一筆已封存的記錄開始檢查鏈…",
   "Checking which tools have earned it…": "正在檢查哪些工具已達標…",
-  "Choose": "選擇",
   "Choose a candidate and turn the rollout on to send it a share of real documents.": "選擇候選項並開啟推出，即可將一部分真實文件交給它。",
   "Choose a candidate provider to start shadowing production extraction.": "選擇候選服務供應商，以開始影子執行正式環境擷取。",
   "Choose a provider": "選擇服務供應商",

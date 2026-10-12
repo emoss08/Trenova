@@ -1,4 +1,4 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { cn } from "@trenova/shared/lib/utils";
 import {
@@ -200,21 +200,11 @@ export function PTOTypeBadge({ type }: { type: PTOType }) {
   );
 }
 
-export function ShipmentStatusBadge({
-  status,
-  className,
-  brokered = false,
-}: {
-  status?: ShipmentStatus;
-  className?: string;
-  /** A brokerage books a carrier rather than assigning a driver, so Assigned reads Booked. */
-  brokered?: boolean;
-}) {
-  const t = useT();
-
-  if (!status) return null;
-
-  const statusAttributes: Record<ShipmentStatus, BadgeAttrProps> = {
+function shipmentStatusAttributes(
+  t: TranslateFn,
+  brokered: boolean,
+): Record<ShipmentStatus, BadgeAttrProps> {
+  return {
     ["New"]: {
       phase: "draft",
       text: t("New"),
@@ -282,6 +272,32 @@ export function ShipmentStatusBadge({
       ),
     },
   };
+}
+
+/** A shipment status as people read it, the same words the badge shows. */
+export function shipmentStatusText(
+  status: ShipmentStatus,
+  t: TranslateFn,
+  brokered = false,
+): string {
+  return shipmentStatusAttributes(t, brokered)[status].text;
+}
+
+export function ShipmentStatusBadge({
+  status,
+  className,
+  brokered = false,
+}: {
+  status?: ShipmentStatus;
+  className?: string;
+  /** A brokerage books a carrier rather than assigning a driver, so Assigned reads Booked. */
+  brokered?: boolean;
+}) {
+  const t = useT();
+
+  if (!status) return null;
+
+  const statusAttributes = shipmentStatusAttributes(t, brokered);
 
   return (
     <Badge variant={phaseTone(statusAttributes[status].phase)} className={cn(className, "max-h-5")}>
