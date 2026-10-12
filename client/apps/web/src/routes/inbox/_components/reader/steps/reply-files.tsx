@@ -5,12 +5,16 @@ import {
   attachableSections,
   fileFromAttachable,
   fitsBudget,
+  overBudget,
+  totalBytes,
   type ReplyFile,
 } from "@/lib/triage/reply-files";
 import type { UploadState } from "@/types/upload";
 import { useQuery } from "@tanstack/react-query";
 import {
   CheckIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
   PaperclipIcon,
   RefreshCw01Icon,
   Upload01Icon,
@@ -22,7 +26,7 @@ import { Progress } from "@trenova/shared/components/ui/progress";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, formatFileSize } from "@trenova/shared/lib/utils";
-import { type ReactNode, useRef, useState } from "react";
+import { type ReactNode, useId, useRef, useState } from "react";
 import { FileBadge } from "../file-badge";
 
 function sourceHeading(t: TranslateFn, source: InboundReplyAttachableSource): string {
@@ -40,12 +44,8 @@ function sourceHeading(t: TranslateFn, source: InboundReplyAttachableSource): st
 
 const ROW = "animate-rise flex min-h-8 min-w-0 items-center gap-2 py-1 pr-1 pl-2";
 
-/**
- * The files a reply carries, one line each in a single box, so a reply with a
- * handful of files stays short. The summary closes the box: the count and,
- * while writing, how much of the email's budget they spend.
- */
-export function ReplyFileList({ summary, children }: { summary?: ReactNode; children: ReactNode }) {
+/** The files a reply carries, one line each in a single box. */
+function ReplyFileList({ children }: { children: ReactNode }) {
   const t = useT();
 
   return (
@@ -53,11 +53,6 @@ export function ReplyFileList({ summary, children }: { summary?: ReactNode; chil
       <ul aria-label={t("Files")} className="divide-border-subtle flex flex-col divide-y">
         {children}
       </ul>
-      {summary !== undefined && (
-        <div className="border-border-subtle text-foreground-subtle flex h-7 items-center justify-between gap-2 border-t px-2 text-xs tabular-nums">
-          {summary}
-        </div>
-      )}
     </div>
   );
 }
@@ -71,7 +66,7 @@ function RemoveButton({ label, onClick }: { label: string; onClick: () => void }
 }
 
 /** A file the reply carries: its kind, name and size, and a way to take it off. */
-export function ReplyFileChip({
+function ReplyFileChip({
   file,
   onRemove,
 }: {
@@ -99,7 +94,7 @@ export function ReplyFileChip({
 }
 
 /** A file on its way up from the computer, or the reason it did not make it. */
-export function UploadingChip({
+function UploadingChip({
   upload,
   onCancel,
   onRetry,
@@ -146,7 +141,7 @@ export function UploadingChip({
 }
 
 /** A file refused before it was sent anywhere, because it would not fit in the email. */
-export function RefusedFileChip({
+function RefusedFileChip({
   name,
   reason,
   onDismiss,
@@ -166,6 +161,109 @@ export function RefusedFileChip({
       </span>
       <RemoveButton label={t("Remove {0}", name)} onClick={onDismiss} />
     </li>
+  );
+}
+
+/** A file refused before upload, keyed so the same pick is refused once. */
+export type RefusedUpload = { key: string; name: string; reason: string };
+
+/**
+ * The files a reply carries, the ones on their way up, and the ones refused
+ * before upload. While anything needs a look — an upload running or failed, a
+ * refusal, files over what the email can carry — every file is listed; once
+ * they have all landed the list folds to one line, opened on a press.
+ */
+export function ReplyFiles({
+  files,
+  uploads,
+  refused,
+  limitBytes,
+  onRemove,
+  onCancelUpload,
+  onRetryUpload,
+  onDismissRefusal,
+}: {
+  files: readonly ReplyFile[];
+  limitBytes: number | null;
+  uploads: readonly UploadState[];
+  refused: readonly RefusedUpload[];
+  onRemove?: (documentId: string) => void;
+  onCancelUpload: (id: string) => void;
+  onRetryUpload: (id: string) => void;
+  onDismissRefusal: (key: string) => void;
+}) {
+  const t = useT();
+  const listId = useId();
+  const [open, setOpen] = useState(false);
+  const pending = uploads.filter((upload) => upload.status !== "success");
+  if (files.length === 0 && pending.length === 0 && refused.length === 0) {
+    return null;
+  }
+
+  const carried = formatFileSize(totalBytes(files));
+  const summary = t(
+    "{0} · {1}",
+    t("{0, plural, one {# file} other {# files}}", files.length),
+    limitBytes === null ? carried : t("{0} of {1}", carried, formatFileSize(limitBytes)),
+  );
+  const needsLook =
+    pending.length > 0 ||
+    refused.length > 0 ||
+    (limitBytes !== null && overBudget(files, limitBytes));
+  const list = (
+    <ReplyFileList>
+      {files.map((file) => (
+        <ReplyFileChip key={file.documentId} file={file} onRemove={onRemove} />
+      ))}
+      {pending.map((upload) => (
+        <UploadingChip
+          key={upload.id}
+          upload={upload}
+          onCancel={onCancelUpload}
+          onRetry={onRetryUpload}
+        />
+      ))}
+      {refused.map((refusal) => (
+        <RefusedFileChip
+          key={refusal.key}
+          name={refusal.name}
+          reason={refusal.reason}
+          onDismiss={() => onDismissRefusal(refusal.key)}
+        />
+      ))}
+    </ReplyFileList>
+  );
+
+  if (needsLook) {
+    return files.length > 0 ? (
+      <div className="flex flex-col gap-1">
+        {list}
+        <span className="text-foreground-subtle px-2 text-xs tabular-nums">{summary}</span>
+      </div>
+    ) : (
+      list
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={listId}
+        onClick={() => setOpen((value) => !value)}
+        className="text-foreground-muted hover:bg-surface-hover ui-focus-ring flex h-7 w-full min-w-0 items-center gap-1.5 rounded-md px-2 text-left text-xs"
+      >
+        <PaperclipIcon aria-hidden className="text-foreground-subtle size-3 shrink-0" />
+        <span className="min-w-0 flex-1 truncate tabular-nums">{summary}</span>
+        {open ? (
+          <ChevronDownIcon aria-hidden className="text-foreground-subtle size-3 shrink-0" />
+        ) : (
+          <ChevronRightIcon aria-hidden className="text-foreground-subtle size-3 shrink-0" />
+        )}
+      </button>
+      {open && <div id={listId}>{list}</div>}
+    </div>
   );
 }
 
