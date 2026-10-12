@@ -2888,6 +2888,7 @@
   "Document lineage does not have a current version": "文件沿革沒有目前版本",
   "Document lineage not found within your organization": "您的組織中找不到該文件沿革",
   "Document link is no longer available": "文件連結已失效",
+  "Document not found": "找不到文件",
   "Document profile does not exist": "文件設定檔不存在",
   "Document profile is required": "文件設定檔為必填",
   "Document profile status is invalid": "文件設定檔狀態無效",

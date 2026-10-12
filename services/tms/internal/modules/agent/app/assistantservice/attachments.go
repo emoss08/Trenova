@@ -156,6 +156,7 @@ func (s *Service) readAttachment(
 	}
 
 	runtime := s.describeAttachment(ctx, doc.ID, doc.OriginalName, doc.FileType, tenant)
+	runtime.FileSize = doc.FileSize
 
 	return attachmentSlot{
 		stored: &conversation.MessageAttachment{

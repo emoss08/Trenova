@@ -7720,6 +7720,7 @@
   "Document lineage does not have a current version": "El linaje del documento no tiene una versión actual",
   "Document lineage not found within your organization": "No se encontró el linaje del documento en su organización",
   "Document link is no longer available": "El enlace al documento ya no está disponible",
+  "Document not found": "No se encontró el documento",
   "Document not found or an unexpected error occurred": "No se encontró el documento o se produjo un error inesperado",
   "Document on file": "Documento en el expediente",
   "Document operations": "Operaciones documentales",

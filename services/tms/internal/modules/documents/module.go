@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/retrievalsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/conversationfileservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentintelligenceservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentoperationsservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentpacketruleservice"
@@ -90,6 +91,7 @@ func SharedOptions() fx.Option {
 			documentsearchprojectionservice.New,
 			documentservice.New,
 			func(s *documentservice.Service) documentports.InvoiceDocumentService { return s },
+			conversationfileservice.New,
 			documentuploadservice.New,
 			func(s *documentuploadservice.Service) documentuploadports.DocumentUploadService { return s },
 			extractionevalservice.New,

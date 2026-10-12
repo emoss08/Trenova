@@ -492,6 +492,7 @@ func (s *Service) attemptChat(
 		StreamClient:             s.streamClientFor(provider),
 		StreamIdle:               s.ai.GetStreamIdleTimeout(),
 		ServerCredentialsAllowed: s.ai.ServerCloudCredentialsAllowed(),
+		Files:                    s.fileSource(req.TenantInfo),
 		Request: &modeladapter.Request{
 			System:       req.System,
 			SystemStable: req.SystemStable,
@@ -573,6 +574,7 @@ func (s *Service) attemptChat(
 		return nil, streamed, err
 	}
 
+	s.noteFiles(provider, resp.Files)
 	if resp.Refused {
 		return nil, streamed, errRefused
 	}

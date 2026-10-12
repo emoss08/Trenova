@@ -544,10 +544,12 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 	messages, shortened := replayHistoryWithFiles(history, req.Proposals, req.FileTexts)
 	now := turnNow(&runtimeContext)
 	input := req.Input
+	var attached agentdefinition.RenderedAttachments
 	if req.Delegation == nil {
-		input = agentdefinition.DescribeAttachments(
+		attached = agentdefinition.RenderAttachments(
 			runtimeContext.Attachments, agentdefinition.AttachmentTextBudget,
-		) + input
+		)
+		input = attached.Block + input
 		input = outOfViewDecisions(history, req.Proposals) + input
 		input = agentdefinition.DescribeAnchors(
 			runtimeContext.Anchors, now, runtimeContext.Timezone,
@@ -559,6 +561,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 	messages = append(messages, agentports.Message{
 		Role:    agentports.RoleUser,
 		Content: input,
+		Files:   messageFiles(input, runtimeContext.Attachments, &attached),
 	})
 	taint, opened := openTaint(req, &runtimeContext, now)
 

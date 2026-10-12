@@ -2888,6 +2888,7 @@
   "Document lineage does not have a current version": "El linaje del documento no tiene una versión actual",
   "Document lineage not found within your organization": "No se encontró el linaje del documento en su organización",
   "Document link is no longer available": "El enlace al documento ya no está disponible",
+  "Document not found": "No se encontró el documento",
   "Document profile does not exist": "El perfil del documento no existe",
   "Document profile is required": "El perfil del documento es obligatorio",
   "Document profile status is invalid": "El estado del perfil del documento no es válido",

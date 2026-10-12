@@ -338,6 +338,41 @@ than any it names takes the newest known constraints.
   `trenova.ai.thinking_dropped`. A value that keeps appearing is the harness editing a
   conversation it should hold still.
 
+### Files the person attached
+
+A turn's user message carries the files attached to it as references
+(`agentports.Message.Files`): the document id, name, type, size, pages, and
+where the file's entry sits in the attachments block (`EntryStart`/`EntryEnd`),
+with the entry that replaces it when the file itself is sent (`NativeEntry`,
+rendered by `agentdefinition.RenderAttachments`). Only the current message's
+files are carried; an earlier message's are named in the replay and read with
+`read_attachment`, and a delegate's task carries none. Bytes never cross a
+durable boundary.
+
+The Anthropic adapter reads them at call time (`modeladapter/anthropicfiles.go`)
+through `Call.Files`, which the router binds to the request's tenant from
+`agentports.MessageFileReader` (`messagefileservice`, over the documents module's
+`conversationfileservice`, which decrypts through `storedobject` and finds only a
+conversation's documents; no view is recorded, as for document intelligence).
+`aiprovider.Provider.FileInput` decides who reads files: an Anthropic Messages
+provider whose model id reads as Claude, because the same protocol fronts other
+vendors' models that refuse a document block. A PDF goes as a `document` block
+(titled with the file name, its id as context) and a JPEG, PNG, GIF or WebP as an
+`image` block after a line naming it, ahead of the message's text, and the file's
+entry is swapped for one that says the file is attached, so its extracted text is
+not paid for twice. Swaps run last first and only where the span still opens with
+the file's `AttachmentEntryLead`.
+
+Anything else goes as its text, and `Response.Files` says why, which the router
+logs: a type the model does not read, an image over 3.75 MB, a PDF past 100 pages
+(600 on a million-token model), the request's files past 20 MB together, a PDF that
+will not open (counted and checked with `kernelports.PDFReader` when the worker has
+one), or a file that could not be read. A request the provider refuses with a 400 or
+413 while carrying files is sent once more without them, before anything has
+streamed. The reader keeps up to eight files of 8 MB or less for ten minutes, keyed
+by tenant and document, since every model call of a turn sends the same files.
+OpenAI and Ollama providers read the text as before.
+
 ### How big a model's context is
 
 Compaction and the run overflow guard work from the provider's context window: the one

@@ -81,6 +81,9 @@ type Response struct {
 	CacheWriteTokens int
 	OutputLimit      int
 	CutOffCall       *CutOffToolCall
+	// Files says which files the request sent as themselves, and which it
+	// sent as their text instead and why.
+	Files FileReport
 	// ThinkingDropped is how many replayed thinking blocks the provider
 	// dropped because the conversation before them had changed. Anthropic
 	// reports it; a recurring drop is an edit the harness should stop making.
@@ -118,7 +121,13 @@ type Call struct {
 	// the server's own cloud identity. The server's configuration says; a
 	// provider saved while it allowed that is refused once it no longer does.
 	ServerCredentialsAllowed bool
+	// Files reads the files a request's messages carry, for a protocol whose
+	// model reads files itself. Nil sends every message as its text.
+	Files FileSource
 }
+
+// FileSource reads the bytes of a file a message carries, by its document.
+type FileSource func(ctx context.Context, documentID string) (*MessageFileContent, error)
 
 // think hands a piece of thinking to the reasoning sink, if there is one.
 func (c *Call) think(delta string) {

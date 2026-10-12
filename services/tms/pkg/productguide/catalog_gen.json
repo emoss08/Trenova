@@ -1,5 +1,5 @@
 {
-  "version": "sha256:515d8fa2ff80d082e53debce691b5b1307be3b59e352b8a904d5e2ab91b09d68",
+  "version": "sha256:1fffadc4540723fa4a1f9497cb329f64ad417fa114bd8b2ffbc94560e1780ce8",
   "modules": [
     {
       "id": "home",
@@ -8293,7 +8293,8 @@
           "steps": [
             "Select **Attach files** (the plus at the bottom left of the box), then **Upload from computer**. You can also press ⌘U (Ctrl+U), or drag files anywhere onto the Desk and drop them on the box.",
             "Each file shows above the text while it uploads. Select **Remove** to take one off, or **Try again** if an upload failed.",
-            "Type your question and send it. If you send files with no text, the agent is asked what is in them."
+            "Type your question and send it. If you send files with no text, the agent is asked what is in them.",
+            "When the agent answers through Claude, it reads a PDF or a photo (JPEG, PNG, GIF or WebP) as the file itself, so its layout, tables, stamps, signatures and handwriting count, not only the text read from it. A PDF of up to 600 pages (100 on Claude Haiku 4.5) goes this way. Other files, and any agent answering through another provider, read the text Trenova read from the file."
           ]
         },
         {

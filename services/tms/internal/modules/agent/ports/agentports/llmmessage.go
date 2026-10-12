@@ -34,6 +34,29 @@ type Message struct {
 	// Reasoning is the thinking behind an assistant turn, replayed so a
 	// provider that signs or references its reasoning can continue it.
 	Reasoning *conversation.ReasoningTrace
+	// Files are the files the person attached to this user message. A model
+	// that reads files is sent each it can take as the file itself, in place
+	// of its entry in Content; any other reads Content as it is.
+	Files []MessageFile
+}
+
+// MessageFile is a file attached to a user message, named by its document.
+// Only the reference crosses a durable boundary: the bytes are read where the
+// model is called.
+type MessageFile struct {
+	DocumentID  string
+	FileName    string
+	ContentType string
+	Size        int64
+	// PageCount is what reading the file counted, zero when it is not known.
+	PageCount int
+	// EntryStart and EntryEnd bound the file's entry in the message's
+	// Content, by byte, and NativeEntry is what replaces it when the file
+	// itself is sent. Offsets rather than a copy, because the entry holds the
+	// text read from the file and the message crosses every model call.
+	EntryStart  int
+	EntryEnd    int
+	NativeEntry string
 }
 
 // ToolCall is the model asking for a tool.

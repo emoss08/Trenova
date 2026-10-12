@@ -71796,6 +71796,15 @@
       "go/other"
     ]
   },
+  "Document not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Document not found or an unexpected error occurred": {
     "sites": 1,
     "scope": [

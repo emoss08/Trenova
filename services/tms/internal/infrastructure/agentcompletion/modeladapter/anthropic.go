@@ -40,12 +40,14 @@ func (anthropicAdapter) Kind() aiprovider.Kind { return aiprovider.KindAnthropic
 // anthropicParams is the request every call sends: the tools, the system
 // prompt and the conversation, each marked where its prefix is worth keeping,
 // and thinking asked for the way the configured model takes it.
-func anthropicParams(call *Call) anthropic.BetaMessageNewParams {
+func anthropicParams(call *Call, attached *anthropicFiles) anthropic.BetaMessageNewParams {
 	params := anthropic.BetaMessageNewParams{
 		Model:     call.Provider.Model,
 		MaxTokens: int64(call.Request.MaxTokens),
 		System:    cachedSystem(call.Request.System, call.Request.SystemStable),
-		Messages:  cachedConversation(toAnthropicMessages(call.Request.Messages)),
+		Messages: cachedConversation(
+			anthropicConversation(attached.messages, attached.blocks),
+		),
 		Tools:     cachedTools(toAnthropicTools(call.Request.Tools)),
 	}
 	applyThinking(&params, call)
@@ -170,7 +172,22 @@ func applyOutputSchema(params *anthropic.BetaMessageNewParams, call *Call) {
 }
 
 func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, error) {
-	params := anthropicParams(call)
+	attached := attachFiles(ctx, call)
+	resp, err := a.complete(ctx, call, &attached)
+	if refusedOverFiles(err, &attached) {
+		plain := plainConversation(call, &attached)
+		resp, err = a.complete(ctx, call, &plain)
+	}
+
+	return resp, err
+}
+
+func (a anthropicAdapter) complete(
+	ctx context.Context,
+	call *Call,
+	attached *anthropicFiles,
+) (*Response, error) {
+	params := anthropicParams(call, attached)
 	applyOutputSchema(&params, call)
 
 	service, err := anthropicMessages(ctx, call, false, a.credentials)
@@ -198,6 +215,7 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 		Reasoning:        anthropicReasoning(content),
 		OutputLimit:      int(params.MaxTokens),
 		ThinkingDropped:  thinkingDropped(message.InputTransformations),
+		Files:            attached.report,
 	}, nil
 }
 
@@ -288,7 +306,28 @@ func (a anthropicAdapter) Stream(
 	call *Call,
 	sink StreamSink,
 ) (*Response, error) {
-	params := anthropicParams(call)
+	attached := attachFiles(ctx, call)
+	emitted := false
+	watched := func(text string) {
+		emitted = true
+		sink(text)
+	}
+	resp, err := a.stream(ctx, call, watched, &attached)
+	if !emitted && refusedOverFiles(err, &attached) {
+		plain := plainConversation(call, &attached)
+		resp, err = a.stream(ctx, call, sink, &plain)
+	}
+
+	return resp, err
+}
+
+func (a anthropicAdapter) stream(
+	ctx context.Context,
+	call *Call,
+	sink StreamSink,
+	attached *anthropicFiles,
+) (*Response, error) {
+	params := anthropicParams(call, attached)
 
 	service, err := anthropicMessages(ctx, call, true, a.credentials)
 	if err != nil {
@@ -322,16 +361,7 @@ func (a anthropicAdapter) Stream(
 			})
 			dropped = thinkingDropped(event.Message.InputTransformations)
 		case "content_block_start":
-			start := event.ContentBlock
-			block := &anthropicStreamBlock{block: anthropicBlock{
-				Type:      start.Type,
-				ID:        start.ID,
-				Name:      start.Name,
-				Signature: start.Signature,
-				Data:      start.Data,
-			}}
-			block.text.WriteString(start.Text)
-			blocks[event.Index] = block
+			blocks[event.Index] = openedBlock(&event.ContentBlock)
 			order = append(order, event.Index)
 		case "content_block_delta":
 			block, ok := blocks[event.Index]
@@ -373,21 +403,7 @@ func (a anthropicAdapter) Stream(
 		return nil, interrupted(err, model)
 	}
 
-	content := make([]anthropicBlock, 0, len(order))
-	for _, index := range order {
-		streamed := blocks[index]
-		block := streamed.block
-		switch block.Type {
-		case anthropicTextBlock:
-			block.Text = streamed.text.String()
-		case anthropicThinkingBlock:
-			block.Thinking = streamed.thinking.String()
-		case anthropicToolUseBlock:
-			block.Arguments, block.InputError = decodeArguments(streamed.input.String())
-		}
-		content = append(content, block)
-	}
-
+	content := streamedContent(blocks, order)
 	text, toolCalls := splitAnthropicContent(content)
 
 	return &Response{
@@ -403,7 +419,45 @@ func (a anthropicAdapter) Stream(
 		Reasoning:        anthropicReasoning(content),
 		OutputLimit:      int(params.MaxTokens),
 		ThinkingDropped:  dropped,
+		Files:            attached.report,
 	}, nil
+}
+
+// openedBlock is a block as the stream opens it, before any delta.
+func openedBlock(
+	start *anthropic.BetaRawContentBlockStartEventContentBlockUnion,
+) *anthropicStreamBlock {
+	block := &anthropicStreamBlock{block: anthropicBlock{
+		Type:      start.Type,
+		ID:        start.ID,
+		Name:      start.Name,
+		Signature: start.Signature,
+		Data:      start.Data,
+	}}
+	block.text.WriteString(start.Text)
+
+	return block
+}
+
+// streamedContent is the reply's blocks in the order they opened, each with
+// the text, thinking or arguments its deltas added up to.
+func streamedContent(blocks map[int64]*anthropicStreamBlock, order []int64) []anthropicBlock {
+	content := make([]anthropicBlock, 0, len(order))
+	for _, index := range order {
+		streamed := blocks[index]
+		block := streamed.block
+		switch block.Type {
+		case anthropicTextBlock:
+			block.Text = streamed.text.String()
+		case anthropicThinkingBlock:
+			block.Thinking = streamed.thinking.String()
+		case anthropicToolUseBlock:
+			block.Arguments, block.InputError = decodeArguments(streamed.input.String())
+		}
+		content = append(content, block)
+	}
+
+	return content
 }
 
 // anthropicStreamFailure reads an error event the provider sent inside an
@@ -481,6 +535,15 @@ func replayThinking(trace *ReasoningTrace) []anthropic.BetaContentBlockParamUnio
 // is an edit every model accepts, and most ignore earlier turns' thinking
 // anyway. A tool result needs its own turn's thinking before it, which stays.
 func toAnthropicMessages(messages []Message) []anthropic.BetaMessageParam {
+	return anthropicConversation(messages, nil)
+}
+
+// anthropicConversation is the conversation as the API takes it, with the
+// blocks that carry each user message's files ahead of its text.
+func anthropicConversation(
+	messages []Message,
+	files map[int][]anthropic.BetaContentBlockParamUnion,
+) []anthropic.BetaMessageParam {
 	out := make([]anthropic.BetaMessageParam, 0, len(messages))
 	currentTurn := 0
 	for i := len(messages) - 1; i >= 0; i-- {
@@ -534,18 +597,18 @@ func toAnthropicMessages(messages []Message) []anthropic.BetaMessageParam {
 				Content: blocks,
 			})
 		default:
-			block := anthropic.BetaContentBlockParamUnion{
+			blocks := append(slices.Clone(files[i]), anthropic.BetaContentBlockParamUnion{
 				OfText: &anthropic.BetaTextBlockParam{Text: msg.Content},
-			}
+			})
 			// Text that follows tool results joins their message, after them,
 			// which is the order the API asks for.
 			if last, _ := lastToolResults(out); last != nil {
-				last.Content = append(last.Content, block)
+				last.Content = append(last.Content, blocks...)
 				continue
 			}
 			out = append(out, anthropic.BetaMessageParam{
 				Role:    anthropic.BetaMessageParamRoleUser,
-				Content: []anthropic.BetaContentBlockParamUnion{block},
+				Content: blocks,
 			})
 		}
 	}
