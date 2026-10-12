@@ -20,10 +20,7 @@ import {
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
-import {
-  formatUnixDateTimeShort,
-  formatUnixTime,
-} from "@trenova/shared/lib/date";
+import { formatUnixDateTimeShort, formatUnixTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useState } from "react";
 import { useNavigate } from "react-router";
@@ -49,7 +46,13 @@ function RowIcon({ children, open }: { children: React.ReactNode; open?: boolean
   );
 }
 
-function ShipmentRow({ message, shipment }: { message: InboundMessageDetail; shipment: InboundShipmentRef }) {
+function ShipmentRow({
+  message,
+  shipment,
+}: {
+  message: InboundMessageDetail;
+  shipment: InboundShipmentRef;
+}) {
   const t = useT();
   const actions = useTriageActions();
   const navigate = useNavigate();
@@ -65,7 +68,8 @@ function ShipmentRow({ message, shipment }: { message: InboundMessageDetail; shi
   if (peek?.deliveredAt != null) {
     meta = t("Delivered {0}", formatUnixDateTimeShort(peek.deliveredAt));
   } else if (peek?.eta != null) {
-    const when = peek.eta - now < DAY ? formatUnixTime(peek.eta) : formatUnixDateTimeShort(peek.eta);
+    const when =
+      peek.eta - now < DAY ? formatUnixTime(peek.eta) : formatUnixDateTimeShort(peek.eta);
     meta = peek.late ? t("ETA {0} · running late", when) : t("ETA {0}", when);
   }
 
@@ -117,7 +121,12 @@ function ShipmentRow({ message, shipment }: { message: InboundMessageDetail; shi
     [t("Equipment"), peek?.equipment || "—"],
     [t("BOL"), shipment.bol || "—"],
     [t("PO"), shipment.poNumber || "—"],
-    [t("On file"), peek === undefined || peek.documentsOnFile.length === 0 ? "—" : peek.documentsOnFile.join(", ")],
+    [
+      t("On file"),
+      peek === undefined || peek.documentsOnFile.length === 0
+        ? "—"
+        : peek.documentsOnFile.join(", "),
+    ],
   ];
 
   return (
@@ -251,7 +260,13 @@ function CustomerButton({
   );
 }
 
-type FactCell = { key: string | null; label: string; value: string; warning: boolean; flagged: boolean };
+type FactCell = {
+  key: string | null;
+  label: string;
+  value: string;
+  warning: boolean;
+  flagged: boolean;
+};
 
 function Fact({ messageId, fact }: { messageId: string; fact: FactCell }) {
   const t = useT();
@@ -325,7 +340,9 @@ function Facts({ message }: { message: InboundMessageDetail }) {
       flagged: fact.flagged,
     }));
   } else {
-    const read = message.attachments.find((attachment) => (attachment.reading?.fields.length ?? 0) > 0);
+    const read = message.attachments.find(
+      (attachment) => (attachment.reading?.fields.length ?? 0) > 0,
+    );
     if (read === undefined || read.reading === null) {
       return null;
     }

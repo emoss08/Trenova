@@ -25,7 +25,10 @@ export const ActivityTrace = memo(function ActivityTrace({
   }
 
   return (
-    <ol aria-label={t("What happened")} className="border-border-subtle flex flex-col border-t border-dashed pt-1">
+    <ol
+      aria-label={t("What happened")}
+      className="border-border-subtle flex flex-col border-t border-dashed pt-1"
+    >
       {activity.map((entry, index) => (
         <li
           key={entry.id}
@@ -33,7 +36,9 @@ export const ActivityTrace = memo(function ActivityTrace({
           className="text-foreground-muted animate-rise grid grid-cols-[12px_minmax(0,1fr)_auto] items-center gap-2 py-1.25 text-sm"
         >
           <span aria-hidden className="bg-success size-1.5 justify-self-center rounded-full" />
-          <span className="min-w-0">{activityLine(t, entry, { meId, format: USER_FORMATTERS })}</span>
+          <span className="min-w-0">
+            {activityLine(t, entry, { meId, format: USER_FORMATTERS })}
+          </span>
           <time
             dateTime={new Date(entry.createdAt * 1000).toISOString()}
             className="text-foreground-subtle font-mono text-2xs tabular-nums"

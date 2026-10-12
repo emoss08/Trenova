@@ -129,7 +129,7 @@ export function NovaLineText({
   return (
     <p
       aria-live="polite"
-      className="text-foreground-muted mt-2 min-h-16.5 text-3xl leading-snug text-pretty @max-2xl:min-h-13.5 @max-2xl:text-2xl"
+      className="text-foreground-muted mt-2 min-h-16.5 text-3xl leading-snug text-pretty @max-2xl:min-h-13.5 @max-2xl:text-xl"
     >
       {words}
     </p>

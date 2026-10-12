@@ -264,7 +264,7 @@ function HandoffBody({ message, onClose }: { message: InboundMessageDetail; onCl
             threads={threads}
             pageSource="none"
             surface="Desk"
-            openingQuestion={t("Help me finish this one.")}
+            openingQuestion={asked === thread.id ? undefined : t("Help me finish this one.")}
             onOpeningQuestionSent={() => setAsked(thread.id)}
             onSwitchAgent={(agentId) => {
               const switched = agents.find((row) => row.id === agentId);

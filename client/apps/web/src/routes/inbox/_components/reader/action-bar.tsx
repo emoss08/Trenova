@@ -174,7 +174,9 @@ function SheetButton({ done, total, onOpen }: { done: number; total: number; onO
       onClick={onOpen}
       className="bg-surface-hover ui-press ui-focus-ring inline-flex h-7.5 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium"
     >
-      <span className="text-foreground-subtle font-mono tabular-nums">{t("{0}/{1}", done, total)}</span>
+      <span className="text-foreground-subtle font-mono tabular-nums">
+        {t("{0}/{1}", done, total)}
+      </span>
       {t("Actions")}
     </button>
   );
@@ -235,8 +237,7 @@ export function ActionBar({
   const waitForReply = () =>
     actions.waitForReply(message.id, tomorrowMorning(Math.floor(Date.now() / 1000), timeZone));
   const canWait =
-    message.awaitingReply === null &&
-    message.replies.some((reply) => reply.status === "Sent");
+    message.awaitingReply === null && message.replies.some((reply) => reply.status === "Sent");
   const ignoreHeld = () =>
     actions.ignore(ids, { note: t("Phishing — sender not on the allow list.") });
 
@@ -382,10 +383,7 @@ export function ActionBar({
         >
           {t("Not phishing")}
         </Button>
-        <Button
-          className="h-8.5 rounded-lg"
-          onClick={ignoreHeld}
-        >
+        <Button className="h-8.5 rounded-lg" onClick={ignoreHeld}>
           {t("Ignore")}
           <Kbd className={kbdOnSolidClassName}>↵</Kbd>
         </Button>
@@ -427,7 +425,12 @@ export function ActionBar({
           {primaryLabel(t, mode.primary)}
           <Kbd className={cn("@max-[720px]/reader:hidden", !nova && kbdOnSolidClassName)}>↵</Kbd>
         </Button>
-        <Button variant="ghost" className="h-8.5 rounded-lg" aria-label={t("Mark handled (E)")} onClick={handle}>
+        <Button
+          variant="ghost"
+          className="h-8.5 rounded-lg"
+          aria-label={t("Mark handled (E)")}
+          onClick={handle}
+        >
           <CheckIcon aria-hidden className="size-3.25" strokeWidth={2} />
           <span className="@max-[720px]/reader:hidden">{t("Done")}</span>
         </Button>
@@ -490,11 +493,7 @@ export function ActionBar({
     );
   }
 
-  const key = noting
-    ? "noting"
-    : mode.kind === "next"
-      ? mode.action.id
-      : mode.kind;
+  const key = noting ? "noting" : mode.kind === "next" ? mode.action.id : mode.kind;
 
   return (
     <div

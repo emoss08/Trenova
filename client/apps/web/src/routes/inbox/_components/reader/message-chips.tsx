@@ -15,7 +15,11 @@ import { cn, toSentenceFragment } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { ReactNode } from "react";
 import { USER_FORMATTERS, snoozeText } from "../action-copy";
-import { CLASSIFICATION_DOT, INBOUND_CLASSIFICATIONS, classificationLabel } from "../classification";
+import {
+  CLASSIFICATION_DOT,
+  INBOUND_CLASSIFICATIONS,
+  classificationLabel,
+} from "../classification";
 import { PersonAvatar } from "../person-avatar";
 import { useTriageActions } from "../use-triage-actions";
 import { KindTag } from "./kind-tag";
@@ -48,11 +52,16 @@ export function MessageChips({ message }: { message: InboundMessageDetail }) {
       title:
         kind === null
           ? t("What kind of message is this?")
-          : t("Nova read this as {0}. It's actually…", toSentenceFragment(classificationLabel(t, kind))),
+          : t(
+              "Nova read this as {0}. It's actually…",
+              toSentenceFragment(classificationLabel(t, kind)),
+            ),
       entries: INBOUND_CLASSIFICATIONS.filter((other) => other !== kind).map((other) => ({
         id: other,
         label: classificationLabel(t, other),
-        leading: <span aria-hidden className={cn("size-2 rounded-sm", CLASSIFICATION_DOT[other])} />,
+        leading: (
+          <span aria-hidden className={cn("size-2 rounded-sm", CLASSIFICATION_DOT[other])} />
+        ),
         onSelect: () => actions.correctKind(message.id, other),
       })),
     });
@@ -148,8 +157,7 @@ export function SettledReceipt({ message }: { message: InboundMessageDetail }) {
       : message.handledByNova
         ? t("Nova")
         : t("a teammate");
-  const line =
-    message.status === "Actioned" ? t("Handled by {0}", by) : t("Ignored by {0}", by);
+  const line = message.status === "Actioned" ? t("Handled by {0}", by) : t("Ignored by {0}", by);
   const note = message.reviewNote.trim();
   const stamped =
     message.reviewedAt === null

@@ -15,7 +15,11 @@ function SentReply({ reply }: { reply: Reply }) {
   const [expanded, setExpanded] = useState(false);
   const sender = reply.sentBy;
   const who =
-    sender === null ? t("Nova replied") : sender.id === meId ? t("You replied") : t("{0} replied", sender.name);
+    sender === null
+      ? t("Nova replied")
+      : sender.id === meId
+        ? t("You replied")
+        : t("{0} replied", sender.name);
 
   return (
     <button

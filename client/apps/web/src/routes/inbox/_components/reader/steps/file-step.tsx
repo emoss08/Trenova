@@ -27,7 +27,6 @@ import { StepBody, StepError, StepField, StepFooter } from "./step-parts";
 const SKIP = "__skip";
 const NO_TYPES: readonly SelectOption[] = [];
 
-
 function TypeSelect({
   label,
   value,
@@ -208,7 +207,10 @@ export function FileStep({
           <LayersThree01Icon aria-hidden className="size-3" />
           {split
             ? t("File as one document")
-            : t("{0, plural, one {Split into # document} other {Split into # documents}}", pages.length)}
+            : t(
+                "{0, plural, one {Split into # document} other {Split into # documents}}",
+                pages.length,
+              )}
           <span className="text-foreground-subtle ml-auto font-mono text-2xs tabular-nums">
             {t("{0, plural, one {# page} other {# pages}}", pages.length)}
           </span>
@@ -272,7 +274,13 @@ export function FileStep({
           {t("Preview")}
         </Button>
         <span className="flex-1" />
-        <Button size="sm" disabled={!ready} isLoading={pending} loadingText={t("Filing…")} onClick={submit}>
+        <Button
+          size="sm"
+          disabled={!ready}
+          isLoading={pending}
+          loadingText={t("Filing…")}
+          onClick={submit}
+        >
           {split
             ? t("{0, plural, one {File # document} other {File # documents}}", ranges.length)
             : t("File")}

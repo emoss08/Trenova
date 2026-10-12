@@ -130,7 +130,7 @@ export function ConnectSource({
 
   return (
     <Dialog open onOpenChange={(open) => (open ? undefined : onClose())}>
-      <DialogContent size="sm" className="max-w-125 gap-0 p-0 sm:max-w-125">
+      <DialogContent size="sm" className="max-w-125 gap-0 p-0 sm:max-w-125 [&>*]:min-w-0">
         {ready && (
           <ConnectBody
             key={existing?.id ?? "new"}

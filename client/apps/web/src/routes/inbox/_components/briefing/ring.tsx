@@ -33,7 +33,7 @@ export function Ring({
 
   return (
     <div
-      className="tb-ring relative size-27 shrink-0"
+      className="tb-ring relative size-27 shrink-0 @max-2xl:size-20"
       data-busy={busy}
       role="img"
       aria-label={
@@ -75,7 +75,7 @@ export function Ring({
           <CheckIcon aria-hidden className="animate-confirm size-7.5" strokeWidth={2.4} />
         ) : (
           <>
-            <span className="font-mono text-3xl font-semibold tabular-nums transition-opacity duration-300">
+            <span className="font-mono text-4xl font-semibold tabular-nums transition-opacity duration-300 @max-2xl:text-3xl">
               {busy ? "" : shown}
             </span>
             <span className="text-2xs text-foreground-subtle mt-1">{busy ? "" : t("for you")}</span>

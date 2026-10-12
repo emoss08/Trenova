@@ -110,9 +110,9 @@ describe("stopsReading", () => {
     ).toBe(
       "The truck arrived 2 hours 5 minutes after the window, but the customer pays detention on a late arrival too, so the charge can stand.",
     );
-    expect(
-      stopsReading(translate, stops({ arrivedAt: END + 60 * MIN }), null, format),
-    ).toContain("arrived 1 hour after the window");
+    expect(stopsReading(translate, stops({ arrivedAt: END + 60 * MIN }), null, format)).toContain(
+      "arrived 1 hour after the window",
+    );
   });
 
   it("says an on-time arrival that waited carries the charge, and one that did not owes none", () => {

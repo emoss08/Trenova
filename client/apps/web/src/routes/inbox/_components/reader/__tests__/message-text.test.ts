@@ -51,7 +51,11 @@ describe("splitQuotedBody", () => {
   });
 });
 
-const fact = (quote: string, key = quote, overrides: Partial<UnderlineFact> = {}): UnderlineFact => ({
+const fact = (
+  quote: string,
+  key = quote,
+  overrides: Partial<UnderlineFact> = {},
+): UnderlineFact => ({
   key,
   label: key,
   quote,
@@ -61,11 +65,14 @@ const fact = (quote: string, key = quote, overrides: Partial<UnderlineFact> = {}
 });
 
 const text = (paragraph: BodySegment[]) =>
-  paragraph.map((segment) => (segment.kind === "text" ? segment.text : `[${segment.text}]`)).join("");
+  paragraph
+    .map((segment) => (segment.kind === "text" ? segment.text : `[${segment.text}]`))
+    .join("");
 
 describe("underlineParagraphs", () => {
   it("splits the words into paragraphs at blank lines and marks each fact where its quote is", () => {
-    const body = "Hello,\n\nWe are disputing the $185.00 detention on invoice INV-20931.\n\nRegards";
+    const body =
+      "Hello,\n\nWe are disputing the $185.00 detention on invoice INV-20931.\n\nRegards";
     const paragraphs = underlineParagraphs(body, [fact("INV-20931"), fact("$185.00 detention")]);
 
     expect(paragraphs.map(text)).toEqual([
@@ -88,15 +95,17 @@ describe("underlineParagraphs", () => {
   });
 
   it("matches without regard to case, and keeps the message's own spelling", () => {
-    expect(underlineParagraphs("Pickup Thursday 08:00", [fact("pickup thursday")]).map(text)).toEqual(
-      ["[Pickup Thursday] 08:00"],
-    );
+    expect(
+      underlineParagraphs("Pickup Thursday 08:00", [fact("pickup thursday")]).map(text),
+    ).toEqual(["[Pickup Thursday] 08:00"]);
   });
 
   it("marks only the first place a quote appears, and a later fact cannot take words already marked", () => {
     const body = "S-104251 rate con for S-104251";
     expect(
-      underlineParagraphs(body, [fact("S-104251", "pro"), fact("S-104251 rate", "overlap")]).map(text),
+      underlineParagraphs(body, [fact("S-104251", "pro"), fact("S-104251 rate", "overlap")]).map(
+        text,
+      ),
     ).toEqual(["[S-104251] rate con for S-104251"]);
     expect(
       underlineParagraphs(body, [fact("S-104251", "pro"), fact("S-104251", "again")]).map(text),
@@ -106,14 +115,19 @@ describe("underlineParagraphs", () => {
   it("leaves out a fact whose quote is empty, is not in the words, or spans two paragraphs", () => {
     const body = "First part.\n\nSecond part.";
     expect(
-      underlineParagraphs(body, [fact(""), fact("   "), fact("Third"), fact("part.\n\nSecond")]).map(text),
+      underlineParagraphs(body, [
+        fact(""),
+        fact("   "),
+        fact("Third"),
+        fact("part.\n\nSecond"),
+      ]).map(text),
     ).toEqual(["First part.", "Second part."]);
   });
 
   it("treats a quote's regular-expression characters as plain text", () => {
-    expect(underlineParagraphs("Rate $1,240 (all-in).", [fact("$1,240 (all-in)")]).map(text)).toEqual([
-      "Rate [$1,240 (all-in)].",
-    ]);
+    expect(
+      underlineParagraphs("Rate $1,240 (all-in).", [fact("$1,240 (all-in)")]).map(text),
+    ).toEqual(["Rate [$1,240 (all-in)]."]);
   });
 
   it("keeps a flagged fact marked, carrying the flag", () => {

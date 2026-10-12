@@ -225,7 +225,10 @@ function LoadForm({
           noteTone={empty > 0 ? "warning" : "subtle"}
           note={
             empty > 0
-              ? t("{0, plural, one {# empty — fine for a draft} other {# empty — fine for a draft}}", empty)
+              ? t(
+                  "{0, plural, one {# empty — fine for a draft} other {# empty — fine for a draft}}",
+                  empty,
+                )
               : t("All filled in")
           }
         >

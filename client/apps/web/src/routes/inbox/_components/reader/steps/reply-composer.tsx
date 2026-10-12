@@ -9,6 +9,7 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
+import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
@@ -153,9 +154,7 @@ function TemplatesMenu({
       }}
     >
       <PopoverTrigger
-        render={
-          <Button size="sm" variant="ghost" className="data-popup-open:bg-surface-hover" />
-        }
+        render={<Button size="sm" variant="ghost" className="data-popup-open:bg-surface-hover" />}
       >
         <LayersThree01Icon aria-hidden className="size-3" />
         {t("Templates")}
@@ -337,6 +336,13 @@ export function ReplyComposer({
     return () => clearTimeout(timer);
   }, [writing, body, savedBody, actions, message.id, subject]);
 
+  const flushDraft = useLatestCallback(() => {
+    if (writing && body.trim() !== "" && body !== savedBody) {
+      actions.saveReplyDraft(message.id, subject, body).catch(() => undefined);
+    }
+  });
+  useEffect(() => flushDraft, [flushDraft]);
+
   const send = (to: string | null) => {
     if (!canSend(state, body)) {
       return;
@@ -362,7 +368,9 @@ export function ReplyComposer({
 
   const sentReply = useMemo(
     () =>
-      state.phase === "sent" ? message.replies.find((reply) => reply.id === state.replyId) : undefined,
+      state.phase === "sent"
+        ? message.replies.find((reply) => reply.id === state.replyId)
+        : undefined,
     [state, message.replies],
   );
 

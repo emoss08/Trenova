@@ -71,7 +71,9 @@ function SenderCardBody({ message }: { message: InboundMessageDetail }) {
       </div>
       {profile === undefined ? (
         query.isError ? (
-          <p className="text-foreground-subtle text-xs">{t("Could not load what is known about this sender.")}</p>
+          <p className="text-foreground-subtle text-xs">
+            {t("Could not load what is known about this sender.")}
+          </p>
         ) : (
           <div aria-busy="true" className="flex flex-col gap-2">
             <Skeleton className="h-5 w-32" />
@@ -85,10 +87,7 @@ function SenderCardBody({ message }: { message: InboundMessageDetail }) {
             <Chip>{roleLabel(t, profile.role)}</Chip>
             {profile.since !== null && (
               <Chip>
-                {t(
-                  "Since {0}",
-                  formatUnixInUserTimezone(profile.since, { year: "numeric" }, ""),
-                )}
+                {t("Since {0}", formatUnixInUserTimezone(profile.since, { year: "numeric" }, ""))}
               </Chip>
             )}
           </div>
@@ -101,9 +100,7 @@ function SenderCardBody({ message }: { message: InboundMessageDetail }) {
             </div>
             <div className="bg-surface-hover flex flex-col rounded-md px-2.5 py-2">
               <span className="font-mono text-lg font-semibold tabular-nums">
-                {profile.usualReplyMinutes === null
-                  ? "—"
-                  : replyTime(t, profile.usualReplyMinutes)}
+                {profile.usualReplyMinutes === null ? "—" : replyTime(t, profile.usualReplyMinutes)}
               </span>
               <span className="text-foreground-subtle text-2xs">{t("your usual reply time")}</span>
             </div>

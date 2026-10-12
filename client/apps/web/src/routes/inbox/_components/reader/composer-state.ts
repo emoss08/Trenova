@@ -91,9 +91,7 @@ export function composerReducer(state: ComposerState, event: ComposerEvent): Com
       }
       return state;
     case "sendSettled":
-      return state.phase === "sending"
-        ? stateOf(event.reply, state.retrying)
-        : state;
+      return state.phase === "sending" ? stateOf(event.reply, state.retrying) : state;
     case "sendErrored":
       if (state.phase !== "sending") {
         return state;

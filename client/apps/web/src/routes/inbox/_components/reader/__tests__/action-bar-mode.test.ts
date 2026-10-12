@@ -133,16 +133,20 @@ describe("actionBarMode", () => {
   });
 
   it("does not offer Nova for a step it has no way to do itself", () => {
-    expect(
-      actionBarMode(message({ actions: [{ ...file, novaCanDo: true }] }), idle),
-    ).toMatchObject({ primary: "doIt" });
+    expect(actionBarMode(message({ actions: [{ ...file, novaCanDo: true }] }), idle)).toMatchObject(
+      { primary: "doIt" },
+    );
   });
 
   it("is busy while Nova drafts the step that is next, and only that step", () => {
-    expect(actionBarMode(message({ actions: [load, reply] }), { load: true, reply: false })).toMatchObject({
+    expect(
+      actionBarMode(message({ actions: [load, reply] }), { load: true, reply: false }),
+    ).toMatchObject({
       busy: true,
     });
-    expect(actionBarMode(message({ actions: [load, reply] }), { load: false, reply: true })).toMatchObject({
+    expect(
+      actionBarMode(message({ actions: [load, reply] }), { load: false, reply: true }),
+    ).toMatchObject({
       busy: false,
     });
   });
@@ -152,7 +156,9 @@ describe("actionBarMode", () => {
       { ...file, done: true },
       { ...reply, done: true, reply: sentReply },
     ];
-    expect(actionBarMode(message({ actions: steps, classification: "ProofOfDelivery" }), idle)).toEqual({
+    expect(
+      actionBarMode(message({ actions: steps, classification: "ProofOfDelivery" }), idle),
+    ).toEqual({
       kind: "done",
       total: 2,
       only: null,
@@ -211,9 +217,9 @@ describe("whyRows", () => {
   }
 
   it("leads with why the reading failed, and then shows no meter", () => {
-    expect(
-      whyRows(why({ failureText: "The body was cut off.", matchReason: "" }), null),
-    ).toEqual([{ kind: "failure", text: "The body was cut off.", held: false }]);
+    expect(whyRows(why({ failureText: "The body was cut off.", matchReason: "" }), null)).toEqual([
+      { kind: "failure", text: "The body was cut off.", held: false },
+    ]);
     expect(
       whyRows(why({ failureText: "Held back: a sign-in link.", status: "Quarantined" }), null)[0],
     ).toEqual({ kind: "failure", text: "Held back: a sign-in link.", held: true });
@@ -228,7 +234,10 @@ describe("whyRows", () => {
     });
     expect(whyRows(why({ confidence: 0.9 }), null)[0]).toMatchObject({ under: false });
     expect(
-      whyRows(why({ mailbox: { reviewPolicy: "AlwaysReview", minConfidence: 0.9, name: "Claims" } }), null),
+      whyRows(
+        why({ mailbox: { reviewPolicy: "AlwaysReview", minConfidence: 0.9, name: "Claims" } }),
+        null,
+      ),
     ).toEqual([{ kind: "note", note: "alwaysReview", mailbox: "Claims" }]);
     expect(whyRows(why({ mailbox: null }), null)).toEqual([]);
   });

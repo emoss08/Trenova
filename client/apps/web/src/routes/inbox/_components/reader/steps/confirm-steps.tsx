@@ -1,9 +1,5 @@
 import { describeApiError } from "@/lib/api-error-message";
-import type {
-  InboundMessageDetail,
-  TriageAction,
-  TriageExceptionKind,
-} from "@/lib/graphql/inbox";
+import type { InboundMessageDetail, TriageAction, TriageExceptionKind } from "@/lib/graphql/inbox";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import {
@@ -108,7 +104,10 @@ export function ExceptionStep({
     <StepBody>
       <p className="text-foreground-muted text-sm leading-normal">
         {pro === ""
-          ? t("Adds {0} exception to the shipment so billing holds the invoice until it's settled.", kindNoun(t, kind))
+          ? t(
+              "Adds {0} exception to the shipment so billing holds the invoice until it's settled.",
+              kindNoun(t, kind),
+            )
           : t(
               "Adds {0} exception to {1} so billing holds the invoice until it's settled.",
               kindNoun(t, kind),
@@ -201,7 +200,10 @@ export function BlockStep({
   return (
     <StepBody>
       <p className="text-foreground-muted text-sm leading-normal">
-        {t("Future mail from {0} goes straight to Ignored.", message.senderDomain || message.fromAddress)}
+        {t(
+          "Future mail from {0} goes straight to Ignored.",
+          message.senderDomain || message.fromAddress,
+        )}
       </p>
       <StepFooter>
         <span className="flex-1" />

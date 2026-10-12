@@ -168,6 +168,33 @@ _Filled in as each area lands._
   local model so Nova reads as on, and adds an address rule (FreshHaul claims assigned to Dana)
   next to the prototype's four. The second saved view searches "SEED-" rather than "S-10".
 
+### Reader
+
+- **"Download original" is "Download as .eml".** The provider's copy of a message is kept in
+  object storage (`html_key`) and no route serves it, so the reader's menu writes the stored
+  headers and plain text as an RFC 5322 file in the browser (`lib/triage/eml.ts`) and names the
+  item for what it is.
+- **Assignees carry no role.** The prototype's assign menu shows each teammate's role
+  ("Billing", "Dispatch"); `triageAssignees` returns the user and how many messages they have
+  waiting, so the menu shows that count, and "Has it now" on the current owner.
+- **"Not phishing" opens the link dialog.** There is no mutation that releases a held message
+  back to waiting; as in the prototype, the button asks which record the message is about.
+  "Ignore" settles it as phishing with that note.
+- **An exception's count and unit are read client-side.** `LogInboundExceptionInput` needs a
+  kind, a quantity and a unit; the action carries only the kind (and the mock leaves it null), so
+  the step reads "2 pallets short" from the message's facts or the document reading and lets the
+  person correct it before logging.
+- **A reply the message did not ask for has no step.** R on a message whose actions include no
+  `Reply` (a POD, the EDI status file) opens a composer appended to the checklist, unnumbered by
+  the server, so the prototype's "reply to anything" still works.
+- **A settled message lists only the steps that were done.** The server keeps deriving open
+  steps for a handled message (a status request still "asks" for an ETA); the reader hides the
+  open ones once the message is settled.
+- **Document types are matched by name.** Select options for `DOCUMENT_TYPE` carry the code as
+  the label and the name as the description; the reader shows and matches the name
+  (`lib/triage/document-types.ts`), since the reading's `documentType` and a page's
+  `suggestedType` are names.
+
 ## Performance
 
 Measured on the development database with 50,055 messages in one tenant (50,000 synthetic across

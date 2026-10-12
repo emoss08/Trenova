@@ -42,12 +42,11 @@ export function FirstDay({
   onConnect: () => void;
 }) {
   const t = useT();
-  const total = counts?.total ?? 0;
-  const read = Math.max(0, total - (counts?.processing ?? 0));
-  const shown = useCountUp(read, stage === "reading" || stage === "done", 600);
   const byKind = new Map(
     (counts?.byClassification ?? []).map((row) => [row.classification, row.total] as const),
   );
+  const read = [...byKind.values()].reduce((sum, count) => sum + count, 0);
+  const shown = useCountUp(read, stage === "reading" || stage === "done", 600);
   const current = stepIndex(stage);
 
   const heading =

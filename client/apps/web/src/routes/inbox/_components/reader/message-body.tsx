@@ -80,7 +80,7 @@ export const MessageBody = memo(function MessageBody({
 
   return (
     <section
-      aria-label={t("Message")}
+      aria-label={t("Message text")}
       className={cn("flex flex-col gap-3 pt-1", held && "text-foreground-muted")}
     >
       {raw ? (

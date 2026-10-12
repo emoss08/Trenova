@@ -152,12 +152,12 @@ function StepRow({
           )}
         </span>
         <span className="flex min-w-0 flex-1 flex-col leading-snug">
-          <span
-            className={cn("truncate text-base font-medium", done && "text-foreground-muted")}
-          >
+          <span className={cn("truncate text-base font-medium", done && "text-foreground-muted")}>
             {title}
           </span>
-          <span className={cn("truncate text-xs", done ? "text-success" : "text-foreground-subtle")}>
+          <span
+            className={cn("truncate text-xs", done ? "text-success" : "text-foreground-subtle")}
+          >
             {detail}
           </span>
         </span>

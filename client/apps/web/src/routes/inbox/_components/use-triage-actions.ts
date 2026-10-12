@@ -199,7 +199,9 @@ export type TriageActions = {
   saveTemplate: (name: string, body: string) => Promise<TriageReplyTemplate>;
   openInNewTab: (id: string) => void;
   /** Opens the Desk hand-off on the message and the steps still open on it. */
-  askInDesk: (message: Pick<InboundMessageRow, "id"> & Partial<Pick<InboundMessageRow, "actions">>) => void;
+  askInDesk: (
+    message: Pick<InboundMessageRow, "id"> & Partial<Pick<InboundMessageRow, "actions">>,
+  ) => void;
 };
 
 /** A new source as the connect flow names it. */
@@ -885,10 +887,15 @@ export function useTriageActionsController(): TriageActions {
           classification: input.classification,
           senderScope: input.senderScope,
           sender: input.sender ?? "",
-          mailboxId: input.mailboxId === undefined || input.mailboxId === null ? null : String(input.mailboxId),
+          mailboxId:
+            input.mailboxId === undefined || input.mailboxId === null
+              ? null
+              : String(input.mailboxId),
           action: input.action,
           assigneeId:
-            input.assigneeId === undefined || input.assigneeId === null ? null : String(input.assigneeId),
+            input.assigneeId === undefined || input.assigneeId === null
+              ? null
+              : String(input.assigneeId),
           assignee: input.assigneeId === rule.assigneeId ? rule.assignee : null,
         };
         queryClient.setQueryData<TriageRule[]>(key, (rules) =>
@@ -958,15 +965,12 @@ export function useTriageActionsController(): TriageActions {
         if (provider === "Postmark") {
           const postmark = generatePostmarkCredentials();
           created = await setInboundMailboxSigningSecret(created.id, postmarkSecret(postmark));
-          url = webhookUrl(
-            API_BASE_URL,
-            window.location.origin,
-            credentials.webhookPath,
-            postmark,
-          );
+          url = webhookUrl(API_BASE_URL, window.location.origin, credentials.webhookPath, postmark);
         }
         queryClient.setQueryData<InboundMailbox[]>(inbox.mailboxes().queryKey, (rows) =>
-          rows === undefined ? [created] : [...rows.filter((row) => row.id !== created.id), created],
+          rows === undefined
+            ? [created]
+            : [...rows.filter((row) => row.id !== created.id), created],
         );
         void queryClient.invalidateQueries({ queryKey: inbox.mailboxes().queryKey });
         refreshSummaries(queryClient);

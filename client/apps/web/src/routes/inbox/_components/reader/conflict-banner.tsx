@@ -31,7 +31,10 @@ function amountLine(t: TranslateFn, conflict: TriageConflict, filed: string): st
     return filed === "" ? t("One is already on file.") : t("Filed {0}.", filed);
   }
   const difference = formatCurrencyWhole(Math.abs(after - before));
-  const where = filed === "" ? t("On file at {0}.", formatCurrencyWhole(before)) : t("Filed {0} at {1}.", filed, formatCurrencyWhole(before));
+  const where =
+    filed === ""
+      ? t("On file at {0}.", formatCurrencyWhole(before))
+      : t("Filed {0} at {1}.", filed, formatCurrencyWhole(before));
   if (after === before) {
     return t("{0} This one says the same.", where);
   }

@@ -31,7 +31,16 @@ import { useReaderPanel } from "./reader-panel";
 
 const EXTENSION = /\.([a-z0-9]{2,5})$/i;
 const REFUSED_PREFIX = /^refused:\s*/i;
-const IMAGE_EXTENSIONS: ReadonlySet<string> = new Set(["jpg", "jpeg", "png", "gif", "heic", "webp", "tif", "tiff"]);
+const IMAGE_EXTENSIONS: ReadonlySet<string> = new Set([
+  "jpg",
+  "jpeg",
+  "png",
+  "gif",
+  "heic",
+  "webp",
+  "tif",
+  "tiff",
+]);
 
 function extensionOf(fileName: string): string {
   return EXTENSION.exec(fileName)?.[1]?.toLowerCase() ?? "file";
@@ -108,7 +117,11 @@ export function attachmentMenu({
     title: attachment.fileName,
     subtitle:
       filed && attachment.filedShipment !== null
-        ? t("{0} · filed on {1}", formatFileSize(attachment.byteSize), attachment.filedShipment.proNumber)
+        ? t(
+            "{0} · filed on {1}",
+            formatFileSize(attachment.byteSize),
+            attachment.filedShipment.proNumber,
+          )
         : formatFileSize(attachment.byteSize),
     entries: [
       {
@@ -148,7 +161,9 @@ export function attachmentMenu({
           { type: "header", label: t("Other shipments") },
           ...shipments
             .filter((option) => option.id !== matched?.id)
-            .map((option) => onShipment({ id: option.id, label: option.label, hint: laneOf(option) })),
+            .map((option) =>
+              onShipment({ id: option.id, label: option.label, hint: laneOf(option) }),
+            ),
           { type: "separator" },
           {
             id: "find",
@@ -274,7 +289,9 @@ function FileChip({
       onClick={open}
       className={cn(
         "border-border ui-focus-ring flex max-w-70 items-center gap-2.5 rounded-lg border py-1.75 pr-3 pl-1.75 text-left transition-colors",
-        refused ? "cursor-default border-dashed" : "hover:border-border-strong hover:bg-surface-hover",
+        refused
+          ? "cursor-default border-dashed"
+          : "hover:border-border-strong hover:bg-surface-hover",
       )}
     >
       <span

@@ -160,9 +160,7 @@ func (s *Service) CreditBilledCharge(
 
 func (s *Service) authorize(ctx context.Context, actor *permissionports.RequestActor) error {
 	if actor == nil {
-		return errortypes.NewAuthorizationError(
-			"Waiving a billed detention charge credits the invoice, which needs permission to update invoices",
-		)
+		return errInvoicePermission()
 	}
 
 	result, err := s.permissions.Check(ctx, &permissionports.PermissionCheckRequest{
@@ -179,12 +177,16 @@ func (s *Service) authorize(ctx context.Context, actor *permissionports.RequestA
 		return fmt.Errorf("authorize the detention credit: %w", err)
 	}
 	if result == nil || !result.Allowed {
-		return errortypes.NewAuthorizationError(
-			"Waiving a billed detention charge credits the invoice, which needs permission to update invoices",
-		)
+		return errInvoicePermission()
 	}
 
 	return nil
+}
+
+func errInvoicePermission() error {
+	return errortypes.NewAuthorizationError(
+		"Waiving a billed detention charge credits the invoice, which needs permission to update invoices",
+	)
 }
 
 func (s *Service) billedInvoices(

@@ -1,10 +1,6 @@
 import type { InboundMessageDetail } from "@/lib/graphql/inbox";
 import { useTriageStore } from "@/stores/triage-store";
-import {
-  ArrowRightIcon,
-  EyeIcon,
-  MessageChatCircleIcon,
-} from "@trenova/shared/components/icons";
+import { ArrowRightIcon, EyeIcon, MessageChatCircleIcon } from "@trenova/shared/components/icons";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { ActionStep, AdhocReplyStep } from "./action-step";
@@ -15,9 +11,7 @@ import { useReaderPanel } from "./reader-panel";
 function Checklist({ message }: { message: InboundMessageDetail }) {
   const t = useT();
   const panel = useReaderPanel();
-  const steps = message.needsReview
-    ? message.actions
-    : message.actions.filter((step) => step.done);
+  const steps = message.needsReview ? message.actions : message.actions.filter((step) => step.done);
   const done = steps.filter((step) => step.done).length;
   const adhoc = panel.adhocReply && !steps.some((step) => step.kind === "Reply");
   if (steps.length === 0 && !adhoc) {
@@ -30,7 +24,9 @@ function Checklist({ message }: { message: InboundMessageDetail }) {
         <>
           <div className="text-foreground-subtle mb-2 flex items-baseline justify-between text-xs font-medium">
             <h2>{t("Actions")}</h2>
-            <span className="font-mono text-2xs tabular-nums">{t("{0}/{1}", done, steps.length)}</span>
+            <span className="font-mono text-2xs tabular-nums">
+              {t("{0}/{1}", done, steps.length)}
+            </span>
           </div>
           <div
             role="progressbar"

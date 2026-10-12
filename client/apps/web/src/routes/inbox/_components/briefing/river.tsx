@@ -46,7 +46,11 @@ export const River = memo(function River({ briefing, now, onOpenMessage }: River
   const tip = hovered === null ? null : briefing.yours.find((point) => point.messageId === hovered);
 
   return (
-    <div className="relative pt-5.5 pb-1 pl-14" aria-label={t("Today so far")} role="group">
+    <div
+      className="relative pt-5.5 pb-1 pl-(--tb-river-pad) [--tb-river-pad:3.5rem] @max-2xl:[--tb-river-pad:0px]"
+      aria-label={t("Today so far")}
+      role="group"
+    >
       <div aria-hidden className="relative mb-1.5 h-3.5">
         {ticks.map((tick) => (
           <span
@@ -66,7 +70,7 @@ export const River = memo(function River({ briefing, now, onOpenMessage }: River
       </div>
 
       <div className="tb-lane-nova relative mb-1.5 h-8 rounded-full">
-        <span className="text-foreground-subtle absolute top-1/2 -left-14 -translate-y-1/2 text-xs">
+        <span className="text-foreground-subtle absolute top-1/2 -left-14 -translate-y-1/2 text-xs @max-2xl:sr-only">
           {t("Nova")}
         </span>
         {briefing.novaPoints.map((point, index) => (
@@ -80,7 +84,7 @@ export const River = memo(function River({ briefing, now, onOpenMessage }: River
       </div>
 
       <div className="bg-surface-hover relative h-9 rounded-full">
-        <span className="text-foreground-subtle absolute top-1/2 -left-14 -translate-y-1/2 text-xs">
+        <span className="text-foreground-subtle absolute top-1/2 -left-14 -translate-y-1/2 text-xs @max-2xl:sr-only">
           {t("You")}
         </span>
         {briefing.yours.map((point, index) => (
@@ -102,7 +106,9 @@ export const River = memo(function River({ briefing, now, onOpenMessage }: River
       <span
         aria-hidden
         className="bg-foreground pointer-events-none absolute top-9 bottom-0 w-px -translate-x-1/2 opacity-50"
-        style={{ left: `calc(3.5rem + (100% - 3.5rem) * ${riverX(now, window) / 100})` }}
+        style={{
+          left: `calc(var(--tb-river-pad) + (100% - var(--tb-river-pad)) * ${riverX(now, window) / 100})`,
+        }}
       />
     </div>
   );

@@ -3,14 +3,22 @@ import { readException } from "../exception-reading";
 
 describe("readException", () => {
   it("reads the count, the unit and the kind from the words Nova read", () => {
-    expect(readException("2 pallets short")).toEqual({ kind: "Shortage", quantity: 2, unit: "pallets" });
+    expect(readException("2 pallets short")).toEqual({
+      kind: "Shortage",
+      quantity: 2,
+      unit: "pallets",
+    });
     expect(readException("1 case over")).toEqual({ kind: "Overage", quantity: 1, unit: "case" });
     expect(readException("3 cartons damaged in transit")).toEqual({
       kind: "Damage",
       quantity: 3,
       unit: "cartons",
     });
-    expect(readException("Short 4 pieces")).toEqual({ kind: "Shortage", quantity: 4, unit: "pieces" });
+    expect(readException("Short 4 pieces")).toEqual({
+      kind: "Shortage",
+      quantity: 4,
+      unit: "pieces",
+    });
   });
 
   it("keeps what it can read and leaves the rest to the person", () => {

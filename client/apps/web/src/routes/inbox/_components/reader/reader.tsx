@@ -85,7 +85,15 @@ function ReaderSkeleton() {
   );
 }
 
-function ReaderError({ error, onRetry, onClose }: { error: unknown; onRetry: () => void; onClose: () => void }) {
+function ReaderError({
+  error,
+  onRetry,
+  onClose,
+}: {
+  error: unknown;
+  onRetry: () => void;
+  onClose: () => void;
+}) {
   const t = useT();
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
@@ -187,9 +195,7 @@ function ReaderView({
   const openFile = useLatestCallback((attachmentId: string, split: boolean) => {
     const stepId = `file:${attachmentId}`;
     if (!message.actions.some((action) => action.id === stepId)) {
-      useTriageStore
-        .getState()
-        .openOverlay({ kind: "doc", messageId: message.id, attachmentId });
+      useTriageStore.getState().openOverlay({ kind: "doc", messageId: message.id, attachmentId });
       return;
     }
     setSplitRequested(split ? attachmentId : null);
@@ -311,10 +317,7 @@ function ReaderView({
           <ActionBar message={message} onPrimary={runNext} primaryRef={primary} />
         </div>
         {compact && (
-          <Drawer
-            open={state.sheet}
-            onOpenChange={(open) => dispatch({ type: "sheet", open })}
-          >
+          <Drawer open={state.sheet} onOpenChange={(open) => dispatch({ type: "sheet", open })}>
             <DrawerContent className="bg-raised max-h-[78%] rounded-t-2xl">
               <DrawerTitle className="sr-only">{t("Actions and information")}</DrawerTitle>
               <DrawerDescription className="sr-only">

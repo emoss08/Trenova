@@ -83,7 +83,8 @@ function windowText(t: TranslateFn, stops: TriageStopTimes, format: StopFormat):
 
 /** The four rows of the stop-times grid. */
 export function stopRows(t: TranslateFn, stops: TriageStopTimes, format: StopFormat): StopRow[] {
-  const at = (seconds: number | null) => (seconds === null ? t("Not recorded") : format.time(seconds));
+  const at = (seconds: number | null) =>
+    seconds === null ? t("Not recorded") : format.time(seconds);
   const late = lateMinutesOf(stops);
 
   return [

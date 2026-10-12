@@ -75,9 +75,9 @@ describe("activityLine", () => {
     expect(line({ kind: "Snoozed", subject: "ShipmentDelivered" })).toBe(
       "Dana Whitfield snoozed it until the shipment delivers",
     );
-    expect(line({ kind: "Snoozed", subject: "DocumentAttached", detail: "Proof of delivery" })).toBe(
-      "Dana Whitfield snoozed it until a proof of delivery is attached",
-    );
+    expect(
+      line({ kind: "Snoozed", subject: "DocumentAttached", detail: "Proof of delivery" }),
+    ).toBe("Dana Whitfield snoozed it until a proof of delivery is attached");
     expect(line({ kind: "Snoozed", subject: "DocumentAttached" })).toBe(
       "Dana Whitfield snoozed it until a document is attached",
     );
@@ -126,9 +126,9 @@ describe("activityLine", () => {
     expect(
       line({ kind: "ReplyFailed", actor: ME, subject: "edi@partner.example", detail: "550" }),
     ).toBe("Your reply to edi@partner.example didn't send");
-    expect(
-      line({ kind: "ReplyFailed", subject: "edi@partner.example", detail: "550" }),
-    ).toBe("Dana Whitfield's reply to edi@partner.example didn't send");
+    expect(line({ kind: "ReplyFailed", subject: "edi@partner.example", detail: "550" })).toBe(
+      "Dana Whitfield's reply to edi@partner.example didn't send",
+    );
   });
 
   it("words linking, filing and splitting by the record and the file", () => {
@@ -157,7 +157,11 @@ describe("activityLine", () => {
 
   it("words a correction by the kinds, and a flagged fact by its label", () => {
     expect(
-      line({ kind: "Corrected", fromClassification: "Tender", toClassification: "RateConfirmation" }),
+      line({
+        kind: "Corrected",
+        fromClassification: "Tender",
+        toClassification: "RateConfirmation",
+      }),
     ).toBe("Dana Whitfield corrected it: tender → rate confirmation");
     expect(line({ kind: "Corrected", toClassification: "Invoice" })).toBe(
       "Dana Whitfield corrected it to invoice",
@@ -185,7 +189,9 @@ describe("activityLine", () => {
     expect(line({ kind: "LoadDrafted", actorKind: "Nova", actor: null })).toBe(
       "Nova drafted the load",
     );
-    expect(line({ kind: "LoadCreated", subject: "S-104260" })).toBe("Dana Whitfield created S-104260");
+    expect(line({ kind: "LoadCreated", subject: "S-104260" })).toBe(
+      "Dana Whitfield created S-104260",
+    );
     expect(line({ kind: "ExceptionLogged", subject: "2 pallets short" })).toBe(
       "Dana Whitfield logged 2 pallets short",
     );
@@ -219,18 +225,18 @@ describe("activityLine", () => {
   });
 
   it("words hand-offs, rules, due times, tests and Nova's reading", () => {
-    expect(line({ kind: "HandedOff", actorKind: "System", actor: null, subject: "Marcus Lee" })).toBe(
-      "Handed off to Marcus Lee",
-    );
+    expect(
+      line({ kind: "HandedOff", actorKind: "System", actor: null, subject: "Marcus Lee" }),
+    ).toBe("Handed off to Marcus Lee");
     expect(line({ kind: "HandedOff", subject: "Marcus Lee" })).toBe(
       "Dana Whitfield handed it off to Marcus Lee",
     );
     expect(
       line({ kind: "RuleApplied", actorKind: "Nova", actor: null, subject: "FileOnShipment" }),
     ).toBe("A rule had Nova file it on the shipment");
-    expect(
-      line({ kind: "RuleCreated", subject: "Ignore", detail: "news.example" }),
-    ).toBe("Dana Whitfield made a rule for news.example: Nova should ignore it");
+    expect(line({ kind: "RuleCreated", subject: "Ignore", detail: "news.example" })).toBe(
+      "Dana Whitfield made a rule for news.example: Nova should ignore it",
+    );
     expect(line({ kind: "RuleCreated", subject: "Ignore" })).toBe(
       "Dana Whitfield made a rule: Nova should ignore it",
     );
@@ -257,12 +263,39 @@ describe("activityLine", () => {
 
   it("has a sentence for every kind the schema has", () => {
     const kinds: InboundActivityKind[] = [
-      "Assigned", "Unassigned", "Snoozed", "Woken", "WaitingOnReply", "StoppedWaiting",
-      "TheyReplied", "ReplyDrafted", "Replied", "ReplyFailed", "Linked", "Unlinked", "Filed",
-      "Unfiled", "Split", "Corrected", "FactFlagged", "Handled", "Ignored", "Reopened",
-      "LoadDrafted", "LoadCreated", "ExceptionLogged", "SenderBlocked", "StopsDecided",
-      "ConflictResolved", "ConflictReopened", "HandedOff", "RuleApplied", "RuleCreated",
-      "DueChanged", "TestReceived", "NovaRead",
+      "Assigned",
+      "Unassigned",
+      "Snoozed",
+      "Woken",
+      "WaitingOnReply",
+      "StoppedWaiting",
+      "TheyReplied",
+      "ReplyDrafted",
+      "Replied",
+      "ReplyFailed",
+      "Linked",
+      "Unlinked",
+      "Filed",
+      "Unfiled",
+      "Split",
+      "Corrected",
+      "FactFlagged",
+      "Handled",
+      "Ignored",
+      "Reopened",
+      "LoadDrafted",
+      "LoadCreated",
+      "ExceptionLogged",
+      "SenderBlocked",
+      "StopsDecided",
+      "ConflictResolved",
+      "ConflictReopened",
+      "HandedOff",
+      "RuleApplied",
+      "RuleCreated",
+      "DueChanged",
+      "TestReceived",
+      "NovaRead",
     ];
     for (const kind of kinds) {
       const text = line({ kind });

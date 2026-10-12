@@ -144,7 +144,11 @@ export function MessageHeader({ message, now }: { message: InboundMessageDetail;
         )}
         <span className="flex-1" />
         <span className="text-foreground-subtle shrink-0 font-mono text-xs tabular-nums">
-          {t("{0} · {1}", formatUnixTime(message.receivedAt), formatSecondsAgo(now - message.receivedAt))}
+          {t(
+            "{0} · {1}",
+            formatUnixTime(message.receivedAt),
+            formatSecondsAgo(now - message.receivedAt),
+          )}
         </span>
       </div>
     </header>

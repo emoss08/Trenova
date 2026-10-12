@@ -60,19 +60,24 @@ function rfc2822Date(seconds: number): string {
   return new Date(seconds * 1000).toUTCString().replace(/GMT$/, "+0000");
 }
 
+/** One header line: a protocol name and its value, never interface text. */
+function header(name: string, value: string): string {
+  // i18n-ignore: an RFC 5322 header line is mail protocol, not interface text
+  return `${name}: ${value}`;
+}
+
 export function messageEml(message: EmlMessage): string {
-  // i18n-ignore: mail headers are the RFC 5322 protocol, not interface text
   const headers = [
-    `From: ${mailbox(message.fromName, message.fromAddress)}`,
-    `To: ${message.toAddresses.map(oneLine).join(", ")}`,
+    header("From", mailbox(message.fromName, message.fromAddress)),
+    header("To", message.toAddresses.map(oneLine).join(", ")),
     ...(message.ccAddresses.length === 0
       ? []
-      : [`Cc: ${message.ccAddresses.map(oneLine).join(", ")}`]),
-    `Subject: ${encodeWord(oneLine(message.subject))}`,
-    `Date: ${rfc2822Date(message.receivedAt)}`,
-    "MIME-Version: 1.0",
-    "Content-Type: text/plain; charset=utf-8",
-    "Content-Transfer-Encoding: 8bit",
+      : [header("Cc", message.ccAddresses.map(oneLine).join(", "))]),
+    header("Subject", encodeWord(oneLine(message.subject))),
+    header("Date", rfc2822Date(message.receivedAt)),
+    header("MIME-Version", "1.0"),
+    header("Content-Type", "text/plain; charset=utf-8"),
+    header("Content-Transfer-Encoding", "8bit"),
   ];
   const body = message.textBody.replace(/\r\n?/g, "\n").split("\n").join(CRLF);
 
@@ -82,7 +87,9 @@ export function messageEml(message: EmlMessage): string {
 /** The file's name: the subject, with what no disk accepts taken out. */
 export function emlFileName(message: Pick<EmlMessage, "subject">): string {
   const base = withoutControls(message.subject)
-    .replace(UNSAFE_FILE_CHARACTERS, " ").replace(/\s+/g, " ").trim();
+    .replace(UNSAFE_FILE_CHARACTERS, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
   return `${base === "" ? "message" : base}.eml`;
 }

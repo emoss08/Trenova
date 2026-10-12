@@ -25629,7 +25629,7 @@
     ]
   },
   "Arrived": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -25643,15 +25643,6 @@
     ]
   },
   "Arrived ({0})": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
-    ]
-  },
-  "Arrived at {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -28690,15 +28681,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Attach to {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
     ]
   },
   "Attach {0} to this shipment's billing item.": {
@@ -32752,7 +32734,7 @@
     ]
   },
   "Being read": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -33328,7 +33310,7 @@
     ]
   },
   "Bill of lading": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -55128,15 +55110,6 @@
     ],
     "areas": [
       "routes/formula-template"
-    ]
-  },
-  "Could not be read": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
     ]
   },
   "Could not bill this statement": {
@@ -100794,7 +100767,7 @@
     ]
   },
   "Handled": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -105572,7 +105545,7 @@
     ]
   },
   "Ignored": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -110192,7 +110165,7 @@
     ]
   },
   "Invoice": {
-    "sites": 37,
+    "sites": 36,
     "scope": [
       "go",
       "ts"
@@ -125852,15 +125825,6 @@
       "apps/web/lib"
     ]
   },
-  "Matched to {0}": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
-    ]
-  },
   "Matches ({0})": {
     "sites": 1,
     "scope": [
@@ -127680,7 +127644,7 @@
     ]
   },
   "Message": {
-    "sites": 12,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -127813,6 +127777,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Message text": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Message the Desk": {
@@ -143221,15 +143194,6 @@
       "routes/admin"
     ]
   },
-  "Not matched to a record": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
-    ]
-  },
   "Not now": {
     "sites": 5,
     "scope": [
@@ -143394,7 +143358,7 @@
     ]
   },
   "Not read": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -143403,7 +143367,7 @@
     ]
   },
   "Not read yet": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -151420,7 +151384,7 @@
     ]
   },
   "Open": {
-    "sites": 62,
+    "sites": 61,
     "scope": [
       "go",
       "ts"
@@ -155493,7 +155457,7 @@
     ]
   },
   "Other": {
-    "sites": 56,
+    "sites": 55,
     "scope": [
       "go",
       "ts"
@@ -170039,7 +170003,7 @@
     ]
   },
   "Proof of delivery": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -174075,7 +174039,7 @@
     ]
   },
   "Rate confirmation": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -175882,15 +175846,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Read as {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
     ]
   },
   "Read at its next step": {
@@ -181185,14 +181140,13 @@
     ]
   },
   "Refused": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
-      "routes/desk",
-      "routes/inbox"
+      "routes/desk"
     ]
   },
   "Refused when it should": {
@@ -199255,15 +199209,6 @@
       "routes/desk"
     ]
   },
-  "See the run that read it": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
-    ]
-  },
   "See theirs": {
     "sites": 1,
     "scope": [
@@ -215308,15 +215253,6 @@
       "apps/web/components"
     ]
   },
-  "Still being read": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
-    ]
-  },
   "Still inside the granted free time": {
     "sites": 1,
     "scope": [
@@ -226940,15 +226876,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "The file could not be opened": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
     ]
   },
   "The file could not be processed. Fix the cause and reprocess.": {
@@ -255860,7 +255787,7 @@
     ]
   },
   "Waiting on you": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -256214,7 +256141,7 @@
     ]
   },
   "Waiving a billed detention charge credits the invoice, which needs permission to update invoices": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -258990,15 +258917,6 @@
     ],
     "areas": [
       "routes/detention-policy"
-    ]
-  },
-  "What the desk read": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
     ]
   },
   "What the employer reported": {
@@ -266188,6 +266106,15 @@
       "routes/billing-queue"
     ]
   },
+  "You took it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "You will be told when the file is ready. It is kept in Reports.": {
     "sites": 1,
     "scope": [
@@ -267823,7 +267750,7 @@
     ]
   },
   "a teammate": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -280373,24 +280300,6 @@
       "routes/desk"
     ]
   },
-  "{0} by": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
-    ]
-  },
-  "{0} by the desk": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/inbox"
-    ]
-  },
   "{0} by {1}": {
     "sites": 4,
     "scope": [
@@ -286948,6 +286857,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} took it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} took it off {1}": {

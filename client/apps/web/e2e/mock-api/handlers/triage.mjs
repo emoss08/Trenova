@@ -854,6 +854,61 @@ function deskMessage(t, thread, role, content, sequence, at, mentions) {
   };
 }
 
+// --- a document's content: a small PDF drawn from what was read off the file, so the document
+// viewer has real pages, with real text, to render and mark
+
+const pdfText = (text) => String(text).replace(/[^\x20-\x7e]/g, "-").replace(/([()\\])/g, "\\$1");
+
+function documentPdf(attachment) {
+  const pages = attachment.pages?.length ? attachment.pages : [{ number: 1, label: attachment.reading?.documentType ?? "Document" }];
+  const fields = attachment.reading?.fields ?? [];
+  const objects = [];
+  const pageRefs = [];
+  const fontRef = 3 + pages.length * 2;
+  pages.forEach((page, index) => {
+    const lines = [`BT /F1 20 Tf 72 720 Td (${pdfText((page.label || "Document").toUpperCase())}) Tj ET`];
+    lines.push(`BT /F1 10 Tf 72 700 Td (${pdfText(attachment.fileName)} - page ${page.number}) Tj ET`);
+    if (index === 0) {
+      fields.forEach((field, row) => {
+        lines.push(`BT /F1 12 Tf 72 ${660 - row * 26} Td (${pdfText(field.label)}:) Tj ET`);
+        lines.push(`BT /F1 12 Tf 220 ${660 - row * 26} Td (${pdfText(field.value)}) Tj ET`);
+      });
+    } else {
+      lines.push("BT /F1 12 Tf 72 660 Td (Received in good order.) Tj ET");
+      lines.push("BT /F1 12 Tf 72 634 Td (Consignee signature on file.) Tj ET");
+    }
+    const stream = lines.join("\n");
+    const pageId = 3 + index * 2;
+    pageRefs.push(`${pageId} 0 R`);
+    objects[pageId] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents ${pageId + 1} 0 R /Resources << /Font << /F1 ${fontRef} 0 R >> >> >>`;
+    objects[pageId + 1] = `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`;
+  });
+  objects[1] = "<< /Type /Catalog /Pages 2 0 R >>";
+  objects[2] = `<< /Type /Pages /Kids [${pageRefs.join(" ")}] /Count ${pages.length} >>`;
+  objects[fontRef] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>";
+  let pdf = "%PDF-1.4\n";
+  const offsets = [];
+  for (let id = 1; id < objects.length; id++) {
+    offsets[id] = pdf.length;
+    pdf += `${id} 0 obj\n${objects[id]}\nendobj\n`;
+  }
+  const xref = pdf.length;
+  pdf += `xref\n0 ${objects.length}\n0000000000 65535 f \n`;
+  for (let id = 1; id < objects.length; id++) pdf += `${String(offsets[id]).padStart(10, "0")} 00000 n \n`;
+  pdf += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return pdf;
+}
+
+function documentContent(state, path) {
+  const documentId = /documents\/([^/]+)\//.exec(path)[1];
+  const attachment = state.triage.messages.flatMap((m) => m.attachments).find((a) => a.documentId === documentId);
+  if (!attachment) return { __status: 404, body: { title: "Not found", status: 404 } };
+  if (!/pdf$/i.test(attachment.fileName) && attachment.contentType !== "application/pdf") {
+    return { __status: 404, body: { title: "No preview", status: 404 } };
+  }
+  return { __raw: documentPdf(attachment), contentType: "application/pdf" };
+}
+
 function startTurn(state, path, body) {
   const t = state.triage;
   const threadId = /athr_mock_\d+/.exec(path)[0];
@@ -928,9 +983,13 @@ export const TRIAGE_ROUTES = [
   ["POST", /^\/api\/v1\/inbox\/typing\/?$/, typing],
   ["POST", /^\/api\/v1\/assistant\/threads\/?$/, startThread],
   ["POST", /^\/api\/v1\/assistant\/threads\/athr_mock_\d+\/turns\/?$/, startTurn],
+  ["GET", /^\/api\/v1\/documents\/[^/]+\/(view|download)\/?$/, documentContent],
   ["GET", /^\/api\/v1\/assistant\/turns\/aturn_mock_\d+\/stream\/?$/, followTurn],
   ["GET", /^\/api\/v1\/assistant\/threads\/athr_mock_\d+\/messages\/?$/, threadMessages],
   ["GET", /^\/api\/v1\/assistant\/threads\/athr_mock_\d+\/turns\/active\/?$/, () => ({ turn: null })],
+  ["GET", /^\/api\/v1\/assistant\/providers\/?$/, () => ({
+    results: [{ id: "aiprov_mock", name: "Claude", kind: "Anthropic", model: "claude-sonnet", trusted: true, vendor: "Anthropic" }],
+  })],
   ["GET", /^\/api\/v1\/assistant\/threads\/athr_mock_\d+\/?$/, (state, path) => {
     const id = /athr_mock_\d+/.exec(path)[0];
     return state.triage.assistantThreads.get(id) ?? { __status: 404, body: { title: "Not found", status: 404 } };

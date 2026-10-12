@@ -45,7 +45,9 @@ function ToolButton({
   return (
     <Tooltip>
       <TooltipTrigger render={children} />
-      <TooltipContent>{shortcut === undefined ? label : t("{0} ({1})", label, shortcut)}</TooltipContent>
+      <TooltipContent>
+        {shortcut === undefined ? label : t("{0} ({1})", label, shortcut)}
+      </TooltipContent>
     </Tooltip>
   );
 }
@@ -321,9 +323,7 @@ export function ReaderToolbar({
           onClick={onTogglePanel}
         >
           <LayoutRightIcon aria-hidden className="size-3.5" />
-          {waiting && openSteps > 0 && (
-            <span className="font-mono tabular-nums">{openSteps}</span>
-          )}
+          {waiting && openSteps > 0 && <span className="font-mono tabular-nums">{openSteps}</span>}
         </Button>
       </ToolButton>
       <Button

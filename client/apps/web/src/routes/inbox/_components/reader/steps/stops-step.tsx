@@ -58,7 +58,10 @@ export function StopsStep({
       )
       .finally(() => setPending(null));
   };
-  useStepSubmit(action.id, action.done || stops === null || pending !== null ? null : () => decide("Waive"));
+  useStepSubmit(
+    action.id,
+    action.done || stops === null || pending !== null ? null : () => decide("Waive"),
+  );
 
   if (query.isLoading) {
     return (
@@ -94,7 +97,12 @@ export function StopsStep({
             )}
           >
             <dt>{row.label}</dt>
-            <dd className={cn("font-mono text-xs font-medium tabular-nums", !row.late && "text-foreground")}>
+            <dd
+              className={cn(
+                "font-mono text-xs font-medium tabular-nums",
+                !row.late && "text-foreground",
+              )}
+            >
               {row.value}
             </dd>
           </div>
