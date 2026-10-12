@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -430,6 +431,7 @@ func (s *Service) AttachLineageToResource(
 		contentText = content.ContentText
 	}
 	s.syncSearchProjection(ctx, s.l, updated, contentText)
+	inboundmessageports.AnnounceDocumentAttached(ctx, s.triage, updated)
 
 	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDocument,

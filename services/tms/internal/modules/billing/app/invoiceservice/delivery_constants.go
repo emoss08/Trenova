@@ -6,14 +6,6 @@ import (
 )
 
 const (
-	// postmarkMessageLimitBytes and resendMessageLimitBytes are the provider's
-	// own ceilings on one message, so a plan that would exceed them is split
-	// across sends rather than rejected.
-	postmarkMessageLimitBytes = int64(10 * 1024 * 1024)
-	resendMessageLimitBytes   = int64(40 * 1024 * 1024)
-
-	defaultBodyOverheadBytes = int64(16 * 1024)
-
 	shareTokenTTL = 14 * 24 * time.Hour
 
 	invoiceDocumentTypeCode = "INVOICE"

@@ -48,7 +48,7 @@ func TestListOrdersTheInboxByArrivalNewestFirst(t *testing.T) {
 	t.Parallel()
 
 	repo := &readStubMessageRepo{}
-	svc := &Service{messageRepo: repo}
+	svc := &Service{messageRepo: repo, now: func() int64 { return 1_784_131_200 }}
 
 	_, err := svc.List(t.Context(), &inboundmessageports.ListInboundMessagesRequest{
 		Filter: &pagination.QueryOptions{},
@@ -66,7 +66,7 @@ func TestListTrimsTheSearchAndDropsOneThatIsOnlySpace(t *testing.T) {
 	t.Parallel()
 
 	repo := &readStubMessageRepo{}
-	svc := &Service{messageRepo: repo}
+	svc := &Service{messageRepo: repo, now: func() int64 { return 1_784_131_200 }}
 
 	_, err := svc.List(t.Context(), &inboundmessageports.ListInboundMessagesRequest{
 		Filter: &pagination.QueryOptions{Query: "  detention  "},
@@ -114,9 +114,9 @@ func TestCountsFoldsTheBreakdownIntoLanesKindsAndMailboxes(t *testing.T) {
 			Count:          1,
 		},
 	}}
-	svc := &Service{messageRepo: repo}
+	svc := &Service{messageRepo: repo, now: func() int64 { return 1_784_131_200 }}
 
-	counts, err := svc.Counts(t.Context(), pagination.TenantInfo{})
+	counts, err := svc.Counts(t.Context(), pagination.TenantInfo{}, pulid.Nil)
 	require.NoError(t, err)
 
 	assert.Equal(t, 5, counts.Waiting, "in review and held back are both waiting")

@@ -72,9 +72,30 @@ type InboundMailbox {
   hasSigningSecret: Boolean!
   "Whether an API key is set for reading message content. Resend posts only a message's metadata, so a Resend mailbox without one cannot read bodies or attachments. The key itself is never returned."
   hasApiKey: Boolean!
+  "When this address last received mail."
+  lastReceivedAt: Timestamp
+  "Whether mail is still arriving, worked out from when it last did."
+  health: InboundSourceHealth!
+  "When a test email was last sent to this address."
+  testSentAt: Timestamp
+  "When the last test email arrived. Later than testSentAt means the address works."
+  testReceivedAt: Timestamp
+  "Senders whose mail goes straight to Ignored: addresses, or domains without an @."
+  blockedSenders: [String!]!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"Whether a source is still delivering."
+enum InboundSourceHealth {
+  Healthy
+  "Nothing has arrived for longer than a working source goes quiet."
+  Quiet
+  "Connected but has never received anything."
+  NeverReceived
+  "Turned off."
+  Paused
 }
 
 """
@@ -112,7 +133,35 @@ type InboundAttachment {
   documentId: ID
   "Why this file was refused or could not be read; blank when it was."
   failureText: String!
+  "The shipment it was filed on, once it was."
+  filedShipmentId: ID
+  filedShipment: InboundShipmentRef
+  "The document type it was filed as."
+  filedAs: String
+  filedAt: Timestamp
+  "How many pages the file has; zero when it is not paged."
+  pageCount: Int!
+  "What each page looked like to the reading, for splitting a file into documents."
+  pages: [InboundAttachmentPage!]!
+  "The documents a split made, one per page range."
+  splitDocuments: [InboundSplitDocument!]!
   createdAt: Timestamp!
+}
+
+"One page of a file, as the reading saw it."
+type InboundAttachmentPage {
+  number: Int!
+  label: String!
+  "The document type the page looks like."
+  suggestedType: String!
+}
+
+"One document a split made from a range of pages."
+type InboundSplitDocument {
+  fromPage: Int!
+  toPage: Int!
+  documentId: ID!
+  documentType: String!
 }
 
 """
@@ -168,6 +217,35 @@ type InboundMessage {
   matchedCustomer: Customer
   "Whether this message is waiting on a person."
   needsReview: Boolean!
+  "The conversation it belongs to, from its Message-ID, In-Reply-To and References."
+  threadKey: String!
+  "How many messages share its thread."
+  threadCount: Int!
+  "The domain it came from."
+  senderDomain: String!
+  "Who it is assigned to."
+  ownerId: ID
+  owner: User
+  "When the organization's response target for its kind runs out. Absent once it is settled."
+  dueAt: Timestamp
+  "The response target that set dueAt, in minutes."
+  responseTargetMinutes: Int!
+  "Set while it is snoozed."
+  snooze: InboundSnooze
+  "Set while it waits on the sender to reply."
+  awaitingReply: InboundAwaitingReply
+  "Whether Nova read it. False when Nova was off when it arrived."
+  novaRead: Boolean!
+  "Whether Nova settled it on its own, under a rule or the mailbox's policy."
+  handledByNova: Boolean!
+  "The rule that settled it, where one did."
+  handledByRuleId: ID
+  "What Nova did when it settled it."
+  handledAction: TriageRuleAction
+  "Who settled it."
+  reviewer: User
+  "What happened to it, oldest first."
+  activity: [InboundActivity!]!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -199,9 +277,132 @@ type InboundMessageConnection {
   totalCount: Int
 }
 
+"A folder of the queue: a question about state rather than a filter."
+enum TriageLane {
+  "Waiting on a person and not parked."
+  Waiting
+  "Replied to, waiting for the sender to answer."
+  WaitingOnThem
+  "Waiting, and assigned to whoever is asking."
+  AssignedToMe
+  Snoozed
+  Handled
+  Ignored
+  Everything
+}
+
+"How a folder is ordered."
+enum TriageSort {
+  "Soonest response target first, the overdue ones at the top."
+  Due
+  Newest
+}
+
+"Something that wakes a snoozed message."
+enum InboundSnoozeEvent {
+  ShipmentDelivered
+  "A document of a given type is attached to the shipment."
+  DocumentAttached
+  "The shipment's invoice is paid."
+  InvoicePaid
+}
+
+"Why a message is out of the queue for now."
+type InboundSnooze {
+  "Set for a snooze until a time."
+  until: Timestamp
+  "Set for a snooze until something happens."
+  event: InboundSnoozeEvent
+  "The shipment the event is watched on."
+  watchShipment: InboundShipmentRef
+  "The document type DocumentAttached waits for."
+  documentTypeId: ID
+  documentTypeName: String
+  snoozedAt: Timestamp!
+  snoozedBy: User
+}
+
+"A message parked until the sender answers."
+type InboundAwaitingReply {
+  since: Timestamp!
+  "When it comes back if nobody replies."
+  until: Timestamp!
+}
+
+"Who did something to a message."
+enum InboundActorKind {
+  Person
+  Nova
+  System
+}
+
+"What happened to a message."
+enum InboundActivityKind {
+  Assigned
+  Unassigned
+  Snoozed
+  Woken
+  WaitingOnReply
+  StoppedWaiting
+  TheyReplied
+  ReplyDrafted
+  Replied
+  ReplyFailed
+  Linked
+  Unlinked
+  Filed
+  Unfiled
+  Split
+  Corrected
+  FactFlagged
+  Handled
+  Ignored
+  Reopened
+  LoadDrafted
+  LoadCreated
+  ExceptionLogged
+  SenderBlocked
+  StopsDecided
+  ConflictResolved
+  ConflictReopened
+  HandedOff
+  RuleApplied
+  RuleCreated
+  DueChanged
+  TestReceived
+  NovaRead
+}
+
+"""
+One line of a message's activity trace. Subject and detail are the names the
+line is about (a file, a shipment's PRO, a person, an address), never prose.
+"""
+type InboundActivity {
+  id: ID!
+  kind: InboundActivityKind!
+  actorKind: InboundActorKind!
+  actor: User
+  subject: String!
+  detail: String!
+  until: Timestamp
+  fromClassification: InboundClassification
+  toClassification: InboundClassification
+  recordId: ID
+  createdAt: Timestamp!
+}
+
 input InboundMessagesInput {
   first: Int = 25
   after: String
+  "The folder. Absent keeps the older status filter."
+  lane: TriageLane
+  sort: TriageSort = Newest
+  "Show one row per thread: the newest message of it in the folder."
+  collapseThreads: Boolean = false
+  "Only one thread, newest first."
+  threadKey: String
+  "Only messages assigned to this person."
+  ownerId: ID
   "Only these statuses; empty is every status."
   statuses: [InboundMessageStatus!]
   classification: InboundClassification
@@ -215,7 +416,16 @@ input InboundMessagesInput {
 
 "The inbox in numbers, for the lane counts."
 type InboundMessageCounts {
+  "Waiting on a person and not parked."
   waiting: Int!
+  waitingOnThem: Int!
+  snoozed: Int!
+  "Waiting, and assigned to whoever asked."
+  assignedToMe: Int!
+  "Waiting and past its response target."
+  overdue: Int!
+  "Still being read."
+  processing: Int!
   handled: Int!
   ignored: Int!
   quarantined: Int!
@@ -246,6 +456,100 @@ input ReviewInboundMessageInput {
   note: String
 }
 
+"Which messages a bulk change applies to: named ones, or everything in a folder."
+input TriageSelectionInput {
+  ids: [ID!]
+  "Everything in this folder, up to the server's bound."
+  folder: InboundMessagesInput
+}
+
+input SnoozeInboundMessagesInput {
+  "Until a time. Exactly one of until and event is set."
+  until: Timestamp
+  event: InboundSnoozeEvent
+  "The document type DocumentAttached waits for."
+  documentTypeId: ID
+}
+
+input BulkReviewInboundMessagesInput {
+  "Actioned or Ignored."
+  status: InboundMessageStatus!
+  note: String
+  "Turn on a rule that does this on its own next time, for one message's kind, sender domain and source."
+  teach: TriageRuleAction
+}
+
+"The record a message was linked to, to unlink."
+enum InboundLinkedRecord {
+  Shipment
+  Customer
+  Carrier
+}
+
+"What a bulk change did."
+type TriageBulkResult {
+  "The messages it changed, as they are now."
+  messages: [InboundMessage!]!
+  "How many it changed, including any past the ones returned."
+  affected: Int!
+  "A rule it turned on, where it was asked to."
+  ruleId: ID
+}
+
+"What handing the queue to the on-call person did."
+type TriageHandOff {
+  to: User!
+  affected: Int!
+}
+
+"A folder a person saved from a search."
+type TriageView {
+  id: ID!
+  name: String!
+  query: String!
+  position: Int!
+  "How many messages waiting on a person match it."
+  waiting: Int!
+}
+
+"How long a kind of message may wait before it is over target."
+type TriageResponseTarget {
+  classification: InboundClassification!
+  minutes: Int!
+  "Whether this is Trenova's default rather than the organization's own."
+  isDefault: Boolean!
+}
+
+input TriageResponseTargetInput {
+  classification: InboundClassification!
+  "Minutes, or null to go back to the default."
+  minutes: Int
+}
+
+"The organization's queue settings."
+type TriageSettings {
+  "Who the queue is handed to at the end of the day."
+  onCallUser: User
+  onCallUserId: ID
+  "Minutes after midnight, in the organization's time zone, when the day wraps up."
+  endOfDayMinute: Int!
+  timezone: String!
+  version: Int!
+}
+
+input TriageSettingsInput {
+  onCallUserId: ID
+  endOfDayMinute: Int!
+  version: Int!
+}
+
+"Someone a message can be assigned to."
+type TriageAssignee {
+  user: User!
+  "Waiting messages already assigned to them."
+  waiting: Int!
+}
+
 input LinkInboundMessageInput {
   shipmentId: ID
   customerId: ID
@@ -261,6 +565,15 @@ extend type Query {
   inboundMessageCounts: InboundMessageCounts!
   "The addresses this organization listens on."
   inboundMailboxes: [InboundMailbox!]!
+  "The messages in one thread, oldest first."
+  inboundThread(threadKey: String!): [InboundMessage!]!
+  "The folders the signed-in person saved."
+  myTriageViews: [TriageView!]!
+  "Every kind's response target, defaults included."
+  triageResponseTargets: [TriageResponseTarget!]!
+  triageSettings: TriageSettings!
+  "People who can be assigned messages."
+  triageAssignees: [TriageAssignee!]!
 }
 
 extend type Mutation {
@@ -278,4 +591,32 @@ extend type Mutation {
   setInboundMailboxSigningSecret(id: ID!, secret: String!): InboundMailbox!
   "Seals and stores the key a Resend mailbox reads message bodies and attachments with: a full access re_ key."
   setInboundMailboxApiKey(id: ID!, apiKey: String!): InboundMailbox!
+  "Settles several messages, or a whole folder, at once."
+  reviewInboundMessages(selection: TriageSelectionInput!, input: BulkReviewInboundMessagesInput!): TriageBulkResult!
+  "Puts settled messages back in the queue."
+  reopenInboundMessages(selection: TriageSelectionInput!): TriageBulkResult!
+  "Assigns messages to a person, or unassigns them when ownerId is null."
+  assignInboundMessages(selection: TriageSelectionInput!, ownerId: ID): TriageBulkResult!
+  "Takes messages out of the queue until a time or an event."
+  snoozeInboundMessages(selection: TriageSelectionInput!, input: SnoozeInboundMessagesInput!): TriageBulkResult!
+  "Brings a snoozed message back now."
+  wakeInboundMessage(id: ID!): InboundMessage!
+  "Parks a message until the sender replies on its thread, or until a time."
+  waitForInboundReply(id: ID!, until: Timestamp!): InboundMessage!
+  "Brings a message waiting on a reply back now."
+  stopWaitingForInboundReply(id: ID!): InboundMessage!
+  "Removes a link a person or the reading made."
+  unlinkInboundMessage(id: ID!, record: InboundLinkedRecord!): InboundMessage!
+  "Sends a test email to a mailbox's address from the organization's outbound email."
+  sendInboundMailboxTest(id: ID!): InboundMailbox!
+  "Assigns everything still waiting to the on-call person."
+  handOffTriage(toUserId: ID!): TriageHandOff!
+  "Starts Nova reading every message it never read, after it was turned on."
+  readUnreadInboundMessages: Int!
+  createMyTriageView(name: String!, query: String!): TriageView!
+  renameMyTriageView(id: ID!, name: String!): TriageView!
+  deleteMyTriageView(id: ID!): Boolean!
+  "Sets response targets; a null minutes goes back to the default."
+  updateTriageResponseTargets(input: [TriageResponseTargetInput!]!): [TriageResponseTarget!]!
+  updateTriageSettings(input: TriageSettingsInput!): TriageSettings!
 }

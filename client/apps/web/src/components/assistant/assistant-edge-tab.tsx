@@ -1,9 +1,16 @@
-import { dockPositionClass, isLeftDock, type AssistantDock } from "@/lib/assistant-dock";
+import {
+  DOCK_EDGE_INSET,
+  dockPositionClass,
+  isLeftDock,
+  isTopDock,
+  type AssistantDock,
+} from "@/lib/assistant-dock";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { m, useReducedMotion } from "motion/react";
 import { AssistantOrb } from "./assistant-orb";
 import { ASSISTANT_SURFACE_ID } from "./assistant-surface";
+import { beaconBottom, useLauncherReach } from "./launcher-clearance";
 import { launcherLabel, type BeaconState } from "./beacon-state";
 
 type AssistantEdgeTabProps = {
@@ -26,6 +33,7 @@ export function AssistantEdgeTab({ dock, beacon, onClick }: AssistantEdgeTabProp
   const reduceMotion = useReducedMotion();
   const left = isLeftDock(dock);
   const hasPending = beacon.mode === "pending";
+  const reach = useLauncherReach();
 
   return (
     <m.button
@@ -37,6 +45,7 @@ export function AssistantEdgeTab({ dock, beacon, onClick }: AssistantEdgeTabProp
         borderBottomLeftRadius: left ? 0 : 10,
         borderTopRightRadius: left ? 10 : 0,
         borderBottomRightRadius: left ? 10 : 0,
+        bottom: isTopDock(dock) ? undefined : beaconBottom(DOCK_EDGE_INSET, reach),
       }}
       transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 34 }}
       aria-label={launcherLabel(t, beacon)}

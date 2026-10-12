@@ -1,3 +1,10 @@
+fragment TriageUserFields on User {
+  id
+  name
+  emailAddress
+  thumbnailUrl
+}
+
 fragment InboundAttachmentFields on InboundAttachment {
   id
   fileName
@@ -6,6 +13,10 @@ fragment InboundAttachmentFields on InboundAttachment {
   kind
   documentId
   failureText
+  filedShipmentId
+  filedAs
+  filedAt
+  pageCount
   createdAt
 }
 
@@ -31,6 +42,11 @@ fragment InboundMailboxFields on InboundMailbox {
   status
   hasSigningSecret
   hasApiKey
+  lastReceivedAt
+  health
+  testSentAt
+  testReceivedAt
+  blockedSenders
   version
   createdAt
   updatedAt
@@ -69,6 +85,28 @@ fragment InboundMessageListFields on InboundMessage {
     code
     name
   }
+  threadKey
+  threadCount
+  senderDomain
+  ownerId
+  owner {
+    ...TriageUserFields
+  }
+  dueAt
+  responseTargetMinutes
+  snooze {
+    ...InboundSnoozeFields
+  }
+  awaitingReply {
+    since
+    until
+  }
+  novaRead
+  handledByNova
+  actions {
+    ...TriageActionFields
+  }
+  version
 }
 
 fragment InboundMessageDetailFields on InboundMessage {
@@ -83,14 +121,37 @@ fragment InboundMessageDetailFields on InboundMessage {
   reviewedAt
   reviewNote
   failureCode
-  version
   createdAt
   updatedAt
+  handledByRuleId
+  handledAction
+  classificationCorrected
+  reviewer {
+    ...TriageUserFields
+  }
   mailbox {
     ...InboundMailboxFields
   }
   attachments {
-    ...InboundAttachmentFields
+    ...InboundAttachmentDetailFields
+  }
+  facts {
+    ...TriageFactFields
+  }
+  conflicts {
+    ...TriageConflictFields
+  }
+  activity {
+    ...InboundActivityFields
+  }
+  replies {
+    ...InboundReplyFields
+  }
+  replyDraft {
+    ...InboundReplyFields
+  }
+  loadDraft {
+    ...TriageLoadDraftFields
   }
 }
 
@@ -118,6 +179,11 @@ query InboundMessage($id: ID!) {
 query InboundMessageCounts {
   inboundMessageCounts {
     waiting
+    waitingOnThem
+    snoozed
+    assignedToMe
+    overdue
+    processing
     handled
     ignored
     quarantined

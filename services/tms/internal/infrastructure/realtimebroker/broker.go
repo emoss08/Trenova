@@ -416,7 +416,9 @@ func (b *Broker) setup(
 
 	if req.JoinUsers {
 		sub.join(agentports.RealtimeScopeUsers)
-		snapshot, joinErr := b.JoinPresence(ctx, &sub.conn, agentports.RealtimeScopeUsers)
+		snapshot, joinErr := b.JoinPresence(
+			ctx, &sub.conn, agentports.RealtimeScopeUsers, agentports.RealtimePresenceState{},
+		)
 		if joinErr != nil {
 			return nil, streamID{}, joinErr
 		}

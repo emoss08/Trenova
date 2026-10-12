@@ -667,7 +667,6 @@
   "Template version activated": "已啟用範本版本",
   "Template version archived": "已封存範本版本",
   "Template version certified": "已認證範本版本",
-  "Templates": "範本",
   "Test case": "測試案例",
   "The EDI document type that seeds the template direction and transaction set.": "決定範本方向與交易集的 EDI 文件類型。",
   "The EDI operations summary could not be loaded. Retry shortly or check the API logs.": "無法載入 EDI 營運摘要。請稍後重試或檢查 API 記錄。",

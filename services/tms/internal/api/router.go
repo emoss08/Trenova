@@ -70,6 +70,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/holdreasonhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/iamhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/inboundhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/inboxpresencehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/insighthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/integrationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmentcontrolhandler"
@@ -184,6 +185,7 @@ type RouterParams struct {
 	WorkerHandler                   *workerhandler.Handler
 	PermissionHandler               *permissionhandler.Handler
 	RealtimeHandler                 *realtimehandler.Handler
+	InboxPresenceHandler            *inboxpresencehandler.Handler
 	RoleHandler                     *rolehandler.Handler
 	RoleAssignmentHandler           *roleassignmenthandler.Handler
 	SearchHandler                   *searchhandler.Handler
@@ -335,6 +337,7 @@ type Router struct {
 	workerHandler                   *workerhandler.Handler
 	permissionHandler               *permissionhandler.Handler
 	realtimeHandler                 *realtimehandler.Handler
+	inboxPresenceHandler            *inboxpresencehandler.Handler
 	roleHandler                     *rolehandler.Handler
 	roleAssignmentHandler           *roleassignmenthandler.Handler
 	searchHandler                   *searchhandler.Handler
@@ -477,6 +480,7 @@ func NewRouter(p RouterParams) *Router {
 		workerHandler:                   p.WorkerHandler,
 		permissionHandler:               p.PermissionHandler,
 		realtimeHandler:                 p.RealtimeHandler,
+		inboxPresenceHandler:            p.InboxPresenceHandler,
 		roleHandler:                     p.RoleHandler,
 		roleAssignmentHandler:           p.RoleAssignmentHandler,
 		searchHandler:                   p.SearchHandler,
@@ -674,6 +678,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.workerHandler.RegisterRoutes(protected)
 	r.permissionHandler.RegisterRoutes(protected)
 	r.realtimeHandler.RegisterRoutes(protected)
+	r.inboxPresenceHandler.RegisterRoutes(protected)
 	r.roleHandler.RegisterRoutes(protected)
 	r.roleAssignmentHandler.RegisterRoutes(protected)
 	r.searchHandler.RegisterRoutes(protected)

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -22,15 +23,16 @@ type InvoiceAdjustmentLineInput struct {
 }
 
 type InvoiceAdjustmentRequest struct {
-	AdjustmentID   pulid.ID                         `json:"adjustmentId"`
-	InvoiceID      pulid.ID                         `json:"invoiceId"`
-	Kind           invoiceadjustment.Kind           `json:"kind"`
-	RebillStrategy invoiceadjustment.RebillStrategy `json:"rebillStrategy"`
-	Reason         string                           `json:"reason"`
-	IdempotencyKey string                           `json:"idempotencyKey"`
-	AttachmentIDs  []pulid.ID                       `json:"attachmentIds"`
-	Lines          []*InvoiceAdjustmentLineInput    `json:"lines"`
-	TenantInfo     pagination.TenantInfo            `json:"tenantInfo"`
+	AdjustmentID     pulid.ID                         `json:"adjustmentId"`
+	InvoiceID        pulid.ID                         `json:"invoiceId"`
+	Kind             invoiceadjustment.Kind           `json:"kind"`
+	RebillStrategy   invoiceadjustment.RebillStrategy `json:"rebillStrategy"`
+	Reason           string                           `json:"reason"`
+	IdempotencyKey   string                           `json:"idempotencyKey"`
+	AttachmentIDs    []pulid.ID                       `json:"attachmentIds"`
+	Lines            []*InvoiceAdjustmentLineInput    `json:"lines"`
+	TenantInfo       pagination.TenantInfo            `json:"tenantInfo"`
+	DetentionWaivers []detentionports.DetentionWaiver `json:"-"`
 }
 
 type CreateDraftInvoiceAdjustmentRequest struct {

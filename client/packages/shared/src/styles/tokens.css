@@ -1229,6 +1229,14 @@
   --animate-word-in: word-in 420ms var(--ease-settle) both;
   --animate-live-ping: live-ping 1.6s var(--ease-swift) infinite;
 
+  /* Triage's motion. A message that arrives while its folder is open drops
+     into the list with a small overshoot and a brand wash that fades over a
+     few seconds (opacity on an overlay, never a background transition). Nova's
+     ring turns while the pointer is on the Briefing, and stops when it leaves. */
+  --animate-arrive: arrive 700ms var(--ease-spring) both;
+  --animate-arrive-glow: arrive-glow 3.4s var(--ease-swift) both;
+  --animate-nova-spin: spin 1.1s cubic-bezier(0.45, 0.05, 0.35, 1) infinite;
+
   /* The Desk's motion vocabulary.
 
      Four verbs, because the Desk has four things that move and each means
@@ -1348,6 +1356,27 @@
   --color-desk-drawer: var(--desk-drawer);
   --color-daylight-sun: var(--daylight-sun);
   --color-daylight-moon: var(--daylight-moon);
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -14px, 0) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes arrive-glow {
+  0%,
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 @keyframes land {

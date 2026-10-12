@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -21,9 +22,10 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Inbound *inboundmessageservice.Service
-	Tenants tenantports.TenantSyncRepository
-	Logger  *zap.Logger
+	Inbound   *inboundmessageservice.Service
+	Tenants   tenantports.TenantSyncRepository
+	Logger    *zap.Logger
+	Conflicts *triageconflictservice.Service `optional:"true"`
 }
 
 // settledPurger is the retention slice of the inbox, narrow so the sweep can be
@@ -32,20 +34,44 @@ type settledPurger interface {
 	PurgeSettled(ctx context.Context, req inboundmessageservice.PurgeSettledRequest) (int, error)
 }
 
+type conflictChecker interface {
+	CheckMessage(ctx context.Context, req triageconflictservice.CheckMessageRequest) error
+}
+
 type Activities struct {
-	inbound *inboundmessageservice.Service
-	purger  settledPurger
-	tenants tenantports.TenantSyncRepository
-	l       *zap.Logger
+	inbound   *inboundmessageservice.Service
+	purger    settledPurger
+	conflicts conflictChecker
+	tenants   tenantports.TenantSyncRepository
+	l         *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
-	return &Activities{
+	activities := &Activities{
 		inbound: p.Inbound,
 		purger:  p.Inbound,
 		tenants: p.Tenants,
 		l:       p.Logger.Named("inbound-activities"),
 	}
+	if p.Conflicts != nil {
+		activities.conflicts = p.Conflicts
+	}
+
+	return activities
+}
+
+func (a *Activities) CheckInboundConflictsActivity(
+	ctx context.Context,
+	payload *ProcessInboundMessagePayload,
+) error {
+	if a.conflicts == nil {
+		return nil
+	}
+
+	return a.conflicts.CheckMessage(ctx, triageconflictservice.CheckMessageRequest{
+		TenantInfo: tenantOf(payload.BasePayload),
+		MessageID:  payload.MessageID,
+	})
 }
 
 // SettleInboundMessageActivity reads a staged message and decides what it is.

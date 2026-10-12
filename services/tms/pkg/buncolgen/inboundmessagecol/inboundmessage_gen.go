@@ -63,6 +63,13 @@ var InboundAttachmentColumns = struct {
 	DocumentID           buncolgen.Column // "document_id" → qualified: "imsga.document_id"
 	DraftID              buncolgen.Column // "draft_id" → qualified: "imsga.draft_id"
 	FailureText          buncolgen.Column // "failure_text" → qualified: "imsga.failure_text"
+	FiledShipmentID      buncolgen.Column // "filed_shipment_id" → qualified: "imsga.filed_shipment_id"
+	FiledAs              buncolgen.Column // "filed_as" → qualified: "imsga.filed_as"
+	FiledAt              buncolgen.Column // "filed_at" → qualified: "imsga.filed_at"
+	FiledBy              buncolgen.Column // "filed_by" → qualified: "imsga.filed_by"
+	PageCount            buncolgen.Column // "page_count" → qualified: "imsga.page_count"
+	Pages                buncolgen.Column // "pages" → qualified: "imsga.pages"
+	SplitDocuments       buncolgen.Column // "split_documents" → qualified: "imsga.split_documents"
 	CreatedAt            buncolgen.Column // "created_at" → qualified: "imsga.created_at"
 	UpdatedAt            buncolgen.Column // "updated_at" → qualified: "imsga.updated_at"
 }{
@@ -79,6 +86,13 @@ var InboundAttachmentColumns = struct {
 	DocumentID:           buncolgen.NewColumn("document_id", "imsga"),
 	DraftID:              buncolgen.NewColumn("draft_id", "imsga"),
 	FailureText:          buncolgen.NewColumn("failure_text", "imsga"),
+	FiledShipmentID:      buncolgen.NewColumn("filed_shipment_id", "imsga"),
+	FiledAs:              buncolgen.NewColumn("filed_as", "imsga"),
+	FiledAt:              buncolgen.NewColumn("filed_at", "imsga"),
+	FiledBy:              buncolgen.NewColumn("filed_by", "imsga"),
+	PageCount:            buncolgen.NewColumn("page_count", "imsga"),
+	Pages:                buncolgen.NewColumn("pages", "imsga"),
+	SplitDocuments:       buncolgen.NewColumn("split_documents", "imsga"),
 	CreatedAt:            buncolgen.NewColumn("created_at", "imsga"),
 	UpdatedAt:            buncolgen.NewColumn("updated_at", "imsga"),
 }
@@ -101,6 +115,13 @@ var InboundAttachmentFieldMap = map[string]string{
 	"documentId":           "document_id",
 	"draftId":              "draft_id",
 	"failureText":          "failure_text",
+	"filedShipmentId":      "filed_shipment_id",
+	"filedAs":              "filed_as",
+	"filedAt":              "filed_at",
+	"filedBy":              "filed_by",
+	"pageCount":            "page_count",
+	"pages":                "pages",
+	"splitDocuments":       "split_documents",
 	"createdAt":            "created_at",
 	"updatedAt":            "updated_at",
 }
@@ -121,6 +142,13 @@ var InboundAttachmentInsertableColumns = []string{
 	"document_id",
 	"draft_id",
 	"failure_text",
+	"filed_shipment_id",
+	"filed_as",
+	"filed_at",
+	"filed_by",
+	"page_count",
+	"pages",
+	"split_documents",
 	"created_at",
 	"updated_at",
 }
@@ -188,6 +216,13 @@ var InboundAttachmentFilter = struct {
 	DocumentID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentId" → DB: "document_id"
 	DraftID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "draftId" → DB: "draft_id"
 	FailureText          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureText" → DB: "failure_text"
+	FiledShipmentID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "filedShipmentId" → DB: "filed_shipment_id"
+	FiledAs              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "filedAs" → DB: "filed_as"
+	FiledAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "filedAt" → DB: "filed_at"
+	FiledBy              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "filedBy" → DB: "filed_by"
+	PageCount            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pageCount" → DB: "page_count"
+	Pages                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pages" → DB: "pages"
+	SplitDocuments       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "splitDocuments" → DB: "split_documents"
 	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
@@ -230,6 +265,27 @@ var InboundAttachmentFilter = struct {
 	FailureText: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("failureText", op, value)
 	},
+	FiledShipmentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("filedShipmentId", op, value)
+	},
+	FiledAs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("filedAs", op, value)
+	},
+	FiledAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("filedAt", op, value)
+	},
+	FiledBy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("filedBy", op, value)
+	},
+	PageCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("pageCount", op, value)
+	},
+	Pages: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("pages", op, value)
+	},
+	SplitDocuments: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("splitDocuments", op, value)
+	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("createdAt", op, value)
 	},
@@ -264,75 +320,119 @@ var InboundMessageTable = buncolgen.TableInfo{
 //	q.Where(InboundMessageColumns.ID.Eq(), id)           // WHERE imsg.id = ?
 //	q.Order(InboundMessageColumns.CreatedAt.OrderDesc())  // ORDER BY imsg.created_at DESC
 var InboundMessageColumns = struct {
-	ID                buncolgen.Column // "id" → qualified: "imsg.id"
-	BusinessUnitID    buncolgen.Column // "business_unit_id" → qualified: "imsg.business_unit_id"
-	OrganizationID    buncolgen.Column // "organization_id" → qualified: "imsg.organization_id"
-	MailboxID         buncolgen.Column // "mailbox_id" → qualified: "imsg.mailbox_id"
-	ProviderMessageID buncolgen.Column // "provider_message_id" → qualified: "imsg.provider_message_id"
-	MessageID         buncolgen.Column // "message_id" → qualified: "imsg.message_id"
-	InReplyTo         buncolgen.Column // "in_reply_to" → qualified: "imsg.in_reply_to"
-	References        buncolgen.Column // "references" → qualified: "imsg.references"
-	FromAddress       buncolgen.Column // "from_address" → qualified: "imsg.from_address"
-	FromName          buncolgen.Column // "from_name" → qualified: "imsg.from_name"
-	ToAddresses       buncolgen.Column // "to_addresses" → qualified: "imsg.to_addresses"
-	CcAddresses       buncolgen.Column // "cc_addresses" → qualified: "imsg.cc_addresses"
-	Subject           buncolgen.Column // "subject" → qualified: "imsg.subject"
-	TextBody          buncolgen.Column // "text_body" → qualified: "imsg.text_body"
-	HTMLKey           buncolgen.Column // "html_key" → qualified: "imsg.html_key"
-	ReceivedAt        buncolgen.Column // "received_at" → qualified: "imsg.received_at"
-	SpamScore         buncolgen.Column // "spam_score" → qualified: "imsg.spam_score"
-	Classification    buncolgen.Column // "classification" → qualified: "imsg.classification"
-	Confidence        buncolgen.Column // "confidence" → qualified: "imsg.confidence"
-	Status            buncolgen.Column // "status" → qualified: "imsg.status"
-	MatchedCustomerID buncolgen.Column // "matched_customer_id" → qualified: "imsg.matched_customer_id"
-	MatchedCarrierID  buncolgen.Column // "matched_carrier_id" → qualified: "imsg.matched_carrier_id"
-	MatchedShipmentID buncolgen.Column // "matched_shipment_id" → qualified: "imsg.matched_shipment_id"
-	MatchReason       buncolgen.Column // "match_reason" → qualified: "imsg.match_reason"
-	RunID             buncolgen.Column // "run_id" → qualified: "imsg.run_id"
-	ReviewedBy        buncolgen.Column // "reviewed_by" → qualified: "imsg.reviewed_by"
-	ReviewedAt        buncolgen.Column // "reviewed_at" → qualified: "imsg.reviewed_at"
-	ReviewNote        buncolgen.Column // "review_note" → qualified: "imsg.review_note"
-	FailureCode       buncolgen.Column // "failure_code" → qualified: "imsg.failure_code"
-	FailureText       buncolgen.Column // "failure_text" → qualified: "imsg.failure_text"
-	SearchVector      buncolgen.Column // "search_vector" → qualified: "imsg.search_vector"
-	Version           buncolgen.Column // "version" → qualified: "imsg.version"
-	CreatedAt         buncolgen.Column // "created_at" → qualified: "imsg.created_at"
-	UpdatedAt         buncolgen.Column // "updated_at" → qualified: "imsg.updated_at"
+	ID                      buncolgen.Column // "id" → qualified: "imsg.id"
+	BusinessUnitID          buncolgen.Column // "business_unit_id" → qualified: "imsg.business_unit_id"
+	OrganizationID          buncolgen.Column // "organization_id" → qualified: "imsg.organization_id"
+	MailboxID               buncolgen.Column // "mailbox_id" → qualified: "imsg.mailbox_id"
+	ProviderMessageID       buncolgen.Column // "provider_message_id" → qualified: "imsg.provider_message_id"
+	MessageID               buncolgen.Column // "message_id" → qualified: "imsg.message_id"
+	InReplyTo               buncolgen.Column // "in_reply_to" → qualified: "imsg.in_reply_to"
+	References              buncolgen.Column // "references" → qualified: "imsg.references"
+	FromAddress             buncolgen.Column // "from_address" → qualified: "imsg.from_address"
+	FromName                buncolgen.Column // "from_name" → qualified: "imsg.from_name"
+	ToAddresses             buncolgen.Column // "to_addresses" → qualified: "imsg.to_addresses"
+	CcAddresses             buncolgen.Column // "cc_addresses" → qualified: "imsg.cc_addresses"
+	Subject                 buncolgen.Column // "subject" → qualified: "imsg.subject"
+	TextBody                buncolgen.Column // "text_body" → qualified: "imsg.text_body"
+	HTMLKey                 buncolgen.Column // "html_key" → qualified: "imsg.html_key"
+	ReceivedAt              buncolgen.Column // "received_at" → qualified: "imsg.received_at"
+	SpamScore               buncolgen.Column // "spam_score" → qualified: "imsg.spam_score"
+	Classification          buncolgen.Column // "classification" → qualified: "imsg.classification"
+	Confidence              buncolgen.Column // "confidence" → qualified: "imsg.confidence"
+	Status                  buncolgen.Column // "status" → qualified: "imsg.status"
+	MatchedCustomerID       buncolgen.Column // "matched_customer_id" → qualified: "imsg.matched_customer_id"
+	MatchedCarrierID        buncolgen.Column // "matched_carrier_id" → qualified: "imsg.matched_carrier_id"
+	MatchedShipmentID       buncolgen.Column // "matched_shipment_id" → qualified: "imsg.matched_shipment_id"
+	MatchReason             buncolgen.Column // "match_reason" → qualified: "imsg.match_reason"
+	RunID                   buncolgen.Column // "run_id" → qualified: "imsg.run_id"
+	ReviewedBy              buncolgen.Column // "reviewed_by" → qualified: "imsg.reviewed_by"
+	ReviewedAt              buncolgen.Column // "reviewed_at" → qualified: "imsg.reviewed_at"
+	ReviewNote              buncolgen.Column // "review_note" → qualified: "imsg.review_note"
+	FailureCode             buncolgen.Column // "failure_code" → qualified: "imsg.failure_code"
+	FailureText             buncolgen.Column // "failure_text" → qualified: "imsg.failure_text"
+	MessageKey              buncolgen.Column // "message_key" → qualified: "imsg.message_key"
+	ThreadKey               buncolgen.Column // "thread_key" → qualified: "imsg.thread_key"
+	SenderDomain            buncolgen.Column // "sender_domain" → qualified: "imsg.sender_domain"
+	OwnerID                 buncolgen.Column // "owner_id" → qualified: "imsg.owner_id"
+	DueAt                   buncolgen.Column // "due_at" → qualified: "imsg.due_at"
+	Parked                  buncolgen.Column // "parked" → qualified: "imsg.parked"
+	SnoozedUntil            buncolgen.Column // "snoozed_until" → qualified: "imsg.snoozed_until"
+	SnoozeEvent             buncolgen.Column // "snooze_event" → qualified: "imsg.snooze_event"
+	SnoozeWatchID           buncolgen.Column // "snooze_watch_id" → qualified: "imsg.snooze_watch_id"
+	SnoozeDocumentTypeID    buncolgen.Column // "snooze_document_type_id" → qualified: "imsg.snooze_document_type_id"
+	SnoozedAt               buncolgen.Column // "snoozed_at" → qualified: "imsg.snoozed_at"
+	SnoozedBy               buncolgen.Column // "snoozed_by" → qualified: "imsg.snoozed_by"
+	AwaitingSince           buncolgen.Column // "awaiting_since" → qualified: "imsg.awaiting_since"
+	AwaitingUntil           buncolgen.Column // "awaiting_until" → qualified: "imsg.awaiting_until"
+	NovaRead                buncolgen.Column // "nova_read" → qualified: "imsg.nova_read"
+	HandledByRuleID         buncolgen.Column // "handled_by_rule_id" → qualified: "imsg.handled_by_rule_id"
+	HandledAction           buncolgen.Column // "handled_action" → qualified: "imsg.handled_action"
+	ClassificationCorrected buncolgen.Column // "classification_corrected" → qualified: "imsg.classification_corrected"
+	Facts                   buncolgen.Column // "facts" → qualified: "imsg.facts"
+	Conflicts               buncolgen.Column // "conflicts" → qualified: "imsg.conflicts"
+	ActionState             buncolgen.Column // "action_state" → qualified: "imsg.action_state"
+	LoadDraft               buncolgen.Column // "load_draft" → qualified: "imsg.load_draft"
+	SearchVector            buncolgen.Column // "search_vector" → qualified: "imsg.search_vector"
+	Version                 buncolgen.Column // "version" → qualified: "imsg.version"
+	CreatedAt               buncolgen.Column // "created_at" → qualified: "imsg.created_at"
+	UpdatedAt               buncolgen.Column // "updated_at" → qualified: "imsg.updated_at"
 }{
-	ID:                buncolgen.NewColumn("id", "imsg"),
-	BusinessUnitID:    buncolgen.NewColumn("business_unit_id", "imsg"),
-	OrganizationID:    buncolgen.NewColumn("organization_id", "imsg"),
-	MailboxID:         buncolgen.NewColumn("mailbox_id", "imsg"),
-	ProviderMessageID: buncolgen.NewColumn("provider_message_id", "imsg"),
-	MessageID:         buncolgen.NewColumn("message_id", "imsg"),
-	InReplyTo:         buncolgen.NewColumn("in_reply_to", "imsg"),
-	References:        buncolgen.NewColumn("references", "imsg"),
-	FromAddress:       buncolgen.NewColumn("from_address", "imsg"),
-	FromName:          buncolgen.NewColumn("from_name", "imsg"),
-	ToAddresses:       buncolgen.NewColumn("to_addresses", "imsg"),
-	CcAddresses:       buncolgen.NewColumn("cc_addresses", "imsg"),
-	Subject:           buncolgen.NewColumn("subject", "imsg"),
-	TextBody:          buncolgen.NewColumn("text_body", "imsg"),
-	HTMLKey:           buncolgen.NewColumn("html_key", "imsg"),
-	ReceivedAt:        buncolgen.NewColumn("received_at", "imsg"),
-	SpamScore:         buncolgen.NewColumn("spam_score", "imsg"),
-	Classification:    buncolgen.NewColumn("classification", "imsg"),
-	Confidence:        buncolgen.NewColumn("confidence", "imsg"),
-	Status:            buncolgen.NewColumn("status", "imsg"),
-	MatchedCustomerID: buncolgen.NewColumn("matched_customer_id", "imsg"),
-	MatchedCarrierID:  buncolgen.NewColumn("matched_carrier_id", "imsg"),
-	MatchedShipmentID: buncolgen.NewColumn("matched_shipment_id", "imsg"),
-	MatchReason:       buncolgen.NewColumn("match_reason", "imsg"),
-	RunID:             buncolgen.NewColumn("run_id", "imsg"),
-	ReviewedBy:        buncolgen.NewColumn("reviewed_by", "imsg"),
-	ReviewedAt:        buncolgen.NewColumn("reviewed_at", "imsg"),
-	ReviewNote:        buncolgen.NewColumn("review_note", "imsg"),
-	FailureCode:       buncolgen.NewColumn("failure_code", "imsg"),
-	FailureText:       buncolgen.NewColumn("failure_text", "imsg"),
-	SearchVector:      buncolgen.NewColumn("search_vector", "imsg"),
-	Version:           buncolgen.NewColumn("version", "imsg"),
-	CreatedAt:         buncolgen.NewColumn("created_at", "imsg"),
-	UpdatedAt:         buncolgen.NewColumn("updated_at", "imsg"),
+	ID:                      buncolgen.NewColumn("id", "imsg"),
+	BusinessUnitID:          buncolgen.NewColumn("business_unit_id", "imsg"),
+	OrganizationID:          buncolgen.NewColumn("organization_id", "imsg"),
+	MailboxID:               buncolgen.NewColumn("mailbox_id", "imsg"),
+	ProviderMessageID:       buncolgen.NewColumn("provider_message_id", "imsg"),
+	MessageID:               buncolgen.NewColumn("message_id", "imsg"),
+	InReplyTo:               buncolgen.NewColumn("in_reply_to", "imsg"),
+	References:              buncolgen.NewColumn("references", "imsg"),
+	FromAddress:             buncolgen.NewColumn("from_address", "imsg"),
+	FromName:                buncolgen.NewColumn("from_name", "imsg"),
+	ToAddresses:             buncolgen.NewColumn("to_addresses", "imsg"),
+	CcAddresses:             buncolgen.NewColumn("cc_addresses", "imsg"),
+	Subject:                 buncolgen.NewColumn("subject", "imsg"),
+	TextBody:                buncolgen.NewColumn("text_body", "imsg"),
+	HTMLKey:                 buncolgen.NewColumn("html_key", "imsg"),
+	ReceivedAt:              buncolgen.NewColumn("received_at", "imsg"),
+	SpamScore:               buncolgen.NewColumn("spam_score", "imsg"),
+	Classification:          buncolgen.NewColumn("classification", "imsg"),
+	Confidence:              buncolgen.NewColumn("confidence", "imsg"),
+	Status:                  buncolgen.NewColumn("status", "imsg"),
+	MatchedCustomerID:       buncolgen.NewColumn("matched_customer_id", "imsg"),
+	MatchedCarrierID:        buncolgen.NewColumn("matched_carrier_id", "imsg"),
+	MatchedShipmentID:       buncolgen.NewColumn("matched_shipment_id", "imsg"),
+	MatchReason:             buncolgen.NewColumn("match_reason", "imsg"),
+	RunID:                   buncolgen.NewColumn("run_id", "imsg"),
+	ReviewedBy:              buncolgen.NewColumn("reviewed_by", "imsg"),
+	ReviewedAt:              buncolgen.NewColumn("reviewed_at", "imsg"),
+	ReviewNote:              buncolgen.NewColumn("review_note", "imsg"),
+	FailureCode:             buncolgen.NewColumn("failure_code", "imsg"),
+	FailureText:             buncolgen.NewColumn("failure_text", "imsg"),
+	MessageKey:              buncolgen.NewColumn("message_key", "imsg"),
+	ThreadKey:               buncolgen.NewColumn("thread_key", "imsg"),
+	SenderDomain:            buncolgen.NewColumn("sender_domain", "imsg"),
+	OwnerID:                 buncolgen.NewColumn("owner_id", "imsg"),
+	DueAt:                   buncolgen.NewColumn("due_at", "imsg"),
+	Parked:                  buncolgen.NewColumn("parked", "imsg"),
+	SnoozedUntil:            buncolgen.NewColumn("snoozed_until", "imsg"),
+	SnoozeEvent:             buncolgen.NewColumn("snooze_event", "imsg"),
+	SnoozeWatchID:           buncolgen.NewColumn("snooze_watch_id", "imsg"),
+	SnoozeDocumentTypeID:    buncolgen.NewColumn("snooze_document_type_id", "imsg"),
+	SnoozedAt:               buncolgen.NewColumn("snoozed_at", "imsg"),
+	SnoozedBy:               buncolgen.NewColumn("snoozed_by", "imsg"),
+	AwaitingSince:           buncolgen.NewColumn("awaiting_since", "imsg"),
+	AwaitingUntil:           buncolgen.NewColumn("awaiting_until", "imsg"),
+	NovaRead:                buncolgen.NewColumn("nova_read", "imsg"),
+	HandledByRuleID:         buncolgen.NewColumn("handled_by_rule_id", "imsg"),
+	HandledAction:           buncolgen.NewColumn("handled_action", "imsg"),
+	ClassificationCorrected: buncolgen.NewColumn("classification_corrected", "imsg"),
+	Facts:                   buncolgen.NewColumn("facts", "imsg"),
+	Conflicts:               buncolgen.NewColumn("conflicts", "imsg"),
+	ActionState:             buncolgen.NewColumn("action_state", "imsg"),
+	LoadDraft:               buncolgen.NewColumn("load_draft", "imsg"),
+	SearchVector:            buncolgen.NewColumn("search_vector", "imsg"),
+	Version:                 buncolgen.NewColumn("version", "imsg"),
+	CreatedAt:               buncolgen.NewColumn("created_at", "imsg"),
+	UpdatedAt:               buncolgen.NewColumn("updated_at", "imsg"),
 }
 
 // InboundMessageFieldMap maps JSON API field names to database column names.
@@ -340,39 +440,61 @@ var InboundMessageColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by InboundMessage.GetStaticFieldMap().
 var InboundMessageFieldMap = map[string]string{
-	"id":                "id",
-	"businessUnitId":    "business_unit_id",
-	"organizationId":    "organization_id",
-	"mailboxId":         "mailbox_id",
-	"providerMessageId": "provider_message_id",
-	"messageId":         "message_id",
-	"inReplyTo":         "in_reply_to",
-	"references":        "references",
-	"fromAddress":       "from_address",
-	"fromName":          "from_name",
-	"toAddresses":       "to_addresses",
-	"ccAddresses":       "cc_addresses",
-	"subject":           "subject",
-	"textBody":          "text_body",
-	"htmlKey":           "html_key",
-	"receivedAt":        "received_at",
-	"spamScore":         "spam_score",
-	"classification":    "classification",
-	"confidence":        "confidence",
-	"status":            "status",
-	"matchedCustomerId": "matched_customer_id",
-	"matchedCarrierId":  "matched_carrier_id",
-	"matchedShipmentId": "matched_shipment_id",
-	"matchReason":       "match_reason",
-	"runId":             "run_id",
-	"reviewedBy":        "reviewed_by",
-	"reviewedAt":        "reviewed_at",
-	"reviewNote":        "review_note",
-	"failureCode":       "failure_code",
-	"failureText":       "failure_text",
-	"version":           "version",
-	"createdAt":         "created_at",
-	"updatedAt":         "updated_at",
+	"id":                      "id",
+	"businessUnitId":          "business_unit_id",
+	"organizationId":          "organization_id",
+	"mailboxId":               "mailbox_id",
+	"providerMessageId":       "provider_message_id",
+	"messageId":               "message_id",
+	"inReplyTo":               "in_reply_to",
+	"references":              "references",
+	"fromAddress":             "from_address",
+	"fromName":                "from_name",
+	"toAddresses":             "to_addresses",
+	"ccAddresses":             "cc_addresses",
+	"subject":                 "subject",
+	"textBody":                "text_body",
+	"htmlKey":                 "html_key",
+	"receivedAt":              "received_at",
+	"spamScore":               "spam_score",
+	"classification":          "classification",
+	"confidence":              "confidence",
+	"status":                  "status",
+	"matchedCustomerId":       "matched_customer_id",
+	"matchedCarrierId":        "matched_carrier_id",
+	"matchedShipmentId":       "matched_shipment_id",
+	"matchReason":             "match_reason",
+	"runId":                   "run_id",
+	"reviewedBy":              "reviewed_by",
+	"reviewedAt":              "reviewed_at",
+	"reviewNote":              "review_note",
+	"failureCode":             "failure_code",
+	"failureText":             "failure_text",
+	"messageKey":              "message_key",
+	"threadKey":               "thread_key",
+	"senderDomain":            "sender_domain",
+	"ownerId":                 "owner_id",
+	"dueAt":                   "due_at",
+	"parked":                  "parked",
+	"snoozedUntil":            "snoozed_until",
+	"snoozeEvent":             "snooze_event",
+	"snoozeWatchId":           "snooze_watch_id",
+	"snoozeDocumentTypeId":    "snooze_document_type_id",
+	"snoozedAt":               "snoozed_at",
+	"snoozedBy":               "snoozed_by",
+	"awaitingSince":           "awaiting_since",
+	"awaitingUntil":           "awaiting_until",
+	"novaRead":                "nova_read",
+	"handledByRuleId":         "handled_by_rule_id",
+	"handledAction":           "handled_action",
+	"classificationCorrected": "classification_corrected",
+	"facts":                   "facts",
+	"conflicts":               "conflicts",
+	"actionState":             "action_state",
+	"loadDraft":               "load_draft",
+	"version":                 "version",
+	"createdAt":               "created_at",
+	"updatedAt":               "updated_at",
 }
 
 // InboundMessageInsertableColumns lists column names suitable for INSERT statements on the "inbound_messages" table.
@@ -408,6 +530,28 @@ var InboundMessageInsertableColumns = []string{
 	"review_note",
 	"failure_code",
 	"failure_text",
+	"message_key",
+	"thread_key",
+	"sender_domain",
+	"owner_id",
+	"due_at",
+	"parked",
+	"snoozed_until",
+	"snooze_event",
+	"snooze_watch_id",
+	"snooze_document_type_id",
+	"snoozed_at",
+	"snoozed_by",
+	"awaiting_since",
+	"awaiting_until",
+	"nova_read",
+	"handled_by_rule_id",
+	"handled_action",
+	"classification_corrected",
+	"facts",
+	"conflicts",
+	"action_state",
+	"load_draft",
 	"version",
 	"created_at",
 	"updated_at",
@@ -480,39 +624,61 @@ func InboundMessageApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) 
 //	InboundMessageFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var InboundMessageFilter = struct {
-	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	MailboxID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "mailboxId" → DB: "mailbox_id"
-	ProviderMessageID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerMessageId" → DB: "provider_message_id"
-	MessageID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "messageId" → DB: "message_id"
-	InReplyTo         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inReplyTo" → DB: "in_reply_to"
-	References        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "references" → DB: "references"
-	FromAddress       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fromAddress" → DB: "from_address"
-	FromName          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fromName" → DB: "from_name"
-	ToAddresses       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toAddresses" → DB: "to_addresses"
-	CcAddresses       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ccAddresses" → DB: "cc_addresses"
-	Subject           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subject" → DB: "subject"
-	TextBody          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "textBody" → DB: "text_body"
-	HTMLKey           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "htmlKey" → DB: "html_key"
-	ReceivedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "receivedAt" → DB: "received_at"
-	SpamScore         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "spamScore" → DB: "spam_score"
-	Classification    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "classification" → DB: "classification"
-	Confidence        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "confidence" → DB: "confidence"
-	Status            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	MatchedCustomerID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "matchedCustomerId" → DB: "matched_customer_id"
-	MatchedCarrierID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "matchedCarrierId" → DB: "matched_carrier_id"
-	MatchedShipmentID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "matchedShipmentId" → DB: "matched_shipment_id"
-	MatchReason       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "matchReason" → DB: "match_reason"
-	RunID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
-	ReviewedBy        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewedBy" → DB: "reviewed_by"
-	ReviewedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewedAt" → DB: "reviewed_at"
-	ReviewNote        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewNote" → DB: "review_note"
-	FailureCode       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureCode" → DB: "failure_code"
-	FailureText       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureText" → DB: "failure_text"
-	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	MailboxID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "mailboxId" → DB: "mailbox_id"
+	ProviderMessageID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerMessageId" → DB: "provider_message_id"
+	MessageID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "messageId" → DB: "message_id"
+	InReplyTo               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inReplyTo" → DB: "in_reply_to"
+	References              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "references" → DB: "references"
+	FromAddress             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fromAddress" → DB: "from_address"
+	FromName                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fromName" → DB: "from_name"
+	ToAddresses             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toAddresses" → DB: "to_addresses"
+	CcAddresses             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ccAddresses" → DB: "cc_addresses"
+	Subject                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subject" → DB: "subject"
+	TextBody                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "textBody" → DB: "text_body"
+	HTMLKey                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "htmlKey" → DB: "html_key"
+	ReceivedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "receivedAt" → DB: "received_at"
+	SpamScore               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "spamScore" → DB: "spam_score"
+	Classification          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "classification" → DB: "classification"
+	Confidence              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "confidence" → DB: "confidence"
+	Status                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	MatchedCustomerID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "matchedCustomerId" → DB: "matched_customer_id"
+	MatchedCarrierID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "matchedCarrierId" → DB: "matched_carrier_id"
+	MatchedShipmentID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "matchedShipmentId" → DB: "matched_shipment_id"
+	MatchReason             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "matchReason" → DB: "match_reason"
+	RunID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
+	ReviewedBy              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewedBy" → DB: "reviewed_by"
+	ReviewedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewedAt" → DB: "reviewed_at"
+	ReviewNote              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewNote" → DB: "review_note"
+	FailureCode             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureCode" → DB: "failure_code"
+	FailureText             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureText" → DB: "failure_text"
+	MessageKey              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "messageKey" → DB: "message_key"
+	ThreadKey               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "threadKey" → DB: "thread_key"
+	SenderDomain            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "senderDomain" → DB: "sender_domain"
+	OwnerID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerId" → DB: "owner_id"
+	DueAt                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dueAt" → DB: "due_at"
+	Parked                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "parked" → DB: "parked"
+	SnoozedUntil            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "snoozedUntil" → DB: "snoozed_until"
+	SnoozeEvent             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "snoozeEvent" → DB: "snooze_event"
+	SnoozeWatchID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "snoozeWatchId" → DB: "snooze_watch_id"
+	SnoozeDocumentTypeID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "snoozeDocumentTypeId" → DB: "snooze_document_type_id"
+	SnoozedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "snoozedAt" → DB: "snoozed_at"
+	SnoozedBy               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "snoozedBy" → DB: "snoozed_by"
+	AwaitingSince           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "awaitingSince" → DB: "awaiting_since"
+	AwaitingUntil           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "awaitingUntil" → DB: "awaiting_until"
+	NovaRead                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "novaRead" → DB: "nova_read"
+	HandledByRuleID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "handledByRuleId" → DB: "handled_by_rule_id"
+	HandledAction           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "handledAction" → DB: "handled_action"
+	ClassificationCorrected func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "classificationCorrected" → DB: "classification_corrected"
+	Facts                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "facts" → DB: "facts"
+	Conflicts               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "conflicts" → DB: "conflicts"
+	ActionState             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "actionState" → DB: "action_state"
+	LoadDraft               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "loadDraft" → DB: "load_draft"
+	Version                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("id", op, value)
@@ -604,6 +770,72 @@ var InboundMessageFilter = struct {
 	FailureText: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("failureText", op, value)
 	},
+	MessageKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("messageKey", op, value)
+	},
+	ThreadKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("threadKey", op, value)
+	},
+	SenderDomain: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("senderDomain", op, value)
+	},
+	OwnerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("ownerId", op, value)
+	},
+	DueAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("dueAt", op, value)
+	},
+	Parked: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("parked", op, value)
+	},
+	SnoozedUntil: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("snoozedUntil", op, value)
+	},
+	SnoozeEvent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("snoozeEvent", op, value)
+	},
+	SnoozeWatchID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("snoozeWatchId", op, value)
+	},
+	SnoozeDocumentTypeID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("snoozeDocumentTypeId", op, value)
+	},
+	SnoozedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("snoozedAt", op, value)
+	},
+	SnoozedBy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("snoozedBy", op, value)
+	},
+	AwaitingSince: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("awaitingSince", op, value)
+	},
+	AwaitingUntil: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("awaitingUntil", op, value)
+	},
+	NovaRead: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("novaRead", op, value)
+	},
+	HandledByRuleID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("handledByRuleId", op, value)
+	},
+	HandledAction: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("handledAction", op, value)
+	},
+	ClassificationCorrected: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("classificationCorrected", op, value)
+	},
+	Facts: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("facts", op, value)
+	},
+	Conflicts: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("conflicts", op, value)
+	},
+	ActionState: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("actionState", op, value)
+	},
+	LoadDraft: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("loadDraft", op, value)
+	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("version", op, value)
 	},
@@ -654,6 +886,11 @@ var MailboxColumns = struct {
 	ReviewPolicy   buncolgen.Column // "review_policy" → qualified: "imbx.review_policy"
 	MinConfidence  buncolgen.Column // "min_confidence" → qualified: "imbx.min_confidence"
 	Status         buncolgen.Column // "status" → qualified: "imbx.status"
+	LastReceivedAt buncolgen.Column // "last_received_at" → qualified: "imbx.last_received_at"
+	TestToken      buncolgen.Column // "test_token" → qualified: "imbx.test_token"
+	TestSentAt     buncolgen.Column // "test_sent_at" → qualified: "imbx.test_sent_at"
+	TestReceivedAt buncolgen.Column // "test_received_at" → qualified: "imbx.test_received_at"
+	BlockedSenders buncolgen.Column // "blocked_senders" → qualified: "imbx.blocked_senders"
 	Version        buncolgen.Column // "version" → qualified: "imbx.version"
 	CreatedAt      buncolgen.Column // "created_at" → qualified: "imbx.created_at"
 	UpdatedAt      buncolgen.Column // "updated_at" → qualified: "imbx.updated_at"
@@ -671,6 +908,11 @@ var MailboxColumns = struct {
 	ReviewPolicy:   buncolgen.NewColumn("review_policy", "imbx"),
 	MinConfidence:  buncolgen.NewColumn("min_confidence", "imbx"),
 	Status:         buncolgen.NewColumn("status", "imbx"),
+	LastReceivedAt: buncolgen.NewColumn("last_received_at", "imbx"),
+	TestToken:      buncolgen.NewColumn("test_token", "imbx"),
+	TestSentAt:     buncolgen.NewColumn("test_sent_at", "imbx"),
+	TestReceivedAt: buncolgen.NewColumn("test_received_at", "imbx"),
+	BlockedSenders: buncolgen.NewColumn("blocked_senders", "imbx"),
 	Version:        buncolgen.NewColumn("version", "imbx"),
 	CreatedAt:      buncolgen.NewColumn("created_at", "imbx"),
 	UpdatedAt:      buncolgen.NewColumn("updated_at", "imbx"),
@@ -691,6 +933,10 @@ var MailboxFieldMap = map[string]string{
 	"reviewPolicy":   "review_policy",
 	"minConfidence":  "min_confidence",
 	"status":         "status",
+	"lastReceivedAt": "last_received_at",
+	"testSentAt":     "test_sent_at",
+	"testReceivedAt": "test_received_at",
+	"blockedSenders": "blocked_senders",
 	"version":        "version",
 	"createdAt":      "created_at",
 	"updatedAt":      "updated_at",
@@ -712,6 +958,11 @@ var MailboxInsertableColumns = []string{
 	"review_policy",
 	"min_confidence",
 	"status",
+	"last_received_at",
+	"test_token",
+	"test_sent_at",
+	"test_received_at",
+	"blocked_senders",
 	"version",
 	"created_at",
 	"updated_at",
@@ -790,6 +1041,10 @@ var MailboxFilter = struct {
 	ReviewPolicy   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewPolicy" → DB: "review_policy"
 	MinConfidence  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minConfidence" → DB: "min_confidence"
 	Status         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	LastReceivedAt func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastReceivedAt" → DB: "last_received_at"
+	TestSentAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "testSentAt" → DB: "test_sent_at"
+	TestReceivedAt func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "testReceivedAt" → DB: "test_received_at"
+	BlockedSenders func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "blockedSenders" → DB: "blocked_senders"
 	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -823,6 +1078,18 @@ var MailboxFilter = struct {
 	},
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("status", op, value)
+	},
+	LastReceivedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("lastReceivedAt", op, value)
+	},
+	TestSentAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("testSentAt", op, value)
+	},
+	TestReceivedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("testReceivedAt", op, value)
+	},
+	BlockedSenders: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("blockedSenders", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("version", op, value)

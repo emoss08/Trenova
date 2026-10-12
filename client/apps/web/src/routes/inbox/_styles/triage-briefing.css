@@ -1,0 +1,385 @@
+/* Triage's Briefing: what the utilities cannot say on their own.
+
+   Every colour is a token. Nova's gradient runs across three categorical
+   accents (indigo, violet, rose), the same three the Nova mark is drawn in,
+   so it reads as Nova's own and never as a tone. Every motion here is a
+   transform or an opacity, and every loop stops when the page is off-screen
+   or the tab is hidden ([data-paused], set by the view) and under reduced
+   motion. */
+
+@property --tb-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.tb-briefing {
+  --tb-nova-a: var(--accent-indigo);
+  --tb-nova-b: var(--accent-violet);
+  --tb-nova-c: var(--accent-rose);
+  --tb-glow-strength: 13%;
+  container: tb-briefing / inline-size;
+}
+
+:root:not(.dark) .tb-briefing {
+  --tb-glow-strength: 9%;
+}
+
+/* The soft violet light behind the top of the page. */
+.tb-briefing::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -180px;
+  width: 900px;
+  max-width: 100%;
+  height: 520px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklch, var(--tb-nova-b) var(--tb-glow-strength), transparent),
+    transparent 70%
+  );
+  animation: tb-fade 1.2s var(--ease-settle) both;
+}
+
+.tb-motes {
+  position: absolute;
+  left: 50%;
+  top: -40px;
+  width: 1000px;
+  max-width: 100%;
+  height: 440px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  color: var(--foreground);
+  animation: tb-fade 1.6s var(--ease-settle) both;
+  mask: radial-gradient(closest-side, black 55%, transparent);
+}
+
+/* Sections arrive in reading order once the briefing has its figures. */
+.tb-stage {
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 700ms var(--ease-settle) var(--tb-delay, 0ms),
+    transform 800ms var(--ease-settle) var(--tb-delay, 0ms);
+}
+
+.tb-stage[data-on="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* The ring. */
+.tb-ring-track {
+  fill: none;
+  stroke: color-mix(in oklch, var(--foreground) 7%, transparent);
+  stroke-width: 7;
+}
+
+.tb-ring-sweep {
+  fill: none;
+  stroke: color-mix(in oklch, var(--tb-nova-b) 70%, transparent);
+  stroke-width: 7;
+  stroke-linecap: round;
+  transform-origin: 54px 54px;
+  opacity: 0;
+  transition: opacity 400ms var(--ease-settle);
+}
+
+.tb-ring[data-busy="true"] .tb-ring-sweep {
+  opacity: 1;
+  animation: tb-spin 1.1s linear infinite;
+}
+
+.tb-ring-fill {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1300ms cubic-bezier(0.22, 1, 0.36, 1) 120ms;
+}
+
+/* The river. */
+.tb-lane-nova {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklch, var(--tb-nova-b) 7%, transparent) 30%,
+    color-mix(in oklch, var(--tb-nova-a) 7%, transparent)
+  );
+}
+
+.tb-nova-dot {
+  background: linear-gradient(135deg, var(--tb-nova-a), var(--tb-nova-c));
+  opacity: 0.55;
+  animation: tb-drift 900ms var(--ease-settle) both;
+}
+
+.tb-your-dot {
+  animation: tb-drop 640ms var(--ease-settle) both;
+}
+
+.tb-over-ring {
+  animation: tb-ping 2s var(--ease-swift) infinite;
+}
+
+/* The deck: a stack of cards, the front one in hand. */
+.tb-card {
+  transform-origin: 50% 100%;
+  transform: translateY(calc(var(--tb-offset) * 14px)) scale(calc(1 - var(--tb-offset) * 0.045));
+  opacity: calc(1 - var(--tb-offset) * 0.3);
+  transition:
+    transform 480ms var(--ease-spring),
+    opacity 300ms var(--ease-settle);
+}
+
+.tb-card[data-front="false"] {
+  background: color-mix(in oklch, var(--card) calc(100% - var(--tb-offset) * 18%), var(--canvas));
+}
+
+.tb-card[data-front="false"]:hover {
+  transform: translateY(calc(var(--tb-offset) * 14px + 6px))
+    scale(calc(1 - var(--tb-offset) * 0.045));
+}
+
+.tb-card[data-front="true"] {
+  animation: tb-card-in 620ms var(--ease-settle) both;
+}
+
+.tb-card[data-flying="true"] {
+  transform: translate(120%, -30px) rotate(12deg);
+  opacity: 0;
+  transition:
+    transform 420ms cubic-bezier(0.5, 0, 0.75, 0),
+    opacity 380ms;
+}
+
+/* Nova's card: its own surface, a border that travels and a slow glow. */
+.tb-nova-card {
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.tb-nova-card[data-front="true"] {
+  border-color: transparent;
+  background: linear-gradient(
+    160deg,
+    color-mix(in oklch, var(--tb-nova-a) 14%, var(--card)) 0%,
+    var(--card) 45%,
+    color-mix(in oklch, var(--tb-nova-c) 10%, var(--card)) 100%
+  );
+}
+
+.tb-nova-card[data-front="false"] {
+  background: color-mix(in oklch, var(--tb-nova-b) 8%, var(--card));
+}
+
+.tb-nova-edge {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--tb-angle),
+    var(--tb-nova-a),
+    var(--tb-nova-b),
+    var(--tb-nova-c),
+    var(--tb-nova-b),
+    var(--tb-nova-a)
+  );
+  mask:
+    linear-gradient(black 0 0) content-box,
+    linear-gradient(black 0 0);
+  mask-composite: exclude;
+  opacity: 0.35;
+  animation: tb-angle 6s linear infinite;
+  transition: opacity 500ms var(--ease-settle);
+}
+
+.tb-nova-card[data-front="true"] .tb-nova-edge {
+  opacity: 0.9;
+}
+
+.tb-nova-card[data-working="true"] .tb-nova-edge {
+  opacity: 1;
+  animation-duration: 1.4s;
+}
+
+.tb-nova-aura {
+  position: absolute;
+  z-index: -1;
+  width: 340px;
+  height: 340px;
+  right: -120px;
+  top: -160px;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklch, var(--tb-nova-b) 38%, transparent),
+    transparent
+  );
+  filter: blur(18px);
+  opacity: 0;
+  transition: opacity 600ms var(--ease-settle);
+  animation: tb-aura 9s ease-in-out infinite;
+}
+
+.tb-nova-card[data-front="true"] .tb-nova-aura {
+  opacity: 0.7;
+}
+
+.tb-nova-card[data-working="true"] .tb-nova-aura {
+  opacity: 1;
+  animation-duration: 3s;
+}
+
+.tb-nova-tile {
+  background: color-mix(in oklch, var(--tb-nova-b) 22%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--tb-nova-b) 35%, transparent);
+}
+
+.tb-nova-avatar {
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--tb-nova-a) 40%, var(--surface-active)),
+    color-mix(in oklch, var(--tb-nova-c) 35%, var(--surface-active))
+  );
+}
+
+.tb-nova-item {
+  animation: tb-nova-in 520ms var(--ease-settle) both;
+}
+
+/* The first day's orb. */
+.tb-orb-ring {
+  background: conic-gradient(
+    from 200deg,
+    var(--tb-nova-a),
+    var(--tb-nova-b),
+    var(--tb-nova-c),
+    var(--tb-nova-a)
+  );
+  mask: radial-gradient(farthest-side, transparent 86%, black 88%);
+  opacity: 0.35;
+  transition: opacity 400ms var(--ease-settle);
+}
+
+.tb-orb-ring[data-reading="true"] {
+  opacity: 1;
+  animation: tb-spin 2.4s linear infinite;
+}
+
+.tb-briefing[data-paused="true"] *,
+.tb-briefing[data-paused="true"]::before {
+  animation-play-state: paused !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tb-briefing *,
+  .tb-briefing::before {
+    animation: none !important;
+  }
+
+  .tb-stage,
+  .tb-card,
+  .tb-ring-fill {
+    transition: none !important;
+  }
+}
+
+@keyframes tb-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes tb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes tb-angle {
+  to {
+    --tb-angle: 360deg;
+  }
+}
+
+@keyframes tb-drift {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+
+  to {
+    opacity: 0.55;
+    transform: none;
+  }
+}
+
+@keyframes tb-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.4);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes tb-ping {
+  0% {
+    opacity: 0.7;
+    transform: scale(0.8);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+@keyframes tb-card-in {
+  from {
+    transform: translateY(18px) scale(0.97);
+    opacity: 0;
+  }
+
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes tb-aura {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(-60px, 40px) scale(1.15);
+  }
+
+  66% {
+    transform: translate(-20px, 90px) scale(0.9);
+  }
+}
+
+@keyframes tb-nova-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -61,11 +61,13 @@ func staged(
 }
 
 func settler(repo *settleRepo, reply string) *Service {
-	return &Service{
+	svc, _ := withQueue(&Service{
 		l:           zap.NewNop(),
 		messageRepo: repo,
 		completion:  &stubCompletion{reply: reply},
-	}
+	})
+
+	return svc
 }
 
 func TestProcessMessage_SettlesAndStoresTheDecision(t *testing.T) {
@@ -220,11 +222,11 @@ func TestProcessMessage_LeavesTheMessageForAnotherAttemptWhenAsked(t *testing.T)
 		message: staged(inboundmessage.StatusReceived, inboundmessage.ReviewAutoHandle),
 	}
 	unavailable := errors.New("provider answered 503")
-	svc := &Service{
+	svc, _ := withQueue(&Service{
 		l:           zap.NewNop(),
 		messageRepo: repo,
 		completion:  &stubCompletion{err: unavailable},
-	}
+	})
 
 	_, err := svc.ProcessMessage(t.Context(), repo.message.ID, pagination.TenantInfo{},
 		RetryModelFailures(func(error) bool { return true }))
@@ -241,11 +243,11 @@ func TestProcessMessage_SendsTheMessageToReviewWhenNotRetrying(t *testing.T) {
 	repo := &settleRepo{
 		message: staged(inboundmessage.StatusReceived, inboundmessage.ReviewAutoHandle),
 	}
-	svc := &Service{
+	svc, _ := withQueue(&Service{
 		l:           zap.NewNop(),
 		messageRepo: repo,
 		completion:  &stubCompletion{err: errors.New("provider answered 400")},
-	}
+	})
 
 	result, err := svc.ProcessMessage(t.Context(), repo.message.ID, pagination.TenantInfo{},
 		RetryModelFailures(func(error) bool { return false }))

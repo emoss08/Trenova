@@ -76,6 +76,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/homelayoutexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/iftaexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/inboundmessageexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/inboundreplyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoiceadjustmentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoicedisputeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoiceexec"
@@ -120,6 +121,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/timesheetexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tractorexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/trailerexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/triageexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/userexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/usstateexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/watchtowerexec"
@@ -185,10 +187,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
@@ -403,10 +407,14 @@ type ResolverRoot interface {
 	IFTAReturnLine() IFTAReturnLineResolver
 	IFTAReturnProblem() IFTAReturnProblemResolver
 	IFTATaxRate() IFTATaxRateResolver
+	InboundActivity() InboundActivityResolver
 	InboundAttachment() InboundAttachmentResolver
 	InboundMailbox() InboundMailboxResolver
 	InboundMailboxCredentials() InboundMailboxCredentialsResolver
 	InboundMessage() InboundMessageResolver
+	InboundReply() InboundReplyResolver
+	InboundSnooze() InboundSnoozeResolver
+	InboundSplitDocument() InboundSplitDocumentResolver
 	Invoice() InvoiceResolver
 	InvoiceAdjustment() InvoiceAdjustmentResolver
 	InvoiceAdjustmentApprovalQueueItem() InvoiceAdjustmentApprovalQueueItemResolver
@@ -468,6 +476,17 @@ type ResolverRoot interface {
 	Tractor() TractorResolver
 	Trailer() TrailerResolver
 	TrainingCourse() TrainingCourseResolver
+	TriageAction() TriageActionResolver
+	TriageAssignee() TriageAssigneeResolver
+	TriageBriefing() TriageBriefingResolver
+	TriageConflict() TriageConflictResolver
+	TriageDeckItem() TriageDeckItemResolver
+	TriageHandOff() TriageHandOffResolver
+	TriageReplyTemplate() TriageReplyTemplateResolver
+	TriageRule() TriageRuleResolver
+	TriageSettings() TriageSettingsResolver
+	TriageStopTimes() TriageStopTimesResolver
+	TriageView() TriageViewResolver
 	User() UserResolver
 	WatchtowerItem() WatchtowerItemResolver
 	Worker() WorkerResolver
@@ -1363,13 +1382,33 @@ type IFTATaxRateResolver interface {
 	Jurisdiction(ctx context.Context, obj *ifta.TaxRate) (*ifta.Jurisdiction, error)
 }
 
+type InboundActivityResolver interface {
+	Actor(ctx context.Context, obj *triage.Activity) (*tenant.User, error)
+	Until(ctx context.Context, obj *triage.Activity) (*int, error)
+	FromClassification(ctx context.Context, obj *triage.Activity) (*inboundmessage.Classification, error)
+	ToClassification(ctx context.Context, obj *triage.Activity) (*inboundmessage.Classification, error)
+	RecordID(ctx context.Context, obj *triage.Activity) (*string, error)
+}
+
 type InboundAttachmentResolver interface {
 	DocumentID(ctx context.Context, obj *inboundmessage.InboundAttachment) (*string, error)
+	FiledShipmentID(ctx context.Context, obj *inboundmessage.InboundAttachment) (*string, error)
+	FiledShipment(ctx context.Context, obj *inboundmessage.InboundAttachment) (*shipmentports.ShipmentSummary, error)
+	FiledAs(ctx context.Context, obj *inboundmessage.InboundAttachment) (*string, error)
+	FiledAt(ctx context.Context, obj *inboundmessage.InboundAttachment) (*int, error)
+	Pages(ctx context.Context, obj *inboundmessage.InboundAttachment) ([]*inboundmessage.AttachmentPage, error)
+	SplitDocuments(ctx context.Context, obj *inboundmessage.InboundAttachment) ([]*inboundmessage.SplitDocument, error)
+	Reading(ctx context.Context, obj *inboundmessage.InboundAttachment) (*inboundmessageports.DocumentReading, error)
 }
 
 type InboundMailboxResolver interface {
 	HasSigningSecret(ctx context.Context, obj *inboundmessage.Mailbox) (bool, error)
 	HasAPIKey(ctx context.Context, obj *inboundmessage.Mailbox) (bool, error)
+	LastReceivedAt(ctx context.Context, obj *inboundmessage.Mailbox) (*int, error)
+	Health(ctx context.Context, obj *inboundmessage.Mailbox) (inboundmessage.SourceHealth, error)
+	TestSentAt(ctx context.Context, obj *inboundmessage.Mailbox) (*int, error)
+	TestReceivedAt(ctx context.Context, obj *inboundmessage.Mailbox) (*int, error)
+	BlockedSenders(ctx context.Context, obj *inboundmessage.Mailbox) ([]string, error)
 }
 
 type InboundMailboxCredentialsResolver interface {
@@ -1391,6 +1430,42 @@ type InboundMessageResolver interface {
 	MatchedShipment(ctx context.Context, obj *inboundmessage.InboundMessage) (*shipmentports.ShipmentSummary, error)
 	MatchedCustomer(ctx context.Context, obj *inboundmessage.InboundMessage) (*customer.Customer, error)
 	NeedsReview(ctx context.Context, obj *inboundmessage.InboundMessage) (bool, error)
+	ThreadCount(ctx context.Context, obj *inboundmessage.InboundMessage) (int, error)
+	OwnerID(ctx context.Context, obj *inboundmessage.InboundMessage) (*string, error)
+	Owner(ctx context.Context, obj *inboundmessage.InboundMessage) (*tenant.User, error)
+	DueAt(ctx context.Context, obj *inboundmessage.InboundMessage) (*int, error)
+	ResponseTargetMinutes(ctx context.Context, obj *inboundmessage.InboundMessage) (int, error)
+	Snooze(ctx context.Context, obj *inboundmessage.InboundMessage) (*inboundmessageports.SnoozeView, error)
+	AwaitingReply(ctx context.Context, obj *inboundmessage.InboundMessage) (*inboundmessageports.AwaitingReplyView, error)
+	HandledByNova(ctx context.Context, obj *inboundmessage.InboundMessage) (bool, error)
+	HandledByRuleID(ctx context.Context, obj *inboundmessage.InboundMessage) (*string, error)
+	HandledAction(ctx context.Context, obj *inboundmessage.InboundMessage) (*inboundmessage.NovaAction, error)
+	Reviewer(ctx context.Context, obj *inboundmessage.InboundMessage) (*tenant.User, error)
+	Activity(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*triage.Activity, error)
+	Actions(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*triage.Action, error)
+	Replies(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*triage.Reply, error)
+	ReplyDraft(ctx context.Context, obj *inboundmessage.InboundMessage) (*triage.Reply, error)
+	LoadDraft(ctx context.Context, obj *inboundmessage.InboundMessage) (*inboundmessage.LoadDraft, error)
+	Facts(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*inboundmessage.Fact, error)
+	Conflicts(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*inboundmessage.Conflict, error)
+}
+
+type InboundReplyResolver interface {
+	CcAddresses(ctx context.Context, obj *triage.Reply) ([]string, error)
+	TemplateID(ctx context.Context, obj *triage.Reply) (*string, error)
+	SuggestedAddress(ctx context.Context, obj *triage.Reply) (*string, error)
+	SentBy(ctx context.Context, obj *triage.Reply) (*tenant.User, error)
+	SentAt(ctx context.Context, obj *triage.Reply) (*int, error)
+}
+
+type InboundSnoozeResolver interface {
+	WatchShipment(ctx context.Context, obj *inboundmessageports.SnoozeView) (*shipmentports.ShipmentSummary, error)
+	DocumentTypeName(ctx context.Context, obj *inboundmessageports.SnoozeView) (*string, error)
+	SnoozedBy(ctx context.Context, obj *inboundmessageports.SnoozeView) (*tenant.User, error)
+}
+
+type InboundSplitDocumentResolver interface {
+	DocumentID(ctx context.Context, obj *inboundmessage.SplitDocument) (string, error)
 }
 
 type InvoiceResolver interface {
@@ -1815,6 +1890,40 @@ type MutationResolver interface {
 	RotateInboundMailboxToken(ctx context.Context, id string) (*inboundmessageservice.MailboxCredentials, error)
 	SetInboundMailboxSigningSecret(ctx context.Context, id string, secret string) (*inboundmessage.Mailbox, error)
 	SetInboundMailboxAPIKey(ctx context.Context, id string, apiKey string) (*inboundmessage.Mailbox, error)
+	ReviewInboundMessages(ctx context.Context, selection gqlmodel.TriageSelectionInput, input gqlmodel.BulkReviewInboundMessagesInput) (*inboundmessageports.BulkResult, error)
+	ReopenInboundMessages(ctx context.Context, selection gqlmodel.TriageSelectionInput) (*inboundmessageports.BulkResult, error)
+	AssignInboundMessages(ctx context.Context, selection gqlmodel.TriageSelectionInput, ownerID *string) (*inboundmessageports.BulkResult, error)
+	SnoozeInboundMessages(ctx context.Context, selection gqlmodel.TriageSelectionInput, input gqlmodel.SnoozeInboundMessagesInput) (*inboundmessageports.BulkResult, error)
+	WakeInboundMessage(ctx context.Context, id string) (*inboundmessage.InboundMessage, error)
+	WaitForInboundReply(ctx context.Context, id string, until int) (*inboundmessage.InboundMessage, error)
+	StopWaitingForInboundReply(ctx context.Context, id string) (*inboundmessage.InboundMessage, error)
+	UnlinkInboundMessage(ctx context.Context, id string, record gqlmodel.InboundLinkedRecord) (*inboundmessage.InboundMessage, error)
+	SendInboundMailboxTest(ctx context.Context, id string) (*inboundmessage.Mailbox, error)
+	HandOffTriage(ctx context.Context, toUserID string) (*inboundmessageports.HandOffResult, error)
+	ReadUnreadInboundMessages(ctx context.Context) (int, error)
+	CreateMyTriageView(ctx context.Context, name string, query string) (*triage.View, error)
+	RenameMyTriageView(ctx context.Context, id string, name string) (*triage.View, error)
+	DeleteMyTriageView(ctx context.Context, id string) (bool, error)
+	UpdateTriageResponseTargets(ctx context.Context, input []*gqlmodel.TriageResponseTargetInput) ([]*inboundmessageports.ResponseTargetView, error)
+	UpdateTriageSettings(ctx context.Context, input gqlmodel.TriageSettingsInput) (*triage.Settings, error)
+	DraftInboundReply(ctx context.Context, messageID string) (*triage.Reply, error)
+	SaveInboundReplyDraft(ctx context.Context, messageID string, subject string, body string, documentIds []string) (*triage.Reply, error)
+	DiscardInboundReplyDraft(ctx context.Context, messageID string) (*inboundmessage.InboundMessage, error)
+	SendInboundReply(ctx context.Context, input gqlmodel.SendInboundReplyInput) (*triage.Reply, error)
+	DraftInboundMany(ctx context.Context, messageIds []string) (int, error)
+	CreateTriageReplyTemplate(ctx context.Context, input gqlmodel.TriageReplyTemplateInput) (*triage.ReplyTemplate, error)
+	UpdateTriageReplyTemplate(ctx context.Context, id string, version int, input gqlmodel.TriageReplyTemplateInput) (*triage.ReplyTemplate, error)
+	DeleteTriageReplyTemplate(ctx context.Context, id string) (bool, error)
+	DraftInboundLoad(ctx context.Context, messageID string) (*inboundmessage.InboundMessage, error)
+	DiscardInboundLoad(ctx context.Context, messageID string) (*inboundmessage.InboundMessage, error)
+	CreateInboundLoad(ctx context.Context, messageID string, fields []*gqlmodel.TriageLoadFieldInput) (*inboundmessage.InboundMessage, error)
+	FileInboundAttachment(ctx context.Context, input gqlmodel.FileInboundAttachmentInput) (*inboundmessage.InboundMessage, error)
+	FileInboundMany(ctx context.Context, messageIds []string) (*inboundmessageports.BulkResult, error)
+	UnfileInboundAttachment(ctx context.Context, attachmentID string) (*inboundmessage.InboundMessage, error)
+	LogInboundException(ctx context.Context, messageID string, input gqlmodel.LogInboundExceptionInput) (*inboundmessage.InboundMessage, error)
+	BlockInboundSender(ctx context.Context, messageID string) (*inboundmessage.InboundMessage, error)
+	UnblockInboundSender(ctx context.Context, mailboxID string, sender string) (*inboundmessage.Mailbox, error)
+	DecideInboundStops(ctx context.Context, messageID string, decision inboundmessage.StopsDecision) (*inboundmessage.InboundMessage, error)
 	CreateInvoiceFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*invoice.Invoice, error)
 	CreateInvoiceFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*invoice.Invoice, error)
 	CreateInvoicesFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*invoiceports.CreateInvoicesResult, error)
@@ -1954,6 +2063,14 @@ type MutationResolver interface {
 	PatchTractor(ctx context.Context, id string, input gqlmodel.TractorPatchInput) (*tractor.Tractor, error)
 	BulkUpdateTractorStatus(ctx context.Context, input gqlmodel.BulkUpdateTractorStatusInput) ([]*tractor.Tractor, error)
 	LocateTractor(ctx context.Context, input gqlmodel.LocateTractorInput) (*equipmentcontinuity.EquipmentContinuity, error)
+	CreateTriageRule(ctx context.Context, input gqlmodel.TriageRuleInput) (*triage.Rule, error)
+	UpdateTriageRule(ctx context.Context, id string, version int, input gqlmodel.TriageRuleInput) (*triage.Rule, error)
+	SetTriageRuleEnabled(ctx context.Context, id string, enabled bool) (*triage.Rule, error)
+	DeleteTriageRule(ctx context.Context, id string) (bool, error)
+	CorrectInboundClassification(ctx context.Context, id string, classification inboundmessage.Classification) (*inboundmessage.InboundMessage, error)
+	FlagInboundFact(ctx context.Context, id string, key string) (*inboundmessage.InboundMessage, error)
+	ResolveInboundConflict(ctx context.Context, id string, conflictID string, resolution inboundmessage.ConflictResolution) (*inboundmessage.InboundMessage, error)
+	ReopenInboundConflict(ctx context.Context, id string, conflictID string) (*inboundmessage.InboundMessage, error)
 	MarkWatchtowerSeen(ctx context.Context, seenAt *int) (*gqlmodel.WatchtowerCounts, error)
 	DismissWatchtowerItem(ctx context.Context, id string) (*watchtower.Item, error)
 	HandOffWatchtowerItem(ctx context.Context, id string, input gqlmodel.HandOffWatchtowerItemInput) (*gqlmodel.WatchtowerHandOffResult, error)
@@ -2563,6 +2680,18 @@ type QueryResolver interface {
 	InboundMessage(ctx context.Context, id string) (*inboundmessage.InboundMessage, error)
 	InboundMessageCounts(ctx context.Context) (*inboundmessageservice.Counts, error)
 	InboundMailboxes(ctx context.Context) ([]*inboundmessage.Mailbox, error)
+	InboundThread(ctx context.Context, threadKey string) ([]*inboundmessage.InboundMessage, error)
+	MyTriageViews(ctx context.Context) ([]*triage.View, error)
+	TriageResponseTargets(ctx context.Context) ([]*inboundmessageports.ResponseTargetView, error)
+	TriageSettings(ctx context.Context) (*triage.Settings, error)
+	TriageAssignees(ctx context.Context) ([]*inboundmessageports.AssigneeView, error)
+	TriageReplyTemplates(ctx context.Context) ([]*triage.ReplyTemplate, error)
+	RenderTriageReplyTemplate(ctx context.Context, templateID string, messageID string) (string, error)
+	TriageStopTimes(ctx context.Context, messageID string) (*inboundmessageports.StopTimes, error)
+	TriageShipmentPeek(ctx context.Context, shipmentID string) (*inboundmessageports.ShipmentPeek, error)
+	TriageCustomerPeek(ctx context.Context, customerID string) (*inboundmessageports.CustomerPeek, error)
+	InboundReplyAttachables(ctx context.Context, messageID string) ([]*inboundmessageports.ReplyAttachable, error)
+	InboundReplyAttachmentLimit(ctx context.Context) (int, error)
 	Invoices(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.InvoiceConnection, error)
 	Invoice(ctx context.Context, id string) (*invoice.Invoice, error)
 	InvoiceAdjustment(ctx context.Context, id string) (*invoiceadjustment.InvoiceAdjustment, error)
@@ -2720,6 +2849,12 @@ type QueryResolver interface {
 	PayrollExportRows(ctx context.Context, id string) ([]*timesheetservice.PayrollExportRow, error)
 	Tractors(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool, includeWorkerDetails *bool) (*gqlmodel.TractorConnection, error)
 	Tractor(ctx context.Context, id string) (*tractor.Tractor, error)
+	TriageBriefing(ctx context.Context) (*inboundmessageports.Briefing, error)
+	TriageRules(ctx context.Context) ([]*triage.Rule, error)
+	TriageRulePreview(ctx context.Context, input gqlmodel.TriageRuleInput) (*inboundmessageports.RulePreview, error)
+	TriageRuleMatches(ctx context.Context, id string) (*inboundmessageports.RulePreview, error)
+	TriageSenderDomains(ctx context.Context, query *string) ([]string, error)
+	InboundSenderProfile(ctx context.Context, messageID string) (*inboundmessageports.SenderProfile, error)
 	Users(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.UserConnection, error)
 	User(ctx context.Context, id string) (*tenant.User, error)
 	WatchtowerItems(ctx context.Context, input gqlmodel.WatchtowerItemsInput) (*gqlmodel.WatchtowerItemConnection, error)
@@ -2896,6 +3031,77 @@ type TrailerResolver interface {
 type TrainingCourseResolver interface {
 	PassingScore(ctx context.Context, obj *worker.TrainingCourse) (*string, error)
 	OpenRecordCount(ctx context.Context, obj *worker.TrainingCourse) (int, error)
+}
+
+type TriageActionResolver interface {
+	Attachment(ctx context.Context, obj *triage.Action) (*inboundmessage.InboundAttachment, error)
+	Shipment(ctx context.Context, obj *triage.Action) (*shipmentports.ShipmentSummary, error)
+	ReplyPurpose(ctx context.Context, obj *triage.Action) (*triage.ReplyPurpose, error)
+	RefusedFileName(ctx context.Context, obj *triage.Action) (*string, error)
+	Reply(ctx context.Context, obj *triage.Action) (*triage.Reply, error)
+	CreatedShipment(ctx context.Context, obj *triage.Action) (*shipmentports.ShipmentSummary, error)
+	StopsDecision(ctx context.Context, obj *triage.Action) (*inboundmessage.StopsDecision, error)
+	ExceptionKind(ctx context.Context, obj *triage.Action) (*inboundmessage.ExceptionKind, error)
+	CompletedAt(ctx context.Context, obj *triage.Action) (*int, error)
+}
+
+type TriageAssigneeResolver interface {
+	User(ctx context.Context, obj *inboundmessageports.AssigneeView) (*tenant.User, error)
+}
+
+type TriageBriefingResolver interface {
+	UnhealthySources(ctx context.Context, obj *inboundmessageports.Briefing) ([]*inboundmessage.Mailbox, error)
+	OnCall(ctx context.Context, obj *inboundmessageports.Briefing) (*tenant.User, error)
+}
+
+type TriageConflictResolver interface {
+	AttachmentID(ctx context.Context, obj *inboundmessage.Conflict) (*string, error)
+	ExistingDocumentID(ctx context.Context, obj *inboundmessage.Conflict) (*string, error)
+	ExistingShipment(ctx context.Context, obj *inboundmessage.Conflict) (*shipmentports.ShipmentSummary, error)
+	ExistingFiledAt(ctx context.Context, obj *inboundmessage.Conflict) (*int, error)
+	ExistingAmount(ctx context.Context, obj *inboundmessage.Conflict) (*string, error)
+	NewAmount(ctx context.Context, obj *inboundmessage.Conflict) (*string, error)
+	LoadIndex(ctx context.Context, obj *inboundmessage.Conflict) (*int, error)
+	Resolution(ctx context.Context, obj *inboundmessage.Conflict) (*inboundmessage.ConflictResolution, error)
+	ResolvedAt(ctx context.Context, obj *inboundmessage.Conflict) (*int, error)
+	Options(ctx context.Context, obj *inboundmessage.Conflict) ([]inboundmessage.ConflictResolution, error)
+}
+
+type TriageDeckItemResolver interface {
+	Owner(ctx context.Context, obj *inboundmessageports.DeckItem) (*tenant.User, error)
+}
+
+type TriageHandOffResolver interface {
+	To(ctx context.Context, obj *inboundmessageports.HandOffResult) (*tenant.User, error)
+}
+
+type TriageReplyTemplateResolver interface {
+	CreatedBy(ctx context.Context, obj *triage.ReplyTemplate) (*tenant.User, error)
+}
+
+type TriageRuleResolver interface {
+	MailboxID(ctx context.Context, obj *triage.Rule) (*string, error)
+	Mailbox(ctx context.Context, obj *triage.Rule) (*inboundmessage.Mailbox, error)
+	AssigneeID(ctx context.Context, obj *triage.Rule) (*string, error)
+	Assignee(ctx context.Context, obj *triage.Rule) (*tenant.User, error)
+	CreatedBy(ctx context.Context, obj *triage.Rule) (*tenant.User, error)
+	MatchesThisMonth(ctx context.Context, obj *triage.Rule) (int, error)
+	LastMatchedAt(ctx context.Context, obj *triage.Rule) (*int, error)
+	LastMatch(ctx context.Context, obj *triage.Rule) (*inboundmessageports.Sample, error)
+}
+
+type TriageSettingsResolver interface {
+	OnCallUser(ctx context.Context, obj *triage.Settings) (*tenant.User, error)
+	OnCallUserID(ctx context.Context, obj *triage.Settings) (*string, error)
+	Timezone(ctx context.Context, obj *triage.Settings) (string, error)
+}
+
+type TriageStopTimesResolver interface {
+	Shipment(ctx context.Context, obj *inboundmessageports.StopTimes) (*shipmentports.ShipmentSummary, error)
+}
+
+type TriageViewResolver interface {
+	Waiting(ctx context.Context, obj *triage.View) (int, error)
 }
 
 type UserResolver interface {
@@ -3210,6 +3416,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		homelayoutexec.Shard,
 		iftaexec.Shard,
 		inboundmessageexec.Shard,
+		inboundreplyexec.Shard,
 		invoiceexec.Shard,
 		invoiceadjustmentexec.Shard,
 		invoicedisputeexec.Shard,
@@ -3254,6 +3461,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		timesheetexec.Shard,
 		tractorexec.Shard,
 		trailerexec.Shard,
+		triageexec.Shard,
 		userexec.Shard,
 		usstateexec.Shard,
 		watchtowerexec.Shard,
@@ -3417,10 +3625,14 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"IFTAReturnLine":                     func() any { return r.IFTAReturnLine() },
 			"IFTAReturnProblem":                  func() any { return r.IFTAReturnProblem() },
 			"IFTATaxRate":                        func() any { return r.IFTATaxRate() },
+			"InboundActivity":                    func() any { return r.InboundActivity() },
 			"InboundAttachment":                  func() any { return r.InboundAttachment() },
 			"InboundMailbox":                     func() any { return r.InboundMailbox() },
 			"InboundMailboxCredentials":          func() any { return r.InboundMailboxCredentials() },
 			"InboundMessage":                     func() any { return r.InboundMessage() },
+			"InboundReply":                       func() any { return r.InboundReply() },
+			"InboundSnooze":                      func() any { return r.InboundSnooze() },
+			"InboundSplitDocument":               func() any { return r.InboundSplitDocument() },
 			"Invoice":                            func() any { return r.Invoice() },
 			"InvoiceAdjustment":                  func() any { return r.InvoiceAdjustment() },
 			"InvoiceAdjustmentApprovalQueueItem": func() any { return r.InvoiceAdjustmentApprovalQueueItem() },
@@ -3482,6 +3694,17 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"Tractor":                            func() any { return r.Tractor() },
 			"Trailer":                            func() any { return r.Trailer() },
 			"TrainingCourse":                     func() any { return r.TrainingCourse() },
+			"TriageAction":                       func() any { return r.TriageAction() },
+			"TriageAssignee":                     func() any { return r.TriageAssignee() },
+			"TriageBriefing":                     func() any { return r.TriageBriefing() },
+			"TriageConflict":                     func() any { return r.TriageConflict() },
+			"TriageDeckItem":                     func() any { return r.TriageDeckItem() },
+			"TriageHandOff":                      func() any { return r.TriageHandOff() },
+			"TriageReplyTemplate":                func() any { return r.TriageReplyTemplate() },
+			"TriageRule":                         func() any { return r.TriageRule() },
+			"TriageSettings":                     func() any { return r.TriageSettings() },
+			"TriageStopTimes":                    func() any { return r.TriageStopTimes() },
+			"TriageView":                         func() any { return r.TriageView() },
 			"User":                               func() any { return r.User() },
 			"WatchtowerItem":                     func() any { return r.WatchtowerItem() },
 			"Worker":                             func() any { return r.Worker() },
@@ -20970,9 +21193,30 @@ type InboundMailbox {
   hasSigningSecret: Boolean!
   "Whether an API key is set for reading message content. Resend posts only a message's metadata, so a Resend mailbox without one cannot read bodies or attachments. The key itself is never returned."
   hasApiKey: Boolean!
+  "When this address last received mail."
+  lastReceivedAt: Timestamp
+  "Whether mail is still arriving, worked out from when it last did."
+  health: InboundSourceHealth!
+  "When a test email was last sent to this address."
+  testSentAt: Timestamp
+  "When the last test email arrived. Later than testSentAt means the address works."
+  testReceivedAt: Timestamp
+  "Senders whose mail goes straight to Ignored: addresses, or domains without an @."
+  blockedSenders: [String!]!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"Whether a source is still delivering."
+enum InboundSourceHealth {
+  Healthy
+  "Nothing has arrived for longer than a working source goes quiet."
+  Quiet
+  "Connected but has never received anything."
+  NeverReceived
+  "Turned off."
+  Paused
 }
 
 """
@@ -21010,7 +21254,35 @@ type InboundAttachment {
   documentId: ID
   "Why this file was refused or could not be read; blank when it was."
   failureText: String!
+  "The shipment it was filed on, once it was."
+  filedShipmentId: ID
+  filedShipment: InboundShipmentRef
+  "The document type it was filed as."
+  filedAs: String
+  filedAt: Timestamp
+  "How many pages the file has; zero when it is not paged."
+  pageCount: Int!
+  "What each page looked like to the reading, for splitting a file into documents."
+  pages: [InboundAttachmentPage!]!
+  "The documents a split made, one per page range."
+  splitDocuments: [InboundSplitDocument!]!
   createdAt: Timestamp!
+}
+
+"One page of a file, as the reading saw it."
+type InboundAttachmentPage {
+  number: Int!
+  label: String!
+  "The document type the page looks like."
+  suggestedType: String!
+}
+
+"One document a split made from a range of pages."
+type InboundSplitDocument {
+  fromPage: Int!
+  toPage: Int!
+  documentId: ID!
+  documentType: String!
 }
 
 """
@@ -21066,6 +21338,35 @@ type InboundMessage {
   matchedCustomer: Customer
   "Whether this message is waiting on a person."
   needsReview: Boolean!
+  "The conversation it belongs to, from its Message-ID, In-Reply-To and References."
+  threadKey: String!
+  "How many messages share its thread."
+  threadCount: Int!
+  "The domain it came from."
+  senderDomain: String!
+  "Who it is assigned to."
+  ownerId: ID
+  owner: User
+  "When the organization's response target for its kind runs out. Absent once it is settled."
+  dueAt: Timestamp
+  "The response target that set dueAt, in minutes."
+  responseTargetMinutes: Int!
+  "Set while it is snoozed."
+  snooze: InboundSnooze
+  "Set while it waits on the sender to reply."
+  awaitingReply: InboundAwaitingReply
+  "Whether Nova read it. False when Nova was off when it arrived."
+  novaRead: Boolean!
+  "Whether Nova settled it on its own, under a rule or the mailbox's policy."
+  handledByNova: Boolean!
+  "The rule that settled it, where one did."
+  handledByRuleId: ID
+  "What Nova did when it settled it."
+  handledAction: TriageRuleAction
+  "Who settled it."
+  reviewer: User
+  "What happened to it, oldest first."
+  activity: [InboundActivity!]!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -21097,9 +21398,132 @@ type InboundMessageConnection {
   totalCount: Int
 }
 
+"A folder of the queue: a question about state rather than a filter."
+enum TriageLane {
+  "Waiting on a person and not parked."
+  Waiting
+  "Replied to, waiting for the sender to answer."
+  WaitingOnThem
+  "Waiting, and assigned to whoever is asking."
+  AssignedToMe
+  Snoozed
+  Handled
+  Ignored
+  Everything
+}
+
+"How a folder is ordered."
+enum TriageSort {
+  "Soonest response target first, the overdue ones at the top."
+  Due
+  Newest
+}
+
+"Something that wakes a snoozed message."
+enum InboundSnoozeEvent {
+  ShipmentDelivered
+  "A document of a given type is attached to the shipment."
+  DocumentAttached
+  "The shipment's invoice is paid."
+  InvoicePaid
+}
+
+"Why a message is out of the queue for now."
+type InboundSnooze {
+  "Set for a snooze until a time."
+  until: Timestamp
+  "Set for a snooze until something happens."
+  event: InboundSnoozeEvent
+  "The shipment the event is watched on."
+  watchShipment: InboundShipmentRef
+  "The document type DocumentAttached waits for."
+  documentTypeId: ID
+  documentTypeName: String
+  snoozedAt: Timestamp!
+  snoozedBy: User
+}
+
+"A message parked until the sender answers."
+type InboundAwaitingReply {
+  since: Timestamp!
+  "When it comes back if nobody replies."
+  until: Timestamp!
+}
+
+"Who did something to a message."
+enum InboundActorKind {
+  Person
+  Nova
+  System
+}
+
+"What happened to a message."
+enum InboundActivityKind {
+  Assigned
+  Unassigned
+  Snoozed
+  Woken
+  WaitingOnReply
+  StoppedWaiting
+  TheyReplied
+  ReplyDrafted
+  Replied
+  ReplyFailed
+  Linked
+  Unlinked
+  Filed
+  Unfiled
+  Split
+  Corrected
+  FactFlagged
+  Handled
+  Ignored
+  Reopened
+  LoadDrafted
+  LoadCreated
+  ExceptionLogged
+  SenderBlocked
+  StopsDecided
+  ConflictResolved
+  ConflictReopened
+  HandedOff
+  RuleApplied
+  RuleCreated
+  DueChanged
+  TestReceived
+  NovaRead
+}
+
+"""
+One line of a message's activity trace. Subject and detail are the names the
+line is about (a file, a shipment's PRO, a person, an address), never prose.
+"""
+type InboundActivity {
+  id: ID!
+  kind: InboundActivityKind!
+  actorKind: InboundActorKind!
+  actor: User
+  subject: String!
+  detail: String!
+  until: Timestamp
+  fromClassification: InboundClassification
+  toClassification: InboundClassification
+  recordId: ID
+  createdAt: Timestamp!
+}
+
 input InboundMessagesInput {
   first: Int = 25
   after: String
+  "The folder. Absent keeps the older status filter."
+  lane: TriageLane
+  sort: TriageSort = Newest
+  "Show one row per thread: the newest message of it in the folder."
+  collapseThreads: Boolean = false
+  "Only one thread, newest first."
+  threadKey: String
+  "Only messages assigned to this person."
+  ownerId: ID
   "Only these statuses; empty is every status."
   statuses: [InboundMessageStatus!]
   classification: InboundClassification
@@ -21113,7 +21537,16 @@ input InboundMessagesInput {
 
 "The inbox in numbers, for the lane counts."
 type InboundMessageCounts {
+  "Waiting on a person and not parked."
   waiting: Int!
+  waitingOnThem: Int!
+  snoozed: Int!
+  "Waiting, and assigned to whoever asked."
+  assignedToMe: Int!
+  "Waiting and past its response target."
+  overdue: Int!
+  "Still being read."
+  processing: Int!
   handled: Int!
   ignored: Int!
   quarantined: Int!
@@ -21144,6 +21577,100 @@ input ReviewInboundMessageInput {
   note: String
 }
 
+"Which messages a bulk change applies to: named ones, or everything in a folder."
+input TriageSelectionInput {
+  ids: [ID!]
+  "Everything in this folder, up to the server's bound."
+  folder: InboundMessagesInput
+}
+
+input SnoozeInboundMessagesInput {
+  "Until a time. Exactly one of until and event is set."
+  until: Timestamp
+  event: InboundSnoozeEvent
+  "The document type DocumentAttached waits for."
+  documentTypeId: ID
+}
+
+input BulkReviewInboundMessagesInput {
+  "Actioned or Ignored."
+  status: InboundMessageStatus!
+  note: String
+  "Turn on a rule that does this on its own next time, for one message's kind, sender domain and source."
+  teach: TriageRuleAction
+}
+
+"The record a message was linked to, to unlink."
+enum InboundLinkedRecord {
+  Shipment
+  Customer
+  Carrier
+}
+
+"What a bulk change did."
+type TriageBulkResult {
+  "The messages it changed, as they are now."
+  messages: [InboundMessage!]!
+  "How many it changed, including any past the ones returned."
+  affected: Int!
+  "A rule it turned on, where it was asked to."
+  ruleId: ID
+}
+
+"What handing the queue to the on-call person did."
+type TriageHandOff {
+  to: User!
+  affected: Int!
+}
+
+"A folder a person saved from a search."
+type TriageView {
+  id: ID!
+  name: String!
+  query: String!
+  position: Int!
+  "How many messages waiting on a person match it."
+  waiting: Int!
+}
+
+"How long a kind of message may wait before it is over target."
+type TriageResponseTarget {
+  classification: InboundClassification!
+  minutes: Int!
+  "Whether this is Trenova's default rather than the organization's own."
+  isDefault: Boolean!
+}
+
+input TriageResponseTargetInput {
+  classification: InboundClassification!
+  "Minutes, or null to go back to the default."
+  minutes: Int
+}
+
+"The organization's queue settings."
+type TriageSettings {
+  "Who the queue is handed to at the end of the day."
+  onCallUser: User
+  onCallUserId: ID
+  "Minutes after midnight, in the organization's time zone, when the day wraps up."
+  endOfDayMinute: Int!
+  timezone: String!
+  version: Int!
+}
+
+input TriageSettingsInput {
+  onCallUserId: ID
+  endOfDayMinute: Int!
+  version: Int!
+}
+
+"Someone a message can be assigned to."
+type TriageAssignee {
+  user: User!
+  "Waiting messages already assigned to them."
+  waiting: Int!
+}
+
 input LinkInboundMessageInput {
   shipmentId: ID
   customerId: ID
@@ -21159,6 +21686,15 @@ extend type Query {
   inboundMessageCounts: InboundMessageCounts!
   "The addresses this organization listens on."
   inboundMailboxes: [InboundMailbox!]!
+  "The messages in one thread, oldest first."
+  inboundThread(threadKey: String!): [InboundMessage!]!
+  "The folders the signed-in person saved."
+  myTriageViews: [TriageView!]!
+  "Every kind's response target, defaults included."
+  triageResponseTargets: [TriageResponseTarget!]!
+  triageSettings: TriageSettings!
+  "People who can be assigned messages."
+  triageAssignees: [TriageAssignee!]!
 }
 
 extend type Mutation {
@@ -21176,6 +21712,388 @@ extend type Mutation {
   setInboundMailboxSigningSecret(id: ID!, secret: String!): InboundMailbox!
   "Seals and stores the key a Resend mailbox reads message bodies and attachments with: a full access re_ key."
   setInboundMailboxApiKey(id: ID!, apiKey: String!): InboundMailbox!
+  "Settles several messages, or a whole folder, at once."
+  reviewInboundMessages(selection: TriageSelectionInput!, input: BulkReviewInboundMessagesInput!): TriageBulkResult!
+  "Puts settled messages back in the queue."
+  reopenInboundMessages(selection: TriageSelectionInput!): TriageBulkResult!
+  "Assigns messages to a person, or unassigns them when ownerId is null."
+  assignInboundMessages(selection: TriageSelectionInput!, ownerId: ID): TriageBulkResult!
+  "Takes messages out of the queue until a time or an event."
+  snoozeInboundMessages(selection: TriageSelectionInput!, input: SnoozeInboundMessagesInput!): TriageBulkResult!
+  "Brings a snoozed message back now."
+  wakeInboundMessage(id: ID!): InboundMessage!
+  "Parks a message until the sender replies on its thread, or until a time."
+  waitForInboundReply(id: ID!, until: Timestamp!): InboundMessage!
+  "Brings a message waiting on a reply back now."
+  stopWaitingForInboundReply(id: ID!): InboundMessage!
+  "Removes a link a person or the reading made."
+  unlinkInboundMessage(id: ID!, record: InboundLinkedRecord!): InboundMessage!
+  "Sends a test email to a mailbox's address from the organization's outbound email."
+  sendInboundMailboxTest(id: ID!): InboundMailbox!
+  "Assigns everything still waiting to the on-call person."
+  handOffTriage(toUserId: ID!): TriageHandOff!
+  "Starts Nova reading every message it never read, after it was turned on."
+  readUnreadInboundMessages: Int!
+  createMyTriageView(name: String!, query: String!): TriageView!
+  renameMyTriageView(id: ID!, name: String!): TriageView!
+  deleteMyTriageView(id: ID!): Boolean!
+  "Sets response targets; a null minutes goes back to the default."
+  updateTriageResponseTargets(input: [TriageResponseTargetInput!]!): [TriageResponseTarget!]!
+  updateTriageSettings(input: TriageSettingsInput!): TriageSettings!
+}
+`, BuiltIn: false},
+	{Name: "../schema/inboundreply.graphqls", Input: `"Where a reply is."
+enum InboundReplyStatus {
+  Draft
+  Sending
+  Sent
+  "The provider refused it; failureText says why."
+  Failed
+}
+
+"A reply from a monitored address, stored with what the provider said about it."
+type InboundReply {
+  id: ID!
+  messageId: ID!
+  status: InboundReplyStatus!
+  fromAddress: String!
+  toAddress: String!
+  ccAddresses: [String!]!
+  subject: String!
+  body: String!
+  draftedByNova: Boolean!
+  templateId: ID
+  "Why the provider refused it."
+  failureText: String!
+  "Another address at the sender that is likely to accept it."
+  suggestedAddress: String
+  sentBy: User
+  sentAt: Timestamp
+  "The files it carries, as they were named when it was written."
+  attachments: [InboundReplyAttachment!]!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"A stored document a reply carries, kept as it was when the reply was written."
+type InboundReplyAttachment {
+  documentId: ID!
+  fileName: String!
+  contentType: String!
+  byteSize: Int!
+}
+
+"Where a file a reply can carry is stored."
+enum InboundReplyAttachableSource {
+  "Came with the message, or was uploaded to it."
+  Message
+  Shipment
+  Customer
+  Carrier
+}
+
+"A stored document a reply to the message can carry."
+type InboundReplyAttachable {
+  "The document's id."
+  id: ID!
+  fileName: String!
+  contentType: String!
+  "The document type's name; blank when it has none."
+  documentType: String!
+  byteSize: Int!
+  createdAt: Timestamp!
+  source: InboundReplyAttachableSource!
+}
+
+input SendInboundReplyInput {
+  messageId: ID!
+  subject: String!
+  body: String!
+  "Another address to send to instead of the sender, after a refusal."
+  toAddress: String
+  templateId: ID
+  "The body is Nova's draft, sent as written or after edits."
+  draftedByNova: Boolean = false
+  "Documents to attach, from inboundReplyAttachables."
+  documentIds: [ID!]
+}
+
+"A reply people reuse, with placeholders filled in from the message and its shipment."
+type TriageReplyTemplate {
+  id: ID!
+  name: String!
+  "The text, with placeholders such as {first}, {pro}, {status}, {eta}, {lane}, {customer} and {po}."
+  body: String!
+  createdBy: User
+  version: Int!
+  createdAt: Timestamp!
+}
+
+input TriageReplyTemplateInput {
+  name: String!
+  body: String!
+}
+
+"A field of a load Nova drafted."
+enum TriageLoadFieldKey {
+  Customer
+  Origin
+  Destination
+  Pickup
+  Delivery
+  Equipment
+  Weight
+  Rate
+  Loads
+  WeekOf
+  RespondBy
+  Reference
+  Commodity
+  Instructions
+}
+
+type TriageLoadField {
+  key: TriageLoadFieldKey!
+  "Blank when Nova could not read it."
+  value: String!
+}
+
+"A load Nova drafted from a message, waiting for a person to check it."
+type TriageLoadDraft {
+  "The file it was read from; blank when it was read from the message text."
+  source: String!
+  fields: [TriageLoadField!]!
+  draftedAt: Timestamp!
+  draftedByNova: Boolean!
+}
+
+input TriageLoadFieldInput {
+  key: TriageLoadFieldKey!
+  value: String!
+}
+
+"A page range of a file, filed as its own document."
+input InboundAttachmentPagesInput {
+  fromPage: Int!
+  toPage: Int!
+  "The document type id to file the range as."
+  documentTypeId: ID!
+}
+
+input FileInboundAttachmentInput {
+  attachmentId: ID!
+  shipmentId: ID!
+  "The document type id to file it as. Ignored when pages are given."
+  documentTypeId: ID
+  "File page ranges as separate documents instead of the whole file."
+  pages: [InboundAttachmentPagesInput!]
+}
+
+input LogInboundExceptionInput {
+  kind: TriageExceptionKind!
+  quantity: Int!
+  "What was short, over or damaged: pallets, cases, pieces."
+  unit: String!
+  note: String
+}
+
+"One field of a document, as the extraction read it."
+type InboundDocumentField {
+  label: String!
+  value: String!
+  tone: TriageFactTone!
+}
+
+"What Nova read from an attached document."
+type InboundDocumentReading {
+  documentType: String!
+  confidence: Float!
+  pageCount: Int!
+  fields: [InboundDocumentField!]!
+}
+
+extend type InboundAttachment {
+  "What the extraction read from the document, once it has."
+  reading: InboundDocumentReading
+}
+
+"A step a message asks for."
+enum TriageActionKind {
+  File
+  BuildLoad
+  Reply
+  CheckStops
+  LogException
+  BlockSender
+  Link
+}
+
+"What a reply is for."
+enum TriageReplyPurpose {
+  ConfirmTender
+  AcceptTender
+  AnswerDispute
+  ReturnSigned
+  AskResend
+  SendEta
+}
+
+"How a detention dispute was settled after the stop times were checked."
+enum TriageStopsDecision {
+  Waive
+  StandBy
+}
+
+"A shortage, overage or damage noted on a delivery."
+enum TriageExceptionKind {
+  Shortage
+  Overage
+  Damage
+}
+
+"""
+One step a message asks for, in the order to do them. Worked out on the server
+from the message's state, so the reader, the action bar and the briefing agree.
+"""
+type TriageAction {
+  "Stable within a message: file:<attachment id>, load, reply, stops, exception, block or link."
+  id: String!
+  kind: TriageActionKind!
+  done: Boolean!
+  "Nova can do this step itself."
+  novaCanDo: Boolean!
+  attachment: InboundAttachment
+  "The shipment the step is about."
+  shipment: InboundShipmentRef
+  replyPurpose: TriageReplyPurpose
+  "For a reply asking for a file again, the file that was refused."
+  refusedFileName: String
+  reply: InboundReply
+  "Nova drafted the load and it waits for a look."
+  loadDrafted: Boolean!
+  "The shipment the step created."
+  createdShipment: InboundShipmentRef
+  stopsDecision: TriageStopsDecision
+  exceptionKind: TriageExceptionKind
+  completedAt: Timestamp
+}
+
+extend type InboundMessage {
+  "The steps it asks for."
+  actions: [TriageAction!]!
+  "Replies sent or drafted, oldest first."
+  replies: [InboundReply!]!
+  "The reply still being written, where there is one."
+  replyDraft: InboundReply
+  "The load Nova drafted, waiting for a look."
+  loadDraft: TriageLoadDraft
+}
+
+"The stop times a detention dispute turns on, read from the shipment."
+type TriageStopTimes {
+  shipment: InboundShipmentRef!
+  stopName: String!
+  appointmentStart: Timestamp
+  appointmentEnd: Timestamp
+  arrivedAt: Timestamp
+  checkedInAt: Timestamp
+  departedAt: Timestamp
+  "Minutes after the appointment window closed; zero when on time."
+  lateMinutes: Int!
+  billedDetentionMinutes: Int!
+  billedDetentionAmount: Decimal
+  "Whether the customer's terms pay detention on a late arrival."
+  detentionPaysWhenLate: Boolean!
+  "Where the arrival time came from: ELD, geofence or a person."
+  arrivalSource: String!
+}
+
+"A stop on a shipment peek."
+type TriagePeekStop {
+  kind: String!
+  city: String!
+  state: String!
+  scheduledAt: Timestamp
+  arrivedAt: Timestamp
+  departedAt: Timestamp
+  done: Boolean!
+}
+
+"A shipment, as a peek shows it."
+type TriageShipmentPeek {
+  id: ID!
+  proNumber: String!
+  bol: String!
+  poNumber: String!
+  status: String!
+  customerName: String!
+  equipment: String!
+  driverName: String!
+  "How far along the route it is, from 0 to 1."
+  progress: Float!
+  late: Boolean!
+  eta: Timestamp
+  deliveredAt: Timestamp
+  stops: [TriagePeekStop!]!
+  "Document types already on file."
+  documentsOnFile: [String!]!
+}
+
+"A customer, as a peek shows it."
+type TriageCustomerPeek {
+  id: ID!
+  code: String!
+  name: String!
+  since: Timestamp!
+  shipmentsThisWeek: Int!
+  waitingInTriage: Int!
+  shipments: [TriageShipmentPeek!]!
+  messages: [TriageSample!]!
+}
+
+extend type Query {
+  triageReplyTemplates: [TriageReplyTemplate!]!
+  "A template with its placeholders filled in from a message and its shipment."
+  renderTriageReplyTemplate(templateId: ID!, messageId: ID!): String!
+  triageStopTimes(messageId: ID!): TriageStopTimes
+  triageShipmentPeek(shipmentId: ID!): TriageShipmentPeek!
+  triageCustomerPeek(customerId: ID!): TriageCustomerPeek!
+  "Documents a reply to the message can carry: its own files and those on its shipment, customer and carrier."
+  inboundReplyAttachables(messageId: ID!): [InboundReplyAttachable!]!
+  "The most a reply's files may add up to, in bytes."
+  inboundReplyAttachmentLimit: Int!
+}
+
+extend type Mutation {
+  "Has Nova draft a reply. It is stored as the message's draft."
+  draftInboundReply(messageId: ID!): InboundReply!
+  "Saves what a person wrote as the message's draft. documentIds replaces the draft's files; leaving it out keeps them."
+  saveInboundReplyDraft(messageId: ID!, subject: String!, body: String!, documentIds: [ID!]): InboundReply!
+  discardInboundReplyDraft(messageId: ID!): InboundMessage!
+  "Sends a reply from the mailbox's address. A refusal comes back as a Failed reply, not an error."
+  sendInboundReply(input: SendInboundReplyInput!): InboundReply!
+  "Has Nova draft replies or loads for many messages; they arrive as each is ready."
+  draftInboundMany(messageIds: [ID!]!): Int!
+  createTriageReplyTemplate(input: TriageReplyTemplateInput!): TriageReplyTemplate!
+  updateTriageReplyTemplate(id: ID!, version: Int!, input: TriageReplyTemplateInput!): TriageReplyTemplate!
+  deleteTriageReplyTemplate(id: ID!): Boolean!
+  "Has Nova draft the load a message describes."
+  draftInboundLoad(messageId: ID!): InboundMessage!
+  discardInboundLoad(messageId: ID!): InboundMessage!
+  "Creates the load from the checked draft, as a new shipment."
+  createInboundLoad(messageId: ID!, fields: [TriageLoadFieldInput!]!): InboundMessage!
+  "Files an attachment on a shipment, whole or split into page ranges."
+  fileInboundAttachment(input: FileInboundAttachmentInput!): InboundMessage!
+  "Files every readable attachment of each message on its matched shipment."
+  fileInboundMany(messageIds: [ID!]!): TriageBulkResult!
+  unfileInboundAttachment(attachmentId: ID!): InboundMessage!
+  "Adds a shortage, overage or damage exception to the matched shipment."
+  logInboundException(messageId: ID!, input: LogInboundExceptionInput!): InboundMessage!
+  "Sends the sender's future mail on this source straight to Ignored, and ignores this message."
+  blockInboundSender(messageId: ID!): InboundMessage!
+  unblockInboundSender(mailboxId: ID!, sender: String!): InboundMailbox!
+  "Records what to do about a detention dispute after checking the stop times, and drafts the reply."
+  decideInboundStops(messageId: ID!, decision: TriageStopsDecision!): InboundMessage!
 }
 `, BuiltIn: false},
 	{Name: "../schema/invoice.graphqls", Input: `enum InvoiceStatus {
@@ -28975,6 +29893,369 @@ type Mutation {
   patchTrailer(id: ID!, input: TrailerPatchInput!): Trailer!
   bulkUpdateTrailerStatus(input: BulkUpdateTrailerStatusInput!): [Trailer!]!
   locateTrailer(input: LocateTrailerInput!): EquipmentContinuity!
+}
+`, BuiltIn: false},
+	{Name: "../schema/triage.graphqls", Input: `"What Nova may do with a message on its own."
+enum TriageRuleAction {
+  "File its documents on the matched shipment."
+  FileOnShipment
+  "File an invoice and queue it for carrier pay."
+  FileAndQueuePay
+  "Draft a reply for a person to check."
+  DraftReply
+  "Draft the load for a person to check."
+  DraftLoad
+  "Link it to the customer or carrier the sender belongs to."
+  LinkBySender
+  Ignore
+  "Assign it to a person."
+  Assign
+}
+
+"Who a rule's messages come from."
+enum TriageSenderScope {
+  Anyone
+  AnyCustomer
+  AnyCarrier
+  "Everyone at a domain, and its subdomains."
+  Domain
+  "One address."
+  Address
+}
+
+"""
+A rule, which reads as a sentence: when a kind of message arrives from someone
+on a source, Nova should do something.
+"""
+type TriageRule {
+  id: ID!
+  classification: InboundClassification!
+  senderScope: TriageSenderScope!
+  "The domain or address, for those scopes; blank otherwise."
+  sender: String!
+  "The source it applies to; absent is every source."
+  mailboxId: ID
+  mailbox: InboundMailbox
+  action: TriageRuleAction!
+  assigneeId: ID
+  assignee: User
+  enabled: Boolean!
+  createdBy: User
+  "Messages it settled since the start of this month."
+  matchesThisMonth: Int!
+  "Every message it ever settled."
+  matchCount: Int!
+  lastMatchedAt: Timestamp
+  "The last message it handled."
+  lastMatch: TriageSample
+  version: Int!
+  createdAt: Timestamp!
+}
+
+input TriageRuleInput {
+  classification: InboundClassification!
+  senderScope: TriageSenderScope!
+  sender: String
+  mailboxId: ID
+  action: TriageRuleAction!
+  assigneeId: ID
+  enabled: Boolean = true
+}
+
+"Why a message a rule would have matched looks wrong for it."
+enum TriageRuleMismatch {
+  "A person corrected what kind of message it was."
+  KindCorrected
+  "It was never matched to a record, so there was nothing to act on."
+  NoMatchedRecord
+  "A person settled it differently from what the rule would do."
+  PersonDisagreed
+}
+
+"A message a rule would have matched."
+type TriageRuleMatch {
+  messageId: ID!
+  fromName: String!
+  fromAddress: String!
+  subject: String!
+  receivedAt: Timestamp!
+  "The PRO, PO or reference the message was about, where it was matched."
+  reference: String!
+  "Why it looks off; absent when it looks right."
+  mismatch: TriageRuleMismatch
+}
+
+"What a rule would have done over the last thirty days."
+type TriageRulePreview {
+  matched: Int!
+  "How many of those look off."
+  off: Int!
+  "The newest matches, off ones first."
+  matches: [TriageRuleMatch!]!
+  since: Timestamp!
+}
+
+"A rule worth turning on, from what people keep doing by hand."
+type TriageRuleSuggestion {
+  classification: InboundClassification!
+  senderScope: TriageSenderScope!
+  sender: String!
+  mailboxId: ID
+  action: TriageRuleAction!
+  "How many of these people settled that way by hand."
+  handledByHand: Int!
+  "How many of these arrived in the window."
+  total: Int!
+}
+
+"A message, as a line in a list Nova shows."
+type TriageSample {
+  messageId: ID!
+  fromName: String!
+  fromAddress: String!
+  subject: String!
+  classification: InboundClassification
+  receivedAt: Timestamp!
+  "The PRO, PO or file name the line is about."
+  reference: String!
+}
+
+"How sure a fact Nova read is to need a look."
+enum TriageFactTone {
+  Neutral
+  Warning
+}
+
+"Something Nova read out of a message, with the words it read it from."
+type TriageFact {
+  key: String!
+  label: String!
+  value: String!
+  "The words in the message the fact was read from."
+  quote: String!
+  tone: TriageFactTone!
+  "A person said it is wrong."
+  flagged: Boolean!
+}
+
+"What a conflict is about."
+enum TriageConflictKind {
+  "The shipment already has a document of the same kind."
+  DuplicateDocument
+  "A load in a tender looks like one already on the board."
+  OverlappingLoad
+}
+
+"How a conflict was settled."
+enum TriageConflictResolution {
+  ReplaceExisting
+  KeepBoth
+  SkipDuplicate
+  ConfirmNew
+}
+
+"Something about a message that clashes with what is already on file."
+type TriageConflict {
+  id: String!
+  kind: TriageConflictKind!
+  attachmentId: ID
+  existingDocumentId: ID
+  existingShipment: InboundShipmentRef
+  existingFiledAt: Timestamp
+  existingAmount: Decimal
+  newAmount: Decimal
+  "Which load in the tender, counting from one."
+  loadIndex: Int
+  resolution: TriageConflictResolution
+  resolvedAt: Timestamp
+  "The choices that settle it, in the order to offer them."
+  options: [TriageConflictResolution!]!
+}
+
+extend type InboundMessage {
+  "What Nova read out of it."
+  facts: [TriageFact!]!
+  "Clashes with what is on file."
+  conflicts: [TriageConflict!]!
+  "A person corrected what kind of message it is."
+  classificationCorrected: Boolean!
+}
+
+"Which part of the deck a waiting message is in."
+enum TriageDeckGroup {
+  "Documents to file on a matched shipment."
+  File
+  "Drafts Nova can write."
+  Draft
+  "Needs a person's call."
+  Decide
+  "Without a record."
+  Link
+  "Held back as possibly unsafe."
+  Held
+}
+
+"A waiting message, as the briefing names it."
+type TriageDeckItem {
+  messageId: ID!
+  fromName: String!
+  fromAddress: String!
+  subject: String!
+  classification: InboundClassification
+  receivedAt: Timestamp!
+  dueAt: Timestamp
+  "The next step it asks for."
+  action: TriageAction
+  owner: User
+}
+
+"One card of the briefing's deck."
+type TriageDeckCard {
+  group: TriageDeckGroup!
+  count: Int!
+  estimateMinutes: Int!
+  "The first few, soonest due first."
+  items: [TriageDeckItem!]!
+  "Every message in the card, for its one action."
+  messageIds: [ID!]!
+}
+
+"Something Nova did on its own today, counted by what it did."
+type TriageHandledGroup {
+  action: TriageRuleAction!
+  classification: InboundClassification
+  count: Int!
+  samples: [TriageSample!]!
+}
+
+"One hour of arrivals."
+type TriageArrivalBucket {
+  hourStart: Timestamp!
+  handledByNova: Int!
+  leftForPerson: Int!
+}
+
+"A message on the river."
+type TriageRiverPoint {
+  messageId: ID!
+  fromName: String!
+  fromAddress: String!
+  subject: String!
+  classification: InboundClassification
+  receivedAt: Timestamp!
+  dueAt: Timestamp
+  "Settled, or parked until later."
+  done: Boolean!
+}
+
+"The corrections people made to Nova's reading."
+type TriageCorrections {
+  thisWeek: Int!
+  "Reading accuracy this week against last, in percentage points."
+  accuracyChange: Float!
+  accuracy: Float!
+}
+
+"Which part of the day the briefing is for."
+enum TriageBriefingPhase {
+  Day
+  EndOfDay
+}
+
+"""
+The briefing: what Nova did, what is left, and what to do first. One aggregate,
+cached per organization and refreshed on every change to the queue.
+"""
+type TriageBriefing {
+  generatedAt: Timestamp!
+  "The organization's local midnight the day's figures count from."
+  dayStart: Timestamp!
+  phase: TriageBriefingPhase!
+  "No source connected, or nothing has ever arrived."
+  firstDay: Boolean!
+  "Whether Nova reads new mail. Off when no model is set up for it."
+  novaEnabled: Boolean!
+  activeSources: Int!
+  waiting: Int!
+  overdue: Int!
+  "Settled by people today."
+  closedByPeopleToday: Int!
+  handledByNovaToday: Int!
+  handledByNova: [TriageHandledGroup!]!
+  arrivals: [TriageArrivalBucket!]!
+  "Messages Nova settled today, for the river's Nova lane."
+  novaPoints: [TriageRiverPoint!]!
+  "Messages left for a person today, for the river's lane."
+  yours: [TriageRiverPoint!]!
+  deck: [TriageDeckCard!]!
+  "The waiting message most over its target."
+  longestWaiting: TriageDeckItem
+  estimateMinutes: Int!
+  corrections: TriageCorrections!
+  "Snoozed or waiting on a reply."
+  comingBack: Int!
+  unhealthySources: [InboundMailbox!]!
+  suggestion: TriageRuleSuggestion
+  onCall: User
+  "At the end of the day: what carries over, soonest due first."
+  carryOver: [TriageDeckItem!]!
+}
+
+"Who a sender is to the organization."
+enum InboundSenderRole {
+  Customer
+  Broker
+  Carrier
+  Driver
+  Unknown
+}
+
+"One kind of mail a sender sends, and how often."
+type InboundSenderKindCount {
+  classification: InboundClassification!
+  count: Int!
+}
+
+"What is known about a sender, from their mail and the records it matched."
+type InboundSenderProfile {
+  address: String!
+  name: String!
+  domain: String!
+  role: InboundSenderRole!
+  "When the customer or carrier they belong to was added."
+  since: Timestamp
+  messagesLast90Days: Int!
+  "How long it usually takes to settle their mail, in minutes."
+  usualReplyMinutes: Int
+  kinds: [InboundSenderKindCount!]!
+  rules: [TriageRule!]!
+  recent: [TriageSample!]!
+}
+
+extend type Query {
+  triageBriefing: TriageBriefing!
+  triageRules: [TriageRule!]!
+  "What a rule would have matched over the last thirty days, before it is turned on."
+  triageRulePreview(input: TriageRuleInput!): TriageRulePreview!
+  "What an existing rule matched, or would have, over the last thirty days."
+  triageRuleMatches(id: ID!): TriageRulePreview!
+  "Domains that have sent mail, for a rule's sender."
+  triageSenderDomains(query: String): [String!]!
+  inboundSenderProfile(messageId: ID!): InboundSenderProfile!
+}
+
+extend type Mutation {
+  createTriageRule(input: TriageRuleInput!): TriageRule!
+  updateTriageRule(id: ID!, version: Int!, input: TriageRuleInput!): TriageRule!
+  setTriageRuleEnabled(id: ID!, enabled: Boolean!): TriageRule!
+  deleteTriageRule(id: ID!): Boolean!
+  "Says what kind of message it really is. Nova reads mail from the sender that way from now on."
+  correctInboundClassification(id: ID!, classification: InboundClassification!): InboundMessage!
+  "Says a fact Nova read is wrong."
+  flagInboundFact(id: ID!, key: String!): InboundMessage!
+  resolveInboundConflict(id: ID!, conflictId: String!, resolution: TriageConflictResolution!): InboundMessage!
+  "Undoes a conflict's resolution."
+  reopenInboundConflict(id: ID!, conflictId: String!): InboundMessage!
 }
 `, BuiltIn: false},
 	{Name: "../schema/us_state.graphqls", Input: `type UsState {

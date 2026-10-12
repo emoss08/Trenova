@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -56,7 +57,8 @@ type ActivitiesParams struct {
 	UsageProvider        platformcatalogports.UsageProvider `optional:"true"`
 	Redis                *goredis.Client                    `optional:"true"`
 	DocumentIntelligence documentports.DocumentContentService
-	ShipmentService      shipmentports.ShipmentService `optional:"true"`
+	ShipmentService      shipmentports.ShipmentService       `optional:"true"`
+	Triage               inboundmessageports.TriageEventSink `optional:"true"`
 }
 
 type Activities struct {
@@ -72,6 +74,7 @@ type Activities struct {
 	redis                *goredis.Client
 	documentIntelligence documentports.DocumentContentService
 	shipmentService      shipmentports.ShipmentService
+	triage               inboundmessageports.TriageEventSink
 }
 
 //nolint:gocritic // dependency injection param
@@ -104,6 +107,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		redis:                p.Redis,
 		documentIntelligence: documentIntelligence,
 		shipmentService:      p.ShipmentService,
+		triage:               p.Triage,
 	}
 }
 
@@ -812,6 +816,7 @@ func (a *Activities) finalizeCreatedDocumentUpload(
 		)
 	}
 	a.syncSearchProjection(ctx, createdDoc, "")
+	inboundmessageports.AnnounceDocumentAttached(ctx, a.triage, createdDoc)
 	return nil
 }
 

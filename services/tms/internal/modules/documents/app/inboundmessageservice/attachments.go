@@ -360,7 +360,12 @@ func (s *Service) updateAttachment(
 	if _, err := s.messageRepo.UpdateAttachment(ctx, row); err != nil {
 		return err
 	}
-	s.publish(ctx, row.OrganizationID, row.BusinessUnitID, row.MessageID, inboxRealtimeAction)
+	s.notify.publish(
+		ctx,
+		pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID},
+		row.MessageID,
+		inboxRealtimeAction,
+	)
 
 	return nil
 }

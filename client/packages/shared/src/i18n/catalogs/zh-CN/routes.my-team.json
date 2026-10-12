@@ -38,7 +38,6 @@
   "Worth a look soon:": "建议尽快查看：",
   "Your team could not be loaded. {0}": "无法加载您的团队。{0}",
   "until called back": "直到另行通知",
-  "until {0}": "直到 {0}",
   "{0, plural, one {# year} other {# years}} on {1}": "{1} 满 {0, plural, other {# 年}}",
   "{0} compliance": "{0}合规",
   "{0} safety": "{0}安全",

@@ -142,12 +142,12 @@ func contentService(
 	store *stubStorage,
 	up *uploads,
 ) *Service {
-	svc := &Service{
+	svc, _ := withQueue(&Service{
 		l:           zap.NewNop(),
 		messageRepo: repo,
 		storage:     store,
 		encryption:  plainSecrets{},
-	}
+	})
 	if fetcher != nil {
 		svc.fetcher = fetcher
 	}
@@ -156,10 +156,6 @@ func contentService(
 	}
 
 	return svc
-}
-
-func tenantOfMessage(message *inboundmessage.InboundMessage) pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: message.OrganizationID, BuID: message.BusinessUnitID}
 }
 
 /*

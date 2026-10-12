@@ -355,10 +355,12 @@ modules:
       - extractionrollout
       - extractionshadow
       - inboundmessage
+      - triage
     service:
       - capturereleaseservice
       - captureservice
       - documentintelligenceservice
+      - documentmailservice
       - documentoperationsservice
       - documentpacketruleservice
       - documentparsingruleservice
@@ -371,6 +373,11 @@ modules:
       - extractionshadowservice
       - inboundmessageservice
       - thumbnailservice
+      - triagebriefingservice
+      - triageconflictservice
+      - triagecorrectionservice
+      - triageruleservice
+      - triagesupport
     job:
       - capturejobs
       - documentintelligencejobs
@@ -379,6 +386,7 @@ modules:
       - extractionshadowjobs
       - inboundjobs
       - thumbnailjobs
+      - triagewakejobs
     repository:
       - capturerepository
       - documentaiextractionrepository
@@ -394,6 +402,9 @@ modules:
       - extractionshadowrepository
       - inboundmessagerepository
       - retrievalsourcerepository
+      - triageinsightrepository
+      - triagemessagerepository
+      - triagerulerepository
   rating:
     level: 6
     domain:
@@ -491,6 +502,7 @@ modules:
       - shipmenttracking
       - shipmentwatchlistservice
       - tenderservice
+      - triagedeliveryrelay
       - weatheralertservice
     job:
       - detentionjobs
@@ -522,6 +534,7 @@ modules:
       - shipmentsuggestionrepository
       - shipmenttrackingrepository
       - tenderrepository
+      - triageoverlaprepository
       - weatheralertrepository
   edi:
     level: 8
@@ -636,6 +649,7 @@ modules:
       - costingservice
       - customerpaymentservice
       - detentionbillingservice
+      - detentioncreditservice
       - invoiceadjustmentservice
       - invoicedisputeservice
       - invoiceledger

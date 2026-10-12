@@ -184,7 +184,7 @@ const DISPATCH_AGENT = {
   id: "agd_dispatch",
   name: "Dispatch desk",
   description: "Follows loads, drivers and equipment for the dispatch team.",
-  template: "dispatch",
+  template: "DispatchAssistant",
   icon: "",
   accent: "",
   toolNames: [

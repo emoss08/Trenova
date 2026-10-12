@@ -1,7 +1,8 @@
 import { stubLayout } from "@/test/layout";
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { VirtualRows } from "../virtual-rows";
+import { act, cleanup, render, screen } from "@testing-library/react";
+import { useEffect, useRef } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { VirtualRows, type VirtualRowsHandle } from "../virtual-rows";
 
 let restoreLayout = () => {};
 
@@ -47,5 +48,56 @@ describe("VirtualRows", () => {
     render(<VirtualRows rows={[]} empty={<p>Nothing here</p>} />);
 
     expect(screen.getByText("Nothing here")).toBeInTheDocument();
+  });
+});
+
+/**
+ * Opening a message far down a Triage lane scrolls the list to it. The rows
+ * that mount there are measured as they attach, and a row above the viewport
+ * that turns out taller than its estimate moves the scroll position to keep
+ * the open row still. That move must not ask React to flush while React is
+ * still committing the rows that caused it.
+ */
+describe("VirtualRows measuring rows it scrolled to", () => {
+  function ScrollsTo({ target }: { target: string }) {
+    const handle = useRef<VirtualRowsHandle>(null);
+    useEffect(() => {
+      handle.current?.scrollToKey(target);
+    }, [target]);
+
+    return (
+      <VirtualRows
+        rows={rows(300)}
+        estimateSize={40}
+        initialHeight={320}
+        handleRef={handle}
+        className="h-80"
+      />
+    );
+  }
+
+  it("never flushes from inside a commit", async () => {
+    restoreLayout();
+    restoreLayout = stubLayout(64);
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    try {
+      const { container } = render(<ScrollsTo target="row-120" />);
+      const scroller = container.firstElementChild as HTMLElement;
+      await act(async () => {
+        scroller.scrollTop = 120 * 40;
+        scroller.dispatchEvent(new Event("scroll"));
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      });
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      });
+
+      expect(screen.getByText("Row 120")).toBeInTheDocument();
+      const flushes = errors.mock.calls.filter((call) => String(call[0]).includes("flushSync"));
+      expect(flushes).toEqual([]);
+    } finally {
+      errors.mockRestore();
+    }
   });
 });

@@ -210,14 +210,16 @@ func newService(
 	messages *stubMessageRepo,
 	store *stubStorage,
 ) *Service {
-	return &Service{
+	svc, _ := withQueue(&Service{
 		l:           zap.NewNop(),
 		mailboxRepo: mailboxes,
 		messageRepo: messages,
 		storage:     store,
 		encryption:  plainSecrets{},
 		workflows:   &stubWorkflows{},
-	}
+	})
+
+	return svc
 }
 
 func TestReceiveWebhook_StagesAVerifiedDelivery(t *testing.T) {

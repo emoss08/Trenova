@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/extractionshadowjobs"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/inboundjobs"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/thumbnailjobs"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/triagewakejobs"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/triageworkjobs"
 	"go.uber.org/fx"
 )
 
@@ -20,5 +22,7 @@ func WorkerOptions() fx.Option {
 		capturejobs.Module,
 		extractionevaljobs.Module,
 		extractionshadowjobs.Module,
+		triagewakejobs.Module,
+		triageworkjobs.Module,
 	)
 }

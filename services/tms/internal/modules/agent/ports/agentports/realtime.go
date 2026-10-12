@@ -31,6 +31,10 @@ const RealtimePresenceLeave = "leave"
 
 const RealtimeScopeUsers = "users"
 
+const RealtimeActivityViewing = "viewing"
+
+const RealtimeActivityWriting = "writing"
+
 const RealtimeCloseRotate = "rotate"
 
 const RealtimeCloseShutdown = "shutdown"
@@ -114,6 +118,8 @@ type RealtimePresenceMember struct {
 	UserID       string `json:"userId"`
 	ConnectionID string `json:"connectionId"`
 	Name         string `json:"name"`
+	MessageID    string `json:"messageId,omitempty"`
+	Activity     string `json:"activity,omitempty"`
 }
 
 type RealtimePresenceEvent struct {
@@ -122,6 +128,13 @@ type RealtimePresenceEvent struct {
 	UserID       string `json:"userId"`
 	ConnectionID string `json:"connectionId"`
 	Name         string `json:"name,omitempty"`
+	MessageID    string `json:"messageId,omitempty"`
+	Activity     string `json:"activity,omitempty"`
+}
+
+type RealtimePresenceState struct {
+	MessageID string
+	Activity  string
 }
 
 type RealtimePresenceSnapshot struct {
@@ -185,6 +198,7 @@ type RealtimeScopeRequest struct {
 	UserID         pulid.ID
 	ConnectionID   string
 	Scope          string
+	State          RealtimePresenceState
 }
 
 type RealtimeTypingRequest struct {
@@ -229,6 +243,7 @@ type RealtimeBroker interface {
 		ctx context.Context,
 		conn *RealtimeConnection,
 		scope string,
+		state RealtimePresenceState,
 	) (*RealtimePresenceSnapshot, error)
 	LeavePresence(ctx context.Context, conn *RealtimeConnection, scope string) error
 	// Throttle reports whether key may act now, and if so holds it for window.

@@ -4,7 +4,7 @@ aliases: [AI assistant, assistant, agents, chat, ask AI, copilot, AI desk, conve
 related:
   - /desk/decisions
   - /desk/watchtower
-  - /inbox
+  - /triage
   - /admin/agent-control
 covers:
   - /desk/t/:threadId

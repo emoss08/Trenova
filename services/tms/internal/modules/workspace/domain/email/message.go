@@ -109,8 +109,9 @@ type Attachment struct {
 	FileName       string   `json:"fileName"       bun:"file_name,type:VARCHAR(255),notnull"`
 	ContentType    string   `json:"contentType"    bun:"content_type,type:VARCHAR(120),notnull"`
 	ObjectKey      string   `json:"objectKey"      bun:"object_key,type:TEXT,notnull"`
-	SizeBytes      int64    `json:"sizeBytes"      bun:"size_bytes,type:BIGINT,notnull"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	SizeBytes      int64          `json:"sizeBytes"      bun:"size_bytes,type:BIGINT,notnull"`
+	Seal           AttachmentSeal `json:"seal"           bun:"seal,type:VARCHAR(32),nullzero"`
+	CreatedAt      int64          `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
 func (a *Attachment) BeforeAppendModel(_ context.Context, query bun.Query) error {

@@ -13,6 +13,8 @@ var ErrRetryableEmailSend = errors.New("retryable email provider failure")
 
 var ErrNonRetryableEmailSend = errors.New("non-retryable email provider failure")
 
+var ErrNoEmailProfile = errors.New("no email profile is set up")
+
 type SendEmailRequest struct {
 	TenantInfo     pagination.TenantInfo `json:"-"`
 	ProfileID      pulid.ID              `json:"profileId"`
@@ -31,11 +33,12 @@ type SendEmailRequest struct {
 }
 
 type EmailAttachment struct {
-	FileName    string `json:"fileName"`
-	ContentType string `json:"contentType"`
-	Content     []byte `json:"content,omitempty"`
-	ObjectKey   string `json:"objectKey,omitempty"`
-	SizeBytes   int64  `json:"sizeBytes,omitempty"`
+	FileName    string               `json:"fileName"`
+	ContentType string               `json:"contentType"`
+	Content     []byte               `json:"content,omitempty"`
+	ObjectKey   string               `json:"objectKey,omitempty"`
+	SizeBytes   int64                `json:"sizeBytes,omitempty"`
+	Seal        email.AttachmentSeal `json:"seal,omitempty"`
 }
 
 type SendPersistedEmailRequest struct {

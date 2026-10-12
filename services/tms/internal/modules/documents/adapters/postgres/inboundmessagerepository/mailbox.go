@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -146,12 +147,19 @@ func (r *mailboxRepository) Update(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*inboundmessage.Mailbox, error) {
 		ov := entity.Version
 		entity.Version++
+		cols := inboundmessagecol.MailboxColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where("version = ?", ov).
+			Where(cols.Version.Eq(), ov).
+			ExcludeColumn(
+				cols.LastReceivedAt.Bare(),
+				cols.TestToken.Bare(),
+				cols.TestSentAt.Bare(),
+				cols.TestReceivedAt.Bare(),
+			).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -165,4 +173,102 @@ func (r *mailboxRepository) Update(
 
 		return entity, nil
 	})
+}
+
+func NewMailboxStateRepository(p MailboxParams) inboundmessageports.TriageMailboxStateRepository {
+	return &mailboxRepository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.inbound-mailbox-state-repository"),
+	}
+}
+
+func (r *mailboxRepository) MarkReceived(
+	ctx context.Context,
+	req inboundmessageports.MailboxReceivedRequest,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		_, err := markReceivedQuery(r.db.DBForContext(ctx), req).Exec(ctx)
+
+		return err
+	})
+}
+
+func markReceivedQuery(
+	db bun.IDB,
+	req inboundmessageports.MailboxReceivedRequest,
+) *bun.UpdateQuery {
+	cols := inboundmessagecol.MailboxColumns
+
+	return db.NewUpdate().
+		Model((*inboundmessage.Mailbox)(nil)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return inboundmessagecol.MailboxScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.MailboxID)
+		}).
+		Set(cols.LastReceivedAt.SetExpr("GREATEST(COALESCE({}, 0), ?::bigint)"), req.ReceivedAt)
+}
+
+func (r *mailboxRepository) MarkTestSent(
+	ctx context.Context,
+	req inboundmessageports.MailboxTestRequest,
+) (*inboundmessage.Mailbox, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*inboundmessage.Mailbox, error) {
+		entity := new(inboundmessage.Mailbox)
+		cols := inboundmessagecol.MailboxColumns
+
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return inboundmessagecol.MailboxScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.MailboxID)
+			}).
+			Set(cols.TestToken.Set(), req.Token).
+			Set(cols.TestSentAt.Set(), req.At).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if err = dberror.CheckRowsAffected(results, "Mailbox", req.MailboxID.String()); err != nil {
+			return nil, err
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *mailboxRepository) MarkTestReceived(
+	ctx context.Context,
+	req inboundmessageports.MailboxTestRequest,
+) (bool, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
+		result, err := markTestReceivedQuery(r.db.DBForContext(ctx), req).Exec(ctx)
+		if err != nil {
+			return false, err
+		}
+		affected, err := result.RowsAffected()
+		if err != nil {
+			return false, err
+		}
+
+		return affected > 0, nil
+	})
+}
+
+func markTestReceivedQuery(
+	db bun.IDB,
+	req inboundmessageports.MailboxTestRequest,
+) *bun.UpdateQuery {
+	cols := inboundmessagecol.MailboxColumns
+
+	return db.NewUpdate().
+		Model((*inboundmessage.Mailbox)(nil)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return inboundmessagecol.MailboxScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.MailboxID).
+				Where(cols.TestToken.Eq(), req.Token)
+		}).
+		Set(cols.TestReceivedAt.Set(), req.At).
+		Set(cols.TestToken.SetNull())
 }

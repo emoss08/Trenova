@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -48,7 +49,8 @@ type Params struct {
 	AuditService       auditports.AuditService
 	WorkflowStarter    kernelports.WorkflowStarter
 	Storage            kernelports.Client
-	Plans              platformplanports.PlanService `optional:"true"`
+	Plans              platformplanports.PlanService     `optional:"true"`
+	Observers          []emailports.EmailMessageObserver `                group:"email_message_observers"`
 }
 
 type Service struct {
@@ -63,6 +65,7 @@ type Service struct {
 	workflowStarter    kernelports.WorkflowStarter
 	storage            kernelports.Client
 	plans              platformplanports.PlanService
+	observers          []emailports.EmailMessageObserver
 }
 
 type HandleProviderEventParams struct {
@@ -88,6 +91,7 @@ func New(p Params) *Service {
 		workflowStarter: p.WorkflowStarter,
 		storage:         p.Storage,
 		plans:           p.Plans,
+		observers:       p.Observers,
 	}
 }
 
@@ -517,6 +521,9 @@ func (s *Service) SendPersisted(
 	}
 	attachments, err := s.providerAttachments(ctx, req.TenantInfo, msg.ID)
 	if err != nil {
+		if errors.Is(err, ErrNonRetryableSend) {
+			return s.markFailed(ctx, msg, err)
+		}
 		return s.markFailed(ctx, msg, fmt.Errorf("%w: %w", ErrRetryableSend, err))
 	}
 
@@ -549,7 +556,7 @@ func (s *Service) SendPersisted(
 	if err != nil {
 		return nil, err
 	}
-	s.syncInvoiceAttempts(ctx, msg)
+	s.messageChanged(ctx, msg, nil)
 	return msg, nil
 }
 
@@ -594,6 +601,20 @@ func (s *Service) persistAttachment(
 	if contentType == "" {
 		contentType = "application/octet-stream"
 	}
+	if !attachment.Seal.IsValid() {
+		return nil, errortypes.NewValidationError(
+			"attachments.seal",
+			errortypes.ErrInvalid,
+			"Attachment seal is not recognized",
+		)
+	}
+	if attachment.Seal != email.AttachmentSealNone && len(attachment.Content) > 0 {
+		return nil, errortypes.NewValidationError(
+			"attachments.seal",
+			errortypes.ErrInvalid,
+			"A sealed attachment must reference a stored object, not carry content",
+		)
+	}
 
 	objectKey := strings.TrimSpace(attachment.ObjectKey)
 	sizeBytes := attachment.SizeBytes
@@ -633,6 +654,7 @@ func (s *Service) persistAttachment(
 		ContentType:    contentType,
 		ObjectKey:      objectKey,
 		SizeBytes:      sizeBytes,
+		Seal:           attachment.Seal,
 	}, nil
 }
 
@@ -650,17 +672,9 @@ func (s *Service) providerAttachments(
 	}
 	result := make([]ProviderAttachment, 0, len(attachments))
 	for _, attachment := range attachments {
-		download, err := s.storage.Download(ctx, attachment.ObjectKey)
-		if err != nil {
-			return nil, err
-		}
-		content, err := io.ReadAll(download.Body)
-		closeErr := download.Body.Close()
-		if err != nil {
-			return nil, err
-		}
-		if closeErr != nil {
-			return nil, closeErr
+		content, contentErr := s.attachmentContent(ctx, attachment)
+		if contentErr != nil {
+			return nil, contentErr
 		}
 		result = append(result, ProviderAttachment{
 			FileName:    attachment.FileName,
@@ -669,6 +683,65 @@ func (s *Service) providerAttachments(
 		})
 	}
 	return result, nil
+}
+
+func (s *Service) attachmentContent(
+	ctx context.Context,
+	attachment *email.Attachment,
+) ([]byte, error) {
+	download, err := s.storage.Download(ctx, attachment.ObjectKey)
+	if err != nil {
+		return nil, err
+	}
+	content, err := io.ReadAll(download.Body)
+	closeErr := download.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	if closeErr != nil {
+		return nil, closeErr
+	}
+
+	switch attachment.Seal {
+	case email.AttachmentSealNone:
+		return content, nil
+	case email.AttachmentSealDocument:
+		return s.unsealDocument(attachment, content)
+	default:
+		return nil, fmt.Errorf(
+			"%w: attachment %s has an unknown seal %q",
+			ErrNonRetryableSend,
+			attachment.ID,
+			attachment.Seal,
+		)
+	}
+}
+
+func (s *Service) unsealDocument(attachment *email.Attachment, sealed []byte) ([]byte, error) {
+	if s.encryptionService == nil || !encryptionservice.IsEnvelope(string(sealed)) {
+		return nil, fmt.Errorf(
+			"%w: attachment %s is not a sealed document",
+			ErrNonRetryableSend,
+			attachment.ID,
+		)
+	}
+
+	content, err := s.encryptionService.DecryptBytesWithAAD(string(sealed), encryptionservice.AAD{
+		Purpose:        encryptionservice.PurposeDocument,
+		OrganizationID: attachment.OrganizationID,
+		BusinessUnitID: attachment.BusinessUnitID,
+		ResourceID:     attachment.ObjectKey,
+	})
+	if err != nil {
+		return nil, fmt.Errorf(
+			"%w: attachment %s could not be unsealed: %w",
+			ErrNonRetryableSend,
+			attachment.ID,
+			err,
+		)
+	}
+
+	return content, nil
 }
 
 func (s *Service) startSendWorkflow(
@@ -774,7 +847,7 @@ func (s *Service) HandleProviderEvent(
 	if _, err = s.repo.UpdateMessage(ctx, msg); err != nil {
 		return err
 	}
-	s.syncInvoiceAttempts(ctx, msg)
+	s.messageChanged(ctx, msg, event)
 	if params.SuppressionReason != "" {
 		_, err = s.repo.CreateSuppression(ctx, &email.Suppression{
 			BusinessUnitID: tenantInfo.BuID,
@@ -914,7 +987,7 @@ func noEmailProfile() error {
 	return errortypes.NewBusinessError(
 		"No email profile is set up for this organization, so nothing can be emailed until " +
 			"an admin adds one in the email settings. Say so, and offer another way to reach them",
-	)
+	).WithInternal(emailports.ErrNoEmailProfile)
 }
 
 func (s *Service) markFailed(
@@ -929,8 +1002,18 @@ func (s *Service) markFailed(
 	if updateErr != nil {
 		return nil, updateErr
 	}
-	s.syncInvoiceAttempts(ctx, updated)
+	s.messageChanged(ctx, updated, nil)
 	return updated, err
+}
+
+func (s *Service) messageChanged(ctx context.Context, msg *email.Message, event *email.Event) {
+	s.syncInvoiceAttempts(ctx, msg)
+	if msg == nil {
+		return
+	}
+	for _, observer := range s.observers {
+		observer.EmailMessageChanged(ctx, emailports.EmailMessageChange{Message: msg, Event: event})
+	}
 }
 
 func (s *Service) syncInvoiceAttempts(ctx context.Context, msg *email.Message) {

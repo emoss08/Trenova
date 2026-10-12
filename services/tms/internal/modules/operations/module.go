@@ -3,6 +3,7 @@ package operations
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/assignmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/carrierassignmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/detentionrepository"
@@ -26,6 +27,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentsuggestionrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmenttrackingrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/tenderrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/triagelookuprepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/triageoverlaprepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/weatheralertrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/app/assignmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
@@ -55,11 +58,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentsuggestionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentwatchlistservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/triagedeliveryrelay"
+	"github.com/emoss08/trenova/internal/modules/operations/app/triageshipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/weatheralertservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
@@ -96,6 +102,8 @@ func SharedOptions() fx.Option {
 			weatheralertrepository.New,
 			dispatchcontrolrepository.New,
 			documentshipmentdraftrepository.New,
+			triageoverlaprepository.New,
+			triagelookuprepository.New,
 			assignmentrepository.New,
 			orderrepository.New,
 			servicefailurereasoncoderepository.New,
@@ -136,6 +144,24 @@ func SharedOptions() fx.Option {
 			),
 			orderservice.New,
 			shipmenteventservice.New,
+			triagedeliveryrelay.New,
+			triageshipmentservice.New,
+			func(s *triageshipmentservice.Service) inboundmessageports.TriageShipmentPeeker { return s },
+			func(s *triageshipmentservice.Service) inboundmessageports.TriageStopTimesReader { return s },
+			func(s *triageshipmentservice.Service) inboundmessageports.TriageLoadCreator { return s },
+			func(s *triageshipmentservice.Service) inboundmessageports.TriageExceptionLogger { return s },
+			func(s *triageshipmentservice.Service) inboundmessageports.TriageDetentionSettler { return s },
+			func(s *triageshipmentservice.Service) inboundmessageports.TriageDetentionEvidenceSource {
+				return s
+			},
+			fx.Annotate(
+				func(r *triagedeliveryrelay.Relay) shipmenteventports.ShipmentEventObserver { return r },
+				fx.ResultTags(`group:"shipment_event_observers"`),
+			),
+			fx.Annotate(
+				func(r *triagedeliveryrelay.Relay) shipmentports.MoveStatusObserver { return r },
+				fx.ResultTags(`group:"move_status_observers"`),
+			),
 			fx.Annotate(
 				orderderivation.New,
 				fx.As(new(orderports.OrderDerivationService)),

@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -52,6 +53,7 @@ type Params struct {
 	AuditService       auditports.AuditService
 	AccountingSync     accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
 	Realtime           agentports.RealtimeService                 `optional:"true"`
+	Triage             inboundmessageports.TriageEventSink        `optional:"true"`
 }
 
 type Service struct {
@@ -68,6 +70,7 @@ type Service struct {
 	auditService       auditports.AuditService
 	accountingSync     accountingsyncports.AccountingSyncEnqueuer
 	realtime           agentports.RealtimeService
+	triage             inboundmessageports.TriageEventSink
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -85,6 +88,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		auditService:       p.AuditService,
 		accountingSync:     p.AccountingSync,
 		realtime:           p.Realtime,
+		triage:             p.Triage,
 	}
 }
 
@@ -736,7 +740,11 @@ func (s *Service) announceInvoice(
 	inv *invoice.Invoice,
 	actor *permissionports.RequestActor,
 ) {
-	if inv == nil || s.realtime == nil {
+	if inv == nil {
+		return
+	}
+	s.wakeTriageOnPaid(ctx, inv)
+	if s.realtime == nil {
 		return
 	}
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
@@ -831,4 +839,15 @@ func applicationLedgerEntries(
 		}
 	}
 	return entries
+}
+
+func (s *Service) wakeTriageOnPaid(ctx context.Context, inv *invoice.Invoice) {
+	if s.triage == nil || inv.SettlementStatus != invoice.SettlementStatusPaid {
+		return
+	}
+
+	tenantInfo := pagination.TenantInfo{OrgID: inv.OrganizationID, BuID: inv.BusinessUnitID}
+	for _, shipmentID := range inv.LegShipmentIDs() {
+		s.triage.InvoicePaid(ctx, tenantInfo, shipmentID)
+	}
 }

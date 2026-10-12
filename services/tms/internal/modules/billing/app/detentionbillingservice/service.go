@@ -133,6 +133,7 @@ func (s *Service) SyncInvoiceBilling(
 			TenantInfo:  req.TenantInfo,
 			ShipmentIDs: distinctIDs(shipmentIDs),
 			ChargeIDs:   chargeIDs,
+			Statuses:    detention.InvoiceSettledStatuses(),
 		},
 	)
 	if err != nil {
@@ -187,25 +188,35 @@ func (s *Service) settle(ctx context.Context, p settleParams) error {
 		summary string
 		comment string
 	)
+	kind := detention.EvidenceKindStatusChange
+	waiver, waiving := p.req.WaiverFor(occurrence.ID)
 	switch {
-	case p.billed && occurrence.Status != detention.OccurrenceStatusBilled:
-		if err := occurrence.MarkBilled(); err != nil {
-			return errortypes.NewValidationError(
-				"status", errortypes.ErrInvalidOperation, err.Error())
+	case !p.billed && waiving && occurrence.Status != detention.OccurrenceStatusWaived:
+		if err := waiveCredited(occurrence, waiver, p.now); err != nil {
+			return err
 		}
-		summary = fmt.Sprintf("Billed on invoice %s at %s %s",
-			invoiceLabel(p.req.InvoiceNumber),
-			occurrence.BillableAmount.StringFixed(2), occurrence.Currency)
-		comment = "Detention charge billed on invoice " + invoiceLabel(p.req.InvoiceNumber)
-	case !p.billed && occurrence.Status == detention.OccurrenceStatusBilled:
-		if err := occurrence.ReleaseBilling(); err != nil {
-			return errortypes.NewValidationError(
-				"status", errortypes.ErrInvalidOperation, err.Error())
-		}
-		summary = releaseSummary(p.req)
-		comment = summary
+		kind = detention.EvidenceKindWaiver
+		summary = waivedSummary(occurrence, waiver, p.req.InvoiceNumber)
+		comment = "Detention charge waived and credited on invoice " +
+			invoiceLabel(p.req.InvoiceNumber)
 	default:
-		return nil
+		change, err := occurrence.FollowInvoices(p.billed)
+		if err != nil {
+			return errortypes.NewValidationError(
+				"status", errortypes.ErrInvalidOperation, err.Error())
+		}
+		switch change {
+		case detention.InvoiceBillingMarked:
+			summary = fmt.Sprintf("Billed on invoice %s at %s %s",
+				invoiceLabel(p.req.InvoiceNumber),
+				occurrence.BillableAmount.StringFixed(2), occurrence.Currency)
+			comment = "Detention charge billed on invoice " + invoiceLabel(p.req.InvoiceNumber)
+		case detention.InvoiceBillingReleased:
+			summary = releaseSummary(p.req)
+			comment = summary
+		case detention.InvoiceBillingUnchanged:
+			return nil
+		}
 	}
 
 	saved, err := s.occurrenceRepo.Update(ctx, occurrence)
@@ -219,7 +230,7 @@ func (s *Service) settle(ctx context.Context, p settleParams) error {
 				OrganizationID:        saved.OrganizationID,
 				BusinessUnitID:        saved.BusinessUnitID,
 				DetentionOccurrenceID: saved.ID,
-				Kind:                  detention.EvidenceKindStatusChange,
+				Kind:                  kind,
 				Source:                detention.EvidenceSourceSystem,
 				Summary:               summary,
 				ObservedAt:            p.now,
@@ -245,6 +256,44 @@ func (s *Service) settle(ctx context.Context, p settleParams) error {
 	})
 
 	return nil
+}
+
+func waiveCredited(
+	occurrence *detention.DetentionOccurrence,
+	waiver detentionports.DetentionWaiver,
+	now int64,
+) error {
+	if occurrence.Status == detention.OccurrenceStatusBilled {
+		if err := occurrence.ReleaseBilling(); err != nil {
+			return errortypes.NewValidationError(
+				"status", errortypes.ErrInvalidOperation, err.Error())
+		}
+	}
+
+	reason := waiver.Reason
+	if reason == "" {
+		reason = detention.WaiverReasonOther
+	}
+	if err := occurrence.Waive(reason, waiver.Note, waiver.RequestedBy, now); err != nil {
+		return errortypes.NewValidationError(
+			"status", errortypes.ErrInvalidOperation, err.Error())
+	}
+
+	return nil
+}
+
+func waivedSummary(
+	occurrence *detention.DetentionOccurrence,
+	waiver detentionports.DetentionWaiver,
+	invoiceNumber string,
+) string {
+	summary := fmt.Sprintf("Waived %s %s after invoice %s was credited",
+		occurrence.WaivedAmount.StringFixed(2), occurrence.Currency, invoiceLabel(invoiceNumber))
+	if note := strings.TrimSpace(waiver.Note); note != "" {
+		summary += ": " + note
+	}
+
+	return summary
 }
 
 func releaseSummary(req *detentionports.SyncDetentionInvoiceBillingRequest) string {

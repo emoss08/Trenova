@@ -2,13 +2,16 @@ package invoiceadjustmentservice
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -46,42 +49,73 @@ func (s *Service) guardDetentionRebill(
 	return err
 }
 
-// syncDetentionBilling settles the detention charges an adjustment touched:
-// those the original invoice billed, and any the replacement bills.
-func (s *Service) syncDetentionBilling(
-	ctx context.Context,
-	source *invoice.Invoice,
-	actor *permissionports.RequestActor,
-	documents ...*invoice.Invoice,
-) error {
-	if s.detentionBilling == nil || source == nil {
+type detentionSync struct {
+	source    *invoice.Invoice
+	actor     *permissionports.RequestActor
+	waivers   []detentionports.DetentionWaiver
+	documents []*invoice.Invoice
+}
+
+func (s *Service) syncDetentionBilling(ctx context.Context, p *detentionSync) error {
+	if s.detentionBilling == nil || p.source == nil {
 		return nil
 	}
 
-	invoiceIDs := make([]pulid.ID, 0, len(documents)+1)
-	invoiceIDs = append(invoiceIDs, source.ID)
-	for _, document := range documents {
+	invoiceIDs := make([]pulid.ID, 0, len(p.documents)+1)
+	invoiceIDs = append(invoiceIDs, p.source.ID)
+	for _, document := range p.documents {
 		if document != nil {
 			invoiceIDs = append(invoiceIDs, document.ID)
 		}
 	}
 
 	var actorUserID pulid.ID
-	if actor != nil {
-		actorUserID = actor.UserID
+	if p.actor != nil {
+		actorUserID = p.actor.UserID
 	}
 
 	return s.detentionBilling.SyncInvoiceBilling(
 		ctx,
 		&detentionports.SyncDetentionInvoiceBillingRequest{
 			TenantInfo: pagination.TenantInfo{
-				OrgID: source.OrganizationID,
-				BuID:  source.BusinessUnitID,
+				OrgID: p.source.OrganizationID,
+				BuID:  p.source.BusinessUnitID,
 			},
 			InvoiceIDs:    invoiceIDs,
-			InvoiceNumber: source.Number,
+			InvoiceNumber: p.source.Number,
 			Event:         detentionports.DetentionBillingInvoiceAdjusted,
 			ActorUserID:   actorUserID,
+			Waivers:       p.waivers,
 		},
 	)
+}
+
+func adjustmentMetadata(req *invoiceadjustmentports.InvoiceAdjustmentRequest) map[string]any {
+	metadata := make(map[string]any, 2)
+	metadata[metadataAttachmentIDs] = req.AttachmentIDs
+	if len(req.DetentionWaivers) > 0 {
+		metadata[metadataDetentionWaivers] = req.DetentionWaivers
+	}
+
+	return metadata
+}
+
+func detentionWaiversOf(
+	adjustment *invoiceadjustment.InvoiceAdjustment,
+) ([]detentionports.DetentionWaiver, error) {
+	raw, ok := adjustment.Metadata[metadataDetentionWaivers]
+	if !ok || raw == nil {
+		return nil, nil
+	}
+
+	var waivers []detentionports.DetentionWaiver
+	if err := jsonutils.Convert(raw, &waivers); err != nil {
+		return nil, fmt.Errorf(
+			"read the detention waivers of adjustment %s: %w",
+			adjustment.ID,
+			err,
+		)
+	}
+
+	return waivers, nil
 }

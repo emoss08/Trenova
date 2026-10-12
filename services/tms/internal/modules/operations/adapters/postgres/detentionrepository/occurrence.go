@@ -365,7 +365,8 @@ func (r *occurrenceRepository) ListByAdditionalCharges(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*detention.DetentionOccurrence, error) {
-			if req == nil || len(req.ChargeIDs) == 0 || len(req.ShipmentIDs) == 0 {
+			if req == nil || len(req.ChargeIDs) == 0 || len(req.ShipmentIDs) == 0 ||
+				len(req.Statuses) == 0 {
 				return []*detention.DetentionOccurrence{}, nil
 			}
 
@@ -379,11 +380,7 @@ func (r *occurrenceRepository) ListByAdditionalCharges(
 					return detentioncol.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
 						Where(cols.ShipmentID.In(), bun.List(req.ShipmentIDs)).
 						Where(cols.AdditionalChargeID.In(), bun.List(req.ChargeIDs)).
-						Where(cols.Status.In(), bun.List([]detention.OccurrenceStatus{
-							detention.OccurrenceStatusPending,
-							detention.OccurrenceStatusApproved,
-							detention.OccurrenceStatusBilled,
-						}))
+						Where(cols.Status.In(), bun.List(req.Statuses))
 				}).
 				Order(cols.ShipmentID.OrderAsc(), cols.ClockStartAt.OrderAsc(), cols.ID.OrderAsc()).
 				Scan(ctx)

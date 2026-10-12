@@ -51,6 +51,24 @@ func PreviousDayStart(ts int64, loc *time.Location) int64 {
 	return time.Date(year, month, day-1, 0, 0, 0, 0, loc).Unix()
 }
 
+func WeekStart(ts int64, loc *time.Location) int64 {
+	if loc == nil {
+		loc = time.UTC
+	}
+	local := time.Unix(ts, 0).In(loc)
+	sinceMonday := (int(local.Weekday()) + 6) % 7
+	year, month, day := local.Date()
+	return time.Date(year, month, day-sinceMonday, 0, 0, 0, 0, loc).Unix()
+}
+
+func MinuteOfDay(ts int64, loc *time.Location) int {
+	if loc == nil {
+		loc = time.UTC
+	}
+	local := time.Unix(ts, 0).In(loc)
+	return local.Hour()*60 + local.Minute()
+}
+
 func MonthStart(ts int64, loc *time.Location) int64 {
 	if loc == nil {
 		loc = time.UTC

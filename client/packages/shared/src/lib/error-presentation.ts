@@ -218,6 +218,13 @@ export function describeError(error: unknown): ErrorDescription {
   });
 }
 
+// isSessionExpiry says whether a failure proves the session is gone (a 401 or an
+// authentication problem, from either transport), as opposed to one that says nothing about
+// it: a rate limit, a server error or a dropped connection.
+export function isSessionExpiry(error: unknown): boolean {
+  return describeError(error).kind === "session-expired";
+}
+
 const CHROMIUM_FRAME = /^\s*at\s+(?:(.+?)\s+\()?(.+?):(\d+):(\d+)\)?\s*$/;
 const GECKO_FRAME = /^\s*(.*?)@(.+?):(\d+):(\d+)\s*$/;
 const DEV_SERVER_PREFIX = /^https?:\/\/[^/]+\/(?:@fs\/)?/;

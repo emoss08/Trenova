@@ -21,8 +21,10 @@ var ErrConnectionNotFound = errortypes.NewNotFoundError(
 
 // presenceData is what a member carries besides its connection id.
 type presenceData struct {
-	UserID string `json:"u"`
-	Name   string `json:"n"`
+	UserID    string `json:"u"`
+	Name      string `json:"n"`
+	MessageID string `json:"m,omitempty"`
+	Activity  string `json:"a,omitempty"`
 }
 
 // sweepScript removes members whose connection stopped refreshing them and
@@ -126,12 +128,18 @@ func (b *Broker) JoinPresence(
 	ctx context.Context,
 	conn *agentports.RealtimeConnection,
 	scope string,
+	state agentports.RealtimePresenceState,
 ) (*agentports.RealtimePresenceSnapshot, error) {
 	tenant := tenantKey(conn.OrganizationID, conn.BusinessUnitID)
 	expKey := presenceExpiryKey(tenant, scope)
 	dataKey := presenceDataKey(tenant, scope)
 
-	data, err := sonic.Marshal(presenceData{UserID: conn.UserID.String(), Name: conn.Name})
+	data, err := sonic.Marshal(presenceData{
+		UserID:    conn.UserID.String(),
+		Name:      conn.Name,
+		MessageID: state.MessageID,
+		Activity:  state.Activity,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +154,7 @@ func (b *Broker) JoinPresence(
 		return nil, err
 	}
 
-	if err = b.announce(ctx, conn, scope, agentports.RealtimePresenceEnter); err != nil {
+	if err = b.announce(ctx, conn, scope, agentports.RealtimePresenceEnter, state); err != nil {
 		return nil, err
 	}
 
@@ -168,17 +176,18 @@ func (b *Broker) withdraw(
 	tenant, scope string,
 ) error {
 	pipe := b.client.TxPipeline()
+	held := pipe.HGet(ctx, presenceDataKey(tenant, scope), conn.ConnectionID)
 	removed := pipe.ZRem(ctx, presenceExpiryKey(tenant, scope), conn.ConnectionID)
 	pipe.HDel(ctx, presenceDataKey(tenant, scope), conn.ConnectionID)
 	pipe.SRem(ctx, connectionScopesKey(conn.ConnectionID), scope)
-	if _, err := pipe.Exec(ctx); err != nil {
+	if _, err := pipe.Exec(ctx); err != nil && !errors.Is(err, redis.Nil) {
 		return err
 	}
 	if removed.Val() == 0 {
 		return nil
 	}
 
-	return b.announce(ctx, conn, scope, agentports.RealtimePresenceLeave)
+	return b.announce(ctx, conn, scope, agentports.RealtimePresenceLeave, heldState(held.Val()))
 }
 
 // dropConnection withdraws every membership a closed connection held. The
@@ -265,6 +274,8 @@ func (b *Broker) members(
 			UserID:       data.UserID,
 			ConnectionID: id,
 			Name:         data.Name,
+			MessageID:    data.MessageID,
+			Activity:     data.Activity,
 		})
 	}
 
@@ -275,6 +286,7 @@ func (b *Broker) announce(
 	ctx context.Context,
 	conn *agentports.RealtimeConnection,
 	scope, action string,
+	state agentports.RealtimePresenceState,
 ) error {
 	return b.announceMember(ctx, &announcement{
 		orgID:        conn.OrganizationID,
@@ -284,7 +296,21 @@ func (b *Broker) announce(
 		userID:       conn.UserID.String(),
 		connectionID: conn.ConnectionID,
 		name:         conn.Name,
+		state:        state,
 	})
+}
+
+func heldState(raw string) agentports.RealtimePresenceState {
+	if raw == "" {
+		return agentports.RealtimePresenceState{}
+	}
+
+	var data presenceData
+	if err := sonic.UnmarshalString(raw, &data); err != nil {
+		return agentports.RealtimePresenceState{}
+	}
+
+	return agentports.RealtimePresenceState{MessageID: data.MessageID, Activity: data.Activity}
 }
 
 type announcement struct {
@@ -295,6 +321,7 @@ type announcement struct {
 	userID       string
 	connectionID string
 	name         string
+	state        agentports.RealtimePresenceState
 }
 
 func (b *Broker) announceMember(ctx context.Context, a *announcement) error {
@@ -304,6 +331,8 @@ func (b *Broker) announceMember(ctx context.Context, a *announcement) error {
 		UserID:       a.userID,
 		ConnectionID: a.connectionID,
 		Name:         a.name,
+		MessageID:    a.state.MessageID,
+		Activity:     a.state.Activity,
 	})
 	if err != nil {
 		return err
@@ -442,6 +471,10 @@ func (b *Broker) sweepScope(ctx context.Context, tenant, scope, member, now stri
 			userID:       data.UserID,
 			connectionID: result[i],
 			name:         data.Name,
+			state: agentports.RealtimePresenceState{
+				MessageID: data.MessageID,
+				Activity:  data.Activity,
+			},
 		}); announceErr != nil {
 			b.l.Warn("could not announce a swept presence member", zap.Error(announceErr))
 		}

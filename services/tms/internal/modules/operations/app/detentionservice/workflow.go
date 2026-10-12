@@ -346,11 +346,54 @@ func (s *Service) Waive(
 		return nil, err
 	}
 
+	return s.saveWaiver(ctx, &p, change, false)
+}
+
+func (s *Service) WaiveUninvoiced(
+	ctx context.Context,
+	p *WaiveParams,
+) (*detention.DetentionOccurrence, error) {
+	if _, err := detention.WaiverReasonFromString(string(p.Reason)); err != nil {
+		return nil, errortypes.NewValidationError(
+			"waiverReason", errortypes.ErrInvalid, "A coded waiver reason is required")
+	}
+
+	released := false
+	change, err := s.planOccurrence(ctx, p.OccurrenceID, p.TenantInfo,
+		func(occurrence *detention.DetentionOccurrence, now int64) error {
+			if occurrence.Status == detention.OccurrenceStatusBilled {
+				if releaseErr := occurrence.ReleaseBilling(); releaseErr != nil {
+					return releaseErr
+				}
+				released = true
+			}
+
+			return occurrence.Waive(p.Reason, p.Note, p.UserID, now)
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	return s.saveWaiver(ctx, p, change, released)
+}
+
+func (s *Service) saveWaiver(
+	ctx context.Context,
+	p *WaiveParams,
+	change *OccurrenceChange,
+	released bool,
+) (*detention.DetentionOccurrence, error) {
 	saved, err := s.occurrenceRepo.Update(ctx, change.After)
 	if err != nil {
 		return nil, err
 	}
 
+	if released {
+		s.appendEvidence(ctx, saved, detention.EvidenceKindStatusChange,
+			detention.EvidenceSourceSystem,
+			"Billing released: no standing invoice bills this charge",
+			change.Now)
+	}
 	s.appendEvidence(ctx, saved, detention.EvidenceKindWaiver,
 		detention.EvidenceSourceManual,
 		fmt.Sprintf("Waived %s %s as %s: %s",

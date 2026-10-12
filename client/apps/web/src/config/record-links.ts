@@ -155,6 +155,11 @@ export const RECORD_LINKS = {
     label: "Conversation",
     path: "/desk/t/{id}",
   },
+  inbound_message: {
+    label: "Message",
+    path: "/triage",
+    params: { message: "{id}" },
+  },
   accounting_sync_record: {
     label: "Sync record",
     path: "/accounting/sync",
