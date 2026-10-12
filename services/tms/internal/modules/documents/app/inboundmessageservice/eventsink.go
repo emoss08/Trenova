@@ -53,7 +53,7 @@ func (e *EventSink) ShipmentDelivered(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) {
-	e.wake(ctx, inboundmessageports.WakeByEventRequest{
+	e.wake(ctx, &inboundmessageports.WakeByEventRequest{
 		TenantInfo: tenantInfo,
 		Event:      inboundmessage.SnoozeEventShipmentDelivered,
 		WatchID:    shipmentID,
@@ -70,7 +70,7 @@ func (e *EventSink) DocumentAttached(
 		return
 	}
 
-	e.wake(ctx, inboundmessageports.WakeByEventRequest{
+	e.wake(ctx, &inboundmessageports.WakeByEventRequest{
 		TenantInfo:     tenantInfo,
 		Event:          inboundmessage.SnoozeEventDocumentAttached,
 		WatchID:        shipmentID,
@@ -83,14 +83,14 @@ func (e *EventSink) InvoicePaid(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) {
-	e.wake(ctx, inboundmessageports.WakeByEventRequest{
+	e.wake(ctx, &inboundmessageports.WakeByEventRequest{
 		TenantInfo: tenantInfo,
 		Event:      inboundmessage.SnoozeEventInvoicePaid,
 		WatchID:    shipmentID,
 	})
 }
 
-func (e *EventSink) wake(ctx context.Context, req inboundmessageports.WakeByEventRequest) {
+func (e *EventSink) wake(ctx context.Context, req *inboundmessageports.WakeByEventRequest) {
 	if req.WatchID.IsNil() || req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
 		return
 	}
@@ -104,7 +104,7 @@ func (e *EventSink) wake(ctx context.Context, req inboundmessageports.WakeByEven
 	var woken []*inboundmessageports.QueueState
 	err := e.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		var wErr error
-		woken, wErr = e.queueRepo.WakeByEvent(txCtx, req)
+		woken, wErr = e.queueRepo.WakeByEvent(txCtx, *req)
 		if wErr != nil || len(woken) == 0 {
 			return wErr
 		}
@@ -132,7 +132,7 @@ func (e *EventSink) wake(ctx context.Context, req inboundmessageports.WakeByEven
 
 func eventActivities(
 	woken []*inboundmessageports.QueueState,
-	req inboundmessageports.WakeByEventRequest,
+	req *inboundmessageports.WakeByEventRequest,
 ) []*triage.Activity {
 	activities := make([]*triage.Activity, 0, len(woken))
 	for _, state := range woken {

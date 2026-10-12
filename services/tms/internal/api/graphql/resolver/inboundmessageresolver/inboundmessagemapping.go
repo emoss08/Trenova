@@ -114,7 +114,7 @@ func (d *Deps) visibleShipment(
 	shipmentID pulid.ID,
 ) (*shipmentports.ShipmentSummary, error) {
 	if shipmentID.IsNil() {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a missing or hidden record resolves to null
 	}
 
 	authCtx, err := d.RequireAuth(ctx)
@@ -122,7 +122,7 @@ func (d *Deps) visibleShipment(
 		return nil, err
 	}
 	if !d.HasPermission(ctx, authCtx, permission.ResourceShipment, permission.OpRead) {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a missing or hidden record resolves to null
 	}
 	if err = base.RequireLoaders(ctx); err != nil {
 		return nil, err
@@ -169,7 +169,7 @@ func (d *Deps) requireViewer(ctx context.Context) (*authctx.AuthContext, error) 
 }
 
 func folderRequest(
-	input gqlmodel.InboundMessagesInput,
+	input *gqlmodel.InboundMessagesInput,
 	tenantInfo pagination.TenantInfo,
 	viewerID pulid.ID,
 ) (*inboundmessageports.ListInboundMessagesRequest, error) {
@@ -237,7 +237,7 @@ func selectionOf(
 		)
 	}
 
-	folder, err := folderRequest(*input.Folder, tenantInfo, viewerID)
+	folder, err := folderRequest(input.Folder, tenantInfo, viewerID)
 	if err != nil {
 		return inboundmessageservice.Selection{}, err
 	}

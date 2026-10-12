@@ -302,7 +302,7 @@ func (r *QueryResolver) InboundMessages(ctx context.Context, input gqlmodel.Inbo
 	cursor.IncludeTotalCount = base.ConnectionFieldRequested(ctx, base.ConnectionTotalCountField)
 
 	req, err := folderRequest(
-		input, base.TenantInfo(authCtx), actorutil.FromAuthContext(authCtx).UserID,
+		&input, base.TenantInfo(authCtx), actorutil.FromAuthContext(authCtx).UserID,
 	)
 	if err != nil {
 		return nil, err

@@ -59,7 +59,7 @@ func (s *Service) ReviewMany(
 		return nil, err
 	}
 
-	result, err := s.runTransition(ctx, settleTransition(settleParams{
+	result, err := s.runTransition(ctx, settleTransition(&settleParams{
 		tenant:   req.TenantInfo,
 		ids:      ids,
 		status:   req.Status,
@@ -92,7 +92,7 @@ type settleParams struct {
 	eligible func(state *inboundmessageports.QueueState) bool
 }
 
-func settleTransition(p settleParams) *transition {
+func settleTransition(p *settleParams) *transition {
 	eligible := p.eligible
 	if eligible == nil {
 		eligible = func(state *inboundmessageports.QueueState) bool {
@@ -133,7 +133,7 @@ func (s *Service) teach(
 	result *transitionResult,
 ) (*pulid.ID, error) {
 	if req.Teach == "" {
-		return nil, nil
+		return nil, nil //nolint:nilnil // nothing was asked to be taught
 	}
 
 	var source *inboundmessageports.QueueState

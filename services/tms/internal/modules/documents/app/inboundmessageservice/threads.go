@@ -125,7 +125,7 @@ func (s *Service) answerAwaiting(ctx context.Context, message *inboundmessage.In
 		ids = append(ids, state.ID)
 	}
 
-	if _, err = s.runTransition(ctx, settleTransition(settleParams{
+	if _, err = s.runTransition(ctx, settleTransition(&settleParams{
 		tenant:   tenantInfo,
 		ids:      ids,
 		status:   inboundmessage.StatusActioned,

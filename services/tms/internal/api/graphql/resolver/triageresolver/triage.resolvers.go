@@ -303,7 +303,7 @@ func (r *TriageConflictResolver) ExistingDocumentID(ctx context.Context, obj *in
 
 func (r *TriageConflictResolver) ExistingShipment(ctx context.Context, obj *inboundmessage.Conflict) (*shipmentports.ShipmentSummary, error) {
 	if obj.ExistingShipmentID.IsNil() {
-		return nil, nil
+		return nil, nil //nolint:nilnil // an unset or hidden reference resolves to null
 	}
 
 	authCtx, err := r.RequireAuth(ctx)
@@ -311,7 +311,7 @@ func (r *TriageConflictResolver) ExistingShipment(ctx context.Context, obj *inbo
 		return nil, err
 	}
 	if !r.HasPermission(ctx, authCtx, permission.ResourceShipment, permission.OpRead) {
-		return nil, nil
+		return nil, nil //nolint:nilnil // an unset or hidden reference resolves to null
 	}
 	if err = base.RequireLoaders(ctx); err != nil {
 		return nil, err
@@ -334,7 +334,7 @@ func (r *TriageConflictResolver) NewAmount(ctx context.Context, obj *inboundmess
 
 func (r *TriageConflictResolver) LoadIndex(ctx context.Context, obj *inboundmessage.Conflict) (*int, error) {
 	if obj.LoadIndex <= 0 {
-		return nil, nil
+		return nil, nil //nolint:nilnil // an unset or hidden reference resolves to null
 	}
 	index := obj.LoadIndex
 
@@ -343,7 +343,7 @@ func (r *TriageConflictResolver) LoadIndex(ctx context.Context, obj *inboundmess
 
 func (r *TriageConflictResolver) Resolution(ctx context.Context, obj *inboundmessage.Conflict) (*inboundmessage.ConflictResolution, error) {
 	if obj.Resolution == "" {
-		return nil, nil
+		return nil, nil //nolint:nilnil // an unset or hidden reference resolves to null
 	}
 	resolution := obj.Resolution
 
@@ -368,7 +368,7 @@ func (r *TriageRuleResolver) MailboxID(ctx context.Context, obj *triage.Rule) (*
 
 func (r *TriageRuleResolver) Mailbox(ctx context.Context, obj *triage.Rule) (*inboundmessage.Mailbox, error) {
 	if obj.MailboxID.IsNil() {
-		return nil, nil
+		return nil, nil //nolint:nilnil // an unset or hidden reference resolves to null
 	}
 	if err := base.RequireLoaders(ctx); err != nil {
 		return nil, err
@@ -406,7 +406,7 @@ func (r *TriageRuleResolver) LastMatchedAt(ctx context.Context, obj *triage.Rule
 
 func (r *TriageRuleResolver) LastMatch(ctx context.Context, obj *triage.Rule) (*inboundmessageports.Sample, error) {
 	if obj.LastMessageID.IsNil() {
-		return nil, nil
+		return nil, nil //nolint:nilnil // an unset or hidden reference resolves to null
 	}
 	if err := base.RequireLoaders(ctx); err != nil {
 		return nil, err
