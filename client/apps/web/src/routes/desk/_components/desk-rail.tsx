@@ -8,17 +8,21 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { cn, getNameInitials } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { nextWake, useSnoozeClock } from "./case/use-snooze-clock";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
-import { deskRailRows, type DeskRailRow } from "@/components/desk-chat/rail/desk-rail-rows";
-import { groupDeskThreadsByRecency } from "@/components/desk-chat/rail/desk-threads";
+import {
+  deskRailRows,
+  type DeskRailRow,
+  type DeskRailShelf,
+} from "@/components/desk-chat/rail/desk-rail-rows";
+import type { DeskShelfKey } from "@/components/desk-chat/rail/desk-threads";
 import { shelfHeading } from "@/components/desk-chat/rail/rail-parts";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { deskIconClass } from "@/components/desk-chat/desk-button-styles";
-import { DeskRailList, type DeskRailPaging } from "./desk-rail-list";
+import { DeskRailList } from "./desk-rail-list";
 import { DeskRailThreadRow, type DeskRailRowActions } from "./desk-rail-row";
 
 /** Which of the Desk's places is in front, so the rail can light it. */
@@ -27,27 +31,21 @@ export type DeskPlace = "today" | "watchtower" | "decisions" | "memory" | "threa
 /** How long a deleted row takes to slide out before it leaves the list. */
 const ROW_LEAVE_MS = 260;
 
-const nowInSeconds = () => Math.floor(Date.now() / 1000);
-
 const NAV_ITEM_CLASS =
   "relative z-1 flex h-7.5 w-full gap-2.5 rounded-lg pr-2 pl-2.5 text-left text-sm text-dsk-muted transition-colors duration-150 hover:bg-dsk-fg/4 hover:text-dsk-fg";
 const NAV_ITEM_ON_CLASS = "text-dsk-fg hover:bg-transparent";
 const NAV_LABEL_CLASS = "min-w-0 flex-1 truncate";
 
-/** A rail with every conversation already read. */
-const ALL_READ: DeskRailPaging = {
-  hasMore: false,
-  loadingMore: false,
-  failed: false,
-  loadMore: () => undefined,
-};
-
 export type DeskRailProps = {
   place: DeskPlace;
-  /** The conversations read so far, pinned first and then newest first. */
-  threads: readonly AssistantThread[];
-  /** Whether more conversations remain to be read, and how to read them. */
-  paging?: DeskRailPaging;
+  /** Every shelf in the rail's order, with what has been read of each. */
+  shelves: readonly DeskRailShelf[];
+  /** When the reader's day began, in Unix seconds: what each row's time is read against. */
+  today: number;
+  /** Every shelf was counted and none holds anything. */
+  noConversations: boolean;
+  /** Reads the next page of an open shelf, or its first again after it failed. */
+  onLoadMore: (shelf: DeskShelfKey) => void;
   /** Told which conversations the rail draws, so a page left stale is read when it shows. */
   onThreadsInView?: (threadIds: readonly string[]) => void;
   agentsById: ReadonlyMap<string, AgentChoice>;
@@ -62,26 +60,28 @@ export type DeskRailProps = {
   onSettings: () => void;
   onTogglePin: (thread: AssistantThread) => void;
   onDelete: (thread: AssistantThread) => void;
-  /** A snoozed case's time came: read the conversations again for its state. */
-  onCaseWake?: () => void;
 };
 
 /**
  * The Desk's rail: the logo, search and a new conversation across the top,
  * the three places, then every conversation shelved by when it was last
- * touched. Each conversation is one line with a dot that says what it is
- * waiting on, and the current place sits on a raised card that slides to
- * whatever is chosen. Pin and delete come forward on hover in place of the
- * time; delete asks once more, inline, before it acts.
+ * touched. Each shelf folds away from its heading, and a folded shelf shows
+ * how many it holds and reads nothing more. Each conversation is one line
+ * with a dot that says what it is waiting on, and the current place sits on
+ * a raised card that slides to whatever is chosen. Pin and delete come
+ * forward on hover in place of the time; delete asks once more, inline,
+ * before it acts.
  *
- * Only the rows near the viewport are mounted, and the next page of
- * conversations is read as the reader nears the end of what is loaded, so a
- * rail of thousands costs what a screenful does.
+ * Only the rows near the viewport are mounted, and each open shelf's next
+ * page is read as the reader nears the end of what is loaded, so a rail of
+ * thousands costs what a screenful does.
  */
 export function DeskRail({
   place,
-  threads,
-  paging = ALL_READ,
+  shelves,
+  today,
+  noConversations,
+  onLoadMore,
   onThreadsInView,
   agentsById,
   activeThreadId,
@@ -94,7 +94,6 @@ export function DeskRail({
   onSettings,
   onTogglePin,
   onDelete,
-  onCaseWake,
 }: DeskRailProps) {
   const t = useT();
   const rt = useRichT();
@@ -102,26 +101,12 @@ export function DeskRail({
   const user = useAuthStore((state) => state.user);
   const timezone = resolveUserTimezone(user?.timezone);
   const liveThreadIds = useLiveThreadIds();
-  const [mountedAt] = useState(nowInSeconds);
-  const wakeAt = useMemo(
-    () =>
-      nextWake(
-        threads.map((thread) =>
-          thread.case?.state === "Snoozed" ? thread.case.snoozedUntil : null,
-        ),
-        mountedAt,
-      ),
-    [mountedAt, threads],
-  );
-  const now = useSnoozeClock(wakeAt, onCaseWake);
   const [confirming, setConfirming] = useState<string | null>(null);
   const [leaving, setLeaving] = useState<string | null>(null);
 
-  const shelves = useMemo(
-    () => groupDeskThreadsByRecency(threads, now, { pinnedFirst: true, timezone }),
-    [now, threads, timezone],
-  );
-  const rows = useMemo(() => deskRailRows(shelves, paging.hasMore), [paging.hasMore, shelves]);
+  const toggleShelf = useDeskSettingsStore((state) => state.toggleShelf);
+  const openThreadId = place === "thread" ? activeThreadId : null;
+  const rows = useMemo(() => deskRailRows(shelves, openThreadId), [openThreadId, shelves]);
 
   const activeKey =
     place === "thread" && activeThreadId
@@ -158,8 +143,32 @@ export function DeskRail({
 
   const renderRow = (row: DeskRailRow) => {
     switch (row.kind) {
-      case "shelf":
-        return <div className="dk-sb-gh">{shelfHeading(t, row.key)}</div>;
+      case "shelf": {
+        const heading = shelfHeading(t, row.key);
+        const counted = row.collapsed && typeof row.count === "number" ? row.count : null;
+        return (
+          <Button
+            variant="bare"
+            size="bare"
+            className="dk-sb-gh dk-sb-gt"
+            aria-expanded={!row.collapsed}
+            aria-label={
+              counted === null
+                ? heading
+                : t("{0}, {1, plural, one {# conversation} other {# conversations}}", heading, counted)
+            }
+            onClick={() => toggleShelf(row.key)}
+          >
+            <span className="min-w-0 flex-1 truncate">{heading}</span>
+            {counted !== null && (
+              <em className="dk-sb-ct" aria-hidden>
+                {counted}
+              </em>
+            )}
+            <DeskIcon name="chevR" size={12} stroke={2} className="dk-sb-gc" />
+          </Button>
+        );
+      }
       case "thread": {
         const { thread } = row;
         return (
@@ -170,17 +179,22 @@ export function DeskRail({
             active={thread.id === activeThreadId && place === "thread"}
             confirming={confirming === thread.id}
             leaving={leaving === thread.id}
-            now={now}
+            today={today}
             timezone={timezone}
             actions={actions}
           />
         );
       }
       default:
-        return paging.failed ? (
+        return row.failed ? (
           <div className="dk-sb-more dk-sb-more-err" role="alert">
             <span>{t("Couldn't load more conversations")}</span>
-            <Button variant="bare" size="bare" className="dk-sb-retry" onClick={paging.loadMore}>
+            <Button
+              variant="bare"
+              size="bare"
+              className="dk-sb-retry"
+              onClick={() => onLoadMore(row.shelf)}
+            >
               {t("Try again")}
             </Button>
           </div>
@@ -188,9 +202,9 @@ export function DeskRail({
           <div
             className="dk-sb-more"
             role="status"
-            aria-label={paging.loadingMore ? t("Loading more...") : undefined}
+            aria-label={row.loading ? t("Loading more...") : undefined}
           >
-            {paging.loadingMore && <span className="dk-sk dk-sb-skel" />}
+            {row.loading && <span className="dk-sk dk-sb-skel" />}
           </div>
         );
     }
@@ -232,7 +246,7 @@ export function DeskRail({
         activeKey={activeKey}
         rows={rows}
         renderRow={renderRow}
-        paging={paging}
+        onLoadMore={onLoadMore}
         onThreadsInView={onThreadsInView}
         nav={
           <>
@@ -285,14 +299,16 @@ export function DeskRail({
           </>
         }
         empty={
-          <>
-            <div className="dk-sb-gh">{t("Conversations")}</div>
-            <div className="dk-sb-empty">
-              {rt("Your chats will show up here. Press <kbd/> to start one.", {
-                kbd: () => <span className="dk-kbd">⌘N</span>,
-              })}
-            </div>
-          </>
+          noConversations ? (
+            <>
+              <div className="dk-sb-gh">{t("Conversations")}</div>
+              <div className="dk-sb-empty">
+                {rt("Your chats will show up here. Press <kbd/> to start one.", {
+                  kbd: () => <span className="dk-kbd">⌘N</span>,
+                })}
+              </div>
+            </>
+          ) : null
         }
       />
 

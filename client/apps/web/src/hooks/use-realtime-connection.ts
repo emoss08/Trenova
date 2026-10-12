@@ -31,8 +31,13 @@ import {
   isShipmentCommentEvent,
 } from "@/lib/shipment-comment-realtime";
 import { isOtherUsersTurnEvent } from "@/lib/assistant-turn-realtime";
-import { boundCaseRecords, CASE_QUERY_ROOTS, touchesCase } from "@/lib/case-realtime";
-import type { ThreadPages } from "@/lib/thread-list";
+import {
+  boundCaseRecordsIn,
+  CASE_QUERY_ROOTS,
+  mayTouchCase,
+  touchesCase,
+} from "@/lib/case-realtime";
+import { cachedThreadLists } from "@/lib/thread-list";
 import { parseReplyReady } from "@/components/assistant/reply-ready";
 import { announceReplyReady } from "@/components/assistant/reply-ready-toast";
 import { releaseTurnReaders } from "@/components/assistant/turn-readers";
@@ -281,8 +286,10 @@ export function useRealtimeConnection() {
 
       // A change to the record a Desk case is about can settle the case or
       // tick its checklist, whatever else the event moves.
-      const threads = queryClient.getQueryData<ThreadPages>(queries.assistant.threads().queryKey);
-      if (touchesCase(evt, boundCaseRecords(threads))) {
+      if (
+        mayTouchCase(evt) &&
+        touchesCase(evt, boundCaseRecordsIn(cachedThreadLists(queryClient)))
+      ) {
         enqueueInvalidation(CASE_QUERY_ROOTS);
       }
 

@@ -110,29 +110,6 @@ export function caseStateLabel(
   }
 }
 
-/** The short form the rail shows beside a conversation. */
-export function caseRailLabel(
-  summary: CaseSummary,
-  now: number,
-  timezone: string,
-  t: TranslateFn,
-): string {
-  switch (caseStateOf(summary, now)) {
-    case "Settled":
-      return t("Settled");
-    case "Snoozed":
-      return turnTime(summary.snoozedUntil ?? now, timezone, t);
-    case "Waiting":
-      return summary.waitingOn === "Carrier"
-        ? t("Carrier")
-        : summary.waitingOn === "Customer"
-          ? t("Customer")
-          : t("Waiting");
-    case "Working":
-      return "";
-  }
-}
-
 export function checklistTitle(checklist: CaseChecklist, t: TranslateFn): string {
   return checklist.kind === "ReadyToBill" ? t("Ready to bill") : t("Ready to close");
 }

@@ -3,6 +3,8 @@ package conversationrepository
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
 
@@ -14,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -209,6 +212,27 @@ func threadWindowOf(req *agentports.ListThreadsRequest) (threadWindow, error) {
 	return window, nil
 }
 
+func threadTouchedAt() string {
+	cols := conversationcol.ThreadColumns
+
+	return buncolgen.Expr("greatest({0}, {1})", cols.LastMessageAt, cols.CreatedAt)
+}
+
+func threadListScope(
+	sq *bun.SelectQuery,
+	userID pulid.ID,
+	tenant pagination.TenantInfo,
+	includeUnlisted bool,
+) *bun.SelectQuery {
+	cols := conversationcol.ThreadColumns
+	sq = conversationcol.ThreadScopeTenant(sq, tenant).Where(cols.UserID.Eq(), userID)
+	if !includeUnlisted {
+		sq = sq.Where(cols.Origin.NotIn(), bun.List(conversation.UnlistedOrigins()))
+	}
+
+	return sq
+}
+
 func threadPageQuery(
 	db bun.IDB,
 	dest *[]*conversation.Thread,
@@ -216,50 +240,119 @@ func threadPageQuery(
 	window threadWindow,
 ) *bun.SelectQuery {
 	cols := conversationcol.ThreadColumns
-	order := buncolgen.Expr(
-		"({0}, {1}, {2}, {3})",
-		cols.Pinned,
-		cols.LastMessageAt,
-		cols.CreatedAt,
-		cols.ID,
-	)
+	touchedAt := threadTouchedAt()
+	order := "(" + cols.Pinned.Qualified() + ", " + touchedAt + ", " + cols.ID.Qualified() + ")"
 
 	return db.NewSelect().
 		Model(dest).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = conversationcol.ThreadScopeTenant(sq, req.TenantInfo).
-				Where(cols.UserID.Eq(), req.UserID)
-			if !req.IncludeUnlisted {
-				sq = sq.Where(cols.Origin.NotIn(), bun.In(conversation.UnlistedOrigins()))
+			sq = threadListScope(sq, req.UserID, req.TenantInfo, req.IncludeUnlisted)
+			if req.Pinned != nil {
+				sq = sq.Where(cols.Pinned.Eq(), *req.Pinned)
+			}
+			if req.TouchedFrom > 0 {
+				sq = sq.Where(touchedAt+" >= ?", req.TouchedFrom)
+			}
+			if req.TouchedBefore > 0 {
+				sq = sq.Where(touchedAt+" < ?", req.TouchedBefore)
 			}
 			if window.after != nil {
 				sq = sq.Where(
-					order+" < (?, ?, ?, ?)",
+					order+" < (?, ?, ?)",
 					window.after.pinned,
-					window.after.lastMessageAt,
-					window.after.createdAt,
+					window.after.touchedAt,
 					window.after.id,
 				)
 			}
 			if window.until != nil {
 				sq = sq.Where(
-					order+" >= (?, ?, ?, ?)",
+					order+" >= (?, ?, ?)",
 					window.until.pinned,
-					window.until.lastMessageAt,
-					window.until.createdAt,
+					window.until.touchedAt,
 					window.until.id,
 				)
 			}
 
 			return sq
 		}).
-		Order(
-			cols.Pinned.OrderDesc(),
-			cols.LastMessageAt.OrderDesc(),
-			cols.CreatedAt.OrderDesc(),
-			cols.ID.OrderDesc(),
-		).
+		Order(cols.Pinned.OrderDesc()).
+		OrderExpr(touchedAt + " DESC").
+		Order(cols.ID.OrderDesc()).
 		Limit(int64(window.limit + 1))
+}
+
+type threadShelfBand struct {
+	Band  int `bun:"band"`
+	Total int `bun:"total"`
+}
+
+func threadShelfBandExpr(edges []int64) (expr string, args []any) {
+	cols := conversationcol.ThreadColumns
+	touchedAt := threadTouchedAt()
+	var band strings.Builder
+	args = make([]any, 0, len(edges))
+
+	band.WriteString("CASE WHEN ")
+	band.WriteString(cols.Pinned.Qualified())
+	band.WriteString(" THEN -1")
+	for index, edge := range edges {
+		band.WriteString(" WHEN ")
+		band.WriteString(touchedAt)
+		band.WriteString(" >= ? THEN ")
+		band.WriteString(strconv.Itoa(index))
+		args = append(args, edge)
+	}
+	band.WriteString(" ELSE ")
+	band.WriteString(strconv.Itoa(len(edges)))
+	band.WriteString(" END AS band")
+
+	return band.String(), args
+}
+
+func threadShelfCountQuery(
+	db bun.IDB,
+	req *agentports.CountThreadShelvesRequest,
+) *bun.SelectQuery {
+	band, args := threadShelfBandExpr(req.Edges)
+
+	return db.NewSelect().
+		Model((*conversation.Thread)(nil)).
+		ColumnExpr(band, args...).
+		ColumnExpr(buncolgen.Count("total")).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return threadListScope(sq, req.UserID, req.TenantInfo, false)
+		}).
+		GroupExpr("band")
+}
+
+func (r *repository) CountThreadShelves(
+	ctx context.Context,
+	req *agentports.CountThreadShelvesRequest,
+) (*agentports.ThreadShelfCounts, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*agentports.ThreadShelfCounts, error) {
+			rows := make([]threadShelfBand, 0, len(req.Edges)+2)
+			if err := threadShelfCountQuery(r.db.DBForContext(ctx), req).
+				Scan(ctx, &rows); err != nil {
+				r.l.Error("failed to count thread shelves", zap.Error(err))
+				return nil, err
+			}
+
+			counts := &agentports.ThreadShelfCounts{Bands: make([]int, len(req.Edges)+1)}
+			for _, row := range rows {
+				switch {
+				case row.Band < 0:
+					counts.Pinned = row.Total
+				case row.Band < len(counts.Bands):
+					counts.Bands[row.Band] = row.Total
+				}
+			}
+
+			return counts, nil
+		},
+	)
 }
 
 func (r *repository) UpdateThread(

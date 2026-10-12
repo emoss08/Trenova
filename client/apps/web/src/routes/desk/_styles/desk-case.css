@@ -177,12 +177,3 @@ a.dk-cs-step {
   }
 }
 
-.dk-sb-cs {
-  flex: none;
-  max-width: 76px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font: 10.5px var(--font-mono);
-  color: var(--dsk-faint);
-}

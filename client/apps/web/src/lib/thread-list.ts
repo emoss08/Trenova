@@ -1,11 +1,16 @@
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
+import type { ThreadListFilter } from "@/services/assistant";
 import type { AssistantThread, AssistantThreadPage } from "@/types/assistant";
 import {
+  hashKey,
   infiniteQueryOptions,
+  queryOptions,
   type DefaultError,
   type InfiniteData,
+  type Query,
   type QueryClient,
+  type QueryKey,
 } from "@tanstack/react-query";
 
 /** Conversations a page of the list holds: a rail and a half. */
@@ -14,39 +19,81 @@ export const THREAD_PAGE_SIZE = 50;
 /** The person's conversations as the cache holds them: every page read so far. */
 export type ThreadPages = InfiniteData<AssistantThreadPage, string>;
 
-type ThreadListKey = ReturnType<typeof queries.assistant.threads>["queryKey"];
-
 const NO_THREADS: AssistantThread[] = [];
 
 /** The most a page read on its own asks for; the server's own cap. */
 const MAX_PAGE_SIZE = 100;
 
 /**
- * What one tab knows about its list beyond the pages themselves: which pages
- * were left as they were when the list was last refreshed, which
- * conversations the rail is drawing, and whether the next refresh is only to
- * catch up on the stale pages that came into view.
+ * What one list in one tab knows beyond its pages: which pages were left as
+ * they were when it was last refreshed, and whether its next refresh is only
+ * to catch up on the stale pages that came into view.
  */
 type ListState = {
   stale: Set<string>;
-  inView: ReadonlySet<string>;
   catchUpNext: boolean;
 };
 
-const states = new WeakMap<QueryClient, ListState>();
+/**
+ * What one tab knows about the person's lists of conversations: the whole
+ * list and each shelf of the rail are lists of their own, and the rail says
+ * once which conversations it is drawing, whichever list each came from.
+ */
+type ClientState = {
+  inView: ReadonlySet<string>;
+  lists: Map<string, ListState>;
+};
 
-function listState(client: QueryClient): ListState {
+const states = new WeakMap<QueryClient, ClientState>();
+
+function clientState(client: QueryClient): ClientState {
   let state = states.get(client);
   if (!state) {
-    state = { stale: new Set(), inView: new Set(), catchUpNext: false };
+    state = { inView: new Set(), lists: new Map() };
     states.set(client, state);
   }
   return state;
 }
 
+function listState(client: QueryClient, queryKey: QueryKey): ListState {
+  const lists = clientState(client).lists;
+  const hash = hashKey(queryKey);
+  let state = lists.get(hash);
+  if (!state) {
+    state = { stale: new Set(), catchUpNext: false };
+    lists.set(hash, state);
+  }
+  return state;
+}
+
+/** The key every list of conversations, and the shelf counts, are cached under. */
+function threadListRoot(): QueryKey {
+  return queries.assistant.threads().queryKey;
+}
+
+/** Whether a cache entry under the list's key holds pages of conversations rather than counts. */
+function isThreadPages(data: unknown): data is ThreadPages {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    Array.isArray((data as Partial<ThreadPages>).pages) &&
+    Array.isArray((data as Partial<ThreadPages>).pageParams)
+  );
+}
+
+const THREAD_LISTS = {
+  queryKey: threadListRoot(),
+  predicate: (query: Query) => isThreadPages(query.state.data),
+};
+
 function shows(page: AssistantThreadPage, inView: ReadonlySet<string>): boolean {
   return inView.size > 0 && page.items.some((thread) => inView.has(thread.id));
 }
+
+type ReadOptions = {
+  filter: ThreadListFilter | undefined;
+  signal: AbortSignal;
+};
 
 /**
  * Reads a page's range again: from the cursor before it down to the place
@@ -54,21 +101,27 @@ function shows(page: AssistantThreadPage, inView: ReadonlySet<string>): boolean 
  * still continue from where they did. The last page of a list read to its end
  * has no boundary below it, and is read as a page.
  */
-function readAgain(page: AssistantThreadPage, cursor: string, signal: AbortSignal) {
+function readAgain(page: AssistantThreadPage, cursor: string, { filter, signal }: ReadOptions) {
   if (page.nextCursor === "") {
     return apiService.assistantService.listThreads({
       cursor,
       limit: Math.min(MAX_PAGE_SIZE, Math.max(THREAD_PAGE_SIZE, page.items.length)),
+      filter,
       signal,
     });
   }
 
-  return apiService.assistantService.listThreads({ cursor, until: page.nextCursor, signal });
+  return apiService.assistantService.listThreads({
+    cursor,
+    until: page.nextCursor,
+    filter,
+    signal,
+  });
 }
 
 /**
- * Reads one page of the list: a new one as the rail scrolls to the end, or
- * an existing one when the list is refreshed.
+ * Reads one page of a list: a new one as the rail scrolls to the end, or an
+ * existing one when the list is refreshed.
  *
  * A refresh reads the first page and the pages whose conversations the rail
  * is drawing, and leaves the rest as they are, marked stale; each is read
@@ -79,15 +132,17 @@ function readAgain(page: AssistantThreadPage, cursor: string, signal: AbortSigna
  */
 async function readPage({
   client,
+  queryKey,
   pageParam,
+  filter,
   signal,
-}: {
+}: ReadOptions & {
   client: QueryClient;
+  queryKey: QueryKey;
   pageParam: string;
-  signal: AbortSignal;
 }): Promise<AssistantThreadPage> {
-  const state = listState(client);
-  const cached = client.getQueryData<ThreadPages>(queries.assistant.threads().queryKey);
+  const state = listState(client, queryKey);
+  const cached = client.getQueryData<ThreadPages>(queryKey);
   const index = cached ? cached.pageParams.indexOf(pageParam) : -1;
   if (!cached || index < 0) {
     if (pageParam === "") {
@@ -96,6 +151,7 @@ async function readPage({
     return apiService.assistantService.listThreads({
       limit: THREAD_PAGE_SIZE,
       cursor: pageParam,
+      filter,
       signal,
     });
   }
@@ -113,67 +169,112 @@ async function readPage({
   }
 
   const page = cached.pages[index];
-  const wanted = state.stale.has(pageParam) && (index === 0 || shows(page, state.inView));
+  const wanted =
+    state.stale.has(pageParam) && (index === 0 || shows(page, clientState(client).inView));
   if (!wanted) {
     return page;
   }
-  const fresh = await readAgain(page, pageParam, signal);
+  const fresh = await readAgain(page, pageParam, { filter, signal });
   state.stale.delete(pageParam);
 
   return fresh;
 }
 
+/** Where each page of a list continues: below the last row of the one before. */
+const PAGED_BY_CURSOR = {
+  initialPageParam: "",
+  getNextPageParam: (last: AssistantThreadPage) => last.nextCursor || undefined,
+};
+
 /**
- * The person's conversations, a page at a time, pinned first and then newest
- * first. Each page continues below the last row of the one before it, so a
- * conversation touched while the reader scrolls is neither repeated nor
- * skipped. A refresh reads only the first page and what the rail is showing;
- * see readPage.
+ * The person's conversations, a page at a time, pinned first and then most
+ * recently touched first. Each page continues below the last row of the one
+ * before it, so a conversation touched while the reader scrolls is neither
+ * repeated nor skipped. A refresh reads only the first page and what the rail
+ * is showing; see readPage.
  */
 export function threadListQuery() {
   return infiniteQueryOptions<
     AssistantThreadPage,
     DefaultError,
     ThreadPages,
-    ThreadListKey,
+    ReturnType<typeof queries.assistant.threads>["queryKey"],
     string
   >({
     queryKey: queries.assistant.threads().queryKey,
-    queryFn: ({ client, pageParam, signal }) => readPage({ client, pageParam, signal }),
-    initialPageParam: "",
-    getNextPageParam: (last: AssistantThreadPage) => last.nextCursor || undefined,
+    queryFn: ({ client, queryKey, pageParam, signal }) =>
+      readPage({ client, queryKey, pageParam, filter: undefined, signal }),
+    ...PAGED_BY_CURSOR,
   });
 }
 
 /**
- * Tells the list which conversations the rail is drawing. A page left stale
+ * One shelf of the rail, read on its own a page at a time: the server keeps
+ * to the shelf's range, so a shelf the reader has folded away costs nothing
+ * until it is opened. Refreshed as the whole list is; see readPage.
+ */
+export function threadShelfQuery(filter: ThreadListFilter) {
+  return infiniteQueryOptions<
+    AssistantThreadPage,
+    DefaultError,
+    ThreadPages,
+    ReturnType<ReturnType<typeof queries.assistant.threads>["_ctx"]["shelf"]>["queryKey"],
+    string
+  >({
+    queryKey: queries.assistant.threads()._ctx.shelf(filter).queryKey,
+    queryFn: ({ client, queryKey, pageParam, signal }) =>
+      readPage({ client, queryKey, pageParam, filter, signal }),
+    ...PAGED_BY_CURSOR,
+  });
+}
+
+/**
+ * How many conversations each shelf holds, banded by the instants each shelf
+ * begins at, newest first. Cached under the list's key, so whatever refreshes
+ * the list refreshes the counts.
+ */
+export function threadShelfCountsQuery(edges: readonly number[]) {
+  return queryOptions({
+    ...queries.assistant.threads()._ctx.shelfCounts(edges),
+    queryFn: ({ signal }) => apiService.assistantService.countThreadShelves(edges, { signal }),
+  });
+}
+
+/**
+ * Tells the lists which conversations the rail is drawing. A page left stale
  * by an earlier refresh is read again as soon as one of its conversations
  * comes into view; pass an empty list when the rail goes away.
  */
 export function noteThreadsInView(client: QueryClient, threadIds: readonly string[]): void {
-  const state = listState(client);
+  const state = clientState(client);
   state.inView = new Set(threadIds);
-  if (state.stale.size === 0 || state.inView.size === 0) {
+  if (state.inView.size === 0) {
     return;
   }
-  const key = queries.assistant.threads().queryKey;
-  const cached = client.getQueryData<ThreadPages>(key);
-  if (!cached || client.isFetching({ queryKey: key, exact: true }) > 0) {
-    return;
+
+  for (const query of client.getQueryCache().findAll(THREAD_LISTS)) {
+    const data = query.state.data;
+    if (!isThreadPages(data) || query.state.fetchStatus !== "idle") {
+      continue;
+    }
+    const list = listState(client, query.queryKey);
+    if (list.stale.size === 0) {
+      continue;
+    }
+    const behind = data.pages.some(
+      (page, index) => list.stale.has(data.pageParams[index]) && shows(page, state.inView),
+    );
+    if (!behind) {
+      continue;
+    }
+    list.catchUpNext = true;
+    void client.refetchQueries({ queryKey: query.queryKey, exact: true, type: "active" });
   }
-  const behind = cached.pages.some(
-    (page, index) => state.stale.has(cached.pageParams[index]) && shows(page, state.inView),
-  );
-  if (!behind) {
-    return;
-  }
-  state.catchUpNext = true;
-  void client.refetchQueries({ queryKey: key, exact: true, type: "active" });
 }
 
-/** Takes a conversation out of every cached page, as soon as it is gone. */
+/** Takes a conversation out of every cached page of every list, as soon as it is gone. */
 export function removeCachedThread(queryClient: QueryClient, threadId: string): void {
-  queryClient.setQueryData<ThreadPages>(queries.assistant.threads().queryKey, (cached) => {
+  queryClient.setQueriesData<ThreadPages>(THREAD_LISTS, (cached) => {
     if (!cached) {
       return cached;
     }
@@ -243,18 +344,59 @@ export function recentThreadsOf(data: ThreadPages | undefined): AssistantThread[
   return data?.pages[0]?.items ?? NO_THREADS;
 }
 
-/** The conversations this tab has read, without asking for any. */
-export function cachedThreads(queryClient: QueryClient): AssistantThread[] {
-  return threadsOf(queryClient.getQueryData<ThreadPages>(queries.assistant.threads().queryKey));
+/** Every list of conversations this tab holds: the whole list and each shelf read so far. */
+export function cachedThreadLists(queryClient: QueryClient): ThreadPages[] {
+  const lists: ThreadPages[] = [];
+  for (const [, data] of queryClient.getQueriesData(THREAD_LISTS)) {
+    if (isThreadPages(data)) {
+      lists.push(data);
+    }
+  }
+
+  return lists;
 }
 
-/** Rewrites one conversation wherever the cached pages hold it. */
+/** The conversations this tab has read, in any list, each once, without asking for any. */
+export function cachedThreads(queryClient: QueryClient): AssistantThread[] {
+  const seen = new Set<string>();
+  const threads: AssistantThread[] = [];
+  for (const list of cachedThreadLists(queryClient)) {
+    for (const thread of threadsOf(list)) {
+      if (!seen.has(thread.id)) {
+        seen.add(thread.id);
+        threads.push(thread);
+      }
+    }
+  }
+
+  return threads;
+}
+
+/** One conversation as any list this tab holds has it, without asking for it. */
+export function findCachedThread(
+  queryClient: QueryClient,
+  threadId: string | null,
+): AssistantThread | null {
+  if (threadId === null) {
+    return null;
+  }
+  for (const list of cachedThreadLists(queryClient)) {
+    const found = findThread(list, threadId);
+    if (found) {
+      return found;
+    }
+  }
+
+  return null;
+}
+
+/** Rewrites one conversation wherever the cached pages of any list hold it. */
 export function updateCachedThread(
   queryClient: QueryClient,
   threadId: string,
   update: (thread: AssistantThread) => AssistantThread,
 ): void {
-  queryClient.setQueryData<ThreadPages>(queries.assistant.threads().queryKey, (cached) => {
+  queryClient.setQueriesData<ThreadPages>(THREAD_LISTS, (cached) => {
     if (!cached) {
       return cached;
     }

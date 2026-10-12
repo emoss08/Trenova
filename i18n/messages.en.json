@@ -27830,6 +27830,15 @@
       "packages/shared/types"
     ]
   },
+  "At least one edge is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "At least one event type is required": {
     "sites": 1,
     "scope": [
@@ -28208,6 +28217,15 @@
     ]
   },
   "At most 500 cases can be required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "At most 8 edges are allowed": {
     "sites": 1,
     "scope": [
       "go"
@@ -39132,7 +39150,7 @@
     ]
   },
   "Carrier": {
-    "sites": 45,
+    "sites": 44,
     "scope": [
       "go",
       "ts"
@@ -59792,7 +59810,7 @@
     ]
   },
   "Customer": {
-    "sites": 73,
+    "sites": 72,
     "scope": [
       "go",
       "ts"
@@ -77222,6 +77240,24 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Edge must be a positive timestamp": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Edges must be strictly descending": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Edit": {
@@ -204888,18 +204924,16 @@
     ]
   },
   "Settled": {
-    "sites": 10,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "apps/web/lib",
       "go/other",
       "packages/shared/components",
       "routes/accounting-drift",
-      "routes/desk",
       "routes/invoice"
     ]
   },
@@ -210608,15 +210642,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Snoozed": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Snoozed to the ETA · {0}": {
@@ -242822,6 +242847,33 @@
       "routes/ar-open-items"
     ]
   },
+  "Touched before cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Touched before must be later than touched from": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Touched from cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Tow-away": {
     "sites": 1,
     "scope": [
@@ -255102,7 +255154,7 @@
     ]
   },
   "Waiting": {
-    "sites": 11,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -287034,6 +287086,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0}, {1, plural, one {# conversation} other {# conversations}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0}-week rotation": {

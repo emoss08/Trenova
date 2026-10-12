@@ -2,9 +2,11 @@ package agentports
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -36,6 +38,59 @@ type ListThreadsRequest struct {
 	// IncludeUnlisted also returns conversations whose origin keeps them out
 	// of the rail, such as quick questions that were not kept.
 	IncludeUnlisted bool
+	Pinned          *bool
+	TouchedFrom     int64
+	TouchedBefore   int64
+}
+
+func (r *ListThreadsRequest) Validate(multiErr *errortypes.MultiError) {
+	if r.TouchedFrom < 0 {
+		multiErr.Add("touchedFrom", errortypes.ErrInvalid, "Touched from cannot be negative")
+	}
+	if r.TouchedBefore < 0 {
+		multiErr.Add("touchedBefore", errortypes.ErrInvalid, "Touched before cannot be negative")
+	}
+	if r.TouchedFrom > 0 && r.TouchedBefore > 0 && r.TouchedFrom >= r.TouchedBefore {
+		multiErr.Add(
+			"touchedBefore",
+			errortypes.ErrInvalid,
+			"Touched before must be later than touched from",
+		)
+	}
+}
+
+const MaxThreadShelfEdges = 8
+
+type CountThreadShelvesRequest struct {
+	UserID     pulid.ID
+	TenantInfo pagination.TenantInfo
+	Edges      []int64
+}
+
+func (r *CountThreadShelvesRequest) Validate(multiErr *errortypes.MultiError) {
+	if len(r.Edges) == 0 {
+		multiErr.Add("edge", errortypes.ErrRequired, "At least one edge is required")
+		return
+	}
+	if len(r.Edges) > MaxThreadShelfEdges {
+		multiErr.Add("edge", errortypes.ErrInvalid, "At most 8 edges are allowed")
+		return
+	}
+	for index, edge := range r.Edges {
+		field := fmt.Sprintf("edge[%d]", index)
+		if edge <= 0 {
+			multiErr.Add(field, errortypes.ErrInvalid, "Edge must be a positive timestamp")
+			continue
+		}
+		if index > 0 && edge >= r.Edges[index-1] {
+			multiErr.Add(field, errortypes.ErrInvalid, "Edges must be strictly descending")
+		}
+	}
+}
+
+type ThreadShelfCounts struct {
+	Pinned int   `json:"pinned"`
+	Bands  []int `json:"bands"`
 }
 
 type ThreadPage struct {
@@ -217,6 +272,10 @@ type ConversationRepository interface {
 		req ListThreadAgentsByIDsRequest,
 	) ([]*conversation.Thread, error)
 	ListThreads(ctx context.Context, req ListThreadsRequest) (*ThreadPage, error)
+	CountThreadShelves(
+		ctx context.Context,
+		req *CountThreadShelvesRequest,
+	) (*ThreadShelfCounts, error)
 	UpdateThread(ctx context.Context, thread *conversation.Thread) (*conversation.Thread, error)
 	DeleteThread(ctx context.Context, req GetThreadRequest) error
 	// DeleteStaleThreads removes unkept conversations of an origin, with their

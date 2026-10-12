@@ -13,7 +13,7 @@ import {
   type AgentAccessPreviewRequest,
 } from "@/lib/graphql/agent-access";
 import { apiService } from "@/services/api";
-import type { ArtifactListParams } from "@/services/assistant";
+import type { ArtifactListParams, ThreadListFilter } from "@/services/assistant";
 import type { DeskSearchKind, MentionPageKind } from "@/types/assistant";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
@@ -21,8 +21,18 @@ export const assistant = createQueryKeys("assistant", {
   // Paged by cursor, pinned first then newest first. Read as an infinite
   // query through threadListQuery (lib/thread-list.ts); every reader of the
   // list goes through the helpers there.
+  // Each shelf of the Desk's rail, and how many each holds, sits under the
+  // list's key, so every invalidation of the list reaches them too.
   threads: () => ({
     queryKey: ["assistant-threads"],
+    contextQueries: {
+      shelf: (filter: ThreadListFilter) => ({
+        queryKey: [filter],
+      }),
+      shelfCounts: (edges: readonly number[]) => ({
+        queryKey: [[...edges]],
+      }),
+    },
   }),
   thread: (id: string) => ({
     queryKey: ["assistant-thread", id],

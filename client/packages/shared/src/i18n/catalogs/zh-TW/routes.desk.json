@@ -1097,6 +1097,7 @@
   "{0}, pending": "{0}，待定",
   "{0}, revocation pending": "{0}，撤銷待定",
   "{0}, stop {1}": "{0}，停靠點 {1}",
+  "{0}, {1, plural, one {# conversation} other {# conversations}}": "{0}，{1, plural, other {# 個對話}}",
   "{0}/mi": "{0}/英里",
   "{0}d ago": "{0} 天前",
   "{0}d {1}h": "{0} 天 {1} 小時",
