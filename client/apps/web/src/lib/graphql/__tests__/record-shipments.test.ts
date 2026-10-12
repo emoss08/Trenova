@@ -160,3 +160,18 @@ describe("fetchRecordShipments for a carrier", () => {
     expect(lastCall().variables.input).not.toHaveProperty("stopLocationIds");
   });
 });
+
+describe("fetchRecordShipments for an order", () => {
+  it("reads an order's legs by the order they belong to", async () => {
+    requestGraphQLMock.mockResolvedValue({
+      shipments: { edges: [], pageInfo: { hasNextPage: false, endCursor: null }, totalCount: 0 },
+    } as never);
+
+    await fetchRecordShipments({ kind: "order", id: "ord_1" }, { first: 5, after: null });
+
+    expect(lastCall().variables.input).toMatchObject({
+      fieldFilters: [{ field: "orderId", operator: "eq", value: "ord_1" }],
+    });
+    expect(lastCall().variables.input).not.toHaveProperty("carrierIds");
+  });
+});

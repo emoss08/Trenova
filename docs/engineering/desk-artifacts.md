@@ -76,7 +76,7 @@ is drawn as a table and reads `kinds/table/`. Shared card styles are the `dk-rec
 `routes/desk/_styles/desk-v2.css`; a card's own styles take its own prefix
 (`dk-bi-*` for the billing item, `dk-ft-*` for the formula template, `dk-sh-*` for the
 shipment, `dk-cu-*` for the customer, `dk-ra-*` for the rate agreement, `dk-tr-*` for the
-tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier).
+tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order).
 
 ## Lazy loading and skeletons
 
@@ -126,7 +126,17 @@ read on request. A new scope is a case in `scopeInput` (`lib/graphql/record-ship
 and, where the server cannot yet filter by it, a `ShipmentsInput` field
 (`tractorIds`, `trailerIds` and `workerIds` match loads with a live move assigned to the
 unit or the driver; `stopLocationIds` matches loads with a live stop at the location;
-`carrierIds` matches loads with a move tendered to the carrier and not canceled).
+`carrierIds` matches loads with a move tendered to the carrier and not canceled; an order's
+legs filter on `orderId`).
+
+Any other list a card reads a page at a time (a location's service failures, a carrier's
+settlements, a record's activity) goes through `usePagedRows` (`record-card/paged-rows.ts`),
+which turns an infinite query into rows, a count and the next page, and is drawn by
+`CardPagedList` (`record-card/card-paged-list.tsx`), which holds the rows while the first page
+is read, says when there is nothing or it could not be read, and reads the next page on
+request. A card's activity is `CardActivity` over `useRecordActivity`: what was done to the
+record from its audit trail, newest first and without reads, each entry a sentence with who
+did it and when, shown only to someone who may read the audit log.
 
 ## Where a record is
 

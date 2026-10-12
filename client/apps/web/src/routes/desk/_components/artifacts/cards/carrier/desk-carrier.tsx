@@ -7,6 +7,7 @@ import type {
   CarrierEligibility,
   CarrierIntel,
   CarrierSettlementRow,
+  CarrierSettlementsPage,
   DeskCarrier as DeskCarrierRecord,
 } from "@/lib/graphql/carrier-card";
 import { queries } from "@/lib/queries";
@@ -19,6 +20,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useCardAccess } from "../../record-card/card-access";
 import { CardDue } from "../../record-card/card-due";
+import { CardPagedList } from "../../record-card/card-paged-list";
 import { CardShipments } from "../../record-card/card-shipments";
 import {
   CardBar,
@@ -30,17 +32,16 @@ import {
   CardHead,
   CardIcon,
   CardMeter,
-  CardMore,
   CardRecordRow,
   CardSection,
   CardSectionError,
-  CardSectionWait,
   CardStats,
   CardStatus,
   CardStepper,
   CardUnreadable,
   RecordCard,
 } from "../../record-card/record-card";
+import { usePagedRows, type PagedRows } from "../../record-card/paged-rows";
 import { neighborsIn } from "../../record-card/record-card-values";
 import { useRecordShipments } from "../../record-card/record-shipments";
 import { CardChecksSkeleton } from "../../skeletons/record-card-skeleton";
@@ -172,22 +173,23 @@ function CarrierCard({
     pageSize: SHIPMENT_ROWS,
     enabled: access.shipments,
   });
-  const settlements = useInfiniteQuery({
-    ...carrierSettlementsQuery(id, SETTLEMENT_ROWS),
-    retry: false,
-    enabled: access.settlements,
-  });
+  const settlements = usePagedRows<CarrierSettlementRow, CarrierSettlementsPage>(
+    useInfiniteQuery({
+      ...carrierSettlementsQuery(id, SETTLEMENT_ROWS),
+      retry: false,
+      enabled: access.settlements,
+    }),
+  );
 
   const standing = complianceStanding(carrier, t);
   const risk = riskReading(carrier.intelRiskLevel);
   const neighbors = neighborsIn(order, id);
   const policies = carrier.insurancePolicies ?? [];
   const contacts = orderedContacts(carrier.contacts ?? []);
-  const settlementRows = useMemo(
-    () => settlements.data?.pages.flatMap((page) => page.rows) ?? [],
-    [settlements.data],
+  const settlementIds = useMemo(
+    () => settlements.rows?.map((row) => row.id) ?? NO_ROWS,
+    [settlements.rows],
   );
-  const settlementIds = useMemo(() => settlementRows.map((row) => row.id), [settlementRows]);
 
   const backToCarrier = t("Back to {0}", carrier.name);
   const listedShipments = useListedRecords({
@@ -288,26 +290,14 @@ function CarrierCard({
         <CardSection
           title={t("Settlements")}
           aside={
-            settlements.data?.pages[0]?.total ? (
+            settlements.total ? (
               <span>
-                {t(
-                  "{0, plural, one {# settlement} other {# settlements}}",
-                  settlements.data.pages[0].total,
-                )}
+                {t("{0, plural, one {# settlement} other {# settlements}}", settlements.total)}
               </span>
             ) : undefined
           }
         >
-          <Settlements
-            rows={settlements.data ? settlementRows : undefined}
-            total={settlements.data?.pages[0]?.total ?? null}
-            pending={settlements.isPending}
-            error={settlements.error}
-            hasMore={settlements.hasNextPage}
-            loadingMore={settlements.isFetchingNextPage}
-            onMore={() => void settlements.fetchNextPage()}
-            onOpen={listedSettlements.open}
-          />
+          <Settlements settlements={settlements} onOpen={listedSettlements.open} />
         </CardSection>
       )}
 
@@ -479,82 +469,50 @@ function AuthorityAndSafety({
 
 /** What the carrier was paid, newest first, a page at a time. */
 function Settlements({
-  rows,
-  total,
-  pending,
-  error,
-  hasMore,
-  loadingMore,
-  onMore,
+  settlements,
   onOpen,
 }: {
-  rows: readonly CarrierSettlementRow[] | undefined;
-  total: number | null;
-  pending: boolean;
-  error: unknown;
-  hasMore: boolean;
-  loadingMore: boolean;
-  onMore: () => void;
+  settlements: PagedRows<CarrierSettlementRow>;
   onOpen: ((settlementId: string) => void) | undefined;
 }) {
   const t = useT();
-  if (error && !rows) {
-    return (
-      <CardSectionError>
-        {describeApiError(error, t("The settlements could not be read."))}
-      </CardSectionError>
-    );
-  }
-  if (pending || !rows) {
-    return <CardSectionWait rows={2} />;
-  }
-  if (rows.length === 0) {
-    return <p className="dk-rec-note">{t("This carrier has not been settled yet.")}</p>;
-  }
   return (
-    <>
-      <div className="dk-rec-list">
-        {rows.map((row) => (
-          <CardRecordRow
-            key={row.id}
-            to={recordPath("carrier_settlement", row.id)}
-            onOpen={onOpen && (() => onOpen(row.id))}
-          >
-            <span className="dk-rec-main">
-              <b>{row.settlementNumber}</b>
-              <span className="dk-rec-sub">{settlementLine(row, t)}</span>
-            </span>
-            <span className="dk-rec-side">
-              <span className="dk-ca-amt">{settlementAmount(row)}</span>
-              <span
-                className={cn(
-                  "dk-rec-sub",
-                  row.status === "Paid" && "dk-ok",
-                  row.status === "Voided" && "dk-off",
-                )}
-              >
-                {choiceLabel(carrierSettlementStatusChoices, row.status)}
+    <CardPagedList
+      list={settlements}
+      waitRows={2}
+      emptyText={t("This carrier has not been settled yet.")}
+      errorText={t("The settlements could not be read.")}
+      nextErrorText={t("The next settlements could not be read.")}
+      loadingLabel={t("Reading more settlements…")}
+    >
+      {(rows) => (
+        <div className="dk-rec-list">
+          {rows.map((row) => (
+            <CardRecordRow
+              key={row.id}
+              to={recordPath("carrier_settlement", row.id)}
+              onOpen={onOpen && (() => onOpen(row.id))}
+            >
+              <span className="dk-rec-main">
+                <b>{row.settlementNumber}</b>
+                <span className="dk-rec-sub">{settlementLine(row, t)}</span>
               </span>
-            </span>
-          </CardRecordRow>
-        ))}
-      </div>
-      {hasMore && (
-        <CardMore
-          shown={
-            total !== null ? t("{0} of {1} shown", rows.length, total) : t("{0} shown", rows.length)
-          }
-          onMore={onMore}
-          loading={loadingMore}
-          label={t("Show more")}
-          loadingLabel={t("Reading more settlements…")}
-        />
+              <span className="dk-rec-side">
+                <span className="dk-ca-amt">{settlementAmount(row)}</span>
+                <span
+                  className={cn(
+                    "dk-rec-sub",
+                    row.status === "Paid" && "dk-ok",
+                    row.status === "Voided" && "dk-off",
+                  )}
+                >
+                  {choiceLabel(carrierSettlementStatusChoices, row.status)}
+                </span>
+              </span>
+            </CardRecordRow>
+          ))}
+        </div>
       )}
-      {error !== null && error !== undefined && (
-        <CardSectionError>
-          {describeApiError(error, t("The next settlements could not be read."))}
-        </CardSectionError>
-      )}
-    </>
+    </CardPagedList>
   );
 }

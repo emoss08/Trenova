@@ -55,6 +55,13 @@ const CARDS = [
     empty: "carrier-new",
     gone: "carrier-gone",
   },
+  {
+    card: "order",
+    loaded: "order-acme",
+    attention: "order-tyson",
+    empty: "order-draft",
+    gone: "order-gone",
+  },
 ];
 
 function shotsFor({ card, loaded, attention, empty, gone }) {

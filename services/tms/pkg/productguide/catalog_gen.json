@@ -1,5 +1,5 @@
 {
-  "version": "sha256:bb9ea0622611bb43c04a24dbebeb339ddc01697d9ba91de638f9c9b921252c80",
+  "version": "sha256:95f8ab3dd4096d35ac7a24dc5b42e7cd25a27e7c0d6e2932bbc7ab31395669ba",
   "modules": [
     {
       "id": "home",
@@ -17041,7 +17041,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "rate_agreement",

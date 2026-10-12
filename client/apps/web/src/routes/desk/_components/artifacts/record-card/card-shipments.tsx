@@ -1,14 +1,8 @@
 import { recordPath } from "@/config/record-links";
-import { describeApiError } from "@/lib/api-error-message";
 import { ShipmentStatusBadge } from "@trenova/shared/components/status-badge";
 import { useT } from "@trenova/shared/i18n/use-t";
-import {
-  CardMore,
-  CardRecordRow,
-  CardSection,
-  CardSectionError,
-  CardSectionWait,
-} from "./record-card";
+import { CardPagedList } from "./card-paged-list";
+import { CardRecordRow, CardSection } from "./record-card";
 import { cardDay, money } from "./record-card-values";
 import { shipmentLane, type RecordShipments } from "./record-shipments";
 
@@ -56,69 +50,45 @@ function ShipmentList({
   emptyText: string;
 }) {
   const t = useT();
-  const { rows, error, pending } = shipments;
-  if (error && !rows) {
-    return (
-      <CardSectionError>
-        {describeApiError(error, t("The shipments could not be read."))}
-      </CardSectionError>
-    );
-  }
-  if (pending || !rows) {
-    return <CardSectionWait rows={3} />;
-  }
-  if (rows.length === 0) {
-    return <p className="dk-rec-note">{emptyText}</p>;
-  }
   return (
-    <>
-      <div className="dk-rec-list">
-        {rows.map((shipment) => {
-          const lane = shipmentLane(shipment);
-          return (
-            <CardRecordRow
-              key={shipment.id}
-              to={recordPath("shipment", shipment.id)}
-              onOpen={onOpen && (() => onOpen(shipment.id))}
-            >
-              <span className="dk-rec-main">
-                <b>{shipment.proNumber}</b>
-                <span className="dk-rec-lane">
-                  {lane.origin ?? t("No pickup")}
-                  <i aria-hidden> → </i>
-                  {lane.destination ?? t("No delivery")}
+    <CardPagedList
+      list={shipments}
+      emptyText={emptyText}
+      errorText={t("The shipments could not be read.")}
+      nextErrorText={t("The next shipments could not be read.")}
+      loadingLabel={t("Reading more shipments…")}
+    >
+      {(rows) => (
+        <div className="dk-rec-list">
+          {rows.map((shipment) => {
+            const lane = shipmentLane(shipment);
+            return (
+              <CardRecordRow
+                key={shipment.id}
+                to={recordPath("shipment", shipment.id)}
+                onOpen={onOpen && (() => onOpen(shipment.id))}
+              >
+                <span className="dk-rec-main">
+                  <b>{shipment.proNumber}</b>
+                  <span className="dk-rec-lane">
+                    {lane.origin ?? t("No pickup")}
+                    <i aria-hidden> → </i>
+                    {lane.destination ?? t("No delivery")}
+                  </span>
                 </span>
-              </span>
-              <span className="dk-rec-side">
-                <ShipmentStatusBadge status={shipment.status} />
-                <span className="dk-rec-sub">
-                  {[cardDay(lane.pickupAt), money(shipment.totalChargeAmount)]
-                    .filter(Boolean)
-                    .join(" · ")}
+                <span className="dk-rec-side">
+                  <ShipmentStatusBadge status={shipment.status} />
+                  <span className="dk-rec-sub">
+                    {[cardDay(lane.pickupAt), money(shipment.totalChargeAmount)]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
                 </span>
-              </span>
-            </CardRecordRow>
-          );
-        })}
-      </div>
-      {shipments.hasMore && (
-        <CardMore
-          shown={
-            shipments.total !== null
-              ? t("{0} of {1} shown", rows.length, shipments.total)
-              : t("{0} shown", rows.length)
-          }
-          onMore={shipments.loadMore}
-          loading={shipments.loadingMore}
-          label={t("Show more")}
-          loadingLabel={t("Reading more shipments…")}
-        />
+              </CardRecordRow>
+            );
+          })}
+        </div>
       )}
-      {shipments.error !== null && shipments.error !== undefined && (
-        <CardSectionError>
-          {describeApiError(shipments.error, t("The next shipments could not be read."))}
-        </CardSectionError>
-      )}
-    </>
+    </CardPagedList>
   );
 }

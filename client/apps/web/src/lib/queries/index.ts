@@ -50,6 +50,7 @@ import { invoiceAdjustment } from "./invoice-adjustment";
 import { invoiceAdjustmentControl } from "./invoice-adjustment-control";
 import { invoiceShare } from "./invoice-share";
 import { location } from "./location";
+import { order } from "./order";
 import { organization } from "./organization";
 import { pageFavoite } from "./page-favorite";
 import { reports } from "./reports";
@@ -119,6 +120,7 @@ const operationsQueries = mergeQueryKeys(
   documentControl,
   documentParsingRule,
   location,
+  order,
   shipment,
   tractor,
   trailer,

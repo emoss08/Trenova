@@ -15,6 +15,7 @@ import { DeskTrailerSkeleton } from "../trailer/trailer-skeleton";
 import { DeskWorkerSkeleton } from "../worker/worker-skeleton";
 import { DeskLocationSkeleton } from "../location/location-skeleton";
 import { DeskCarrierSkeleton } from "../carrier/carrier-skeleton";
+import { DeskOrderSkeleton } from "../order/order-skeleton";
 import {
   InPlaceRecord,
   RecordArtifact,
@@ -46,6 +47,10 @@ vi.mock("../rate-agreement/desk-rate-agreement", () => ({
 vi.mock("../trailer/desk-trailer", () => ({
   DeskTrailer: () => <p>Trailer card</p>,
   DeskTrailerArtifact: () => <p>Trailer artifact</p>,
+}));
+vi.mock("../order/desk-order", () => ({
+  DeskOrder: () => <p>Order card</p>,
+  DeskOrderArtifact: () => <p>Order artifact</p>,
 }));
 vi.mock("../carrier/desk-carrier", () => ({
   DeskCarrier: () => <p>Carrier card</p>,
@@ -126,6 +131,8 @@ describe("the Desk's resource cards", () => {
     expect(recordCardFor("location")?.resource).toBe(Resource.Location);
     expect(recordCardFor("carrier")?.Skeleton).toBe(DeskCarrierSkeleton);
     expect(recordCardFor("carrier")?.resource).toBe(Resource.Carrier);
+    expect(recordCardFor("order")?.Skeleton).toBe(DeskOrderSkeleton);
+    expect(recordCardFor("order")?.resource).toBe(Resource.Order);
   });
 
   it("leaves a record without a card, or no record at all, to open its page", () => {
@@ -145,6 +152,7 @@ describe("the Desk's resource cards", () => {
     const worker = recordCardFor("worker");
     const place = recordCardFor("location");
     const partner = recordCardFor("carrier");
+    const booking = recordCardFor("order");
     const props = { recordId: "x_1", order: [], onSelect: vi.fn(), onBack: vi.fn() };
 
     draw(
@@ -189,6 +197,10 @@ describe("the Desk's resource cards", () => {
         {partner && (
           <RecordArtifact entry={partner} artifact={artifact} recordId="x_1" fallback={null} />
         )}
+        {booking && <InPlaceRecord entry={booking} {...props} />}
+        {booking && (
+          <RecordArtifact entry={booking} artifact={artifact} recordId="x_1" fallback={null} />
+        )}
       </>,
     );
 
@@ -212,6 +224,8 @@ describe("the Desk's resource cards", () => {
     expect(await screen.findByText("Location artifact")).toBeInTheDocument();
     expect(await screen.findByText("Carrier card")).toBeInTheDocument();
     expect(await screen.findByText("Carrier artifact")).toBeInTheDocument();
+    expect(await screen.findByText("Order card")).toBeInTheDocument();
+    expect(await screen.findByText("Order artifact")).toBeInTheDocument();
   });
 
   // A record opened in place takes over the pane its table or listing card was

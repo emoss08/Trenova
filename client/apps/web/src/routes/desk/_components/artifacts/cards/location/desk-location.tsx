@@ -11,6 +11,7 @@ import type {
   DeskLocation as DeskLocationRecord,
   LocationDwell,
   LocationFailure,
+  LocationFailuresPage,
   LocationPolicies,
 } from "@/lib/graphql/location-card";
 import { queries } from "@/lib/queries";
@@ -21,6 +22,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useCardAccess } from "../../record-card/card-access";
+import { CardPagedList } from "../../record-card/card-paged-list";
 import { CardShipments } from "../../record-card/card-shipments";
 import { CardWhere, mapPoint } from "../../record-card/card-where";
 import {
@@ -30,7 +32,6 @@ import {
   CardFacts,
   CardHead,
   CardIcon,
-  CardMore,
   CardRecordRow,
   CardSection,
   CardSectionError,
@@ -41,6 +42,7 @@ import {
   CardUnreadable,
   RecordCard,
 } from "../../record-card/record-card";
+import { usePagedRows, type PagedRows } from "../../record-card/paged-rows";
 import { neighborsIn } from "../../record-card/record-card-values";
 import { useRecordShipments } from "../../record-card/record-shipments";
 import { MAP_SIZE } from "../../record-card/still-map";
@@ -176,11 +178,13 @@ function LocationCard({
     pageSize: SHIPMENT_ROWS,
     enabled: access.shipments,
   });
-  const failures = useInfiniteQuery({
-    ...locationFailuresQuery(id, FAILURE_ROWS),
-    retry: false,
-    enabled: access.failures,
-  });
+  const failures = usePagedRows<LocationFailure, LocationFailuresPage>(
+    useInfiniteQuery({
+      ...locationFailuresQuery(id, FAILURE_ROWS),
+      retry: false,
+      enabled: access.failures,
+    }),
+  );
 
   const standing = locationStanding(location.status, t);
   const neighbors = neighborsIn(order, id);
@@ -190,11 +194,7 @@ function LocationCard({
   const zoom = point ? locationZoom(point, outline, MAP_SIZE) : undefined;
   const street = streetLine(location);
   const city = cityLine(location);
-  const failureRows = useMemo(
-    () => failures.data?.pages.flatMap((page) => page.rows) ?? [],
-    [failures.data],
-  );
-  const failureIds = useMemo(() => failureRows.map((row) => row.id), [failureRows]);
+  const failureIds = useMemo(() => failures.rows?.map((row) => row.id) ?? NO_ROWS, [failures.rows]);
 
   const backToLocation = t("Back to {0}", location.name);
   const listedShipments = useListedRecords({
@@ -308,23 +308,14 @@ function LocationCard({
         <CardSection
           title={t("Service failures")}
           aside={
-            failures.data?.pages[0]?.total ? (
+            failures.total ? (
               <span className="dk-warn">
-                {t("{0, plural, one {# failure} other {# failures}}", failures.data.pages[0].total)}
+                {t("{0, plural, one {# failure} other {# failures}}", failures.total)}
               </span>
             ) : undefined
           }
         >
-          <Failures
-            rows={failures.data ? failureRows : undefined}
-            total={failures.data?.pages[0]?.total ?? null}
-            pending={failures.isPending}
-            error={failures.error}
-            hasMore={failures.hasNextPage}
-            loadingMore={failures.isFetchingNextPage}
-            onMore={() => void failures.fetchNextPage()}
-            onOpen={listedFailures.open}
-          />
+          <Failures failures={failures} onOpen={listedFailures.open} />
         </CardSection>
       )}
 
@@ -455,79 +446,47 @@ function Policies({
 
 /** The service failures at the location's docks, newest first, a page at a time. */
 function Failures({
-  rows,
-  total,
-  pending,
-  error,
-  hasMore,
-  loadingMore,
-  onMore,
+  failures,
   onOpen,
 }: {
-  rows: readonly LocationFailure[] | undefined;
-  total: number | null;
-  pending: boolean;
-  error: unknown;
-  hasMore: boolean;
-  loadingMore: boolean;
-  onMore: () => void;
+  failures: PagedRows<LocationFailure>;
   onOpen: ((failureId: string) => void) | undefined;
 }) {
   const t = useT();
-  if (error && !rows) {
-    return (
-      <CardSectionError>
-        {describeApiError(error, t("The service failures could not be read."))}
-      </CardSectionError>
-    );
-  }
-  if (pending || !rows) {
-    return <CardSectionWait rows={2} />;
-  }
-  if (rows.length === 0) {
-    return <p className="dk-rec-note">{t("No service failure has been recorded here.")}</p>;
-  }
   return (
-    <>
-      <div className="dk-rec-list">
-        {rows.map((failure) => (
-          <CardRecordRow
-            key={failure.id}
-            to={recordPath("service_failure", failure.id)}
-            onOpen={onOpen && (() => onOpen(failure.id))}
-          >
-            <span className="dk-rec-main">
-              <b>{failure.number}</b>
-              <span className="dk-rec-sub">{failureLine(failure, t)}</span>
-            </span>
-            <span
-              className={cn(
-                "dk-lo-fst",
-                failure.status === "Open" && "dk-warn",
-                failure.status === "Resolved" && "dk-ok",
-              )}
+    <CardPagedList
+      list={failures}
+      waitRows={2}
+      emptyText={t("No service failure has been recorded here.")}
+      errorText={t("The service failures could not be read.")}
+      nextErrorText={t("The next service failures could not be read.")}
+      loadingLabel={t("Reading more service failures…")}
+    >
+      {(rows) => (
+        <div className="dk-rec-list">
+          {rows.map((failure) => (
+            <CardRecordRow
+              key={failure.id}
+              to={recordPath("service_failure", failure.id)}
+              onOpen={onOpen && (() => onOpen(failure.id))}
             >
-              {choiceLabel(serviceFailureStatusChoices, failure.status)}
-            </span>
-          </CardRecordRow>
-        ))}
-      </div>
-      {hasMore && (
-        <CardMore
-          shown={
-            total !== null ? t("{0} of {1} shown", rows.length, total) : t("{0} shown", rows.length)
-          }
-          onMore={onMore}
-          loading={loadingMore}
-          label={t("Show more")}
-          loadingLabel={t("Reading more service failures…")}
-        />
+              <span className="dk-rec-main">
+                <b>{failure.number}</b>
+                <span className="dk-rec-sub">{failureLine(failure, t)}</span>
+              </span>
+              <span
+                className={cn(
+                  "dk-lo-fst",
+                  failure.status === "Open" && "dk-warn",
+                  failure.status === "Resolved" && "dk-ok",
+                )}
+              >
+                {choiceLabel(serviceFailureStatusChoices, failure.status)}
+              </span>
+            </CardRecordRow>
+          ))}
+        </div>
       )}
-      {error !== null && error !== undefined && (
-        <CardSectionError>
-          {describeApiError(error, t("The next service failures could not be read."))}
-        </CardSectionError>
-      )}
-    </>
+    </CardPagedList>
   );
 }

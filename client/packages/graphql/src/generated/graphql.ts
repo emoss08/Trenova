@@ -13287,6 +13287,13 @@ export type RestoreNotificationsMutationVariables = Exact<{
 
 export type RestoreNotificationsMutation = { restoreNotifications: boolean };
 
+export type DeskOrderCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskOrderCardQuery = { order: { id: string, status: OrderStatus, orderNumber: string, poNumber: string | null, bol: string | null, currencyCode: string, quotedAmount: string | null, baseAmount: string | null, totalAmount: string | null, createdAt: number, updatedAt: number, customer: { id: string, code: string, name: string } | null, charges: Array<{ id: string, description: string, amount: string, invoiceId: string | null, invoicedAt: number | null, allocations: Array<{ id: string }> }> } | null };
+
 export type OrderDetailQueryVariables = Exact<{
   id: string | number;
 }>;
@@ -13792,6 +13799,15 @@ export type RateQuoteTableQueryVariables = Exact<{
 
 
 export type RateQuoteTableQuery = { rateQuotes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RateQuoteRowFieldsFragment': RateQuoteRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DeskRecordActivityQueryVariables = Exact<{
+  resourceId: string | number;
+  input: DataTableConnectionInput;
+  includeTotalCount: boolean;
+}>;
+
+
+export type DeskRecordActivityQuery = { auditEntriesByResourceId: { totalCount?: number | null, edges: Array<{ node: { id: string, operation: string, timestamp: number, changes: unknown, comment: string | null, principalType: string, user: { id: string, name: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type RecurringShipmentTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceShipmentId: string, customerId: string | null, originLocationId: string | null, destinationLocationId: string | null, name: string, description: string, status: RecurringShipmentStatus, cronExpression: string, timezone: string, startDate: number | null, endDate: number | null, maxOccurrences: number | null, leadTimeDays: number, skipWeekends: boolean, exceptionPolicy: RecurringShipmentExceptionPolicy, blackoutDates: Array<string> | null, autoGenerate: boolean, nextOccurrenceAt: number | null, lastOccurrenceAt: number | null, lastRunAt: number | null, generationCount: number, consecutiveFailures: number, version: number, createdAt: number, updatedAt: number, customer: { id: string, name: string, code: string } | null, originLocation: { id: string, name: string, code: string } | null, destinationLocation: { id: string, name: string, code: string } | null } & { ' $fragmentName'?: 'RecurringShipmentTableRowFieldsFragment' };
 
@@ -26424,6 +26440,7 @@ export const MarkNotificationsUnreadDocument = {"__meta__":{"kind":"mutation","n
 export const MarkAllNotificationsReadDocument = {"__meta__":{"kind":"mutation","name":"MarkAllNotificationsRead","hash":"sha256:e919497b911d73638f8329785ecb0b4b48a247bb6d037bf89b2a498c5bca336d"}} as unknown as TypedDocumentString<MarkAllNotificationsReadMutation, MarkAllNotificationsReadMutationVariables>;
 export const DismissNotificationsDocument = {"__meta__":{"kind":"mutation","name":"DismissNotifications","hash":"sha256:762abd6aba103c349367b7834a0e909dd2e06b9d5c1a33f71a4467431db83d50"}} as unknown as TypedDocumentString<DismissNotificationsMutation, DismissNotificationsMutationVariables>;
 export const RestoreNotificationsDocument = {"__meta__":{"kind":"mutation","name":"RestoreNotifications","hash":"sha256:e97ca2a47ac7291064a1651afaf8807310b842b010cc23d5b383cab58018d6e1"}} as unknown as TypedDocumentString<RestoreNotificationsMutation, RestoreNotificationsMutationVariables>;
+export const DeskOrderCardDocument = {"__meta__":{"kind":"query","name":"DeskOrderCard","hash":"sha256:1af2ca0371a6d7d8a919ad6b7217635f87cb481a2036748d961db8af230d299f"}} as unknown as TypedDocumentString<DeskOrderCardQuery, DeskOrderCardQueryVariables>;
 export const OrderDetailDocument = {"__meta__":{"kind":"query","name":"OrderDetail","hash":"sha256:8489d71b0ee45ca376e2ab63d2529afca382b8700c267e32f57abd116e6af645"}} as unknown as TypedDocumentString<OrderDetailQuery, OrderDetailQueryVariables>;
 export const AttachOrderShipmentsDocument = {"__meta__":{"kind":"mutation","name":"AttachOrderShipments","hash":"sha256:c5dd0f391421cd1c7def4a849abaf9630283cc0b9b5c4ad83164f677b79273a9"}} as unknown as TypedDocumentString<AttachOrderShipmentsMutation, AttachOrderShipmentsMutationVariables>;
 export const DetachOrderShipmentDocument = {"__meta__":{"kind":"mutation","name":"DetachOrderShipment","hash":"sha256:5a7b3fa35274ee455c2c6c8eb92842cbf663284cf5639cbc0c4dea9d7350984c"}} as unknown as TypedDocumentString<DetachOrderShipmentMutation, DetachOrderShipmentMutationVariables>;
@@ -26488,6 +26505,7 @@ export const RateAgreementTableDocument = {"__meta__":{"kind":"query","name":"Ra
 export const RateZoneTableDocument = {"__meta__":{"kind":"query","name":"RateZoneTable","hash":"sha256:5c85f76694ab5702f5ea01ffaae7a1b360b3f9f4845cb21d3230f95cf45bd3d8"}} as unknown as TypedDocumentString<RateZoneTableQuery, RateZoneTableQueryVariables>;
 export const RateMatrixTableDocument = {"__meta__":{"kind":"query","name":"RateMatrixTable","hash":"sha256:65be740d59f9fe8439905de2e2b2a65d1a468902d99009a28fb0577333ddd82f"}} as unknown as TypedDocumentString<RateMatrixTableQuery, RateMatrixTableQueryVariables>;
 export const RateQuoteTableDocument = {"__meta__":{"kind":"query","name":"RateQuoteTable","hash":"sha256:88e2aef95489941a0c4ba7d6658c28748e949efb2bc7e48800463e41a8406141"}} as unknown as TypedDocumentString<RateQuoteTableQuery, RateQuoteTableQueryVariables>;
+export const DeskRecordActivityDocument = {"__meta__":{"kind":"query","name":"DeskRecordActivity","hash":"sha256:126f8ab49f988b55d4618a79d275470be43e07dca41e8e7c663ea8cbb8211c8b"}} as unknown as TypedDocumentString<DeskRecordActivityQuery, DeskRecordActivityQueryVariables>;
 export const RecurringShipmentTableDocument = {"__meta__":{"kind":"query","name":"RecurringShipmentTable","hash":"sha256:39b9629192b6601cb0ad2d676939a2f409a667373cf616f7bc85fb478d36c6d7"}} as unknown as TypedDocumentString<RecurringShipmentTableQuery, RecurringShipmentTableQueryVariables>;
 export const CannedReportsDocument = {"__meta__":{"kind":"query","name":"CannedReports","hash":"sha256:597b62a2e0291d15c7fc013e195a15594efb4e35e2b82183a24c791037994b27"}} as unknown as TypedDocumentString<CannedReportsQuery, CannedReportsQueryVariables>;
 export const ReportCatalogDocument = {"__meta__":{"kind":"query","name":"ReportCatalog","hash":"sha256:79e369a4fec3bb0d7d5c6975d5782adb517ddeb55868c86d31e6f644f12d2d39"}} as unknown as TypedDocumentString<ReportCatalogQuery, ReportCatalogQueryVariables>;

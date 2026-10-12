@@ -66,6 +66,10 @@ export function deskCardArtifacts(anchor) {
     ),
     "carrier-new": artifact("carrier-new", "carrier", "car_new", "Northgate Transport"),
     "carrier-gone": artifact("carrier-gone", "carrier", "car_999", "Prairie Line Carriers"),
+    "order-acme": artifact("order-acme", "order", "ord_acme", "Order ORD-2610-0118"),
+    "order-tyson": artifact("order-tyson", "order", "ord_tyson", "Order ORD-2609-0977"),
+    "order-draft": artifact("order-draft", "order", "ord_draft", "Order ORD-2610-0131"),
+    "order-gone": artifact("order-gone", "order", "ord_999", "Order ORD-2608-0001"),
   };
 }
 
@@ -1070,6 +1074,120 @@ export function deskCarriers(anchor) {
   };
 }
 
+/**
+ * Three orders between them drawing every state the card has: Acme's order is
+ * on the road with one leg delivered and a lumper charge waiting to be
+ * invoiced; Tyson's is completed with a detention charge split between two
+ * payers and nothing invoiced yet, so billing is due; the third is a draft
+ * taken this morning, not yet priced, with nothing on it.
+ */
+export function deskOrders(anchor) {
+  const charge = (id, description, amount, invoicedDaysAgo, allocations = 0) => ({
+    id,
+    description,
+    amount,
+    invoiceId: invoicedDaysAgo === null ? null : `inv_${id}`,
+    invoicedAt: invoicedDaysAgo === null ? null : anchor - invoicedDaysAgo * DAY,
+    allocations: Array.from({ length: allocations }, (_, index) => ({ id: `${id}_a${index}` })),
+  });
+  const entry = (id, operation, hoursAgo, name, changes = null, comment = null) => ({
+    id,
+    operation,
+    timestamp: anchor - hoursAgo * HOUR,
+    changes,
+    comment,
+    principalType: name ? "session_user" : "system",
+    user: name ? { id: `usr_${id}`, name } : null,
+  });
+  return {
+    ord_acme: {
+      order: {
+        id: "ord_acme",
+        status: "InProgress",
+        orderNumber: "ORD-2610-0118",
+        poNumber: "PO-88213",
+        bol: "BOL-55120",
+        currencyCode: "USD",
+        quotedAmount: "4000.0000",
+        baseAmount: "3800.0000",
+        totalAmount: "4285.0000",
+        createdAt: anchor - 3 * DAY,
+        updatedAt: anchor - 2 * HOUR,
+        customer: { id: "cus_acme", code: "ACME", name: "Acme Foods" },
+        charges: [
+          charge("och_a1", "Fuel surcharge", "400.0000", 1),
+          charge("och_a2", "Lumper at Dallas DC", "85.0000", null),
+        ],
+      },
+      activity: [
+        entry("ae_a1", "update", 2, "Mia Chen", {
+          status: { from: "Confirmed", to: "InProgress" },
+        }),
+        entry("ae_a2", "update", 20, "Mia Chen", {
+          poNumber: { from: null, to: "PO-88213" },
+          bol: { from: null, to: "BOL-55120" },
+        }),
+        entry("ae_a3", "update", 30, null, { totalAmount: { from: "4200", to: "4285" } }),
+        entry("ae_a4", "approve", 50, "Omar Haddad", null, "Rate confirmed with Acme"),
+        entry("ae_a5", "create", 72, "Mia Chen"),
+        entry("ae_a6", "update", 72, "Mia Chen", { quotedAmount: { from: null, to: "4000" } }),
+      ],
+      shipments: 2,
+    },
+    ord_tyson: {
+      order: {
+        id: "ord_tyson",
+        status: "Completed",
+        orderNumber: "ORD-2609-0977",
+        poNumber: "TY-4400912",
+        bol: null,
+        currencyCode: "USD",
+        quotedAmount: "6100.0000",
+        baseAmount: "6100.0000",
+        totalAmount: "7365.0000",
+        createdAt: anchor - 21 * DAY,
+        updatedAt: anchor - DAY,
+        customer: { id: "cus_tyson", code: "TYSON", name: "Tyson Foods" },
+        charges: [
+          charge("och_t1", "Detention at Springdale, 4 h 15 m", "1020.0000", null, 2),
+          charge("och_t2", "Reefer fuel", "245.0000", null),
+        ],
+      },
+      activity: [
+        entry("ae_t1", "update", 24, "Ray Gutierrez", {
+          status: { from: "InProgress", to: "Completed" },
+        }),
+        entry("ae_t2", "update", 30, "Ray Gutierrez", {
+          charges: { from: null, to: "added" },
+          totalAmount: { from: "6345", to: "7365" },
+          baseAmount: { from: "6100", to: "6100" },
+          currencyCode: { from: "USD", to: "USD" },
+        }),
+      ],
+      shipments: 3,
+    },
+    ord_draft: {
+      order: {
+        id: "ord_draft",
+        status: "Draft",
+        orderNumber: "ORD-2610-0131",
+        poNumber: null,
+        bol: null,
+        currencyCode: "USD",
+        quotedAmount: null,
+        baseAmount: null,
+        totalAmount: null,
+        createdAt: anchor - 2 * HOUR,
+        updatedAt: anchor - 2 * HOUR,
+        customer: { id: "cus_globex", code: "GLOBEX", name: "Globex Corporation" },
+        charges: [],
+      },
+      activity: [],
+      shipments: 0,
+    },
+  };
+}
+
 /** A document filed on a tractor, as the documents API returns it. */
 export function deskDocument(resourceType, resourceId, [name, fileType, fileSize], index, anchor) {
   return {
@@ -1180,6 +1298,22 @@ const TURNS = {
   "carrier-gone": [
     "Show me Prairie Line Carriers.",
     "Prairie Line Carriers has been removed since I looked it up. [Prairie Line Carriers](artifact:art_carrier-gone) is what I found then.",
+  ],
+  "order-acme": [
+    "Where is Acme's order PO-88213?",
+    "Acme's order ORD-2610-0118 is in progress: one of its two legs has delivered and the other is on the road. The lumper charge from Dallas still has to be invoiced. [Order ORD-2610-0118](artifact:art_order-acme) has the legs, charges and history.",
+  ],
+  "order-tyson": [
+    "Is the Tyson order ready to bill?",
+    "Yes: ORD-2609-0977 completed yesterday and none of its $1,265.00 in charges has been invoiced yet; the detention is split between Tyson and the consignee. [Order ORD-2609-0977](artifact:art_order-tyson) lays it out.",
+  ],
+  "order-draft": [
+    "Pull up the Globex order from this morning.",
+    "ORD-2610-0131 for Globex is still a draft, not priced and with no legs yet. [Order ORD-2610-0131](artifact:art_order-draft) shows what is there.",
+  ],
+  "order-gone": [
+    "Show me ORD-2608-0001.",
+    "That order has been removed since I looked it up. [Order ORD-2608-0001](artifact:art_order-gone) is what I found then.",
   ],
   "tractor-t-318": [
     "Pull up T-318.",

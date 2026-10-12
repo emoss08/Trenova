@@ -4280,6 +4280,9 @@ button.dk-dx-c:hover {
   margin: 0;
   padding: 0 0 12px;
 }
+.dk-rec-log:has(+ .dk-rec-more) {
+  padding-bottom: 0;
+}
 .dk-rec-log li {
   position: relative;
   display: grid;
@@ -5530,6 +5533,9 @@ th.dk-cb .dk-ax-cb:hover {
 }
 .dk-ax-ki.dk-k-carrier {
   color: var(--accent-amber);
+}
+.dk-ax-ki.dk-k-order {
+  color: var(--accent-teal);
 }
 /* The shipment card */
 .dk-sh-nowsec {
@@ -6966,6 +6972,118 @@ th.dk-cb .dk-ax-cb:hover {
   }
   .dk-ca-contacts > li {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* The order card */
+.dk-or {
+  container: dkor / inline-size;
+}
+.dk-rec-amt .dk-or-wait {
+  color: var(--dsk-faint);
+}
+/* the order's way from draft to closed, each step a dot on one line */
+.dk-or-way {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-or-way > li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-or-way > li > i {
+  position: relative;
+  z-index: 1;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid var(--dsk-b);
+  background: var(--dsk-card);
+}
+.dk-or-way > li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 10px;
+  right: 0;
+  height: 2px;
+  background: var(--dsk-b-sub);
+}
+.dk-or-way > li.dk-done > i,
+.dk-or-way > li.dk-now > i {
+  border-color: var(--dsk-fg);
+  background: var(--dsk-fg);
+}
+.dk-or-way > li.dk-done::after {
+  background: var(--dsk-fg);
+}
+.dk-or-way > li.dk-done {
+  color: var(--dsk-fg2);
+}
+.dk-or-way > li.dk-now {
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-or-way > li.dk-now > i {
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--dsk-fg) 16%, transparent);
+}
+.dk-or-way > li > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-or-way.dk-off > li {
+  color: var(--dsk-faint);
+}
+.dk-or-canceled {
+  margin-bottom: 12px;
+}
+.dk-rec-stats.dk-or-sums {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0 0 12px;
+}
+/* the charges, each with its amount on the right */
+.dk-or-charges {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-or-charges > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-or-charges > li:first-child {
+  border-top: 0;
+}
+.dk-or-amt {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 12.5px;
+  color: var(--dsk-fg);
+}
+@container dkor (max-width: 420px) {
+  .dk-or-way {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 12px;
+  }
+  .dk-or-way > li:nth-child(3)::after {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dk-or-way > li > i {
+    transition: background-color 200ms var(--dk-settle);
   }
 }
 /* The rate agreement card */

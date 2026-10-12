@@ -1,9 +1,14 @@
-import type { RecordShipment, ShipmentScope } from "@/lib/graphql/record-shipments";
+import type {
+  RecordShipment,
+  RecordShipmentsPage,
+  ShipmentScope,
+} from "@/lib/graphql/record-shipments";
 import { cityStateLabel } from "@/lib/place";
 import { recordShipmentsQuery } from "@/lib/queries/record-shipments";
 import { getDestinationStop, getOriginStop } from "@/lib/shipment-utils";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { usePagedRows, type PagedRows } from "./paged-rows";
 
 /** A shipment's lane and when it picks up, from its first pickup and last delivery. */
 export type ShipmentLane = {
@@ -26,18 +31,9 @@ export function shipmentLane(shipment: RecordShipment): ShipmentLane {
 }
 
 /** The shipments a card lists for one record, as its list section draws them. */
-export type RecordShipments = {
-  /** Every page read so far, newest first; undefined until the first page lands. */
-  rows: RecordShipment[] | undefined;
+export type RecordShipments = PagedRows<RecordShipment> & {
   /** The listed shipments' ids in the order shown, for stepping through them. */
   ids: readonly string[];
-  /** How many there are in all, from the first page. */
-  total: number | null;
-  hasMore: boolean;
-  loadingMore: boolean;
-  loadMore: () => void;
-  pending: boolean;
-  error: unknown;
 };
 
 const NO_IDS: readonly string[] = [];
@@ -56,23 +52,13 @@ export function useRecordShipments({
   pageSize: number;
   enabled: boolean;
 }): RecordShipments {
-  const query = useInfiniteQuery({
-    ...recordShipmentsQuery(scope, pageSize),
-    enabled,
-    retry: false,
-  });
-  const rows = useMemo(() => query.data?.pages.flatMap((page) => page.rows), [query.data]);
-  const ids = useMemo(() => rows?.map((row) => row.id) ?? NO_IDS, [rows]);
-  const { fetchNextPage } = query;
-
-  return {
-    rows,
-    ids,
-    total: query.data?.pages[0]?.total ?? null,
-    hasMore: query.hasNextPage,
-    loadingMore: query.isFetchingNextPage,
-    loadMore: () => void fetchNextPage(),
-    pending: query.isPending,
-    error: query.error,
-  };
+  const list = usePagedRows<RecordShipment, RecordShipmentsPage>(
+    useInfiniteQuery({
+      ...recordShipmentsQuery(scope, pageSize),
+      enabled,
+      retry: false,
+    }),
+  );
+  const ids = useMemo(() => list.rows?.map((row) => row.id) ?? NO_IDS, [list.rows]);
+  return { ...list, ids };
 }
