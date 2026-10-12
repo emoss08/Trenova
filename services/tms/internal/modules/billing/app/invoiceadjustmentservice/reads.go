@@ -29,6 +29,9 @@ func (s *Service) Approve(
 		ctx,
 		kernelports.TxOptions{LockTimeout: 5 * 1000000000},
 		func(txCtx context.Context, _ bun.Tx) error {
+			if guardErr := s.refuseSelfApproval(txCtx, req, actor); guardErr != nil {
+				return guardErr
+			}
 			executed, execErr := s.executeApprovedAdjustment(
 				txCtx,
 				req.AdjustmentID,
@@ -103,6 +106,48 @@ func (s *Service) Reject(
 	s.logAudit(updated, actor, permission.OpReject, "Invoice adjustment rejected")
 	s.publishAdjustedInvoices(ctx, actor, restored)
 	return updated, nil
+}
+
+// refuseSelfApproval keeps whoever submitted an adjustment that needs
+// approval from approving it, where the organization asks for a separate
+// approver. Retrying one whose execution failed without ever needing approval
+// is not an approval and stays open to its submitter.
+func (s *Service) refuseSelfApproval(
+	ctx context.Context,
+	req *invoiceadjustmentports.ApproveInvoiceAdjustmentRequest,
+	actor *permissionports.RequestActor,
+) error {
+	if actor == nil || actor.UserID.IsNil() || s.adjustmentCtrlRepo == nil {
+		return nil
+	}
+
+	adjustment, err := s.repo.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
+		ID:         req.AdjustmentID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+	if !adjustment.ApprovalRequired || adjustment.SubmittedByID != actor.UserID {
+		return nil
+	}
+
+	control, err := s.adjustmentCtrlRepo.GetByOrgID(ctx, adjustment.OrganizationID)
+	if errortypes.IsNotFoundError(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if !control.RequireSeparateApprover {
+		return nil
+	}
+
+	return errortypes.NewValidationError(
+		"adjustmentId",
+		errortypes.ErrInvalidOperation,
+		"You submitted this adjustment, so someone else must approve it",
+	)
 }
 
 type lockedDecision struct {

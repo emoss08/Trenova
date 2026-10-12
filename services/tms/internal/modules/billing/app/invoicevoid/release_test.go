@@ -79,7 +79,7 @@ func (f *releaseFixture) deps() invoicevoid.Deps {
 		ShipmentRepo:         f.shipmentRepo,
 		InvoiceRepo:          f.invoiceRepo,
 		OrderDerivation:      f.derivation,
-		Renumber: func(context.Context, billingqueue.BillType) (string, error) {
+		Renumber: func(context.Context, *billingqueue.BillingQueueItem) (string, error) {
 			return "INV-2", nil
 		},
 	}

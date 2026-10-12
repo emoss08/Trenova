@@ -102,6 +102,9 @@ func (s *Service) PreviewMemo(
 	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
+	if err = s.refuseAutoPostingMemo(ctx, req, entity); err != nil {
+		return nil, err
+	}
 	entity.Number = ""
 
 	return entity, nil

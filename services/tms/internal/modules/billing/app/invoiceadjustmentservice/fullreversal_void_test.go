@@ -127,7 +127,7 @@ func TestVoidReversedInvoiceHonoursTheRequestedDispositionAndReason(t *testing.T
 			if !req.Rebill || req.RenumberFn == nil {
 				return false
 			}
-			number, err := req.RenumberFn(t.Context(), billingqueue.BillTypeInvoice)
+			number, err := req.RenumberFn(t.Context(), &billingqueue.BillingQueueItem{BillType: billingqueue.BillTypeInvoice})
 			return err == nil && number == "INV-2"
 		})).
 		Return([]*billingqueue.BillingQueueItem{}, nil).

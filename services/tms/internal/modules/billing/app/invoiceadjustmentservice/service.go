@@ -64,6 +64,7 @@ type Params struct {
 	Commercial         *shipmentcommercial.Calculator
 	Generator          invoiceadjustmentports.InvoiceAdjustGenerator
 	SequenceGenerator  seqgen.Generator
+	SequenceFormats    seqgen.FormatProvider                      `optional:"true"`
 	AccountingSync     accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
 	CustomerLedgerRepo customerledgerports.CustomerLedgerProjectionRepository
 	AccountingPolicy   *accountingcontrolpolicyservice.Service
@@ -97,6 +98,7 @@ type Service struct {
 	commercial         *shipmentcommercial.Calculator
 	generator          invoiceadjustmentports.InvoiceAdjustGenerator
 	sequenceGenerator  seqgen.Generator
+	sequenceFormats    seqgen.FormatProvider
 	accountingSync     accountingsyncports.AccountingSyncEnqueuer
 	customerLedgerRepo customerledgerports.CustomerLedgerProjectionRepository
 	accountingPolicy   *accountingcontrolpolicyservice.Service
@@ -159,6 +161,7 @@ func New(p Params) invoiceadjustmentports.InvoiceAdjustmentService {
 		commercial:         p.Commercial,
 		generator:          p.Generator,
 		sequenceGenerator:  p.SequenceGenerator,
+		sequenceFormats:    p.SequenceFormats,
 		accountingSync:     p.AccountingSync,
 		customerLedgerRepo: p.CustomerLedgerRepo,
 		accountingPolicy:   p.AccountingPolicy,

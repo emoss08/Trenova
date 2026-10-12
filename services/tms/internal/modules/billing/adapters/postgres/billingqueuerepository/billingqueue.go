@@ -446,7 +446,7 @@ func (r *repository) ReleaseForInvoice(
 
 				if req.Rebill {
 					if req.RenumberFn != nil {
-						number, err := req.RenumberFn(ctx, item.BillType)
+						number, err := req.RenumberFn(ctx, item)
 						if err != nil {
 							return nil, err
 						}

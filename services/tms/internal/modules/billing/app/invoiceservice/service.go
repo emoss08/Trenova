@@ -75,6 +75,7 @@ type Params struct {
 	CustomerLedgerRepo   customerledgerports.CustomerLedgerProjectionRepository
 	BillingRepo          tenantports.BillingControlRepository
 	AccountingRepo       tenantports.AccountingControlRepository
+	AdjustmentCtrlRepo   tenantports.InvoiceAdjustmentControlRepository `optional:"true"`
 	Stamper              *exchangeratestamp.Stamper
 	JournalRepo          journalentryports.JournalPostingRepository
 	AdjustmentRepo       invoiceadjustmentports.InvoiceAdjustmentRepository
@@ -120,6 +121,7 @@ type Service struct {
 	customerLedgerRepo   customerledgerports.CustomerLedgerProjectionRepository
 	billingRepo          tenantports.BillingControlRepository
 	accountingRepo       tenantports.AccountingControlRepository
+	adjustmentCtrlRepo   tenantports.InvoiceAdjustmentControlRepository
 	stamper              *exchangeratestamp.Stamper
 	journalRepo          journalentryports.JournalPostingRepository
 	adjustmentRepo       invoiceadjustmentports.InvoiceAdjustmentRepository
@@ -197,6 +199,7 @@ func NewService(p Params) *Service { //nolint:gocritic // mirrors New
 		customerLedgerRepo:          p.CustomerLedgerRepo,
 		billingRepo:                 p.BillingRepo,
 		accountingRepo:              p.AccountingRepo,
+		adjustmentCtrlRepo:          p.AdjustmentCtrlRepo,
 		stamper:                     p.Stamper,
 		journalRepo:                 p.JournalRepo,
 		adjustmentRepo:              p.AdjustmentRepo,
@@ -527,6 +530,11 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 		alreadyPosted, planErr := s.planPost(txCtx, entity, req, now)
 		if planErr != nil {
 			return planErr
+		}
+		if !alreadyPosted {
+			if guardErr := s.guardMemoPoster(txCtx, entity, actor, req.TenantInfo); guardErr != nil {
+				return guardErr
+			}
 		}
 
 		if alreadyPosted {

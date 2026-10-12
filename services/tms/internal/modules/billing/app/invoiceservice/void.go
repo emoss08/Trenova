@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevoid"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -193,7 +192,7 @@ func (s *Service) voidLockedDraft(
 
 	released, err := invoicevoid.Release(
 		ctx,
-		s.voidDeps(req.TenantInfo),
+		s.voidDeps(),
 		invoicevoid.Params{
 			Invoice:     updated,
 			Disposition: req.Disposition,
@@ -274,7 +273,7 @@ func (s *Service) voidPosted(
 	return result, nil
 }
 
-func (s *Service) voidDeps(tenantInfo pagination.TenantInfo) invoicevoid.Deps {
+func (s *Service) voidDeps() invoicevoid.Deps {
 	return invoicevoid.Deps{
 		BillingQueueRepo:     s.billingQueueRepo,
 		OrderRepo:            s.orderRepo,
@@ -283,44 +282,7 @@ func (s *Service) voidDeps(tenantInfo pagination.TenantInfo) invoicevoid.Deps {
 		InvoiceRepo:          s.repo,
 		OrderDerivation:      s.orderDerivation,
 		DetentionBilling:     s.detentionBilling,
-		Renumber: func(ctx context.Context, billType billingqueue.BillType) (string, error) {
-			return s.renumberBillingItem(ctx, tenantInfo, billType)
-		},
-	}
-}
-
-// renumberBillingItem mints a fresh billing number for an item released to be
-// billed again, because the voided invoice keeps the one it had.
-func (s *Service) renumberBillingItem(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	billType billingqueue.BillType,
-) (string, error) {
-	switch billType {
-	case billingqueue.BillTypeCreditMemo:
-		return s.sequenceGenerator.GenerateCreditMemoNumber(
-			ctx,
-			tenantInfo.OrgID,
-			tenantInfo.BuID,
-			"",
-			"",
-		)
-	case billingqueue.BillTypeDebitMemo:
-		return s.sequenceGenerator.GenerateDebitMemoNumber(
-			ctx,
-			tenantInfo.OrgID,
-			tenantInfo.BuID,
-			"",
-			"",
-		)
-	default:
-		return s.sequenceGenerator.GenerateInvoiceNumber(
-			ctx,
-			tenantInfo.OrgID,
-			tenantInfo.BuID,
-			"",
-			"",
-		)
+		Renumber:             s.numberer().ForItem,
 	}
 }
 

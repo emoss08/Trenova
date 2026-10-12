@@ -26,7 +26,7 @@ type Deps struct {
 	InvoiceRepo          invoiceports.InvoiceRepository
 	OrderDerivation      orderports.OrderDerivationService
 	DetentionBilling     detentionports.DetentionBillingService
-	Renumber             func(ctx context.Context, billType billingqueue.BillType) (string, error)
+	Renumber             func(ctx context.Context, item *billingqueue.BillingQueueItem) (string, error)
 }
 
 // Params names the invoice being voided and how its freight should be treated.

@@ -30,11 +30,13 @@
   "Paid invoice adjustment policy": "Política de ajuste de facturas pagadas",
   "Partially paid invoice adjustment policy": "Política de ajuste de facturas parcialmente pagadas",
   "Replacement invoice review policy": "Política de revisión de facturas sustitutivas",
+  "Require a separate approver": "Exigir un aprobador distinto",
   "Rerate variance tolerance percent": "Porcentaje de tolerancia de variación al volver a tarificar",
   "Standard adjustment approval policy": "Política de aprobación de ajustes estándar",
   "Standard adjustment approval threshold": "Umbral de aprobación de ajustes estándar",
   "Superseded invoice visibility policy": "Política de visibilidad de facturas sustituidas",
   "Tolerance percentage used when comparing rerated replacement invoice economics to the superseded invoice.": "Porcentaje de tolerancia usado al comparar las condiciones económicas de la factura sustitutiva vuelta a tarificar con las de la factura sustituida.",
+  "Whoever submits an adjustment or raises a credit memo that needs approval cannot approve or post it themselves. Leave this off if one person handles billing.": "Quien envía un ajuste o emite una nota de crédito que requiere aprobación no puede aprobarla ni contabilizarla. Déjelo desactivado si una sola persona gestiona la facturación.",
   "Write-off amount above which approval is required when the write-off approval policy uses an amount threshold.": "Importe de cancelación por encima del cual se requiere aprobación cuando la política de aprobación de cancelaciones usa un umbral de importe.",
   "Write-off approval policy": "Política de aprobación de cancelaciones",
   "Write-off approval threshold": "Umbral de aprobación de cancelaciones"

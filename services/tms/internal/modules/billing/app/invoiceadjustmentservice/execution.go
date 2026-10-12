@@ -3,6 +3,7 @@ package invoiceadjustmentservice
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
@@ -505,13 +506,14 @@ func (s *Service) createReplacementQueueItem(
 	lines []*invoice.InvoiceLine,
 	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
 ) (*billingqueue.BillingQueueItem, error) {
-	number, err := s.generator.GenerateInvoiceNumber(
-		ctx,
-		adjustment.OrganizationID,
-		adjustment.BusinessUnitID,
-		"",
-		"",
-	)
+	number, err := s.numberer().Next(ctx, &billingnumber.Request{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: adjustment.OrganizationID,
+			BuID:  adjustment.BusinessUnitID,
+		},
+		BillType: billingqueue.BillTypeInvoice,
+		PayerID:  sourceInvoice.CustomerID,
+	})
 	if err != nil {
 		return nil, err
 	}

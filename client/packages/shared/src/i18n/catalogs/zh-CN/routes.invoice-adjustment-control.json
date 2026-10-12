@@ -30,11 +30,13 @@
   "Paid invoice adjustment policy": "已付款发票的调整政策",
   "Partially paid invoice adjustment policy": "部分付款发票的调整政策",
   "Replacement invoice review policy": "替代发票审查政策",
+  "Require a separate approver": "需要由他人批准",
   "Rerate variance tolerance percent": "重新计价差异容差百分比",
   "Standard adjustment approval policy": "标准调整批准政策",
   "Standard adjustment approval threshold": "标准调整批准门槛",
   "Superseded invoice visibility policy": "已被取代发票的可见性政策",
   "Tolerance percentage used when comparing rerated replacement invoice economics to the superseded invoice.": "比较重新计价后的替代发票与被取代发票经济条件时所用的容差百分比。",
+  "Whoever submits an adjustment or raises a credit memo that needs approval cannot approve or post it themselves. Leave this off if one person handles billing.": "提交调整或开立需批准的贷项通知单的人，不能自行批准或过账。如果只有一人负责账务，请保持关闭。",
   "Write-off amount above which approval is required when the write-off approval policy uses an amount threshold.": "当冲销批准政策采用金额门槛时，超过此冲销金额即需批准。",
   "Write-off approval policy": "冲销批准政策",
   "Write-off approval threshold": "冲销批准门槛"

@@ -55,6 +55,11 @@ func (s *Service) CreateMemo(
 	}
 	cus, control, lines := plan.customer, plan.control, plan.lines
 
+	probe := s.buildMemoEntity(req, &billingqueue.BillingQueueItem{}, cus, control, lines)
+	if err = s.refuseAutoPostingMemo(ctx, req, probe); err != nil {
+		return nil, err
+	}
+
 	number, err := s.generateMemoNumber(ctx, req.TenantInfo, req.BillType)
 	if err != nil {
 		return nil, err
@@ -62,7 +67,9 @@ func (s *Service) CreateMemo(
 
 	var created *invoice.Invoice
 	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		item, txErr := s.billingQueueRepo.Create(txCtx, memoQueueItem(req, cus, number))
+		queued := memoQueueItem(req, cus, number)
+		queued.AdjustmentContext[memoRaisedByKey] = actor.UserID.String()
+		item, txErr := s.billingQueueRepo.Create(txCtx, queued)
 		if txErr != nil {
 			return txErr
 		}

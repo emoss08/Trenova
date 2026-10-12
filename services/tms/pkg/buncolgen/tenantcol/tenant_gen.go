@@ -2254,6 +2254,7 @@ var InvoiceAdjustmentControlColumns = struct {
 	StandardAdjustmentApprovalThreshold  buncolgen.Column // "standard_adjustment_approval_threshold" → qualified: "iac.standard_adjustment_approval_threshold"
 	WriteOffApprovalPolicy               buncolgen.Column // "write_off_approval_policy" → qualified: "iac.write_off_approval_policy"
 	WriteOffApprovalThreshold            buncolgen.Column // "write_off_approval_threshold" → qualified: "iac.write_off_approval_threshold"
+	RequireSeparateApprover              buncolgen.Column // "require_separate_approver" → qualified: "iac.require_separate_approver"
 	RerateVarianceTolerancePercent       buncolgen.Column // "rerate_variance_tolerance_percent" → qualified: "iac.rerate_variance_tolerance_percent"
 	ReplacementInvoiceReviewPolicy       buncolgen.Column // "replacement_invoice_review_policy" → qualified: "iac.replacement_invoice_review_policy"
 	CustomerCreditBalancePolicy          buncolgen.Column // "customer_credit_balance_policy" → qualified: "iac.customer_credit_balance_policy"
@@ -2276,6 +2277,7 @@ var InvoiceAdjustmentControlColumns = struct {
 	StandardAdjustmentApprovalThreshold:  buncolgen.NewColumn("standard_adjustment_approval_threshold", "iac"),
 	WriteOffApprovalPolicy:               buncolgen.NewColumn("write_off_approval_policy", "iac"),
 	WriteOffApprovalThreshold:            buncolgen.NewColumn("write_off_approval_threshold", "iac"),
+	RequireSeparateApprover:              buncolgen.NewColumn("require_separate_approver", "iac"),
 	RerateVarianceTolerancePercent:       buncolgen.NewColumn("rerate_variance_tolerance_percent", "iac"),
 	ReplacementInvoiceReviewPolicy:       buncolgen.NewColumn("replacement_invoice_review_policy", "iac"),
 	CustomerCreditBalancePolicy:          buncolgen.NewColumn("customer_credit_balance_policy", "iac"),
@@ -2304,6 +2306,7 @@ var InvoiceAdjustmentControlFieldMap = map[string]string{
 	"standardAdjustmentApprovalThreshold":  "standard_adjustment_approval_threshold",
 	"writeOffApprovalPolicy":               "write_off_approval_policy",
 	"writeOffApprovalThreshold":            "write_off_approval_threshold",
+	"requireSeparateApprover":              "require_separate_approver",
 	"rerateVarianceTolerancePercent":       "rerate_variance_tolerance_percent",
 	"replacementInvoiceReviewPolicy":       "replacement_invoice_review_policy",
 	"customerCreditBalancePolicy":          "customer_credit_balance_policy",
@@ -2330,6 +2333,7 @@ var InvoiceAdjustmentControlInsertableColumns = []string{
 	"standard_adjustment_approval_threshold",
 	"write_off_approval_policy",
 	"write_off_approval_threshold",
+	"require_separate_approver",
 	"rerate_variance_tolerance_percent",
 	"replacement_invoice_review_policy",
 	"customer_credit_balance_policy",
@@ -2416,6 +2420,7 @@ var InvoiceAdjustmentControlFilter = struct {
 	StandardAdjustmentApprovalThreshold  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "standardAdjustmentApprovalThreshold" → DB: "standard_adjustment_approval_threshold"
 	WriteOffApprovalPolicy               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "writeOffApprovalPolicy" → DB: "write_off_approval_policy"
 	WriteOffApprovalThreshold            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "writeOffApprovalThreshold" → DB: "write_off_approval_threshold"
+	RequireSeparateApprover              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requireSeparateApprover" → DB: "require_separate_approver"
 	RerateVarianceTolerancePercent       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rerateVarianceTolerancePercent" → DB: "rerate_variance_tolerance_percent"
 	ReplacementInvoiceReviewPolicy       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "replacementInvoiceReviewPolicy" → DB: "replacement_invoice_review_policy"
 	CustomerCreditBalancePolicy          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerCreditBalancePolicy" → DB: "customer_credit_balance_policy"
@@ -2463,6 +2468,9 @@ var InvoiceAdjustmentControlFilter = struct {
 	},
 	WriteOffApprovalThreshold: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("writeOffApprovalThreshold", op, value)
+	},
+	RequireSeparateApprover: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("requireSeparateApprover", op, value)
 	},
 	RerateVarianceTolerancePercent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("rerateVarianceTolerancePercent", op, value)

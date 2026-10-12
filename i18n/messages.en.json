@@ -189965,6 +189965,15 @@
       "routes/edi"
     ]
   },
+  "Require a separate approver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice-adjustment-control"
+    ]
+  },
   "Require approval": {
     "sites": 1,
     "scope": [
@@ -241253,6 +241262,15 @@
       "go/other"
     ]
   },
+  "This credit memo needs approval before it is posted. Save it as a draft for an approver to post.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This custom field has <b>{0, plural, one {# value} other {# values}}</b> across <b>{1, plural, one {# resource} other {# resources}}</b>.": {
     "sites": 1,
     "scope": [
@@ -268028,6 +268046,15 @@
       "routes/worker"
     ]
   },
+  "Whoever submits an adjustment or raises a credit memo that needs approval cannot approve or post it themselves. Leave this off if one person handles billing.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice-adjustment-control"
+    ]
+  },
   "Whole number": {
     "sites": 1,
     "scope": [
@@ -272008,6 +272035,15 @@
       "apps/web/components"
     ]
   },
+  "You raised this credit memo, so someone else must approve and post it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "You replied": {
     "sites": 1,
     "scope": [
@@ -272060,6 +272096,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "You submitted this adjustment, so someone else must approve it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "You took it": {
