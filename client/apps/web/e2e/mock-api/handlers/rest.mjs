@@ -3,12 +3,16 @@ import { PROVIDER_ROUTES } from "./aiproviders.mjs";
 import { AI_ROUTES } from "./aicontrol.mjs";
 import { TRIAGE_ROUTES } from "./triage.mjs";
 import { DESK_CARD_ROUTES } from "./deskcards.mjs";
+import { DESK_CASE_ROUTES } from "./deskcase.mjs";
+import { DESK_THREAD_ROUTES } from "./deskthreads.mjs";
 import { ORG, permissionManifest } from "../fixtures/session.mjs";
 import { SETTINGS_ROUTES } from "./settings.mjs";
 
 const EMPTY_PAGE = { results: [], count: 0, next: null, prev: null };
 
 const ROUTES = [
+  ...DESK_CASE_ROUTES,
+  ...DESK_THREAD_ROUTES,
   ...TRIAGE_ROUTES,
   ...PROVIDER_ROUTES,
   ...EXTENSION_ROUTES,
@@ -48,8 +52,6 @@ const ROUTES = [
   ],
   ["GET", /^\/api\/v1\/page-favorites\/check\/?$/, () => ({ favorited: false })],
   ["GET", /^\/api\/v1\/page-favorites\/?$/, () => []],
-  ["GET", /^\/api\/v1\/assistant\/threads\/?$/, () => ({ items: [], total: 0 })],
-  ["GET", /^\/api\/v1\/assistant\/turns\/active\/?$/, () => ({ items: [] })],
   ["GET", /^\/api\/v1\/documents\/uploads\/active\/?$/, () => []],
   ["GET", /^\/api\/v1\/realtime\/stream\/?$/, () => ({ __stream: true })],
   ["GET", /^\/api\/v1\/insights\/?$/, () => ({ items: [], total: 0 })],
@@ -62,7 +64,9 @@ export function handleRest(state, { method, path, query, body }) {
       const payload = handler(state, path, body, query);
       if (payload && payload.__stream) return { known: true, stream: true };
       if (payload && payload.__raw) return { known: true, raw: payload.__raw, contentType: payload.contentType };
-      if (payload && payload.__sse) return { known: true, sse: payload.__sse };
+      if (payload && payload.__sse) {
+        return { known: true, sse: payload.__sse, sseHold: payload.__sseHold };
+      }
       if (payload && payload.__status) {
         return { known: true, status: payload.__status, payload: payload.body };
       }

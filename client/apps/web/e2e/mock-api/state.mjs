@@ -27,6 +27,8 @@ export const SCENARIO_DEFAULTS = {
   desk: process.env.MOCK_DESK ?? "full",
   // the card the Desk cards conversation holds
   deskSlug: process.env.MOCK_DESK_SLUG ?? "tractor-t-101",
+  // the Desk's live conversation: idle | working (a reply under way, steered, follow-ups queued)
+  deskReply: process.env.MOCK_DESK_REPLY ?? "idle",
 };
 
 const TRIAGE_SCENARIOS = new Set(["live", "firstDay", "noMailbox", "deskOff"]);
