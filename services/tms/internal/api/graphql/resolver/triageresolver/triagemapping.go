@@ -34,7 +34,7 @@ func ruleFromInput(input *gqlmodel.TriageRuleInput) (*triage.Rule, error) {
 
 func userByID(ctx context.Context, id pulid.ID) (*tenant.User, error) {
 	if id.IsNil() {
-		return nil, nil
+		return nil, nil //nolint:nilnil // no one is named, which is not a failure
 	}
 	if err := base.RequireLoaders(ctx); err != nil {
 		return nil, err

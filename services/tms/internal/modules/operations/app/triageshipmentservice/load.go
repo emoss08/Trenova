@@ -44,13 +44,13 @@ type loadBuild struct {
 	now      time.Time
 }
 
-func (b *loadBuild) value(key inboundmessage.LoadFieldKey) (value, path string, ok bool) {
+func (b *loadBuild) value(key inboundmessage.LoadFieldKey) (string, bool) {
 	field, ok := b.fields[key]
 	if !ok || strings.TrimSpace(field.Value) == "" {
-		return "", "", false
+		return "", false
 	}
 
-	return strings.TrimSpace(field.Value), fmt.Sprintf("fields[%d].value", field.Index), true
+	return strings.TrimSpace(field.Value), true
 }
 
 func (b *loadBuild) fail(
@@ -96,7 +96,7 @@ func (s *Service) CreateLoad(
 		return nil, err
 	}
 
-	if instructions, _, ok := build.value(inboundmessage.LoadFieldInstructions); ok {
+	if instructions, ok := build.value(inboundmessage.LoadFieldInstructions); ok {
 		if _, commentErr := s.comments.CreateSystem(
 			ctx,
 			&shipmentports.CreateSystemShipmentCommentRequest{
@@ -223,7 +223,7 @@ func newStop(
 }
 
 func (s *Service) resolveCustomer(ctx context.Context, b *loadBuild) (pulid.ID, error) {
-	text, _, ok := b.value(inboundmessage.LoadFieldCustomer)
+	text, ok := b.value(inboundmessage.LoadFieldCustomer)
 	if !ok {
 		if b.req.CustomerID.IsNotNil() {
 			return b.req.CustomerID, nil
@@ -350,7 +350,7 @@ func (s *Service) resolvePlace(
 	key inboundmessage.LoadFieldKey,
 	missing string,
 ) (resolvedPlace, error) {
-	text, _, ok := b.value(key)
+	text, ok := b.value(key)
 	if !ok {
 		b.fail(key, errortypes.ErrRequired, missing)
 
@@ -409,7 +409,7 @@ func (b *loadBuild) window(
 	place resolvedPlace,
 	missing string,
 ) *timeutils.Window {
-	text, _, ok := b.value(key)
+	text, ok := b.value(key)
 	if !ok {
 		b.fail(key, errortypes.ErrRequired, missing)
 
@@ -435,7 +435,7 @@ func (s *Service) applyEquipment(
 	b *loadBuild,
 	entity *shipment.Shipment,
 ) error {
-	text, _, ok := b.value(inboundmessage.LoadFieldEquipment)
+	text, ok := b.value(inboundmessage.LoadFieldEquipment)
 	if !ok {
 		return nil
 	}
@@ -462,7 +462,7 @@ func (s *Service) applyEquipment(
 }
 
 func (b *loadBuild) applyWeight(entity *shipment.Shipment) {
-	text, _, ok := b.value(inboundmessage.LoadFieldWeight)
+	text, ok := b.value(inboundmessage.LoadFieldWeight)
 	if !ok {
 		return
 	}
@@ -503,7 +503,7 @@ func parsePounds(text string) (int64, bool) {
 }
 
 func (b *loadBuild) applyRate(entity *shipment.Shipment) {
-	text, _, ok := b.value(inboundmessage.LoadFieldRate)
+	text, ok := b.value(inboundmessage.LoadFieldRate)
 	if !ok {
 		return
 	}
@@ -532,7 +532,7 @@ func firstAmount(text string) string {
 }
 
 func (b *loadBuild) applyReference(entity *shipment.Shipment) {
-	text, _, ok := b.value(inboundmessage.LoadFieldReference)
+	text, ok := b.value(inboundmessage.LoadFieldReference)
 	if !ok {
 		return
 	}
@@ -550,7 +550,7 @@ func (s *Service) applyCommodity(
 	b *loadBuild,
 	entity *shipment.Shipment,
 ) error {
-	text, _, ok := b.value(inboundmessage.LoadFieldCommodity)
+	text, ok := b.value(inboundmessage.LoadFieldCommodity)
 	if !ok {
 		return nil
 	}

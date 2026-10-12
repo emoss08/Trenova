@@ -240,7 +240,7 @@ type failure struct {
 	cause   error
 }
 
-func (s *Service) fail(ctx context.Context, f *failure) (*triage.Reply, error) {
+func (s *tracker) fail(ctx context.Context, f *failure) (*triage.Reply, error) {
 	if f.cause != nil {
 		s.l.Warn("an inbound reply was not sent",
 			zap.String("replyId", f.reply.ID.String()),
@@ -270,7 +270,7 @@ func (s *Service) fail(ctx context.Context, f *failure) (*triage.Reply, error) {
 	return updated, nil
 }
 
-func (s *Service) suggestAddress(
+func (s *tracker) suggestAddress(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
 	refused string,
@@ -295,7 +295,7 @@ func (s *Service) suggestAddress(
 	return addresses[0]
 }
 
-func (s *Service) markSent(
+func (s *tracker) markSent(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
 	reply *triage.Reply,
@@ -329,7 +329,7 @@ func (s *Service) markSent(
 	return updated, nil
 }
 
-func (s *Service) applyEmailStatus(
+func (s *tracker) applyEmailStatus(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
 	reply *triage.Reply,
@@ -413,7 +413,7 @@ func eventDetail(raw map[string]any) string {
 	return ""
 }
 
-func (s *Service) EmailMessageChanged(ctx context.Context, change emailports.EmailMessageChange) {
+func (s *tracker) EmailMessageChanged(ctx context.Context, change emailports.EmailMessageChange) {
 	sent := change.Message
 	if sent == nil {
 		return

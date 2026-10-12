@@ -157,7 +157,7 @@ func SharedOptions() fx.Option {
 			triagenova.New,
 			inboundreplyservice.New,
 			fx.Annotate(
-				func(s *inboundreplyservice.Service) emailports.EmailMessageObserver { return s },
+				inboundreplyservice.NewEmailObserver,
 				fx.ResultTags(emailports.EmailMessageObserverGroup),
 			),
 			triageworkservice.New,

@@ -16,16 +16,22 @@ import (
 	"go.uber.org/zap"
 )
 
-type Params struct {
+type TrackerParams struct {
 	fx.In
 
-	Logger        *zap.Logger
-	Messages      inboundmessageports.InboundMessageRepository
-	Replies       inboundmessageports.InboundReplyRepository
+	Logger     *zap.Logger
+	Messages   inboundmessageports.InboundMessageRepository
+	Replies    inboundmessageports.InboundReplyRepository
+	Work       inboundmessageports.TriageWorkRepository
+	Activities inboundmessageports.TriageActivityRecorder
+	Notifier   inboundmessageports.TriageMessageNotifier
+}
+
+type Params struct {
+	fx.In
+	TrackerParams
+
 	Templates     inboundmessageports.TriageReplyTemplateRepository
-	Work          inboundmessageports.TriageWorkRepository
-	Activities    inboundmessageports.TriageActivityRecorder
-	Notifier      inboundmessageports.TriageMessageNotifier
 	Organizations tenantports.OrganizationRepository
 	Nova          *triagenova.Caller
 	Email         emailports.EmailService                   `optional:"true"`
@@ -33,41 +39,58 @@ type Params struct {
 	Stops         inboundmessageports.TriageStopTimesReader `optional:"true"`
 }
 
+type tracker struct {
+	l          *zap.Logger
+	messages   inboundmessageports.InboundMessageRepository
+	replies    inboundmessageports.InboundReplyRepository
+	work       inboundmessageports.TriageWorkRepository
+	activities inboundmessageports.TriageActivityRecorder
+	notifier   inboundmessageports.TriageMessageNotifier
+	now        func() int64
+}
+
 type Service struct {
-	l             *zap.Logger
-	messages      inboundmessageports.InboundMessageRepository
-	replies       inboundmessageports.InboundReplyRepository
+	*tracker
+
 	templates     inboundmessageports.TriageReplyTemplateRepository
-	work          inboundmessageports.TriageWorkRepository
-	activities    inboundmessageports.TriageActivityRecorder
-	notifier      inboundmessageports.TriageMessageNotifier
 	organizations tenantports.OrganizationRepository
 	nova          triagenova.Completer
 	email         emailports.EmailService
 	peeks         inboundmessageports.TriageShipmentPeeker
 	stops         inboundmessageports.TriageStopTimesReader
-	now           func() int64
+}
+
+func newTracker(p *TrackerParams) *tracker {
+	return &tracker{
+		l:          p.Logger.Named("service.inbound-reply"),
+		messages:   p.Messages,
+		replies:    p.Replies,
+		work:       p.Work,
+		activities: p.Activities,
+		notifier:   p.Notifier,
+		now:        timeutils.NowUnix,
+	}
+}
+
+func NewEmailObserver(
+	p TrackerParams,
+) emailports.EmailMessageObserver { //nolint:gocritic // fx params are passed by value
+	return newTracker(&p)
 }
 
 func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 	return &Service{
-		l:             p.Logger.Named("service.inbound-reply"),
-		messages:      p.Messages,
-		replies:       p.Replies,
+		tracker:       newTracker(&p.TrackerParams),
 		templates:     p.Templates,
-		work:          p.Work,
-		activities:    p.Activities,
-		notifier:      p.Notifier,
 		organizations: p.Organizations,
 		nova:          p.Nova,
 		email:         p.Email,
 		peeks:         p.Peeks,
 		stops:         p.Stops,
-		now:           timeutils.NowUnix,
 	}
 }
 
-func (s *Service) message(
+func (s *tracker) message(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	messageID pulid.ID,
@@ -80,7 +103,7 @@ func (s *Service) message(
 	})
 }
 
-func (s *Service) record(ctx context.Context, activities ...*triage.Activity) {
+func (s *tracker) record(ctx context.Context, activities ...*triage.Activity) {
 	if len(activities) == 0 {
 		return
 	}
@@ -93,7 +116,7 @@ func (s *Service) record(ctx context.Context, activities ...*triage.Activity) {
 	}
 }
 
-func (s *Service) changed(ctx context.Context, message *inboundmessage.InboundMessage) {
+func (s *tracker) changed(ctx context.Context, message *inboundmessage.InboundMessage) {
 	s.notifier.MessagesChanged(ctx, message)
 }
 

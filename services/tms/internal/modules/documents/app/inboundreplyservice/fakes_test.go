@@ -490,18 +490,20 @@ func newFixture() *fixture {
 		message: message,
 	}
 	f.service = &Service{
-		l:             zap.NewNop(),
-		messages:      f.messages,
-		replies:       f.replies,
+		tracker: &tracker{
+			l:          zap.NewNop(),
+			messages:   f.messages,
+			replies:    f.replies,
+			work:       f.work,
+			activities: f.recorder,
+			notifier:   f.notifier,
+			now:        func() int64 { return 1_791_000_000 },
+		},
 		templates:     f.templates,
-		work:          f.work,
-		activities:    f.recorder,
-		notifier:      f.notifier,
 		organizations: fakeOrganizations{},
 		nova:          f.nova,
 		email:         f.email,
 		peeks:         f.peeks,
-		now:           func() int64 { return 1_791_000_000 },
 	}
 
 	return f

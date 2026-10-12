@@ -9,7 +9,19 @@ export type TriageRowMode = "next" | "preview";
  * `openOverlay` by whatever asked for it — a key, a button, a menu item — and
  * rendered by the page, so the same dialog opens the same way from anywhere.
  */
-export type TriageOverlay = { kind: "link"; messageId: string } | { kind: "shortcuts" };
+export type TriageOverlay =
+  | { kind: "link"; messageId: string }
+  | { kind: "shortcuts" }
+  /** The document viewer, on one file of a message. */
+  | { kind: "doc"; messageId: string; attachmentId: string }
+  /** A shipment the message is about, drawn over the reader. */
+  | { kind: "shipmentPeek"; messageId: string; shipmentId: string }
+  /** A customer the message is about, drawn over the reader. */
+  | { kind: "customerPeek"; messageId: string; customerId: string }
+  /** Hands the message and the steps still open on it to an agent in Desk. */
+  | { kind: "desk"; messageId: string; openActionIds: readonly string[] }
+  /** Connects a new source, or reconnects the one named. */
+  | { kind: "connect"; mailboxId: string | null };
 
 /**
  * What the open reader can do that a key asks for. The reader registers these
@@ -42,6 +54,8 @@ type TriageState = {
   railCollapsed: boolean;
   /** What rows show under the subject. Kept per viewer. */
   rowMode: TriageRowMode;
+  /** Whether the reader underlines the words Nova read a fact from. Kept per viewer. */
+  underlineFacts: boolean;
   readerCommands: ReaderCommands;
   /** How many Triage pages are mounted; arrival toasts only show while one is. */
   mounted: number;
@@ -59,6 +73,7 @@ type TriageState = {
   togglePanel: () => void;
   toggleRail: () => void;
   setRowMode: (mode: TriageRowMode) => void;
+  setUnderlineFacts: (underline: boolean) => void;
   setReaderCommands: (commands: ReaderCommands) => void;
   mount: () => () => void;
 };
@@ -124,6 +139,7 @@ export const useTriageStore = create<TriageState>()(
       panelOpen: true,
       railCollapsed: false,
       rowMode: "next",
+      underlineFacts: false,
       readerCommands: {},
       mounted: 0,
 
@@ -159,6 +175,7 @@ export const useTriageStore = create<TriageState>()(
       togglePanel: () => set((state) => ({ panelOpen: !state.panelOpen })),
       toggleRail: () => set((state) => ({ railCollapsed: !state.railCollapsed })),
       setRowMode: (rowMode) => set({ rowMode }),
+      setUnderlineFacts: (underlineFacts) => set({ underlineFacts }),
       setReaderCommands: (readerCommands) => set({ readerCommands }),
       mount: () => {
         set((state) => ({ mounted: state.mounted + 1 }));
@@ -174,7 +191,11 @@ export const useTriageStore = create<TriageState>()(
     }),
     {
       name: "trenova-triage",
-      partialize: (state) => ({ railCollapsed: state.railCollapsed, rowMode: state.rowMode }),
+      partialize: (state) => ({
+        railCollapsed: state.railCollapsed,
+        rowMode: state.rowMode,
+        underlineFacts: state.underlineFacts,
+      }),
     },
   ),
 );

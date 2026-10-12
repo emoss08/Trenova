@@ -208,7 +208,10 @@ func (s *Service) senderHints(
 		return nil
 	}
 
-	domain := stringutils.FirstNonEmpty(message.SenderDomain, emailutils.Domain(message.FromAddress))
+	domain := stringutils.FirstNonEmpty(
+		message.SenderDomain,
+		emailutils.Domain(message.FromAddress),
+	)
 	hints, err := s.hints.HintsFor(ctx, tenantInfo, domain)
 	if err != nil {
 		s.l.Warn("could not read the sender's classification hints",
@@ -258,9 +261,12 @@ func decodeClassification(text string) (Classification, error) {
 	return Classification{
 		Class:      class,
 		Confidence: payload.Confidence,
-		Reasoning:  stringutils.TruncateRunes(strings.TrimSpace(payload.Reasoning), maxReasoningRunes),
-		Narrated:   true,
-		Facts:      factsFrom(payload.Facts),
+		Reasoning: stringutils.TruncateRunes(
+			strings.TrimSpace(payload.Reasoning),
+			maxReasoningRunes,
+		),
+		Narrated: true,
+		Facts:    factsFrom(payload.Facts),
 	}, nil
 }
 
@@ -297,8 +303,11 @@ func factsFrom(raw []factPayload) []inboundmessage.Fact {
 		}
 
 		facts = append(facts, inboundmessage.Fact{
-			Key:   key,
-			Label: stringutils.FirstNonEmpty(stringutils.OneLine(item.Label, maxFactLabelRunes), key),
+			Key: key,
+			Label: stringutils.FirstNonEmpty(
+				stringutils.OneLine(item.Label, maxFactLabelRunes),
+				key,
+			),
 			Value: value,
 			Quote: quote,
 			Tone:  tone,
