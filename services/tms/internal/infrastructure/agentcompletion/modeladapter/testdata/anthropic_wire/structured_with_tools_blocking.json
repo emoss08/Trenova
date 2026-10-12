@@ -1,0 +1,66 @@
+{
+  "method": "POST",
+  "path": "/v1/messages",
+  "query": "",
+  "headers": {
+    "Anthropic-Version": "2023-06-01",
+    "Content-Type": "application/json",
+    "X-Api-Key": "sk-test"
+  },
+  "body": {
+    "max_tokens": 512,
+    "messages": [
+      {
+        "content": [
+          {
+            "cache_control": {
+              "type": "ephemeral"
+            },
+            "text": "Pick up in Dallas, deliver in Austin.",
+            "type": "text"
+          }
+        ],
+        "role": "user"
+      }
+    ],
+    "model": "claude-opus-4-8",
+    "system": [
+      {
+        "cache_control": {
+          "type": "ephemeral"
+        },
+        "text": "Extract the stops.",
+        "type": "text"
+      }
+    ],
+    "tools": [
+      {
+        "cache_control": {
+          "type": "ephemeral"
+        },
+        "description": "Look up a shipment by its number",
+        "input_schema": {
+          "additionalProperties": false,
+          "properties": {
+            "include": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "number": {
+              "description": "Pro number",
+              "maxLength": 20,
+              "type": "string"
+            }
+          },
+          "required": [
+            "number"
+          ],
+          "type": "object"
+        },
+        "name": "get_shipment"
+      }
+    ]
+  }
+}

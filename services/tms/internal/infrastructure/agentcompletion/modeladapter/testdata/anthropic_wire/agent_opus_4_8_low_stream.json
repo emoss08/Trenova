@@ -1,0 +1,184 @@
+{
+  "method": "POST",
+  "path": "/v1/messages",
+  "query": "",
+  "headers": {
+    "Anthropic-Version": "2023-06-01",
+    "Content-Type": "application/json",
+    "X-Api-Key": "sk-test"
+  },
+  "body": {
+    "max_tokens": 10240,
+    "messages": [
+      {
+        "content": [
+          {
+            "text": "Where is S1?",
+            "type": "text"
+          }
+        ],
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "text": "Looking it up.",
+            "type": "text"
+          },
+          {
+            "id": "call_1",
+            "input": {
+              "include": [
+                "stops",
+                "moves"
+              ],
+              "number": "S1"
+            },
+            "name": "get_shipment",
+            "type": "tool_use"
+          }
+        ],
+        "role": "assistant"
+      },
+      {
+        "content": [
+          {
+            "content": "{\"status\":\"InTransit\"}",
+            "tool_use_id": "call_1",
+            "type": "tool_result"
+          }
+        ],
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "text": "In Dallas.",
+            "type": "text"
+          }
+        ],
+        "role": "assistant"
+      },
+      {
+        "content": [
+          {
+            "text": "And S2 and S3?",
+            "type": "text"
+          }
+        ],
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "signature": "sig_current",
+            "thinking": "this turn",
+            "type": "thinking"
+          },
+          {
+            "data": "redacted_payload",
+            "type": "redacted_thinking"
+          },
+          {
+            "id": "call_2",
+            "input": {
+              "number": "S2"
+            },
+            "name": "get_shipment",
+            "type": "tool_use"
+          },
+          {
+            "id": "call_3",
+            "input": {},
+            "name": "get_shipment",
+            "type": "tool_use"
+          }
+        ],
+        "role": "assistant"
+      },
+      {
+        "content": [
+          {
+            "content": "{\"status\":\"Delivered\"}",
+            "tool_use_id": "call_2",
+            "type": "tool_result"
+          }
+        ],
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "cache_control": {
+              "type": "ephemeral"
+            },
+            "content": "not found",
+            "is_error": true,
+            "tool_use_id": "call_3",
+            "type": "tool_result"
+          }
+        ],
+        "role": "user"
+      }
+    ],
+    "model": "claude-opus-4-8",
+    "output_config": {
+      "effort": "low"
+    },
+    "stream": true,
+    "system": [
+      {
+        "cache_control": {
+          "type": "ephemeral"
+        },
+        "text": "Rules that never change.",
+        "type": "text"
+      },
+      {
+        "text": "\n\nToday is Friday.",
+        "type": "text"
+      }
+    ],
+    "thinking": {
+      "display": "summarized",
+      "type": "adaptive"
+    },
+    "tools": [
+      {
+        "description": "Look up a shipment by its number",
+        "input_schema": {
+          "additionalProperties": false,
+          "properties": {
+            "include": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "number": {
+              "description": "Pro number",
+              "maxLength": 20,
+              "type": "string"
+            }
+          },
+          "required": [
+            "number"
+          ],
+          "type": "object"
+        },
+        "name": "get_shipment"
+      },
+      {
+        "cache_control": {
+          "type": "ephemeral"
+        },
+        "description": "List workers",
+        "input_schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "name": "list_workers"
+      }
+    ]
+  }
+}
