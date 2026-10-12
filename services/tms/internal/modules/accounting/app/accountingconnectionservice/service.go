@@ -273,10 +273,14 @@ func (s *Service) Disconnect(
 		return nil, err
 	}
 
-	if current, getErr := s.connections.GetByType(ctx, accountingsyncports.GetAccountingConnectionRequest{
-		TenantInfo:      req.TenantInfo,
-		IntegrationType: req.IntegrationType,
-	}); getErr == nil && current.IsActive() {
+	if current, getErr := s.connections.GetByType(
+		ctx,
+		accountingsyncports.GetAccountingConnectionRequest{
+			TenantInfo:      req.TenantInfo,
+			IntegrationType: req.IntegrationType,
+		},
+	); getErr == nil &&
+		current.IsActive() {
 		s.releaseSubscriptions(ctx, current)
 	}
 

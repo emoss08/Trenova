@@ -128,7 +128,9 @@ func (c *Connector) purchaseInput(
 	return input, nil
 }
 
-func purchaseLines(lines []accountingsyncports.AccountingPurchaseLine) ([]businesscentral.LineInput, error) {
+func purchaseLines(
+	lines []accountingsyncports.AccountingPurchaseLine,
+) ([]businesscentral.LineInput, error) {
 	if len(lines) == 0 {
 		return nil, errLinesRequired
 	}

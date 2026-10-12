@@ -522,7 +522,9 @@ func (s *Service) linkTarget(
 	ctx context.Context,
 	conn *accountingsync.AccountingConnection,
 ) *linkTarget {
-	target := &linkTarget{urlOf: func(accountingsyncports.AccountingDocumentLink) string { return "" }}
+	target := &linkTarget{
+		urlOf: func(accountingsyncports.AccountingDocumentLink) string { return "" },
+	}
 	session, err := s.connService.Session(ctx, tenantOf(conn), conn.ID)
 	if err != nil {
 		s.l.Debug("linking without provider links: the connection cannot be used", zap.Error(err))
@@ -564,14 +566,14 @@ func (s *Service) linkRecords(
 				continue
 			}
 			if !record.Link(&accountingsync.SyncLink{
-				ExternalID:  change.ExternalID,
+				ExternalID: change.ExternalID,
 				ExternalURL: target.urlOf(accountingsyncports.AccountingDocumentLink{
 					Kind:       objectType,
 					ExternalID: change.ExternalID,
 					DocNumber:  change.ExternalNumber,
 				}),
-				Resolution:  linkedText(p),
-				Combined:    combined,
+				Resolution: linkedText(p),
+				Combined:   combined,
 			}, s.nowUnix()) {
 				continue
 			}

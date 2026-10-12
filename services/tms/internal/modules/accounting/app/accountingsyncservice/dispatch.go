@@ -375,11 +375,14 @@ func finishedResult(
 	if written != nil {
 		result.ExternalID = written.ExternalID
 		result.ExternalDocNumber = written.DocNumber
-		result.ExternalURL = sess.writer.DocumentURL(sess.auth, accountingsyncports.AccountingDocumentLink{
-			Kind:       record.ObjectType,
-			ExternalID: written.ExternalID,
-			DocNumber:  written.DocNumber,
-		})
+		result.ExternalURL = sess.writer.DocumentURL(
+			sess.auth,
+			accountingsyncports.AccountingDocumentLink{
+				Kind:       record.ObjectType,
+				ExternalID: written.ExternalID,
+				DocNumber:  written.DocNumber,
+			},
+		)
 	}
 	return &pushResult{result: result, refs: refs}, nil
 }

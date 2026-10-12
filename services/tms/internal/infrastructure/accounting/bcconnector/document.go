@@ -268,7 +268,9 @@ func (c *Connector) salesInput(
 	return input, nil
 }
 
-func salesLines(lines []accountingsyncports.AccountingDocumentLine) ([]businesscentral.LineInput, error) {
+func salesLines(
+	lines []accountingsyncports.AccountingDocumentLine,
+) ([]businesscentral.LineInput, error) {
 	if len(lines) == 0 {
 		return nil, errLinesRequired
 	}
@@ -293,7 +295,9 @@ func salesLines(lines []accountingsyncports.AccountingDocumentLine) ([]businessc
 	return out, nil
 }
 
-func lineQuantity(line *accountingsyncports.AccountingDocumentLine) (quantity, price decimal.Decimal) {
+func lineQuantity(
+	line *accountingsyncports.AccountingDocumentLine,
+) (quantity, price decimal.Decimal) {
 	if line.Quantity.IsPositive() && !line.UnitPrice.IsNegative() &&
 		sameMoney(line.Quantity.Mul(line.UnitPrice), line.Amount) {
 		return line.Quantity, line.UnitPrice

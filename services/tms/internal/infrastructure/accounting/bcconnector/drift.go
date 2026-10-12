@@ -25,7 +25,9 @@ var readOrder = []businesscentral.DocumentKind{
 }
 
 func (c *Connector) DocumentReadLimits() accountingsyncports.AccountingDocumentReadLimits {
-	return accountingsyncports.AccountingDocumentReadLimits{MaxPerRead: businesscentral.MaxIDsPerRead}
+	return accountingsyncports.AccountingDocumentReadLimits{
+		MaxPerRead: businesscentral.MaxIDsPerRead,
+	}
 }
 
 func readKindOf(
