@@ -85,6 +85,7 @@ Loaded now:
 - close_fiscal_period
 
 Callable after find_tools:
+- read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - list_accounting_sync_records — List the documents Trenova sends to the accounting system and where each stands, newest first.
 - get_accounting_sync_record — Get one accounting sync record with its status, why it last failed and every try.
 - retry_accounting_sync — Send documents that did not reach the accounting system again.

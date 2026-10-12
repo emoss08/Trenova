@@ -152,7 +152,6 @@
   "Status updates": "狀態更新",
   "Stop performance": "停靠點績效",
   "Subject line": "主旨列",
-  "Tax exempt": "免稅",
   "The DOT number or broker vetting setting has unsaved changes. Save the customer before vetting so the new values are used.": "DOT 編號或貨運經紀審核設定有未儲存的變更。請先儲存客戶資料再進行審核，才能套用新值。",
   "The customer update desk emails these as each stop is reached or left. A customer set to Nothing is never emailed about a stop.": "客戶通知工作檯會在每個停靠點抵達或離開時寄出這些電子郵件。設定為「無」的客戶不會收到任何停靠點相關的電子郵件。",
   "The customer's tax exemption certificate or resale number, required for audit compliance.": "客戶的免稅證明或轉售編號，稽核合規所必需。",

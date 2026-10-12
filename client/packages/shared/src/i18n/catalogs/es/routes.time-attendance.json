@@ -134,12 +134,10 @@
   "{0} running time": "{0} de tiempo de ejecución",
   "{0} shift meter": "Medidor de turno de {0}",
   "{0} still running": "{0} sigue en ejecución",
-  "{0} to {1}": "de {0} a {1}",
   "{0} waiting for a run": "{0} a la espera de una ejecución",
   "{0} with OT": "{0} con horas extra",
   "{0} – {1} · {2, plural, one {# timesheet} other {# timesheets}}.": "{0} – {1} · {2, plural, one {# hoja de horas} other {# hojas de horas}}.",
   "{0}'s hours": "Horas de {0}",
-  "{0}m": "{0} m",
   "· {0} OT": "· {0} de horas extra",
   "· {0}m break": "· descanso de {0} min",
   "– now": "– ahora"

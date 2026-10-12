@@ -96,6 +96,7 @@ Loaded now:
 - search_shipments
 
 Callable after find_tools:
+- read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - get_worker — Retrieve one worker (driver) by id, including their profile and current state.
 - list_expiring_credentials — List worker (driver) credentials falling due, newest expiry first — medical cards, licences, hazmat endorsements and anything else the organization tracks.
 - list_time_off — List worker (driver) time-off requests — who is out, who is asking to be, and who was turned down.

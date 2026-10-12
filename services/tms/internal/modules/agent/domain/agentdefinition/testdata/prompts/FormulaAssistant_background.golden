@@ -71,6 +71,7 @@ Loaded now:
 
 Callable after find_tools:
 - list_formula_templates — List formula templates — the rating methods a shipment is priced with.
+- get_formula_template — Retrieve one formula template by id, whole: its formula, variables and their defaults, breakdown lines, minimum, maximum, rounding, status and version.
 - list_rate_agreements — List rate agreements, the contracts and tariffs that price freight for a customer or pay a carrier.
 - get_rate_agreement — Retrieve one rate agreement, a contract or tariff, by id with its lane rules, rates, minimums and weight breaks.
 - get_rate_matrix — Retrieve one rate matrix by id: the grid of rates a lane rule prices from.

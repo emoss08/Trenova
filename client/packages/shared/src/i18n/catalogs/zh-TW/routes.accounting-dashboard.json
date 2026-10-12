@@ -33,6 +33,5 @@
   "{0, plural, one {# open invoice} other {# open invoices}}": "{0, plural, other {# 張未結發票}}",
   "{0} applications in period": "期間內沖抵 {0} 筆",
   "{0} inv · oldest {1}d": "{0} 張發票 · 最久 {1} 天",
-  "{0} past due": "{0} 已逾期",
   "{0}d past due": "逾期 {0} 天"
 }

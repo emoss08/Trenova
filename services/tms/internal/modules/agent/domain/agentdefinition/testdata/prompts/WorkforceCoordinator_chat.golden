@@ -94,6 +94,7 @@ Loaded now:
 - run_dot_random_draw
 
 Callable after find_tools:
+- read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - search_worker — Find a driver or other worker by name or code, or list the roster.
 - get_worker — Retrieve one worker (driver) by id, including their profile and current state.
 - update_worker_pto — Change the kind, days or reason of a time-off request still waiting for a decision.

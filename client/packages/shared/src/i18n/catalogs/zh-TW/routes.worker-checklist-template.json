@@ -24,7 +24,6 @@
   "Short unique identifier; saved in uppercase.": "簡短的唯一識別碼；會以大寫儲存。",
   "Shown as the line the owner ticks off on the worker's checklist.": "在駕駛員的檢查清單上，顯示為負責人勾選的項目。",
   "Shown on the worker's Checklist tab once a checklist is started from this template.": "自此範本啟動檢查清單後，會顯示在駕駛員的「檢查清單」分頁上。",
-  "Starts": "開始",
   "The employment event that starts this checklist for a worker.": "為駕駛員啟動此檢查清單的僱傭事件。",
   "The item completes itself once a worker document of this type is on file.": "檔案中一旦有此類型的駕駛員文件，此項目即自動完成。",
   "The item completes itself once the worker holds a valid credential of this type.": "駕駛員一旦持有此類型的有效證照，此項目即自動完成。",

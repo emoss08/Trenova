@@ -81,6 +81,7 @@ Loaded now:
 - list_trailers
 
 Callable after find_tools:
+- read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - get_worker — Retrieve one worker (driver) by id, including their profile and current state.
 - plan_dispatch — Dry-run the dispatch optimizer over a window's uncovered moves: the driver it would put on each move and why, and what blocked the rest.
 - shop_carriers — Price a saved shipment against carriers and rank them by contract cost, margin against the customer's charge, and routing guide rank.

@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 563.
+Tools listed: 566.
 
 ## The model
 
@@ -59,7 +59,7 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 192 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 195 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 8 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 226 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 3 |
@@ -84,6 +84,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Describe report dataset (`describe_report_dataset`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Explain rate (`explain_rate`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Find in trenova (`find_in_trenova`) | Reads only | Automatic | — | — | Searches the product guide for the caller; nothing changes and nothing is sent. |
+| Find shipment records (`find_shipment_records`) | Reads only | Automatic | — | — | Matches the records a new shipment names against the organization's own; nothing changes and nothing is sent. |
 | Find tools (`find_tools`) | Reads only | Automatic | — | — | Loads more of the agent's own tools into the turn; it reads the catalog and changes nothing. |
 | Get accounting mapping (`get_accounting_mapping`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get accounting sync record (`get_accounting_sync_record`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -109,6 +110,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Get EDI partner (`get_edi_partner`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get EDI transfer (`get_edi_transfer`) | Reads only | Automatic | — | Always, from EDI | Reads a load tender a trading partner wrote, stops and references included; nothing changes and nothing is sent. |
 | Get fiscal close blockers (`get_fiscal_close_blockers`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Get formula template (`get_formula_template`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get fuel surcharge rates (`get_fuel_surcharge_rates`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get inbound message (`get_inbound_message`) | Reads only | Automatic | — | Always, from inbound message | Reads mail an outsider wrote; nothing changes and nothing is sent. |
 | Get insight (`get_insight`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -250,6 +252,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Propose formula (`propose_formula`) | Reads only | Automatic | — | — | Hands a formula to the person's own editor for them to insert, test and save; nothing is saved and nothing is sent. |
 | Quote shipment (`quote_shipment`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Rank move candidates (`rank_move_candidates`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Read attachment (`read_attachment`) | Reads only | Automatic | — | Always, from attachment | Reads text from a file the person attached to their own conversation; nothing changes and nothing is sent. |
 | Recall memory (`recall_memory`) | Reads only | Automatic | — | When the record is marked, from memory | Reads memories earlier runs saved, which carry the taint of the run that wrote them. |
 | Run report (`run_report`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Search documents (`search_documents`) | Reads only | Automatic | — | Always, from document | Searches text extracted from documents, many of which someone outside wrote; each record returned is checked against what the caller may read, and nothing changes or is sent. |

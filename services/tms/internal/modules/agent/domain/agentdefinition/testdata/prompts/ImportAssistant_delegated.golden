@@ -67,7 +67,9 @@ Loaded now:
 - set_required_field
 
 Callable after find_tools:
+- read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - get_customer — Retrieve one customer by id, with their billing and email profiles.
+- get_formula_template — Retrieve one formula template by id, whole: its formula, variables and their defaults, breakdown lines, minimum, maximum, rounding, status and version.
 - list_locations — List locations (facilities, terminals, yards) narrowed by status, code, name or city.
 - list_location_categories — List location categories — how facilities are grouped, and what each offers: secure parking, overnight, a restroom, whether an appointment is required.
 - accept_field — Accept one field read from the document as correct on the import page.

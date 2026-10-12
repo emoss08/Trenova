@@ -75,6 +75,7 @@ Loaded now:
 - list_gl_accounts
 
 Callable after find_tools:
+- read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - search_worker — Find a driver or other worker by name or code, or list the roster.
 - list_carriers — List the carriers this organization tenders freight to, narrowed by status, compliance, safety rating or authority number.
 - get_worker_earnings_summary — Summarize what a worker has earned but not yet been paid on a settlement.

@@ -24,7 +24,6 @@
   "Short unique identifier; saved in uppercase.": "Identificador único corto; se guarda en mayúsculas.",
   "Shown as the line the owner ticks off on the worker's checklist.": "Se muestra como la línea que el responsable marca en la lista de comprobación del trabajador.",
   "Shown on the worker's Checklist tab once a checklist is started from this template.": "Se muestra en la pestaña Lista de comprobación del trabajador cuando se inicia una lista desde esta plantilla.",
-  "Starts": "Comienza",
   "The employment event that starts this checklist for a worker.": "El evento laboral que inicia esta lista de comprobación para un trabajador.",
   "The item completes itself once a worker document of this type is on file.": "El elemento se completa solo cuando consta un documento del trabajador de este tipo.",
   "The item completes itself once the worker holds a valid credential of this type.": "El elemento se completa solo cuando el trabajador tiene una credencial válida de este tipo.",

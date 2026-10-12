@@ -63,9 +63,11 @@ Loaded now:
 - run_rate_simulation
 
 Callable after find_tools:
+- read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - describe_formula_schema — Describe what a rating formula may use: every shipment variable (one line each), the functions by signature, and the rate tables it can look up.
 - test_formula_expression — Price a formula expression with Trenova's formula engine, for sample loads or against a saved shipment.
 - propose_formula — Put a formula in front of the person for their editor, with its variables, a plain explanation and two or three sample loads priced by the engine.
+- get_formula_template — Retrieve one formula template by id, whole: its formula, variables and their defaults, breakdown lines, minimum, maximum, rounding, status and version.
 - list_rate_agreements — List rate agreements, the contracts and tariffs that price freight for a customer or pay a carrier.
 - get_rate_agreement — Retrieve one rate agreement, a contract or tariff, by id with its lane rules, rates, minimums and weight breaks.
 - get_rate_matrix — Retrieve one rate matrix by id: the grid of rates a lane rule prices from.

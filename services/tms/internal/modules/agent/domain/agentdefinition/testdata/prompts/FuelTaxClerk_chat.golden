@@ -92,6 +92,7 @@ Loaded now:
 - list_ifta_returns
 
 Callable after find_tools:
+- read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - get_tractor — Retrieve one tractor by id, with its equipment details, fleet and assigned workers.
 - search_worker — Find a driver or other worker by name or code, or list the roster.
 - get_shipment — Retrieve one shipment (load) by its id, with its stops, the driver and equipment assigned to each move, the holds on it now and its newest comments.

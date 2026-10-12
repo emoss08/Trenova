@@ -19,6 +19,8 @@ export function sourcePaths(webRoot) {
     router: join(src, "router.tsx"),
     navigation: join(src, "config", "navigation.config.ts"),
     recordLinks: join(src, "config", "record-links.ts"),
+    recordKinds: join(shared, "types", "generated", "record-kinds.ts"),
+    deskCards: join(src, "routes", "desk", "_components", "artifacts", "cards", "registry.tsx"),
     resources: join(shared, "types", "generated", "permission-resources.ts"),
     capabilities: join(shared, "types", "organization-capability.ts"),
   };
@@ -274,6 +276,29 @@ export function readNavigation(paths, members) {
 
 export function readRecordLinks(paths) {
   return objectConst(paths.recordLinks, "RECORD_LINKS");
+}
+
+/** The kinds of record the server knows, generated from its permission registry. */
+export function readRecordKinds(paths) {
+  return new Set(Object.keys(objectConst(paths.recordKinds, "RecordKindIDPrefix")));
+}
+
+/**
+ * The kinds of record the Desk draws as a card of its own: the keys of the
+ * card registry. Its values are lazily loaded components, which a static read
+ * cannot evaluate and does not need.
+ */
+export function readDeskCards(paths) {
+  const { program } = parseFile(paths.deskCards);
+  let node = topLevelConsts(program).get("RECORD_CARDS");
+  while (node && node.type !== "ObjectExpression" && node.expression) {
+    node = node.expression;
+  }
+  if (node?.type !== "ObjectExpression") {
+    throw new Error(`${paths.deskCards}: no top-level object RECORD_CARDS`);
+  }
+
+  return new Set(node.properties.map(propertyName).filter((name) => name !== null));
 }
 
 function jsxAttributeObject(element, name) {

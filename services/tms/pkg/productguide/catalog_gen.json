@@ -1,5 +1,5 @@
 {
-  "version": "sha256:57fba5177615bd7d12c7d297a7fa620c871d5e4b4dcb4c1949924e4cc9269fad",
+  "version": "sha256:be89aac2373a38fe324966d1e1d2017e3997780388e55ec5566acd983c1b45d9",
   "modules": [
     {
       "id": "home",
@@ -16876,7 +16876,8 @@
       "path": "/billing/queue",
       "params": {
         "item": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "capture_batch",
@@ -16921,7 +16922,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "dashboard",
@@ -16963,6 +16965,13 @@
         "panelType": "edit",
         "panelEntityId": "{id}"
       }
+    },
+    {
+      "entity": "formula_template",
+      "label": "Formula template",
+      "path": "/billing/configuration-files/formula-templates/{id}/edit",
+      "params": {},
+      "deskCard": true
     },
     {
       "entity": "fuel_purchase",
@@ -17039,7 +17048,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "rate_matrix",
@@ -17073,7 +17083,8 @@
         "expanded": "{id}",
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "tractor",

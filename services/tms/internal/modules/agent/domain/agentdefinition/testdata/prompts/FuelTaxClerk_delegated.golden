@@ -67,6 +67,7 @@ Loaded now:
 - get_fuel_surcharge_rates
 
 Callable after find_tools:
+- read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - list_tractors — List tractors (power units) narrowed by status, ownership, or a registration or lease date.
 - get_tractor — Retrieve one tractor by id, with its equipment details, fleet and assigned workers.
 - search_documents — Search the text of documents: rate confirmations, bills of lading, proofs of delivery, invoices, contracts, permits and other files attached to records.

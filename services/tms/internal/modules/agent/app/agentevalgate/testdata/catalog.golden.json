@@ -5977,7 +5977,7 @@
             "type": "integer"
           },
           "minTemperature": {
-            "description": "The lowest temperature it may be carried at, in degrees Fahrenheit.",
+            "description": "The lowest temperature it may be carried at, in degrees Fahrenheit, below maxTemperature. Leave it out for one setpoint such as a reefer held at -10 F, which is the maximum.",
             "maximum": 200,
             "minimum": -100,
             "type": "integer"
@@ -6062,7 +6062,7 @@
             "type": "string"
           },
           "code": {
-            "description": "The customer's short code, unique in this organization.",
+            "description": "The customer's short code, unique in this organization. When the person and the document give none, make one from the name: up to ten letters, such as HARBORLN for Harbor Line Foods.",
             "maxLength": 10,
             "type": "string"
           },
@@ -7433,7 +7433,7 @@
     },
     {
       "name": "create_shipment",
-      "description": "Enter a new shipment, priced by the customer's rate agreement when no price is given; to copy one, use duplicate_shipment. Give the customer, service type and shipment type by id. Price it the way the person did: \"$2,450 flat\" is the Flat Rate template with baseRate 2450, \"$2.10 a mile\" Per Mile with 2.10, and charges they name are accessorial charges. Given no price, leave the rating out and call it: it finds the agreement itself, so do not look one up. Only when it says none covers the lane, ask the person for the price, offering one to react to. Add the freight (pieces, weight, commodities, temperatures) and one move with its stops in travel order, each with a location id, a type and a local window such as 2026-10-01T08:00, from 0. Pass sourceDocumentId for a shipment read from an uploaded document. The system assigns the pro number; the BOL is optional, and a BOL must be unique.",
+      "description": "Enter a new shipment, priced by the customer's rate agreement when no price is given; to copy one, use duplicate_shipment. Match its customer, stops and commodities first with one find_shipment_records call, and propose what it says is missing instead of stopping. Do not interview the person first: fill what the conversation, page and lookups give and call it; ask_user only for what it refuses as missing. Price it the way the person did: \"$2,450 flat\" is the Flat Rate template, \"$2.10 a mile\" Per Mile, and charges they name are accessorial charges. Given no price, leave the rating out: it finds the agreement itself; ask for one only when none covers the lane. Add the freight and one move with its stops in travel order, each with a location and a local window; a window that has passed is entered as written. The system assigns the pro number; the BOL is optional, and a BOL must be unique.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -7715,7 +7715,7 @@
             "type": "object"
           },
           "sourceDocumentId": {
-            "description": "The uploaded document this shipment was read from, when there is one: the documentId you read with get_shipment_draft, usually this run's subject or the page.",
+            "description": "The uploaded document this shipment was read from, when there is one: the documentId you read with get_shipment_draft or read_attachment, usually a file on the message, this run's subject or the page.",
             "type": "string",
             "x-recordOf": "document"
           }
@@ -7730,6 +7730,7 @@
         "enter shipment"
       ],
       "prerequisites": [
+        "find_shipment_records",
         "list_customers",
         "list_service_types",
         "list_shipment_types",
@@ -10810,6 +10811,91 @@
       }
     },
     {
+      "name": "find_shipment_records",
+      "description": "Match the customer, stop locations and commodities a new shipment names, in one call, and say which are missing. Each comes with its closest matches, and the answer lists the service types, shipment types, equipment types, location categories and rating methods to choose from. Use it before create_shipment instead of one list call per record.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "commodities": {
+            "description": "What the load carries, by name.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
+          "customer": {
+            "additionalProperties": false,
+            "description": "The customer the load is billed to, as the person or the document names it.",
+            "properties": {
+              "code": {
+                "description": "Optional: its code, when given.",
+                "type": "string"
+              },
+              "name": {
+                "description": "The customer's name.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "locations": {
+            "description": "Every stop's place, in travel order.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "addressLine1": {
+                  "description": "Its street address.",
+                  "type": "string"
+                },
+                "city": {
+                  "description": "Its city.",
+                  "type": "string"
+                },
+                "name": {
+                  "description": "The facility or company name.",
+                  "type": "string"
+                },
+                "postalCode": {
+                  "description": "Its ZIP code.",
+                  "type": "string"
+                },
+                "state": {
+                  "description": "Its two-letter state.",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "maxItems": 10,
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "shipment",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Matches the records a new shipment names against the organization's own; nothing changes and nothing is sent."
+      }
+    },
+    {
       "name": "find_tools",
       "policy": {
         "kind": "runtime",
@@ -12264,12 +12350,12 @@
     },
     {
       "name": "get_document_summary",
-      "description": "Read a document by id: what kind of document it looks like, how many pages, the text extracted from it, and the structured fields document intelligence found. Use it for a file the person attached to their message, for a document a record names, or for a page search_documents pointed at. For a rate confirmation or tender, follow with get_shipment_draft for the shipment it describes. A document whose reading is still pending has no text yet; say so and ask again shortly.",
+      "description": "Read a document by id: what kind of document it looks like, how many pages, the text extracted from it, and the structured fields document intelligence found. Use it for a document a record names, or for a page search_documents pointed at; a file the person attached to this conversation is read with read_attachment. For a rate confirmation or tender, follow with get_shipment_draft for the shipment it describes. A document whose reading is still pending has no text yet; say so and ask again shortly.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "documentId": {
-            "description": "The document's id, from the attachments on the message, a documentId in get_inbound_message or get_worker_credential, or this run's subject.",
+            "description": "The document's id, from a documentId in get_inbound_message or get_worker_credential, a search_documents result, or this run's subject.",
             "type": "string",
             "x-recordOf": "document"
           },
@@ -12577,6 +12663,52 @@
       "policy": {
         "kind": "query",
         "resource": "fiscal_period",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "get_formula_template",
+      "description": "Retrieve one formula template by id, whole: its formula, variables and their defaults, breakdown lines, minimum, maximum, rounding, status and version. Read it before explaining or changing a formula. Use list_formula_templates first when you have a name rather than an id.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "formulaTemplateId": {
+            "description": "The formula template's id, from list_formula_templates.",
+            "type": "string",
+            "x-recordOf": "formula_template"
+          }
+        },
+        "required": [
+          "formulaTemplateId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "formula template details",
+        "read a formula",
+        "formula variables",
+        "minimum charge",
+        "rounding"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "formula_template",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -17643,7 +17775,7 @@
     },
     {
       "name": "list_formula_templates",
-      "description": "List formula templates — the rating methods a shipment is priced with. Use it to turn a rating method a person named into the id a shipment needs, or to find a formula to read. Filters: type (FreightCharge|AccessorialCharge); status (Active|Inactive|Draft|InReview): only Active ones price shipments; text: name; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List formula templates — the rating methods a shipment is priced with. Use it to turn a rating method a person named into the id a shipment needs, or to find a formula to read. A row carries only a template's name, description, type and status: to show, explain or price one template, read it whole with get_formula_template using the row's id. Filters: type (FreightCharge|AccessorialCharge); status (Active|Inactive|Draft|InReview): only Active ones price shipments; text: name; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -23643,6 +23775,7 @@
               "driver_settlement",
               "edi_inbound_file",
               "edi_message",
+              "formula_template",
               "fuel_purchase",
               "hazardous_material",
               "invoice",
@@ -25348,7 +25481,7 @@
             "x-recordKinds": [
               "billing_queue_item",
               "shipment_move",
-              "conversation",
+              "assistant_thread",
               "shipment",
               "document",
               "organization",
@@ -25484,6 +25617,62 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "read_attachment",
+      "description": "Read a file the person attached to this conversation: its text in reading order and what was read from it. It says how many pages it has, what kind of document it looks like and the fields found. Leave documentId out to list every file attached to this conversation, newest first. Read one page, or the part past where a long text stops with offset. A file still being read is waited for.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "documentId": {
+            "description": "The file's id, from the attachments on a message or from read_attachment called without it, which lists the files attached to this conversation.",
+            "type": "string",
+            "x-recordOf": "document"
+          },
+          "offset": {
+            "description": "Where in the text to start, in characters, for a long document read in pieces. Defaults to the beginning.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "page": {
+            "description": "Optional: read only this page, for example the page search_documents found. Leave it out to read the whole text.",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "searchTerms": [
+        "read attachment",
+        "attached file",
+        "uploaded file",
+        "read the pdf",
+        "read the rate confirmation",
+        "the file I sent",
+        "document I attached"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "assistant",
+        "operation": "read",
+        "scope": "self",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "always",
+        "source": "attachment",
+        "carriesTaint": false,
+        "rationale": "Reads text from a file the person attached to their own conversation; nothing changes and nothing is sent."
       }
     },
     {
@@ -34294,7 +34483,7 @@
             "type": "integer"
           },
           "minTemperature": {
-            "description": "The lowest temperature it may be carried at, in degrees Fahrenheit. Leave it out to keep it.",
+            "description": "The lowest temperature it may be carried at, in degrees Fahrenheit, below maxTemperature. Leave it out for one setpoint such as a reefer held at -10 F, which is the maximum. Leave it out to keep it.",
             "maximum": 200,
             "minimum": -100,
             "type": "integer"
@@ -34439,7 +34628,7 @@
             "type": "string"
           },
           "code": {
-            "description": "The customer's short code, unique in this organization. Leave it out to keep it.",
+            "description": "The customer's short code, unique in this organization. When the person and the document give none, make one from the name: up to ten letters, such as HARBORLN for Harbor Line Foods. Leave it out to keep it.",
             "maxLength": 10,
             "type": "string"
           },

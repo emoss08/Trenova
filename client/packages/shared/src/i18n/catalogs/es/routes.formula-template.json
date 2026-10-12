@@ -288,7 +288,6 @@
   "Validated against sample data": "Validada con datos de muestra",
   "Validated against sample data — result {0}": "Validada con datos de muestra: resultado {0}",
   "Validation warning: {0}": "Advertencia de validación: {0}",
-  "Variables": "Variables",
   "Variables resolve from the selected shipment; sample data is ignored. Custom variable defaults still apply.": "Las variables se resuelven a partir del envío seleccionado; los datos de muestra se ignoran. Los valores predeterminados de las variables personalizadas siguen aplicándose.",
   "Vars": "Vars.",
   "Vars ({0})": "Vars. ({0})",

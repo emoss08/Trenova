@@ -24,7 +24,6 @@
   "Short unique identifier; saved in uppercase.": "简短的唯一标识符；会以大写存储。",
   "Shown as the line the owner ticks off on the worker's checklist.": "在司机的检查清单上，显示为负责人勾选的项目。",
   "Shown on the worker's Checklist tab once a checklist is started from this template.": "自此模板启动检查清单后，会显示在司机的“检查清单”标签页上。",
-  "Starts": "开始",
   "The employment event that starts this checklist for a worker.": "为司机启动此检查清单的雇佣事件。",
   "The item completes itself once a worker document of this type is on file.": "档案中一旦有此类型的司机文档，此项目即自动完成。",
   "The item completes itself once the worker holds a valid credential of this type.": "司机一旦持有此类型的有效证照，此项目即自动完成。",

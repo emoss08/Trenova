@@ -67,6 +67,7 @@ Loaded now:
 - search_shipments
 
 Callable after find_tools:
+- read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - list_carriers — List the carriers this organization tenders freight to, narrowed by status, compliance, safety rating or authority number.
 - get_carrier — Retrieve one carrier by id, including its authority, insurance and compliance state.
 - create_carrier — Add a carrier the organization can tender freight to: its code, name, USDOT and MC numbers, SCAC, address and dispatch contact.

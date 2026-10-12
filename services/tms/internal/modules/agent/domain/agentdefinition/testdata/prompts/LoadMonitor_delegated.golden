@@ -57,6 +57,7 @@ Loaded now:
 - record_stop_actual
 
 Callable after find_tools:
+- read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - list_vehicle_positions — Where every tractor is right now, from the telematics feed: its last known position, the nearest place name, speed, engine state and how old the reading is.
 - get_worker_hos — A driver's hours of service as the ELD last reported them: duty status and the drive, shift, cycle and break time remaining, in minutes.
 - list_service_failure_reason_codes — The reason codes a service failure can carry, such as Weather, Shipper delay or Equipment.

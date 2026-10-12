@@ -61,6 +61,7 @@ Loaded now:
 - create_commodity
 
 Callable after find_tools:
+- read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - get_shipment — Retrieve one shipment (load) by its id, with its stops, the driver and equipment assigned to each move, the holds on it now and its newest comments.
 - list_invoices — List invoices narrowed by customer, status, whether they are paid or disputed, the amount, or the invoice and due dates.
 - add_shipment_comment — Leave a note on a shipment's comment thread, where dispatch will read it.

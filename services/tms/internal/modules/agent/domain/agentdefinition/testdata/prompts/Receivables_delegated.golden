@@ -67,6 +67,7 @@ Loaded now:
 - withdraw_invoice_dispute
 
 Callable after find_tools:
+- read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - get_customer — Retrieve one customer by id, with their billing and email profiles.
 - get_invoice — Retrieve one invoice by id, with its line items, totals, payment and dispute state.
 - search_documents — Search the text of documents: rate confirmations, bills of lading, proofs of delivery, invoices, contracts, permits and other files attached to records.

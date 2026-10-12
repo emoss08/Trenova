@@ -288,7 +288,6 @@
   "Validated against sample data": "已使用範例資料驗證",
   "Validated against sample data — result {0}": "已使用範例資料驗證 — 結果 {0}",
   "Validation warning: {0}": "驗證警示：{0}",
-  "Variables": "變數",
   "Variables resolve from the selected shipment; sample data is ignored. Custom variable defaults still apply.": "變數會依所選運單解析，範例資料將被忽略。自訂變數的預設值仍然適用。",
   "Vars": "變數",
   "Vars ({0})": "變數（{0}）",

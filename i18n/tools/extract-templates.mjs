@@ -11,7 +11,7 @@ import { join, relative } from "node:path";
 // Each root names the catalog area its strings land in: the built-in document
 // templates organizations customize, and the Trenova Cloud emails the platform sends.
 const TEMPLATE_ROOTS = [
-  { dir: "services/tms/internal/core/domain/documenttemplate/starters/assets", area: "template" },
+  { dir: "services/tms/internal/modules/documents/domain/documenttemplate/starters/assets", area: "template" },
   { dir: "services/tms/internal/cloud/platformemailservice/templates", area: "platform-email" },
 ];
 

@@ -92,6 +92,7 @@ Loaded now:
 - list_watchtower_items
 
 Callable after find_tools:
+- read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - get_carrier — Retrieve one carrier by id, including its authority, insurance and compliance state.
 - create_carrier — Add a carrier the organization can tender freight to: its code, name, USDOT and MC numbers, SCAC, address and dispatch contact.
 - update_carrier — Change a carrier's details: name, numbers, SCAC, address, dispatch contact, notes, or payment and remit-to details.

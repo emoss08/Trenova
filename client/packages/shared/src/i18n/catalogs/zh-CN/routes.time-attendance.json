@@ -134,12 +134,10 @@
   "{0} running time": "{0} 运行时长",
   "{0} shift meter": "{0} 班次计量",
   "{0} still running": "{0} 仍在运行",
-  "{0} to {1}": "{0} 至 {1}",
   "{0} waiting for a run": "{0} 条等待运行",
   "{0} with OT": "{0}（含加班）",
   "{0} – {1} · {2, plural, one {# timesheet} other {# timesheets}}.": "{0} – {1} · {2, plural, other {# 份工时表}}。",
   "{0}'s hours": "{0} 的工时",
-  "{0}m": "{0} 分钟",
   "· {0} OT": "· 加班 {0}",
   "· {0}m break": "· 休息 {0} 分钟",
   "– now": "– 现在"

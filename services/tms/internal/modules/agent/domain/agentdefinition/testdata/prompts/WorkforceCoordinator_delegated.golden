@@ -69,6 +69,7 @@ Loaded now:
 - update_shipment_permit
 
 Callable after find_tools:
+- read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - search_worker — Find a driver or other worker by name or code, or list the roster.
 - list_workers — List workers (drivers) by employment or qualification.
 - get_worker — Retrieve one worker (driver) by id, including their profile and current state.

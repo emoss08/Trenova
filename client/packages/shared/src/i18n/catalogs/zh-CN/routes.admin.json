@@ -1298,7 +1298,6 @@
   "Share this URL with your users for Okta SSO sign-in.": "请将此网址提供给您的用户，以进行 Okta SSO 登录。",
   "Shipment custom field": "货运自定义字段",
   "Shipment draft extraction": "货运草稿提取",
-  "Shipment field": "货运字段",
   "Shortest-route profile for shortest-path calculator requests.": "最短路径计算请求所使用的最短路线配置文件。",
   "Show the scanner's own window": "显示扫描仪自带的窗口",
   "Shows carriers, routing guides, tendering, and carrier settlements. Turning this off hides them from menus and navigation; it does not restrict permissions or API access.": "显示承运商、路线指南、委派与承运商结算。关闭后会将这些项目从菜单与导航中隐藏；但不会限制权限或 API 访问。",

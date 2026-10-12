@@ -78,6 +78,11 @@ type RecordLink struct {
 	Label  string            `json:"label"`
 	Path   string            `json:"path"`
 	Params map[string]string `json:"params"`
+	// DeskCard is whether the Desk draws this kind of record as a card of its
+	// own (client/apps/web/src/routes/desk/_components/artifacts/cards/
+	// registry.tsx), so a table of them opens each row beside the
+	// conversation.
+	DeskCard bool `json:"deskCard,omitempty"`
 }
 
 type Catalog struct {

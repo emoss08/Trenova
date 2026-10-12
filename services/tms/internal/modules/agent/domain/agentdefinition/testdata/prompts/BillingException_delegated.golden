@@ -57,6 +57,7 @@ Loaded now:
 - attach_document_to_shipment
 
 Callable after find_tools:
+- read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - transition_item_to_in_review — Move a billing queue item into review so a biller can work it: one waiting for review, on hold, in exception or sent back to operations.
 - hold_billing_queue_item — Put a billing queue item on hold, with a note saying what it waits on.
 - move_billing_item_to_exception — Move a billing queue item in review into exception for a biller to resolve.

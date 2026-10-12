@@ -10517,6 +10517,27 @@ export type ReverseCustomerPaymentMutationVariables = Exact<{
 
 export type ReverseCustomerPaymentMutation = { reverseCustomerPayment: { id: string, customerId: string, amountMinor: number, appliedAmountMinor: number, unappliedAmountMinor: number, status: CustomerPaymentStatus, reversalBatchId: string | null, reversedById: string | null, reversedAt: number | null, reversalReason: string, updatedAt: number, applications: Array<{ id: string, invoiceId: string, appliedAmountMinor: number, shortPayAmountMinor: number, lineNumber: number }> | null } };
 
+export type DeskCustomerCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskCustomerCardQuery = { customer: { id: string, status: EntityStatus, code: string, name: string, addressLine1: string | null, addressLine2: string | null, city: string | null, postalCode: string, dotNumber: string | null, mcNumber: string | null, createdAt: number, updatedAt: number, state: { abbreviation: string } | null, billingProfile: { paymentTerm: CustomerPaymentTerm, billingCycle: CustomerBillingCycle, invoiceDelivery: CustomerInvoiceDelivery, emailInvoiceEnabled: boolean, ediInvoiceEnabled: boolean, autoBill: boolean, creditLimit: string | null, creditBalance: string, creditStatus: CustomerCreditStatus, enforceCreditLimit: boolean, creditHoldReason: string, fuelSurchargeMode: CustomerFuelSurchargeMode, billingCurrency: string, requirePONumber: boolean, requireBOLNumber: boolean, requireDeliveryNumber: boolean, taxExempt: boolean, applyLateCharges: boolean, lateChargeRate: string | null, gracePeriodDays: number, billingNotes: string, documentTypes: Array<{ id: string, name: string }> | null } | null } | null };
+
+export type DeskCustomerShipmentsQueryVariables = Exact<{
+  input: ShipmentsInput;
+}>;
+
+
+export type DeskCustomerShipmentsQuery = { shipments: { totalCount: number | null, edges: Array<{ node: { id: string, proNumber: string, status: ShipmentStatus, totalChargeAmount: string, moves: Array<{ sequence: number, stops: Array<{ sequence: number, type: StopType, scheduledWindowStart: number, location: { city: string, state: { abbreviation: string } | null } | null }> }> } }> } };
+
+export type DeskCustomerRateAgreementsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type DeskCustomerRateAgreementsQuery = { rateAgreements: { totalCount: number | null, edges: Array<{ node: { id: string, code: string, name: string, status: RateAgreementStatus, agreementType: RateAgreementType, effectiveFrom: number, effectiveTo: number | null, autoRenew: boolean, renewalNoticeDays: number } }> } };
+
 export type CustomerBillingProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, invoiceDelivery: CustomerInvoiceDelivery, billingCycle: CustomerBillingCycle, billingCycleAnchorDay: number, billingCycleTimezone: string, lastBilledPeriodEnd: number | null, paymentTerm: CustomerPaymentTerm, hasBillingControlOverrides: boolean, creditLimit: string | null, creditBalance: string, creditStatus: CustomerCreditStatus, enforceCreditLimit: boolean, autoCreditHold: boolean, creditHoldReason: string, autoSendInvoiceOnGeneration: boolean, emailInvoiceEnabled: boolean, ediInvoiceEnabled: boolean, splitBy: InvoiceSplitKey, sectionBy: InvoiceSectionKey, invoiceDetail: InvoiceDetail, minConsolidatedAmount: string | null, maxShipmentsPerInvoice: number, invoiceNumberFormat: CustomerInvoiceNumberFormat, customerInvoicePrefix: string, invoiceCopies: number, revenueAccountId: string | null, arAccountId: string | null, applyLateCharges: boolean, lateChargeRate: string | null, gracePeriodDays: number, taxExempt: boolean, taxExemptNumber: string, enforceCustomerBillingReq: boolean, validateCustomerRates: boolean, autoTransfer: boolean, autoMarkReadyToBill: boolean, autoApprove: boolean, autoBill: boolean, countLateOnlyOnAppointmentStops: boolean, autoApplyAccessorials: boolean, billingCurrency: string, requirePONumber: boolean, requireBOLNumber: boolean, requireDeliveryNumber: boolean, defaultBillerId: string | null, billingNotes: string, fuelSurchargeMode: CustomerFuelSurchargeMode, fuelSurchargeProgramId: string | null, version: number, createdAt: number, updatedAt: number, documentTypes: Array<{ id: string, code: string, name: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory }> | null } & { ' $fragmentName'?: 'CustomerBillingProfileFieldsFragment' };
 
 export type CustomerEmailProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, subject: string, comment: string, fromEmail: string, toRecipients: string, ccRecipients: string, bccRecipients: string, attachmentName: string, readReceipt: boolean, includeShipmentDetail: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CustomerEmailProfileFieldsFragment' };
@@ -13647,6 +13668,13 @@ export type RunPtoAccrualMutationVariables = Exact<{
 
 export type RunPtoAccrualMutation = { runPtoAccrual: { queued: boolean, workflowId: string | null, workersProcessed: number, workersSkipped: number, entriesPosted: number, entriesCapped: number, entriesSkipped: number } };
 
+export type DeskRateAgreementPricingQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type DeskRateAgreementPricingQuery = { rateQuotes: { totalCount: number | null, edges: Array<{ node: { id: string, ratedAt: number } }> } };
+
 export type RateAgreementRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, partyType: RateAgreementPartyType, customerId: string | null, carrierId: string | null, code: string, name: string, description: string, agreementType: RateAgreementType, status: RateAgreementStatus, contractRef: string, priority: number, effectiveFrom: number, effectiveTo: number | null, autoRenew: boolean, renewalNoticeDays: number, currency: string, defaultMinCharge: string | null, defaultMaxCharge: string | null, marginFloorPercent: string | null, maxPayPercentOfSell: string | null, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, reviewComment: string, currentVersionNumber: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RateAgreementRowFieldsFragment' };
 
 export type RateZoneRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string, status: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RateZoneRowFieldsFragment' };
@@ -14274,7 +14302,7 @@ export type NotifyShipmentDelayMutation = { notifyShipmentDelay: boolean };
 
 export type ShipmentUserFieldsFragment = { id: string, name: string, username: string, emailAddress: string, timezone: string, status: EntityStatus, profilePicUrl: string, thumbnailUrl: string } & { ' $fragmentName'?: 'ShipmentUserFieldsFragment' };
 
-export type ShipmentLocationFieldsFragment = { id: string, name: string, code: string, status: EntityStatus, locationCategoryId: string, stateId: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, longitude: number | null, latitude: number | null } & { ' $fragmentName'?: 'ShipmentLocationFieldsFragment' };
+export type ShipmentLocationFieldsFragment = { id: string, name: string, code: string, status: EntityStatus, locationCategoryId: string, stateId: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, longitude: number | null, latitude: number | null, state: { id: string, name: string, abbreviation: string, countryName: string, countryIso3: string } | null } & { ' $fragmentName'?: 'ShipmentLocationFieldsFragment' };
 
 export type ShipmentWorkerFieldsFragment = { id: string, firstName: string, lastName: string, wholeName: string, profilePicUrl: string } & { ' $fragmentName'?: 'ShipmentWorkerFieldsFragment' };
 
@@ -23352,6 +23380,13 @@ export const ShipmentLocationFieldsFragmentDoc = new TypedDocumentString(`
   postalCode
   longitude
   latitude
+  state {
+    id
+    name
+    abbreviation
+    countryName
+    countryIso3
+  }
 }
     `, {"fragmentName":"ShipmentLocationFields"}) as unknown as TypedDocumentString<ShipmentLocationFieldsFragment, unknown>;
 export const ShipmentStopFieldsFragmentDoc = new TypedDocumentString(`
@@ -23394,6 +23429,13 @@ export const ShipmentStopFieldsFragmentDoc = new TypedDocumentString(`
   postalCode
   longitude
   latitude
+  state {
+    id
+    name
+    abbreviation
+    countryName
+    countryIso3
+  }
 }`, {"fragmentName":"ShipmentStopFields"}) as unknown as TypedDocumentString<ShipmentStopFieldsFragment, unknown>;
 export const ShipmentTractorFieldsFragmentDoc = new TypedDocumentString(`
     fragment ShipmentTractorFields on Tractor {
@@ -23548,6 +23590,13 @@ export const ShipmentMoveFieldsFragmentDoc = new TypedDocumentString(`
   postalCode
   longitude
   latitude
+  state {
+    id
+    name
+    abbreviation
+    countryName
+    countryIso3
+  }
 }
 fragment ShipmentWorkerFields on Worker {
   id
@@ -23973,6 +24022,13 @@ fragment ShipmentLocationFields on Location {
   postalCode
   longitude
   latitude
+  state {
+    id
+    name
+    abbreviation
+    countryName
+    countryIso3
+  }
 }
 fragment ShipmentWorkerFields on Worker {
   id
@@ -25867,6 +25923,9 @@ export const CustomerPaymentDetailDocument = {"__meta__":{"kind":"query","name":
 export const PostAndApplyCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"PostAndApplyCustomerPayment","hash":"sha256:8509b32952e2ba614257d3189c57cbd58da45afbb0dafb31f17958e117f62ea6"}} as unknown as TypedDocumentString<PostAndApplyCustomerPaymentMutation, PostAndApplyCustomerPaymentMutationVariables>;
 export const ApplyUnappliedCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"ApplyUnappliedCustomerPayment","hash":"sha256:1c0798232c1c035894870e85c421a9f0f214ff7407eb9f35155cfd9b87a9b4e0"}} as unknown as TypedDocumentString<ApplyUnappliedCustomerPaymentMutation, ApplyUnappliedCustomerPaymentMutationVariables>;
 export const ReverseCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"ReverseCustomerPayment","hash":"sha256:fe84be95798f92734cec53df3348b8593909fafde378deb329d583affe25145f"}} as unknown as TypedDocumentString<ReverseCustomerPaymentMutation, ReverseCustomerPaymentMutationVariables>;
+export const DeskCustomerCardDocument = {"__meta__":{"kind":"query","name":"DeskCustomerCard","hash":"sha256:f9392e6e7b40d6562977857131ff16dbaf3bfcbc0d21b2512c1acec7fbd6176f"}} as unknown as TypedDocumentString<DeskCustomerCardQuery, DeskCustomerCardQueryVariables>;
+export const DeskCustomerShipmentsDocument = {"__meta__":{"kind":"query","name":"DeskCustomerShipments","hash":"sha256:d1e1c514368e82ef2b04e590a6463b19cb3d232effffabea1c941a16b48d5965"}} as unknown as TypedDocumentString<DeskCustomerShipmentsQuery, DeskCustomerShipmentsQueryVariables>;
+export const DeskCustomerRateAgreementsDocument = {"__meta__":{"kind":"query","name":"DeskCustomerRateAgreements","hash":"sha256:1ba242b68d29998af524f262662b0017f695a8e36d48900f2a6969c1b19bce2e"}} as unknown as TypedDocumentString<DeskCustomerRateAgreementsQuery, DeskCustomerRateAgreementsQueryVariables>;
 export const CustomerTableDocument = {"__meta__":{"kind":"query","name":"CustomerTable","hash":"sha256:5ac4908d539bd6bee48049a6729a62ad4ac0e1a6a6c7e4ddf366f208b533ef1b"}} as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
 export const DataTableInsightFieldsDocument = {"__meta__":{"kind":"query","name":"DataTableInsightFields","hash":"sha256:22fecf32b7271231ed11fa6894b1067fa462fe7647a51aec3ce2573a6dead073"}} as unknown as TypedDocumentString<DataTableInsightFieldsQuery, DataTableInsightFieldsQueryVariables>;
 export const DataTableFacetsDocument = {"__meta__":{"kind":"query","name":"DataTableFacets","hash":"sha256:65addc4be5159ffbc133b39c9fdd7f1fc5052ee694ffe223537fa75fb3351f6f"}} as unknown as TypedDocumentString<DataTableFacetsQuery, DataTableFacetsQueryVariables>;
@@ -26271,6 +26330,7 @@ export const AssignWorkerPtoPolicyDocument = {"__meta__":{"kind":"mutation","nam
 export const EndWorkerPtoPolicyAssignmentDocument = {"__meta__":{"kind":"mutation","name":"EndWorkerPtoPolicyAssignment","hash":"sha256:f9ff2611c47c157836dcb8f726f5998d9678fa3ebb70cda279ee5b0743b361f3"}} as unknown as TypedDocumentString<EndWorkerPtoPolicyAssignmentMutation, EndWorkerPtoPolicyAssignmentMutationVariables>;
 export const AdjustWorkerPtoBalanceDocument = {"__meta__":{"kind":"mutation","name":"AdjustWorkerPtoBalance","hash":"sha256:a3fce577ecde28e859be1eaf870d6a466af8a4785cce1ba86e1b62254741724f"}} as unknown as TypedDocumentString<AdjustWorkerPtoBalanceMutation, AdjustWorkerPtoBalanceMutationVariables>;
 export const RunPtoAccrualDocument = {"__meta__":{"kind":"mutation","name":"RunPtoAccrual","hash":"sha256:47af4f61dbe7bbf69b8be7097b975e2c2b82f8d425c01690fbd96cebaf8b72c7"}} as unknown as TypedDocumentString<RunPtoAccrualMutation, RunPtoAccrualMutationVariables>;
+export const DeskRateAgreementPricingDocument = {"__meta__":{"kind":"query","name":"DeskRateAgreementPricing","hash":"sha256:87cd40f97a3b37737c7133b51a27baaceea8ca6d28572124d3938fd1a85be040"}} as unknown as TypedDocumentString<DeskRateAgreementPricingQuery, DeskRateAgreementPricingQueryVariables>;
 export const RateAgreementTableDocument = {"__meta__":{"kind":"query","name":"RateAgreementTable","hash":"sha256:19878581f83da9c8d035951edb5c3b9d7e8c65381a5928f513e0fde06e34fb40"}} as unknown as TypedDocumentString<RateAgreementTableQuery, RateAgreementTableQueryVariables>;
 export const RateZoneTableDocument = {"__meta__":{"kind":"query","name":"RateZoneTable","hash":"sha256:5c85f76694ab5702f5ea01ffaae7a1b360b3f9f4845cb21d3230f95cf45bd3d8"}} as unknown as TypedDocumentString<RateZoneTableQuery, RateZoneTableQueryVariables>;
 export const RateMatrixTableDocument = {"__meta__":{"kind":"query","name":"RateMatrixTable","hash":"sha256:65be740d59f9fe8439905de2e2b2a65d1a468902d99009a28fb0577333ddd82f"}} as unknown as TypedDocumentString<RateMatrixTableQuery, RateMatrixTableQueryVariables>;
@@ -26351,13 +26411,13 @@ export const TenderShipmentsDocument = {"__meta__":{"kind":"mutation","name":"Te
 export const DecideShipmentSuggestionDocument = {"__meta__":{"kind":"mutation","name":"DecideShipmentSuggestion","hash":"sha256:c58d215bd70ddacae5cb7bb1db402fe00f516e3b02750be051dba50a8fb157a8"}} as unknown as TypedDocumentString<DecideShipmentSuggestionMutation, DecideShipmentSuggestionMutationVariables>;
 export const UndoShipmentSuggestionDecisionDocument = {"__meta__":{"kind":"mutation","name":"UndoShipmentSuggestionDecision","hash":"sha256:70cabba6bbcd1f39dd47f1d0d7c1458757280bef6239eab04b33a90166f9ad16"}} as unknown as TypedDocumentString<UndoShipmentSuggestionDecisionMutation, UndoShipmentSuggestionDecisionMutationVariables>;
 export const NotifyShipmentDelayDocument = {"__meta__":{"kind":"mutation","name":"NotifyShipmentDelay","hash":"sha256:ac9e4fcb73800c23f82a4b48d988a24a084b6aca45e5d9747b7a7c04a0ad7183"}} as unknown as TypedDocumentString<NotifyShipmentDelayMutation, NotifyShipmentDelayMutationVariables>;
-export const ShipmentBoardTableDocument = {"__meta__":{"kind":"query","name":"ShipmentBoardTable","hash":"sha256:2b14c8b12afb6b80366a2349eaf1568238d7650da24fc7e6897e972e4b5b22fd"}} as unknown as TypedDocumentString<ShipmentBoardTableQuery, ShipmentBoardTableQueryVariables>;
-export const ShipmentDetailDocument = {"__meta__":{"kind":"query","name":"ShipmentDetail","hash":"sha256:07663326eb422daefce4e6005195a493aa0e41b647d4a20238bb08766fe91b18"}} as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
+export const ShipmentBoardTableDocument = {"__meta__":{"kind":"query","name":"ShipmentBoardTable","hash":"sha256:173bd6b0bd2951dbc6f0f2c7e7b37f107eacaac97bad99d7c9164a18742d58e6"}} as unknown as TypedDocumentString<ShipmentBoardTableQuery, ShipmentBoardTableQueryVariables>;
+export const ShipmentDetailDocument = {"__meta__":{"kind":"query","name":"ShipmentDetail","hash":"sha256:e4cea406adc9fa670c66e4b1e33216c5ba72cea42a2c3e84de2b8692b14a02f3"}} as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
 export const ShipmentPageAnalyticsDocument = {"__meta__":{"kind":"query","name":"ShipmentPageAnalytics","hash":"sha256:7781708ca578b5c735008b859ff154d5a6cdebb8449afb02f5abf4fdc1cf3214"}} as unknown as TypedDocumentString<ShipmentPageAnalyticsQuery, ShipmentPageAnalyticsQueryVariables>;
 export const ShipmentTomorrowsPickupsDocument = {"__meta__":{"kind":"query","name":"ShipmentTomorrowsPickups","hash":"sha256:4efe02e85e165ab339b90c81ea8d05dad114942c74d9333034f58a4e6a609ee4"}} as unknown as TypedDocumentString<ShipmentTomorrowsPickupsQuery, ShipmentTomorrowsPickupsQueryVariables>;
-export const UnassignedShipmentsDocument = {"__meta__":{"kind":"query","name":"UnassignedShipments","hash":"sha256:21a2fd6ffe869b7024d25ff3e4a74beda6bbaf905995924be9fd7c4f9e6dcfba"}} as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
-export const ExceptionShipmentsDocument = {"__meta__":{"kind":"query","name":"ExceptionShipments","hash":"sha256:92f2314f5c2296f6634733fb059194631637a8750a7c1f2d45c54e210c6377ab"}} as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
-export const MapShipmentsDocument = {"__meta__":{"kind":"query","name":"MapShipments","hash":"sha256:93d207f449b5d30fec976d130f6698958875bbc7e72c00b0d3f6bd50176e09b1"}} as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
+export const UnassignedShipmentsDocument = {"__meta__":{"kind":"query","name":"UnassignedShipments","hash":"sha256:bbda5d68fd3765031012d674a4506f6ae335457083bfede6583db2148499a8d3"}} as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
+export const ExceptionShipmentsDocument = {"__meta__":{"kind":"query","name":"ExceptionShipments","hash":"sha256:b85554564d40479a5e6a98b29d18225a51a763da46add7035dd340ee8584f155"}} as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
+export const MapShipmentsDocument = {"__meta__":{"kind":"query","name":"MapShipments","hash":"sha256:1a9e23fd6e84622f7f92d0e32e1d36ebae38c36319a2a9b4a139912e4a1efc35"}} as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
 export const ShipmentCommentsDocument = {"__meta__":{"kind":"query","name":"ShipmentComments","hash":"sha256:e8ded6c042536cd06b3552020cc7245d5d5585ebae1cee2cdf5d4369b07b33a7"}} as unknown as TypedDocumentString<ShipmentCommentsQuery, ShipmentCommentsQueryVariables>;
 export const ShipmentCommentRepliesDocument = {"__meta__":{"kind":"query","name":"ShipmentCommentReplies","hash":"sha256:c3d7d09953b6ceb3ea38fbc547d409fea336121d2b3bcacefce4b894f29bd3c6"}} as unknown as TypedDocumentString<ShipmentCommentRepliesQuery, ShipmentCommentRepliesQueryVariables>;
 export const ShipmentCommentCountDocument = {"__meta__":{"kind":"query","name":"ShipmentCommentCount","hash":"sha256:1f62df3579f042a9c8914aa2b124bb976b08c30fdb27dc1fa25926487e7d877e"}} as unknown as TypedDocumentString<ShipmentCommentCountQuery, ShipmentCommentCountQueryVariables>;
@@ -26365,18 +26425,18 @@ export const ShipmentEventsDocument = {"__meta__":{"kind":"query","name":"Shipme
 export const ShipmentBillingReadinessDocument = {"__meta__":{"kind":"query","name":"ShipmentBillingReadiness","hash":"sha256:98a2cd4d00d91a045e742b52e3c9a318781d5eb12903f63fe4d141f0aefe449c"}} as unknown as TypedDocumentString<ShipmentBillingReadinessQuery, ShipmentBillingReadinessQueryVariables>;
 export const ShipmentUiPolicyDocument = {"__meta__":{"kind":"query","name":"ShipmentUIPolicy","hash":"sha256:31816c9ef557fefb9f366f7c6de4a496827f84f1ce406e42f21e1444ddefb7a1"}} as unknown as TypedDocumentString<ShipmentUiPolicyQuery, ShipmentUiPolicyQueryVariables>;
 export const ShipmentPreviousRatesDocument = {"__meta__":{"kind":"query","name":"ShipmentPreviousRates","hash":"sha256:fb9ce636f0cfa91106dfcc559e31eb59e1e6cfa4d229668dbc2208e7a3730f9b"}} as unknown as TypedDocumentString<ShipmentPreviousRatesQuery, ShipmentPreviousRatesQueryVariables>;
-export const CreateShipmentDocument = {"__meta__":{"kind":"mutation","name":"CreateShipment","hash":"sha256:2ec7d1ba17f26ccba62537cd5f1641211d4ad8ac80397ac3c1973a478da56dd1"}} as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
-export const UpdateShipmentDocument = {"__meta__":{"kind":"mutation","name":"UpdateShipment","hash":"sha256:dba04b817502eb68b53ddf2fcdee551567f963c2b9720ab854263ee0cb8c6d2f"}} as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
-export const CancelShipmentDocument = {"__meta__":{"kind":"mutation","name":"CancelShipment","hash":"sha256:348e32aa442ad79ac2494b0c12426237ea9cc92c79c8be4008fc9ebfc7b95287"}} as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
-export const UncancelShipmentDocument = {"__meta__":{"kind":"mutation","name":"UncancelShipment","hash":"sha256:f3b24edbe073097986837e3e3485ce1ca9815ee0f60aa2180288a5b69012af83"}} as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
+export const CreateShipmentDocument = {"__meta__":{"kind":"mutation","name":"CreateShipment","hash":"sha256:8634f263eda692af5577606a3cf5cf7f2d51961f585b1729a61e6f1f9efc1b5a"}} as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
+export const UpdateShipmentDocument = {"__meta__":{"kind":"mutation","name":"UpdateShipment","hash":"sha256:42ae70bf777db6f08ce39a1fda898ae0a32f0146e7859c2f281458016f5a0a24"}} as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
+export const CancelShipmentDocument = {"__meta__":{"kind":"mutation","name":"CancelShipment","hash":"sha256:4085b4d9d117e8347b0f61b1c1b9dafe26c3dce5d1f7f48705b25ffec99a3ab0"}} as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
+export const UncancelShipmentDocument = {"__meta__":{"kind":"mutation","name":"UncancelShipment","hash":"sha256:5f1156a794448365243837d00eb629d7fe5422a2703ec4c655abcd5ba4a887dd"}} as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
 export const DuplicateShipmentDocument = {"__meta__":{"kind":"mutation","name":"DuplicateShipment","hash":"sha256:0dcc6ec862a4ef66a9e7137e45548bb355204f1bc766d172a035b5e537298ecf"}} as unknown as TypedDocumentString<DuplicateShipmentMutation, DuplicateShipmentMutationVariables>;
-export const TransferShipmentOwnershipDocument = {"__meta__":{"kind":"mutation","name":"TransferShipmentOwnership","hash":"sha256:dbfd5b6b1022c1a32604c2ef35d9ab220a4d08782792331eb55d2d3550928ca1"}} as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
+export const TransferShipmentOwnershipDocument = {"__meta__":{"kind":"mutation","name":"TransferShipmentOwnership","hash":"sha256:338ed043cf1a9d0c4a9eacaeab2df11ff49a334b37a97f654d10c6280e0c583c"}} as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
 export const TransferShipmentToBillingItemsDocument = {"__meta__":{"kind":"mutation","name":"TransferShipmentToBillingItems","hash":"sha256:880f3a1da6c6411f6be5b37b9171f4724b28a0cf4a4b68c5baf63fdc8fbfe8d6"}} as unknown as TypedDocumentString<TransferShipmentToBillingItemsMutation, TransferShipmentToBillingItemsMutationVariables>;
 export const TransferShipmentToBillingDocument = {"__meta__":{"kind":"mutation","name":"TransferShipmentToBilling","hash":"sha256:26bfaf606837906606b2d36e188ad75e47db576e9ed709a5f47b3ddf619cf487"}} as unknown as TypedDocumentString<TransferShipmentToBillingMutation, TransferShipmentToBillingMutationVariables>;
 export const BulkTransferShipmentsToBillingDocument = {"__meta__":{"kind":"mutation","name":"BulkTransferShipmentsToBilling","hash":"sha256:b6cdcdefd2780a75fc875cd010360eb2a5f212bf8e8a84e963cd744c8fed7bf9"}} as unknown as TypedDocumentString<BulkTransferShipmentsToBillingMutation, BulkTransferShipmentsToBillingMutationVariables>;
 export const CalculateShipmentTotalsDocument = {"__meta__":{"kind":"mutation","name":"CalculateShipmentTotals","hash":"sha256:675789448d139ef11053baf07c910d999193810b6acd81ae401229c1e1753a75"}} as unknown as TypedDocumentString<CalculateShipmentTotalsMutation, CalculateShipmentTotalsMutationVariables>;
 export const PreviewShipmentContractRateDocument = {"__meta__":{"kind":"mutation","name":"PreviewShipmentContractRate","hash":"sha256:b3609be8eacbbcd92db634d5a0939e1cf3bd0d4c1635b56ac8a7e1082d7aaaff"}} as unknown as TypedDocumentString<PreviewShipmentContractRateMutation, PreviewShipmentContractRateMutationVariables>;
-export const AutoRateShipmentDocument = {"__meta__":{"kind":"mutation","name":"AutoRateShipment","hash":"sha256:e80f1b2988b8aacf081df46caae4844bdd0d2d6389959e827495de14b09a2665"}} as unknown as TypedDocumentString<AutoRateShipmentMutation, AutoRateShipmentMutationVariables>;
+export const AutoRateShipmentDocument = {"__meta__":{"kind":"mutation","name":"AutoRateShipment","hash":"sha256:7a6d4affdb1fc7238bae28d581d37df0efc8c6ff14ab41e96df876d7c042271a"}} as unknown as TypedDocumentString<AutoRateShipmentMutation, AutoRateShipmentMutationVariables>;
 export const CalculateShipmentDistanceDocument = {"__meta__":{"kind":"mutation","name":"CalculateShipmentDistance","hash":"sha256:5c8612acf5d98e8e255b7ec31d1fb37d4723fe9cfed4f6e2c2c4203ba5092b5a"}} as unknown as TypedDocumentString<CalculateShipmentDistanceMutation, CalculateShipmentDistanceMutationVariables>;
 export const RecalculateShipmentDistanceDocument = {"__meta__":{"kind":"mutation","name":"RecalculateShipmentDistance","hash":"sha256:c22b19ad3ce0ea5856e7d3b13cbf94d2b5a34aadeaf0f90cf09c5ba8f6f87c51"}} as unknown as TypedDocumentString<RecalculateShipmentDistanceMutation, RecalculateShipmentDistanceMutationVariables>;
 export const CheckShipmentDuplicateBolDocument = {"__meta__":{"kind":"mutation","name":"CheckShipmentDuplicateBol","hash":"sha256:245fce8ae3f1f985031b2343ce03fa257082b6453a6b738c209e49581315c33c"}} as unknown as TypedDocumentString<CheckShipmentDuplicateBolMutation, CheckShipmentDuplicateBolMutationVariables>;
