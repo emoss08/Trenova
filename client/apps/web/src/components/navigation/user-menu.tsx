@@ -54,7 +54,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
               name={user?.name}
               profilePicUrl={user?.profilePicUrl}
               thumbnailUrl={user?.thumbnailUrl}
-              className="size-7"
+              className="size-5"
               fallbackClassName="bg-muted text-2xs font-medium text-muted-foreground"
             />
           </DropdownMenuTrigger>
@@ -108,11 +108,6 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              title={t("Profile")}
-              startContent={<User01Icon className="size-4" />}
-              onClick={() => void navigate("/profile")}
-            />
             <DropdownMenuItem
               title={t("Settings")}
               startContent={<Settings01Icon className="size-4" />}

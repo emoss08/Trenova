@@ -55,6 +55,7 @@ export function NotificationSheet() {
             aria-label={
               unreadCount > 0 ? t("Notifications ({0} unread)", unreadCount) : t("Notifications")
             }
+            className="w-6"
             onPointerEnter={() => void import("./notification-panel")}
           />
         }
