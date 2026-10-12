@@ -90,7 +90,7 @@ export function InjuryList({ workerId }: { workerId: string }) {
             if (canUpdate) {
               actions.push({
                 id: "edit",
-                label: `Edit case ${injury.caseYear}-${injury.caseNumber}`,
+                label: t("Edit case {0}-{1}", injury.caseYear, injury.caseNumber),
                 icon: Edit02Icon,
                 onSelect: () => setDialog({ injury }),
               });
@@ -98,7 +98,7 @@ export function InjuryList({ workerId }: { workerId: string }) {
             if (canDelete) {
               actions.push({
                 id: "delete",
-                label: `Delete case ${injury.caseYear}-${injury.caseNumber}`,
+                label: t("Delete case {0}-{1}", injury.caseYear, injury.caseNumber),
                 icon: Trash01Icon,
                 destructive: true,
                 disabled: deleteMutation.isPending,
@@ -126,7 +126,7 @@ export function InjuryList({ workerId }: { workerId: string }) {
                       {formatUnixDate(injury.occurredAt)}
                     </span>
                     <RowActionsMenu
-                      label={`Actions for case ${injury.caseYear}-${injury.caseNumber}`}
+                      label={t("Actions for case {0}-{1}", injury.caseYear, injury.caseNumber)}
                       actions={actions}
                     />
                   </span>
@@ -135,9 +135,11 @@ export function InjuryList({ workerId }: { workerId: string }) {
                 <p className="text-muted-foreground mt-1">
                   {illnessTypeLabel(injury.illnessType)}
                   {injury.bodyPart ? ` · ${injury.bodyPart}` : ""}
-                  {injury.daysAway > 0 ? ` ${t("· {0} days away", injury.daysAway)}` : ""}
+                  {injury.daysAway > 0
+                    ? ` ${t("· {0, plural, one {# day away} other {# days away}}", injury.daysAway)}`
+                    : ""}
                   {injury.daysRestricted > 0
-                    ? ` ${t("· {0} restricted", injury.daysRestricted)}`
+                    ? ` ${t("· {0, plural, one {# day restricted} other {# days restricted}}", injury.daysRestricted)}`
                     : ""}
                 </p>
                 {injury.claimStatus !== "NotFiled" ? (

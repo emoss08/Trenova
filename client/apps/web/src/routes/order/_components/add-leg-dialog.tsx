@@ -63,14 +63,14 @@ export function AddLegDialog({ open, onOpenChange, orderId, customerId }: AddLeg
       ),
     onSuccess: () => {
       invalidateOrders();
-      toast.success(selected.length === 1 ? "Leg added" : `${selected.length} legs added`, {
+      toast.success(t("{0, plural, one {Leg added} other {# legs added}}", selected.length), {
         description: t("The shipments have been attached to this order."),
       });
       handleClose();
     },
     onError: (error) => {
       toast.error(t("Failed to add legs"), {
-        description: graphQLErrorMessage(error, "The shipments could not be attached."),
+        description: graphQLErrorMessage(error, t("The shipments could not be attached.")),
       });
     },
   });
@@ -118,7 +118,7 @@ export function AddLegDialog({ open, onOpenChange, orderId, customerId }: AddLeg
                     onClick={() =>
                       setSelected((current) => current.filter((item) => item.id !== leg.id))
                     }
-                    aria-label={`Remove ${leg.label}`}
+                    aria-label={t("Remove {0}", leg.label)}
                   >
                     <XCloseIcon className="size-3" />
                   </Button>

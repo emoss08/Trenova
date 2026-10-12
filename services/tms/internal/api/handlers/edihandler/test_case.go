@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -54,7 +54,7 @@ func (h *Handler) listTestCases(c *gin.Context) {
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDITestCase], error) {
 		return h.service.ListTestCases(
 			c.Request.Context(),
-			&repositories.ListEDITestCasesRequest{
+			&ediports.ListEDITestCasesRequest{
 				Filter:                   req,
 				PartnerDocumentProfileID: profileID,
 			},
@@ -124,7 +124,7 @@ func (h *Handler) getTestCase(c *gin.Context) {
 	}
 	testCase, err := h.service.GetTestCase(
 		c.Request.Context(),
-		repositories.GetEDITestCaseByIDRequest{
+		ediports.GetEDITestCaseByIDRequest{
 			ID:         testCaseID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -172,7 +172,7 @@ func (h *Handler) deleteTestCase(c *gin.Context) {
 	}
 	if err = h.service.DeleteTestCase(
 		c.Request.Context(),
-		repositories.DeleteEDITestCaseRequest{
+		ediports.DeleteEDITestCaseRequest{
 			ID:         testCaseID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},

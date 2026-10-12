@@ -2,7 +2,6 @@ package webhooks
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -51,7 +50,7 @@ func (s *service) Get(ctx context.Context, id string) (Webhook, error) {
 	out := Webhook{}
 	if err := s.client.Do(ctx, httpx.Request{
 		Method: http.MethodGet,
-		Path:   fmt.Sprintf("/webhooks/%s", webhookID),
+		Path:   httpx.PathWithID("/webhooks", webhookID),
 		Out:    &out,
 	}); err != nil {
 		return Webhook{}, err
@@ -60,11 +59,8 @@ func (s *service) Get(ctx context.Context, id string) (Webhook, error) {
 }
 
 func (s *service) Create(ctx context.Context, req CreateRequest) (Webhook, error) {
-	if strings.TrimSpace(req.Name) == "" {
-		return Webhook{}, ErrWebhookNameRequired
-	}
-	if strings.TrimSpace(req.Url) == "" {
-		return Webhook{}, ErrWebhookURLRequired
+	if err := ValidateCreateRequest(req); err != nil {
+		return Webhook{}, err
 	}
 
 	out := Webhook{}
@@ -88,7 +84,7 @@ func (s *service) Update(ctx context.Context, id string, req UpdateRequest) (Web
 	out := Webhook{}
 	if err := s.client.Do(ctx, httpx.Request{
 		Method: http.MethodPatch,
-		Path:   fmt.Sprintf("/webhooks/%s", webhookID),
+		Path:   httpx.PathWithID("/webhooks", webhookID),
 		Body:   req,
 		Out:    &out,
 	}); err != nil {
@@ -105,7 +101,7 @@ func (s *service) Delete(ctx context.Context, id string) error {
 
 	return s.client.Do(ctx, httpx.Request{
 		Method:         http.MethodDelete,
-		Path:           fmt.Sprintf("/webhooks/%s", webhookID),
+		Path:           httpx.PathWithID("/webhooks", webhookID),
 		ExpectedStatus: []int{http.StatusNoContent},
 	})
 }

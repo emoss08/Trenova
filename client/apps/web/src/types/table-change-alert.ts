@@ -4,6 +4,7 @@ import {
   type NotificationPriority,
 } from "@trenova/shared/types/notification";
 import { createLimitOffsetResponse } from "@trenova/shared/types/server";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export { notificationPrioritySchema, type NotificationPriority };
 
@@ -31,7 +32,7 @@ export const conditionOperatorSchema = z.enum([
 export type ConditionOperator = z.infer<typeof conditionOperatorSchema>;
 
 export const conditionSchema = z.object({
-  field: z.string().min(1, "Field is required"),
+  field: z.string().min(1, { error: () => translate("Field is required") }),
   operator: conditionOperatorSchema,
   value: z.union([z.string(), z.number(), z.null()]).optional(),
 });
@@ -78,10 +79,15 @@ export const tcaSubscriptionSchema = z.object({
 export type TCASubscription = z.infer<typeof tcaSubscriptionSchema>;
 
 export const tcaSubscriptionFormSchema = z.object({
-  name: z.string().min(1, "Name is required").max(255),
-  tableName: z.string().min(1, "Table is required"),
+  name: z
+    .string()
+    .min(1, { error: () => translate("Name is required") })
+    .max(255),
+  tableName: z.string().min(1, { error: () => translate("Table is required") }),
   recordId: z.string().optional(),
-  eventTypes: z.array(z.string()).min(1, "At least one event type is required"),
+  eventTypes: z
+    .array(z.string())
+    .min(1, { error: () => translate("At least one event type is required") }),
   conditions: z.array(conditionSchema).default([]),
   conditionMatch: conditionMatchSchema.default("all"),
   watchedColumns: z.array(z.string()).default([]),

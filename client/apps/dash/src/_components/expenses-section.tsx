@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { ExpenseStatusBadge } from "./portal-badges";
 import { useDashFeatures } from "./use-dash-features";
 import { stopPlace, originStop, destinationStop, useMyLoads } from "./use-loads";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function ExpensesSection() {
   const t = useT();
@@ -45,7 +46,8 @@ export function ExpensesSection() {
       toast.success(t("Expense cancelled."));
       await queryClient.invalidateQueries({ queryKey: ["dash-expenses"] });
     },
-    onError: (error: Error) => toast.error(error.message || "We couldn't cancel that expense."),
+    onError: (error: Error) =>
+      toast.error(error.message || translate("We couldn't cancel that expense.")),
   });
 
   return (
@@ -163,7 +165,8 @@ function ExpenseSubmitDrawer({ open, onOpenChange }: ExpenseSubmitDrawerProps) {
       reset();
       onOpenChange(false);
     },
-    onError: (error: Error) => toast.error(error.message || "We couldn't submit your expense."),
+    onError: (error: Error) =>
+      toast.error(error.message || translate("We couldn't submit your expense.")),
   });
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {

@@ -42,19 +42,39 @@ export type IdentityProvider = z.infer<typeof identityProviderSchema>;
 export const identityProvidersSchema = z.array(identityProviderSchema);
 
 export const identityProviderFormSchema = identityProviderSchema.extend({
-  name: z.string().trim().min(1, "Provider name is required"),
-  slug: z.string().trim().min(1, "Provider slug is required"),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Provider name is required") }),
+  slug: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Provider slug is required") }),
   allowedDomains: z.array(z.string().trim().min(1)).default([]),
   attributeMap: z.record(z.string(), z.string()).default({ email: "email" }),
-  oidcIssuerUrl: z.string().trim().min(1, "Issuer URL is required"),
-  oidcClientId: z.string().trim().min(1, "Client ID is required"),
+  oidcIssuerUrl: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Issuer URL is required") }),
+  oidcClientId: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Client ID is required") }),
   oidcClientSecret: z.string().default(""),
-  oidcRedirectUrl: z.string().trim().min(1, "Redirect URI is required"),
-  oidcScopes: z.array(z.string().trim().min(1)).min(1, "At least one OIDC scope is required"),
+  oidcRedirectUrl: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Redirect URI is required") }),
+  oidcScopes: z
+    .array(z.string().trim().min(1))
+    .min(1, { error: () => translate("At least one OIDC scope is required") }),
 });
 
 export const identityProviderCreateFormSchema = identityProviderFormSchema.extend({
-  oidcClientSecret: z.string().trim().min(1, "Client secret is required"),
+  oidcClientSecret: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Client secret is required") }),
 });
 
 export type IdentityProviderFormValues = z.infer<typeof identityProviderFormSchema>;
@@ -78,7 +98,10 @@ export type SCIMDirectoryListResponse = z.infer<typeof scimDirectoryListSchema>;
 export const scimDirectoriesSchema = z.array(scimDirectorySchema);
 
 export const scimDirectoryFormSchema = scimDirectorySchema.extend({
-  tenantSlug: z.string().trim().min(1, "Tenant slug is required"),
+  tenantSlug: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Tenant slug is required") }),
 });
 
 export type SCIMDirectoryFormValues = z.infer<typeof scimDirectoryFormSchema>;
@@ -126,9 +149,15 @@ export type SCIMGroupRoleMappingListResponse = z.infer<typeof scimGroupRoleMappi
 export const scimGroupRoleMappingsSchema = z.array(scimGroupRoleMappingSchema);
 
 export const scimGroupRoleMappingFormSchema = scimGroupRoleMappingSchema.extend({
-  externalGroupId: z.string().trim().min(1, "External group ID is required"),
+  externalGroupId: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("External group ID is required") }),
   displayName: z.string().default(""),
-  roleId: z.string().trim().min(1, "Role is required"),
+  roleId: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Role is required") }),
 });
 
 export type SCIMGroupRoleMappingFormValues = z.infer<typeof scimGroupRoleMappingFormSchema>;
@@ -180,10 +209,22 @@ export type AccessPolicyConditionRow = z.infer<typeof accessPolicyConditionRowSc
 
 export const accessPolicyFormSchema = accessPolicySchema
   .extend({
-    name: z.string().trim().min(1, "Policy name is required"),
-    resource: z.string().trim().min(1, "Resource is required"),
-    operation: z.string().trim().min(1, "Operation is required"),
-    priority: z.number().int().min(0, "Priority cannot be negative"),
+    name: z
+      .string()
+      .trim()
+      .min(1, { error: () => translate("Policy name is required") }),
+    resource: z
+      .string()
+      .trim()
+      .min(1, { error: () => translate("Resource is required") }),
+    operation: z
+      .string()
+      .trim()
+      .min(1, { error: () => translate("Operation is required") }),
+    priority: z
+      .number()
+      .int()
+      .min(0, { error: () => translate("Priority cannot be negative") }),
     conditionRows: z.array(accessPolicyConditionRowSchema).default([]),
   })
   .superRefine((value, ctx) => {

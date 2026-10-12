@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -18,16 +18,26 @@ import (
 func (r *Deps) deskActor(
 	ctx context.Context,
 	operation permission.Operation,
-) (*services.DeskMemoryActor, error) {
+) (*agentports.DeskMemoryActor, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAssistant, operation)
 	if err != nil {
 		return nil, err
 	}
 
-	return &services.DeskMemoryActor{
-		Actor:           actorutil.FromAuthContext(authCtx),
-		MayCreateShared: r.HasPermission(ctx, authCtx, permission.ResourceAgentMemory, permission.OpCreate),
-		MayUpdateShared: r.HasPermission(ctx, authCtx, permission.ResourceAgentMemory, permission.OpUpdate),
+	return &agentports.DeskMemoryActor{
+		Actor: actorutil.FromAuthContext(authCtx),
+		MayCreateShared: r.HasPermission(
+			ctx,
+			authCtx,
+			permission.ResourceAgentMemory,
+			permission.OpCreate,
+		),
+		MayUpdateShared: r.HasPermission(
+			ctx,
+			authCtx,
+			permission.ResourceAgentMemory,
+			permission.OpUpdate,
+		),
 	}, nil
 }
 
@@ -48,7 +58,7 @@ func idString(id *pulid.ID) *string {
 	return &value
 }
 
-func deskMemoryToModel(memory *services.DeskMemory) *gqlmodel.DeskMemory {
+func deskMemoryToModel(memory *agentports.DeskMemory) *gqlmodel.DeskMemory {
 	entity := memory.Memory
 	out := &gqlmodel.DeskMemory{
 		ID:          entity.ID.String(),
@@ -84,7 +94,7 @@ func deskEvidence(evidence *agent.MemoryEvidence) (string, []string) {
 	return evidence.Reason, evidence.Quotes
 }
 
-func deskLinkToModel(link *services.DeskMemoryLink) *gqlmodel.DeskMemoryLink {
+func deskLinkToModel(link *agentports.DeskMemoryLink) *gqlmodel.DeskMemoryLink {
 	if link == nil {
 		return nil
 	}
@@ -96,7 +106,7 @@ func deskLinkToModel(link *services.DeskMemoryLink) *gqlmodel.DeskMemoryLink {
 	}
 }
 
-func deskPageToModel(page *services.DeskMemoryPage) *gqlmodel.DeskMemoryPage {
+func deskPageToModel(page *agentports.DeskMemoryPage) *gqlmodel.DeskMemoryPage {
 	out := &gqlmodel.DeskMemoryPage{
 		Items:  make([]*gqlmodel.DeskMemory, 0, len(page.Items)),
 		All:    page.All,
@@ -121,7 +131,7 @@ func deskPageToModel(page *services.DeskMemoryPage) *gqlmodel.DeskMemoryPage {
 	return out
 }
 
-func deskSettingsToModel(settings *services.DeskMemorySettings) *gqlmodel.DeskMemorySettings {
+func deskSettingsToModel(settings *agentports.DeskMemorySettings) *gqlmodel.DeskMemorySettings {
 	out := &gqlmodel.DeskMemorySettings{
 		SavingMode:               settings.SavingMode,
 		Roles:                    make([]*gqlmodel.DeskMemoryRole, 0, len(settings.Roles)),

@@ -127,8 +127,7 @@ returned to the client as HTTP 422.
 Operations are also capped at `MaxOperationDepth`. Introspection meta-fields
 (`__schema`, `__type`, `__typename`) are excluded from the depth measurement:
 the standard introspection query is 13 levels deep, so counting it would block
-the playground and the admin GraphQL explorer. Introspection is disabled outside
-development anyway.
+schema tooling. Introspection is disabled outside development anyway.
 
 The limits are calibrated against every persisted operation by
 `TestPersistedDocumentBudget`, which measures each document at the maximum page

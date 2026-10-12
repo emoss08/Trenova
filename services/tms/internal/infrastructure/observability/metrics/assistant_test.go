@@ -91,7 +91,26 @@ func TestAssistant_IsSafeWhenThereIsNoCollector(t *testing.T) {
 		absent.RecordTurnStopped("cancelled")
 		absent.RecordStepReplayed("AssistantTurn", "Completed")
 		absent.RecordStreamAttach("resumed")
+		absent.RecordToolOutcome("list_shipments", "ran")
 	})
+}
+
+// A tool the models keep calling wrongly has to stand apart from one that
+// works, by tool and by what stopped it.
+func TestAssistant_CountsToolOutcomesByToolAndVerdict(t *testing.T) {
+	t.Parallel()
+
+	assistant, registry := newAssistantForTest(t)
+
+	assistant.RecordToolOutcome("list_shipments", "ran")
+	assistant.RecordToolOutcome("list_shipments", "invalid")
+	assistant.RecordToolOutcome("list_shipments", "invalid")
+	assistant.RecordToolOutcome("assign_move", "proposed")
+
+	name := "trenova_assistant_tool_outcomes_total"
+	assert.Equal(t, 1, countOf(t, registry, name, "list_shipments", "ran"))
+	assert.Equal(t, 2, countOf(t, registry, name, "list_shipments", "invalid"))
+	assert.Equal(t, 1, countOf(t, registry, name, "assign_move", "proposed"))
 }
 
 // countOf reads one counter by the label values it carries, in any order:

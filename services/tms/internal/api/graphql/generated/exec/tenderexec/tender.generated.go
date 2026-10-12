@@ -8,9 +8,9 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
-	"github.com/emoss08/trenova/internal/core/domain/carrier"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -34,7 +34,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").Tender(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTender),
+				Marshal: gqlexec.Marshal(marshalOTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTender),
 			},
 			{
 				Name:       "tendersByShipment",
@@ -48,7 +48,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").TendersByShipment(ctx, fc.Args["shipmentId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNTender2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTenderᚄ),
+				Marshal: gqlexec.Marshal(marshalNTender2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTenderᚄ),
 			},
 			{
 				Name:       "liveTenderByMove",
@@ -61,7 +61,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").LiveTenderByMove(ctx, fc.Args["moveId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTender),
+				Marshal: gqlexec.Marshal(marshalOTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTender),
 			},
 		}},
 		{Object: "Tender", Fields: []*gqlexec.Field{
@@ -132,7 +132,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*tender.Tender)
 					return obj.Mode, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTenderMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐMode),
+				Marshal: gqlexec.Marshal(marshalNTenderMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐMode),
 			},
 			{
 				Name:     "status",
@@ -142,7 +142,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*tender.Tender)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTenderStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐStatus),
+				Marshal: gqlexec.Marshal(marshalNTenderStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐStatus),
 			},
 			{
 				Name:     "currentRank",
@@ -258,7 +258,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*tender.Tender)
 					return gqlexec.Resolver[resolverTender](ec, "Tender").RoutingGuide(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalORoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuide),
+				Marshal: gqlexec.Marshal(marshalORoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐRoutingGuide),
 			},
 			{
 				Name:      "offers",
@@ -268,7 +268,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*tender.Tender)
 					return obj.Offers, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOTenderOffer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTenderOfferᚄ),
+				Marshal: gqlexec.Marshal(marshalOTenderOffer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTenderOfferᚄ),
 			},
 		}},
 		{Object: "TenderOffer", Fields: []*gqlexec.Field{
@@ -340,7 +340,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*tender.TenderOffer)
 					return obj.RateMethod, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐCarrierRateMethod),
+				Marshal: gqlexec.Marshal(marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierRateMethod),
 			},
 			{
 				Name:       "rate",
@@ -372,7 +372,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*tender.TenderOffer)
 					return obj.Channel, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTenderChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐChannel),
+				Marshal: gqlexec.Marshal(marshalNTenderChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐChannel),
 			},
 			{
 				Name:     "status",
@@ -382,7 +382,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*tender.TenderOffer)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTenderOfferStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐOfferStatus),
+				Marshal: gqlexec.Marshal(marshalNTenderOfferStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐOfferStatus),
 			},
 			{
 				Name:     "recipientEmail",
@@ -430,7 +430,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*tender.TenderOffer)
 					return gqlexec.Resolver[resolverTenderOffer](ec, "TenderOffer").ResponseSource(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOTenderResponseSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐResponseSource),
+				Marshal: gqlexec.Marshal(marshalOTenderResponseSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐResponseSource),
 			},
 			{
 				Name:     "declineReason",
@@ -527,7 +527,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*tender.TenderOffer)
 					return obj.Carrier, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrier),
+				Marshal: gqlexec.Marshal(marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrier),
 			},
 		}},
 	},
@@ -611,7 +611,7 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐCarrierRateMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.CarrierRateMethod) graphql.Marshaler {
+func marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierRateMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.CarrierRateMethod) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -667,15 +667,15 @@ func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
-func marshalNTender2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTenderᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*tender.Tender) graphql.Marshaler {
+func marshalNTender2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTenderᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*tender.Tender) graphql.Marshaler {
 	return gqlexec.List[*tender.Tender]{
-		Elem:        marshalNTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTender,
+		Elem:        marshalNTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTender,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTender(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tender.Tender) graphql.Marshaler {
+func marshalNTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTender(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tender.Tender) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -683,7 +683,7 @@ func marshalNTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdoma
 	return ec.MarshalType(ctx, sel, "Tender", v)
 }
 
-func marshalNTenderChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐChannel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tender.Channel) graphql.Marshaler {
+func marshalNTenderChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐChannel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tender.Channel) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -691,7 +691,7 @@ func marshalNTenderChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋ
 	return res
 }
 
-func marshalNTenderMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tender.Mode) graphql.Marshaler {
+func marshalNTenderMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tender.Mode) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -699,7 +699,7 @@ func marshalNTenderMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdom
 	return res
 }
 
-func marshalNTenderOffer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTenderOffer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tender.TenderOffer) graphql.Marshaler {
+func marshalNTenderOffer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTenderOffer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tender.TenderOffer) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -707,7 +707,7 @@ func marshalNTenderOffer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return ec.MarshalType(ctx, sel, "TenderOffer", v)
 }
 
-func marshalNTenderOfferStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐOfferStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tender.OfferStatus) graphql.Marshaler {
+func marshalNTenderOfferStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐOfferStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tender.OfferStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -715,7 +715,7 @@ func marshalNTenderOfferStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return res
 }
 
-func marshalNTenderStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tender.Status) graphql.Marshaler {
+func marshalNTenderStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tender.Status) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -731,7 +731,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrier(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrier.Carrier) graphql.Marshaler {
+func marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrier(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrier.Carrier) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -746,28 +746,28 @@ func marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx co
 	return res
 }
 
-func marshalORoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuide(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tender.RoutingGuide) graphql.Marshaler {
+func marshalORoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐRoutingGuide(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tender.RoutingGuide) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "RoutingGuide", v)
 }
 
-func marshalOTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTender(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tender.Tender) graphql.Marshaler {
+func marshalOTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTender(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tender.Tender) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Tender", v)
 }
 
-func marshalOTenderOffer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTenderOfferᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*tender.TenderOffer) graphql.Marshaler {
+func marshalOTenderOffer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTenderOfferᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*tender.TenderOffer) graphql.Marshaler {
 	return gqlexec.List[*tender.TenderOffer]{
-		Elem:        marshalNTenderOffer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTenderOffer,
+		Elem:        marshalNTenderOffer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTenderOffer,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalOTenderResponseSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐResponseSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tender.ResponseSource) graphql.Marshaler {
+func marshalOTenderResponseSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐResponseSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tender.ResponseSource) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

@@ -3,14 +3,14 @@ package mocks
 import (
 	"context"
 
-	servicesport "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 type NoopRealtimeService struct{}
 
 func (s *NoopRealtimeService) PublishResourceInvalidation(
 	_ context.Context,
-	_ *servicesport.PublishResourceInvalidationRequest,
+	_ *agentports.PublishResourceInvalidationRequest,
 ) error {
 	return nil
 }

@@ -1,3 +1,4 @@
+import { STOP_TYPE_LABELS } from "@trenova/shared/lib/stop-type";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -50,6 +51,7 @@ import { toast } from "sonner";
 import { AssignmentDialog } from "../assignment-dialog";
 import { SplitMoveDialog } from "../shipment-split-move-dialog";
 import { RecordStopActualDialog } from "./record-stop-actual-dialog";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function MoveCard({
   moveIndex,
@@ -98,8 +100,8 @@ export function MoveCard({
   // operator who reads "shipment control" while the profile is what denied it
   // goes looking in the wrong settings page.
   const removalBlockedReason = moveRemovalRule
-    ? `Move removal is blocked by the ${moveRemovalRule.provenance.profileName} profile`
-    : "Move removal is disabled by shipment control";
+    ? t("Move removal is blocked by the {0} profile", moveRemovalRule.provenance.profileName)
+    : t("Move removal is disabled by shipment control");
   const canUnassign =
     hasDriverAssignment && move?.status === "Assigned" && move?.assignment?.status === "New";
   const canCancelCarrier = hasCarrierAssignment && move?.status === "Assigned";
@@ -166,9 +168,14 @@ export function MoveCard({
       if (move?.shipmentId) {
         void queryClient.invalidateQueries({ queryKey: ["shipment", move.shipmentId] });
       }
-      toast.success(variables.action === "Arrive" ? "Arrival recorded" : "Departure recorded", {
-        description: t("The stop actuals and move status have been updated."),
-      });
+      toast.success(
+        variables.action === "Arrive"
+          ? translate("Arrival recorded")
+          : translate("Departure recorded"),
+        {
+          description: t("The stop actuals and move status have been updated."),
+        },
+      );
     },
     onError: (error: Error) => {
       toast.error(t("Failed to record stop actual"), { description: error.message });
@@ -278,7 +285,7 @@ export function MoveCard({
               title={t("Delete")}
               label={t("Delete")}
               description={
-                canRemove ? "Delete this move and all associated stops" : removalBlockedReason
+                canRemove ? t("Delete this move and all associated stops") : removalBlockedReason
               }
               color="danger"
               disabled={!canRemove}
@@ -429,13 +436,6 @@ const moveStatusConfig: Record<
   Canceled: { label: "Canceled", variant: "danger" },
 };
 
-const stopTypeLabels: Record<StopType, string> = {
-  Pickup: "Pickup",
-  Delivery: "Delivery",
-  SplitPickup: "Split Pickup",
-  SplitDelivery: "Split Delivery",
-};
-
 const stopStatusBgColor: Record<StopStatus, string> = {
   New: "bg-accent-violet",
   InTransit: "bg-info",
@@ -505,7 +505,7 @@ function LocationDisplay({ locationId, stopType }: { locationId: string; stopTyp
       <div className="flex items-center gap-1.5">
         {location.addressLine1 && <span className="truncate text-xs">{location.addressLine1}</span>}
         <span className="text-muted-foreground text-xs whitespace-nowrap">
-          ({stopTypeLabels[stopType]})
+          ({STOP_TYPE_LABELS[stopType]})
         </span>
       </div>
       <p className="text-muted-foreground truncate text-xs">
@@ -532,7 +532,7 @@ function stopCheckCallAction(stop: Stop, enabled: boolean): StopActualAction | n
 }
 
 function stopDescription(stop: Stop): string {
-  const label = stopTypeLabels[stop.type];
+  const label = STOP_TYPE_LABELS[stop.type];
   const place = stop.location?.name || stop.addressLine;
   return place ? `${label} · ${place}` : label;
 }
@@ -643,20 +643,20 @@ function StopTimelineItem({
                 <div className="flex items-center gap-1.5">
                   <span className="truncate text-xs">{stop.addressLine}</span>
                   <span className="text-muted-foreground text-xs whitespace-nowrap">
-                    ({stopTypeLabels[stop.type]})
+                    ({STOP_TYPE_LABELS[stop.type]})
                   </span>
                 </div>
               </>
             ) : (
               <span className="text-muted-foreground text-xs whitespace-nowrap">
-                ({stopTypeLabels[stop.type]})
+                ({STOP_TYPE_LABELS[stop.type]})
               </span>
             )}
           </>
         ) : hasErrors ? (
           <div className="flex flex-col gap-0.5">
             <span className="text-destructive text-xs">
-              {t("Error in {0} stop", stopTypeLabels[stop.type])}
+              {t("Error in {0} stop", STOP_TYPE_LABELS[stop.type])}
             </span>
             <span className="text-muted-foreground text-xs">
               {t("Click to edit and fix errors")}
@@ -664,7 +664,7 @@ function StopTimelineItem({
           </div>
         ) : (
           <span className="text-muted-foreground text-xs">
-            {t("Enter {0} information", stopTypeLabels[stop.type])}
+            {t("Enter {0} information", STOP_TYPE_LABELS[stop.type])}
           </span>
         )}
       </div>

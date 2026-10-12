@@ -84,8 +84,8 @@ function MatchBanner({ series, onDismiss }: { series: RecurringShipment; onDismi
       const result = await apiService.recurringShipmentService.generate(series.id as string);
       toast.success(
         result.shipment?.proNumber
-          ? `Shipment ${result.shipment.proNumber} generated from "${series.name}"`
-          : `Occurrence processed for "${series.name}"`,
+          ? t('Shipment {0} generated from "{1}"', result.shipment.proNumber, series.name)
+          : t('Occurrence processed for "{0}"', series.name),
         {
           description: t(
             "The recurring series created this shipment for you — you can discard this manual entry.",

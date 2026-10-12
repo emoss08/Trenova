@@ -3,10 +3,12 @@ package shipmentboardresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 )
 
-func suggestionQueueToModel(q *services.ShipmentSuggestionQueue) *gqlmodel.ShipmentSuggestionQueue {
+func suggestionQueueToModel(
+	q *shipmentsuggestionports.ShipmentSuggestionQueue,
+) *gqlmodel.ShipmentSuggestionQueue {
 	items := make([]*gqlmodel.ShipmentSuggestion, 0, len(q.Items))
 	for _, item := range q.Items {
 		items = append(items, suggestionToModel(item))
@@ -19,7 +21,9 @@ func suggestionQueueToModel(q *services.ShipmentSuggestionQueue) *gqlmodel.Shipm
 	}
 }
 
-func suggestionToModel(item *services.ShipmentSuggestion) *gqlmodel.ShipmentSuggestion {
+func suggestionToModel(
+	item *shipmentsuggestionports.ShipmentSuggestion,
+) *gqlmodel.ShipmentSuggestion {
 	impact := item.Impact
 	if impact == nil {
 		impact = []string{}

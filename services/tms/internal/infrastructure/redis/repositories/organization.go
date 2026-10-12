@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/redis/go-redis/v9"
@@ -31,7 +31,7 @@ type organizationRepository struct {
 
 func NewOrganizationRepository(
 	p OrganizationRepositoryParams,
-) repositories.OrganizationCacheRepository {
+) tenantports.OrganizationCacheRepository {
 	return &organizationRepository{
 		client: p.Client,
 		l:      p.Logger,

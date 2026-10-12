@@ -1,191 +1,220 @@
-import { SectionPanel } from "@/components/section-panel";
 import type {
   AIRetrievalModelChange,
   AIRetrievalSource,
   AIRetrievalSourceType,
   AIRetrievalStatus,
 } from "@/lib/graphql/ai-retrieval";
-import { Badge } from "@trenova/shared/components/ui/badge";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Progress } from "@trenova/shared/components/ui/progress";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
-import { phaseTone } from "@trenova/shared/lib/status-phase";
-import { RefreshCw02Icon } from "@trenova/shared/components/icons";
+import { cn } from "@trenova/shared/lib/utils";
+import { Ic, type IcName } from "../kit/ic";
+import { SecH, Switch } from "../kit/layout";
 import {
   SOURCE_LABEL,
   SOURCE_STATE,
+  SOURCE_STATE_TONE,
   modelChangeShare,
+  sourceShares,
   sourceState,
   sourceWaiting,
 } from "./retrieval-model";
+import { Button } from "@trenova/shared/components/ui/button";
 
-const INDEXED_AT_FORMAT = {
-  month: "short",
-  day: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-} as const;
+const SOURCE_ICON: Record<AIRetrievalSourceType, IcName> = {
+  Memory: "brain",
+  Document: "receipt",
+  InboundMessage: "inbox",
+};
 
 type RetrievalSourcesProps = {
   status: AIRetrievalStatus;
   canUpdate: boolean;
-  onReindex: (sourceType: AIRetrievalSourceType) => void;
-  onShowFailures: (sourceType: AIRetrievalSourceType) => void;
+  busy: boolean;
+  onToggle: (source: AIRetrievalSourceType, enabled: boolean) => void;
+  onReindex: (source: AIRetrievalSourceType) => void;
+  onShowFailures: (source: AIRetrievalSourceType) => void;
 };
 
 /**
- * Each source's place in the index under the model searches use: how many
- * items are indexed, waiting or failed, when the last one was indexed, and a
- * re-index for when the text or the chunking changed. A model change in
- * progress is shown above them, because searches keep the old model until
- * every source is indexed under the new one.
+ * Each source's place in the index under the model searches use: how much is indexed,
+ * waiting, failed or skipped, a switch to index it at all, and a re-index for when its
+ * text or the chunking changed. A model change in progress sits above them, because
+ * searches keep the old model until every source is indexed under the new one.
  */
 export function RetrievalSources({
   status,
   canUpdate,
+  busy,
+  onToggle,
   onReindex,
   onShowFailures,
 }: RetrievalSourcesProps) {
   const t = useT();
-  const activeModel = status.settings.activeModelKey;
+  const model = status.settings.activeModelKey;
 
   return (
-    <SectionPanel
-      title={t("Sources")}
-      hint={activeModel ? <span className="font-mono">{activeModel}</span> : undefined}
-      help={t(
-        "Counts are for the model searches use now. An item is skipped on purpose when it is retired, superseded, has no text yet, or belongs to a record too sensitive to send to a provider; skipped items are still found by their words.",
-      )}
-    >
-      {status.modelChange ? <ModelChangeProgress change={status.modelChange} /> : null}
-      {!status.modelChange && status.configuredModelDiffers && status.configuredModelKey ? (
-        <p className="border-border text-muted-foreground border-b px-3 py-2 text-xs">
+    <section className="sec">
+      <SecH t={t("Sources")} r={model ? <span className="sh2-n mono">{model}</span> : null} />
+      {status.modelChange && <ModelChange change={status.modelChange} />}
+      {!status.modelChange && status.configuredModelDiffers && status.configuredModelKey && (
+        <p className="lead">
           {t(
             "The Embedding task now routes to {0}. Every source is indexed under it before searches move to it.",
             status.configuredModelKey,
           )}
         </p>
-      ) : null}
-      <ul className="divide-border flex flex-col divide-y">
+      )}
+      <div className="srcs">
         {status.sources.map((source) => (
           <SourceRow
             key={source.sourceType}
             source={source}
             status={status}
             canUpdate={canUpdate}
+            busy={busy}
+            onToggle={onToggle}
             onReindex={onReindex}
             onShowFailures={onShowFailures}
           />
         ))}
-      </ul>
-    </SectionPanel>
+      </div>
+    </section>
   );
 }
 
-function ModelChangeProgress({ change }: { change: AIRetrievalModelChange }) {
+function ModelChange({ change }: { change: AIRetrievalModelChange }) {
   const t = useT();
   const share = modelChangeShare(change);
 
   return (
-    <div className="border-border flex flex-col gap-1.5 border-b px-3 py-2.5">
-      <div className="flex items-baseline justify-between gap-2 text-xs">
-        <span className="font-medium">{t("Changing the embedding model")}</span>
-        <span className="text-muted-foreground tabular-nums">{Math.round(share * 100)}%</span>
+    <div className="src">
+      <span className="src-i">
+        <Ic n="refresh" s={15} />
+      </span>
+      <div className="src-m">
+        <div className="src-h">
+          <b>{t("Changing the embedding model")}</b>
+          <span className="tg b">
+            <i className="spn" />
+            {Math.round(share * 100)}%
+          </span>
+        </div>
+        <p>
+          {t(
+            "{0} of {1} indexed under {2}. Searches use {3} until every source is done.",
+            formatNumber(change.indexed),
+            formatNumber(change.total),
+            change.toModelKey,
+            change.fromModelKey || t("no model"),
+          )}
+          {change.failed > 0 &&
+            ` ${t("{0, plural, one {# item failed.} other {# items failed.}}", change.failed)}`}
+        </p>
+        <div
+          className="sbar"
+          role="progressbar"
+          aria-label={t("Items indexed under the new model")}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(share * 100)}
+        >
+          <i className="ix" style={{ width: `${share * 100}%` }} />
+        </div>
       </div>
-      <Progress
-        value={change.indexed}
-        max={Math.max(change.total, 1)}
-        size="sm"
-        aria-label={t("Items indexed under the new model")}
-      />
-      <p className="text-muted-foreground text-xs">
-        {t(
-          "{0} of {1} indexed under {2}. Searches use {3} until every source is done.",
-          formatNumber(change.indexed),
-          formatNumber(change.total),
-          change.toModelKey,
-          change.fromModelKey || t("no model"),
-        )}
-        {change.failed > 0
-          ? ` ${t("{0, plural, one {# item failed.} other {# items failed.}}", change.failed)}`
-          : ""}
-      </p>
     </div>
   );
 }
+
+type SourceRowProps = Omit<RetrievalSourcesProps, "status"> & {
+  source: AIRetrievalSource;
+  status: AIRetrievalStatus;
+};
 
 function SourceRow({
   source,
   status,
   canUpdate,
+  busy,
+  onToggle,
   onReindex,
   onShowFailures,
-}: {
-  source: AIRetrievalSource;
-  status: AIRetrievalStatus;
-  canUpdate: boolean;
-  onReindex: (sourceType: AIRetrievalSourceType) => void;
-  onShowFailures: (sourceType: AIRetrievalSourceType) => void;
-}) {
+}: SourceRowProps) {
   const t = useT();
-  const state = SOURCE_STATE[sourceState(source, status)];
+  const stateKey = sourceState(source, status);
+  const state = SOURCE_STATE[stateKey];
   const waiting = sourceWaiting(source);
+  const shares = sourceShares(source);
+  const label = t(SOURCE_LABEL[source.sourceType].label);
+  const indexed = Boolean(status.settings.activeModelKey);
 
   return (
-    <li className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">{t(SOURCE_LABEL[source.sourceType].label)}</span>
-          <Badge variant={phaseTone(state.phase)} title={state.description && t(state.description)}>
+    <div className={cn("src", !source.enabled && "dim")}>
+      <span className="src-i">
+        <Ic n={SOURCE_ICON[source.sourceType]} s={15} />
+      </span>
+      <div className="src-m">
+        <div className="src-h">
+          <b>{label}</b>
+          <span
+            className={cn("tg", SOURCE_STATE_TONE[stateKey])}
+            title={state.description ? t(state.description) : undefined}
+          >
+            {stateKey === "indexing" && <i className="spn" />}
             {t(state.text)}
-          </Badge>
+          </span>
         </div>
-        <p className="text-muted-foreground text-xs tabular-nums">
-          {t(
-            "{0} indexed · {1} waiting · {2} failed · {3} skipped, of {4}",
-            formatNumber(source.indexed),
-            formatNumber(waiting),
-            formatNumber(source.failed),
-            formatNumber(source.skipped),
-            formatNumber(source.total),
+        <p>{t(SOURCE_LABEL[source.sourceType].description)}</p>
+        <div className="sbar" aria-hidden>
+          <i className="ix" style={{ width: `${shares.indexed}%` }} />
+          <i className="fx" style={{ width: `${shares.failed}%` }} />
+          <i className="sk" style={{ width: `${shares.skipped}%` }} />
+        </div>
+        <div className="src-n mono">
+          <span>{t("{0} indexed", formatNumber(source.indexed))}</span>
+          <span>{t("{0} waiting", formatNumber(waiting))}</span>
+          {source.failed > 0 && (
+            <button type="button" className="t-d" onClick={() => onShowFailures(source.sourceType)}>
+              {t("{0} failed", formatNumber(source.failed))}
+            </button>
           )}
-        </p>
-        <p className="text-muted-foreground text-xs">
-          {source.lastIndexedAt
-            ? t(
-                "Last indexed {0}",
-                formatUnixInUserTimezone(source.lastIndexedAt, INDEXED_AT_FORMAT),
-              )
-            : t("Never indexed")}
-        </p>
+          {source.skipped > 0 && (
+            <span
+              title={t(
+                "Retired, superseded, empty, or too sensitive to send. Still found by their words.",
+              )}
+            >
+              {t("{0} skipped", formatNumber(source.skipped))}
+            </span>
+          )}
+          <span className="dim">{t("of {0}", formatNumber(source.total))}</span>
+        </div>
       </div>
-      <div className="flex shrink-0 items-center gap-1.5">
-        {source.failed > 0 ? (
-          <Button variant="ghost" size="xs" onClick={() => onShowFailures(source.sourceType)}>
-            {t("Show failures")}
-          </Button>
-        ) : null}
-        {canUpdate ? (
+      {canUpdate && (
+        <div className="src-c">
           <Button
-            variant="outline"
-            size="xs"
-            onClick={() => onReindex(source.sourceType)}
-            disabled={!source.enabled || !status.settings.activeModelKey}
+            type="button"
+            variant="outline" size="sm"
+            disabled={!source.enabled || !indexed}
             title={
-              !source.enabled
-                ? t("Turn the source on to index it")
-                : !status.settings.activeModelKey
-                  ? t("Nothing is indexed yet")
+              !indexed
+                ? t("Nothing is indexed yet")
+                : !source.enabled
+                  ? t("Turn the source on to index it")
                   : undefined
             }
+            onClick={() => onReindex(source.sourceType)}
           >
-            <RefreshCw02Icon className="size-3.5" />
+            <Ic n="refresh" s={12} />
             {t("Re-index")}
           </Button>
-        ) : null}
-      </div>
-    </li>
+          <Switch
+            on={source.enabled}
+            label={t("Index {0}", label)}
+            disabled={busy}
+            onChange={(enabled) => onToggle(source.sourceType, enabled)}
+          />
+        </div>
+      )}
+    </div>
   );
 }

@@ -10,7 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 )
 
 func (r *MutationResolver) MarkNotificationsRead(ctx context.Context, ids []string) (bool, error) {
@@ -58,7 +58,7 @@ func (r *QueryResolver) Notifications(ctx context.Context, input gqlmodel.DataTa
 		return nil, err
 	}
 
-	req := &repositories.ListNotificationConnectionRequest{
+	req := &notificationports.ListNotificationConnectionRequest{
 		Filter:       tableInput.Filter,
 		Cursor:       tableInput.Cursor,
 		PersonalOnly: authCtx.IsPortalUser,

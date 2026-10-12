@@ -5,11 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/detention"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/detentionpolicyservice"
-	"github.com/emoss08/trenova/internal/core/services/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -108,7 +108,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*detention.DetentionPolicy], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListDetentionPoliciesRequest{
+				&detentionports.ListDetentionPoliciesRequest{
 					Filter:     req,
 					Status:     helpers.QueryString(c, "status"),
 					CustomerID: customerID,
@@ -143,7 +143,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.GetByID(
 		c.Request.Context(),
-		&repositories.GetDetentionPolicyByIDRequest{
+		&detentionports.GetDetentionPolicyByIDRequest{
 			DetentionPolicyID: policyID,
 			TenantInfo:        pagination.FromAuthAsUser(authCtx),
 			IncludeTiers:      true,
@@ -252,7 +252,7 @@ func (h *Handler) delete(c *gin.Context) {
 		return
 	}
 
-	if err = h.service.Delete(c.Request.Context(), &repositories.GetDetentionPolicyByIDRequest{
+	if err = h.service.Delete(c.Request.Context(), &detentionports.GetDetentionPolicyByIDRequest{
 		DetentionPolicyID: policyID,
 		TenantInfo:        pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID); err != nil {
@@ -286,7 +286,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*detention.DetentionPolicy], error) {
 			return h.service.SelectOptions(
 				c.Request.Context(),
-				&repositories.DetentionPolicySelectOptionsRequest{
+				&detentionports.DetentionPolicySelectOptionsRequest{
 					SelectQueryRequest: req,
 				},
 			)
@@ -316,7 +316,7 @@ func (h *Handler) getOption(c *gin.Context) {
 
 	entity, err := h.service.GetByID(
 		c.Request.Context(),
-		&repositories.GetDetentionPolicyByIDRequest{
+		&detentionports.GetDetentionPolicyByIDRequest{
 			DetentionPolicyID: policyID,
 			TenantInfo:        pagination.FromAuthAsUser(authCtx),
 		},

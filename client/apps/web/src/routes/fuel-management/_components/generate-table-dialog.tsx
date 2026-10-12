@@ -23,6 +23,8 @@ import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 export type GenerateValueMeta = {
   label: string;
+  startLabel: string;
+  stepHelper: string;
   prefix?: string;
   suffix?: string;
   decimalScale: number;
@@ -168,9 +170,12 @@ export function GenerateTableDialog({
     if (!preview || preview.length === 0) return;
     onApply(preview);
     onOpenChange(false);
-    toast.success(`${preview.length} price bands created`, {
-      description: t("Every band is editable — adjust any range or value before saving."),
-    });
+    toast.success(
+      t("{0, plural, one {# price band created} other {# price bands created}}", preview.length),
+      {
+        description: t("Every band is editable — adjust any range or value before saving."),
+      },
+    );
   };
 
   const formatValue = (value: string) => {
@@ -224,7 +229,7 @@ export function GenerateTableDialog({
               invalid={state.increment !== null && state.increment <= 0}
             />
             <WizardField
-              label={`Starting ${valueMeta.label.toLowerCase()}`}
+              label={valueMeta.startLabel}
               helper={t("Charged in the first (lowest price) band.")}
               value={state.startValue}
               onChange={(value) => update({ startValue: value })}
@@ -234,7 +239,7 @@ export function GenerateTableDialog({
             />
             <WizardField
               label={t("Increase per band")}
-              helper={`How much the ${valueMeta.label.toLowerCase()} goes up from one band to the next.`}
+              helper={valueMeta.stepHelper}
               value={state.valueStep}
               onChange={(value) => update({ valueStep: value })}
               prefix={valueMeta.prefix}
@@ -320,9 +325,8 @@ export function GenerateTableDialog({
           <span className="text-muted-foreground text-xs">
             {replaceCount > 0
               ? t(
-                  "Applying replaces your {0} existing {1}.",
+                  "Applying replaces your {0, plural, one {# existing band} other {# existing bands}}.",
                   replaceCount,
-                  replaceCount === 1 ? "band" : "bands",
                 )
               : ""}
           </span>

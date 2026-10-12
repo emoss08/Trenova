@@ -76,7 +76,10 @@ export default function WorkerDQFTab({ workerId, onOpenTab }: WorkerDQFTabProps)
     mutationFn: (id: string) => recordEmploymentVerificationFollowUp(id),
     onSuccess: (updated) => {
       toast.success(t("Follow-up recorded"), {
-        description: `${updated.followUpCount} chase${updated.followUpCount === 1 ? "" : "s"} on file as evidence of good-faith effort.`,
+        description: t(
+          "{0, plural, one {# chase} other {# chases}} on file as evidence of good-faith effort.",
+          updated.followUpCount,
+        ),
       });
       void invalidate();
     },

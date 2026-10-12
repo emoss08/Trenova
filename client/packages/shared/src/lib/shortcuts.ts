@@ -13,6 +13,7 @@ export function isMacPlatform(): boolean {
  * platform spells it: "⌘K" on a Mac, "Ctrl+K" elsewhere.
  */
 export function formatShortcut(key: string, mac: boolean = isMacPlatform()): string {
+  // i18n-ignore: key names as printed on the keyboard
   return mac ? `⌘${key}` : `Ctrl+${key}`;
 }
 
@@ -21,5 +22,6 @@ export function formatShortcut(key: string, mac: boolean = isMacPlatform()): str
  * platform spells it: "⌥L" on a Mac, "Alt+L" elsewhere.
  */
 export function formatAltShortcut(key: string, mac: boolean = isMacPlatform()): string {
+  // i18n-ignore: key names as printed on the keyboard
   return mac ? `⌥${key}` : `Alt+${key}`;
 }

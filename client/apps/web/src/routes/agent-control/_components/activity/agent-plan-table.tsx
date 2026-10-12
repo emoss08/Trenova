@@ -6,7 +6,7 @@ import {
   type AgentPlanRow,
 } from "@/lib/graphql/agent-activity-tables";
 import { decideAgentPlan } from "@/lib/graphql/agent-decisions";
-import { aiControlStatsQueryKey } from "../overview/use-ai-control-stats";
+import { invalidateAIControlCounts } from "../overview/use-ai-control-stats";
 import type { Row, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { invalidateProposalViews } from "@/lib/proposal-cache";
@@ -33,7 +33,7 @@ export default function AgentPlanTable() {
     toast.success(message);
     await Promise.all([
       invalidateProposalViews(queryClient),
-      queryClient.invalidateQueries({ queryKey: aiControlStatsQueryKey }),
+      invalidateAIControlCounts(queryClient),
     ]);
   };
 
@@ -98,6 +98,7 @@ export default function AgentPlanTable() {
     <>
       <DataTable<AgentPlanRow>
         name="Agent Plan"
+        emptyTitle={t("No agent plans yet")}
         queryKey="agent-plan-list"
         graphql={agentPlanTableGraphQLConfig}
         resource={Resource.AgentProposal}

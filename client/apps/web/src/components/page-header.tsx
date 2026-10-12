@@ -10,6 +10,13 @@ export type PageHeaderProps = {
   actions?: React.ReactNode;
   includeMetadata?: boolean;
   className?: string;
+  /**
+   * Keeps the title and description for assistive technology and the
+   * document's metadata without drawing the bar: a room draws its own title
+   * in its rail, so the bar would say it twice. The page's actions and context
+   * go with the bar; a room puts them where it draws its title.
+   */
+  visuallyHidden?: boolean;
 };
 
 export const PAGE_HEADER_HEIGHT_CLASS = "min-h-11";
@@ -21,7 +28,18 @@ export function PageHeader({
   actions,
   includeMetadata = true,
   className,
+  visuallyHidden = false,
 }: PageHeaderProps) {
+  if (visuallyHidden) {
+    return (
+      <div data-slot="page-header" className="sr-only">
+        <h1>{title}</h1>
+        {description ? <p>{description}</p> : null}
+        {includeMetadata && <Metadata title={title} description={description} />}
+      </div>
+    );
+  }
+
   return (
     <div
       data-slot="page-header"

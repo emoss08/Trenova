@@ -18,6 +18,7 @@ import { endOfDay, startOfDay } from "date-fns";
 import { parseAsJson } from "nuqs";
 import type { FieldFilter, FilterGroup, SortField } from "@trenova/shared/types/data-table";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const DAY_SECONDS = 86_400;
 
@@ -137,6 +138,14 @@ export type AuditTableState = {
   sort: SortField[];
 };
 
+/** No search, filter or sort: an export of the scope alone. */
+export const UNFILTERED_AUDIT_TABLE: AuditTableState = {
+  query: "",
+  fieldFilters: [],
+  filterGroups: [],
+  sort: [],
+};
+
 export type AuditExportRequestParams = {
   format: AiAuditExportFormat;
   from: number;
@@ -195,8 +204,14 @@ export function dayEndOf(unixSeconds: number): number {
 export const auditExportFormSchema = z
   .object({
     format: z.enum(["CSV", "JSON"]),
-    from: z.number({ error: "The start of the range is required" }).int().positive(),
-    to: z.number({ error: "The end of the range is required" }).int().positive(),
+    from: z
+      .number({ error: () => translate("The start of the range is required") })
+      .int()
+      .positive(),
+    to: z
+      .number({ error: () => translate("The end of the range is required") })
+      .int()
+      .positive(),
     useCurrentFilters: z.boolean(),
   })
   .superRefine((value, ctx) => {
@@ -206,13 +221,13 @@ export const auditExportFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["to"],
-        message: "The end of the range must not be before its start",
+        message: translate("The end of the range must not be before its start"),
       });
     } else if (to - from > AUDIT_MAX_EXPORT_RANGE_SECONDS) {
       ctx.addIssue({
         code: "custom",
         path: ["to"],
-        message: "An export can cover at most seven years",
+        message: translate("An export can cover at most seven years"),
       });
     }
   });
@@ -380,6 +395,21 @@ export function isVerificationPending(
   }
 
   return (status.lastVerifiedAt ?? null) === request.baseline;
+}
+
+/** Rows recorded since the last seal; they are sealed at the next check. */
+export function unsealedRows(
+  status: Pick<AIAuditChainStatus, "lastSeq" | "sealedThroughSeq">,
+): number {
+  return Math.max(0, status.lastSeq - status.sealedThroughSeq);
+}
+
+/** Whether a row of the trail has been sealed into the chain yet. */
+export function isSealed(
+  seq: number,
+  status: Pick<AIAuditChainStatus, "sealedThroughSeq"> | null | undefined,
+): boolean | null {
+  return status ? seq <= status.sealedThroughSeq : null;
 }
 
 /** A mismatch is the trail no longer matching its chain; a missing key only stops the check. */

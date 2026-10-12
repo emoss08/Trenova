@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /** Mirrors the reason length check in Override.Validate. */
 export const MIN_OVERRIDE_REASON_LENGTH = 10;
@@ -19,7 +20,7 @@ const MAX_LEAD_TIME_DAYS = 60;
 export const jurisdictionRuleOverrideSchema = z
   .object({
     id: z.string().optional(),
-    stateId: z.string().min(1, { message: "State is required" }),
+    stateId: z.string().min(1, { error: () => translate("State is required") }),
 
     maxWidthFeet: z.number().positive().nullish(),
     maxHeightFeet: z.number().positive().nullish(),
@@ -30,14 +31,14 @@ export const jurisdictionRuleOverrideSchema = z
       .number()
       .int()
       .min(0)
-      .max(MAX_LEAD_TIME_DAYS, { message: "Lead time must be 60 days or fewer" })
+      .max(MAX_LEAD_TIME_DAYS, { error: () => translate("Lead time must be 60 days or fewer") })
       .nullish(),
 
     daylightOnly: z.boolean().nullish(),
     holidayRestricted: z.boolean().nullish(),
 
     reason: z.string().min(MIN_OVERRIDE_REASON_LENGTH, {
-      message: "Explain why this jurisdiction is overridden, at least 10 characters",
+      error: () => translate("Explain why this jurisdiction is overridden, at least 10 characters"),
     }),
 
     version: z.number().int().optional(),
@@ -58,7 +59,7 @@ export const jurisdictionRuleOverrideSchema = z
       v.daylightOnly != null ||
       v.holidayRestricted != null,
     {
-      message: "An override must change at least one limit or restriction",
+      error: () => translate("An override must change at least one limit or restriction"),
       path: ["stateId"],
     },
   );

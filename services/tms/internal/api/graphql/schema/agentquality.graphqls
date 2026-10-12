@@ -312,6 +312,8 @@ type AgentQualityOverview {
   agentsWithCases: Int!
   judgeEnabled: Boolean!
   regressionThreshold: Float!
+  "The open regression that fell furthest below its agent's recent median; null when none is open."
+  worstRegression: AgentSuiteRun
 }
 
 "An answer people rated down, with the most recent thumbs down on it."

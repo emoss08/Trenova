@@ -5,15 +5,15 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/businesscentral"
 )
 
 func (c *Connector) FindDocument(
 	ctx context.Context,
-	req *services.AccountingFindDocumentRequest,
-) (*services.AccountingDocumentResult, bool, error) {
+	req *accountingsyncports.AccountingFindDocumentRequest,
+) (*accountingsyncports.AccountingDocumentResult, bool, error) {
 	kind := req.Kind
 	if !kind.IsSalesDocument() && !kind.IsBill() && !kind.IsBillPayment() &&
 		kind != accountingsync.SyncObjectCustomerPayment &&
@@ -29,7 +29,7 @@ func (c *Connector) FindDocument(
 	}
 
 	var (
-		found *services.AccountingDocumentResult
+		found *accountingsyncports.AccountingDocumentResult
 		ok    bool
 	)
 	switch {
@@ -54,7 +54,7 @@ func findPosted(
 	ctx context.Context,
 	client *businesscentral.Client,
 	kind businesscentral.DocumentKind,
-	req *services.AccountingFindDocumentRequest,
+	req *accountingsyncports.AccountingFindDocumentRequest,
 ) (*businesscentral.Document, bool, error) {
 	listed, err := client.FindDocuments(
 		ctx,
@@ -81,8 +81,8 @@ func findPosted(
 func findSales(
 	ctx context.Context,
 	client *businesscentral.Client,
-	req *services.AccountingFindDocumentRequest,
-) (*services.AccountingDocumentResult, bool, error) {
+	req *accountingsyncports.AccountingFindDocumentRequest,
+) (*accountingsyncports.AccountingDocumentResult, bool, error) {
 	kind, err := salesKindOf(req.Kind)
 	if err != nil {
 		return nil, false, err
@@ -91,7 +91,7 @@ func findSales(
 	if err != nil || !ok {
 		return nil, false, err
 	}
-	return &services.AccountingDocumentResult{
+	return &accountingsyncports.AccountingDocumentResult{
 		ExternalID: doc.ID,
 		DocNumber:  doc.Number,
 		Refs:       map[string]string{accountingsync.ExternalRefDocument: doc.ID},
@@ -101,8 +101,8 @@ func findSales(
 func (c *Connector) findPurchase(
 	ctx context.Context,
 	client *businesscentral.Client,
-	req *services.AccountingFindDocumentRequest,
-) (*services.AccountingDocumentResult, bool, error) {
+	req *accountingsyncports.AccountingFindDocumentRequest,
+) (*accountingsyncports.AccountingDocumentResult, bool, error) {
 	kind := purchaseKindOf(req.Credit)
 	doc, ok, err := findPosted(ctx, client, kind, req)
 	if err != nil || !ok {
@@ -116,8 +116,8 @@ func (c *Connector) findPurchase(
 func findPayment(
 	ctx context.Context,
 	client *businesscentral.Client,
-	req *services.AccountingFindDocumentRequest,
-) (*services.AccountingDocumentResult, bool, error) {
+	req *accountingsyncports.AccountingFindDocumentRequest,
+) (*accountingsyncports.AccountingDocumentResult, bool, error) {
 	if strings.TrimSpace(req.RequestID) == "" {
 		return nil, false, nil
 	}

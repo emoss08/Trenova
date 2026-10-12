@@ -4,12 +4,12 @@ package aitrainingresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	aitrainingports "github.com/emoss08/trenova/internal/modules/agent/ports/aitrainingports"
 )
 
 type Deps struct {
 	*base.Core
-	AiTrainingHistoryService services.AITrainingHistoryService
+	AiTrainingHistoryService aitrainingports.AITrainingHistoryService
 }
 
 type QueryResolver struct{ *Deps }

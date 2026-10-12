@@ -1,0 +1,51 @@
+defaults:
+  tags: [attachments, documents, shipments]
+
+scenarios:
+  - name: rate-confirmation-attached-and-reattached
+    description: >
+      A person attaches a rate confirmation and asks for the shipment, asks about the file on a
+      later message that carries none, then attaches a revised copy. The agent read only a
+      1,200-character excerpt of the first file, which on a C.H. Robinson confirmation is its
+      terms, held no tool to read the rest, and twice answered a re-uploaded file with "I don't
+      see a file attached". The confirmation is laid out in label and value columns, so it also
+      covers reading a PDF in reading order rather than content-stream order.
+    agent: Bench · Shipment desk
+    exclusive: acme-shipments
+    steps:
+      - say: Can you build a shipment based on this rate confirmation?
+        page: { path: /billing/queue, title: Billing queue }
+        attach: [../fixtures/attachments/rate-confirmation-np-77120.pdf]
+        expect:
+          proposals: [{ tool: create_shipment }]
+          maxFailedCalls: 2
+          replyExcludes:
+            - "don't see|do not see|can't see|cannot see|no file|not attached|re-upload|reupload"
+          noRecordIds: true
+          rubric: >
+            Reads the attached confirmation from the message itself and proposes the shipment:
+            Acme Manufacturing, picked up at the Los Angeles Terminal on 2027-03-15 between 08:00
+            and 12:00, delivered to the Chicago Distribution Center on 2027-03-18 at 09:00, 38,000
+            lb of auto parts on 22 pallets in a 53 ft dry van, priced at $3,610.00 flat ($3,200
+            line haul and $410 fuel surcharge). It never asks the person to send the file again.
+      - say: Before you go on, what's the total rate on it and when is the pickup?
+        expect:
+          replyIncludes: ["3,610", "03/15|3/15|March 15|Mar 15|15 March|15 Mar|2027-03-15"]
+          replyExcludes:
+            - "don't see|do not see|can't see|cannot see|no file|not attached|re-upload|reupload"
+          maxFailedCalls: 0
+          rubric: >
+            Answers about the file the first message carried, from the message's replayed
+            attachment and read_attachment, not from memory of an excerpt: $3,610.00, picked up
+            2027-03-15 08:00-12:00 at the Los Angeles Terminal.
+      - say: Here is the revised confirmation. What changed?
+        attach: [../fixtures/attachments/rate-confirmation-np-77120-revised.pdf]
+        expect:
+          replyIncludes: ["14:00|2:00|2 pm|2pm|2 p.m."]
+          replyExcludes:
+            - "don't see|do not see|can't see|cannot see|no file|not attached|re-upload|reupload"
+          maxFailedCalls: 1
+          rubric: >
+            Sees the re-uploaded file on this message and compares it with the first: the delivery
+            appointment moved from 09:00 to 14:00 on 2027-03-18, and nothing else changed. It
+            offers to update the proposed shipment's delivery window rather than starting over.

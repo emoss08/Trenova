@@ -1,0 +1,52 @@
+# The Desk's trailer card: what the trailer is, where its last move left it,
+# who owns it and what falls due on it, without the custom fields and tenant
+# details the edit panel loads.
+query DeskTrailerCard($id: ID!) {
+  trailer(id: $id) {
+    id
+    code
+    status
+    make
+    model
+    year
+    vin
+    licensePlateNumber
+    registrationNumber
+    registrationExpiry
+    lastInspectionDate
+    maxLoadWeight
+    externalId
+    ownershipType
+    lessorName
+    leaseReference
+    leaseEndDate
+    createdAt
+    registrationState {
+      abbreviation
+    }
+    equipmentType {
+      id
+      code
+      description
+    }
+    equipmentManufacturer {
+      id
+      name
+    }
+    fleetCode {
+      id
+      code
+    }
+    ownerWorker {
+      id
+      firstName
+      lastName
+    }
+    lastKnownLocation {
+      id
+      name
+      latitude
+      longitude
+    }
+  }
+}

@@ -8,9 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -20,15 +20,15 @@ import (
 )
 
 type transcriptRuns struct {
-	repositories.AgentRunRepository
+	agentports.AgentRunRepository
 
 	runs     map[pulid.ID]*agent.AgentRun
-	requests []repositories.ListAgentRunsByIDsRequest
+	requests []agentports.ListAgentRunsByIDsRequest
 }
 
 func (f *transcriptRuns) ListTranscriptsByIDs(
 	_ context.Context,
-	req repositories.ListAgentRunsByIDsRequest,
+	req agentports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
 	f.requests = append(f.requests, req)
 	found := make([]*agent.AgentRun, 0, len(req.IDs))
@@ -74,9 +74,7 @@ func (f *transcriptFixture) ctx(t *testing.T) context.Context {
 	factory := loaders.NewAgentRunTranscriptByIDLoaderFactory(
 		loaders.AgentRunTranscriptByIDLoaderFactoryParams{Runs: f.runs},
 	)
-	ctx := loaders.WithLoaders(t.Context(), &loaders.Loaders{
-		AgentRunTranscriptByID: factory.NewForTenant(f.tenant),
-	})
+	ctx := factory.Attach(t.Context(), f.tenant)
 
 	return gqlctx.WithAuthContext(ctx, &authctx.AuthContext{
 		PrincipalType:  authctx.PrincipalTypeUser,

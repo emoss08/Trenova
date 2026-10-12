@@ -1,16 +1,21 @@
 package documentoperationshandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentsearchprojectionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"net/http"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/handlers/documentoperationshandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/documentoperationsservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentoperationsservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -24,11 +29,11 @@ import (
 
 type testDeps struct {
 	handler          *documentoperationshandler.Handler
-	documentRepo     *mocks.MockDocumentRepository
-	sessionRepo      *mocks.MockDocumentUploadSessionRepository
-	contentService   *mocks.MockDocumentContentService
-	searchProjection *mocks.MockDocumentSearchProjectionService
-	workflowStarter  *mocks.MockWorkflowStarter
+	documentRepo     *documentportsmock.MockDocumentRepository
+	sessionRepo      *documentuploadportsmock.MockDocumentUploadSessionRepository
+	contentService   *documentportsmock.MockDocumentContentService
+	searchProjection *documentsearchprojectionportsmock.MockDocumentSearchProjectionService
+	workflowStarter  *kernelportsmock.MockWorkflowStarter
 }
 
 func setupHandler(t *testing.T) *testDeps {
@@ -40,11 +45,11 @@ func setupHandler(t *testing.T) *testDeps {
 		Config: &config.Config{App: config.AppConfig{Debug: true}},
 	})
 
-	documentRepo := mocks.NewMockDocumentRepository(t)
-	sessionRepo := mocks.NewMockDocumentUploadSessionRepository(t)
-	contentService := mocks.NewMockDocumentContentService(t)
-	searchProjection := mocks.NewMockDocumentSearchProjectionService(t)
-	workflowStarter := mocks.NewMockWorkflowStarter(t)
+	documentRepo := documentportsmock.NewMockDocumentRepository(t)
+	sessionRepo := documentuploadportsmock.NewMockDocumentUploadSessionRepository(t)
+	contentService := documentportsmock.NewMockDocumentContentService(t)
+	searchProjection := documentsearchprojectionportsmock.NewMockDocumentSearchProjectionService(t)
+	workflowStarter := kernelportsmock.NewMockWorkflowStarter(t)
 
 	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
 		PermissionEngine: &mocks.AllowAllPermissionEngine{},
@@ -82,7 +87,7 @@ func TestGetDiagnostics(t *testing.T) {
 	lineageID := pulid.MustNew("doc_")
 	tenantInfo := pagination.TenantInfo{OrgID: testutil.TestOrgID, BuID: testutil.TestBuID}
 
-	deps.documentRepo.EXPECT().GetByID(mock.Anything, repositories.GetDocumentByIDRequest{
+	deps.documentRepo.EXPECT().GetByID(mock.Anything, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,
 	}).Return(&document.Document{
@@ -92,12 +97,12 @@ func TestGetDiagnostics(t *testing.T) {
 		BusinessUnitID: testutil.TestBuID,
 		FileType:       "application/pdf",
 	}, nil)
-	deps.documentRepo.EXPECT().ListVersions(mock.Anything, repositories.ListDocumentVersionsRequest{
+	deps.documentRepo.EXPECT().ListVersions(mock.Anything, documentports.ListDocumentVersionsRequest{
 		LineageID:  lineageID,
 		TenantInfo: tenantInfo,
 	}).Return([]*document.Document{{ID: documentID, LineageID: lineageID}}, nil)
 	deps.sessionRepo.EXPECT().
-		ListRelated(mock.Anything, &repositories.ListRelatedDocumentUploadSessionsRequest{
+		ListRelated(mock.Anything, &documentuploadports.ListRelatedDocumentUploadSessionsRequest{
 			TenantInfo: tenantInfo,
 			DocumentID: documentID,
 			LineageID:  lineageID,
@@ -139,7 +144,7 @@ func TestResyncSearchAccepted(t *testing.T) {
 		BusinessUnitID: testutil.TestBuID,
 	}
 
-	deps.documentRepo.EXPECT().GetByID(mock.Anything, repositories.GetDocumentByIDRequest{
+	deps.documentRepo.EXPECT().GetByID(mock.Anything, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,
 	}).Return(doc, nil)

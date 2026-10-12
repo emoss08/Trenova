@@ -5,8 +5,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/restx"
 )
 
@@ -51,7 +51,7 @@ func (m ErrorMapper) Map(err error) error {
 		return err
 	}
 
-	var providerErr *services.CarrierIntelProviderError
+	var providerErr *carrierintelports.CarrierIntelProviderError
 	if errors.As(err, &providerErr) {
 		return err
 	}
@@ -64,7 +64,7 @@ func (m ErrorMapper) Map(err error) error {
 	}
 
 	status := restx.StatusCode(err)
-	mapped := &services.CarrierIntelProviderError{
+	mapped := &carrierintelports.CarrierIntelProviderError{
 		Provider:   m.Provider,
 		StatusCode: status,
 		Err:        err,
@@ -73,49 +73,49 @@ func (m ErrorMapper) Map(err error) error {
 	switch {
 	case m.matches(m.Unauthorized, err) ||
 		status == http.StatusUnauthorized || status == http.StatusForbidden:
-		mapped.Kind = services.CarrierIntelErrorUnauthorized
+		mapped.Kind = carrierintelports.CarrierIntelErrorUnauthorized
 		mapped.Message = messageUnauthorized
 	case m.matches(m.PaymentRequired, err) || status == http.StatusPaymentRequired:
-		mapped.Kind = services.CarrierIntelErrorPaymentRequired
+		mapped.Kind = carrierintelports.CarrierIntelErrorPaymentRequired
 		mapped.Message = messagePaymentRequired
 	case m.matches(m.NotFound, err) || status == http.StatusNotFound:
-		mapped.Kind = services.CarrierIntelErrorNotFound
+		mapped.Kind = carrierintelports.CarrierIntelErrorNotFound
 		mapped.Message = messageNotFound
 	case m.matches(m.RateLimited, err) || status == http.StatusTooManyRequests:
-		mapped.Kind = services.CarrierIntelErrorRateLimited
+		mapped.Kind = carrierintelports.CarrierIntelErrorRateLimited
 		mapped.Message = messageRateLimited
 		mapped.RetryAfter = restx.RetryAfterOf(err)
 	case m.matches(m.Invalid, err) ||
 		status == http.StatusBadRequest || status == http.StatusUnprocessableEntity:
-		mapped.Kind = services.CarrierIntelErrorInvalidRequest
+		mapped.Kind = carrierintelports.CarrierIntelErrorInvalidRequest
 		mapped.Message = messageInvalidRequest
 	default:
-		mapped.Kind = services.CarrierIntelErrorUnavailable
+		mapped.Kind = carrierintelports.CarrierIntelErrorUnavailable
 		mapped.Message = messageUnavailable
 	}
 	return mapped
 }
 
 func (m ErrorMapper) InvalidRequest(message string) error {
-	return &services.CarrierIntelProviderError{
+	return &carrierintelports.CarrierIntelProviderError{
 		Provider: m.Provider,
-		Kind:     services.CarrierIntelErrorInvalidRequest,
+		Kind:     carrierintelports.CarrierIntelErrorInvalidRequest,
 		Message:  message,
 	}
 }
 
 func (m ErrorMapper) Unsupported(message string) error {
-	return &services.CarrierIntelProviderError{
+	return &carrierintelports.CarrierIntelProviderError{
 		Provider: m.Provider,
-		Kind:     services.CarrierIntelErrorUnsupported,
+		Kind:     carrierintelports.CarrierIntelErrorUnsupported,
 		Message:  message,
 	}
 }
 
 func (m ErrorMapper) NotFoundError() error {
-	return &services.CarrierIntelProviderError{
+	return &carrierintelports.CarrierIntelProviderError{
 		Provider:   m.Provider,
-		Kind:       services.CarrierIntelErrorNotFound,
+		Kind:       carrierintelports.CarrierIntelErrorNotFound,
 		StatusCode: http.StatusOK,
 		Message:    messageNotFound,
 	}

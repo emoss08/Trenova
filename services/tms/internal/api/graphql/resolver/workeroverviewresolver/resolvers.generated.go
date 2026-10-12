@@ -4,7 +4,7 @@ package workeroverviewresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	workeroverviewservice "github.com/emoss08/trenova/internal/core/services/workeroverviewservice"
+	workeroverviewservice "github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
 )
 
 type Deps struct {

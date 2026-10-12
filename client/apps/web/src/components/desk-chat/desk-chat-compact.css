@@ -128,11 +128,21 @@
   margin: 8px -8px 6px -12px;
   background: var(--dsk-b-sub);
 }
-.dk-dense .dk-dcx > :is(.dk-bt, .dk-apv-b) {
-  order: 2;
+
+/* A question waiting on the person: a choice with a line of consequence takes
+   the row, so the line is read rather than wrapped into a sliver, and a form's
+   labels sit over their controls instead of beside them. */
+.dk-dense .dk-ask-opt.dk-d {
+  flex-basis: 100%;
 }
-.dk-dense .dk-dcx > .dk-bt:first-of-type {
-  margin-left: auto;
+.dk-dense .dk-ask-f {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+.dk-dense .dk-ask-fl {
+  width: auto;
+  padding-top: 0;
 }
 
 /* The line under the composer wraps rather than clipping in a narrow column. */
@@ -141,10 +151,4 @@
   min-height: 14px;
   padding-inline: 12px;
   text-align: center;
-}
-
-/* The jump to the newest reply sits just above the dock, in the one column. */
-.dk-dense .dk-jump-b {
-  height: 28px;
-  font-size: 12px;
 }

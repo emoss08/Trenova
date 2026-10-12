@@ -1,3 +1,4 @@
+import { defineLabels } from "@trenova/shared/i18n/labels";
 /**
  * Labels and tones for the drug and alcohol testing programme. The server owns
  * the enums; this is the one place the client turns them into words, so a
@@ -54,19 +55,19 @@ export function drugAlcoholStatusMeta(status: string): StatusMeta {
   );
 }
 
-export const RETURN_TO_DUTY_LABELS: Record<ReturnToDutyStatusValue, string> = {
+export const RETURN_TO_DUTY_LABELS: Record<ReturnToDutyStatusValue, string> = defineLabels({
   NotRequired: "Not required",
   SAPEvaluation: "SAP evaluation",
   RTDTestRequired: "Return-to-duty test required",
   FollowUpTesting: "Follow-up testing",
   Complete: "Complete",
-};
+});
 
 export function returnToDutyLabel(status: string): string {
   return RETURN_TO_DUTY_LABELS[status as ReturnToDutyStatusValue] ?? status;
 }
 
-export const DOT_TEST_TYPE_LABELS: Record<string, string> = {
+export const DOT_TEST_TYPE_LABELS: Record<string, string> = defineLabels({
   PreEmployment: "Pre-employment",
   Random: "Random",
   PostAccident: "Post-accident",
@@ -74,25 +75,25 @@ export const DOT_TEST_TYPE_LABELS: Record<string, string> = {
   ReturnToDuty: "Return to duty",
   FollowUp: "Follow-up",
   Other: "Other",
-};
+});
 
 export function dotTestTypeLabel(value: string): string {
   return DOT_TEST_TYPE_LABELS[value] ?? value;
 }
 
-export const DOT_TEST_STATUS_LABELS: Record<string, string> = {
+export const DOT_TEST_STATUS_LABELS: Record<string, string> = defineLabels({
   Scheduled: "Scheduled",
   Collected: "Collected",
   AwaitingResult: "At the lab",
   Completed: "Completed",
   Cancelled: "Cancelled",
-};
+});
 
 export function dotTestStatusLabel(value: string): string {
   return DOT_TEST_STATUS_LABELS[value] ?? value;
 }
 
-export const DOT_TEST_RESULT_LABELS: Record<string, string> = {
+export const DOT_TEST_RESULT_LABELS: Record<string, string> = defineLabels({
   Pending: "Pending",
   Negative: "Negative",
   NegativeDilute: "Negative (dilute)",
@@ -102,7 +103,7 @@ export const DOT_TEST_RESULT_LABELS: Record<string, string> = {
   Substituted: "Substituted",
   Invalid: "Invalid",
   Cancelled: "Cancelled",
-};
+});
 
 export function dotTestResultLabel(value: string): string {
   return DOT_TEST_RESULT_LABELS[value] ?? value;
@@ -125,26 +126,26 @@ export function dotResultTone(result: string): BadgeTone {
   return "neutral";
 }
 
-export const DOT_VIOLATION_TYPE_LABELS: Record<string, string> = {
+export const DOT_VIOLATION_TYPE_LABELS: Record<string, string> = defineLabels({
   PositiveTest: "Positive test",
   TestRefusal: "Refusal to test",
   AlcoholUse: "Alcohol use",
   DrugUse: "Drug use",
   ActualKnowledge: "Actual knowledge",
   Other: "Other",
-};
+});
 
 export function dotViolationTypeLabel(value: string): string {
   return DOT_VIOLATION_TYPE_LABELS[value] ?? value;
 }
 
-export const DOT_VIOLATION_STATUS_LABELS: Record<string, string> = {
+export const DOT_VIOLATION_STATUS_LABELS: Record<string, string> = defineLabels({
   Open: "Awaiting SAP referral",
   SAPEvaluation: "SAP evaluation",
   RTDPending: "Return-to-duty test required",
   FollowUp: "Follow-up testing",
   Resolved: "Resolved",
-};
+});
 
 export function dotViolationStatusLabel(value: string): string {
   return DOT_VIOLATION_STATUS_LABELS[value] ?? value;
@@ -158,23 +159,23 @@ export function violationProhibits(status: string): boolean {
   return status === "Open" || status === "SAPEvaluation" || status === "RTDPending";
 }
 
-export const CLEARINGHOUSE_QUERY_TYPE_LABELS: Record<string, string> = {
+export const CLEARINGHOUSE_QUERY_TYPE_LABELS: Record<string, string> = defineLabels({
   PreEmploymentFull: "Pre-employment full query",
   AnnualLimited: "Annual limited query",
   Full: "Full query",
   Limited: "Limited query",
-};
+});
 
 export function clearinghouseQueryTypeLabel(value: string): string {
   return CLEARINGHOUSE_QUERY_TYPE_LABELS[value] ?? value;
 }
 
-export const CLEARINGHOUSE_RESULT_LABELS: Record<string, string> = {
+export const CLEARINGHOUSE_RESULT_LABELS: Record<string, string> = defineLabels({
   Pending: "Awaiting answer",
   NoViolations: "No violations",
   ViolationsFound: "Violations found",
   ConsentDenied: "Consent denied",
-};
+});
 
 export function clearinghouseResultLabel(value: string): string {
   return CLEARINGHOUSE_RESULT_LABELS[value] ?? value;
@@ -186,24 +187,24 @@ export function clearinghouseResultTone(result: string): BadgeTone {
   return "warning";
 }
 
-export const RANDOM_PERIOD_LABELS: Record<string, string> = {
+export const RANDOM_PERIOD_LABELS: Record<string, string> = defineLabels({
   Monthly: "Monthly",
   Quarterly: "Quarterly",
   SemiAnnual: "Twice a year",
   Annual: "Yearly",
-};
+});
 
 export function randomPeriodLabel(value: string): string {
   return RANDOM_PERIOD_LABELS[value] ?? value;
 }
 
-export const RANDOM_ENTRY_STATUS_LABELS: Record<string, string> = {
+export const RANDOM_ENTRY_STATUS_LABELS: Record<string, string> = defineLabels({
   Selected: "Selected",
   Notified: "Notified",
   Completed: "Collected",
   Excused: "Excused",
   Missed: "Missed",
-};
+});
 
 export function randomEntryStatusLabel(value: string): string {
   return RANDOM_ENTRY_STATUS_LABELS[value] ?? value;

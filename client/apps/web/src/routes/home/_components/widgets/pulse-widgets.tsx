@@ -221,7 +221,7 @@ export function OnTimeGoalWidget({ widget, data }: WidgetProps) {
             value={onTime.percent / 100}
             tone={onTime.percent >= onTime.target ? "success" : "warning"}
             size={72}
-            aria-label={`On-time ${onTime.percent.toFixed(1)} percent`}
+            aria-label={t("On-time {0} percent", onTime.percent.toFixed(1))}
           >
             <span className="font-mono text-sm font-semibold tabular-nums">
               {onTime.percent.toFixed(1)}%

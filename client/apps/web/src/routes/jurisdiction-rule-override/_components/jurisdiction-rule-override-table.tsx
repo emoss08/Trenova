@@ -15,6 +15,7 @@ export default function JurisdictionRuleOverrideTable() {
   return (
     <DataTable<JurisdictionRuleOverride>
       name="Carrier Override"
+      emptyTitle={t("No carrier overrides yet")}
       queryKey="jurisdiction-rule-override-list"
       graphql={jurisdictionRuleOverrideTableGraphQLConfig}
       resource={Resource.JurisdictionRuleOverride}

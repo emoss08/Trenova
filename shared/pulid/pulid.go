@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -168,6 +169,7 @@ func (u ID) Time() (time.Time, error) {
 const (
 	ulidLength      = 26
 	maxPrefixLength = 12
+	misCopySlack    = 3
 )
 
 // LooksLike reports whether value has the shape of a PULID: a lowercase
@@ -179,14 +181,45 @@ func LooksLike(value string) bool {
 	if prefixLength < 2 || prefixLength > maxPrefixLength || value[prefixLength-1] != '_' {
 		return false
 	}
-	for i := range prefixLength - 1 {
-		c := value[i]
+
+	return isPrefix(value[:prefixLength-1]) && isCrockfordText(value[prefixLength:])
+}
+
+// MisCopied reports a value shaped like a PULID except that its ULID is a few
+// characters short or long, as when one was dropped or doubled in copying an
+// id. It returns the prefix, underscore included, and how many ULID
+// characters the value has.
+func MisCopied(value string) (string, int, bool) {
+	cut := strings.IndexByte(value, '_')
+	if cut < 1 || cut+1 > maxPrefixLength {
+		return "", 0, false
+	}
+	body := value[cut+1:]
+	if len(body) == ulidLength || len(body) < ulidLength-misCopySlack ||
+		len(body) > ulidLength+misCopySlack {
+		return "", 0, false
+	}
+	if !isPrefix(value[:cut]) || !isCrockfordText(body) {
+		return "", 0, false
+	}
+
+	return value[:cut+1], len(body), true
+}
+
+func isPrefix(text string) bool {
+	for i := range len(text) {
+		c := text[i]
 		if (c < 'a' || c > 'z') && (i == 0 || c < '0' || c > '9') {
 			return false
 		}
 	}
-	for i := prefixLength; i < len(value); i++ {
-		if !isCrockford(value[i]) {
+
+	return true
+}
+
+func isCrockfordText(text string) bool {
+	for i := range len(text) {
+		if !isCrockford(text[i]) {
 			return false
 		}
 	}

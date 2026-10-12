@@ -18,7 +18,7 @@ platform:
   referenceDataStewards: []
   instanceId: "" # Identifies this installation; set from TRENOVA_INSTANCE_ID
   # The Trenova Cloud edition adds the cloud platform mode and its own sections
-  # (platform.cloud, platform.controlPlane, system.networkPulse and aiRetraining). They
+  # (platform.cloud, platform.controlPlane and aiRetraining). They
   # are not part of the self-hosted build, and the loader refuses them here because
   # configuration is decoded strictly.
 
@@ -206,7 +206,11 @@ ai:
   completionTimeout: 5m # One blocking call to a model, including the wait before it answers
   streamIdleTimeout: 5m # How long a streamed reply may go silent; reasoning models think for minutes before their first token
   privateNetworkProviders: true # Let organizations point a provider at a private or loopback address (self-hosted models). Set false when many organizations share this server
+  serverCloudCredentials: false # Let a Bedrock, Vertex AI or Claude Platform provider sign in with this server's own cloud identity (IAM role, application default credentials). Leave false when many organizations share this server
+  cacheDiagnostics: false # Ask the Claude API where each agent turn's prompt stopped matching the call before it, and log and trace why the cache missed. Claude API providers only
   maxRetries: 2 # Retries for transient failures
+  modelPriceReference: true # Estimate a model's price from OpenRouter's public catalog when its provider lists none; set false to make no outside call
+  modelPriceReferenceTtl: 24h # How long that catalog is kept before it is read again
 
   # Reading uploaded documents with a model, and the OCR pipeline that feeds it.
   documentExtraction: false # Let a model classify and extract uploaded documents
@@ -330,7 +334,7 @@ reporting:
 #
 # The sidecar renders organization-authored markup, so it must never be exposed:
 # no published port, no reverse-proxy route, and an internal-only network. See
-# docker-compose-local.yml for the hardened service definition.
+# dev/compose.yml for the hardened service definition.
 renderer:
     gotenbergUrl: http://gotenberg:3000
     requestTimeout: 45s # HTTP timeout for one convert call

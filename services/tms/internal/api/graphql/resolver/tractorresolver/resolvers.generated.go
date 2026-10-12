@@ -4,7 +4,7 @@ package tractorresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	tractorservice "github.com/emoss08/trenova/internal/core/services/tractorservice"
+	tractorservice "github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
 )
 
 type Deps struct {

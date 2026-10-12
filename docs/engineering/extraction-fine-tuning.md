@@ -20,7 +20,7 @@ export when enough new corrections have been confirmed, and a GPU machine render
 scores it with `trenova ai retraining run` (see [Retrain on a schedule](#9-retrain-on-a-schedule)).
 
 The Go side owns everything that must match production exactly: the prompt, the reply schema,
-reading a reply, and scoring it. The Python side in `ml/extraction-finetune` owns the training
+reading a reply, and scoring it. The Python side in `tools/extraction-finetune` owns the training
 recipe: how a confirmed answer becomes the reply the model learns, which examples become
 preference pairs, and the training itself. Neither re-implements the other.
 
@@ -103,7 +103,7 @@ manifest. The recipe is part of the configuration, so `--resume` refuses a chang
 
 The builder has two cross-checks. `tests/fixtures/extraction-schema.json` is the production reply
 schema, and a Go test (`TestFineTuningPipelineSchemaFixtureIsCurrent`) fails when it goes stale.
-Regenerate it with `TRENOVA_UPDATE_FIXTURES=1 go test ./internal/core/services/aidocumentservice/`.
+Regenerate it with `TRENOVA_UPDATE_FIXTURES=1 go test ./internal/modules/agent/app/aidocumentservice/`.
 In the other direction, `trenova ai fine-tune score` reads the recipe's replies with production's
 reply reader.
 
@@ -112,7 +112,7 @@ reply reader.
 On the GPU machine:
 
 ```bash
-cd ml/extraction-finetune
+cd tools/extraction-finetune
 uv sync --extra train --extra predict
 uv run trenova-finetune verify --dataset ./datasets/aitx_01J
 uv run trenova-finetune run --config configs/qwen2.5-7b-instruct.yaml \
@@ -608,7 +608,7 @@ GPU timer          trenova ai retraining run
 
   ```bash
   trenova ai retraining run \
-    --config ml/extraction-finetune/configs/qwen2.5-7b-instruct.yaml \
+    --config tools/extraction-finetune/configs/qwen2.5-7b-instruct.yaml \
     --work-dir /data/retraining
   ```
 

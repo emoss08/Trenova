@@ -467,8 +467,8 @@ func ScopeTenant(
 // Prefer the generated per-entity helpers (e.g. WorkerScopeTenantUpdate).
 //
 //	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-//	    return buncolgen.TrailerScopeTenantUpdate(uq, req.TenantInfo).
-//	        Where(buncolgen.TrailerColumns.ID.In(), bun.List(req.TrailerIDs))
+//	    return trailercol.TrailerScopeTenantUpdate(uq, req.TenantInfo).
+//	        Where(trailercol.TrailerColumns.ID.In(), bun.List(req.TrailerIDs))
 //	})
 func ScopeTenantUpdate(
 	q *bun.UpdateQuery,

@@ -1,4 +1,3 @@
-"use no memo";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Input } from "@trenova/shared/components/ui/input";
 import {
@@ -17,6 +16,8 @@ import type { Cell, FilterVariant } from "@trenova/shared/types/data-table";
 import type { SelectOption } from "@trenova/shared/types/fields";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
+import { columnHeaderLabel } from "@/lib/data-table";
 
 function pad(value: number): string {
   return String(value).padStart(2, "0");
@@ -77,7 +78,6 @@ type DataTableCellEditorProps<TData extends Record<string, any>> = {
 export function DataTableCellEditor<TData extends Record<string, any>>({
   cell,
 }: DataTableCellEditorProps<TData>) {
-  "use no memo";
   const t = useT();
 
   const variant = (cell.column.columnDef.meta?.filterType ?? "text") as FilterVariant;
@@ -98,7 +98,8 @@ export function DataTableCellEditor<TData extends Record<string, any>>({
         await cell.commitEdit(value);
       } catch (error) {
         toast.error(t("Update failed"), {
-          description: error instanceof Error ? error.message : "The change could not be saved.",
+          description:
+            error instanceof Error ? error.message : translate("The change could not be saved."),
         });
         setIsPending(false);
       }
@@ -150,7 +151,7 @@ export function DataTableCellEditor<TData extends Record<string, any>>({
           onBlur={() => {
             if (!isPending) cell.stopEditing();
           }}
-          aria-label={`Edit ${cell.column.id}`}
+          aria-label={t("Edit {0}", columnHeaderLabel(cell.column))}
         />
         {isPending && <Spinner className="size-3.5" />}
       </span>
@@ -172,7 +173,7 @@ export function DataTableCellEditor<TData extends Record<string, any>>({
           <SelectTrigger
             size="sm"
             className="h-7 w-full min-w-0 text-xs"
-            aria-label={`Edit ${cell.column.id}`}
+            aria-label={t("Edit {0}", columnHeaderLabel(cell.column))}
           >
             <SelectValue placeholder={t("Select a value")} />
           </SelectTrigger>
@@ -202,7 +203,7 @@ export function DataTableCellEditor<TData extends Record<string, any>>({
         onKeyDown={handleInputKeyDown}
         onBlur={handleInputBlur}
         className={cn("h-7 w-full min-w-0 px-2 text-xs")}
-        aria-label={`Edit ${cell.column.id}`}
+        aria-label={t("Edit {0}", columnHeaderLabel(cell.column))}
       />
       {isPending && <Spinner className="size-3.5 shrink-0" />}
     </span>

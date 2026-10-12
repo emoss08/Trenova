@@ -3,7 +3,7 @@ package assistanthandler
 import (
 	"net/http"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -43,7 +43,7 @@ func (h *Handler) handoff(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authctx.GetAuthContext(c))
-	result, err := h.handoffs.Handoff(c.Request.Context(), &serviceports.HandoffThreadRequest{
+	result, err := h.handoffs.Handoff(c.Request.Context(), &agentports.HandoffThreadRequest{
 		TenantInfo:        req.TenantInfo,
 		ThreadID:          req.ID,
 		AgentDefinitionID: agentID,

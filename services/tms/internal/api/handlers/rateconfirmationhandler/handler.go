@@ -6,10 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	_ "github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/rateconfirmationservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/rating/app/rateconfirmationservice"
+	_ "github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -98,7 +98,7 @@ func (h *Handler) listByMove(c *gin.Context) {
 
 	entities, err := h.service.ListByMove(
 		c.Request.Context(),
-		&repositories.ListRateConfirmationsByMoveRequest{
+		&rateconfirmationports.ListRateConfirmationsByMoveRequest{
 			TenantInfo:     pagination.FromAuth(authCtx),
 			ShipmentMoveID: moveID,
 		},
@@ -184,7 +184,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		&repositories.GetRateConfirmationByIDRequest{
+		&rateconfirmationports.GetRateConfirmationByIDRequest{
 			TenantInfo:         pagination.FromAuth(authCtx),
 			RateConfirmationID: rateConfirmationID,
 		},

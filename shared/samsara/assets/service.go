@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/shared/samsara/internal/httpx"
 )
 
+const assetsPath = "/assets"
+
 type Service interface {
 	Create(ctx context.Context, req CreateRequest) (Asset, error)
 	List(ctx context.Context, params ListParams) (ListResponse, error)
@@ -59,7 +61,7 @@ func (s *service) Create(
 	out := createResponse{}
 	if err := s.client.Do(ctx, httpx.Request{
 		Method: http.MethodPost,
-		Path:   "/assets",
+		Path:   assetsPath,
 		Body:   req,
 		Out:    &out,
 	}); err != nil {
@@ -80,7 +82,7 @@ func (s *service) List(
 	out := ListResponse{}
 	if err := s.client.Do(ctx, httpx.Request{
 		Method: http.MethodGet,
-		Path:   "/assets",
+		Path:   assetsPath,
 		Query:  params.Query(),
 		Out:    &out,
 	}); err != nil {
@@ -106,7 +108,7 @@ func (s *service) Delete(ctx context.Context, ids []string) error {
 		query.Set("id", id)
 		if err := s.client.Do(ctx, httpx.Request{
 			Method:         http.MethodDelete,
-			Path:           "/assets",
+			Path:           assetsPath,
 			Query:          query,
 			ExpectedStatus: []int{http.StatusNoContent},
 		}); err != nil {
@@ -133,7 +135,7 @@ func (s *service) Update(
 	out := updateResponse{}
 	if err := s.client.Do(ctx, httpx.Request{
 		Method: http.MethodPatch,
-		Path:   "/assets",
+		Path:   assetsPath,
 		Query:  query,
 		Body:   req,
 		Out:    &out,
@@ -175,7 +177,7 @@ func (s *service) StreamLocationPages(
 		return err
 	}
 	if params.Limit == 0 {
-		params.Limit = 512
+		params.Limit = maxLocationStreamLimit
 	}
 
 	for {

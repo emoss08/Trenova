@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -31,7 +31,7 @@ type scopeVerdictCacheRepository struct {
 
 func NewScopeVerdictCacheRepository(
 	p ScopeVerdictCacheParams,
-) repositories.ScopeVerdictCacheRepository {
+) agentports.ScopeVerdictCacheRepository {
 	return &scopeVerdictCacheRepository{
 		client: p.Client,
 		l:      p.Logger.Named("repository.scope-verdict-cache"),
@@ -45,7 +45,7 @@ func (r *scopeVerdictCacheRepository) key(key string) string {
 func (r *scopeVerdictCacheRepository) Get(
 	ctx context.Context,
 	key string,
-) (*repositories.CachedScopeVerdict, error) {
+) (*agentports.CachedScopeVerdict, error) {
 	raw, err := r.client.Get(ctx, r.key(key)).Bytes()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
@@ -55,7 +55,7 @@ func (r *scopeVerdictCacheRepository) Get(
 		return nil, fmt.Errorf("read scope verdict: %w", err)
 	}
 
-	verdict := new(repositories.CachedScopeVerdict)
+	verdict := new(agentports.CachedScopeVerdict)
 	if err = sonic.Unmarshal(raw, verdict); err != nil {
 		// A row this replica cannot read is a row nobody should read; it is
 		// dropped so the next call replaces it rather than tripping again.
@@ -71,7 +71,7 @@ func (r *scopeVerdictCacheRepository) Get(
 func (r *scopeVerdictCacheRepository) Set(
 	ctx context.Context,
 	key string,
-	verdict *repositories.CachedScopeVerdict,
+	verdict *agentports.CachedScopeVerdict,
 	ttl time.Duration,
 ) error {
 	payload, err := sonic.Marshal(verdict)

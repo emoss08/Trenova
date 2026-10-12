@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const decimalStringSchema = z
   .union([
@@ -6,9 +7,11 @@ export const decimalStringSchema = z
       .string()
       .transform((val) => (val.trim() === "" ? null : Number(val)))
       .refine((val) => val === null || Number.isFinite(val), {
-        error: "Must be a valid number",
+        error: () => translate("Must be a valid number"),
       }),
-    z.number().refine((val) => Number.isFinite(val), { error: "Must be a valid number" }),
+    z
+      .number()
+      .refine((val) => Number.isFinite(val), { error: () => translate("Must be a valid number") }),
     z.null(),
   ])
   .nullish();

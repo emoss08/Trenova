@@ -4,7 +4,7 @@ import { Tabs, TabsList, TabsPanel, TabsTab } from "@trenova/shared/components/u
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { getShipmentPageAnalyticsGraphQL } from "@/lib/graphql/shipment";
-import { cn, formatCompactCurrency, formatCurrency, pluralize } from "@trenova/shared/lib/utils";
+import { cn, formatCompactCurrency, formatCurrency } from "@trenova/shared/lib/utils";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
 import type React from "react";
@@ -93,7 +93,11 @@ function CustomersList({ entries }: { entries: CustomerMixEntry[] }) {
               <span className="truncate text-xs font-medium">{entry.name}</span>
               <span
                 className="text-muted-foreground font-mono text-2xs tabular-nums"
-                title={`${formatCurrency(entry.revenue)} · ${entry.loads} ${pluralize("load", entry.loads)}`}
+                title={t(
+                  "{0} · {1, plural, one {# load} other {# loads}}",
+                  formatCurrency(entry.revenue),
+                  entry.loads,
+                )}
               >
                 {formatCompactCurrency(entry.revenue)} · {entry.loads}
               </span>

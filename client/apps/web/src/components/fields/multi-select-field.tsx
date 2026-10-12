@@ -32,6 +32,7 @@ import {
   useState,
   type ComponentPropsWithoutRef,
 } from "react";
+import { useFieldValueFormat } from "@trenova/shared/lib/form-field-registry";
 import {
   Controller,
   type Control,
@@ -272,10 +273,21 @@ export function MultiSelectAutocomplete<T>({
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOptions, setSelectedOptions] = useState<T[]>([]);
+  const shownNames = useRef(new Map<string, string>());
   const debouncedSearchTerm = useDebounce(searchTerm, preload ? 0 : 300);
   const [page, setPage] = useState(1);
   const commandListRef = useRef<HTMLDivElement>(null);
   const { options, loading, error, hasMore } = asyncState;
+
+  useEffect(() => {
+    for (const option of selectedOptions) {
+      shownNames.current.set(String(getOptionValue(option)), getDisplayValue(option));
+    }
+    for (const option of options) {
+      shownNames.current.set(String(getOptionValue(option)), getDisplayValue(option));
+    }
+  }, [getDisplayValue, getOptionValue, options, selectedOptions]);
+  useFieldValueFormat((optionValue) => shownNames.current.get(String(optionValue)));
 
   const animationRef = useRef<number | null>(null);
   const targetScrollRef = useRef<number | null>(null);
@@ -685,7 +697,7 @@ export function MultiSelectAutocomplete<T>({
           <Command shouldFilter={false} className="overflow-hidden">
             <CommandInput
               className="h-7 truncate bg-transparent [&_[cmdk-input]]:h-7"
-              placeholder={`Search ${label?.toLowerCase()}...`}
+              placeholder={t("Search {0}...", label?.toLowerCase())}
               value={searchTerm}
               onValueChange={setSearchTerm}
             />
@@ -791,6 +803,7 @@ export function MultiSelectAutocompleteField<TOption, TForm extends FieldValues>
 
         return (
           <FieldWrapper
+            name={name}
             label={label}
             description={description}
             required={!!rules?.required}

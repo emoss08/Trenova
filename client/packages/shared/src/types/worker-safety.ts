@@ -1,5 +1,6 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export const safetyEventKindSchema = z.enum([
   "Accident",
@@ -45,56 +46,56 @@ export const recognitionKindSchema = z.enum([
 ]);
 export type RecognitionKind = z.infer<typeof recognitionKindSchema>;
 
-export const SAFETY_EVENT_KIND_LABELS: Record<SafetyEventKind, string> = {
+export const SAFETY_EVENT_KIND_LABELS: Record<SafetyEventKind, string> = defineLabels({
   Accident: "Accident",
   Incident: "Incident",
   NearMiss: "Near miss",
   Citation: "Citation",
   Inspection: "Inspection",
-};
+});
 
-export const SAFETY_SEVERITY_LABELS: Record<SafetySeverity, string> = {
+export const SAFETY_SEVERITY_LABELS: Record<SafetySeverity, string> = defineLabels({
   Minor: "Minor",
   Moderate: "Moderate",
   Major: "Major",
   Critical: "Critical",
-};
+});
 
-export const SAFETY_EVENT_STATUS_LABELS: Record<SafetyEventStatus, string> = {
+export const SAFETY_EVENT_STATUS_LABELS: Record<SafetyEventStatus, string> = defineLabels({
   Open: "Open",
   UnderReview: "Under review",
   Closed: "Closed",
-};
+});
 
-export const INSPECTION_RESULT_LABELS: Record<InspectionResult, string> = {
+export const INSPECTION_RESULT_LABELS: Record<InspectionResult, string> = defineLabels({
   Pass: "Passed",
   Fail: "Failed",
   OutOfService: "Out of service",
-};
+});
 
-export const DISCIPLINARY_LEVEL_LABELS: Record<DisciplinaryLevel, string> = {
+export const DISCIPLINARY_LEVEL_LABELS: Record<DisciplinaryLevel, string> = defineLabels({
   Coaching: "Coaching",
   VerbalWarning: "Verbal warning",
   WrittenWarning: "Written warning",
   FinalWarning: "Final warning",
   Suspension: "Suspension",
   Termination: "Termination",
-};
+});
 
-export const DISCIPLINARY_STATUS_LABELS: Record<DisciplinaryStatus, string> = {
+export const DISCIPLINARY_STATUS_LABELS: Record<DisciplinaryStatus, string> = defineLabels({
   Active: "Active",
   Expired: "Expired",
   Rescinded: "Rescinded",
-};
+});
 
-export const RECOGNITION_KIND_LABELS: Record<RecognitionKind, string> = {
+export const RECOGNITION_KIND_LABELS: Record<RecognitionKind, string> = defineLabels({
   SafetyMilestone: "Safety milestone",
   CustomerPraise: "Customer praise",
   Performance: "Performance",
   Tenure: "Tenure",
   TeamPlayer: "Team player",
   Other: "Other",
-};
+});
 
 const optionalTrimmed = (max: number, message: string) =>
   z
@@ -120,7 +121,7 @@ const optionalMoney = z
   .pipe(
     z
       .string()
-      .regex(MONEY_PATTERN, { message: "Enter an amount with up to two decimals" })
+      .regex(MONEY_PATTERN, { error: () => translate("Enter an amount with up to two decimals") })
       .nullable(),
   );
 
@@ -128,15 +129,21 @@ export const safetyEventFormSchema = z
   .object({
     kind: safetyEventKindSchema,
     severity: safetySeveritySchema,
-    occurredAt: z.number().int().positive({ message: "When did it happen?" }),
+    occurredAt: z
+      .number()
+      .int()
+      .positive({ error: () => translate("When did it happen?") }),
     location: optionalTrimmed(255, "Location cannot exceed 255 characters"),
     description: z
       .string()
       .trim()
-      .min(1, { message: "Describe what happened" })
-      .max(4000, { message: "Description cannot exceed 4000 characters" }),
+      .min(1, { error: () => translate("Describe what happened") })
+      .max(4000, { error: () => translate("Description cannot exceed 4000 characters") }),
     preventable: z.boolean(),
-    points: z.number().int().min(0, { message: "Points cannot be negative" }),
+    points: z
+      .number()
+      .int()
+      .min(0, { error: () => translate("Points cannot be negative") }),
     referenceNumber: optionalTrimmed(100, "Reference cannot exceed 100 characters"),
     shipmentId: z.string().nullable().optional(),
     inspectionLevel: z.number().int().min(1).max(6).nullable(),
@@ -166,8 +173,8 @@ export const closeSafetyEventFormSchema = z.object({
   resolution: z
     .string()
     .trim()
-    .min(3, { message: "Say how the event was resolved" })
-    .max(4000, { message: "Resolution cannot exceed 4000 characters" }),
+    .min(3, { error: () => translate("Say how the event was resolved") })
+    .max(4000, { error: () => translate("Resolution cannot exceed 4000 characters") }),
 });
 export type CloseSafetyEventFormValues = z.infer<typeof closeSafetyEventFormSchema>;
 
@@ -177,12 +184,16 @@ export const issueActionFormSchema = z
     reason: z
       .string()
       .trim()
-      .min(3, { message: "Say why the action is being taken" })
-      .max(4000, { message: "Reason cannot exceed 4000 characters" }),
+      .min(3, { error: () => translate("Say why the action is being taken") })
+      .max(4000, { error: () => translate("Reason cannot exceed 4000 characters") }),
     details: optionalTrimmed(4000, "Details cannot exceed 4000 characters"),
     occurredAt: z.number().int().positive().nullable(),
     expiresAt: z.number().int().positive().nullable(),
-    suspensionDays: z.number().int().min(1, { message: "At least one day" }).nullable(),
+    suspensionDays: z
+      .number()
+      .int()
+      .min(1, { error: () => translate("At least one day") })
+      .nullable(),
     safetyEventId: z.string().nullable().optional(),
     recordEmploymentEvent: z.boolean(),
   })
@@ -208,8 +219,8 @@ export const rescindActionFormSchema = z.object({
   reason: z
     .string()
     .trim()
-    .min(3, { message: "Say why the action is rescinded" })
-    .max(255, { message: "Reason cannot exceed 255 characters" }),
+    .min(3, { error: () => translate("Say why the action is rescinded") })
+    .max(255, { error: () => translate("Reason cannot exceed 255 characters") }),
 });
 export type RescindActionFormValues = z.infer<typeof rescindActionFormSchema>;
 
@@ -218,10 +229,13 @@ export const recognitionFormSchema = z.object({
   title: z
     .string()
     .trim()
-    .min(1, { message: "Give the recognition a title" })
-    .max(120, { message: "Title cannot exceed 120 characters" }),
+    .min(1, { error: () => translate("Give the recognition a title") })
+    .max(120, { error: () => translate("Title cannot exceed 120 characters") }),
   message: optionalTrimmed(2000, "Message cannot exceed 2000 characters"),
-  occurredAt: z.number().int().positive({ message: "Choose the date" }),
+  occurredAt: z
+    .number()
+    .int()
+    .positive({ error: () => translate("Choose the date") }),
   visibleToWorker: z.boolean(),
 });
 export type RecognitionFormValues = z.infer<typeof recognitionFormSchema>;

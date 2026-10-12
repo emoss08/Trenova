@@ -1,6 +1,6 @@
 package aiproviderhandler
 
-import "github.com/emoss08/trenova/internal/core/domain/aiprovider"
+import "github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 
 // KindDescriptor describes a wire protocol to the configuration UI.
 type KindDescriptor struct {
@@ -20,7 +20,7 @@ func kindDescriptors() []KindDescriptor {
 		{
 			Kind:                       aiprovider.KindAnthropicMessages,
 			Label:                      "Anthropic Messages",
-			Description:                "Anthropic's API, and any endpoint serving the same shape such as Amazon Bedrock.",
+			Description:                "Anthropic's API, called directly or through Amazon Bedrock, Google Vertex AI, Claude Platform on AWS or Google Cloud, or Microsoft Foundry.",
 			DefaultBaseURL:             aiprovider.KindAnthropicMessages.DefaultBaseURL(),
 			RequiresAPIKey:             true,
 			DefaultStructuredOutput:    aiprovider.KindAnthropicMessages.DefaultStructuredOutputMode(),
@@ -62,6 +62,12 @@ func kindDescriptors() []KindDescriptor {
 	}
 }
 
+const (
+	awsDomain          = "aws.amazon.com"
+	googleCloudDomain  = "cloud.google.com"
+	exampleClaudeModel = "claude-opus-5-5"
+)
+
 // Preset is a known deployment an administrator can start from, so configuring a
 // provider does not begin with hunting for the right base URL.
 type Preset struct {
@@ -81,6 +87,100 @@ type Preset struct {
 	Tasks               []aiprovider.Task              `json:"tasks,omitempty"`
 	EmbeddingDimensions int                            `json:"embeddingDimensions,omitempty"`
 	EmbeddingInputStyle aiprovider.EmbeddingInputStyle `json:"embeddingInputStyle,omitempty"`
+	// Platform is where an Anthropic Messages preset reaches Claude.
+	Platform aiprovider.Platform `json:"platform,omitempty"`
+}
+
+// PlatformSetting names a platform setting the editor asks for.
+type PlatformSetting string
+
+const (
+	PlatformSettingRegion      = PlatformSetting("region")
+	PlatformSettingProjectID   = PlatformSetting("projectId")
+	PlatformSettingWorkspaceID = PlatformSetting("workspaceId")
+	PlatformSettingResource    = PlatformSetting("resource")
+	PlatformSettingAccessKeyID = PlatformSetting("accessKeyId")
+	PlatformSettingTenantID    = PlatformSetting("tenantId")
+	PlatformSettingClientID    = PlatformSetting("clientId")
+)
+
+// PlatformAuthDescriptor is one way a platform signs in: whether a secret is
+// stored for it, and which settings it adds.
+type PlatformAuthDescriptor struct {
+	Auth               aiprovider.PlatformAuth `json:"auth"`
+	RequiresCredential bool                    `json:"requiresCredential"`
+	Settings           []PlatformSetting       `json:"settings"`
+}
+
+// PlatformDescriptor is the shape of a platform for the editor: the settings
+// it needs, the ways it signs in, the first being its default, and whether
+// it lists its models. Labels are the interface's own, so they are translated
+// there.
+type PlatformDescriptor struct {
+	Platform    aiprovider.Platform      `json:"platform"`
+	Settings    []PlatformSetting        `json:"settings"`
+	Auths       []PlatformAuthDescriptor `json:"auths"`
+	ListsModels bool                     `json:"listsModels"`
+}
+
+func platformDescriptors() []PlatformDescriptor {
+	platforms := aiprovider.AllPlatforms()
+	out := make([]PlatformDescriptor, 0, len(platforms))
+	for _, platform := range platforms {
+		auths := platform.Auths()
+		descriptor := PlatformDescriptor{
+			Platform:    platform,
+			Settings:    platformSettings(platform),
+			Auths:       make([]PlatformAuthDescriptor, 0, len(auths)),
+			ListsModels: platform.ListsModels(),
+		}
+		for _, auth := range auths {
+			descriptor.Auths = append(descriptor.Auths, PlatformAuthDescriptor{
+				Auth:               auth,
+				RequiresCredential: auth != aiprovider.PlatformAuthServer,
+				Settings:           authSettings(auth),
+			})
+		}
+		out = append(out, descriptor)
+	}
+
+	return out
+}
+
+func platformSettings(platform aiprovider.Platform) []PlatformSetting {
+	switch platform {
+	case aiprovider.PlatformBedrock:
+		return []PlatformSetting{PlatformSettingRegion}
+	case aiprovider.PlatformClaudeAWS:
+		return []PlatformSetting{PlatformSettingRegion, PlatformSettingWorkspaceID}
+	case aiprovider.PlatformVertexAI:
+		return []PlatformSetting{PlatformSettingProjectID, PlatformSettingRegion}
+	case aiprovider.PlatformClaudeGoogleCloud:
+		return []PlatformSetting{
+			PlatformSettingProjectID, PlatformSettingRegion, PlatformSettingWorkspaceID,
+		}
+	case aiprovider.PlatformFoundry:
+		return []PlatformSetting{PlatformSettingResource}
+	case aiprovider.PlatformDirect:
+		return []PlatformSetting{}
+	default:
+		return []PlatformSetting{}
+	}
+}
+
+func authSettings(auth aiprovider.PlatformAuth) []PlatformSetting {
+	switch auth {
+	case aiprovider.PlatformAuthAccessKey:
+		return []PlatformSetting{PlatformSettingAccessKeyID}
+	case aiprovider.PlatformAuthEntraID:
+		return []PlatformSetting{PlatformSettingTenantID, PlatformSettingClientID}
+	case aiprovider.PlatformAuthAPIKey,
+		aiprovider.PlatformAuthServiceAccount,
+		aiprovider.PlatformAuthServer:
+		return []PlatformSetting{}
+	default:
+		return []PlatformSetting{}
+	}
 }
 
 // Presets covers the deployments organizations actually reach for. The
@@ -98,6 +198,57 @@ func Presets() []Preset {
 			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
 			RequiresAPIKey:       true,
 			ExampleModel:         "claude-opus-5",
+		},
+		{
+			Key:                  "bedrock-claude",
+			Domain:               awsDomain,
+			Label:                "Claude on Amazon Bedrock",
+			Kind:                 aiprovider.KindAnthropicMessages,
+			Platform:             aiprovider.PlatformBedrock,
+			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			RequiresAPIKey:       true,
+			ExampleModel:         "anthropic.claude-opus-5-5",
+		},
+		{
+			Key:                  "vertex-claude",
+			Domain:               googleCloudDomain,
+			Label:                "Claude on Google Vertex AI",
+			Kind:                 aiprovider.KindAnthropicMessages,
+			Platform:             aiprovider.PlatformVertexAI,
+			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			RequiresAPIKey:       true,
+			ExampleModel:         exampleClaudeModel,
+		},
+		{
+			Key:                  "claude-platform-aws",
+			Domain:               awsDomain,
+			Label:                "Claude Platform on AWS",
+			Kind:                 aiprovider.KindAnthropicMessages,
+			Platform:             aiprovider.PlatformClaudeAWS,
+			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			RequiresAPIKey:       true,
+			ExampleModel:         exampleClaudeModel,
+		},
+		{
+			Key:                  "claude-platform-google-cloud",
+			Domain:               googleCloudDomain,
+			Label:                "Claude Platform on Google Cloud",
+			Kind:                 aiprovider.KindAnthropicMessages,
+			Platform:             aiprovider.PlatformClaudeGoogleCloud,
+			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			RequiresAPIKey:       true,
+			ExampleModel:         exampleClaudeModel,
+		},
+		{
+			Key:                  "foundry-claude",
+			Domain:               "azure.microsoft.com",
+			Label:                "Claude on Microsoft Foundry",
+			Kind:                 aiprovider.KindAnthropicMessages,
+			Platform:             aiprovider.PlatformFoundry,
+			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			RequiresAPIKey:       true,
+			ExampleModel:         exampleClaudeModel,
+			Notes:                "The model is your deployment's name, which is the model ID unless you renamed it.",
 		},
 		{
 			Key:                  "openai",
@@ -207,7 +358,7 @@ func Presets() []Preset {
 		},
 		{
 			Key:                  "bedrock",
-			Domain:               "aws.amazon.com",
+			Domain:               awsDomain,
 			Label:                "Amazon Bedrock",
 			Kind:                 aiprovider.KindOpenAIChat,
 			BaseURL:              "",

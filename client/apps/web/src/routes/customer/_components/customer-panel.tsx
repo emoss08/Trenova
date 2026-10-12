@@ -102,13 +102,16 @@ export function CustomerPanel({ open, onOpenChange, mode, row }: DataTablePanelP
 
   const user = useAuthStore((s) => s.user);
   const panelDescription = row?.updatedAt
-    ? `Last updated on ${formatToUserTimezone(
-        row.updatedAt,
-        {
-          timeFormat: user?.timeFormat || "24-hour",
-        },
-        user?.timezone,
-      )}`
+    ? t(
+        "Last updated on {0}",
+        formatToUserTimezone(
+          row.updatedAt,
+          {
+            timeFormat: user?.timeFormat || "24-hour",
+          },
+          user?.timezone,
+        ),
+      )
     : undefined;
 
   const form = useForm({

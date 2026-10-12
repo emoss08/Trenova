@@ -44,6 +44,7 @@ export function JsonEditorField<T extends FieldValues>({
       rules={rules}
       render={({ field, fieldState }) => (
         <FieldWrapper
+          name={name}
           label={label}
           description={description}
           error={fieldState.error?.message}

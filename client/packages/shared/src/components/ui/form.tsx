@@ -3,6 +3,11 @@ import { cn } from "@trenova/shared/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
 import { useFormContext } from "react-hook-form";
+import {
+  createFieldRegistry,
+  FormFieldsProvider,
+  useFormFieldRegistry,
+} from "@trenova/shared/lib/form-field-registry";
 
 export type GridCols = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 export type ColSpan = GridCols | "full" | "auto";
@@ -84,6 +89,12 @@ FormRootError.displayName = "FormRootError";
 
 export const Form = React.memo(({ className, onSubmit, children, ...props }: FormProps) => {
   const form = useFormContext();
+  // Every form keeps a registry of the fields it draws, so a change review or a save
+  // dock can name them as the form does. A form panel provides one above its form,
+  // to share with its footer; a form without one gets its own.
+  const enclosing = useFormFieldRegistry();
+  const [own] = React.useState(() => (enclosing ? null : createFieldRegistry()));
+  const registry = enclosing ?? own;
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -104,7 +115,11 @@ export const Form = React.memo(({ className, onSubmit, children, ...props }: For
     // control to explain ("An invalid form control with name='' is not focusable").
     <form onSubmit={handleSubmit} className={className} noValidate {...props}>
       <FormRootError className="mb-4" />
-      {children}
+      {registry && registry !== enclosing ? (
+        <FormFieldsProvider registry={registry}>{children}</FormFieldsProvider>
+      ) : (
+        children
+      )}
     </form>
   );
 });
@@ -148,12 +163,26 @@ FormControl.displayName = "FormControl";
 interface FormSectionProps extends React.HTMLAttributes<HTMLDivElement> {
   title?: string;
   titleCount?: number;
-  description?: string;
+  description?: React.ReactNode;
   action?: React.ReactNode;
+  /** Drawn just before the title, such as a mark that the section holds unsaved changes. */
+  indicator?: React.ReactNode;
+  /** Drawn just after the title, such as a control that explains the section. */
+  titleAside?: React.ReactNode;
 }
 
 export const FormSection = React.memo(
-  ({ className, title, titleCount, description, action, children, ...props }: FormSectionProps) => (
+  ({
+    className,
+    title,
+    titleCount,
+    description,
+    action,
+    indicator,
+    titleAside,
+    children,
+    ...props
+  }: FormSectionProps) => (
     <div
       className={cn("flex flex-col gap-2", className)}
       role="group"
@@ -165,9 +194,11 @@ export const FormSection = React.memo(
           <div className="space-y-1">
             {title && (
               <span className="flex items-center gap-1">
+                {indicator}
                 <h3 id={`section-${title}`} className="text-base leading-none font-semibold">
                   {title}
                 </h3>
+                {titleAside}
                 {titleCount && titleCount > 0 ? (
                   <span className="text-xs text-muted-foreground">({titleCount})</span>
                 ) : null}

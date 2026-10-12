@@ -208,7 +208,7 @@ export function DetentionChargeAction({
                   <span className="font-medium">{stopCaption(occurrence, t)}</span>
                   <span className="text-muted-foreground">
                     {" "}
-                    · {t(OCCURRENCE_STATUS_LABEL[occurrence.status])}
+                    · {OCCURRENCE_STATUS_LABEL[occurrence.status]}
                   </span>
                 </span>
                 <span className="shrink-0 tabular-nums">

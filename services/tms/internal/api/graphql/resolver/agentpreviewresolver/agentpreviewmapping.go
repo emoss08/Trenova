@@ -3,14 +3,12 @@ package agentpreviewresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/fieldsensitivity"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,20 +21,18 @@ import (
 func (r *Deps) PreviewViewer(
 	ctx context.Context,
 	authCtx *authctx.AuthContext,
-) *services.PreviewViewer {
+) *agentports.PreviewViewer {
 	actor := actorutil.FromAuthContext(authCtx)
-	viewer := &services.PreviewViewer{
+	viewer := &agentports.PreviewViewer{
 		Actor: actor,
 		Reads: fieldsensitivity.NewReadAccess(r.PermissionEngine, actor),
 	}
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		viewer.Ceilings = l.FieldCeilings
-	}
+	viewer.Ceilings = loaders.FieldCeilings(ctx)
 
 	return viewer
 }
 
-func (r *Deps) previewService() (services.ProposalPreviewService, error) {
+func (r *Deps) previewService() (agentports.ProposalPreviewService, error) {
 	if r.ProposalPreviewService == nil {
 		return nil, errortypes.NewBusinessError("Previews of proposed changes are not available")
 	}
@@ -56,7 +52,7 @@ func (r *Deps) ProposalPreview(
 	}
 
 	tenant := base.TenantInfo(authCtx)
-	proposal, err := r.AgentProposalService.GetByID(ctx, repositories.GetAgentProposalByIDRequest{
+	proposal, err := r.AgentProposalService.GetByID(ctx, agentports.GetAgentProposalByIDRequest{
 		ID:         proposalID,
 		TenantInfo: &tenant,
 	})
@@ -64,7 +60,7 @@ func (r *Deps) ProposalPreview(
 		return nil, err
 	}
 
-	return previews.ForProposal(ctx, &services.ProposalPreviewRequest{
+	return previews.ForProposal(ctx, &agentports.ProposalPreviewRequest{
 		Proposal:      proposal,
 		Modifications: modifications,
 		Viewer:        r.PreviewViewer(ctx, authCtx),
@@ -81,7 +77,7 @@ func (r *Deps) PlanPreview(
 		return nil, err
 	}
 
-	plan, err := r.AgentPlanService.GetByID(ctx, repositories.GetAgentPlanByIDRequest{
+	plan, err := r.AgentPlanService.GetByID(ctx, agentports.GetAgentPlanByIDRequest{
 		ID:         planID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
@@ -89,7 +85,7 @@ func (r *Deps) PlanPreview(
 		return nil, err
 	}
 
-	return previews.ForPlan(ctx, &services.PlanPreviewRequest{
+	return previews.ForPlan(ctx, &agentports.PlanPreviewRequest{
 		Plan:   plan,
 		Viewer: r.PreviewViewer(ctx, authCtx),
 	})

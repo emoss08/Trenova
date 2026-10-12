@@ -6,8 +6,9 @@ import (
 	"math"
 	"net/http"
 
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -22,7 +23,7 @@ type EmbedCall struct {
 	Provider *aiprovider.Provider
 	APIKey   string
 	Client   *http.Client
-	Purpose  serviceports.EmbeddingPurpose
+	Purpose  aiusageports.EmbeddingPurpose
 	Inputs   []string
 }
 
@@ -50,7 +51,7 @@ func (c *EmbedCall) wireInputs() []string {
 	}
 
 	prefix := nomicDocumentPrefix
-	if c.Purpose == serviceports.EmbeddingPurposeQuery {
+	if c.Purpose == aiusageports.EmbeddingPurposeQuery {
 		prefix = nomicQueryPrefix
 	}
 
@@ -63,7 +64,7 @@ func (c *EmbedCall) wireInputs() []string {
 }
 
 func (c *EmbedCall) voyageInputType() string {
-	if c.Purpose == serviceports.EmbeddingPurposeQuery {
+	if c.Purpose == aiusageports.EmbeddingPurposeQuery {
 		return voyageQueryType
 	}
 
@@ -90,7 +91,7 @@ func checkVectorCount(call *EmbedCall, got int) error {
 		call.Provider.Name,
 		got,
 		len(call.Inputs),
-	).WithInternal(serviceports.ErrEmbeddingResponseInvalid)
+	).WithInternal(aiusageports.ErrEmbeddingResponseInvalid)
 }
 
 func checkEmbeddings(call *EmbedCall, vectors [][]float32) error {
@@ -106,13 +107,13 @@ func checkEmbeddings(call *EmbedCall, vectors [][]float32) error {
 				call.Provider.Name,
 				len(vector),
 				want,
-			).WithInternal(serviceports.ErrEmbeddingDimensionMismatch)
+			).WithInternal(aiusageports.ErrEmbeddingDimensionMismatch)
 		}
 		if err := checkFinite(vector); err != nil {
 			return errortypes.NewBusinessError(
 				"Embedding provider {0} returned an unusable response",
 				call.Provider.Name,
-			).WithInternal(fmt.Errorf("vector %d: %w: %w", idx, err, serviceports.ErrEmbeddingResponseInvalid))
+			).WithInternal(fmt.Errorf("vector %d: %w: %w", idx, err, aiusageports.ErrEmbeddingResponseInvalid))
 		}
 	}
 
@@ -135,7 +136,7 @@ func (r *Registry) Embedder(kind aiprovider.Kind) (Embedder, error) {
 	if !ok {
 		return nil, errortypes.NewBusinessError(
 			"The {0} protocol has no embedding endpoint", string(kind),
-		).WithInternal(serviceports.ErrNoProviderConfigured)
+		).WithInternal(agentports.ErrNoProviderConfigured)
 	}
 
 	return embedder, nil

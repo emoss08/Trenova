@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type React from "react";
 import { Delta, KpiCard, KpiHeader, KpiSub } from "./kpi-card";
 import type { DeltaTone } from "./tone";
@@ -35,6 +36,7 @@ export function KpiGoalBar({
   span = 2,
   className,
 }: KpiGoalBarProps) {
+  const t = useT();
   const actualPct = Math.min(100, Math.max(0, (actual / max) * 100));
   const targetPct = Math.min(100, Math.max(0, (target / max) * 100));
   const onGoal = actual <= target;
@@ -63,7 +65,7 @@ export function KpiGoalBar({
           }}
         />
         <div
-          title={`Target ${target}${unit ?? ""}`}
+          title={t("Target {0}{1}", target, unit ?? "")}
           className="bg-foreground/55 absolute -top-0.5 -bottom-0.5 w-0.5 rounded-[1px]"
           style={{ left: `calc(${targetPct}% - 1px)` }}
         />

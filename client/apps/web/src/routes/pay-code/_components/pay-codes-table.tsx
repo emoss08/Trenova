@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
-import { runBulkAction } from "@/lib/bulk-run";
+import { notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
 import {
   payCodeTableGraphQLConfig,
   updatePayCode,
@@ -15,6 +15,7 @@ import { selectOptionsQueryFilter } from "@/lib/select-options-cache";
 import { toast } from "sonner";
 import { getColumns, payCodeStatusInput } from "./pay-code-columns";
 import { PayCodePanel } from "./pay-code-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function PayCodesTable() {
   const t = useT();
@@ -29,10 +30,48 @@ export default function PayCodesTable() {
         toast.info(t("Every selected pay code already has that status."));
         return;
       }
-      await runBulkAction(
-        eligible,
-        (row) => updatePayCode(payCodeStatusInput(row, status as "Active" | "Inactive")),
-        { noun: "pay code", verb: status === "Active" ? "activated" : "deactivated" },
+      const outcome = await settleAll(eligible, (row) =>
+        updatePayCode(payCodeStatusInput(row, status as "Active" | "Inactive")),
+      );
+      notifyBulkOutcome(
+        outcome,
+        status === "Active"
+          ? {
+              succeeded: (count) =>
+                translate(
+                  "{0, plural, one {# pay code activated} other {# pay codes activated}}",
+                  count,
+                ),
+              partial: (succeeded, failed) =>
+                translate(
+                  "{0, plural, one {# pay code activated} other {# pay codes activated}}, {1} failed",
+                  succeeded,
+                  failed,
+                ),
+              allFailed: (failed) =>
+                translate(
+                  "{0, plural, one {The selected pay code failed} other {All # selected pay codes failed}}",
+                  failed,
+                ),
+            }
+          : {
+              succeeded: (count) =>
+                translate(
+                  "{0, plural, one {# pay code deactivated} other {# pay codes deactivated}}",
+                  count,
+                ),
+              partial: (succeeded, failed) =>
+                translate(
+                  "{0, plural, one {# pay code deactivated} other {# pay codes deactivated}}, {1} failed",
+                  succeeded,
+                  failed,
+                ),
+              allFailed: (failed) =>
+                translate(
+                  "{0, plural, one {The selected pay code failed} other {All # selected pay codes failed}}",
+                  failed,
+                ),
+            },
       );
       await queryClient.invalidateQueries({ queryKey: ["pay-code-list"] });
       await queryClient.invalidateQueries(selectOptionsQueryFilter("PAY_CODE"));
@@ -72,6 +111,7 @@ export default function PayCodesTable() {
   return (
     <DataTable<PayCodeRow>
       name="Pay Code"
+      emptyTitle={t("No pay codes yet")}
       queryKey="pay-code-list"
       graphql={payCodeTableGraphQLConfig}
       resource={Resource.PayCode}

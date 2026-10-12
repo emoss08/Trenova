@@ -1,4 +1,4 @@
-import { api } from "@trenova/shared/lib/api";
+import { api, withCsrfHeader } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { safeParse } from "@trenova/shared/lib/parse";
 import { readEventStream } from "@trenova/shared/lib/sse";
@@ -13,9 +13,11 @@ import {
   toolTrustListSchema,
   assistantMessagePageSchema,
   mentionCandidateListSchema,
+  mentionPageSchema,
   deskSearchResultListSchema,
   threadBudgetSchema,
   type DeskSearchKind,
+  type MentionPageKind,
   type MentionSearchType,
   assistantArtifactListSchema,
   assistantArtifactPageSchema,
@@ -27,9 +29,16 @@ import {
   assistantProposalListSchema,
   proposalEditsSchema,
   assistantProviderListSchema,
-  assistantThreadListSchema,
+  assistantThreadPageSchema,
+  assistantThreadShelfCountsSchema,
   assistantThreadSchema,
   conversationScheduleListSchema,
+  queuedMessageListSchema,
+  agentWaitListSchema,
+  agentWaitSchema,
+  caseBindingSchema,
+  caseViewSchema,
+  queuedMessageSchema,
   conversationScheduleSchema,
   createdScheduleSchema,
   handoffResultSchema,
@@ -40,11 +49,16 @@ import {
   type AssistantArtifact,
   type AssistantEntityRef,
   type AssistantPageContext,
+  type AssistantSurface,
   type ThreadOrigin,
   type AssistantStreamEvent,
   type AssistantThread,
+  type CaseParty,
+  type CaseSubjectType,
   type ConversationSchedule,
+  type QueuedMessage,
   type SaveAgentDefinitionRequest,
+  type SnoozeAnchor,
 } from "@/types/assistant";
 
 /**
@@ -70,6 +84,18 @@ export function artifactDocumentUrl(
   return `${API_BASE_URL}/assistant/threads/${encodeURIComponent(threadId)}/artifacts/${encodeURIComponent(artifactId)}/export/?format=${format}`;
 }
 
+/**
+ * What narrows the person's conversations to one shelf, on the server: pinned
+ * or not, and the instants, in Unix seconds, between which each was last
+ * touched (its last message, or its creation when it has none). Either end of
+ * the range may be left open.
+ */
+export type ThreadListFilter = {
+  pinned?: boolean;
+  touchedFrom?: number;
+  touchedBefore?: number;
+};
+
 /** What narrows a page of a conversation's artifacts, on the server. */
 export type ArtifactListParams = {
   cursor?: string;
@@ -77,6 +103,8 @@ export type ArtifactListParams = {
   q?: string;
   kind?: string;
   pinned?: boolean;
+  /** Each payload cut to the keys that name and draw an artifact in a list. */
+  summary?: boolean;
 };
 
 export function downloadAssistantTranscript(threadId: AssistantThread["id"]): void {
@@ -97,6 +125,26 @@ const startedTurnSchema = z.object({
 
 export type StartedTurn = z.infer<typeof startedTurnSchema>;
 
+/**
+ * What became of a message handed to the queue: still waiting (with why, when
+ * the conversation was free but could not take it), read into the reply under
+ * way, or sent as a reply of its own.
+ */
+const queueOutcomeSchema = z.object({
+  item: queuedMessageSchema.nullish(),
+  steering: z.boolean().optional().default(false),
+  held: z.string().optional().default(""),
+  turn: startedTurnSchema.nullish(),
+});
+
+export type QueueOutcome = z.infer<typeof queueOutcomeSchema>;
+
+/** A message for the queue: the words, and what rides with them. */
+export type EnqueueOptions = SendMessageOptions & {
+  /** Read it into the reply under way at its next step, rather than after it. */
+  steer?: boolean;
+};
+
 /** A reply a conversation is still producing. */
 export type ActiveTurn = {
   id: string;
@@ -108,7 +156,7 @@ export type ActiveTurn = {
    * a request the person scheduled coming round, or the conversation being
    * compacted.
    */
-  origin?: "Person" | "DecisionFollowUp" | "Scheduled" | "Compaction";
+  origin?: "Person" | "DecisionFollowUp" | "Scheduled" | "Compaction" | "WaitResolved";
   /** The question the turn answers, when a person asked one. */
   input?: string;
 };
@@ -135,16 +183,23 @@ export type StartThreadOptions = {
 /** What rides with a message besides the words. */
 export type SendMessageOptions = {
   context?: AssistantPageContext | null;
+  surface?: AssistantSurface;
   providerId?: string;
   /** Documents uploaded to this thread for this message. */
   attachmentDocumentIds?: readonly string[];
   /** Records named from the composer. */
   mentions?: readonly AssistantEntityRef[];
+  /**
+   * Hands the message to another agent the person may use, run from this
+   * conversation in place of its own agent's reply.
+   */
+  directedAgentId?: string;
 };
 
 /** A quick question from anywhere: no thread yet, the answer makes one. */
 export type AskOptions = {
   context?: AssistantPageContext | null;
+  surface?: AssistantSurface;
   mentions?: readonly AssistantEntityRef[];
 };
 
@@ -161,9 +216,60 @@ export type UpdateThreadOptions = {
 };
 
 export class AssistantService {
-  public async listThreads(limit = 50, offset = 0) {
-    const response = await api.get(`/assistant/threads/?limit=${limit}&offset=${offset}`);
-    return safeParse(assistantThreadListSchema, response, "Assistant Thread");
+  /**
+   * One page of the person's conversations; the cursor is the previous page's
+   * `nextCursor`. Given `until` (a page's own `nextCursor`), it reads that
+   * page's range again instead: everything from the cursor down to the place
+   * `until` marks, however many conversations sit there now.
+   */
+  public async listThreads({
+    limit,
+    cursor,
+    until,
+    filter,
+    signal,
+  }: {
+    limit?: number;
+    cursor?: string;
+    until?: string;
+    filter?: ThreadListFilter;
+    signal?: AbortSignal;
+  } = {}) {
+    const params = new URLSearchParams();
+    if (limit !== undefined) {
+      params.set("limit", String(limit));
+    }
+    if (cursor) {
+      params.set("cursor", cursor);
+    }
+    if (until) {
+      params.set("until", until);
+    }
+    if (filter?.pinned !== undefined) {
+      params.set("pinned", String(filter.pinned));
+    }
+    if (filter?.touchedFrom !== undefined) {
+      params.set("touchedFrom", String(filter.touchedFrom));
+    }
+    if (filter?.touchedBefore !== undefined) {
+      params.set("touchedBefore", String(filter.touchedBefore));
+    }
+    const query = params.size > 0 ? `?${params.toString()}` : "";
+    const response = await api.get(`/assistant/threads/${query}`, { signal });
+    return safeParse(assistantThreadPageSchema, response, "Assistant Thread");
+  }
+
+  /** How many conversations each shelf holds, banded by the edges given, newest first. */
+  public async countThreadShelves(
+    edges: readonly number[],
+    { signal }: { signal?: AbortSignal } = {},
+  ) {
+    const params = new URLSearchParams();
+    for (const edge of edges) {
+      params.append("edge", String(edge));
+    }
+    const response = await api.get(`/assistant/threads/shelves/?${params.toString()}`, { signal });
+    return safeParse(assistantThreadShelfCountsSchema, response, "Assistant Thread Shelves");
   }
 
   public async startThread(agentDefinitionId: string, options: StartThreadOptions = {}) {
@@ -213,6 +319,7 @@ export class AssistantService {
     if (options?.q) params.set("q", options.q);
     if (options?.kind) params.set("kind", options.kind);
     if (options?.pinned) params.set("pinned", "true");
+    if (options?.summary) params.set("summary", "true");
     const query = params.toString();
     const response = await api.get(
       `/assistant/threads/${threadId}/artifacts/${query ? `?${query}` : ""}`,
@@ -338,6 +445,136 @@ export class AssistantService {
     return safeParse(startedTurnSchema, response, "Assistant Turn");
   }
 
+  /** What the person left for the conversation, in the order it will be sent. */
+  public async listQueue(
+    threadId: AssistantThread["id"],
+    { signal }: { signal?: AbortSignal } = {},
+  ) {
+    const response = await api.get(`/assistant/threads/${threadId}/queue/`, { signal });
+    return safeParse(queuedMessageListSchema, response, "Queued Message");
+  }
+
+  /**
+   * Leaves a message for the conversation. With steer, the reply under way
+   * reads it at its next step; otherwise it is sent once the reply ends. A
+   * conversation with nothing under way sends it at once, and the outcome
+   * carries the turn to follow.
+   */
+  public async enqueue(
+    threadId: AssistantThread["id"],
+    content: string,
+    options: EnqueueOptions = {},
+  ): Promise<QueueOutcome> {
+    const response = await api.post(`/assistant/threads/${threadId}/queue/`, {
+      ...messageBody(content, options),
+      steer: options.steer ?? false,
+    });
+    return safeParse(queueOutcomeSchema, response, "Queued Message");
+  }
+
+  public async editQueued(
+    threadId: AssistantThread["id"],
+    item: Pick<QueuedMessage, "id" | "version">,
+    content: string,
+  ) {
+    const response = await api.patch(`/assistant/threads/${threadId}/queue/${item.id}/`, {
+      content,
+      version: item.version,
+    });
+    return safeParse(queuedMessageSchema, response, "Queued Message");
+  }
+
+  public async removeQueued(threadId: AssistantThread["id"], id: QueuedMessage["id"]) {
+    await api.delete(`/assistant/threads/${threadId}/queue/${id}/`);
+  }
+
+  /** Puts the waiting messages in this order; every one of them is named once. */
+  public async reorderQueue(threadId: AssistantThread["id"], ids: readonly string[]) {
+    const response = await api.put(`/assistant/threads/${threadId}/queue/order/`, { ids });
+    return safeParse(queuedMessageListSchema, response, "Queued Message");
+  }
+
+  /**
+   * Sends a waiting message now: into the reply under way when there is one,
+   * or as a reply of its own ahead of the rest of the queue.
+   */
+  public async sendQueued(threadId: AssistantThread["id"], id: QueuedMessage["id"]) {
+    const response = await api.post(`/assistant/threads/${threadId}/queue/${id}/send/`, {});
+    return safeParse(queueOutcomeSchema, response, "Queued Message");
+  }
+
+  /** What the conversation's agent is waiting on, newest first. */
+  public async listWaits(
+    threadId: AssistantThread["id"],
+    { signal }: { signal?: AbortSignal } = {},
+  ) {
+    const response = await api.get(`/assistant/threads/${threadId}/waits/`, { signal });
+    return safeParse(agentWaitListSchema, response, "Agent Wait");
+  }
+
+  /** Ends a wait without the agent picking the work up. */
+  public async cancelWait(threadId: AssistantThread["id"], waitId: string) {
+    const response = await api.post(`/assistant/threads/${threadId}/waits/${waitId}/cancel/`, {});
+    return safeParse(agentWaitSchema, response, "Agent Wait");
+  }
+
+  /** Where the conversation's case stands, what stands between its record and what comes next. */
+  public async getCase(threadId: AssistantThread["id"], { signal }: { signal?: AbortSignal } = {}) {
+    const response = await api.get(`/assistant/threads/${threadId}/case/`, { signal });
+    return safeParse(caseViewSchema, response, "Case");
+  }
+
+  /** Makes the conversation a case about a shipment, invoice or dispute. */
+  public async bindCase(
+    threadId: AssistantThread["id"],
+    subject: { subjectType: CaseSubjectType; subjectId: string },
+  ) {
+    const response = await api.put(`/assistant/threads/${threadId}/case/`, subject);
+    return safeParse(caseBindingSchema, response, "Case");
+  }
+
+  /** Makes the case an ordinary conversation again. */
+  public async unbindCase(threadId: AssistantThread["id"]) {
+    const response = await api.delete(`/assistant/threads/${threadId}/case/`);
+    return safeParse(caseBindingSchema, response, "Case");
+  }
+
+  /**
+   * Puts the case out of the way until a time, the shipment's next
+   * appointment or its ETA. `until` is the time, or the fallback for an ETA
+   * the shipment does not have yet.
+   */
+  public async snoozeCase(
+    threadId: AssistantThread["id"],
+    snooze: { anchor: SnoozeAnchor; until?: number },
+  ) {
+    const response = await api.post(`/assistant/threads/${threadId}/case/snooze/`, snooze);
+    return safeParse(caseBindingSchema, response, "Case");
+  }
+
+  public async wakeCase(threadId: AssistantThread["id"]) {
+    const response = await api.post(`/assistant/threads/${threadId}/case/wake/`, {});
+    return safeParse(caseBindingSchema, response, "Case");
+  }
+
+  /** Ticks, or unticks, a step the organization added for a person to tick. */
+  public async tickCaseItem(threadId: AssistantThread["id"], itemKey: string, ticked: boolean) {
+    const response = await api.post(`/assistant/threads/${threadId}/case/ticks/`, {
+      itemKey,
+      ticked,
+    });
+    return safeParse(caseViewSchema, response, "Case");
+  }
+
+  /** Parks the case until the customer or one of the carriers replies. */
+  public async awaitCaseReply(
+    threadId: AssistantThread["id"],
+    party: { party: CaseParty["kind"]; partyId: string; giveUpAfterHours?: number },
+  ) {
+    const response = await api.post(`/assistant/threads/${threadId}/case/await-reply/`, party);
+    return safeParse(agentWaitSchema, response, "Agent Wait");
+  }
+
   public async getThread(id: AssistantThread["id"]) {
     const response = await api.get(`/assistant/threads/${id}/`);
     return safeParse(assistantThreadSchema, response, "Assistant Thread");
@@ -424,6 +661,23 @@ export class AssistantService {
     return parsed.results;
   }
 
+  /** One page of the records of one kind, for a list that scrolls through them all. */
+  public async searchMentionPage(
+    query: string,
+    kind: MentionPageKind,
+    { offset, limit, signal }: { offset: number; limit: number; signal?: AbortSignal },
+  ) {
+    const params = new URLSearchParams({
+      query,
+      kind,
+      offset: String(offset),
+      limit: String(limit),
+    });
+    const response = await api.get(`/assistant/mentions/?${params.toString()}`, { signal });
+
+    return safeParse(mentionPageSchema, response, "Assistant Mentions");
+  }
+
   /**
    * The person's own conversations, what was said in them and what they
    * produced. With nothing typed, the conversations and artifacts that are
@@ -504,6 +758,7 @@ export class AssistantService {
       {
         content,
         context: options.context ?? null,
+        surface: options.surface ?? "",
         mentions: options.mentions ?? [],
       },
       { signal },
@@ -634,9 +889,11 @@ function messageBody(content: string, options: SendMessageOptions): Record<strin
   return {
     content,
     context: options.context ?? null,
+    surface: options.surface ?? "",
     providerId: options.providerId ?? "",
     attachmentDocumentIds: options.attachmentDocumentIds ?? [],
     mentions: options.mentions ?? [],
+    ...(options.directedAgentId ? { directedAgentId: options.directedAgentId } : {}),
   };
 }
 
@@ -678,6 +935,44 @@ export class AgentDefinitionService {
   public async eventKinds() {
     const response = await api.get("/agent-definitions/event-kinds/");
     return safeParse(agentEventListSchema, response, "Agent Event");
+  }
+
+  /**
+   * Tries a draft once against live records, every write simulated, and hands each
+   * server-sent event to `onMessage` as it arrives. Nothing is saved. Resolves when the
+   * stream ends; an abort ends it quietly.
+   */
+  public async dryRun(
+    payload: { agentId: string | null; draft: SaveAgentDefinitionRequest; prompt: string },
+    onMessage: (event: string, data: string) => void,
+    options: { signal?: AbortSignal } = {},
+  ): Promise<void> {
+    const path = "/agent-definitions/dry-run/";
+    const headers = await withCsrfHeader(
+      "POST",
+      { Accept: "text/event-stream", "Content-Type": "application/json" },
+      path,
+    );
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method: "POST",
+      headers,
+      credentials: "include",
+      signal: options.signal,
+      body: JSON.stringify({
+        agentId: payload.agentId ?? "",
+        draft: saveAgentDefinitionRequestSchema.parse(payload.draft),
+        prompt: payload.prompt,
+      }),
+    });
+    if (!response.ok || !response.body) {
+      throw new AssistantStreamError(await streamFailureMessage(response), response.status);
+    }
+
+    await readEventStream(
+      response.body,
+      (message) => onMessage(message.event, message.data),
+      options.signal,
+    );
   }
 
   public async previewPrompt(payload: SaveAgentDefinitionRequest) {

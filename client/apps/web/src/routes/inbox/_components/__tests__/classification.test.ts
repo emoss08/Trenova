@@ -14,7 +14,7 @@ import {
  */
 describe("inbound classifications", () => {
   const serverKinds = goEnumValues({
-    file: "services/tms/internal/core/domain/inboundmessage/enums.go",
+    file: "services/tms/internal/modules/documents/domain/inboundmessage/enums.go",
     typeName: "Classification",
   });
 

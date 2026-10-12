@@ -19,6 +19,8 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { VersionDetail } from "../version-detail/version-detail";
 import { formatUnixDate } from "@trenova/shared/lib/date";
+import { defineLabels } from "@trenova/shared/i18n/labels";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const STATUS_BADGE_VARIANT = {
   Draft: "warning",
@@ -26,10 +28,10 @@ const STATUS_BADGE_VARIANT = {
   Archived: "neutral",
 } as const;
 
-const PARSER_MODE_LABELS: Record<string, string> = {
+const PARSER_MODE_LABELS: Record<string, string> = defineLabels({
   merge_with_base: "Merge",
   override_base: "Override",
-};
+});
 
 const NEW_VERSION_TEMPLATE = {
   status: "Draft" as const,
@@ -103,7 +105,9 @@ function VersionList({
       if (data.id) onSelectVersion(data.id);
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to create draft version");
+      toast.error(
+        error instanceof Error ? error.message : translate("Failed to create draft version"),
+      );
     },
   });
 

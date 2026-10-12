@@ -57,11 +57,10 @@ function CustomerRow({ row, scale }: { row: CustomerDetentionStat; scale: number
         </div>
         <p className="text-2xs text-muted-foreground mt-0.5 truncate tabular-nums">
           {t(
-            "{0} billed · {1} paid out · {2} {3}",
+            "{0} billed · {1} paid out · {2, plural, one {# stop} other {# stops}}",
             formatCurrency(row.billedAmount),
             formatCurrency(row.driverPayAmount),
             row.stopCount,
-            row.stopCount === 1 ? "stop" : "stops",
           )}
         </p>
       </div>
@@ -135,7 +134,7 @@ export function CustomerMargin({
               <PanelExpandToggle
                 expanded={expanded}
                 hiddenCount={hidden}
-                noun="customers"
+                of="customers"
                 onToggle={() => setExpanded((current) => !current)}
               />
             ) : null}

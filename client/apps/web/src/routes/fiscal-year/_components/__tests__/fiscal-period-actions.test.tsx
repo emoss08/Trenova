@@ -47,7 +47,7 @@ vi.mock("@/services/api", () => ({
   },
 }));
 
-// Contract: services/tms/internal/core/services/fiscalperiodservice. Inactive → Open
+// Contract: services/tms/internal/modules/accounting/app/fiscalperiodservice. Inactive → Open
 // (activate), Open → Locked (lock), Locked → Open (unlock), Open|Locked → Closed
 // (close), Closed → Open (reopen, reason required). PermanentlyClosed is terminal,
 // and nothing loosens a period whose fiscal year is Closed or PermanentlyClosed.

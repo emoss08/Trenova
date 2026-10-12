@@ -1,38 +1,48 @@
+import logo from "@/assets/logo.webp";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { ReactNode } from "react";
-import { AuthPanel, type CredentialReceipt } from "./auth-panel";
+import { LegalAgreementNote } from "./legal-agreement-note";
+import { AuthStage, AuthStageCanvas } from "./stage/auth-stage";
 
-// The step the flow is on. It drives the crumb counter, the aura position on the
-// panel and which receipt rows have been filled in.
-// "forgot" sits off the main path and gets no aura rule of its own, so the panel stays
-// where the login step left it.
+// The step the sign-in flow is on.
 export type AuthStep = "login" | "forgot" | "org" | "role" | "done";
 
 /**
- * Two-pane sign-in frame: an ambient panel on the left that shows the session
- * credential assembling itself, and a single morphing card on the right.
+ * The sign-in frame: the form column on the left — brand, the screen, the legal line —
+ * and the shader stage on the right. The screen is centred by auto margins rather than
+ * spaced between its neighbours, so it stays put when the install publishes no legal
+ * line. At 860px and below it is one column with the stage as a 200px band on top, and
+ * the whole frame scrolls instead of the column.
  *
- * The `minmax(0,1fr)` track, the `min(400px,100%)` column and `scrollbar-gutter:stable`
- * are load-bearing together — an auto-sized track grows a horizontal scrollbar the
- * moment the tallest step makes the pane scroll vertically.
+ * The screen is keyed by `screenKey`, so moving between steps replays its entrance.
+ *
+ * The `minmax(0,…)` tracks and `scrollbar-gutter:stable` are load-bearing together —
+ * an auto-sized track grows a horizontal scrollbar the moment the tallest screen makes
+ * the column scroll vertically.
  */
-export function AuthShell({
-  step,
-  receipt,
-  children,
-}: {
-  step: AuthStep;
-  receipt: CredentialReceipt;
-  children: ReactNode;
-}) {
+export function AuthShell({ screenKey, children }: { screenKey: string; children: ReactNode }) {
+  const t = useT();
+
   return (
-    <div
-      data-auth-step={step}
-      className="bg-background font-geist text-foreground fixed inset-0 grid h-svh w-full grid-cols-1 overflow-hidden text-base tracking-[-0.006em] antialiased min-[900px]:grid-cols-[1fr_clamp(440px,42%,560px)]"
-    >
-      <AuthPanel receipt={receipt} />
-      <main className="relative grid min-w-0 grid-cols-[minmax(0,1fr)] items-center justify-items-center overflow-auto px-6 py-10 [scrollbar-gutter:stable]">
-        <div className="flex w-[min(400px,100%)] max-w-full flex-col gap-4">{children}</div>
-      </main>
-    </div>
+    <AuthStage>
+      <div
+        data-auth-shell=""
+        className="bg-auth-canvas font-geist text-foreground fixed inset-0 grid w-full grid-cols-[minmax(0,1fr)] grid-rows-[200px_minmax(0,auto)] overflow-auto tracking-[-0.005em] antialiased min-[861px]:h-svh min-[861px]:grid-cols-[minmax(380px,520px)_minmax(0,1fr)] min-[861px]:grid-rows-[minmax(0,1fr)] min-[861px]:overflow-hidden"
+      >
+        <main className="relative z-1 row-start-2 flex min-w-0 flex-col px-[clamp(28px,5vw,64px)] py-8 min-[861px]:row-start-1 min-[861px]:[scrollbar-gutter:stable] min-[861px]:overflow-auto">
+          <div className="flex items-center gap-2.5 self-start">
+            <img src={logo} alt="" className="size-6 object-contain" />
+            <span className="text-lg font-semibold tracking-[-0.02em]">{t("Trenova")}</span>
+          </div>
+          <div key={screenKey} className="auth-enter my-auto flex w-full max-w-[360px] flex-col py-12">
+            {children}
+          </div>
+          <LegalAgreementNote />
+        </main>
+        <div className="border-border relative row-start-1 min-w-0 overflow-hidden border-b min-[861px]:col-start-2 min-[861px]:border-b-0 min-[861px]:border-l">
+          <AuthStageCanvas />
+        </div>
+      </div>
+    </AuthStage>
   );
 }

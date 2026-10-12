@@ -1,4 +1,4 @@
-import { toUserWallClock } from "@trenova/shared/lib/date";
+import { fromUserWallClock, toUserWallClock } from "@trenova/shared/lib/date";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -15,4 +15,16 @@ export function calendarDayOf(unix: number, timezone: string): number {
  */
 export function calendarDaysAgo(at: number, now: number, timezone: string): number {
   return Math.round((calendarDayOf(now, timezone) - calendarDayOf(at, timezone)) / DAY_MS);
+}
+
+/**
+ * The instant, in Unix seconds, the reader's calendar day began some days
+ * before the one `now` falls on: their midnight then, however long that day
+ * was.
+ */
+export function calendarDayStart(now: number, daysAgo: number, timezone: string): number {
+  const local = toUserWallClock(now, timezone) ?? new Date(now * 1000);
+  const midnight = new Date(local.getFullYear(), local.getMonth(), local.getDate() - daysAgo);
+
+  return fromUserWallClock(midnight, timezone) ?? Math.floor(midnight.getTime() / 1000);
 }

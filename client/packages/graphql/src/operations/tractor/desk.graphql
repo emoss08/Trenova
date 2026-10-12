@@ -1,0 +1,98 @@
+# The Desk's tractor card: who the tractor is, where it stands, who drives and
+# owns it and what falls due on it, without the custom fields and tenant
+# details the edit panel loads.
+query DeskTractorCard($id: ID!) {
+  tractor(id: $id) {
+    id
+    code
+    status
+    make
+    model
+    year
+    vin
+    licensePlateNumber
+    registrationNumber
+    registrationExpiry
+    externalId
+    fuelType
+    iftaQualified
+    ownershipType
+    lessorName
+    leaseReference
+    leaseEndDate
+    createdAt
+    state {
+      abbreviation
+    }
+    equipmentType {
+      id
+      code
+      description
+    }
+    equipmentManufacturer {
+      id
+      name
+    }
+    fleetCode {
+      id
+      code
+    }
+    primaryWorker {
+      id
+      firstName
+      lastName
+    }
+    secondaryWorker {
+      id
+      firstName
+      lastName
+    }
+    ownerWorker {
+      id
+      firstName
+      lastName
+    }
+    lastKnownLocation {
+      id
+      name
+      latitude
+      longitude
+    }
+  }
+}
+
+# Where the tractor last reported itself, for the card's position section.
+query DeskTractorPosition($tractorId: ID!) {
+  vehiclePosition(tractorId: $tractorId) {
+    latitude
+    longitude
+    headingDegrees
+    speedMph
+    engineState
+    fuelPercent
+    odometerMeters
+    formattedLocation
+    recordedAt
+  }
+}
+
+# The tractor's inspections, newest first, a page at a time: the next page is
+# read from before the last one shown.
+query DeskTractorInspections(
+  $tractorId: ID!
+  $limit: Int!
+  $before: Timestamp
+  $beforeId: ID
+) {
+  vehicleInspections(tractorId: $tractorId, limit: $limit, before: $before, beforeId: $beforeId) {
+    id
+    inspectionType
+    safetyStatus
+    workerName
+    startedAt
+    location
+    odometerMeters
+    defectCount
+    unresolvedDefectCount
+  }
+}

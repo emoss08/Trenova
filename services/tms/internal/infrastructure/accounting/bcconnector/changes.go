@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/businesscentral"
 )
 
-var _ services.AccountingChangeReader = (*Connector)(nil)
+var _ accountingsyncports.AccountingChangeReader = (*Connector)(nil)
 
 type changeTarget string
 
@@ -155,8 +155,8 @@ func nextSince(since, latest, started time.Time) time.Time {
 	return next
 }
 
-func (c *Connector) ChangeFeedLimits() services.AccountingChangeFeedLimits {
-	return services.AccountingChangeFeedLimits{
+func (c *Connector) ChangeFeedLimits() accountingsyncports.AccountingChangeFeedLimits {
+	return accountingsyncports.AccountingChangeFeedLimits{
 		MaxLookback:    0,
 		ReportsDeletes: false,
 		MaxPerRead:     businesscentral.MaxPageSize,
@@ -167,7 +167,7 @@ func (c *Connector) ChangeCursorAt(at time.Time) string {
 	return formatInstant(at)
 }
 
-func changeTargets(req *services.ReadAccountingChangesRequest) []changeTarget {
+func changeTargets(req *accountingsyncports.ReadAccountingChangesRequest) []changeTarget {
 	targets := make([]changeTarget, 0, maxChangeTargets)
 	if req.Documents {
 		targets = append(
@@ -203,8 +203,8 @@ func changeTargets(req *services.ReadAccountingChangesRequest) []changeTarget {
 
 func (c *Connector) ReadChanges(
 	ctx context.Context,
-	req *services.ReadAccountingChangesRequest,
-) (*services.AccountingChangePage, error) {
+	req *accountingsyncports.ReadAccountingChangesRequest,
+) (*accountingsyncports.AccountingChangePage, error) {
 	now := req.Now.UTC()
 	if req.Now.IsZero() {
 		now = c.now().UTC()
@@ -218,10 +218,10 @@ func (c *Connector) ReadChanges(
 		cursor.started = now
 	}
 	if len(cursor.targets) == 0 {
-		return &services.AccountingChangePage{
-			Payments:   []services.AccountingInboundPayment{},
-			Documents:  []services.AccountingChangedDocument{},
-			References: []services.AccountingChangedReference{},
+		return &accountingsyncports.AccountingChangePage{
+			Payments:   []accountingsyncports.AccountingInboundPayment{},
+			Documents:  []accountingsyncports.AccountingChangedDocument{},
+			References: []accountingsyncports.AccountingChangedReference{},
 			NextCursor: cursor.String(),
 		}, nil
 	}
@@ -235,7 +235,7 @@ func (c *Connector) ReadChanges(
 
 type changeCollector struct {
 	client *businesscentral.Client
-	page   *services.AccountingChangePage
+	page   *accountingsyncports.AccountingChangePage
 	latest time.Time
 	read   int
 }
@@ -243,10 +243,10 @@ type changeCollector struct {
 func newChangeCollector(client *businesscentral.Client) *changeCollector {
 	return &changeCollector{
 		client: client,
-		page: &services.AccountingChangePage{
-			Payments:   []services.AccountingInboundPayment{},
-			Documents:  []services.AccountingChangedDocument{},
-			References: []services.AccountingChangedReference{},
+		page: &accountingsyncports.AccountingChangePage{
+			Payments:   []accountingsyncports.AccountingInboundPayment{},
+			Documents:  []accountingsyncports.AccountingChangedDocument{},
+			References: []accountingsyncports.AccountingChangedReference{},
 		},
 	}
 }
@@ -254,7 +254,7 @@ func newChangeCollector(client *businesscentral.Client) *changeCollector {
 func (c *changeCollector) run(
 	ctx context.Context,
 	cursor *changeCursor,
-) (*services.AccountingChangePage, error) {
+) (*accountingsyncports.AccountingChangePage, error) {
 	since := cursor.since
 	for idx := cursor.index; idx < len(cursor.targets); idx++ {
 		if err := c.readTarget(ctx, cursor.targets[idx], &since); err != nil {
@@ -341,7 +341,7 @@ func (c *changeCollector) readParties(
 }
 
 func (c *changeCollector) reference(obj *accountingsync.AccountingReferenceObject) {
-	c.page.References = append(c.page.References, services.AccountingChangedReference{
+	c.page.References = append(c.page.References, accountingsyncports.AccountingChangedReference{
 		Object: obj,
 	})
 }
@@ -362,11 +362,11 @@ func (c *changeCollector) readDocuments(
 		if doc.ID == "" {
 			continue
 		}
-		operation := services.AccountingChangeUpsert
+		operation := accountingsyncports.AccountingChangeUpsert
 		if retired(doc.Status) {
-			operation = services.AccountingChangeVoid
+			operation = accountingsyncports.AccountingChangeVoid
 		}
-		c.page.Documents = append(c.page.Documents, services.AccountingChangedDocument{
+		c.page.Documents = append(c.page.Documents, accountingsyncports.AccountingChangedDocument{
 			ObjectTypes: types,
 			ExternalID:  doc.ID,
 			Operation:   operation,

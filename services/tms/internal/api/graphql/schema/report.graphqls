@@ -603,8 +603,52 @@ extend type Query {
   reportDashboard(id: ID!): ReportDashboard!
 }
 
+input TableExportColumnInput {
+  "The field the column shows, as the table filters and sorts by it."
+  field: String!
+  label: String!
+}
+
+"What a data table is showing, to export or schedule as a report."
+input TableExportViewInput {
+  resource: String!
+  columns: [TableExportColumnInput!]!
+  filter: DataTableConnectionInput
+}
+
+input ExportTableViewInput {
+  name: String!
+  view: TableExportViewInput!
+  "csv, xlsx or pdf."
+  format: String!
+}
+
+input ScheduleTableViewInput {
+  name: String!
+  view: TableExportViewInput!
+  cronExpression: String!
+  timezone: String
+  formats: [String!]!
+  emailRecipients: [String!]
+  emailAttach: Boolean
+  emailInline: Boolean
+}
+
+type TableExportResult {
+  "The report the view was saved as; it lives in the person's reports."
+  definitionId: ID!
+  run: ReportRun
+  schedule: ReportSchedule
+  "Columns the report could not show, by label."
+  skippedColumns: [String!]!
+}
+
 extend type Mutation {
   createReportDefinition(input: SaveReportDefinitionInput!): ReportDefinition!
+  "Saves a table's view as a report and runs it in the background, with no row limit beyond the report's own."
+  exportTableView(input: ExportTableViewInput!): TableExportResult!
+  "Saves a table's view as a report and sends it on a schedule."
+  scheduleTableView(input: ScheduleTableViewInput!): TableExportResult!
   updateReportDefinition(input: UpdateReportDefinitionInput!): ReportDefinition!
   deleteReportDefinition(id: ID!): Boolean!
   forkCannedReport(input: ForkCannedReportInput!): ReportDefinition!

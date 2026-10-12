@@ -1,0 +1,21 @@
+query MyTableLayout($resource: String!) {
+  myTableLayout(resource: $resource) {
+    resource
+    layout
+    version
+    updatedAt
+  }
+}
+
+mutation SaveMyTableLayout($input: TableLayoutInput!) {
+  saveMyTableLayout(input: $input) {
+    resource
+    layout
+    version
+    updatedAt
+  }
+}
+
+mutation ResetMyTableLayout($resource: String!) {
+  resetMyTableLayout(resource: $resource)
+}

@@ -332,7 +332,7 @@ function KpiTile({
           )}
           {(delta * 100).toFixed(1)}%
           <span className="text-muted-foreground">
-            {t("vs {0}", compareColumn?.label ?? "previous")}
+            {compareColumn?.label ? t("vs {0}", compareColumn.label) : t("vs previous")}
           </span>
         </p>
       )}
@@ -345,7 +345,9 @@ function KpiTile({
             />
           </div>
           <p className="text-2xs text-muted-foreground tabular-nums">
-            {t("{0}% of {1}", (attainment * 100).toFixed(0), chart.goal?.label || "target")}
+            {chart.goal?.label
+              ? t("{0}% of {1}", (attainment * 100).toFixed(0), chart.goal.label)
+              : t("{0}% of target", (attainment * 100).toFixed(0))}
           </p>
         </div>
       )}

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/shared/exa"
 	"github.com/emoss08/trenova/shared/httpsafe"
 )
@@ -16,14 +16,14 @@ const (
 	pageMaxAgeHours = 24
 )
 
-var _ serviceports.WebSearchProvider = (*Connector)(nil)
+var _ agentextensionports.WebSearchProvider = (*Connector)(nil)
 
 type Connector struct {
 	httpClient *http.Client
 	baseURL    string
 }
 
-func New() serviceports.WebSearchProvider {
+func New() agentextensionports.WebSearchProvider {
 	return &Connector{
 		httpClient: httpsafe.NewClient(requestTimeout),
 		baseURL:    exa.DefaultBaseURL,
@@ -36,8 +36,8 @@ func (c *Connector) client(apiKey string) (*exa.Client, error) {
 
 func (c *Connector) Search(
 	ctx context.Context,
-	req serviceports.WebSearchProviderRequest,
-) (*serviceports.WebSearchProviderResponse, error) {
+	req agentextensionports.WebSearchProviderRequest,
+) (*agentextensionports.WebSearchProviderResponse, error) {
 	client, err := c.client(req.APIKey)
 	if err != nil {
 		return nil, err
@@ -60,14 +60,14 @@ func (c *Connector) Search(
 		return nil, err
 	}
 
-	results := make([]serviceports.WebSearchProviderResult, 0, len(resp.Results))
+	results := make([]agentextensionports.WebSearchProviderResult, 0, len(resp.Results))
 	for idx := range resp.Results {
 		result := &resp.Results[idx]
 		target := strings.TrimSpace(result.URL)
 		if target == "" {
 			continue
 		}
-		results = append(results, serviceports.WebSearchProviderResult{
+		results = append(results, agentextensionports.WebSearchProviderResult{
 			Title:         strings.TrimSpace(result.Title),
 			URL:           target,
 			PublishedDate: strings.TrimSpace(result.PublishedDate),
@@ -76,7 +76,7 @@ func (c *Connector) Search(
 		})
 	}
 
-	return &serviceports.WebSearchProviderResponse{
+	return &agentextensionports.WebSearchProviderResponse{
 		Results: results,
 		CostUSD: resp.TotalCost(),
 	}, nil
@@ -84,8 +84,8 @@ func (c *Connector) Search(
 
 func (c *Connector) Read(
 	ctx context.Context,
-	req serviceports.WebPageProviderRequest,
-) (*serviceports.WebPageProviderResponse, error) {
+	req agentextensionports.WebPageProviderRequest,
+) (*agentextensionports.WebPageProviderResponse, error) {
 	client, err := c.client(req.APIKey)
 	if err != nil {
 		return nil, err
@@ -103,12 +103,15 @@ func (c *Connector) Read(
 
 	cost := resp.TotalCost()
 	if _, failed := resp.Failure(req.URL); failed || len(resp.Results) == 0 {
-		return &serviceports.WebPageProviderResponse{URL: req.URL, CostUSD: cost}, exa.ErrContentNotFound
+		return &agentextensionports.WebPageProviderResponse{
+			URL:     req.URL,
+			CostUSD: cost,
+		}, exa.ErrContentNotFound
 	}
 
 	page := &resp.Results[0]
 
-	return &serviceports.WebPageProviderResponse{
+	return &agentextensionports.WebPageProviderResponse{
 		Title:         strings.TrimSpace(page.Title),
 		URL:           strings.TrimSpace(page.URL),
 		PublishedDate: strings.TrimSpace(page.PublishedDate),

@@ -4,7 +4,7 @@ package tableconfigurationresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	tableconfigurationservice "github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
+	tableconfigurationservice "github.com/emoss08/trenova/internal/modules/workspace/app/tableconfigurationservice"
 )
 
 type Deps struct {

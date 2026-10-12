@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/businesscentral"
 )
 
@@ -32,9 +32,9 @@ var (
 
 func (c *Connector) Companies(
 	ctx context.Context,
-	grant *services.AccountingTokenGrant,
+	grant *accountingsyncports.AccountingTokenGrant,
 	_ string,
-) ([]services.AccountingCompany, error) {
+) ([]accountingsyncports.AccountingCompany, error) {
 	if grant == nil {
 		return nil, businesscentral.ErrAccessTokenRequired
 	}
@@ -51,7 +51,7 @@ func (c *Connector) Companies(
 		return nil, err
 	}
 
-	companies := make([]services.AccountingCompany, 0, len(environments))
+	companies := make([]accountingsyncports.AccountingCompany, 0, len(environments))
 	for idx := range environments {
 		env := &environments[idx]
 		if !businesscentral.ValidEnvironmentName(env.Name) {
@@ -97,11 +97,11 @@ func refusesAccess(err error) bool {
 }
 
 func appendCompanies(
-	companies []services.AccountingCompany,
+	companies []accountingsyncports.AccountingCompany,
 	tenant string,
 	env *businesscentral.Environment,
 	listed []businesscentral.Company,
-) []services.AccountingCompany {
+) []accountingsyncports.AccountingCompany {
 	for idx := range listed {
 		company := &listed[idx]
 		ref, err := businesscentral.NewCompanyRef(tenant, env.Name, company.ID)
@@ -112,7 +112,7 @@ func appendCompanies(
 		if id == "" {
 			continue
 		}
-		companies = append(companies, services.AccountingCompany{
+		companies = append(companies, accountingsyncports.AccountingCompany{
 			ID:   id,
 			Name: companyLabel(company, env),
 		})
@@ -144,7 +144,7 @@ func (c *Connector) CompanyFacts(
 	ctx context.Context,
 	realmID, accessToken string,
 ) (*accountingsync.CompanyFacts, error) {
-	client, err := c.client(services.AccountingDocumentAuth{
+	client, err := c.client(accountingsyncports.AccountingDocumentAuth{
 		RealmID:     realmID,
 		AccessToken: accessToken,
 	})

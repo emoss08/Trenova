@@ -34,6 +34,7 @@ import { ProfileDocuments } from "../_components/profile-documents";
 import { PtoSection } from "../_components/pto-section";
 import { useDashFeatures } from "../_components/use-dash-features";
 import { cn } from "@trenova/shared/lib/utils";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const themeOptions = [
   { value: "light", label: "Light", icon: SunIcon },
@@ -177,13 +178,15 @@ function PushNotificationsCard() {
     onSuccess: async (enabled) => {
       toast.success(
         enabled
-          ? "Push notifications are on — you'll hear about loads and pay even with Dash closed."
-          : "Push notifications turned off.",
+          ? translate(
+              "Push notifications are on — you'll hear about loads and pay even with Dash closed.",
+            )
+          : translate("Push notifications turned off."),
       );
       await queryClient.invalidateQueries({ queryKey: ["dash-push-subscription"] });
     },
     onError: (error: Error) =>
-      toast.error(error.message || "We couldn't update push notifications."),
+      toast.error(error.message || translate("We couldn't update push notifications.")),
   });
 
   return (

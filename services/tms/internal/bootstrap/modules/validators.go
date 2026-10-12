@@ -3,68 +3,6 @@ package modules
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/carriercapacityservice"
-
-	"github.com/emoss08/trenova/internal/core/services/accessorialchargeservice"
-	"github.com/emoss08/trenova/internal/core/services/accountingcontrolservice"
-	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
-	"github.com/emoss08/trenova/internal/core/services/agentrunservice"
-	"github.com/emoss08/trenova/internal/core/services/billingcontrolservice"
-	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
-	"github.com/emoss08/trenova/internal/core/services/carrierservice"
-	"github.com/emoss08/trenova/internal/core/services/commodityservice"
-	"github.com/emoss08/trenova/internal/core/services/costingservice"
-	"github.com/emoss08/trenova/internal/core/services/customerpaymentservice"
-	"github.com/emoss08/trenova/internal/core/services/customerservice"
-	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
-	"github.com/emoss08/trenova/internal/core/services/dataentrycontrolservice"
-	"github.com/emoss08/trenova/internal/core/services/detentionpolicyservice"
-	"github.com/emoss08/trenova/internal/core/services/dispatchcontrolservice"
-	"github.com/emoss08/trenova/internal/core/services/distanceoverrideservice"
-	"github.com/emoss08/trenova/internal/core/services/distanceprofileservice"
-	"github.com/emoss08/trenova/internal/core/services/documentcontrolservice"
-	"github.com/emoss08/trenova/internal/core/services/documentpacketruleservice"
-	"github.com/emoss08/trenova/internal/core/services/documentparsingruleservice"
-	"github.com/emoss08/trenova/internal/core/services/documentservice"
-	"github.com/emoss08/trenova/internal/core/services/documenttemplateservice"
-	"github.com/emoss08/trenova/internal/core/services/documenttypeservice"
-	"github.com/emoss08/trenova/internal/core/services/ediservice"
-	"github.com/emoss08/trenova/internal/core/services/emailservice"
-	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
-	"github.com/emoss08/trenova/internal/core/services/equipmenttypeservice"
-	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
-	"github.com/emoss08/trenova/internal/core/services/fiscalyearservice"
-	"github.com/emoss08/trenova/internal/core/services/fleetcodeservice"
-	"github.com/emoss08/trenova/internal/core/services/fuelpurchaseservice"
-	"github.com/emoss08/trenova/internal/core/services/glaccountservice"
-	"github.com/emoss08/trenova/internal/core/services/hazardousmaterialservice"
-	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationruleservice"
-	"github.com/emoss08/trenova/internal/core/services/holdreasonservice"
-	"github.com/emoss08/trenova/internal/core/services/iamservice"
-	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentcontrolservice"
-	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentservice"
-	"github.com/emoss08/trenova/internal/core/services/invoicerunservice"
-	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
-	"github.com/emoss08/trenova/internal/core/services/journalreversalservice"
-	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
-	"github.com/emoss08/trenova/internal/core/services/locationservice"
-	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
-	"github.com/emoss08/trenova/internal/core/services/orderservice"
-	"github.com/emoss08/trenova/internal/core/services/organizationservice"
-	"github.com/emoss08/trenova/internal/core/services/rateagreementservice"
-	"github.com/emoss08/trenova/internal/core/services/ratematrixservice"
-	"github.com/emoss08/trenova/internal/core/services/ratezoneservice"
-	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
-	"github.com/emoss08/trenova/internal/core/services/roleservice"
-	"github.com/emoss08/trenova/internal/core/services/sequenceconfigservice"
-	"github.com/emoss08/trenova/internal/core/services/servicetypeservice"
-	"github.com/emoss08/trenova/internal/core/services/shipmentcontrolservice"
-	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
-	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
-	"github.com/emoss08/trenova/internal/core/services/tractorservice"
-	"github.com/emoss08/trenova/internal/core/services/trailerservice"
-	"github.com/emoss08/trenova/internal/core/services/userservice"
-	"github.com/emoss08/trenova/internal/core/services/workerservice"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -123,70 +61,6 @@ var ValidationFrameworkModule = fx.Module(
 
 var ValidatorModule = fx.Module(
 	"validators",
-	fx.Provide(
-		organizationservice.NewValidator,
-		iamservice.NewValidator,
-		equipmentmanufacturerservice.NewValidator,
-		equipmenttypeservice.NewValidator,
-		fleetcodeservice.NewValidator,
-		fuelpurchaseservice.NewValidator,
-		tractorservice.NewValidator,
-		trailerservice.NewValidator,
-		userservice.NewValidator,
-		workerservice.NewValidator,
-		roleservice.NewValidator,
-		customfieldservice.NewValidator,
-		customfieldservice.NewValuesValidator,
-		documentservice.NewValidator,
-		accessorialchargeservice.NewValidator,
-		servicetypeservice.NewValidator,
-		orderservice.NewValidator,
-		sequenceconfigservice.NewValidator,
-		shipmentcontrolservice.NewValidator,
-		shipmentservice.NewValidator,
-		shipmenttypeservice.NewValidator,
-		hazardousmaterialservice.NewValidator,
-		hazmatsegregationruleservice.NewValidator,
-		commodityservice.NewValidator,
-		customerpaymentservice.NewValidator,
-		carrierservice.NewValidator,
-		customerservice.NewValidator,
-		accountingcontrolservice.NewValidator,
-		accounttypeservice.NewValidator,
-		glaccountservice.NewValidator,
-		fiscalyearservice.NewValidator,
-		fiscalperiodservice.NewValidator,
-		locationcategoryservice.NewValidator,
-		locationservice.NewValidator,
-		documenttypeservice.NewValidator,
-		ediservice.NewValidator,
-		emailservice.NewValidator,
-		holdreasonservice.NewValidator,
-		recurringshipmentservice.NewValidator,
-		detentionpolicyservice.NewValidator,
-		rateagreementservice.NewValidator,
-		ratezoneservice.NewValidator,
-		ratematrixservice.NewValidator,
-		invoiceadjustmentcontrolservice.NewValidator,
-		invoiceadjustmentservice.NewValidator,
-		invoiceservice.NewValidator,
-		invoicerunservice.NewValidator,
-		journalreversalservice.NewValidator,
-		manualjournalservice.NewValidator,
-		billingcontrolservice.NewValidator,
-		costingservice.NewValidator,
-		carriercapacityservice.NewValidator,
-		dataentrycontrolservice.NewValidator,
-		dispatchcontrolservice.NewValidator,
-		distanceoverrideservice.NewValidator,
-		distanceprofileservice.NewValidator,
-		documentcontrolservice.NewValidator,
-		documentparsingruleservice.NewValidator,
-		documentpacketruleservice.NewValidator,
-		documenttemplateservice.NewValidator,
-		billingqueueservice.NewValidator,
-		agentrunservice.NewValidator,
-	),
 	fx.Options(
 		ValidationFrameworkModule,
 	),

@@ -23,6 +23,7 @@ import { SpinnerIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./stored-mileage-columns";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const storedMileageService = new StoredMileageService();
 
@@ -46,7 +47,8 @@ export default function StoredMileageTable() {
     },
     onError: (error) => {
       toast.error(t("Failed to deactivate stored mileage"), {
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        description:
+          error instanceof Error ? error.message : translate("An unexpected error occurred"),
       });
     },
   });
@@ -71,6 +73,7 @@ export default function StoredMileageTable() {
     <>
       <DataTable<StoredMileageRow>
         name="Stored Mileage"
+        emptyTitle={t("No stored mileages yet")}
         queryKey="stored-mileage-list"
         graphql={storedMileageTableGraphQLConfig}
         resource={Resource.StoredMileage}

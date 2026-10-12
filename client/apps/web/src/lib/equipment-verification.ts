@@ -4,6 +4,7 @@ import type {
   VerifyCarrierEquipmentInput,
 } from "@trenova/graphql/generated/graphql";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const VIN_LENGTH = 17;
 export const PLATE_NUMBER_MAX_LENGTH = 15;
@@ -50,7 +51,7 @@ export function vinProblem(value: string): string | null {
 
 export const verifyEquipmentFormSchema = z
   .object({
-    unitType: z.enum(EQUIPMENT_UNIT_TYPES, { error: "Choose the unit type" }),
+    unitType: z.enum(EQUIPMENT_UNIT_TYPES, { error: () => translate("Choose the unit type") }),
     identifyBy: z.enum(EQUIPMENT_IDENTIFIERS),
     vin: z.string(),
     plateNumber: z.string(),
@@ -73,20 +74,20 @@ export const verifyEquipmentFormSchema = z
           ctx.addIssue({
             code: "custom",
             path: ["plateNumber"],
-            message: "Enter the plate number",
+            message: translate("Enter the plate number"),
           });
         } else if (!PLATE_NUMBER_PATTERN.test(plate)) {
           ctx.addIssue({
             code: "custom",
             path: ["plateNumber"],
-            message: "Plate number must be 1-15 letters, digits, spaces or dashes",
+            message: translate("Plate number must be 1-15 letters, digits, spaces or dashes"),
           });
         }
         if (!PLATE_STATE_PATTERN.test(values.plateState.trim().toUpperCase())) {
           ctx.addIssue({
             code: "custom",
             path: ["plateStateId"],
-            message: "Choose the state that issued the plate",
+            message: translate("Choose the state that issued the plate"),
           });
         }
         break;
@@ -94,12 +95,16 @@ export const verifyEquipmentFormSchema = z
       case "unit": {
         const unit = values.unitNumber.trim();
         if (unit === "") {
-          ctx.addIssue({ code: "custom", path: ["unitNumber"], message: "Enter the unit number" });
+          ctx.addIssue({
+            code: "custom",
+            path: ["unitNumber"],
+            message: translate("Enter the unit number"),
+          });
         } else if (unit.length > UNIT_NUMBER_MAX_LENGTH) {
           ctx.addIssue({
             code: "custom",
             path: ["unitNumber"],
-            message: "Unit number cannot exceed 50 characters",
+            message: translate("Unit number cannot exceed 50 characters"),
           });
         }
         break;
@@ -142,8 +147,10 @@ export const equipmentOverrideFormSchema = z.object({
   reason: z
     .string()
     .trim()
-    .min(1, "A reason is required to override a verification")
-    .max(EQUIPMENT_OVERRIDE_REASON_MAX_LENGTH, "Reason cannot exceed 2000 characters"),
+    .min(1, { error: () => translate("A reason is required to override a verification") })
+    .max(EQUIPMENT_OVERRIDE_REASON_MAX_LENGTH, {
+      error: () => translate("Reason cannot exceed 2000 characters"),
+    }),
 });
 
 export type EquipmentOverrideFormValues = z.infer<typeof equipmentOverrideFormSchema>;

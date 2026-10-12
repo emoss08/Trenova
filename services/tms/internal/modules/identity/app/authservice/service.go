@@ -1,0 +1,1256 @@
+//nolint:funlen,gocritic // existing legacy workflow/API shape is intentionally kept stable
+package authservice
+
+import (
+	"context"
+	"crypto/rand"
+	"crypto/subtle"
+	"encoding/base64"
+	"net/url"
+	"slices"
+	"strings"
+	"time"
+
+	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/requestmeta"
+	"github.com/emoss08/trenova/pkg/sessiontoken"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+	"golang.org/x/oauth2"
+)
+
+type Params struct {
+	fx.In
+
+	UserRepository    tenantports.UserRepository
+	OrganizationRepo  tenantports.OrganizationRepository
+	SessionRepository sessionports.SessionRepository
+	RBACRepository    permissionports.RBACRepository
+	SSOConfigRepo     tenantports.SSOConfigRepository
+	SSOStateRepo      tenantports.SSOLoginStateRepository
+	SSOIdentityLinks  tenantports.SSOIdentityLinkRepository
+	APIKeyRepository  apikeyports.APIKeyRepository
+	PortalRepo        workerports.PortalAccessRepository
+	UsageRecorder     apikeyports.UsageRecorder
+	TurnStopper       agentports.AssistantTurnStopper
+	AuthEvents        iamports.AuthEventRecorder
+	LoginThrottle     sessionports.LoginThrottleStore `optional:"true"`
+	Plans             platformplanports.PlanService   `optional:"true"`
+	MFA               sessionports.MFAService         `optional:"true"`
+	MFAChallenges     iamports.MFAChallengeRepository `optional:"true"`
+	Encryption        *encryptionservice.Service
+	Config            *config.Config
+	Logger            *zap.Logger
+}
+
+type Service struct {
+	ur         tenantports.UserRepository
+	or         tenantports.OrganizationRepository
+	sr         sessionports.SessionRepository
+	rbacRepo   permissionports.RBACRepository
+	ssoRepo    tenantports.SSOConfigRepository
+	stateRepo  tenantports.SSOLoginStateRepository
+	links      tenantports.SSOIdentityLinkRepository
+	akr        apikeyports.APIKeyRepository
+	portalRepo workerports.PortalAccessRepository
+	usageBuf   apikeyports.UsageRecorder
+	turns      agentports.AssistantTurnStopper
+	authEvents iamports.AuthEventRecorder
+	throttle   sessionports.LoginThrottleStore
+	plans      platformplanports.PlanService
+	mfa        sessionports.MFAService
+	challenges iamports.MFAChallengeRepository
+	enc        *encryptionservice.Service
+	cfg        *config.Config
+	l          *zap.Logger
+}
+
+func New(p Params) tenantports.AuthService {
+	return &Service{
+		ur:         p.UserRepository,
+		or:         p.OrganizationRepo,
+		sr:         p.SessionRepository,
+		rbacRepo:   p.RBACRepository,
+		ssoRepo:    p.SSOConfigRepo,
+		stateRepo:  p.SSOStateRepo,
+		links:      p.SSOIdentityLinks,
+		akr:        p.APIKeyRepository,
+		portalRepo: p.PortalRepo,
+		usageBuf:   p.UsageRecorder,
+		turns:      p.TurnStopper,
+		authEvents: p.AuthEvents,
+		throttle:   p.LoginThrottle,
+		plans:      p.Plans,
+		mfa:        p.MFA,
+		challenges: p.MFAChallenges,
+		enc:        p.Encryption,
+		cfg:        p.Config,
+		l:          p.Logger.Named("service.auth"),
+	}
+}
+
+var errInvalidCredentials = errortypes.NewAuthenticationError("Invalid email or password")
+var errSSORequired = errortypes.NewAuthenticationError(
+	"Password login is disabled for this organization. Use SSO to sign in.",
+)
+
+const ssoLoginStateTTL = 10 * time.Minute
+
+type tenantSSOConfiguration struct {
+	organization *tenant.Organization
+	configs      []*tenant.SSOConfig
+}
+
+type loginSessionContext struct {
+	AuthProvider          string
+	ExternalIdentityID    string
+	ExternalSubject       string
+	AuthenticatorAAL      int
+	FederationFAL         int
+	MFAAuthenticatedAt    int64
+	LastReauthenticatedAt int64
+	RiskDecision          string
+	RiskDecisionID        pulid.ID
+}
+
+func (s *Service) Login(
+	ctx context.Context,
+	req tenantports.LoginRequest,
+) (resp *tenantports.LoginResponse, err error) {
+	if err = req.Validate(); err != nil {
+		return nil, err
+	}
+
+	attempt := newAuthAttempt(iamports.AuthEventProviderPassword)
+	defer func() { s.recordAuthAttempt(ctx, attempt, err) }()
+
+	throttleKey := loginThrottleKey(ctx, req.EmailAddress)
+	if err = s.checkLoginThrottle(ctx, throttleKey, attempt); err != nil {
+		return nil, err
+	}
+
+	usr, err := s.ur.FindByEmail(ctx, req.EmailAddress)
+	if err != nil {
+		attempt.fail(authErrorUnknownAccount)
+		s.recordLoginFailure(ctx, throttleKey)
+		return nil, errInvalidCredentials
+	}
+	attempt.forUser(usr)
+
+	if err = usr.VerifyCredentials(req.Password); err != nil {
+		if errortypes.IsAuthorizationError(err) {
+			attempt.fail(authErrorAccountUnavailable)
+			return nil, err
+		}
+		attempt.fail(authErrorRejectedLogin)
+		s.recordLoginFailure(ctx, throttleKey)
+		return nil, errInvalidCredentials
+	}
+	s.resetLoginThrottle(ctx, throttleKey)
+
+	scoped := userScope(ctx, usr)
+
+	targetOrg, err := s.resolveRequestedOrganization(scoped, req.OrganizationSlug, usr)
+	if err != nil {
+		attempt.fail(authErrorOrganizationAccess)
+		return nil, err
+	}
+	if targetOrg != nil {
+		attempt.forOrganization(targetOrg.ID, targetOrg.BusinessUnitID)
+	}
+
+	if err = s.enforcePasswordLoginPolicy(
+		scoped,
+		req.OrganizationSlug,
+		usr,
+		targetOrg,
+	); err != nil {
+		return nil, err
+	}
+
+	targetOrg, err = s.enforcePlanLogin(scoped, usr, targetOrg)
+	if err != nil {
+		attempt.fail(authErrorSubscriptionExpired)
+		return nil, err
+	}
+
+	challenge, err := s.issueMFAChallenge(scoped, usr, targetOrg, attempt)
+	if err != nil || challenge != nil {
+		return challenge, err
+	}
+
+	return s.finishLogin(scoped, usr, targetOrg, loginSessionContext{
+		AuthProvider:          iamports.AuthEventProviderPassword,
+		AuthenticatorAAL:      1,
+		FederationFAL:         1,
+		LastReauthenticatedAt: timeutils.NowUnix(),
+		RiskDecision:          riskDecisionAllow,
+	})
+}
+
+func (s *Service) finishLogin(
+	ctx context.Context,
+	usr *tenant.User,
+	targetOrg *tenant.Organization,
+	authn loginSessionContext,
+) (*tenantports.LoginResponse, error) {
+	if targetOrg != nil && targetOrg.ID != usr.CurrentOrganizationID {
+		if err := s.ur.UpdateCurrentOrganization(
+			organizationScope(ctx, targetOrg.ID, targetOrg.BusinessUnitID, usr.ID),
+			usr.ID,
+			targetOrg.ID,
+			targetOrg.BusinessUnitID,
+		); err != nil {
+			return nil, err
+		}
+
+		usr.CurrentOrganizationID = targetOrg.ID
+		usr.BusinessUnitID = targetOrg.BusinessUnitID
+	}
+
+	return s.createLoginResponse(userScope(ctx, usr), usr, authn)
+}
+
+func (s *Service) GetTenantLoginMetadata(
+	ctx context.Context,
+	organizationSlug string,
+) (*tenantports.TenantLoginMetadataResponse, error) {
+	loginConfig, err := s.enabledTenantSSOConfiguration(ctx, organizationSlug)
+	if err != nil {
+		return nil, err
+	}
+
+	org := loginConfig.organization
+	resp := &tenantports.TenantLoginMetadataResponse{
+		OrganizationID:   org.ID.String(),
+		OrganizationName: org.Name,
+		OrganizationSlug: org.LoginSlug,
+		PasswordEnabled:  true,
+	}
+
+	var anyEnforced bool
+	enabledProviders := make([]string, 0, len(loginConfig.configs))
+	for _, cfg := range loginConfig.configs {
+		enabledProviders = append(enabledProviders, string(cfg.Provider))
+		if cfg.EnforceSSO {
+			anyEnforced = true
+		}
+	}
+	resp.EnabledProviders = enabledProviders
+	resp.EnforceSSO = anyEnforced
+	resp.PasswordEnabled = !anyEnforced
+
+	return resp, nil
+}
+
+func (s *Service) ListAuthProviders(
+	ctx context.Context,
+	organizationSlug string,
+) ([]tenantports.AuthProviderSummary, error) {
+	loginConfig, err := s.enabledTenantSSOConfiguration(ctx, organizationSlug)
+	if err != nil {
+		return nil, err
+	}
+
+	providers := make([]tenantports.AuthProviderSummary, 0, len(loginConfig.configs))
+	for _, cfg := range loginConfig.configs {
+		providers = append(providers, tenantports.AuthProviderSummary{
+			ID:       cfg.ID,
+			Name:     cfg.Name,
+			Provider: cfg.Provider,
+			Protocol: cfg.Protocol,
+			Enabled:  cfg.Enabled,
+		})
+	}
+
+	return providers, nil
+}
+
+func (s *Service) StartSSOLogin(
+	ctx context.Context,
+	req tenantports.StartSSOLoginRequest,
+) (string, error) {
+	if s.or == nil || s.ssoRepo == nil || s.stateRepo == nil {
+		return "", errortypes.NewBusinessError(
+			"{0} SSO is not configured", providerDisplayName(req.Provider),
+		)
+	}
+
+	org, err := s.or.GetByLoginSlug(ctx, req.OrganizationSlug)
+	if err != nil {
+		return "", err
+	}
+	ctx = organizationScope(ctx, org.ID, org.BusinessUnitID, pulid.Nil)
+
+	ssoConfig, err := s.resolveSSOConfig(ctx, org.ID, req)
+	if err != nil {
+		return "", err
+	}
+	req.Provider = ssoConfig.Provider
+
+	if err = validateReturnToURL(req.ReturnTo, s.cfg.Server.CORS.AllowedOrigins); err != nil {
+		return "", err
+	}
+
+	provider, err := oidc.NewProvider(ctx, ssoConfig.OIDCIssuerURL)
+	if err != nil {
+		return "", errortypes.NewBusinessError("Failed to initialize {0} identity provider", providerDisplayName(req.Provider)).
+			WithInternal(err)
+	}
+
+	oauthCfg := oauth2.Config{
+		ClientID:     ssoConfig.OIDCClientID,
+		ClientSecret: decryptSSOSecret(s.enc, ssoConfig),
+		Endpoint:     provider.Endpoint(),
+		RedirectURL:  ssoConfig.OIDCRedirectURL,
+		Scopes:       ssoConfig.OIDCScopes,
+	}
+
+	state := randomURLToken(32)
+	nonce := randomURLToken(32)
+	verifier := oauth2.GenerateVerifier()
+
+	if err = s.stateRepo.Save(ctx, &tenantports.SSOLoginState{
+		State:            state,
+		Provider:         req.Provider,
+		ProviderID:       ssoConfig.ID,
+		OrganizationID:   org.ID,
+		BusinessUnitID:   org.BusinessUnitID,
+		OrganizationSlug: org.LoginSlug,
+		CodeVerifier:     verifier,
+		Nonce:            nonce,
+		ReturnTo:         req.ReturnTo,
+	}, ssoLoginStateTTL); err != nil {
+		return "", err
+	}
+
+	return oauthCfg.AuthCodeURL(
+		state,
+		oidc.Nonce(nonce),
+		oauth2.S256ChallengeOption(verifier),
+	), nil
+}
+
+func (s *Service) resolveSSOConfig(
+	ctx context.Context,
+	orgID pulid.ID,
+	req tenantports.StartSSOLoginRequest,
+) (*tenant.SSOConfig, error) {
+	if req.ProviderID.IsNotNil() {
+		cfg, err := s.ssoRepo.GetEnabledByID(ctx, req.ProviderID)
+		if err != nil {
+			return nil, err
+		}
+		if cfg.OrganizationID != orgID {
+			return nil, errortypes.NewAuthenticationError(
+				"SSO provider does not belong to this organization",
+			)
+		}
+		return cfg, nil
+	}
+
+	return s.ssoRepo.GetEnabledByOrganizationID(ctx, orgID, req.Provider)
+}
+
+func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
+	ctx context.Context,
+	req tenantports.SSOCallbackRequest,
+) (resp *tenantports.SSOCallbackResponse, err error) {
+	if s.or == nil || s.ssoRepo == nil || s.stateRepo == nil {
+		return nil, errortypes.NewBusinessError("SSO is not configured")
+	}
+
+	attempt := newAuthAttempt(ssoAuthEventProvider(""))
+	attempt.fal = 2
+	defer func() { s.recordAuthAttempt(ctx, attempt, err) }()
+
+	loginState, err := s.stateRepo.Get(ctx, req.State)
+	if err != nil {
+		attempt.fail(authErrorSSOState)
+		return nil, errortypes.NewAuthenticationError("SSO login session is invalid or expired")
+	}
+	attempt.provider = ssoAuthEventProvider(loginState.Provider)
+	attempt.forOrganization(loginState.OrganizationID, loginState.BusinessUnitID)
+	defer func() {
+		if delErr := s.stateRepo.Delete(ctx, req.State); delErr != nil {
+			s.l.Warn("failed to delete sso login state", zap.Error(delErr))
+		}
+	}()
+
+	displayName := providerDisplayName(loginState.Provider)
+
+	if loginState.OrganizationID.IsNil() || loginState.BusinessUnitID.IsNil() {
+		attempt.fail(authErrorSSOState)
+		return nil, errortypes.NewAuthenticationError("SSO login session is invalid or expired")
+	}
+	scoped := organizationScope(
+		ctx,
+		loginState.OrganizationID,
+		loginState.BusinessUnitID,
+		pulid.Nil,
+	)
+
+	ssoConfig, err := s.resolveSSOConfigForCallback(scoped, loginState)
+	if err != nil {
+		attempt.fail(authErrorSSOConfig)
+		return nil, err
+	}
+
+	provider, err := oidc.NewProvider(scoped, ssoConfig.OIDCIssuerURL)
+	if err != nil {
+		attempt.fail(authErrorSSOConfig)
+		return nil, errortypes.NewBusinessError("Failed to initialize {0} identity provider", displayName).
+			WithInternal(err)
+	}
+
+	oauthCfg := oauth2.Config{
+		ClientID:     ssoConfig.OIDCClientID,
+		ClientSecret: decryptSSOSecret(s.enc, ssoConfig),
+		Endpoint:     provider.Endpoint(),
+		RedirectURL:  ssoConfig.OIDCRedirectURL,
+		Scopes:       ssoConfig.OIDCScopes,
+	}
+
+	oauthToken, err := oauthCfg.Exchange(
+		scoped,
+		req.Code,
+		oauth2.VerifierOption(loginState.CodeVerifier),
+	)
+	if err != nil {
+		attempt.fail(authErrorSSOExchange)
+		return nil, errortypes.NewAuthenticationError("{0} login failed", displayName)
+	}
+
+	rawIDToken, ok := oauthToken.Extra("id_token").(string)
+	if !ok || rawIDToken == "" {
+		attempt.fail(authErrorSSOAssertion)
+		return nil, errortypes.NewAuthenticationError(
+			"{0} login did not return an ID token", displayName,
+		)
+	}
+
+	verifier := provider.Verifier(&oidc.Config{
+		ClientID: ssoConfig.OIDCClientID,
+	})
+	idToken, err := verifier.Verify(scoped, rawIDToken)
+	if err != nil {
+		attempt.fail(authErrorSSOAssertion)
+		return nil, errortypes.NewAuthenticationError("{0} identity token is invalid", displayName)
+	}
+
+	var claims oidcClaims
+	if err = idToken.Claims(&claims); err != nil {
+		attempt.fail(authErrorSSOAssertion)
+		return nil, errortypes.NewAuthenticationError("{0} identity token is invalid", displayName)
+	}
+
+	if claims.Nonce != loginState.Nonce {
+		attempt.fail(authErrorSSONonce)
+		return nil, errortypes.NewAuthenticationError("{0} login nonce mismatch", displayName)
+	}
+
+	if ssoConfig.Provider == tenant.SSOProviderAzureAD {
+		expectedTenantID := strings.TrimSpace(microsoftTenantIDFromIssuer(ssoConfig.OIDCIssuerURL))
+		if expectedTenantID != "" && !strings.EqualFold(expectedTenantID, claims.TenantID) {
+			attempt.fail(authErrorSSOTenant)
+			return nil, errortypes.NewAuthenticationError(
+				"Microsoft tenant does not match this organization's configuration",
+			)
+		}
+	}
+
+	usr, err := s.resolveSSOUser(scoped, &ssoUserLookup{
+		Config:      ssoConfig,
+		Identity:    identityFromOIDCClaims(idToken.Issuer, &claims, ssoConfig.Provider),
+		DisplayName: displayName,
+	})
+	if err != nil {
+		attempt.fail(authErrorSSOIdentity)
+		return nil, err
+	}
+	attempt.userID = usr.ID
+
+	if err = usr.ValidateStatus(); err != nil {
+		attempt.fail(authErrorAccountUnavailable)
+		return nil, err
+	}
+
+	if err = s.ensureUserHasOrganizationAccess(
+		scoped,
+		usr.ID,
+		loginState.OrganizationID,
+	); err != nil {
+		attempt.fail(authErrorOrganizationAccess)
+		return nil, err
+	}
+
+	if loginState.OrganizationID != usr.CurrentOrganizationID {
+		if err = s.ur.UpdateCurrentOrganization(
+			scoped,
+			usr.ID,
+			loginState.OrganizationID,
+			ssoConfig.BusinessUnitID,
+		); err != nil {
+			return nil, err
+		}
+		usr.CurrentOrganizationID = loginState.OrganizationID
+		usr.BusinessUnitID = ssoConfig.BusinessUnitID
+	}
+
+	aal, mfaAt := assuranceFromOIDCClaims(claims)
+	attempt.aal = aal
+	loginResp, err := s.createLoginResponse(userScope(scoped, usr), usr, loginSessionContext{
+		AuthProvider:          string(loginState.Provider),
+		ExternalSubject:       claims.Subject,
+		AuthenticatorAAL:      aal,
+		FederationFAL:         2,
+		MFAAuthenticatedAt:    mfaAt,
+		LastReauthenticatedAt: timeutils.NowUnix(),
+		RiskDecision:          riskDecisionAllow,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &tenantports.SSOCallbackResponse{
+		LoginResponse: loginResp,
+		RedirectTo:    loginState.ReturnTo,
+	}, nil
+}
+
+func (s *Service) GetSSOLoginState(
+	ctx context.Context,
+	state string,
+) (*tenantports.SSOLoginState, error) {
+	if s.stateRepo == nil {
+		return nil, errortypes.NewBusinessError("SSO is not configured")
+	}
+	return s.stateRepo.Get(ctx, state)
+}
+
+func (s *Service) enabledTenantSSOConfiguration(
+	ctx context.Context,
+	organizationSlug string,
+) (*tenantSSOConfiguration, error) {
+	if s.or == nil || s.ssoRepo == nil {
+		return nil, errortypes.NewBusinessError("Tenant login is not configured")
+	}
+
+	org, err := s.or.GetByLoginSlug(ctx, organizationSlug)
+	if err != nil {
+		return nil, err
+	}
+
+	configs, err := s.ssoRepo.ListEnabledByOrganizationID(
+		organizationScope(ctx, org.ID, org.BusinessUnitID, pulid.Nil),
+		org.ID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &tenantSSOConfiguration{
+		organization: org,
+		configs:      configs,
+	}, nil
+}
+
+func (s *Service) resolveSSOConfigForCallback(
+	ctx context.Context,
+	loginState *tenantports.SSOLoginState,
+) (*tenant.SSOConfig, error) {
+	if loginState.ProviderID.IsNotNil() {
+		cfg, err := s.ssoRepo.GetEnabledByID(ctx, loginState.ProviderID)
+		if err != nil {
+			return nil, err
+		}
+		if cfg.OrganizationID != loginState.OrganizationID {
+			return nil, errortypes.NewAuthenticationError(
+				"SSO provider does not belong to this organization",
+			)
+		}
+		return cfg, nil
+	}
+
+	return s.ssoRepo.GetEnabledByOrganizationID(
+		ctx,
+		loginState.OrganizationID,
+		loginState.Provider,
+	)
+}
+
+func (s *Service) ValidateSession(
+	ctx context.Context,
+	sessionID pulid.ID,
+) (*session.Session, error) {
+	sess, err := s.sr.Get(ctx, sessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = sess.Validate(); err != nil {
+		if delErr := s.sr.Delete(ctx, sessionID); delErr != nil {
+			s.l.Error("failed to delete expired session", zap.Error(delErr))
+		}
+		return nil, errortypes.NewAuthenticationError("Session has expired. Please login again.")
+	}
+
+	return sess, nil
+}
+
+func (s *Service) AuthenticateSession(
+	ctx context.Context,
+	token string,
+) (*session.Session, error) {
+	sessionID, secret, err := sessiontoken.Parse(token)
+	if err != nil {
+		return nil, errortypes.NewAuthenticationError("Session is invalid. Please login again.")
+	}
+
+	sess, err := s.ValidateSession(ctx, sessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !sessiontoken.Matches(secret, sess.SecretHash) {
+		s.l.Warn(
+			"rejected a session cookie whose secret does not match the session",
+			zap.String("sessionID", sessionID.String()),
+			zap.String("userID", sess.UserID.String()),
+		)
+		return nil, errortypes.NewAuthenticationError("Session is invalid. Please login again.")
+	}
+
+	if now := timeutils.NowUnix(); sess.NeedsTouch(now) {
+		if touchErr := s.sr.Touch(ctx, sess.ID, now); touchErr == nil {
+			sess.LastAccessedAt = now
+		}
+	}
+
+	return sess, nil
+}
+
+func (s *Service) ListAuthorizedSessionRoles(
+	ctx context.Context,
+	sessionID pulid.ID,
+) (*tenantports.AuthorizedSessionRolesResponse, error) {
+	sess, err := s.ValidateSession(ctx, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	ctx = sessionScope(ctx, sess)
+
+	authorizedRoles, err := s.authorizedRoleSummaries(ctx, sess.UserID, sess.OrganizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	authorizedRoleIDs := roleSummaryIDs(authorizedRoles)
+	return &tenantports.AuthorizedSessionRolesResponse{
+		RoleIDs:           authorizedRoleIDs,
+		AuthorizedRoleIDs: authorizedRoleIDs,
+		AuthorizedRoles:   authorizedRoles,
+	}, nil
+}
+
+func (s *Service) ActivateSessionRoles(
+	ctx context.Context,
+	req tenantports.ActivateSessionRolesRequest,
+) (*tenantports.ActivateSessionRolesResponse, error) {
+	sess, err := s.ValidateSession(ctx, req.SessionID)
+	if err != nil {
+		return nil, err
+	}
+	ctx = sessionScope(ctx, sess)
+
+	authorizedRoles, err := s.authorizedRoleSummaries(ctx, sess.UserID, sess.OrganizationID)
+	if err != nil {
+		return nil, err
+	}
+	authorizedRoleIDs := roleSummaryIDs(authorizedRoles)
+	authorized := make(map[pulid.ID]struct{}, len(authorizedRoleIDs))
+	for _, id := range authorizedRoleIDs {
+		authorized[id] = struct{}{}
+	}
+
+	activeRoleIDs := make([]pulid.ID, 0, len(req.RoleIDs))
+	seen := make(map[pulid.ID]struct{}, len(req.RoleIDs))
+	for _, roleID := range req.RoleIDs {
+		if roleID.IsNil() {
+			continue
+		}
+		if _, ok := seen[roleID]; ok {
+			continue
+		}
+		if _, ok := authorized[roleID]; !ok {
+			return nil, errortypes.NewAuthorizationError("Cannot activate unauthorized role")
+		}
+		seen[roleID] = struct{}{}
+		activeRoleIDs = append(activeRoleIDs, roleID)
+	}
+	if len(activeRoleIDs) == 0 && len(authorizedRoleIDs) > 0 {
+		return nil, errortypes.NewValidationError(
+			"roleIds",
+			errortypes.ErrRequired,
+			"At least one active role is required",
+		)
+	}
+
+	violations, vErr := s.rbacRepo.ValidateDynamicSeparationOfDuty(
+		ctx,
+		sess.OrganizationID,
+		activeRoleIDs,
+	)
+	if vErr != nil {
+		return nil, vErr
+	}
+	if len(violations) > 0 {
+		return nil, errortypes.NewAuthorizationError(
+			"Selected active roles violate dynamic separation of duty",
+		)
+	}
+
+	sess.ActiveRoleIDs = activeRoleIDs
+	if err = s.sr.Update(ctx, sess); err != nil {
+		return nil, err
+	}
+
+	return &tenantports.ActivateSessionRolesResponse{
+		ActiveRoleIDs:          activeRoleIDs,
+		AuthorizedRoleIDs:      authorizedRoleIDs,
+		ActiveRoles:            activeRoleSummaries(activeRoleIDs, authorizedRoles),
+		AuthorizedRoles:        authorizedRoles,
+		RequiresRoleActivation: len(activeRoleIDs) == 0 && len(authorizedRoleIDs) > 0,
+	}, nil
+}
+
+// stopTurnsTimeout bounds stopping a person's replies as they sign out. Each
+// stop is one call to the engine running the reply, and signing out must not
+// wait on a slow one for long.
+const stopTurnsTimeout = 10 * time.Second
+
+// Logout ends the session, then stops every reply its person still has in
+// progress. Once they have signed out nobody is left to read those replies,
+// and each one runs on a worker, and bills, until it is stopped.
+func (s *Service) Logout(ctx context.Context, sessionID pulid.ID) error {
+	sess, err := s.sr.Get(ctx, sessionID)
+	if err != nil {
+		// A session that cannot be read is still deleted; there is just no
+		// telling whose replies to stop.
+		s.l.Warn("could not read the session being signed out of",
+			zap.String("sessionID", sessionID.String()),
+			zap.Error(err),
+		)
+		sess = nil
+	}
+
+	attempt := newAuthAttempt(iamports.AuthEventProviderLogout)
+	if sess != nil {
+		attempt.userID = sess.UserID
+		attempt.forOrganization(sess.OrganizationID, sess.BusinessUnitID)
+	}
+
+	if err = s.sr.Delete(ctx, sessionID); err != nil {
+		s.recordAuthAttempt(ctx, attempt, err)
+		return err
+	}
+
+	s.recordAuthAttempt(ctx, attempt, nil)
+	s.stopTurns(ctx, sess)
+
+	return nil
+}
+
+// stopTurns stops the replies of the person signing out. It is best effort:
+// signing out succeeds whether or not they could all be stopped.
+func (s *Service) stopTurns(ctx context.Context, sess *session.Session) {
+	if s.turns == nil || sess == nil || sess.UserID.IsNil() {
+		return
+	}
+
+	stopCtx, cancel := context.WithTimeout(
+		sessionScope(context.WithoutCancel(ctx), sess),
+		stopTurnsTimeout,
+	)
+	defer cancel()
+
+	err := s.turns.StopAllForUser(stopCtx, agentports.StopUserTurnsRequest{
+		UserID: sess.UserID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  sess.OrganizationID,
+			BuID:   sess.BusinessUnitID,
+			UserID: sess.UserID,
+		},
+	})
+	if err != nil {
+		s.l.Error("could not stop the replies of a person signing out",
+			zap.String("userID", sess.UserID.String()),
+			zap.Error(err),
+		)
+	}
+}
+
+func (s *Service) AuthenticateAPIKey(
+	ctx context.Context,
+	token string,
+	ipAddress, userAgent string,
+) (*tenantports.AuthenticatedPrincipal, error) {
+	if !s.cfg.Security.APIToken.Enabled {
+		return nil, errortypes.NewAuthenticationError("API token authentication is disabled")
+	}
+
+	prefix, secret, err := apikey.SplitToken(token)
+	if err != nil {
+		return nil, errortypes.NewAuthenticationError("Invalid bearer token")
+	}
+
+	key, err := s.akr.GetByPrefix(ctx, prefix)
+	if err != nil {
+		return nil, errortypes.NewAuthenticationError("Invalid bearer token")
+	}
+
+	if key.Status != apikey.StatusActive {
+		return nil, errortypes.NewAuthenticationError("API key is inactive")
+	}
+
+	if key.IsExpired(timeutils.NowUnix()) {
+		return nil, errortypes.NewAuthenticationError("API key has expired")
+	}
+
+	computed := apikey.HashSecret(key.SecretSalt, secret)
+	if subtle.ConstantTimeCompare([]byte(computed), []byte(key.SecretHash)) != 1 {
+		return nil, errortypes.NewAuthenticationError("Invalid bearer token")
+	}
+
+	s.usageBuf.RecordUsage(apikeyports.APIKeyUsageEvent{
+		APIKeyID:       key.ID,
+		OrganizationID: key.OrganizationID,
+		BusinessUnitID: key.BusinessUnitID,
+		OccurredAt:     time.Now().UTC(),
+		IPAddress:      ipAddress,
+		UserAgent:      userAgent,
+	})
+
+	return &tenantports.AuthenticatedPrincipal{
+		Type:           permissionports.PrincipalTypeAPIKey,
+		PrincipalID:    key.ID,
+		APIKeyID:       key.ID,
+		BusinessUnitID: key.BusinessUnitID,
+		OrganizationID: key.OrganizationID,
+		APIKey:         key,
+	}, nil
+}
+
+func (s *Service) createSession(
+	ctx context.Context,
+	user *tenant.User,
+	authn loginSessionContext,
+) (*session.Session, string, error) {
+	expiresAt := timeutils.NowUnix() + int64(session.DefaultTTL.Seconds())
+
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  user.CurrentOrganizationID,
+		BuID:   user.BusinessUnitID,
+		UserID: user.ID,
+	}
+
+	isPortalUser, err := s.portalRepo.ExistsWorkerForUser(ctx, tenantInfo)
+	if err != nil {
+		return nil, "", err
+	}
+
+	meta, _ := requestmeta.From(ctx)
+	sess := session.NewSession(&session.NewSessionRequest{
+		IPAddress:             meta.ClientIP,
+		UserAgent:             meta.UserAgent,
+		TenantInfo:            tenantInfo,
+		IsPortalUser:          isPortalUser,
+		MustChangePassword:    user.MustChangePassword,
+		Locale:                user.Locale,
+		ExpiresAt:             expiresAt,
+		AuthProvider:          authn.AuthProvider,
+		ExternalIdentityID:    authn.ExternalIdentityID,
+		ExternalSubject:       authn.ExternalSubject,
+		AuthenticatorAAL:      authn.AuthenticatorAAL,
+		FederationFAL:         authn.FederationFAL,
+		MFAAuthenticatedAt:    authn.MFAAuthenticatedAt,
+		LastReauthenticatedAt: authn.LastReauthenticatedAt,
+		RiskDecision:          authn.RiskDecision,
+		RiskDecisionID:        authn.RiskDecisionID,
+	})
+
+	issued, err := sessiontoken.Issue(sess.ID)
+	if err != nil {
+		return nil, "", err
+	}
+	sess.SecretHash = issued.SecretHash
+
+	if err = s.sr.Create(ctx, sess); err != nil {
+		return nil, "", err
+	}
+
+	return sess, issued.Token, nil
+}
+
+func (s *Service) createLoginResponse(
+	ctx context.Context,
+	user *tenant.User,
+	authn loginSessionContext,
+) (*tenantports.LoginResponse, error) {
+	sess, token, err := s.createSession(ctx, user, authn)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = s.ur.UpdateLastLoginAt(ctx, user.ID); err != nil {
+		s.l.Error("failed to update last login at", zap.Error(err))
+	}
+
+	authorizedRoles, err := s.authorizedRoleSummaries(ctx, user.ID, user.CurrentOrganizationID)
+	if err != nil {
+		return nil, err
+	}
+	authorizedRoleIDs := roleSummaryIDs(authorizedRoles)
+
+	return &tenantports.LoginResponse{
+		User:                  user,
+		ExpiresAt:             sess.ExpiresAt,
+		SessionID:             sess.ID.String(),
+		SessionToken:          token,
+		AuthProvider:          sess.AuthProvider,
+		ExternalIdentityID:    sess.ExternalIdentityID,
+		AuthenticatorAAL:      sess.AuthenticatorAAL,
+		FederationFAL:         sess.FederationFAL,
+		MFAAuthenticatedAt:    sess.MFAAuthenticatedAt,
+		LastReauthenticatedAt: sess.LastReauthenticatedAt,
+		RiskDecision:          sess.RiskDecision,
+		ActiveRoleIDs:         sess.ActiveRoleIDs,
+		AuthorizedRoleIDs:     authorizedRoleIDs,
+		ActiveRoles:           activeRoleSummaries(sess.ActiveRoleIDs, authorizedRoles),
+		AuthorizedRoles:       authorizedRoles,
+		RequiresRoleActivation: len(sess.ActiveRoleIDs) == 0 &&
+			len(authorizedRoleIDs) > 0,
+	}, nil
+}
+
+func (s *Service) authorizedRoleSummaries(
+	ctx context.Context,
+	userID pulid.ID,
+	orgID pulid.ID,
+) ([]permissionports.RoleSummary, error) {
+	roles, err := s.rbacRepo.GetAuthorizedRoles(ctx, userID, orgID)
+	if err != nil {
+		return nil, err
+	}
+	summaries := make([]permissionports.RoleSummary, 0, len(roles))
+	for _, role := range roles {
+		if role != nil {
+			summaries = append(summaries, permissionports.NewRoleSummary(role))
+		}
+	}
+
+	counts, err := s.rbacRepo.CountRolePermissions(ctx, roleSummaryIDs(summaries))
+	if err != nil {
+		return nil, err
+	}
+	permissionports.ApplyRolePermissionCounts(summaries, counts)
+
+	return summaries, nil
+}
+
+func roleSummaryIDs(roles []permissionports.RoleSummary) []pulid.ID {
+	roleIDs := make([]pulid.ID, len(roles))
+	for i, role := range roles {
+		roleIDs[i] = role.ID
+	}
+	return roleIDs
+}
+
+func activeRoleSummaries(
+	activeRoleIDs []pulid.ID,
+	authorizedRoles []permissionports.RoleSummary,
+) []permissionports.RoleSummary {
+	if len(activeRoleIDs) == 0 || len(authorizedRoles) == 0 {
+		return []permissionports.RoleSummary{}
+	}
+
+	byID := make(map[pulid.ID]permissionports.RoleSummary, len(authorizedRoles))
+	for _, role := range authorizedRoles {
+		byID[role.ID] = role
+	}
+
+	activeRoles := make([]permissionports.RoleSummary, 0, len(activeRoleIDs))
+	for _, roleID := range activeRoleIDs {
+		role, ok := byID[roleID]
+		if ok {
+			activeRoles = append(activeRoles, role)
+		}
+	}
+	return activeRoles
+}
+
+func (s *Service) resolveRequestedOrganization(
+	ctx context.Context,
+	organizationSlug string,
+	user *tenant.User,
+) (*tenant.Organization, error) {
+	if strings.TrimSpace(organizationSlug) == "" {
+		return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
+	}
+
+	org, err := s.or.GetByLoginSlug(ctx, organizationSlug)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = s.ensureUserHasOrganizationAccess(ctx, user.ID, org.ID); err != nil {
+		return nil, err
+	}
+
+	return org, nil
+}
+
+func (s *Service) ensureUserHasOrganizationAccess(
+	ctx context.Context,
+	userID, organizationID pulid.ID,
+) error {
+	memberships, err := s.ur.GetOrganizations(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	for _, membership := range memberships {
+		if membership.OrganizationID == organizationID {
+			return nil
+		}
+	}
+
+	return errortypes.NewAuthorizationError("You do not have access to this organization")
+}
+
+func (s *Service) enforcePasswordLoginPolicy(
+	ctx context.Context,
+	organizationSlug string,
+	user *tenant.User,
+	targetOrg *tenant.Organization,
+) error {
+	if strings.TrimSpace(organizationSlug) == "" && targetOrg == nil {
+		targetOrg = &tenant.Organization{
+			ID:             user.CurrentOrganizationID,
+			BusinessUnitID: user.BusinessUnitID,
+		}
+	}
+
+	if targetOrg == nil {
+		return nil
+	}
+
+	if s.ssoRepo == nil {
+		return nil
+	}
+
+	ctx = organizationScope(ctx, targetOrg.ID, targetOrg.BusinessUnitID, user.ID)
+
+	for _, p := range []tenant.SSOProvider{tenant.SSOProviderAzureAD, tenant.SSOProviderOkta} {
+		cfg, err := s.ssoRepo.GetEnabledByOrganizationID(ctx, targetOrg.ID, p)
+		if err != nil {
+			if errortypes.IsNotFoundError(err) {
+				continue
+			}
+			return err
+		}
+		if cfg.EnforceSSO {
+			return errSSORequired
+		}
+	}
+
+	return nil
+}
+
+type oidcClaims struct {
+	Email             string   `json:"email"`
+	EmailVerified     oidcBool `json:"email_verified"`
+	PreferredUsername string   `json:"preferred_username"`
+	UPN               string   `json:"upn"`
+	Nonce             string   `json:"nonce"`
+	TenantID          string   `json:"tid"`
+	Subject           string   `json:"sub"`
+	ACR               string   `json:"acr"`
+	AMR               []string `json:"amr"`
+}
+
+func (c oidcClaims) EmailAddress(provider tenant.SSOProvider) string {
+	if email := strings.TrimSpace(c.Email); email != "" {
+		return strings.ToLower(email)
+	}
+
+	if provider != tenant.SSOProviderAzureAD {
+		return ""
+	}
+
+	if username := strings.TrimSpace(c.PreferredUsername); username != "" {
+		return strings.ToLower(username)
+	}
+
+	return strings.ToLower(strings.TrimSpace(c.UPN))
+}
+
+func assuranceFromOIDCClaims(claims oidcClaims) (int, int64) {
+	for _, method := range claims.AMR {
+		switch strings.ToLower(strings.TrimSpace(method)) {
+		case "mfa", "otp", "totp", "webauthn", "hwk", "swk", "fido", "face", "fingerprint":
+			return 2, timeutils.NowUnix()
+		}
+	}
+
+	acr := strings.ToLower(strings.TrimSpace(claims.ACR))
+	if strings.Contains(acr, "aal2") || strings.Contains(acr, "level2") ||
+		strings.Contains(acr, "urn:mace:incommon:iap:silver") {
+		return 2, timeutils.NowUnix()
+	}
+
+	return 1, 0
+}
+
+func validateReturnToURL(returnTo string, allowedOrigins []string) error {
+	if strings.TrimSpace(returnTo) == "" {
+		return errortypes.NewValidationError(
+			"returnTo",
+			errortypes.ErrRequired,
+			"Return URL is required",
+		)
+	}
+
+	parsed, err := url.Parse(returnTo)
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return errortypes.NewValidationError(
+			"returnTo",
+			errortypes.ErrInvalid,
+			"Return URL must be an absolute URL",
+		)
+	}
+
+	origin := parsed.Scheme + "://" + parsed.Host
+	if slices.Contains(allowedOrigins, origin) {
+		return nil
+	}
+
+	return errortypes.NewValidationError(
+		"returnTo",
+		errortypes.ErrInvalid,
+		"Return URL is not allowed for this environment",
+	)
+}
+
+func validateAllowedDomain(emailAddress string, allowedDomains []string) error {
+	if len(allowedDomains) == 0 {
+		return nil
+	}
+
+	parts := strings.Split(emailAddress, "@")
+	if len(parts) != 2 {
+		return errortypes.NewAuthenticationError("SSO account email address is invalid")
+	}
+
+	for _, domain := range allowedDomains {
+		if strings.EqualFold(strings.TrimSpace(domain), parts[1]) {
+			return nil
+		}
+	}
+
+	return errortypes.NewAuthenticationError(
+		"SSO account email domain is not allowed for this organization",
+	)
+}
+
+func ssoAuthEventProvider(p tenant.SSOProvider) string {
+	if p == "" {
+		return "sso"
+	}
+	return "sso." + string(p)
+}
+
+func providerDisplayName(p tenant.SSOProvider) string {
+	switch p {
+	case tenant.SSOProviderAzureAD:
+		return "Microsoft"
+	case tenant.SSOProviderOkta:
+		return "Okta"
+	default:
+		return string(p)
+	}
+}
+
+func microsoftTenantIDFromIssuer(issuerURL string) string {
+	parts := strings.Split(strings.Trim(strings.TrimSpace(issuerURL), "/"), "/")
+	if len(parts) < 2 {
+		return ""
+	}
+
+	return parts[len(parts)-2]
+}
+
+func randomURLToken(size int) string {
+	buf := make([]byte, size)
+	if _, err := rand.Read(buf); err != nil {
+		panic(err)
+	}
+
+	return base64.RawURLEncoding.EncodeToString(buf)
+}
+
+func decryptSSOSecret(enc *encryptionservice.Service, cfg *tenant.SSOConfig) string {
+	if cfg == nil {
+		return ""
+	}
+	if enc == nil {
+		return ""
+	}
+
+	if encryptionservice.IsEnvelope(cfg.OIDCClientSecret) {
+		for _, resourceID := range ssoSecretAADResourceIDs(cfg.Provider) {
+			plaintext, err := enc.DecryptStringWithAAD(
+				cfg.OIDCClientSecret,
+				encryptionservice.AAD{
+					Purpose:        encryptionservice.PurposeIAMOIDCClientSecret,
+					OrganizationID: cfg.OrganizationID,
+					BusinessUnitID: cfg.BusinessUnitID,
+					ResourceID:     resourceID,
+				},
+			)
+			if err == nil {
+				return plaintext
+			}
+		}
+		return ""
+	}
+
+	return ""
+}
+
+func ssoSecretAADResourceIDs(provider tenant.SSOProvider) []string {
+	resourceID := string(provider)
+	normalized := strings.ToLower(strings.TrimSpace(resourceID))
+	if normalized == "" || normalized == resourceID {
+		return []string{resourceID}
+	}
+
+	return []string{resourceID, normalized}
+}

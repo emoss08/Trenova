@@ -19,6 +19,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { disputeCategoryLabels } from "./portal-badges";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const categories = Object.keys(disputeCategoryLabels) as SettlementDisputeCategory[];
 
@@ -64,7 +65,9 @@ export function DisputeDrawer({ settlementId, line, open, onOpenChange }: Disput
       reset();
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "We couldn't send your dispute.");
+      toast.error(
+        error instanceof Error ? error.message : translate("We couldn't send your dispute."),
+      );
     } finally {
       setPending(false);
     }

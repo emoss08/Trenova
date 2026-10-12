@@ -3,7 +3,7 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/workerchecklistservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -36,7 +36,8 @@ func NewWorkerChecklistTemplateOpenChecklistCountLoaderFactory(
 	}
 }
 
-func (f *WorkerChecklistTemplateOpenChecklistCountLoaderFactory) NewForTenant(
+func newWorkerChecklistTemplateOpenChecklistCountLoader(
+	f *WorkerChecklistTemplateOpenChecklistCountLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, int] {
 	return newLoader(f.batchFunc(tenantInfo))

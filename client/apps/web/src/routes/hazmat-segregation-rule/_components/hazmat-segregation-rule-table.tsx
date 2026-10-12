@@ -15,6 +15,7 @@ export default function HazmatSegregationRuleTable() {
   return (
     <DataTable<HazmatSegregationRule>
       name="Hazmat Segregation Rule"
+      emptyTitle={t("No hazmat segregation rules yet")}
       queryKey="hazmat-segregation-rule-list"
       graphql={hazmatSegregationRuleTableGraphQLConfig}
       resource={Resource.HazmatSegregationRule}

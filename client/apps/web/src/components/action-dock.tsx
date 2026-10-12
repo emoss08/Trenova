@@ -1,7 +1,7 @@
 import { cn } from "@trenova/shared/lib/utils";
 import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 
 export type ActionDockPosition = "center" | "left" | "right";
 
@@ -19,6 +19,10 @@ export type ActionDockProps = {
   animated?: boolean;
   /** The status block on the left of the dock; omit to show actions alone. */
   indicator?: ReactNode;
+  /** Classes for the pill itself, such as a fixed width its content truncates within. */
+  pillClassName?: string;
+  /** The pill's element, for a popover that should sit over the whole dock. */
+  pillRef?: Ref<HTMLDivElement>;
   children: ReactNode;
 };
 
@@ -33,13 +37,21 @@ export function ActionDock({
   className,
   animated = false,
   indicator,
+  pillClassName,
+  pillRef,
   children,
 }: ActionDockProps) {
   const containerClassName = cn("fixed bottom-6 z-50", POSITION_CLASSES[position], className);
   const pill = (
-    <div className="bg-foreground flex w-fit min-w-112.5 items-center gap-x-10 rounded-lg p-2">
+    <div
+      ref={pillRef}
+      className={cn(
+        "bg-foreground flex w-fit min-w-112.5 items-center gap-x-10 rounded-lg p-2",
+        pillClassName,
+      )}
+    >
       {indicator}
-      <div className="ml-auto flex items-center space-x-2">{children}</div>
+      <div className="ml-auto flex shrink-0 items-center space-x-2">{children}</div>
     </div>
   );
 

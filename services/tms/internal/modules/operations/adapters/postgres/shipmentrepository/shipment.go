@@ -1,0 +1,1308 @@
+package shipmentrepository
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"strings"
+
+	"github.com/emoss08/trenova/pkg/buncolgen/commoditycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
+
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/seqgen"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/uptrace/bun"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+type Params struct {
+	fx.In
+
+	DB                         *postgres.Connection
+	Logger                     *zap.Logger
+	Generator                  seqgen.Generator
+	MoveRepository             shipmentports.ShipmentMoveRepository
+	AdditionalChargeRepository shipmentports.ShipmentAdditionalChargeRepository
+	ChargeAllocationRepository shipmentports.ChargeAllocationRepository
+	CommodityRepository        shipmentports.ShipmentCommodityRepository
+	OrderRepository            orderports.OrderRepository
+	Quota                      platformplanports.QuotaGuard `optional:"true"`
+}
+
+type repository struct {
+	db                         *postgres.Connection
+	l                          *zap.Logger
+	generator                  seqgen.Generator
+	moveRepository             shipmentports.ShipmentMoveRepository
+	additionalChargeRepository shipmentports.ShipmentAdditionalChargeRepository
+	chargeAllocationRepository shipmentports.ChargeAllocationRepository
+	commodityRepository        shipmentports.ShipmentCommodityRepository
+	orderRepository            orderports.OrderRepository
+	quota                      platformplanports.QuotaGuard
+}
+
+//nolint:gocritic // This is a constructor function
+func New(p Params) shipmentports.ShipmentRepository {
+	return &repository{
+		db:                         p.DB,
+		l:                          p.Logger.Named("postgres.shipment-repository"),
+		generator:                  p.Generator,
+		moveRepository:             p.MoveRepository,
+		additionalChargeRepository: p.AdditionalChargeRepository,
+		chargeAllocationRepository: p.ChargeAllocationRepository,
+		commodityRepository:        p.CommodityRepository,
+		orderRepository:            p.OrderRepository,
+		quota:                      quotaservice.OrUnlimited(p.Quota),
+	}
+}
+
+func (r *repository) List(
+	ctx context.Context,
+	req *shipmentports.ListShipmentsRequest,
+) (*pagination.CursorListResult[*shipment.Shipment], error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*shipment.Shipment], error) {
+			dba := r.db.DBForContext(ctx)
+
+			quick, err := QuickFilterConditions(dba, &req.ShipmentOptions)
+			if err != nil {
+				return nil, err
+			}
+
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, cErr := dba.
+					NewSelect().
+					Model((*shipment.Shipment)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return countShipmentListQuery(sq, dba, req).Apply(whereAll(quick))
+					}).
+					Count(ctx)
+				if cErr != nil {
+					return nil, cErr
+				}
+				totalCount = new(int(total))
+			}
+
+			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*shipment.Shipment]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(items *[]*shipment.Shipment) *bun.SelectQuery {
+					return dba.NewSelect().
+						Model(items).
+						ColumnExpr(shipmentcol.ShipmentTable.All())
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					sq, aErr := cursorFilterQuery(sq, dba, req)
+					if aErr != nil {
+						return sq, aErr
+					}
+					return sq.Apply(whereAll(quick)), nil
+				},
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			if req.ShipmentOptions.ExpandShipmentDetails {
+				if err = r.hydrateMoves(ctx, result.Items); err != nil {
+					return nil, err
+				}
+			}
+
+			return result, nil
+		},
+	)
+}
+
+func (r *repository) GetByID(
+	ctx context.Context,
+	req *shipmentports.GetShipmentByIDRequest,
+) (*shipment.Shipment, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
+		sp := shipmentcol.ShipmentColumns
+		entity := new(shipment.Shipment)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
+					Where(sp.ID.Eq(), req.ID)
+			}).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return standardShipmentFilter(sq, req.ShipmentOptions)
+			}).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Shipment")
+		}
+
+		if req.ExpandShipmentDetails {
+			if err = r.hydrateMoves(ctx, []*shipment.Shipment{entity}); err != nil {
+				return nil, err
+			}
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req *shipmentports.GetShipmentsByIDsRequest,
+) ([]*shipment.Shipment, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
+		sp := shipmentcol.ShipmentColumns
+		entities := make([]*shipment.Shipment, 0, len(req.ShipmentIDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
+					Where(sp.ID.In(), bun.List(req.ShipmentIDs))
+			}).
+			Relation(shipmentcol.ShipmentRelations.Customer).
+			Relation(shipmentcol.ShipmentRelations.ServiceType).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				if !req.IncludeCharges {
+					return sq
+				}
+
+				return withCharges(sq.Relation(shipmentcol.ShipmentRelations.BillToCustomer))
+			}).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Shipment")
+		}
+
+		return entities, nil
+	})
+}
+
+func (r *repository) ListRatedByFormulaTemplate(
+	ctx context.Context,
+	req *shipmentports.ListRatedByFormulaTemplateRequest,
+) ([]*shipment.Shipment, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
+		sp := shipmentcol.ShipmentColumns
+		sm := shipmentcol.ShipmentMoveColumns
+		stp := shipmentcol.StopColumns
+
+		entities := make([]*shipment.Shipment, 0, req.Limit)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
+					Where(sp.FormulaTemplateID.Eq(), req.TemplateID)
+			}).
+			Relation(shipmentcol.ShipmentRelations.Customer).
+			Relation(shipmentcol.ShipmentRelations.TractorType).
+			Relation(shipmentcol.ShipmentRelations.TrailerType).
+			RelationWithOpts(shipmentcol.ShipmentRelations.Moves, bun.RelationOpts{
+				Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.Order(sm.Sequence.OrderAsc())
+				},
+			}).
+			RelationWithOpts(
+				buncolgen.Rel(shipmentcol.ShipmentRelations.Moves, shipmentcol.ShipmentMoveRelations.Stops),
+				bun.RelationOpts{
+					Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return sq.Order(stp.Sequence.OrderAsc())
+					},
+				},
+			).
+			RelationWithOpts(shipmentcol.ShipmentRelations.AdditionalCharges, bun.RelationOpts{
+				Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.Relation(shipmentcol.AdditionalChargeRelations.AccessorialCharge)
+				},
+			}).
+			RelationWithOpts(shipmentcol.ShipmentRelations.Commodities, bun.RelationOpts{
+				Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.Relation(shipmentcol.ShipmentCommodityRelations.Commodity).
+						Relation(buncolgen.Rel(
+							shipmentcol.ShipmentCommodityRelations.Commodity,
+							commoditycol.CommodityRelations.HazardousMaterial))
+				},
+			}).
+			Order(sp.CreatedAt.OrderDesc()).
+			Limit(int64(req.Limit)).
+			Scan(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
+func (r *repository) SelectOptions(
+	ctx context.Context,
+	req *shipmentports.ShipmentSelectOptionsRequest,
+) (*pagination.ListResult[*shipment.Shipment], error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*shipment.Shipment], error) {
+			sp := shipmentcol.ShipmentColumns
+
+			return dbhelper.SelectOptions[*shipment.Shipment](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						sp.ID,
+						sp.CreatedAt,
+						sp.Status,
+						sp.ProNumber,
+						sp.BOL,
+					},
+					OrgColumnRef:     &sp.OrganizationID,
+					BuColumnRef:      &sp.BusinessUnitID,
+					SearchColumnRefs: []buncolgen.Column{sp.ProNumber, sp.BOL},
+					EntityName:       "Shipment",
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						if !req.CustomerID.IsNil() {
+							q = q.Where(sp.CustomerID.Eq(), req.CustomerID)
+						}
+						if req.AttachableOnly {
+							q = q.Where(sp.Status.Ne(), shipment.StatusCanceled).
+								Where(sp.Status.Ne(), shipment.StatusInvoiced)
+						}
+						if !req.ExcludeOrderID.IsNil() {
+							q = q.Where(
+								"(? IS NULL OR ? != ?)",
+								bun.Ident(sp.OrderID.Qualified()),
+								bun.Ident(sp.OrderID.Qualified()),
+								req.ExcludeOrderID,
+							)
+						}
+						return q.Order(sp.CreatedAt.OrderDesc())
+					},
+				},
+			)
+		},
+	)
+}
+
+func (r *repository) GetUnassigned(
+	ctx context.Context,
+	req *shipmentports.GetUnassignedShipmentsRequest,
+) (*pagination.CursorListResult[*shipment.Shipment], error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*shipment.Shipment], error) {
+			dba := r.db.DBForContext(ctx)
+
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*shipment.Shipment)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						countReq := shipmentports.ListShipmentsRequest{
+							Filter: req.Filter,
+							ShipmentOptions: shipmentports.ShipmentOptions{
+								Status: string(shipment.StatusNew),
+							},
+						}
+						return countShipmentListQuery(sq, dba, &countReq).
+							Where("NOT EXISTS (?)", unassignedShipmentPredicate(dba))
+					}).
+					Count(ctx)
+				if err != nil {
+					return nil, err
+				}
+				totalCount = new(int(total))
+			}
+
+			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*shipment.Shipment]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(items *[]*shipment.Shipment) *bun.SelectQuery {
+					return dba.NewSelect().
+						Model(items).
+						ColumnExpr(shipmentcol.ShipmentTable.All())
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					return unassignedShipmentListQuery(sq, dba, req)
+				},
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			if req.ShipmentOptions.ExpandShipmentDetails {
+				if err = r.hydrateMoves(ctx, result.Items); err != nil {
+					return nil, err
+				}
+			}
+
+			return result, nil
+		},
+	)
+}
+
+func (r *repository) GetPreviousRates(
+	ctx context.Context,
+	req *shipmentports.GetPreviousRatesRequest,
+) (*pagination.ListResult[*shipmentports.PreviousRateSummary], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*shipmentports.PreviousRateSummary], error) {
+			sp := shipmentcol.ShipmentColumns
+			entities := make([]*shipmentports.PreviousRateSummary, 0, 50)
+
+			baseQuery := func(dba bun.IDB) *bun.SelectQuery {
+				originCTE, destinationCTE := buildPreviousRatesCTEs(
+					dba,
+					req.OriginLocationID,
+					req.DestinationLocationID,
+				)
+
+				query := dba.NewSelect().
+					With("origin_shipments", originCTE).
+					With("destination_shipments", destinationCTE).
+					TableExpr(shipmentcol.ShipmentTable.Name+" AS "+shipmentcol.ShipmentTable.Alias).
+					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
+							Where(sp.ShipmentTypeID.Eq(), req.ShipmentTypeID).
+							Where(sp.ServiceTypeID.Eq(), req.ServiceTypeID).
+							Where(sp.Status.Eq(), shipment.StatusInvoiced).
+							Where("sp.id IN (SELECT shipment_id FROM origin_shipments)").
+							Where("sp.id IN (SELECT shipment_id FROM destination_shipments)")
+					})
+
+				if req.CustomerID != nil {
+					query = query.Where(sp.CustomerID.Eq(), pulid.ConvertFromPtr(req.CustomerID))
+				}
+
+				if req.ExcludeShipmentID != nil {
+					query = query.Where(sp.ID.Ne(), pulid.ConvertFromPtr(req.ExcludeShipmentID))
+				}
+
+				return query
+			}
+
+			countQuery := baseQuery(r.db.DBForContext(ctx)).
+				ColumnExpr("COUNT(*)")
+
+			total := 0
+			if err := countQuery.Scan(ctx, &total); err != nil {
+				return nil, err
+			}
+
+			itemsQuery := baseQuery(r.db.DBForContext(ctx)).
+				ColumnExpr(sp.ID.As("shipment_id")).
+				ColumnExpr(sp.ProNumber.Qualified()).
+				ColumnExpr(sp.CustomerID.Qualified()).
+				ColumnExpr(sp.ServiceTypeID.Qualified()).
+				ColumnExpr(sp.ShipmentTypeID.Qualified()).
+				ColumnExpr(sp.FormulaTemplateID.Qualified()).
+				ColumnExpr(sp.FreightChargeAmount.Qualified()).
+				ColumnExpr(sp.OtherChargeAmount.Qualified()).
+				ColumnExpr(sp.TotalChargeAmount.Qualified()).
+				ColumnExpr(sp.RatingUnit.Qualified()).
+				ColumnExpr(sp.Pieces.Qualified()).
+				ColumnExpr(sp.Weight.Qualified()).
+				ColumnExpr(sp.CreatedAt.Qualified()).
+				Order(sp.CreatedAt.OrderDesc()).
+				Limit(50)
+
+			if err := itemsQuery.Scan(ctx, &entities); err != nil {
+				return nil, err
+			}
+
+			return &pagination.ListResult[*shipmentports.PreviousRateSummary]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
+}
+
+func (r *repository) Create(
+	ctx context.Context,
+	entity *shipment.Shipment,
+) (*shipment.Shipment, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
+		quotaReq := shipmentQuotaRequest(entity.OrganizationID, entity.BusinessUnitID, 1)
+		if err := quotaservice.Preflight(ctx, r.quota, &quotaReq); err != nil {
+			return nil, err
+		}
+
+		locationCode, businessUnitCode, err := r.resolveSequenceCodes(ctx, entity)
+		if err != nil {
+			return nil, err
+		}
+
+		proNumber, err := r.generator.GenerateShipmentProNumber(
+			ctx,
+			entity.OrganizationID,
+			entity.BusinessUnitID,
+			locationCode,
+			businessUnitCode,
+		)
+		if err != nil {
+			return nil, err
+		}
+		entity.ProNumber = proNumber
+
+		// A shipment created outside a commercial order gets its own single-leg order so
+		// everything has a commercial parent. The order number is minted before the tx,
+		// consistent with the pro-number lifecycle (a rolled-back tx burns a number).
+		newOrder, err := r.buildAutoOrder(ctx, entity, locationCode, businessUnitCode)
+		if err != nil {
+			return nil, err
+		}
+
+		err = r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			if err = quotaservice.EnforceAll(c, r.quota, quotaReq); err != nil {
+				return err
+			}
+
+			if newOrder != nil {
+				if err = r.orderRepository.CreateInTx(c, tx, newOrder); err != nil {
+					return err
+				}
+				entity.OrderID = newOrder.ID
+			}
+
+			if _, err = r.db.DBForContext(c).
+				NewInsert().
+				Model(entity).
+				Returning("*").
+				Exec(c); err != nil {
+				return err
+			}
+
+			if err = r.moveRepository.SyncForShipment(c, tx, entity); err != nil {
+				return err
+			}
+
+			if err = r.additionalChargeRepository.SyncForShipment(c, tx, entity); err != nil {
+				return err
+			}
+
+			if err = r.chargeAllocationRepository.SyncForShipment(c, tx, entity); err != nil {
+				return err
+			}
+
+			return r.commodityRepository.SyncForShipment(c, tx, entity)
+		})
+		if err != nil {
+			return nil, dberror.MapRetryableTransactionError(
+				err,
+				"Shipment is busy. Retry the request.",
+			)
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) buildAutoOrder(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	locationCode, businessUnitCode string,
+) (*order.Order, error) {
+	if !entity.OrderID.IsNil() {
+		return nil, nil
+	}
+
+	orderNumber, err := r.generator.GenerateOrderNumber(
+		ctx,
+		entity.OrganizationID,
+		entity.BusinessUnitID,
+		locationCode,
+		businessUnitCode,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &order.Order{
+		OrganizationID: entity.OrganizationID,
+		BusinessUnitID: entity.BusinessUnitID,
+		CustomerID:     entity.CustomerID,
+		OwnerID:        entity.OwnerID,
+		EnteredByID:    entity.EnteredByID,
+		Status:         order.StatusConfirmed,
+		OrderNumber:    orderNumber,
+		CurrencyCode:   "USD",
+		TotalAmount:    entity.TotalChargeAmount,
+	}, nil
+}
+
+func (r *repository) Update(
+	ctx context.Context,
+	entity *shipment.Shipment,
+) (*shipment.Shipment, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
+		sp := shipmentcol.ShipmentColumns
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			ov := entity.Version
+			entity.Version++
+
+			results, err := r.db.DBForContext(c).NewUpdate().
+				Model(entity).
+				ExcludeColumn(
+					sp.CreatedAt.Bare(),
+					sp.BillingTransferStatus.Bare(),
+					sp.TransferredToBillingAt.Bare(),
+					sp.IdempotencyKey.Bare(),
+				).
+				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+					return shipmentcol.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
+						OrgID: entity.OrganizationID,
+						BuID:  entity.BusinessUnitID,
+					}).
+						Where(sp.ID.Eq(), entity.ID).
+						Where(sp.Version.Eq(), ov)
+				}).
+				Returning("*").
+				Exec(c)
+			if err != nil {
+				return err
+			}
+
+			if err = dberror.CheckRowsAffected(
+				results,
+				"Shipment",
+				entity.ID.String(),
+			); err != nil {
+				return err
+			}
+
+			if err = r.moveRepository.SyncForShipment(c, tx, entity); err != nil {
+				return err
+			}
+
+			if err = r.additionalChargeRepository.SyncForShipment(c, tx, entity); err != nil {
+				return err
+			}
+
+			if err = r.chargeAllocationRepository.SyncForShipment(c, tx, entity); err != nil {
+				return err
+			}
+
+			return r.commodityRepository.SyncForShipment(c, tx, entity)
+		})
+		if err != nil {
+			return nil, dberror.MapRetryableTransactionError(
+				err,
+				"Shipment is busy. Retry the request.",
+			)
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) UpdateOperationalLifecycle(
+	ctx context.Context,
+	entity *shipment.Shipment,
+) (*shipment.Shipment, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
+		sp := shipmentcol.ShipmentColumns
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			ov := entity.Version
+			entity.Version++
+
+			results, err := r.db.DBForContext(c).NewUpdate().
+				Model(entity).
+				Column(
+					sp.Status.Bare(),
+					sp.ActualShipDate.Bare(),
+					sp.ActualDeliveryDate.Bare(),
+					sp.Version.Bare(),
+					sp.UpdatedAt.Bare(),
+				).
+				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+					return shipmentcol.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
+						OrgID: entity.OrganizationID,
+						BuID:  entity.BusinessUnitID,
+					}).
+						Where(sp.ID.Eq(), entity.ID).
+						Where(sp.Version.Eq(), ov)
+				}).
+				Returning("*").
+				Exec(c)
+			if err != nil {
+				return err
+			}
+
+			if err = dberror.CheckRowsAffected(
+				results,
+				"Shipment",
+				entity.ID.String(),
+			); err != nil {
+				return err
+			}
+
+			return r.moveRepository.SyncForShipment(c, tx, entity)
+		})
+		if err != nil {
+			return nil, dberror.MapRetryableTransactionError(
+				err,
+				"Shipment is busy. Retry the request.",
+			)
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) MarkReadyToInvoice(
+	ctx context.Context,
+	entity *shipment.Shipment,
+) (*shipment.Shipment, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
+		sp := shipmentcol.ShipmentColumns
+		ov := entity.Version
+		entity.Version++
+
+		results, err := r.db.DBForContext(ctx).NewUpdate().
+			Model(entity).
+			Column(
+				sp.Status.Bare(),
+				sp.MarkedReadyToBillAt.Bare(),
+				sp.Version.Bare(),
+				sp.UpdatedAt.Bare(),
+			).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return shipmentcol.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
+					OrgID: entity.OrganizationID,
+					BuID:  entity.BusinessUnitID,
+				}).
+					Where(sp.ID.Eq(), entity.ID).
+					Where(sp.Version.Eq(), ov)
+			}).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			entity.Version = ov
+			return nil, dberror.MapRetryableTransactionError(
+				err,
+				"Shipment is busy. Retry the request.",
+			)
+		}
+
+		if err = dberror.CheckRowsAffected(results, "Shipment", entity.ID.String()); err != nil {
+			entity.Version = ov
+			return nil, err
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) UpdateDerivedState(
+	ctx context.Context,
+	entity *shipment.Shipment,
+) (*shipment.Shipment, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
+		sp := shipmentcol.ShipmentColumns
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			ov := entity.Version
+			entity.Version++
+
+			results, err := r.db.DBForContext(c).NewUpdate().
+				Model(entity).
+				Column(
+					sp.Status.Bare(),
+					sp.ActualShipDate.Bare(),
+					sp.ActualDeliveryDate.Bare(),
+					sp.FormulaTemplateID.Bare(),
+					sp.FreightChargeAmount.Bare(),
+					sp.BaseRate.Bare(),
+					sp.OtherChargeAmount.Bare(),
+					sp.TotalChargeAmount.Bare(),
+					sp.RatingDetail.Bare(),
+					sp.MarkedReadyToBillAt.Bare(),
+					sp.BilledAt.Bare(),
+					sp.Version.Bare(),
+					sp.UpdatedAt.Bare(),
+				).
+				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+					return shipmentcol.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
+						OrgID: entity.OrganizationID,
+						BuID:  entity.BusinessUnitID,
+					}).
+						Where(sp.ID.Eq(), entity.ID).
+						Where(sp.Version.Eq(), ov)
+				}).
+				Returning("*").
+				Exec(c)
+			if err != nil {
+				return err
+			}
+
+			if err = dberror.CheckRowsAffected(
+				results,
+				"Shipment",
+				entity.ID.String(),
+			); err != nil {
+				return err
+			}
+
+			if err = r.additionalChargeRepository.SyncForShipment(c, tx, entity); err != nil {
+				return err
+			}
+
+			return r.chargeAllocationRepository.SyncForShipment(c, tx, entity)
+		})
+		if err != nil {
+			return nil, dberror.MapRetryableTransactionError(
+				err,
+				"Shipment is busy. Retry the request.",
+			)
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) UpdateStatus(
+	ctx context.Context,
+	req *shipmentports.UpdateShipmentStatusRequest,
+) (*shipment.Shipment, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
+		sp := shipmentcol.ShipmentColumns
+		entity := new(shipment.Shipment)
+
+		results, err := r.db.DBForContext(ctx).NewUpdate().
+			Model(entity).
+			Set(sp.Status.Set(), req.Status).
+			Set(sp.Version.Inc(1)).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return shipmentcol.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
+					Where(sp.ID.Eq(), req.ShipmentID).
+					Where(sp.Version.Eq(), req.Version)
+			}).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		if err = dberror.CheckRowsAffected(
+			results,
+			"Shipment",
+			req.ShipmentID.String(),
+		); err != nil {
+			return nil, err
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) Cancel(
+	ctx context.Context,
+	req *shipmentports.CancelShipmentRequest,
+) (*shipment.Shipment, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
+		sp := shipmentcol.ShipmentColumns
+		entity := new(shipment.Shipment)
+
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			results, err := tx.NewUpdate().
+				Model(entity).
+				Set(sp.Status.Set(), shipment.StatusCanceled).
+				Set(sp.CanceledAt.Set(), req.CanceledAt).
+				Set(sp.CanceledByID.Set(), req.CanceledByID).
+				Set(sp.CancelReason.Set(), req.CancelReason).
+				Set(sp.Version.Inc(1)).
+				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+					return shipmentcol.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
+						Where(sp.ID.Eq(), req.ShipmentID).
+						Where(sp.Version.Eq(), req.ExpectedVersion).
+						Where(sp.Status.NotIn(), bun.List([]shipment.Status{
+							shipment.StatusCanceled,
+							shipment.StatusInvoiced,
+						}))
+				}).
+				Returning("*").
+				Exec(c)
+			if err != nil {
+				return err
+			}
+
+			if err = dberror.CheckRowsAffected(
+				results, "Shipment",
+				req.ShipmentID.String(),
+			); err != nil {
+				return err
+			}
+
+			return r.cancelShipmentComponents(c, tx, req.ShipmentID)
+		})
+		if err != nil {
+			return nil, dberror.MapRetryableTransactionError(
+				err,
+				"Shipment is busy. Retry the request.",
+			)
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) Uncancel(
+	ctx context.Context,
+	req *shipmentports.UncancelShipmentRequest,
+) (*shipment.Shipment, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
+		sp := shipmentcol.ShipmentColumns
+		entity := new(shipment.Shipment)
+
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			results, err := tx.NewUpdate().
+				Model(entity).
+				Set(sp.Status.Set(), restoredShipmentStatus(req)).
+				Set(sp.CanceledAt.Set(), nil).
+				Set(sp.CanceledByID.Set(), pulid.Nil).
+				Set(sp.CancelReason.Set(), "").
+				Set(sp.Version.Inc(1)).
+				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+					return shipmentcol.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
+						Where(sp.ID.Eq(), req.ShipmentID).
+						Where(sp.Version.Eq(), req.ExpectedVersion).
+						Where(sp.Status.Eq(), shipment.StatusCanceled)
+				}).
+				Returning("*").
+				Exec(c)
+			if err != nil {
+				return err
+			}
+
+			if err = dberror.CheckRowsAffected(
+				results,
+				"Shipment",
+				req.ShipmentID.String(),
+			); err != nil {
+				return err
+			}
+
+			return r.uncancelShipmentComponents(c, tx, req)
+		})
+		if err != nil {
+			return nil, dberror.MapRetryableTransactionError(
+				err,
+				"Shipment is busy. Retry the request.",
+			)
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) TransferOwnership(
+	ctx context.Context,
+	req *shipmentports.TransferOwnershipRequest,
+) (*shipment.Shipment, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
+		sp := shipmentcol.ShipmentColumns
+		entity := new(shipment.Shipment)
+
+		results, err := r.db.DBForContext(ctx).NewUpdate().
+			Model(entity).
+			Set(sp.OwnerID.Set(), req.OwnerID).
+			Set(sp.Version.Inc(1)).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return shipmentcol.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
+					Where(sp.ID.Eq(), req.ShipmentID)
+			}).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		if err = dberror.CheckRowsAffected(
+			results,
+			"Shipment",
+			req.ShipmentID.String(),
+		); err != nil {
+			return nil, err
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) FindByExternalReference(
+	ctx context.Context,
+	req *shipmentports.ExternalReferenceCheckRequest,
+) (*shipmentports.DuplicateBOLResult, error) {
+	reference := strings.TrimSpace(req.ExternalReference)
+	if reference == "" || req.CustomerID.IsNil() {
+		return nil, nil //nolint:nilnil // no reference never collides
+	}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*shipmentports.DuplicateBOLResult, error) {
+			sp := shipmentcol.ShipmentColumns
+			found := new(shipmentports.DuplicateBOLResult)
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Column(sp.ID.Bare(), sp.ProNumber.Bare()).
+				Model((*shipment.Shipment)(nil)).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
+						Where(sp.CustomerID.Eq(), req.CustomerID).
+						Where(sp.ExternalReference.Expr("lower({})")+" = lower(?)", reference).
+						Where(sp.Status.Ne(), shipment.StatusCanceled)
+					if req.ShipmentID.IsNotNil() {
+						sq = sq.Where(sp.ID.Ne(), req.ShipmentID)
+					}
+					return sq
+				}).
+				Limit(1)
+			if err := query.Scan(ctx, found); err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					return nil, nil
+				}
+				return nil, err
+			}
+			return found, nil
+		},
+	)
+}
+
+func (r *repository) FindIDByIdempotencyKey(
+	ctx context.Context,
+	req *shipmentports.IdempotencyKeyLookupRequest,
+) (pulid.ID, error) {
+	if req.IdempotencyKey == "" {
+		return pulid.Nil, nil
+	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (pulid.ID, error) {
+		sp := shipmentcol.ShipmentColumns
+		var id pulid.ID
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*shipment.Shipment)(nil)).
+			Column(sp.ID.Bare()).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
+					Where(sp.IdempotencyKey.Eq(), req.IdempotencyKey)
+			}).
+			Limit(1).
+			Scan(ctx, &id)
+		if errors.Is(err, sql.ErrNoRows) {
+			return pulid.Nil, nil
+		}
+		if err != nil {
+			return pulid.Nil, err
+		}
+		return id, nil
+	})
+}
+
+func (r *repository) CheckForDuplicateBOLs(
+	ctx context.Context,
+	req *shipmentports.DuplicateBOLCheckRequest,
+) ([]*shipmentports.DuplicateBOLResult, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*shipmentports.DuplicateBOLResult, error) {
+			sp := shipmentcol.ShipmentColumns
+			duplicates := make([]*shipmentports.DuplicateBOLResult, 0)
+
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Column(sp.ID.Bare(), sp.ProNumber.Bare()).
+				Model((*shipment.Shipment)(nil)).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
+						Where(sp.BOL.Eq(), req.BOL).
+						Where(sp.Status.Ne(), shipment.StatusCanceled)
+				})
+
+			if req.ShipmentID != nil {
+				query = query.Where(sp.ID.Ne(), pulid.ConvertFromPtr(req.ShipmentID))
+			}
+
+			if err := query.Scan(ctx, &duplicates); err != nil {
+				return nil, err
+			}
+
+			return duplicates, nil
+		},
+	)
+}
+
+func (r *repository) BulkDuplicate(
+	ctx context.Context,
+	req *shipmentports.BulkDuplicateShipmentRequest,
+) ([]*shipment.Shipment, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
+		quotaReq := shipmentQuotaRequest(
+			req.TenantInfo.OrgID,
+			req.TenantInfo.BuID,
+			int64(max(req.Count, 0)),
+		)
+		if err := quotaservice.Preflight(ctx, r.quota, &quotaReq); err != nil {
+			return nil, err
+		}
+
+		source, err := r.getDuplicateSource(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+
+		locationCode, businessUnitCode, err := r.resolveSequenceCodes(ctx, source)
+		if err != nil {
+			return nil, err
+		}
+
+		proNumbers, err := r.generator.GenerateBatch(ctx, &seqgen.GenerateRequest{
+			Type:             tenant.SequenceTypeProNumber,
+			OrgID:            req.TenantInfo.OrgID,
+			BuID:             req.TenantInfo.BuID,
+			Count:            req.Count,
+			LocationCode:     locationCode,
+			BusinessUnitCode: businessUnitCode,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		graph := buildDuplicatedShipmentGraph(
+			source,
+			proNumbers,
+			req.DateAnchor(timeutils.NowUnix()),
+			req.TenantInfo.UserID,
+		)
+
+		// Every duplicated shipment keeps the "everything has a commercial parent"
+		// invariant: each one gets its own single-leg auto-order, numbered from the same
+		// pre-tx batch pattern as pro numbers.
+		orderNumbers, err := r.generator.GenerateBatch(ctx, &seqgen.GenerateRequest{
+			Type:             tenant.SequenceTypeOrder,
+			OrgID:            req.TenantInfo.OrgID,
+			BuID:             req.TenantInfo.BuID,
+			Count:            len(graph.shipments),
+			LocationCode:     locationCode,
+			BusinessUnitCode: businessUnitCode,
+		})
+		if err != nil {
+			return nil, err
+		}
+		autoOrders := make([]*order.Order, 0, len(graph.shipments))
+		for idx, duplicated := range graph.shipments {
+			if duplicated == nil || idx >= len(orderNumbers) {
+				continue
+			}
+			autoOrder := BuildAutoOrder(duplicated, orderNumbers[idx])
+			duplicated.OrderID = autoOrder.ID
+			autoOrders = append(autoOrders, autoOrder)
+		}
+
+		quotaReq.Quantity = int64(len(graph.shipments))
+		err = r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			if quotaErr := quotaservice.EnforceAll(c, r.quota, quotaReq); quotaErr != nil {
+				return quotaErr
+			}
+
+			if len(autoOrders) > 0 {
+				if _, insertErr := tx.
+					NewInsert().
+					Model(&autoOrders).
+					Returning("NULL").
+					Exec(c); insertErr != nil {
+					return insertErr
+				}
+			}
+
+			if len(graph.shipments) > 0 {
+				if _, insertErr := tx.
+					NewInsert().
+					Model(&graph.shipments).
+					Returning("NULL").
+					Exec(c); insertErr != nil {
+					return insertErr
+				}
+			}
+
+			if len(graph.moves) > 0 {
+				if _, insertErr := tx.
+					NewInsert().
+					Model(&graph.moves).
+					Returning("NULL").
+					Exec(c); insertErr != nil {
+					return insertErr
+				}
+			}
+
+			if len(graph.stops) > 0 {
+				if _, insertErr := tx.
+					NewInsert().
+					Model(&graph.stops).
+					Returning("NULL").
+					Exec(c); insertErr != nil {
+					return insertErr
+				}
+			}
+
+			if len(graph.additionalCharges) > 0 {
+				if _, insertErr := tx.
+					NewInsert().
+					Model(&graph.additionalCharges).
+					Returning("NULL").
+					Exec(c); insertErr != nil {
+					return insertErr
+				}
+			}
+
+			if len(graph.chargeAllocations) > 0 {
+				if _, insertErr := tx.
+					NewInsert().
+					Model(&graph.chargeAllocations).
+					Returning("NULL").
+					Exec(c); insertErr != nil {
+					return insertErr
+				}
+			}
+
+			if len(graph.commodities) > 0 {
+				if _, insertErr := tx.
+					NewInsert().
+					Model(&graph.commodities).
+					Returning("NULL").
+					Exec(c); insertErr != nil {
+					return insertErr
+				}
+			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, dberror.MapRetryableTransactionError(
+				err,
+				"Shipment is busy. Retry the request.",
+			)
+		}
+
+		return graph.shipments, nil
+	})
+}
+
+func (r *repository) PlanDuplicate(
+	ctx context.Context,
+	req *shipmentports.BulkDuplicateShipmentRequest,
+) (*shipmentports.ShipmentDuplicatePlan, error) {
+	source, err := r.getDuplicateSource(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	graph := buildDuplicatedShipmentGraph(
+		source,
+		make([]string, req.Count),
+		req.DateAnchor(timeutils.NowUnix()),
+		req.TenantInfo.UserID,
+	)
+
+	return &shipmentports.ShipmentDuplicatePlan{Source: source, Copies: graph.shipments}, nil
+}
+
+func (r *repository) getDuplicateSource(
+	ctx context.Context,
+	req *shipmentports.BulkDuplicateShipmentRequest,
+) (*shipment.Shipment, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
+		return LoadShipmentGraphSource(
+			ctx,
+			r.db.DBForContext(ctx),
+			req.TenantInfo,
+			req.ShipmentID,
+		)
+	})
+}
+
+func (r *repository) resolveSequenceCodes(
+	ctx context.Context,
+	entity *shipment.Shipment,
+) (locationCode, businessUnitCode string, err error) {
+	return dbtx.Write2(
+		ctx,
+		r.db,
+		func(ctx context.Context) (locationCode, businessUnitCode string, err error) {
+			return ResolveSequenceCodes(ctx, r.db.DBForContext(ctx), entity)
+		},
+	)
+}
+
+// ResolveSequenceCodes resolves the location and business-unit codes feeding
+// pro-number/order-number sequence generation for copies of the given shipment.
+func ResolveSequenceCodes(
+	ctx context.Context,
+	db bun.IDB,
+	entity *shipment.Shipment,
+) (locationCode, businessUnitCode string, err error) {
+	bu := new(tenant.BusinessUnit)
+	err = db.NewSelect().
+		Model(bu).
+		Column(tenantcol.BusinessUnitColumns.Code.Bare()).
+		Where(tenantcol.BusinessUnitColumns.ID.Eq(), entity.BusinessUnitID).
+		Scan(ctx)
+	if err != nil {
+		return "", "", dberror.HandleNotFoundError(err, "Sequence")
+	}
+
+	businessUnitCode = bu.Code
+
+	if len(entity.Moves) > 0 && len(entity.Moves[0].Stops) > 0 {
+		var code string
+		err = db.NewSelect().
+			TableExpr("locations").
+			Column("code").
+			Where("id = ?", entity.Moves[0].Stops[0].LocationID).
+			Scan(ctx, &code)
+		if err != nil {
+			return "", "", dberror.HandleNotFoundError(err, "Sequence")
+		}
+
+		locationCode = code
+	}
+
+	return locationCode, businessUnitCode, nil
+}
+
+func shipmentQuotaRequest(orgID, buID pulid.ID, quantity int64) platformplanports.QuotaRequest {
+	return platformplanports.QuotaRequest{
+		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+		Meter:      platformcatalog.MeterShipmentsTotal,
+		Quantity:   quantity,
+	}
+}

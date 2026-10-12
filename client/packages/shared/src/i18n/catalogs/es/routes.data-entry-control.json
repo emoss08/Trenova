@@ -1,0 +1,14 @@
+{
+  "Case formatting rules": "Reglas de formato de mayúsculas",
+  "City case": "Mayúsculas de la ciudad",
+  "Code case": "Mayúsculas del código",
+  "Configure case formatting rules for data entry across the system": "Configure las reglas de formato de mayúsculas para la introducción de datos en todo el sistema",
+  "Control how text is automatically formatted when entering data. These rules apply system-wide to standardize codes, names, emails, and city fields.": "Controle cómo se formatea automáticamente el texto al introducir datos. Estas reglas se aplican en todo el sistema para estandarizar códigos, nombres, correos y campos de ciudad.",
+  "Data entry control": "Control de introducción de datos",
+  "Email case": "Mayúsculas del correo",
+  "Formatting applied to city name fields.": "Formato aplicado a los campos de nombre de ciudad.",
+  "Formatting applied to code fields (e.g., equipment codes, fleet codes).": "Formato aplicado a los campos de código (p. ej., códigos de equipo, códigos de flota).",
+  "Formatting applied to email address fields.": "Formato aplicado a los campos de dirección de correo.",
+  "Formatting applied to name fields (e.g., commodity names, hazmat names).": "Formato aplicado a los campos de nombre (p. ej., nombres de mercancías, nombres de materiales peligrosos).",
+  "Name case": "Mayúsculas del nombre"
+}

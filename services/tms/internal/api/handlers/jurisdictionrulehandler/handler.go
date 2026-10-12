@@ -6,9 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
+	"github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,14 +20,14 @@ import (
 type Params struct {
 	fx.In
 
-	Service              services.JurisdictionRuleService
+	Service              jurisdictionruleports.JurisdictionRuleService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Logger               *zap.Logger
 }
 
 type Handler struct {
-	service services.JurisdictionRuleService
+	service jurisdictionruleports.JurisdictionRuleService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 	logger  *zap.Logger
@@ -91,13 +91,16 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*jurisdictionrule.JurisdictionRule], error) {
-			return h.service.List(c.Request.Context(), &services.ListJurisdictionRulesRequest{
-				Filter: req,
-				VerificationState: jurisdictionrule.VerificationState(
-					helpers.QueryStringTrimmed(c, "verificationState"),
-				),
-				Status: jurisdictionrule.Status(helpers.QueryStringTrimmed(c, "status")),
-			})
+			return h.service.List(
+				c.Request.Context(),
+				&jurisdictionruleports.ListJurisdictionRulesRequest{
+					Filter: req,
+					VerificationState: jurisdictionrule.VerificationState(
+						helpers.QueryStringTrimmed(c, "verificationState"),
+					),
+					Status: jurisdictionrule.Status(helpers.QueryStringTrimmed(c, "status")),
+				},
+			)
 		},
 	)
 }
@@ -246,7 +249,7 @@ func (h *Handler) verify(c *gin.Context) {
 
 	verified, err := h.service.Verify(
 		c.Request.Context(),
-		&services.VerifyJurisdictionRuleRequest{
+		&jurisdictionruleports.VerifyJurisdictionRuleRequest{
 			RuleID:     ruleID,
 			State:      jurisdictionrule.VerificationState(body.VerificationState),
 			SourceNote: body.SourceNote,

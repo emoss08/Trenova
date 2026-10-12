@@ -7,14 +7,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/businesscentral"
 )
 
 var (
-	_ services.AccountingReferenceReader  = (*Connector)(nil)
-	_ services.AccountingReferenceCreator = (*Connector)(nil)
+	_ accountingsyncports.AccountingReferenceReader  = (*Connector)(nil)
+	_ accountingsyncports.AccountingReferenceCreator = (*Connector)(nil)
 )
 
 const (
@@ -39,9 +39,9 @@ func (c *Connector) MaxReferencePageSize() int {
 
 func (c *Connector) ListReference(
 	ctx context.Context,
-	req *services.AccountingReferencePageRequest,
-) (*services.AccountingReferencePage, error) {
-	client, err := c.client(services.AccountingDocumentAuth{
+	req *accountingsyncports.AccountingReferencePageRequest,
+) (*accountingsyncports.AccountingReferencePage, error) {
+	client, err := c.client(accountingsyncports.AccountingDocumentAuth{
 		RealmID:     req.RealmID,
 		AccessToken: req.AccessToken,
 	})
@@ -52,7 +52,7 @@ func (c *Connector) ListReference(
 	if err != nil {
 		return nil, err
 	}
-	return &services.AccountingReferencePage{Objects: objects}, nil
+	return &accountingsyncports.AccountingReferencePage{Objects: objects}, nil
 }
 
 func listReference(
@@ -108,9 +108,9 @@ func referenceKindOf(kind businesscentral.PartyKind) accountingsync.ReferenceKin
 
 func (c *Connector) CreateReference(
 	ctx context.Context,
-	req *services.AccountingCreateReferenceRequest,
+	req *accountingsyncports.AccountingCreateReferenceRequest,
 ) (*accountingsync.AccountingReferenceObject, error) {
-	client, err := c.client(services.AccountingDocumentAuth{
+	client, err := c.client(accountingsyncports.AccountingDocumentAuth{
 		RealmID:     req.RealmID,
 		AccessToken: req.AccessToken,
 	})
@@ -144,7 +144,7 @@ func (c *Connector) CreateReference(
 func (c *Connector) createItem(
 	ctx context.Context,
 	client *businesscentral.Client,
-	draft *services.AccountingItemDraft,
+	draft *accountingsyncports.AccountingItemDraft,
 ) (*accountingsync.AccountingReferenceObject, error) {
 	name := c.SanitizeName(accountingsync.ReferenceKindItem, draft.Name)
 	items, err := client.Items(ctx, nil)
@@ -170,7 +170,7 @@ func createParty(
 	ctx context.Context,
 	client *businesscentral.Client,
 	kind businesscentral.PartyKind,
-	draft *services.AccountingPartyDraft,
+	draft *accountingsyncports.AccountingPartyDraft,
 ) (*businesscentral.Party, error) {
 	input := partyInputOf(draft)
 	if input.DisplayName == "" {
@@ -194,7 +194,7 @@ func (c *Connector) SanitizeName(_ accountingsync.ReferenceKind, name string) st
 	return cleanText(name, maxNameLength)
 }
 
-func partyInputOf(draft *services.AccountingPartyDraft) *businesscentral.PartyInput {
+func partyInputOf(draft *accountingsyncports.AccountingPartyDraft) *businesscentral.PartyInput {
 	return &businesscentral.PartyInput{
 		DisplayName:  cleanText(draft.DisplayName, maxNameLength),
 		Email:        cleanText(draft.Email, maxEmailLength),
@@ -207,16 +207,16 @@ func partyInputOf(draft *services.AccountingPartyDraft) *businesscentral.PartyIn
 }
 
 type partyWrite struct {
-	auth       services.AccountingDocumentAuth
+	auth       accountingsyncports.AccountingDocumentAuth
 	kind       businesscentral.PartyKind
 	externalID string
-	party      *services.AccountingPartyDraft
+	party      *accountingsyncports.AccountingPartyDraft
 }
 
 func (c *Connector) upsertParty(
 	ctx context.Context,
 	write *partyWrite,
-) (*services.AccountingDocumentResult, error) {
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	client, err := c.client(write.auth)
 	if err != nil {
 		return nil, err
@@ -230,7 +230,7 @@ func (c *Connector) upsertParty(
 	if err != nil {
 		return nil, err
 	}
-	return &services.AccountingDocumentResult{
+	return &accountingsyncports.AccountingDocumentResult{
 		ExternalID: saved.ID,
 		DocNumber:  saved.DisplayName,
 		Refs:       map[string]string{},
@@ -242,7 +242,7 @@ func updateParty(
 	client *businesscentral.Client,
 	kind businesscentral.PartyKind,
 	id string,
-	draft *services.AccountingPartyDraft,
+	draft *accountingsyncports.AccountingPartyDraft,
 ) (*businesscentral.Party, error) {
 	current, err := client.Party(ctx, kind, id)
 	if err != nil {

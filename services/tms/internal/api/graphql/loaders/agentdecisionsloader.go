@@ -3,8 +3,8 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -14,14 +14,14 @@ import (
 type decisionsByProposalsLister interface {
 	ListByProposals(
 		ctx context.Context,
-		req repositories.ListAgentDecisionsByProposalsRequest,
+		req agentports.ListAgentDecisionsByProposalsRequest,
 	) ([]*agent.AgentDecision, error)
 }
 
 type AgentDecisionsByProposalIDLoaderFactoryParams struct {
 	fx.In
 
-	Decisions repositories.AgentDecisionRepository
+	Decisions agentports.AgentDecisionRepository
 }
 
 // AgentDecisionsByProposalIDLoaderFactory reads the decisions behind a page
@@ -37,7 +37,7 @@ func NewAgentDecisionsByProposalIDLoaderFactory(
 	return &AgentDecisionsByProposalIDLoaderFactory{decisions: p.Decisions}
 }
 
-func (f *AgentDecisionsByProposalIDLoaderFactory) NewForTenant(
+func newAgentDecisionsByProposalIDLoader(f *AgentDecisionsByProposalIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*agent.AgentDecision] {
 	return newLoader(f.batchFunc(tenantInfo))
@@ -50,7 +50,7 @@ func (f *AgentDecisionsByProposalIDLoaderFactory) batchFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*agent.AgentDecision, error) {
 			decisions, err := f.decisions.ListByProposals(
 				ctx,
-				repositories.ListAgentDecisionsByProposalsRequest{
+				agentports.ListAgentDecisionsByProposalsRequest{
 					ProposalIDs: ids,
 					TenantInfo:  tenantInfo,
 				},

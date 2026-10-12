@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/storage"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/lifecycle"
 	commonpb "go.temporal.io/api/common/v1"
@@ -61,7 +61,7 @@ type TemporalPayloadStore struct {
 
 var _ converter.StorageDriver = (*TemporalPayloadStore)(nil)
 
-func NewTemporalPayloadStore(client storage.Client) (*TemporalPayloadStore, error) {
+func NewTemporalPayloadStore(client kernelports.Client) (*TemporalPayloadStore, error) {
 	c, ok := client.(*Client)
 	if !ok {
 		return nil, fmt.Errorf(

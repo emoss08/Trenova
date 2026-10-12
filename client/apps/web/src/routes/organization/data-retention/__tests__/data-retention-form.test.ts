@@ -10,7 +10,7 @@ import {
 } from "../data-retention-form";
 
 /*
-The limits are the server's (services/tms/internal/core/domain/tenant/
+The limits are the server's (services/tms/internal/modules/identity/domain/tenant/
 dataretention.go): DefaultAIAuditRetentionDays 2555, seven years, and
 MinAIAuditRetentionDays 365. The REST field is aiAuditRetentionPeriod.
 */

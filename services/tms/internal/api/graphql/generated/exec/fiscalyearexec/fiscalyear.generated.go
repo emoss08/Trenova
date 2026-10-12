@@ -9,9 +9,9 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -63,7 +63,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fiscalyear.FiscalYear)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFiscalYearStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfiscalyearᚐStatus),
+				Marshal: gqlexec.Marshal(marshalNFiscalYearStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalyearᚐStatus),
 			},
 			{
 				Name:     "year",
@@ -183,7 +183,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fiscalyear.FiscalYear)
 					return obj.BusinessUnit, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit),
+				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit),
 			},
 			{
 				Name:      "organization",
@@ -193,7 +193,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fiscalyear.FiscalYear)
 					return obj.Organization, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization),
+				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization),
 			},
 			{
 				Name:       "periods",
@@ -206,7 +206,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fiscalyear.FiscalYear)
 					return gqlexec.Resolver[resolverFiscalYear](ec, "FiscalYear").Periods(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNFiscalPeriod2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfiscalperiodᚐFiscalPeriodᚄ),
+				Marshal: gqlexec.Marshal(marshalNFiscalPeriod2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐFiscalPeriodᚄ),
 			},
 		}},
 		{Object: "FiscalYearConnection", Fields: []*gqlexec.Field{
@@ -252,7 +252,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FiscalYearEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFiscalYear2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfiscalyearᚐFiscalYear),
+				Marshal: gqlexec.Marshal(marshalNFiscalYear2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalyearᚐFiscalYear),
 			},
 			{
 				Name:     "cursor",
@@ -291,7 +291,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").FiscalYear(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOFiscalYear2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfiscalyearᚐFiscalYear),
+				Marshal: gqlexec.Marshal(marshalOFiscalYear2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalyearᚐFiscalYear),
 			},
 		}},
 	},
@@ -367,15 +367,15 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNFiscalPeriod2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfiscalperiodᚐFiscalPeriodᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*fiscalperiod.FiscalPeriod) graphql.Marshaler {
+func marshalNFiscalPeriod2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐFiscalPeriodᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*fiscalperiod.FiscalPeriod) graphql.Marshaler {
 	return gqlexec.List[*fiscalperiod.FiscalPeriod]{
-		Elem:        marshalNFiscalPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfiscalperiodᚐFiscalPeriod,
+		Elem:        marshalNFiscalPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐFiscalPeriod,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNFiscalPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfiscalperiodᚐFiscalPeriod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fiscalperiod.FiscalPeriod) graphql.Marshaler {
+func marshalNFiscalPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐFiscalPeriod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fiscalperiod.FiscalPeriod) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -383,7 +383,7 @@ func marshalNFiscalPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return ec.MarshalType(ctx, sel, "FiscalPeriod", v)
 }
 
-func marshalNFiscalYear2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfiscalyearᚐFiscalYear(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fiscalyear.FiscalYear) graphql.Marshaler {
+func marshalNFiscalYear2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalyearᚐFiscalYear(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fiscalyear.FiscalYear) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -415,7 +415,7 @@ func marshalNFiscalYearEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi
 	return ec.MarshalType(ctx, sel, "FiscalYearEdge", v)
 }
 
-func marshalNFiscalYearStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfiscalyearᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fiscalyear.Status) graphql.Marshaler {
+func marshalNFiscalYearStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalyearᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fiscalyear.Status) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -471,14 +471,14 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
+func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "BusinessUnit", v)
 }
 
-func marshalOFiscalYear2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfiscalyearᚐFiscalYear(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fiscalyear.FiscalYear) graphql.Marshaler {
+func marshalOFiscalYear2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalyearᚐFiscalYear(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fiscalyear.FiscalYear) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -493,7 +493,7 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
+func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

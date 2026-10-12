@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -17,7 +17,7 @@ func trailerRelationIncludes(
 	nodePathPrefix string,
 	includeEquipmentDetails *bool,
 	includeFleetDetails *bool,
-) repositories.TrailerRelationIncludes {
+) trailerports.TrailerRelationIncludes {
 	return trailerRelationIncludesForFields(
 		func(path string) bool {
 			return graphql.FieldRequested(ctx, path)
@@ -33,7 +33,7 @@ func trailerRelationIncludesForFields(
 	nodePathPrefix string,
 	includeEquipmentDetails *bool,
 	includeFleetDetails *bool,
-) repositories.TrailerRelationIncludes {
+) trailerports.TrailerRelationIncludes {
 	equipmentDetailsAllowed := includeEquipmentDetails == nil || *includeEquipmentDetails
 	fleetDetailsAllowed := includeFleetDetails == nil || *includeFleetDetails
 	selection := projection.Select(
@@ -48,8 +48,9 @@ func trailerRelationIncludesForFields(
 		},
 	)
 	fleetCodeSelection, fleetCodeSelected := selection.Relations["fleetCode"]
+	_, ownerWorkerSelected := selection.Relations["ownerWorker"]
 
-	includes := repositories.TrailerRelationIncludes{
+	includes := trailerports.TrailerRelationIncludes{
 		IncludeBusinessUnit:          selection.HasRelation("businessUnit"),
 		IncludeOrganization:          selection.HasRelation("organization"),
 		IncludeRegistrationState:     selection.HasRelation("registrationState"),
@@ -57,6 +58,7 @@ func trailerRelationIncludesForFields(
 		IncludeEquipmentManufacturer: selection.HasRelation("equipmentManufacturer"),
 		IncludeFleetCode:             fleetCodeSelected,
 		IncludeFleetManager:          fleetCodeSelection.Selection.HasRelation("manager"),
+		IncludeOwnerWorker:           ownerWorkerSelected,
 		IncludeLastKnownLocation:     selection.HasSpecial("lastKnownLocation"),
 		IncludeCustomFields:          selection.HasSpecial("customFields"),
 		TrailerColumns:               selection.Columns,
@@ -69,6 +71,9 @@ func trailerRelationIncludesForFields(
 	}
 	if includes.IncludeFleetCode {
 		includes.FleetCodeColumns = selection.RelationColumns("fleetCode")
+	}
+	if includes.IncludeOwnerWorker {
+		includes.OwnerWorkerColumns = selection.RelationColumns("ownerWorker")
 	}
 
 	return includes
@@ -128,7 +133,9 @@ func lastKnownLocationReference(entity *trailer.Trailer) *gqlmodel.LocationRefer
 	}
 
 	return &gqlmodel.LocationReference{
-		ID:   entity.LastKnownLocationID.String(),
-		Name: entity.LastKnownLocationName,
+		ID:        entity.LastKnownLocationID.String(),
+		Name:      entity.LastKnownLocationName,
+		Latitude:  entity.LastKnownLocationLatitude,
+		Longitude: entity.LastKnownLocationLongitude,
 	}
 }

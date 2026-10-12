@@ -1,21 +1,15 @@
-import logoRainbow from "@/assets/logo.webp";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useReducedMotion } from "motion/react";
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type ReactNode,
-  type RefObject,
-} from "react";
+import { ArrowLeftIcon } from "@trenova/shared/components/icons";
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { Link } from "react-router";
 
 const COUNT_DURATION_MS = 420;
 
 /**
  * Eases a displayed number towards `target`, so the permission tally on the role step
- * and the panel's live figures count rather than snap.
+ * counts rather than snaps.
  */
 function useAnimatedNumber(target: number, enabled: boolean): number {
   // Holds the interpolated value only while a tween is in flight, and returns to null
@@ -67,18 +61,72 @@ export function StepCrumbs({ left, right }: { left: ReactNode; right: ReactNode 
   );
 }
 
-export function StepHeading({ title, children }: { title: string; children?: ReactNode }) {
+/**
+ * The title and subline every sign-in screen opens with. Its 28px bottom margin is the
+ * design's form gap plus the head's own spacing, since the heading sits beside the form.
+ */
+export function AuthHeading({ title, children }: { title: ReactNode; children?: ReactNode }) {
   return (
-    <>
-      <h1 className="m-0 text-xl font-semibold tracking-[-0.028em]">{title}</h1>
-      {children ? <p className="text-muted-foreground mt-1 mb-0 text-sm">{children}</p> : null}
-    </>
+    <div className="mb-7 flex flex-col gap-2">
+      <h1 className="text-auth-title m-0 font-[550] text-balance">{title}</h1>
+      {children ? (
+        <p className="text-auth-body text-muted-foreground m-0 text-pretty">{children}</p>
+      ) : null}
+    </div>
+  );
+}
+
+const INLINE_LINK_CLASS =
+  "text-foreground decoration-foreground/30 hover:decoration-foreground font-medium underline underline-offset-[3px] transition-[text-decoration-color]";
+
+/** An in-app link inside running text, such as the one under a heading. */
+export function AuthLink({ to, children }: { to: string; children: ReactNode }) {
+  return (
+    <Link to={to} className={INLINE_LINK_CLASS}>
+      {children}
+    </Link>
+  );
+}
+
+/** A low-emphasis text action: "Forgot?", "Use a different address", "Start over". */
+export function AuthQuietButton({
+  onClick,
+  children,
+  disabled,
+}: {
+  onClick: () => void;
+  children: ReactNode;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="ui-focus-ring text-muted-foreground hover:text-foreground cursor-pointer rounded-sm bg-transparent p-0 text-base transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {children}
+    </button>
+  );
+}
+
+/** The "← Back to …" action at the top of a screen off the main path. */
+export function AuthBackButton({ onClick, children }: { onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="ui-focus-ring text-muted-foreground hover:text-foreground mb-2 inline-flex cursor-pointer items-center gap-[7px] self-start rounded-sm bg-transparent p-0 text-base transition-[color,gap] duration-200 hover:gap-2.5"
+    >
+      <ArrowLeftIcon className="size-3.5" />
+      {children}
+    </button>
   );
 }
 
 export function KeyHint({ children }: { children: ReactNode }) {
   return (
-    <span className="border-border-2 text-subtle-foreground font-table rounded-md border px-[5px] py-px text-2xs whitespace-nowrap">
+    <span className="border-border-2 text-subtle-foreground font-table text-2xs rounded-md border px-[5px] py-px whitespace-nowrap">
       {children}
     </span>
   );
@@ -94,29 +142,11 @@ export function AuthTray({ onBack, hints }: { onBack: () => void; hints: ReactNo
         onClick={onBack}
         className="text-muted-foreground hover:text-foreground inline-flex cursor-pointer items-center gap-1.5 text-sm transition-colors duration-150"
       >
-        <BackArrow />
+        <ArrowLeftIcon className="size-[13px]" />
         {t("Back")}
       </button>
       <span className="hidden items-center gap-1.5 sm:flex">{hints}</span>
     </div>
-  );
-}
-
-function BackArrow() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="13"
-      height="13"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M19 12H5M11 6l-6 6 6 6" />
-    </svg>
   );
 }
 
@@ -173,14 +203,14 @@ export function AuthOption({
         ) : null}
       </span>
       {chip ? (
-        <span className="border-border-2 text-subtle-foreground rounded-full border px-2 py-0.5 text-2xs font-medium whitespace-nowrap">
+        <span className="border-border-2 text-subtle-foreground text-2xs rounded-full border px-2 py-0.5 font-medium whitespace-nowrap">
           {chip}
         </span>
       ) : null}
       {shortcut ? (
         <span
           aria-hidden="true"
-          className="border-border-2 text-subtle-foreground font-table hidden rounded-md border px-[5px] py-px text-2xs opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 sm:inline"
+          className="border-border-2 text-subtle-foreground font-table text-2xs hidden rounded-md border px-[5px] py-px opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 sm:inline"
         >
           {shortcut}
         </span>
@@ -283,52 +313,4 @@ export function useOptionListKeyboard({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [enabled, listRef]);
-}
-
-/**
- * Measures the active step and animates the card to its height, so swapping steps
- * grows or shrinks the card instead of snapping. The first measurement is applied
- * without a transition — animating up from an unset height would slide the card open
- * on every page load.
- */
-export function useMorphHeight() {
-  const outerRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
-  const [animated, setAnimated] = useState(false);
-
-  useLayoutEffect(() => {
-    const outer = outerRef.current;
-    const inner = innerRef.current;
-    if (!outer || !inner) {
-      return;
-    }
-
-    const apply = () => {
-      outer.style.height = `${inner.offsetHeight}px`;
-    };
-
-    apply();
-    const observer = new ResizeObserver(apply);
-    observer.observe(inner);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => setAnimated(true));
-    return () => cancelAnimationFrame(frame);
-  }, []);
-
-  return { outerRef, innerRef, animated };
-}
-
-/** The wordmark above the card on narrow screens, where the ambient panel is hidden. */
-export function AuthMobileBrand() {
-  const t = useT();
-
-  return (
-    <div className="mb-1 flex items-center justify-center gap-2.5 min-[900px]:hidden">
-      <img src={logoRainbow} alt="" className="size-6 object-contain" />
-      <span className="text-lg font-semibold tracking-[-0.02em]">{t("Trenova")}</span>
-    </div>
-  );
 }

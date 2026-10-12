@@ -5,6 +5,7 @@ import type {
   ShipmentBillingRequirement,
 } from "@trenova/shared/types/shipment";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const DOCUMENT_REJECTION_REASON_MAX_LENGTH = 1000;
 
@@ -12,11 +13,10 @@ export const rejectDocumentFormSchema = z.object({
   reason: z
     .string()
     .trim()
-    .min(1, "Say why the document is rejected")
-    .max(
-      DOCUMENT_REJECTION_REASON_MAX_LENGTH,
-      "Rejection reason cannot be longer than 1000 characters",
-    ),
+    .min(1, { error: () => translate("Say why the document is rejected") })
+    .max(DOCUMENT_REJECTION_REASON_MAX_LENGTH, {
+      error: () => translate("Rejection reason cannot be longer than 1000 characters"),
+    }),
 });
 
 export type RejectDocumentFormValues = z.infer<typeof rejectDocumentFormSchema>;
@@ -58,7 +58,10 @@ export function canRejectDocument(
   return state === "approved" || state === "awaiting" || state === "unreviewed";
 }
 
-export const DOCUMENT_REVIEW_PHASE: Record<Exclude<DocumentReviewState, "unreviewed" | "inactive">, StatusPhase> = {
+export const DOCUMENT_REVIEW_PHASE: Record<
+  Exclude<DocumentReviewState, "unreviewed" | "inactive">,
+  StatusPhase
+> = {
   approved: "complete",
   rejected: "failed",
   awaiting: "awaiting",

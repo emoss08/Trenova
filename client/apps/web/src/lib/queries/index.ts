@@ -1,5 +1,6 @@
 import { mergeQueryKeys } from "@lukemorales/query-key-factory";
 import { accountingControl } from "./accounting-control";
+import { agentBuilder } from "./agent-builder";
 import { agentPreview } from "./agent-preview";
 import { agentRun } from "./agent-run";
 import { agentQuality } from "./agent-quality";
@@ -21,8 +22,10 @@ import { manualJournal } from "./manual-journal";
 import { audit } from "./audit";
 import { briefing } from "./briefing";
 import { billingControl } from "./billing-control";
+import { caseChecklist } from "./case-checklist";
 import { billingQueue } from "./billing-queue";
 import { customer } from "./customer";
+import { rateAgreement } from "./rate-agreement";
 import { customerPayment } from "./customer-payment";
 import { dataEntryControl } from "./data-entry-control";
 import { distanceControl } from "./distance-control";
@@ -36,6 +39,7 @@ import { email } from "./email";
 import { formulaTemplate } from "./formula-template";
 import { googleMaps } from "./google-maps";
 import { agentExtension } from "./agent-extension";
+import { aiControl } from "./ai-control";
 import { aiProvider } from "./ai-provider";
 import { aiRetrieval } from "./ai-retrieval";
 import { assistant } from "./assistant";
@@ -46,6 +50,7 @@ import { invoiceAdjustment } from "./invoice-adjustment";
 import { invoiceAdjustmentControl } from "./invoice-adjustment-control";
 import { invoiceShare } from "./invoice-share";
 import { location } from "./location";
+import { order } from "./order";
 import { organization } from "./organization";
 import { pageFavoite } from "./page-favorite";
 import { reports } from "./reports";
@@ -57,11 +62,16 @@ import { recurringShipment } from "./recurring-shipment";
 import { shipment } from "./shipment";
 import { shipmentBoard } from "./shipment-board";
 import { shipmentControl } from "./shipment-control";
+import { tractor } from "./tractor";
+import { trailer } from "./trailer";
 import { homeLayout } from "./home-layout";
 import { sidebarPreferences } from "./sidebar-preferences";
 import { notification } from "@trenova/shared/lib/queries/notification";
 import { tableChangeAlert } from "./table-change-alert";
 import { tableConfiguration } from "./table-configuration";
+import { tableLayout } from "./table-layout";
+import { dataTableInsight } from "./data-table-insight";
+import { bulkEdit } from "./bulk-edit";
 import { user, userOrganization } from "./user";
 import { weatherAlert } from "./weather-alert";
 import { weatherRadar } from "./weather-radar";
@@ -69,6 +79,7 @@ import { worker } from "./worker";
 import { exchangeRate } from "./exchange-rate";
 import { fuelSurcharge } from "./fuel-surcharge";
 import { costControl } from "./cost-control";
+import { carrier } from "./carrier";
 import { carrierIntelSettings } from "./carrier-intel-settings";
 import { telematics } from "./telematics";
 
@@ -83,12 +94,14 @@ const financialQueries = mergeQueryKeys(
   journalReversal,
   manualJournal,
   billingControl,
+  caseChecklist,
   billingQueue,
   invoice,
   invoiceAdjustment,
   invoiceAdjustmentControl,
   invoiceShare,
   customer,
+  rateAgreement,
   customerPayment,
   formulaTemplate,
   sequenceConfig,
@@ -107,7 +120,10 @@ const operationsQueries = mergeQueryKeys(
   documentControl,
   documentParsingRule,
   location,
+  order,
   shipment,
+  tractor,
+  trailer,
   shipmentBoard,
   rateQuote,
   recurringShipment,
@@ -124,6 +140,9 @@ const workspaceQueries = mergeQueryKeys(
   userOrganization,
   pageFavoite,
   tableConfiguration,
+  tableLayout,
+  dataTableInsight,
+  bulkEdit,
   homeLayout,
   sidebarPreferences,
   user,
@@ -134,6 +153,7 @@ const workspaceQueries = mergeQueryKeys(
   organization,
   integration,
   accountingSync,
+  aiControl,
   aiProvider,
   aiRetrieval,
   agentExtension,
@@ -141,9 +161,11 @@ const workspaceQueries = mergeQueryKeys(
   agentRun,
   assistant,
   insight,
+  carrier,
   carrierIntelSettings,
   agentQuality,
   agentSafety,
+  agentBuilder,
   agentScorecard,
   aiAudit,
   attention,

@@ -32,6 +32,8 @@ import { getColumns } from "./pto-columns";
 import { PTOPanel } from "./pto-panel";
 import { PTOReasonDialog, type PTOReasonDialogMode } from "./pto-reason-dialog";
 import { usePTOInvalidation } from "./use-pto-invalidation";
+import { translate } from "@trenova/shared/i18n/runtime";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 type PendingApproval = {
   ids: string[];
@@ -86,15 +88,26 @@ export default function PTODataTable() {
         action: "Approve",
       });
       notifyBulkOutcome(bulkPayloadToOutcome(payload), {
-        entity: "PTO request",
-        verbPast: PTO_ACTION_LABELS.Approve.verbPast,
+        succeeded: (count) =>
+          t("Approved {0, plural, one {# PTO request} other {# PTO requests}}", count),
+        partial: (succeeded, failed) =>
+          t(
+            "Approved {0, plural, one {# PTO request} other {# PTO requests}}; {1} failed",
+            succeeded,
+            failed,
+          ),
+        allFailed: (failed) =>
+          t(
+            "{0, plural, one {The selected PTO request failed} other {All # selected PTO requests failed}}",
+            failed,
+          ),
         skipped: pendingApproval.skipped,
       });
       await invalidate();
       setPendingApproval(null);
     } catch (error) {
       toast.error(t("Failed to approve PTO"), {
-        description: error instanceof Error ? error.message : "Please try again.",
+        description: error instanceof Error ? error.message : translate("Please try again."),
       });
     } finally {
       setApproving(false);
@@ -106,7 +119,7 @@ export default function PTODataTable() {
     if (canApprove) {
       actions.push({
         id: "approve",
-        label: PTO_ACTION_LABELS.Approve.label,
+        label: sourceLabels(PTO_ACTION_LABELS.Approve).label,
         icon: CheckCircleIcon,
         onClick: (rows) => openAction(rows, "Approve"),
       });
@@ -114,7 +127,7 @@ export default function PTODataTable() {
     if (canReject) {
       actions.push({
         id: "reject",
-        label: PTO_ACTION_LABELS.Reject.label,
+        label: sourceLabels(PTO_ACTION_LABELS.Reject).label,
         icon: XCircleIcon,
         onClick: (rows) => openAction(rows, "Reject"),
       });
@@ -122,7 +135,7 @@ export default function PTODataTable() {
     if (canCancel) {
       actions.push({
         id: "cancel",
-        label: PTO_ACTION_LABELS.Cancel.label,
+        label: sourceLabels(PTO_ACTION_LABELS.Cancel).label,
         icon: SlashCircle01Icon,
         variant: "destructive",
         onClick: (rows) => openAction(rows, "Cancel"),
@@ -136,7 +149,7 @@ export default function PTODataTable() {
     if (canApprove) {
       actions.push({
         id: "approve",
-        label: PTO_ACTION_LABELS.Approve.label,
+        label: sourceLabels(PTO_ACTION_LABELS.Approve).label,
         icon: CheckCircleIcon,
         group: "decision",
         hidden: (row) => !canApplyPTOAction(row.original.status, "Approve"),
@@ -146,7 +159,7 @@ export default function PTODataTable() {
     if (canReject) {
       actions.push({
         id: "reject",
-        label: PTO_ACTION_LABELS.Reject.label,
+        label: sourceLabels(PTO_ACTION_LABELS.Reject).label,
         icon: XCircleIcon,
         group: "decision",
         hidden: (row) => !canApplyPTOAction(row.original.status, "Reject"),
@@ -156,7 +169,7 @@ export default function PTODataTable() {
     if (canCancel) {
       actions.push({
         id: "cancel",
-        label: PTO_ACTION_LABELS.Cancel.label,
+        label: sourceLabels(PTO_ACTION_LABELS.Cancel).label,
         icon: SlashCircle01Icon,
         variant: "destructive",
         hidden: (row) => !canApplyPTOAction(row.original.status, "Cancel"),
@@ -173,6 +186,7 @@ export default function PTODataTable() {
       <DataTable<WorkerPTORow>
         queryKey="worker-pto-list"
         name="Worker PTO"
+        emptyTitle={t("No PTO requests yet")}
         resource={Resource.WorkerPTO}
         columns={columns}
         graphql={workerTableGraphQLConfigs.pto}

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/glaccount"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +21,7 @@ func TestGLAccountBatchFunc_PreservesOrderAndReportsMissingIDs(t *testing.T) {
 	secondID := pulid.MustNew("gla_")
 	missingID := pulid.MustNew("gla_")
 	repo := &stubGLAccountRepository{
-		getByIDs: func(_ context.Context, req repositories.GetGLAccountsByIDsRequest) ([]*glaccount.GLAccount, error) {
+		getByIDs: func(_ context.Context, req glaccountports.GetGLAccountsByIDsRequest) ([]*glaccount.GLAccount, error) {
 			assert.Equal(t, []pulid.ID{secondID, firstID, missingID}, req.GLAccountIDs)
 			return []*glaccount.GLAccount{
 				{ID: firstID, AccountCode: "1000"},
@@ -57,7 +57,7 @@ func TestGLAccountBatchFunc_RepositoryErrorFillsValidResults(t *testing.T) {
 	accountID := pulid.MustNew("gla_")
 	repoErr := errors.New("repository failed")
 	repo := &stubGLAccountRepository{
-		getByIDs: func(context.Context, repositories.GetGLAccountsByIDsRequest) ([]*glaccount.GLAccount, error) {
+		getByIDs: func(context.Context, glaccountports.GetGLAccountsByIDsRequest) ([]*glaccount.GLAccount, error) {
 			return nil, repoErr
 		},
 	}
@@ -74,26 +74,26 @@ func TestGLAccountBatchFunc_RepositoryErrorFillsValidResults(t *testing.T) {
 }
 
 type stubGLAccountRepository struct {
-	getByIDs func(context.Context, repositories.GetGLAccountsByIDsRequest) ([]*glaccount.GLAccount, error)
+	getByIDs func(context.Context, glaccountports.GetGLAccountsByIDsRequest) ([]*glaccount.GLAccount, error)
 }
 
 func (s *stubGLAccountRepository) List(
 	context.Context,
-	*repositories.ListGLAccountsRequest,
+	*glaccountports.ListGLAccountsRequest,
 ) (*pagination.ListResult[*glaccount.GLAccount], error) {
 	return nil, nil
 }
 
 func (s *stubGLAccountRepository) GetByID(
 	context.Context,
-	repositories.GetGLAccountByIDRequest,
+	glaccountports.GetGLAccountByIDRequest,
 ) (*glaccount.GLAccount, error) {
 	return nil, nil
 }
 
 func (s *stubGLAccountRepository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetGLAccountsByIDsRequest,
+	req glaccountports.GetGLAccountsByIDsRequest,
 ) ([]*glaccount.GLAccount, error) {
 	return s.getByIDs(ctx, req)
 }
@@ -114,21 +114,21 @@ func (s *stubGLAccountRepository) Update(
 
 func (s *stubGLAccountRepository) BulkUpdateStatus(
 	context.Context,
-	*repositories.BulkUpdateGLAccountStatusRequest,
+	*glaccountports.BulkUpdateGLAccountStatusRequest,
 ) ([]*glaccount.GLAccount, error) {
 	return nil, nil
 }
 
 func (s *stubGLAccountRepository) SelectOptions(
 	context.Context,
-	*repositories.GLAccountSelectOptionsRequest,
+	*glaccountports.GLAccountSelectOptionsRequest,
 ) (*pagination.ListResult[*glaccount.GLAccount], error) {
 	return nil, nil
 }
 
 func (s *stubGLAccountRepository) Delete(
 	context.Context,
-	repositories.DeleteGLAccountRequest,
+	glaccountports.DeleteGLAccountRequest,
 ) error {
 	return nil
 }

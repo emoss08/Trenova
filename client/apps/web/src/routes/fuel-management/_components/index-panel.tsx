@@ -20,6 +20,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const DEFAULT_VALUES: Partial<FuelIndex> = {
   name: "",
@@ -80,7 +81,9 @@ export function IndexPanel({ open, onOpenChange, entry }: IndexPanelProps) {
     mutationFn: async (values: FuelIndex) =>
       isEdit && entry ? updateFuelIndex(entry.index.id, values) : createFuelIndex(values),
     onSuccess: () => {
-      toast.success(isEdit ? "Fuel index updated" : "Custom fuel index created");
+      toast.success(
+        isEdit ? translate("Fuel index updated") : translate("Custom fuel index created"),
+      );
       void queryClient.invalidateQueries({
         queryKey: queries.fuelSurcharge.dashboard().queryKey,
       });

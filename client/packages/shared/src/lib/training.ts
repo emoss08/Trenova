@@ -1,4 +1,6 @@
-import type { WorkerTrainingHealth } from "../types/worker-training";
+import { translate } from "@trenova/shared/i18n/runtime";
+import { formatUnixDate } from "@trenova/shared/lib/date";
+import type { WorkerTrainingHealth, WorkerTrainingStatus } from "../types/worker-training";
 
 export type TrainingHealthMeta = {
   label: string;
@@ -105,9 +107,9 @@ export type TrainingTiming = {
 export function describeTrainingTiming(timing: TrainingTiming): string {
   switch (timing.health) {
     case "Missing":
-      return "Not assigned";
+      return translate("Not assigned");
     case "Failed":
-      return "Failed — retake needed";
+      return translate("Failed — retake needed");
     case "Scheduled":
     case "DueSoon":
     case "Overdue":
@@ -122,20 +124,71 @@ export function describeTrainingTiming(timing: TrainingTiming): string {
 }
 
 function describeDue(days: number | null | undefined): string {
-  if (days == null) return "No due date";
-  if (days === 0) return "Due today";
-  if (days === 1) return "Due tomorrow";
-  if (days < 0) return `Overdue by ${-days} day${days === -1 ? "" : "s"}`;
-  return `Due in ${days} days`;
+  if (days == null) return translate("No due date");
+  if (days === 0) return translate("Due today");
+  if (days === 1) return translate("Due tomorrow");
+  if (days < 0) {
+    return translate("{0, plural, one {Overdue by # day} other {Overdue by # days}}", -days);
+  }
+  return translate("{0, plural, one {Due in # day} other {Due in # days}}", days);
 }
 
 function describeExpiry(days: number | null | undefined): string {
-  if (days == null) return "Does not expire";
-  if (days === 0) return "Expires today";
-  if (days === 1) return "Expires tomorrow";
-  if (days === -1) return "Expired yesterday";
-  if (days < 0) return `Expired ${-days} days ago`;
-  return `Expires in ${days} days`;
+  if (days == null) return translate("Does not expire");
+  if (days === 0) return translate("Expires today");
+  if (days === 1) return translate("Expires tomorrow");
+  if (days === -1) return translate("Expired yesterday");
+  if (days < 0) {
+    return translate("{0, plural, one {Expired # day ago} other {Expired # days ago}}", -days);
+  }
+  return translate("{0, plural, one {Expires in # day} other {Expires in # days}}", days);
+}
+
+export function trainingRecordStatusLabel(status: WorkerTrainingStatus): string {
+  switch (status) {
+    case "Assigned":
+      return translate("Assigned");
+    case "InProgress":
+      return translate("In progress");
+    case "Completed":
+      return translate("Completed");
+    case "Failed":
+      return translate("Failed");
+    case "Expired":
+      return translate("Expired");
+    case "Waived":
+      return translate("Waived");
+    case "Cancelled":
+      return translate("Cancelled");
+    default:
+      return status;
+  }
+}
+
+/**
+ * A record's status with the day it took effect, as one sentence per status so a translation
+ * can place the date where its grammar needs it.
+ */
+export function describeTrainingRecordOn(status: WorkerTrainingStatus, unix: number): string {
+  const date = formatUnixDate(unix);
+  switch (status) {
+    case "Assigned":
+      return translate("Assigned {0}", date);
+    case "InProgress":
+      return translate("In progress since {0}", date);
+    case "Completed":
+      return translate("Completed {0}", date);
+    case "Failed":
+      return translate("Failed {0}", date);
+    case "Expired":
+      return translate("Expired {0}", date);
+    case "Waived":
+      return translate("Waived {0}", date);
+    case "Cancelled":
+      return translate("Cancelled {0}", date);
+    default:
+      return date;
+  }
 }
 
 export type TrainingSortable = {

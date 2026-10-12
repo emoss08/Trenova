@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -45,10 +45,13 @@ func (h *Handler) listVersions(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*formulatemplate.FormulaTemplateVersion], error) {
-			return h.service.ListVersions(c.Request.Context(), &repositories.ListVersionsRequest{
-				Filter:     req,
-				TemplateID: templateID,
-			})
+			return h.service.ListVersions(
+				c.Request.Context(),
+				&formulatemplateports.ListVersionsRequest{
+					Filter:     req,
+					TemplateID: templateID,
+				},
+			)
 		},
 	)
 }
@@ -83,7 +86,7 @@ func (h *Handler) getVersion(c *gin.Context) {
 
 	version, err := h.service.GetVersion(
 		c.Request.Context(),
-		&repositories.GetVersionRequest{
+		&formulatemplateports.GetVersionRequest{
 			TenantInfo:    pagination.FromAuthAsUser(authCtx),
 			TemplateID:    templateID,
 			VersionNumber: versionNumber,
@@ -131,7 +134,7 @@ func (h *Handler) createVersion(c *gin.Context) {
 
 	version, err := h.service.CreateVersion(
 		c.Request.Context(),
-		&repositories.CreateVersionRequest{
+		&formulatemplateports.CreateVersionRequest{
 			TenantInfo:    pagination.FromAuthAsUser(authCtx),
 			TemplateID:    templateID,
 			ChangeMessage: req.ChangeMessage,
@@ -180,7 +183,7 @@ func (h *Handler) rollback(c *gin.Context) {
 
 	template, err := h.service.Rollback(
 		c.Request.Context(),
-		&repositories.RollbackRequest{
+		&formulatemplateports.RollbackRequest{
 			TenantInfo:    pagination.FromAuthAsUser(authCtx),
 			TemplateID:    templateID,
 			TargetVersion: req.TargetVersion,
@@ -231,7 +234,7 @@ func (h *Handler) fork(c *gin.Context) {
 
 	template, err := h.service.Fork(
 		c.Request.Context(),
-		&repositories.ForkTemplateRequest{
+		&formulatemplateports.ForkTemplateRequest{
 			TenantInfo:       pagination.FromAuthAsUser(authCtx),
 			SourceTemplateID: templateID,
 			SourceVersion:    req.SourceVersion,
@@ -292,7 +295,7 @@ func (h *Handler) compareVersions(c *gin.Context) {
 
 	diff, err := h.service.CompareVersions(
 		c.Request.Context(),
-		&repositories.CompareVersionsRequest{
+		&formulatemplateports.CompareVersionsRequest{
 			TenantInfo:  pagination.FromAuthAsUser(authCtx),
 			TemplateID:  templateID,
 			FromVersion: fromVersion,
@@ -329,7 +332,7 @@ func (h *Handler) getLineage(c *gin.Context) {
 
 	lineage, err := h.service.GetLineage(
 		c.Request.Context(),
-		&repositories.GetLineageRequest{
+		&formulatemplateports.GetLineageRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			TemplateID: templateID,
 		},
@@ -384,7 +387,7 @@ func (h *Handler) updateVersionTags(c *gin.Context) {
 
 	version, err := h.service.UpdateVersionTags(
 		c.Request.Context(),
-		&repositories.UpdateVersionTagsRequest{
+		&formulatemplateports.UpdateVersionTagsRequest{
 			TenantInfo:    pagination.FromAuthAsUser(authCtx),
 			TemplateID:    templateID,
 			VersionNumber: versionNumber,
@@ -421,7 +424,7 @@ func (h *Handler) listScheduledVersions(c *gin.Context) {
 
 	versions, err := h.service.ListScheduledVersions(
 		c.Request.Context(),
-		&repositories.ListScheduledVersionsRequest{
+		&formulatemplateports.ListScheduledVersionsRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			TemplateID: templateID,
 		},

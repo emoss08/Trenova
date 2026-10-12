@@ -9,13 +9,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/require"
 )
 
 const (
 	handlerDir     = "../../handlers"
-	permissionDir  = "../../../core/domain/permission"
+	permissionDir  = "../../../modules/identity/domain/permission"
 	resourceSource = "resource_gen.go"
 	operationFile  = "operations.go"
 )

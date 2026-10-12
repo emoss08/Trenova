@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 /**
  * The one-word verdict on a worker. Blocked means they cannot be put on a load
@@ -8,12 +9,12 @@ import { z } from "zod";
 export const workerStandingSchema = z.enum(["Good", "Watch", "AtRisk", "Blocked"]);
 export type WorkerStanding = z.infer<typeof workerStandingSchema>;
 
-export const WORKER_STANDING_LABELS: Record<WorkerStanding, string> = {
+export const WORKER_STANDING_LABELS: Record<WorkerStanding, string> = defineLabels({
   Good: "Good standing",
   Watch: "Worth watching",
   AtRisk: "At risk",
   Blocked: "Cannot be assigned",
-};
+});
 
 export const concernSeveritySchema = z.enum(["Critical", "Warning", "Info"]);
 export type ConcernSeverity = z.infer<typeof concernSeveritySchema>;

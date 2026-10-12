@@ -6,9 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/onboardingports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,13 +19,13 @@ import (
 type Params struct {
 	fx.In
 
-	Service              services.OnboardingService
+	Service              onboardingports.OnboardingService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service services.OnboardingService
+	service onboardingports.OnboardingService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -102,22 +102,25 @@ func (h *Handler) complete(c *gin.Context) {
 	tenantInfo := actorutil.TenantInfoFrom(authCtx)
 	tenantInfo.UserID = authCtx.UserID
 
-	state, err := h.service.Complete(c.Request.Context(), &services.CompleteOnboardingRequest{
-		TenantInfo: tenantInfo,
-		Actor:      actorutil.FromAuthContext(authCtx),
-		Organization: services.OnboardingOrganization{
-			Name:         body.Organization.Name,
-			Timezone:     body.Organization.Timezone,
-			AddressLine1: body.Organization.AddressLine1,
-			City:         body.Organization.City,
-			StateID:      body.Organization.StateID,
-			PostalCode:   body.Organization.PostalCode,
-			ScacCode:     body.Organization.ScacCode,
-			DOTNumber:    body.Organization.DOTNumber,
+	state, err := h.service.Complete(
+		c.Request.Context(),
+		&onboardingports.CompleteOnboardingRequest{
+			TenantInfo: tenantInfo,
+			Actor:      actorutil.FromAuthContext(authCtx),
+			Organization: onboardingports.OnboardingOrganization{
+				Name:         body.Organization.Name,
+				Timezone:     body.Organization.Timezone,
+				AddressLine1: body.Organization.AddressLine1,
+				City:         body.Organization.City,
+				StateID:      body.Organization.StateID,
+				PostalCode:   body.Organization.PostalCode,
+				ScacCode:     body.Organization.ScacCode,
+				DOTNumber:    body.Organization.DOTNumber,
+			},
+			OperationType:  body.OperationType,
+			LoadSampleData: body.LoadSampleData,
 		},
-		OperationType:  body.OperationType,
-		LoadSampleData: body.LoadSampleData,
-	})
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

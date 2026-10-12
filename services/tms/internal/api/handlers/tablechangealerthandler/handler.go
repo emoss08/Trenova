@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/tablechangealertports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -90,7 +90,7 @@ func (h *Handler) listSubscriptions(c *gin.Context) {
 		func() (*pagination.ListResult[*tablechangealert.TCASubscription], error) {
 			return h.service.ListSubscriptions(
 				c.Request.Context(),
-				&repositories.ListTCASubscriptionsRequest{
+				&tablechangealertports.ListTCASubscriptionsRequest{
 					Filter: req,
 				},
 			)
@@ -109,7 +109,7 @@ func (h *Handler) getSubscription(c *gin.Context) {
 
 	entity, err := h.service.GetSubscriptionByID(
 		c.Request.Context(),
-		repositories.GetTCASubscriptionByIDRequest{
+		tablechangealertports.GetTCASubscriptionByIDRequest{
 			SubscriptionID: id,
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  auth.OrganizationID,

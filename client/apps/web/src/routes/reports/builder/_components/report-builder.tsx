@@ -263,7 +263,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
           <aside className="border-border flex min-h-0 flex-col border-r">
             <div className="border-border flex h-8 shrink-0 items-center border-b px-3">
               <span className="text-xs text-muted-foreground font-medium">
-                {t("{0} Fields", entity?.label ?? ir.entity)}
+                {entity ? t("{0} fields", t(entity.label)) : t("Fields")}
               </span>
             </div>
             <div className="min-h-0 flex-1 p-2.5">

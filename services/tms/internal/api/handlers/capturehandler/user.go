@@ -3,7 +3,7 @@ package capturehandler
 import (
 	"net/http"
 
-	"github.com/emoss08/trenova/internal/core/services/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
 )

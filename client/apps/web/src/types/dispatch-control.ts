@@ -4,6 +4,7 @@ import {
   timestampSchema,
   versionSchema,
 } from "@trenova/shared/types/helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const serviceIncidentTypeSchema = z.enum([
   "Never",
@@ -44,7 +45,11 @@ export type ScoringFactor = z.infer<typeof scoringFactorSchema>;
 
 export const scoringWeightsSchema = z.partialRecord(
   scoringFactorSchema,
-  z.number().min(0, "Weights must be at least 0").max(10, "Weights cannot exceed 10").optional(),
+  z
+    .number()
+    .min(0, { error: () => translate("Weights must be at least 0") })
+    .max(10, { error: () => translate("Weights cannot exceed 10") })
+    .optional(),
 );
 
 export type ScoringWeights = z.infer<typeof scoringWeightsSchema>;
@@ -209,25 +214,25 @@ export const dispatchControlSchema = z
     scoringWeights: scoringWeightsSchema.optional(),
     autoAssignConfidenceThreshold: z.coerce
       .number()
-      .min(0, "Confidence threshold must be at least 0")
-      .max(1, "Confidence threshold cannot exceed 1")
+      .min(0, { error: () => translate("Confidence threshold must be at least 0") })
+      .max(1, { error: () => translate("Confidence threshold cannot exceed 1") })
       .optional(),
     autoAssignMaxDeadheadMiles: z
       .number()
       .int()
-      .positive("Max deadhead miles must be greater than 0")
+      .positive({ error: () => translate("Max deadhead miles must be greater than 0") })
       .nullish(),
     autoAssignPlanningHorizonHours: z
       .number()
       .int()
-      .min(1, "Planning horizon must be at least 1 hour")
-      .max(336, "Planning horizon cannot exceed 336 hours")
+      .min(1, { error: () => translate("Planning horizon must be at least 1 hour") })
+      .max(336, { error: () => translate("Planning horizon cannot exceed 336 hours") })
       .optional(),
     coverageRiskWindowHours: z
       .number()
       .int()
-      .min(1, "Coverage risk window must be at least 1 hour")
-      .max(168, "Coverage risk window cannot exceed 168 hours")
+      .min(1, { error: () => translate("Coverage risk window must be at least 1 hour") })
+      .max(168, { error: () => translate("Coverage risk window cannot exceed 168 hours") })
       .optional(),
     enforceWorkerAssign: z.boolean(),
     enforceTrailerContinuity: z.boolean(),
@@ -242,7 +247,7 @@ export const dispatchControlSchema = z
     recordServiceFailures: serviceIncidentTypeSchema,
     serviceFailureTarget: z
       .number()
-      .nonnegative("Service failure target must be non-negative")
+      .nonnegative({ error: () => translate("Service failure target must be non-negative") })
       .nullish(),
     serviceFailureGracePeriod: z.number().int().nullish(),
   })
@@ -255,7 +260,7 @@ export const dispatchControlSchema = z
     },
     {
       path: ["serviceFailureGracePeriod"],
-      message: "Service failure grace period must be greater than 0",
+      error: () => translate("Service failure grace period must be greater than 0"),
     },
   );
 

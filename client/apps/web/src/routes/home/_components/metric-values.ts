@@ -60,7 +60,7 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
         delta: analytics.revenueToday.deltaPct,
         deltaLabel: "%",
         deltaTone: "success",
-        sub: `RPM $${analytics.revenueToday.rpm.toFixed(2)}`,
+        sub: translate("RPM ${0}", analytics.revenueToday.rpm.toFixed(2)),
         sparkline: analytics.revenueToday.sparkline.map((point) => point.value),
         href: SHIPMENTS_HREF,
       };
@@ -76,7 +76,11 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
         delta: analytics.onTimePercent.deltaPp,
         deltaLabel: "pp",
         deltaTone: analytics.onTimePercent.deltaPp >= 0 ? "success" : "danger",
-        sub: `Target ${analytics.onTimePercent.target}% · 7-day ${analytics.onTimePercent.sevenDayPercent.toFixed(1)}%`,
+        sub: translate(
+          "Target {0}% · 7-day {1}%",
+          analytics.onTimePercent.target,
+          analytics.onTimePercent.sevenDayPercent.toFixed(1),
+        ),
         href: SHIPMENTS_HREF,
       };
     case "emptyMilePercent":
@@ -92,7 +96,11 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
         delta: analytics.emptyMilePercent.deltaPp,
         deltaLabel: "pp",
         deltaTone: analytics.emptyMilePercent.deltaPp <= 0 ? "success" : "danger",
-        sub: `${analytics.emptyMilePercent.emptyMiles.toLocaleString()} deadhead miles`,
+        sub: translate(
+          "{0} {1, plural, one {deadhead mile} other {deadhead miles}}",
+          analytics.emptyMilePercent.emptyMiles.toLocaleString(),
+          analytics.emptyMilePercent.emptyMiles,
+        ),
         href: SHIPMENTS_HREF,
       };
     case "atRisk":
@@ -104,7 +112,11 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
         raw: analytics.atRisk.count,
         delta: analytics.atRisk.delta,
         deltaTone: "danger",
-        sub: `${analytics.atRisk.etaSlip} ETA slip · ${analytics.atRisk.weather} weather`,
+        sub: translate(
+          "{0} ETA slip · {1} weather",
+          analytics.atRisk.etaSlip,
+          analytics.atRisk.weather,
+        ),
         href: SHIPMENTS_HREF,
       };
     case "unassigned":
@@ -116,7 +128,7 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
         raw: analytics.unassigned.count,
         delta: analytics.unassigned.delta,
         deltaTone: "warning",
-        sub: `${formatCompactCurrency(analytics.unassigned.revenueWaiting)} waiting`,
+        sub: translate("{0} waiting", formatCompactCurrency(analytics.unassigned.revenueWaiting)),
         href: SHIPMENTS_HREF,
       };
     case "readyToDispatch":
@@ -128,7 +140,7 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
         raw: analytics.readyToDispatch.count,
         delta: analytics.readyToDispatch.delta,
         deltaTone: "brand",
-        sub: `${analytics.readyToDispatch.driverReady} driver-ready`,
+        sub: translate("{0} driver-ready", analytics.readyToDispatch.driverReady),
         href: SHIPMENTS_HREF,
       };
     case "marginPercent":
@@ -138,7 +150,10 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
         shape: "stat",
         display: `${analytics.profitability.avgMarginPct.toFixed(1)}%`,
         raw: analytics.profitability.avgMarginPct,
-        sub: `${analytics.profitability.unprofitableCount} unprofitable loads`,
+        sub: translate(
+          "{0, plural, one {# unprofitable load} other {# unprofitable loads}}",
+          analytics.profitability.unprofitableCount,
+        ),
         href: SHIPMENTS_HREF,
       };
     case "revenuePerMile":
@@ -157,7 +172,11 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
         shape: "stat",
         display: `$${analytics.profitability.avgCpm.toFixed(2)}`,
         raw: analytics.profitability.avgCpm,
-        sub: `${analytics.profitability.totalMiles.toLocaleString()} miles`,
+        sub: translate(
+          "{0} {1, plural, one {mile} other {miles}}",
+          analytics.profitability.totalMiles.toLocaleString(),
+          analytics.profitability.totalMiles,
+        ),
         href: SHIPMENTS_HREF,
       };
     default:
@@ -177,7 +196,10 @@ function receivablesMetric(key: string, receivables: HomeData["receivables"]): M
         shape: "hero",
         display: formatCompactCurrency(minorToMajor(overview?.totalOpenMinor)),
         raw: minorToMajor(overview?.totalOpenMinor),
-        sub: `${overview?.openInvoiceCount ?? 0} invoices`,
+        sub: translate(
+          "{0, plural, one {# invoice} other {# invoices}}",
+          overview?.openInvoiceCount ?? 0,
+        ),
         href: RECEIVABLES_HREF,
       };
     case "arOverdue":
@@ -188,7 +210,11 @@ function receivablesMetric(key: string, receivables: HomeData["receivables"]): M
         display: formatCompactCurrency(minorToMajor(overview?.overdueMinor)),
         raw: minorToMajor(overview?.overdueMinor),
         deltaTone: "danger",
-        sub: `${overview?.overdueInvoiceCount ?? 0} invoices · avg ${Math.round(overview?.avgDaysPastDue ?? 0)}d late`,
+        sub: translate(
+          "{0, plural, one {# invoice} other {# invoices}} · avg {1}d late",
+          overview?.overdueInvoiceCount ?? 0,
+          Math.round(overview?.avgDaysPastDue ?? 0),
+        ),
         href: RECEIVABLES_HREF,
       };
     case "arDaysSalesOutstanding":

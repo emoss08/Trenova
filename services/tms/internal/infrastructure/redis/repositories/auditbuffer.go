@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -33,7 +33,7 @@ type auditBufferRepository struct {
 	l      *zap.Logger
 }
 
-func NewAuditBufferRepository(p AuditBufferRepositoryParams) repositories.AuditBufferRepository {
+func NewAuditBufferRepository(p AuditBufferRepositoryParams) auditports.AuditBufferRepository {
 	return &auditBufferRepository{
 		client: p.Client,
 		l:      p.Logger.Named("redis.audit-buffer-repository"),

@@ -17,9 +17,10 @@ import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const rerateSchema = z.object({
-  formulaTemplateId: z.string().min(1, "Required"),
+  formulaTemplateId: z.string().min(1, { error: () => translate("Required") }),
 });
 
 type RerateFormValues = z.infer<typeof rerateSchema>;

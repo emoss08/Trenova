@@ -69,7 +69,7 @@ func TestStreamQueryAndPath(t *testing.T) {
 			assert.Equal(t, "/dvirs/stream", req.Path)
 			assert.Equal(t, "2026-01-02T03:04:05Z", req.Query.Get("startTime"))
 			assert.Equal(t, "2026-01-03T03:04:05Z", req.Query.Get("endTime"))
-			assert.Equal(t, "unsafe,resolved", req.Query.Get("safetyStatus"))
+			assert.Equal(t, []string{"unsafe", "resolved"}, req.Query["safetyStatus"])
 			assert.Equal(t, "cursor-1", req.Query.Get("after"))
 			assert.Equal(t, "25", req.Query.Get("limit"))
 			assert.Equal(t, "true", req.Query.Get("includeExternalIds"))
@@ -307,4 +307,30 @@ func TestHistoryAllValidation(t *testing.T) {
 	_, err := svc.HistoryAll(t.Context(), HistoryParams{StartTime: &start})
 	require.Error(t, err)
 	assert.ErrorIs(t, err, ErrEndTimeRequired)
+}
+
+func TestStreamValidatesSafetyStatusAndRange(t *testing.T) {
+	t.Parallel()
+
+	svc := NewService(
+		&httpxtest.MockRequester{DoFunc: func(_ context.Context, _ httpx.Request) error {
+			t.Fatal("request must not be sent")
+			return nil
+		}},
+	)
+
+	start := time.Date(2026, 3, 1, 8, 0, 0, 0, time.UTC)
+	before := start.Add(-time.Minute)
+
+	_, err := svc.Stream(t.Context(), StreamParams{
+		StartTime:      &start,
+		SafetyStatuses: []string{"unsafe", "broken"},
+	})
+	require.ErrorIs(t, err, ErrSafetyStatusInvalid)
+
+	_, err = svc.Stream(t.Context(), StreamParams{StartTime: &start, EndTime: &before})
+	require.ErrorIs(t, err, ErrTimeRangeInvalid)
+
+	_, err = svc.History(t.Context(), HistoryParams{StartTime: &start, EndTime: &before})
+	require.ErrorIs(t, err, ErrTimeRangeInvalid)
 }

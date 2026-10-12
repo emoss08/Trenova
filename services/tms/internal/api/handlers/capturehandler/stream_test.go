@@ -8,10 +8,10 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/captureservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -19,17 +19,17 @@ import (
 	"go.uber.org/zap"
 )
 
-func invalidationFrame(t *testing.T, resource, action string, signal captureservice.DeviceSignal) services.RealtimeFrame {
+func invalidationFrame(t *testing.T, resource, action string, signal captureservice.DeviceSignal) agentports.RealtimeFrame {
 	t.Helper()
 
-	data, err := sonic.Marshal(services.ResourceInvalidationEvent{
+	data, err := sonic.Marshal(agentports.ResourceInvalidationEvent{
 		Resource: resource,
 		Action:   action,
 		Entity:   signal,
 	})
 	require.NoError(t, err)
 
-	return services.RealtimeFrame{ID: "1-0", Event: services.RealtimeEventInvalidation, Data: data}
+	return agentports.RealtimeFrame{ID: "1-0", Event: agentports.RealtimeEventInvalidation, Data: data}
 }
 
 func openTestStream(t *testing.T) (*helpers.EventStream, *httptest.ResponseRecorder) {

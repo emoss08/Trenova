@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,10 +31,10 @@ func TestReadDocumentsReportsTotalsBalancesAndVoids(t *testing.T) {
 	conn := testConnector(t, fake)
 	assert.Equal(t, 50, conn.DocumentReadLimits().MaxPerRead)
 
-	states, err := conn.ReadDocuments(t.Context(), &services.ReadAccountingDocumentsRequest{
+	states, err := conn.ReadDocuments(t.Context(), &accountingsyncports.ReadAccountingDocumentsRequest{
 		Auth: testAuth(),
 		Kind: accountingsync.SyncObjectInvoice,
-		Targets: []services.AccountingDocumentTarget{
+		Targets: []accountingsyncports.AccountingDocumentTarget{
 			{ExternalID: strings.ToUpper(testInvoice)},
 			{ExternalID: testNewInvoice},
 			{ExternalID: testCreditMemo},
@@ -80,10 +80,10 @@ func TestReadDocumentsSplitsBillsByCreditAndSkipsPayments(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	states, err := conn.ReadDocuments(t.Context(), &services.ReadAccountingDocumentsRequest{
+	states, err := conn.ReadDocuments(t.Context(), &accountingsyncports.ReadAccountingDocumentsRequest{
 		Auth: testAuth(),
 		Kind: accountingsync.SyncObjectCarrierBill,
-		Targets: []services.AccountingDocumentTarget{
+		Targets: []accountingsyncports.AccountingDocumentTarget{
 			{ExternalID: testBill},
 			{
 				ExternalID: testVendorCredit,
@@ -96,18 +96,18 @@ func TestReadDocumentsSplitsBillsByCreditAndSkipsPayments(t *testing.T) {
 	assert.False(t, states[0].Voided)
 	assert.True(t, states[1].Voided)
 
-	payments, err := conn.ReadDocuments(t.Context(), &services.ReadAccountingDocumentsRequest{
+	payments, err := conn.ReadDocuments(t.Context(), &accountingsyncports.ReadAccountingDocumentsRequest{
 		Auth:    testAuth(),
 		Kind:    accountingsync.SyncObjectCustomerPayment,
-		Targets: []services.AccountingDocumentTarget{{ExternalID: "T123"}},
+		Targets: []accountingsyncports.AccountingDocumentTarget{{ExternalID: "T123"}},
 	})
 	require.NoError(t, err)
 	assert.Empty(t, payments)
 
-	_, err = conn.ReadDocuments(t.Context(), &services.ReadAccountingDocumentsRequest{
+	_, err = conn.ReadDocuments(t.Context(), &accountingsyncports.ReadAccountingDocumentsRequest{
 		Auth:    testAuth(),
 		Kind:    accountingsync.SyncObjectCustomer,
-		Targets: []services.AccountingDocumentTarget{{ExternalID: testCustomer}},
+		Targets: []accountingsyncports.AccountingDocumentTarget{{ExternalID: testCustomer}},
 	})
 	require.ErrorIs(t, err, errDocumentKind)
 }

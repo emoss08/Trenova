@@ -1,9 +1,18 @@
+import type { ThreadAsks, ThreadAskRequest } from "@/components/assistant/ask-requests";
 import type { AssistantMessage, AssistantThread } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DeskThread, type DeskThreadProps } from "../desk-thread";
+
+const conversation = vi.hoisted(() => ({
+  reply: "Two loads are stuck at the yard.",
+  artifacts: [] as { id: string; kind: string; title: string }[],
+  asks: { byReply: new Map(), open: null } as ThreadAsks,
+  answer: (() => undefined) as ((value: string) => void) | undefined,
+  providersReady: true,
+}));
 
 vi.mock("@/lib/queries", () => ({
   queries: {
@@ -11,6 +20,12 @@ vi.mock("@/lib/queries", () => ({
       artifacts: (threadId: string) => ({
         queryKey: ["artifacts", threadId],
         queryFn: () => ({ results: [] }),
+        _ctx: {
+          summary: {
+            queryKey: ["artifacts", threadId, "summary"],
+            queryFn: () => ({ results: conversation.artifacts }),
+          },
+        },
       }),
       threadBudget: (threadId: string) => ({
         queryKey: ["budget", threadId],
@@ -75,7 +90,7 @@ vi.mock("@/components/assistant/use-thread-model", () => ({
   useThreadModel: () => ({
     entries: [
       { kind: "user", message: question },
-      { kind: "assistant", message: reply, tools: [] },
+      { kind: "assistant", message: { ...reply, content: conversation.reply }, tools: [] },
     ],
     placements: new Map(),
     turn: null,
@@ -89,8 +104,8 @@ vi.mock("@/components/assistant/use-thread-model", () => ({
       cancel: () => undefined,
     },
     older: { has: false, loading: false, load: () => undefined },
-    answer: () => undefined,
-    artifactsByMessage: new Map(),
+    answer: conversation.answer,
+    asks: conversation.asks,
     block: null,
     current: null,
     decided: () => undefined,
@@ -98,12 +113,11 @@ vi.mock("@/components/assistant/use-thread-model", () => ({
     dismiss: async () => undefined,
     draft: "",
     followUpDecision: () => undefined,
-    latestUserSequence: 1,
     onDraftChange: () => undefined,
     proposalsQuery: { data: { results: [] } },
     providerId: "",
     providers: [],
-    providersReady: true,
+    providersReady: conversation.providersReady,
     queue: [],
     resumeAll: () => undefined,
     retry: null,
@@ -112,10 +126,26 @@ vi.mock("@/components/assistant/use-thread-model", () => ({
     showDock: false,
     stop: () => undefined,
     suggestions: [],
+    waits: { open: [], byId: new Map(), cancel: async () => undefined },
+    waiting: {
+      items: [],
+      add: async () => true,
+      edit: async () => true,
+      remove: async () => undefined,
+      move: async () => undefined,
+      sendNow: async () => undefined,
+    },
   }),
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  conversation.reply = "Two loads are stuck at the yard.";
+  conversation.artifacts = [];
+  conversation.asks = { byReply: new Map(), open: null };
+  conversation.answer = () => undefined;
+  conversation.providersReady = true;
+});
 
 const thread = {
   id: "athr_1",
@@ -208,5 +238,90 @@ describe("DeskThread in the compact density", () => {
 
     renderThread({ density: "compact", pageSource: "none" });
     expect(screen.queryByRole("button", { name: /^(Sharing|Not sharing)/ })).toBeNull();
+  });
+});
+
+describe("DeskThread's artifact links", () => {
+  it("opens the artifact a saved reply names from its badge", async () => {
+    conversation.reply =
+      "The [Shipments](artifact:art_01M4PB27N0HX4MVKQJN5NXPTV7) shows 15 completed shipments.";
+    conversation.artifacts = [
+      { id: "art_01M4PB27N0HX4MVKQJN5NXPTV7", kind: "table_view", title: "Shipments" },
+    ];
+    const open = vi.fn();
+    renderThread({ artifacts: { open } });
+
+    const badge = await screen.findByRole("button", { name: "Open Shipments" });
+    expect(badge.closest("p")).toHaveTextContent("The Shipments shows 15 completed shipments.");
+    fireEvent.click(badge);
+    expect(open).toHaveBeenCalledWith("art_01M4PB27N0HX4MVKQJN5NXPTV7");
+  });
+});
+
+describe("DeskThread's open question", () => {
+  const request: ThreadAskRequest = {
+    sequence: 3,
+    callId: "call_3",
+    question: "Which window should the report cover?",
+    options: [
+      { value: "7", label: "7 days", detail: "the last week" },
+      { value: "30", label: "30 days", detail: "" },
+    ],
+    allowOther: true,
+    otherHint: "Number of days",
+    input: { type: "text" },
+    fields: [],
+  };
+
+  /** The reply asked the question and nothing has answered it. */
+  function asked() {
+    conversation.asks = {
+      byReply: new Map([["msg_a", [{ request, answer: null }]]]),
+      open: request,
+    };
+    // A conversation with no model to answer is locked, and a locked one
+    // docks nothing; the models are left unread here so it is not.
+    conversation.providersReady = false;
+  }
+
+  it("docks the question above the composer and leaves a line where it was asked", () => {
+    asked();
+    const { container } = renderThread();
+
+    const dock = container.querySelector(".dk-dock");
+    const question = screen.getByRole("region", { name: "Question from the agent" });
+    expect(dock).toContainElement(question);
+    expect(question).toHaveTextContent("Which window should the report cover?");
+    expect(screen.getByText("Waiting for your answer below")).toBeInTheDocument();
+  });
+
+  it("makes the composer the box for a value in words", () => {
+    asked();
+    renderThread();
+
+    expect(screen.getByRole("textbox", { name: "Message the Desk" })).toHaveAttribute(
+      "placeholder",
+      "Number of days",
+    );
+  });
+
+  it("answers with the choice picked", () => {
+    asked();
+    const answer = vi.fn();
+    conversation.answer = answer;
+    renderThread();
+
+    fireEvent.click(screen.getByRole("button", { name: "30 days" }));
+
+    expect(answer).toHaveBeenCalledWith("30");
+  });
+
+  it("docks nothing in a conversation nobody can send to", () => {
+    asked();
+    conversation.answer = undefined;
+    renderThread();
+
+    expect(screen.queryByRole("region", { name: "Question from the agent" })).toBeNull();
+    expect(screen.getByText("Not answered yet")).toBeInTheDocument();
   });
 });

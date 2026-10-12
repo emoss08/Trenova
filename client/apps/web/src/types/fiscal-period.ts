@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import { tenantInfoSchema } from "@trenova/shared/types/helpers";
 
@@ -46,7 +47,7 @@ export const fiscalPeriodSchema = z
         maximum: max,
         inclusive: true,
         path: ["periodNumber"],
-        message: `Period number must be at most ${max}`,
+        message: translate("Period number must be at most {0}", max),
       });
     }
   });

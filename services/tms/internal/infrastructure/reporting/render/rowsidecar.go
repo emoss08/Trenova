@@ -4,10 +4,10 @@ import (
 	"context"
 	"io"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 )
 
-var _ serviceports.ReportDatasetReader = (*RowsSidecar)(nil)
+var _ reportports.ReportDatasetReader = (*RowsSidecar)(nil)
 
 /*
 RowsSidecar is the machine-readable copy of a run, written whatever format the
@@ -25,7 +25,7 @@ the one thing a diff may not rest on. So the rows are encoded as they go past,
 in the same pass, and the sidecar holds exactly the rows the run produced.
 */
 type RowsSidecar struct {
-	inner    serviceports.ReportDatasetReader
+	inner    reportports.ReportDatasetReader
 	envelope *rowsEnvelope
 
 	// err is sticky. The first write failure stops the sidecar and is reported
@@ -35,7 +35,7 @@ type RowsSidecar struct {
 
 	// totals is memoized because Finish needs it whether or not the renderer
 	// asked for it, and asking the reader twice is a second aggregate query.
-	totals      serviceports.ReportRow
+	totals      reportports.ReportRow
 	totalsErr   error
 	totalsTaken bool
 }
@@ -44,9 +44,9 @@ type RowsSidecar struct {
 // sink. The envelope head is written immediately, so sink receives bytes even
 // for a run that yields no rows.
 func NewRowsSidecar(
-	inner serviceports.ReportDatasetReader,
+	inner reportports.ReportDatasetReader,
 	sink io.Writer,
-	meta serviceports.ReportRunMeta,
+	meta reportports.ReportRunMeta,
 ) *RowsSidecar {
 	sidecar := &RowsSidecar{
 		inner:    inner,
@@ -57,9 +57,9 @@ func NewRowsSidecar(
 	return sidecar
 }
 
-func (s *RowsSidecar) Schema() []serviceports.ReportResultColumn { return s.inner.Schema() }
+func (s *RowsSidecar) Schema() []reportports.ReportResultColumn { return s.inner.Schema() }
 
-func (s *RowsSidecar) Next(ctx context.Context) (serviceports.ReportRow, error) {
+func (s *RowsSidecar) Next(ctx context.Context) (reportports.ReportRow, error) {
 	row, err := s.inner.Next(ctx)
 	if err != nil {
 		return row, err
@@ -72,7 +72,7 @@ func (s *RowsSidecar) Next(ctx context.Context) (serviceports.ReportRow, error) 
 	return row, nil
 }
 
-func (s *RowsSidecar) Totals(ctx context.Context) (serviceports.ReportRow, error) {
+func (s *RowsSidecar) Totals(ctx context.Context) (reportports.ReportRow, error) {
 	if !s.totalsTaken {
 		s.totalsTaken = true
 		s.totals, s.totalsErr = s.inner.Totals(ctx)

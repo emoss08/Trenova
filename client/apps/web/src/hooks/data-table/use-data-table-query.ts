@@ -4,7 +4,7 @@ import type {
   DataTableQueryOptions,
 } from "@trenova/shared/types/data-table";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   resolveExtraVariables,
   resolveGraphQLVariableSources,
@@ -147,6 +147,7 @@ export function useDataTableQuery<TData extends Record<string, unknown>>(
         graphql,
         signal,
       }),
+    placeholderData: keepPreviousData,
     enabled,
   });
 }

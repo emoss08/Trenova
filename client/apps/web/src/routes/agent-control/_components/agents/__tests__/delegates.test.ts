@@ -1,6 +1,12 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { describe, expect, it } from "vitest";
-import { canDelegate, delegatesLine, savedDelegates, type DelegateSummary } from "../delegates";
+import {
+  canDelegate,
+  delegateCandidates,
+  delegatesLine,
+  savedDelegates,
+  type DelegateSummary,
+} from "../delegates";
 
 const t = translate;
 
@@ -54,5 +60,56 @@ describe("canDelegate", () => {
     expect(canDelegate("Scheduled")).toBe(false);
     expect(canDelegate("Event")).toBe(false);
     expect(canDelegate("Continuous")).toBe(false);
+  });
+});
+
+describe("delegateCandidates", () => {
+  type Candidate = Parameters<typeof delegateCandidates>[0][number];
+  function agent(id: string, patch: Partial<Candidate> = {}): Candidate {
+    return { id, enabled: true, triggerMode: "Chat", systemKey: "", ...patch };
+  }
+
+  const roster = [
+    agent("self"),
+    agent("chat"),
+    agent("off", { enabled: false }),
+    agent("scheduled", { triggerMode: "Scheduled" }),
+    agent("event", { triggerMode: "Event" }),
+    agent("watch", { triggerMode: "Continuous" }),
+    agent("import", { systemKey: "import_assistant" }),
+    agent("formula", { systemKey: "formula_assistant" }),
+    agent("system-chat", { systemKey: "dispatch_desk" }),
+  ];
+
+  it("offers only enabled agents people talk to, other than itself and page agents", () => {
+    expect(
+      delegateCandidates(roster, { selfId: "self", chosen: [] }).map((entry) => [
+        entry.agent.id,
+        entry.unavailable,
+      ]),
+    ).toEqual([
+      ["chat", null],
+      ["system-chat", null],
+    ]);
+  });
+
+  it("offers every agent but none of the excluded ones for a new agent", () => {
+    expect(
+      delegateCandidates(roster, { selfId: null, chosen: [] }).map((entry) => entry.agent.id),
+    ).toEqual(["self", "chat", "system-chat"]);
+  });
+
+  it("keeps an agent already chosen that can no longer be asked, so it can be taken off", () => {
+    expect(
+      delegateCandidates(roster, { selfId: "self", chosen: ["off", "scheduled", "import"] }).map(
+        (entry) => [entry.agent.id, entry.unavailable],
+      ),
+    ).toEqual([
+      ["chat", null],
+      ["off", "disabled"],
+      ["scheduled", "background"],
+      ["import", "page"],
+      ["system-chat", null],
+    ]);
   });
 });

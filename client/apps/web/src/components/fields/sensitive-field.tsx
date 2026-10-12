@@ -11,6 +11,7 @@ export function SensitiveField<T extends FieldValues>({
   control,
   rules,
   className,
+  layout,
   ...props
 }: InputFieldProps<T>) {
   const inputId = `input-${name}`;
@@ -29,11 +30,13 @@ export function SensitiveField<T extends FieldValues>({
       rules={rules}
       render={({ field, fieldState }) => (
         <FieldWrapper
+          name={name}
           label={label}
           description={description}
           required={!!rules?.required}
           error={fieldState.error?.message}
           className={className}
+          layout={layout}
         >
           <div className="relative">
             <Input

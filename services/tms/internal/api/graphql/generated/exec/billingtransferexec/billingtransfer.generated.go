@@ -9,8 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -76,7 +76,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBillingTransferRunStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐRunStatus),
+				Marshal: gqlexec.Marshal(marshalNBillingTransferRunStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐRunStatus),
 			},
 			{
 				Name:     "scope",
@@ -86,7 +86,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.Scope, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBillingTransferRunScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐRunScope),
+				Marshal: gqlexec.Marshal(marshalNBillingTransferRunScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐRunScope),
 			},
 			{
 				Name:     "billType",
@@ -96,7 +96,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.BillType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐBillType),
+				Marshal: gqlexec.Marshal(marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType),
 			},
 			{
 				Name:     "markCompletedReadyToInvoice",
@@ -359,7 +359,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.BillingTransferRunItem)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBillingTransferItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐItemStatus),
+				Marshal: gqlexec.Marshal(marshalNBillingTransferItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐItemStatus),
 			},
 			{
 				Name:     "failureCode",
@@ -368,7 +368,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.BillingTransferRunItem)
 					return obj.FailureCode, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOShipmentBillingTransferFailureCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐFailureCode),
+				Marshal: gqlexec.Marshal(marshalOShipmentBillingTransferFailureCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐFailureCode),
 			},
 			{
 				Name:     "errorMessage",
@@ -414,7 +414,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.BillingTransferRunItem)
 					return obj.BillingQueueStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOBillingQueueStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐStatus),
+				Marshal: gqlexec.Marshal(marshalOBillingQueueStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐStatus),
 			},
 			{
 				Name:      "missingRequirements",
@@ -425,7 +425,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.BillingTransferRunItem)
 					return obj.MissingRequirements, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBillingTransferRequirement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐMissingRequirementᚄ),
+				Marshal: gqlexec.Marshal(marshalNBillingTransferRequirement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐMissingRequirementᚄ),
 			},
 			{
 				Name:      "validationFailures",
@@ -436,7 +436,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.BillingTransferRunItem)
 					return obj.ValidationFailures, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBillingTransferValidation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐValidationFailureᚄ),
+				Marshal: gqlexec.Marshal(marshalNBillingTransferValidation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐValidationFailureᚄ),
 			},
 			{
 				Name:     "processedAt",
@@ -768,7 +768,7 @@ func unmarshalInputBillingTransferRunItemsFilterInput(ctx context.Context, ec *g
 		switch k {
 		case "statuses":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statuses"))
-			data, err := unmarshalOBillingTransferItemStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐItemStatusᚄ(ctx, ec, v)
+			data, err := unmarshalOBillingTransferItemStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐItemStatusᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -804,7 +804,7 @@ func unmarshalInputStartBillingTransferRunInput(ctx context.Context, ec *gqlexec
 		switch k {
 		case "scope":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scope"))
-			data, err := unmarshalNBillingTransferRunScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐRunScope(ctx, ec, v)
+			data, err := unmarshalNBillingTransferRunScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐRunScope(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -832,7 +832,7 @@ func unmarshalInputStartBillingTransferRunInput(ctx context.Context, ec *gqlexec
 			it.Status = data
 		case "billType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billType"))
-			data, err := unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐBillType(ctx, ec, v)
+			data, err := unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -853,13 +853,13 @@ func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exe
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
 
-func unmarshalNBillingTransferItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐItemStatus(ctx context.Context, ec *gqlexec.Exec, v any) (billingtransfer.ItemStatus, error) {
+func unmarshalNBillingTransferItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐItemStatus(ctx context.Context, ec *gqlexec.Exec, v any) (billingtransfer.ItemStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := billingtransfer.ItemStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNBillingTransferRunScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐRunScope(ctx context.Context, ec *gqlexec.Exec, v any) (billingtransfer.RunScope, error) {
+func unmarshalNBillingTransferRunScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐRunScope(ctx context.Context, ec *gqlexec.Exec, v any) (billingtransfer.RunScope, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := billingtransfer.RunScope(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -880,7 +880,7 @@ func unmarshalNStartBillingTransferRunInput2githubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐBillType(ctx context.Context, ec *gqlexec.Exec, v any) (*billingqueue.BillType, error) {
+func unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType(ctx context.Context, ec *gqlexec.Exec, v any) (*billingqueue.BillType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -889,11 +889,11 @@ func unmarshalOBillType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋ
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOBillingTransferItemStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐItemStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]billingtransfer.ItemStatus, error) {
+func unmarshalOBillingTransferItemStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐItemStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]billingtransfer.ItemStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNBillingTransferItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐItemStatus)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNBillingTransferItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐItemStatus)
 }
 
 func unmarshalOBillingTransferRunItemsFilterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingTransferRunItemsFilterInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.BillingTransferRunItemsFilterInput, error) {
@@ -936,7 +936,7 @@ func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐBillType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingqueue.BillType) graphql.Marshaler {
+func marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐBillType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingqueue.BillType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -944,7 +944,7 @@ func marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomai
 	return res
 }
 
-func marshalNBillingTransferItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐItemStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingtransfer.ItemStatus) graphql.Marshaler {
+func marshalNBillingTransferItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐItemStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingtransfer.ItemStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -952,15 +952,15 @@ func marshalNBillingTransferItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return res
 }
 
-func marshalNBillingTransferRequirement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐMissingRequirementᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*billingtransfer.MissingRequirement) graphql.Marshaler {
+func marshalNBillingTransferRequirement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐMissingRequirementᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*billingtransfer.MissingRequirement) graphql.Marshaler {
 	return gqlexec.List[*billingtransfer.MissingRequirement]{
-		Elem:        marshalNBillingTransferRequirement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐMissingRequirement,
+		Elem:        marshalNBillingTransferRequirement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐMissingRequirement,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNBillingTransferRequirement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐMissingRequirement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingtransfer.MissingRequirement) graphql.Marshaler {
+func marshalNBillingTransferRequirement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐMissingRequirement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingtransfer.MissingRequirement) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1008,7 +1008,7 @@ func marshalNBillingTransferRunItemEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return ec.MarshalType(ctx, sel, "BillingTransferRunItemEdge", v)
 }
 
-func marshalNBillingTransferRunScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐRunScope(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingtransfer.RunScope) graphql.Marshaler {
+func marshalNBillingTransferRunScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐRunScope(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingtransfer.RunScope) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1016,7 +1016,7 @@ func marshalNBillingTransferRunScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return res
 }
 
-func marshalNBillingTransferRunStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐRunStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingtransfer.RunStatus) graphql.Marshaler {
+func marshalNBillingTransferRunStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐRunStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingtransfer.RunStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1024,15 +1024,15 @@ func marshalNBillingTransferRunStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res
 }
 
-func marshalNBillingTransferValidation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐValidationFailureᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*billingtransfer.ValidationFailure) graphql.Marshaler {
+func marshalNBillingTransferValidation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐValidationFailureᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*billingtransfer.ValidationFailure) graphql.Marshaler {
 	return gqlexec.List[*billingtransfer.ValidationFailure]{
-		Elem:        marshalNBillingTransferValidation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐValidationFailure,
+		Elem:        marshalNBillingTransferValidation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐValidationFailure,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNBillingTransferValidation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐValidationFailure(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingtransfer.ValidationFailure) graphql.Marshaler {
+func marshalNBillingTransferValidation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐValidationFailure(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingtransfer.ValidationFailure) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1088,7 +1088,7 @@ func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
-func marshalOBillingQueueStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingqueue.Status) graphql.Marshaler {
+func marshalOBillingQueueStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingqueue.Status) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -1111,7 +1111,7 @@ func marshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalOShipmentBillingTransferFailureCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingtransferᚐFailureCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingtransfer.FailureCode) graphql.Marshaler {
+func marshalOShipmentBillingTransferFailureCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐFailureCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingtransfer.FailureCode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

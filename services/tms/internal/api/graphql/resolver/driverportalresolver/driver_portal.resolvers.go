@@ -9,21 +9,22 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/telematicsmapping"
-
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/driverpay"
-	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/driverportalservice"
-	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
-	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/telematicsmapping"
+	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -585,7 +586,7 @@ func (r *QueryResolver) SettlementDisputes(ctx context.Context, input gqlmodel.D
 	}
 	result, err := r.DriverSettlementService.ListDisputesConnection(
 		ctx,
-		&repositories.ListSettlementDisputeConnectionRequest{
+		&driversettlementports.ListSettlementDisputeConnectionRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
@@ -605,7 +606,7 @@ func (r *QueryResolver) SettlementDispute(ctx context.Context, id string) (*driv
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid dispute")
 	}
-	return r.DriverSettlementService.GetDispute(ctx, repositories.GetSettlementDisputeByIDRequest{
+	return r.DriverSettlementService.GetDispute(ctx, driversettlementports.GetSettlementDisputeByIDRequest{
 		ID:               disputeID,
 		TenantInfo:       base.TenantInfo(authCtx),
 		IncludeRelations: true,
@@ -752,7 +753,7 @@ func (r *QueryResolver) MyDisputes(ctx context.Context) ([]*driversettlement.Dis
 	}
 	return r.DriverSettlementService.ListDisputesForWorker(
 		ctx,
-		&repositories.ListSettlementDisputesForWorkerRequest{
+		&driversettlementports.ListSettlementDisputesForWorkerRequest{
 			TenantInfo: ti,
 			WorkerID:   wrk.ID,
 		},
@@ -980,7 +981,7 @@ func (r *QueryResolver) MyNotifications(ctx context.Context, input gqlmodel.Data
 	if err != nil {
 		return nil, err
 	}
-	req := &repositories.ListNotificationConnectionRequest{
+	req := &notificationports.ListNotificationConnectionRequest{
 		Filter:       tableInput.Filter,
 		Cursor:       tableInput.Cursor,
 		PersonalOnly: true,
@@ -1020,7 +1021,7 @@ func (r *QueryResolver) DriverExpenses(ctx context.Context, input gqlmodel.DataT
 	}
 	result, err := r.DriverSettlementService.ListExpensesConnection(
 		ctx,
-		&repositories.ListDriverExpenseConnectionRequest{
+		&driverpayports.ListDriverExpenseConnectionRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
@@ -1040,7 +1041,7 @@ func (r *QueryResolver) DriverExpense(ctx context.Context, id string) (*driverpa
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid expense")
 	}
-	return r.DriverSettlementService.GetExpense(ctx, repositories.GetDriverExpenseByIDRequest{
+	return r.DriverSettlementService.GetExpense(ctx, driverpayports.GetDriverExpenseByIDRequest{
 		ID:         expenseID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

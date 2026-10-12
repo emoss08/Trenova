@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 /**
  * Shift patterns and the rota, shared by the office board and the driver
  * portal so the two never disagree about what a pattern means.
@@ -132,7 +133,7 @@ export function describeShiftPattern(mask: string, cycleWeeks: number): string {
   }
 
   if (cycleWeeks > 1) {
-    return `${description} · ${cycleWeeks}-week rotation`;
+    return translate("{0} · {1}-week rotation", description, cycleWeeks);
   }
   return description;
 }

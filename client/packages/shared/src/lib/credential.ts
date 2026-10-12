@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { CredentialHealth } from "../types/worker-credential";
 
 export type CredentialHealthTone = "ok" | "soon" | "overdue" | "missing";
@@ -61,12 +62,14 @@ export function credentialHealthMeta(health: CredentialHealth): CredentialHealth
  * arithmetic: 0 is "today", negatives are already past.
  */
 export function describeDaysUntil(days: number | null | undefined): string {
-  if (days == null) return "No expiry";
-  if (days === 0) return "Expires today";
-  if (days === 1) return "Expires tomorrow";
-  if (days === -1) return "Expired yesterday";
-  if (days < 0) return `Expired ${-days} days ago`;
-  return `${days} days left`;
+  if (days == null) return translate("No expiry");
+  if (days === 0) return translate("Expires today");
+  if (days === 1) return translate("Expires tomorrow");
+  if (days === -1) return translate("Expired yesterday");
+  if (days < 0) {
+    return translate("{0, plural, one {Expired # day ago} other {Expired # days ago}}", -days);
+  }
+  return translate("{0, plural, one {# day left} other {# days left}}", days);
 }
 
 /**

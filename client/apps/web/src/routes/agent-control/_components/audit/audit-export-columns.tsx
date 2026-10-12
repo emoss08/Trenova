@@ -78,7 +78,14 @@ export function getAuditExportColumns(
       header: t("By"),
       cell: ({ row }) => <span>{row.original.requestedBy?.name ?? "—"}</span>,
       size: 160,
-      meta: { label: t("By"), apiField: "requestedByUserId", filterable: false, sortable: false },
+      meta: {
+        label: t("By"),
+        apiField: "requestedByUserId",
+        sortable: false,
+        filterable: true,
+        filterType: "record",
+        filterRecord: "USER",
+      },
     },
     {
       accessorKey: "format",

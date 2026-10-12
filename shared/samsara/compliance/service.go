@@ -62,7 +62,7 @@ func (s *service) HOSClocksAll(
 		return nil, err
 	}
 	if params.Limit == 0 {
-		params.Limit = 512
+		params.Limit = maxClocksLimit
 	}
 
 	items := make([]HOSClock, 0)
@@ -106,6 +106,9 @@ func (s *service) HOSViolations(
 	ctx context.Context,
 	params HOSViolationsParams,
 ) (HOSViolationsResponse, error) {
+	if err := params.Validate(); err != nil {
+		return HOSViolationsResponse{}, err
+	}
 	out := HOSViolationsResponse{}
 	if err := s.client.Do(ctx, httpx.Request{
 		Method: http.MethodGet,
@@ -120,6 +123,9 @@ func (s *service) HOSViolations(
 
 //nolint:gocritic // params is intentionally passed by value.
 func (s *service) HOSLogs(ctx context.Context, params HOSLogsParams) (HOSLogsResponse, error) {
+	if err := params.Validate(); err != nil {
+		return HOSLogsResponse{}, err
+	}
 	out := HOSLogsResponse{}
 	if err := s.client.Do(ctx, httpx.Request{
 		Method: http.MethodGet,
@@ -137,6 +143,9 @@ func (s *service) DriverTachographHistory(
 	ctx context.Context,
 	params DriverTachographParams,
 ) (DriverTachographResponse, error) {
+	if err := params.Validate(); err != nil {
+		return DriverTachographResponse{}, err
+	}
 	out := DriverTachographResponse{}
 	if err := s.client.Do(ctx, httpx.Request{
 		Method: http.MethodGet,
@@ -154,6 +163,9 @@ func (s *service) VehicleTachographHistory(
 	ctx context.Context,
 	params VehicleTachographParams,
 ) (VehicleTachographResponse, error) {
+	if err := params.Validate(); err != nil {
+		return VehicleTachographResponse{}, err
+	}
 	out := VehicleTachographResponse{}
 	if err := s.client.Do(ctx, httpx.Request{
 		Method: http.MethodGet,

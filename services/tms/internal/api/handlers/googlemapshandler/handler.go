@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/gin-gonic/gin"
@@ -14,12 +14,12 @@ import (
 type Params struct {
 	fx.In
 
-	AutoCompleteService services.AutoCompleteService
+	AutoCompleteService kernelports.AutoCompleteService
 	ErrorHandler        *helpers.ErrorHandler
 }
 
 type Handler struct {
-	service services.AutoCompleteService
+	service kernelports.AutoCompleteService
 	eh      *helpers.ErrorHandler
 }
 
@@ -51,7 +51,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 func (h *Handler) autocomplete(c *gin.Context) {
 	ac := authctx.GetAuthContext(c)
 
-	var req services.AutoCompleteRequest
+	var req kernelports.AutoCompleteRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.eh.HandleError(c, err)
 		return

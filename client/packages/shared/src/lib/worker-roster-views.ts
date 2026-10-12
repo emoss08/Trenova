@@ -75,7 +75,10 @@ export function rosterViews(now: number): RosterView[] {
     },
     {
       id: "expiring-soon",
-      label: `Expiring in ${EXPIRING_SOON_DAYS} days`,
+      label: translate(
+        "{0, plural, one {Expiring in # day} other {Expiring in # days}}",
+        EXPIRING_SOON_DAYS,
+      ),
       description: translate("A required credential lapses inside the renewal window."),
       filters: [
         {

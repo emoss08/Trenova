@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { ControlsProvider } from "@/contexts/control-context";
 import type { PanelMode, ColumnDef, Row, Table } from "@trenova/shared/types/data-table";
-import type { PaginationState, RowData, RowSelectionState } from "@tanstack/react-table";
+import type { PaginationState, RowData } from "@tanstack/react-table";
 import { createContext, useContext, useMemo } from "react";
 
 interface DataTableStateContextType {
@@ -18,14 +18,21 @@ interface DataTablePanelContextType<TData extends RowData = RowData> {
   isPanelOpen: boolean;
   panelMode: PanelMode;
   panelRow: TData | null;
-  rowSelection: RowSelectionState;
-  selectedCount: number;
   getSelectedRows: () => TData[];
   openPanelCreate: () => void;
   openPanelEdit: (row: Row<TData>) => void;
   closePanel: () => void;
   hasPanel: boolean;
   canOpenPanel: boolean;
+}
+
+interface DataTableLayoutContextType {
+  /** Widens or narrows columns to their widest content on the page; every resizable column when none are named. */
+  fitColumns: (columnIds?: readonly string[]) => void;
+  /** Copies the top selected cell of each column into the selected cells below it. */
+  fillDown: () => void;
+  /** Pastes the clipboard onto the selected cells, from the selection's top-left. */
+  pasteFromClipboard: () => void;
 }
 
 interface DataTableBaseContextType<TData extends RowData = RowData, TValue = unknown> {
@@ -39,6 +46,7 @@ interface DataTableContextType<TData extends RowData = RowData, TValue = unknown
     DataTableStateContextType,
     DataTableBaseContextType<TData, TValue>,
     DataTablePanelContextType<TData>,
+    DataTableLayoutContextType,
     DataTablePermissionsContextType {}
 
 const DataTableContext = createContext<DataTableContextType<any, any> | null>(null);
@@ -51,6 +59,7 @@ export function DataTableProvider<TData extends RowData, TValue>({
   ...props
 }: Partial<DataTableStateContextType> &
   Partial<DataTablePanelContextType<TData>> &
+  Partial<DataTableLayoutContextType> &
   Partial<DataTablePermissionsContextType> &
   DataTableBaseContextType<TData, TValue> & {
     children: React.ReactNode;
@@ -61,8 +70,6 @@ export function DataTableProvider<TData extends RowData, TValue>({
       columns: props.columns,
       isLoading: props.isLoading,
       pagination: props.pagination ?? { pageIndex: 0, pageSize: 10 },
-      rowSelection: props.rowSelection ?? {},
-      selectedCount: props.selectedCount ?? 0,
       getSelectedRows: props.getSelectedRows ?? emptyRows,
       isPanelOpen: props.isPanelOpen ?? false,
       panelMode: props.panelMode ?? "create",
@@ -72,6 +79,9 @@ export function DataTableProvider<TData extends RowData, TValue>({
       closePanel: props.closePanel ?? noopFn,
       hasPanel: props.hasPanel ?? false,
       canOpenPanel: props.canOpenPanel ?? false,
+      fitColumns: props.fitColumns ?? noopFn,
+      fillDown: props.fillDown ?? noopFn,
+      pasteFromClipboard: props.pasteFromClipboard ?? noopFn,
       canCreate: props.canCreate ?? true,
       canUpdate: props.canUpdate ?? true,
       canExport: props.canExport ?? true,
@@ -81,8 +91,6 @@ export function DataTableProvider<TData extends RowData, TValue>({
       props.columns,
       props.isLoading,
       props.pagination,
-      props.rowSelection,
-      props.selectedCount,
       props.getSelectedRows,
       props.isPanelOpen,
       props.panelMode,
@@ -92,6 +100,9 @@ export function DataTableProvider<TData extends RowData, TValue>({
       props.closePanel,
       props.hasPanel,
       props.canOpenPanel,
+      props.fitColumns,
+      props.fillDown,
+      props.pasteFromClipboard,
       props.canCreate,
       props.canUpdate,
       props.canExport,

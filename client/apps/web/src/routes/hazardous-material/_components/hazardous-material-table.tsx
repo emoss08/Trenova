@@ -12,6 +12,7 @@ import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./hazardous-material-columns";
 import { HazardousMaterialPanel } from "./hazardous-material-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function HazardousMaterialTable() {
   const t = useT();
@@ -28,9 +29,9 @@ export default function HazardousMaterialTable() {
           status: status as HazardousMaterial["status"],
         }),
         {
-          loading: "Updating status...",
-          success: "Status updated successfully",
-          error: "Failed to update status",
+          loading: translate("Updating status..."),
+          success: translate("Status updated successfully"),
+          error: translate("Failed to update status"),
           finally: async () => {
             await queryClient.invalidateQueries({
               queryKey: ["hazardous-material-list"],
@@ -62,6 +63,7 @@ export default function HazardousMaterialTable() {
   return (
     <DataTable<HazardousMaterial>
       name="Hazardous Material"
+      emptyTitle={t("No hazardous materials yet")}
       queryKey="hazardous-material-list"
       graphql={hazardousMaterialTableGraphQLConfig}
       resource={Resource.HazardousMaterial}

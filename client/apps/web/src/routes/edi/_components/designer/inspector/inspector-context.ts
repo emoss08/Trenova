@@ -37,8 +37,19 @@ export function buildMessageInspectorContext({
   provenance,
 }: EDIMessageInspection): InspectorContext {
   return {
-    title: `Message ${message.transactionControlNumber || message.id}`,
-    subtitle: `${message.transactionSet} ${message.direction} generated ${formatUnix(message.generatedAt)}`,
+    title: translate("Message {0}", message.transactionControlNumber || message.id),
+    subtitle:
+      message.direction === "Inbound"
+        ? translate(
+            "{0} Inbound generated {1}",
+            message.transactionSet,
+            formatUnix(message.generatedAt),
+          )
+        : translate(
+            "{0} Outbound generated {1}",
+            message.transactionSet,
+            formatUnix(message.generatedAt),
+          ),
     status: {
       label: message.status,
       variant: message.status === "Generated" ? "success" : "danger",
@@ -112,8 +123,11 @@ export function buildPreviewInspectorContext(preview: EDIDocumentPreview): Inspe
   const templateVersionLabel = templateVersion ? `v${templateVersion.versionNumber}` : "-";
 
   return {
-    title: `Preview ${preview.transactionControlNumber}`,
-    subtitle: `${transactionSet || "X12"} ${direction} provisional preview`,
+    title: translate("Preview {0}", preview.transactionControlNumber),
+    subtitle:
+      direction === "Inbound"
+        ? translate("{0} Inbound provisional preview", transactionSet || "X12")
+        : translate("{0} Outbound provisional preview", transactionSet || "X12"),
     status: {
       label: translate("Provisional"),
       variant: "info",

@@ -4,9 +4,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/domain/subscription"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
+
+	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -65,10 +66,10 @@ func Restriction(capability platformplan.Capability) error {
 	)
 }
 
-func Restricting(t *testing.T, capability platformplan.Capability) *mocks.MockPlanService {
+func Restricting(t *testing.T, capability platformplan.Capability) *platformplanportsmock.MockPlanService {
 	t.Helper()
 
-	plans := mocks.NewMockPlanService(t)
+	plans := platformplanportsmock.NewMockPlanService(t)
 	plans.EXPECT().
 		RequireCapability(mock.Anything, mock.Anything, capability).
 		Return(Restriction(capability))
@@ -76,10 +77,10 @@ func Restricting(t *testing.T, capability platformplan.Capability) *mocks.MockPl
 	return plans
 }
 
-func Allowing(t *testing.T, capability platformplan.Capability) *mocks.MockPlanService {
+func Allowing(t *testing.T, capability platformplan.Capability) *platformplanportsmock.MockPlanService {
 	t.Helper()
 
-	plans := mocks.NewMockPlanService(t)
+	plans := platformplanportsmock.NewMockPlanService(t)
 	plans.EXPECT().
 		RequireCapability(mock.Anything, mock.Anything, capability).
 		Return(nil)
@@ -91,10 +92,10 @@ func Cloud(
 	t *testing.T,
 	tenantInfo pagination.TenantInfo,
 	resolved *platformplan.ResolvedPlan,
-) *mocks.MockPlanService {
+) *platformplanportsmock.MockPlanService {
 	t.Helper()
 
-	plans := mocks.NewMockPlanService(t)
+	plans := platformplanportsmock.NewMockPlanService(t)
 	plans.EXPECT().EnforcesPlans().Return(true).Maybe()
 	plans.EXPECT().
 		Resolve(mock.Anything, tenantInfo.OrgID, tenantInfo.BuID).

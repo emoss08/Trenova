@@ -93,9 +93,8 @@ function FacilityRow({
           </p>
           <p className="text-2xs text-muted-foreground mt-0.5 truncate tabular-nums">
             {t(
-              "{0} {1} · {2} past free time {3}",
+              "{0, plural, one {# stop} other {# stops}} · {1} past free time {2}",
               row.stopCount,
-              row.stopCount === 1 ? "stop" : "stops",
               row.breachCount,
               row.disputeCount > 0 ? ` ${t("· {0} disputed", row.disputeCount)}` : "",
             )}
@@ -155,24 +154,28 @@ function FacilityRow({
               <MetricCell
                 label={t("Average dwell")}
                 value={formatDetentionMinutes(Math.round(row.avgDwellMinutes))}
-                detail={`${formatDetentionMinutes(
-                  Math.round(row.p90DwellMinutes - row.medianDwellMinutes),
-                )} tail over median`}
+                detail={t(
+                  "{0} tail over median",
+                  formatDetentionMinutes(Math.round(row.p90DwellMinutes - row.medianDwellMinutes)),
+                )}
               />
               <MetricCell
                 label={t("Driver pay")}
                 value={formatCurrency(row.driverPayAmount)}
                 detail={
                   row.billedAmount > 0
-                    ? `${Math.round((row.driverPayAmount / row.billedAmount) * 100)}% of billed`
-                    : "nothing billed"
+                    ? t(
+                        "{0}% of billed",
+                        Math.round((row.driverPayAmount / row.billedAmount) * 100),
+                      )
+                    : t("nothing billed")
                 }
               />
               <MetricCell
                 label={t("Margin per stop")}
                 value={formatCurrency(marginPerStop)}
                 valueClassName={deltaToneClass(marginPerStop)}
-                detail={`${formatCurrency(row.netMargin)} total`}
+                detail={t("{0} total", formatCurrency(row.netMargin))}
               />
               <MetricCell
                 label={t("Leakage")}
@@ -180,8 +183,8 @@ function FacilityRow({
                 valueClassName={row.waivedAmount > 0 ? "text-warning-foreground" : undefined}
                 detail={
                   row.suppressedCount > 0
-                    ? `${row.suppressedCount} suppressed, no notice`
-                    : "every charge noticed"
+                    ? t("{0} suppressed, no notice", row.suppressedCount)
+                    : t("every charge noticed")
                 }
               />
             </div>
@@ -251,7 +254,7 @@ export function FacilityProfiles({
               <PanelExpandToggle
                 expanded={expanded}
                 hiddenCount={hidden}
-                noun="facilities"
+                of="facilities"
                 onToggle={() => setExpanded((current) => !current)}
               />
             ) : (

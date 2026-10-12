@@ -77,8 +77,8 @@ export function JournalEntryDetailPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: `Journal Entry ${entry.entryNumber}`,
-        description: entry.description || `${entry.entryType} journal entry`,
+        title: t("Journal Entry {0}", entry.entryNumber),
+        description: entry.description || t("{0} journal entry", entry.entryType),
         actions: backButton,
       }}
     >

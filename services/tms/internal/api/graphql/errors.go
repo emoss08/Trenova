@@ -53,6 +53,9 @@ func newErrorPresenter(cfg *config.Config) graphql.ErrorPresenterFunc {
 		if params := sanitizer.ExtractParams(err); len(params) > 0 {
 			gqlErr.Extensions["params"] = params
 		}
+		if conflict := sanitizer.ExtractConflict(err); conflict != nil {
+			gqlErr.Extensions["conflict"] = conflict
+		}
 		if validationErrors := sanitizer.ExtractErrors(err); len(validationErrors) > 0 {
 			gqlErr.Extensions["errors"] = helpers.LocalizeErrors(locale, validationErrors)
 		}

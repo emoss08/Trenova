@@ -3,9 +3,9 @@ import { recordAtLocation, type RecordEntityType } from "@/config/record-links";
 /**
  * What the person is looking at, in the shape the server accepts.
  *
- * The kind names mirror `KnownPageEntityTypes` on the server; a kind the
- * server does not list is rejected with a field error, so an unknown page
- * sends its path and nothing else.
+ * The server accepts every record the registry opens on a page (it reads the
+ * registry through the generated product guide) and rejects any other kind
+ * with a field error, so an unknown page sends its path and nothing else.
  */
 export type PageContext = {
   path: string;

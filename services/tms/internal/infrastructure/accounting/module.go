@@ -1,11 +1,11 @@
 package accounting
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcconnector"
 	"github.com/emoss08/trenova/internal/infrastructure/accounting/qboconnector"
 	"github.com/emoss08/trenova/internal/infrastructure/accounting/xeroconnector"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/outboundlimit"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"go.uber.org/fx"
 )
 
@@ -19,7 +19,7 @@ var Module = fx.Module("accounting-connectors",
 			qbo *qboconnector.Provider,
 			xero *xeroconnector.Provider,
 			bc *bcconnector.Provider,
-		) services.AccountingConnectorRegistry {
+		) accountingsyncports.AccountingConnectorRegistry {
 			return NewRegistry(qbo, xero, bc)
 		},
 	),

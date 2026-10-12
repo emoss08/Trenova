@@ -23,6 +23,7 @@ import {
 } from "@trenova/shared/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const EQUIPMENT_STATUS_VARIANTS: Record<EquipmentStatus, BadgeVariant> = {
   Available: "success",
@@ -31,12 +32,12 @@ const EQUIPMENT_STATUS_VARIANTS: Record<EquipmentStatus, BadgeVariant> = {
   Sold: "warning",
 };
 
-const EQUIPMENT_STATUS_LABELS: Record<EquipmentStatus, string> = {
+const EQUIPMENT_STATUS_LABELS: Record<EquipmentStatus, string> = defineLabels({
   Available: "Available",
   AtMaintenance: "At Maintenance",
   OutOfService: "Out of Service",
   Sold: "Sold",
-};
+});
 
 const EQUIPMENT_STATUS_ICONS: Record<EquipmentStatus, React.ReactNode> = {
   Available: <CheckDoubleIcon className="size-3" />,

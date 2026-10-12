@@ -3,7 +3,7 @@ import { getColumns } from "../shipment-columns";
 import { describe, expect, it } from "vitest";
 
 describe("shipment billing column", () => {
-  const columns = getColumns({ rowActions: [], t: translate, expandedRowId: null, onToggleExpanded: () => {} });
+  const columns = getColumns({ t: translate, onToggleExpanded: () => {} });
   const column = columns.find((entry) => entry.id === "billing");
 
   it("sits right after the tender column", () => {

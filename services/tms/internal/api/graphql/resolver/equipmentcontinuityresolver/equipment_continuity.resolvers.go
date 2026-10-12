@@ -10,7 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -35,12 +35,11 @@ func (r *EquipmentContinuityResolver) CurrentLocationName(ctx context.Context, o
 		return "", nil
 	}
 
-	loadersForRequest, ok := loaders.FromContext(ctx)
-	if !ok || loadersForRequest == nil {
+	if !loaders.Available(ctx) {
 		return "", errortypes.NewDatabaseError("Location loader is not configured")
 	}
 
-	location, err := loadersForRequest.LocationByID.Load(ctx, obj.CurrentLocationID.String())
+	location, err := loaders.LocationByID(ctx, obj.CurrentLocationID.String())
 	if err != nil || location == nil {
 		return "", err
 	}

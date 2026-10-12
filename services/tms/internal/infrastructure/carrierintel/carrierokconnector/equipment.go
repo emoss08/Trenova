@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/shared/carrierok"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -17,8 +17,8 @@ const messageEquipmentIdentifier = "equipment lookup requires a VIN, plate numbe
 
 func (c *Client) FindByEquipment(
 	ctx context.Context,
-	req *services.CarrierIntelEquipmentRequest,
-) (*services.CarrierIntelEquipmentResult, error) {
+	req *carrierintelports.CarrierIntelEquipmentRequest,
+) (*carrierintelports.CarrierIntelEquipmentResult, error) {
 	if req == nil {
 		return nil, errorMapper.InvalidRequest(messageEquipmentIdentifier)
 	}
@@ -43,7 +43,7 @@ func (c *Client) FindByEquipment(
 		return nil, outcome.Mapped
 	}
 
-	matches := make([]services.CarrierIntelEquipmentMatch, 0, len(profiles))
+	matches := make([]carrierintelports.CarrierIntelEquipmentMatch, 0, len(profiles))
 	raws := make([][]byte, 0, len(profiles))
 	for idx := range profiles {
 		profile := normalizeProfile(&profiles[idx])
@@ -51,7 +51,7 @@ func (c *Client) FindByEquipment(
 		if profile.Identity != nil {
 			legalName = profile.Identity.LegalName
 		}
-		matches = append(matches, services.CarrierIntelEquipmentMatch{
+		matches = append(matches, carrierintelports.CarrierIntelEquipmentMatch{
 			DOTNumber: profile.DOTNumber(),
 			LegalName: legalName,
 			Unit:      matchingUnit(profile.Equipment, req),
@@ -69,13 +69,15 @@ func (c *Client) FindByEquipment(
 	}
 	c.recorder.Record(ctx, outcome)
 
-	return &services.CarrierIntelEquipmentResult{
+	return &carrierintelports.CarrierIntelEquipmentResult{
 		Matches: matches,
 		Raw:     joinRaw(raws),
 	}, nil
 }
 
-func equipmentQuery(req *services.CarrierIntelEquipmentRequest) (carrierok.ProfileQuery, bool) {
+func equipmentQuery(
+	req *carrierintelports.CarrierIntelEquipmentRequest,
+) (carrierok.ProfileQuery, bool) {
 	vin := strings.TrimSpace(req.VIN)
 	plate := strings.TrimSpace(req.PlateNumber)
 	unit := strings.TrimSpace(req.UnitNumber)
@@ -110,7 +112,7 @@ func vendorUnitType(unitType carrierintel.UnitType) string {
 
 func matchingUnit(
 	equipment []carrierintel.Equipment,
-	req *services.CarrierIntelEquipmentRequest,
+	req *carrierintelports.CarrierIntelEquipmentRequest,
 ) *carrierintel.Equipment {
 	vin := stringutils.NormalizeIdentifier(req.VIN)
 	plate := stringutils.NormalizeIdentifier(req.PlateNumber)

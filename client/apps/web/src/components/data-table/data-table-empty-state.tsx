@@ -1,18 +1,21 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptyTable, type EmptyTableColumn } from "@trenova/shared/components/ui/empty-table";
-import { pluralize, toSentenceFragment } from "@trenova/shared/lib/utils";
 import { PlusIcon } from "@trenova/shared/components/icons";
 
 type DataTableEmptyStateProps = {
-  /** The record the table lists, as the table names itself. */
-  name: string;
   /** The table's own visible columns, so the sketch is that table with nothing in it. */
   columns: readonly EmptyTableColumn[];
   hasActiveFilters: boolean;
+  /** The translated title naming the table's records, shown when no filter is on. */
+  title?: string;
   onClearFilters: () => void;
   /** The table's default create action, when the viewer may add a record. */
-  onAddRecord?: () => void;
+  addRecord?: {
+    /** The translated label the table's own create action carries. */
+    label: string;
+    onClick: () => void;
+  };
 };
 
 /**
@@ -21,33 +24,34 @@ type DataTableEmptyStateProps = {
  * nothing recorded at all, it is to add the first record.
  */
 export function DataTableEmptyState({
-  name,
   columns,
   hasActiveFilters,
+  title,
   onClearFilters,
-  onAddRecord,
+  addRecord,
 }: DataTableEmptyStateProps) {
   const t = useT();
 
-  const records = pluralize(toSentenceFragment(name), 2);
   return (
     <EmptyTable
       className="py-10"
-      title={hasActiveFilters ? "Nothing matches" : `No ${records} yet`}
+      title={hasActiveFilters ? t("Nothing matches") : (title ?? t("No records yet"))}
       description={
         hasActiveFilters
-          ? `No ${toSentenceFragment(name)} fits the search and filters. Widen them, or clear them to see every one.`
-          : onAddRecord
-            ? `Nothing has been recorded here yet. Add the first ${toSentenceFragment(name)} and it appears here.`
-            : `Nothing has been recorded here yet. The first ${toSentenceFragment(name)} appears here as soon as it exists.`
+          ? t("No record fits the search and filters. Widen them, or clear them to see every one.")
+          : addRecord
+            ? t("Nothing has been recorded here yet. Add the first record and it appears here.")
+            : t(
+                "Nothing has been recorded here yet. The first record appears here as soon as it exists.",
+              )
       }
       columns={columns}
       onClearFilters={hasActiveFilters ? onClearFilters : undefined}
       action={
-        onAddRecord ? (
-          <Button size="sm" onClick={onAddRecord}>
+        addRecord ? (
+          <Button size="sm" onClick={addRecord.onClick}>
             <PlusIcon className="size-3.5" />
-            {t("New {0}", toSentenceFragment(name))}
+            {addRecord.label}
           </Button>
         ) : null
       }

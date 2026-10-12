@@ -85,18 +85,30 @@ export function StatementDetail({
       setHeldIds(new Set());
       if (result.errorCount === 0 && result.skippedCount === 0) {
         toast.success(
-          `${result.successCount} invoice${result.successCount === 1 ? "" : "s"} created`,
+          t("{0, plural, one {# invoice created} other {# invoices created}}", result.successCount),
         );
       } else {
         const firstError = result.results.find((entry) => entry.error)?.error;
         toast.warning(
-          `${result.successCount} created, ${result.skippedCount} skipped, ${result.errorCount} failed` +
-            (firstError ? ` — ${firstError}` : ""),
+          firstError
+            ? t(
+                "{0} created, {1} skipped, {2} failed — {3}",
+                result.successCount,
+                result.skippedCount,
+                result.errorCount,
+                firstError,
+              )
+            : t(
+                "{0} created, {1} skipped, {2} failed",
+                result.successCount,
+                result.skippedCount,
+                result.errorCount,
+              ),
         );
       }
       invalidateStatements(queryClient);
     },
-    onError: (error: Error) => toast.error(error.message || "Could not bill this statement"),
+    onError: (error: Error) => toast.error(error.message || t("Could not bill this statement")),
   });
 
   if (isLoading) {
@@ -188,7 +200,11 @@ export function StatementDetail({
         {groups.length === 0 ? (
           <EmptySheet
             title={t("Nothing on this statement yet")}
-            description={`No approved, uninvoiced shipment for ${statement.customerName} was delivered in ${periodRange(statement.periodStart, statement.periodEnd)}. Approving one in the Shipments view puts it here straight away.`}
+            description={t(
+              "No approved, uninvoiced shipment for {0} was delivered in {1}. Approving one in the Shipments view puts it here straight away.",
+              statement.customerName,
+              periodRange(statement.periodStart, statement.periodEnd),
+            )}
             sketch={
               <div className="flex flex-col gap-2">
                 {[0, 1].map((card) => (

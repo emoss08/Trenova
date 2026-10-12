@@ -3,10 +3,10 @@ package shipmentboardresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 )
 
-func capacityToModel(c *services.ShipmentCapacity) *gqlmodel.ShipmentCapacity {
+func capacityToModel(c *shipmentports.ShipmentCapacity) *gqlmodel.ShipmentCapacity {
 	units := make([]*gqlmodel.CapacityUnit, 0, len(c.Units))
 	for _, unit := range c.Units {
 		units = append(units, capacityUnitToModel(unit))
@@ -36,7 +36,7 @@ func capacityToModel(c *services.ShipmentCapacity) *gqlmodel.ShipmentCapacity {
 	return out
 }
 
-func capacityUnitToModel(u *services.CapacityUnit) *gqlmodel.CapacityUnit {
+func capacityUnitToModel(u *shipmentports.CapacityUnit) *gqlmodel.CapacityUnit {
 	out := &gqlmodel.CapacityUnit{
 		ID:                u.ID.String(),
 		Kind:              gqlmodel.CapacityUnitKind(u.Kind),
@@ -59,7 +59,7 @@ func capacityUnitToModel(u *services.CapacityUnit) *gqlmodel.CapacityUnit {
 	return out
 }
 
-func capacityMatchesToModel(matches []*services.CapacityMatch) []*gqlmodel.CapacityMatch {
+func capacityMatchesToModel(matches []*shipmentports.CapacityMatch) []*gqlmodel.CapacityMatch {
 	out := make([]*gqlmodel.CapacityMatch, 0, len(matches))
 	for _, match := range matches {
 		pickup := match.PickupAt
@@ -82,7 +82,7 @@ func capacityMatchesToModel(matches []*services.CapacityMatch) []*gqlmodel.Capac
 }
 
 func coverageSuggestionsToModel(
-	s *services.ShipmentCoverageSuggestions,
+	s *shipmentports.ShipmentCoverageSuggestions,
 ) *gqlmodel.ShipmentCoverageSuggestions {
 	drivers := make([]*gqlmodel.DriverCoverageSuggestion, 0, len(s.Drivers))
 	for _, driver := range s.Drivers {
@@ -117,7 +117,7 @@ func coverageSuggestionsToModel(
 	return &gqlmodel.ShipmentCoverageSuggestions{Drivers: drivers, Carriers: carriers}
 }
 
-func tenderResultToModel(r *services.TenderShipmentsResult) *gqlmodel.TenderShipmentsResult {
+func tenderResultToModel(r *shipmentports.TenderShipmentsResult) *gqlmodel.TenderShipmentsResult {
 	tendered := make([]*gqlmodel.TenderShipmentSuccess, 0, len(r.Tendered))
 	for _, success := range r.Tendered {
 		tendered = append(tendered, &gqlmodel.TenderShipmentSuccess{

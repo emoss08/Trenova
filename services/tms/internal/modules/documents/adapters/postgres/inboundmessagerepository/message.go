@@ -1,0 +1,794 @@
+//nolint:gocritic // Repository request structs follow the existing value-parameter port contracts.
+package inboundmessagerepository
+
+import (
+	"context"
+	"slices"
+	"strings"
+
+	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
+
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/uptrace/bun"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+type Params struct {
+	fx.In
+
+	DB     *postgres.Connection
+	Logger *zap.Logger
+}
+
+type repository struct {
+	db *postgres.Connection
+	l  *zap.Logger
+}
+
+func New(p Params) inboundmessageports.InboundMessageRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.inbound-message-repository"),
+	}
+}
+
+var needsReviewStatuses = []inboundmessage.Status{
+	inboundmessage.StatusInReview,
+	inboundmessage.StatusQuarantined,
+}
+
+var settledStatuses = []inboundmessage.Status{
+	inboundmessage.StatusActioned,
+	inboundmessage.StatusIgnored,
+}
+
+type folderColumns struct {
+	alias             string
+	ID                buncolgen.Column
+	OrganizationID    buncolgen.Column
+	BusinessUnitID    buncolgen.Column
+	Status            buncolgen.Column
+	Classification    buncolgen.Column
+	MailboxID         buncolgen.Column
+	MatchedShipmentID buncolgen.Column
+	ReceivedAt        buncolgen.Column
+	ThreadKey         buncolgen.Column
+	OwnerID           buncolgen.Column
+	Parked            buncolgen.Column
+}
+
+func newFolderColumns(alias string) folderColumns {
+	cols := inboundmessagecol.InboundMessageColumns
+
+	return folderColumns{
+		alias:             alias,
+		ID:                cols.ID.WithAlias(alias),
+		OrganizationID:    cols.OrganizationID.WithAlias(alias),
+		BusinessUnitID:    cols.BusinessUnitID.WithAlias(alias),
+		Status:            cols.Status.WithAlias(alias),
+		Classification:    cols.Classification.WithAlias(alias),
+		MailboxID:         cols.MailboxID.WithAlias(alias),
+		MatchedShipmentID: cols.MatchedShipmentID.WithAlias(alias),
+		ReceivedAt:        cols.ReceivedAt.WithAlias(alias),
+		ThreadKey:         cols.ThreadKey.WithAlias(alias),
+		OwnerID:           cols.OwnerID.WithAlias(alias),
+		Parked:            cols.Parked.WithAlias(alias),
+	}
+}
+
+const newerAlias = "nwr"
+
+var (
+	folderCols = newFolderColumns(inboundmessagecol.InboundMessageTable.Alias)
+	newerCols  = newFolderColumns(newerAlias)
+)
+
+func narrow(
+	db bun.IDB,
+	sq *bun.SelectQuery,
+	req *inboundmessageports.ListInboundMessagesRequest,
+) *bun.SelectQuery {
+	sq = applyFolder(sq, req, folderCols)
+	if req.ThreadKey != "" {
+		sq = sq.Where(folderCols.ThreadKey.Eq(), req.ThreadKey)
+	}
+	if req.CollapseThreads && req.ThreadKey == "" {
+		sq = sq.Where("NOT EXISTS (?)", newerInFolder(db, req))
+	}
+
+	return sq
+}
+
+func applyFolder(
+	sq *bun.SelectQuery,
+	req *inboundmessageports.ListInboundMessagesRequest,
+	c folderColumns,
+) *bun.SelectQuery {
+	sq = applyLane(sq, req.Lane, req.ViewerID, c)
+	if len(req.Statuses) > 0 {
+		sq = sq.Where(c.Status.In(), bun.List(req.Statuses))
+	}
+	if req.Classification != "" {
+		sq = sq.Where(c.Classification.Eq(), req.Classification)
+	}
+	if req.MailboxID.IsNotNil() {
+		sq = sq.Where(c.MailboxID.Eq(), req.MailboxID)
+	}
+	if req.ShipmentID.IsNotNil() {
+		sq = sq.Where(c.MatchedShipmentID.Eq(), req.ShipmentID)
+	}
+	if req.OwnerID.IsNotNil() {
+		sq = sq.Where(c.OwnerID.Eq(), req.OwnerID)
+	}
+	if req.Since > 0 {
+		sq = sq.Where(c.ReceivedAt.Gte(), req.Since)
+	}
+
+	return sq
+}
+
+func applyLane(
+	sq *bun.SelectQuery,
+	lane inboundmessageports.Lane,
+	viewerID pulid.ID,
+	c folderColumns,
+) *bun.SelectQuery {
+	switch lane {
+	case inboundmessageports.LaneWaiting:
+		return sq.Where(c.Status.In(), bun.List(needsReviewStatuses)).Where(c.Parked.IsNull())
+	case inboundmessageports.LaneAssignedToMe:
+		return sq.Where(c.Status.In(), bun.List(needsReviewStatuses)).
+			Where(c.Parked.IsNull()).
+			Where(c.OwnerID.Eq(), viewerID)
+	case inboundmessageports.LaneWaitingOnThem:
+		return sq.Where(c.Parked.Eq(), inboundmessage.ParkingAwaitingReply)
+	case inboundmessageports.LaneSnoozed:
+		return sq.Where(c.Parked.Eq(), inboundmessage.ParkingSnoozed)
+	case inboundmessageports.LaneHandled:
+		return sq.Where(c.Status.Eq(), inboundmessage.StatusActioned)
+	case inboundmessageports.LaneIgnored:
+		return sq.Where(c.Status.Eq(), inboundmessage.StatusIgnored)
+	case inboundmessageports.LaneEverything:
+		return sq
+	default:
+		return sq
+	}
+}
+
+func newerInFolder(
+	db bun.IDB,
+	req *inboundmessageports.ListInboundMessagesRequest,
+) *bun.SelectQuery {
+	probe := db.NewSelect().
+		TableExpr(inboundmessagecol.InboundMessageTable.As(newerAlias)).
+		ColumnExpr("1").
+		Where(newerCols.OrganizationID.EqColumn(folderCols.OrganizationID)).
+		Where(newerCols.BusinessUnitID.EqColumn(folderCols.BusinessUnitID)).
+		Where(newerCols.ThreadKey.EqColumn(folderCols.ThreadKey)).
+		Where(buncolgen.Expr(
+			"({0} > {1} OR ({0} = {1} AND {2} > {3}))",
+			newerCols.ReceivedAt, folderCols.ReceivedAt, newerCols.ID, folderCols.ID,
+		))
+	probe = applyFolder(probe, req, newerCols)
+	if req.Filter != nil && strings.TrimSpace(req.Filter.Query) != "" {
+		probe = searchPredicate(probe, newerAlias, req.Filter.Query)
+	}
+
+	return probe
+}
+
+func searchPredicate(sq *bun.SelectQuery, alias, query string) *bun.SelectQuery {
+	entity := (*inboundmessage.InboundMessage)(nil)
+	fieldConfig := querybuilder.GetFieldConfiguration(entity)
+
+	return querybuilder.NewWithPostgresSearch(sq, alias, fieldConfig, entity).
+		WithPredicatesOnly().
+		ApplyTextSearchFilter(query, querybuilder.ExtractSearchFields(fieldConfig)).
+		GetQuery()
+}
+
+func (r *repository) List(
+	ctx context.Context,
+	req *inboundmessageports.ListInboundMessagesRequest,
+) (*pagination.ListResult[*inboundmessage.InboundMessage], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*inboundmessage.InboundMessage], error) {
+			entities := make([]*inboundmessage.InboundMessage, 0, req.Filter.Pagination.SafeLimit())
+			cols := inboundmessagecol.InboundMessageColumns
+
+			dba := r.db.DBForContext(ctx)
+			query := narrow(dba, dba.NewSelect().Model(&entities).Relation("Mailbox"), req)
+
+			total, err := querybuilder.ApplyFilters(
+				query, "imsg", req.Filter, (*inboundmessage.InboundMessage)(nil),
+			).
+				Order(cols.ReceivedAt.OrderDesc()).
+				Limit(int64(req.Filter.Pagination.SafeLimit())).
+				Offset(int64(req.Filter.Pagination.SafeOffset())).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			return &pagination.ListResult[*inboundmessage.InboundMessage]{
+				Items: entities,
+				Total: int(total),
+			}, nil
+		},
+	)
+}
+
+func (r *repository) ListCursor(
+	ctx context.Context,
+	req *inboundmessageports.ListInboundMessagesRequest,
+) (*pagination.CursorListResult[*inboundmessage.InboundMessage], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*inboundmessage.InboundMessage], error) {
+			dba := r.db.DBForContext(ctx)
+
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*inboundmessage.InboundMessage)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return narrow(dba, querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							inboundmessagecol.InboundMessageTable.Alias,
+							req.Filter,
+							(*inboundmessage.InboundMessage)(nil),
+						), req)
+					}).
+					Count(ctx)
+				if err != nil {
+					return nil, err
+				}
+				totalCount = new(int(total))
+			}
+
+			return dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*inboundmessage.InboundMessage]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*inboundmessage.InboundMessage) *bun.SelectQuery {
+						return dba.NewSelect().Model(entities).Relation("Mailbox")
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						sq, applyErr := querybuilder.ApplyCursorFilters(
+							sq,
+							inboundmessagecol.InboundMessageTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*inboundmessage.InboundMessage)(nil),
+						)
+						if applyErr != nil {
+							return sq, applyErr
+						}
+
+						return narrow(dba, sq, req), nil
+					},
+				},
+			)
+		},
+	)
+}
+
+func (r *repository) GetByID(
+	ctx context.Context,
+	req inboundmessageports.GetInboundMessageByIDRequest,
+) (*inboundmessage.InboundMessage, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*inboundmessage.InboundMessage, error) {
+		entity := new(inboundmessage.InboundMessage)
+		cols := inboundmessagecol.InboundMessageColumns
+
+		query := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Relation("Mailbox").
+			Where(cols.ID.Eq(), req.ID).
+			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo))
+		if req.IncludeAttachments {
+			query = query.Relation("Attachments")
+		}
+
+		if err := query.Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, "InboundMessage")
+		}
+
+		return entity, nil
+	})
+}
+
+// GetByProviderID is the idempotency read. It is scoped by mailbox rather than
+// by tenant because the mailbox is what the delivery resolved to, and the
+// unique index it rides on is `(mailbox_id, provider_message_id)`.
+func (r *repository) GetByProviderID(
+	ctx context.Context,
+	req inboundmessageports.GetInboundMessageByProviderIDRequest,
+) (*inboundmessage.InboundMessage, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*inboundmessage.InboundMessage, error) {
+		entity := new(inboundmessage.InboundMessage)
+		cols := inboundmessagecol.InboundMessageColumns
+
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where(cols.MailboxID.Eq(), req.MailboxID).
+			Where(cols.ProviderMessageID.Eq(), req.ProviderMessageID).
+			Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, "InboundMessage")
+		}
+
+		return entity, nil
+	})
+}
+
+// Create writes the message and its attachments as one transaction.
+//
+// A message whose attachment rows failed to write would be a message the
+// pipeline believes has nothing to extract, and the files would be lost with no
+// record that they ever arrived.
+func (r *repository) Create(
+	ctx context.Context,
+	entity *inboundmessage.InboundMessage,
+	attachments []*inboundmessage.InboundAttachment,
+) (*inboundmessage.InboundMessage, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*inboundmessage.InboundMessage, error) {
+		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+			if _, iErr := tx.NewInsert().Model(entity).Returning("*").Exec(c); iErr != nil {
+				return iErr
+			}
+			if len(attachments) == 0 {
+				return nil
+			}
+
+			for _, attachment := range attachments {
+				attachment.MessageID = entity.ID
+				attachment.OrganizationID = entity.OrganizationID
+				attachment.BusinessUnitID = entity.BusinessUnitID
+			}
+			if _, iErr := tx.NewInsert().Model(&attachments).Returning("*").Exec(c); iErr != nil {
+				return iErr
+			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		entity.Attachments = attachments
+
+		return entity, nil
+	})
+}
+
+func (r *repository) Update(
+	ctx context.Context,
+	entity *inboundmessage.InboundMessage,
+) (*inboundmessage.InboundMessage, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*inboundmessage.InboundMessage, error) {
+		ov := entity.Version
+		entity.Version++
+
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WherePK().
+			Where("version = ?", ov).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			entity.Version = ov
+
+			return nil, err
+		}
+		if err = dberror.CheckRowsAffected(
+			results,
+			"InboundMessage",
+			entity.ID.String(),
+		); err != nil {
+			return nil, err
+		}
+
+		return entity, nil
+	})
+}
+
+// UpdateAttachment carries no version because an attachment row is only ever
+// written by the pipeline that owns the message, one step at a time.
+func (r *repository) UpdateAttachment(
+	ctx context.Context,
+	entity *inboundmessage.InboundAttachment,
+) (*inboundmessage.InboundAttachment, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*inboundmessage.InboundAttachment, error) {
+			results, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(entity).
+				WherePK().
+				Returning("*").
+				Exec(ctx)
+			if err != nil {
+				return nil, err
+			}
+			if err = dberror.CheckRowsAffected(
+				results, "InboundAttachment", entity.ID.String(),
+			); err != nil {
+				return nil, err
+			}
+
+			return entity, nil
+		},
+	)
+}
+
+func (r *repository) ListAttachments(
+	ctx context.Context,
+	messageID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) ([]*inboundmessage.InboundAttachment, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*inboundmessage.InboundAttachment, error) {
+			entities := make([]*inboundmessage.InboundAttachment, 0, 4)
+			cols := inboundmessagecol.InboundAttachmentColumns
+
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Where(cols.MessageID.Eq(), messageID).
+				Apply(inboundmessagecol.InboundAttachmentApplyTenant(tenantInfo)).
+				Order(cols.CreatedAt.OrderAsc()).
+				Scan(ctx); err != nil {
+				return nil, err
+			}
+
+			return entities, nil
+		},
+	)
+}
+
+// CountBreakdown is the inbox's census in one aggregate: a row per status,
+// reading and mailbox that has any mail. The service folds it into lanes,
+// kinds and mailboxes, so the counts in the rail cannot disagree with each
+// other the way three separate queries run a moment apart could.
+func (r *repository) CountBreakdown(
+	ctx context.Context,
+	req inboundmessageports.CountInboundMessagesRequest,
+) ([]inboundmessageports.InboundMessageCount, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]inboundmessageports.InboundMessageCount, error) {
+			rows := make(
+				[]inboundmessageports.InboundMessageCount,
+				0,
+				len(inboundmessage.AllStatuses()),
+			)
+
+			if err := countBreakdownQuery(
+				r.db.DBForContext(ctx),
+				req,
+			).Scan(ctx, &rows); err != nil {
+				return nil, err
+			}
+
+			return rows, nil
+		},
+	)
+}
+
+func countBreakdownQuery(
+	db bun.IDB,
+	req inboundmessageports.CountInboundMessagesRequest,
+) *bun.SelectQuery {
+	open, settled := censusStatuses(req.Statuses)
+	if len(settled) == 0 {
+		return openCensusQuery(db, req, open)
+	}
+	if len(open) == 0 {
+		return settledCensusQuery(db, req, settled)
+	}
+
+	return openCensusQuery(db, req, open).UnionAll(settledCensusQuery(db, req, settled))
+}
+
+func censusStatuses(
+	requested []inboundmessage.Status,
+) (open, settled []inboundmessage.Status) {
+	if len(requested) == 0 {
+		requested = inboundmessage.AllStatuses()
+	}
+	open = make([]inboundmessage.Status, 0, len(requested))
+	settled = make([]inboundmessage.Status, 0, len(settledStatuses))
+	for _, status := range requested {
+		if slices.Contains(settledStatuses, status) {
+			settled = append(settled, status)
+
+			continue
+		}
+		open = append(open, status)
+	}
+
+	return open, settled
+}
+
+func censusBase(
+	db bun.IDB,
+	req inboundmessageports.CountInboundMessagesRequest,
+	statuses []inboundmessage.Status,
+) *bun.SelectQuery {
+	cols := inboundmessagecol.InboundMessageColumns
+	query := db.NewSelect().
+		Model((*inboundmessage.InboundMessage)(nil)).
+		ColumnExpr(cols.Status.Qualified()).
+		ColumnExpr(cols.Classification.Expr("COALESCE({}, '')")+" AS classification").
+		ColumnExpr(cols.MailboxID.Qualified()).
+		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
+		Where(cols.Status.In(), bun.List(statuses))
+	if req.Since > 0 {
+		query = query.Where(cols.ReceivedAt.Gte(), req.Since)
+	}
+
+	return query
+}
+
+func openCensusQuery(
+	db bun.IDB,
+	req inboundmessageports.CountInboundMessagesRequest,
+	statuses []inboundmessage.Status,
+) *bun.SelectQuery {
+	cols := inboundmessagecol.InboundMessageColumns
+	classification := cols.Classification.Expr("COALESCE({}, '')")
+	parked := cols.Parked.Expr("COALESCE({}, '')")
+	mine := cols.OwnerID.Expr("COALESCE({} = ?, FALSE)")
+	overdue := cols.DueAt.Expr("COALESCE({} < ?, FALSE)")
+
+	return censusBase(db, req, statuses).
+		ColumnExpr(parked+" AS parked").
+		ColumnExpr(mine+" AS mine", req.ViewerID.String()).
+		ColumnExpr(overdue+" AS overdue", req.Now).
+		ColumnExpr(buncolgen.Count("count")).
+		GroupExpr(cols.Status.Qualified()).
+		GroupExpr(classification).
+		GroupExpr(cols.MailboxID.Qualified()).
+		GroupExpr(parked).
+		GroupExpr(mine, req.ViewerID.String()).
+		GroupExpr(overdue, req.Now)
+}
+
+func settledCensusQuery(
+	db bun.IDB,
+	req inboundmessageports.CountInboundMessagesRequest,
+	statuses []inboundmessage.Status,
+) *bun.SelectQuery {
+	cols := inboundmessagecol.InboundMessageColumns
+
+	return censusBase(db, req, statuses).
+		ColumnExpr("'' AS parked").
+		ColumnExpr("FALSE AS mine").
+		ColumnExpr("FALSE AS overdue").
+		ColumnExpr(buncolgen.Count("count")).
+		GroupExpr(cols.Status.Qualified()).
+		GroupExpr(cols.Classification.Qualified()).
+		GroupExpr(cols.MailboxID.Qualified())
+}
+
+// CountAttachmentsByMessageIDs answers the paperclip on a page of list rows in
+// one query, rather than one per row.
+func (r *repository) CountAttachmentsByMessageIDs(
+	ctx context.Context,
+	req inboundmessageports.CountInboundAttachmentsRequest,
+) (map[pulid.ID]int, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
+		counts := make(map[pulid.ID]int, len(req.MessageIDs))
+		if len(req.MessageIDs) == 0 {
+			return counts, nil
+		}
+
+		cols := inboundmessagecol.InboundAttachmentColumns
+		rows := make([]struct {
+			MessageID pulid.ID `bun:"message_id"`
+			Count     int      `bun:"count"`
+		}, 0, len(req.MessageIDs))
+
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*inboundmessage.InboundAttachment)(nil)).
+			ColumnExpr(cols.MessageID.Qualified()).
+			ColumnExpr("COUNT(*) AS count").
+			Where(cols.MessageID.In(), bun.In(req.MessageIDs)).
+			Apply(inboundmessagecol.InboundAttachmentApplyTenant(req.TenantInfo)).
+			GroupExpr(cols.MessageID.Qualified()).
+			Scan(ctx, &rows); err != nil {
+			return nil, err
+		}
+
+		for _, row := range rows {
+			counts[row.MessageID] = row.Count
+		}
+
+		return counts, nil
+	})
+}
+
+// ListRecentForReview feeds the watchtower's nightly snapshot: the messages
+// still waiting on a person.
+func (r *repository) ListRecentForReview(
+	ctx context.Context,
+	req inboundmessageports.ListRecentInboundMessagesForReviewRequest,
+) ([]*inboundmessage.InboundMessage, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
+			limit := req.Limit
+			if limit <= 0 {
+				limit = 10
+			}
+
+			entities := make([]*inboundmessage.InboundMessage, 0, limit)
+			cols := inboundmessagecol.InboundMessageColumns
+
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Where(cols.Status.In(), bun.In([]inboundmessage.Status{
+					inboundmessage.StatusInReview,
+					inboundmessage.StatusQuarantined,
+				})).
+				Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
+				Order(cols.ReceivedAt.OrderDesc()).
+				Limit(int64(limit)).
+				Scan(ctx); err != nil {
+				return nil, err
+			}
+
+			return entities, nil
+		},
+	)
+}
+
+// DeleteBefore removes messages that are finished with and old enough.
+//
+// Only terminal ones go: a message still in review is work somebody has not
+// done yet, and retention is not the thing that should decide it never will be.
+func (r *repository) DeleteBefore(
+	ctx context.Context,
+	req inboundmessageports.DeleteInboundMessagesBeforeRequest,
+) (int64, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
+		cols := inboundmessagecol.InboundMessageColumns
+
+		ids := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*inboundmessage.InboundMessage)(nil)).
+			Column("id").
+			Where(cols.ReceivedAt.Lt(), req.Before).
+			Where(cols.Status.In(), bun.In([]inboundmessage.Status{
+				inboundmessage.StatusActioned,
+				inboundmessage.StatusIgnored,
+				inboundmessage.StatusQuarantined,
+			})).
+			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
+			Limit(int64(req.Limit))
+
+		results, err := r.db.DBForContext(ctx).
+			NewDelete().
+			Model((*inboundmessage.InboundMessage)(nil)).
+			Where("id IN (?)", ids).
+			Exec(ctx)
+		if err != nil {
+			return 0, err
+		}
+
+		return results.RowsAffected()
+	})
+}
+
+// ListSettledBefore reads the oldest settled messages first, through the lane
+// index, returning only what retention needs: the id and the stored body key.
+func (r *repository) ListSettledBefore(
+	ctx context.Context,
+	req inboundmessageports.ListSettledInboundMessagesRequest,
+) ([]*inboundmessage.InboundMessage, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
+			entities := make([]*inboundmessage.InboundMessage, 0, req.Limit)
+			if err := settledBeforeQuery(
+				r.db.DBForContext(ctx),
+				req,
+				&entities,
+			).Scan(ctx); err != nil {
+				return nil, err
+			}
+
+			return entities, nil
+		},
+	)
+}
+
+func settledBeforeQuery(
+	db bun.IDB,
+	req inboundmessageports.ListSettledInboundMessagesRequest,
+	entities *[]*inboundmessage.InboundMessage,
+) *bun.SelectQuery {
+	cols := inboundmessagecol.InboundMessageColumns
+
+	return db.NewSelect().
+		Model(entities).
+		Column(
+			cols.ID.Bare(),
+			cols.OrganizationID.Bare(),
+			cols.BusinessUnitID.Bare(),
+			cols.HTMLKey.Bare(),
+		).
+		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
+		Where(cols.Status.In(), bun.In([]inboundmessage.Status{
+			inboundmessage.StatusActioned,
+			inboundmessage.StatusIgnored,
+		})).
+		Where(cols.ReceivedAt.Lt(), req.Before).
+		Order(cols.ReceivedAt.OrderAsc()).
+		Limit(int64(req.Limit))
+}
+
+// DeleteByIDs removes messages inside one tenant. Their attachment rows go
+// with them through the foreign key's cascade.
+func (r *repository) DeleteByIDs(
+	ctx context.Context,
+	req inboundmessageports.DeleteInboundMessagesRequest,
+) (int, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		if len(req.IDs) == 0 {
+			return 0, nil
+		}
+
+		result, err := deleteByIDsQuery(r.db.DBForContext(ctx), req).Exec(ctx)
+		if err != nil {
+			return 0, err
+		}
+
+		deleted, err := result.RowsAffected()
+		if err != nil {
+			return 0, err
+		}
+
+		return int(deleted), nil
+	})
+}
+
+func deleteByIDsQuery(
+	db bun.IDB,
+	req inboundmessageports.DeleteInboundMessagesRequest,
+) *bun.DeleteQuery {
+	cols := inboundmessagecol.InboundMessageColumns
+
+	return db.NewDelete().
+		Model((*inboundmessage.InboundMessage)(nil)).
+		Where(cols.ID.In(), bun.In(req.IDs)).
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID)
+}

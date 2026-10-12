@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -53,7 +53,7 @@ type idempotencyStore struct {
 	l      *zap.Logger
 }
 
-func NewIdempotencyStore(p IdempotencyStoreParams) repositories.IdempotencyStore {
+func NewIdempotencyStore(p IdempotencyStoreParams) kernelports.IdempotencyStore {
 	return &idempotencyStore{
 		client: p.Client,
 		l:      p.Logger.Named("redis.idempotency-store"),
@@ -62,8 +62,8 @@ func NewIdempotencyStore(p IdempotencyStoreParams) repositories.IdempotencyStore
 
 func (s *idempotencyStore) Claim(
 	ctx context.Context,
-	claim repositories.IdempotencyClaim,
-) (repositories.IdempotencyClaimResult, error) {
+	claim kernelports.IdempotencyClaim,
+) (kernelports.IdempotencyClaimResult, error) {
 	raw, err := idempotencyClaimScript.Run(
 		ctx,
 		s.client,
@@ -73,7 +73,7 @@ func (s *idempotencyStore) Claim(
 		claim.LockTTL.Milliseconds(),
 	).Slice()
 	if err != nil {
-		return repositories.IdempotencyClaimResult{}, fmt.Errorf("claim idempotency key: %w", err)
+		return kernelports.IdempotencyClaimResult{}, fmt.Errorf("claim idempotency key: %w", err)
 	}
 
 	return decodeIdempotencyClaim(raw)
@@ -81,7 +81,7 @@ func (s *idempotencyStore) Claim(
 
 func (s *idempotencyStore) Complete(
 	ctx context.Context,
-	completion *repositories.IdempotencyCompletion,
+	completion *kernelports.IdempotencyCompletion,
 ) error {
 	held, err := idempotencyCompleteScript.Run(
 		ctx,
@@ -98,7 +98,7 @@ func (s *idempotencyStore) Complete(
 		return fmt.Errorf("complete idempotency key: %w", err)
 	}
 	if held == 0 {
-		return repositories.ErrIdempotencyClaimLost
+		return kernelports.ErrIdempotencyClaimLost
 	}
 	return nil
 }
@@ -115,24 +115,24 @@ func (s *idempotencyStore) Release(ctx context.Context, key, owner string) error
 	return nil
 }
 
-func decodeIdempotencyClaim(raw []any) (repositories.IdempotencyClaimResult, error) {
+func decodeIdempotencyClaim(raw []any) (kernelports.IdempotencyClaimResult, error) {
 	if len(raw) == 0 {
-		return repositories.IdempotencyClaimResult{}, errors.New(
+		return kernelports.IdempotencyClaimResult{}, errors.New(
 			"claim idempotency key: empty script reply",
 		)
 	}
 	if flag, _ := raw[0].(int64); flag == 1 {
-		return repositories.IdempotencyClaimResult{Claimed: true}, nil
+		return kernelports.IdempotencyClaimResult{Claimed: true}, nil
 	}
 	if len(raw) != 7 {
-		return repositories.IdempotencyClaimResult{}, fmt.Errorf(
+		return kernelports.IdempotencyClaimResult{}, fmt.Errorf(
 			"claim idempotency key: unexpected script reply of %d values",
 			len(raw),
 		)
 	}
 
-	record := &repositories.IdempotencyRecord{
-		State:       repositories.IdempotencyState(replyString(raw[1])),
+	record := &kernelports.IdempotencyRecord{
+		State:       kernelports.IdempotencyState(replyString(raw[1])),
 		Fingerprint: replyString(raw[2]),
 		ContentType: replyString(raw[4]),
 		BodyOmitted: replyString(raw[6]) == "true",
@@ -140,7 +140,7 @@ func decodeIdempotencyClaim(raw []any) (repositories.IdempotencyClaimResult, err
 	if status := replyString(raw[3]); status != "" {
 		code, err := strconv.Atoi(status)
 		if err != nil {
-			return repositories.IdempotencyClaimResult{}, fmt.Errorf(
+			return kernelports.IdempotencyClaimResult{}, fmt.Errorf(
 				"claim idempotency key: stored status %q: %w",
 				status,
 				err,
@@ -152,7 +152,7 @@ func decodeIdempotencyClaim(raw []any) (repositories.IdempotencyClaimResult, err
 		record.Body = []byte(body)
 	}
 
-	return repositories.IdempotencyClaimResult{Existing: record}, nil
+	return kernelports.IdempotencyClaimResult{Existing: record}, nil
 }
 
 func replyString(value any) string {

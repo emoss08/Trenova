@@ -1,11 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import logoRainbow from "@/assets/logo.webp";
 import { Metadata } from "@/components/metadata";
-import { LegalAgreementNote } from "./_components/legal-agreement-note";
 import { useCallback, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { AuthCard } from "./_components/auth-card";
-import type { CredentialReceipt } from "./_components/auth-panel";
 import { AuthShell } from "./_components/auth-shell";
 import { ResetPasswordDone, ResetPasswordForm } from "./_components/reset-password-form";
 
@@ -26,38 +22,19 @@ export function ResetPasswordPage() {
     void navigate("/login", { replace: true });
   }, [navigate]);
 
-  // The receipt has no identity to show here, so it tracks the recovery itself: the
-  // link arrived, then the password was set.
-  const receipt: CredentialReceipt = {
-    issued: isDone,
-    rows: [
-      { key: "Link", value: token ? "Received" : undefined },
-      { key: "Password", value: isDone ? "Updated" : undefined },
-    ],
-  };
-
   return (
     <>
       <Metadata title={t("Reset password")} description={t("Choose a new Trenova password")} />
-      <AuthShell step={isDone ? "done" : "login"} receipt={receipt}>
-        <div className="mb-1 flex items-center justify-center gap-2.5 min-[900px]:hidden">
-          <img src={logoRainbow} alt="" className="size-6 object-contain" />
-          <span className="text-lg font-semibold tracking-[-0.02em]">{t("Trenova")}</span>
-        </div>
-
-        <AuthCard stepKey={isDone ? "done" : "reset"}>
-          {isDone ? (
-            <ResetPasswordDone onSignIn={goToSignIn} />
-          ) : (
-            <ResetPasswordForm
-              token={token}
-              onDone={() => setIsDone(true)}
-              onRequestNewLink={goToSignIn}
-            />
-          )}
-        </AuthCard>
-
-        <LegalAgreementNote />
+      <AuthShell screenKey={isDone ? "done" : "reset"}>
+        {isDone ? (
+          <ResetPasswordDone onSignIn={goToSignIn} />
+        ) : (
+          <ResetPasswordForm
+            token={token}
+            onDone={() => setIsDone(true)}
+            onRequestNewLink={goToSignIn}
+          />
+        )}
       </AuthShell>
     </>
   );

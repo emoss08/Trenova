@@ -104,7 +104,7 @@ export function StudioEditorPane({
                 />
                 {detailErrorCount > 0 && !detailsOpen && (
                   <Badge variant="danger" className="text-2xs mr-2">
-                    {detailErrorCount} {detailErrorCount === 1 ? "issue" : "issues"}
+                    {t("{0, plural, one {# issue} other {# issues}}", detailErrorCount)}
                   </Badge>
                 )}
                 <ChevronDownIcon
@@ -263,7 +263,7 @@ export function StudioEditorPane({
               control={control}
               placeholder="2"
               decimalScale={0}
-              description={`Decimal places kept, 0 to ${MAX_ROUNDING_PRECISION}`}
+              description={t("Decimal places kept, 0 to {0}", MAX_ROUNDING_PRECISION)}
             />
           </FormControl>
         </FormGroup>

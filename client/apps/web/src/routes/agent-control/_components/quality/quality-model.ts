@@ -1,13 +1,20 @@
 import type {
   AgentQualityControl,
+  AgentQualityOverview,
+  AgentSuiteRun,
+  AgentSuiteRunCase,
   AgentSuiteRunStatus,
   UpdateAgentQualityControlInput,
 } from "@/lib/graphql/agent-quality";
+import { NEGATIVE_REASONS, POSITIVE_REASONS } from "@/components/ai-feedback/feedback-reasons";
+import { readCaseChecks } from "./cases/case-checks";
 import { centsToDecimal, decimalToCents } from "@/lib/decimal-cents";
 import type { AiFeedbackTargetType } from "@trenova/graphql/generated/graphql";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { BadgeAttrProps } from "@trenova/shared/lib/status-phase";
 import { z } from "zod";
+import { defineLabels } from "@trenova/shared/i18n/labels";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /** A section's figures move with the nightly sweep; a minute old is still true. */
 export const QUALITY_STALE_MS = 60_000;
@@ -47,14 +54,14 @@ export function suiteRunStatusChoices(t: TranslateFn): { value: string; label: s
 }
 
 /** What a rated answer was, in the words of the place a person rated it. */
-export const TARGET_TYPE_LABEL: Record<AiFeedbackTargetType, string> = {
+export const TARGET_TYPE_LABEL: Record<AiFeedbackTargetType, string> = defineLabels({
   AssistantMessage: "Assistant answer",
   DelegatedAnswer: "Answer from another agent",
   Briefing: "Briefing",
   BriefingSection: "Briefing section",
   Insight: "Insight",
   WatchtowerItem: "Watchtower item",
-};
+});
 
 export function targetTypeChoices(t: TranslateFn): { value: string; label: string }[] {
   return (Object.keys(TARGET_TYPE_LABEL) as AiFeedbackTargetType[]).map((type) => ({
@@ -85,12 +92,12 @@ export function formatDelta(value: number | null | undefined): { text: string; t
 
   const points = Math.round(value * 100);
   if (points === 0) {
-    return { text: "±0 pts", tone: "muted" };
+    return { text: translate("±0 pts"), tone: "muted" };
   }
 
   return points > 0
-    ? { text: `+${points} pts`, tone: "success" }
-    : { text: `${points} pts`, tone: "danger" };
+    ? { text: translate("{0, plural, one {+# pt} other {+# pts}}", points), tone: "success" }
+    : { text: translate("{0, plural, one {# pt} other {# pts}}", points), tone: "danger" };
 }
 
 /** A decimal dollar amount as the Decimal scalar carries it, shown with its cents. */
@@ -118,7 +125,9 @@ export { centsToDecimal, decimalToCents };
 export const qualityControlSchema = z
   .object({
     enabled: z.boolean(),
-    runHour: z.string().regex(/^(?:[0-9]|1[0-9]|2[0-3])$/, "Pick an hour of the day"),
+    runHour: z
+      .string()
+      .regex(/^(?:[0-9]|1[0-9]|2[0-3])$/, { error: () => translate("Pick an hour of the day") }),
     timezone: z.string().max(100),
     maxCasesPerAgent: z.number().int().min(1).max(500),
     nightlyBudgetCents: z.number().int().min(0).max(10_000_000),
@@ -128,10 +137,11 @@ export const qualityControlSchema = z
     regressionThresholdPoints: z.number().min(1).max(100),
     minCases: z.number().int().min(1).max(500),
     forceRerunDays: z.number().int().min(1).max(90),
+    version: z.number().int().min(0),
   })
   .refine((values) => values.monthlyBudgetCents >= values.nightlyBudgetCents, {
     path: ["monthlyBudgetCents"],
-    message: "The monthly budget cannot be less than one night's budget",
+    error: () => translate("The monthly budget cannot be less than one night's budget"),
   });
 
 export type QualityControlFormValues = z.infer<typeof qualityControlSchema>;
@@ -150,18 +160,16 @@ export function toFormValues(control: AgentQualityControl): QualityControlFormVa
     regressionThresholdPoints: Math.round(control.regressionThreshold * 100),
     minCases: control.minCases,
     forceRerunDays: control.forceRerunDays,
+    version: control.version,
   };
 }
 
 /** The saved controls from the form, at the version the form was opened on. */
-export function toUpdateInput(
-  values: QualityControlFormValues,
-  version: number,
-): UpdateAgentQualityControlInput {
+export function toUpdateInput(values: QualityControlFormValues): UpdateAgentQualityControlInput {
   const timezone = values.timezone.trim();
 
   return {
-    version,
+    version: values.version,
     enabled: values.enabled,
     runHourLocal: Number(values.runHour),
     ...(timezone === "" ? {} : { timezone }),
@@ -176,10 +184,81 @@ export function toUpdateInput(
   };
 }
 
-/** The hours of the night a sweep can start at, as a select lists them. */
-export function runHourOptions(): { value: string; label: string }[] {
-  return Array.from({ length: 24 }, (_, hour) => ({
-    value: String(hour),
-    label: `${String(hour).padStart(2, "0")}:00`,
-  }));
+/**
+ * How far a run's score sits from its agent's recent median, in whole points: negative
+ * when it fell. Null when either is missing, so nothing is compared.
+ */
+export function pointsChange(run: Pick<AgentSuiteRun, "qualityScore" | "baselineScore"> | null) {
+  if (!run || run.qualityScore == null || run.baselineScore == null) {
+    return null;
+  }
+
+  return Math.round((run.qualityScore - run.baselineScore) * 100);
+}
+
+export type QualityHeroFacts = {
+  /** The mean of each scored agent's latest score, as a share; null when none is scored. */
+  score: number | null;
+  /** The share of rated answers people liked; null when hidden or nobody rated. */
+  liked: number | null;
+  /** No agent has a golden set, so the sweep has nothing to replay. */
+  noCases: boolean;
+  /** The open regression that fell furthest, with how far. */
+  worst: { agentId: string; agentName: string; points: number | null } | null;
+};
+
+/** What Nova says at the head of Quality, from the overview. */
+export function qualityHeroFacts(overview: AgentQualityOverview): QualityHeroFacts {
+  const worst = overview.worstRegression;
+
+  return {
+    score: overview.qualityScore ?? null,
+    liked: overview.ratingsVisible && overview.ratings > 0 ? (overview.satisfaction ?? null) : null,
+    noCases: overview.agentsWithCases === 0,
+    worst: worst
+      ? {
+          agentId: worst.agentDefinitionId,
+          agentName: worst.agentName,
+          points: pointsChange(worst),
+        }
+      : null,
+  };
+}
+
+export type CaseOutcome = "passed" | "failed" | "unasked";
+
+export function caseOutcomeLabel(t: TranslateFn, outcome: CaseOutcome): string {
+  switch (outcome) {
+    case "passed":
+      return t("Passed");
+    case "failed":
+      return t("Below the bar");
+    case "unasked":
+      return t("Not asked");
+  }
+}
+
+/** One case of a suite run as a square: passed, failed (or below the bar), or not asked. */
+export function caseOutcome(evaluation: Pick<AgentSuiteRunCase, "status" | "checks">): CaseOutcome {
+  if (evaluation.status === "Failed") {
+    return "failed";
+  }
+  if (evaluation.status !== "Completed") {
+    return "unasked";
+  }
+  const checks = readCaseChecks(evaluation.checks);
+  if (!checks) {
+    return "unasked";
+  }
+
+  return checks.passed ? "passed" : "failed";
+}
+
+const REASON_LABEL = new Map<string, string>(
+  [...NEGATIVE_REASONS, ...POSITIVE_REASONS].map((option) => [option.value, option.label]),
+);
+
+/** The reasons a person picked when rating an answer, in their words. */
+export function ratingReasonLabels(t: TranslateFn, reasons: readonly string[]): string[] {
+  return reasons.map((reason) => t(REASON_LABEL.get(reason) ?? reason));
 }

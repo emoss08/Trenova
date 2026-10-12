@@ -1,0 +1,25 @@
+"The arrangement of one data table a person last left it in."
+type TableLayout {
+  resource: String!
+  "Columns shown, ordered, sized and pinned, the density, colour rules and the view it was based on."
+  layout: JSON!
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+input TableLayoutInput {
+  resource: String!
+  layout: JSON!
+}
+
+extend type Query {
+  "The caller's own layout for a table, or null when they have not changed it."
+  myTableLayout(resource: String!): TableLayout
+}
+
+extend type Mutation {
+  "Keeps the caller's arrangement of a table, replacing the one before."
+  saveMyTableLayout(input: TableLayoutInput!): TableLayout!
+  "Forgets the caller's arrangement of a table, so it opens as its default view."
+  resetMyTableLayout(resource: String!): Boolean!
+}

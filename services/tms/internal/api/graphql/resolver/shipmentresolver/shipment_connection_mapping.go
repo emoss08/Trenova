@@ -3,7 +3,7 @@ package shipmentresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	shipmentdomain "github.com/emoss08/trenova/internal/core/domain/shipment"
+	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 

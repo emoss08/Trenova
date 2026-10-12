@@ -47,8 +47,10 @@ export function getColumns(
       meta: {
         label: t("Document type"),
         apiField: "documentTypeId",
-        filterable: false,
+        filterable: true,
         sortable: false,
+        filterType: "record",
+        filterRecord: "DOCUMENT_TYPE",
       },
     },
     {

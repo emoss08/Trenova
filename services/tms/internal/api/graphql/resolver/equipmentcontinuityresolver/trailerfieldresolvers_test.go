@@ -3,7 +3,7 @@ package equipmentcontinuityresolver
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

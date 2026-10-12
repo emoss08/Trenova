@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	formulaerrors "github.com/emoss08/trenova/internal/core/services/formula/errors"
+	formulaerrors "github.com/emoss08/trenova/internal/modules/rating/app/formula/errors"
 	"github.com/stretchr/testify/assert"
 )
 

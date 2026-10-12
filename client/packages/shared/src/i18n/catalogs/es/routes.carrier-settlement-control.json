@@ -1,0 +1,23 @@
+{
+  "A load's carrier cost stays out of settlements until its carrier invoice match is resolved, and a settlement with unmatched loads cannot be approved.": "El costo del transportista de una carga queda fuera de las liquidaciones hasta que se resuelva su conciliación de factura, y no se puede aprobar una liquidación con cargas sin conciliar.",
+  "Accounts payable account": "Cuenta de cuentas por pagar",
+  "Auto-accept within tolerance": "Aceptar automáticamente dentro de la tolerancia",
+  "Auto-match inbound invoices": "Cotejar automáticamente las facturas entrantes",
+  "Auto-matched invoices within the variance tolerance are resolved into the carrier's settlement pool without review. Requires auto-match.": "Las facturas cotejadas automáticamente dentro de la tolerancia de variación se incorporan al fondo de liquidación del transportista sin revisión. Requiere el cotejo automático.",
+  "Automate the routine AP run so reviewers focus on exceptions.": "Automatice la corrida rutinaria de cuentas por pagar para que los revisores se centren en las excepciones.",
+  "Carrier invoices are compared to the negotiated buy rate; gaps beyond the tolerance flag a variance.": "Las facturas de los transportistas se comparan con la tarifa de compra negociada; las diferencias que superan la tolerancia marcan una variación.",
+  "Carrier settlement control updated": "Se actualizó el control de liquidación de transportistas",
+  "Configure carrier pay periods, cost accrual triggers, batch automation, invoice-match tolerance, and AP posting accounts": "Configure los períodos de pago de los transportistas, los activadores de devengo de costos, la automatización de lotes, la tolerancia de cotejo de facturas y las cuentas de contabilización de cuentas por pagar",
+  "Defines the carrier settlement cycle and when purchased-transportation cost accrues.": "Define el ciclo de liquidación del transportista y cuándo se devenga el costo de transporte contratado.",
+  "GL defaults for carrier settlement postings — posting debits purchased transportation and credits accounts payable; blank falls back to the accounting control defaults.": "Valores predeterminados del libro mayor para las contabilizaciones de liquidaciones de transportistas: la contabilización carga transporte contratado y abona cuentas por pagar; si se deja en blanco, se usan los valores predeterminados del control contable.",
+  "Generate a carrier settlement batch automatically when each pay period closes.": "Generar automáticamente un lote de liquidación de transportistas al cerrar cada período de pago.",
+  "Hold pay until the invoice is matched": "Retener el pago hasta que se concilie la factura",
+  "How often carriers are settled — weekly is the industry norm for brokered freight.": "Con qué frecuencia se liquidan los transportistas: la norma del sector para la carga intermediada es semanal.",
+  "Inbound EDI 210 invoices from tendered carriers are matched to their carrier assignment automatically; gaps beyond the tolerance still land in the review workspace.": "Las facturas EDI 210 entrantes de los transportistas ofertados se cotejan automáticamente con su asignación; las diferencias que superan la tolerancia siguen llegando al espacio de trabajo de revisión.",
+  "Invoice totals within this amount of the buy rate auto-match; larger gaps flag a variance for review.": "Los totales de factura que estén dentro de este importe respecto de la tarifa de compra se cotejan automáticamente; las diferencias mayores marcan una variación para revisión.",
+  "Posting accounts": "Cuentas de contabilización",
+  "The AP account credited when a settlement posts and debited when it is paid.": "La cuenta por pagar que se abona al contabilizar una liquidación y se carga al pagarla.",
+  "The expense account debited for carrier cost when a settlement posts.": "La cuenta de gastos que se carga por el costo del transportista al contabilizar una liquidación.",
+  "The shipment milestone at which carrier cost accrues into the settlement pool.": "El hito del envío en el que el costo del transportista se devenga en el fondo de liquidación.",
+  "Variance tolerance": "Tolerancia de variación"
+}

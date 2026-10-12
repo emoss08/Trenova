@@ -44,6 +44,7 @@ type StubTableProps = {
   contextMenuActions?: RowAction<Record<string, unknown>>[];
   TablePanel?: ComponentType<DataTablePanelProps<Record<string, unknown>>>;
   enableReadOnlyPanel?: boolean;
+  toolbar?: { trailing?: ReactNode };
 };
 
 /**
@@ -63,6 +64,7 @@ vi.mock("@/components/data-table/data-table", () => ({
     const { TablePanel } = props;
     return (
       <section aria-label={`${props.name} table`}>
+        {props.toolbar?.trailing}
         <table>
           <tbody>
             {table.rows.map((row, rowIndex) => (
@@ -90,6 +92,15 @@ const fetchAgentQualityOverview = vi.fn<() => Promise<AgentQualityOverview>>();
 const fetchAgentQualityControl = vi.fn<() => Promise<AgentQualityControl>>();
 const fetchAgentQuality = vi.fn();
 const fetchAgentSuiteRun = vi.fn();
+const fetchSuiteRunCases = vi.fn();
+const updateAgentQualityControl = vi.fn();
+const createAgentEvalCase = vi.fn();
+
+vi.mock("@/lib/graphql/agent-eval-cases", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/graphql/agent-eval-cases")>()),
+  createAgentEvalCase: (...args: unknown[]) => createAgentEvalCase(...args),
+}));
+vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 
 vi.mock("@/lib/graphql/agent-quality", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/graphql/agent-quality")>();
@@ -99,6 +110,8 @@ vi.mock("@/lib/graphql/agent-quality", async (importOriginal) => {
     fetchAgentQualityControl: () => fetchAgentQualityControl(),
     fetchAgentQuality: (...args: unknown[]) => fetchAgentQuality(...args),
     fetchAgentSuiteRun: (...args: unknown[]) => fetchAgentSuiteRun(...args),
+    fetchSuiteRunCases: (...args: unknown[]) => fetchSuiteRunCases(...args),
+    updateAgentQualityControl: (...args: unknown[]) => updateAgentQualityControl(...args),
   };
 });
 
@@ -113,6 +126,9 @@ beforeEach(() => {
   fetchAgentQualityControl.mockReset();
   fetchAgentQuality.mockReset();
   fetchAgentSuiteRun.mockReset();
+  fetchSuiteRunCases.mockReset();
+  updateAgentQualityControl.mockReset();
+  createAgentEvalCase.mockReset();
   table.rows = [];
   table.openRow = null;
   table.props = [];
@@ -144,6 +160,7 @@ const overview: AgentQualityOverview = {
   agentsWithCases: 3,
   judgeEnabled: false,
   regressionThreshold: 0.1,
+  worstRegression: null,
 };
 
 function suiteRun(overrides: Partial<AgentSuiteRun> = {}): AgentSuiteRunRow {
@@ -228,6 +245,37 @@ const control: AgentQualityControl = {
   updatedAt: 0,
 } as AgentQualityControl;
 
+function detail(overrides: Record<string, unknown> = {}) {
+  return {
+    agentDefinitionId: "agdef_1",
+    agentName: "Billing desk",
+    enabled: true,
+    windowDays: 30,
+    since: 1_788_000_000,
+    ratingsVisible: true,
+    satisfaction: 0.8,
+    ratings: 40,
+    activeCases: 3,
+    satisfactionPoints: [],
+    qualityPoints: rows[0]?.qualityPoints ?? [],
+    worstRated: [
+      {
+        id: "AssistantMessage:msg_1:",
+        negative: 2,
+        positive: 0,
+        sample: {
+          id: "fb_1",
+          reasons: [],
+          comment: "",
+          turnSnapshot: { question: "Total?", answer: "It is $12.", tools: [] },
+        },
+      },
+    ],
+    lastSuiteRun: suiteRun(),
+    ...overrides,
+  };
+}
+
 function renderTab(view: QualityView, searchParams = "", onUrlUpdate?: OnUrlUpdateFunction) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const wrapper = ({ children }: { children: ReactNode }) => (
@@ -259,11 +307,11 @@ describe("QualityTab", () => {
     primeDefaults();
     renderTab("agents");
 
-    const figures = await screen.findByRole("group", { name: "AI quality figures" });
+    const figures = await screen.findByRole("region", { name: "AI quality figures" });
     await within(figures).findByText("82%");
     expect(within(figures).getByText("140")).toBeTruthy();
     expect(within(figures).getByText("87%")).toBeTruthy();
-    expect(within(figures).getByText("2")).toBeTruthy();
+    expect(within(figures).getByText("1")).toBeTruthy();
     expect(within(figures).getByText("$12.40")).toBeTruthy();
     expect(within(figures).getByText("1 agent still regressed")).toBeTruthy();
   });
@@ -311,10 +359,11 @@ describe("QualityTab", () => {
     expect(ratings?.hidden?.({ original: rows[0] } as never)).toBe(true);
   });
 
-  // The agent's panel leads to its runs: the runs view, narrowed to the
+  // The agent's sheet leads to its runs: the runs view, narrowed to the
   // agent, with the table's own state cleared.
-  it("opens an agent's suite runs from its panel", async () => {
+  it("opens an agent's suite runs from its sheet", async () => {
     primeDefaults();
+    fetchAgentQuality.mockResolvedValue(detail());
     table.rows = rows;
     table.openRow = rows[0] as unknown as Record<string, unknown>;
     const updates: URLSearchParams[] = [];
@@ -322,12 +371,89 @@ describe("QualityTab", () => {
       updates.push(event.searchParams);
     });
 
-    await userEvent.click(await screen.findByRole("button", { name: "Its suite runs" }));
+    const sheet = await screen.findByRole("complementary", { name: "Billing desk" });
+    expect(await within(sheet).findByText("3 golden cases · last run completed")).toBeTruthy();
+    expect(within(sheet).getByText("+2 pts")).toBeTruthy();
+    expect(within(sheet).getByText("“It is $12.”")).toBeTruthy();
+    await userEvent.click(within(sheet).getByRole("button", { name: "All runs" }));
 
     await waitFor(() => expect(updates.at(-1)?.get("quality")).toBe("runs"));
     expect(updates.at(-1)?.get("tab")).toBe("quality");
     expect(updates.at(-1)?.get("agent")).toBe("agdef_1");
     expect(updates.at(-1)?.get("panelType")).toBeNull();
+  });
+
+  it("says which agent fell furthest and opens it", async () => {
+    primeDefaults();
+    fetchAgentQualityOverview.mockResolvedValue({
+      ...overview,
+      worstRegression: suiteRun({
+        agentDefinitionId: "agdef_2",
+        agentName: "Dispatch desk",
+        qualityScore: 0.8,
+        baselineScore: 0.86,
+        regression: true,
+      }),
+    });
+    fetchAgentQuality.mockResolvedValue(
+      detail({ agentDefinitionId: "agdef_2", agentName: "Dispatch desk" }),
+    );
+    renderTab("agents");
+
+    expect(await screen.findByText(/against their golden sets, and people liked/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Dispatch desk" })).toBeTruthy();
+    expect(screen.getByText(/dropped 6 points after its last change\./)).toBeTruthy();
+    expect(screen.getByText("Nightly sweep · 02:00")).toBeTruthy();
+
+    await userEvent.click(screen.getByRole("button", { name: "Look at Dispatch desk" }));
+    expect(await screen.findByRole("complementary", { name: "Dispatch desk" })).toBeTruthy();
+    expect(fetchAgentQuality).toHaveBeenCalledWith("agdef_2", expect.anything());
+  });
+
+  it("says nothing is scored and offers no agent when no agent has a golden set", async () => {
+    primeDefaults();
+    fetchAgentQualityOverview.mockResolvedValue({
+      ...overview,
+      qualityScore: null,
+      ratingsVisible: false,
+      agentsWithCases: 0,
+      openRegressions: 0,
+    });
+    renderTab("agents");
+
+    expect(
+      await screen.findByText("No agent has a golden set yet, so nothing is scored."),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^Look at/ })).toBeNull();
+  });
+
+  it("shows a run's cases as squares in its sheet", async () => {
+    primeDefaults();
+    const run = suiteRun({ casesTotal: 3, casesPassed: 1, casesFailed: 1, casesSkipped: 1 });
+    fetchSuiteRunCases.mockResolvedValue([
+      {
+        id: "ev_1",
+        suiteOrdinal: 1,
+        status: "Completed",
+        checks: { passed: true, hardFailure: false, checks: [] },
+      },
+      { id: "ev_2", suiteOrdinal: 2, status: "Failed", checks: null },
+      { id: "ev_3", suiteOrdinal: 3, status: "Skipped", checks: null },
+    ]);
+    table.rows = [run];
+    table.openRow = run as unknown as Record<string, unknown>;
+    renderTab("runs");
+
+    const sheet = await screen.findByRole("complementary", { name: "Suite run · Billing desk" });
+    expect(within(sheet).getByText("2 of 3")).toBeTruthy();
+    const squares = await within(sheet).findAllByRole("listitem");
+    expect(squares.map((square) => square.getAttribute("aria-label"))).toEqual([
+      "Case 1 · Passed",
+      "Case 2 · Below the bar",
+      "Case 3 · Not asked",
+    ]);
+    expect(squares.map((square) => square.className)).toEqual(["", "f", "z"]);
+    expect(fetchSuiteRunCases).toHaveBeenCalledWith("asr_1", expect.anything());
   });
 
   it("narrows the suite runs to the agent a link names, and widens them again", async () => {
@@ -402,30 +528,66 @@ describe("QualityTab", () => {
 
     await screen.findByRole("region", { name: "Worst-Rated Answer table" });
     expect(lastTable().graphql.extraVariables).toEqual({ window: 30 });
-    expect(await screen.findByText("Wrong invoice total.")).toBeTruthy();
-    expect(screen.getAllByText("What is the total on invoice 12?").length).toBeGreaterThan(0);
+    const sheet = await screen.findByRole("complementary", {
+      name: "What is the total on invoice 12?",
+    });
+    expect(within(sheet).getByText("Wrong invoice total.")).toBeTruthy();
+    expect(within(sheet).getByText("“It is $12.”")).toBeTruthy();
+    expect(within(sheet).queryByRole("link", { name: "Open the conversation" })).toBeNull();
+
+    createAgentEvalCase.mockResolvedValue({ evalCase: {}, duplicate: false });
+    await userEvent.click(within(sheet).getByRole("button", { name: "Add to golden set" }));
+    await waitFor(() =>
+      expect(createAgentEvalCase).toHaveBeenCalledWith({ fromFeedback: { feedbackId: "fb_1" } }),
+    );
   });
 
-  it("mounts the golden set and the settings as views of their own", async () => {
+  it("mounts the golden set as a view of its own, without the figures", async () => {
     primeDefaults();
     renderTab("golden");
     expect(await screen.findByText("Golden set table")).toBeTruthy();
-    cleanup();
-
-    renderTab("settings");
-    expect(await screen.findByRole("button", { name: "Save settings" })).toBeTruthy();
-    expect(screen.queryByRole("group", { name: "AI quality figures" })).toBeNull();
+    expect(screen.queryByRole("region", { name: "AI quality figures" })).toBeNull();
   });
 
-  it("will not save the settings without the right to change AI Control", async () => {
+  it("opens the sweep settings over the agents and saves them at the loaded version", async () => {
+    primeDefaults();
+    updateAgentQualityControl.mockResolvedValue({
+      ...control,
+      regressionThreshold: 0.05,
+      version: 1,
+    });
+    renderTab("agents");
+
+    await userEvent.click(await screen.findByRole("button", { name: "Sweep settings" }));
+    const editor = await screen.findByRole("complementary", { name: "Sweep settings" });
+    const threshold = within(editor).getByRole("radiogroup", { name: "Regression threshold" });
+    await userEvent.click(within(threshold).getByRole("radio", { name: "5 pts" }));
+    await userEvent.click(within(editor).getByRole("button", { name: /Save changes/ }));
+
+    await waitFor(() => expect(updateAgentQualityControl).toHaveBeenCalledTimes(1));
+    expect(updateAgentQualityControl.mock.calls[0]?.[0]).toMatchObject({
+      version: 0,
+      regressionThreshold: 0.05,
+      runHourLocal: 2,
+      maxCasesPerAgent: 50,
+    });
+  });
+
+  it("will not save the sweep settings without the right to change AI Control", async () => {
     primeDefaults();
     permissions.denied.add(`${Resource.AgentControl}:${Operation.Update}`);
-    renderTab("settings");
+    renderTab("agents");
 
-    const save = await screen.findByRole("button", { name: "Save settings" });
-    expect((save as HTMLButtonElement).disabled).toBe(true);
+    await userEvent.click(await screen.findByRole("button", { name: "Sweep settings" }));
+    const editor = await screen.findByRole("complementary", { name: "Sweep settings" });
+    const threshold = within(editor).getByRole("radiogroup", { name: "Regression threshold" });
+    await userEvent.click(within(threshold).getByRole("radio", { name: "5 pts" }));
+
     expect(
-      screen.getByText("Changing these needs the right to update AI Control and the golden set."),
+      within(editor).getByText(
+        "Changing these needs the right to update AI control and the golden set.",
+      ),
     ).toBeTruthy();
+    expect(within(editor).getByRole("button", { name: /Save changes/ })).toBeDisabled();
   });
 });

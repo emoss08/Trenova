@@ -175,12 +175,20 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
 
     setValue("name", option.properShippingName);
     setValue("properShippingName", option.properShippingName);
+    // i18n-ignore: hazmat description stored on the record
     const descParts = [`UN${option.unNumber} ${option.properShippingName}`];
-    if (option.hazardClass) descParts.push(`Class ${option.hazardClass}`);
+    if (option.hazardClass)
+      // i18n-ignore: hazmat description stored on the record
+      descParts.push(`Class ${option.hazardClass}`);
     if (option.subsidiaryHazard && option.subsidiaryHazard !== option.hazardClass)
+      // i18n-ignore: hazmat description stored on the record
       descParts.push(`Subsidiary hazard: ${option.subsidiaryHazard}`);
-    if (option.packingGroup) descParts.push(`PG ${option.packingGroup}`);
-    if (option.ergGuide) descParts.push(`ERG Guide ${option.ergGuide}`);
+    if (option.packingGroup)
+      // i18n-ignore: hazmat description stored on the record
+      descParts.push(`PG ${option.packingGroup}`);
+    if (option.ergGuide)
+      // i18n-ignore: hazmat description stored on the record
+      descParts.push(`ERG Guide ${option.ergGuide}`);
     setValue("description", descParts.join(", "));
     setValue("unNumber", option.unNumber);
 

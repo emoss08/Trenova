@@ -4,7 +4,7 @@ package commodityresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	commodityservice "github.com/emoss08/trenova/internal/core/services/commodityservice"
+	commodityservice "github.com/emoss08/trenova/internal/modules/reference/app/commodityservice"
 )
 
 type Deps struct {

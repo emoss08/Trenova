@@ -3,7 +3,7 @@ package fileconnector
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/sftp"
 )
 

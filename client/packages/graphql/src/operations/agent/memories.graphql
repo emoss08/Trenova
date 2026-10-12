@@ -12,6 +12,9 @@ fragment AgentMemoryTableRowFields on AgentMemory {
   content
   agentDefinitionId
   tainted
+  taints
+  reviewedByUserId
+  reviewedAt
   sourceRunId
   sourceProposalId
   sourceThreadId
@@ -93,6 +96,12 @@ mutation UpdateAgentMemory($id: ID!, $input: AgentMemoryInput!) {
 
 mutation SetAgentMemoryStatus($id: ID!, $status: AgentMemoryStatus!) {
   setAgentMemoryStatus(id: $id, status: $status) {
+    ...AgentMemoryTableRowFields
+  }
+}
+
+mutation ReviewAgentMemory($id: ID!, $version: Int!) {
+  reviewAgentMemory(id: $id, version: $version) {
     ...AgentMemoryTableRowFields
   }
 }

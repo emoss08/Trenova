@@ -9,7 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/notification"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -139,7 +139,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*notification.Notification)
 					return obj.Priority, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNNotificationPriority2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋnotificationᚐPriority),
+				Marshal: gqlexec.Marshal(marshalNNotificationPriority2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋnotificationᚐPriority),
 			},
 			{
 				Name:     "channel",
@@ -149,7 +149,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*notification.Notification)
 					return obj.Channel, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNNotificationChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋnotificationᚐChannel),
+				Marshal: gqlexec.Marshal(marshalNNotificationChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋnotificationᚐChannel),
 			},
 			{
 				Name:     "title",
@@ -262,7 +262,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*notification.Notification)
 					return obj.DeliveryStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNNotificationDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋnotificationᚐDeliveryStatus),
+				Marshal: gqlexec.Marshal(marshalNNotificationDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋnotificationᚐDeliveryStatus),
 			},
 			{
 				Name:     "source",
@@ -355,7 +355,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.NotificationEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNNotification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋnotificationᚐNotification),
+				Marshal: gqlexec.Marshal(marshalNNotification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋnotificationᚐNotification),
 			},
 			{
 				Name:     "cursor",
@@ -615,7 +615,7 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNNotification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋnotificationᚐNotification(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *notification.Notification) graphql.Marshaler {
+func marshalNNotification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋnotificationᚐNotification(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *notification.Notification) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -623,7 +623,7 @@ func marshalNNotification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return ec.MarshalType(ctx, sel, "Notification", v)
 }
 
-func marshalNNotificationChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋnotificationᚐChannel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v notification.Channel) graphql.Marshaler {
+func marshalNNotificationChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋnotificationᚐChannel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v notification.Channel) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -639,7 +639,7 @@ func marshalNNotificationConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return ec.MarshalType(ctx, sel, "NotificationConnection", v)
 }
 
-func marshalNNotificationDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋnotificationᚐDeliveryStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v notification.DeliveryStatus) graphql.Marshaler {
+func marshalNNotificationDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋnotificationᚐDeliveryStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v notification.DeliveryStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -663,7 +663,7 @@ func marshalNNotificationEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋa
 	return ec.MarshalType(ctx, sel, "NotificationEdge", v)
 }
 
-func marshalNNotificationPriority2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋnotificationᚐPriority(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v notification.Priority) graphql.Marshaler {
+func marshalNNotificationPriority2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋnotificationᚐPriority(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v notification.Priority) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

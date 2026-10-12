@@ -150,7 +150,7 @@ export function OANDAExchangeRatesForm({ open, onClose }: { open: boolean; onClo
             <SensitiveField
               name="configuration.apiKey"
               control={control}
-              label={`API Key ${hasApiKey ? "(leave blank to keep existing key)" : ""}`}
+              label={hasApiKey ? t("API Key (leave blank to keep existing key)") : t("API Key")}
               autoComplete="off"
               placeholder={hasApiKey ? "********" : "Enter your OANDA API key"}
             />

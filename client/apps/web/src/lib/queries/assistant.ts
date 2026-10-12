@@ -13,13 +13,26 @@ import {
   type AgentAccessPreviewRequest,
 } from "@/lib/graphql/agent-access";
 import { apiService } from "@/services/api";
-import type { DeskSearchKind } from "@/types/assistant";
+import type { ArtifactListParams, ThreadListFilter } from "@/services/assistant";
+import type { DeskSearchKind, MentionPageKind } from "@/types/assistant";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const assistant = createQueryKeys("assistant", {
+  // Paged by cursor, pinned first then newest first. Read as an infinite
+  // query through threadListQuery (lib/thread-list.ts); every reader of the
+  // list goes through the helpers there.
+  // Each shelf of the Desk's rail, and how many each holds, sits under the
+  // list's key, so every invalidation of the list reaches them too.
   threads: () => ({
     queryKey: ["assistant-threads"],
-    queryFn: () => apiService.assistantService.listThreads(),
+    contextQueries: {
+      shelf: (filter: ThreadListFilter) => ({
+        queryKey: [filter],
+      }),
+      shelfCounts: (edges: readonly number[]) => ({
+        queryKey: [[...edges]],
+      }),
+    },
   }),
   thread: (id: string) => ({
     queryKey: ["assistant-thread", id],
@@ -50,6 +63,33 @@ export const assistant = createQueryKeys("assistant", {
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       apiService.assistantService.listThreadSchedules(threadId, { signal }),
   }),
+  // What the person left for a conversation while its agent worked, in send
+  // order. Kept fresh by the "assistant_queue" realtime event, not polled.
+  queue: (threadId: string) => ({
+    queryKey: ["assistant-queue", threadId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.listQueue(threadId, { signal }),
+  }),
+  // What the conversation's agent is waiting on. Kept fresh by the
+  // "agent_waits" realtime event, not polled.
+  waits: (threadId: string) => ({
+    queryKey: ["assistant-waits", threadId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.listWaits(threadId, { signal }),
+  }),
+  // Where the conversation's case stands and its checklist. Kept fresh by
+  // the "assistant_case" and "agent_waits" events and by changes to the
+  // record the case is about (lib/case-realtime.ts).
+  case: (threadId: string) => ({
+    queryKey: ["assistant-case", threadId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.getCase(threadId, { signal }),
+  }),
+  // Records the person can make a conversation a case about, one kind at a
+  // time, paged by the case picker as it scrolls (use-case-records.ts).
+  caseRecords: (query: string, kind: MentionPageKind) => ({
+    queryKey: [query, kind],
+  }),
   activeTurns: () => ({
     queryKey: ["assistant-active-turns"],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
@@ -73,25 +113,46 @@ export const assistant = createQueryKeys("assistant", {
     queryFn: () => apiService.assistantService.listPlans(threadId),
   }),
   // The first page of a conversation's artifacts by lineage, pinned and
-  // newest first: what the transcript points at and the stack is built from.
-  // Every artifact query of a thread shares this key's prefix, so one
-  // invalidation refreshes them all.
+  // newest first, every version with its payload. Every artifact query of a
+  // thread is one of its context queries, so they share this key's prefix and
+  // one invalidation of it refreshes them all.
   artifacts: (threadId: string) => ({
     queryKey: ["assistant-artifacts", threadId],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       apiService.assistantService.listArtifacts(threadId, { signal, limit: ARTIFACT_FIRST_PAGE }),
-  }),
-  // Every version of one lineage, for an artifact a link or the store names
-  // that the first page does not hold.
-  artifactLineage: (threadId: string, artifactId: string) => ({
-    queryKey: ["assistant-artifacts", threadId, "lineage", artifactId],
-    queryFn: ({ signal }: { signal?: AbortSignal }) =>
-      apiService.assistantService.artifactLineage(threadId, artifactId, { signal }),
-  }),
-  artifactBySlug: (threadId: string, slug: string) => ({
-    queryKey: ["assistant-artifacts", threadId, "slug", slug],
-    queryFn: ({ signal }: { signal?: AbortSignal }) =>
-      apiService.assistantService.artifactBySlug(threadId, slug, { signal }),
+    contextQueries: {
+      // The same page with each payload cut to what names and draws an
+      // artifact in a list: what the Desk's transcript, counts and stack read.
+      // The contents come with their lineage when one is shown.
+      // oxlint-disable-next-line @tanstack/query/exhaustive-deps -- a context query's key is prefixed with its parent's, which names the thread
+      summary: {
+        queryKey: null,
+        queryFn: ({ signal }: { signal?: AbortSignal }) =>
+          apiService.assistantService.listArtifacts(threadId, {
+            signal,
+            limit: ARTIFACT_FIRST_PAGE,
+            summary: true,
+          }),
+      },
+      // Every version of one lineage with its payload: what an artifact is
+      // drawn from, and how one a link or the store names is found.
+      // oxlint-disable-next-line @tanstack/query/exhaustive-deps -- a context query's key is prefixed with its parent's, which names the thread
+      lineage: (artifactId: string) => ({
+        queryKey: [artifactId],
+        queryFn: ({ signal }: { signal?: AbortSignal }) =>
+          apiService.assistantService.artifactLineage(threadId, artifactId, { signal }),
+      }),
+      // oxlint-disable-next-line @tanstack/query/exhaustive-deps -- a context query's key is prefixed with its parent's, which names the thread
+      slug: (slug: string) => ({
+        queryKey: [slug],
+        queryFn: ({ signal }: { signal?: AbortSignal }) =>
+          apiService.assistantService.artifactBySlug(threadId, slug, { signal }),
+      }),
+      // The list of every artifact to search, paged by useInfiniteQuery.
+      browse: (filters: Pick<ArtifactListParams, "q" | "kind" | "pinned">) => ({
+        queryKey: [filters],
+      }),
+    },
   }),
   // The organization's agents with everything an administrator configures;
   // AI Control only. Chat surfaces read myAgents.

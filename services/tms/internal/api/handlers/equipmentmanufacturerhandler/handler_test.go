@@ -1,6 +1,7 @@
 package equipmentmanufacturerhandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentmanufacturerportsmock"
 	"context"
 	"errors"
 	"fmt"
@@ -10,10 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturerhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,7 +31,7 @@ var errNotFound = errors.New("equipment manufacturer not found")
 
 func setupEquipManufacturerHandler(
 	t *testing.T,
-	repo *mocks.MockEquipmentManufacturerRepository,
+	repo *equipmentmanufacturerportsmock.MockEquipmentManufacturerRepository,
 ) *equipmentmanufacturerhandler.Handler {
 	t.Helper()
 
@@ -70,7 +71,7 @@ func TestEquipmentManufacturerHandler_List_Success(t *testing.T) {
 	t.Parallel()
 
 	emID := pulid.MustNew("em_")
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer]{
 			Items: []*equipmentmanufacturer.EquipmentManufacturer{
@@ -120,9 +121,9 @@ func TestEquipmentManufacturerHandler_List_WithPagination(t *testing.T) {
 		})
 	}
 
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	repo.On("List", mock.Anything, mock.MatchedBy(
-		func(req *repositories.ListEquipmentManufacturersRequest) bool {
+		func(req *equipmentmanufacturerports.ListEquipmentManufacturersRequest) bool {
 			return req.Filter.Pagination.Limit == requestedLimit+1
 		},
 	)).Return(&pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer]{
@@ -154,7 +155,7 @@ func TestEquipmentManufacturerHandler_List_WithPagination(t *testing.T) {
 func TestEquipmentManufacturerHandler_List_RejectsOffset(t *testing.T) {
 	t.Parallel()
 
-	handler := setupEquipManufacturerHandler(t, mocks.NewMockEquipmentManufacturerRepository(t))
+	handler := setupEquipManufacturerHandler(t, equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t))
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -172,7 +173,7 @@ func TestEquipmentManufacturerHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
 	emID := pulid.MustNew("em_")
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).
 		Return(&equipmentmanufacturer.EquipmentManufacturer{
 			ID:             emID,
@@ -203,7 +204,7 @@ func TestEquipmentManufacturerHandler_Get_NotFound(t *testing.T) {
 	t.Parallel()
 
 	emID := pulid.MustNew("em_")
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	handler := setupEquipManufacturerHandler(t, repo)
@@ -222,7 +223,7 @@ func TestEquipmentManufacturerHandler_Get_NotFound(t *testing.T) {
 func TestEquipmentManufacturerHandler_Get_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	handler := setupEquipManufacturerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -239,7 +240,7 @@ func TestEquipmentManufacturerHandler_Get_InvalidID(t *testing.T) {
 func TestEquipmentManufacturerHandler_Create_Success(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	repo.On("Create", mock.Anything, mock.Anything).
 		Return(func(_ context.Context, entity *equipmentmanufacturer.EquipmentManufacturer) *equipmentmanufacturer.EquipmentManufacturer {
 			entity.ID = pulid.MustNew("em_")
@@ -270,7 +271,7 @@ func TestEquipmentManufacturerHandler_Create_Success(t *testing.T) {
 func TestEquipmentManufacturerHandler_Create_BadJSON(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	handler := setupEquipManufacturerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -289,7 +290,7 @@ func TestEquipmentManufacturerHandler_Update_Success(t *testing.T) {
 	t.Parallel()
 
 	emID := pulid.MustNew("em_")
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).
 		Return(&equipmentmanufacturer.EquipmentManufacturer{
 			ID:             emID,
@@ -328,7 +329,7 @@ func TestEquipmentManufacturerHandler_Update_NotFound(t *testing.T) {
 	t.Parallel()
 
 	emID := pulid.MustNew("em_")
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	handler := setupEquipManufacturerHandler(t, repo)
@@ -352,7 +353,7 @@ func TestEquipmentManufacturerHandler_Patch_Success(t *testing.T) {
 	t.Parallel()
 
 	emID := pulid.MustNew("em_")
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).
 		Return(&equipmentmanufacturer.EquipmentManufacturer{
 			ID:             emID,
@@ -386,7 +387,7 @@ func TestEquipmentManufacturerHandler_Patch_Success(t *testing.T) {
 func TestEquipmentManufacturerHandler_Patch_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	handler := setupEquipManufacturerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -404,7 +405,7 @@ func TestEquipmentManufacturerHandler_Patch_InvalidID(t *testing.T) {
 func TestEquipmentManufacturerHandler_SelectOptions_Success(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	repo.On("SelectOptions", mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer]{
 			Items: []*equipmentmanufacturer.EquipmentManufacturer{},
@@ -428,7 +429,7 @@ func TestEquipmentManufacturerHandler_GetOption_Success(t *testing.T) {
 	t.Parallel()
 
 	emID := pulid.MustNew("em_")
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).
 		Return(&equipmentmanufacturer.EquipmentManufacturer{
 			ID:             emID,
@@ -454,7 +455,7 @@ func TestEquipmentManufacturerHandler_GetOption_Success(t *testing.T) {
 func TestEquipmentManufacturerHandler_GetOption_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	handler := setupEquipManufacturerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -472,7 +473,7 @@ func TestEquipmentManufacturerHandler_BulkUpdateStatus_Success(t *testing.T) {
 	t.Parallel()
 
 	emID := pulid.MustNew("em_")
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	repo.On("GetByIDs", mock.Anything, mock.Anything).
 		Return([]*equipmentmanufacturer.EquipmentManufacturer{
 			{ID: emID, Name: "Peterbilt", Status: domaintypes.StatusActive},
@@ -503,7 +504,7 @@ func TestEquipmentManufacturerHandler_GetOption_NotFound(t *testing.T) {
 	t.Parallel()
 
 	emID := pulid.MustNew("em_")
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	handler := setupEquipManufacturerHandler(t, repo)
@@ -523,7 +524,7 @@ func TestEquipmentManufacturerHandler_BulkUpdateStatus_ServiceError(t *testing.T
 	t.Parallel()
 
 	emID := pulid.MustNew("em_")
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	repo.On("GetByIDs", mock.Anything, mock.Anything).
 		Return([]*equipmentmanufacturer.EquipmentManufacturer{
 			{ID: emID, Name: "Peterbilt", Status: domaintypes.StatusActive},
@@ -551,7 +552,7 @@ func TestEquipmentManufacturerHandler_BulkUpdateStatus_ServiceError(t *testing.T
 func TestEquipmentManufacturerHandler_Create_ServiceError(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	repo.On("Create", mock.Anything, mock.Anything).Return(nil, errors.New("service error"))
 
 	handler := setupEquipManufacturerHandler(t, repo)
@@ -574,7 +575,7 @@ func TestEquipmentManufacturerHandler_Create_ServiceError(t *testing.T) {
 func TestEquipmentManufacturerHandler_Update_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	handler := setupEquipManufacturerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -595,7 +596,7 @@ func TestEquipmentManufacturerHandler_Update_InvalidID(t *testing.T) {
 func TestEquipmentManufacturerHandler_BulkUpdateStatus_BadJSON(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	handler := setupEquipManufacturerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().

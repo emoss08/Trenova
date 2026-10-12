@@ -97,13 +97,13 @@ function PerformanceBody({ performance }: { performance: ARCollectionPerformance
         <RateStat
           label={t("Short-pay rate")}
           value={`${(performance.shortPayRate * 100).toFixed(1)}%`}
-          detail={`${totals.shortPayApplicationCount} of ${totals.applicationCount || 0}`}
+          detail={t("{0} of {1}", totals.shortPayApplicationCount, totals.applicationCount || 0)}
           alert={performance.shortPayRate > 0.1}
         />
         <RateStat
           label={t("Dispute rate")}
           value={`${(performance.disputeRate * 100).toFixed(1)}%`}
-          detail={`${totals.disputedInvoiceCount} invoices`}
+          detail={t("{0, plural, one {# invoice} other {# invoices}}", totals.disputedInvoiceCount)}
           alert={performance.disputeRate > 0.05}
         />
       </div>

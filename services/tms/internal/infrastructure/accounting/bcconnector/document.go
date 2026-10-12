@@ -8,15 +8,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/businesscentral"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
 )
 
-var _ services.AccountingDocumentWriter = (*Connector)(nil)
+var _ accountingsyncports.AccountingDocumentWriter = (*Connector)(nil)
 
 const (
 	providerName       = "Business Central"
@@ -42,8 +42,8 @@ var (
 	errLinesRequired = errors.New("businesscentral: a document needs at least one line")
 )
 
-func (c *Connector) DocumentLimits() services.AccountingDocumentLimits {
-	return services.AccountingDocumentLimits{
+func (c *Connector) DocumentLimits() accountingsyncports.AccountingDocumentLimits {
+	return accountingsyncports.AccountingDocumentLimits{
 		MaxDocNumberLength:      businesscentral.MaxExternalDocumentNumberLength,
 		SupportsDebitMemo:       false,
 		CanVoidCreditMemo:       true,
@@ -53,8 +53,8 @@ func (c *Connector) DocumentLimits() services.AccountingDocumentLimits {
 }
 
 func (c *Connector) DocumentURL(
-	auth services.AccountingDocumentAuth,
-	link services.AccountingDocumentLink,
+	auth accountingsyncports.AccountingDocumentAuth,
+	link accountingsyncports.AccountingDocumentLink,
 ) string {
 	page := documentPage(link.Kind)
 	number := strings.TrimSpace(link.DocNumber)
@@ -175,8 +175,8 @@ func retired(status string) bool {
 
 func (c *Connector) UpsertCustomer(
 	ctx context.Context,
-	doc *services.AccountingCustomerDocument,
-) (*services.AccountingDocumentResult, error) {
+	doc *accountingsyncports.AccountingCustomerDocument,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	return c.upsertParty(ctx, &partyWrite{
 		auth:       doc.Auth,
 		kind:       businesscentral.PartyCustomer,
@@ -187,8 +187,8 @@ func (c *Connector) UpsertCustomer(
 
 func (c *Connector) CreateSalesDocument(
 	ctx context.Context,
-	doc *services.AccountingSalesDocument,
-) (*services.AccountingDocumentResult, error) {
+	doc *accountingsyncports.AccountingSalesDocument,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	kind, err := salesKindOf(doc.Kind)
 	if err != nil {
 		return nil, err
@@ -208,8 +208,8 @@ func (c *Connector) writeSales(
 	ctx context.Context,
 	client *businesscentral.Client,
 	kind businesscentral.DocumentKind,
-	doc *services.AccountingSalesDocument,
-	result *services.AccountingDocumentResult,
+	doc *accountingsyncports.AccountingSalesDocument,
+	result *accountingsyncports.AccountingDocumentResult,
 ) error {
 	input, err := c.salesInput(ctx, client, kind, doc)
 	if err != nil {
@@ -239,7 +239,7 @@ func (c *Connector) salesInput(
 	ctx context.Context,
 	client *businesscentral.Client,
 	kind businesscentral.DocumentKind,
-	doc *services.AccountingSalesDocument,
+	doc *accountingsyncports.AccountingSalesDocument,
 ) (*businesscentral.DocumentInput, error) {
 	lines, err := salesLines(doc.Lines)
 	if err != nil {
@@ -268,7 +268,7 @@ func (c *Connector) salesInput(
 	return input, nil
 }
 
-func salesLines(lines []services.AccountingDocumentLine) ([]businesscentral.LineInput, error) {
+func salesLines(lines []accountingsyncports.AccountingDocumentLine) ([]businesscentral.LineInput, error) {
 	if len(lines) == 0 {
 		return nil, errLinesRequired
 	}
@@ -293,7 +293,7 @@ func salesLines(lines []services.AccountingDocumentLine) ([]businesscentral.Line
 	return out, nil
 }
 
-func lineQuantity(line *services.AccountingDocumentLine) (quantity, price decimal.Decimal) {
+func lineQuantity(line *accountingsyncports.AccountingDocumentLine) (quantity, price decimal.Decimal) {
 	if line.Quantity.IsPositive() && !line.UnitPrice.IsNegative() &&
 		sameMoney(line.Quantity.Mul(line.UnitPrice), line.Amount) {
 		return line.Quantity, line.UnitPrice
@@ -318,8 +318,8 @@ func lineDescription(description string) string {
 
 func (c *Connector) UpdateSalesDocument(
 	ctx context.Context,
-	doc *services.AccountingSalesDocument,
-) (*services.AccountingDocumentResult, error) {
+	doc *accountingsyncports.AccountingSalesDocument,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	kind, err := salesKindOf(doc.Kind)
 	if err != nil {
 		return nil, err
@@ -349,8 +349,8 @@ func (c *Connector) UpdateSalesDocument(
 
 func (c *Connector) VoidSalesDocument(
 	ctx context.Context,
-	ref *services.AccountingDocumentRef,
-) (*services.AccountingDocumentResult, error) {
+	ref *accountingsyncports.AccountingDocumentRef,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	kind, err := salesKindOf(ref.Kind)
 	if err != nil {
 		return nil, err
@@ -471,10 +471,10 @@ func sameID(a, b string) bool {
 	return strings.EqualFold(strings.TrimSpace(a), strings.TrimSpace(b))
 }
 
-func newResult(refs map[string]string) *services.AccountingDocumentResult {
+func newResult(refs map[string]string) *accountingsyncports.AccountingDocumentResult {
 	copied := make(map[string]string, len(refs)+4)
 	maps.Copy(copied, refs)
-	return &services.AccountingDocumentResult{Refs: copied}
+	return &accountingsyncports.AccountingDocumentResult{Refs: copied}
 }
 
 func unixOrZero(t time.Time) int64 {

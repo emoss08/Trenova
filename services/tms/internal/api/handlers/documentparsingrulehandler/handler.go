@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/documentparsingrule"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/documentparsingruleservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentparsingruleservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentparsingrule"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -340,11 +340,11 @@ func (h *Handler) simulateVersion(c *gin.Context) {
 		return
 	}
 	req := new(struct {
-		FileName            string                                `json:"fileName"`
-		Text                string                                `json:"text"`
-		Pages               []serviceports.DocumentParsingPage    `json:"pages"`
-		ProviderFingerprint string                                `json:"providerFingerprint"`
-		Baseline            *serviceports.DocumentParsingAnalysis `json:"baseline"`
+		FileName            string                                            `json:"fileName"`
+		Text                string                                            `json:"text"`
+		Pages               []documentparsingruleports.DocumentParsingPage    `json:"pages"`
+		ProviderFingerprint string                                            `json:"providerFingerprint"`
+		Baseline            *documentparsingruleports.DocumentParsingAnalysis `json:"baseline"`
 	})
 	if err = c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
@@ -352,7 +352,7 @@ func (h *Handler) simulateVersion(c *gin.Context) {
 	}
 	result, err := h.service.SimulateVersion(
 		c.Request.Context(),
-		&serviceports.DocumentParsingSimulationRequest{
+		&documentparsingruleports.DocumentParsingSimulationRequest{
 			TenantInfo:          pagination.FromAuth(authCtx),
 			VersionID:           versionID,
 			FileName:            req.FileName,

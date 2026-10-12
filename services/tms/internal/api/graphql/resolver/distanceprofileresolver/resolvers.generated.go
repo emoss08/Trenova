@@ -4,7 +4,7 @@ package distanceprofileresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	distanceprofileservice "github.com/emoss08/trenova/internal/core/services/distanceprofileservice"
+	distanceprofileservice "github.com/emoss08/trenova/internal/modules/places/app/distanceprofileservice"
 )
 
 type Deps struct {

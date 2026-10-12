@@ -66,8 +66,11 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
               placeholder={t("Select a status")}
               description={
                 isEdit && openReviewCount > 0
-                  ? `${openReviewCount} open review${openReviewCount === 1 ? "" : "s"} use this template; close those first to deactivate.`
-                  : "Inactive templates cannot be used for new reviews."
+                  ? t(
+                      "{0, plural, one {# open review uses this template; close it first to deactivate.} other {# open reviews use this template; close those first to deactivate.}}",
+                      openReviewCount,
+                    )
+                  : t("Inactive templates cannot be used for new reviews.")
               }
             />
           </FormControl>
@@ -109,7 +112,10 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
 
       <FormSection
         title={t("Rating items")}
-        description={`Each item is scored 1–5. Weights decide the share of the overall score — currently ${totalWeight} in total.`}
+        description={t(
+          "Each item is scored 1–5. Weights decide the share of the overall score — currently {0} in total.",
+          totalWeight,
+        )}
         action={
           <Button
             type="button"
@@ -144,7 +150,7 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
                     size="sm"
                     variant="ghost"
                     className="size-7"
-                    aria-label={`Remove item ${index + 1}`}
+                    aria-label={t("Remove item {0}", index + 1)}
                     onClick={() => items.remove(index)}
                   >
                     <Trash01Icon className="size-3.5" />

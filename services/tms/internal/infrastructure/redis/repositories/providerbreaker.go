@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
@@ -26,7 +26,7 @@ type providerBreakerRepository struct {
 	client *redis.Client
 }
 
-func NewProviderBreakerRepository(p ProviderBreakerParams) repositories.ProviderBreakerRepository {
+func NewProviderBreakerRepository(p ProviderBreakerParams) agentports.ProviderBreakerRepository {
 	return &providerBreakerRepository{client: p.Client}
 }
 

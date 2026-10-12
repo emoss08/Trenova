@@ -1,0 +1,404 @@
+package agentsafetyservice
+
+import (
+	"cmp"
+	"context"
+	"fmt"
+	"slices"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentaccessservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/memtable"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
+	"go.uber.org/fx"
+)
+
+const (
+	MaxAgentIDs  = 100
+	listPageSize = pagination.MaxLimit
+	maxAgents    = 2000
+)
+
+type toolPolicies interface {
+	Get(name string) (agentports.ToolPolicy, bool)
+	All() []agentports.ToolPolicy
+}
+
+type toolHolder interface {
+	ToolSummaries(definition *agentdefinition.Definition) []agentdefinition.ToolSummary
+}
+
+type Params struct {
+	fx.In
+
+	Policies    *agenttoolpolicy.Catalog
+	Runtime     agentports.AgentRuntime
+	Definitions agentdefinitionports.AgentDefinitionRepository
+	Controls    tenantports.AgentControlRepository
+	Trust       agentports.AgentToolTrustRepository
+	Registry    *permission.Registry
+	Rules       agentports.ToolRuleOverrides `optional:"true"`
+}
+
+type Service struct {
+	policies    toolPolicies
+	holder      toolHolder
+	definitions agentdefinitionports.AgentDefinitionRepository
+	controls    tenantports.AgentControlRepository
+	trust       toolTrustLister
+	sensitive   agentaccessservice.SensitiveToolRule
+	rules       agentports.ToolRuleOverrides
+	entries     []policyEntry
+	byName      map[string]int
+	resources   []string
+	toolRules   *memtable.Table[toolRuleRow]
+	agentTools  *memtable.Table[agentToolRow]
+}
+
+//nolint:gocritic // dependency injection
+func New(p Params) agentports.AgentSafetyService {
+	return newService(serviceDeps{
+		policies:    p.Policies,
+		holder:      p.Runtime,
+		definitions: p.Definitions,
+		controls:    p.Controls,
+		trust:       p.Trust,
+		sensitive:   agentaccessservice.DefaultSensitiveRule(p.Registry),
+		rules:       p.Rules,
+	})
+}
+
+type serviceDeps struct {
+	policies    toolPolicies
+	holder      toolHolder
+	definitions agentdefinitionports.AgentDefinitionRepository
+	controls    tenantports.AgentControlRepository
+	trust       toolTrustLister
+	sensitive   agentaccessservice.SensitiveToolRule
+	rules       agentports.ToolRuleOverrides
+}
+
+func newService(deps serviceDeps) *Service {
+	svc := &Service{
+		policies:    deps.policies,
+		holder:      deps.holder,
+		definitions: deps.definitions,
+		controls:    deps.controls,
+		trust:       deps.trust,
+		sensitive:   deps.sensitive,
+		rules:       deps.rules,
+	}
+	svc.indexPolicies(PolicyViews(deps.policies.All()))
+
+	return svc
+}
+
+func PolicyViews(policies []agentports.ToolPolicy) []agentports.AgentToolPolicyView {
+	views := make([]agentports.AgentToolPolicyView, 0, len(policies))
+	for idx := range policies {
+		views = append(views, PolicyView(policies[idx]))
+	}
+
+	return views
+}
+
+func PolicyView(policy agentports.ToolPolicy) agentports.AgentToolPolicyView {
+	view := agentports.AgentToolPolicyView{
+		Policy:      policy,
+		Title:       stringutils.HumanizeCamelCaseSentence(policy.Name),
+		Promotable:  agenttoolpolicy.Promotable(policy),
+		Leaves:      slices.ContainsFunc(policy.Egress, agent.EgressClass.Leaves),
+		Explanation: agenttoolpolicy.ExplainTier(policy),
+	}
+
+	held := agentaccessservice.HeldToolOf(policy)
+	if held.Resource != "" {
+		view.Needs = &agentports.ToolGrant{Resource: held.Resource, Operation: held.Operation}
+	}
+
+	return view
+}
+
+func OverriddenView(
+	declared agentports.ToolPolicy,
+	override *agent.ToolRuleOverride,
+) agentports.AgentToolPolicyView {
+	view := PolicyView(agenttoolpolicy.ApplyOverride(declared, override))
+	if override != nil {
+		original := declared
+		view.Declared = &original
+		view.Override = override
+	}
+
+	return view
+}
+
+func (s *Service) overridesFor(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (map[string]*agent.ToolRuleOverride, error) {
+	if s.rules == nil || tenantInfo.OrgID.IsNil() {
+		return map[string]*agent.ToolRuleOverride{}, nil
+	}
+
+	rules, err := s.rules.For(ctx, tenantInfo)
+	if err != nil {
+		return nil, fmt.Errorf("read tool rules for safety: %w", err)
+	}
+
+	return rules, nil
+}
+
+func (s *Service) ToolPolicies() []agentports.AgentToolPolicyView {
+	out := make([]agentports.AgentToolPolicyView, 0, len(s.entries))
+	for idx := range s.entries {
+		out = append(out, s.entries[idx].view)
+	}
+
+	return out
+}
+
+func (s *Service) ToolPolicy(name string) (agentports.AgentToolPolicyView, bool) {
+	idx, ok := s.byName[name]
+	if !ok {
+		return agentports.AgentToolPolicyView{}, false
+	}
+
+	return s.entries[idx].view, true
+}
+
+func (s *Service) ListSubjects(
+	ctx context.Context,
+	req *agentports.ListAgentSafetyRequest,
+) ([]*agentports.AgentSafetySubject, error) {
+	definitions, err := s.listDefinitions(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if len(definitions) == 0 {
+		return []*agentports.AgentSafetySubject{}, nil
+	}
+
+	control, err := s.controls.GetOrCreate(ctx, req.TenantInfo)
+	if err != nil {
+		return nil, fmt.Errorf("read agent control for safety: %w", err)
+	}
+
+	subjects := make([]*agentports.AgentSafetySubject, 0, len(definitions))
+	for _, definition := range definitions {
+		subjects = append(subjects, &agentports.AgentSafetySubject{
+			Agent:   definition,
+			Control: control,
+		})
+	}
+
+	return subjects, nil
+}
+
+func (s *Service) Assess(
+	ctx context.Context,
+	req *agentports.AssessAgentSafetyRequest,
+) []agentports.AgentToolSafety {
+	if req == nil || req.Subject == nil || req.Subject.Agent == nil {
+		return []agentports.AgentToolSafety{}
+	}
+
+	trustByTool := make(map[string]*agent.ToolTrust, len(req.Trust))
+	for _, row := range req.Trust {
+		if row != nil {
+			trustByTool[row.ToolName] = row
+		}
+	}
+
+	rules := req.Rules
+	if rules == nil {
+		loaded, err := s.overridesFor(ctx, pagination.TenantInfo{
+			OrgID: req.Subject.Agent.OrganizationID,
+			BuID:  req.Subject.Agent.BusinessUnitID,
+		})
+		if err != nil {
+			loaded = map[string]*agent.ToolRuleOverride{}
+		}
+		rules = loaded
+	}
+
+	held := s.heldPolicies(req.Subject.Agent)
+	out := make([]agentports.AgentToolSafety, 0, len(held))
+	for idx := range held {
+		view := OverriddenView(held[idx], rules[held[idx].Name])
+		policy := view.Policy
+		input := agenttoolpolicy.AssessInput{
+			Policy:     policy,
+			Definition: req.Subject.Agent,
+			Trust:      trustByTool[policy.Name],
+			Control:    req.Subject.Control,
+		}
+		clean := agenttoolpolicy.Assess(ctx, &input)
+		input.Tainted = true
+		tainted := agenttoolpolicy.Assess(ctx, &input)
+
+		out = append(out, agentports.AgentToolSafety{
+			AgentID:    req.Subject.Agent.ID,
+			AgentName:  req.Subject.Agent.Name,
+			PolicyName: policy.Name,
+			Clean:      clean,
+			Tainted:    tainted,
+			Policy:     &view,
+		})
+	}
+
+	return out
+}
+
+func (s *Service) ReachWarnings(req *agentports.AgentReachRequest) []agentports.AgentReachWarning {
+	warnings := make([]agentports.AgentReachWarning, 0, 2)
+	if req == nil || req.Subject == nil || req.Subject.Agent == nil {
+		return warnings
+	}
+
+	definition := req.Subject.Agent
+	if definition.OpenToEveryone() {
+		if sensitive := s.sensitiveTools(s.heldPolicies(definition)); len(sensitive) > 0 {
+			warnings = append(warnings, agentports.AgentReachWarning{
+				Kind:  agentdefinition.ReachOpenWithSensitiveTools,
+				Tools: sensitive,
+			})
+		}
+	}
+	if definition.ReachableByNobody(req.GrantedRoles) {
+		warnings = append(warnings, agentports.AgentReachWarning{
+			Kind:  agentdefinition.ReachNoAudience,
+			Tools: []string{},
+		})
+	}
+
+	return warnings
+}
+
+func (s *Service) sensitiveTools(policies []agentports.ToolPolicy) []string {
+	held := make([]agentaccessservice.HeldTool, 0, len(policies))
+	for idx := range policies {
+		held = append(held, agentaccessservice.HeldToolOf(policies[idx]))
+	}
+
+	return agentaccessservice.SensitiveTools(held, s.sensitive)
+}
+
+func (s *Service) heldPolicies(definition *agentdefinition.Definition) []agentports.ToolPolicy {
+	if s.holder == nil || s.policies == nil {
+		return []agentports.ToolPolicy{}
+	}
+
+	summaries := s.holder.ToolSummaries(definition)
+	out := make([]agentports.ToolPolicy, 0, len(summaries))
+	seen := make(map[string]struct{}, len(summaries))
+	for _, summary := range summaries {
+		if _, duplicate := seen[summary.Name]; duplicate {
+			continue
+		}
+		seen[summary.Name] = struct{}{}
+
+		if policy, ok := s.policies.Get(summary.Name); ok {
+			out = append(out, policy)
+		}
+	}
+
+	return out
+}
+
+func (s *Service) listDefinitions(
+	ctx context.Context,
+	req *agentports.ListAgentSafetyRequest,
+) ([]*agentdefinition.Definition, error) {
+	if req.AgentIDs != nil {
+		return s.definitionsByID(ctx, req)
+	}
+
+	out := make([]*agentdefinition.Definition, 0, listPageSize)
+	for offset := 0; offset < maxAgents; offset += listPageSize {
+		page, err := s.definitions.List(ctx, &agentdefinitionports.ListAgentDefinitionRequest{
+			Filter: &pagination.QueryOptions{
+				TenantInfo: req.TenantInfo,
+				Pagination: pagination.Info{Limit: listPageSize, Offset: offset},
+			},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("list agents for safety: %w", err)
+		}
+
+		out = append(out, page.Items...)
+		if len(page.Items) < listPageSize || len(out) >= page.Total {
+			break
+		}
+	}
+
+	return out, nil
+}
+
+func (s *Service) definitionsByID(
+	ctx context.Context,
+	req *agentports.ListAgentSafetyRequest,
+) ([]*agentdefinition.Definition, error) {
+	ids, err := validateAgentIDs(req.AgentIDs)
+	if err != nil {
+		return nil, err
+	}
+	if len(ids) == 0 {
+		return []*agentdefinition.Definition{}, nil
+	}
+
+	definitions, err := s.definitions.ListByIDs(
+		ctx,
+		agentdefinitionports.ListAgentDefinitionsByIDsRequest{
+			IDs:        ids,
+			TenantInfo: req.TenantInfo,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("read agents for safety: %w", err)
+	}
+
+	slices.SortStableFunc(definitions, func(a, b *agentdefinition.Definition) int {
+		return cmp.Compare(a.Name, b.Name)
+	})
+
+	return definitions, nil
+}
+
+func validateAgentIDs(ids []pulid.ID) ([]pulid.ID, error) {
+	if len(ids) > MaxAgentIDs {
+		return nil, errortypes.NewValidationError(
+			"agentIds", errortypes.ErrInvalid, "At most 100 agents can be named at once",
+		)
+	}
+
+	multiErr := errortypes.NewMultiError()
+	seen := make(map[pulid.ID]struct{}, len(ids))
+	out := make([]pulid.ID, 0, len(ids))
+	for idx, id := range ids {
+		if id.IsNil() {
+			multiErr.Add(fmt.Sprintf("agentIds[%d]", idx), errortypes.ErrRequired,
+				"Agent cannot be empty")
+			continue
+		}
+		if _, duplicate := seen[id]; duplicate {
+			continue
+		}
+		seen[id] = struct{}{}
+		out = append(out, id)
+	}
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	return out, nil
+}

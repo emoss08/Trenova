@@ -1,0 +1,13 @@
+{
+  "Approvals pending": "待批准",
+  "Failed items": "失败的项目",
+  "Idempotency key": "幂等键",
+  "Item results": "项目结果",
+  "Last failure count": "最近失败次数",
+  "No failure recorded": "未记录失败",
+  "Per-item outcome, failure reason, and created artifacts.": "各项目的结果、失败原因与创建的产出物。",
+  "Pick a batch from the list to see how each item ran and what it created.": "请从列表中选择一个批次，以查看各项目的执行情形及其产出。",
+  "Search batch id, submitter, idempotency key...": "搜索批次 ID、提交者、幂等键...",
+  "System batch": "系统批次",
+  "Track bulk adjustment submission progress, failures, and created artifacts.": "跟踪批量调整的提交进度、失败情形与创建的产出物。"
+}

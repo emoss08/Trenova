@@ -60,7 +60,7 @@ missing here is one nobody can choose — and a mailbox already set to it fails
 the form's parse the moment somebody opens it to edit.
 */
 describe("mailbox option lists", () => {
-  const file = "services/tms/internal/core/domain/inboundmessage/enums.go";
+  const file = "services/tms/internal/modules/documents/domain/inboundmessage/enums.go";
 
   it("cover every provider, review policy and status the server has", () => {
     expect([...PROVIDERS].sort()).toEqual(goEnumValues({ file, typeName: "Provider" }).sort());

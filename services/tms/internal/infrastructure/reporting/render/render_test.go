@@ -10,10 +10,11 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/pkg/reportfmt"
 	"github.com/shopspring/decimal"
@@ -24,18 +25,18 @@ import (
 )
 
 type fakeReader struct {
-	schema    []services.ReportResultColumn
-	rows      []services.ReportRow
-	generate  func(i int64) services.ReportRow
-	totals    services.ReportRow
+	schema    []reportports.ReportResultColumn
+	rows      []reportports.ReportRow
+	generate  func(i int64) reportports.ReportRow
+	totals    reportports.ReportRow
 	total     int64
 	pos       int64
 	truncated bool
 }
 
-func (f *fakeReader) Schema() []services.ReportResultColumn { return f.schema }
+func (f *fakeReader) Schema() []reportports.ReportResultColumn { return f.schema }
 
-func (f *fakeReader) Next(_ context.Context) (services.ReportRow, error) {
+func (f *fakeReader) Next(_ context.Context) (reportports.ReportRow, error) {
 	if f.generate != nil {
 		if f.pos >= f.total {
 			return nil, io.EOF
@@ -52,7 +53,7 @@ func (f *fakeReader) Next(_ context.Context) (services.ReportRow, error) {
 	return row, nil
 }
 
-func (f *fakeReader) Totals(_ context.Context) (services.ReportRow, error) { return f.totals, nil }
+func (f *fakeReader) Totals(_ context.Context) (reportports.ReportRow, error) { return f.totals, nil }
 
 func (f *fakeReader) RowCount() int64 { return f.pos }
 
@@ -66,8 +67,8 @@ func testColumn(
 	id, label string,
 	fieldType reportcatalog.FieldType,
 	hint reportcatalog.FormatHint,
-) services.ReportResultColumn {
-	return services.ReportResultColumn{
+) reportports.ReportResultColumn {
+	return reportports.ReportResultColumn{
 		ID:     id,
 		Label:  label,
 		Type:   fieldType,
@@ -79,8 +80,8 @@ func testColumn(
 	}
 }
 
-func testSchema() []services.ReportResultColumn {
-	return []services.ReportResultColumn{
+func testSchema() []reportports.ReportResultColumn {
+	return []reportports.ReportResultColumn{
 		testColumn("c0", "Customer", reportcatalog.FieldString, reportcatalog.FormatNone),
 		testColumn("c1", "Total Charge", reportcatalog.FieldDecimal, reportcatalog.FormatMoney),
 		testColumn("c2", "Shipments", reportcatalog.FieldInt, reportcatalog.FormatCount),
@@ -89,8 +90,8 @@ func testSchema() []services.ReportResultColumn {
 	}
 }
 
-func testRows() []services.ReportRow {
-	return []services.ReportRow{
+func testRows() []reportports.ReportRow {
+	return []reportports.ReportRow{
 		{"ACME, Inc.", decimal.RequireFromString("1234.5000"), int64(12), int64(1784131200), true},
 		{
 			`Quote "Freight"`,
@@ -103,8 +104,8 @@ func testRows() []services.ReportRow {
 	}
 }
 
-func testMeta() services.ReportRunMeta {
-	return services.ReportRunMeta{
+func testMeta() reportports.ReportRunMeta {
+	return reportports.ReportRunMeta{
 		Title:           "Revenue by Customer",
 		Description:     "Total charges grouped by customer",
 		GeneratedAtUnix: 1784131200,
@@ -122,7 +123,7 @@ func TestCSVRendererGolden(t *testing.T) {
 	renderer := NewCSV(CSVParams{Config: testConfig()})
 	var buf bytes.Buffer
 
-	stats, err := renderer.Render(context.Background(), &services.ReportRenderRequest{
+	stats, err := renderer.Render(context.Background(), &reportports.ReportRenderRequest{
 		Dataset: &fakeReader{schema: testSchema(), rows: testRows(), truncated: true},
 		Sink:    &buf,
 		Meta:    testMeta(),
@@ -143,7 +144,7 @@ func TestJSONRendererGolden(t *testing.T) {
 	renderer := NewJSON()
 	var buf bytes.Buffer
 
-	stats, err := renderer.Render(context.Background(), &services.ReportRenderRequest{
+	stats, err := renderer.Render(context.Background(), &reportports.ReportRenderRequest{
 		Dataset: &fakeReader{schema: testSchema(), rows: testRows()},
 		Sink:    &buf,
 		Meta:    testMeta(),
@@ -185,7 +186,7 @@ func TestXLSXRendererGolden(t *testing.T) {
 	renderer := NewXLSX()
 	var buf bytes.Buffer
 
-	stats, err := renderer.Render(context.Background(), &services.ReportRenderRequest{
+	stats, err := renderer.Render(context.Background(), &reportports.ReportRenderRequest{
 		Dataset: &fakeReader{schema: testSchema(), rows: testRows()},
 		Sink:    &buf,
 		Meta:    testMeta(),
@@ -259,8 +260,8 @@ func TestStreamingMemoryBound(t *testing.T) {
 		return &fakeReader{
 			schema: testSchema(),
 			total:  totalRows,
-			generate: func(i int64) services.ReportRow {
-				return services.ReportRow{
+			generate: func(i int64) reportports.ReportRow {
+				return reportports.ReportRow{
 					fmt.Sprintf("Customer %d with a reasonably long name", i),
 					decimal.NewFromInt(i),
 					i,
@@ -271,7 +272,7 @@ func TestStreamingMemoryBound(t *testing.T) {
 		}
 	}
 
-	renderers := []services.ReportRenderer{
+	renderers := []reportports.ReportRenderer{
 		NewCSV(CSVParams{Config: testConfig()}),
 		NewJSON(),
 	}
@@ -283,7 +284,7 @@ func TestStreamingMemoryBound(t *testing.T) {
 			runtime.ReadMemStats(&before)
 
 			sink := &countingWriter{}
-			stats, err := renderer.Render(context.Background(), &services.ReportRenderRequest{
+			stats, err := renderer.Render(context.Background(), &reportports.ReportRenderRequest{
 				Dataset: newDataset(),
 				Sink:    sink,
 				Meta:    testMeta(),
@@ -307,14 +308,14 @@ func TestStreamingMemoryBound(t *testing.T) {
 // capturingPDFRenderer records the render request instead of printing it, so the
 // report layout can be asserted without a browser in the loop.
 type capturingPDFRenderer struct {
-	got *services.PDFRenderRequest
+	got *documenttemplateports.PDFRenderRequest
 	pdf []byte
 	err error
 }
 
 func (c *capturingPDFRenderer) Render(
 	_ context.Context,
-	req *services.PDFRenderRequest,
+	req *documenttemplateports.PDFRenderRequest,
 ) ([]byte, error) {
 	c.got = req
 	if c.err != nil {
@@ -340,7 +341,7 @@ func TestPDFRendererRowCap(t *testing.T) {
 	})
 
 	var buf bytes.Buffer
-	_, err := renderer.Render(t.Context(), &services.ReportRenderRequest{
+	_, err := renderer.Render(t.Context(), &reportports.ReportRenderRequest{
 		Dataset: &fakeReader{schema: testSchema(), rows: testRows()},
 		Sink:    &buf,
 		Meta:    testMeta(),
@@ -358,7 +359,7 @@ func TestPDFRendererSubmitsReportPageSetup(t *testing.T) {
 	})
 
 	var buf bytes.Buffer
-	stats, err := renderer.Render(t.Context(), &services.ReportRenderRequest{
+	stats, err := renderer.Render(t.Context(), &reportports.ReportRenderRequest{
 		Dataset: &fakeReader{schema: testSchema(), rows: testRows()},
 		Sink:    &buf,
 		Meta:    testMeta(),
@@ -382,7 +383,7 @@ func TestPDFRendererSubmitsReportPageSetup(t *testing.T) {
 }
 
 func TestPDFRendererPropagatesBackendFailure(t *testing.T) {
-	backend := &capturingPDFRenderer{err: services.ErrPDFRendererUnavailable}
+	backend := &capturingPDFRenderer{err: documenttemplateports.ErrPDFRendererUnavailable}
 	renderer := NewPDF(PDFParams{
 		Config:   testConfig(),
 		Renderer: backend,
@@ -390,18 +391,18 @@ func TestPDFRendererPropagatesBackendFailure(t *testing.T) {
 	})
 
 	var buf bytes.Buffer
-	_, err := renderer.Render(t.Context(), &services.ReportRenderRequest{
+	_, err := renderer.Render(t.Context(), &reportports.ReportRenderRequest{
 		Dataset: &fakeReader{schema: testSchema(), rows: testRows()},
 		Sink:    &buf,
 		Meta:    testMeta(),
 	})
-	require.ErrorIs(t, err, services.ErrPDFRendererUnavailable)
+	require.ErrorIs(t, err, documenttemplateports.ErrPDFRendererUnavailable)
 	assert.Empty(t, buf.Bytes(), "a failed render must not write a partial artifact")
 }
 
 func TestRegistryResolvesRenderers(t *testing.T) {
 	registry := NewRegistry(RegistryParams{
-		Renderers: []services.ReportRenderer{
+		Renderers: []reportports.ReportRenderer{
 			NewCSV(CSVParams{Config: testConfig()}),
 			NewJSON(),
 		},
@@ -417,7 +418,7 @@ func TestRegistryResolvesRenderers(t *testing.T) {
 }
 
 func TestFormatCellEdgeCases(t *testing.T) {
-	loc := metaLocation(&services.ReportRunMeta{Timezone: "America/Chicago"})
+	loc := metaLocation(&reportports.ReportRunMeta{Timezone: "America/Chicago"})
 
 	epochCol := testColumn("c", "Created", reportcatalog.FieldEpoch, reportcatalog.FormatNone)
 	assert.Equal(t, "2026-07-16 00:00", formatCell(&epochCol, int64(1784178000), loc))
@@ -430,7 +431,7 @@ func TestFormatCellEdgeCases(t *testing.T) {
 	assert.Equal(t, strings.Repeat("x", 3), formatCell(&strCol, "xxx", loc))
 
 	// A column with no resolved display renders raw rather than guessing.
-	bare := &services.ReportResultColumn{Type: reportcatalog.FieldDecimal}
+	bare := &reportports.ReportResultColumn{Type: reportcatalog.FieldDecimal}
 	assert.Equal(t, "1234.5", formatCell(bare, decimal.RequireFromString("1234.5"), loc))
 }
 

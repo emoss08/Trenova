@@ -129,12 +129,13 @@ export function MetricCell({
 export function PanelExpandToggle({
   expanded,
   hiddenCount,
-  noun,
+  of,
   onToggle,
 }: {
   expanded: boolean;
   hiddenCount: number;
-  noun: string;
+  /** What the hidden rows are, so the button can name them whole in any language. */
+  of: "facilities" | "customers";
   onToggle: () => void;
 }) {
   const t = useT();
@@ -145,7 +146,11 @@ export function PanelExpandToggle({
       onClick={onToggle}
       className="ui-focus-ring text-2xs text-muted-foreground hover:text-foreground ml-auto rounded-sm font-medium transition-colors outline-none"
     >
-      {expanded ? t("Show fewer") : t("Show {0} more {1}", hiddenCount, noun)}
+      {expanded
+        ? t("Show fewer")
+        : of === "facilities"
+          ? t("{0, plural, one {Show # more facility} other {Show # more facilities}}", hiddenCount)
+          : t("{0, plural, one {Show # more customer} other {Show # more customers}}", hiddenCount)}
     </button>
   );
 }

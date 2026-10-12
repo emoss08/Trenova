@@ -3,8 +3,8 @@ package modeladapter
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 const (
@@ -14,7 +14,7 @@ const (
 
 // BuildContextText renders a delimited context, fencing every untrusted section
 // so prompt injection carried in customer data cannot be read as instruction.
-func BuildContextText(deliminated serviceports.DelimitedContext) string {
+func BuildContextText(deliminated agentports.DelimitedContext) string {
 	var builder strings.Builder
 
 	for _, section := range deliminated.Sections {

@@ -4,15 +4,22 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/commodity"
-	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
-	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
-	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/core/domain/order"
-	"github.com/emoss08/trenova/internal/core/domain/servicetype"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/fleetcodeports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
+	"github.com/emoss08/trenova/internal/modules/places/ports/distanceprofileports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/hazardousmaterialports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/servicetypeports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/shipmenttypeports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -26,7 +33,7 @@ func (r *Deps) resolveFleetCodeSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.FleetCodeService.Get(
 				ctx,
-				repositories.GetFleetCodeByIDRequest{
+				fleetcodeports.GetFleetCodeByIDRequest{
 					ID:         id,
 					TenantInfo: &req.TenantInfo,
 				},
@@ -61,7 +68,7 @@ func (r *Deps) resolveShipmentTypeSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.ShipmentTypeService.Get(
 				ctx,
-				repositories.GetShipmentTypeByIDRequest{
+				shipmenttypeports.GetShipmentTypeByIDRequest{
 					ID:         id,
 					TenantInfo: req.TenantInfo,
 				},
@@ -77,7 +84,7 @@ func (r *Deps) resolveShipmentTypeSelectOptions(
 
 	result, err := r.ShipmentTypeService.SelectOptions(
 		ctx,
-		&repositories.ShipmentTypeSelectOptionsRequest{
+		&shipmenttypeports.ShipmentTypeSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)
@@ -101,7 +108,7 @@ func (r *Deps) resolveServiceTypeSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.ServiceTypeService.Get(
 				ctx,
-				repositories.GetServiceTypeByIDRequest{
+				servicetypeports.GetServiceTypeByIDRequest{
 					ID:         id,
 					TenantInfo: req.TenantInfo,
 				},
@@ -117,7 +124,7 @@ func (r *Deps) resolveServiceTypeSelectOptions(
 
 	result, err := r.ServiceTypeService.SelectOptions(
 		ctx,
-		&repositories.ServiceTypeSelectOptionsRequest{
+		&servicetypeports.ServiceTypeSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)
@@ -141,7 +148,7 @@ func (r *Deps) resolveDistanceProfileSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.DistanceProfileService.Get(
 				ctx,
-				repositories.GetDistanceProfileByIDRequest{
+				distanceprofileports.GetDistanceProfileByIDRequest{
 					ID:         id,
 					TenantInfo: req.TenantInfo,
 				},
@@ -157,7 +164,7 @@ func (r *Deps) resolveDistanceProfileSelectOptions(
 
 	result, err := r.DistanceProfileService.SelectOptions(
 		ctx,
-		&repositories.DistanceProfileSelectOptionsRequest{
+		&distanceprofileports.DistanceProfileSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)
@@ -181,7 +188,7 @@ func (r *Deps) resolveCommoditySelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.CommodityService.Get(
 				ctx,
-				repositories.GetCommodityByIDRequest{
+				commodityports.GetCommodityByIDRequest{
 					ID:         id,
 					TenantInfo: req.TenantInfo,
 				},
@@ -197,7 +204,7 @@ func (r *Deps) resolveCommoditySelectOptions(
 
 	result, err := r.CommodityService.SelectOptions(
 		ctx,
-		&repositories.CommoditySelectOptionsRequest{
+		&commodityports.CommoditySelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)
@@ -221,7 +228,7 @@ func (r *Deps) resolveHazardousMaterialSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.HazardousMaterialService.Get(
 				ctx,
-				repositories.GetHazardousMaterialByIDRequest{
+				hazardousmaterialports.GetHazardousMaterialByIDRequest{
 					ID:         id,
 					TenantInfo: req.TenantInfo,
 				},
@@ -237,7 +244,7 @@ func (r *Deps) resolveHazardousMaterialSelectOptions(
 
 	result, err := r.HazardousMaterialService.SelectOptions(
 		ctx,
-		&repositories.HazardousMaterialSelectOptionsRequest{
+		&hazardousmaterialports.HazardousMaterialSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)
@@ -259,7 +266,7 @@ func (r *Deps) resolveOrderSelectOptions(
 	if len(req.IDs) > 0 {
 		entities, err := r.OrderService.GetByIDs(
 			ctx,
-			repositories.GetOrdersByIDsRequest{
+			orderports.GetOrdersByIDsRequest{
 				TenantInfo: req.TenantInfo,
 				OrderIDs:   req.IDs,
 			},
@@ -274,7 +281,7 @@ func (r *Deps) resolveOrderSelectOptions(
 
 	result, err := r.OrderService.SelectOptions(
 		ctx,
-		&repositories.OrderSelectOptionsRequest{
+		&orderports.OrderSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 			AttachableOnly:     selectOptionBoolFilter(req.Filters, "attachableOnly"),
 			CustomerID:         selectOptionCustomerFilter(req.Filters),
@@ -322,7 +329,7 @@ func (r *Deps) resolveShipmentSelectOptions(
 	if len(req.IDs) > 0 {
 		entities, err := r.ShipmentService.GetByIDs(
 			ctx,
-			&repositories.GetShipmentsByIDsRequest{
+			&shipmentports.GetShipmentsByIDsRequest{
 				TenantInfo:  req.TenantInfo,
 				ShipmentIDs: req.IDs,
 			},
@@ -337,7 +344,7 @@ func (r *Deps) resolveShipmentSelectOptions(
 
 	result, err := r.ShipmentService.SelectOptions(
 		ctx,
-		&repositories.ShipmentSelectOptionsRequest{
+		&shipmentports.ShipmentSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 			CustomerID:         selectOptionCustomerFilter(req.Filters),
 			AttachableOnly:     selectOptionBoolFilter(req.Filters, "attachableOnly"),

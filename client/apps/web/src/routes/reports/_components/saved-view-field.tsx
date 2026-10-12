@@ -114,27 +114,27 @@ export function SavedViewField({
             params: (view.params as Record<string, unknown> | null) ?? {},
             format: view.format ?? format,
           });
-          toast.success(`Saved "${view.name}"`);
+          toast.success(t('Saved "{0}"', view.name));
         },
         onError: (error) => {
-          toast.error(graphQLErrorMessage(error, "Failed to save the view"));
+          toast.error(graphQLErrorMessage(error, t("Failed to save the view")));
         },
       },
     );
-  }, [name, shared, createView, definitionId, params, format, onSelect]);
+  }, [name, shared, createView, definitionId, params, format, onSelect, t]);
 
   const handleDelete = useCallback(() => {
     if (!selected) return;
     deleteView.mutate(selected.id, {
       onSuccess: () => {
         onSelect(null);
-        toast.success(`Deleted "${selected.name}"`);
+        toast.success(t('Deleted "{0}"', selected.name));
       },
       onError: (error) => {
-        toast.error(graphQLErrorMessage(error, "Failed to delete the view"));
+        toast.error(graphQLErrorMessage(error, t("Failed to delete the view")));
       },
     });
-  }, [selected, deleteView, onSelect]);
+  }, [selected, deleteView, onSelect, t]);
 
   // Only the owner may delete, which is what the server enforces too — showing
   // the control to anyone else would only produce an error they cannot act on.

@@ -10,9 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/places/ports/distanceprofileports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -33,7 +33,7 @@ func (r *QueryResolver) DistanceProfiles(ctx context.Context, input gqlmodel.Dat
 
 	result, err := r.DistanceProfileService.ListConnection(
 		ctx,
-		&repositories.ListDistanceProfileConnectionRequest{
+		&distanceprofileports.ListDistanceProfileConnectionRequest{
 			Filter:                 tableInput.Filter,
 			Cursor:                 tableInput.Cursor,
 			DistanceProfileColumns: distanceProfileColumns(ctx, "edges.node"),
@@ -57,7 +57,7 @@ func (r *QueryResolver) DistanceProfile(ctx context.Context, id string) (*distan
 		return nil, err
 	}
 
-	return r.DistanceProfileService.Get(ctx, repositories.GetDistanceProfileByIDRequest{
+	return r.DistanceProfileService.Get(ctx, distanceprofileports.GetDistanceProfileByIDRequest{
 		ID:         profileID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

@@ -5,13 +5,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/xero"
 	"github.com/shopspring/decimal"
 )
 
-var _ services.AccountingDocumentReader = (*Connector)(nil)
+var _ accountingsyncports.AccountingDocumentReader = (*Connector)(nil)
 
 type readKind int
 
@@ -22,13 +22,13 @@ const (
 	readAllocation
 )
 
-func (c *Connector) DocumentReadLimits() services.AccountingDocumentReadLimits {
-	return services.AccountingDocumentReadLimits{MaxPerRead: xero.MaxIDsPerRead}
+func (c *Connector) DocumentReadLimits() accountingsyncports.AccountingDocumentReadLimits {
+	return accountingsyncports.AccountingDocumentReadLimits{MaxPerRead: xero.MaxIDsPerRead}
 }
 
 func readKindOf(
 	kind accountingsync.SyncObjectType,
-	target *services.AccountingDocumentTarget,
+	target *accountingsyncports.AccountingDocumentTarget,
 ) (readKind, error) {
 	switch {
 	case kind == accountingsync.SyncObjectInvoice || kind == accountingsync.SyncObjectDebitMemo:
@@ -57,19 +57,19 @@ type driftStep func(
 	ctx context.Context,
 	client *xero.Client,
 	plan *driftRead,
-) ([]*services.AccountingDocumentState, error)
+) ([]*accountingsyncports.AccountingDocumentState, error)
 
 type driftRead struct {
 	invoices    []string
 	creditNotes []string
-	payments    []*services.AccountingDocumentTarget
-	allocations []*services.AccountingDocumentTarget
+	payments    []*accountingsyncports.AccountingDocumentTarget
+	allocations []*accountingsyncports.AccountingDocumentTarget
 }
 
 func (c *Connector) ReadDocuments(
 	ctx context.Context,
-	req *services.ReadAccountingDocumentsRequest,
-) ([]*services.AccountingDocumentState, error) {
+	req *accountingsyncports.ReadAccountingDocumentsRequest,
+) ([]*accountingsyncports.AccountingDocumentState, error) {
 	var plan driftRead
 	for idx := range req.Targets {
 		target := &req.Targets[idx]
@@ -97,7 +97,7 @@ func (c *Connector) ReadDocuments(
 	if err != nil {
 		return nil, err
 	}
-	out := make([]*services.AccountingDocumentState, 0, len(req.Targets))
+	out := make([]*accountingsyncports.AccountingDocumentState, 0, len(req.Targets))
 	for _, step := range []driftStep{
 		readInvoices,
 		readCreditNotes,
@@ -125,7 +125,7 @@ func readInvoices(
 	ctx context.Context,
 	client *xero.Client,
 	plan *driftRead,
-) ([]*services.AccountingDocumentState, error) {
+) ([]*accountingsyncports.AccountingDocumentState, error) {
 	found := make(map[string]*xero.Invoice, len(plan.invoices))
 	for _, chunk := range chunks(plan.invoices) {
 		invoices, err := client.InvoicesByID(ctx, chunk)
@@ -136,9 +136,9 @@ func readInvoices(
 			found[strings.ToLower(invoices[idx].InvoiceID)] = &invoices[idx]
 		}
 	}
-	out := make([]*services.AccountingDocumentState, 0, len(plan.invoices))
+	out := make([]*accountingsyncports.AccountingDocumentState, 0, len(plan.invoices))
 	for _, id := range plan.invoices {
-		state := &services.AccountingDocumentState{ExternalID: id}
+		state := &accountingsyncports.AccountingDocumentState{ExternalID: id}
 		if invoice, ok := found[strings.ToLower(id)]; ok {
 			balance := invoice.AmountDue
 			state.Found = true
@@ -158,7 +158,7 @@ func readCreditNotes(
 	ctx context.Context,
 	client *xero.Client,
 	plan *driftRead,
-) ([]*services.AccountingDocumentState, error) {
+) ([]*accountingsyncports.AccountingDocumentState, error) {
 	found := make(map[string]*xero.CreditNote, len(plan.creditNotes))
 	for _, chunk := range chunks(plan.creditNotes) {
 		notes, err := client.CreditNotesByID(ctx, chunk)
@@ -169,9 +169,9 @@ func readCreditNotes(
 			found[strings.ToLower(notes[idx].CreditNoteID)] = &notes[idx]
 		}
 	}
-	out := make([]*services.AccountingDocumentState, 0, len(plan.creditNotes))
+	out := make([]*accountingsyncports.AccountingDocumentState, 0, len(plan.creditNotes))
 	for _, id := range plan.creditNotes {
-		state := &services.AccountingDocumentState{ExternalID: id}
+		state := &accountingsyncports.AccountingDocumentState{ExternalID: id}
 		if note, ok := found[strings.ToLower(id)]; ok {
 			balance := note.RemainingCredit
 			state.Found = true
@@ -202,7 +202,7 @@ func readPayments(
 	ctx context.Context,
 	client *xero.Client,
 	plan *driftRead,
-) ([]*services.AccountingDocumentState, error) {
+) ([]*accountingsyncports.AccountingDocumentState, error) {
 	invoiceIDs := make([]string, 0, len(plan.payments))
 	seen := make(map[string]struct{}, len(plan.payments))
 	for _, target := range plan.payments {
@@ -225,13 +225,15 @@ func readPayments(
 		}
 	}
 
-	out := make([]*services.AccountingDocumentState, 0, len(plan.payments))
+	out := make([]*accountingsyncports.AccountingDocumentState, 0, len(plan.payments))
 	for _, target := range plan.payments {
 		wanted := paymentIDsOf(target.Refs)
 		if len(wanted) == 0 {
 			continue
 		}
-		state := &services.AccountingDocumentState{ExternalID: strings.TrimSpace(target.ExternalID)}
+		state := &accountingsyncports.AccountingDocumentState{
+			ExternalID: strings.TrimSpace(target.ExternalID),
+		}
 		total := decimal.Zero
 		deleted, read := 0, 0
 		for _, paymentID := range wanted {
@@ -262,7 +264,7 @@ func readAllocations(
 	ctx context.Context,
 	client *xero.Client,
 	plan *driftRead,
-) ([]*services.AccountingDocumentState, error) {
+) ([]*accountingsyncports.AccountingDocumentState, error) {
 	noteIDs := make([]string, 0, len(plan.allocations))
 	seen := make(map[string]struct{}, len(plan.allocations))
 	for _, target := range plan.allocations {
@@ -289,13 +291,13 @@ func readAllocations(
 		}
 	}
 
-	out := make([]*services.AccountingDocumentState, 0, len(plan.allocations))
+	out := make([]*accountingsyncports.AccountingDocumentState, 0, len(plan.allocations))
 	for _, target := range plan.allocations {
 		if strings.TrimSpace(target.Refs[refCreditNote]) == "" {
 			continue
 		}
 		id := strings.TrimSpace(target.ExternalID)
-		state := &services.AccountingDocumentState{ExternalID: id}
+		state := &accountingsyncports.AccountingDocumentState{ExternalID: id}
 		if allocation, ok := byID[strings.ToLower(id)]; ok {
 			state.Found = true
 			state.Voided = allocation.IsDeleted

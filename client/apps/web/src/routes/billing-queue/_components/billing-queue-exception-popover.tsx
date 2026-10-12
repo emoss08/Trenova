@@ -19,6 +19,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 type ExceptionTargetStatus = Extract<BillingQueueItem["status"], "Exception" | "SentBackToOps">;
 
@@ -28,7 +29,7 @@ type ExceptionFormValues = {
 };
 
 const REASON_OPTIONS: SelectOption[] = exceptionReasonCodeSchema.options.map((code) => ({
-  label: exceptionReasonLabels[code],
+  label: sourceLabels(exceptionReasonLabels)[code],
   value: code,
 }));
 

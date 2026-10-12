@@ -20,6 +20,7 @@ import {
   formatFieldLabel,
   isRecordValue,
   isSensitiveOmittedValue,
+  auditEntryTitle,
   normalizeAuditChanges,
   operationLabel,
   resourceLabel,
@@ -74,7 +75,9 @@ function AuditValueCell({ value, path }: { value: unknown; path?: string }) {
 
   const isArray = Array.isArray(value);
   const count = isArray ? value.length : Object.keys(value).length;
-  const summary = isArray ? `Array (${count} items)` : `Object (${count} fields)`;
+  const summary = isArray
+    ? t("{0, plural, one {Array (# item)} other {Array (# items)}}", count)
+    : t("{0, plural, one {Object (# field)} other {Object (# fields)}}", count);
 
   return (
     <div className="space-y-2">
@@ -159,8 +162,11 @@ export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<A
     <DataTablePanelContainer
       open={open}
       onOpenChange={onOpenChange}
-      title={row.comment || `${operationLabel(row.operation)} ${resourceLabel(row.resource)}`}
-      description={`Recorded on ${formatToUserTimezone(row.timestamp, { showTimeZone: true })}`}
+      title={row.comment || auditEntryTitle(row.operation, row.resource)}
+      description={t(
+        "Recorded on {0}",
+        formatToUserTimezone(row.timestamp, { showTimeZone: true }),
+      )}
       size="xl"
     >
       <div className="space-y-5">

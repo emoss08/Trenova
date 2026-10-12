@@ -7,14 +7,14 @@ import (
 	"io"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/reportfmt"
 	"github.com/shopspring/decimal"
 	"github.com/xuri/excelize/v2"
 )
 
-var _ services.ReportRenderer = (*XLSXRenderer)(nil)
+var _ reportports.ReportRenderer = (*XLSXRenderer)(nil)
 
 // excelSheetRowLimit is the XLSX per-sheet row capacity (1,048,576) minus one
 // header row per data sheet.
@@ -28,8 +28,8 @@ func (r *XLSXRenderer) Format() report.Format { return report.FormatXLSX }
 
 func (r *XLSXRenderer) Render(
 	ctx context.Context,
-	req *services.ReportRenderRequest,
-) (*services.ReportRenderStats, error) {
+	req *reportports.ReportRenderRequest,
+) (*reportports.ReportRenderStats, error) {
 	file := excelize.NewFile()
 	defer file.Close()
 
@@ -76,7 +76,7 @@ func (r *XLSXRenderer) Render(
 		return nil, err
 	}
 
-	return &services.ReportRenderStats{
+	return &reportports.ReportRenderStats{
 		Rows:      req.Dataset.RowCount(),
 		Truncated: truncated,
 	}, nil
@@ -106,7 +106,7 @@ var toneColours = map[reportfmt.Tone]string{
 // actually produce, so no styles are created for columns without rules.
 func newToneStyles(
 	file *excelize.File,
-	schema []services.ReportResultColumn,
+	schema []reportports.ReportResultColumn,
 ) ([]map[reportfmt.Tone]int, error) {
 	styles := make([]map[reportfmt.Tone]int, len(schema))
 
@@ -145,7 +145,7 @@ func newToneStyles(
 func (r *XLSXRenderer) writeDataSheets(
 	ctx context.Context,
 	file *excelize.File,
-	req *services.ReportRenderRequest,
+	req *reportports.ReportRenderRequest,
 	styles *sheetStyles,
 ) error {
 	loc := metaLocation(&req.Meta)
@@ -211,7 +211,7 @@ func (r *XLSXRenderer) writeDataSheets(
 func (r *XLSXRenderer) writeTotalsRow(
 	ctx context.Context,
 	writer *excelize.StreamWriter,
-	req *services.ReportRenderRequest,
+	req *reportports.ReportRenderRequest,
 	styles *sheetStyles,
 	loc *time.Location,
 	rowNum int,
@@ -243,7 +243,7 @@ func (r *XLSXRenderer) writeTotalsRow(
 // to the column's own number format.
 func (s *sheetStyles) styleFor(
 	index int,
-	column *services.ReportResultColumn,
+	column *reportports.ReportResultColumn,
 	value any,
 ) int {
 	if index < len(s.tones) && s.tones[index] != nil {
@@ -266,7 +266,7 @@ func (r *XLSXRenderer) writeRow(writer *excelize.StreamWriter, rowNum int, cells
 
 func (r *XLSXRenderer) writeInfoSheet(
 	file *excelize.File,
-	req *services.ReportRenderRequest,
+	req *reportports.ReportRenderRequest,
 ) error {
 	const sheet = "Report"
 	if err := file.SetSheetName("Sheet1", sheet); err != nil {
@@ -302,7 +302,7 @@ func (r *XLSXRenderer) writeInfoSheet(
 func (r *XLSXRenderer) newDataSheet(
 	file *excelize.File,
 	sheetName string,
-	schema []services.ReportResultColumn,
+	schema []reportports.ReportResultColumn,
 	headerStyle int,
 ) (*excelize.StreamWriter, error) {
 	if _, err := file.NewSheet(sheetName); err != nil {
@@ -330,7 +330,7 @@ func (r *XLSXRenderer) newDataSheet(
 // format, instead of pre-rendered strings a spreadsheet cannot aggregate.
 func newColumnStyles(
 	file *excelize.File,
-	schema []services.ReportResultColumn,
+	schema []reportports.ReportResultColumn,
 	bold bool,
 ) ([]int, error) {
 	styles := make([]int, len(schema))
@@ -362,7 +362,7 @@ func newColumnStyles(
 }
 
 func xlsxCell(
-	column *services.ReportResultColumn,
+	column *reportports.ReportResultColumn,
 	value any,
 	loc *time.Location,
 	styleID int,
@@ -379,7 +379,7 @@ func xlsxCell(
 	return excelize.Cell{StyleID: styleID, Value: xlsxNativeValue(column, value, loc)}
 }
 
-func xlsxNativeValue(column *services.ReportResultColumn, value any, loc *time.Location) any {
+func xlsxNativeValue(column *reportports.ReportResultColumn, value any, loc *time.Location) any {
 	asDate := column.Display.Style == reportfmt.StyleDate
 
 	switch v := value.(type) {

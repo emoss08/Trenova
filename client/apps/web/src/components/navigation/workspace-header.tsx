@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   FavoriteToggle,
   HeaderBreadcrumbs,
@@ -14,6 +15,7 @@ import { NotificationSheet } from "@/components/notification-center/notification
 import { useSidebarNavigation } from "@/hooks/use-sidebar-navigation";
 import { cn } from "@trenova/shared/lib/utils";
 import { ChevronDownIcon, DotsGridIcon } from "@trenova/shared/components/icons";
+import type { ReactNode } from "react";
 
 export const WORKSPACE_HEADER_HEIGHT_CLASS = "h-10";
 
@@ -23,15 +25,16 @@ export const WORKSPACE_HEADER_HEIGHT_CLASS = "h-10";
  * "Modules" label so the control never disappears.
  */
 function ModulesTrigger() {
+  const t = useT();
   const { activeModule } = useSidebarNavigation();
-  const label = activeModule ? moduleDisplayLabel(activeModule) : "Modules";
+  const label = activeModule ? moduleDisplayLabel(activeModule) : t("Modules");
 
   return (
     <ModulesMenu
       trigger={
         <button
           type="button"
-          aria-label={activeModule ? `Switch module (current: ${label})` : "Open modules"}
+          aria-label={activeModule ? t("Switch module (current: {0})", label) : t("Open modules")}
           className={cn(
             "flex h-7 max-w-56 items-center gap-1.5 rounded-md pr-1.5 pl-1 text-sm font-medium transition-colors outline-none",
             "ui-focus-ring text-foreground hover:bg-muted data-popup-open:bg-muted",
@@ -54,9 +57,10 @@ function ModulesTrigger() {
  * The global strip of the workspace layout, in three zones: who you work as
  * and the map of the product on the left, search in the middle, and the
  * actions that apply everywhere on the right. Where you are is not its job;
- * the context bar above the page carries that.
+ * the context bar above the page carries that. A room, which has no context
+ * bar, leads it with the toggle for its own rail.
  */
-export function WorkspaceHeader() {
+export function WorkspaceHeader({ leading }: { leading?: ReactNode }) {
   return (
     <header
       className={cn(
@@ -65,7 +69,8 @@ export function WorkspaceHeader() {
       )}
     >
       <div className="flex min-w-0 items-center gap-1.5">
-        <div className="flex min-w-0 max-w-64 shrink items-center">
+        {leading}
+        <div className="flex max-w-64 min-w-0 shrink items-center">
           <OrgSwitcher />
         </div>
         <div aria-hidden className="bg-border mx-0.5 h-4 w-px shrink-0" />

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/glaccount"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 )
 
 func (r *Deps) resolveGLAccountSelectOptions(
@@ -13,7 +13,7 @@ func (r *Deps) resolveGLAccountSelectOptions(
 	req *SelectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		entities, err := r.GlAccountRepo.GetByIDs(ctx, repositories.GetGLAccountsByIDsRequest{
+		entities, err := r.GlAccountRepo.GetByIDs(ctx, glaccountports.GetGLAccountsByIDsRequest{
 			TenantInfo:   req.TenantInfo,
 			GLAccountIDs: req.IDs,
 		})
@@ -31,7 +31,7 @@ func (r *Deps) resolveGLAccountSelectOptions(
 
 	result, err := r.GlAccountRepo.SelectOptions(
 		ctx,
-		&repositories.GLAccountSelectOptionsRequest{
+		&glaccountports.GLAccountSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)

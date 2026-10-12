@@ -41,6 +41,7 @@ import {
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const PERIOD_OPTIONS = randomPeriodSchema.options.map((value) => ({
   value,
@@ -130,7 +131,7 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
       return pool ? updateDotRandomPool(pool.id, pool.version, input) : createDotRandomPool(input);
     },
     onSuccess: () => {
-      toast.success(isEdit ? "Pool updated" : "Pool created");
+      toast.success(isEdit ? translate("Pool updated") : translate("Pool created"));
       void queryClient.invalidateQueries({ queryKey: [DOT_RANDOM_POOLS_KEY] });
       onOpenChange(false);
     },
@@ -221,7 +222,10 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                   name="drugRatePercent"
                   label={t("Drug rate (% a year)")}
                   placeholder="50"
-                  description={`Annual rate as a percentage of the pool; FMCSA requires at least ${DOT_MINIMUM_DRUG_RATE}% for drugs (49 CFR 382.305).`}
+                  description={t(
+                    "Annual rate as a percentage of the pool; FMCSA requires at least {0}% for drugs (49 CFR 382.305).",
+                    DOT_MINIMUM_DRUG_RATE,
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -231,7 +235,10 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                   name="alcoholRatePercent"
                   label={t("Alcohol rate (% a year)")}
                   placeholder="10"
-                  description={`Annual rate as a percentage of the pool; FMCSA requires at least ${DOT_MINIMUM_ALCOHOL_RATE}% for alcohol (49 CFR 382.305).`}
+                  description={t(
+                    "Annual rate as a percentage of the pool; FMCSA requires at least {0}% for alcohol (49 CFR 382.305).",
+                    DOT_MINIMUM_ALCOHOL_RATE,
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>

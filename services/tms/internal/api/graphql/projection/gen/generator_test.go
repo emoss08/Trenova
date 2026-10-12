@@ -35,14 +35,19 @@ gates:
 			"parent/parent.go": parentDomainFile,
 		},
 		BuncolgenFiles: map[string]string{
-			"parent_gen.go": parentBuncolgenFile,
+			"parentcol/parent_gen.go": parentBuncolgenFile,
 		},
 	})
 
 	output := runFixture(t, fixture)
 
 	require.Contains(t, output, "var ParentSpec TypeSpec")
-	require.Contains(t, output, "FieldMap: buncolgen.ParentFieldMap")
+	require.Contains(t, output, "FieldMap: parentcol.ParentFieldMap")
+	require.Contains(
+		t,
+		output,
+		"import (\n\t\"github.com/emoss08/trenova/pkg/buncolgen/parentcol\"\n)",
+	)
 	require.Contains(t, output, "AlwaysColumns: []string{\n\t\t\t\"id\",\n\t\t\t\"created_at\",")
 	require.Contains(t, output, "Name:        \"statusText\"")
 	require.Contains(t, output, "FieldMapKey: \"status\"")
@@ -85,8 +90,8 @@ type Projected struct {
 `,
 		},
 		BuncolgenFiles: map[string]string{
-			"projected_gen.go": `
-package buncolgen
+			"projectedcol/projected_gen.go": `
+package projectedcol
 
 var ProjectedFieldMap = map[string]string{"id": "id"}
 `,
@@ -136,8 +141,8 @@ type Connection struct {
 `,
 		},
 		BuncolgenFiles: map[string]string{
-			"widget_gen.go": `
-package buncolgen
+			"widgetcol/widget_gen.go": `
+package widgetcol
 
 var ConnectionFieldMap = map[string]string{"id": "id", "name": "name"}
 `,
@@ -147,7 +152,7 @@ var ConnectionFieldMap = map[string]string{"id": "id", "name": "name"}
 	output := runFixture(t, fixture)
 
 	require.Contains(t, output, "var WidgetConnectionSpec TypeSpec")
-	require.Contains(t, output, "FieldMap: buncolgen.ConnectionFieldMap")
+	require.Contains(t, output, "FieldMap: widgetcol.ConnectionFieldMap")
 }
 
 func TestRun_SynthesizesFieldMapForBoundEntityWithoutBuncolgen(t *testing.T) {
@@ -195,6 +200,8 @@ type Mailbox struct {
 		`FieldMap: map[string]string{"id": "id", "senderName": "from_name"}`,
 	)
 	require.Contains(t, output, "FieldMapKey: \"senderName\"")
+	require.NotContains(t, output, "import (")
+	require.NotContains(t, output, "import \"")
 }
 
 func TestRun_SkipsBoundNonEntityWithoutBuncolgen(t *testing.T) {
@@ -251,18 +258,77 @@ virtuals:
 			"shipment/second.go": lowCoverageDomainFile,
 		},
 		BuncolgenFiles: map[string]string{
-			"parent_gen.go": parentBuncolgenFile,
-			"stop_gen.go":   stopBuncolgenFile,
-			"second_gen.go": lowCoverageBuncolgenFile,
+			"parentcol/parent_gen.go":   parentBuncolgenFile,
+			"shipmentcol/stop_gen.go":   stopBuncolgenFile,
+			"shipmentcol/second_gen.go": lowCoverageBuncolgenFile,
 		},
 	})
 
 	output := runFixture(t, fixture)
 
 	require.Contains(t, output, "var ShipmentStopSpec TypeSpec")
-	require.Contains(t, output, "FieldMap: buncolgen.StopFieldMap")
+	require.Contains(t, output, "FieldMap: shipmentcol.StopFieldMap")
 	require.Contains(t, output, "Name:        \"locationId\"")
 	require.Contains(t, output, "FieldMapKey: \"locationId\"")
+}
+
+func TestRun_IgnoresFieldMapThatDoesNotDescribeTheStruct(t *testing.T) {
+	t.Parallel()
+
+	fixture := newGeneratorFixture(t, generatorFixture{
+		Schema: `
+type Item {
+  id: ID!
+  title: String!
+}
+
+type ChecklistRow {
+  key: String!
+  label: String!
+  count: Int!
+}
+
+type Query {
+  item: Item
+}
+`,
+		DomainFiles: map[string]string{
+			"watchtower/item.go": `
+package watchtower
+
+import "github.com/uptrace/bun"
+
+type Item struct {
+	bun.BaseModel ` + "`bun:\"table:watchtower_items,alias:wi\"`" + `
+
+	ID string ` + "`json:\"id\" bun:\"id\"`" + `
+	Title string ` + "`json:\"title\" bun:\"title\"`" + `
+}
+`,
+			"checklist/item.go": `
+package checklist
+
+type Item struct {
+	Key string ` + "`json:\"key\"`" + `
+	Label string ` + "`json:\"label\"`" + `
+	Count int ` + "`json:\"count\"`" + `
+}
+`,
+		},
+		BuncolgenFiles: map[string]string{
+			"watchtowercol/watchtower_gen.go": `
+package watchtowercol
+
+var ItemFieldMap = map[string]string{"id": "id", "title": "title"}
+`,
+		},
+	})
+
+	output := runFixture(t, fixture)
+
+	require.Contains(t, output, "var ItemSpec TypeSpec")
+	require.Contains(t, output, "FieldMap: watchtowercol.ItemFieldMap")
+	require.NotContains(t, output, "ChecklistRowSpec")
 }
 
 func TestRun_InfersBunRelationAndRelationColumnKey(t *testing.T) {
@@ -282,7 +348,7 @@ virtuals:
 			"parent/parent.go": parentDomainFile,
 		},
 		BuncolgenFiles: map[string]string{
-			"parent_gen.go": parentBuncolgenFile,
+			"parentcol/parent_gen.go": parentBuncolgenFile,
 		},
 	})
 
@@ -311,7 +377,7 @@ virtuals:
 			"parent/parent.go": parentDomainFile,
 		},
 		BuncolgenFiles: map[string]string{
-			"parent_gen.go": parentBuncolgenFile,
+			"parentcol/parent_gen.go": parentBuncolgenFile,
 		},
 	})
 
@@ -353,13 +419,13 @@ type Bravo struct {
 `,
 		},
 		BuncolgenFiles: map[string]string{
-			"alpha_gen.go": `
-package buncolgen
+			"alphacol/alpha_gen.go": `
+package alphacol
 
 var AlphaFieldMap = map[string]string{"id": "id", "name": "name"}
 `,
-			"bravo_gen.go": `
-package buncolgen
+			"bravocol/bravo_gen.go": `
+package bravocol
 
 var BravoFieldMap = map[string]string{"id": "id", "name": "name"}
 `,
@@ -389,7 +455,7 @@ virtuals:
 			"parent/parent.go": parentDomainFile,
 		},
 		BuncolgenFiles: map[string]string{
-			"parent_gen.go": parentBuncolgenFile,
+			"parentcol/parent_gen.go": parentBuncolgenFile,
 		},
 	})
 
@@ -420,7 +486,7 @@ specials:
 			"parent/parent.go": parentDomainFile,
 		},
 		BuncolgenFiles: map[string]string{
-			"parent_gen.go": parentBuncolgenFile,
+			"parentcol/parent_gen.go": parentBuncolgenFile,
 		},
 	})
 
@@ -453,7 +519,7 @@ specials:
 			"parent/parent.go": parentDomainFile,
 		},
 		BuncolgenFiles: map[string]string{
-			"parent_gen.go": parentBuncolgenFile,
+			"parentcol/parent_gen.go": parentBuncolgenFile,
 		},
 	})
 
@@ -506,7 +572,7 @@ specials:
 					"parent/parent.go": parentDomainFile,
 				},
 				BuncolgenFiles: map[string]string{
-					"parent_gen.go": parentBuncolgenFile,
+					"parentcol/parent_gen.go": parentBuncolgenFile,
 				},
 			})
 
@@ -537,8 +603,8 @@ type Projected struct {
 `,
 		},
 		BuncolgenFiles: map[string]string{
-			"projected_gen.go": `
-package buncolgen
+			"projectedcol/projected_gen.go": `
+package projectedcol
 
 var ProjectedFieldMap = map[string]string{"id": "id"}
 `,
@@ -728,7 +794,7 @@ type Second struct {
 `
 
 const parentBuncolgenFile = `
-package buncolgen
+package parentcol
 
 var ParentFieldMap = map[string]string{
 	"id": "id",
@@ -751,7 +817,7 @@ var ChildFieldMap = map[string]string{
 `
 
 const stopBuncolgenFile = `
-package buncolgen
+package shipmentcol
 
 var StopFieldMap = map[string]string{
 	"id": "id",
@@ -770,7 +836,7 @@ var StopRelations = struct {
 `
 
 const lowCoverageBuncolgenFile = `
-package buncolgen
+package shipmentcol
 
 var SecondFieldMap = map[string]string{
 	"id": "id",

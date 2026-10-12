@@ -26,13 +26,14 @@ import {
 } from "@trenova/shared/components/icons";
 import { Controller, useFormContext } from "react-hook-form";
 import { casingOptions, separatorOptions } from "./sequence-config-constants";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
-const componentLabels: Record<LocationCodeComponent, string> = {
+const componentLabels: Record<LocationCodeComponent, string> = defineLabels({
   name: "Name",
   city: "City",
   state: "State",
   postal_code: "Postal Code",
-};
+});
 
 const componentIcons: Record<LocationCodeComponent, IconComponent> = {
   name: Tag01Icon,
@@ -41,12 +42,12 @@ const componentIcons: Record<LocationCodeComponent, IconComponent> = {
   postal_code: Mail01Icon,
 };
 
-const componentDescriptions: Record<LocationCodeComponent, string> = {
+const componentDescriptions: Record<LocationCodeComponent, string> = defineLabels({
   name: "Location name",
   city: "City of address",
   state: "State of address",
   postal_code: "ZIP / postal code",
-};
+});
 
 export function LocationCodeStrategySection({ index }: { index: number }) {
   const t = useT();

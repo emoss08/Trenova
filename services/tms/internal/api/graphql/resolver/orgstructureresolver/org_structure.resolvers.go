@@ -10,10 +10,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/orgstructureservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -216,7 +216,7 @@ func (r *MutationResolver) RevokeApprovalDelegation(ctx context.Context, id stri
 	ti := base.TenantInfo(authCtx)
 	existing, err := r.OrgStructureService.ListDelegations(
 		ctx,
-		&repositories.ListApprovalDelegationsRequest{TenantInfo: ti, DelegatorID: authCtx.UserID},
+		&workerports.ListApprovalDelegationsRequest{TenantInfo: ti, DelegatorID: authCtx.UserID},
 	)
 	if err != nil {
 		return nil, err
@@ -249,7 +249,7 @@ func (r *QueryResolver) JobPositions(ctx context.Context, activeOnly *bool, driv
 		return nil, err
 	}
 
-	return r.OrgStructureService.ListPositions(ctx, &repositories.ListJobPositionsRequest{
+	return r.OrgStructureService.ListPositions(ctx, &workerports.ListJobPositionsRequest{
 		TenantInfo:       base.TenantInfo(authCtx),
 		ActiveOnly:       base.BoolValue(activeOnly),
 		DrivingOnly:      base.BoolValue(drivingOnly),
@@ -359,7 +359,7 @@ func (r *QueryResolver) ApprovalDelegations(ctx context.Context, delegatorID *st
 		}
 	}
 
-	req := &repositories.ListApprovalDelegationsRequest{
+	req := &workerports.ListApprovalDelegationsRequest{
 		TenantInfo:   base.TenantInfo(authCtx),
 		DelegatorID:  delegator,
 		DelegateID:   delegate,

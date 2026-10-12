@@ -9,9 +9,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/schemadiff"
 	"github.com/emoss08/trenova/internal/api/writecoverage"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy/registered"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy/registered"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/stretchr/testify/require"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -25,7 +25,7 @@ const (
 type contract struct {
 	schema  *ast.Schema
 	binding *Binding
-	tool    serviceports.AgentTool
+	tool    agentports.AgentTool
 	used    map[string]bool
 }
 
@@ -38,13 +38,13 @@ func loadSchema(t *testing.T) *ast.Schema {
 	return schema
 }
 
-func loadActionTools(t *testing.T) map[string]serviceports.AgentTool {
+func loadActionTools(t *testing.T) map[string]agentports.AgentTool {
 	t.Helper()
 
 	built, err := registered.Build()
 	require.NoError(t, err)
 
-	tools := make(map[string]serviceports.AgentTool, len(built.Actions))
+	tools := make(map[string]agentports.AgentTool, len(built.Actions))
 	for _, tool := range built.Actions {
 		tools[tool.Name()] = tool
 	}

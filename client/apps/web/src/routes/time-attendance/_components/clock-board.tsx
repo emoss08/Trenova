@@ -171,7 +171,7 @@ function BoardList({
               type="button"
               onClick={() => onPick(entry.workerId)}
               aria-pressed={selected}
-              aria-label={`Open the clock for ${name}`}
+              aria-label={t("Open the clock for {0}", name)}
               className="ui-focus-ring flex min-w-0 items-center gap-2.5 rounded-md text-left outline-none"
             >
               <Avatar size="sm">
@@ -197,21 +197,19 @@ function BoardList({
                     </span>
                   ) : null}
                   <span className="text-muted-foreground text-xs tabular-nums">
-                    {t(
-                      "since {0}{1}",
-                      formatPunchTime(entry.clockedInAt),
-                      entry.source !== "Clock" ? ` · ${entry.source}` : "",
-                    )}
+                    {entry.source !== "Clock"
+                      ? t("since {0} · {1}", formatPunchTime(entry.clockedInAt), entry.source)
+                      : t("since {0}", formatPunchTime(entry.clockedInAt))}
                   </span>
                 </span>
                 <span className="flex items-center gap-2">
                   <span
                     role="meter"
-                    aria-label={`${name} shift meter`}
+                    aria-label={t("{0} shift meter", name)}
                     aria-valuemin={0}
                     aria-valuemax={100}
                     aria-valuenow={Math.round(share * 100)}
-                    aria-valuetext={`${formatHours(runningMinutes)} of a 12 hour day`}
+                    aria-valuetext={t("{0} of a 12 hour day", formatHours(runningMinutes))}
                     className="bg-muted relative h-1 w-40 max-w-full overflow-hidden rounded-full"
                   >
                     <span
@@ -234,7 +232,7 @@ function BoardList({
                   "font-mono text-sm font-semibold tabular-nums",
                   overlong && "text-warning-foreground",
                 )}
-                aria-label={`${name} running time`}
+                aria-label={t("{0} running time", name)}
               >
                 {formatHours(runningMinutes)}
               </span>
@@ -245,7 +243,7 @@ function BoardList({
                   isLoading={punchingOut === entry.workerId}
                   disabled={punchingOut !== null && punchingOut !== entry.workerId}
                   onClick={() => onPunchOut(entry.workerId)}
-                  aria-label={`Clock out ${name}`}
+                  aria-label={t("Clock out {0}", name)}
                 >
                   <SquareIcon className="size-3" />
                   {t("Clock out")}

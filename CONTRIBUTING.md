@@ -80,7 +80,7 @@ pnpm lint
 For local infrastructure:
 
 ```bash
-docker compose -f docker-compose-local.yml up -d
+docker compose -f dev/compose.yml up -d
 ```
 
 Use narrower test commands when a full suite is not needed, but include the commands you ran in the pull request description.

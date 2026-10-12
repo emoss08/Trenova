@@ -260,6 +260,13 @@ function stringifyArgument(value: unknown): string {
 export const RUNNING_POLL_INTERVAL_MS = 2000;
 
 /**
+ * The same, while realtime is connected. The server publishes the proposal's
+ * change when an approval commits and when it has run, so this only catches
+ * an event that was lost.
+ */
+export const CONNECTED_RUNNING_POLL_INTERVAL_MS = 15_000;
+
+/**
  * Whether anything approved has not reported back yet.
  *
  * Execution happens after the resolve call returns, so a card that was
@@ -270,6 +277,7 @@ export const RUNNING_POLL_INTERVAL_MS = 2000;
 export function pollIntervalFor(
   proposals: readonly AssistantProposal[],
   plans: readonly AssistantPlan[],
+  connected = false,
 ): number | false {
   const running =
     proposals.some(
@@ -288,7 +296,11 @@ export function pollIntervalFor(
         (plan.failedStep ?? 0) === 0,
     );
 
-  return running ? RUNNING_POLL_INTERVAL_MS : false;
+  if (!running) {
+    return false;
+  }
+
+  return connected ? CONNECTED_RUNNING_POLL_INTERVAL_MS : RUNNING_POLL_INTERVAL_MS;
 }
 
 /**

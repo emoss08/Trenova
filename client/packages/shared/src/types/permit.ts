@@ -5,6 +5,7 @@ import {
   nullableStringSchema,
   optionalStringSchema,
 } from "./helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const permitStatusSchema = z.enum(["Pending", "Active", "Expired", "Void"]);
 export type PermitStatus = z.infer<typeof permitStatusSchema>;
@@ -112,11 +113,11 @@ export const permitListSchema = nullableArraySchema(permitSchema);
 
 export const permitCreateSchema = z
   .object({
-    stateId: z.string().min(1, { error: "Issuing state is required" }),
+    stateId: z.string().min(1, { error: () => translate("Issuing state is required") }),
     permitNumber: z
       .string()
-      .min(1, { error: "Permit number is required" })
-      .max(100, { error: "Permit number must be between 1 and 100 characters" }),
+      .min(1, { error: () => translate("Permit number is required") })
+      .max(100, { error: () => translate("Permit number must be between 1 and 100 characters") }),
     status: permitStatusSchema.default("Active"),
     issuedAt: z.number().int().nullish(),
     expiresAt: z.number().int().nullish(),
@@ -127,11 +128,11 @@ export const permitCreateSchema = z
   // operator sees "expiry must be after the issue date" against the field that
   // is wrong instead of a round trip that returns a whole-form error.
   .refine((value) => !value.issuedAt || !value.expiresAt || value.expiresAt > value.issuedAt, {
-    error: "Expiry must be after the issue date",
+    error: () => translate("Expiry must be after the issue date"),
     path: ["expiresAt"],
   })
   .refine((value) => value.status !== "Active" || !!value.expiresAt, {
-    error: "An active permit must record when it expires",
+    error: () => translate("An active permit must record when it expires"),
     path: ["expiresAt"],
   });
 export type PermitCreateInput = z.input<typeof permitCreateSchema>;
@@ -141,7 +142,7 @@ export const MIN_WAIVER_REASON_LENGTH = 10;
 
 export const waiveRequirementSchema = z.object({
   reason: z.string().min(MIN_WAIVER_REASON_LENGTH, {
-    error: "Provide a reason of at least 10 characters explaining the waiver",
+    error: () => translate("Provide a reason of at least 10 characters explaining the waiver"),
   }),
 });
 export type WaiveRequirementInput = z.infer<typeof waiveRequirementSchema>;

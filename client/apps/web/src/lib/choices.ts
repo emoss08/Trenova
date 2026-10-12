@@ -87,7 +87,10 @@ import type {
   ServiceFailureReasonCategory,
   ServiceFailureReasonCodeAppliesTo,
 } from "@/types/service-failure-reason-code";
-import type { CarrierIntelRiskLevel } from "@trenova/graphql/generated/graphql";
+import type {
+  CarrierIntelRiskLevel,
+  EquipmentOwnershipType,
+} from "@trenova/graphql/generated/graphql";
 import type { AccessorialChargeMethod, RateUnit } from "@trenova/shared/types/accessorial-charge";
 import type { BillingQueueStatus, ExceptionReasonCode } from "@trenova/shared/types/billing-queue";
 import type {
@@ -220,6 +223,7 @@ import type {
 import type { DrugAlcoholStatus } from "@trenova/shared/types/worker-drug-alcohol-status";
 import type { SafetyRating } from "@trenova/shared/types/worker-safety";
 import type { WorkerTrainingHealth } from "@trenova/shared/types/worker-training";
+import { defineLabels, sourceLabels, translateLabel } from "@trenova/shared/i18n/labels";
 
 export const formulaTemplateStatusChoices = [
   { label: "Active", value: "Active", color: "var(--success)" },
@@ -1327,6 +1331,15 @@ export function findChoice<TValue extends string | boolean | number>(
   return choices.find((choice) => choice.value === value);
 }
 
+/** A choice's label in the reader's language, or the value itself when no choice has it. */
+export function choiceLabel<TValue extends string>(
+  choices: ReadonlyArray<GenericSelectOption<TValue>>,
+  value: TValue,
+): string {
+  const label = findChoice(choices, value)?.label;
+  return label === undefined ? value : translateLabel(label);
+}
+
 export const transferScheduleChoices = [
   { value: "Continuous", label: "Continuous", color: "var(--success)" },
   { value: "Hourly", label: "Hourly", color: "var(--info)" },
@@ -1657,7 +1670,7 @@ export const invoiceScopeChoices = [
   { value: "Memo", label: "Memo" },
 ] satisfies ReadonlyArray<GenericSelectOption<InvoiceScope>>;
 
-export const exceptionReasonLabels: Record<ExceptionReasonCode, string> = {
+export const exceptionReasonLabels: Record<ExceptionReasonCode, string> = defineLabels({
   MissingDocumentation: "Missing Documentation",
   IncorrectRates: "Incorrect Rates",
   WeightDiscrepancy: "Weight Discrepancy",
@@ -1668,7 +1681,7 @@ export const exceptionReasonLabels: Record<ExceptionReasonCode, string> = {
   ServiceFailure: "Service Failure",
   RateNotOnFile: "Rate Not On File",
   Other: "Other",
-};
+});
 
 export const manualJournalStatusChoices = [
   { label: "Draft", value: "Draft" },
@@ -2439,51 +2452,94 @@ export const rateMatrixRangeOverflowChoices = [
 ] satisfies ReadonlyArray<GenericSelectOption<string>>;
 
 export const fuelCardProviderChoices = fuelCardProviderSchema.options.map((value) => ({
-  label: FUEL_CARD_PROVIDER_LABELS[value],
+  label: sourceLabels(FUEL_CARD_PROVIDER_LABELS)[value],
   value,
 })) satisfies ReadonlyArray<GenericSelectOption<FuelCardProvider>>;
 
 export const fuelCardStatusChoices = [
-  { label: FUEL_CARD_STATUS_LABELS.Active, value: "Active", color: "var(--success)" },
-  { label: FUEL_CARD_STATUS_LABELS.Suspended, value: "Suspended", color: "var(--warning)" },
-  { label: FUEL_CARD_STATUS_LABELS.Cancelled, value: "Cancelled", color: "var(--danger)" },
+  { label: sourceLabels(FUEL_CARD_STATUS_LABELS).Active, value: "Active", color: "var(--success)" },
+  {
+    label: sourceLabels(FUEL_CARD_STATUS_LABELS).Suspended,
+    value: "Suspended",
+    color: "var(--warning)",
+  },
+  {
+    label: sourceLabels(FUEL_CARD_STATUS_LABELS).Cancelled,
+    value: "Cancelled",
+    color: "var(--danger)",
+  },
 ] satisfies ReadonlyArray<GenericSelectOption<FuelCardStatus>>;
 
+/** Who owns a tractor or trailer, as the equipment pages name it. */
+export const equipmentOwnershipChoices = [
+  { value: "CompanyOwned", label: "Company owned" },
+  { value: "Leased", label: "Leased" },
+  { value: "OwnerOperator", label: "Owner-operator" },
+] satisfies ReadonlyArray<GenericSelectOption<EquipmentOwnershipType>>;
+
 export const fuelPurchaseSourceChoices = fuelPurchaseSourceSchema.options.map((value) => ({
-  label: FUEL_PURCHASE_SOURCE_LABELS[value],
+  label: sourceLabels(FUEL_PURCHASE_SOURCE_LABELS)[value],
   value,
 })) satisfies ReadonlyArray<GenericSelectOption<FuelPurchaseSource>>;
 
 export const iftaFuelTypeChoices = iftaFuelTypeSchema.options.map((value) => ({
-  label: IFTA_FUEL_TYPE_LABELS[value],
+  label: sourceLabels(IFTA_FUEL_TYPE_LABELS)[value],
   value,
 })) satisfies ReadonlyArray<GenericSelectOption<IftaFuelType>>;
 
 export const fuelQuantityUnitChoices = fuelQuantityUnitSchema.options.map((value) => ({
-  label: FUEL_QUANTITY_UNIT_LABELS[value],
+  label: sourceLabels(FUEL_QUANTITY_UNIT_LABELS)[value],
   value,
 })) satisfies ReadonlyArray<GenericSelectOption<FuelQuantityUnit>>;
 
 export const iftaReturnStatusChoices = [
-  { label: IFTA_RETURN_STATUS_LABELS.Draft, value: "Draft", color: "var(--foreground-subtle)" },
-  { label: IFTA_RETURN_STATUS_LABELS.Finalized, value: "Finalized", color: "var(--info)" },
-  { label: IFTA_RETURN_STATUS_LABELS.Filed, value: "Filed", color: "var(--success)" },
+  {
+    label: sourceLabels(IFTA_RETURN_STATUS_LABELS).Draft,
+    value: "Draft",
+    color: "var(--foreground-subtle)",
+  },
+  {
+    label: sourceLabels(IFTA_RETURN_STATUS_LABELS).Finalized,
+    value: "Finalized",
+    color: "var(--info)",
+  },
+  { label: sourceLabels(IFTA_RETURN_STATUS_LABELS).Filed, value: "Filed", color: "var(--success)" },
 ] satisfies ReadonlyArray<GenericSelectOption<IftaReturnStatus>>;
 
 export const iftaQuarterChoices = iftaQuarterSchema.options.map((value) => ({
-  label: IFTA_QUARTER_LABELS[value],
+  label: sourceLabels(IFTA_QUARTER_LABELS)[value],
   value,
 })) satisfies ReadonlyArray<GenericSelectOption<IftaQuarter>>;
 
 export const iftaMileageSourceChoices = iftaMileageSourceSchema.options.map((value) => ({
-  label: IFTA_MILEAGE_SOURCE_LABELS[value],
+  label: sourceLabels(IFTA_MILEAGE_SOURCE_LABELS)[value],
   value,
 })) satisfies ReadonlyArray<GenericSelectOption<IftaMileageSource>>;
 
 export const fuelPurchaseImportStatusChoices = [
-  { label: FUEL_PURCHASE_IMPORT_STATUS_LABELS.Pending, value: "Pending", color: "var(--warning)" },
-  { label: FUEL_PURCHASE_IMPORT_STATUS_LABELS.Parsed, value: "Parsed", color: "var(--info)" },
-  { label: FUEL_PURCHASE_IMPORT_STATUS_LABELS.Committed, value: "Committed", color: "var(--success)" },
-  { label: FUEL_PURCHASE_IMPORT_STATUS_LABELS.Failed, value: "Failed", color: "var(--danger)" },
-  { label: FUEL_PURCHASE_IMPORT_STATUS_LABELS.Discarded, value: "Discarded", color: "var(--foreground-subtle)" },
+  {
+    label: sourceLabels(FUEL_PURCHASE_IMPORT_STATUS_LABELS).Pending,
+    value: "Pending",
+    color: "var(--warning)",
+  },
+  {
+    label: sourceLabels(FUEL_PURCHASE_IMPORT_STATUS_LABELS).Parsed,
+    value: "Parsed",
+    color: "var(--info)",
+  },
+  {
+    label: sourceLabels(FUEL_PURCHASE_IMPORT_STATUS_LABELS).Committed,
+    value: "Committed",
+    color: "var(--success)",
+  },
+  {
+    label: sourceLabels(FUEL_PURCHASE_IMPORT_STATUS_LABELS).Failed,
+    value: "Failed",
+    color: "var(--danger)",
+  },
+  {
+    label: sourceLabels(FUEL_PURCHASE_IMPORT_STATUS_LABELS).Discarded,
+    value: "Discarded",
+    color: "var(--foreground-subtle)",
+  },
 ] satisfies ReadonlyArray<GenericSelectOption<FuelPurchaseImportStatus>>;

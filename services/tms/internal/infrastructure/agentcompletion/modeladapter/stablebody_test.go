@@ -8,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/stretchr/testify/require"
 )
 

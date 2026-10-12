@@ -33,6 +33,7 @@ import { ArrowRightIcon, CoffeeIcon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export type EditableTimeEntry = ManualEntryLike & { id: string; source: string };
 
@@ -115,7 +116,7 @@ export function RecordEntryDialog({
         reason: values.reason,
       }),
     onSuccess: () => {
-      toast.success(entry ? "Entry corrected" : "Hours recorded");
+      toast.success(entry ? translate("Entry corrected") : translate("Hours recorded"));
       onRecorded();
       onOpenChange(false);
     },

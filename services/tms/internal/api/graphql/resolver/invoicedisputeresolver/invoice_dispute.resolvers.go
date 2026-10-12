@@ -12,10 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -30,12 +29,11 @@ func (r *InvoiceResolver) Disputes(ctx context.Context, obj *invoice.Invoice) ([
 		return nil, err
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l == nil {
+	if !loaders.Available(ctx) {
 		return []*invoice.InvoiceDispute{}, nil
 	}
 
-	return l.InvoiceDisputesByInvoiceID.Load(ctx, obj.ID.String())
+	return loaders.InvoiceDisputesByInvoiceID(ctx, obj.ID.String())
 }
 
 func (r *InvoiceResolver) OpenDispute(ctx context.Context, obj *invoice.Invoice) (*invoice.InvoiceDispute, error) {
@@ -85,7 +83,7 @@ func (r *MutationResolver) OpenInvoiceDispute(ctx context.Context, input gqlmode
 
 	return r.InvoiceDisputeService.Open(
 		ctx,
-		&services.OpenInvoiceDisputeRequest{
+		&invoiceports.OpenInvoiceDisputeRequest{
 			InvoiceID:      invoiceID,
 			TenantInfo:     base.TenantInfo(authCtx),
 			ReasonCode:     input.ReasonCode,
@@ -120,7 +118,7 @@ func (r *MutationResolver) ResolveInvoiceDispute(ctx context.Context, input gqlm
 
 	return r.InvoiceDisputeService.Resolve(
 		ctx,
-		&services.ResolveInvoiceDisputeRequest{
+		&invoiceports.ResolveInvoiceDisputeRequest{
 			DisputeID:              disputeID,
 			TenantInfo:             base.TenantInfo(authCtx),
 			Resolution:             input.Resolution,
@@ -144,7 +142,7 @@ func (r *MutationResolver) WithdrawInvoiceDispute(ctx context.Context, input gql
 
 	return r.InvoiceDisputeService.Withdraw(
 		ctx,
-		&services.WithdrawInvoiceDisputeRequest{
+		&invoiceports.WithdrawInvoiceDisputeRequest{
 			DisputeID:  disputeID,
 			TenantInfo: base.TenantInfo(authCtx),
 			Notes:      stringutils.FromPtr(input.Notes),
@@ -164,7 +162,7 @@ func (r *QueryResolver) InvoiceDisputes(ctx context.Context, invoiceID string) (
 		return nil, errortypes.NewValidationError("invoiceId", errortypes.ErrInvalid, "Invalid invoice")
 	}
 
-	grouped, err := r.InvoiceDisputeRepo.ListByInvoiceIDs(ctx, &repositories.ListInvoiceDisputesByInvoiceIDsRequest{
+	grouped, err := r.InvoiceDisputeRepo.ListByInvoiceIDs(ctx, &invoiceports.ListInvoiceDisputesByInvoiceIDsRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		InvoiceIDs: []pulid.ID{id},
 	})

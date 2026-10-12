@@ -1,3 +1,4 @@
+"use no memo";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import type { ReportPreviewColumn } from "@/lib/graphql/reports";
@@ -44,6 +45,7 @@ const TONE_CLASS: Record<Exclude<ReportDisplayTone, "">, string> = {
 };
 
 function toneClass(tone: ReportDisplayTone): string | undefined {
+  // i18n-ignore: CSS class names
   return tone === "" ? undefined : `${TONE_CLASS[tone]} font-medium`;
 }
 

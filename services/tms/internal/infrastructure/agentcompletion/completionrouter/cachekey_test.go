@@ -3,7 +3,8 @@ package completionrouter
 import (
 	"testing"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,9 +16,9 @@ func TestPromptCacheKey(t *testing.T) {
 
 	agent := pulid.MustNew("agd_")
 	one, two := int64(1), int64(2)
-	request := func(user pulid.ID, version *int64) *serviceports.ChatCompletionRequest {
+	request := func(user pulid.ID, version *int64) *agentports.ChatCompletionRequest {
 		req := chatRequest(pulid.Nil)
-		req.Attribution = serviceports.AIUsageAttribution{
+		req.Attribution = aiusageports.AIUsageAttribution{
 			UserID:            user,
 			AgentDefinitionID: agent,
 			DefinitionVersion: version,

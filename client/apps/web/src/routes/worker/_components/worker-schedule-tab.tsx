@@ -1,4 +1,4 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import {
   AVAILABILITY_PREFERENCES_KEY,
@@ -240,7 +240,7 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
                       if (next === "None") return;
                       savePreference({ dayOfWeek, preference: next });
                     }}
-                    aria-label={`${label} availability`}
+                    aria-label={availabilityLabel(t, dayOfWeek)}
                   />
                 </li>
               );
@@ -292,6 +292,25 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
       />
     </div>
   );
+}
+
+function availabilityLabel(t: TranslateFn, dayOfWeek: number): string {
+  switch (dayOfWeek) {
+    case 0:
+      return t("Sunday availability");
+    case 1:
+      return t("Monday availability");
+    case 2:
+      return t("Tuesday availability");
+    case 3:
+      return t("Wednesday availability");
+    case 4:
+      return t("Thursday availability");
+    case 5:
+      return t("Friday availability");
+    default:
+      return t("Saturday availability");
+  }
 }
 
 function PastAssignment({ assignment }: { assignment: ShiftAssignmentRow }) {

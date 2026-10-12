@@ -7,11 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/shipmentsuggestion"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/idempotency"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -38,7 +39,7 @@ func (r *MutationResolver) TenderShipments(
 		return nil, err
 	}
 
-	items := make([]services.TenderShipmentItem, 0, len(input.Items))
+	items := make([]shipmentports.TenderShipmentItem, 0, len(input.Items))
 	for idx, item := range input.Items {
 		shipmentID, parseErr := pulid.Parse(item.ShipmentID)
 		if parseErr != nil {
@@ -58,11 +59,11 @@ func (r *MutationResolver) TenderShipments(
 		}
 		items = append(
 			items,
-			services.TenderShipmentItem{ShipmentID: shipmentID, CarrierID: carrierID},
+			shipmentports.TenderShipmentItem{ShipmentID: shipmentID, CarrierID: carrierID},
 		)
 	}
 
-	result, err := r.BoardTenderer.TenderShipments(ctx, &services.TenderShipmentsRequest{
+	result, err := r.BoardTenderer.TenderShipments(ctx, &shipmentports.TenderShipmentsRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		Items:      items,
 	})
@@ -83,7 +84,7 @@ func (r *MutationResolver) DecideShipmentSuggestion(
 	}
 
 	tenantInfo := base.TenantInfo(authCtx)
-	if err = r.BoardSuggestionDecider.Decide(ctx, &services.DecideSuggestionRequest{
+	if err = r.BoardSuggestionDecider.Decide(ctx, &shipmentsuggestionports.DecideSuggestionRequest{
 		TenantInfo: tenantInfo,
 		UserID:     tenantInfo.UserID,
 		Key:        input.Key,
@@ -112,7 +113,7 @@ func (r *MutationResolver) UndoShipmentSuggestionDecision(
 	}
 
 	tenantInfo := base.TenantInfo(authCtx)
-	if err = r.BoardSuggestionDecider.Undo(ctx, &services.UndoSuggestionRequest{
+	if err = r.BoardSuggestionDecider.Undo(ctx, &shipmentsuggestionports.UndoSuggestionRequest{
 		TenantInfo: tenantInfo,
 		UserID:     tenantInfo.UserID,
 		Key:        key,
@@ -219,29 +220,6 @@ func (r *QueryResolver) ShipmentQuickFilterCounts(
 	return quickFilterCountsToModel(rows), nil
 }
 
-//nolint:gocritic // gqlgen resolver signature is generated with a value input parameter
-func (r *QueryResolver) ShipmentFacetCounts(
-	ctx context.Context,
-	input gqlmodel.ShipmentBoardScopeInput,
-	facets []repositories.ShipmentFacet,
-) ([]*gqlmodel.ShipmentFacetCounts, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpRead)
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := r.BoardFacetCounts.FacetCounts(
-		ctx,
-		scopeRequestFromGraphQL(&input, base.TenantInfo(authCtx)),
-		facets,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return facetCountsToModel(rows), nil
-}
-
 func (r *QueryResolver) ShipmentBriefing(
 	ctx context.Context,
 	timezone string,
@@ -271,7 +249,7 @@ func (r *QueryResolver) ShipmentCapacity(
 	capacity, err := r.BoardCapacity.Capacity(
 		ctx,
 		base.TenantInfo(authCtx),
-		services.CapacityUnitKind(kind),
+		shipmentports.CapacityUnitKind(kind),
 	)
 	if err != nil {
 		return nil, err
@@ -299,9 +277,9 @@ func (r *QueryResolver) CapacityUnitMatches(
 		)
 	}
 
-	request := &services.CapacityMatchesRequest{
+	request := &shipmentports.CapacityMatchesRequest{
 		TenantInfo: base.TenantInfo(authCtx),
-		Kind:       services.CapacityUnitKind(kind),
+		Kind:       shipmentports.CapacityUnitKind(kind),
 		UnitID:     id,
 	}
 	if limit != nil {
@@ -358,7 +336,7 @@ func (r *QueryResolver) ShipmentSuggestions(
 	}
 
 	tenantInfo := base.TenantInfo(authCtx)
-	queue, err := r.BoardSuggestions.Suggestions(ctx, &services.SuggestionRequest{
+	queue, err := r.BoardSuggestions.Suggestions(ctx, &shipmentsuggestionports.SuggestionRequest{
 		TenantInfo: tenantInfo,
 		UserID:     tenantInfo.UserID,
 		Timezone:   timezone,
@@ -385,4 +363,29 @@ func (r *QueryResolver) ShipmentWatchlist(
 	}
 
 	return watchlistToModel(watchlist), nil
+}
+
+//nolint:gocritic // gqlgen resolver signature is generated with a value input parameter
+func (r *QueryResolver) ShipmentBoardGroups(
+	ctx context.Context,
+	input gqlmodel.ShipmentBoardScopeInput,
+	groupBy shipment.BoardGrouping,
+) ([]*gqlmodel.ShipmentBoardGroup, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	groups, err := r.BoardGroups.GroupSummary(
+		ctx,
+		&shipmentports.SummarizeShipmentBoardGroupsRequest{
+			Scope:   scopeRequestFromGraphQL(&input, base.TenantInfo(authCtx)),
+			GroupBy: groupBy,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return boardGroupsToModel(groups), nil
 }

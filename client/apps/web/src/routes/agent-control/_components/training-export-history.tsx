@@ -28,14 +28,14 @@ export function TrainingExportHistory() {
   }
   if (isError) {
     return (
-      <p className="text-muted-foreground text-xs">
+      <p className="es-note">
         {t("The training exports that included this organization could not be loaded")}
       </p>
     );
   }
   if (totals.exports === 0) {
     return (
-      <p className="text-muted-foreground text-xs">
+      <p className="es-note">
         {t("No training export has included this organization's corrections.")}
       </p>
     );
@@ -43,7 +43,7 @@ export function TrainingExportHistory() {
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-muted-foreground text-xs">
+      <p className="es-note">
         {t(
           "Included in {0, plural, one {# training export} other {# training exports}}, {1, plural, one {# correction} other {# corrections}} in all",
           totals.exports,

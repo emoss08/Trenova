@@ -101,7 +101,7 @@ export function BankReceiptBatchDetailPage() {
     <PageLayout
       pageHeaderProps={{
         title: batch.reference || "Import Batch",
-        description: `Source: ${batch.source}`,
+        description: t("Source: {0}", batch.source),
         context: <AccountingStatusBadge status={batch.status} />,
         actions: backButton,
       }}

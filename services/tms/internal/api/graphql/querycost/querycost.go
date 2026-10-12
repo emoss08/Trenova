@@ -133,7 +133,11 @@ func selectionDepth(set ast.SelectionSet, current, spreads int) int {
 			if s.Definition == nil {
 				continue
 			}
-			if depth := selectionDepth(s.Definition.SelectionSet, current, spreads+1); depth > deepest {
+			if depth := selectionDepth(
+				s.Definition.SelectionSet,
+				current,
+				spreads+1,
+			); depth > deepest {
 				deepest = depth
 			}
 		case *ast.InlineFragment:

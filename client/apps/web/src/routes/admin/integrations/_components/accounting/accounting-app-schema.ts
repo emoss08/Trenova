@@ -1,6 +1,7 @@
 import type { AccountingAppCredential } from "@/lib/graphql/accounting-sync";
 import type { AccountingAppEnvironment } from "@trenova/graphql/generated/graphql";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const ACCOUNTING_APP_ENVIRONMENTS = [
   "Sandbox",
@@ -25,15 +26,20 @@ export function accountingAppFormSchema(
   return z
     .object({
       environment: z
-        .enum(ACCOUNTING_APP_ENVIRONMENTS, { error: "Choose an environment" })
-        .refine((value) => environments.includes(value), { error: "Choose an environment" }),
+        .enum(ACCOUNTING_APP_ENVIRONMENTS, { error: () => translate("Choose an environment") })
+        .refine((value) => environments.includes(value), {
+          error: () => translate("Choose an environment"),
+        }),
       clientId: z
         .string()
         .trim()
-        .min(1, { error: "Client ID is required" })
-        .max(MAX_CLIENT_ID_LENGTH, { error: "Client ID cannot be longer than 255 characters" })
+        .min(1, { error: () => translate("Client ID is required") })
+        .max(MAX_CLIENT_ID_LENGTH, {
+          error: () => translate("Client ID cannot be longer than 255 characters"),
+        })
         .regex(CLIENT_ID_PATTERN, {
-          error: "Client ID can only contain letters, numbers, dots, dashes and underscores",
+          error: () =>
+            translate("Client ID can only contain letters, numbers, dots, dashes and underscores"),
         }),
       clientSecret: z.string().trim(),
       webhookVerifierToken: z.string().trim(),
@@ -46,12 +52,12 @@ export function accountingAppFormSchema(
           saved.clientId === value.clientId &&
           saved.environment === value.environment),
       {
-        error: "Enter the client secret that goes with this client ID",
+        error: () => translate("Enter the client secret that goes with this client ID"),
         path: ["clientSecret"],
       },
     )
     .refine((value) => !(value.clearWebhookVerifierToken && value.webhookVerifierToken !== ""), {
-      error: "Enter a new key or remove the saved one, not both",
+      error: () => translate("Enter a new key or remove the saved one, not both"),
       path: ["webhookVerifierToken"],
     });
 }

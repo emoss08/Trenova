@@ -53,22 +53,14 @@ export function CategoryTile({ category, className }: { category: string; classN
   );
 }
 
-export function CategoryGroupHeader({
-  label,
-  count,
-  noun,
-}: {
-  label: string;
-  count: number;
-  noun: string;
-}) {
+export function CategoryGroupHeader({ label, count }: { label: string; count: number }) {
   const t = useT();
 
   return (
     <div className="flex items-center gap-2">
       <h2 className="text-muted-foreground text-xs font-semibold">{label}</h2>
       <span className="text-2xs text-muted-foreground/70 tabular-nums">
-        {count} {count === 1 ? noun : t("{0}s", noun)}
+        {t("{0, plural, one {# report} other {# reports}}", count)}
       </span>
     </div>
   );

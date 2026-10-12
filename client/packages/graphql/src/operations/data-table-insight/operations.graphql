@@ -1,0 +1,41 @@
+query DataTableInsightFields($resource: String!) {
+  dataTableInsightFields(resource: $resource) {
+    name
+    facetable
+    summable
+  }
+}
+
+query DataTableFacets($input: DataTableFacetInput!) {
+  dataTableFacets(input: $input) {
+    field
+    total
+    buckets {
+      value
+      count
+    }
+  }
+}
+
+query DataTableAggregates($input: DataTableAggregateInput!) {
+  dataTableAggregates(input: $input) {
+    count
+    values {
+      field
+      sum
+      average
+      min
+      max
+    }
+  }
+}
+
+query DataTableSeries($input: DataTableSeriesInput!) {
+  dataTableSeries(input: $input) {
+    periodStarts
+    groups {
+      value
+      points
+    }
+  }
+}

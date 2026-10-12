@@ -10,9 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -45,7 +45,7 @@ func (r *QueryResolver) AuditEntries(ctx context.Context, input gqlmodel.DataTab
 
 	result, err := r.AuditService.ListConnection(
 		ctx,
-		&repositories.ListAuditEntriesConnectionRequest{
+		&auditports.ListAuditEntriesConnectionRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
@@ -75,7 +75,7 @@ func (r *QueryResolver) AuditEntriesByResourceID(ctx context.Context, input gqlm
 
 	result, err := r.AuditService.ListConnection(
 		ctx,
-		&repositories.ListAuditEntriesConnectionRequest{
+		&auditports.ListAuditEntriesConnectionRequest{
 			Filter:     tableInput.Filter,
 			Cursor:     tableInput.Cursor,
 			ResourceID: parsedResourceID,
@@ -99,7 +99,7 @@ func (r *QueryResolver) AuditEntry(ctx context.Context, id string) (*audit.Entry
 		return nil, err
 	}
 
-	return r.AuditService.GetByID(ctx, repositories.GetAuditEntryByIDOptions{
+	return r.AuditService.GetByID(ctx, auditports.GetAuditEntryByIDOptions{
 		EntryID:    entryID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

@@ -28,7 +28,7 @@ export default function RateAgreementTable() {
   const { mutate: duplicateAgreement } = useMutation({
     mutationFn: (id: string) => apiService.rateAgreementService.duplicate(id),
     onSuccess: (copy) => {
-      toast.success(`Duplicated as ${copy.code} — a fresh draft, ready to edit`);
+      toast.success(t("Duplicated as {0} — a fresh draft, ready to edit", copy.code));
       void queryClient.invalidateQueries({ queryKey: ["rate-agreement-list"] });
     },
     onError: () => toast.error(t("The agreement could not be duplicated")),
@@ -93,6 +93,7 @@ export default function RateAgreementTable() {
     <>
       <DataTable<RateAgreementRow>
         name="Rate Agreement"
+        emptyTitle={t("No rate agreements yet")}
         queryKey="rate-agreement-list"
         graphql={rateAgreementTableGraphQLConfig}
         resource={Resource.RateAgreement}

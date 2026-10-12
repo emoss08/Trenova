@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -42,7 +42,7 @@ func TestSubscribeSendsTheClientStateItIsGiven(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	grant, err := conn.Subscribe(t.Context(), &services.AccountingSubscribeRequest{
+	grant, err := conn.Subscribe(t.Context(), &accountingsyncports.AccountingSubscribeRequest{
 		Auth:            testAuth(),
 		Resource:        "salesInvoices",
 		NotificationURL: testNotifyURL,
@@ -63,7 +63,7 @@ func TestSubscribeSendsTheClientStateItIsGiven(t *testing.T) {
 	assert.Equal(t, "/api/v2.0/companies("+testCompany+")/salesInvoices", call.Body["resource"])
 	assert.Equal(t, "sealed-by-the-service", call.Body["clientState"])
 
-	_, err = conn.Subscribe(t.Context(), &services.AccountingSubscribeRequest{
+	_, err = conn.Subscribe(t.Context(), &accountingsyncports.AccountingSubscribeRequest{
 		Auth: testAuth(), Resource: "sales invoices", NotificationURL: testNotifyURL,
 	})
 	require.ErrorIs(t, err, errUnknownResource)
@@ -82,7 +82,7 @@ func TestRenewSubscriptionPatchesWithTheETag(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	grant, err := conn.RenewSubscription(t.Context(), &services.AccountingRenewSubscriptionRequest{
+	grant, err := conn.RenewSubscription(t.Context(), &accountingsyncports.AccountingRenewSubscriptionRequest{
 		Auth:            testAuth(),
 		Resource:        "customers",
 		ExternalID:      testSubscription,
@@ -105,7 +105,7 @@ func TestRenewingAGoneSubscriptionIsReportedAsGone(t *testing.T) {
 	t.Parallel()
 
 	conn := testConnector(t, &fakeBC{})
-	_, err := conn.RenewSubscription(t.Context(), &services.AccountingRenewSubscriptionRequest{
+	_, err := conn.RenewSubscription(t.Context(), &accountingsyncports.AccountingRenewSubscriptionRequest{
 		Auth:            testAuth(),
 		Resource:        "items",
 		ExternalID:      testSubscription,
@@ -122,7 +122,7 @@ func TestUnsubscribeDeletesAndToleratesAMissingSubscription(t *testing.T) {
 	path := subscriptionsPath + "('" + testSubscription + "')"
 	fake := &fakeBC{}
 	conn := testConnector(t, fake)
-	require.NoError(t, conn.Unsubscribe(t.Context(), &services.AccountingUnsubscribeRequest{
+	require.NoError(t, conn.Unsubscribe(t.Context(), &accountingsyncports.AccountingUnsubscribeRequest{
 		Auth: testAuth(), ExternalID: testSubscription, ETag: `W/"e"`,
 	}))
 	call, ok := fake.find(http.MethodDelete, path)
@@ -133,10 +133,10 @@ func TestUnsubscribeDeletesAndToleratesAMissingSubscription(t *testing.T) {
 		return http.StatusForbidden, readFixture(t, "error_403.json")
 	}}
 	conn = testConnector(t, failing)
-	require.Error(t, conn.Unsubscribe(t.Context(), &services.AccountingUnsubscribeRequest{
+	require.Error(t, conn.Unsubscribe(t.Context(), &accountingsyncports.AccountingUnsubscribeRequest{
 		Auth: testAuth(), ExternalID: testSubscription,
 	}))
-	require.Error(t, conn.Unsubscribe(t.Context(), &services.AccountingUnsubscribeRequest{
-		Auth: services.AccountingDocumentAuth{RealmID: "bad"}, ExternalID: testSubscription,
+	require.Error(t, conn.Unsubscribe(t.Context(), &accountingsyncports.AccountingUnsubscribeRequest{
+		Auth: accountingsyncports.AccountingDocumentAuth{RealmID: "bad"}, ExternalID: testSubscription,
 	}))
 }

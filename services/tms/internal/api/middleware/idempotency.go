@@ -10,8 +10,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/idempotency"
@@ -38,14 +38,14 @@ type IdempotencyParams struct {
 	fx.In
 
 	Config       *config.Config
-	Store        repositories.IdempotencyStore `optional:"true"`
+	Store        kernelports.IdempotencyStore `optional:"true"`
 	ErrorHandler *helpers.ErrorHandler
 	Logger       *zap.Logger
 }
 
 type IdempotencyMiddleware struct {
 	enabled          bool
-	store            repositories.IdempotencyStore
+	store            kernelports.IdempotencyStore
 	errorHandler     *helpers.ErrorHandler
 	logger           *zap.Logger
 	recordTTL        time.Duration
@@ -175,7 +175,7 @@ func (m *IdempotencyMiddleware) rejectTooLarge(c *gin.Context) {
 func (m *IdempotencyMiddleware) serve(c *gin.Context, scopedKey, fingerprint string) {
 	owner := rand.Text()
 	claimCtx, cancel := context.WithTimeout(c.Request.Context(), m.storeTimeout)
-	result, err := m.store.Claim(claimCtx, repositories.IdempotencyClaim{
+	result, err := m.store.Claim(claimCtx, kernelports.IdempotencyClaim{
 		Key:         scopedKey,
 		Fingerprint: fingerprint,
 		Owner:       owner,
@@ -200,7 +200,7 @@ func (m *IdempotencyMiddleware) serve(c *gin.Context, scopedKey, fingerprint str
 
 func (m *IdempotencyMiddleware) answerExisting(
 	c *gin.Context,
-	existing *repositories.IdempotencyRecord,
+	existing *kernelports.IdempotencyRecord,
 	fingerprint string,
 ) {
 	switch {
@@ -213,7 +213,7 @@ func (m *IdempotencyMiddleware) answerExisting(
 			"This Idempotency-Key was already used for a different request; send a new key for a new request",
 		))
 		c.Abort()
-	case existing.State != repositories.IdempotencyStateCompleted:
+	case existing.State != kernelports.IdempotencyStateCompleted:
 		m.rejectInFlight(c)
 	case existing.BodyOmitted:
 		c.Header(idempotency.HeaderReplayed, "true")
@@ -285,7 +285,7 @@ func (m *IdempotencyMiddleware) complete(
 	scopedKey, owner string,
 	capture *idempotencyCaptureWriter,
 ) {
-	completion := &repositories.IdempotencyCompletion{
+	completion := &kernelports.IdempotencyCompletion{
 		Key:         scopedKey,
 		Owner:       owner,
 		Status:      capture.Status(),

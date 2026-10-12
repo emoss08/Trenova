@@ -6,6 +6,7 @@ import {
   type BadgeClassAttrProps,
 } from "@trenova/shared/lib/status-phase";
 import type { AgentEvalCaseSource, AgentEvalCaseStatus } from "@trenova/graphql/generated/graphql";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const CASE_STATUS: Record<AgentEvalCaseStatus, BadgeAttrProps> = {
   Candidate: {
@@ -28,19 +29,19 @@ const CASE_SOURCE: Record<AgentEvalCaseSource, BadgeClassAttrProps> = {
   Curated: { accent: "accent-indigo", text: "Written by hand" },
 };
 
-export const CASE_STATUS_ACTION: Record<AgentEvalCaseStatus, string> = {
+export const CASE_STATUS_ACTION: Record<AgentEvalCaseStatus, string> = defineLabels({
   Candidate: "Move back to candidates",
   Active: "Activate",
   Quarantined: "Quarantine",
   Retired: "Retire",
-};
+});
 
-export const CASE_STATUS_MOVED: Record<AgentEvalCaseStatus, string> = {
+export const CASE_STATUS_MOVED: Record<AgentEvalCaseStatus, string> = defineLabels({
   Candidate: "Case moved back to candidates",
   Active: "Case activated",
   Quarantined: "Case quarantined",
   Retired: "Case retired",
-};
+});
 
 export function EvalCaseStatusBadge({ value, t }: { value: AgentEvalCaseStatus; t: TranslateFn }) {
   const attrs = CASE_STATUS[value];

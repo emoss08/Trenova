@@ -1,4 +1,3 @@
-"use no memo";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -15,6 +14,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { Table } from "@trenova/shared/types/data-table";
 import { CheckIcon, Columns03Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
+import { columnHeaderLabel } from "@/lib/data-table";
 
 type DataTableViewOptionsProps<TData extends RowData> = {
   table: Table<TData>;
@@ -52,7 +52,7 @@ export function DataTableViewOptions<TData extends RowData>({
             <CommandEmpty>{t("No columns found.")}</CommandEmpty>
             <CommandGroup>
               {columns.map((column) => {
-                const label = column.columnDef.meta?.label || column.id;
+                const label = columnHeaderLabel(column);
                 const isVisible = column.getIsVisible();
                 return (
                   <CommandItem

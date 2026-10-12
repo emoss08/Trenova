@@ -34,6 +34,11 @@ const SEVERITY_TONE: Record<HosClockSeverity, RingGaugeTone> = {
   critical: "critical",
 };
 
+/** The tone a clock's ring is drawn in, from the hours it has left. */
+export function hosClockTone(remainingMs: number): RingGaugeTone {
+  return SEVERITY_TONE[hosClockSeverity(Math.max(0, remainingMs))];
+}
+
 const SEVERITY_TEXT: Record<HosClockSeverity, string> = {
   normal: "text-foreground",
   warning: "text-warning",
@@ -73,17 +78,14 @@ export function HosClockGauge({
           size={size}
           strokeWidth={strokeWidth}
           tone={SEVERITY_TONE[tone]}
-          aria-label={`${label} time remaining`}
+          aria-label={t("{0} time remaining", label)}
         />
         <div className="flex min-w-0 flex-col">
           <span className="text-muted-foreground text-2xs leading-tight font-semibold">
             {label}
           </span>
           <span
-            className={cn(
-              "text-2xs leading-tight font-semibold tabular-nums",
-              SEVERITY_TEXT[tone],
-            )}
+            className={cn("text-2xs leading-tight font-semibold tabular-nums", SEVERITY_TEXT[tone])}
           >
             {formatClockDurationMs(clamped)}
           </span>

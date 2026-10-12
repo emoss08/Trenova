@@ -8,6 +8,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@trenova/shared/components/ui/collapsible";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { DelegateDocument } from "@/types/assistant";
@@ -351,14 +352,15 @@ function PublishedRow({ document }: { document: DelegateDocument }) {
         {open && kind ? (
           <>
             {t("Published")}{" "}
-            <button
-              type="button"
+            <Button
+              variant="bare"
+              size="bare"
               onClick={() => open(document.id)}
               aria-label={t("Open {0}", title)}
-              className="ui-focus-ring text-brand rounded-control text-left underline-offset-2 hover:underline"
+              className="text-brand rounded-control text-left underline-offset-2 hover:underline"
             >
               {title}
-            </button>
+            </Button>
           </>
         ) : (
           t("Published {0}", title)

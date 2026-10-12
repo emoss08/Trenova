@@ -1,18 +1,12 @@
 import { queries } from "@/lib/queries";
+import { cachedThreads } from "@/lib/thread-list";
 import { apiService } from "@/services/api";
 import { useAssistantStore } from "@/stores/assistant-store";
-import type {
-  AssistantLiveTurnList,
-  AssistantThread,
-  assistantThreadListSchema,
-} from "@/types/assistant";
+import type { AssistantLiveTurnList, AssistantThread } from "@/types/assistant";
 import type { QueryClient } from "@tanstack/react-query";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { toast } from "sonner";
-import type { z } from "zod";
 import { isViewingThread, type ReplyReady, type ViewingState } from "./reply-ready";
-
-type ThreadList = z.infer<typeof assistantThreadListSchema>;
 
 export type AnnounceReplyReadyOptions = {
   reply: ReplyReady;
@@ -119,9 +113,7 @@ function replyTitle(t: TranslateFn, reply: ReplyReady): string {
  * Empty when the conversation is untitled; null when nothing here knows it.
  */
 export function cachedConversationTitle(queryClient: QueryClient, threadId: string): string | null {
-  const listed = queryClient
-    .getQueryData<ThreadList>(queries.assistant.threads().queryKey)
-    ?.items.find((thread) => thread.id === threadId);
+  const listed = cachedThreads(queryClient).find((thread) => thread.id === threadId);
   if (listed) {
     return listed.title;
   }

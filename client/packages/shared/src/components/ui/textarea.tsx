@@ -7,18 +7,27 @@ import TextareaAutosizeComponent from "react-textarea-autosize";
 
 export type TextareaProps = React.ComponentProps<typeof TextareaAutosizeComponent> & {
   isInvalid?: boolean;
+  /**
+   * The text area alone, without the field's border, fill or focus ring, for a
+   * control that draws the field around it and something else, such as a footer.
+   */
+  bare?: boolean;
 };
 
-function Textarea({ className, isInvalid, ...props }: TextareaProps) {
+function Textarea({ className, isInvalid, bare = false, ...props }: TextareaProps) {
   return (
     <TextareaAutosizeComponent
       data-slot="textarea"
       className={cn(
-        "ui-field flex w-full px-2 py-0.5 text-base",
-        "ui-focus-ring placeholder:text-muted-foreground",
+        "flex w-full px-2 py-0.5 text-base placeholder:text-muted-foreground",
         "disabled:cursor-not-allowed disabled:opacity-60 md:text-xs",
-        isInvalid &&
-          "border-danger bg-danger-subtle placeholder:text-danger-foreground [--ring:var(--ring-danger)]",
+        bare
+          ? "resize-none bg-transparent outline-none"
+          : cn(
+              "ui-field ui-focus-ring",
+              isInvalid &&
+                "border-danger bg-danger-subtle placeholder:text-danger-foreground [--ring:var(--ring-danger)]",
+            ),
         className,
       )}
       {...props}

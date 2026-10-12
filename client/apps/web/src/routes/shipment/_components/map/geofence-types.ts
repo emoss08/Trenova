@@ -1,4 +1,5 @@
 import type { LocationGeofenceType } from "@trenova/shared/types/location";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 type Base = {
   id: string;
@@ -17,7 +18,7 @@ export type NormalizedGeofence =
       path: google.maps.LatLngLiteral[];
     });
 
-export const GEOFENCE_KIND_LABEL: Record<NormalizedGeofence["kind"], string> = {
+export const GEOFENCE_KIND_LABEL: Record<NormalizedGeofence["kind"], string> = defineLabels({
   circle: "Circle",
   polygon: "Polygon",
-};
+});

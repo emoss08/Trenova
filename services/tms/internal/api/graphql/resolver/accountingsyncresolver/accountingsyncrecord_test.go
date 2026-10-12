@@ -3,8 +3,8 @@ package accountingsyncresolver
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -63,7 +63,7 @@ func TestOrderedAccountingSyncStatesFollowsTheRequestAndDropsUnknowns(t *testing
 	t.Parallel()
 
 	first, second, never := pulid.MustNew("inv_"), pulid.MustNew("inv_"), pulid.MustNew("inv_")
-	states := map[pulid.ID]*services.AccountingSyncObjectState{
+	states := map[pulid.ID]*accountingsyncports.AccountingSyncObjectState{
 		first:  {ObjectID: first, ObjectType: accountingsync.SyncObjectInvoice},
 		second: {ObjectID: second, ObjectType: accountingsync.SyncObjectInvoice},
 	}

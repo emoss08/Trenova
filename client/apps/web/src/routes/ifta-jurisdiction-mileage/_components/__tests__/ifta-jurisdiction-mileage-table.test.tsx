@@ -3,15 +3,18 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import IftaJurisdictionMileageTable from "../ifta-jurisdiction-mileage-table";
+import { seedDataTableQueries } from "@/test/data-table-queries";
 
-const useDataTableQueryMock = vi.hoisted(() =>
-  vi.fn(() => ({
+// One answer, kept across renders, as React Query keeps an unchanged result.
+const useDataTableQueryMock = vi.hoisted(() => {
+  const result = {
     data: { results: [] as unknown[], count: 0 },
     isLoading: false,
     isError: false,
     error: null,
-  })),
-);
+  };
+  return vi.fn(() => result);
+});
 
 vi.mock("../ifta-jurisdiction-mileage-panel", () => ({
   IftaJurisdictionMileagePanel: () => null,
@@ -40,16 +43,14 @@ vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),
 }));
 
-vi.mock("@/hooks/data-table/use-data-table-query", () => ({
+vi.mock("@/hooks/data-table/use-data-table-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/hooks/data-table/use-data-table-query")>()),
   useDataTableQuery: useDataTableQueryMock,
 }));
 
-vi.mock("@/lib/queries", () => ({
+vi.mock("@/lib/queries", async () => ({
   queries: {
-    tableConfiguration: {
-      default: () => ({ queryKey: ["tableConfig-default"], queryFn: () => null }),
-      all: () => ({ queryKey: ["tableConfig-all"], queryFn: () => ({ results: [], count: 0 }) }),
-    },
+    ...(await import("@/test/data-table-queries")).dataTableQueryMocks,
   },
 }));
 
@@ -58,7 +59,7 @@ vi.mock("@trenova/shared/hooks/use-debounce", () => ({
 }));
 
 function renderTable() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  const client = seedDataTableQueries(new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } }));
   render(
     <QueryClientProvider client={client}>
       <NuqsTestingAdapter hasMemory resetUrlUpdateQueueOnMount={false}>

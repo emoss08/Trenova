@@ -1,3 +1,5 @@
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import type { AuthEvent, RiskDecision } from "@trenova/shared/types/iam";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { securityTabParser, type SecurityTabValue } from "@/hooks/use-organization-setting-state";
 import { queries } from "@/lib/queries";
@@ -41,7 +43,33 @@ export function SecurityAccessWorkspace({ organizationId }: { organizationId: st
   );
 }
 
+function signInActivityLabel(t: TranslateFn, event: AuthEvent): string {
+  const provider = formatIdentityProviderName(event.provider);
+  switch (event.outcome) {
+    case "success":
+      return t("{0} sign-in success", provider);
+    case "challenge":
+      return t("{0} sign-in challenge", provider);
+    case "denied":
+      return t("{0} sign-in denied", provider);
+    case "failed":
+      return t("{0} sign-in failed", provider);
+  }
+}
+
+function riskDecisionLabel(t: TranslateFn, outcome: RiskDecision["outcome"]): string {
+  switch (outcome) {
+    case "allow":
+      return t("Risk decision: allow");
+    case "challenge":
+      return t("Risk decision: challenge");
+    case "deny":
+      return t("Risk decision: deny");
+  }
+}
+
 function SecurityOverviewSection({ organizationId }: { organizationId: string }) {
+  const t = useT();
   const providersQuery = useQuery({
     queryKey: [identityProviderQueryKey(organizationId)],
     queryFn: async () => apiService.organizationService.listIdentityProviders(organizationId),
@@ -65,22 +93,22 @@ function SecurityOverviewSection({ organizationId }: { organizationId: string })
       [
         ...authEvents.map((event) => ({
           id: event.id,
-          label: `${formatIdentityProviderName(event.provider)} sign-in ${event.outcome}`,
-          detail: event.ipAddress || event.errorCode || "Authentication event",
+          label: signInActivityLabel(t, event),
+          detail: event.ipAddress || event.errorCode || t("Authentication event"),
           status: event.riskOutcome,
           occurredAt: event.occurredAt,
         })),
         ...riskDecisions.map((decision) => ({
           id: decision.id,
-          label: `Risk decision: ${decision.outcome}`,
-          detail: decision.reason || decision.signals.join(", ") || "No additional signals",
+          label: riskDecisionLabel(t, decision.outcome),
+          detail: decision.reason || decision.signals.join(", ") || t("No additional signals"),
           status: decision.outcome,
           occurredAt: decision.createdAt,
         })),
       ]
         .sort((left, right) => right.occurredAt - left.occurredAt)
         .slice(0, 4),
-    [authEvents, riskDecisions],
+    [authEvents, riskDecisions, t],
   );
 
   const overviewLoading =

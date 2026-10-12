@@ -6,11 +6,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -65,7 +65,7 @@ func (h *Handler) listTenderChanges(c *gin.Context) {
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.TenderChange], error) {
 		return h.service.ListTenderChanges(
 			c.Request.Context(),
-			&repositories.ListEDITenderChangesRequest{
+			&ediports.ListEDITenderChangesRequest{
 				Filter:           req,
 				RecipientID:      recipientID,
 				SourceShipmentID: sourceShipmentID,
@@ -85,7 +85,7 @@ func (h *Handler) getTenderChange(c *gin.Context) {
 
 	change, err := h.service.GetTenderChange(
 		c.Request.Context(),
-		repositories.GetEDITenderChangeByIDRequest{
+		ediports.GetEDITenderChangeByIDRequest{
 			ID:         changeID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -111,7 +111,7 @@ func (h *Handler) tenderChangeAction(
 	fn func(
 		context.Context,
 		*ediservice.TenderChangeActionRequest,
-		*services.RequestActor,
+		*permissionports.RequestActor,
 	) (*edi.TenderChange, error),
 ) {
 	authCtx := authctx.GetAuthContext(c)
@@ -149,7 +149,7 @@ func (h *Handler) transferChangeAction(
 	fn func(
 		context.Context,
 		*ediservice.TransferChangeActionRequest,
-		*services.RequestActor,
+		*permissionports.RequestActor,
 	) (*edi.TransferChange, error),
 ) {
 	authCtx := authctx.GetAuthContext(c)
@@ -196,7 +196,7 @@ func (h *Handler) withTransfer(
 
 	transfer, err := h.service.GetTransfer(
 		c.Request.Context(),
-		repositories.GetEDITransferByIDRequest{
+		ediports.GetEDITransferByIDRequest{
 			ID:         transferID,
 			TenantInfo: pagination.FromAuth(authCtx),
 			Direction:  direction,

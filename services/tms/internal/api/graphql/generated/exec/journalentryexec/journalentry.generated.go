@@ -9,9 +9,9 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/journalentry"
-	"github.com/emoss08/trenova/internal/core/domain/journalsource"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -355,7 +355,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*journalentry.JournalEntry)
 					return obj.Lines, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOJournalEntryLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntryLineᚄ),
+				Marshal: gqlexec.Marshal(marshalOJournalEntryLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntryLineᚄ),
 			},
 		}},
 		{Object: "JournalEntryConnection", Fields: []*gqlexec.Field{
@@ -401,7 +401,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.JournalEntryEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntry),
+				Marshal: gqlexec.Marshal(marshalNJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntry),
 			},
 			{
 				Name:     "cursor",
@@ -564,7 +564,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.JournalReviewOutcome)
+					obj := o.(*journalentryports.JournalReviewOutcome)
 					return obj.EntryID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -574,7 +574,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.JournalReviewOutcome)
+					obj := o.(*journalentryports.JournalReviewOutcome)
 					return obj.EntryNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -584,7 +584,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.JournalReviewOutcome)
+					obj := o.(*journalentryports.JournalReviewOutcome)
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -594,7 +594,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.JournalReviewOutcome)
+					obj := o.(*journalentryports.JournalReviewOutcome)
 					return obj.Changed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -604,7 +604,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.JournalReviewOutcome)
+					obj := o.(*journalentryports.JournalReviewOutcome)
 					return obj.Error, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -617,17 +617,17 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "JournalReviewOutcome",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.JournalReviewResult)
+					obj := o.(*journalentryports.JournalReviewResult)
 					return obj.Outcomes, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNJournalReviewOutcome2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐJournalReviewOutcomeᚄ),
+				Marshal: gqlexec.Marshal(marshalNJournalReviewOutcome2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋjournalentryportsᚐJournalReviewOutcomeᚄ),
 			},
 			{
 				Name:     "changed",
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.JournalReviewResult)
+					obj := o.(*journalentryports.JournalReviewResult)
 					return obj.Changed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -637,7 +637,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.JournalReviewResult)
+					obj := o.(*journalentryports.JournalReviewResult)
 					return obj.Failed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -649,7 +649,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.JournalReviewSummary)
+					obj := o.(*journalentryports.JournalReviewSummary)
 					return obj.AwaitingApproval, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -659,7 +659,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.JournalReviewSummary)
+					obj := o.(*journalentryports.JournalReviewSummary)
 					return obj.ReadyToPost, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -668,7 +668,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "oldestAccountingDate",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.JournalReviewSummary)
+					obj := o.(*journalentryports.JournalReviewSummary)
 					return obj.OldestAccountingDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -680,7 +680,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.JournalReviewSummary)
+					obj := o.(*journalentryports.JournalReviewSummary)
 					return gqlexec.Resolver[resolverJournalReviewSummary](ec, "JournalReviewSummary").PostingMode(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -690,7 +690,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.JournalReviewSummary)
+					obj := o.(*journalentryports.JournalReviewSummary)
 					return obj.RequiresApproval, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -770,7 +770,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveJournalEntries(ctx, fc.Args["input"].(gqlmodel.JournalReviewInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNJournalReviewResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐJournalReviewResult),
+				Marshal: gqlexec.Marshal(marshalNJournalReviewResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋjournalentryportsᚐJournalReviewResult),
 			},
 			{
 				Name:       "postJournalEntries",
@@ -783,7 +783,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PostJournalEntries(ctx, fc.Args["input"].(gqlmodel.JournalReviewInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNJournalReviewResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐJournalReviewResult),
+				Marshal: gqlexec.Marshal(marshalNJournalReviewResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋjournalentryportsᚐJournalReviewResult),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -798,7 +798,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").JournalEntry(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntry),
+				Marshal: gqlexec.Marshal(marshalOJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntry),
 			},
 			{
 				Name:       "journalEntriesBySource",
@@ -812,7 +812,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").JournalEntriesBySource(ctx, fc.Args["sourceType"].(string), fc.Args["sourceId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNJournalEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntryᚄ),
+				Marshal: gqlexec.Marshal(marshalNJournalEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntryᚄ),
 			},
 			{
 				Name:       "journalSourceByObject",
@@ -825,7 +825,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").JournalSourceByObject(ctx, fc.Args["sourceType"].(string), fc.Args["sourceId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOJournalSourceInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalsourceᚐSource),
+				Marshal: gqlexec.Marshal(marshalOJournalSourceInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalsourceᚐSource),
 			},
 			{
 				Name:       "journalReviewTable",
@@ -851,7 +851,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").JournalReviewSummary(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNJournalReviewSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐJournalReviewSummary),
+				Marshal: gqlexec.Marshal(marshalNJournalReviewSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋjournalentryportsᚐJournalReviewSummary),
 			},
 		}},
 	},
@@ -877,12 +877,12 @@ type resolverJournalEntryLine interface {
 }
 
 type resolverJournalReviewSummary interface {
-	PostingMode(ctx context.Context, obj *services.JournalReviewSummary) (string, error)
+	PostingMode(ctx context.Context, obj *journalentryports.JournalReviewSummary) (string, error)
 }
 
 type resolverMutation interface {
-	ApproveJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*services.JournalReviewResult, error)
-	PostJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*services.JournalReviewResult, error)
+	ApproveJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error)
+	PostJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error)
 }
 
 type resolverQuery interface {
@@ -890,7 +890,7 @@ type resolverQuery interface {
 	JournalEntriesBySource(ctx context.Context, sourceType string, sourceID string) ([]*journalentry.JournalEntry, error)
 	JournalSourceByObject(ctx context.Context, sourceType string, sourceID string) (*journalsource.Source, error)
 	JournalReviewTable(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JournalEntryConnection, error)
-	JournalReviewSummary(ctx context.Context) (*services.JournalReviewSummary, error)
+	JournalReviewSummary(ctx context.Context) (*journalentryports.JournalReviewSummary, error)
 }
 
 var (
@@ -1101,15 +1101,15 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNJournalEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*journalentry.JournalEntry) graphql.Marshaler {
+func marshalNJournalEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*journalentry.JournalEntry) graphql.Marshaler {
 	return gqlexec.List[*journalentry.JournalEntry]{
-		Elem:        marshalNJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntry,
+		Elem:        marshalNJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntry,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalentry.JournalEntry) graphql.Marshaler {
+func marshalNJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalentry.JournalEntry) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1141,7 +1141,7 @@ func marshalNJournalEntryEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋa
 	return ec.MarshalType(ctx, sel, "JournalEntryEdge", v)
 }
 
-func marshalNJournalEntryLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntryLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalentry.JournalEntryLine) graphql.Marshaler {
+func marshalNJournalEntryLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntryLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalentry.JournalEntryLine) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1149,15 +1149,15 @@ func marshalNJournalEntryLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return ec.MarshalType(ctx, sel, "JournalEntryLine", v)
 }
 
-func marshalNJournalReviewOutcome2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐJournalReviewOutcomeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*services.JournalReviewOutcome) graphql.Marshaler {
-	return gqlexec.List[*services.JournalReviewOutcome]{
-		Elem:        marshalNJournalReviewOutcome2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐJournalReviewOutcome,
+func marshalNJournalReviewOutcome2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋjournalentryportsᚐJournalReviewOutcomeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*journalentryports.JournalReviewOutcome) graphql.Marshaler {
+	return gqlexec.List[*journalentryports.JournalReviewOutcome]{
+		Elem:        marshalNJournalReviewOutcome2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋjournalentryportsᚐJournalReviewOutcome,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNJournalReviewOutcome2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐJournalReviewOutcome(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.JournalReviewOutcome) graphql.Marshaler {
+func marshalNJournalReviewOutcome2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋjournalentryportsᚐJournalReviewOutcome(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalentryports.JournalReviewOutcome) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1165,7 +1165,7 @@ func marshalNJournalReviewOutcome2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "JournalReviewOutcome", v)
 }
 
-func marshalNJournalReviewResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐJournalReviewResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.JournalReviewResult) graphql.Marshaler {
+func marshalNJournalReviewResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋjournalentryportsᚐJournalReviewResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalentryports.JournalReviewResult) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1173,7 +1173,7 @@ func marshalNJournalReviewResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "JournalReviewResult", v)
 }
 
-func marshalNJournalReviewSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐJournalReviewSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.JournalReviewSummary) graphql.Marshaler {
+func marshalNJournalReviewSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋjournalentryportsᚐJournalReviewSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalentryports.JournalReviewSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1218,16 +1218,16 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalentry.JournalEntry) graphql.Marshaler {
+func marshalOJournalEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalentry.JournalEntry) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "JournalEntry", v)
 }
 
-func marshalOJournalEntryLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntryLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*journalentry.JournalEntryLine) graphql.Marshaler {
+func marshalOJournalEntryLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntryLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*journalentry.JournalEntryLine) graphql.Marshaler {
 	return gqlexec.List[*journalentry.JournalEntryLine]{
-		Elem:        marshalNJournalEntryLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalentryᚐJournalEntryLine,
+		Elem:        marshalNJournalEntryLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalentryᚐJournalEntryLine,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
@@ -1239,7 +1239,7 @@ func marshalOJournalEntryLineAccount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "JournalEntryLineAccount", v)
 }
 
-func marshalOJournalSourceInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalsourceᚐSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalsource.Source) graphql.Marshaler {
+func marshalOJournalSourceInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalsourceᚐSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalsource.Source) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

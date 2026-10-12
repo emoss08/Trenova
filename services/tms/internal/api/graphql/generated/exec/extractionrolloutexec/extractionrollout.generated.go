@@ -9,9 +9,9 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
-	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -114,7 +114,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*extractionrollout.ExtractionRollout)
 					return gqlexec.Resolver[resolverExtractionRollout](ec, "ExtractionRollout").HaltReason(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOExtractionRolloutHaltReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋextractionrolloutᚐHaltReason),
+				Marshal: gqlexec.Marshal(marshalOExtractionRolloutHaltReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionrolloutᚐHaltReason),
 			},
 			{
 				Name:     "haltCandidateRate",
@@ -172,7 +172,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutAccuracy)
+					obj := o.(*extractionrolloutports.ExtractionRolloutAccuracy)
 					return obj.Scored, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -182,7 +182,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutAccuracy)
+					obj := o.(*extractionrolloutports.ExtractionRolloutAccuracy)
 					return obj.Correct, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -192,7 +192,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutAccuracy)
+					obj := o.(*extractionrolloutports.ExtractionRolloutAccuracy)
 					return obj.Accuracy, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -204,7 +204,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutArmReport)
+					obj := o.(*extractionrolloutports.ExtractionRolloutArmReport)
 					return obj.Assigned, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -214,7 +214,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutArmReport)
+					obj := o.(*extractionrolloutports.ExtractionRolloutArmReport)
 					return obj.Pending, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -224,7 +224,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutArmReport)
+					obj := o.(*extractionrolloutports.ExtractionRolloutArmReport)
 					return obj.Accepted, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -234,7 +234,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutArmReport)
+					obj := o.(*extractionrolloutports.ExtractionRolloutArmReport)
 					return obj.Rejected, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -244,7 +244,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutArmReport)
+					obj := o.(*extractionrolloutports.ExtractionRolloutArmReport)
 					return obj.Failed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -254,7 +254,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutArmReport)
+					obj := o.(*extractionrolloutports.ExtractionRolloutArmReport)
 					return obj.Superseded, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -264,7 +264,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutArmReport)
+					obj := o.(*extractionrolloutports.ExtractionRolloutArmReport)
 					return obj.FellBack, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -274,7 +274,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutArmReport)
+					obj := o.(*extractionrolloutports.ExtractionRolloutArmReport)
 					return obj.RejectionRate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -287,17 +287,17 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ExtractionRollout",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutReport)
+					obj := o.(*extractionrolloutports.ExtractionRolloutReport)
 					return obj.Rollout, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNExtractionRollout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋextractionrolloutᚐExtractionRollout),
+				Marshal: gqlexec.Marshal(marshalNExtractionRollout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionrolloutᚐExtractionRollout),
 			},
 			{
 				Name:     "providerName",
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutReport)
+					obj := o.(*extractionrolloutports.ExtractionRolloutReport)
 					return obj.ProviderName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -308,10 +308,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ExtractionRolloutArm",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutReport)
+					obj := o.(*extractionrolloutports.ExtractionRolloutReport)
 					return obj.Candidate, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNExtractionRolloutArm2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionRolloutArmReport),
+				Marshal: gqlexec.Marshal(marshalNExtractionRolloutArm2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionrolloutportsᚐExtractionRolloutArmReport),
 			},
 			{
 				Name:      "control",
@@ -319,10 +319,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ExtractionRolloutArm",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutReport)
+					obj := o.(*extractionrolloutports.ExtractionRolloutReport)
 					return obj.Control, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNExtractionRolloutArm2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionRolloutArmReport),
+				Marshal: gqlexec.Marshal(marshalNExtractionRolloutArm2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionrolloutportsᚐExtractionRolloutArmReport),
 			},
 			{
 				Name:      "candidateAccuracy",
@@ -330,10 +330,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ExtractionRolloutAccuracy",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutReport)
+					obj := o.(*extractionrolloutports.ExtractionRolloutReport)
 					return obj.CandidateAccuracy, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNExtractionRolloutAccuracy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionRolloutAccuracy),
+				Marshal: gqlexec.Marshal(marshalNExtractionRolloutAccuracy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionrolloutportsᚐExtractionRolloutAccuracy),
 			},
 			{
 				Name:      "productionAccuracy",
@@ -341,10 +341,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ExtractionRolloutAccuracy",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutReport)
+					obj := o.(*extractionrolloutports.ExtractionRolloutReport)
 					return obj.ProductionAccuracy, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNExtractionRolloutAccuracy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionRolloutAccuracy),
+				Marshal: gqlexec.Marshal(marshalNExtractionRolloutAccuracy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionrolloutportsᚐExtractionRolloutAccuracy),
 			},
 			{
 				Name:      "fields",
@@ -352,17 +352,17 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ExtractionShadowFieldComparison",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutReport)
+					obj := o.(*extractionrolloutports.ExtractionRolloutReport)
 					return obj.Fields, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNExtractionShadowFieldComparison2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐFieldComparisonᚄ),
+				Marshal: gqlexec.Marshal(marshalNExtractionShadowFieldComparison2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaicorrectionᚐFieldComparisonᚄ),
 			},
 			{
 				Name:     "truncated",
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutReport)
+					obj := o.(*extractionrolloutports.ExtractionRolloutReport)
 					return obj.Truncated, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -372,7 +372,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutReport)
+					obj := o.(*extractionrolloutports.ExtractionRolloutReport)
 					return obj.MinGuardScoredFields, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -382,7 +382,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionRolloutReport)
+					obj := o.(*extractionrolloutports.ExtractionRolloutReport)
 					return obj.MinGuardExtractions, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -400,7 +400,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateExtractionRollout(ctx, fc.Args["input"].(gqlmodel.UpdateExtractionRolloutInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNExtractionRollout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋextractionrolloutᚐExtractionRollout),
+				Marshal: gqlexec.Marshal(marshalNExtractionRollout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionrolloutᚐExtractionRollout),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -414,7 +414,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionRollout(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNExtractionRollout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋextractionrolloutᚐExtractionRollout),
+				Marshal: gqlexec.Marshal(marshalNExtractionRollout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionrolloutᚐExtractionRollout),
 			},
 			{
 				Name:       "extractionRolloutReport",
@@ -426,7 +426,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionRolloutReport(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNExtractionRolloutReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionRolloutReport),
+				Marshal: gqlexec.Marshal(marshalNExtractionRolloutReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionrolloutportsᚐExtractionRolloutReport),
 			},
 		}},
 	},
@@ -451,7 +451,7 @@ type resolverMutation interface {
 
 type resolverQuery interface {
 	ExtractionRollout(ctx context.Context) (*extractionrollout.ExtractionRollout, error)
-	ExtractionRolloutReport(ctx context.Context) (*services.ExtractionRolloutReport, error)
+	ExtractionRolloutReport(ctx context.Context) (*extractionrolloutports.ExtractionRolloutReport, error)
 }
 
 var (
@@ -573,7 +573,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNExtractionRollout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋextractionrolloutᚐExtractionRollout(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractionrollout.ExtractionRollout) graphql.Marshaler {
+func marshalNExtractionRollout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionrolloutᚐExtractionRollout(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractionrollout.ExtractionRollout) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -581,15 +581,15 @@ func marshalNExtractionRollout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "ExtractionRollout", v)
 }
 
-func marshalNExtractionRolloutAccuracy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionRolloutAccuracy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v services.ExtractionRolloutAccuracy) graphql.Marshaler {
+func marshalNExtractionRolloutAccuracy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionrolloutportsᚐExtractionRolloutAccuracy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v extractionrolloutports.ExtractionRolloutAccuracy) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "ExtractionRolloutAccuracy", &v)
 }
 
-func marshalNExtractionRolloutArm2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionRolloutArmReport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v services.ExtractionRolloutArmReport) graphql.Marshaler {
+func marshalNExtractionRolloutArm2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionrolloutportsᚐExtractionRolloutArmReport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v extractionrolloutports.ExtractionRolloutArmReport) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "ExtractionRolloutArm", &v)
 }
 
-func marshalNExtractionRolloutReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionRolloutReport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.ExtractionRolloutReport) graphql.Marshaler {
+func marshalNExtractionRolloutReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionrolloutportsᚐExtractionRolloutReport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractionrolloutports.ExtractionRolloutReport) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -597,13 +597,13 @@ func marshalNExtractionRolloutReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "ExtractionRolloutReport", v)
 }
 
-func marshalNExtractionShadowFieldComparison2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐFieldComparison(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aicorrection.FieldComparison) graphql.Marshaler {
+func marshalNExtractionShadowFieldComparison2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaicorrectionᚐFieldComparison(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aicorrection.FieldComparison) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "ExtractionShadowFieldComparison", &v)
 }
 
-func marshalNExtractionShadowFieldComparison2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐFieldComparisonᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aicorrection.FieldComparison) graphql.Marshaler {
+func marshalNExtractionShadowFieldComparison2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaicorrectionᚐFieldComparisonᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aicorrection.FieldComparison) graphql.Marshaler {
 	return gqlexec.List[aicorrection.FieldComparison]{
-		Elem:        marshalNExtractionShadowFieldComparison2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐFieldComparison,
+		Elem:        marshalNExtractionShadowFieldComparison2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaicorrectionᚐFieldComparison,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
@@ -649,7 +649,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOExtractionRolloutHaltReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋextractionrolloutᚐHaltReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractionrollout.HaltReason) graphql.Marshaler {
+func marshalOExtractionRolloutHaltReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionrolloutᚐHaltReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractionrollout.HaltReason) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

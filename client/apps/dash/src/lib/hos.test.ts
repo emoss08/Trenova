@@ -23,8 +23,8 @@ describe("timeAgo", () => {
     expect(timeAgo(nowSeconds - 59 * 60, nowMs)).toBe("59m ago");
     expect(timeAgo(nowSeconds - 60 * 60, nowMs)).toBe("1h ago");
     expect(timeAgo(nowSeconds - 23 * 60 * 60, nowMs)).toBe("23h ago");
-    expect(timeAgo(nowSeconds - 24 * 60 * 60, nowMs)).toBe("1d ago");
-    expect(timeAgo(nowSeconds - 90 * 24 * 60 * 60, nowMs)).toBe("90d ago");
+    expect(timeAgo(nowSeconds - 24 * 60 * 60, nowMs)).toBe("yesterday");
+    expect(timeAgo(nowSeconds - 90 * 24 * 60 * 60, nowMs)).toBe("3mo ago");
   });
 
   it("never goes negative for future timestamps", () => {
@@ -52,7 +52,10 @@ describe("gaugeTone", () => {
 describe("dutyStatusInfo", () => {
   it("maps known duty statuses", () => {
     expect(dutyStatusInfo("driving")).toEqual({ label: "Driving", variant: "accent-emerald" });
-    expect(dutyStatusInfo("sleeperBed")).toEqual({ label: "Sleeper berth", variant: "accent-violet" });
+    expect(dutyStatusInfo("sleeperBed")).toEqual({
+      label: "Sleeper berth",
+      variant: "accent-violet",
+    });
     expect(dutyStatusInfo("onDuty")).toEqual({ label: "On duty", variant: "accent-amber" });
   });
 

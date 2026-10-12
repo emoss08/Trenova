@@ -3,6 +3,7 @@ package helpers
 import (
 	"fmt"
 
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/i18n"
 )
 
@@ -15,10 +16,11 @@ type ProblemDetail struct {
 	Detail   string `json:"detail,omitempty"`
 	Instance string `json:"instance,omitempty"`
 
-	Errors     []ValidationError `json:"errors,omitempty"`
-	TraceID    string            `json:"traceId,omitempty"`
-	UsageStats any               `json:"usageStats,omitempty"`
-	Params     map[string]string `json:"params,omitempty"`
+	Errors     []ValidationError        `json:"errors,omitempty"`
+	TraceID    string                   `json:"traceId,omitempty"`
+	UsageStats any                      `json:"usageStats,omitempty"`
+	Conflict   *errortypes.EditConflict `json:"conflict,omitempty"`
+	Params     map[string]string        `json:"params,omitempty"`
 }
 
 type ValidationError struct {
@@ -68,6 +70,7 @@ type ProblemBuilder struct {
 	traceID     string
 	errors      []ValidationError
 	usageStats  any
+	conflict    *errortypes.EditConflict
 	params      map[string]string
 	locale      i18n.Locale
 }
@@ -113,6 +116,11 @@ func (b *ProblemBuilder) WithUsageStats(stats any) *ProblemBuilder {
 	return b
 }
 
+func (b *ProblemBuilder) WithConflict(conflict *errortypes.EditConflict) *ProblemBuilder {
+	b.conflict = conflict
+	return b
+}
+
 func (b *ProblemBuilder) WithParams(params map[string]string) *ProblemBuilder {
 	b.params = params
 	return b
@@ -144,6 +152,7 @@ func (b *ProblemBuilder) Build() *ProblemDetail {
 		TraceID:    b.traceID,
 		Errors:     b.translatedErrors(),
 		UsageStats: b.usageStats,
+		Conflict:   b.conflict,
 		Params:     b.params,
 	}
 }

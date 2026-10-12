@@ -6,6 +6,7 @@ import type {
   CaptureSeparatorStrategy,
 } from "@/lib/graphql/capture";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const PIXEL_TYPES = [
   "BlackWhite",
@@ -35,7 +36,11 @@ const MAX_FIXED_PAGE_COUNT = 500;
 
 export const profileFormSchema = z
   .object({
-    name: z.string().trim().min(1, { error: "Name is required" }).max(MAX_NAME),
+    name: z
+      .string()
+      .trim()
+      .min(1, { error: () => translate("Name is required") })
+      .max(MAX_NAME),
     description: z.string().max(MAX_DESCRIPTION),
     status: z.enum(PROFILE_STATUSES),
     isDefault: z.boolean(),
@@ -47,8 +52,8 @@ export const profileFormSchema = z
     jpegQuality: z
       .number()
       .int()
-      .min(30, { error: "At least 30" })
-      .max(95, { error: "At most 95" }),
+      .min(30, { error: () => translate("At least 30") })
+      .max(95, { error: () => translate("At most 95") }),
     showDriverUi: z.boolean(),
     // The checkbox group stores an empty choice as null.
     separatorStrategies: z
@@ -58,7 +63,7 @@ export const profileFormSchema = z
     fixedPageCount: z.number().int().min(0).max(MAX_FIXED_PAGE_COUNT),
   })
   .refine((value) => !value.isDefault || value.status === "Active", {
-    error: "An inactive profile cannot be the default",
+    error: () => translate("An inactive profile cannot be the default"),
     path: ["isDefault"],
   })
   .refine(
@@ -66,7 +71,7 @@ export const profileFormSchema = z
       !value.separatorStrategies.includes("FixedPageCount") ||
       (value.fixedPageCount >= 1 && value.fixedPageCount <= MAX_FIXED_PAGE_COUNT),
     {
-      error: `Pages per document must be between 1 and ${MAX_FIXED_PAGE_COUNT}`,
+      error: () => translate("Pages per document must be between 1 and {0}", MAX_FIXED_PAGE_COUNT),
       path: ["fixedPageCount"],
     },
   );

@@ -55,7 +55,7 @@ function PlannedAssignmentRow({
         checked={checked}
         disabled={!canAssign}
         onCheckedChange={(value) => onCheckedChange(value === true)}
-        aria-label={`Include ${assignment.proNumber} → ${assignment.workerName}`}
+        aria-label={t("Include {0} → {1}", assignment.proNumber, assignment.workerName)}
       />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex items-center gap-1.5">

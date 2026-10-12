@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,8 +18,8 @@ const (
 	 {"PaymentID":"` + testPayment2 + `","Amount":200,"Invoice":{"InvoiceID":"` + testInvoice2 + `"}}]}]}`
 )
 
-func paymentDoc(apps ...services.AccountingPaymentApplication) *services.AccountingPaymentDocument {
-	doc := &services.AccountingPaymentDocument{
+func paymentDoc(apps ...accountingsyncports.AccountingPaymentApplication) *accountingsyncports.AccountingPaymentDocument {
+	doc := &accountingsyncports.AccountingPaymentDocument{
 		Auth:                     testAuth(),
 		RequestID:                testRequestID,
 		CustomerExternalID:       testCustomer,
@@ -65,7 +65,7 @@ func TestSinglePaymentCarriesTheRequestIDInItsReference(t *testing.T) {
 	fake := paymentFake(nil)
 	conn := testConnector(t, fake)
 
-	result, err := conn.SavePayment(t.Context(), paymentDoc(services.AccountingPaymentApplication{
+	result, err := conn.SavePayment(t.Context(), paymentDoc(accountingsyncports.AccountingPaymentApplication{
 		InvoiceExternalID: testInvoice, InvoiceNumber: "INV-1001", AppliedAmount: dec("500"),
 	}))
 	require.NoError(t, err)
@@ -90,8 +90,8 @@ func TestSeveralApplicationsBecomeABatchPayment(t *testing.T) {
 	conn := testConnector(t, fake)
 
 	result, err := conn.SavePayment(t.Context(), paymentDoc(
-		services.AccountingPaymentApplication{InvoiceExternalID: testInvoice, AppliedAmount: dec("300")},
-		services.AccountingPaymentApplication{InvoiceExternalID: testInvoice2, AppliedAmount: dec("200")},
+		accountingsyncports.AccountingPaymentApplication{InvoiceExternalID: testInvoice, AppliedAmount: dec("300")},
+		accountingsyncports.AccountingPaymentApplication{InvoiceExternalID: testInvoice2, AppliedAmount: dec("200")},
 	))
 	require.NoError(t, err)
 	assert.Equal(t, testBatch, result.ExternalID)
@@ -114,7 +114,7 @@ func TestShortPayIsACreditNoteToTheWriteOffAccountAllocatedToTheInvoice(t *testi
 	fake := paymentFake(nil)
 	conn := testConnector(t, fake)
 
-	doc := paymentDoc(services.AccountingPaymentApplication{
+	doc := paymentDoc(accountingsyncports.AccountingPaymentApplication{
 		InvoiceExternalID: testInvoice, InvoiceNumber: "INV-1001",
 		AppliedAmount: dec("480"), ShortPayAmount: dec("20"),
 	})
@@ -152,14 +152,14 @@ func TestShortPayWithoutAWriteOffAccountIsAMappingError(t *testing.T) {
 
 	fake := paymentFake(nil)
 	conn := testConnector(t, fake)
-	_, err := conn.SavePayment(t.Context(), paymentDoc(services.AccountingPaymentApplication{
+	_, err := conn.SavePayment(t.Context(), paymentDoc(accountingsyncports.AccountingPaymentApplication{
 		InvoiceExternalID: testInvoice, AppliedAmount: dec("480"), ShortPayAmount: dec("20"),
 	}))
 	require.Error(t, err)
 	assert.Equal(t, accountingsync.SyncErrorMapping, conn.ClassifyDocumentError(err).Category)
 	assert.Empty(t, fake.writes())
 
-	withPrior := paymentDoc(services.AccountingPaymentApplication{
+	withPrior := paymentDoc(accountingsyncports.AccountingPaymentApplication{
 		InvoiceExternalID: testInvoice, AppliedAmount: dec("480"), ShortPayAmount: dec("20"),
 		ShortPayCreditExternalID: testShortNote,
 	})
@@ -174,7 +174,7 @@ func TestUpdatingAPaymentDeletesAndRecreatesIt(t *testing.T) {
 	fake := paymentFake(nil)
 	conn := testConnector(t, fake)
 
-	doc := paymentDoc(services.AccountingPaymentApplication{
+	doc := paymentDoc(accountingsyncports.AccountingPaymentApplication{
 		InvoiceExternalID: testInvoice, AppliedAmount: dec("500"),
 	})
 	doc.ExternalID = testOldPayment
@@ -203,7 +203,7 @@ func TestReplacementSkipsTheDeleteItAlreadyMade(t *testing.T) {
 
 	fake := paymentFake(nil)
 	conn := testConnector(t, fake)
-	doc := paymentDoc(services.AccountingPaymentApplication{
+	doc := paymentDoc(accountingsyncports.AccountingPaymentApplication{
 		InvoiceExternalID: testInvoice, AppliedAmount: dec("500"),
 	})
 	doc.ExternalID = testOldPayment
@@ -220,7 +220,7 @@ func TestUpdatingABatchDeletesTheBatch(t *testing.T) {
 
 	fake := paymentFake(nil)
 	conn := testConnector(t, fake)
-	doc := paymentDoc(services.AccountingPaymentApplication{
+	doc := paymentDoc(accountingsyncports.AccountingPaymentApplication{
 		InvoiceExternalID: testInvoice, AppliedAmount: dec("500"),
 	})
 	doc.ExternalID = testBatch
@@ -240,7 +240,7 @@ func TestUnappliedCashCannotBeSent(t *testing.T) {
 
 	fake := paymentFake(nil)
 	conn := testConnector(t, fake)
-	doc := paymentDoc(services.AccountingPaymentApplication{
+	doc := paymentDoc(accountingsyncports.AccountingPaymentApplication{
 		InvoiceExternalID: testInvoice, AppliedAmount: dec("400"),
 	})
 	doc.TotalAmount = dec("500")
@@ -272,7 +272,7 @@ func TestVoidPaymentDeletesThePaymentAndVoidsItsShortPayNotes(t *testing.T) {
 	})
 	conn := testConnector(t, fake)
 
-	_, err := conn.VoidPayment(t.Context(), &services.AccountingDocumentRef{
+	_, err := conn.VoidPayment(t.Context(), &accountingsyncports.AccountingDocumentRef{
 		Auth: testAuth(), RequestID: "void-req", Kind: accountingsync.SyncObjectCustomerPayment,
 		ExternalID: testBatch,
 		Refs: map[string]string{
@@ -297,7 +297,7 @@ func TestVoidOfAMissingPaymentSucceeds(t *testing.T) {
 
 	fake := &fakeXero{}
 	conn := testConnector(t, fake)
-	_, err := conn.VoidPayment(t.Context(), &services.AccountingDocumentRef{
+	_, err := conn.VoidPayment(t.Context(), &accountingsyncports.AccountingDocumentRef{
 		Auth: testAuth(), RequestID: "void-req", Kind: accountingsync.SyncObjectCustomerPayment,
 		ExternalID: testPayment, Refs: map[string]string{},
 	})
@@ -318,8 +318,8 @@ func TestPaymentReference(t *testing.T) {
 func findPaymentWith(
 	t *testing.T,
 	body string,
-	req *services.AccountingFindDocumentRequest,
-) (*services.AccountingDocumentResult, bool, *fakeXero) {
+	req *accountingsyncports.AccountingFindDocumentRequest,
+) (*accountingsyncports.AccountingDocumentResult, bool, *fakeXero) {
 	t.Helper()
 	fake := &fakeXero{respond: func(call xeroCall) (int, string) {
 		if call.Method == http.MethodGet && call.Path == "/Payments" {
@@ -342,7 +342,7 @@ func TestFindPaymentMatchesInvoiceDateAmountAndReference(t *testing.T) {
 	 {"PaymentID":"` + testOldPayment + `","Status":"DELETED","Amount":500,"Date":"2026-09-15T00:00:00","Reference":"ACH 7781 ` + testRequestID + `","Invoice":{"InvoiceID":"` + testInvoice + `"}},
 	 {"PaymentID":"` + testPayment2 + `","Status":"AUTHORISED","Amount":500,"Date":"2026-09-15T00:00:00","Reference":"someone else","Invoice":{"InvoiceID":"` + testInvoice + `"}},
 	 {"PaymentID":"` + testPayment + `","Status":"AUTHORISED","Amount":500,"Date":"2026-09-15T00:00:00","Reference":"ACH 7781 ` + testRequestID + `","Invoice":{"InvoiceID":"` + testInvoice + `"}}]}`
-	req := &services.AccountingFindDocumentRequest{
+	req := &accountingsyncports.AccountingFindDocumentRequest{
 		Kind:                 accountingsync.SyncObjectCustomerPayment,
 		DocNumber:            "ACH 7781",
 		TxnDate:              "2026-09-15",
@@ -372,7 +372,7 @@ func TestFindPaymentAdoptsABatch(t *testing.T) {
 	body := `{"Payments":[
 	 {"PaymentID":"` + testPayment + `","BatchPaymentID":"` + testBatch + `","Status":"AUTHORISED","Amount":300,"Date":"2026-09-15T00:00:00","Invoice":{"InvoiceID":"` + testInvoice + `"}},
 	 {"PaymentID":"` + testPayment2 + `","BatchPaymentID":"` + testBatch + `","Status":"AUTHORISED","Amount":200,"Date":"2026-09-15T00:00:00","Reference":"ACH 7781 ` + testRequestID + `","Invoice":{"InvoiceID":"` + testInvoice2 + `"}}]}`
-	found, ok, _ := findPaymentWith(t, body, &services.AccountingFindDocumentRequest{
+	found, ok, _ := findPaymentWith(t, body, &accountingsyncports.AccountingFindDocumentRequest{
 		Kind:                 accountingsync.SyncObjectCustomerPayment,
 		DocNumber:            "ACH 7781",
 		TxnDate:              "2026-09-15",
@@ -384,7 +384,7 @@ func TestFindPaymentAdoptsABatch(t *testing.T) {
 	assert.Equal(t, docTypeBatchPayment, found.Refs[accountingsync.ExternalRefDocumentType])
 	assert.Equal(t, testPayment2, found.Refs[refPaymentPrefix+testInvoice2])
 
-	_, ok, _ = findPaymentWith(t, body, &services.AccountingFindDocumentRequest{
+	_, ok, _ = findPaymentWith(t, body, &accountingsyncports.AccountingFindDocumentRequest{
 		Kind:                 accountingsync.SyncObjectCustomerPayment,
 		TxnDate:              "2026-09-15",
 		Total:                dec("500"),
@@ -405,7 +405,7 @@ func TestFindCreditApplicationByAllocation(t *testing.T) {
 		return 0, ""
 	}}
 	conn := testConnector(t, fake)
-	found, ok, err := conn.FindDocument(t.Context(), &services.AccountingFindDocumentRequest{
+	found, ok, err := conn.FindDocument(t.Context(), &accountingsyncports.AccountingFindDocumentRequest{
 		Auth: testAuth(), Kind: accountingsync.SyncObjectCreditApplication,
 		TxnDate: "2026-09-02", Total: dec("40"),
 		AppliesToExternalIDs: []string{testInvoice}, CreditExternalID: testCreditNote,
@@ -415,7 +415,7 @@ func TestFindCreditApplicationByAllocation(t *testing.T) {
 	assert.Equal(t, testAllocation, found.ExternalID)
 	assert.Equal(t, testCreditNote, found.Refs[refCreditNote])
 
-	_, ok, err = conn.FindDocument(t.Context(), &services.AccountingFindDocumentRequest{
+	_, ok, err = conn.FindDocument(t.Context(), &accountingsyncports.AccountingFindDocumentRequest{
 		Auth: testAuth(), Kind: accountingsync.SyncObjectCreditApplication, Total: dec("41"),
 		AppliesToExternalIDs: []string{testInvoice}, CreditExternalID: testCreditNote,
 	})

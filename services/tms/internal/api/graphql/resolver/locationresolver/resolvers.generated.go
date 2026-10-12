@@ -4,7 +4,7 @@ package locationresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	locationservice "github.com/emoss08/trenova/internal/core/services/locationservice"
+	locationservice "github.com/emoss08/trenova/internal/modules/places/app/locationservice"
 )
 
 type Deps struct {

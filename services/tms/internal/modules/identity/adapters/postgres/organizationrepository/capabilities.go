@@ -1,0 +1,57 @@
+package organizationrepository
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
+
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/pkg/dberror"
+	"go.uber.org/zap"
+)
+
+func (r *repository) GetCapabilities(
+	ctx context.Context,
+	req tenantports.GetOrganizationCapabilitiesRequest,
+) (*tenantports.OrganizationCapabilities, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*tenantports.OrganizationCapabilities, error) {
+			log := r.l.With(
+				zap.String("operation", "GetCapabilities"),
+				zap.String("orgID", req.TenantInfo.OrgID.String()),
+				zap.String("lock", string(req.Lock)),
+			)
+
+			org := tenantcol.OrganizationColumns
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*tenant.Organization)(nil)).
+				Column(
+					org.BrokerageEnabled.String(),
+					org.AssetOperationsEnabled.String(),
+				).
+				Where(org.ID.Eq(), req.TenantInfo.OrgID).
+				Where(org.BusinessUnitID.Eq(), req.TenantInfo.BuID)
+
+			if req.Lock != tenantports.CapabilityLockNone {
+				query = query.For(string(req.Lock))
+			}
+
+			capabilities := new(tenantports.OrganizationCapabilities)
+			if err := query.Scan(
+				ctx,
+				&capabilities.BrokerageEnabled,
+				&capabilities.AssetOperationsEnabled,
+			); err != nil {
+				log.Error("failed to read organization capabilities", zap.Error(err))
+				return nil, dberror.HandleNotFoundError(err, "Organization")
+			}
+
+			return capabilities, nil
+		},
+	)
+}

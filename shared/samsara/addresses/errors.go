@@ -14,4 +14,10 @@ var (
 	ErrGeofencePolygonVerticesBounds = errors.New(
 		"address geofence polygon vertices must be between 3 and 40",
 	)
+	ErrGeofenceRadiusInvalid   = errors.New("address geofence circle radiusMeters must be positive")
+	ErrNameTooLong             = errors.New("address name must be at most 255 characters")
+	ErrFormattedAddressTooLong = errors.New(
+		"address formattedAddress must be at most 1024 characters",
+	)
+	ErrNotesTooLong = errors.New("address notes must be at most 280 characters")
 )

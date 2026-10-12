@@ -48,7 +48,7 @@ func (s *service) ListAll(ctx context.Context, params ListParams) ([]Driver, err
 		return nil, err
 	}
 	if params.Limit == 0 {
-		params.Limit = 512
+		params.Limit = MaxListLimit
 	}
 
 	items := make([]Driver, 0)
@@ -72,8 +72,8 @@ func (s *service) ListAll(ctx context.Context, params ListParams) ([]Driver, err
 
 //nolint:gocritic // request is copied intentionally to keep create validation side-effect free.
 func (s *service) Create(ctx context.Context, req CreateRequest) (Driver, error) {
-	if strings.TrimSpace(req.Name) == "" {
-		return Driver{}, ErrDriverNameRequired
+	if err := ValidateCreateRequest(req); err != nil {
+		return Driver{}, err
 	}
 
 	out := createResponse{}
@@ -101,7 +101,7 @@ func (s *service) Update(ctx context.Context, id string, req UpdateRequest) (Dri
 	out := updateResponse{}
 	if err := s.client.Do(ctx, httpx.Request{
 		Method: http.MethodPatch,
-		Path:   "/fleet/drivers/" + driverID,
+		Path:   httpx.PathWithID("/fleet/drivers", driverID),
 		Body:   req,
 		Out:    &out,
 	}); err != nil {

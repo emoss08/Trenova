@@ -1,5 +1,6 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export const performanceReviewStatusSchema = z.enum([
   "Draft",
@@ -12,35 +13,37 @@ export type PerformanceReviewStatus = z.infer<typeof performanceReviewStatusSche
 export const reviewGoalStatusSchema = z.enum(["Open", "Done", "Dropped"]);
 export type ReviewGoalStatus = z.infer<typeof reviewGoalStatusSchema>;
 
-export const PERFORMANCE_REVIEW_STATUS_LABELS: Record<PerformanceReviewStatus, string> = {
-  Draft: "Draft",
-  Submitted: "Submitted",
-  Acknowledged: "Signed",
-  Closed: "Closed",
-};
+export const PERFORMANCE_REVIEW_STATUS_LABELS: Record<PerformanceReviewStatus, string> =
+  defineLabels({
+    Draft: "Draft",
+    Submitted: "Submitted",
+    Acknowledged: "Signed",
+    Closed: "Closed",
+  });
 
 /** What each status is waiting on, in the reviewer's words. */
-export const PERFORMANCE_REVIEW_STATUS_HINTS: Record<PerformanceReviewStatus, string> = {
-  Draft: "Waiting on you to submit it.",
-  Submitted: "Waiting on the worker to sign off in Dash.",
-  Acknowledged: "Signed by the worker — close it when you are ready.",
-  Closed: "Filed. The next review is scheduled from the template cadence.",
-};
+export const PERFORMANCE_REVIEW_STATUS_HINTS: Record<PerformanceReviewStatus, string> =
+  defineLabels({
+    Draft: "Waiting on you to submit it.",
+    Submitted: "Waiting on the worker to sign off in Dash.",
+    Acknowledged: "Signed by the worker — close it when you are ready.",
+    Closed: "Filed. The next review is scheduled from the template cadence.",
+  });
 
-export const REVIEW_GOAL_STATUS_LABELS: Record<ReviewGoalStatus, string> = {
+export const REVIEW_GOAL_STATUS_LABELS: Record<ReviewGoalStatus, string> = defineLabels({
   Open: "Open",
   Done: "Done",
   Dropped: "Dropped",
-};
+});
 
 /** The 1–5 scale, with the words that go on each mark. */
-export const REVIEW_SCORE_LABELS: Record<number, string> = {
+export const REVIEW_SCORE_LABELS: Record<number, string> = defineLabels({
   1: "Needs work",
   2: "Below",
   3: "Meets",
   4: "Strong",
   5: "Exceptional",
-};
+});
 
 const optionalTrimmed = (max: number, message: string) =>
   z
@@ -57,20 +60,22 @@ export const reviewItemFormSchema = z.object({
   key: z
     .string()
     .trim()
-    .min(1, { message: "Key is required" })
-    .max(50, { message: "Key cannot exceed 50 characters" })
-    .regex(/^[a-z0-9_-]+$/, { message: "Lower-case letters, digits, dashes and underscores" }),
+    .min(1, { error: () => translate("Key is required") })
+    .max(50, { error: () => translate("Key cannot exceed 50 characters") })
+    .regex(/^[a-z0-9_-]+$/, {
+      error: () => translate("Lower-case letters, digits, dashes and underscores"),
+    }),
   label: z
     .string()
     .trim()
-    .min(1, { message: "Label is required" })
-    .max(100, { message: "Label cannot exceed 100 characters" }),
+    .min(1, { error: () => translate("Label is required") })
+    .max(100, { error: () => translate("Label cannot exceed 100 characters") }),
   description: optionalTrimmed(255, "Description cannot exceed 255 characters"),
   weight: z
     .number()
     .int()
-    .min(1, { message: "Weight must be at least 1" })
-    .max(10, { message: "Weight cannot exceed 10" }),
+    .min(1, { error: () => translate("Weight must be at least 1") })
+    .max(10, { error: () => translate("Weight cannot exceed 10") }),
 });
 export type ReviewItemFormValues = z.infer<typeof reviewItemFormSchema>;
 
@@ -79,19 +84,27 @@ export const reviewTemplateFormSchema = z
     code: z
       .string()
       .trim()
-      .min(1, { message: "Code is required" })
-      .max(50, { message: "Code cannot exceed 50 characters" })
-      .regex(/^[A-Za-z0-9_-]+$/, { message: "Letters, digits, dashes and underscores only" }),
+      .min(1, { error: () => translate("Code is required") })
+      .max(50, { error: () => translate("Code cannot exceed 50 characters") })
+      .regex(/^[A-Za-z0-9_-]+$/, {
+        error: () => translate("Letters, digits, dashes and underscores only"),
+      }),
     name: z
       .string()
       .trim()
-      .min(1, { message: "Name is required" })
-      .max(100, { message: "Name cannot exceed 100 characters" }),
+      .min(1, { error: () => translate("Name is required") })
+      .max(100, { error: () => translate("Name cannot exceed 100 characters") }),
     description: optionalTrimmed(1000, "Description cannot exceed 1000 characters"),
     status: z.enum(["Active", "Inactive"]),
     isDefault: z.boolean(),
-    cadenceMonths: z.number().int().min(1, { message: "At least one month" }).nullable(),
-    items: z.array(reviewItemFormSchema).min(1, { message: "Add at least one rating item" }),
+    cadenceMonths: z
+      .number()
+      .int()
+      .min(1, { error: () => translate("At least one month") })
+      .nullable(),
+    items: z
+      .array(reviewItemFormSchema)
+      .min(1, { error: () => translate("Add at least one rating item") }),
   })
   .superRefine((values, ctx) => {
     if (values.isDefault && values.status !== "Active") {
@@ -117,10 +130,16 @@ export type ReviewTemplateFormValues = z.infer<typeof reviewTemplateFormSchema>;
 
 export const createReviewFormSchema = z
   .object({
-    templateId: z.string().min(1, { message: "Choose a template" }),
+    templateId: z.string().min(1, { error: () => translate("Choose a template") }),
     title: optionalTrimmed(120, "Title cannot exceed 120 characters"),
-    periodStart: z.number().int().positive({ message: "Choose the period start" }),
-    periodEnd: z.number().int().positive({ message: "Choose the period end" }),
+    periodStart: z
+      .number()
+      .int()
+      .positive({ error: () => translate("Choose the period start") }),
+    periodEnd: z
+      .number()
+      .int()
+      .positive({ error: () => translate("Choose the period end") }),
   })
   .superRefine((values, ctx) => {
     if (values.periodEnd < values.periodStart) {
@@ -137,8 +156,8 @@ export const reviewDraftFormSchema = z.object({
   title: z
     .string()
     .trim()
-    .min(1, { message: "Give the review a title" })
-    .max(120, { message: "Title cannot exceed 120 characters" }),
+    .min(1, { error: () => translate("Give the review a title") })
+    .max(120, { error: () => translate("Title cannot exceed 120 characters") }),
   periodStart: z.number().int().positive(),
   periodEnd: z.number().int().positive(),
   ratings: z.array(
@@ -159,8 +178,8 @@ export const reviewDraftFormSchema = z.object({
       title: z
         .string()
         .trim()
-        .min(1, { message: "Goal needs a title" })
-        .max(255, { message: "Goal cannot exceed 255 characters" }),
+        .min(1, { error: () => translate("Goal needs a title") })
+        .max(255, { error: () => translate("Goal cannot exceed 255 characters") }),
       dueAt: z.number().int().positive().nullable(),
       status: reviewGoalStatusSchema,
     }),

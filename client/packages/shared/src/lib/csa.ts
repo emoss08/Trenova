@@ -1,3 +1,4 @@
+import { defineLabels } from "@trenova/shared/i18n/labels";
 /**
  * The FMCSA's seven Behavior Analysis and Safety Improvement Categories, in
  * the agency's own words and its own order. A safety director puts this page
@@ -19,7 +20,7 @@ export const CSA_BASIC_ORDER = [
 
 export type CSABasic = (typeof CSA_BASIC_ORDER)[number];
 
-export const CSA_BASIC_LABELS: Record<string, string> = {
+export const CSA_BASIC_LABELS: Record<string, string> = defineLabels({
   UnsafeDriving: "Unsafe Driving",
   HOSCompliance: "Hours of Service",
   DriverFitness: "Driver Fitness",
@@ -27,13 +28,13 @@ export const CSA_BASIC_LABELS: Record<string, string> = {
   VehicleMaintenance: "Vehicle Maintenance",
   HazmatCompliance: "Hazmat Compliance",
   CrashIndicator: "Crash Indicator",
-};
+});
 
 export function csaBasicLabel(value: string): string {
   return CSA_BASIC_LABELS[value] ?? value;
 }
 
-export const CSA_BASIC_HINTS: Record<string, string> = {
+export const CSA_BASIC_HINTS: Record<string, string> = defineLabels({
   UnsafeDriving: "Speeding, reckless driving, improper lane change, inattention.",
   HOSCompliance: "Driving beyond the limits, and the records of duty status behind them.",
   DriverFitness: "Licensing, medical qualification, and the driver qualification file.",
@@ -41,7 +42,7 @@ export const CSA_BASIC_HINTS: Record<string, string> = {
   VehicleMaintenance: "Brakes, lights, load securement — everything a roadside inspection checks.",
   HazmatCompliance: "Placarding, packaging and paperwork for regulated loads.",
   CrashIndicator: "Crash history and the pattern in it. Not published publicly by the FMCSA.",
-};
+});
 
 export function csaBasicHint(value: string): string {
   return CSA_BASIC_HINTS[value] ?? "";
@@ -71,24 +72,24 @@ export function csaBarWidth(weightedScore: number, worstScore: number): number {
   return Math.max(3, Math.min(100, Math.round((weightedScore / worstScore) * 100)));
 }
 
-export const SAFETY_EVENT_KIND_LABELS: Record<string, string> = {
+export const SAFETY_EVENT_KIND_LABELS: Record<string, string> = defineLabels({
   Accident: "Accidents",
   Incident: "Incidents",
   NearMiss: "Near misses",
   Citation: "Citations",
   Inspection: "Inspections",
-};
+});
 
 export function safetyEventKindLabel(value: string): string {
   return SAFETY_EVENT_KIND_LABELS[value] ?? value;
 }
 
-export const SAFETY_RATING_LABELS: Record<string, string> = {
+export const SAFETY_RATING_LABELS: Record<string, string> = defineLabels({
   Excellent: "Excellent",
   Good: "Good",
   Watch: "Watch",
   AtRisk: "At risk",
-};
+});
 
 export function safetyRatingLabel(value: string): string {
   return SAFETY_RATING_LABELS[value] ?? value;
@@ -132,11 +133,11 @@ export function trendDirection(values: number[]): "up" | "down" | "flat" {
  */
 export const CSA_SEVERITY_WEIGHTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 
-export const DIGEST_CADENCE_LABELS: Record<string, string> = {
+export const DIGEST_CADENCE_LABELS: Record<string, string> = defineLabels({
   Immediate: "One notice per obligation",
   Daily: "Daily round-up",
   Weekly: "Weekly round-up",
-};
+});
 
 export function digestCadenceLabel(value: string): string {
   return DIGEST_CADENCE_LABELS[value] ?? value;

@@ -38,6 +38,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "ReportSchedule", Implementors: []string{"ReportSchedule"}},
 		{Name: "ReportScheduleAlert", Implementors: []string{"ReportScheduleAlert"}},
 		{Name: "ReportView", Implementors: []string{"ReportView"}},
+		{Name: "TableExportResult", Implementors: []string{"TableExportResult"}},
 	},
 	Fields: []gqlexec.Fields{
 		{Object: "CannedReport", Fields: []*gqlexec.Field{
@@ -135,6 +136,32 @@ var Shard = &gqlexec.Shard{
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateReportDefinition(ctx, fc.Args["input"].(gqlmodel.SaveReportDefinitionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportDefinition),
+			},
+			{
+				Name:       "exportTableView",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "TableExportResult",
+				Args:       field_Mutation_exportTableView_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ExportTableView(ctx, fc.Args["input"].(gqlmodel.ExportTableViewInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNTableExportResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTableExportResult),
+			},
+			{
+				Name:       "scheduleTableView",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "TableExportResult",
+				Args:       field_Mutation_scheduleTableView_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ScheduleTableView(ctx, fc.Args["input"].(gqlmodel.ScheduleTableViewInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNTableExportResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTableExportResult),
 			},
 			{
 				Name:       "updateReportDefinition",
@@ -2261,10 +2288,53 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
 			},
 		}},
+		{Object: "TableExportResult", Fields: []*gqlexec.Field{
+			{
+				Name:     "definitionId",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TableExportResult)
+					return obj.DefinitionID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:      "run",
+				HasChild:  true,
+				ChildType: "ReportRun",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TableExportResult)
+					return obj.Run, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOReportRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRun),
+			},
+			{
+				Name:      "schedule",
+				HasChild:  true,
+				ChildType: "ReportSchedule",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TableExportResult)
+					return obj.Schedule, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOReportSchedule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportSchedule),
+			},
+			{
+				Name:     "skippedColumns",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TableExportResult)
+					return obj.SkippedColumns, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+		}},
 	},
 	Inputs: []gqlexec.Input{
 		{Name: "CreateReportScheduleInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCreateReportScheduleInput)},
 		{Name: "CreateReportViewInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCreateReportViewInput)},
+		{Name: "ExportTableViewInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputExportTableViewInput)},
 		{Name: "ForkCannedReportInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputForkCannedReportInput)},
 		{Name: "ReportBandInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportBandInput)},
 		{Name: "ReportChartGoalInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportChartGoalInput)},
@@ -2291,6 +2361,9 @@ var Shard = &gqlexec.Shard{
 		{Name: "RunReportInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRunReportInput)},
 		{Name: "SaveReportDashboardInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSaveReportDashboardInput)},
 		{Name: "SaveReportDefinitionInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSaveReportDefinitionInput)},
+		{Name: "ScheduleTableViewInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputScheduleTableViewInput)},
+		{Name: "TableExportColumnInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputTableExportColumnInput)},
+		{Name: "TableExportViewInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputTableExportViewInput)},
 		{Name: "UpdateReportDashboardInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateReportDashboardInput)},
 		{Name: "UpdateReportDefinitionInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateReportDefinitionInput)},
 		{Name: "UpdateReportScheduleInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateReportScheduleInput)},
@@ -2304,6 +2377,8 @@ var Shard = &gqlexec.Shard{
 
 type resolverMutation interface {
 	CreateReportDefinition(ctx context.Context, input gqlmodel.SaveReportDefinitionInput) (*gqlmodel.ReportDefinition, error)
+	ExportTableView(ctx context.Context, input gqlmodel.ExportTableViewInput) (*gqlmodel.TableExportResult, error)
+	ScheduleTableView(ctx context.Context, input gqlmodel.ScheduleTableViewInput) (*gqlmodel.TableExportResult, error)
 	UpdateReportDefinition(ctx context.Context, input gqlmodel.UpdateReportDefinitionInput) (*gqlmodel.ReportDefinition, error)
 	DeleteReportDefinition(ctx context.Context, id string) (bool, error)
 	ForkCannedReport(ctx context.Context, input gqlmodel.ForkCannedReportInput) (*gqlmodel.ReportDefinition, error)
@@ -2354,6 +2429,32 @@ func field_Mutation_createReportDefinition_args(ctx context.Context, ec *gqlexec
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.SaveReportDefinitionInput, error) {
 			return unmarshalNSaveReportDefinitionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSaveReportDefinitionInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_exportTableView_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ExportTableViewInput, error) {
+			return unmarshalNExportTableViewInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐExportTableViewInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_scheduleTableView_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ScheduleTableViewInput, error) {
+			return unmarshalNScheduleTableViewInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐScheduleTableViewInput(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -2888,6 +2989,50 @@ func unmarshalInputCreateReportViewInput(ctx context.Context, ec *gqlexec.Exec, 
 		case "format":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("format"))
 			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Format = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputExportTableViewInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ExportTableViewInput, error) {
+	var it gqlmodel.ExportTableViewInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "view", "format"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "view":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("view"))
+			data, err := unmarshalNTableExportViewInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTableExportViewInput(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.View = data
+		case "format":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("format"))
+			data, err := unmarshalNString2string(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -4566,6 +4711,166 @@ func unmarshalInputSaveReportDefinitionInput(ctx context.Context, ec *gqlexec.Ex
 	return it, nil
 }
 
+func unmarshalInputScheduleTableViewInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ScheduleTableViewInput, error) {
+	var it gqlmodel.ScheduleTableViewInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "view", "cronExpression", "timezone", "formats", "emailRecipients", "emailAttach", "emailInline"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "view":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("view"))
+			data, err := unmarshalNTableExportViewInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTableExportViewInput(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.View = data
+		case "cronExpression":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cronExpression"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CronExpression = data
+		case "timezone":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timezone"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Timezone = data
+		case "formats":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("formats"))
+			data, err := unmarshalNString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Formats = data
+		case "emailRecipients":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emailRecipients"))
+			data, err := unmarshalOString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EmailRecipients = data
+		case "emailAttach":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emailAttach"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EmailAttach = data
+		case "emailInline":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emailInline"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EmailInline = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputTableExportColumnInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.TableExportColumnInput, error) {
+	var it gqlmodel.TableExportColumnInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"field", "label"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		case "label":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Label = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputTableExportViewInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.TableExportViewInput, error) {
+	var it gqlmodel.TableExportViewInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"resource", "columns", "filter"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "resource":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resource"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Resource = data
+		case "columns":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("columns"))
+			data, err := unmarshalNTableExportColumnInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTableExportColumnInputᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Columns = data
+		case "filter":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+			data, err := unmarshalODataTableConnectionInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Filter = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputUpdateReportDashboardInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.UpdateReportDashboardInput, error) {
 	var it gqlmodel.UpdateReportDashboardInput
 	if obj == nil {
@@ -4948,6 +5253,11 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNExportTableViewInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐExportTableViewInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.ExportTableViewInput, error) {
+	res, err := unmarshalInputExportTableViewInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNFloat2float64(ctx context.Context, ec *gqlexec.Exec, v any) (float64, error) {
 	res, err := graphql.UnmarshalFloatContext(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5070,6 +5380,11 @@ func unmarshalNSaveReportDefinitionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNScheduleTableViewInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐScheduleTableViewInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.ScheduleTableViewInput, error) {
+	res, err := unmarshalInputScheduleTableViewInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5077,6 +5392,20 @@ func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (stri
 
 func unmarshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNString2string)
+}
+
+func unmarshalNTableExportColumnInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTableExportColumnInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.TableExportColumnInput, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNTableExportColumnInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTableExportColumnInput)
+}
+
+func unmarshalNTableExportColumnInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTableExportColumnInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.TableExportColumnInput, error) {
+	res, err := unmarshalInputTableExportColumnInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNTableExportViewInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTableExportViewInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.TableExportViewInput, error) {
+	res, err := unmarshalInputTableExportViewInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalNUpdateReportDashboardInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateReportDashboardInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.UpdateReportDashboardInput, error) {
@@ -5112,6 +5441,14 @@ func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*b
 		return nil, nil
 	}
 	res, err := graphql.UnmarshalBoolean(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalODataTableConnectionInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.DataTableConnectionInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := unmarshalInputDataTableConnectionInput(ctx, ec, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -5668,6 +6005,14 @@ func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.
 	}.Marshal(ctx, ec, sel, v)
 }
 
+func marshalNTableExportResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTableExportResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.TableExportResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "TableExportResult", v)
+}
+
 func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
 	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
@@ -5715,11 +6060,25 @@ func marshalOReportBand2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋg
 	return ec.MarshalType(ctx, sel, "ReportBand", v)
 }
 
+func marshalOReportRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRun(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportRun) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ReportRun", v)
+}
+
 func marshalOReportRunError2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunError(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportRunError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ReportRunError", v)
+}
+
+func marshalOReportSchedule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportSchedule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportSchedule) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ReportSchedule", v)
 }
 
 func marshalOReportScheduleAlert2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportScheduleAlert(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportScheduleAlert) graphql.Marshaler {

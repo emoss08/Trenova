@@ -1,6 +1,17 @@
 import { usePageViewStore, type RegisteredTableView } from "@/stores/page-view-store";
+import { useTableAtom, type TableAtomSource } from "@trenova/shared/hooks/use-table-atom";
 import type { FieldFilter, FilterGroup, SortField } from "@trenova/shared/types/data-table";
+import type { RowSelectionState } from "@tanstack/react-table";
 import { useEffect } from "react";
+
+/** The selected row ids as one string, so a tick redraws only when the set changes. */
+function selectedIdsKey(selection: RowSelectionState): string {
+  let key = "";
+  for (const id in selection) {
+    if (selection[id]) key = key === "" ? id : `${key},${id}`;
+  }
+  return key;
+}
 
 type PageViewRegistrationInput = {
   resource: string | undefined;
@@ -8,8 +19,7 @@ type PageViewRegistrationInput = {
   fieldFilters: readonly FieldFilter[];
   filterGroups: readonly FilterGroup[];
   sort: readonly SortField[];
-  rowSelection: Readonly<Record<string, boolean>>;
-  selectionCount: number;
+  selection: TableAtomSource<RowSelectionState>;
   columnVisibility: Readonly<Record<string, boolean>>;
   columnIds: readonly string[];
   rowCount: number | null;
@@ -18,7 +28,9 @@ type PageViewRegistrationInput = {
 /**
  * Tells the page view what this table is showing, as it changes, and takes
  * it back when the table leaves. One table per page is what the assistant
- * reads; a page with two registers the one mounted last.
+ * reads; a page with two registers the one mounted last. The selection is
+ * followed from the table's own state, so the caller redraws only when the
+ * selected set changes, not on every render of the table.
  */
 export function usePageViewRegistration({
   resource,
@@ -26,8 +38,7 @@ export function usePageViewRegistration({
   fieldFilters,
   filterGroups,
   sort,
-  rowSelection,
-  selectionCount,
+  selection,
   columnVisibility,
   columnIds,
   rowCount,
@@ -38,10 +49,7 @@ export function usePageViewRegistration({
   const filtersKey = JSON.stringify(fieldFilters);
   const groupsKey = JSON.stringify(filterGroups);
   const sortKey = JSON.stringify(sort);
-  const selectedIds = Object.entries(rowSelection)
-    .filter(([, selected]) => selected)
-    .map(([id]) => id);
-  const selectionKey = selectedIds.join(",");
+  const selectionKey = useTableAtom(selection, selectedIdsKey);
   const visibleColumns = columnIds.filter((id) => columnVisibility[id] ?? true);
   const columnsKey = visibleColumns.join(",");
 
@@ -49,14 +57,15 @@ export function usePageViewRegistration({
     if (!resource) {
       return;
     }
+    const selectedIds = selectionKey === "" ? [] : selectionKey.split(",");
     const table: RegisteredTableView = {
       resource,
       query,
       fieldFilters: JSON.parse(filtersKey) as RegisteredTableView["fieldFilters"],
       filterGroups: JSON.parse(groupsKey) as RegisteredTableView["filterGroups"],
       sort: JSON.parse(sortKey) as RegisteredTableView["sort"],
-      selectedIds: selectionKey === "" ? [] : selectionKey.split(","),
-      selectionCount,
+      selectedIds,
+      selectionCount: selectedIds.length,
       visibleColumns: columnsKey === "" ? [] : columnsKey.split(","),
       rowCount,
     };
@@ -68,7 +77,6 @@ export function usePageViewRegistration({
     query,
     resource,
     rowCount,
-    selectionCount,
     selectionKey,
     setTable,
     sortKey,

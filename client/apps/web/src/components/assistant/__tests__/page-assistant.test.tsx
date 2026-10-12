@@ -9,6 +9,8 @@ import { PageAssistant } from "../page-assistant";
 const mocks = vi.hoisted(() => ({
   canCreate: true,
   getThread: vi.fn(),
+  listArtifacts: vi.fn(),
+  artifactLineage: vi.fn(),
 }));
 
 vi.mock("@/hooks/use-permission", () => ({
@@ -16,12 +18,31 @@ vi.mock("@/hooks/use-permission", () => ({
 }));
 
 vi.mock("@/services/api", () => ({
-  apiService: { assistantService: { getThread: mocks.getThread, listArtifacts: vi.fn() } },
+  apiService: {
+    assistantService: {
+      getThread: mocks.getThread,
+      listArtifacts: mocks.listArtifacts,
+      artifactLineage: mocks.artifactLineage,
+    },
+  },
 }));
 
 vi.mock("@/components/desk-chat/desk-thread", () => ({
-  DeskThread: ({ thread }: { thread: { id: string } }) => (
-    <div data-testid="thread">{thread.id}</div>
+  DeskThread: ({
+    thread,
+    artifacts,
+  }: {
+    thread: { id: string };
+    artifacts?: { open: (id: string) => void };
+  }) => (
+    <div>
+      <div data-testid="thread">{thread.id}</div>
+      {artifacts ? (
+        <button type="button" onClick={() => artifacts.open("aart_2")}>
+          Open the rate sheet
+        </button>
+      ) : null}
+    </div>
   ),
 }));
 
@@ -69,7 +90,10 @@ function pageThread(overrides: Partial<PageThread["thread"]> = {}): PageThread {
   };
 }
 
-function renderAssistant(open: () => Promise<PageThread>) {
+function renderAssistant(
+  open: () => Promise<PageThread>,
+  onOpenArtifact?: (artifact: { id: string }) => void,
+) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
@@ -77,6 +101,7 @@ function renderAssistant(open: () => Promise<PageThread>) {
         conversationKey={["import", "doc_1"]}
         open={open}
         page={{ surface: "shipment_import", readDraft: () => null, onDraftEdit: vi.fn() }}
+        onOpenArtifact={onOpenArtifact}
       />
     </QueryClientProvider>,
   );
@@ -129,6 +154,29 @@ describe("PageAssistant", () => {
     expect(await screen.findByTestId("thread")).toHaveTextContent("athr_1");
     expect(screen.getByText("Shipment import assistant")).toBeInTheDocument();
     expect(screen.getByText("Read outside content")).toBeInTheDocument();
+  });
+
+  /*
+  The page assistant read every artifact of its conversation with each
+  payload, on open and again on every artifact event, only so a link could
+  open one. It reads the one a person opens, when they open it.
+  */
+  it("reads only the artifact a person opens, when they open it", async () => {
+    const opened = pageThread();
+    mocks.getThread.mockResolvedValue(opened.thread);
+    const older = { id: "aart_1", threadId: "athr_1" };
+    const picked = { id: "aart_2", threadId: "athr_1" };
+    mocks.artifactLineage.mockResolvedValue({ results: [older, picked] });
+    const onOpenArtifact = vi.fn();
+
+    renderAssistant(vi.fn().mockResolvedValue(opened), onOpenArtifact);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Open the rate sheet" }));
+
+    await waitFor(() => expect(onOpenArtifact).toHaveBeenCalledWith(picked));
+    expect(mocks.artifactLineage).toHaveBeenCalledTimes(1);
+    expect(mocks.artifactLineage.mock.calls[0]?.slice(0, 2)).toEqual(["athr_1", "aart_2"]);
+    expect(mocks.listArtifacts).not.toHaveBeenCalled();
   });
 
   it("offers a new conversation once the server closed this one", async () => {

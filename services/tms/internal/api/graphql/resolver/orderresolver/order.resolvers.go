@@ -7,17 +7,19 @@ package orderresolver
 
 import (
 	"context"
+
+	"github.com/99designs/gqlgen/graphql"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/order"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	shipmentdomain "github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/orderservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
+	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -61,7 +63,7 @@ func (r *MutationResolver) UpdateOrder(ctx context.Context, id string, input gql
 		)
 	}
 
-	entity, err := r.OrderService.Get(ctx, repositories.GetOrderByIDRequest{
+	entity, err := r.OrderService.Get(ctx, orderports.GetOrderByIDRequest{
 		ID:         orderID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
@@ -369,8 +371,8 @@ func (r *OrderResolver) Charges(ctx context.Context, obj *order.Order) ([]*gqlmo
 		allocations := charge.Allocations
 		if allocations == nil {
 			allocations = []*shipmentdomain.ChargeAllocation{}
-			if l, ok := loaders.FromContext(ctx); ok && l != nil {
-				loaded, loadErr := l.ChargeAllocationsByOrderChargeID.Load(ctx, charge.ID.String())
+			if loaders.Available(ctx) {
+				loaded, loadErr := loaders.ChargeAllocationsByOrderChargeID(ctx, charge.ID.String())
 				if loadErr != nil {
 					return nil, loadErr
 				}
@@ -410,7 +412,7 @@ func (r *QueryResolver) Orders(ctx context.Context, input gqlmodel.DataTableConn
 
 	result, err := r.OrderService.ListConnection(
 		ctx,
-		&repositories.ListOrdersConnectionRequest{
+		&orderports.ListOrdersConnectionRequest{
 			Filter:       tableInput.Filter,
 			Cursor:       tableInput.Cursor,
 			OrderColumns: orderColumns(ctx, "edges.node"),
@@ -434,9 +436,9 @@ func (r *QueryResolver) Order(ctx context.Context, id string) (*order.Order, err
 		return nil, err
 	}
 
-	return r.OrderService.Get(ctx, repositories.GetOrderByIDRequest{
-		ID:              orderID,
-		TenantInfo:      base.TenantInfo(authCtx),
-		IncludeShipment: true,
-	})
+	return r.OrderService.Get(ctx, orderByIDRequest(
+		func(path string) bool { return graphql.FieldRequested(ctx, path) },
+		orderID,
+		base.TenantInfo(authCtx),
+	))
 }

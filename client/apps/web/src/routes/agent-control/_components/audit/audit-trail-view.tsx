@@ -6,14 +6,15 @@ import {
   aiAuditEventTableGraphQLConfig,
   type AIAuditEventRow,
 } from "@/lib/graphql/ai-audit";
-import { Button } from "@trenova/shared/components/ui/button";
 import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { DataTableEmptyStateRenderProps } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { FileDownload02Icon } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
+import { AUDIT_EXPORT_PARAM, auditExportParser } from "../../ai-control-tabs";
+import { useAddressedFlag } from "../../use-addressed-flag";
+import { Ic } from "../kit/ic";
 import { getAuditEventColumns } from "./audit-event-columns";
 import { AuditEventPanel } from "./audit-event-panel";
 import {
@@ -24,8 +25,8 @@ import {
   type AuditTrailScope,
 } from "./audit-model";
 import { AuditScopeBar } from "./audit-scope-bar";
-import { ChainStatusStrip } from "./chain-status";
 import { ExportTrailDialog } from "./export-trail-dialog";
+import { Button } from "@trenova/shared/components/ui/button";
 
 /** The trail is written by a projector every minute; the table reads again on that beat. */
 const TRAIL_REFRESH_MS = 60_000;
@@ -65,7 +66,7 @@ function TrailEmpty({ hasActiveFilters, onClearFilters }: DataTableEmptyStateRen
 }
 
 /**
- * The signed trail of what agents did: the chain's status above, the range,
+ * The signed trail of what agents did: the range,
  * agent and person it is narrowed to beside it, and every event in the
  * standard table below, each opening in full.
  */
@@ -75,7 +76,7 @@ export default function AuditTrailView({ onOpenExports }: { onOpenExports: () =>
   const scope = params[AUDIT_SCOPE_PARAM];
   const { allowed: canExport } = usePermission(Resource.AIAuditTrail, Operation.Export);
   const { allowed: canPickAgent } = usePermission(Resource.AgentDefinition, Operation.Read);
-  const [exportOpen, setExportOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useAddressedFlag(AUDIT_EXPORT_PARAM, auditExportParser);
 
   const columns = useMemo(() => getAuditEventColumns(t), [t]);
   const scopeFilters = useMemo(() => auditScopeFilters(scope), [scope]);
@@ -98,16 +99,15 @@ export default function AuditTrailView({ onOpenExports }: { onOpenExports: () =>
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      <ChainStatusStrip />
       <AuditScopeBar
         scope={scope}
         onChange={changeScope}
         canPickAgent={canPickAgent}
         actions={
           canExport ? (
-            <Button type="button" variant="outline" size="sm" onClick={() => setExportOpen(true)}>
-              <FileDownload02Icon className="size-3.5" />
-              {t("Export trail…")}
+            <Button type="button" variant="outline" onClick={() => setExportOpen(true)}>
+              <Ic n="download" s={13} />
+              {t("Export trail")}
             </Button>
           ) : null
         }

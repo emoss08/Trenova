@@ -12,8 +12,9 @@ import {
   Truck01Icon,
   Wallet02Icon,
 } from "@trenova/shared/components/icons";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
-export const sequenceTitles: Record<SequenceType, string> = {
+export const sequenceTitles: Record<SequenceType, string> = defineLabels({
   pro_number: "Pro Number",
   consolidation: "Consolidation Number",
   order: "Order Number",
@@ -24,9 +25,9 @@ export const sequenceTitles: Record<SequenceType, string> = {
   manual_journal_request: "Manual Journal Request",
   location_code: "Location Code",
   driver_settlement: "Driver Settlement Number",
-};
+});
 
-export const sequenceDescriptions: Record<SequenceType, string> = {
+export const sequenceDescriptions: Record<SequenceType, string> = defineLabels({
   pro_number: "Controls generated PRO numbers for shipment creation and tracking.",
   consolidation: "Controls consolidation number generation for grouped shipment operations.",
   order: "Controls order number generation for commercial orders above shipments.",
@@ -37,7 +38,7 @@ export const sequenceDescriptions: Record<SequenceType, string> = {
   manual_journal_request: "Controls manual journal request numbering before approval and posting.",
   location_code: "Controls generated location codes assigned during location creation.",
   driver_settlement: "Controls driver settlement numbering for pay period settlements.",
-};
+});
 
 export const sequenceIcons: Record<SequenceType, IconComponent> = {
   pro_number: Truck01Icon,

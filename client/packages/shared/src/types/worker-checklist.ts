@@ -1,5 +1,6 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export const checklistKindSchema = z.enum(["Onboarding", "Offboarding", "Custom"]);
 export type ChecklistKind = z.infer<typeof checklistKindSchema>;
@@ -25,42 +26,42 @@ export type ChecklistStatus = z.infer<typeof checklistStatusSchema>;
 export const checklistItemStatusSchema = z.enum(["Pending", "Done", "Skipped", "NotApplicable"]);
 export type ChecklistItemStatus = z.infer<typeof checklistItemStatusSchema>;
 
-export const CHECKLIST_KIND_LABELS: Record<ChecklistKind, string> = {
+export const CHECKLIST_KIND_LABELS: Record<ChecklistKind, string> = defineLabels({
   Onboarding: "Onboarding",
   Offboarding: "Offboarding",
   Custom: "Custom",
-};
+});
 
-export const CHECKLIST_TRIGGER_LABELS: Record<ChecklistTrigger, string> = {
+export const CHECKLIST_TRIGGER_LABELS: Record<ChecklistTrigger, string> = defineLabels({
   Hired: "When hired",
   Rehired: "When rehired",
   Terminated: "When terminated",
   Manual: "Started by hand",
-};
+});
 
-export const CHECKLIST_ITEM_KIND_LABELS: Record<ChecklistItemKind, string> = {
+export const CHECKLIST_ITEM_KIND_LABELS: Record<ChecklistItemKind, string> = defineLabels({
   Document: "Document",
   Credential: "Credential",
   Task: "Task",
   Equipment: "Equipment",
   PortalAccess: "Portal access",
-};
+});
 
-export const CHECKLIST_OWNER_LABELS: Record<ChecklistOwner, string> = {
+export const CHECKLIST_OWNER_LABELS: Record<ChecklistOwner, string> = defineLabels({
   HR: "HR",
   Safety: "Safety",
   Dispatch: "Dispatch",
   Payroll: "Payroll",
   IT: "IT",
   Fleet: "Fleet",
-};
+});
 
-export const CHECKLIST_ITEM_STATUS_LABELS: Record<ChecklistItemStatus, string> = {
+export const CHECKLIST_ITEM_STATUS_LABELS: Record<ChecklistItemStatus, string> = defineLabels({
   Pending: "Pending",
   Done: "Done",
   Skipped: "Skipped",
   NotApplicable: "Not applicable",
-};
+});
 
 /** Kinds that complete themselves from evidence and cannot be ticked by hand. */
 export const AUTO_SATISFIED_ITEM_KINDS: ReadonlySet<ChecklistItemKind> = new Set([
@@ -85,16 +86,16 @@ export const checklistTemplateItemFormSchema = z
     label: z
       .string()
       .trim()
-      .min(1, { message: "Label is required" })
-      .max(150, { message: "Label cannot exceed 150 characters" }),
+      .min(1, { error: () => translate("Label is required") })
+      .max(150, { error: () => translate("Label cannot exceed 150 characters") }),
     description: optionalTrimmed(1000, "Description cannot exceed 1000 characters"),
     kind: checklistItemKindSchema,
     required: z.boolean(),
     dueOffsetDays: z
       .number()
       .int()
-      .min(0, { message: "Cannot be negative" })
-      .max(365, { message: "Cannot exceed 365 days" }),
+      .min(0, { error: () => translate("Cannot be negative") })
+      .max(365, { error: () => translate("Cannot exceed 365 days") }),
     owner: checklistOwnerSchema,
     credentialTypeId: z.string().nullable().optional(),
     documentTypeId: z.string().nullable().optional(),
@@ -122,20 +123,24 @@ export const checklistTemplateFormSchema = z
     code: z
       .string()
       .trim()
-      .min(1, { message: "Code is required" })
-      .max(50, { message: "Code cannot exceed 50 characters" })
-      .regex(/^[A-Za-z0-9_-]+$/, { message: "Letters, digits, dashes and underscores only" }),
+      .min(1, { error: () => translate("Code is required") })
+      .max(50, { error: () => translate("Code cannot exceed 50 characters") })
+      .regex(/^[A-Za-z0-9_-]+$/, {
+        error: () => translate("Letters, digits, dashes and underscores only"),
+      }),
     name: z
       .string()
       .trim()
-      .min(1, { message: "Name is required" })
-      .max(100, { message: "Name cannot exceed 100 characters" }),
+      .min(1, { error: () => translate("Name is required") })
+      .max(100, { error: () => translate("Name cannot exceed 100 characters") }),
     description: optionalTrimmed(1000, "Description cannot exceed 1000 characters"),
     kind: checklistKindSchema,
     trigger: checklistTriggerSchema,
     status: z.enum(["Active", "Inactive"]),
     isDefault: z.boolean(),
-    items: z.array(checklistTemplateItemFormSchema).min(1, { message: "Add at least one item" }),
+    items: z
+      .array(checklistTemplateItemFormSchema)
+      .min(1, { error: () => translate("Add at least one item") }),
   })
   .superRefine((values, ctx) => {
     if (values.isDefault && values.trigger === "Manual") {

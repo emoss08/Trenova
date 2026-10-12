@@ -7,6 +7,9 @@ import {
   AgentQualityOverviewDocument,
   AgentQualityPointFieldsFragmentDoc,
   AgentSuiteRunCaseTableDocument,
+  AgentSuiteRunCaseFieldsFragmentDoc,
+  DataTablePageInfoFieldsFragmentDoc,
+  type AgentSuiteRunCaseTableQuery,
   AgentSuiteRunDocument,
   AgentSuiteRunFieldsFragmentDoc,
   AgentSuiteRunTableDocument,
@@ -31,7 +34,13 @@ export type AgentSuiteRun = AgentSuiteRunFieldsFragment;
 export type AgentQualityPoint = AgentQualityPointFieldsFragment;
 export type AgentWorstRatedAnswer = AgentWorstRatedAnswerFieldsFragment;
 export type AgentQualityControl = AgentQualityControlFieldsFragment;
-export type AgentQualityOverview = AgentQualityOverviewQuery["agentQualityOverview"];
+export type AgentQualityOverview = Omit<
+  AgentQualityOverviewQuery["agentQualityOverview"],
+  "worstRegression"
+> & {
+  /** The open regression that fell furthest below its agent's recent median. */
+  worstRegression: AgentSuiteRun | null;
+};
 export type AgentSuiteRunCase = AgentSuiteRunCaseFieldsFragment;
 export type { AgentSuiteRunStatus, UpdateAgentQualityControlInput };
 
@@ -129,7 +138,14 @@ export async function fetchAgentQualityOverview(
     signal: options?.signal,
   });
 
-  return data.agentQualityOverview;
+  const overview = data.agentQualityOverview;
+
+  return {
+    ...overview,
+    worstRegression: overview.worstRegression
+      ? getFragmentData(AgentSuiteRunFieldsFragmentDoc, overview.worstRegression)
+      : null,
+  };
 }
 
 export async function fetchAgentQuality(
@@ -181,6 +197,40 @@ export async function fetchAgentSuiteRun(
   return data.agentSuiteRun
     ? getFragmentData(AgentSuiteRunFieldsFragmentDoc, data.agentSuiteRun)
     : null;
+}
+
+/** The most cases one page of a suite run returns. */
+const SUITE_CASE_PAGE = 100;
+
+/** Every case a suite run asked, in the order it asked them, read a page at a time. */
+export async function fetchSuiteRunCases(
+  suiteRunId: string,
+  options?: RequestOptions,
+): Promise<AgentSuiteRunCase[]> {
+  const cases: AgentSuiteRunCase[] = [];
+  let after: string | null = null;
+  for (;;) {
+    const data: AgentSuiteRunCaseTableQuery = await requestGraphQL({
+      document: AgentSuiteRunCaseTableDocument,
+      operationName: "AgentSuiteRunCaseTable",
+      variables: {
+        suiteRunId,
+        input: { first: SUITE_CASE_PAGE, ...(after ? { after } : {}) },
+        includeTotalCount: false,
+      },
+      signal: options?.signal,
+    });
+    const page = data.agentSuiteRunCaseConnection;
+    for (const edge of page.edges) {
+      cases.push(getFragmentData(AgentSuiteRunCaseFieldsFragmentDoc, edge.node));
+    }
+    const pageInfo = getFragmentData(DataTablePageInfoFieldsFragmentDoc, page.pageInfo);
+    const next = pageInfo.endCursor;
+    if (!pageInfo.hasNextPage || !next || next === after) {
+      return cases;
+    }
+    after = next;
+  }
 }
 
 export async function fetchAgentQualityControl(

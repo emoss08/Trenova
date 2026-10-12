@@ -10,9 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,7 +29,7 @@ func (r *QueryResolver) DocumentPacketRules(ctx context.Context, input gqlmodel.
 
 	result, err := r.DocumentPacketRuleService.ListConnection(
 		ctx,
-		&repositories.ListDocumentPacketRuleConnectionRequest{
+		&documentpacketruleports.ListDocumentPacketRuleConnectionRequest{
 			Filter:                    tableInput.Filter,
 			Cursor:                    tableInput.Cursor,
 			DocumentPacketRuleColumns: documentPacketRuleColumns(ctx, "edges.node"),
@@ -53,7 +53,7 @@ func (r *QueryResolver) DocumentPacketRule(ctx context.Context, id string) (*doc
 		return nil, err
 	}
 
-	return r.DocumentPacketRuleService.Get(ctx, repositories.GetDocumentPacketRuleByIDRequest{
+	return r.DocumentPacketRuleService.Get(ctx, documentpacketruleports.GetDocumentPacketRuleByIDRequest{
 		ID:         ruleID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

@@ -5,6 +5,18 @@ holds two core tools that read it: `find_in_trenova` (pages and step-by-step
 tasks, filtered to what the person can open) and `open_page` (moves the app to
 a page or record). The prompt also names the page a person is on from it.
 
+A chat turn also says where the conversation is being had: the client sends
+`surface` (`Desk` from the Desk, `Assistant` from the panel over a page), and the
+prompt tells the agent so. On the Desk it carries the Desk guide's "What it's
+for", so an agent asked "where am I?" or "what does this do?" answers about the
+Desk, and the page context it receives is labelled as the page the person had
+open before the Desk. Who Trenova is for, what it covers and its website are
+fixed text in the prompt's "Trenova itself" section, so "what is Trenova?" needs
+no tool call; keep that text in step with the product. Agents never show people
+code or how Trenova is built: the GitHub repository is something an agent with
+`web_search` may read to answer a product question, and names only when asked
+where the source is.
+
 The guide is `services/tms/pkg/productguide/catalog_gen.json`. It is generated;
 never edit it by hand.
 

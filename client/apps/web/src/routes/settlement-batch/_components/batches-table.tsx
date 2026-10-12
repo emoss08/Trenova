@@ -17,6 +17,7 @@ export default function BatchesTable() {
   return (
     <DataTable<SettlementBatchRow>
       name="Settlement Batch"
+      emptyTitle={t("No settlement batches yet")}
       queryKey="settlement-batch-list"
       graphql={settlementBatchTableGraphQLConfig}
       resource={Resource.DriverSettlement}

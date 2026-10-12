@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { withCsrfHeader } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { withIdempotencyKeyHeader } from "@trenova/shared/lib/idempotency";
@@ -8,10 +9,12 @@ import type {
   TypedGraphQLDocument,
 } from "@trenova/shared/types/graphql";
 import {
+  type EditConflict,
   type NormalizedApiError,
   type ProblemType,
   type ValidationError,
   apiProblem,
+  editConflictSchema,
   parseFieldErrors,
   parseProblemType,
 } from "@trenova/shared/types/errors";
@@ -266,6 +269,11 @@ export class GraphQLRequestError extends Error {
 
   public isTimeoutError(): boolean {
     return apiProblem.isTimeoutError(this.normalize());
+  }
+
+  public getConflict(): EditConflict | null {
+    const parsed = editConflictSchema.safeParse(this.extensions?.conflict);
+    return parsed.success ? parsed.data : null;
   }
 }
 
@@ -547,7 +555,9 @@ export async function requestGraphQLResult<TData, TVariables = Record<string, un
       new GraphQLRequestError({
         graphQLErrors,
         kind: "transport",
-        message: graphQLErrors[0]?.message ?? `GraphQL request failed with HTTP ${response.status}`,
+        message:
+          graphQLErrors[0]?.message ??
+          translate("GraphQL request failed with HTTP {0}", response.status),
         status: response.status,
       }),
     );

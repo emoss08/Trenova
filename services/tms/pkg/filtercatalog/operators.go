@@ -277,11 +277,27 @@ func CoerceDate(name, raw string, clk Clock) (int64, error) {
 		return seconds, nil
 	}
 
+	if day, ok := datePrefix(raw); ok {
+		if seconds, parsed := clk.ParseDate(day); parsed {
+			return seconds, nil
+		}
+	}
+
 	return 0, fmt.Errorf(
 		"%q on %q is not a date; use YYYY-MM-DD, today, tomorrow or yesterday, "+
 			"or nextndays/lastndays with a day count",
 		raw, name,
 	)
+}
+
+func datePrefix(raw string) (string, bool) {
+	raw = strings.TrimSpace(raw)
+	const dayLength = len("2006-01-02")
+	if len(raw) <= dayLength || (raw[dayLength] != 'T' && raw[dayLength] != ' ') {
+		return "", false
+	}
+
+	return raw[:dayLength], true
 }
 
 // NamedDay resolves the words a person uses for a date.

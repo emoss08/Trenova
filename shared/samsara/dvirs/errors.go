@@ -8,4 +8,6 @@ var (
 	ErrEndTimeRequired     = errors.New("dvir endTime is required")
 	ErrStreamLimitInvalid  = errors.New("dvir stream limit must be between 1 and 200")
 	ErrHistoryLimitInvalid = errors.New("dvir history limit must be between 1 and 512")
+	ErrTimeRangeInvalid    = errors.New("dvir endTime must not be before startTime")
+	ErrSafetyStatusInvalid = errors.New("dvir safety status must be one of safe, unsafe, resolved")
 )

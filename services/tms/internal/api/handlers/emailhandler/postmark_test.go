@@ -3,7 +3,7 @@ package emailhandler
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/email"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/stretchr/testify/require"
 )
 

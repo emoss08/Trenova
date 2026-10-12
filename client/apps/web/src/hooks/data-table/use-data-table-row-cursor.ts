@@ -16,8 +16,11 @@ export type DataTableRowCursorParams = {
   onCursorRowIdChange: (rowId: string | null) => void;
   expandedRowId: string | null;
   onExpandedRowIdChange?: (rowId: string | null) => void;
-  hasSelection: boolean;
+  /** Asked when Escape is pressed, so the selection need not be followed between keys. */
+  hasSelection: () => boolean;
   onToggleSelect?: (rowId: string) => void;
+  /** Pins the row under the cursor to the top of the table, or unpins it. */
+  onTogglePin?: (rowId: string) => void;
   onClearSelection?: () => void;
   shortcuts?: readonly DataTableRowCursorShortcut[];
 };
@@ -77,6 +80,7 @@ export function useDataTableRowCursor(params: DataTableRowCursorParams) {
         onExpandedRowIdChange,
         hasSelection,
         onToggleSelect,
+        onTogglePin,
         onClearSelection,
       } = latest.current;
 
@@ -106,6 +110,13 @@ export function useDataTableRowCursor(params: DataTableRowCursorParams) {
         return;
       }
 
+      if (event.key === "p" || event.key === "P") {
+        if (anchorIndex < 0 || !onTogglePin) return;
+        event.preventDefault();
+        onTogglePin(rowIds[anchorIndex]);
+        return;
+      }
+
       if (event.key === "x" || event.key === "X") {
         if (anchorIndex < 0 || !onToggleSelect) return;
         event.preventDefault();
@@ -119,7 +130,7 @@ export function useDataTableRowCursor(params: DataTableRowCursorParams) {
           onExpandedRowIdChange(null);
           return;
         }
-        if (hasSelection && onClearSelection) {
+        if (onClearSelection && hasSelection()) {
           event.preventDefault();
           onClearSelection();
           return;

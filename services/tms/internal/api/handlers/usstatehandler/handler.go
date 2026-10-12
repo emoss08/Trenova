@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/usstateservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/usstateservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -85,7 +85,7 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetUsStateByIDRequest{
+	entity, err := h.service.Get(c.Request.Context(), usstateports.GetUsStateByIDRequest{
 		StateID: usStateID,
 	})
 	if err != nil {

@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/businesscentral"
 )
 
-var _ services.AccountingWebhookSubscriber = (*Connector)(nil)
+var _ accountingsyncports.AccountingWebhookSubscriber = (*Connector)(nil)
 
 const subscriptionRenewWindow = 24 * time.Hour
 
@@ -54,7 +54,7 @@ func subscriptionInput(
 
 func (c *Connector) Subscribe(
 	ctx context.Context,
-	req *services.AccountingSubscribeRequest,
+	req *accountingsyncports.AccountingSubscribeRequest,
 ) (*accountingsync.WebhookSubscriptionGrant, error) {
 	client, err := c.client(req.Auth)
 	if err != nil {
@@ -73,7 +73,7 @@ func (c *Connector) Subscribe(
 
 func (c *Connector) RenewSubscription(
 	ctx context.Context,
-	req *services.AccountingRenewSubscriptionRequest,
+	req *accountingsyncports.AccountingRenewSubscriptionRequest,
 ) (*accountingsync.WebhookSubscriptionGrant, error) {
 	client, err := c.client(req.Auth)
 	if err != nil {
@@ -92,7 +92,7 @@ func (c *Connector) RenewSubscription(
 
 func (c *Connector) Unsubscribe(
 	ctx context.Context,
-	req *services.AccountingUnsubscribeRequest,
+	req *accountingsyncports.AccountingUnsubscribeRequest,
 ) error {
 	client, err := c.client(req.Auth)
 	if err != nil {

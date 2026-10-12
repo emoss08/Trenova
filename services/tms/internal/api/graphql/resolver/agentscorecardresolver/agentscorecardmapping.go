@@ -2,8 +2,8 @@ package agentscorecardresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 // toGQLAgentScorecard shapes the counted record for the wire.
@@ -11,7 +11,7 @@ import (
 // The trust ladder rides along on the same object rather than as a field
 // resolver: it comes from one query the service already made, and a lazy
 // field would turn one request into two for a panel that always shows both.
-func toGQLAgentScorecard(result *services.AgentScorecardResult) *gqlmodel.AgentScorecard {
+func toGQLAgentScorecard(result *agentports.AgentScorecardResult) *gqlmodel.AgentScorecard {
 	card := result.Scorecard
 
 	out := &gqlmodel.AgentScorecard{
@@ -35,12 +35,16 @@ func toGQLAgentScorecard(result *services.AgentScorecardResult) *gqlmodel.AgentS
 		CostUsd:               card.CostUSD.String(),
 		EstimatedMinutesSaved: card.EstimatedMinutesSaved,
 		ByTool:                make([]*agent.ToolOutcomeCount, 0, len(card.ByTool)),
+		ToolVerdicts:          make([]*agent.ToolVerdictCount, 0, len(card.ToolVerdicts)),
 		Trend:                 make([]*agent.ScorecardPoint, 0, len(card.Trend)),
 		ToolTrust:             make([]*gqlmodel.AgentToolTrust, 0, len(result.ToolTrust)),
 	}
 
 	for index := range card.ByTool {
 		out.ByTool = append(out.ByTool, &card.ByTool[index])
+	}
+	for index := range card.ToolVerdicts {
+		out.ToolVerdicts = append(out.ToolVerdicts, &card.ToolVerdicts[index])
 	}
 	for index := range card.Trend {
 		out.Trend = append(out.Trend, &card.Trend[index])

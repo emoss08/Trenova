@@ -12,7 +12,6 @@ import {
   type IftaReturnView,
 } from "@/lib/ifta-return";
 import { Button } from "@trenova/shared/components/ui/button";
-import { pluralize } from "@trenova/shared/lib/utils";
 import {
   Download01Icon,
   FilePlus02Icon,
@@ -95,8 +94,11 @@ export function ReturnActions({ ret, period, perms }: ReturnActionsProps) {
           disabled={finalizeBlocked}
           title={
             missingRates.length > 0
-              ? `${missingRates.length} member ${pluralize("line", missingRates.length)} has no published rate, so the return cannot be finalized yet.`
-              : "Recompute and lock the worksheet."
+              ? t(
+                  "{0, plural, one {# member line has no published rate, so the return cannot be finalized yet.} other {# member lines have no published rate, so the return cannot be finalized yet.}}",
+                  missingRates.length,
+                )
+              : t("Recompute and lock the worksheet.")
           }
         >
           <Lock01Icon className="size-3.5" />

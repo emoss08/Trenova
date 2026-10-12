@@ -12,10 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/domain/latecharge"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
 func (r *InvoiceResolver) LateChargeAssessments(ctx context.Context, obj *invoice.Invoice) ([]*latecharge.LateChargeAssessment, error) {
@@ -26,23 +26,22 @@ func (r *InvoiceResolver) LateChargeAssessments(ctx context.Context, obj *invoic
 		return nil, err
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l == nil {
+	if !loaders.Available(ctx) {
 		return []*latecharge.LateChargeAssessment{}, nil
 	}
 
-	return l.LateChargeAssessmentsByInvoiceID.Load(ctx, obj.ID.String())
+	return loaders.LateChargeAssessmentsByInvoiceID(ctx, obj.ID.String())
 }
 
 func (r *LateChargeAssessmentResolver) RatePercent(ctx context.Context, obj *latecharge.LateChargeAssessment) (string, error) {
 	return obj.RatePercent.String(), nil
 }
 
-func (r *LateChargeLineResolver) RatePercent(ctx context.Context, obj *services.LateChargeLine) (string, error) {
+func (r *LateChargeLineResolver) RatePercent(ctx context.Context, obj *latechargeports.LateChargeLine) (string, error) {
 	return obj.RatePercent.String(), nil
 }
 
-func (r *MutationResolver) AssessLateCharges(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*services.LateChargeAssessmentResult, error) {
+func (r *MutationResolver) AssessLateCharges(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*latechargeports.LateChargeAssessmentResult, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoice, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -56,7 +55,7 @@ func (r *MutationResolver) AssessLateCharges(ctx context.Context, input *gqlmode
 	return r.LateChargeService.Assess(ctx, req, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *QueryResolver) LateChargePreview(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*services.LateChargeAssessmentResult, error) {
+func (r *QueryResolver) LateChargePreview(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*latechargeports.LateChargeAssessmentResult, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoice, permission.OpRead)
 	if err != nil {
 		return nil, err

@@ -1,4 +1,3 @@
-import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type { AgentSafetySummary } from "@/lib/graphql/agent-safety";
 import { stubLayout } from "@/test/layout";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -11,20 +10,28 @@ import type {
 } from "@trenova/shared/types/data-table";
 import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import type { ComponentType, ReactNode } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { policy, rule, safety, tool } from "./fixtures";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { definition, rule, safety, tool } from "./fixtures";
 
-const fetchAgentSafetySummary = vi.fn<() => Promise<AgentSafetySummary>>();
-const fetchAgentSafetyHeaders = vi.fn();
+const api = vi.hoisted(() => ({
+  fetchAgentSafetySummary: vi.fn(),
+  fetchAgentSafetyHeaders: vi.fn(),
+  fetchAgentToolHolders: vi.fn(),
+  fetchToolHolderAnswers: vi.fn(),
+  fetchAgentDefinitions: vi.fn(),
+}));
 
-vi.mock("@/lib/graphql/agent-safety", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/graphql/agent-safety")>();
-  return {
-    ...actual,
-    fetchAgentSafetySummary: () => fetchAgentSafetySummary(),
-    fetchAgentSafetyHeaders: (...args: unknown[]) => fetchAgentSafetyHeaders(...args),
-  };
-});
+vi.mock("@/lib/graphql/agent-safety", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/graphql/agent-safety")>()),
+  fetchAgentSafetySummary: () => api.fetchAgentSafetySummary(),
+  fetchAgentSafetyHeaders: (...args: unknown[]) => api.fetchAgentSafetyHeaders(...args),
+  fetchAgentToolHolders: () => api.fetchAgentToolHolders(),
+  fetchToolHolderAnswers: (...args: unknown[]) => api.fetchToolHolderAnswers(...args),
+}));
+vi.mock("@/lib/graphql/agent-definition", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/graphql/agent-definition")>()),
+  fetchAgentDefinitions: () => api.fetchAgentDefinitions(),
+}));
 
 type StubTableProps = {
   name: string;
@@ -36,9 +43,9 @@ type StubTableProps = {
 };
 
 /**
- * The data table has its own tests; here it only has to show what the tab
- * hands it. It draws the rows a test gives it through the tab's own columns,
- * and opens the tab's own panel on the row a test names.
+ * The data table has its own tests; here it only has to show what the tab hands it: the
+ * rows a test gives it through the tab's own columns, and the tab's own panel on the row a
+ * test names.
  */
 const table = vi.hoisted(() => ({
   rows: [] as Record<string, unknown>[],
@@ -53,15 +60,6 @@ vi.mock("@/components/data-table/data-table", () => ({
     return (
       <section aria-label={`${props.name} table`}>
         <table>
-          <thead>
-            <tr>
-              {props.columns.map((column, index) => (
-                <th key={index}>
-                  {typeof column.header === "string" ? column.header : (column.id ?? "")}
-                </th>
-              ))}
-            </tr>
-          </thead>
           <tbody>
             {table.rows.map((row, rowIndex) => (
               <tr key={rowIndex}>
@@ -84,32 +82,58 @@ vi.mock("@/components/data-table/data-table", () => ({
   },
 }));
 
-// The picker has its own tests; here it only has to hand back an agent.
-const pickerProps = vi.fn();
-vi.mock("@/components/assistant/agent-picker", () => ({
-  AgentPickerList: (props: {
-    source: string;
-    hiddenIds: ReadonlySet<string>;
-    onSelect: (agent: AgentChoice) => void;
-  }) => {
-    pickerProps(props);
-    return (
-      <button type="button" onClick={() => props.onSelect(choice("agdef_1", "Customer desk"))}>
-        Pick Customer desk
-      </button>
-    );
-  },
-}));
-
 const { default: SafetyTab } = await import("../safety-tab");
+
+const summary: AgentSafetySummary = {
+  toolCount: 132,
+  runWithoutPerson: 2,
+  leaveOrganization: 9,
+  openWithSensitive: 4,
+  resources: ["shipment", "general", "customer"],
+  egressCounts: [
+    { egress: "Internal", count: 30 },
+    { egress: "CustomerVisible", count: 5 },
+    { egress: "Money", count: 2 },
+  ],
+  unattendedTools: ["Assign move", "Release billing hold"],
+  openSensitiveAgentIds: ["agdef_1", "agdef_2", "agdef_3", "agdef_4"],
+};
+
+const agents = [
+  definition("agdef_1", "Customer desk", { toolNames: ["email_customer"] }),
+  definition("agdef_2", "Dispatch desk"),
+  definition("agdef_3", "Billing desk", { enabled: false }),
+  definition("agdef_4", "Rates desk"),
+  definition("agdef_5", "Safety desk"),
+];
+
+const emailCustomer = rule(
+  {
+    name: "email_customer",
+    title: "Email customer",
+    egress: ["ExternalRecipient"],
+    leavesOrganization: true,
+    promotableTier: "ActWithApproval",
+    needs: { resource: "customer", operation: "update" },
+    rationale: "An email reaches a customer and cannot be taken back.",
+  },
+  false,
+);
 
 let restoreLayout = () => {};
 
 beforeEach(() => {
   restoreLayout = stubLayout();
-  fetchAgentSafetySummary.mockReset();
-  fetchAgentSafetyHeaders.mockReset();
-  pickerProps.mockReset();
+  api.fetchAgentSafetySummary.mockResolvedValue(summary);
+  api.fetchAgentSafetyHeaders.mockResolvedValue([]);
+  api.fetchAgentToolHolders.mockResolvedValue(
+    new Map([
+      ["email_customer", ["agdef_1", "agdef_2"]],
+      ["assign_move", ["agdef_1", "agdef_2", "agdef_3", "agdef_4", "agdef_5"]],
+    ]),
+  );
+  api.fetchToolHolderAnswers.mockResolvedValue([]);
+  api.fetchAgentDefinitions.mockResolvedValue(agents);
   table.rows = [];
   table.openRow = null;
   table.props = [];
@@ -118,21 +142,8 @@ beforeEach(() => {
 afterEach(() => {
   restoreLayout();
   cleanup();
+  vi.clearAllMocks();
 });
-
-function choice(id: string, name: string): AgentChoice {
-  return {
-    id,
-    name,
-    description: "",
-    template: null,
-    icon: "",
-    accent: "",
-    toolNames: [],
-    systemKey: "",
-    starters: [],
-  };
-}
 
 function renderTab(view: "rules" | "agents", searchParams = "", onUrlUpdate?: OnUrlUpdateFunction) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -154,153 +165,162 @@ function lastTable(): StubTableProps {
   return props;
 }
 
-const summary: AgentSafetySummary = {
-  toolCount: 132,
-  runWithoutPerson: 4,
-  leaveOrganization: 9,
-  openWithSensitive: 1,
-  resources: ["shipment", "general", "customer"],
-};
-
-const emailCustomer = rule(
-  {
-    name: "email_customer",
-    title: "Email customer",
-    egress: ["ExternalRecipient"],
-    leavesOrganization: true,
-    promotableTier: "ActWithApproval",
-    needs: { resource: "customer", operation: "update" },
-    rationale: "An email reaches a customer and cannot be taken back.",
-    hasCondition: true,
-    conditionDescription: "Only to a contact on the customer's record.",
-  },
-  false,
-);
-
 describe("SafetyTab", () => {
-  it("heads both views with the figures counted on the server", async () => {
-    fetchAgentSafetySummary.mockResolvedValue(summary);
-
+  it("says what runs without a person, what leaves, and which open agents hold it", async () => {
     renderTab("rules");
 
-    const figures = await screen.findByRole("group", { name: "AI safety figures" });
-    expect(within(figures).getByText("4")).toBeTruthy();
-    expect(within(figures).getByText("9")).toBeTruthy();
-    expect(within(figures).getByText("1")).toBeTruthy();
+    expect(await screen.findByRole("link", { name: "2 tools run" })).toBeInTheDocument();
+    expect(
+      screen.getByText(/can send outside the organization, and every one waits/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "4 agents" })).toBeInTheDocument();
+    expect(
+      screen.getByText("on at least one agent · Assign move, Release billing hold"),
+    ).toBeInTheDocument();
+  });
+
+  it("says nothing runs alone and offers no review when nothing does and nothing is open", async () => {
+    api.fetchAgentSafetySummary.mockResolvedValue({
+      ...summary,
+      runWithoutPerson: 0,
+      unattendedTools: [],
+      openWithSensitive: 0,
+      openSensitiveAgentIds: [],
+    });
+    renderTab("rules");
+
+    expect(await screen.findByText(/No tool runs without a person\./)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Review open agents" })).not.toBeInTheDocument();
+  });
+
+  it("narrows the rules to the tools that run alone", async () => {
+    const updates: URLSearchParams[] = [];
+    renderTab("rules", "", (event) => updates.push(event.searchParams));
+
+    await userEvent.click(await screen.findByRole("link", { name: "2 tools run" }));
+
+    await waitFor(() => expect(updates.at(-1)?.get("fieldFilters")).toContain("runsWithoutPerson"));
+  });
+
+  it("compares the first three open agents when asked to review them", async () => {
+    const updates: URLSearchParams[] = [];
+    renderTab("rules", "", (event) => updates.push(event.searchParams));
+
+    await userEvent.click(await screen.findByRole("button", { name: "Review open agents" }));
+
+    await waitFor(() => expect(updates.at(-1)?.get("safety")).toBe("agents"));
+    expect(updates.at(-1)?.get("safetyAgents")).toBe("agdef_1,agdef_2,agdef_3");
+  });
+
+  it("maps the tools that change things by who sees their work, and narrows the rules by one", async () => {
+    const updates: URLSearchParams[] = [];
+    renderTab("rules", "", (event) => updates.push(event.searchParams));
+
+    const map = await screen.findByRole("group", { name: "Who sees the work" });
+    expect(
+      within(map)
+        .getAllByRole("button")
+        .map((button) => button.textContent),
+    ).toEqual(["30Internal", "5Customer", "2Money"]);
+    expect(screen.getByText("37 tools that change things")).toBeInTheDocument();
+
+    await userEvent.click(within(map).getByRole("button", { name: /Customer/ }));
+    await waitFor(() => expect(updates.at(-1)?.get("fieldFilters")).toContain("CustomerVisible"));
+  });
+
+  it("marks the audience the rules are narrowed to, and clears it", async () => {
+    const filters = encodeURIComponent(
+      JSON.stringify([{ field: "egress", operator: "eq", value: "Money" }]),
+    );
+    const updates: URLSearchParams[] = [];
+    renderTab("rules", `?fieldFilters=${filters}`, (event) => updates.push(event.searchParams));
+
+    const map = await screen.findByRole("group", { name: "Who sees the work" });
+    expect(within(map).getByRole("button", { name: /Money/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Clear" }));
+    await waitFor(() => expect(updates.at(-1)?.get("fieldFilters")).toBeNull());
   });
 
   it("says so when the figures cannot be loaded", async () => {
-    fetchAgentSafetySummary.mockRejectedValue(new Error("offline"));
-
+    api.fetchAgentSafetySummary.mockRejectedValue(new Error("offline"));
     renderTab("rules");
 
     expect(
       await screen.findByText(
         "What agents can do without a person could not be loaded. Try again shortly.",
       ),
-    ).toBeTruthy();
+    ).toBeInTheDocument();
   });
 });
 
 describe("Tool rules", () => {
-  // The rules are the app's data table over the rule connection, with a
-  // read-only panel, so they scroll, page, filter and sort like every table.
-  it("draws the rules in the data table from the rule connection", async () => {
-    fetchAgentSafetySummary.mockResolvedValue(summary);
-    table.rows = [
-      rule({ name: "assign_move", title: "Assign move" }, true),
-      emailCustomer,
-      rule({
-        name: "get_inbound_message",
-        title: "Get inbound message",
-        kind: "Query",
-        effect: "Lookup",
-        egress: ["None"],
-        readsExternal: "Always",
-        source: "InboundMessage",
-      }),
-    ];
+  // The rules table is a lazy chunk; load it once up front so a test waits on the
+  // table it asserts about, not on the first transform of its module graph.
+  beforeAll(async () => {
+    await import("../tool-rules-table");
+  });
 
+  it("draws the rules from the rule connection with the agents that hold each tool", async () => {
+    table.rows = [rule({ name: "assign_move", title: "Assign move" }, true), emailCustomer];
     renderTab("rules");
 
     const rules = await screen.findByRole("region", { name: "Tool Rule table" });
-    const props = lastTable();
-    expect(props.graphql.operationName).toBe("AgentToolRuleTable");
-    expect(props.graphql.connectionKey).toBe("agentToolRuleConnection");
-    expect(props.enableReadOnlyPanel).toBe(true);
-    expect(props.enableCreateAction).toBe(false);
-
-    expect(within(rules).getAllByText("email_customer").length).toBeGreaterThan(0);
-    expect(within(rules).getByText("Outside recipient")).toBeTruthy();
-    expect(within(rules).getByText("Always, from inbound messages")).toBeTruthy();
-    expect(within(rules).getByText("On at least one agent")).toBeTruthy();
-  });
-
-  // Every column the toolbar can filter or sort names a field the server
-  // answers to; the resources a rule can need come from the figures.
-  it("filters and sorts on the server's fields", async () => {
-    fetchAgentSafetySummary.mockResolvedValue(summary);
-
-    renderTab("rules");
-
+    expect(lastTable().graphql.operationName).toBe("AgentToolRuleTable");
+    expect(lastTable().enableCreateAction).toBe(false);
+    expect(within(rules).getByText("Outside recipient")).toBeInTheDocument();
     await waitFor(() =>
-      expect(
-        lastTable().columns.find((column) => column.meta?.apiField === "resource")?.meta
-          ?.filterOptions,
-      ).toHaveLength(3),
+      expect(within(rules).getByLabelText("Customer desk, Dispatch desk")).toBeInTheDocument(),
     );
-    const fields = lastTable()
-      .columns.filter((column) => column.meta?.filterable)
-      .map((column) => column.meta?.apiField);
-    expect(fields).toEqual([
-      "title",
-      "name",
-      "egress",
-      "maxTier",
-      "resource",
-      "kind",
-      "readsExternal",
-      "runsWithoutPerson",
-    ]);
+    expect(within(rules).getByText("+1")).toBeInTheDocument();
   });
 
-  // The rationale and the condition are long; they open in the row's panel
-  // rather than widening the table.
-  it("opens a rule's rationale and condition in its panel", async () => {
-    fetchAgentSafetySummary.mockResolvedValue(summary);
+  it("opens a rule with who holds it and what each holder makes of it", async () => {
+    api.fetchToolHolderAnswers.mockResolvedValue([
+      tool(
+        "email_customer",
+        { answer: "NEEDS_APPROVAL", tier: "ActWithApproval" },
+        { answer: "PROPOSE_ONLY", tier: "Propose" },
+      ),
+    ]);
     table.rows = [emailCustomer];
     table.openRow = emailCustomer;
-
     renderTab("rules");
 
+    expect(await screen.findByText("Held by 2 agents")).toBeInTheDocument();
+    expect(screen.getByText("Leaves the organization — never past approval")).toBeInTheDocument();
     expect(
-      await screen.findByText("An email reaches a customer and cannot be taken back."),
-    ).toBeTruthy();
-    expect(screen.getByText("Only to a contact on the customer's record.")).toBeTruthy();
+      screen.getByText("An email reaches a customer and cannot be taken back."),
+    ).toBeInTheDocument();
+    expect(await screen.findByText("Needs approval")).toBeInTheDocument();
+    expect(screen.getByText("Proposes only")).toBeInTheDocument();
+    expect(api.fetchToolHolderAnswers.mock.calls[0]?.slice(0, 2)).toEqual([
+      "email_customer",
+      ["agdef_1", "agdef_2"],
+    ]);
   });
 });
 
 describe("By agent", () => {
-  // Nothing about any agent is read, and no table is drawn, until someone
-  // picks an agent.
-  it("reads no agent until one is picked", async () => {
-    fetchAgentSafetySummary.mockResolvedValue(summary);
+  it("reads no agent until one is picked, and offers every agent to start from", async () => {
+    const updates: URLSearchParams[] = [];
+    renderTab("agents", "", (event) => updates.push(event.searchParams));
 
-    renderTab("agents");
-
-    const byAgent = await screen.findByRole("region", { name: "By agent" });
     expect(
-      within(byAgent).getByText("Add an agent to see what it can do without a person."),
-    ).toBeTruthy();
-    expect(fetchAgentSafetyHeaders).not.toHaveBeenCalled();
+      await screen.findByText("Pick an agent to see what it can do without a person"),
+    ).toBeInTheDocument();
+    expect(api.fetchAgentSafetyHeaders).not.toHaveBeenCalled();
     expect(table.props).toHaveLength(0);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Dispatch desk" }));
+    await waitFor(() => expect(updates.at(-1)?.get("safetyAgents")).toBe("agdef_2"));
   });
 
-  // The picked agents go to the server as the query's own argument, and one
-  // table holds every picked agent's tools.
-  it("reads the picked agent and lists its tools in one table", async () => {
-    fetchAgentSafetySummary.mockResolvedValue(summary);
-    fetchAgentSafetyHeaders.mockResolvedValue([
+  it("reads the picked agents and lists their tools in one table", async () => {
+    api.fetchAgentSafetyHeaders.mockResolvedValue([
       safety("agdef_1", "Customer desk", {
         reach: {
           accessMode: "Everyone",
@@ -309,96 +329,52 @@ describe("By agent", () => {
         },
       }),
     ]);
-    table.rows = [
-      tool("assign_move", { answer: "RUNS_ON_ITS_OWN" }),
-      tool(
-        "email_customer",
-        { answer: "NEEDS_APPROVAL", tier: "ActWithApproval", heldBy: ["egress_class"] },
-        { answer: "NEEDS_APPROVAL", tier: "ActWithApproval", heldBy: ["egress_class", "tainted"] },
-        { egress: ["ExternalRecipient"], leavesOrganization: true },
-      ),
-    ];
-    const updates: URLSearchParams[] = [];
+    table.rows = [tool("assign_move", { answer: "RUNS_ON_ITS_OWN" })];
+    renderTab("agents", "?safetyAgents=agdef_1");
 
-    renderTab("agents", "", (event) => {
-      updates.push(event.searchParams);
-    });
-
-    const byAgent = await screen.findByRole("region", { name: "By agent" });
-    await userEvent.click(within(byAgent).getByRole("button", { name: /add an agent/i }));
-    await userEvent.click(await screen.findByRole("button", { name: "Pick Customer desk" }));
-
-    const header = await within(byAgent).findByRole("region", { name: "Customer desk" });
-    expect(fetchAgentSafetyHeaders.mock.calls[0]?.[0]).toEqual(["agdef_1"]);
-    expect(pickerProps.mock.calls.at(-1)?.[0].source).toBe("grantable");
-    expect(within(header).getByText("Everyone who can use the assistant")).toBeTruthy();
-    expect(within(header).getByText(/leave the organization: /)).toBeTruthy();
-    expect(updates.at(-1)?.get("safetyAgents")).toBe("agdef_1");
-
-    const tools = await screen.findByRole("region", { name: "Agent Tool table" });
-    expect(lastTable().graphql.operationName).toBe("AgentToolSafetyTable");
+    expect(await screen.findByRole("button", { name: "Limit to roles" })).toBeInTheDocument();
+    expect(api.fetchAgentSafetyHeaders.mock.calls[0]?.[0]).toEqual(["agdef_1"]);
     expect(lastTable().graphql.extraVariables).toEqual({ agentIds: ["agdef_1"] });
-    expect(within(tools).getByText("Read outside text")).toBeTruthy();
-    expect(within(tools).getAllByText("Runs on its own")).toHaveLength(2);
-    expect(
-      lastTable().columns.find((column) => column.meta?.apiField === "agentId")?.meta
-        ?.filterOptions,
-    ).toEqual([{ value: "agdef_1", label: "Customer desk" }]);
+    await userEvent.click(
+      screen.getByRole("button", { name: "1 tool that leaves the organization" }),
+    );
+    expect(screen.getByText(/Email customer\./)).toBeInTheDocument();
   });
 
-  // Taking an agent out also clears the table's filters, which could name it.
-  it("takes an agent out of the comparison and starts the table over", async () => {
-    fetchAgentSafetySummary.mockResolvedValue(summary);
-    fetchAgentSafetyHeaders.mockResolvedValue([safety("agdef_1", "Customer desk")]);
-    const updates: URLSearchParams[] = [];
+  it("takes an agent out and starts the table over", async () => {
     const filters = encodeURIComponent(
       JSON.stringify([{ field: "agentId", operator: "eq", value: "agdef_1" }]),
     );
+    const updates: URLSearchParams[] = [];
+    renderTab("agents", `?safetyAgents=agdef_1&fieldFilters=${filters}`, (event) =>
+      updates.push(event.searchParams),
+    );
 
-    renderTab("agents", `?safetyAgents=agdef_1&fieldFilters=${filters}`, (event) => {
-      updates.push(event.searchParams);
-    });
-
-    const byAgent = await screen.findByRole("region", { name: "By agent" });
     await userEvent.click(
-      await within(byAgent).findByRole("button", {
-        name: "Remove Customer desk from the comparison",
-      }),
+      await screen.findByRole("button", { name: "Remove Customer desk from the comparison" }),
     );
 
     await waitFor(() => expect(updates.at(-1)?.get("safetyAgents")).toBeNull());
     expect(updates.at(-1)?.get("fieldFilters")).toBeNull();
-    expect(
-      await within(byAgent).findByText("Add an agent to see what it can do without a person."),
-    ).toBeTruthy();
   });
 
-  it("offers to take out an agent that no longer exists", async () => {
-    fetchAgentSafetySummary.mockResolvedValue(summary);
-    fetchAgentSafetyHeaders.mockResolvedValue([]);
+  it("offers no more than four agents at once", async () => {
+    renderTab("agents", "?safetyAgents=agdef_1,agdef_2,agdef_3,agdef_4");
 
-    renderTab("agents", "?safetyAgents=agdef_gone");
-
-    const byAgent = await screen.findByRole("region", { name: "By agent" });
-    expect(await within(byAgent).findByText("This agent no longer exists.")).toBeTruthy();
-    expect(within(byAgent).getByRole("button", { name: "Remove" })).toBeTruthy();
+    await screen.findByRole("button", { name: "Remove Rates desk from the comparison" });
+    expect(screen.queryByRole("button", { name: "Compare another" })).not.toBeInTheDocument();
   });
 
-  it("opens what the agent makes of a tool in the row's panel", async () => {
-    fetchAgentSafetySummary.mockResolvedValue(summary);
-    fetchAgentSafetyHeaders.mockResolvedValue([safety("agdef_1", "Customer desk")]);
-    const email = tool(
-      "email_customer",
-      { answer: "NEEDS_APPROVAL", tier: "ActWithApproval", heldBy: ["egress_class"] },
-      { answer: "NEEDS_APPROVAL", tier: "ActWithApproval", heldBy: ["tainted"] },
-      { rationale: policy({}).rationale },
-    );
+  it("opens a tool from an agent's row with that agent marked among the holders", async () => {
+    const email = tool("email_customer", { answer: "NEEDS_APPROVAL", tier: "ActWithApproval" });
     table.rows = [email];
     table.openRow = email;
-
     renderTab("agents", "?safetyAgents=agdef_1");
 
-    expect(await screen.findByText("Held by Customer desk")).toBeTruthy();
-    expect(screen.getByText("Assigning a move changes only internal records.")).toBeTruthy();
+    const holders = await screen.findByText("Held by 2 agents");
+    const row = (
+      await within(holders.parentElement as HTMLElement).findByText("Customer desk")
+    ).closest(".hl-r");
+    expect(row).toHaveClass("on");
   });
 });

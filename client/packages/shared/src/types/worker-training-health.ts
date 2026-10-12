@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 /**
  * Training health lives in its own leaf module because two things need it that
@@ -18,7 +19,7 @@ export const workerTrainingHealthSchema = z.enum([
 ]);
 export type WorkerTrainingHealth = z.infer<typeof workerTrainingHealthSchema>;
 
-export const WORKER_TRAINING_HEALTH_LABELS: Record<WorkerTrainingHealth, string> = {
+export const WORKER_TRAINING_HEALTH_LABELS: Record<WorkerTrainingHealth, string> = defineLabels({
   Current: "Current",
   Scheduled: "Scheduled",
   DueSoon: "Due soon",
@@ -27,4 +28,4 @@ export const WORKER_TRAINING_HEALTH_LABELS: Record<WorkerTrainingHealth, string>
   Expired: "Expired",
   Failed: "Failed",
   Missing: "Missing",
-};
+});

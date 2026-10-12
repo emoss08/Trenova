@@ -10,7 +10,7 @@ vi.mock("@trenova/shared/lib/api", () => ({
 }));
 
 // Contract fixture mirroring PublicRateConfirmationView in
-// services/tms/internal/core/services/rateconfirmationservice/public.go — every
+// services/tms/internal/modules/rating/app/rateconfirmationservice/public.go — every
 // field is a non-omitted JSON key, strings may be empty, stops is always an array.
 function publicView() {
   return {

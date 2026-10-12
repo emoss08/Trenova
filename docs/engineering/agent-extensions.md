@@ -11,13 +11,13 @@ The first extension is web search through Exa (`web_search`, `web_read`).
 
 | Piece | Location |
 |---|---|
-| Types, availability, settings spec, tool ownership | `services/tms/internal/core/domain/agentextension/` |
+| Types, availability, settings spec, tool ownership | `services/tms/internal/modules/agent/domain/agentextension/` |
 | Stored settings and daily usage | `agent_extensions`, `agent_extension_usage_daily` |
-| Marketplace, settings, test, metering, web research | `internal/core/services/agentextensionservice/` |
+| Marketplace, settings, test, metering, web research | `internal/modules/agent/app/agentextensionservice/` |
 | REST API (`/agent-extensions/...`) | `internal/api/handlers/agentextensionhandler/` |
 | Vendor adapter | `internal/infrastructure/agentextension/exaconnector/` over `shared/exa` |
-| Tools | `internal/core/services/agentquerytoolservice/web_tools.go` |
-| Runtime gating and the approval rule | `internal/core/services/agentruntime/extensions.go` |
+| Tools | `internal/modules/agent/app/agentquerytoolservice/web_tools.go` |
+| Runtime gating and the approval rule | `internal/modules/agent/app/agentruntime/extensions.go` |
 | Marketplace UI | `client/apps/web/src/routes/agent-control/_components/extensions/` |
 
 Settings reuse the integration field spec (`domain/configspec`) and the encrypted secret codec

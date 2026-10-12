@@ -9,11 +9,12 @@ import {
   ediTransactionSetSchema,
   ediValidationModeSchema,
 } from "@trenova/shared/types/edi";
+import { defineLabels, sourceLabels } from "@trenova/shared/i18n/labels";
 
 const templateElementSourceLabels: Record<
   (typeof ediTemplateElementSourceSchema.options)[number],
   string
-> = {
+> = defineLabels({
   constant: "Constant",
   fieldPath: "Field path",
   partnerSetting: "Partner setting",
@@ -22,10 +23,10 @@ const templateElementSourceLabels: Record<
   repeat: "Repeat",
   transform: "Transform",
   starlark: "Starlark",
-};
+});
 
 const mappingEntityTypeLabels: Record<(typeof ediMappingEntityTypeSchema.options)[number], string> =
-  {
+  defineLabels({
     Customer: "Customer",
     ServiceType: "Service type",
     ShipmentType: "Shipment type",
@@ -34,13 +35,14 @@ const mappingEntityTypeLabels: Record<(typeof ediMappingEntityTypeSchema.options
     Commodity: "Commodity",
     AccessorialCharge: "Accessorial charge",
     ServiceFailureReasonCode: "Service failure reason code",
-  };
+  });
 
-const validationModeLabels: Record<(typeof ediValidationModeSchema.options)[number], string> = {
-  Strict: "Strict",
-  WarnOnly: "Warn only",
-  Disabled: "Disabled",
-};
+const validationModeLabels: Record<(typeof ediValidationModeSchema.options)[number], string> =
+  defineLabels({
+    Strict: "Strict",
+    WarnOnly: "Warn only",
+    Disabled: "Disabled",
+  });
 
 function toOptions<T extends string>(
   values: readonly T[],
@@ -53,7 +55,7 @@ export const templateStatusOptions = toOptions(ediTemplateStatusSchema.options);
 
 export const templateElementSourceOptions = toOptions(
   ediTemplateElementSourceSchema.options,
-  templateElementSourceLabels,
+  sourceLabels(templateElementSourceLabels),
 );
 
 export const transformBaseSourceOptions = templateElementSourceOptions.filter(
@@ -62,12 +64,12 @@ export const transformBaseSourceOptions = templateElementSourceOptions.filter(
 
 export const mappingEntityTypeOptions = toOptions(
   ediMappingEntityTypeSchema.options,
-  mappingEntityTypeLabels,
+  sourceLabels(mappingEntityTypeLabels),
 );
 
 export const validationModeOptions = toOptions(
   ediValidationModeSchema.options,
-  validationModeLabels,
+  sourceLabels(validationModeLabels),
 );
 
 export const transactionSetOptions = toOptions(ediTransactionSetSchema.options);

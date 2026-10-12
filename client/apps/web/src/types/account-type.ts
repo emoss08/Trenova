@@ -4,6 +4,7 @@ import {
   statusSchema,
   tenantInfoSchema,
 } from "@trenova/shared/types/helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const accountCategorySchema = z.enum([
   "Asset",
@@ -18,8 +19,8 @@ export type AccountCategory = z.infer<typeof accountCategorySchema>;
 export const accountTypeSchema = z.object({
   ...tenantInfoSchema.shape,
   status: statusSchema,
-  code: z.string().min(1, { error: "Code is required" }),
-  name: z.string().min(1, { error: "Name is required" }),
+  code: z.string().min(1, { error: () => translate("Code is required") }),
+  name: z.string().min(1, { error: () => translate("Name is required") }),
   description: optionalStringSchema,
   category: accountCategorySchema,
   color: optionalStringSchema,

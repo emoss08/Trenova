@@ -1,10 +1,10 @@
 package fuelcard
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/fuelcard/fileconnector"
 	"github.com/emoss08/trenova/internal/infrastructure/fuelcard/rampconnector"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"go.uber.org/fx"
 )
 
@@ -22,14 +22,14 @@ var Module = fx.Module("fuelcard",
 // WEX and Comdata are read from the transaction export a customer already
 // receives, because neither network grants production API access without its own
 // partner agreement.
-func newWEXConnector() services.FuelCardProvider {
+func newWEXConnector() fuelpurchaseports.FuelCardProvider {
 	return fileconnector.New(integration.TypeWEXFuel)
 }
 
-func newComdataConnector() services.FuelCardProvider {
+func newComdataConnector() fuelpurchaseports.FuelCardProvider {
 	return fileconnector.New(integration.TypeComdataFuel)
 }
 
-func newRampConnector() services.FuelCardProvider {
+func newRampConnector() fuelpurchaseports.FuelCardProvider {
 	return rampconnector.New()
 }

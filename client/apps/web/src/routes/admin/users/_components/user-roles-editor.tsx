@@ -24,9 +24,10 @@ import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const assignRoleFormSchema = z.object({
-  roleId: z.string().min(1, "Role is required"),
+  roleId: z.string().min(1, { error: () => translate("Role is required") }),
   expiresAt: z.number().nullable().optional(),
 });
 
@@ -141,15 +142,21 @@ function RoleAssignmentRow({ assignment, isDisabled, onUnassign }: RoleAssignmen
   const role = assignment.role;
 
   const expiresText = assignment.expiresAt
-    ? `Expires: ${formatToUserTimezone(assignment.expiresAt, {
-        timeFormat: TimeFormat.enum["24-hour"],
-      })}`
-    : "Never expires";
+    ? t(
+        "Expires: {0}",
+        formatToUserTimezone(assignment.expiresAt, {
+          timeFormat: TimeFormat.enum["24-hour"],
+        }),
+      )
+    : t("Never expires");
 
   const assignedText = assignment.assignedAt
-    ? `Assigned: ${formatToUserTimezone(assignment.assignedAt, {
-        timeFormat: TimeFormat.enum["24-hour"],
-      })}`
+    ? t(
+        "Assigned: {0}",
+        formatToUserTimezone(assignment.assignedAt, {
+          timeFormat: TimeFormat.enum["24-hour"],
+        }),
+      )
     : "";
 
   return (

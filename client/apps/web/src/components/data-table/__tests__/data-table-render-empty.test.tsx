@@ -5,6 +5,8 @@ import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/test
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { DataTable } from "../data-table";
+import { DataTableEmptyState } from "../data-table-empty-state";
+import { seedDataTableQueries } from "@/test/data-table-queries";
 
 type TestRow = { id: string; name: string; amount: number };
 
@@ -41,15 +43,13 @@ vi.mock("@/hooks/use-permission", () => ({
     isLoading: false,
   }),
 }));
-vi.mock("@/hooks/data-table/use-data-table-query", () => ({
+vi.mock("@/hooks/data-table/use-data-table-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/hooks/data-table/use-data-table-query")>()),
   useDataTableQuery: () => ({ ...queryResult.current, error: null }),
 }));
-vi.mock("@/lib/queries", () => ({
+vi.mock("@/lib/queries", async () => ({
   queries: {
-    tableConfiguration: {
-      default: () => ({ queryKey: ["tableConfig-default"], queryFn: () => null }),
-      all: () => ({ queryKey: ["tableConfig-all"], queryFn: () => ({ results: [], count: 0 }) }),
-    },
+    ...(await import("@/test/data-table-queries")).dataTableQueryMocks,
   },
 }));
 vi.mock("@trenova/shared/hooks/use-debounce", () => ({
@@ -64,7 +64,7 @@ vi.mock("@/lib/data-table", async (importOriginal) => ({
 type Props = Partial<React.ComponentProps<typeof DataTable<TestRow>>>;
 
 function renderTable(props: Props = {}, searchParams = "", onUrlUpdate?: OnUrlUpdateFunction) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  const client = seedDataTableQueries(new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } }));
   render(
     <QueryClientProvider client={client}>
       <NuqsTestingAdapter hasMemory searchParams={searchParams} onUrlUpdate={onUrlUpdate}>
@@ -95,7 +95,7 @@ describe("DataTable empty state", () => {
   it("replaces the table with a sketch named after the record when nothing is recorded", () => {
     renderTable();
 
-    expect(screen.getByRole("heading", { name: "No test records yet" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "No records yet" })).toBeInTheDocument();
     expect(screen.queryByRole("columnheader")).not.toBeInTheDocument();
     expect(screen.queryByText(/Rows per page/)).not.toBeInTheDocument();
     expect(screen.queryByText("No data available")).not.toBeInTheDocument();
@@ -106,7 +106,7 @@ describe("DataTable empty state", () => {
     const user = userEvent.setup();
     renderTable({ onAddRecord });
 
-    const sheet = screen.getByRole("region", { name: "No test records yet" });
+    const sheet = screen.getByRole("region", { name: "No records yet" });
     await user.click(within(sheet).getByRole("button", { name: "New test record" }));
     expect(onAddRecord).toHaveBeenCalledTimes(1);
   });
@@ -132,6 +132,20 @@ describe("DataTable empty state", () => {
     expect(last.searchParams.get("query")).toBeNull();
   });
 
+  it("names the table's own records when it passes an empty title", () => {
+    renderTable({ emptyTitle: "No shipments yet" });
+
+    expect(screen.getByRole("heading", { name: "No shipments yet" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "No records yet" })).not.toBeInTheDocument();
+  });
+
+  it("says nothing matches, not its empty title, when a search emptied the table", () => {
+    renderTable({ emptyTitle: "No shipments yet" }, "?query=alice");
+
+    expect(screen.getByRole("heading", { name: "Nothing matches" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "No shipments yet" })).not.toBeInTheDocument();
+  });
+
   it("lets a table draw its own empty state and tells it whether filters are on", () => {
     renderTable({
       renderEmptyState: ({ hasActiveFilters }) => (
@@ -140,7 +154,7 @@ describe("DataTable empty state", () => {
     });
 
     expect(screen.getByText("custom empty")).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "No test records yet" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "No records yet" })).not.toBeInTheDocument();
   });
 
   it("keeps the table once there are rows", () => {
@@ -152,6 +166,46 @@ describe("DataTable empty state", () => {
     renderTable();
 
     expect(screen.getByText("Alice")).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "No test records yet" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "No records yet" })).not.toBeInTheDocument();
+  });
+});
+
+describe("DataTableEmptyState", () => {
+  const columns = [{ label: "Name" }];
+
+  it("shows the table's own title when nothing is recorded and no filter is on", () => {
+    render(
+      <DataTableEmptyState
+        columns={columns}
+        hasActiveFilters={false}
+        onClearFilters={vi.fn()}
+        title="No customers yet"
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "No customers yet" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "No records yet" })).not.toBeInTheDocument();
+  });
+
+  it("says nothing matches when a filter is on, whatever its title", () => {
+    render(
+      <DataTableEmptyState
+        columns={columns}
+        hasActiveFilters
+        onClearFilters={vi.fn()}
+        title="No customers yet"
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Nothing matches" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "No customers yet" })).not.toBeInTheDocument();
+  });
+
+  it("falls back to the generic title without one", () => {
+    render(
+      <DataTableEmptyState columns={columns} hasActiveFilters={false} onClearFilters={vi.fn()} />,
+    );
+
+    expect(screen.getByRole("heading", { name: "No records yet" })).toBeInTheDocument();
   });
 });

@@ -182,7 +182,7 @@ function ReversalDetailPanel({
       open={open}
       onOpenChange={onOpenChange}
       title={t("Journal reversal")}
-      description={`Reversal for entry ${reversal.originalJournalEntryId}`}
+      description={t("Reversal for entry {0}", reversal.originalJournalEntryId)}
       headerActions={<AccountingStatusBadge status={reversal.status} />}
     >
       <div className="flex flex-col gap-6">

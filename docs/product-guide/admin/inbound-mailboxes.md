@@ -2,7 +2,7 @@
 path: /admin/inbound-mailboxes
 aliases: [inbound email, email intake, mailbox addresses, tender inbox, POD inbox, inbound webhook, Resend inbound, Postmark inbound, Resend API key, missing email body]
 related:
-  - /inbox
+  - /triage
   - /admin/integrations
   - /admin/agent-control
 ---
@@ -22,7 +22,7 @@ every delivery, and a Resend mailbox without an API key accepts mail but cannot 
 attachments, so each message waits for a person saying why. Resend forwards everything its
 account receives to every webhook, so a Resend mailbox only keeps mail addressed to its own
 **Address** (including Cc and Bcc). Administrators set mailboxes up here; the mail itself is
-read in the [Inbox](/inbox).
+read in the [Triage](/triage).
 
 ## Tasks
 
@@ -75,7 +75,7 @@ Keywords: edit mailbox, pause mailbox, change trust level
 ### Read a mailbox's mail
 Keywords: view emails, mailbox messages
 1. Open [Inbound mailboxes](/admin/inbound-mailboxes).
-2. Select **Open its mail** on the mailbox to open the [Inbox](/inbox) filtered to it.
+2. Select **Open its mail** on the mailbox to open the [Triage](/triage) filtered to it.
 
 ## Notes
 Viewing the page needs read access to inbound mailboxes. **New mailbox** needs create access, and
@@ -83,7 +83,7 @@ Viewing the page needs read access to inbound mailboxes. **New mailbox** needs c
 mailbox's token, which is stored only as a hash; if it is lost, rotate for a new one. The signing
 secret and the API key are stored encrypted and never shown again.
 
-If mail sent to a mailbox never appears in the [Inbox](/inbox), check the webhook's delivery log
+If mail sent to a mailbox never appears in the [Triage](/triage), check the webhook's delivery log
 in the provider: a 404 means the URL's token is wrong or the mailbox is **Not listening**, a 401
 means the signing secret does not match, and a 200 marked ignored means the message was not
 addressed to the mailbox's **Address**.

@@ -9,12 +9,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/rateconfirmationservice"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
+	"github.com/emoss08/trenova/internal/modules/rating/app/rateconfirmationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -35,14 +35,14 @@ func (testDB) IsHealthy(context.Context) bool       { return true }
 func (testDB) Close() error                         { return nil }
 func (testDB) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	return fn(ctx, bun.Tx{})
 }
 
 type tokenRepo struct {
-	repositories.RateConfirmationRepository
+	rateconfirmationports.RateConfirmationRepository
 
 	token  *rateconfirmation.RateConfirmationToken
 	entity *rateconfirmation.RateConfirmation
@@ -60,7 +60,7 @@ func (f *tokenRepo) GetTokenByHash(
 
 func (f *tokenRepo) GetByID(
 	_ context.Context,
-	req *repositories.GetRateConfirmationByIDRequest,
+	req *rateconfirmationports.GetRateConfirmationByIDRequest,
 ) (*rateconfirmation.RateConfirmation, error) {
 	if f.entity != nil && f.entity.ID == req.RateConfirmationID {
 		return f.entity, nil
@@ -70,7 +70,7 @@ func (f *tokenRepo) GetByID(
 
 func (f *tokenRepo) MarkTokenUsed(
 	_ context.Context,
-	_ *repositories.MarkRateConfirmationTokenUsedRequest,
+	_ *rateconfirmationports.MarkRateConfirmationTokenUsedRequest,
 ) (bool, error) {
 	return true, nil
 }

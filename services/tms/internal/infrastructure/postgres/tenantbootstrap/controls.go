@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
-	"github.com/emoss08/trenova/internal/core/domain/dataentrycontrol"
-	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/dataentrycontrol"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
@@ -65,7 +65,11 @@ func CreateControls(ctx context.Context, db bun.IDB, scope Scope) error {
 	if _, err := db.NewInsert().Model(invoiceAdjustmentControl).Exec(ctx); err != nil {
 		return fmt.Errorf("create invoice adjustment control: %w", err)
 	}
-	if err := scope.record(ctx, "invoice_adjustment_controls", invoiceAdjustmentControl.ID); err != nil {
+	if err := scope.record(
+		ctx,
+		"invoice_adjustment_controls",
+		invoiceAdjustmentControl.ID,
+	); err != nil {
 		return err
 	}
 

@@ -136,6 +136,133 @@ describe("auth store checkAuth", () => {
   });
 });
 
+// Responses written from the server's contract: every failure is an RFC 9457 problem
+// document (internal/api/helpers/errors.go), and the rate limiter answers 429 with a
+// Retry-After header (internal/api/middleware/ratelimit.go).
+function problemResponse(
+  status: number,
+  problem: string,
+  title: string,
+  headers: Record<string, string> = {},
+): Response {
+  return new Response(
+    JSON.stringify({
+      type: `https://api.trenova.app/problems/${problem}`,
+      title,
+      status,
+      detail: title,
+    }),
+    { status, headers: { "Content-Type": "application/problem+json", ...headers } },
+  );
+}
+
+describe("auth store checkSession", () => {
+  let clearPermissions: ReturnType<typeof vi.spyOn>;
+
+  function answerSessionCheckWith(outcome: Response | Error) {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        if (outcome instanceof Error) {
+          throw outcome;
+        }
+        return outcome;
+      }),
+    );
+  }
+
+  beforeEach(() => {
+    clearPermissions = vi
+      .spyOn(usePermissionStore.getState(), "clearPermissions")
+      .mockImplementation(() => {});
+    vi.spyOn(usePermissionStore.getState(), "checkForUpdates").mockResolvedValue(
+      undefined as never,
+    );
+    setCsrfToken("session-token");
+    useAuthStore.getState().setUser(makeUser());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    clearCsrfToken();
+    useAuthStore.getState().setUser(null);
+  });
+
+  it("reports signed in when the server returns the current user", async () => {
+    answerSessionCheckWith(
+      new Response(JSON.stringify(makeUser({ name: "Fresh User" })), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    await expect(useAuthStore.getState().checkSession()).resolves.toEqual({
+      status: "signed_in",
+    });
+    expect(useAuthStore.getState().user?.name).toBe("Fresh User");
+  });
+
+  it("reports signed out on a 401 and tears the session down", async () => {
+    answerSessionCheckWith(problemResponse(401, "authentication-error", "Authentication Failed"));
+
+    await expect(useAuthStore.getState().checkSession()).resolves.toEqual({
+      status: "signed_out",
+    });
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+    expect(clearPermissions).toHaveBeenCalledTimes(1);
+  });
+
+  // A rate-limited session check says nothing about the session. Treating it as signed
+  // out sent people who had been navigating quickly to the login form.
+  it("reports unreachable on a 429 and keeps the session and the server's error", async () => {
+    answerSessionCheckWith(
+      problemResponse(429, "rate-limit-exceeded", "Rate Limit Exceeded", { "Retry-After": "7" }),
+    );
+
+    const result = await useAuthStore.getState().checkSession();
+
+    expect(result.status).toBe("unreachable");
+    const error = result.status === "unreachable" ? result.error : null;
+    expect(error).toBeInstanceOf(ApiRequestError);
+    expect((error as ApiRequestError).status).toBe(429);
+    expect((error as ApiRequestError).retryAfter).toBe(7);
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    expect(clearPermissions).not.toHaveBeenCalled();
+  });
+
+  it("reports unreachable on a 500", async () => {
+    answerSessionCheckWith(problemResponse(500, "internal-error", "Internal Error"));
+
+    const result = await useAuthStore.getState().checkSession();
+
+    expect(result.status).toBe("unreachable");
+    expect(result.status === "unreachable" && (result.error as ApiRequestError).status).toBe(500);
+    expect(clearPermissions).not.toHaveBeenCalled();
+  });
+
+  it("reports unreachable when the network fails", async () => {
+    const failure = new TypeError("Failed to fetch");
+    answerSessionCheckWith(failure);
+
+    await expect(useAuthStore.getState().checkSession()).resolves.toEqual({
+      status: "unreachable",
+      error: failure,
+    });
+    expect(useAuthStore.getState().user).not.toBeNull();
+    expect(clearPermissions).not.toHaveBeenCalled();
+  });
+
+  it("keeps checkAuth a plain yes or no over the same check", async () => {
+    answerSessionCheckWith(
+      problemResponse(429, "rate-limit-exceeded", "Rate Limit Exceeded", { "Retry-After": "7" }),
+    );
+
+    await expect(useAuthStore.getState().checkAuth()).resolves.toBe(false);
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+  });
+});
+
 describe("auth store teardown", () => {
   let clearPermissions: ReturnType<typeof vi.spyOn>;
 

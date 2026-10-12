@@ -4,14 +4,13 @@ package invoicedisputeresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	repositories "github.com/emoss08/trenova/internal/core/ports/repositories"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	invoiceports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 )
 
 type Deps struct {
 	*base.Core
-	InvoiceDisputeRepo    repositories.InvoiceDisputeRepository
-	InvoiceDisputeService services.InvoiceDisputeService
+	InvoiceDisputeRepo    invoiceports.InvoiceDisputeRepository
+	InvoiceDisputeService invoiceports.InvoiceDisputeService
 }
 
 type InvoiceDisputeResolver struct{ *Deps }

@@ -1,0 +1,6 @@
+{
+  "Choose a fiscal period above and every account's debits, credits and net change for it are listed here.": "于上方选择会计期间，此处即会列出各科目在该期间的借方、贷方与净变动。",
+  "Net change": "净变动",
+  "No journal entry landed in this period, so every account stands where it did. Post one, or pick another period.": "此期间内没有任何分录入账，因此各科目维持原状。请过账一笔分录，或选择其他期间。",
+  "View account balances for a fiscal period.": "查看某会计期间的科目余额。"
+}

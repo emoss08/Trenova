@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
-import { runBulkAction } from "@/lib/bulk-run";
+import { notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
 import {
   recurringDeductionTableGraphQLConfig,
   updateRecurringDeduction,
@@ -15,6 +15,7 @@ import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { deductionStatusInput, getColumns } from "./deduction-columns";
 import { DeductionPanel } from "./deduction-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function DeductionsTable() {
   const t = useT();
@@ -29,11 +30,48 @@ export default function DeductionsTable() {
         toast.info(t("No selected deductions can move to that status."));
         return;
       }
-      await runBulkAction(
-        eligible,
-        (row) =>
-          updateRecurringDeduction(deductionStatusInput(row, status as RecurringDeductionStatus)),
-        { noun: "deduction", verb: status === "Paused" ? "paused" : "resumed" },
+      const outcome = await settleAll(eligible, (row) =>
+        updateRecurringDeduction(deductionStatusInput(row, status as RecurringDeductionStatus)),
+      );
+      notifyBulkOutcome(
+        outcome,
+        status === "Paused"
+          ? {
+              succeeded: (count) =>
+                translate(
+                  "{0, plural, one {# deduction paused} other {# deductions paused}}",
+                  count,
+                ),
+              partial: (succeeded, failed) =>
+                translate(
+                  "{0, plural, one {# deduction paused} other {# deductions paused}}, {1} failed",
+                  succeeded,
+                  failed,
+                ),
+              allFailed: (failed) =>
+                translate(
+                  "{0, plural, one {The selected deduction failed} other {All # selected deductions failed}}",
+                  failed,
+                ),
+            }
+          : {
+              succeeded: (count) =>
+                translate(
+                  "{0, plural, one {# deduction resumed} other {# deductions resumed}}",
+                  count,
+                ),
+              partial: (succeeded, failed) =>
+                translate(
+                  "{0, plural, one {# deduction resumed} other {# deductions resumed}}, {1} failed",
+                  succeeded,
+                  failed,
+                ),
+              allFailed: (failed) =>
+                translate(
+                  "{0, plural, one {The selected deduction failed} other {All # selected deductions failed}}",
+                  failed,
+                ),
+            },
       );
       await queryClient.invalidateQueries({ queryKey: ["recurring-deduction-list"] });
     },
@@ -72,6 +110,7 @@ export default function DeductionsTable() {
   return (
     <DataTable<RecurringDeductionRow>
       name="Recurring Deduction"
+      emptyTitle={t("No recurring deductions yet")}
       queryKey="recurring-deduction-list"
       graphql={recurringDeductionTableGraphQLConfig}
       resource={Resource.RecurringDeduction}

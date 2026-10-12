@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { optionalStringSchema, tenantInfoSchema } from "@trenova/shared/types/helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const fieldTypeSchema = z.enum([
   "text",
@@ -12,8 +13,8 @@ export const fieldTypeSchema = z.enum([
 export type FieldType = z.infer<typeof fieldTypeSchema>;
 
 export const selectOptionSchema = z.object({
-  value: z.string().min(1, "Value is required"),
-  label: z.string().min(1, "Label is required"),
+  value: z.string().min(1, { error: () => translate("Value is required") }),
+  label: z.string().min(1, { error: () => translate("Label is required") }),
   color: optionalStringSchema,
   description: optionalStringSchema,
 });
@@ -37,16 +38,19 @@ export type UIAttributes = z.infer<typeof uiAttributesSchema>;
 
 export const customFieldDefinitionSchema = z.object({
   ...tenantInfoSchema.shape,
-  resourceType: z.string().min(1, "Resource type is required"),
+  resourceType: z.string().min(1, { error: () => translate("Resource type is required") }),
   name: z
     .string()
-    .min(1, "Name is required")
+    .min(1, { error: () => translate("Name is required") })
     .max(100)
-    .regex(
-      /^[a-z][a-z0-9_]*$/,
-      "Must start with lowercase letter, only lowercase letters, numbers, underscores",
-    ),
-  label: z.string().min(1, "Label is required").max(150),
+    .regex(/^[a-z][a-z0-9_]*$/, {
+      error: () =>
+        translate("Must start with lowercase letter, only lowercase letters, numbers, underscores"),
+    }),
+  label: z
+    .string()
+    .min(1, { error: () => translate("Label is required") })
+    .max(150),
   description: optionalStringSchema,
   fieldType: fieldTypeSchema,
   isRequired: z.boolean().default(false),

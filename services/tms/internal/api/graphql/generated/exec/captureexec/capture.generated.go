@@ -9,12 +9,11 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/capture"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/capturereleaseservice"
-	"github.com/emoss08/trenova/internal/core/services/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -147,7 +146,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capturereleaseservice.Release)
 					return obj.Installer, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureAgentInstaller2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcapturereleaseserviceᚐInstaller),
+				Marshal: gqlexec.Marshal(marshalNCaptureAgentInstaller2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturereleaseserviceᚐInstaller),
 			},
 			{
 				Name:     "notes",
@@ -211,7 +210,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureBatch)
 					return gqlexec.Resolver[resolverCaptureBatch](ec, "CaptureBatch").User(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:     "deviceId",
@@ -233,7 +232,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureBatch)
 					return gqlexec.Resolver[resolverCaptureBatch](ec, "CaptureBatch").Device(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOCaptureDevice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureDevice),
+				Marshal: gqlexec.Marshal(marshalOCaptureDevice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureDevice),
 			},
 			{
 				Name:     "requestId",
@@ -261,7 +260,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureBatch)
 					return obj.Source, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSource),
+				Marshal: gqlexec.Marshal(marshalNCaptureSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSource),
 			},
 			{
 				Name:     "status",
@@ -271,7 +270,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureBatch)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureBatchStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐBatchStatus),
+				Marshal: gqlexec.Marshal(marshalNCaptureBatchStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐBatchStatus),
 			},
 			{
 				Name:     "sourceName",
@@ -302,7 +301,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureBatch)
 					return obj.Settings, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureSettings2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSettings),
+				Marshal: gqlexec.Marshal(marshalNCaptureSettings2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSettings),
 			},
 			{
 				Name:     "targetType",
@@ -333,7 +332,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureBatch)
 					return gqlexec.Resolver[resolverCaptureBatch](ec, "CaptureBatch").Target(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOCaptureRecordRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐCaptureRecordLabel),
+				Marshal: gqlexec.Marshal(marshalOCaptureRecordRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋcaptureportsᚐCaptureRecordLabel),
 			},
 			{
 				Name:     "documentTypeId",
@@ -447,7 +446,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureBatch)
 					return gqlexec.Resolver[resolverCaptureBatch](ec, "CaptureBatch").Pages(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNCapturePage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCapturePageᚄ),
+				Marshal: gqlexec.Marshal(marshalNCapturePage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCapturePageᚄ),
 			},
 			{
 				Name:       "items",
@@ -460,7 +459,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureBatch)
 					return gqlexec.Resolver[resolverCaptureBatch](ec, "CaptureBatch").Items(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureItemᚄ),
+				Marshal: gqlexec.Marshal(marshalNCaptureItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureItemᚄ),
 			},
 			{
 				Name:     "version",
@@ -536,7 +535,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.CaptureBatchEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureBatch),
+				Marshal: gqlexec.Marshal(marshalNCaptureBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureBatch),
 			},
 			{
 				Name:     "cursor",
@@ -589,7 +588,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.CaptureCoverSheet)
 					return gqlexec.Resolver[resolverCaptureCoverSheet](ec, "CaptureCoverSheet").Target(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOCaptureRecordRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐCaptureRecordLabel),
+				Marshal: gqlexec.Marshal(marshalOCaptureRecordRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋcaptureportsᚐCaptureRecordLabel),
 			},
 			{
 				Name:     "documentTypeId",
@@ -619,7 +618,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.CaptureCoverSheet)
 					return obj.QRCode, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureQRCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐCaptureQRCode),
+				Marshal: gqlexec.Marshal(marshalNCaptureQRCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋcaptureportsᚐCaptureQRCode),
 			},
 			{
 				Name:     "expiresAt",
@@ -693,7 +692,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureDevice)
 					return gqlexec.Resolver[resolverCaptureDevice](ec, "CaptureDevice").User(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:     "name",
@@ -743,7 +742,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureDevice)
 					return obj.Architecture, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureArchitecture2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐArchitecture),
+				Marshal: gqlexec.Marshal(marshalNCaptureArchitecture2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐArchitecture),
 			},
 			{
 				Name:     "osVersion",
@@ -763,7 +762,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureDevice)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureDeviceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐDeviceStatus),
+				Marshal: gqlexec.Marshal(marshalNCaptureDeviceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐDeviceStatus),
 			},
 			{
 				Name:      "sources",
@@ -774,7 +773,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureDevice)
 					return obj.Sources, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureSourceInfo2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSourceInfoᚄ),
+				Marshal: gqlexec.Marshal(marshalNCaptureSourceInfo2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSourceInfoᚄ),
 			},
 			{
 				Name:     "lastSeenAt",
@@ -905,7 +904,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureItem)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐItemStatus),
+				Marshal: gqlexec.Marshal(marshalNCaptureItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐItemStatus),
 			},
 			{
 				Name:     "pageIds",
@@ -958,7 +957,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureItem)
 					return gqlexec.Resolver[resolverCaptureItem](ec, "CaptureItem").SuggestedRecord(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOCaptureRecordRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐCaptureRecordLabel),
+				Marshal: gqlexec.Marshal(marshalOCaptureRecordRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋcaptureportsᚐCaptureRecordLabel),
 			},
 			{
 				Name:     "suggestedDocumentTypeId",
@@ -978,7 +977,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureItem)
 					return gqlexec.Resolver[resolverCaptureItem](ec, "CaptureItem").SuggestionSource(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOCaptureSuggestionSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSuggestionSource),
+				Marshal: gqlexec.Marshal(marshalOCaptureSuggestionSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSuggestionSource),
 			},
 			{
 				Name:     "suggestionConfidence",
@@ -1047,7 +1046,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureItem)
 					return gqlexec.Resolver[resolverCaptureItem](ec, "CaptureItem").FiledRecord(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOCaptureRecordRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐCaptureRecordLabel),
+				Marshal: gqlexec.Marshal(marshalOCaptureRecordRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋcaptureportsᚐCaptureRecordLabel),
 			},
 			{
 				Name:     "filedDocumentTypeId",
@@ -1086,7 +1085,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureItem)
 					return gqlexec.Resolver[resolverCaptureItem](ec, "CaptureItem").FiledBy(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:     "filedAt",
@@ -1199,7 +1198,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CapturePage)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCapturePageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐPageStatus),
+				Marshal: gqlexec.Marshal(marshalNCapturePageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐPageStatus),
 			},
 			{
 				Name:     "byteSize",
@@ -1411,7 +1410,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*captureservice.PairingPreview)
 					return obj.Architecture, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureArchitecture2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐArchitecture),
+				Marshal: gqlexec.Marshal(marshalNCaptureArchitecture2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐArchitecture),
 			},
 			{
 				Name:     "osVersion",
@@ -1503,7 +1502,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureProfile)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureProfileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐProfileStatus),
+				Marshal: gqlexec.Marshal(marshalNCaptureProfileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐProfileStatus),
 			},
 			{
 				Name:     "isDefault",
@@ -1533,7 +1532,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureProfile)
 					return obj.PixelType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCapturePixelType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐPixelType),
+				Marshal: gqlexec.Marshal(marshalNCapturePixelType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐPixelType),
 			},
 			{
 				Name:     "duplex",
@@ -1593,7 +1592,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureProfile)
 					return obj.SeparatorStrategies, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureSeparatorStrategy2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSeparatorStrategyᚄ),
+				Marshal: gqlexec.Marshal(marshalNCaptureSeparatorStrategy2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSeparatorStrategyᚄ),
 			},
 			{
 				Name:     "fixedPageCount",
@@ -1642,7 +1641,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.CaptureQRCode)
+					obj := o.(*captureports.CaptureQRCode)
 					return obj.Size, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1652,7 +1651,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.CaptureQRCode)
+					obj := o.(*captureports.CaptureQRCode)
 					return obj.Modules, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
@@ -1664,7 +1663,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.CaptureRecordLabel)
+					obj := o.(*captureports.CaptureRecordLabel)
 					return obj.ResourceType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1674,7 +1673,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.CaptureRecordLabel)
+					obj := o.(*captureports.CaptureRecordLabel)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1684,7 +1683,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.CaptureRecordLabel)
+					obj := o.(*captureports.CaptureRecordLabel)
 					return obj.Title, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1694,7 +1693,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.CaptureRecordLabel)
+					obj := o.(*captureports.CaptureRecordLabel)
 					return obj.Subtitle, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1739,7 +1738,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureRequest)
 					return obj.Mode, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureRequestMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐRequestMode),
+				Marshal: gqlexec.Marshal(marshalNCaptureRequestMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐRequestMode),
 			},
 			{
 				Name:     "status",
@@ -1749,7 +1748,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureRequest)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureRequestStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐRequestStatus),
+				Marshal: gqlexec.Marshal(marshalNCaptureRequestStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐRequestStatus),
 			},
 			{
 				Name:     "targetType",
@@ -1817,7 +1816,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.CaptureRequest)
 					return gqlexec.Resolver[resolverCaptureRequest](ec, "CaptureRequest").FailureCode(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOCaptureRequestFailureCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐRequestFailureCode),
+				Marshal: gqlexec.Marshal(marshalOCaptureRequestFailureCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐRequestFailureCode),
 			},
 			{
 				Name:     "failureMessage",
@@ -1910,7 +1909,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.Settings)
 					return gqlexec.Resolver[resolverCaptureSettings](ec, "CaptureSettings").Protocol(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOCaptureSourceProtocol2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSourceProtocol),
+				Marshal: gqlexec.Marshal(marshalOCaptureSourceProtocol2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSourceProtocol),
 			},
 			{
 				Name:     "bitness",
@@ -1941,7 +1940,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.Settings)
 					return gqlexec.Resolver[resolverCaptureSettings](ec, "CaptureSettings").PixelType(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOCapturePixelType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐPixelType),
+				Marshal: gqlexec.Marshal(marshalOCapturePixelType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐPixelType),
 			},
 			{
 				Name:     "duplex",
@@ -2035,7 +2034,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*capture.SourceInfo)
 					return obj.Protocol, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureSourceProtocol2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSourceProtocol),
+				Marshal: gqlexec.Marshal(marshalNCaptureSourceProtocol2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSourceProtocol),
 			},
 			{
 				Name:     "bitness",
@@ -2128,7 +2127,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*captureservice.FileItemsResult)
 					return obj.Filed, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureItemᚄ),
+				Marshal: gqlexec.Marshal(marshalNCaptureItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureItemᚄ),
 			},
 			{
 				Name:      "failures",
@@ -2139,7 +2138,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*captureservice.FileItemsResult)
 					return obj.Failures, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureItemFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcaptureserviceᚐFileItemFailureᚄ),
+				Marshal: gqlexec.Marshal(marshalNCaptureItemFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcaptureserviceᚐFileItemFailureᚄ),
 			},
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
@@ -2154,7 +2153,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").EditCaptureItems(ctx, fc.Args["batchId"].(string), fc.Args["input"].(gqlmodel.EditCaptureItemsInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureBatch),
+				Marshal: gqlexec.Marshal(marshalNCaptureBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureBatch),
 			},
 			{
 				Name:       "fileCaptureItem",
@@ -2167,7 +2166,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").FileCaptureItem(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.FileCaptureItemInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureItem),
+				Marshal: gqlexec.Marshal(marshalNCaptureItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureItem),
 			},
 			{
 				Name:       "fileCaptureItems",
@@ -2180,7 +2179,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").FileCaptureItems(ctx, fc.Args["items"].([]*gqlmodel.FileCaptureItemsEntryInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFileCaptureItemsResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcaptureserviceᚐFileItemsResult),
+				Marshal: gqlexec.Marshal(marshalNFileCaptureItemsResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcaptureserviceᚐFileItemsResult),
 			},
 			{
 				Name:       "discardCaptureItem",
@@ -2193,7 +2192,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DiscardCaptureItem(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureBatch),
+				Marshal: gqlexec.Marshal(marshalNCaptureBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureBatch),
 			},
 			{
 				Name:       "discardCaptureBatch",
@@ -2206,7 +2205,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DiscardCaptureBatch(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureBatch),
+				Marshal: gqlexec.Marshal(marshalNCaptureBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureBatch),
 			},
 			{
 				Name:       "createCaptureRequest",
@@ -2219,7 +2218,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateCaptureRequest(ctx, fc.Args["input"].(gqlmodel.CreateCaptureRequestInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureRequest),
+				Marshal: gqlexec.Marshal(marshalNCaptureRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureRequest),
 			},
 			{
 				Name:       "cancelCaptureRequest",
@@ -2232,7 +2231,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CancelCaptureRequest(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureRequest),
+				Marshal: gqlexec.Marshal(marshalNCaptureRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureRequest),
 			},
 			{
 				Name:       "createCaptureCoverSheets",
@@ -2282,7 +2281,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RevokeMyCaptureDevice(ctx, fc.Args["id"].(string), fc.Args["reason"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureDevice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureDevice),
+				Marshal: gqlexec.Marshal(marshalNCaptureDevice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureDevice),
 			},
 			{
 				Name:       "revokeCaptureDevice",
@@ -2295,7 +2294,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RevokeCaptureDevice(ctx, fc.Args["id"].(string), fc.Args["reason"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureDevice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureDevice),
+				Marshal: gqlexec.Marshal(marshalNCaptureDevice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureDevice),
 			},
 			{
 				Name:       "createCaptureProfile",
@@ -2308,7 +2307,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateCaptureProfile(ctx, fc.Args["input"].(gqlmodel.CaptureProfileInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureProfile),
+				Marshal: gqlexec.Marshal(marshalNCaptureProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureProfile),
 			},
 			{
 				Name:       "updateCaptureProfile",
@@ -2321,7 +2320,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateCaptureProfile(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.CaptureProfileInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureProfile),
+				Marshal: gqlexec.Marshal(marshalNCaptureProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureProfile),
 			},
 			{
 				Name:       "deleteCaptureProfile",
@@ -2347,7 +2346,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyCaptureAccess(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureAccess2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcaptureserviceᚐAccess),
+				Marshal: gqlexec.Marshal(marshalNCaptureAccess2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcaptureserviceᚐAccess),
 			},
 			{
 				Name:       "captureAgentRelease",
@@ -2358,7 +2357,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CaptureAgentRelease(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalOCaptureAgentRelease2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcapturereleaseserviceᚐRelease),
+				Marshal: gqlexec.Marshal(marshalOCaptureAgentRelease2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturereleaseserviceᚐRelease),
 			},
 			{
 				Name:       "captureBatches",
@@ -2386,7 +2385,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CaptureBatch(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureBatch),
+				Marshal: gqlexec.Marshal(marshalNCaptureBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureBatch),
 			},
 			{
 				Name:       "myCaptureDevices",
@@ -2400,7 +2399,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyCaptureDevices(ctx, fc.Args["status"].(*capture.DeviceStatus))
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureDevice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureDeviceᚄ),
+				Marshal: gqlexec.Marshal(marshalNCaptureDevice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureDeviceᚄ),
 			},
 			{
 				Name:       "captureDevices",
@@ -2414,7 +2413,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CaptureDevices(ctx, fc.Args["status"].(*capture.DeviceStatus), fc.Args["query"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureDevice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureDeviceᚄ),
+				Marshal: gqlexec.Marshal(marshalNCaptureDevice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureDeviceᚄ),
 			},
 			{
 				Name:       "availableCaptureProfiles",
@@ -2426,7 +2425,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AvailableCaptureProfiles(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureProfile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureProfileᚄ),
+				Marshal: gqlexec.Marshal(marshalNCaptureProfile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureProfileᚄ),
 			},
 			{
 				Name:       "captureProfiles",
@@ -2440,7 +2439,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CaptureProfiles(ctx, fc.Args["status"].(*capture.ProfileStatus), fc.Args["query"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureProfile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureProfileᚄ),
+				Marshal: gqlexec.Marshal(marshalNCaptureProfile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureProfileᚄ),
 			},
 			{
 				Name:       "captureProfile",
@@ -2454,7 +2453,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CaptureProfile(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureProfile),
+				Marshal: gqlexec.Marshal(marshalNCaptureProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureProfile),
 			},
 			{
 				Name:       "captureRequestsForTarget",
@@ -2468,7 +2467,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CaptureRequestsForTarget(ctx, fc.Args["targetType"].(string), fc.Args["targetId"].(string), fc.Args["limit"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNCaptureRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureRequestᚄ),
+				Marshal: gqlexec.Marshal(marshalNCaptureRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureRequestᚄ),
 			},
 			{
 				Name:       "captureDevicePairing",
@@ -2482,7 +2481,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CaptureDevicePairing(ctx, fc.Args["userCode"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNCapturePairingPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcaptureserviceᚐPairingPreview),
+				Marshal: gqlexec.Marshal(marshalNCapturePairingPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcaptureserviceᚐPairingPreview),
 			},
 		}},
 	},
@@ -2513,7 +2512,7 @@ var Shard = &gqlexec.Shard{
 type resolverCaptureBatch interface {
 	User(ctx context.Context, obj *capture.CaptureBatch) (*tenant.User, error)
 	Device(ctx context.Context, obj *capture.CaptureBatch) (*capture.CaptureDevice, error)
-	Target(ctx context.Context, obj *capture.CaptureBatch) (*repositories.CaptureRecordLabel, error)
+	Target(ctx context.Context, obj *capture.CaptureBatch) (*captureports.CaptureRecordLabel, error)
 	OpenItemCount(ctx context.Context, obj *capture.CaptureBatch) (int, error)
 	IsEditable(ctx context.Context, obj *capture.CaptureBatch) (bool, error)
 	Pages(ctx context.Context, obj *capture.CaptureBatch) ([]*capture.CapturePage, error)
@@ -2521,7 +2520,7 @@ type resolverCaptureBatch interface {
 }
 
 type resolverCaptureCoverSheet interface {
-	Target(ctx context.Context, obj *gqlmodel.CaptureCoverSheet) (*repositories.CaptureRecordLabel, error)
+	Target(ctx context.Context, obj *gqlmodel.CaptureCoverSheet) (*captureports.CaptureRecordLabel, error)
 }
 
 type resolverCaptureDevice interface {
@@ -2531,9 +2530,9 @@ type resolverCaptureDevice interface {
 
 type resolverCaptureItem interface {
 	PageCount(ctx context.Context, obj *capture.CaptureItem) (int, error)
-	SuggestedRecord(ctx context.Context, obj *capture.CaptureItem) (*repositories.CaptureRecordLabel, error)
+	SuggestedRecord(ctx context.Context, obj *capture.CaptureItem) (*captureports.CaptureRecordLabel, error)
 	SuggestionSource(ctx context.Context, obj *capture.CaptureItem) (*capture.SuggestionSource, error)
-	FiledRecord(ctx context.Context, obj *capture.CaptureItem) (*repositories.CaptureRecordLabel, error)
+	FiledRecord(ctx context.Context, obj *capture.CaptureItem) (*captureports.CaptureRecordLabel, error)
 	FiledBy(ctx context.Context, obj *capture.CaptureItem) (*tenant.User, error)
 }
 
@@ -2908,7 +2907,7 @@ func field_Query_myCaptureDevices_args(ctx context.Context, ec *gqlexec.Exec, ra
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "status",
 		func(ctx context.Context, v any) (*capture.DeviceStatus, error) {
-			return unmarshalOCaptureDeviceStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐDeviceStatus(ctx, ec, v)
+			return unmarshalOCaptureDeviceStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐDeviceStatus(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -2921,7 +2920,7 @@ func field_Query_captureDevices_args(ctx context.Context, ec *gqlexec.Exec, rawA
 	args := make(map[string]any, 2)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "status",
 		func(ctx context.Context, v any) (*capture.DeviceStatus, error) {
-			return unmarshalOCaptureDeviceStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐDeviceStatus(ctx, ec, v)
+			return unmarshalOCaptureDeviceStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐDeviceStatus(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -2942,7 +2941,7 @@ func field_Query_captureProfiles_args(ctx context.Context, ec *gqlexec.Exec, raw
 	args := make(map[string]any, 2)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "status",
 		func(ctx context.Context, v any) (*capture.ProfileStatus, error) {
-			return unmarshalOCaptureProfileStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐProfileStatus(ctx, ec, v)
+			return unmarshalOCaptureProfileStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐProfileStatus(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -3061,14 +3060,14 @@ func unmarshalInputCaptureBatchesInput(ctx context.Context, ec *gqlexec.Exec, ob
 			it.Sort = data
 		case "statuses":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statuses"))
-			data, err := unmarshalOCaptureBatchStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐBatchStatusᚄ(ctx, ec, v)
+			data, err := unmarshalOCaptureBatchStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐBatchStatusᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.Statuses = data
 		case "source":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
-			data, err := unmarshalOCaptureSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSource(ctx, ec, v)
+			data, err := unmarshalOCaptureSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSource(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3265,7 +3264,7 @@ func unmarshalInputCaptureProfileInput(ctx context.Context, ec *gqlexec.Exec, ob
 			it.Description = data
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := unmarshalNCaptureProfileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐProfileStatus(ctx, ec, v)
+			data, err := unmarshalNCaptureProfileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐProfileStatus(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3286,7 +3285,7 @@ func unmarshalInputCaptureProfileInput(ctx context.Context, ec *gqlexec.Exec, ob
 			it.DPI = data
 		case "pixelType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pixelType"))
-			data, err := unmarshalNCapturePixelType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐPixelType(ctx, ec, v)
+			data, err := unmarshalNCapturePixelType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐPixelType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3328,7 +3327,7 @@ func unmarshalInputCaptureProfileInput(ctx context.Context, ec *gqlexec.Exec, ob
 			it.ShowDriverUI = data
 		case "separatorStrategies":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("separatorStrategies"))
-			data, err := unmarshalNCaptureSeparatorStrategy2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSeparatorStrategyᚄ(ctx, ec, v)
+			data, err := unmarshalNCaptureSeparatorStrategy2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSeparatorStrategyᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3372,7 +3371,7 @@ func unmarshalInputCreateCaptureRequestInput(ctx context.Context, ec *gqlexec.Ex
 			it.DeviceID = data
 		case "mode":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mode"))
-			data, err := unmarshalNCaptureRequestMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐRequestMode(ctx, ec, v)
+			data, err := unmarshalNCaptureRequestMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐRequestMode(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3575,7 +3574,7 @@ func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool,
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNCaptureBatchStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐBatchStatus(ctx context.Context, ec *gqlexec.Exec, v any) (capture.BatchStatus, error) {
+func unmarshalNCaptureBatchStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐBatchStatus(ctx context.Context, ec *gqlexec.Exec, v any) (capture.BatchStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := capture.BatchStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3609,7 +3608,7 @@ func unmarshalNCapturePageRotationInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNCapturePixelType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐPixelType(ctx context.Context, ec *gqlexec.Exec, v any) (capture.PixelType, error) {
+func unmarshalNCapturePixelType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐPixelType(ctx context.Context, ec *gqlexec.Exec, v any) (capture.PixelType, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := capture.PixelType(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3620,26 +3619,26 @@ func unmarshalNCaptureProfileInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNCaptureProfileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐProfileStatus(ctx context.Context, ec *gqlexec.Exec, v any) (capture.ProfileStatus, error) {
+func unmarshalNCaptureProfileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐProfileStatus(ctx context.Context, ec *gqlexec.Exec, v any) (capture.ProfileStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := capture.ProfileStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNCaptureRequestMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐRequestMode(ctx context.Context, ec *gqlexec.Exec, v any) (capture.RequestMode, error) {
+func unmarshalNCaptureRequestMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐRequestMode(ctx context.Context, ec *gqlexec.Exec, v any) (capture.RequestMode, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := capture.RequestMode(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNCaptureSeparatorStrategy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSeparatorStrategy(ctx context.Context, ec *gqlexec.Exec, v any) (capture.SeparatorStrategy, error) {
+func unmarshalNCaptureSeparatorStrategy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSeparatorStrategy(ctx context.Context, ec *gqlexec.Exec, v any) (capture.SeparatorStrategy, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := capture.SeparatorStrategy(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNCaptureSeparatorStrategy2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSeparatorStrategyᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]capture.SeparatorStrategy, error) {
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNCaptureSeparatorStrategy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSeparatorStrategy)
+func unmarshalNCaptureSeparatorStrategy2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSeparatorStrategyᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]capture.SeparatorStrategy, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNCaptureSeparatorStrategy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSeparatorStrategy)
 }
 
 func unmarshalNCreateCaptureRequestInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateCaptureRequestInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.CreateCaptureRequestInput, error) {
@@ -3702,14 +3701,14 @@ func unmarshalOCaptureBatchSort2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOCaptureBatchStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐBatchStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]capture.BatchStatus, error) {
+func unmarshalOCaptureBatchStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐBatchStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]capture.BatchStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNCaptureBatchStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐBatchStatus)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNCaptureBatchStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐBatchStatus)
 }
 
-func unmarshalOCaptureDeviceStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐDeviceStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*capture.DeviceStatus, error) {
+func unmarshalOCaptureDeviceStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐDeviceStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*capture.DeviceStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -3725,7 +3724,7 @@ func unmarshalOCapturePageRotationInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenova�
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNCapturePageRotationInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCapturePageRotationInput)
 }
 
-func unmarshalOCaptureProfileStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐProfileStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*capture.ProfileStatus, error) {
+func unmarshalOCaptureProfileStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐProfileStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*capture.ProfileStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -3734,7 +3733,7 @@ func unmarshalOCaptureProfileStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOCaptureSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSource(ctx context.Context, ec *gqlexec.Exec, v any) (*capture.Source, error) {
+func unmarshalOCaptureSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSource(ctx context.Context, ec *gqlexec.Exec, v any) (*capture.Source, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -3783,7 +3782,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNCaptureAccess2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcaptureserviceᚐAccess(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *captureservice.Access) graphql.Marshaler {
+func marshalNCaptureAccess2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcaptureserviceᚐAccess(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *captureservice.Access) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3791,11 +3790,11 @@ func marshalNCaptureAccess2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore
 	return ec.MarshalType(ctx, sel, "CaptureAccess", v)
 }
 
-func marshalNCaptureAgentInstaller2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcapturereleaseserviceᚐInstaller(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capturereleaseservice.Installer) graphql.Marshaler {
+func marshalNCaptureAgentInstaller2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturereleaseserviceᚐInstaller(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capturereleaseservice.Installer) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "CaptureAgentInstaller", &v)
 }
 
-func marshalNCaptureArchitecture2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐArchitecture(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.Architecture) graphql.Marshaler {
+func marshalNCaptureArchitecture2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐArchitecture(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.Architecture) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3803,7 +3802,7 @@ func marshalNCaptureArchitecture2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return res
 }
 
-func marshalNCaptureBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureBatch(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.CaptureBatch) graphql.Marshaler {
+func marshalNCaptureBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureBatch(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.CaptureBatch) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3835,7 +3834,7 @@ func marshalNCaptureBatchEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋa
 	return ec.MarshalType(ctx, sel, "CaptureBatchEdge", v)
 }
 
-func marshalNCaptureBatchStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐBatchStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.BatchStatus) graphql.Marshaler {
+func marshalNCaptureBatchStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐBatchStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.BatchStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3859,15 +3858,15 @@ func marshalNCaptureCoverSheet2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "CaptureCoverSheet", v)
 }
 
-func marshalNCaptureDevice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureDeviceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*capture.CaptureDevice) graphql.Marshaler {
+func marshalNCaptureDevice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureDeviceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*capture.CaptureDevice) graphql.Marshaler {
 	return gqlexec.List[*capture.CaptureDevice]{
-		Elem:        marshalNCaptureDevice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureDevice,
+		Elem:        marshalNCaptureDevice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureDevice,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCaptureDevice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureDevice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.CaptureDevice) graphql.Marshaler {
+func marshalNCaptureDevice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureDevice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.CaptureDevice) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3875,7 +3874,7 @@ func marshalNCaptureDevice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore
 	return ec.MarshalType(ctx, sel, "CaptureDevice", v)
 }
 
-func marshalNCaptureDeviceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐDeviceStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.DeviceStatus) graphql.Marshaler {
+func marshalNCaptureDeviceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐDeviceStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.DeviceStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3883,15 +3882,15 @@ func marshalNCaptureDeviceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return res
 }
 
-func marshalNCaptureItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*capture.CaptureItem) graphql.Marshaler {
+func marshalNCaptureItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*capture.CaptureItem) graphql.Marshaler {
 	return gqlexec.List[*capture.CaptureItem]{
-		Elem:        marshalNCaptureItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureItem,
+		Elem:        marshalNCaptureItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureItem,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCaptureItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.CaptureItem) graphql.Marshaler {
+func marshalNCaptureItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.CaptureItem) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3899,19 +3898,19 @@ func marshalNCaptureItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return ec.MarshalType(ctx, sel, "CaptureItem", v)
 }
 
-func marshalNCaptureItemFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcaptureserviceᚐFileItemFailure(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v captureservice.FileItemFailure) graphql.Marshaler {
+func marshalNCaptureItemFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcaptureserviceᚐFileItemFailure(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v captureservice.FileItemFailure) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "CaptureItemFailure", &v)
 }
 
-func marshalNCaptureItemFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcaptureserviceᚐFileItemFailureᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []captureservice.FileItemFailure) graphql.Marshaler {
+func marshalNCaptureItemFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcaptureserviceᚐFileItemFailureᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []captureservice.FileItemFailure) graphql.Marshaler {
 	return gqlexec.List[captureservice.FileItemFailure]{
-		Elem:        marshalNCaptureItemFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcaptureserviceᚐFileItemFailure,
+		Elem:        marshalNCaptureItemFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcaptureserviceᚐFileItemFailure,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCaptureItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐItemStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.ItemStatus) graphql.Marshaler {
+func marshalNCaptureItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐItemStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.ItemStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3919,15 +3918,15 @@ func marshalNCaptureItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return res
 }
 
-func marshalNCapturePage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCapturePageᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*capture.CapturePage) graphql.Marshaler {
+func marshalNCapturePage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCapturePageᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*capture.CapturePage) graphql.Marshaler {
 	return gqlexec.List[*capture.CapturePage]{
-		Elem:        marshalNCapturePage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCapturePage,
+		Elem:        marshalNCapturePage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCapturePage,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCapturePage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCapturePage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.CapturePage) graphql.Marshaler {
+func marshalNCapturePage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCapturePage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.CapturePage) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3935,7 +3934,7 @@ func marshalNCapturePage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return ec.MarshalType(ctx, sel, "CapturePage", v)
 }
 
-func marshalNCapturePageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐPageStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.PageStatus) graphql.Marshaler {
+func marshalNCapturePageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐPageStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.PageStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3943,7 +3942,7 @@ func marshalNCapturePageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return res
 }
 
-func marshalNCapturePairingPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcaptureserviceᚐPairingPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *captureservice.PairingPreview) graphql.Marshaler {
+func marshalNCapturePairingPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcaptureserviceᚐPairingPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *captureservice.PairingPreview) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3951,7 +3950,7 @@ func marshalNCapturePairingPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "CapturePairingPreview", v)
 }
 
-func marshalNCapturePixelType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐPixelType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.PixelType) graphql.Marshaler {
+func marshalNCapturePixelType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐPixelType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.PixelType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3959,15 +3958,15 @@ func marshalNCapturePixelType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore
 	return res
 }
 
-func marshalNCaptureProfile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureProfileᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*capture.CaptureProfile) graphql.Marshaler {
+func marshalNCaptureProfile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureProfileᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*capture.CaptureProfile) graphql.Marshaler {
 	return gqlexec.List[*capture.CaptureProfile]{
-		Elem:        marshalNCaptureProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureProfile,
+		Elem:        marshalNCaptureProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureProfile,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCaptureProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.CaptureProfile) graphql.Marshaler {
+func marshalNCaptureProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.CaptureProfile) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3975,7 +3974,7 @@ func marshalNCaptureProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return ec.MarshalType(ctx, sel, "CaptureProfile", v)
 }
 
-func marshalNCaptureProfileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐProfileStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.ProfileStatus) graphql.Marshaler {
+func marshalNCaptureProfileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐProfileStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.ProfileStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3983,7 +3982,7 @@ func marshalNCaptureProfileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNCaptureQRCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐCaptureQRCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.CaptureQRCode) graphql.Marshaler {
+func marshalNCaptureQRCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋcaptureportsᚐCaptureQRCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *captureports.CaptureQRCode) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3991,15 +3990,15 @@ func marshalNCaptureQRCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore
 	return ec.MarshalType(ctx, sel, "CaptureQRCode", v)
 }
 
-func marshalNCaptureRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureRequestᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*capture.CaptureRequest) graphql.Marshaler {
+func marshalNCaptureRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureRequestᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*capture.CaptureRequest) graphql.Marshaler {
 	return gqlexec.List[*capture.CaptureRequest]{
-		Elem:        marshalNCaptureRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureRequest,
+		Elem:        marshalNCaptureRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureRequest,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCaptureRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureRequest(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.CaptureRequest) graphql.Marshaler {
+func marshalNCaptureRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureRequest(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.CaptureRequest) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -4007,7 +4006,7 @@ func marshalNCaptureRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return ec.MarshalType(ctx, sel, "CaptureRequest", v)
 }
 
-func marshalNCaptureRequestMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐRequestMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.RequestMode) graphql.Marshaler {
+func marshalNCaptureRequestMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐRequestMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.RequestMode) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4015,7 +4014,7 @@ func marshalNCaptureRequestMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋco
 	return res
 }
 
-func marshalNCaptureRequestStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐRequestStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.RequestStatus) graphql.Marshaler {
+func marshalNCaptureRequestStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐRequestStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.RequestStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4023,7 +4022,7 @@ func marshalNCaptureRequestStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNCaptureSeparatorStrategy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSeparatorStrategy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.SeparatorStrategy) graphql.Marshaler {
+func marshalNCaptureSeparatorStrategy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSeparatorStrategy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.SeparatorStrategy) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4031,19 +4030,19 @@ func marshalNCaptureSeparatorStrategy2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res
 }
 
-func marshalNCaptureSeparatorStrategy2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSeparatorStrategyᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []capture.SeparatorStrategy) graphql.Marshaler {
+func marshalNCaptureSeparatorStrategy2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSeparatorStrategyᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []capture.SeparatorStrategy) graphql.Marshaler {
 	return gqlexec.List[capture.SeparatorStrategy]{
-		Elem:        marshalNCaptureSeparatorStrategy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSeparatorStrategy,
+		Elem:        marshalNCaptureSeparatorStrategy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSeparatorStrategy,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCaptureSettings2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSettings(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.Settings) graphql.Marshaler {
+func marshalNCaptureSettings2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSettings(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.Settings) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "CaptureSettings", &v)
 }
 
-func marshalNCaptureSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.Source) graphql.Marshaler {
+func marshalNCaptureSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.Source) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4051,19 +4050,19 @@ func marshalNCaptureSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋ
 	return res
 }
 
-func marshalNCaptureSourceInfo2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSourceInfo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.SourceInfo) graphql.Marshaler {
+func marshalNCaptureSourceInfo2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSourceInfo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.SourceInfo) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "CaptureSourceInfo", &v)
 }
 
-func marshalNCaptureSourceInfo2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSourceInfoᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []capture.SourceInfo) graphql.Marshaler {
+func marshalNCaptureSourceInfo2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSourceInfoᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []capture.SourceInfo) graphql.Marshaler {
 	return gqlexec.List[capture.SourceInfo]{
-		Elem:        marshalNCaptureSourceInfo2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSourceInfo,
+		Elem:        marshalNCaptureSourceInfo2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSourceInfo,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCaptureSourceProtocol2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSourceProtocol(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.SourceProtocol) graphql.Marshaler {
+func marshalNCaptureSourceProtocol2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSourceProtocol(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v capture.SourceProtocol) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4071,7 +4070,7 @@ func marshalNCaptureSourceProtocol2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNFileCaptureItemsResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcaptureserviceᚐFileItemsResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *captureservice.FileItemsResult) graphql.Marshaler {
+func marshalNFileCaptureItemsResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcaptureserviceᚐFileItemsResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *captureservice.FileItemsResult) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -4170,21 +4169,21 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOCaptureAgentRelease2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcapturereleaseserviceᚐRelease(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capturereleaseservice.Release) graphql.Marshaler {
+func marshalOCaptureAgentRelease2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋcapturereleaseserviceᚐRelease(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capturereleaseservice.Release) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "CaptureAgentRelease", v)
 }
 
-func marshalOCaptureDevice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureDevice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.CaptureDevice) graphql.Marshaler {
+func marshalOCaptureDevice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐCaptureDevice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.CaptureDevice) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "CaptureDevice", v)
 }
 
-func marshalOCapturePixelType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐPixelType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.PixelType) graphql.Marshaler {
+func marshalOCapturePixelType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐPixelType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.PixelType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -4192,14 +4191,14 @@ func marshalOCapturePixelType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return res
 }
 
-func marshalOCaptureRecordRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐCaptureRecordLabel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.CaptureRecordLabel) graphql.Marshaler {
+func marshalOCaptureRecordRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋcaptureportsᚐCaptureRecordLabel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *captureports.CaptureRecordLabel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "CaptureRecordRef", v)
 }
 
-func marshalOCaptureRequestFailureCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐRequestFailureCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.RequestFailureCode) graphql.Marshaler {
+func marshalOCaptureRequestFailureCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐRequestFailureCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.RequestFailureCode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -4207,7 +4206,7 @@ func marshalOCaptureRequestFailureCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return res
 }
 
-func marshalOCaptureSourceProtocol2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSourceProtocol(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.SourceProtocol) graphql.Marshaler {
+func marshalOCaptureSourceProtocol2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSourceProtocol(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.SourceProtocol) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -4215,7 +4214,7 @@ func marshalOCaptureSourceProtocol2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res
 }
 
-func marshalOCaptureSuggestionSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐSuggestionSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.SuggestionSource) graphql.Marshaler {
+func marshalOCaptureSuggestionSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋcaptureᚐSuggestionSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *capture.SuggestionSource) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -4263,7 +4262,7 @@ func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.S
 	return res
 }
 
-func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

@@ -4,16 +4,19 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
-
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
-	"github.com/emoss08/trenova/internal/core/services/conversationscheduleservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentwaitservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantqueueservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/conversationscheduleservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,22 +29,28 @@ import (
 type Params struct {
 	fx.In
 
-	Service              serviceports.AssistantService
+	Service              agentports.AssistantService
 	Turns                *assistantturnservice.Service
-	Workflows            serviceports.WorkflowStarter
+	Workflows            kernelports.WorkflowStarter
 	Schedules            *conversationscheduleservice.Service
-	Handoffs             serviceports.AssistantHandoffService `optional:"true"`
+	Handoffs             agentports.AssistantHandoffService `optional:"true"`
+	Queue                *assistantqueueservice.Service
+	Waits                *agentwaitservice.Service
+	Cases                deskcaseports.AssistantCaseService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Logger               *zap.Logger
 }
 
 type Handler struct {
-	service   serviceports.AssistantService
+	service   agentports.AssistantService
 	turns     *assistantturnservice.Service
-	workflows serviceports.WorkflowStarter
+	workflows kernelports.WorkflowStarter
 	schedules scheduleService
-	handoffs  serviceports.AssistantHandoffService
+	handoffs  agentports.AssistantHandoffService
+	queue     *assistantqueueservice.Service
+	waits     *agentwaitservice.Service
+	cases     deskcaseports.AssistantCaseService
 	eh        *helpers.ErrorHandler
 	pm        *middleware.PermissionMiddleware
 	logger    *zap.Logger
@@ -53,6 +62,9 @@ func New(p Params) *Handler {
 		turns:     p.Turns,
 		workflows: p.Workflows,
 		handoffs:  p.Handoffs,
+		queue:     p.Queue,
+		waits:     p.Waits,
+		cases:     p.Cases,
 		eh:        p.ErrorHandler,
 		pm:        p.PermissionMiddleware,
 		logger:    p.Logger.Named("assistanthandler"),
@@ -77,6 +89,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET("/mentions/", h.pm.RequirePermission(resource, permission.OpRead), h.searchMentions)
 	api.GET("/search/", h.pm.RequirePermission(resource, permission.OpRead), h.searchDesk)
 	api.GET("/threads/", h.pm.RequirePermission(resource, permission.OpRead), h.listThreads)
+	api.GET(
+		"/threads/shelves/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.countThreadShelves,
+	)
 	api.POST("/threads/", h.pm.RequirePermission(resource, permission.OpCreate), h.startThread)
 	// A quick question makes a thread of its own, so it needs what starting
 	// one needs.
@@ -215,11 +232,14 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	)
 	h.registerScheduleRoutes(api, resource)
 	h.registerArtifactRoutes(api, resource)
+	h.registerQueueRoutes(api, resource)
+	h.registerWaitRoutes(api, resource)
+	h.registerCaseRoutes(api, resource)
 }
 
-func requestActorFromAuthContext(authCtx *authctx.AuthContext) serviceports.RequestActor {
-	return serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalType(authCtx.PrincipalType),
+func requestActorFromAuthContext(authCtx *authctx.AuthContext) permissionports.RequestActor {
+	return permissionports.RequestActor{
+		PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
 		PrincipalID:    authCtx.PrincipalID,
 		UserID:         authCtx.UserID,
 		APIKeyID:       authCtx.APIKeyID,
@@ -239,15 +259,15 @@ func tenantFromAuthContext(authCtx *authctx.AuthContext) pagination.TenantInfo {
 // threadRequest builds the per-user scoped read used by every thread route. The
 // user comes from the auth context rather than the path, so one person cannot
 // read another's conversation by guessing an id.
-func threadRequest(c *gin.Context) (repositories.GetThreadRequest, error) {
+func threadRequest(c *gin.Context) (agentports.GetThreadRequest, error) {
 	authCtx := authctx.GetAuthContext(c)
 
 	threadID, err := pulid.Parse(c.Param("threadID"))
 	if err != nil {
-		return repositories.GetThreadRequest{}, err
+		return agentports.GetThreadRequest{}, err
 	}
 
-	return repositories.GetThreadRequest{
+	return agentports.GetThreadRequest{
 		ID:         threadID,
 		UserID:     authCtx.UserID,
 		TenantInfo: tenantFromAuthContext(authCtx),
@@ -255,8 +275,12 @@ func threadRequest(c *gin.Context) (repositories.GetThreadRequest, error) {
 }
 
 type listThreadsQuery struct {
-	Limit  int `form:"limit"`
-	Offset int `form:"offset"`
+	Limit         int    `form:"limit"`
+	Cursor        string `form:"cursor"`
+	Until         string `form:"until"`
+	Pinned        *bool  `form:"pinned"`
+	TouchedFrom   int64  `form:"touchedFrom"`
+	TouchedBefore int64  `form:"touchedBefore"`
 }
 
 func (h *Handler) listThreads(c *gin.Context) {
@@ -268,12 +292,45 @@ func (h *Handler) listThreads(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.ListThreads(c.Request.Context(), repositories.ListThreadsRequest{
-		UserID:     authCtx.UserID,
-		TenantInfo: tenantFromAuthContext(authCtx),
-		Limit:      query.Limit,
-		Offset:     query.Offset,
+	result, err := h.service.ListThreads(c.Request.Context(), agentports.ListThreadsRequest{
+		UserID:        authCtx.UserID,
+		TenantInfo:    tenantFromAuthContext(authCtx),
+		Limit:         query.Limit,
+		Cursor:        query.Cursor,
+		Until:         query.Until,
+		Pinned:        query.Pinned,
+		TouchedFrom:   query.TouchedFrom,
+		TouchedBefore: query.TouchedBefore,
 	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+type threadShelvesQuery struct {
+	Edges []int64 `form:"edge"`
+}
+
+func (h *Handler) countThreadShelves(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	var query threadShelvesQuery
+	if err := c.ShouldBindQuery(&query); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	result, err := h.service.CountThreadShelves(
+		c.Request.Context(),
+		&agentports.CountThreadShelvesRequest{
+			UserID:     authCtx.UserID,
+			TenantInfo: tenantFromAuthContext(authCtx),
+			Edges:      query.Edges,
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -317,7 +374,7 @@ func (h *Handler) startThread(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authCtx)
-	thread, err := h.service.StartThread(c.Request.Context(), &serviceports.StartThreadRequest{
+	thread, err := h.service.StartThread(c.Request.Context(), &agentports.StartThreadRequest{
 		AgentDefinitionID: agentID,
 		Title:             body.Title,
 		TenantInfo:        tenantFromAuthContext(authCtx),
@@ -381,7 +438,7 @@ func (h *Handler) requestMore(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.RequestMore(c.Request.Context(), serviceports.RequestMoreRequest{
+	result, err := h.service.RequestMore(c.Request.Context(), agentports.RequestMoreRequest{
 		Thread: req,
 		Kind:   body.Kind,
 	})
@@ -433,7 +490,7 @@ func (h *Handler) updateThread(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authctx.GetAuthContext(c))
-	thread, err := h.service.UpdateThread(c.Request.Context(), &serviceports.UpdateThreadRequest{
+	thread, err := h.service.UpdateThread(c.Request.Context(), &agentports.UpdateThreadRequest{
 		ThreadID:    req.ID,
 		TenantInfo:  req.TenantInfo,
 		Title:       body.Title,
@@ -587,7 +644,7 @@ func (h *Handler) listMessages(c *gin.Context) {
 		return
 	}
 
-	page, err := h.service.ListMessages(c.Request.Context(), serviceports.ListThreadMessagesRequest{
+	page, err := h.service.ListMessages(c.Request.Context(), agentports.ListThreadMessagesRequest{
 		Thread:         req,
 		Limit:          query.Limit,
 		BeforeSequence: query.Before,
@@ -647,6 +704,7 @@ func (r *pageContextRequest) page() *agent.PageContext {
 type sendMessageRequest struct {
 	Content string              `json:"content"`
 	Context *pageContextRequest `json:"context"`
+	Surface agent.Surface       `json:"surface"`
 	// ProviderID is the model the person picked in the composer. Empty leaves
 	// the choice to the organization's priority order. It is resolved against
 	// the providers this organization has assigned to the assistant before it
@@ -659,6 +717,9 @@ type sendMessageRequest struct {
 	// FollowUpProposalID asks for the turn that follows a decision on one of
 	// the thread's proposals, in place of content.
 	FollowUpProposalID pulid.ID `json:"followUpProposalId"`
+	// DirectedAgentID hands the message to another agent the person may use,
+	// run from this conversation in place of its own agent's reply.
+	DirectedAgentID pulid.ID `json:"directedAgentId"`
 	// awaited is set by the route that waits for the saved turn rather than
 	// following its stream. It is never read from the request body.
 	awaited bool
@@ -669,6 +730,7 @@ type sendMessageRequest struct {
 type askRequest struct {
 	Content  string              `json:"content"`
 	Context  *pageContextRequest `json:"context"`
+	Surface  agent.Surface       `json:"surface"`
 	Mentions []agent.EntityRef   `json:"mentions"`
 }
 
@@ -684,9 +746,14 @@ func (r *sendMessageRequest) page() *agent.PageContext {
 	return r.Context.page()
 }
 
+// searchMentionsQuery is the @ search's tab, or with a limit one page of a
+// single kind for a list that scrolls through every record of it.
 type searchMentionsQuery struct {
-	Query string `form:"query"`
-	Type  string `form:"type"`
+	Query  string `form:"query"`
+	Type   string `form:"type"`
+	Kind   string `form:"kind"`
+	Offset int    `form:"offset"`
+	Limit  int    `form:"limit"`
 }
 
 func (h *Handler) searchMentions(c *gin.Context) {
@@ -698,10 +765,29 @@ func (h *Handler) searchMentions(c *gin.Context) {
 		return
 	}
 
+	if query.Limit > 0 {
+		page, err := h.service.SearchMentionPage(
+			c.Request.Context(),
+			requestActorFromAuthContext(authCtx),
+			agentports.MentionPageRequest{
+				Query:  query.Query,
+				Kind:   query.Kind,
+				Offset: query.Offset,
+				Limit:  query.Limit,
+			},
+		)
+		if err != nil {
+			h.eh.HandleError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, page)
+		return
+	}
+
 	results, err := h.service.SearchMentions(
 		c.Request.Context(),
 		requestActorFromAuthContext(authCtx),
-		serviceports.MentionSearchRequest{Query: query.Query, Kind: query.Type},
+		agentports.MentionSearchRequest{Query: query.Query, Kind: query.Type},
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -728,7 +814,7 @@ func (h *Handler) searchDesk(c *gin.Context) {
 	results, err := h.service.SearchDesk(
 		c.Request.Context(),
 		requestActorFromAuthContext(authCtx),
-		serviceports.DeskSearchRequest{Query: query.Query, Kind: query.Kind},
+		agentports.DeskSearchRequest{Query: query.Query, Kind: query.Kind},
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)

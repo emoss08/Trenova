@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 /**
  * A stored tool call's `Arguments` is a `map[string]any` without `omitempty`
- * (internal/core/domain/conversation/message.go), so a call the model made
+ * (internal/modules/agent/domain/conversation/message.go), so a call the model made
  * with no arguments is serialized as `"arguments": null`. A thread that holds
  * one such call must still open.
  */

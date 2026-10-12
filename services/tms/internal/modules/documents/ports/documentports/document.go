@@ -1,0 +1,145 @@
+package documentports
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+)
+
+type ListDocumentsRequest struct {
+	Filter       *pagination.QueryOptions `json:"filter"`
+	ResourceID   string                   `json:"resourceId"`
+	ResourceType string                   `json:"resourceType"`
+	Status       string                   `json:"status"`
+}
+
+type DocumentSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
+	ResourceID         string                         `json:"resourceId"`
+	ResourceType       string                         `json:"resourceType"`
+}
+
+type GetDocumentByIDRequest struct {
+	ID         pulid.ID              `json:"id"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+}
+
+type GetDocumentByStoragePathRequest struct {
+	StoragePath string                `json:"storagePath"`
+	TenantInfo  pagination.TenantInfo `json:"tenantInfo"`
+}
+
+type GetDocumentsByResourceRequest struct {
+	TenantInfo          pagination.TenantInfo `json:"tenantInfo"`
+	ResourceID          string                `json:"resourceId"`
+	ResourceType        string                `json:"resourceType"`
+	IncludeDocumentType bool                  `json:"includeDocumentType"`
+}
+
+type GetDocumentsByResourceIDsRequest struct {
+	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
+	ResourceType string                `json:"resourceType"`
+	ResourceIDs  []string              `json:"resourceIds"`
+}
+
+type DeleteDocumentRequest struct {
+	ID         pulid.ID              `json:"id"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+}
+
+type UpdateDocumentPreviewRequest struct {
+	ID                 pulid.ID               `json:"id"`
+	TenantInfo         pagination.TenantInfo  `json:"tenantInfo"`
+	PreviewStatus      document.PreviewStatus `json:"previewStatus"`
+	PreviewStoragePath string                 `json:"previewStoragePath"`
+}
+
+type UpdateDocumentIntelligenceRequest struct {
+	ID                  pulid.ID                     `json:"id"`
+	TenantInfo          pagination.TenantInfo        `json:"tenantInfo"`
+	ContentStatus       document.ContentStatus       `json:"contentStatus"`
+	ContentError        string                       `json:"contentError"`
+	DetectedKind        string                       `json:"detectedKind"`
+	HasExtractedText    bool                         `json:"hasExtractedText"`
+	ShipmentDraftStatus document.ShipmentDraftStatus `json:"shipmentDraftStatus"`
+	DocumentTypeID      *pulid.ID                    `json:"documentTypeId"`
+}
+
+type ListPendingPreviewReconciliationRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	OlderThan  int64                 `json:"olderThan"`
+	Limit      int                   `json:"limit"`
+}
+
+type ListDocumentVersionsRequest struct {
+	LineageID  pulid.ID              `json:"lineageId"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+}
+
+type PromoteDocumentVersionRequest struct {
+	LineageID         pulid.ID              `json:"lineageId"`
+	CurrentDocumentID pulid.ID              `json:"currentDocumentId"`
+	TenantInfo        pagination.TenantInfo `json:"tenantInfo"`
+}
+
+type DeleteDocumentLineageRequest struct {
+	LineageIDs []pulid.ID            `json:"lineageIds"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+}
+
+type MoveDocumentLineageRequest struct {
+	DocumentID   pulid.ID              `json:"documentId"`
+	ResourceID   string                `json:"resourceId"`
+	ResourceType string                `json:"resourceType"`
+	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
+}
+
+type BulkDeleteDocumentRequest struct {
+	IDs        []pulid.ID            `json:"ids"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+}
+
+type DocumentRepository interface {
+	List(
+		ctx context.Context,
+		req *ListDocumentsRequest,
+	) (*pagination.ListResult[*document.Document], error)
+	SelectOptions(
+		ctx context.Context,
+		req *DocumentSelectOptionsRequest,
+	) (*pagination.ListResult[*document.Document], error)
+	GetByID(ctx context.Context, req GetDocumentByIDRequest) (*document.Document, error)
+	GetByStoragePath(
+		ctx context.Context,
+		req GetDocumentByStoragePathRequest,
+	) (*document.Document, error)
+	GetByIDs(ctx context.Context, req BulkDeleteDocumentRequest) ([]*document.Document, error)
+	ListVersions(ctx context.Context, req ListDocumentVersionsRequest) ([]*document.Document, error)
+	GetByResourceID(
+		ctx context.Context,
+		req *GetDocumentsByResourceRequest,
+	) ([]*document.Document, error)
+	GetByResourceIDs(
+		ctx context.Context,
+		req *GetDocumentsByResourceIDsRequest,
+	) ([]*document.Document, error)
+	ListPendingPreviewReconciliation(
+		ctx context.Context,
+		req *ListPendingPreviewReconciliationRequest,
+	) ([]*document.Document, error)
+	ListPendingPreviewReconciliationTenants(
+		ctx context.Context,
+		req *ListPendingPreviewReconciliationRequest,
+	) ([]pagination.TenantInfo, error)
+	Create(ctx context.Context, entity *document.Document) (*document.Document, error)
+	Update(ctx context.Context, entity *document.Document) (*document.Document, error)
+	UpdatePreview(ctx context.Context, req *UpdateDocumentPreviewRequest) error
+	UpdateIntelligence(ctx context.Context, req *UpdateDocumentIntelligenceRequest) error
+	PromoteVersion(ctx context.Context, req *PromoteDocumentVersionRequest) error
+	MoveLineageToResource(ctx context.Context, req *MoveDocumentLineageRequest) error
+	Delete(ctx context.Context, req DeleteDocumentRequest) error
+	BulkDelete(ctx context.Context, req BulkDeleteDocumentRequest) error
+	DeleteByLineageIDs(ctx context.Context, req DeleteDocumentLineageRequest) error
+}

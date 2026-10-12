@@ -6,10 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/bankreceiptworkitemservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptworkitemservice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -104,7 +104,7 @@ func (h *Handler) get(c *gin.Context) {
 	}
 	item, err := h.service.Get(
 		c.Request.Context(),
-		&serviceports.GetBankReceiptWorkItemRequest{
+		&bankreceiptworkitemports.GetBankReceiptWorkItemRequest{
 			WorkItemID: id,
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  auth.OrganizationID,
@@ -135,7 +135,7 @@ func (h *Handler) assign(c *gin.Context) {
 	}
 	item, err := h.service.Assign(
 		c.Request.Context(),
-		&serviceports.AssignBankReceiptWorkItemRequest{
+		&bankreceiptworkitemports.AssignBankReceiptWorkItemRequest{
 			WorkItemID:       id,
 			AssignedToUserID: body.AssignedToUserID,
 			TenantInfo: pagination.TenantInfo{
@@ -161,7 +161,7 @@ func (h *Handler) startReview(c *gin.Context) {
 	}
 	item, err := h.service.StartReview(
 		c.Request.Context(),
-		&serviceports.GetBankReceiptWorkItemRequest{
+		&bankreceiptworkitemports.GetBankReceiptWorkItemRequest{
 			WorkItemID: id,
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  auth.OrganizationID,
@@ -194,7 +194,7 @@ func (h *Handler) resolve(c *gin.Context) {
 	}
 	item, err := h.service.Resolve(
 		c.Request.Context(),
-		&serviceports.ResolveBankReceiptWorkItemRequest{
+		&bankreceiptworkitemports.ResolveBankReceiptWorkItemRequest{
 			WorkItemID:     id,
 			ResolutionType: bankreceiptworkitem.ResolutionType(body.ResolutionType),
 			ResolutionNote: body.ResolutionNote,
@@ -228,7 +228,7 @@ func (h *Handler) dismiss(c *gin.Context) {
 	}
 	item, err := h.service.Dismiss(
 		c.Request.Context(),
-		&serviceports.DismissBankReceiptWorkItemRequest{
+		&bankreceiptworkitemports.DismissBankReceiptWorkItemRequest{
 			WorkItemID:     id,
 			ResolutionNote: body.ResolutionNote,
 			TenantInfo: pagination.TenantInfo{

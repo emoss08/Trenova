@@ -60,7 +60,9 @@ func HTML(doc *Document) string {
 	if len(doc.Sources) > 0 {
 		b.WriteString(`<section class="src"><h4>Sources</h4>`)
 		for _, source := range doc.Sources {
-			b.WriteString(`<div><sup>` + strconv.Itoa(source.N) + `</sup> ` + html.EscapeString(source.Label))
+			b.WriteString(
+				`<div><sup>` + strconv.Itoa(source.N) + `</sup> ` + html.EscapeString(source.Label),
+			)
 			if source.Tool != "" {
 				b.WriteString(` <code>` + html.EscapeString(source.Tool) + `</code>`)
 			}

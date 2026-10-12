@@ -131,7 +131,10 @@ export function PendingConnectionsPanel() {
         title={t("Reject EDI connection")}
         description={
           rejecting
-            ? `Reject the connection request from ${rejecting.sourceOrganization?.name ?? rejecting.sourceOrganizationId}.`
+            ? t(
+                "Reject the connection request from {0}.",
+                rejecting.sourceOrganization?.name ?? rejecting.sourceOrganizationId,
+              )
             : undefined
         }
         placeholder={t("Reason shared with the requesting organization")}

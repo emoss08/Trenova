@@ -34,8 +34,10 @@ export function getMappingProfileColumns(t: TranslateFn): ColumnDef<EDIMappingPr
       meta: {
         label: t("Partner"),
         apiField: "ediPartnerId",
-        filterable: false,
         sortable: false,
+        filterable: true,
+        filterType: "record",
+        filterRecord: "EDI_PARTNER",
       },
     },
     {

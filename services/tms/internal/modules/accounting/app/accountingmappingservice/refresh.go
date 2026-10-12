@@ -1,0 +1,302 @@
+package accountingmappingservice
+
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/zap"
+)
+
+const (
+	maxModelTargets        = 100
+	maxRefreshErrorLength  = 1000
+	maxReferencePagesGuard = 500
+)
+
+var errReferenceUnsupported = errors.New("this accounting system cannot share its reference data")
+
+func (s *Service) PullReference(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	connectionID pulid.ID,
+	kind accountingsync.ReferenceKind,
+) (*accountingsyncports.AccountingReferencePull, error) {
+	if !kind.IsValid() {
+		return nil, fmt.Errorf("unknown reference kind %q", kind)
+	}
+	session, err := s.connectionService.Session(ctx, tenantInfo, connectionID)
+	if err != nil {
+		return nil, err
+	}
+	reader, ok := session.Connector.(accountingsyncports.AccountingReferenceReader)
+	if !ok {
+		return nil, errReferenceUnsupported
+	}
+	profile := accountingsync.MustProfile(session.Connection.IntegrationType)
+	if !profile.Has(kind) {
+		return &accountingsyncports.AccountingReferencePull{Kind: kind}, nil
+	}
+
+	seenAt := timeutils.NowUnix()
+	pull := &accountingsyncports.AccountingReferencePull{Kind: kind}
+	start := 1
+	for pages := 0; start > 0; pages++ {
+		if pages >= maxReferencePagesGuard {
+			return nil, fmt.Errorf("stopped after %d pages of %s records", pages, kind)
+		}
+		page, listErr := reader.ListReference(
+			ctx,
+			&accountingsyncports.AccountingReferencePageRequest{
+				RealmID:       session.Connection.ExternalRealmID,
+				AccessToken:   session.AccessToken,
+				Kind:          kind,
+				StartPosition: start,
+				PageSize:      reader.MaxReferencePageSize(),
+			},
+		)
+		if listErr != nil {
+			s.connectionService.ReportCallFailure(ctx, tenantInfo, connectionID, listErr)
+			return nil, listErr
+		}
+		if err = s.references.Upsert(
+			ctx,
+			&accountingsyncports.UpsertAccountingReferenceObjectsRequest{
+				TenantInfo:   tenantInfo,
+				ConnectionID: connectionID,
+				Objects:      page.Objects,
+				SeenAt:       seenAt,
+			},
+		); err != nil {
+			return nil, err
+		}
+		pull.Fetched += len(page.Objects)
+		start = page.NextStart
+	}
+
+	removed, err := s.references.MarkRemovedUnseen(
+		ctx,
+		&accountingsyncports.MarkAccountingReferenceRemovedRequest{
+			TenantInfo:   tenantInfo,
+			ConnectionID: connectionID,
+			Kind:         kind,
+			SeenBefore:   seenAt,
+			At:           timeutils.NowUnix(),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	pull.Removed = removed
+	return pull, nil
+}
+
+func (s *Service) Rescore(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	connectionID pulid.ID,
+) (*accountingsyncports.AccountingRescoreResult, error) {
+	conn, err := s.connections.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
+		TenantInfo: tenantInfo,
+		ID:         connectionID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	targets, err := s.listTargets(ctx, tenantInfo, conn)
+	if err != nil {
+		return nil, err
+	}
+	result := &accountingsyncports.AccountingRescoreResult{Targets: len(targets)}
+
+	fresh := make([]*accountingsync.AccountingMapping, 0, len(targets))
+	for _, t := range targets {
+		fresh = append(fresh, &accountingsync.AccountingMapping{
+			OrganizationID:  tenantInfo.OrgID,
+			BusinessUnitID:  tenantInfo.BuID,
+			ConnectionID:    connectionID,
+			TargetType:      t.TargetType,
+			TrenovaObjectID: t.ObjectID,
+			TrenovaKey:      t.Key,
+			TargetLabel:     t.Label,
+			ProviderKind:    t.Kind,
+			State:           accountingsync.MappingStateUnmatched,
+			Signals:         accountingsync.MappingSignals{},
+		})
+	}
+	if result.Created, err = s.mappings.CreateMissing(ctx, fresh); err != nil {
+		return nil, err
+	}
+
+	rows, err := s.mappings.ListByConnection(ctx, &accountingsyncports.ListAccountingMappingsQuery{
+		TenantInfo:   tenantInfo,
+		ConnectionID: connectionID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	refs, err := s.loadReferences(ctx, tenantInfo, connectionID)
+	if err != nil {
+		return nil, err
+	}
+
+	byIdentity := make(map[string]*target, len(targets))
+	for _, t := range targets {
+		byIdentity[t.identity()] = t
+	}
+
+	changed := make([]*accountingsync.AccountingMapping, 0, len(rows))
+	relabeled := make([]*accountingsync.AccountingMapping, 0)
+	for _, row := range rows {
+		t, ok := byIdentity[mappingIdentity(row)]
+		if !ok {
+			continue
+		}
+		switch refs.rescore(row, t) {
+		case rescoreChanged:
+			changed = append(changed, row)
+		case rescoreRelabeled:
+			relabeled = append(relabeled, row)
+		case rescoreUnchanged:
+		}
+		tallyRow(result, row)
+	}
+
+	if result.Updated, err = s.mappings.ApplyScoring(ctx, changed); err != nil {
+		return nil, err
+	}
+	if err = s.mappings.UpdateLabels(ctx, relabeled); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func tallyRow(
+	result *accountingsyncports.AccountingRescoreResult,
+	row *accountingsync.AccountingMapping,
+) {
+	if row.State == accountingsync.MappingStateProposed {
+		result.Proposed++
+	}
+	if row.NeedsModelReview() && len(result.NeedsModel) < maxModelTargets {
+		result.NeedsModel = append(result.NeedsModel, row.ID)
+	}
+}
+
+type referenceSet struct {
+	byKind  map[accountingsync.ReferenceKind][]*accountingsync.AccountingReferenceObject
+	indexes map[accountingsync.ReferenceKind]*tokenIndex
+}
+
+func (s *Service) loadReferences(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	connectionID pulid.ID,
+) (*referenceSet, error) {
+	set := &referenceSet{
+		byKind:  make(map[accountingsync.ReferenceKind][]*accountingsync.AccountingReferenceObject),
+		indexes: make(map[accountingsync.ReferenceKind]*tokenIndex),
+	}
+	for _, kind := range accountingsync.AllReferenceKinds() {
+		refs, err := s.references.ListByKind(
+			ctx,
+			&accountingsyncports.ListAccountingReferenceObjectsRequest{
+				TenantInfo:   tenantInfo,
+				ConnectionID: connectionID,
+				Kind:         kind,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+		set.byKind[kind] = refs
+		if kind == accountingsync.ReferenceKindCustomer ||
+			kind == accountingsync.ReferenceKindVendor {
+			set.indexes[kind] = newTokenIndex(refs)
+		}
+	}
+	return set, nil
+}
+
+type rescoreOutcome int
+
+const (
+	rescoreUnchanged rescoreOutcome = iota
+	rescoreChanged
+	rescoreRelabeled
+)
+
+func (r *referenceSet) rescore(row *accountingsync.AccountingMapping, t *target) rescoreOutcome {
+	labelChanged := row.TargetLabel != t.Label
+	row.TargetLabel = t.Label
+	proposalChanged := false
+	if row.Rescorable() {
+		kind := t.Kind
+		proposal := score(t, r.byKind[kind], r.indexes[kind])
+		if !row.KeepsModelPick(proposal) {
+			proposalChanged = row.ApplyProposal(proposal)
+		}
+	}
+	switch {
+	case proposalChanged || (labelChanged && row.State != accountingsync.MappingStateConfirmed):
+		return rescoreChanged
+	case labelChanged:
+		return rescoreRelabeled
+	default:
+		return rescoreUnchanged
+	}
+}
+
+func (s *Service) MarkRefreshStarted(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	connectionID pulid.ID,
+) error {
+	now := timeutils.NowUnix()
+	return s.connections.MarkReferenceRefresh(
+		ctx,
+		accountingsyncports.MarkAccountingReferenceRefreshRequest{
+			TenantInfo: tenantInfo,
+			ID:         connectionID,
+			StartedAt:  &now,
+		},
+	)
+}
+
+func (s *Service) MarkRefreshFinished(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	connectionID pulid.ID,
+	failure string,
+) error {
+	req := accountingsyncports.MarkAccountingReferenceRefreshRequest{
+		TenantInfo: tenantInfo,
+		ID:         connectionID,
+		Error:      stringutils.TruncateRunes(failure, maxRefreshErrorLength),
+	}
+	if failure == "" {
+		now := timeutils.NowUnix()
+		req.RefreshedAt = &now
+	}
+	if err := s.connections.MarkReferenceRefresh(ctx, req); err != nil {
+		return err
+	}
+
+	conn, err := s.connections.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
+		TenantInfo: tenantInfo,
+		ID:         connectionID,
+	})
+	if err != nil {
+		s.l.Warn("could not reload the connection after a refresh", zap.Error(err))
+		return nil
+	}
+	s.publishConnectionInvalidation(ctx, conn, pulid.Nil)
+	return nil
+}

@@ -3,7 +3,7 @@ import { WIDGET_COMPONENTS, widgetComponentFor } from "../widget-registry";
 
 /**
  * Mirrors the widget keys in
- * services/tms/internal/core/domain/homelayout/catalog.go. The server decides
+ * services/tms/internal/modules/workspace/domain/homelayout/catalog.go. The server decides
  * which widgets exist; this list is the client's promise that it can draw each
  * of them. Adding a widget to the Go catalog without adding it here means the
  * server offers a card the client renders as nothing, so the two lists are kept

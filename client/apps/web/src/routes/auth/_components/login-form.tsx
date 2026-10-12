@@ -1,8 +1,12 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { EntraLogo } from "@/components/logos/entra";
 import { OktaLogo } from "@/components/logos/okta";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { emailSchema } from "@/lib/auth-validation";
 import { edition } from "@/lib/edition";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
+import { translate } from "@trenova/shared/i18n/runtime";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { authService } from "@trenova/shared/services/auth";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { isMFAChallenge, type MFAChallenge } from "@trenova/shared/types/mfa";
@@ -12,26 +16,19 @@ import {
   type LoginRequest,
   type LoginResponse,
 } from "@trenova/shared/types/user";
-import { cn } from "@trenova/shared/lib/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
-import { Building03Icon, Truck01Icon } from "@trenova/shared/components/icons";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "react-router";
-import { AuthCardBody } from "./auth-card";
-import { AuthErrorText, AuthSubmit, AuthTextField } from "./auth-field";
-import { StepCrumbs, StepHeading } from "./auth-primitives";
+import { AuthErrorText, AuthPasswordField, AuthSubmit, AuthTextField } from "./auth-field";
+import { AuthHeading, AuthQuietButton } from "./auth-primitives";
 import { MFAChallengeForm } from "./mfa-challenge-form";
-
-export type AuthAudience = "office" | "driver";
+import { useAuthStage } from "./stage/auth-stage-context";
 
 const LoginPrompt = edition.slots.LoginPrompt;
 
-const AUDIENCE_OPTIONS = [
-  { value: "office", label: "Office", icon: Building03Icon },
-  { value: "driver", label: "Driver", icon: Truck01Icon },
-] as const;
+const loginFormSchema = loginRequestSchema.extend({
+  emailAddress: emailSchema(() => translate("Enter the work email you were invited with.")),
+});
 
 export function LoginForm({
   organizationSlug,
@@ -42,6 +39,7 @@ export function LoginForm({
 }: {
   organizationSlug?: string;
   tenantMetadata?: TenantLoginMetadata;
+  /** The flow's step counter, shown by the second-factor step if one follows. */
   stepLabel: string;
   onAuthenticated: (response: LoginResponse) => Promise<void> | void;
   // Handed whatever is already in the email box, so recovery does not start by asking
@@ -49,16 +47,11 @@ export function LoginForm({
   onForgotPassword: (emailAddress: string) => void;
 }) {
   const t = useT();
+  const stage = useAuthStage();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const ssoError = searchParams.get("sso_error");
   const setUser = useAuthStore((state) => state.setUser);
-  const [audience, setAudience] = useState<AuthAudience>("office");
-
-  // The audience toggle only makes sense on the generic sign-in page: a tenant login
-  // page is already scoped to one organization's office users.
-  const showAudienceToggle = !tenantMetadata;
-  const isDriverAudience = showAudienceToggle && audience === "driver";
 
   const providerQuery = useQuery({
     queryKey: ["auth-providers", organizationSlug],
@@ -71,7 +64,7 @@ export function LoginForm({
   const returnTo = typeof window !== "undefined" ? `${window.location.origin}/` : "/";
 
   const form = useForm<LoginRequest>({
-    resolver: zodResolver(loginRequestSchema),
+    resolver: zodResolver(loginFormSchema),
     defaultValues: {
       emailAddress: "",
       password: "",
@@ -83,7 +76,22 @@ export function LoginForm({
 
   const [challenge, setChallenge] = useState<MFAChallenge | null>(null);
 
-  const { mutateAsync, isPending } = useApiMutation({
+  // Back on the sign-in form means no one is signed in, whichever step led here.
+  useEffect(() => {
+    stage.setDone(false);
+  }, [stage]);
+
+  const authenticated = async (response: LoginResponse) => {
+    stage.setDone(true);
+    try {
+      await onAuthenticated(response);
+    } catch (error) {
+      stage.setDone(false);
+      throw error;
+    }
+  };
+
+  const { mutate, isPending } = useApiMutation({
     mutationFn: authService.login,
     form,
     resourceName: "Login",
@@ -93,12 +101,13 @@ export function LoginForm({
         return;
       }
       setUser(data.user);
-      await onAuthenticated(data);
+      await authenticated(data);
     },
   });
 
   const onSubmit = (data: LoginRequest) => {
-    void mutateAsync(data);
+    stage.burst();
+    mutate(data);
   };
 
   if (challenge) {
@@ -106,7 +115,7 @@ export function LoginForm({
       <MFAChallengeForm
         challenge={challenge}
         stepLabel={stepLabel}
-        onAuthenticated={onAuthenticated}
+        onAuthenticated={authenticated}
         onCancel={() => {
           setChallenge(null);
           form.setValue("password", "");
@@ -116,196 +125,85 @@ export function LoginForm({
   }
 
   return (
-    <AuthCardBody>
-      <StepCrumbs left={stepLabel} right="Secure sign-in" />
-      <StepHeading
-        title={
-          isDriverAudience ? "Driver sign-in" : (tenantMetadata?.organizationName ?? "Welcome back")
-        }
-      >
-        {isDriverAudience ? (
-          t("Dash is where drivers see loads and pay.")
-        ) : tenantMetadata ? (
+    <>
+      <AuthHeading title={tenantMetadata?.organizationName ?? t("Sign in")}>
+        {tenantMetadata ? (
           t("Sign in to {0}", tenantMetadata.organizationName)
         ) : (
           <LoginPrompt fallback={t("Sign in with the account your organization set up for you.")} />
         )}
-      </StepHeading>
+      </AuthHeading>
 
-      {showAudienceToggle ? (
-        <AudienceToggle value={audience} onChange={setAudience} />
-      ) : (
-        <div className="h-[18px]" />
-      )}
-
-      {isDriverAudience ? (
-        <div className="flex flex-col gap-3.5">
-          <p className="text-muted-foreground m-0 text-sm">
-            {t("Loads, settlement statements and pay — built for the phone.")}
-          </p>
-          <a
-            href="/dash/login"
-            className="bg-foreground text-background border-foreground flex h-10 w-full items-center justify-center gap-2 rounded-[9px] border text-base font-[550] transition-[opacity,transform] duration-150 hover:opacity-90 active:scale-[0.988]"
+      <form className="flex flex-col gap-4" noValidate onSubmit={handleSubmit(onSubmit)}>
+        {ssoError && (
+          <button
+            type="button"
+            className="ui-focus-ring text-danger cursor-pointer rounded-sm text-left text-base"
+            onClick={() =>
+              setSearchParams((params) => {
+                params.delete("sso_error");
+                return params;
+              })
+            }
           >
-            {t("Continue to Dash")}
-            <ArrowRight />
-          </a>
-          <p className="text-subtle-foreground m-0 text-xs">
-            {t("First time here? Use the invitation link your carrier sent you.")}
-          </p>
-        </div>
-      ) : (
-        <form className="flex flex-col gap-3.5" noValidate onSubmit={handleSubmit(onSubmit)}>
-          {ssoError && (
-            <button
-              type="button"
-              className="text-auth-danger cursor-pointer text-left text-xs"
-              onClick={() =>
-                setSearchParams((params) => {
-                  params.delete("sso_error");
-                  return params;
-                })
-              }
-            >
-              {ssoError}
-            </button>
-          )}
+            {ssoError}
+          </button>
+        )}
 
-          {hasAnySso && (
-            <>
-              <div className="flex flex-col gap-2">
-                {providers.map((provider) => (
-                  <a
-                    key={provider.id}
-                    href={authService.getSSOStartUrl(provider.id, organizationSlug ?? "", returnTo)}
-                    className="border-border hover:border-input flex h-[38px] items-center justify-center gap-[9px] rounded-[9px] border bg-transparent text-sm font-medium whitespace-nowrap transition-colors duration-150 hover:bg-[color-mix(in_oklch,var(--foreground)_5%,transparent)]"
-                  >
-                    <ProviderLogo provider={provider.provider} />
-                    {t("Continue with {0}", provider.name)}
-                  </a>
-                ))}
+        {hasAnySso && (
+          <>
+            <div className="flex flex-col gap-2">
+              {providers.map((provider) => (
+                <a
+                  key={provider.id}
+                  href={authService.getSSOStartUrl(provider.id, organizationSlug ?? "", returnTo)}
+                  className="ui-focus-ring bg-auth-field border-border-strong text-auth-body hover:border-foreground/35 flex h-11 items-center justify-center gap-[9px] rounded-[10px] border font-medium whitespace-nowrap transition-colors"
+                >
+                  <ProviderLogo provider={provider.provider} />
+                  {t("Continue with {0}", provider.name)}
+                </a>
+              ))}
+            </div>
+            {passwordEnabled && (
+              <div className="text-muted-foreground before:bg-border after:bg-border flex items-center gap-3 text-sm before:h-px before:flex-1 before:content-[''] after:h-px after:flex-1 after:content-['']">
+                {t("or")}
               </div>
-              {passwordEnabled && (
-                <div className="text-subtle-foreground flex items-center gap-2.5 text-xs before:bg-border-2 after:bg-border-2 before:h-px before:flex-1 after:h-px after:flex-1 before:content-[''] after:content-['']">
-                  or
-                </div>
-              )}
-            </>
-          )}
+            )}
+          </>
+        )}
 
-          {passwordEnabled && (
-            <>
-              <AuthTextField
-                name="emailAddress"
-                control={control}
-                label={t("Email address")}
-                type="email"
-                required
-                placeholder="name@work-email.com"
-                autoComplete="username"
-                disabled={isPending}
-              />
-              <AuthTextField
-                name="password"
-                control={control}
-                label={t("Password")}
-                type="password"
-                required
-                revealable
-                placeholder="••••••••"
-                autoComplete="current-password"
-                disabled={isPending}
-                trailing={
-                  <button
-                    type="button"
-                    onClick={() => onForgotPassword(form.getValues("emailAddress"))}
-                    className="text-muted-foreground hover:text-foreground cursor-pointer bg-transparent text-xs transition-colors duration-150"
-                  >
-                    {t("Forgot?")}
-                  </button>
-                }
-              />
-              {rootError && <AuthErrorText>{rootError}</AuthErrorText>}
-              <AuthSubmit
-                type="submit"
-                isLoading={isPending}
-                loadingText={t("Verifying credentials")}
-              >
-                {t("Sign in")}
-              </AuthSubmit>
-            </>
-          )}
-        </form>
-      )}
-    </AuthCardBody>
-  );
-}
-
-/**
- * Segmented control rather than underline tabs: the knob slides between two equal
- * columns, measured from the active button so the track stays correct at any width.
- */
-function AudienceToggle({
-  value,
-  onChange,
-}: {
-  value: AuthAudience;
-  onChange: (audience: AuthAudience) => void;
-}) {
-  const t = useT();
-
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [knob, setKnob] = useState({ x: 0, width: 0 });
-
-  // offsetLeft is measured from the track's border edge, while the absolutely positioned
-  // knob is placed against its padding edge. Subtracting clientLeft — the border width —
-  // reconciles the two; a fixed offset instead leaves the knob a border-width off centre,
-  // which reads as uneven padding on the inactive side.
-  useLayoutEffect(() => {
-    const track = trackRef.current;
-    const active = track?.querySelector<HTMLButtonElement>(`[data-audience="${value}"]`);
-    if (!track || !active) {
-      return;
-    }
-
-    const measure = () =>
-      setKnob({ x: active.offsetLeft - track.clientLeft, width: active.offsetWidth });
-
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(track);
-    return () => observer.disconnect();
-  }, [value]);
-
-  return (
-    <div
-      ref={trackRef}
-      role="tablist"
-      className="bg-field border-border-2 relative mt-4 mb-[18px] grid grid-cols-2 gap-0.5 rounded-[9px] border p-[3px]"
-    >
-      <span
-        aria-hidden="true"
-        className="bg-popover border-border absolute top-[3px] bottom-[3px] left-0 rounded-md border transition-[transform,width] duration-[320ms] ease-[cubic-bezier(0.2,0.8,0.2,1)]"
-        style={{ transform: `translateX(${knob.x}px)`, width: knob.width }}
-      />
-      {AUDIENCE_OPTIONS.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          role="tab"
-          data-audience={option.value}
-          aria-selected={value === option.value}
-          onClick={() => onChange(option.value)}
-          className={cn(
-            "relative z-1 flex cursor-pointer items-center justify-center gap-[7px] rounded-md border-0 bg-transparent px-3 py-[7px] text-sm leading-[1.5] font-medium transition-colors duration-[180ms]",
-            value === option.value ? "text-foreground" : "text-subtle-foreground",
-          )}
-        >
-          <option.icon className="size-[15px]" />
-          {t(option.label)}
-        </button>
-      ))}
-    </div>
+        {passwordEnabled && (
+          <>
+            <AuthTextField
+              name="emailAddress"
+              control={control}
+              label={t("Email")}
+              type="email"
+              placeholder="you@carrier.com"
+              autoComplete="username"
+              disabled={isPending}
+            />
+            <AuthPasswordField
+              name="password"
+              control={control}
+              label={t("Password")}
+              placeholder="••••••••"
+              autoComplete="current-password"
+              disabled={isPending}
+              trailing={
+                <AuthQuietButton onClick={() => onForgotPassword(form.getValues("emailAddress"))}>
+                  {t("Forgot?")}
+                </AuthQuietButton>
+              }
+            />
+            {rootError && <AuthErrorText>{rootError}</AuthErrorText>}
+            <AuthSubmit type="submit" busy={isPending} busyLabel={t("Verifying")}>
+              {t("Sign in")}
+            </AuthSubmit>
+          </>
+        )}
+      </form>
+    </>
   );
 }
 
@@ -317,26 +215,8 @@ function ProviderLogo({ provider }: { provider: string }) {
     return <OktaLogo className="h-3.5 w-auto" />;
   }
   return (
-    <span className="border-border-2 text-subtle-foreground font-table flex size-3.5 items-center justify-center rounded-sm border text-3xs font-semibold">
+    <span className="border-border-2 text-subtle-foreground font-table text-3xs flex size-3.5 items-center justify-center rounded-sm border font-semibold">
       S
     </span>
-  );
-}
-
-function ArrowRight() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="13"
-      height="13"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M5 12h14M13 6l6 6-6 6" />
-    </svg>
   );
 }

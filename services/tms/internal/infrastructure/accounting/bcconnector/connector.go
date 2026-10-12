@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/businesscentral"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/restx"
@@ -46,7 +46,7 @@ type Params struct {
 }
 
 type Provider struct {
-	instance       *services.AccountingApp
+	instance       *accountingsyncports.AccountingApp
 	redirectURL    string
 	webhookBaseURL string
 	apiOpts        []businesscentral.Option
@@ -62,8 +62,8 @@ type Provider struct {
 }
 
 var (
-	_ services.AccountingProvider             = (*Provider)(nil)
-	_ services.AccountingSubscriptionProvider = (*Provider)(nil)
+	_ accountingsyncports.AccountingProvider             = (*Provider)(nil)
+	_ accountingsyncports.AccountingSubscriptionProvider = (*Provider)(nil)
 )
 
 type Connector struct {
@@ -76,7 +76,7 @@ type Connector struct {
 	l          *zap.Logger
 }
 
-var _ services.AccountingConnector = (*Connector)(nil)
+var _ accountingsyncports.AccountingConnector = (*Connector)(nil)
 
 func New(p Params) (*Provider, error) {
 	cfg := p.Config.Accounting.BusinessCentral
@@ -97,7 +97,7 @@ func New(p Params) (*Provider, error) {
 		)
 	}
 	if cfg.IsConfigured(&p.Config.App) {
-		provider.instance = &services.AccountingApp{
+		provider.instance = &accountingsyncports.AccountingApp{
 			Source:       accountingsync.AppSourceInstance,
 			Environment:  accountingsync.AppEnvironmentProduction,
 			ClientID:     strings.TrimSpace(cfg.ClientID),
@@ -111,7 +111,7 @@ func (p *Provider) IntegrationType() integration.Type {
 	return integration.TypeBusinessCentral
 }
 
-func (p *Provider) InstanceApp() (*services.AccountingApp, bool) {
+func (p *Provider) InstanceApp() (*accountingsyncports.AccountingApp, bool) {
 	if p.instance == nil {
 		return nil, false
 	}
@@ -123,11 +123,13 @@ func (p *Provider) RedirectURL() string {
 	return p.redirectURL
 }
 
-func (p *Provider) Bind(app *services.AccountingApp) (services.AccountingConnector, error) {
+func (p *Provider) Bind(
+	app *accountingsyncports.AccountingApp,
+) (accountingsyncports.AccountingConnector, error) {
 	return p.bind(app)
 }
 
-func (p *Provider) bind(app *services.AccountingApp) (*Connector, error) {
+func (p *Provider) bind(app *accountingsyncports.AccountingApp) (*Connector, error) {
 	if app == nil {
 		return nil, ErrNotConfigured
 	}
@@ -183,14 +185,14 @@ func (p *Provider) NotificationBaseURL() string {
 
 func (p *Provider) ParseNotifications(
 	body []byte,
-) ([]services.AccountingWebhookNotification, error) {
+) ([]accountingsyncports.AccountingWebhookNotification, error) {
 	parsed, err := businesscentral.ParseNotifications(body)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]services.AccountingWebhookNotification, 0, len(parsed))
+	out := make([]accountingsyncports.AccountingWebhookNotification, 0, len(parsed))
 	for idx := range parsed {
-		out = append(out, services.AccountingWebhookNotification{
+		out = append(out, accountingsyncports.AccountingWebhookNotification{
 			SubscriptionID: parsed[idx].SubscriptionID,
 			ClientState:    parsed[idx].ClientState,
 			Resource:       parsed[idx].Resource,
@@ -204,7 +206,7 @@ func (p *Provider) ValidationToken(raw string) (string, bool) {
 	return businesscentral.ValidationToken(raw)
 }
 
-func bindingKey(app *services.AccountingApp) string {
+func bindingKey(app *accountingsyncports.AccountingApp) string {
 	return hashutils.SHA256Hex(
 		strings.TrimSpace(app.ClientID) + "\x00" + strings.TrimSpace(app.ClientSecret),
 	)
@@ -220,7 +222,9 @@ func (c *Connector) options() []businesscentral.Option {
 	return append(opts, c.apiOpts...)
 }
 
-func (c *Connector) client(auth services.AccountingDocumentAuth) (*businesscentral.Client, error) {
+func (c *Connector) client(
+	auth accountingsyncports.AccountingDocumentAuth,
+) (*businesscentral.Client, error) {
 	ref, err := businesscentral.ParseCompanyRef(auth.RealmID)
 	if err != nil {
 		return nil, err
@@ -238,7 +242,7 @@ func (c *Connector) AuthorizeURL(state string) (string, error) {
 func (c *Connector) ExchangeCode(
 	ctx context.Context,
 	code string,
-) (*services.AccountingTokenGrant, error) {
+) (*accountingsyncports.AccountingTokenGrant, error) {
 	if c.oauth == nil {
 		return nil, errNoRedirect
 	}
@@ -252,7 +256,7 @@ func (c *Connector) ExchangeCode(
 func (c *Connector) Refresh(
 	ctx context.Context,
 	refreshToken string,
-) (*services.AccountingTokenGrant, error) {
+) (*accountingsyncports.AccountingTokenGrant, error) {
 	if c.oauth == nil {
 		return nil, errNoRedirect
 	}
@@ -269,8 +273,8 @@ func (c *Connector) Revoke(_ context.Context, _ string) error {
 
 func (c *Connector) ReleaseCompanies(
 	_ context.Context,
-	_ *services.AccountingTokenGrant,
-	_ []services.AccountingCompany,
+	_ *accountingsyncports.AccountingTokenGrant,
+	_ []accountingsyncports.AccountingCompany,
 ) error {
 	return nil
 }
@@ -284,7 +288,7 @@ func (c *Connector) VerifyApp(ctx context.Context) error {
 	case err == nil, businesscentral.IsInvalidGrant(err):
 		return nil
 	case businesscentral.IsInvalidClient(err):
-		return services.ErrAccountingAppRejected
+		return accountingsyncports.ErrAccountingAppRejected
 	default:
 		return err
 	}
@@ -298,8 +302,8 @@ func (c *Connector) ClassifyError(err error) accountingsync.ErrorCategory {
 	return classifyError(err)
 }
 
-func grantOf(token *businesscentral.Token) *services.AccountingTokenGrant {
-	return &services.AccountingTokenGrant{
+func grantOf(token *businesscentral.Token) *accountingsyncports.AccountingTokenGrant {
+	return &accountingsyncports.AccountingTokenGrant{
 		AccessToken:    token.AccessToken,
 		RefreshToken:   token.RefreshToken,
 		AccessTokenTTL: token.ExpiresIn,

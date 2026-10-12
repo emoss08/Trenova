@@ -45,3 +45,12 @@ func TestSearchableKey_ReadsACamelCaseKeyAsWords(t *testing.T) {
 	assert.True(t, MatchesWordPrefixes(SearchWords("edi inbound"), SearchableKey("EDIInboundFile")))
 	assert.Empty(t, SearchableKey(""))
 }
+
+func TestContainsAnyWord_MatchesWholeWordsOnly(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, ContainsAnyWord("1000 Sycamore St.", "st", "ave"))
+	assert.True(t, ContainsAnyWord("E Lancaster Ave", "st", "ave"))
+	assert.False(t, ContainsAnyWord("BEX Logistics-OH Consolidation", "st", "dr", "ln"))
+	assert.False(t, ContainsAnyWord("", "st"))
+}

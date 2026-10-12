@@ -1,9 +1,9 @@
-import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
-import { DeskIcon, type DeskIconName } from "./desk-icons";
+import { DeskCard, DeskCardButton, DeskCardLink, type DeskCardTone } from "./desk-card";
+import type { DeskIconName } from "./desk-icons";
 
-/** What a card is about: something failed, something to watch, a boundary, or news. */
-export type DeskErrorTone = "err" | "warn" | "neutral" | "info";
+/** What an error card is about: something failed, something to watch, a boundary, or news. */
+export type DeskErrorTone = Exclude<DeskCardTone, "ask">;
 
 /**
  * A card in the conversation for something that did not go to plan: a reply
@@ -28,46 +28,14 @@ export function DeskErrorCard({
   children?: ReactNode;
 }) {
   return (
-    <div
-      className={cn("dk-ec-card", `dk-t-${tone}`, compact && "dk-sm")}
-      role={tone === "err" ? "alert" : undefined}
-    >
-      <span className="dk-ec-ic">
-        <DeskIcon name={icon} size={15} stroke={2} />
-      </span>
-      <div className="dk-ec-body">
-        {title && <b>{title}</b>}
-        {sub && <span className="dk-ec-sub">{sub}</span>}
-        {children}
-        {actions && <div className="dk-ec-acts">{actions}</div>}
-      </div>
-    </div>
+    <DeskCard tone={tone} icon={icon} title={title} sub={sub} compact={compact} actions={actions}>
+      {children}
+    </DeskCard>
   );
 }
 
 /** A button in an error card: ink for the way forward, quiet for the rest. */
-export function DeskErrorButton({
-  ink = false,
-  disabled,
-  title,
-  onClick,
-  children,
-}: {
-  ink?: boolean;
-  disabled?: boolean;
-  title?: string;
-  onClick?: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      className={cn("dk-ec-btn", ink ? "dk-ink" : "dk-ghost")}
-      disabled={disabled}
-      title={title}
-      onClick={onClick}
-    >
-      {children}
-    </button>
-  );
-}
+export const DeskErrorButton = DeskCardButton;
+
+/** A link-like action in an error card or lock line: underlined text, no fill. */
+export const DeskErrorLink = DeskCardLink;

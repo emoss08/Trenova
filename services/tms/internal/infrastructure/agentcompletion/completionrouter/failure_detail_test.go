@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
@@ -24,7 +24,7 @@ func TestDistinctFailuresCountsAttempts(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("aip_")
-	out := distinctFailures([]serviceports.ChatProviderFailure{
+	out := distinctFailures([]agentports.ChatProviderFailure{
 		{ProviderID: id, Vendor: "anthropic", Status: "Overloaded", HTTPStatus: 529, Attempts: 1},
 		{ProviderID: id, Vendor: "anthropic", Status: "Overloaded", HTTPStatus: 529, Attempts: 1},
 	})

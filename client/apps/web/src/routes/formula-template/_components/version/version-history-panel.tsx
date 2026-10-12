@@ -143,7 +143,7 @@ export function VersionHistoryPanel({
       const filename = getVersionExportFilename(template, version.versionNumber);
       downloadJson(exportData, filename);
       toast.success(t("Version exported"), {
-        description: `Downloaded v${version.versionNumber} as JSON`,
+        description: t("Downloaded v{0} as JSON", version.versionNumber),
       });
     },
     [template, t],
@@ -163,11 +163,12 @@ export function VersionHistoryPanel({
     await apiService.formulaTemplateService
       .rollback(template.id, {
         targetVersion: pendingRollbackVersion.versionNumber,
+        // i18n-ignore: change message stored on the template version record
         changeMessage: `Rolled back to version ${pendingRollbackVersion.versionNumber}`,
       })
       .then((updatedTemplate) => {
         toast.success(t("Rollback successful"), {
-          description: `Restored to version ${pendingRollbackVersion.versionNumber}`,
+          description: t("Restored to version {0}", pendingRollbackVersion.versionNumber),
         });
 
         void invalidateFormulaTemplate(queryClient);
@@ -360,9 +361,15 @@ function getChangeBadges(
 
   if (variableChanges.length > 0) {
     badges.push({
-      label: `Vars${variableChanges.length > 1 ? ` (${variableChanges.length})` : ""}`,
+      label:
+        variableChanges.length > 1
+          ? translate("Vars ({0})", variableChanges.length)
+          : translate("Vars"),
       color: "bg-accent-violet-subtle text-accent-violet-on-subtle",
-      tooltip: `${variableChanges.length} variable change${variableChanges.length > 1 ? "s" : ""}`,
+      tooltip: translate(
+        "{0, plural, one {# variable change} other {# variable changes}}",
+        variableChanges.length,
+      ),
     });
   }
 
@@ -379,10 +386,12 @@ function getChangeBadges(
 
   if (otherCount > 0) {
     const otherLabels: string[] = [];
-    if (hasName) otherLabels.push("name");
-    if (hasDescription) otherLabels.push("description");
-    if (hasType) otherLabels.push("type");
-    if (metadataChanges.length > 0) otherLabels.push(`${metadataChanges.length} metadata`);
+    if (hasName) otherLabels.push(translate("name"));
+    if (hasDescription) otherLabels.push(translate("description"));
+    if (hasType) otherLabels.push(translate("type"));
+    if (metadataChanges.length > 0) {
+      otherLabels.push(translate("{0} metadata", metadataChanges.length));
+    }
 
     badges.push({
       label: `+${otherCount}`,
@@ -425,11 +434,11 @@ function VersionItem({
       ),
     onSuccess: (_data, effectiveFrom) => {
       void invalidateFormulaTemplate(queryClient);
-      toast.success(effectiveFrom === null ? "Schedule cleared" : "Activation scheduled", {
+      toast.success(effectiveFrom === null ? t("Schedule cleared") : t("Activation scheduled"), {
         description:
           effectiveFrom === null
-            ? `v${version.versionNumber} will no longer activate automatically`
-            : `v${version.versionNumber} activates ${formatToUserTimezone(effectiveFrom)}`,
+            ? t("v{0} will no longer activate automatically", version.versionNumber)
+            : t("v{0} activates {1}", version.versionNumber, formatToUserTimezone(effectiveFrom)),
       });
       setScheduleDialogOpen(false);
     },

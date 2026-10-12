@@ -7,7 +7,7 @@ import { usePermission } from "@/hooks/use-permission";
 import { formatCurrency, formatFileSize } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { Notification } from "@trenova/shared/types/notification";
-import { formatDistanceToNowStrict } from "date-fns";
+import { formatRelativeTime } from "@trenova/shared/i18n/format";
 import { Download01Icon } from "@trenova/shared/components/icons";
 import { MentionReply } from "./notification-mention-reply";
 import {
@@ -26,7 +26,7 @@ function ReportRunAttachment({ notification }: { notification: Notification }) {
   const runId = notificationDataString(notification, "runId");
   if (!runId) return null;
 
-  const name = notificationDataString(notification, "reportName") ?? "Report";
+  const name = notificationDataString(notification, "reportName") ?? t("Report");
   const format = notificationDataString(notification, "format");
   const byteSize = notificationDataNumber(notification, "byteSize");
   const rowCount = notificationDataNumber(notification, "rowCount");
@@ -37,12 +37,12 @@ function ReportRunAttachment({ notification }: { notification: Notification }) {
   const meta: string[] = [];
   if (format) meta.push(format.toUpperCase());
   if (byteSize !== null && byteSize > 0) meta.push(formatFileSize(byteSize));
-  if (rowCount !== null) meta.push(`${rowCount.toLocaleString()} rows`);
+  if (rowCount !== null) meta.push(t("{0, plural, one {# row} other {# rows}}", rowCount));
   if (expiresAt !== null) {
     meta.push(
       expired
-        ? "Expired — run the report again"
-        : `Expires ${formatDistanceToNowStrict(new Date(expiresAt * 1000), { addSuffix: true })}`,
+        ? t("Expired — run the report again")
+        : t("Expires {0}", formatRelativeTime(expiresAt - Math.floor(Date.now() / 1000))),
     );
   }
 
@@ -66,7 +66,7 @@ function ReportRunAttachment({ notification }: { notification: Notification }) {
           variant="outline"
           size="icon-xs"
           className="shrink-0"
-          aria-label={`Download ${name}`}
+          aria-label={t("Download {0}", name)}
           onClick={(event) => {
             event.stopPropagation();
             downloadReportRun({ id: runId });

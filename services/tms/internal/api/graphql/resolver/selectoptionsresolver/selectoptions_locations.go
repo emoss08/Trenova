@@ -4,10 +4,13 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
-	"github.com/emoss08/trenova/internal/core/domain/ratezone"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -21,7 +24,7 @@ func (r *Deps) resolveUSStateSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.UsStateService.Get(
 				ctx,
-				repositories.GetUsStateByIDRequest{StateID: id},
+				usstateports.GetUsStateByIDRequest{StateID: id},
 			)
 			if err != nil {
 				return nil, err
@@ -51,7 +54,7 @@ func (r *Deps) resolveLocationSelectOptions(
 	if len(req.IDs) > 0 {
 		entities, err := r.LocationService.GetByIDs(
 			ctx,
-			repositories.GetLocationsByIDsRequest{
+			locationports.GetLocationsByIDsRequest{
 				TenantInfo:  req.TenantInfo,
 				LocationIDs: req.IDs,
 			},
@@ -66,7 +69,7 @@ func (r *Deps) resolveLocationSelectOptions(
 
 	result, err := r.LocationService.SelectOptions(
 		ctx,
-		&repositories.LocationSelectOptionsRequest{
+		&locationports.LocationSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)
@@ -90,7 +93,7 @@ func (r *Deps) resolveRateZoneSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.RateZoneService.GetByID(
 				ctx,
-				&repositories.GetRateZoneByIDRequest{
+				&ratezoneports.GetRateZoneByIDRequest{
 					RateZoneID: id,
 					TenantInfo: req.TenantInfo,
 				},
@@ -125,7 +128,7 @@ func (r *Deps) resolveLocationCategorySelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.LocationCategoryService.Get(
 				ctx,
-				repositories.GetLocationCategoryByIDRequest{
+				locationcategoryports.GetLocationCategoryByIDRequest{
 					ID:         id,
 					TenantInfo: req.TenantInfo,
 				},

@@ -2,9 +2,12 @@ package querybuilder
 
 import (
 	"database/sql"
+	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/pkg/pagination"
+
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/stretchr/testify/assert"
@@ -683,6 +686,50 @@ func TestQueryBuilder_ResolveShipmentAppointmentRelationships(t *testing.T) {
 	assert.Contains(t, sql, `LEFT JOIN shipment_moves AS sm_delivery_appt`)
 	assert.Contains(t, sql, `LEFT JOIN stops AS delivery_appt`)
 	assert.Contains(t, sql, `ORDER BY "delivery_appt"."scheduled_window_start" DESC`)
+}
+
+func TestQueryBuilder_ShipmentEndStopsGroupTheBoardByDay(t *testing.T) {
+	t.Parallel()
+
+	ClearCaches()
+
+	db := newAdditionalTestDB()
+	entity := &shipment.Shipment{}
+	fieldConfig := GetFieldConfiguration(entity)
+
+	for _, field := range []string{
+		"shipper_stop.scheduledWindowStart",
+		"consignee_stop.scheduledWindowStart",
+	} {
+		assert.True(t, fieldConfig.FilterableFields[field], field)
+		assert.True(t, fieldConfig.SortableFields[field], field)
+	}
+	assert.True(t, fieldConfig.FilterableFields["ownerId"])
+	assert.True(t, fieldConfig.SortableFields["ownerId"])
+	assert.True(t, fieldConfig.FilterableFields["customerId"])
+	assert.True(t, fieldConfig.SortableFields["customerId"])
+
+	query := db.NewSelect().Model((*shipment.Shipment)(nil)).ModelTableExpr("shipments AS sp")
+	qb := NewWithPostgresSearch(query, "sp", fieldConfig, entity).WithTraversalSupport(true)
+	qb.ApplySort([]domaintypes.SortField{
+		{Field: "shipperStop.scheduledWindowStart", Direction: dbtype.SortDirectionAsc},
+	})
+	qb.ApplyFilterGroups([]domaintypes.FilterGroup{{Filters: []domaintypes.FieldFilter{
+		{Field: "shipperStop.scheduledWindowStart", Operator: dbtype.OpLessThan, Value: 1_791_349_200},
+		{
+			Field:    "shipperStop.scheduledWindowStart",
+			Operator: dbtype.OpGreaterThanOrEqual,
+			Value:    1_791_435_600,
+		},
+		{Field: "shipperStop.scheduledWindowStart", Operator: dbtype.OpIsNull},
+	}}})
+
+	sql := qb.GetQuery().String()
+	assert.Equal(t, 1, strings.Count(sql, "LEFT JOIN stops AS shipper_stop"))
+	assert.Contains(t, sql, "shipper_stop.id = (SELECT end_stp.id FROM shipment_moves AS end_sm")
+	assert.Contains(t, sql, "end_sm.shipment_id = sp.id")
+	assert.Contains(t, sql, `ORDER BY "shipper_stop"."scheduled_window_start" ASC`)
+	assert.Contains(t, sql, "IS NULL")
 }
 
 func TestQueryBuilder_ResolveBelongsToRelationship(t *testing.T) {
@@ -1742,4 +1789,20 @@ func TestQueryBuilder_ApplyGeoFilters_RadiusConversion(t *testing.T) {
 	})
 
 	assert.NotNil(t, qb.GetQuery())
+}
+
+/*
+pagination.NormalizeFilterValue hands a whole number on as int64, from GraphQL
+and from REST alike, and extractDays read only int and float64: "the last 7
+days" counted as zero days and matched only rows from this second on, so the AI
+audit trail, and every other table filtered by lastndays or nextndays, came up
+empty.
+*/
+func TestExtractDays_ReadsTheDayCountAFilterIsNormalizedTo(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, 7, extractDays(pagination.NormalizeFilterValue(float64(7), "lastndays")))
+	assert.Equal(t, 7, extractDays(int64(7)))
+	assert.Equal(t, 30, extractDays(int32(30)))
+	assert.Equal(t, 15, extractDays(map[string]any{"days": int64(15)}))
 }

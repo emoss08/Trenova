@@ -4,13 +4,15 @@ package inboundmessageresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	inboundmessageservice "github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
+	inboundmessageservice "github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 )
 
 type Deps struct {
 	*base.Core
 	InboundMessageService *inboundmessageservice.Service
 }
+
+type InboundActivityResolver struct{ *Deps }
 
 type InboundAttachmentResolver struct{ *Deps }
 
@@ -20,6 +22,18 @@ type InboundMailboxResolver struct{ *Deps }
 
 type InboundMessageResolver struct{ *Deps }
 
+type InboundSnoozeResolver struct{ *Deps }
+
+type InboundSplitDocumentResolver struct{ *Deps }
+
 type MutationResolver struct{ *Deps }
 
 type QueryResolver struct{ *Deps }
+
+type TriageAssigneeResolver struct{ *Deps }
+
+type TriageHandOffResolver struct{ *Deps }
+
+type TriageSettingsResolver struct{ *Deps }
+
+type TriageViewResolver struct{ *Deps }

@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -175,7 +176,7 @@ func (s *WorkerTrainingSeed) ensureCourses(
 	}
 
 	existing := make([]*worker.TrainingCourse, 0, len(rows))
-	cols := buncolgen.TrainingCourseColumns
+	cols := workercol.TrainingCourseColumns
 	if err := tx.NewSelect().
 		Model(&existing).
 		Where(cols.OrganizationID.Eq(), refs.orgID).
@@ -196,7 +197,7 @@ func (s *WorkerTrainingSeed) loadWorkers(
 	refs *trainingSeedRefs,
 ) ([]*worker.Worker, error) {
 	workers := make([]*worker.Worker, 0, 32)
-	cols := buncolgen.WorkerColumns
+	cols := workercol.WorkerColumns
 	err := tx.NewSelect().
 		Model(&workers).
 		Where(cols.OrganizationID.Eq(), refs.orgID).
@@ -349,7 +350,7 @@ func (s *WorkerTrainingSeed) hasRecord(
 	wrk *worker.Worker,
 	course *worker.TrainingCourse,
 ) (bool, error) {
-	cols := buncolgen.WorkerTrainingRecordColumns
+	cols := workercol.WorkerTrainingRecordColumns
 	return tx.NewSelect().
 		Model((*worker.WorkerTrainingRecord)(nil)).
 		Where(cols.OrganizationID.Eq(), refs.orgID).

@@ -16,12 +16,12 @@ import {
   monthCost,
   retrievalRailState,
   retrievalRefetchInterval,
-  retrievalSettingsSchema,
+  parseBudgetCents,
+  retrievalSentence,
   retrievalTotals,
   sourceState,
   sourceWaiting,
-  toSettingsFormValues,
-  toSettingsPatch,
+  sourceShares,
   RETRIEVAL_REFRESH_MS,
 } from "../retrieval-model";
 
@@ -327,68 +327,93 @@ describe("retrievalRailState", () => {
   });
 });
 
-describe("settings form", () => {
-  it("opens on the saved settings, the budget in cents", () => {
-    expect(toSettingsFormValues(status().settings)).toEqual({
-      memoryEnabled: true,
-      documentsEnabled: true,
-      inboundMessagesEnabled: true,
-      paused: false,
-      monthlyIndexingBudgetCents: 1000,
+describe("retrievalSentence", () => {
+  it("says nothing is routed while no model is configured, counting what waits", () => {
+    const base = status();
+    const unrouted = status({
+      availability: { ...base.availability, available: false, reason: "NoProvider" },
+      settings: { ...base.settings, activeModelKey: null },
+      configuredModelKey: null,
+      sources: [
+        source({ sourceType: "Memory", enabled: true, total: 10, skipped: 2 }),
+        source({ sourceType: "Document", enabled: false, total: 500 }),
+      ],
+    });
+
+    expect(retrievalSentence(unrouted)).toEqual({ kind: "unrouted", waiting: 8 });
+  });
+
+  it("says indexing is paused, and whether the budget paused it", () => {
+    const base = status();
+
+    expect(
+      retrievalSentence(
+        status({ settings: { ...base.settings, paused: true, pausedReason: "Manual" } }),
+      ),
+    ).toEqual({ kind: "paused", budget: false });
+    expect(
+      retrievalSentence(
+        status({
+          availability: { ...base.availability, available: false, reason: "BudgetPaused" },
+          settings: { ...base.settings, paused: true, pausedReason: "Budget" },
+        }),
+      ),
+    ).toEqual({ kind: "paused", budget: true });
+  });
+
+  it("says how much is left while the indexer works, and what failed once it is done", () => {
+    const base = status();
+    const indexing = status({
+      sources: [source({ sourceType: "Memory", enabled: true, total: 10, indexed: 4, pending: 6 })],
+    });
+    const done = status({
+      sources: [source({ sourceType: "Memory", enabled: true, total: 10, indexed: 8, failed: 2 })],
+    });
+
+    expect(retrievalSentence(indexing)).toEqual({
+      kind: "indexing",
+      model: base.settings.activeModelKey,
+      waiting: 6,
+    });
+    expect(retrievalSentence(done)).toEqual({
+      kind: "done",
+      model: base.settings.activeModelKey,
+      failed: 2,
+    });
+  });
+});
+
+describe("parseBudgetCents", () => {
+  it("reads dollars typed with or without a sign, commas or cents", () => {
+    expect(parseBudgetCents("12.5")).toBe(1250);
+    expect(parseBudgetCents("$1,000")).toBe(100_000);
+    expect(parseBudgetCents(" 0 ")).toBe(0);
+  });
+
+  it("refuses text, a negative, a third decimal or more than the server takes", () => {
+    expect(parseBudgetCents("ten")).toBeNull();
+    expect(parseBudgetCents("-5")).toBeNull();
+    expect(parseBudgetCents("1.234")).toBeNull();
+    expect(parseBudgetCents("100000.01")).toBeNull();
+    expect(parseBudgetCents("100000")).toBe(10_000_000);
+  });
+});
+
+describe("sourceShares", () => {
+  it("draws each part of the bar as a share of everything the source holds", () => {
+    expect(sourceShares(source({ total: 200, indexed: 100, failed: 20, skipped: 10 }))).toEqual({
+      indexed: 50,
+      failed: 10,
+      skipped: 5,
     });
   });
 
-  // The switch is a person's pause. A budget pause is lifted by raising the
-  // budget, so it does not show as a switch someone turned on.
-  it("shows only a manual pause on the pause switch", () => {
-    const settings = status().settings;
-
-    expect(toSettingsFormValues({ ...settings, paused: true, pausedReason: "Manual" }).paused).toBe(
-      true,
-    );
-    expect(toSettingsFormValues({ ...settings, paused: true, pausedReason: "Budget" }).paused).toBe(
-      false,
-    );
-  });
-
-  it("sends nothing when nothing changed", () => {
-    const initial = toSettingsFormValues(status().settings);
-
-    expect(toSettingsPatch(initial, initial)).toEqual({});
-  });
-
-  // The patch input leaves an absent field alone, so turning a source off
-  // must send false rather than leave it out.
-  it("sends exactly what changed, false included", () => {
-    const initial = toSettingsFormValues(status().settings);
-    const patch = toSettingsPatch(
-      { ...initial, documentsEnabled: false, paused: true, monthlyIndexingBudgetCents: 1250 },
-      initial,
-    );
-
-    expect(patch).toEqual({
-      documentsEnabled: false,
-      paused: true,
-      monthlyIndexingBudgetUsd: "12.50",
+  it("draws nothing for an empty source rather than dividing by zero", () => {
+    expect(sourceShares(source({ total: 0, indexed: 0, failed: 0, skipped: 0 }))).toEqual({
+      indexed: 0,
+      failed: 0,
+      skipped: 0,
     });
-    expect(Object.hasOwn(patch, "memoryEnabled")).toBe(false);
-    expect(Object.hasOwn(patch, "inboundMessagesEnabled")).toBe(false);
-  });
-
-  it("refuses a negative budget or one past the server's maximum", () => {
-    const initial = toSettingsFormValues(status().settings);
-
-    expect(
-      retrievalSettingsSchema.safeParse({ ...initial, monthlyIndexingBudgetCents: -1 }).success,
-    ).toBe(false);
-    expect(
-      retrievalSettingsSchema.safeParse({ ...initial, monthlyIndexingBudgetCents: 10_000_001 })
-        .success,
-    ).toBe(false);
-    expect(
-      retrievalSettingsSchema.safeParse({ ...initial, monthlyIndexingBudgetCents: 10_000_000 })
-        .success,
-    ).toBe(true);
   });
 });
 

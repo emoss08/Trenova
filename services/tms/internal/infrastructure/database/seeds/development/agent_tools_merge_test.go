@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/stretchr/testify/assert"
 )
 

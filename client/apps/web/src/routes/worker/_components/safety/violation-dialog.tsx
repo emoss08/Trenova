@@ -30,6 +30,7 @@ import {
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const BASIC_OPTIONS = CSA_BASIC_ORDER.map((value) => ({
   value,
@@ -110,7 +111,7 @@ export function ViolationDialog({
         : recordSafetyViolation({ ...shared, safetyEventId });
     },
     onSuccess: () => {
-      toast.success(isEdit ? "Violation corrected" : "Violation cited");
+      toast.success(isEdit ? translate("Violation corrected") : translate("Violation cited"));
       void queryClient.invalidateQueries({ queryKey: [SAFETY_VIOLATIONS_KEY, safetyEventId] });
       void queryClient.invalidateQueries({ queryKey: ["fleet-safety"] });
       onOpenChange(false);

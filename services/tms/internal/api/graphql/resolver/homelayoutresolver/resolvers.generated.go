@@ -4,7 +4,7 @@ package homelayoutresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	homelayoutservice "github.com/emoss08/trenova/internal/core/services/homelayoutservice"
+	homelayoutservice "github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
 )
 
 type Deps struct {

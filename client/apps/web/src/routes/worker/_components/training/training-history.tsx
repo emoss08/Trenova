@@ -5,11 +5,11 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import {
-  WORKER_TRAINING_STATUS_LABELS,
   type WorkerTrainingHealth,
   type WorkerTrainingStatus,
 } from "@trenova/shared/types/worker-training";
 import { ChevronDownIcon } from "@trenova/shared/components/icons";
+import { describeTrainingRecordOn, trainingRecordStatusLabel } from "@trenova/shared/lib/training";
 import { useState } from "react";
 
 /**
@@ -45,12 +45,17 @@ export function TrainingHistory({ records }: { records: WorkerTrainingRecordRow[
                 <p className="truncate text-sm font-medium">{record.course?.name ?? t("Course")}</p>
                 <p className="text-muted-foreground truncate">
                   {[
-                    `${WORKER_TRAINING_STATUS_LABELS[record.status as WorkerTrainingStatus]}${
-                      record.completedAt ? ` ${formatUnixDate(record.completedAt)}` : ""
-                    }`,
-                    record.expiresAt ? `valid until ${formatUnixDate(record.expiresAt)}` : null,
+                    record.completedAt
+                      ? describeTrainingRecordOn(
+                          record.status as WorkerTrainingStatus,
+                          record.completedAt,
+                        )
+                      : trainingRecordStatusLabel(record.status as WorkerTrainingStatus),
+                    record.expiresAt
+                      ? t("valid until {0}", formatUnixDate(record.expiresAt))
+                      : null,
                     record.waivedReason,
-                    record.recordedBy?.name ? `by ${record.recordedBy.name}` : null,
+                    record.recordedBy?.name ? t("by {0}", record.recordedBy.name) : null,
                   ]
                     .filter(Boolean)
                     .join(" · ")}

@@ -1,8 +1,12 @@
+import type { Hotkey } from "@tanstack/react-hotkeys";
+
 export interface Keybind {
   id: string;
   label: string;
   keys: string[];
   description: string;
+  /** The binding as `useHotkey` takes it, for a keybind bound from this config. */
+  hotkey?: Hotkey;
 }
 
 export interface KeybindGroup {
@@ -164,6 +168,59 @@ export const keybindGroups: KeybindGroup[] = [
     ],
   },
   {
+    id: "edit-sheet",
+    label: "Editing",
+    keybinds: [
+      {
+        id: "save",
+        label: "Save changes",
+        keys: ["Ctrl", "S"],
+        description: "Save the editor you are in",
+        hotkey: "Mod+S",
+      },
+      {
+        id: "close",
+        label: "Close editor",
+        keys: ["Esc"],
+        description: "Close the editor, asking first when there are unsaved changes",
+        hotkey: "Escape",
+      },
+    ],
+  },
+  {
+    id: "ai-control",
+    label: "AI control",
+    keybinds: [
+      {
+        id: "tab",
+        label: "Go to a tab",
+        keys: ["1–9"],
+        description: "Open the first nine tabs of AI control in order",
+      },
+      {
+        id: "search",
+        label: "Search",
+        keys: ["/"],
+        description: "Search the list on the current tab",
+        hotkey: "/",
+      },
+      {
+        id: "new",
+        label: "New",
+        keys: ["N"],
+        description: "Create a new agent or provider on its tab",
+        hotkey: "N",
+      },
+      {
+        id: "edit",
+        label: "Edit",
+        keys: ["E"],
+        description: "Open the selected row's editor",
+        hotkey: "E",
+      },
+    ],
+  },
+  {
     id: "navigation",
     label: "Record navigation",
     keybinds: [
@@ -226,6 +283,108 @@ export const keybindGroups: KeybindGroup[] = [
         label: "Next page",
         keys: ["→"],
         description: "Show the page after in a page preview",
+      },
+    ],
+  },
+  {
+    id: "triage",
+    label: "Triage",
+    keybinds: [
+      {
+        id: "triage-briefing",
+        label: "Briefing",
+        keys: ["B"],
+        description: "Go back to the briefing",
+      },
+      {
+        id: "triage-next",
+        label: "Next message",
+        keys: ["J"],
+        description: "Open the next message; the down arrow does the same",
+      },
+      {
+        id: "triage-previous",
+        label: "Previous message",
+        keys: ["K"],
+        description: "Open the previous message; the up arrow does the same",
+      },
+      {
+        id: "triage-search",
+        label: "Search",
+        keys: ["/"],
+        description: "Search the open folder",
+      },
+      {
+        id: "triage-panel",
+        label: "Actions panel",
+        keys: ["I"],
+        description: "Show or hide the actions and information beside the message",
+      },
+      {
+        id: "triage-do",
+        label: "Do the next step",
+        keys: ["Enter"],
+        description: "Do the next open step of the message",
+      },
+      {
+        id: "triage-handle",
+        label: "Mark handled",
+        keys: ["E"],
+        description: "Mark the message, or every selected one, handled",
+      },
+      {
+        id: "triage-ignore",
+        label: "Ignore",
+        keys: ["#"],
+        description: "Ignore the message, or every selected one",
+      },
+      {
+        id: "triage-reply",
+        label: "Reply",
+        keys: ["R"],
+        description: "Write a reply to the sender",
+      },
+      {
+        id: "triage-snooze",
+        label: "Snooze until tomorrow",
+        keys: ["S"],
+        description: "Snooze the message, or every selected one, until tomorrow morning",
+      },
+      {
+        id: "triage-assign",
+        label: "Assign to me",
+        keys: ["M"],
+        description: "Assign the message, or every selected one, to you",
+      },
+      {
+        id: "triage-select",
+        label: "Select",
+        keys: ["X"],
+        description: "Select or deselect the open message for a bulk change",
+      },
+      {
+        id: "triage-link",
+        label: "Link to a record",
+        keys: ["L"],
+        description: "Say which shipment or customer the message is about",
+      },
+      {
+        id: "triage-desk",
+        label: "Ask an agent in Desk",
+        keys: ["A"],
+        description: "Hand the message and its open steps to one of your agents",
+      },
+      {
+        id: "triage-shortcuts",
+        label: "Shortcuts",
+        keys: ["?"],
+        description: "Show these shortcuts",
+      },
+      {
+        id: "triage-escape",
+        label: "Back out",
+        keys: ["Esc"],
+        description: "Clear the selection, then close the panel, then close the message",
       },
     ],
   },
@@ -302,3 +461,18 @@ export const keybindGroups: KeybindGroup[] = [
     ],
   },
 ];
+
+/**
+ * The `useHotkey` binding of a keybind, so the key a shortcut sheet shows and the key that
+ * is bound are the same entry. Throws for a keybind that is not bound from config, which is
+ * a mistake in the caller rather than something to recover from.
+ */
+export function hotkeyOf(groupId: string, keybindId: string): Hotkey {
+  const hotkey = keybindGroups
+    .find((group) => group.id === groupId)
+    ?.keybinds.find((keybind) => keybind.id === keybindId)?.hotkey;
+  if (!hotkey) {
+    throw new Error(`No hotkey is configured for ${groupId}.${keybindId}`);
+  }
+  return hotkey;
+}

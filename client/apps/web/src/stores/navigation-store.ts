@@ -15,11 +15,19 @@ export function isSidebarVariant(value: unknown): value is SidebarVariant {
 interface NavigationState {
   activeModuleId: ModuleId | null;
   sidebarCollapsed: boolean;
+  /**
+   * Whether the sidebar's sheet is out on a phone, where the sidebar never
+   * sits beside the page. It starts closed on every visit and is not kept.
+   */
+  compactSidebarOpen: boolean;
   sidebarVariant: SidebarVariant;
 
   setActiveModuleId: (id: ModuleId | null) => void;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
+  setCompactSidebarOpen: (open: boolean) => void;
+  /** Folds the sidebar beside the page, or on a phone slides its sheet in or out. */
+  toggleSidebarFor: (compact: boolean) => void;
   setSidebarVariant: (variant: SidebarVariant) => void;
 }
 
@@ -28,6 +36,7 @@ export const useNavigationStore = create<NavigationState>()(
     (set) => ({
       activeModuleId: null,
       sidebarCollapsed: false,
+      compactSidebarOpen: false,
       sidebarVariant: DEFAULT_SIDEBAR_VARIANT,
 
       setActiveModuleId: (id: ModuleId | null) => {
@@ -40,6 +49,18 @@ export const useNavigationStore = create<NavigationState>()(
 
       setSidebarCollapsed: (collapsed: boolean) => {
         set({ sidebarCollapsed: collapsed });
+      },
+
+      setCompactSidebarOpen: (open: boolean) => {
+        set({ compactSidebarOpen: open });
+      },
+
+      toggleSidebarFor: (compact: boolean) => {
+        set((state) =>
+          compact
+            ? { compactSidebarOpen: !state.compactSidebarOpen }
+            : { sidebarCollapsed: !state.sidebarCollapsed },
+        );
       },
 
       setSidebarVariant: (variant: SidebarVariant) => {

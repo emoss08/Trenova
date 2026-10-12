@@ -39,6 +39,10 @@ var Bindings = []Binding{
 			"commodities":       "ShipmentCommodityInput",
 			"additionalCharges": "ShipmentAdditionalChargeInput",
 		},
+		Defaulted: map[string]string{
+			"formulaTemplateId": "left out, the tool seats the rating method and base rate the " +
+				"customer's rate agreement prices the lane with, and refuses when none does",
+		},
 	},
 	{
 		Tool:  "update_shipment",
@@ -137,6 +141,10 @@ var Bindings = []Binding{
 	{
 		Tool:  "request_worker_pto",
 		Input: "CreateWorkerPTOInput",
+		Defaulted: map[string]string{
+			"reason": "left out, the kind of time off is the reason: \"put it in as vacation\" " +
+				"says why, and asking for a reason only delayed the request",
+		},
 	},
 	{
 		Tool:  "schedule_dot_test",
@@ -225,7 +233,10 @@ var Bindings = []Binding{
 		},
 		Extra: map[string]string{"safetyEventId": namedID("safetyEventId")},
 	},
-	{Tool: "record_fuel_purchase", Input: "FuelPurchaseInput"},
+	{Tool: "record_fuel_purchase", Input: "FuelPurchaseInput", Defaulted: map[string]string{
+		"totalAmount": "the tool works the total out from quantity and unitPrice when a receipt " +
+			"is read out as gallons and a price, and refuses when it has neither",
+	}},
 	{
 		Tool:  "correct_fuel_purchase",
 		Input: "FuelPurchaseInput",
@@ -355,6 +366,8 @@ var Unbound = map[string]string{
 	"add_home_widget":                   layoutPart,
 	"add_order_charge": "addOrderCharge takes the charge as scalar arguments; only its payer sp" +
 		"lit is an input object, which the tool does not take",
+	"add_shipment_charge": "adds one accessorial to a saved shipment through the shipment " +
+		"service's update; it takes the charge and its units, never the whole ShipmentInput",
 	"adjust_escrow_account":           pendingBinding,
 	"apply_carrier_intel_suggestions": pendingBinding,
 	"apply_credit_memo":               pendingBinding,
@@ -408,20 +421,25 @@ var Unbound = map[string]string{
 	"remove_driver_settlement_adjustment":  pendingBinding,
 	"remove_home_widget":                   layoutPart,
 	"remove_order_charge":                  pendingBinding,
-	"resolve_accounting_drift":             pendingBinding,
-	"resolve_carrier_intel_event":          pendingBinding,
-	"retry_accounting_sync":                pendingBinding,
-	"reverse_customer_payment":             pendingBinding,
-	"save_table_view":                      pendingBinding,
-	"schedule_report":                      pendingBinding,
-	"send_billing_item_back_to_ops":        statusDecision,
-	"set_accounting_mapping":               pendingBinding,
-	"set_order_charge_allocations":         pendingBinding,
-	"set_worker_availability_preference":   pendingBinding,
-	"skip_accounting_sync":                 pendingBinding,
-	"tender_move_to_carriers":              oneMoveTender,
-	"tender_move_to_routing_guide":         oneMoveTender,
-	"transfer_shipment_ownership":          pendingBinding,
+	"reply_to_inbound_message": "answers the sender under the original subject in the " +
+		"organization's letterhead and settles the message; it takes the body and an email " +
+		"profile, never the subject, address or template sendInboundReply's input lets a person set",
+	"reschedule_stop": "moves one stop's window through the shipment service's update; it " +
+		"takes the stop and its new window, never the whole ShipmentInput",
+	"resolve_accounting_drift":           pendingBinding,
+	"resolve_carrier_intel_event":        pendingBinding,
+	"retry_accounting_sync":              pendingBinding,
+	"reverse_customer_payment":           pendingBinding,
+	"save_table_view":                    pendingBinding,
+	"schedule_report":                    pendingBinding,
+	"send_billing_item_back_to_ops":      statusDecision,
+	"set_accounting_mapping":             pendingBinding,
+	"set_order_charge_allocations":       pendingBinding,
+	"set_worker_availability_preference": pendingBinding,
+	"skip_accounting_sync":               pendingBinding,
+	"tender_move_to_carriers":            oneMoveTender,
+	"tender_move_to_routing_guide":       oneMoveTender,
+	"transfer_shipment_ownership":        pendingBinding,
 	"transfer_to_billing": "one tool for four mutations (one shipment, its items, a bulk transfer " +
 		"and a transfer run), so no single input is its shape",
 	"transition_item_to_in_review": statusDecision,

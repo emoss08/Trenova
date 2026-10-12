@@ -8,8 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -25,7 +25,7 @@ type Params struct {
 	// Realtime ends its event streams as soon as shutdown begins. Shutdown
 	// otherwise waits on every open stream until its deadline, since a stream
 	// is a request that never finishes on its own.
-	Realtime services.RealtimeGateway `optional:"true"`
+	Realtime agentports.RealtimeGateway `optional:"true"`
 }
 
 type Server struct {

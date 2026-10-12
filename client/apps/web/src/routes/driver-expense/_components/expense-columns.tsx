@@ -42,7 +42,13 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverExpenseRow>[] {
       header: t("Driver"),
       cell: ({ row }) => <span className="text-sm font-medium">{workerName(row.original)}</span>,
       size: 160,
-      meta: { apiField: "workerId", label: t("Driver") },
+      meta: {
+        apiField: "workerId",
+        label: t("Driver"),
+        filterable: true,
+        filterType: "record",
+        filterRecord: "WORKER",
+      },
     },
     {
       accessorKey: "amountMinor",

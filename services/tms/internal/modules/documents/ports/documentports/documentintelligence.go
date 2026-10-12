@@ -1,0 +1,31 @@
+package documentports
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+)
+
+type DocumentContentService interface {
+	GetContent(
+		ctx context.Context,
+		documentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (*documentcontent.Content, error)
+	GetShipmentDraft(
+		ctx context.Context,
+		documentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (*documentshipmentdraft.DocumentShipmentDraft, error)
+	SearchDocuments(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		resourceType, resourceID, query string,
+	) ([]*document.Document, error)
+	Reextract(ctx context.Context, documentID pulid.ID, tenantInfo pagination.TenantInfo) error
+	EnqueueExtraction(ctx context.Context, doc *document.Document, userID pulid.ID) error
+}

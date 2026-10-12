@@ -1,3 +1,8 @@
+import { PROVIDER_HANDLERS } from "./aiproviders.mjs";
+import { AI_HANDLERS } from "./aicontrol.mjs";
+import { DESK_HANDLERS, TRIAGE_HANDLERS } from "./triage.mjs";
+import { TriageError } from "./triage-model.mjs";
+import { DESK_CARD_HANDLERS } from "./deskcards.mjs";
 import { hash, stageOf, stageRankOf, STAGE_RANKS } from "../state.mjs";
 
 const HOUR = 3600;
@@ -67,6 +72,10 @@ const FIELD_GETTERS = new Map(Object.entries({
   createdAt: (s) => s.createdAt,
   totalChargeAmount: (s) => s.board.revenue,
   "customer.name": (s) => s.customer.name,
+  ownerId: (s) => s.ownerId ?? null,
+  "owner.name": (s) => s.owner?.name ?? null,
+  "shipperStop.scheduledWindowStart": (s) => pickupOf(s).scheduledWindowStart,
+  "consigneeStop.scheduledWindowStart": (s) => deliveryOf(s).scheduledWindowStart,
   bol: (s) => s.bol,
   billingTransferStatus: (s) => s.billingTransferStatus ?? "",
 }));
@@ -88,9 +97,17 @@ function fieldFilterMatches(s, filter) {
     case "in":
       return list.map(String).includes(String(value));
     case "notin":
-      return !list.map(String).includes(String(value));
+      return value !== null && value !== undefined && !list.map(String).includes(String(value));
     case "contains":
       return String(value ?? "").toLowerCase().includes(String(filter.value).toLowerCase());
+    case "lt":
+      return value !== null && value !== undefined && value < filter.value;
+    case "gte":
+      return value !== null && value !== undefined && value >= filter.value;
+    case "isnull":
+      return value === null || value === undefined;
+    case "isnotnull":
+      return value !== null && value !== undefined;
     default:
       return true;
   }
@@ -126,6 +143,8 @@ function sorted(list, sort = []) {
       const x = get(a);
       const y = get(b);
       if (x === y) continue;
+      if (x === null || x === undefined) return 1;
+      if (y === null || y === undefined) return -1;
       const order = x > y ? 1 : -1;
       return term.direction === "desc" ? -order : order;
     }
@@ -183,43 +202,47 @@ function stageSummary(state, input) {
   });
 }
 
+/* Mirrors the server: groups in the order the board sorts their rows, days
+   in the board's zone, and an empty key for no date or no owner. */
+const GROUP_KEYS = {
+  ShipDate: (s, tz) => dayKey(pickupOf(s).scheduledWindowStart, tz),
+  DeliveryDate: (s, tz) => dayKey(deliveryOf(s).scheduledWindowStart, tz),
+  Customer: (s) => s.customerId,
+  Owner: (s) => s.ownerId ?? "",
+};
+
+function dayKey(unix, timezone) {
+  if (unix === null || unix === undefined) return "";
+  return new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" })
+    .format(new Date(unix * 1000));
+}
+
+function boardGroups(state, input, groupBy) {
+  const keyOf = GROUP_KEYS[groupBy];
+  if (!keyOf) throw new Error(`unknown grouping ${groupBy}`);
+  const groups = new Map();
+  for (const s of scoped(state, input)) {
+    const key = keyOf(s, input.timezone ?? "UTC");
+    const label = groupBy === "Customer" ? s.customer.name : groupBy === "Owner" ? (s.owner?.name ?? "") : "";
+    const entry = groups.get(key) ?? { key, label, count: 0, total: 0 };
+    entry.count += 1;
+    entry.total += s.board.revenue;
+    groups.set(key, entry);
+  }
+  const blankLast = (a, b) => (a.key === "") - (b.key === "");
+  const byName = (a, b) => blankLast(a, b) || a.label.localeCompare(b.label) || (a.key < b.key ? -1 : 1);
+  const byKey = (a, b) => blankLast(a, b) || (a.key < b.key ? -1 : 1);
+  return [...groups.values()]
+    .sort(groupBy === "Customer" || groupBy === "Owner" ? byName : byKey)
+    .map(({ key, label, count, total }) => ({ key, label, count, revenue: money(total) }));
+}
+
 function quickFilterCounts(state, input) {
   const list = scoped(state, input);
   return ["Late", "Uncovered", "Moving", "DeliveringToday", "Reefer", "LowMargin"].map((filter) => ({
     filter,
     count: list.filter((s) => quickFilterMatches(state, s, { filter })).length,
   }));
-}
-
-const STATUS_LABEL = {
-  New: "New",
-  Assigned: "Assigned",
-  InTransit: "In transit",
-  Delayed: "Delayed",
-  Completed: "Completed",
-  Canceled: "Canceled",
-};
-
-function facetCounts(state, input, facets) {
-  const list = scoped(state, input);
-  const tally = (field, valueOf, labelOf) => {
-    const counts = new Map();
-    for (const s of list) {
-      const value = valueOf(s);
-      if (value == null) continue;
-      const entry = counts.get(value) ?? { value, label: labelOf(s, value), count: 0 };
-      entry.count += 1;
-      counts.set(value, entry);
-    }
-    return { field, values: [...counts.values()].sort((a, b) => b.count - a.count) };
-  };
-  const defs = new Map(Object.entries({
-    Status: () => tally("status", (s) => s.status, (_s, v) => STATUS_LABEL[v] ?? v),
-    Equipment: () => tally("equipmentClass", (s) => (s.board.reefer ? "Reefer" : "DryVan"), (_s, v) => (v === "Reefer" ? "Reefer" : "Dry van")),
-    TenderStatus: () => tally("tenderStatus", (s) => s.tenderStatus, (_s, v) => v),
-    Customer: () => tally("customerId", (s) => s.customerId, (s) => s.customer.name),
-  }));
-  return facets.filter((facet) => defs.has(facet)).map((facet) => ({ facet, ...defs.get(facet)() }));
 }
 
 function coverageNoun(operationType, count) {
@@ -232,30 +255,75 @@ function plural(count, word) {
   return `${count} ${count === 1 ? word : `${word}s`}`;
 }
 
-function briefing(state) {
-  const now = state.now();
-  const today = state.shipments.filter((s) => startOfDay(projectedArrival(s)) === startOfDay(now) || startOfDay(s.board.pickupAt) === startOfDay(now));
-  const moving = state.shipments.filter((s) => stageOf(s) === "Moving").length;
+function boardFacts(state) {
+  const count = (filter) => state.shipments.filter((s) => quickFilterMatches(state, s, { filter })).length;
   const late = state.shipments.filter((s) => stageOf(s) === "Late");
-  const uncovered = state.shipments.filter(isUncovered).length;
-  const reason = late.find((s) => s.board.risk)?.board.risk;
-  const segments = [{ text: `${plural(today.length, "load")} today. `, filter: null }];
-  segments.push({ text: `${moving} ${moving === 1 ? "is" : "are"} moving on schedule`, filter: "Moving" });
-  if (late.length) {
-    segments.push({ text: ", ", filter: null });
-    segments.push({ text: `${late.length} ${late.length === 1 ? "is" : "are"} running late`, filter: "Late" });
-    if (reason) segments.push({ text: state.scenario.ai ? ` behind the ${reason.toLowerCase().replace("weather on", "storm over")}` : ` (${reason.toLowerCase()})`, filter: null });
+  const openSuggestions = suggestionItems(state).filter((item) => state.decisions.get(item.key) !== "Done").length;
+  return {
+    deliveringToday: count("DeliveringToday"),
+    moving: count("Moving"),
+    late: late.length,
+    uncovered: count("Uncovered"),
+    detention: count("Detention"),
+    readyToBill: count("ReadyToBill"),
+    lateReason: late.find((s) => s.board.risk)?.board.risk ?? "",
+    openSuggestions,
+  };
+}
+
+function openIssues(facts) {
+  return facts.late + facts.uncovered + facts.openSuggestions;
+}
+
+function joinClauses(clauses) {
+  const segments = [];
+  clauses.forEach((clause, index) => {
+    if (index > 0) segments.push({ text: index === clauses.length - 1 ? " and " : ", ", filter: null });
+    segments.push(...clause);
+  });
+  if (clauses.length) segments.push({ text: ". ", filter: null });
+  return segments;
+}
+
+function briefSegments(state, facts) {
+  const loads = (count) => plural(count, "load");
+  const verb = (count, one, many) => (count === 1 ? one : many);
+  const board = [];
+  if (facts.deliveringToday) board.push([{ text: `${loads(facts.deliveringToday)} ${verb(facts.deliveringToday, "delivers", "deliver")} today`, filter: "DeliveringToday" }]);
+  if (facts.moving) board.push([{ text: `${loads(facts.moving)} ${verb(facts.moving, "is", "are")} moving on schedule`, filter: "Moving" }]);
+  if (facts.late) {
+    const clause = [{ text: `${loads(facts.late)} ${verb(facts.late, "is", "are")} late`, filter: "Late" }];
+    if (facts.lateReason) clause.push({ text: `, mostly ${facts.lateReason.toLowerCase()}`, filter: null });
+    board.push(clause);
   }
-  if (uncovered) {
-    segments.push({ text: late.length ? ", and " : " and ", filter: null });
-    const noun = coverageNoun(state.scenario.operationType, 1);
-    segments.push({ text: `${uncovered} still need${uncovered === 1 ? "s" : ""} ${noun}`, filter: "Uncovered" });
+  const followUp = [];
+  if (facts.uncovered) followUp.push([{ text: `${loads(facts.uncovered)} still ${verb(facts.uncovered, "needs", "need")} ${coverageNoun(state.scenario.operationType, facts.uncovered)}`, filter: "Uncovered" }]);
+  if (facts.detention) followUp.push([{ text: `${loads(facts.detention)} ${verb(facts.detention, "is", "are")} accruing detention`, filter: "Detention" }]);
+  if (facts.readyToBill) followUp.push([{ text: `${loads(facts.readyToBill)} ${verb(facts.readyToBill, "is", "are")} ready to bill`, filter: "ReadyToBill" }]);
+  const segments = [...joinClauses(board), ...joinClauses(followUp)];
+  if (!segments.length) return [{ text: "Nothing on the board needs you right now.", filter: null }];
+  segments[segments.length - 1] = { text: ".", filter: null };
+  return segments;
+}
+
+/**
+ * The day's brief is stored like the server stores it: written once, read
+ * after that, and written again only when everything it flagged is cleared.
+ */
+function briefing(state) {
+  const facts = boardFacts(state);
+  const stored = state.brief;
+  if (!stored || (stored.openIssues > 0 && openIssues(facts) === 0 && stored.generation < 6)) {
+    state.brief = {
+      segments: briefSegments(state, facts),
+      narrated: state.scenario.ai,
+      generatedAt: state.now(),
+      generation: (stored?.generation ?? 0) + 1,
+      openIssues: openIssues(facts),
+    };
   }
-  segments.push({ text: ".", filter: null });
-  if (state.scenario.ai && (late.length || uncovered)) {
-    segments.push({ text: " I've drafted fixes in the brief.", filter: null });
-  }
-  return { segments, narrated: state.scenario.ai, generatedAt: now };
+  const { openIssues: _open, ...brief } = state.brief;
+  return brief;
 }
 
 function driverUnits(state) {
@@ -777,7 +845,6 @@ const EMPTY_CONNECTION = {
 };
 
 const SHELL_HANDLERS = {
-  MyAgents: () => ({ myAgents: EMPTY_CONNECTION }),
   AttentionSummary: () => ({
     attentionSummary: {
       billingQueue: 0,
@@ -789,6 +856,7 @@ const SHELL_HANDLERS = {
     },
   }),
   SidebarPreferences: () => ({ sidebarPreferences: null }),
+  RecentActivity: () => ({ auditEntries: { edges: [], pageInfo: { endCursor: null, hasNextPage: false } } }),
   NotificationUnreadCount: () => ({ notificationUnreadCount: 0 }),
   DefaultTableConfiguration: () => ({ defaultTableConfiguration: null }),
   TableConfigurationTable: () => ({ tableConfigurations: EMPTY_CONNECTION }),
@@ -796,6 +864,32 @@ const SHELL_HANDLERS = {
 
 const HANDLERS = {
   ...SHELL_HANDLERS,
+  ...PROVIDER_HANDLERS,
+  ...AI_HANDLERS,
+  ...DESK_HANDLERS,
+  ...TRIAGE_HANDLERS,
+  ...DESK_CARD_HANDLERS,
+  SelectOptions: (state, v) => {
+    const cards = DESK_CARD_HANDLERS.SelectOptions(state, v);
+    return v.input?.resource !== "USER" && cards.selectOptions.totalCount > 0
+      ? cards
+      : DESK_HANDLERS.SelectOptions(state, v);
+  },
+  MyAgents: (state, v) => {
+    const triage = DESK_HANDLERS.MyAgents(state, v).myAgents;
+    const known = new Set(triage.edges.map((edge) => edge.node.id));
+    const cards = DESK_CARD_HANDLERS.MyAgents(state, v).myAgents.edges
+      .filter((edge) => !known.has(edge.node.id))
+      .map((edge) => ({ node: { systemKey: "", delegates: [], starters: [], ...edge.node } }));
+    const edges = [...triage.edges, ...cards];
+    return {
+      myAgents: {
+        edges,
+        pageInfo: triage.pageInfo,
+        ...(v.includeTotalCount ? { totalCount: edges.length } : {}),
+      },
+    };
+  },
   ShipmentBoardTable: (state, v) => ({ shipments: shipmentConnection(state, v.input, v.includeTotalCount) }),
   ShipmentDetail: (state, v) => {
     const s = state.shipments.find((x) => x.id === v.id);
@@ -828,8 +922,8 @@ const HANDLERS = {
     },
   }),
   ShipmentStageSummary: (state, v) => ({ shipmentStageSummary: stageSummary(state, v.input) }),
+  ShipmentBoardGroups: (state, v) => ({ shipmentBoardGroups: boardGroups(state, v.input, v.groupBy) }),
   ShipmentQuickFilterCounts: (state, v) => ({ shipmentQuickFilterCounts: quickFilterCounts(state, v.input) }),
-  ShipmentFacetCounts: (state, v) => ({ shipmentFacetCounts: facetCounts(state, v.input, v.facets) }),
   ShipmentBriefing: (state) => ({ shipmentBriefing: briefing(state) }),
   ShipmentCapacity: (state, v) => ({ shipmentCapacity: capacity(state, v.kind) }),
   CapacityUnitMatches: (state, v) => ({ capacityUnitMatches: capacityMatches(state, v.kind, v.unitId, v.limit ?? 2) }),
@@ -900,14 +994,32 @@ const HANDLERS = {
   },
 };
 
-export function handleGraphQL(state, body) {
+/** A domain error the way the server's error presenter returns it: code, problem type and field errors. */
+function presentedError(error, operationName) {
+  return {
+    message: error.message,
+    path: [operationName.charAt(0).toLowerCase() + operationName.slice(1)],
+    extensions: {
+      code: error.code,
+      type: `https://api.trenova.app/problems/${error.problem}`,
+      ...(error.field ? { errors: [{ field: error.field, message: error.message, code: error.code }] } : {}),
+    },
+  };
+}
+
+export async function handleGraphQL(state, body) {
   const handler = Object.hasOwn(HANDLERS, body.operationName) ? HANDLERS[body.operationName] : undefined;
   if (!handler) {
     return { known: false, payload: { data: null, errors: [{ message: `mock-api: no handler for ${body.operationName}`, extensions: { code: "MOCK_UNHANDLED" } }] } };
   }
   try {
-    return { known: true, payload: { data: handler(state, body.variables ?? {}) } };
+    const data = await handler(state, body.variables ?? {});
+    if (data && data.__hold) return { known: true, hold: true };
+    return { known: true, payload: { data } };
   } catch (error) {
+    if (error instanceof TriageError) {
+      return { known: true, payload: { data: null, errors: [presentedError(error, body.operationName)] } };
+    }
     return { known: true, payload: { data: null, errors: [{ message: String(error?.stack ?? error) }] } };
   }
 }

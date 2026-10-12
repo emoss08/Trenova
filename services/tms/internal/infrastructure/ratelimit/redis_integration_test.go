@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,7 +21,7 @@ func TestRedisStore_EnforcesBurstAcrossClients_Integration(t *testing.T) {
 	storeB, err := NewRedisStore(client, "test")
 	require.NoError(t, err)
 
-	requests := []repositories.RateLimitRequest{
+	requests := []kernelports.RateLimitRequest{
 		{Key: "{org_1}:apikey:ak_1", Policy: policy(60, 2), Cost: 1},
 		{Key: "{org_1}:tenant", Policy: policy(600, 100), Cost: 1},
 	}
@@ -60,7 +60,7 @@ func TestRedisStore_DeniedBatchDoesNotConsumeOtherScopes_Integration(t *testing.
 	store, err := NewRedisStore(client, "test")
 	require.NoError(t, err)
 
-	requests := []repositories.RateLimitRequest{
+	requests := []kernelports.RateLimitRequest{
 		{Key: "{org_2}:user:usr_1", Policy: policy(60, 10), Cost: 1},
 		{Key: "{org_2}:tenant", Policy: policy(60, 1), Cost: 1},
 	}
@@ -98,7 +98,7 @@ func TestRedisStore_ConcurrentCallersNeverExceedBurst_Integration(t *testing.T) 
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			decisions, checkErr := store.Check(t.Context(), []repositories.RateLimitRequest{
+			decisions, checkErr := store.Check(t.Context(), []kernelports.RateLimitRequest{
 				{Key: "{org_3}:apikey:ak_3", Policy: policy(60, burst), Cost: 1},
 			})
 			if checkErr != nil || !decisions[0].Allowed {

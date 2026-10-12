@@ -2,10 +2,13 @@ package routes
 
 import samsaraspec "github.com/emoss08/trenova/shared/samsara/internal/samsaraspec"
 
-type Route = samsaraspec.BaseRouteResponseObjectResponseBody
+type Route = samsaraspec.BaseRouteWithOrdersResponseObjectResponseBody
 
-// Stop is used by callers when constructing route payloads.
-type Stop = samsaraspec.CreateRoutesStopRequestObjectRequestBody
+type Stop = samsaraspec.CreateRouteStopWithOrdersRequestObjectRequestBody
+
+type UpdateStop = samsaraspec.UpdateRoutesStopRequestObjectRequestBody
+
+type AppointmentWindow = samsaraspec.RouteStopAppointmentWindowRequestBody
 
 type CreateRequest = samsaraspec.RoutesCreateRouteRequestBody
 

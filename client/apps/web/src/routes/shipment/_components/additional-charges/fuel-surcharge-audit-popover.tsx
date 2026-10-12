@@ -50,7 +50,7 @@ export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDet
   if (detail.bandValue != null) {
     derivation.push({
       label: t("Matched band"),
-      value: `${money(detail.bandMin) ?? "Open"} – ${money(detail.bandMax) ?? "Open"}`,
+      value: `${money(detail.bandMin) ?? t("Open")} – ${money(detail.bandMax) ?? t("Open")}`,
     });
   }
   if (detail.pegPrice != null) {
@@ -59,7 +59,7 @@ export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDet
   if (detail.increment != null && detail.incrementRate != null) {
     derivation.push({
       label: t("Escalator"),
-      value: `${money(detail.incrementRate, 4)}/mi per ${money(detail.increment)}`,
+      value: t("{0}/mi per {1}", money(detail.incrementRate, 4), money(detail.increment)),
     });
   }
   if (detail.milesPerGallon != null) {

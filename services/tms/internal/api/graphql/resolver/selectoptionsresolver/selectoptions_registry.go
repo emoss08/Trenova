@@ -8,8 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -140,6 +140,9 @@ func (r *Deps) SelectOptionRegistry() map[gqlmodel.SelectOptionResource]SelectOp
 		},
 		gqlmodel.SelectOptionResourceRole: {
 			Resolve: r.resolveRoleSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceAiProvider: {
+			Resolve: r.resolveAIProviderSelectOptions,
 		},
 		gqlmodel.SelectOptionResourceRateMatrix: {
 			Resolve: r.resolveRateMatrixSelectOptions,

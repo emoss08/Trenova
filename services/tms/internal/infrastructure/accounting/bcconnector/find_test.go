@@ -4,15 +4,15 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func findRequest(kind accountingsync.SyncObjectType) *services.AccountingFindDocumentRequest {
-	return &services.AccountingFindDocumentRequest{
+func findRequest(kind accountingsync.SyncObjectType) *accountingsyncports.AccountingFindDocumentRequest {
+	return &accountingsyncports.AccountingFindDocumentRequest{
 		Auth:                   testAuth(),
 		Kind:                   kind,
 		DocNumber:              "TRN-1001",

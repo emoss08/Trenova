@@ -4,7 +4,7 @@ package workercredentialresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	workercredentialservice "github.com/emoss08/trenova/internal/core/services/workercredentialservice"
+	workercredentialservice "github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 )
 
 type Deps struct {

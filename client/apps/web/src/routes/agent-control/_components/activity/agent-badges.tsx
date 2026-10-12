@@ -15,6 +15,7 @@ import type {
   AgentType,
 } from "@trenova/graphql/generated/graphql";
 import type { ComponentProps } from "react";
+import { defineLabels, sourceLabels } from "@trenova/shared/i18n/labels";
 
 export { OutsideContentBadge } from "@/components/assistant/outside-content-badge";
 
@@ -79,13 +80,13 @@ const MEMORY_KIND: Record<AgentMemoryKind, { label: string; variant: Variant }> 
   Procedure: { label: "Procedure", variant: "accent-violet" },
 };
 
-const MEMORY_SOURCE: Record<AgentMemorySource, string> = {
+const MEMORY_SOURCE: Record<AgentMemorySource, string> = defineLabels({
   User: "A person",
   Agent: "An agent",
   Decision: "A decision",
   Feedback: "Feedback",
   Reflection: "Learned from work",
-};
+});
 
 const MEMORY_STATUS: Record<AgentMemoryStatus, { label: string; variant: Variant }> = {
   Active: { label: "Active", variant: "success" },
@@ -107,14 +108,15 @@ const TRIGGER: Record<AgentRunTrigger, { label: string; variant: Variant }> = {
   Scheduled: { label: "Scheduled", variant: "accent-teal" },
   Event: { label: "Event", variant: "accent-amber" },
   Continuous: { label: "Continuous", variant: "accent-violet" },
+  Wait: { label: "Picked up from a wait", variant: "accent-indigo" },
 };
 
-const AGENT_TYPE: Record<AgentType, string> = {
+const AGENT_TYPE: Record<AgentType, string> = defineLabels({
   BillingException: "Billing exception",
   DispatchAssignment: "Dispatch assignment",
   AssistantChat: "Assistant chat",
   General: "General",
-};
+});
 
 const SEVERITY: Record<AgentSeverity, { label: string; variant: Variant }> = {
   Low: { label: "Low", variant: "neutral" },
@@ -166,9 +168,6 @@ export const EvaluationStatusBadge = ({
 export const VerdictBadge = ({ value, t }: { value: string; t: TranslateFn }) => (
   <Labelled entry={VERDICT[value]} t={t} />
 );
-export const MemoryKindBadge = ({ value, t }: { value: AgentMemoryKind; t: TranslateFn }) => (
-  <Labelled entry={MEMORY_KIND[value]} t={t} />
-);
 export const MemoryStatusBadge = ({ value, t }: { value: AgentMemoryStatus; t: TranslateFn }) => (
   <Labelled entry={MEMORY_STATUS[value]} t={t} />
 );
@@ -187,6 +186,10 @@ export const SeverityBadge = ({ value, t }: { value: AgentSeverity; t: Translate
 export const ResolutionBadge = ({ value, t }: { value: AgentResolutionState; t: TranslateFn }) => (
   <Labelled entry={RESOLUTION[value]} t={t} />
 );
+
+export function runStatusLabel(value: AgentRunStatus, t: TranslateFn): string {
+  return t(RUN_STATUS[value].label);
+}
 
 export function agentTypeLabel(value: AgentType, t: TranslateFn): string {
   return t(AGENT_TYPE[value] ?? value);
@@ -216,10 +219,12 @@ export const memoryStatusChoices = Object.entries(MEMORY_STATUS).map(([value, en
   value,
   label: entry.label,
 }));
-export const memorySourceChoices = Object.entries(MEMORY_SOURCE).map(([value, label]) => ({
-  value,
-  label,
-}));
+export const memorySourceChoices = Object.entries(sourceLabels(MEMORY_SOURCE)).map(
+  ([value, label]) => ({
+    value,
+    label,
+  }),
+);
 export const triggerChoices = Object.entries(TRIGGER).map(([value, entry]) => ({
   value,
   label: entry.label,

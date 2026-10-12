@@ -1,0 +1,487 @@
+package aiproviderrepository
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
+
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+type Params struct {
+	fx.In
+
+	DB     *postgres.Connection
+	Logger *zap.Logger
+}
+
+type repository struct {
+	db *postgres.Connection
+	l  *zap.Logger
+}
+
+func New(p Params) agentports.AIProviderRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.aiprovider-repository"),
+	}
+}
+
+func (r *repository) filterQuery(
+	q *bun.SelectQuery,
+	req *agentports.ListAIProviderRequest,
+) *bun.SelectQuery {
+	cols := aiprovidercol.ProviderColumns
+	q = querybuilder.ApplyFilters(
+		q,
+		aiprovidercol.ProviderTable.Alias,
+		req.Filter,
+		(*aiprovider.Provider)(nil),
+	)
+
+	return q.Apply(aiprovidercol.ProviderApplyTenant(req.Filter.TenantInfo)).
+		Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset())).
+		Order(cols.Priority.OrderAsc(), cols.Name.OrderAsc())
+}
+
+func (r *repository) List(
+	ctx context.Context,
+	req *agentports.ListAIProviderRequest,
+) (*pagination.ListResult[*aiprovider.Provider], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*aiprovider.Provider], error) {
+			log := r.l.With(zap.String("operation", "List"))
+
+			entities := make([]*aiprovider.Provider, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count ai providers", zap.Error(err))
+				return nil, err
+			}
+
+			return &pagination.ListResult[*aiprovider.Provider]{
+				Items: entities,
+				Total: int(total),
+			}, nil
+		},
+	)
+}
+
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *agentports.ListAIProviderConnectionRequest,
+) (*pagination.CursorListResult[*aiprovider.Provider], error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*aiprovider.Provider], error) {
+			dba := r.db.DBForContext(ctx)
+
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*aiprovider.Provider)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							aiprovidercol.ProviderTable.Alias,
+							req.Filter,
+							(*aiprovider.Provider)(nil),
+						)
+
+						return sq.Apply(aiprovidercol.ProviderApplyTenant(req.Filter.TenantInfo))
+					}).
+					Count(ctx)
+				if err != nil {
+					r.l.Error("failed to count ai providers", zap.Error(err))
+					return nil, err
+				}
+				totalCount = new(int(total))
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*aiprovider.Provider]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*aiprovider.Provider) *bun.SelectQuery {
+						sq := dba.NewSelect().Model(entities)
+						if len(req.Columns) == 0 {
+							return sq.ColumnExpr(aiprovidercol.ProviderTable.All())
+						}
+
+						return sq.Column(req.Columns...)
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return querybuilder.ApplyCursorFilters(
+							sq,
+							aiprovidercol.ProviderTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*aiprovider.Provider)(nil),
+						)
+					},
+				})
+			if err != nil {
+				r.l.Error("failed to scan ai providers", zap.Error(err))
+				return nil, err
+			}
+
+			return result, nil
+		},
+	)
+}
+
+func (r *repository) GetByID(
+	ctx context.Context,
+	req agentports.GetAIProviderByIDRequest,
+) (*aiprovider.Provider, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aiprovider.Provider, error) {
+		entity := new(aiprovider.Provider)
+
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return aiprovidercol.ProviderScopeTenant(sq, req.TenantInfo).
+					Where(aiprovidercol.ProviderColumns.ID.Eq(), req.ID)
+			}).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "AIProvider")
+		}
+
+		return entity, nil
+	})
+}
+
+// ListForTask returns the enabled providers assigned to a task in priority order.
+// Ordering is resolved in SQL rather than in the router so the fallback chain is
+// stable across calls and visible in the query plan.
+func (r *repository) ListForTask(
+	ctx context.Context,
+	req agentports.ListAIProvidersForTaskRequest,
+) ([]*aiprovider.Provider, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiprovider.Provider, error) {
+		entities := make([]*aiprovider.Provider, 0, defaultTaskCandidates)
+
+		if err := buildProvidersForTaskQuery(
+			r.db.DBForContext(ctx), &entities, req,
+		).Scan(ctx); err != nil {
+			return nil, fmt.Errorf("list ai providers for task %q: %w", req.Task, err)
+		}
+
+		return entities, nil
+	})
+}
+
+func (r *repository) ListEnabled(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) ([]*aiprovider.Provider, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiprovider.Provider, error) {
+		cols := aiprovidercol.ProviderColumns
+		entities := make([]*aiprovider.Provider, 0, defaultTaskCandidates)
+
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			ExcludeColumn(cols.APIKey.Bare(), cols.PreviousAPIKey.Bare()).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return aiprovidercol.ProviderScopeTenant(sq, tenantInfo).
+					Where(cols.Enabled.IsTrue())
+			}).
+			Order(cols.Priority.OrderAsc(), cols.CreatedAt.OrderAsc()).
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("list enabled ai providers: %w", err)
+		}
+
+		return entities, nil
+	})
+}
+
+func (r *repository) ListOrdered(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) ([]*aiprovider.Provider, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiprovider.Provider, error) {
+		cols := aiprovidercol.ProviderColumns
+		entities := make([]*aiprovider.Provider, 0, defaultTaskCandidates)
+
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return aiprovidercol.ProviderScopeTenant(sq, tenantInfo)
+			}).
+			Order(cols.Priority.OrderAsc(), cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("list ai providers in routing order: %w", err)
+		}
+
+		for idx, entity := range entities {
+			entities[idx] = entity.Redacted()
+		}
+		return entities, nil
+	})
+}
+
+// buildProvidersForTaskQuery is split out so the rendered SQL can be asserted
+// without a live database. The task argument has to reach PostgreSQL as an
+// array literal, and a Go slice and a pgdialect.Array are indistinguishable to
+// the compiler — the difference only shows up in the statement.
+func (r *repository) SelectOptions(
+	ctx context.Context,
+	req *agentports.AIProviderSelectOptionsRequest,
+) (*pagination.ListResult[*aiprovider.Provider], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*aiprovider.Provider], error) {
+			cols := aiprovidercol.ProviderColumns
+			return dbhelper.SelectOptions[*aiprovider.Provider](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.Name,
+						cols.Model,
+						cols.Kind,
+						cols.Enabled,
+						cols.Tasks,
+						cols.Priority,
+						cols.CreatedAt,
+					},
+					OrgColumnRef: &cols.OrganizationID,
+					BuColumnRef:  &cols.BusinessUnitID,
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						return applySelectOptionsFilter(q, req.Task)
+					},
+					EntityName:       "AIProvider",
+					SearchColumnRefs: []buncolgen.Column{cols.Name, cols.Model},
+				},
+			)
+		},
+	)
+}
+
+func applySelectOptionsFilter(q *bun.SelectQuery, task aiprovider.Task) *bun.SelectQuery {
+	cols := aiprovidercol.ProviderColumns
+	q = q.Where(cols.Enabled.IsTrue())
+	if task != "" {
+		q = q.Where(cols.Tasks.Expr("{} @> ?::text[]"), pgdialect.Array([]string{string(task)}))
+	}
+
+	return q.Order(cols.Priority.OrderAsc(), cols.Name.OrderAsc(), cols.ID.OrderAsc())
+}
+
+func buildProvidersForTaskQuery(
+	db bun.IDB,
+	entities *[]*aiprovider.Provider,
+	req agentports.ListAIProvidersForTaskRequest,
+) *bun.SelectQuery {
+	cols := aiprovidercol.ProviderColumns
+
+	return db.
+		NewSelect().
+		Model(entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return aiprovidercol.ProviderScopeTenant(sq, req.TenantInfo).
+				Where(cols.Enabled.IsTrue()).
+				Where(
+					cols.Tasks.Expr("{} @> ?::text[]"),
+					pgdialect.Array([]string{string(req.Task)}),
+				)
+		}).
+		Order(cols.Priority.OrderAsc(), cols.CreatedAt.OrderAsc())
+}
+
+func (r *repository) Create(
+	ctx context.Context,
+	entity *aiprovider.Provider,
+) (*aiprovider.Provider, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiprovider.Provider, error) {
+		log := r.l.With(
+			zap.String("operation", "Create"),
+			zap.String("name", entity.Name),
+		)
+
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
+			if dberror.IsUniqueConstraintViolation(err) {
+				return nil, duplicateProviderName(entity.Name)
+			}
+			log.Error("failed to create ai provider", zap.Error(err))
+			return nil, err
+		}
+
+		return entity, nil
+	})
+}
+
+// duplicateProviderName surfaces the unique index on (organization, business
+// unit, lower(name)) as a field error, since the name is how an operator tells
+// two endpoints apart when assigning tasks.
+func duplicateProviderName(name string) error {
+	multiErr := errortypes.NewMultiError()
+	multiErr.Add(
+		"name",
+		errortypes.ErrDuplicate,
+		fmt.Sprintf("An AI provider named %q already exists", name),
+	)
+
+	return multiErr
+}
+
+func (r *repository) Update(
+	ctx context.Context,
+	entity *aiprovider.Provider,
+) (*aiprovider.Provider, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiprovider.Provider, error) {
+		cols := aiprovidercol.ProviderColumns
+		ov := entity.Version
+		entity.Version++
+
+		res, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return aiprovidercol.ProviderScopeTenantUpdate(uq, pagination.TenantInfo{
+					OrgID: entity.OrganizationID,
+					BuID:  entity.BusinessUnitID,
+				}).Where(cols.ID.Eq(), entity.ID).
+					Where(cols.Version.Eq(), ov)
+			}).
+			Set(cols.Name.Set(), entity.Name).
+			Set(cols.Description.Set(), entity.Description).
+			Set(cols.Kind.Set(), entity.Kind).
+			Set(cols.BaseURL.Set(), entity.BaseURL).
+			Set(cols.Model.Set(), entity.Model).
+			Set(cols.APIKey.Set(), entity.APIKey).
+			Set(cols.AllowPrivateNetwork.Set(), entity.AllowPrivateNetwork).
+			Set(cols.StructuredOutputMode.Set(), entity.StructuredOutputMode).
+			Set(cols.ReasoningEffort.Set(), entity.ReasoningEffort).
+			Set(cols.ThinkingStyle.Set(), entity.ThinkingStyle).
+			Set(cols.Platform.Set(), entity.Platform).
+			Set(cols.PlatformSettings.Set(), entity.PlatformSettings).
+			Set(cols.ExtraBody.Set(), entity.ExtraBody).
+			Set(cols.InputCostPerMillion.Set(), entity.InputCostPerMillion).
+			Set(cols.OutputCostPerMillion.Set(), entity.OutputCostPerMillion).
+			Set(cols.CacheReadCostPerMillion.Set(), entity.CacheReadCostPerMillion).
+			Set(cols.CacheWriteCostPerMillion.Set(), entity.CacheWriteCostPerMillion).
+			Set(cols.MaxTokens.Set(), entity.MaxTokens).
+			Set(cols.ContextWindowTokens.Set(), entity.ContextWindowTokens).
+			Set(cols.Tasks.Set(), dbhelper.TextArray(entity.Tasks)).
+			Set(cols.Priority.Set(), entity.Priority).
+			Set(cols.EmbeddingDimensions.Set(), entity.EmbeddingDimensions).
+			Set(cols.EmbeddingInputStyle.Set(), entity.EmbeddingInputStyle).
+			Set(cols.Trusted.Set(), entity.Trusted).
+			Set(cols.Enabled.Set(), entity.Enabled).
+			Set(cols.TimeoutSeconds.Set(), entity.TimeoutSeconds).
+			Set(cols.MaxConcurrent.Set(), entity.MaxConcurrent).
+			Set(cols.MonthlyCapUSD.Set(), entity.MonthlyCapUSD).
+			Set(cols.OnCap.Set(), entity.OnCap).
+			Set(cols.APIKeyPrefix.Set(), stringutils.Ptr(entity.APIKeyPrefix)).
+			Set(cols.APIKeyLastFour.Set(), stringutils.Ptr(entity.APIKeyLastFour)).
+			Set(cols.APIKeyAddedAt.Set(), entity.APIKeyAddedAt).
+			Set(cols.APIKeyAddedByID.Set(), entity.APIKeyAddedByID).
+			Set(cols.APIKeyLastUsedAt.Set(), entity.APIKeyLastUsedAt).
+			Set(cols.PreviousAPIKey.Set(), stringutils.Ptr(entity.PreviousAPIKey)).
+			Set(cols.RotationExpiresAt.Set(), entity.RotationExpiresAt).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			Set(cols.Version.Set(), entity.Version).
+			Exec(ctx)
+		if err != nil {
+			if dberror.IsUniqueConstraintViolation(err) {
+				return nil, duplicateProviderName(entity.Name)
+			}
+			return nil, fmt.Errorf("update ai provider: %w", err)
+		}
+
+		if err = dberror.CheckRowsAffected(res, "AIProvider", entity.ID.String()); err != nil {
+			return nil, err
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) Delete(
+	ctx context.Context,
+	req agentports.DeleteAIProviderRequest,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		res, err := r.db.DBForContext(ctx).
+			NewDelete().
+			Model((*aiprovider.Provider)(nil)).
+			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+				return aiprovidercol.ProviderScopeTenantDelete(dq, req.TenantInfo).
+					Where(aiprovidercol.ProviderColumns.ID.Eq(), req.ID)
+			}).
+			Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("delete ai provider: %w", err)
+		}
+
+		return dberror.CheckRowsAffected(res, "AIProvider", req.ID.String())
+	})
+}
+
+const defaultTaskCandidates = 4
+
+func (r *repository) MarkTested(
+	ctx context.Context,
+	req agentports.MarkAIProviderTestedRequest,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		cols := aiprovidercol.ProviderColumns
+
+		res, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*aiprovider.Provider)(nil)).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return aiprovidercol.ProviderScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID)
+			}).
+			Set(cols.LastTest.Set(), req.Outcome).
+			Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("mark ai provider tested: %w", err)
+		}
+
+		return dberror.CheckRowsAffected(res, "AIProvider", req.ID.String())
+	})
+}

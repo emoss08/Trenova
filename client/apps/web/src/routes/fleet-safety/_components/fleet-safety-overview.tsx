@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { InfoPopover } from "@/components/info-popover";
 import { KpiCard, KpiHeader } from "@/components/kpi/kpi-card";
 import { KPI_VALUE_CLASS, KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
@@ -146,7 +147,7 @@ export function FleetSafetyOverview({ summary }: FleetSafetyOverviewProps) {
 
 function describeEvents(open: number, preventable: number): string {
   const parts: string[] = [];
-  if (open > 0) parts.push(`${open} open`);
-  if (preventable > 0) parts.push(`${preventable} preventable`);
-  return parts.length > 0 ? parts.join(" · ") : "Nothing open, nothing preventable";
+  if (open > 0) parts.push(translate("{0} open", open));
+  if (preventable > 0) parts.push(translate("{0} preventable", preventable));
+  return parts.length > 0 ? parts.join(" · ") : translate("Nothing open, nothing preventable");
 }

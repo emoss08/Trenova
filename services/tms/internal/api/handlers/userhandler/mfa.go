@@ -3,7 +3,7 @@ package userhandler
 import (
 	"net/http"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -38,7 +38,7 @@ func (h *Handler) getMyMFA(c *gin.Context) {
 func (h *Handler) beginTOTPEnrollment(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	var req services.BeginTOTPEnrollmentRequest
+	var req sessionports.BeginTOTPEnrollmentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -58,7 +58,7 @@ func (h *Handler) beginTOTPEnrollment(c *gin.Context) {
 func (h *Handler) confirmTOTPEnrollment(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	var req services.ConfirmTOTPEnrollmentRequest
+	var req sessionports.ConfirmTOTPEnrollmentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -79,7 +79,7 @@ func (h *Handler) confirmTOTPEnrollment(c *gin.Context) {
 func (h *Handler) disableTOTP(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	var req services.DisableTOTPRequest
+	var req sessionports.DisableTOTPRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -97,7 +97,7 @@ func (h *Handler) disableTOTP(c *gin.Context) {
 func (h *Handler) regenerateRecoveryCodes(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	var req services.RegenerateRecoveryCodesRequest
+	var req sessionports.RegenerateRecoveryCodesRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -123,7 +123,7 @@ func (h *Handler) resetUserMFA(c *gin.Context) {
 		return
 	}
 
-	if err = h.mfa.ResetUserMFA(c.Request.Context(), &services.ResetUserMFARequest{
+	if err = h.mfa.ResetUserMFA(c.Request.Context(), &sessionports.ResetUserMFARequest{
 		TenantInfo:   tenantInfoOf(authCtx),
 		TargetUserID: targetUserID,
 	}); err != nil {

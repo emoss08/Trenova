@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/businesscentral"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -144,7 +144,7 @@ func TestRevokeSucceedsWithoutACall(t *testing.T) {
 	fake := &fakeBC{}
 	conn := testConnector(t, fake)
 	require.NoError(t, conn.Revoke(t.Context(), "refresh-token"))
-	require.NoError(t, conn.ReleaseCompanies(t.Context(), nil, []services.AccountingCompany{{ID: "x"}}))
+	require.NoError(t, conn.ReleaseCompanies(t.Context(), nil, []accountingsyncports.AccountingCompany{{ID: "x"}}))
 	assert.Empty(t, fake.all())
 }
 
@@ -158,7 +158,7 @@ func TestVerifyAppTreatsInvalidGrantAsAcceptedAndInvalidClientAsRejected(t *test
 		want    error
 	}{
 		{"accepted", http.StatusBadRequest, "invalid_grant.json", nil},
-		{"rejected", http.StatusUnauthorized, "invalid_client.json", services.ErrAccountingAppRejected},
+		{"rejected", http.StatusUnauthorized, "invalid_client.json", accountingsyncports.ErrAccountingAppRejected},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -180,7 +180,7 @@ func TestVerifyAppTreatsInvalidGrantAsAcceptedAndInvalidClientAsRejected(t *test
 	}})
 	err := conn.VerifyApp(t.Context())
 	require.Error(t, err)
-	assert.NotErrorIs(t, err, services.ErrAccountingAppRejected)
+	assert.NotErrorIs(t, err, accountingsyncports.ErrAccountingAppRejected)
 }
 
 func TestVerifyWebhookNeverAcceptsABody(t *testing.T) {
@@ -199,7 +199,7 @@ func TestProviderParsesNotificationsAndValidationTokens(t *testing.T) {
 	notes, err := provider.ParseNotifications([]byte(readFixture(t, "notifications.json")))
 	require.NoError(t, err)
 	require.Len(t, notes, 2)
-	assert.Equal(t, services.AccountingWebhookNotification{
+	assert.Equal(t, accountingsyncports.AccountingWebhookNotification{
 		SubscriptionID: "3a6f0b1c2d4e4f5a8b9c0d1e2f3a4b5c",
 		ClientState:    "s3cr3t-state",
 		Resource: "api/v2.0/companies(a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d)/" +
@@ -243,7 +243,7 @@ func TestCompaniesListsEveryEnvironmentWithTheSandboxLabel(t *testing.T) {
 
 	fake := &fakeBC{respond: companiesResponder(t, http.StatusOK)}
 	conn := testConnector(t, fake)
-	companies, err := conn.Companies(t.Context(), &services.AccountingTokenGrant{
+	companies, err := conn.Companies(t.Context(), &accountingsyncports.AccountingTokenGrant{
 		AccessToken: accessTokenFor(strings.ToUpper(testTenant)),
 	}, "")
 	require.NoError(t, err)
@@ -256,7 +256,7 @@ func TestCompaniesListsEveryEnvironmentWithTheSandboxLabel(t *testing.T) {
 	}
 	sandbox := acme
 	sandbox.Environment = "uat_sandbox-2"
-	assert.Equal(t, []services.AccountingCompany{
+	assert.Equal(t, []accountingsyncports.AccountingCompany{
 		{ID: production.String(), Name: "CRONUS USA, Inc. · Production"},
 		{ID: acme.String(), Name: "Acme Freight LLC · Production"},
 		{ID: sandbox.String(), Name: "Acme Freight · uat_sandbox-2 (Sandbox)"},
@@ -269,7 +269,7 @@ func TestCompaniesProbesProductionWhenEnvironmentsAreRefused(t *testing.T) {
 
 	fake := &fakeBC{respond: companiesResponder(t, http.StatusForbidden)}
 	conn := testConnector(t, fake)
-	companies, err := conn.Companies(t.Context(), &services.AccountingTokenGrant{
+	companies, err := conn.Companies(t.Context(), &accountingsyncports.AccountingTokenGrant{
 		AccessToken: accessTokenFor(testTenant),
 	}, "")
 	require.NoError(t, err)
@@ -280,7 +280,7 @@ func TestCompaniesProbesProductionWhenEnvironmentsAreRefused(t *testing.T) {
 		return http.StatusUnauthorized, readFixture(t, "error_401.json")
 	}}
 	conn = testConnector(t, refused)
-	_, err = conn.Companies(t.Context(), &services.AccountingTokenGrant{
+	_, err = conn.Companies(t.Context(), &accountingsyncports.AccountingTokenGrant{
 		AccessToken: accessTokenFor(testTenant),
 	}, "")
 	require.ErrorIs(t, err, errNoAccess)
@@ -299,12 +299,12 @@ func TestCompaniesFailsWithoutACompanyOrATenant(t *testing.T) {
 		}
 		return 0, ""
 	}})
-	_, err := conn.Companies(t.Context(), &services.AccountingTokenGrant{
+	_, err := conn.Companies(t.Context(), &accountingsyncports.AccountingTokenGrant{
 		AccessToken: accessTokenFor(testTenant),
 	}, "")
 	require.ErrorIs(t, err, errNoCompany)
 
-	_, err = conn.Companies(t.Context(), &services.AccountingTokenGrant{AccessToken: "opaque"}, "")
+	_, err = conn.Companies(t.Context(), &accountingsyncports.AccountingTokenGrant{AccessToken: "opaque"}, "")
 	require.ErrorIs(t, err, businesscentral.ErrMalformedToken)
 	_, err = conn.Companies(t.Context(), nil, "")
 	require.ErrorIs(t, err, businesscentral.ErrAccessTokenRequired)

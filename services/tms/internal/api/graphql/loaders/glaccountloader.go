@@ -3,8 +3,8 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/glaccount"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -14,11 +14,11 @@ import (
 type GLAccountByIDLoaderFactoryParams struct {
 	fx.In
 
-	GLAccountRepo repositories.GLAccountRepository
+	GLAccountRepo glaccountports.GLAccountRepository
 }
 
 type GLAccountByIDLoaderFactory struct {
-	glAccountRepo repositories.GLAccountRepository
+	glAccountRepo glaccountports.GLAccountRepository
 }
 
 func NewGLAccountByIDLoaderFactory(
@@ -29,7 +29,7 @@ func NewGLAccountByIDLoaderFactory(
 	}
 }
 
-func (f *GLAccountByIDLoaderFactory) NewForTenant(
+func newGLAccountByIDLoader(f *GLAccountByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *glaccount.GLAccount] {
 	return newLoader(f.batchFunc(tenantInfo))
@@ -39,7 +39,7 @@ func (f *GLAccountByIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
 ) batchFetchFunc[*glaccount.GLAccount] {
 	return batchByIDFunc(func(ctx context.Context, ids []pulid.ID) ([]*glaccount.GLAccount, error) {
-		return f.glAccountRepo.GetByIDs(ctx, repositories.GetGLAccountsByIDsRequest{
+		return f.glAccountRepo.GetByIDs(ctx, glaccountports.GetGLAccountsByIDsRequest{
 			TenantInfo:   tenantInfo,
 			GLAccountIDs: ids,
 		})

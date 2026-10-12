@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/domain/conversationschedule"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/services/conversationscheduleservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/conversationscheduleservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -153,11 +153,14 @@ func (h *Handler) createSchedule(c *gin.Context) {
 		return
 	}
 
-	result, err := h.schedules.Create(c.Request.Context(), conversationscheduleservice.CreateRequest{
-		ThreadID: threadID,
-		Text:     body.Content,
-		Actor:    requestActorFromAuthContext(authctx.GetAuthContext(c)),
-	})
+	result, err := h.schedules.Create(
+		c.Request.Context(),
+		conversationscheduleservice.CreateRequest{
+			ThreadID: threadID,
+			Text:     body.Content,
+			Actor:    requestActorFromAuthContext(authctx.GetAuthContext(c)),
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

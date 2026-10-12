@@ -27,6 +27,7 @@ export type BaseDateFieldProps = {
 export type DateFieldProps<T extends FieldValues> = BaseDateFieldProps & FormControlProps<T>;
 
 const styles = {
+  // i18n-ignore: Tailwind class list
   base: `${fieldTriggerClass} w-full h-7 text-sm justify-start text-left font-normal`,
   invalid: fieldInvalidClass,
   open: "text-sm",
@@ -142,6 +143,7 @@ export function DateField<T extends FieldValues>({
 
         return (
           <FieldWrapper
+            name={name}
             label={label}
             description={description}
             required={!!rules?.required}
@@ -213,6 +215,7 @@ export function AutoCompleteDateField<T extends FieldValues>({
       render={({ field, fieldState }) => {
         return (
           <FieldWrapper
+            name={name}
             label={label}
             description={description}
             descriptionId={descriptionId}

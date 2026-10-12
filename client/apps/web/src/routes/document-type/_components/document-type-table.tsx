@@ -15,6 +15,7 @@ export default function DocumentTypeTable() {
   return (
     <DataTable<DocumentType>
       name="Document Type"
+      emptyTitle={t("No document types yet")}
       queryKey="document-type-list"
       graphql={documentTypeTableGraphQLConfig}
       resource={Resource.DocumentType}

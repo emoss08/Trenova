@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/accounttype"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accounttypeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -102,7 +102,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*accounttype.AccountType], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListAccountTypesRequest{
+				&accounttypeports.ListAccountTypesRequest{
 					Filter: req,
 				},
 			)
@@ -126,7 +126,7 @@ func (h *Handler) list(c *gin.Context) {
 func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := new(repositories.BulkUpdateAccountTypeStatusRequest)
+	req := new(accounttypeports.BulkUpdateAccountTypeStatusRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -168,7 +168,7 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetAccountTypeByIDRequest{
+	entity, err := h.service.Get(c.Request.Context(), accounttypeports.GetAccountTypeByIDRequest{
 		ID:         accountTypeID,
 		TenantInfo: pagination.FromAuth(authCtx),
 	})
@@ -203,7 +203,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*accounttype.AccountType], error) {
 			return h.service.SelectOptions(
 				c.Request.Context(),
-				&repositories.AccountTypeSelectOptionsRequest{
+				&accounttypeports.AccountTypeSelectOptionsRequest{
 					SelectQueryRequest: req,
 				},
 			)
@@ -234,7 +234,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetAccountTypeByIDRequest{
+		accounttypeports.GetAccountTypeByIDRequest{
 			ID:         accountTypeID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -306,7 +306,7 @@ func (h *Handler) patch(c *gin.Context) {
 
 	existing, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetAccountTypeByIDRequest{
+		accounttypeports.GetAccountTypeByIDRequest{
 			ID:         accountTypeID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},

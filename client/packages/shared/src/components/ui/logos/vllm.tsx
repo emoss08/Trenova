@@ -5,12 +5,12 @@ export function VLLMLogo({ className }: { className?: string }) {
     <svg
       className={cn("size-4", className)}
       viewBox="0 0 24 24"
-      fill="currentColor"
       role="img"
       aria-hidden="true"
       focusable="false"
     >
-      <path d="m23.6 0-8.721 4.59L9.829 24h7.41zM9.83 24V5.142H.4Z" />
+      <path d="M0 4.973h9.324V23L0 4.973z" fill="#FDB515" />
+      <path d="M13.986 4.351L22.378 0l-6.216 23H9.324l4.662-18.649z" fill="#30A2FF" />
     </svg>
   );
 }

@@ -4,7 +4,7 @@ package userresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	userservice "github.com/emoss08/trenova/internal/core/services/userservice"
+	userservice "github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 )
 
 type Deps struct {

@@ -60,10 +60,27 @@ export const panelSearchParamsParser = {
   panelEntityId: parseAsString,
 };
 
+export const DEFAULT_PAGE_SIZE = 10;
+
 export const tablePaginationSearchParamsParser = {
   pageIndex: parseAsInteger.withDefault(1),
-  pageSize: parseAsInteger.withDefault(10),
+  pageSize: parseAsInteger.withDefault(DEFAULT_PAGE_SIZE),
 };
+
+/**
+ * The page size a table actually runs at. A table that names its sizes opens
+ * at the first of them, and a size it does not offer (an old link, a saved
+ * view from before the sizes changed) falls back to that first size rather
+ * than fetching a page the picker cannot show.
+ */
+export function resolvePageSize(pageSize: number, pageSizeOptions?: readonly number[]): number {
+  if (!pageSizeOptions?.length || pageSizeOptions.includes(pageSize)) return pageSize;
+  return pageSizeOptions[0];
+}
+
+export function defaultPageSizeFor(pageSizeOptions?: readonly number[]): number {
+  return pageSizeOptions?.[0] ?? DEFAULT_PAGE_SIZE;
+}
 
 export const tableFilterSearchParamsParser = {
   query: parseAsString.withDefault(""),

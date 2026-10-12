@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/ifta"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/redis/go-redis/v9"
@@ -34,7 +34,7 @@ type iftaJurisdictionCacheRepository struct {
 
 func NewIFTAJurisdictionCacheRepository(
 	p IFTAJurisdictionCacheRepositoryParams,
-) repositories.IFTAJurisdictionCacheRepository {
+) iftaports.IFTAJurisdictionCacheRepository {
 	return &iftaJurisdictionCacheRepository{
 		client: p.Client,
 		l:      p.Logger.Named("redis.ifta-jurisdiction-cache-repository"),
@@ -47,7 +47,12 @@ func (r *iftaJurisdictionCacheRepository) GetAll(
 	log := r.l.With(zap.String("operation", "GetAll"))
 
 	jurisdictions := make([]*ifta.Jurisdiction, 0, defaultJurisdictionCacheSize)
-	if err := redishelpers.GetJSON(ctx, r.client, jurisdictionKeyPrefix, &jurisdictions); err != nil {
+	if err := redishelpers.GetJSON(
+		ctx,
+		r.client,
+		jurisdictionKeyPrefix,
+		&jurisdictions,
+	); err != nil {
 		if redishelpers.IsRedisNil(err) {
 			return nil, errortypes.NewNotFoundError("ifta jurisdictions not cached")
 		}

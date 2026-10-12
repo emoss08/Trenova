@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"go.uber.org/zap"
 )

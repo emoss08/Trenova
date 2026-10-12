@@ -3,6 +3,7 @@ import {
   MEMORY_CONTENT_LIMIT,
   memoryFormDefaults,
   memoryFormSchema,
+  memoryValuesFromRow,
   toMemoryInput,
 } from "../memory-form-schema";
 
@@ -97,6 +98,42 @@ describe("toMemoryInput", () => {
       subjectType: "Customer",
       subjectId: "cus_1",
       toolName: "assign_move",
+      expiresAt: 1_800_000_000,
+      version: 0,
+    });
+  });
+});
+
+describe("memoryValuesFromRow", () => {
+  it("reads a memory about every agent with nothing optional set", () => {
+    expect(
+      memoryValuesFromRow({ kind: "Fact", content: "Dock 4 closes at 15:00.", version: 3 }),
+    ).toEqual({
+      kind: "Fact",
+      content: "Dock 4 closes at 15:00.",
+      subjectType: null,
+      subjectId: null,
+      toolName: "",
+      expiresAt: null,
+      version: 3,
+    });
+  });
+
+  it("keeps a record, a tool and an end day as they are", () => {
+    expect(
+      memoryValuesFromRow({
+        kind: "Correction",
+        content: "Detention starts after 2 hours.",
+        subjectType: "Customer",
+        subjectId: "cus_1",
+        toolName: "assess_detention",
+        expiresAt: 1_800_000_000,
+        version: 0,
+      }),
+    ).toMatchObject({
+      subjectType: "Customer",
+      subjectId: "cus_1",
+      toolName: "assess_detention",
       expiresAt: 1_800_000_000,
       version: 0,
     });

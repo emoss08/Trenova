@@ -25,6 +25,12 @@ export type ThreadEntry =
   | { kind: "schedule"; message: AssistantMessage }
   /** Where the conversation was compacted: everything before it is summarized for the agent. */
   | { kind: "compaction"; message: AssistantMessage }
+  /** Something the person said while a reply was being written, read by it at its next step. */
+  | { kind: "steer"; message: AssistantMessage }
+  /** Records the reply was working with changed elsewhere, and it was told. */
+  | { kind: "world"; message: AssistantMessage }
+  /** A wait the agent set ended, and this turn picks the work up. */
+  | { kind: "wait"; message: AssistantMessage }
   | { kind: "assistant"; message: AssistantMessage; tools: ToolExchange[] };
 
 /**
@@ -96,6 +102,15 @@ export function groupThread(messages: readonly AssistantMessage[]): ThreadEntry[
       case "compaction":
         entries.push({ kind: "compaction", message });
         break;
+      case "steer":
+        entries.push({ kind: "steer", message });
+        break;
+      case "world":
+        entries.push({ kind: "world", message });
+        break;
+      case "wait":
+        entries.push({ kind: "wait", message });
+        break;
       case "assistant": {
         const tools: ToolExchange[] = [...orphans];
         orphans = [];
@@ -120,31 +135,6 @@ export function groupThread(messages: readonly AssistantMessage[]): ThreadEntry[
   }
 
   return entries;
-}
-
-/**
- * The entry each of another agent's saved messages is drawn under, keyed by
- * the message and by every call it made. What that agent produced is tied to
- * its own message, which is never an entry of its own, so an artifact or a
- * card pointing at it is placed under the reply that handed the task over.
- */
-export function delegatedOwners(entries: readonly ThreadEntry[]): Map<string, string> {
-  const owners = new Map<string, string>();
-  for (const entry of entries) {
-    if (entry.kind !== "assistant") {
-      continue;
-    }
-    for (const exchange of entry.tools) {
-      for (const message of exchange.delegated ?? []) {
-        owners.set(message.id, entry.message.id);
-        for (const call of message.toolCalls ?? []) {
-          owners.set(call.id, entry.message.id);
-        }
-      }
-    }
-  }
-
-  return owners;
 }
 
 /** Where an assistant entry sits in the reply it belongs to. */

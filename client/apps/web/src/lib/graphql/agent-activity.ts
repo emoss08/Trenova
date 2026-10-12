@@ -1,5 +1,7 @@
 import {
+  AgentActivitySummaryDocument,
   AgentDefinitionCountDocument,
+  type AgentActivitySummaryQuery,
   AgentProposalCountDocument,
   AgentRunCountDocument,
 } from "@trenova/graphql/generated/graphql";
@@ -70,4 +72,25 @@ export async function fetchAgentActivityCounts(
     ]);
 
   return { agentsTotal, agentsEnabled, pendingProposals, runsLast24h, memoriesActive };
+}
+
+export type AgentActivitySummary = AgentActivitySummaryQuery["agentActivitySummary"];
+
+/**
+ * What agents did since the moment given, for the head of Activity: the runs, the
+ * proposals waiting and the week's decisions, and the exceptions still open. Counts the
+ * reader may not see arrive null.
+ */
+export async function fetchAgentActivitySummary(
+  since: number,
+  options?: RequestOptions,
+): Promise<AgentActivitySummary> {
+  const data = await requestGraphQL({
+    document: AgentActivitySummaryDocument,
+    operationName: "AgentActivitySummary",
+    variables: { since },
+    signal: options?.signal,
+  });
+
+  return data.agentActivitySummary;
 }

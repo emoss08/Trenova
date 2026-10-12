@@ -136,7 +136,7 @@ export function EvalCasePanel({
     onSuccess: async (evalCase) => {
       await refresh(evalCase);
       reset(toFormValues(evalCase));
-      toast.success(t(CASE_STATUS_MOVED[evalCase.status]));
+      toast.success(CASE_STATUS_MOVED[evalCase.status]);
     },
     resourceName: t("Evaluation case"),
   });
@@ -181,7 +181,7 @@ export function EvalCasePanel({
                 isLoading={moveTo.isPending && moveTo.variables === status}
                 onClick={() => moveTo.mutate(status)}
               >
-                {t(CASE_STATUS_ACTION[status])}
+                {CASE_STATUS_ACTION[status]}
               </Button>
             ))}
             {canCreate && evalCase.status !== "Retired" ? (

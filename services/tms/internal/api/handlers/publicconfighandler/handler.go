@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )
@@ -21,13 +21,13 @@ type Params struct {
 
 	Config       *config.Config
 	ErrorHandler *helpers.ErrorHandler
-	Contributors []services.PublicConfigContributor `group:"public_config_contributors"`
+	Contributors []kernelports.PublicConfigContributor `group:"public_config_contributors"`
 }
 
 type Handler struct {
 	cfg          *config.Config
 	eh           *helpers.ErrorHandler
-	contributors []services.PublicConfigContributor
+	contributors []kernelports.PublicConfigContributor
 }
 
 func New(p Params) *Handler {
@@ -41,7 +41,7 @@ func New(p Params) *Handler {
 func AsContributor(constructor any) any {
 	return fx.Annotate(
 		constructor,
-		fx.As(new(services.PublicConfigContributor)),
+		fx.As(new(kernelports.PublicConfigContributor)),
 		fx.ResultTags(`group:"`+ContributorsGroup+`"`),
 	)
 }
@@ -62,10 +62,10 @@ func (h *Handler) publicConfig(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-func (h *Handler) Build(ctx context.Context) (*services.PublicConfig, error) {
-	resp := &services.PublicConfig{
+func (h *Handler) Build(ctx context.Context) (*kernelports.PublicConfig, error) {
+	resp := &kernelports.PublicConfig{
 		PlatformMode: string(h.cfg.Platform.GetMode()),
-		FreePlan:     services.PublicFreePlanSummary{Limits: map[string]int64{}},
+		FreePlan:     kernelports.PublicFreePlanSummary{Limits: map[string]int64{}},
 	}
 
 	for _, contributor := range h.contributors {

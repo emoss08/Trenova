@@ -1,5 +1,5 @@
 import { StatusDot, riskTone } from "@/components/carrier-intelligence/status-dot";
-import { cityStateLabel } from "@/lib/carrier-intelligence";
+import { cityStateLabel } from "@/lib/place";
 import { carrierPanelPath } from "@/lib/carrier-links";
 import {
   candidateAuthorityAgeDays,
@@ -76,7 +76,7 @@ export function SourcingResultRow({
         onFocus={onFocusRow}
         onKeyDown={onKeyDown}
         aria-label={t("Open {0}", name)}
- className="ui-focus-ring focus-visible:bg-muted/50 absolute inset-0 z-0 cursor-pointer outline-none"
+        className="ui-focus-ring focus-visible:bg-muted/50 absolute inset-0 z-0 cursor-pointer outline-none"
       />
       <div className="pointer-events-none relative flex min-w-0 flex-col gap-0.5">
         <div className="flex min-w-0 items-baseline gap-1.5">
@@ -121,7 +121,7 @@ export function SourcingResultRow({
         {candidate.existingCarrierId ? (
           <Link
             to={carrierPanelPath(candidate.existingCarrierId, "intelligence")}
- className="ui-focus-ring text-muted-foreground hover:text-foreground rounded-sm text-xs outline-none"
+            className="ui-focus-ring text-muted-foreground hover:text-foreground rounded-sm text-xs outline-none"
             data-testid="existing-carrier-link"
           >
             {t("In Trenova")}

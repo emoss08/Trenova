@@ -32,8 +32,8 @@ export const costCategoryFormSchema = z
     benchmarkRatePerMile: z.string(),
     overrideRatePerMile: z.coerce
       .number()
-      .min(0, "Rate must be 0 or greater")
-      .max(100, "Rate must be 100 or less")
+      .min(0, { error: () => translate("Rate must be 0 or greater") })
+      .max(100, { error: () => translate("Rate must be 100 or less") })
       .nullish(),
     isActive: z.boolean(),
     glAccountIds: z.array(z.string()),
@@ -66,24 +66,24 @@ export const costControlSchema = z
     useLiveFuelPrice: z.boolean(),
     milesPerGallon: z.coerce
       .number()
-      .positive("Miles per gallon must be greater than 0")
-      .max(20, "Miles per gallon must be 20 or less"),
+      .positive({ error: () => translate("Miles per gallon must be greater than 0") })
+      .max(20, { error: () => translate("Miles per gallon must be 20 or less") }),
     includeDeadheadMiles: z.boolean(),
     glActualsEnabled: z.boolean(),
     glRollingMonths: z.coerce
       .number()
       .int()
-      .min(1, "GL rolling months must be at least 1")
-      .max(12, "GL rolling months must be 12 or less"),
+      .min(1, { error: () => translate("GL rolling months must be at least 1") })
+      .max(12, { error: () => translate("GL rolling months must be 12 or less") }),
     plannedMonthlyMiles: z.coerce
       .number()
       .int()
-      .positive("Planned monthly miles must be greater than 0")
+      .positive({ error: () => translate("Planned monthly miles must be greater than 0") })
       .nullish(),
     targetMarginPercent: z.coerce
       .number()
-      .min(0, "Target margin must be 0 or greater")
-      .max(100, "Target margin must be 100 or less")
+      .min(0, { error: () => translate("Target margin must be 0 or greater") })
+      .max(100, { error: () => translate("Target margin must be 100 or less") })
       .nullish(),
     version: z.number(),
     categories: z.array(costCategoryFormSchema),

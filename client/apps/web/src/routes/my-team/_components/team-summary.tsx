@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import { KpiCard, KpiHeader } from "@/components/kpi/kpi-card";
@@ -128,12 +129,16 @@ export function TeamSummaryStrip({ summary, now }: TeamSummaryStripProps) {
 function describeAttention(summary: TeamSummary): string {
   if (summary.attention === 0) {
     return summary.watching > 0
-      ? `Nobody blocked. ${summary.watching} to keep an eye on.`
-      : "Nobody blocked, nobody on watch.";
+      ? translate("Nobody blocked. {0} to keep an eye on.", summary.watching)
+      : translate("Nobody blocked, nobody on watch.");
   }
   const parts: string[] = [];
-  if (summary.byReason.compliance > 0) parts.push(`${summary.byReason.compliance} compliance`);
-  if (summary.byReason.training > 0) parts.push(`${summary.byReason.training} training`);
-  if (summary.byReason.safety > 0) parts.push(`${summary.byReason.safety} safety`);
+  if (summary.byReason.compliance > 0) {
+    parts.push(translate("{0} compliance", summary.byReason.compliance));
+  }
+  if (summary.byReason.training > 0) {
+    parts.push(translate("{0} training", summary.byReason.training));
+  }
+  if (summary.byReason.safety > 0) parts.push(translate("{0} safety", summary.byReason.safety));
   return parts.join(" · ");
 }

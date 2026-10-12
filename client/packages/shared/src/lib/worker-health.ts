@@ -1,6 +1,7 @@
 import { safetyRatingLabel, safetyRatingTone } from "./csa";
 import { trainingHealthMeta } from "./training";
 import { workerTrainingHealthSchema } from "../types/worker-training-health";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export type WorkerHealthMeta = {
   label: string;
@@ -18,11 +19,11 @@ const DOT_BY_VARIANT: Record<WorkerHealthMeta["badgeVariant"], string> = {
   neutral: "bg-foreground-subtle/60",
 };
 
-export const COMPLIANCE_STATUS_LABELS: Record<string, string> = {
+export const COMPLIANCE_STATUS_LABELS: Record<string, string> = defineLabels({
   Compliant: "Compliant",
   NonCompliant: "Non-compliant",
   Pending: "Pending",
-};
+});
 
 export function complianceStatusLabel(value: string): string {
   return COMPLIANCE_STATUS_LABELS[value] ?? value;

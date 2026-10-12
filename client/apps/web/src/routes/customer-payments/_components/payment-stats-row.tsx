@@ -24,9 +24,10 @@ export function PaymentStatsRow() {
       <KpiStripItem
         label={t("Unapplied cash")}
         value={formatCurrency(stats.unappliedCashMinor / 100)}
-        sub={`${stats.unappliedPaymentCount} ${
-          stats.unappliedPaymentCount === 1 ? "payment" : "payments"
-        } with remainder`}
+        sub={t(
+          "{0, plural, one {# payment} other {# payments}} with remainder",
+          stats.unappliedPaymentCount,
+        )}
         tone={stats.unappliedCashMinor > 0 ? "warning" : undefined}
       />
       <KpiStripItem

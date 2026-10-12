@@ -3,7 +3,7 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -36,7 +36,8 @@ func NewWorkerCredentialTypeActiveCredentialCountLoaderFactory(
 	}
 }
 
-func (f *WorkerCredentialTypeActiveCredentialCountLoaderFactory) NewForTenant(
+func newWorkerCredentialTypeActiveCredentialCountLoader(
+	f *WorkerCredentialTypeActiveCredentialCountLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, int] {
 	return newLoader(f.batchFunc(tenantInfo))

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 var ocrImageExts = map[string]struct{}{
@@ -15,9 +15,9 @@ var ocrImageExts = map[string]struct{}{
 }
 
 type pageBuilder struct {
-	pages      []services.OfficePage
+	pages      []kernelports.OfficePage
 	text       bytes.Buffer
-	images     []services.OfficeImage
+	images     []kernelports.OfficeImage
 	seenImages map[string]struct{}
 	textBytes  int
 	imageBytes int
@@ -135,7 +135,7 @@ func (b *pageBuilder) attach(name, ext string, data []byte) {
 		return
 	}
 	b.imageBytes += len(data)
-	b.images = append(b.images, services.OfficeImage{Name: name, Ext: ext, Data: data})
+	b.images = append(b.images, kernelports.OfficeImage{Name: name, Ext: ext, Data: data})
 }
 
 func (b *pageBuilder) breakPage() {
@@ -148,7 +148,7 @@ func (b *pageBuilder) finishPage() {
 	if b.full {
 		return
 	}
-	b.pages = append(b.pages, services.OfficePage{
+	b.pages = append(b.pages, kernelports.OfficePage{
 		Text:   strings.TrimSpace(b.text.String()),
 		Images: b.images,
 	})
@@ -160,7 +160,7 @@ func (b *pageBuilder) finishPage() {
 	}
 }
 
-func (b *pageBuilder) result() []services.OfficePage {
+func (b *pageBuilder) result() []kernelports.OfficePage {
 	if b.hasContent() {
 		b.finishPage()
 	}

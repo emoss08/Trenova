@@ -1,0 +1,267 @@
+package receivabletools
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+)
+
+// subjectKinds are the kinds of record a case can be about, read from the
+// prefix each agent.SubjectType declares, so the id beside a subjectType is
+// held to exactly those kinds and the list cannot drift from the enum. When a
+// subject's prefix has no kind in permission's table the list is empty and
+// the parameter is left unmarked, for the catalog contract test to name,
+// rather than refusing every real id of that subject.
+var subjectKinds = func() []permission.RecordKind {
+	subjects := agent.AllSubjectTypes()
+	kinds := make([]permission.RecordKind, 0, len(subjects))
+	for _, subject := range subjects {
+		kind, ok := permission.RecordKindOfIDPrefix(subject.IDPrefix())
+		if !ok {
+			return nil
+		}
+		kinds = append(kinds, kind)
+	}
+
+	return kinds
+}()
+
+func subjectIDProperty(description string) map[string]any {
+	if len(subjectKinds) == 0 {
+		return agenttoolschema.IDText(description)
+	}
+
+	return agenttoolschema.KindID(description, subjectKinds...)
+}
+
+var ErrMissingRun = errors.New("an exception can only be raised from within an agent run")
+
+var ErrSubjectUncheckable = errors.New(
+	"the record an exception is about cannot be checked right now",
+)
+
+type RaiseExceptionTool struct {
+	exceptions agentports.AgentExceptionService
+	subjects   agentports.AgentSubjectRepository
+}
+
+func NewRaiseExceptionTool(
+	exceptions agentports.AgentExceptionService,
+	subjects agentports.AgentSubjectRepository,
+) agentports.AgentTool {
+	return &RaiseExceptionTool{exceptions: exceptions, subjects: subjects}
+}
+
+func (t *RaiseExceptionTool) Name() string { return "raise_exception" }
+
+func (t *RaiseExceptionTool) Description() string {
+	return "Hand a case to a person when you cannot resolve it: say what you tried, how " +
+		"severe it is and which record it concerns. Use this instead of guessing. It is for " +
+		"a problem with a record or a run that a person must resolve, not for requesting a " +
+		"product feature or reporting that a tool cannot do something; for that, tell the " +
+		"person plainly what cannot be done. It only works inside an agent run."
+}
+
+func (t *RaiseExceptionTool) ParamSchema() map[string]any {
+	return map[string]any{
+		schemaType: "object",
+		"properties": map[string]any{
+			common.FieldSubjectType: agenttoolschema.Enum(
+				"The kind of record the case is about.",
+				agenttoolschema.SubjectTypes,
+			),
+			common.FieldSubjectID: subjectIDProperty(
+				"The id of that record: usually this run's subject, or an id a " +
+					"tool such as get_shipment or list_shipments returned. Its prefix must " +
+					"match subjectType: a report's id starts rd_, a dashboard's rdb_, an " +
+					"insight's inst_.",
+			),
+			common.FieldCategory: agenttoolschema.Enum(
+				"What kind of problem it is.",
+				agenttoolschema.ExceptionCategories,
+			),
+			common.FieldSeverity: agenttoolschema.Enum(
+				"How urgent it is for the person who takes over. Defaults to Medium.",
+				agenttoolschema.Severities,
+			),
+			"attemptSummary": map[string]any{
+				schemaType:    "string",
+				"description": "What you tried and why it was not enough, for the person who takes over.",
+			},
+			"blastRadius": map[string]any{
+				schemaType:    "integer",
+				"description": "How many records are affected.",
+			},
+		},
+		"required": []string{
+			"subjectType",
+			common.FieldSubjectID,
+			"category",
+			"severity",
+			"attemptSummary",
+		},
+		"additionalProperties": false,
+	}
+}
+
+func (t *RaiseExceptionTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceAgentException,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeRun,
+		DefaultTier:   agent.TierAutoExecute,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Records an exception against the run itself for a person inside the " +
+			"organization.",
+	}
+}
+
+func (t *RaiseExceptionTool) Execute(
+	ctx context.Context,
+	params agentports.ToolExecuteParams,
+) error {
+	if err := common.GuardExecute(t, params); err != nil {
+		return err
+	}
+
+	request, err := t.request(ctx, &params)
+	if err != nil {
+		return err
+	}
+
+	_, err = t.exceptions.Flag(ctx, request, params.Actor)
+
+	return err
+}
+
+func (t *RaiseExceptionTool) request(
+	ctx context.Context,
+	params *agentports.ToolExecuteParams,
+) (*agentports.FlagAgentExceptionRequest, error) {
+	if params.RunID.IsNil() {
+		return nil, ErrMissingRun
+	}
+
+	subjectType, subjectID, err := t.subject(ctx, *params)
+	if err != nil {
+		return nil, err
+	}
+	summary, err := common.RequireString(params.Params, "attemptSummary")
+	if err != nil {
+		return nil, err
+	}
+
+	category, given, err := common.OptionalEnum(
+		params.Params, "category", agenttoolschema.ExceptionCategories.Values,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if !given {
+		category = agent.CategoryOther
+	}
+	severity, given, err := common.OptionalEnum(
+		params.Params, "severity", agenttoolschema.Severities.Values,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if !given {
+		severity = agent.SeverityMedium
+	}
+
+	return &agentports.FlagAgentExceptionRequest{
+		RunID:          params.RunID,
+		Category:       category,
+		Severity:       severity,
+		SubjectType:    subjectType,
+		SubjectID:      subjectID,
+		AttemptSummary: summary,
+		Evidence: []agent.EvidenceRef{{
+			Type: "agent_run",
+			ID:   params.RunID.String(),
+			Note: "raised by the agent",
+		}},
+		BlastRadius: int(common.OptionalInt64(params.Params, "blastRadius")),
+		TenantInfo: pagination.TenantInfo{
+			OrgID: params.OrganizationID,
+			BuID:  params.BusinessUnitID,
+		},
+	}, nil
+}
+
+func (t *RaiseExceptionTool) Validate(
+	ctx context.Context,
+	params agentports.ToolExecuteParams,
+) error {
+	if err := common.GuardExecute(t, params); err != nil {
+		return err
+	}
+
+	_, _, err := t.subject(ctx, params)
+
+	return err
+}
+
+// subject reads the record a case is about and checks that it is one: the
+// id's prefix must match the kind named, and the record must be the tenant's.
+// A report's id filed as an insight used to be recorded as given, approved,
+// and left an exception pointing at nothing. Execute checks again, because an
+// approval runs it long after the proposal was validated.
+func (t *RaiseExceptionTool) subject(
+	ctx context.Context,
+	params agentports.ToolExecuteParams,
+) (agent.SubjectType, pulid.ID, error) {
+	subjectTypeRaw, err := common.RequireString(params.Params, "subjectType")
+	if err != nil {
+		return "", pulid.Nil, err
+	}
+	subjectType := agent.SubjectType(strings.TrimSpace(subjectTypeRaw))
+	if !subjectType.IsValid() {
+		return "", pulid.Nil, fmt.Errorf(
+			"parameter \"subjectType\" is not a known record kind; use one of %s",
+			strings.Join(agenttoolschema.SubjectTypes.Names(), ", "),
+		)
+	}
+	subjectID, err := common.RequirePulid(params.Params, common.FieldSubjectID)
+	if err != nil {
+		return "", pulid.Nil, err
+	}
+	if err = subjectType.CheckID(subjectID); err != nil {
+		return "", pulid.Nil, err
+	}
+
+	if t.subjects == nil {
+		return "", pulid.Nil, ErrSubjectUncheckable
+	}
+	exists, err := t.subjects.Exists(ctx, agentports.AgentSubjectExistsRequest{
+		TenantInfo:  common.TenantFrom(params),
+		SubjectType: subjectType,
+		SubjectID:   subjectID,
+	})
+	if err != nil {
+		return "", pulid.Nil, fmt.Errorf("check the %s: %w", subjectType.Noun(), err)
+	}
+	if !exists {
+		return "", pulid.Nil, fmt.Errorf(
+			"there is no %s %s in this organization; pass the id of a record a tool returned",
+			subjectType.Noun(), subjectID,
+		)
+	}
+
+	return subjectType, subjectID, nil
+}

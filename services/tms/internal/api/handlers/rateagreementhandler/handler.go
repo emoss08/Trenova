@@ -7,10 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/rateagreementservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -53,6 +53,16 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/:rateAgreementID/rules/",
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.listRules,
+	)
+	api.GET(
+		"/:rateAgreementID/lanes/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.listLanes,
+	)
+	api.GET(
+		"/:rateAgreementID/lanes/summary/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.summarizeLanes,
 	)
 	api.POST(
 		"/:rateAgreementID/rules/amend/",
@@ -147,7 +157,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*rateagreement.RateAgreement], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListRateAgreementRequest{
+				&rateagreementports.ListRateAgreementRequest{
 					Filter:    req,
 					PartyType: rateagreement.PartyType(helpers.QueryString(c, "partyType")),
 					Status:    rateagreement.Status(helpers.QueryString(c, "status")),
@@ -162,7 +172,8 @@ func (h *Handler) list(c *gin.Context) {
 // @Tags Rate Agreements
 // @Produce json
 // @Param rateAgreementID path string true "Rate agreement ID"
-// @Param includeChildren query bool false "Include rules, accessorials and the fuel binding"
+// @Param includeChildren query bool false "Include rules, accessorials and the fuel binding" default(true)
+// @Param includeRules query bool false "With includeChildren, also include the rules; false leaves them to the lanes endpoint" default(true)
 // @Success 200 {object} rateagreement.RateAgreement
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
@@ -181,10 +192,11 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.GetByID(
 		c.Request.Context(),
-		&repositories.GetRateAgreementByIDRequest{
+		&rateagreementports.GetRateAgreementByIDRequest{
 			RateAgreementID: agreementID,
 			TenantInfo:      tenantOf(authCtx),
 			IncludeChildren: helpers.QueryBool(c, "includeChildren", true),
+			OmitRules:       !helpers.QueryBool(c, "includeRules", true),
 		},
 	)
 	if err != nil {
@@ -295,7 +307,7 @@ func (h *Handler) listRules(c *gin.Context) {
 
 	rules, err := h.service.ListRules(
 		c.Request.Context(),
-		&repositories.ListRateAgreementRulesRequest{
+		&rateagreementports.ListRateAgreementRulesRequest{
 			TenantInfo:        tenantOf(authCtx),
 			RateAgreementID:   agreementID,
 			AsOf:              helpers.QueryInt64(c, "asOf", 0),
@@ -310,6 +322,80 @@ func (h *Handler) listRules(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, rules)
+}
+
+// @Summary List a rate agreement's live lanes
+// @Description Pages the active rules that have not been closed out, most specific first, with the number of live lanes and of retired rules.
+// @ID listRateAgreementLanes
+// @Tags Rate Agreements
+// @Produce json
+// @Param rateAgreementID path string true "Rate agreement ID"
+// @Param limit query int false "Page size" minimum(1) maximum(100) default(8)
+// @Param offset query int false "Page offset" minimum(0) default(0)
+// @Success 200 {object} rateagreementports.RateAgreementLanePage
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /rate-agreements/{rateAgreementID}/lanes [get]
+func (h *Handler) listLanes(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	agreementID, err := h.agreementID(c)
+	if err != nil {
+		return
+	}
+
+	page, err := h.service.ListLanes(
+		c.Request.Context(),
+		&rateagreementports.ListRateAgreementLanesRequest{
+			TenantInfo:      tenantOf(authCtx),
+			RateAgreementID: agreementID,
+			Limit:           helpers.QueryInt(c, "limit", rateagreementports.DefaultLaneLimit),
+			Offset:          helpers.QueryInt(c, "offset", 0),
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, page)
+}
+
+// @Summary Summarize a rate agreement's lanes
+// @Description Groups the agreement's live lanes by the formula template or rate matrix that prices them, with how many lanes each prices and the range of their rates.
+// @ID summarizeRateAgreementLanes
+// @Tags Rate Agreements
+// @Produce json
+// @Param rateAgreementID path string true "Rate agreement ID"
+// @Success 200 {object} rateagreementports.RateAgreementLaneSummary
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Router /rate-agreements/{rateAgreementID}/lanes/summary/ [get]
+func (h *Handler) summarizeLanes(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	agreementID, err := h.agreementID(c)
+	if err != nil {
+		return
+	}
+
+	summary, err := h.service.SummarizeLanes(
+		c.Request.Context(),
+		&rateagreementports.ListRateAgreementLanesRequest{
+			TenantInfo:      tenantOf(authCtx),
+			RateAgreementID: agreementID,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, summary)
 }
 
 type amendRulesRequest struct {
@@ -350,7 +436,7 @@ func (h *Handler) amendRules(c *gin.Context) {
 
 	amended, err := h.service.AmendRules(
 		c.Request.Context(),
-		&repositories.AmendRateAgreementRulesRequest{
+		&rateagreementports.AmendRateAgreementRulesRequest{
 			TenantInfo:      tenantOf(authCtx),
 			RateAgreementID: agreementID,
 			EffectiveFrom:   body.EffectiveFrom,
@@ -397,7 +483,7 @@ func (h *Handler) listVersions(c *gin.Context) {
 		func() (*pagination.ListResult[*rateagreement.RateAgreementVersion], error) {
 			return h.service.ListVersions(
 				c.Request.Context(),
-				&repositories.ListRateAgreementVersionsRequest{
+				&rateagreementports.ListRateAgreementVersionsRequest{
 					TenantInfo:      tenantOf(authCtx),
 					RateAgreementID: agreementID,
 					Limit:           req.Pagination.Limit,

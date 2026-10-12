@@ -4,7 +4,7 @@ package selfserviceresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	selfserviceservice "github.com/emoss08/trenova/internal/core/services/selfserviceservice"
+	selfserviceservice "github.com/emoss08/trenova/internal/modules/workforce/app/selfserviceservice"
 )
 
 type Deps struct {

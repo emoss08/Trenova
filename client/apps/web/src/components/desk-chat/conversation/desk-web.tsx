@@ -1,4 +1,5 @@
 import { MarkdownLinkContext, type MarkdownLinkRenderer } from "@/components/elements/ai-markdown";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useCallback, useState, type CSSProperties, type ReactNode } from "react";
@@ -191,9 +192,10 @@ export function DeskWebSources({
 
   return (
     <div className={cn("dk-ws", open && "dk-open")}>
-      <button
-        type="button"
-        className="dk-ws-b"
+      <Button
+        variant="bare"
+        size="bare"
+        className="h-6.5 gap-2 rounded-full pr-2.5 pl-1.5 text-sm text-dsk-subtle transition-colors duration-140 hover:bg-dsk-hover hover:text-dsk-fg aria-expanded:bg-dsk-hover aria-expanded:text-dsk-fg [&_svg]:transition-transform [&_svg]:duration-200 [&_svg]:ease-(--dk-ease) aria-expanded:[&_svg]:rotate-90"
         aria-expanded={open}
         onClick={() => setOpen((was) => !was)}
       >
@@ -204,7 +206,7 @@ export function DeskWebSources({
         </span>
         <span>{t("{0, plural, one {# source} other {# sources}}", sources.length)}</span>
         <DeskIcon name="chevR" size={10} />
-      </button>
+      </Button>
       <div className="dk-ws-x" inert={!open}>
         <div>
           {query !== "" && (

@@ -5,11 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	_ "github.com/emoss08/trenova/internal/core/domain/tenant" // import for documentation generation
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/roleservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	_ "github.com/emoss08/trenova/internal/modules/identity/domain/tenant" // import for documentation generation
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,14 +20,14 @@ type Params struct {
 	fx.In
 
 	Service              *roleservice.Service
-	PermissionEngine     services.PermissionEngine
+	PermissionEngine     permissionports.PermissionEngine
 	PermissionMiddleware *middleware.PermissionMiddleware
 	ErrorHandler         *helpers.ErrorHandler
 }
 
 type Handler struct {
 	service    *roleservice.Service
-	permEngine services.PermissionEngine
+	permEngine permissionports.PermissionEngine
 	perm       *middleware.PermissionMiddleware
 	eh         *helpers.ErrorHandler
 }
@@ -107,7 +106,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*permission.Role], error) {
 			return h.service.ListRoles(
 				c.Request.Context(),
-				&repositories.ListRolesRequest{
+				&permissionports.ListRolesRequest{
 					Filter: req,
 				},
 			)
@@ -137,7 +136,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	role, err := h.service.GetRoleByID(
 		c.Request.Context(),
-		repositories.GetRoleByIDRequest{
+		permissionports.GetRoleByIDRequest{
 			ID:         id,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -355,7 +354,7 @@ func (h *Handler) listConstraints(c *gin.Context) {
 	constraintType := permission.RoleConstraintType(c.Query("type"))
 	constraints, err := h.service.ListRoleConstraints(
 		c.Request.Context(),
-		repositories.ListRoleConstraintsRequest{
+		permissionports.ListRoleConstraintsRequest{
 			OrganizationID: authCtx.OrganizationID,
 			Type:           constraintType,
 		},

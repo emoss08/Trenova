@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/klippa-app/go-pdfium"
 	"github.com/klippa-app/go-pdfium/requests"
 	"github.com/klippa-app/go-pdfium/responses"
@@ -42,7 +42,7 @@ type Reader struct {
 	closed bool
 }
 
-var _ services.PDFReader = (*Reader)(nil)
+var _ kernelports.PDFReader = (*Reader)(nil)
 
 func New(p Params) *Reader {
 	r := NewReader(p.Config.GetPDFReaderConfig(), p.Logger)
@@ -76,9 +76,9 @@ func NewReader(cfg *config.PDFReaderConfig, logger *zap.Logger) *Reader {
 	}
 }
 
-func (r *Reader) Open(ctx context.Context, data []byte) (services.PDFDocument, error) {
+func (r *Reader) Open(ctx context.Context, data []byte) (kernelports.PDFDocument, error) {
 	if len(data) == 0 {
-		return nil, fmt.Errorf("open pdf: %w: empty input", services.ErrPDFUnreadable)
+		return nil, fmt.Errorf("open pdf: %w: empty input", kernelports.ErrPDFUnreadable)
 	}
 
 	pool, err := r.ensurePool()

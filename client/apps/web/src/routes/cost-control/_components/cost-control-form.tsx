@@ -36,6 +36,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { FormProvider, type Resolver, useForm, useFormContext, useWatch } from "react-hook-form";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 function toFormValues(control: CostingControl): CostControlFormValues {
   return {
@@ -264,11 +265,11 @@ function CostBasisCard() {
   );
 }
 
-const rateSourceBadge: Record<string, string> = {
+const rateSourceBadge: Record<string, string> = defineLabels({
   Benchmark: "Benchmark",
   Override: "Override",
   GLActual: "GL Actual",
-};
+});
 
 function CategoryRatesCard({
   title,

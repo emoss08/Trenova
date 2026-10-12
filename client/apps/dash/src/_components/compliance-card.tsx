@@ -25,6 +25,7 @@ import { Edit02Icon, ShieldAlertIcon, ShieldTickIcon } from "@trenova/shared/com
 import { useState } from "react";
 import { toast } from "sonner";
 import { useDashFeatures } from "./use-dash-features";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function ComplianceCard() {
   const t = useT();
@@ -142,7 +143,7 @@ function PendingChangeNotice() {
       toast.success(t("Request withdrawn."));
       await queryClient.invalidateQueries({ queryKey: ["dash-profile-change-requests"] });
     },
-    onError: (error: Error) => toast.error(error.message || "Could not withdraw it."),
+    onError: (error: Error) => toast.error(error.message || translate("Could not withdraw it.")),
   });
 
   const latest = requests.data?.[0];
@@ -226,15 +227,16 @@ function ContactEditDrawer({ profile, open, onOpenChange }: ContactEditDrawerPro
     onSuccess: async () => {
       toast.success(
         requiresApproval
-          ? "Sent to your carrier — your record changes once they approve it."
-          : "Contact details updated.",
+          ? translate("Sent to your carrier — your record changes once they approve it.")
+          : translate("Contact details updated."),
       );
       await queryClient.invalidateQueries({ queryKey: ["dash-compliance-profile"] });
       await queryClient.invalidateQueries({ queryKey: ["dash-profile"] });
       await queryClient.invalidateQueries({ queryKey: ["dash-profile-change-requests"] });
       onOpenChange(false);
     },
-    onError: (error: Error) => toast.error(error.message || "We couldn't save your changes."),
+    onError: (error: Error) =>
+      toast.error(error.message || translate("We couldn't save your changes.")),
   });
 
   const setField = (field: keyof typeof form) => (event: React.ChangeEvent<HTMLInputElement>) =>

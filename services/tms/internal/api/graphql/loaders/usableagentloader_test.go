@@ -5,10 +5,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,7 +24,7 @@ type countingDefinitions struct {
 
 func (d *countingDefinitions) ListByIDs(
 	_ context.Context,
-	req repositories.ListAgentDefinitionsByIDsRequest,
+	req agentdefinitionports.ListAgentDefinitionsByIDsRequest,
 ) ([]*agentdefinition.Definition, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -42,16 +42,16 @@ func (d *countingDefinitions) ListByIDs(
 
 type countingUsable struct {
 	mu     sync.Mutex
-	usable services.UsableAgents
-	actors []*services.RequestActor
+	usable permissionports.UsableAgents
+	actors []*permissionports.RequestActor
 	asked  []permission.Operation
 }
 
 func (u *countingUsable) AgentsUsable(
 	_ context.Context,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	operation permission.Operation,
-) (*services.UsableAgents, error) {
+) (*permissionports.UsableAgents, error) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 	u.actors = append(u.actors, actor)
@@ -104,7 +104,7 @@ func newUsableAgentsFixture() *usableAgentsFixture {
 	} {
 		f.definitions.byID[definition.ID] = definition
 	}
-	f.usable = &countingUsable{usable: services.UsableAgents{
+	f.usable = &countingUsable{usable: permissionports.UsableAgents{
 		Assistant:  true,
 		GrantedIDs: []pulid.ID{f.granted.ID},
 	}}
@@ -123,7 +123,7 @@ func TestUsableAgentByID_BatchesAndKeepsOnlyWhatThePersonMayUse(t *testing.T) {
 	t.Parallel()
 
 	f := newUsableAgentsFixture()
-	loader := f.factory.NewForTenant(f.tenant)
+	loader := newUsableAgentByIDLoader(f.factory, f.tenant)
 
 	ids := []pulid.ID{
 		f.open.ID, f.granted.ID, f.withheld.ID, f.disabled.ID, f.scheduled.ID, f.open.ID,
@@ -148,7 +148,7 @@ func TestUsableAgentByID_BatchesAndKeepsOnlyWhatThePersonMayUse(t *testing.T) {
 	assert.Len(t, f.definitions.calls[0], 5, "each agent is asked for once")
 	require.Len(t, f.usable.actors, 1, "one read of what the person may use")
 	assert.Equal(t, f.tenant.UserID, f.usable.actors[0].UserID)
-	assert.Equal(t, services.PrincipalTypeUser, f.usable.actors[0].PrincipalType)
+	assert.Equal(t, permissionports.PrincipalTypeUser, f.usable.actors[0].PrincipalType)
 	assert.Equal(t, permission.OpCreate, f.usable.asked[0],
 		"the delegates a person may use are those they could ask, as the turn decides")
 }
@@ -157,9 +157,9 @@ func TestUsableAgentByID_NothingWithoutTheAssistant(t *testing.T) {
 	t.Parallel()
 
 	f := newUsableAgentsFixture()
-	f.usable.usable = services.UsableAgents{}
+	f.usable.usable = permissionports.UsableAgents{}
 
-	_, err := f.factory.NewForTenant(f.tenant).Load(t.Context(), f.open.ID.String())
+	_, err := newUsableAgentByIDLoader(f.factory, f.tenant).Load(t.Context(), f.open.ID.String())
 
 	assert.True(t, errortypes.IsNotFoundError(err))
 	assert.Empty(t, f.definitions.calls, "the agents are not read for a person who may use none")
@@ -171,7 +171,7 @@ func TestUsableAgentByID_NothingWithoutAPerson(t *testing.T) {
 	f := newUsableAgentsFixture()
 	f.tenant.UserID = pulid.Nil
 
-	_, err := f.factory.NewForTenant(f.tenant).Load(t.Context(), f.open.ID.String())
+	_, err := newUsableAgentByIDLoader(f.factory, f.tenant).Load(t.Context(), f.open.ID.String())
 
 	assert.True(t, errortypes.IsNotFoundError(err))
 	assert.Empty(t, f.usable.actors)

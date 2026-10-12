@@ -154,6 +154,9 @@ writes:
   "mutation resolveAgentException":
     exempt: agent-administration
     reason: "An agent exception is an agent handing a case to a person; the person resolves it."
+  "mutation reviewAgentMemory":
+    exempt: agent-administration
+    reason: "A person vouching for what an agent wrote after reading outside content; an agent clearing the taint on what it will read would undo the hold."
   "mutation setAgentMemoryStatus":
     tools: [forget_memory]
   "mutation undoMyDecision":
@@ -179,6 +182,36 @@ writes:
   "PUT /api/v1/agent-definitions/:agentID/":
     exempt: agent-administration
     reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
+  "POST /api/v1/agent-definitions/dry-run/":
+    exempt: read-only
+    reason: "Tries a draft agent once with every write simulated; it saves and changes nothing."
+  "mutation dismissAIProviderFailure":
+    exempt: user-preference
+    reason: "Puts away a notice on one person's own overview; it changes nothing anyone else sees."
+  "mutation applyAITuneUp":
+    exempt: agent-administration
+    reason: "Applies a change to how agents and providers are set up that the runs suggested; it is the human check on AI setup."
+  "mutation dismissAITuneUp":
+    exempt: agent-administration
+    reason: "Puts away a suggested change to AI setup; it changes no record an agent works on."
+  "mutation restoreAITuneUp":
+    exempt: agent-administration
+    reason: "Brings back a suggested change to AI setup that was put away."
+  "mutation restoreAIProviderFailure":
+    exempt: user-preference
+    reason: "Brings back a notice one person put away on their own overview."
+  "mutation draftAgentFromDescription":
+    exempt: read-only
+    reason: "Asks a model to draft an agent from a description and returns the draft; it saves nothing, and saving it is the agent builder's create."
+  "mutation tightenAgentInstructions":
+    exempt: read-only
+    reason: "Asks a model to shorten an agent's instructions and returns the text; it saves nothing."
+  "mutation keepAgentTestPrompt":
+    exempt: agent-administration
+    reason: "Keeps a prompt a person tries an agent with in its builder; an agent has no use for keeping prompts to test itself."
+  "mutation deleteAgentTestPrompt":
+    exempt: agent-administration
+    reason: "Removes a prompt a person kept in an agent's builder."
   "mutation setAgentAccess":
     exempt: security
     reason: "Decides which people may use which agents."
@@ -217,6 +250,11 @@ writes:
     exempt: agent-administration
     reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
 
+  # agentsafety
+  "mutation saveAgentToolRule":
+    exempt: agent-administration
+    reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
+
   # agentrun
   "POST /api/v1/agent-runs/":
     exempt: agent-administration
@@ -242,6 +280,15 @@ writes:
     reason: "A person's rating of an agent's answer; an agent rating itself would be meaningless."
 
   # aiprovider
+  "mutation patchAIProvider":
+    exempt: agent-administration
+    reason: "Configures the model providers agents run on, including their API keys."
+  "mutation reorderAIProviders":
+    exempt: agent-administration
+    reason: "Sets the order in which the model providers agents run on take work."
+  "mutation testAIProviderDraft":
+    exempt: read-only
+    reason: "Tests an unsaved provider's credentials once and returns the result; it saves nothing."
   "DELETE /api/v1/ai-providers/:providerID/":
     exempt: agent-administration
     reason: "Configures the model providers agents run on, including their API keys."
@@ -289,12 +336,21 @@ writes:
   "DELETE /api/v1/assistant/threads/:threadID/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "DELETE /api/v1/assistant/threads/:threadID/case/":
+    exempt: agent-administration
+    reason: "A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on."
+  "DELETE /api/v1/assistant/threads/:threadID/queue/:itemID/":
+    exempt: agent-administration
+    reason: "Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words."
   "PATCH /api/v1/assistant/schedules/:scheduleID/":
     exempt: agent-administration
     reason: "Scheduling a conversation to run again is a person directing an agent's work; an agent that could schedule itself would set its own workload."
   "PATCH /api/v1/assistant/threads/:threadID/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "PATCH /api/v1/assistant/threads/:threadID/queue/:itemID/":
+    exempt: agent-administration
+    reason: "Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words."
   "POST /api/v1/assistant/ask/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
@@ -316,6 +372,17 @@ writes:
   "POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/versions/":
     exempt: agent-administration
     reason: "A person keeping or restoring their own version of a document an agent drafted in their conversation; the agent drafts through the conversation itself."
+  "POST /api/v1/assistant/threads/:threadID/case/await-reply/":
+    tools: [wait_until]
+  "POST /api/v1/assistant/threads/:threadID/case/snooze/":
+    exempt: agent-administration
+    reason: "A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on."
+  "POST /api/v1/assistant/threads/:threadID/case/ticks/":
+    exempt: agent-administration
+    reason: "A tick on a step the organization added for a person to tick is that person's word that it was done; an agent ticking it would vouch for itself."
+  "POST /api/v1/assistant/threads/:threadID/case/wake/":
+    exempt: agent-administration
+    reason: "A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on."
   "POST /api/v1/assistant/threads/:threadID/compact/":
     exempt: agent-administration
     reason: "Compacting a conversation manages the agent's own context window; the runtime compacts on its own limits and no record changes."
@@ -323,6 +390,12 @@ writes:
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
   "POST /api/v1/assistant/threads/:threadID/messages/":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/assistant/threads/:threadID/queue/":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/assistant/threads/:threadID/queue/:itemID/send/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
   "POST /api/v1/assistant/threads/:threadID/read/":
@@ -337,12 +410,20 @@ writes:
   "POST /api/v1/assistant/threads/:threadID/turns/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/assistant/threads/:threadID/waits/:waitID/cancel/":
+    tools: [cancel_wait]
   "POST /api/v1/assistant/turns/:turnID/stop/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "PUT /api/v1/assistant/threads/:threadID/case/":
+    exempt: agent-administration
+    reason: "A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on."
   "PUT /api/v1/assistant/threads/:threadID/proposals/:proposalID/edits/":
     exempt: agent-administration
     reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
+  "PUT /api/v1/assistant/threads/:threadID/queue/order/":
+    exempt: agent-administration
+    reason: "Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words."
 
   # auth
   "POST /api/v1/auth/forgot-password":
@@ -622,6 +703,14 @@ writes:
   "mutation voidCarrierSettlement":
     tools: [void_carrier_settlement]
 
+  # casechecklist
+  "DELETE /api/v1/case-checklists/:templateID/":
+    exempt: configuration
+    reason: "How case checklists are laid out for the organization and its customers is billing configuration an administrator sets; agents work the checklist, they do not decide what is on it."
+  "PUT /api/v1/case-checklists/":
+    exempt: configuration
+    reason: "How case checklists are laid out for the organization and its customers is billing configuration an administrator sets; agents work the checklist, they do not decide what is on it."
+
   # commodity
   "PATCH /api/v1/commodities/:commodityID/":
     tools: [update_commodity]
@@ -675,11 +764,6 @@ writes:
   "PUT /api/v1/custom-fields/definitions/:definitionID/":
     exempt: configuration
     reason: "Custom field definitions change the shape of records for everyone; an administrator owns them."
-
-  # databasesession
-  "POST /api/v1/admin/database-sessions/:pid/terminate/":
-    exempt: security
-    reason: "Terminating database sessions is a platform administrator's emergency control."
 
   # dataentrycontrol
   "PUT /api/v1/data-entry-controls/":
@@ -1717,25 +1801,114 @@ writes:
     reason: "An inbound webhook a provider calls with a signed token, not a person."
 
   # inboundmessage
+  "mutation assignInboundMessages":
+    pending: "Assign inbound messages to a person, or take them off whoever has them."
   "mutation createInboundMailbox":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
+  "mutation createMyTriageView":
+    exempt: user-preference
+    reason: "A saved search in one person's own Triage sidebar."
+  "mutation deleteMyTriageView":
+    exempt: user-preference
+    reason: "A saved search in one person's own Triage sidebar."
+  "mutation handOffTriage":
+    pending: "Hand everything still waiting in Triage to the on-call person at the end of the day."
   "mutation linkInboundMessage":
     tools: [link_inbound_message]
+  "mutation readUnreadInboundMessages":
+    exempt: agent-administration
+    reason: "Sets Nova reading the backlog it never read; it switches an agent on rather than doing an agent's work."
+  "mutation renameMyTriageView":
+    exempt: user-preference
+    reason: "A saved search in one person's own Triage sidebar."
+  "mutation reopenInboundMessages":
+    pending: "Put settled inbound messages back in the Triage queue."
   "mutation reviewInboundMessage":
     tools: [mark_inbound_message]
+  "mutation reviewInboundMessages":
+    exempt: duplicate
+    reason: "The bulk form of reviewInboundMessage; mark_inbound_message settles each message."
   "mutation rotateInboundMailboxToken":
     exempt: security
     reason: "Replaces the secret that authenticates mail forwarded into the mailbox."
+  "mutation sendInboundMailboxTest":
+    exempt: configuration
+    reason: "Checks that a connected address receives mail while an administrator sets the mailbox up."
   "mutation setInboundMailboxApiKey":
     exempt: security
     reason: "Sets the provider credential the mailbox reads forwarded mail's content with."
   "mutation setInboundMailboxSigningSecret":
     exempt: security
     reason: "Sets the secret that authenticates mail forwarded into the mailbox."
+  "mutation snoozeInboundMessages":
+    pending: "Snooze inbound messages until a time, a delivery, a document or a payment."
+  "mutation stopWaitingForInboundReply":
+    pending: "Bring an inbound message waiting on a reply back to the queue now."
+  "mutation unlinkInboundMessage":
+    pending: "Remove the shipment, customer or carrier an inbound message was linked to."
   "mutation updateInboundMailbox":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
+  "mutation updateTriageResponseTargets":
+    exempt: configuration
+    reason: "How long each kind of message may wait is an organization-wide setting an administrator owns."
+  "mutation updateTriageSettings":
+    exempt: configuration
+    reason: "The on-call person and the end of the working day are organization-wide settings an administrator owns."
+  "mutation waitForInboundReply":
+    pending: "Park an inbound message until the sender replies on its thread, or until a time."
+  "mutation wakeInboundMessage":
+    pending: "Bring a snoozed inbound message back to the queue now."
+
+  # inboundreply
+  "mutation blockInboundSender":
+    pending: "Send a sender's future mail on a source straight to Ignored, and ignore the message."
+  "mutation createInboundLoad":
+    pending: "Create the shipment a tender in Triage describes, from the fields a person checked."
+  "mutation createTriageReplyTemplate":
+    exempt: configuration
+    reason: "Reply templates are organization-wide wording an administrator maintains; replies use them."
+  "mutation decideInboundStops":
+    pending: "Waive or stand by a disputed detention charge after checking the stop times, and draft the answer."
+  "mutation deleteTriageReplyTemplate":
+    exempt: configuration
+    reason: "Reply templates are organization-wide wording an administrator maintains; replies use them."
+  "mutation discardInboundLoad":
+    pending: "Throw away the load Nova drafted from an inbound message."
+  "mutation discardInboundReplyDraft":
+    pending: "Throw away the reply draft waiting on an inbound message."
+  "mutation draftInboundLoad":
+    pending: "Have Nova read the load an inbound tender describes into a draft for a person to check."
+  "mutation draftInboundMany":
+    pending: "Have Nova draft replies and loads for many inbound messages in the background."
+  "mutation draftInboundReply":
+    pending: "Have Nova draft a reply to an inbound message for a person to review."
+  "mutation fileInboundAttachment":
+    pending: "File an email attachment on a shipment as a typed document, whole or split into page ranges."
+  "mutation fileInboundMany":
+    pending: "File every readable attachment of each inbound message on its matched shipment."
+  "mutation logInboundException":
+    pending: "Log a shortage, overage or damage from a delivery on the shipment as a billing hold."
+  "mutation saveInboundReplyDraft":
+    pending: "Save a person's reply to an inbound message as its draft."
+  "mutation sendInboundReply":
+    tools: [reply_to_inbound_message]
+  "mutation unblockInboundSender":
+    pending: "Let a blocked sender's mail on a source reach the queue again."
+  "mutation unfileInboundAttachment":
+    pending: "Take an email attachment back off the shipment it was filed on."
+  "mutation updateTriageReplyTemplate":
+    exempt: configuration
+    reason: "Reply templates are organization-wide wording an administrator maintains; replies use them."
+
+  # inboxpresence
+  "DELETE /api/v1/inbox/presence/":
+    exempt: infrastructure
+    reason: "Presence and typing signals a browser sends while a person is on the page."
+  "POST /api/v1/inbox/presence/":
+    exempt: infrastructure
+    reason: "Presence and typing signals a browser sends while a person is on the page."
 
   # insight
   "POST /api/v1/insights/:insightID/dismiss/":
@@ -2200,6 +2373,18 @@ writes:
   "POST /api/v1/shipments/:shipmentID/comments/typing/":
     exempt: infrastructure
     reason: "Presence and typing signals a browser sends while a person is on the page."
+  "DELETE /api/v1/realtime/presence/:resource/":
+    exempt: infrastructure
+    reason: "Presence and typing signals a browser sends while a person is on the page."
+  "POST /api/v1/realtime/presence/:resource/":
+    exempt: infrastructure
+    reason: "Presence and typing signals a browser sends while a person is on the page."
+  "DELETE /api/v1/realtime/presence/:resource/:recordID/":
+    exempt: infrastructure
+    reason: "Presence and typing signals a browser sends while a person is on the page."
+  "POST /api/v1/realtime/presence/:resource/:recordID/":
+    exempt: infrastructure
+    reason: "Presence and typing signals a browser sends while a person is on the page."
 
   # recurringshipment
   "POST /api/v1/recurring-shipments/":
@@ -2466,7 +2651,7 @@ writes:
   "mutation unresolveShipmentComment":
     tools: [resolve_shipment_comment]
   "mutation updateShipment":
-    tools: [update_shipment]
+    tools: [update_shipment, reschedule_stop, add_shipment_charge]
   "mutation updateShipmentComment":
     tools: [edit_shipment_comment]
 
@@ -2548,6 +2733,30 @@ writes:
     exempt: configuration
     reason: "Sets the table view everyone in the organization starts from."
   "mutation updateTableConfiguration":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+
+  # bulkedit
+  "mutation startBulkEdit":
+    exempt: duplicate
+    reason: "Applies a write listed elsewhere (bulkUpdateCustomerStatus, bulkUpdateLocationStatus, bulkUpdateCarrierStatus, transferShipmentOwnership) to many rows; each row goes through that write's own service."
+  "mutation undoMyBulkEdit":
+    exempt: duplicate
+    reason: "Puts rows back through the same writes startBulkEdit applies (bulkUpdateCustomerStatus, bulkUpdateLocationStatus, bulkUpdateCarrierStatus, transferShipmentOwnership)."
+
+  # tableexport
+  "mutation exportTableView":
+    exempt: duplicate
+    reason: "Saves a table's view through createReportDefinition and runs it through runReport; those writes are listed under report."
+  "mutation scheduleTableView":
+    exempt: duplicate
+    reason: "Saves a table's view through createReportDefinition and schedules it through createReportSchedule; those writes are listed under report."
+
+  # tablelayout
+  "mutation resetMyTableLayout":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+  "mutation saveMyTableLayout":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
 
@@ -2638,6 +2847,30 @@ writes:
   "mutation updateTrailer":
     tools: [update_trailer]
 
+  # triage
+  "mutation correctInboundClassification":
+    exempt: attestation
+    reason: "A person's verdict on what Nova read; it trains Nova and the sender's hints, so an agent correcting it would grade its own reading."
+  "mutation createTriageRule":
+    exempt: agent-administration
+    reason: "Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent."
+  "mutation deleteTriageRule":
+    exempt: agent-administration
+    reason: "Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent."
+  "mutation flagInboundFact":
+    exempt: attestation
+    reason: "A person's verdict on what Nova read; it trains Nova, so an agent flagging it would grade its own reading."
+  "mutation reopenInboundConflict":
+    pending: "Reopen a settled duplicate-document or repeated-load conflict on a triage message"
+  "mutation resolveInboundConflict":
+    pending: "Settle a duplicate-document or repeated-load conflict on a triage message: replace or keep the document on file, skip or confirm the load"
+  "mutation setTriageRuleEnabled":
+    exempt: agent-administration
+    reason: "Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent."
+  "mutation updateTriageRule":
+    exempt: agent-administration
+    reason: "Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent."
+
   # user
   "DELETE /api/v1/users/me/profile-picture/":
     exempt: user-preference
@@ -2651,6 +2884,21 @@ writes:
   "PATCH /api/v1/users/me/settings/":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
+  "PATCH /api/v1/users/me/profile/":
+    exempt: user-preference
+    reason: "A person's own job title, phone and avatar; they describe themselves and no agent speaks for them."
+  "PUT /api/v1/users/me/availability/":
+    exempt: user-preference
+    reason: "Whether a person is available, focusing or away, and who covers for them, is theirs alone to say."
+  "PUT /api/v1/users/me/notification-preferences/":
+    exempt: user-preference
+    reason: "What reaches a person outside the bell, and when, is their own choice; it changes nothing anyone else sees."
+  "DELETE /api/v1/users/me/sessions/:sessionID/":
+    exempt: security
+    reason: "Signing a device out decides who can act as the person; an agent never ends someone's sessions."
+  "POST /api/v1/users/me/sessions/revoke-others/":
+    exempt: security
+    reason: "Signing a device out decides who can act as the person; an agent never ends someone's sessions."
   "POST /api/v1/users/:userID/permissions/simulate/":
     exempt: read-only
     reason: "Shows what a user could do with a set of roles and saves nothing."

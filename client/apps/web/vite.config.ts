@@ -2,12 +2,14 @@ import tailwindcss from "@tailwindcss/vite";
 import { createRequire } from "node:module";
 import path from "path";
 // import { visualizer } from "rollup-plugin-visualizer";
-import react from "@vitejs/plugin-react";
+import babel from "@rolldown/plugin-babel";
+import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { defineConfig, normalizePath } from "vite";
 import { compression } from "vite-plugin-compression2";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 import { editionAlias } from "../../packages/edition/node/resolve-entry.ts";
 import { singletonPackages } from "../../singleton-packages.ts";
+import { routeCatalogs } from "./vite/route-catalogs.ts";
 
 const require = createRequire(import.meta.url);
 
@@ -29,8 +31,18 @@ export default defineConfig({
     },
   },
   plugins: [
+    routeCatalogs({ srcDir: path.resolve(dirname, "src") }),
     react(),
-    // babel({ presets: [reactCompilerPreset()] }),
+    // Every component is compiled. Files built on TanStack Virtual, whose virtualizer
+    // changes in place, start with "use no memo", as does any page found showing stale
+    // values: that is how a page opts out. TanStack Table v9 is compiled; a component
+    // that reads table state through a row, column or header subscribes to it.
+    // The generated GraphQL client is megabytes of documents and types with no
+    // components; compiling it stalls the build on Babel's deoptimised printer.
+    babel({
+      presets: [reactCompilerPreset()],
+      exclude: [/[\\/]node_modules[\\/]/, /[\\/]packages[\\/]graphql[\\/]src[\\/]generated[\\/]/],
+    }),
     tailwindcss(),
     compression({
       algorithms: ["gzip", "brotliCompress"],

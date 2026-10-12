@@ -17,16 +17,17 @@ import {
 } from "@trenova/shared/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const WORKER_TYPE_VARIANTS: Record<WorkerType, BadgeVariant> = {
   Employee: "success",
   Contractor: "info",
 };
 
-const WORKER_TYPE_LABELS: Record<WorkerType, string> = {
+const WORKER_TYPE_LABELS: Record<WorkerType, string> = defineLabels({
   Employee: "Employee",
   Contractor: "Contractor",
-};
+});
 
 const WORKER_TYPE_ICONS: Record<WorkerType, React.ReactNode> = {
   Employee: <User01Icon className="size-3" />,

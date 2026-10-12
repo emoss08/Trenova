@@ -1,0 +1,79 @@
+"A value a bulk-editable field can be set to."
+type BulkEditOption {
+  value: String!
+  label: String!
+}
+
+"A field of a table that can be changed on many rows at once."
+type BulkEditField {
+  name: String!
+  label: String!
+  "record (picked from a list of records) or select (one of a fixed set)."
+  kind: String!
+  "For a record field, the select-option resource its values are picked from."
+  record: String
+  options: [BulkEditOption!]!
+}
+
+input BulkEditSelectionInput {
+  "The rows chosen one by one."
+  ids: [ID!]
+  "Or every row matching the table's filters, resolved by the server when the edit runs."
+  filter: DataTableConnectionInput
+  "The table's own list options beyond filters, such as the shipment board's quick filters."
+  options: JSON
+}
+
+input BulkEditInput {
+  resource: String!
+  field: String!
+  value: String!
+  selection: BulkEditSelectionInput!
+}
+
+type BulkEditPreview {
+  "How many rows the edit would reach."
+  count: Int!
+  "True when more rows match than one bulk edit can change."
+  tooMany: Boolean!
+}
+
+type BulkEditFailure {
+  id: ID!
+  message: String!
+}
+
+"One change made to many rows at once, and how far it has got."
+type BulkEditJob {
+  id: ID!
+  resource: String!
+  field: String!
+  value: String!
+  "Queued, Running, Completed, Failed, Undoing or Undone."
+  status: String!
+  totalCount: Int!
+  processedCount: Int!
+  changedCount: Int!
+  failedCount: Int!
+  failureMessage: String!
+  "The first rows that could not be changed, with why."
+  failures: [BulkEditFailure!]!
+  canUndo: Boolean!
+  completedAt: Timestamp
+  undoneAt: Timestamp
+  createdAt: Timestamp!
+}
+
+extend type Query {
+  bulkEditFields(resource: String!): [BulkEditField!]!
+  previewBulkEdit(input: BulkEditInput!): BulkEditPreview!
+  myBulkEdit(id: ID!): BulkEditJob
+  myBulkEdits(resource: String, limit: Int): [BulkEditJob!]!
+}
+
+extend type Mutation {
+  "Starts changing one field on every chosen row; it runs in the background."
+  startBulkEdit(input: BulkEditInput!): BulkEditJob!
+  "Puts back every row the caller's bulk edit changed, within a day of it finishing."
+  undoMyBulkEdit(id: ID!): BulkEditJob!
+}

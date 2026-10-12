@@ -23,6 +23,7 @@ import {
 } from "@trenova/shared/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const DRIVER_TYPE_VARIANTS: Record<DriverType, BadgeVariant> = {
   Local: "info",
@@ -31,12 +32,12 @@ const DRIVER_TYPE_VARIANTS: Record<DriverType, BadgeVariant> = {
   Team: "info",
 };
 
-const DRIVER_TYPE_LABELS: Record<DriverType, string> = {
+const DRIVER_TYPE_LABELS: Record<DriverType, string> = defineLabels({
   Local: "Local",
   Regional: "Regional",
   OTR: "OTR",
   Team: "Team",
-};
+});
 
 const DRIVER_TYPE_ICONS: Record<DriverType, React.ReactNode> = {
   Local: <MarkerPin01Icon className="size-3" />,

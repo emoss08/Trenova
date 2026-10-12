@@ -26,6 +26,26 @@ fragment AgentToolPolicyFields on AgentToolPolicy {
   carriesTaint
   rationale
   explanation
+  declaredMaxTier
+  declaredReadsExternal
+  ruleVersion
+  rule {
+    maxTier
+    readsExternal
+    reason
+    updatedAt
+    updatedBy {
+      id
+      name
+    }
+  }
+}
+
+fragment AgentToolRuleImpactFields on AgentToolRuleImpact {
+  agentId
+  agentName
+  before
+  after
 }
 
 fragment AgentToolAutonomyFields on AgentToolAutonomy {
@@ -117,11 +137,41 @@ query AgentSafetySummary {
     leaveOrganization
     openWithSensitive
     resources
+    egressCounts {
+      egress
+      count
+    }
+    unattendedTools
+    openSensitiveAgentIds
   }
 }
 
 query AgentSafety($agentIds: [ID!]) {
   agentSafety(agentIds: $agentIds) {
     ...AgentSafetyHeaderFields
+  }
+}
+
+query AgentToolHolders {
+  agentToolHolders {
+    policyName
+    agentIds
+  }
+}
+
+query AgentToolRuleImpact($name: String!, $input: AgentToolRuleInput!) {
+  agentToolRuleImpact(name: $name, input: $input) {
+    ...AgentToolRuleImpactFields
+  }
+}
+
+mutation SaveAgentToolRule($name: String!, $version: Int!, $input: AgentToolRuleInput!) {
+  saveAgentToolRule(name: $name, version: $version, input: $input) {
+    tool {
+      ...AgentToolPolicyFields
+    }
+    affected {
+      ...AgentToolRuleImpactFields
+    }
   }
 }

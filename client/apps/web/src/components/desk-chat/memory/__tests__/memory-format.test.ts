@@ -1,6 +1,15 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describe, expect, it } from "vitest";
-import { memorySource, memoryWhy, savedLine, scopeLabel, usageLine } from "../memory-format";
+import {
+  joinSteps,
+  memorySource,
+  memoryWhy,
+  savedLine,
+  scopeLabel,
+  scopeWord,
+  splitSteps,
+  usageLine,
+} from "../memory-format";
 
 const t = ((text: string, ...args: unknown[]) =>
   text.replace(/\{(\d)\}/g, (_match, index: string) => String(args[Number(index)]))) as TranslateFn;
@@ -96,5 +105,49 @@ describe("memoryWhy", () => {
       { key: "replaces", label: "Replaces", text: "“Copy dispatch on rate confirmations.”" },
       { key: "replacedBy", label: "Replaced by", text: "“Copy dispatch, billing and the rep.”" },
     ]);
+  });
+});
+
+describe("scopeWord", () => {
+  it("names who a memory is for in a word, capitalised at the start of a line", () => {
+    expect(scopeWord({ scope: "User" }, t)).toBe("just you");
+    expect(scopeWord({ scope: "User" }, t, true)).toBe("Just you");
+    expect(scopeWord({ scope: "Agent" }, t)).toBe("everyone");
+    expect(scopeWord({ scope: "Agent" }, t, true)).toBe("Everyone");
+    expect(scopeWord({ scope: "Role", roleName: "Dispatch" }, t)).toBe("Dispatch");
+    expect(scopeWord({ scope: "Role", roleName: "Dispatch" }, t, true)).toBe("Dispatch");
+    expect(scopeWord({ scope: "Role", roleName: null }, t)).toBe("your team");
+    expect(scopeWord({ scope: "Organization" }, t)).toBe("the whole organization");
+  });
+});
+
+describe("splitSteps", () => {
+  it("splits numbered steps written on one line", () => {
+    expect(
+      splitSteps("1. If `search_shipments` finds nothing, keep looking. 2. Call `list_shipments`."),
+    ).toEqual(["If `search_shipments` finds nothing, keep looking.", "Call `list_shipments`."]);
+  });
+
+  it("splits on lines when the memory is written on lines, dropping their numbers", () => {
+    expect(splitSteps("1. Read the move\n\n2. Assign it\nConfirm")).toEqual([
+      "Read the move",
+      "Assign it",
+      "Confirm",
+    ]);
+  });
+
+  it("returns text that does not split as one entry, and nothing for empty text", () => {
+    expect(splitSteps("Acme pays on the 15th.")).toEqual(["Acme pays on the 15th."]);
+    expect(splitSteps("   ")).toEqual([]);
+  });
+});
+
+describe("joinSteps", () => {
+  it("writes edited steps back in the memory's own form", () => {
+    expect(joinSteps(["Read it", "Assign it"], "1. Read. 2. Assign.")).toBe(
+      "1. Read it 2. Assign it",
+    );
+    expect(joinSteps(["Read it", " ", "Assign it"], "Read.\nAssign.")).toBe("Read it\nAssign it");
+    expect(joinSteps(["Acme pays on the 15th."], "Acme pays late.")).toBe("Acme pays on the 15th.");
   });
 });

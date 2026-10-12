@@ -23,6 +23,7 @@ import { CheckIcon, PlusIcon, SearchLgIcon, XCloseIcon } from "@trenova/shared/c
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { widgetVisualFor, WidgetSketch } from "./widget-gallery-visuals";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 /** How long a card keeps its "Added" confirmation before settling back. */
 const ADDED_FEEDBACK_MS = 1200;
@@ -563,6 +564,7 @@ function GalleryFooter({
   onDone: () => void;
 }) {
   const t = useT();
+  const rt = useRichT();
 
   return (
     <div className="border-border/70 bg-muted/40 flex items-center gap-3 border-t px-4 py-2.5">
@@ -575,9 +577,10 @@ function GalleryFooter({
           <>
             {t("Room for {0} more.", remaining)}
             <span className="hidden sm:inline">
-              {t("Use")} <Kbd className="h-4 px-1 text-2xs">&darr;</Kbd>{" "}
-              {t("to reach the cards and")} <Kbd className="h-4 px-1 text-2xs">&crarr;</Kbd>{" "}
-              {t("to add one.")}
+              {rt("Use <down/> to reach the cards and <enter/> to add one.", {
+                down: () => <Kbd className="h-4 px-1 text-2xs">&darr;</Kbd>,
+                enter: () => <Kbd className="h-4 px-1 text-2xs">&crarr;</Kbd>,
+              })}
             </span>
           </>
         )}

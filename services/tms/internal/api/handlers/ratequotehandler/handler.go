@@ -5,13 +5,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/domain/ratequote"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/ratequoteservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -103,7 +102,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*ratequote.RateQuote], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListRateQuotesRequest{Filter: req},
+				&ratequoteports.ListRateQuotesRequest{Filter: req},
 			)
 		},
 	)
@@ -131,7 +130,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.GetByID(c.Request.Context(), &repositories.GetRateQuoteByIDRequest{
+	entity, err := h.service.GetByID(c.Request.Context(), &ratequoteports.GetRateQuoteByIDRequest{
 		RateQuoteID: quoteID,
 		TenantInfo:  tenantOf(authCtx),
 	})
@@ -165,7 +164,7 @@ func (h *Handler) listForShipment(c *gin.Context) {
 
 	quotes, err := h.service.ListForShipment(
 		c.Request.Context(),
-		&repositories.ListShipmentRateQuotesRequest{
+		&ratequoteports.ListShipmentRateQuotesRequest{
 			ShipmentID: shipmentID,
 			TenantInfo: tenantOf(authCtx),
 			Limit:      shipmentQuoteHistoryLimit,
@@ -204,7 +203,7 @@ func (h *Handler) appliedForShipment(c *gin.Context) {
 
 	entity, err := h.service.GetAppliedForShipment(
 		c.Request.Context(),
-		&repositories.GetShipmentRateQuoteRequest{
+		&ratequoteports.GetShipmentRateQuoteRequest{
 			ShipmentID: shipmentID,
 			PartyType:  partyTypeOf(c),
 			TenantInfo: tenantOf(authCtx),
@@ -224,7 +223,7 @@ func (h *Handler) appliedForShipment(c *gin.Context) {
 // here rather than referenced directly.
 //
 //nolint:unused // referenced from the swagger annotations, not from Go code
-type ratedShipment = services.RatedShipment
+type ratedShipment = ratequoteports.RatedShipment
 
 type explainRequest struct {
 	PartyType rateagreement.PartyType `json:"partyType"`
@@ -361,12 +360,12 @@ func tenantOf(authCtx *authctx.AuthContext) pagination.TenantInfo {
 // API documentation has something to point at.
 //
 //nolint:unused // referenced by the swagger annotation below
-type shopResult = services.ShopResult
+type shopResult = ratequoteports.ShopResult
 
 type shopRequest struct {
 	// Strategy is what "best" means for this run. Left empty it is least cost,
 	// which is what somebody shopping without saying what they meant is asking.
-	Strategy services.ShopStrategy `json:"strategy"`
+	Strategy ratequoteports.ShopStrategy `json:"strategy"`
 	// CarrierIDs is an explicit shortlist. Left empty the shipment's routing
 	// guide supplies the candidates, which is the ordinary case.
 	CarrierIDs []pulid.ID `json:"carrierIds"`

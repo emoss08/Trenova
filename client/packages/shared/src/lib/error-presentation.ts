@@ -218,6 +218,13 @@ export function describeError(error: unknown): ErrorDescription {
   });
 }
 
+// isSessionExpiry says whether a failure proves the session is gone (a 401 or an
+// authentication problem, from either transport), as opposed to one that says nothing about
+// it: a rate limit, a server error or a dropped connection.
+export function isSessionExpiry(error: unknown): boolean {
+  return describeError(error).kind === "session-expired";
+}
+
 const CHROMIUM_FRAME = /^\s*at\s+(?:(.+?)\s+\()?(.+?):(\d+):(\d+)\)?\s*$/;
 const GECKO_FRAME = /^\s*(.*?)@(.+?):(\d+):(\d+)\s*$/;
 const DEV_SERVER_PREFIX = /^https?:\/\/[^/]+\/(?:@fs\/)?/;
@@ -268,26 +275,34 @@ export function formatErrorReport(
   const lines = [
     context.title,
     "",
+    // i18n-ignore: support ticket report, kept in English for Trenova support
     `Kind: ${description.kind}`,
+    // i18n-ignore: support ticket report, kept in English for Trenova support
     `Occurred: ${context.occurredAt.toISOString()}`,
   ];
 
   if (description.traceId) {
+    // i18n-ignore: support ticket report, kept in English for Trenova support
     lines.push(`Reference: ${description.traceId}`);
   }
   if (description.status) {
+    // i18n-ignore: support ticket report, kept in English for Trenova support
     lines.push(`Status: ${description.status}`);
   }
   if (description.problemType) {
+    // i18n-ignore: support ticket report, kept in English for Trenova support
     lines.push(`Problem: ${description.problemType}`);
   }
   if (description.code) {
+    // i18n-ignore: support ticket report, kept in English for Trenova support
     lines.push(`Code: ${description.code}`);
   }
   if (context.location) {
+    // i18n-ignore: support ticket report, kept in English for Trenova support
     lines.push(`Page: ${context.location}`);
   }
   if (typeof navigator !== "undefined") {
+    // i18n-ignore: support ticket report, kept in English for Trenova support
     lines.push(`Browser: ${navigator.userAgent}`);
   }
 

@@ -6,6 +6,7 @@ import type {
   ExtractionEvalResultStatus,
   ExtractionEvalRunStatus,
 } from "@trenova/graphql/generated/graphql";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 /** How far back production accuracy is read. */
 export const EXTRACTION_WINDOW_DAYS = 30;
@@ -64,17 +65,17 @@ export const OUTCOME: Record<AiCorrectionOutcome, BadgeAttrProps> = {
   },
 };
 
-export const CASE_STATUS_ACTION: Record<ExtractionEvalCaseStatus, string> = {
+export const CASE_STATUS_ACTION: Record<ExtractionEvalCaseStatus, string> = defineLabels({
   Candidate: "Move back to candidates",
   Active: "Activate",
   Retired: "Retire",
-};
+});
 
-export const CASE_STATUS_MOVED: Record<ExtractionEvalCaseStatus, string> = {
+export const CASE_STATUS_MOVED: Record<ExtractionEvalCaseStatus, string> = defineLabels({
   Candidate: "Case moved back to candidates",
   Active: "Case activated",
   Retired: "Case retired",
-};
+});
 
 const NEXT_CASE_STATUSES: Record<ExtractionEvalCaseStatus, ExtractionEvalCaseStatus[]> = {
   Candidate: ["Active", "Retired"],
@@ -95,7 +96,7 @@ export function choicesOf<T extends string>(map: Record<T, BadgeAttrProps>) {
   return (Object.keys(map) as T[]).map((value) => ({ value, label: map[value].text }));
 }
 
-const FIELD_LABEL: Record<string, string> = {
+const FIELD_LABEL: Record<string, string> = defineLabels({
   referenceNumber: "Reference number",
   rate: "Rate",
   weight: "Weight",
@@ -112,7 +113,7 @@ const FIELD_LABEL: Record<string, string> = {
   postalCode: "ZIP",
   date: "Date",
   appointmentRequired: "Appointment",
-};
+});
 
 const STOP_KEY = /^stops\.(pickup|delivery)(?:\[(\d+)\])?\.(\w+)$/;
 
@@ -124,11 +125,11 @@ const STOP_KEY = /^stops\.(pickup|delivery)(?:\[(\d+)\])?\.(\w+)$/;
 export function fieldLabel(key: string, t: TranslateFn): string {
   const stop = STOP_KEY.exec(key);
   if (!stop) {
-    return FIELD_LABEL[key] ? t(FIELD_LABEL[key]) : key;
+    return FIELD_LABEL[key] ? FIELD_LABEL[key] : key;
   }
 
   const [, role, index, field] = stop;
-  const fieldText = FIELD_LABEL[field] ? t(FIELD_LABEL[field]) : field;
+  const fieldText = FIELD_LABEL[field] ? FIELD_LABEL[field] : field;
   const roleText = role === "pickup" ? t("Pickup") : t("Delivery");
   const inSentence = fieldText === fieldText.toUpperCase() ? fieldText : fieldText.toLowerCase();
   if (index === undefined) {

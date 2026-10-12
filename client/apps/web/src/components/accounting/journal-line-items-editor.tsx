@@ -107,7 +107,7 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
                   <MoneyField
                     control={control}
                     name={`lines.${index}.debitAmount`}
-                    aria-label={`Line ${index + 1} debit amount`}
+                    aria-label={t("Line {0} debit amount", index + 1)}
                     className="h-8 text-xs"
                     onValueCommit={clearOpposite(index, "creditAmount")}
                   />
@@ -116,7 +116,7 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
                   <MoneyField
                     control={control}
                     name={`lines.${index}.creditAmount`}
-                    aria-label={`Line ${index + 1} credit amount`}
+                    aria-label={t("Line {0} credit amount", index + 1)}
                     className="h-8 text-xs"
                     onValueCommit={clearOpposite(index, "debitAmount")}
                   />
@@ -126,7 +126,7 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
                     type="button"
                     variant="ghost"
                     size="icon-xxs"
-                    aria-label={`Remove line ${index + 1}`}
+                    aria-label={t("Remove line {0}", index + 1)}
                     onClick={() => handleRemove(index)}
                     disabled={fields.length <= 2}
                     className="opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 disabled:opacity-0"

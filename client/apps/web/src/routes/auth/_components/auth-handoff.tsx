@@ -1,21 +1,25 @@
+import { firstNameOf } from "@/lib/onboarding-copy";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useReducedMotion } from "motion/react";
 import { useEffect } from "react";
+import { AuthCheckMark, AuthProgress, AuthSuccess } from "./auth-success";
 
 const HANDOFF_MS = 1600;
 const HANDOFF_REDUCED_MS = 200;
 
 /**
- * The last beat before the dashboard: the credential is issued, and the bar is the
+ * The last beat before the dashboard: the session is issued, and the bar is the
  * receipt for the manifest fetch that already completed. It holds long enough to read
  * what the session was scoped to, then hands off.
  */
 export function AuthHandoff({
+  userName,
   organizationName,
   roleCount,
   permissionCount,
   onComplete,
 }: {
+  userName?: string;
   organizationName?: string;
   roleCount: number;
   /** Undefined when the manifest carried no per-role counts; the clause is dropped. */
@@ -25,34 +29,25 @@ export function AuthHandoff({
   const t = useT();
 
   const prefersReducedMotion = useReducedMotion();
+  const duration = prefersReducedMotion ? HANDOFF_REDUCED_MS : HANDOFF_MS;
+  const firstName = firstNameOf(userName);
 
   useEffect(() => {
-    const timer = setTimeout(onComplete, prefersReducedMotion ? HANDOFF_REDUCED_MS : HANDOFF_MS);
+    const timer = setTimeout(onComplete, duration);
     return () => clearTimeout(timer);
-  }, [onComplete, prefersReducedMotion]);
+  }, [onComplete, duration]);
 
   return (
-    <div className="flex flex-col items-center gap-4 px-6 py-[38px]" role="status">
-      <span className="auth-ring-pop border-border relative grid size-11 place-items-center rounded-full border">
-        <svg
-          viewBox="0 0 24 24"
-          width="18"
-          height="18"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path className="auth-check-draw" d="M5 12.5l4.5 4.5L19 7" />
-        </svg>
-      </span>
-      <div className="text-center">
-        <div className="text-lg font-[550] tracking-[-0.01em]">
-          {organizationName ? t("Entering {0}", organizationName) : t("Entering Trenova")}
-        </div>
-        <div className="text-subtle-foreground font-table mt-1.5 text-xs">
+    <AuthSuccess
+      mark={<AuthCheckMark />}
+      title={firstName ? t("Welcome back, {0}.", firstName) : t("Welcome back.")}
+    >
+      <p className="text-muted-foreground m-0 flex flex-wrap gap-x-1.5 font-mono text-sm">
+        <span>
+          {organizationName ? t("Opening {0}", organizationName) : t("Opening Trenova")}
+        </span>
+        <span aria-hidden="true">·</span>
+        <span>
           {t(
             "{0, plural, one {# role} other {# roles}}{1}",
             roleCount,
@@ -60,11 +55,9 @@ export function AuthHandoff({
               ? null
               : ` ${t("· {0} {1, plural, one {permission} other {permissions}}", permissionCount.toLocaleString(), permissionCount)}`,
           )}
-        </div>
-      </div>
-      <div className="bg-border-2 h-0.5 w-full overflow-hidden rounded-sm">
-        <i className="auth-progress bg-foreground block h-full" />
-      </div>
-    </div>
+        </span>
+      </p>
+      <AuthProgress durationMs={duration} />
+    </AuthSuccess>
   );
 }

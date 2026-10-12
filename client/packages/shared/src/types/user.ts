@@ -10,9 +10,13 @@ import {
 } from "./helpers";
 import { roleSchema, roleSummaryArraySchema } from "./role";
 import { createLimitOffsetResponse } from "./server";
+import { translate } from "@trenova/shared/i18n/runtime";
 export { apiErrorResponseSchema, type ApiErrorResponse } from "./errors";
 
 export const TimeFormat = z.enum(["12-hour", "24-hour"]);
+
+export const availabilityStatusSchema = z.enum(["available", "focus", "away"]);
+export type AvailabilityStatus = z.infer<typeof availabilityStatusSchema>;
 export type TimeFormatType = z.infer<typeof TimeFormat>;
 
 export const userRoleAssignmentSchema = z.object({
@@ -73,17 +77,26 @@ export const userSchema = z.object({
   currentOrganizationId: optionalStringSchema,
 
   status: statusSchema,
-  name: z.string().min(1, { error: "Name is required" }),
-  username: z.string().min(1, { error: "Username is required" }),
-  emailAddress: z.email().min(1, { error: "Email address is required" }),
+  name: z.string().min(1, { error: () => translate("Name is required") }),
+  username: z.string().min(1, { error: () => translate("Username is required") }),
+  emailAddress: z.email().min(1, { error: () => translate("Email address is required") }),
   profilePicUrl: optionalStringSchema,
   thumbnailUrl: optionalStringSchema,
-  timezone: z.string().min(1, { error: "Timezone is required" }),
+  timezone: z.string().min(1, { error: () => translate("Timezone is required") }),
   timeFormat: TimeFormat.default("12-hour"),
   locale: z.enum(LOCALES).default(DEFAULT_LOCALE),
   isLocked: z.boolean().default(false),
   mustChangePassword: z.boolean().default(true),
   lastLoginAt: timestampSchema.optional(),
+  jobTitle: z.string().catch("").default(""),
+  phoneNumber: z.string().catch("").default(""),
+  avatarStyle: z.string().catch("auto").default("auto"),
+  availabilityStatus: availabilityStatusSchema.catch("available").default("available"),
+  focusUntil: z.number().nullish(),
+  awayBackOn: z.number().nullish(),
+  awayDelegateUserId: z.string().nullish(),
+  awayNote: z.string().catch("").default(""),
+  passwordChangedAt: z.number().nullish(),
 
   assignments: z.array(userRoleAssignmentSchema).nullish(),
   memberships: z.array(userOrganizationMembershipSchema).nullish(),
@@ -97,9 +110,11 @@ export type UserResponse = z.infer<typeof userResponseSchema>;
 
 export const loginRequestSchema = z.object({
   emailAddress: z.email({
-    error: "Please enter a valid email address",
+    error: () => translate("Please enter a valid email address"),
   }),
-  password: z.string({ error: "Password is required" }).min(1, "Password is required"),
+  password: z
+    .string({ error: () => translate("Password is required") })
+    .min(1, { error: () => translate("Password is required") }),
   organizationSlug: z.string().optional(),
 });
 
@@ -120,7 +135,7 @@ export const loginResponseSchema = z.object({
 export type LoginResponse = z.infer<typeof loginResponseSchema>;
 
 export const updateMySettingsSchema = z.object({
-  timezone: z.string().min(1, { error: "Timezone is required" }),
+  timezone: z.string().min(1, { error: () => translate("Timezone is required") }),
   timeFormat: TimeFormat,
   locale: z.enum(LOCALES),
 });
@@ -128,9 +143,9 @@ export const updateMySettingsSchema = z.object({
 export type UpdateMySettings = z.infer<typeof updateMySettingsSchema>;
 
 export const changeMyPasswordSchema = z.object({
-  currentPassword: z.string().min(1, { error: "Current password is required" }),
-  newPassword: z.string().min(1, { error: "New password is required" }),
-  confirmPassword: z.string().min(1, { error: "Confirm password is required" }),
+  currentPassword: z.string().min(1, { error: () => translate("Current password is required") }),
+  newPassword: z.string().min(1, { error: () => translate("New password is required") }),
+  confirmPassword: z.string().min(1, { error: () => translate("Confirm password is required") }),
 });
 
 export type ChangeMyPassword = z.infer<typeof changeMyPasswordSchema>;
@@ -151,3 +166,74 @@ export type BulkUpdateUserStatusRequest = z.infer<typeof bulkUpdateUserStatusReq
 export const bulkUpdateUserStatusResponseSchema = z.array(userSchema);
 
 export type BulkUpdateUserStatusResponse = z.infer<typeof bulkUpdateUserStatusResponseSchema>;
+
+export const updateMyProfileSchema = z.object({
+  jobTitle: z.string().max(100).optional(),
+  phoneNumber: z.string().max(30).optional(),
+  avatarStyle: z.string().optional(),
+});
+
+export type UpdateMyProfile = z.infer<typeof updateMyProfileSchema>;
+
+export const updateMyAvailabilitySchema = z.object({
+  status: availabilityStatusSchema,
+  focusUntil: z.number().nullable().optional(),
+  backOn: z.number().nullable().optional(),
+  delegateUserId: z.string().nullable().optional(),
+  awayNote: z.string().max(280).optional(),
+});
+
+export type UpdateMyAvailability = z.infer<typeof updateMyAvailabilitySchema>;
+
+export const deviceKindSchema = z.enum(["desktop", "mobile", "tablet", "unknown"]).catch("unknown");
+export type DeviceKind = z.infer<typeof deviceKindSchema>;
+
+export const sessionSummarySchema = z.object({
+  id: z.string(),
+  label: z.string().catch(""),
+  browser: z.string().catch(""),
+  os: z.string().catch(""),
+  device: deviceKindSchema,
+  ipAddress: z.string().catch(""),
+  authProvider: z.string().catch(""),
+  createdAt: z.number(),
+  lastAccessedAt: z.number(),
+  expiresAt: z.number(),
+  current: z.boolean(),
+});
+
+export type SessionSummary = z.infer<typeof sessionSummarySchema>;
+
+export const sessionSummariesSchema = z.array(sessionSummarySchema);
+
+export const revokeSessionsResponseSchema = z.object({ revoked: z.number() });
+
+export const signInSummarySchema = z.object({
+  id: z.string(),
+  provider: z.string(),
+  outcome: z.enum(["success", "challenge", "denied", "failed"]).catch("failed"),
+  mfaState: z.string().catch(""),
+  errorCode: z.string().catch(""),
+  ipAddress: z.string().catch(""),
+  label: z.string().catch(""),
+  device: deviceKindSchema,
+  occurredAt: z.number(),
+});
+
+export type SignInSummary = z.infer<typeof signInSummarySchema>;
+
+export const signInSummariesSchema = z.array(signInSummarySchema);
+
+export const avatarSummarySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  username: z.string(),
+  avatarStyle: z.string().catch("auto"),
+  availability: availabilityStatusSchema.catch("available"),
+  awayBackOn: z.number().nullish(),
+  awayNote: z.string().catch(""),
+});
+
+export type AvatarSummary = z.infer<typeof avatarSummarySchema>;
+
+export const avatarSummariesSchema = z.array(avatarSummarySchema);

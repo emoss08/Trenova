@@ -1,0 +1,266 @@
+package reporting
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/reportcatalog"
+	"github.com/emoss08/trenova/shared/pulid"
+	"go.uber.org/zap"
+)
+
+type SaveDashboardRequest struct {
+	Request
+
+	DashboardID pulid.ID
+	Name        string
+	Description string
+	Category    string
+	Tags        []string
+	Visibility  report.Visibility
+	Layout      *report.DashboardLayout
+	Version     int64
+}
+
+type GetDashboardRequest struct {
+	Request
+
+	DashboardID pulid.ID
+}
+
+type ListDashboardsRequest struct {
+	Request
+
+	Limit  int
+	Offset int
+}
+
+func (s *Service) CreateDashboard(
+	ctx context.Context,
+	req *SaveDashboardRequest,
+) (*report.Dashboard, error) {
+	entity := NewDashboard(req)
+
+	multiErr := errortypes.NewMultiError()
+	entity.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+	if err := s.validateTileTargets(ctx, req.TenantInfo, entity.Layout); err != nil {
+		return nil, err
+	}
+
+	created, err := s.dashboardRepo.Create(ctx, entity)
+	if err != nil {
+		s.l.Error("failed to create dashboard", zap.Error(err))
+		return nil, err
+	}
+
+	return created, nil
+}
+
+func (s *Service) UpdateDashboard(
+	ctx context.Context,
+	req *SaveDashboardRequest,
+) (*report.Dashboard, error) {
+	existing, err := s.dashboardRepo.GetByID(ctx, &reportports.GetReportDashboardRequest{
+		TenantInfo:  req.TenantInfo,
+		DashboardID: req.DashboardID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if existing.OwnerID != req.TenantInfo.UserID {
+		return nil, errortypes.NewAuthorizationError(
+			"Only the dashboard owner can modify this dashboard",
+		)
+	}
+
+	ApplyDashboardSave(existing, req)
+
+	multiErr := errortypes.NewMultiError()
+	existing.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+	if err = s.validateTileTargets(ctx, req.TenantInfo, existing.Layout); err != nil {
+		return nil, err
+	}
+
+	updated, err := s.dashboardRepo.Update(ctx, existing)
+	if err != nil {
+		s.l.Error("failed to update dashboard", zap.Error(err))
+		return nil, err
+	}
+
+	return updated, nil
+}
+
+func (s *Service) GetDashboard(
+	ctx context.Context,
+	req *GetDashboardRequest,
+) (*report.Dashboard, error) {
+	entity, err := s.dashboardRepo.GetByID(ctx, &reportports.GetReportDashboardRequest{
+		TenantInfo:  req.TenantInfo,
+		DashboardID: req.DashboardID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if entity.Visibility != report.VisibilityShared &&
+		entity.OwnerID != req.TenantInfo.UserID {
+		return nil, errortypes.NewNotFoundError("Dashboard not found")
+	}
+
+	return entity, nil
+}
+
+func (s *Service) ListDashboards(
+	ctx context.Context,
+	req *ListDashboardsRequest,
+) ([]*report.Dashboard, error) {
+	return s.dashboardRepo.List(ctx, &reportports.ListReportDashboardsRequest{
+		TenantInfo: req.TenantInfo,
+		ViewerID:   req.TenantInfo.UserID,
+		Limit:      req.Limit,
+		Offset:     req.Offset,
+	})
+}
+
+func (s *Service) DeleteDashboard(ctx context.Context, req *GetDashboardRequest) error {
+	if _, err := s.PlanDeleteDashboard(ctx, req); err != nil {
+		return err
+	}
+
+	return s.dashboardRepo.Delete(ctx, &reportports.GetReportDashboardRequest{
+		TenantInfo:  req.TenantInfo,
+		DashboardID: req.DashboardID,
+	})
+}
+
+// UnavailableTile is a tile whose report the caller cannot open.
+type UnavailableTile struct {
+	Index int
+	// Canned is true when the tile named a built-in report by key rather
+	// than a saved one by id.
+	Canned bool
+}
+
+// UnavailableTileTargets names the tiles that point at a report the caller
+// cannot open: a saved report that does not exist or is not theirs to read,
+// or a built-in key that names nothing. It is what a dashboard save checks,
+// exposed so an agent's proposal can be refused before anybody approves it.
+func (s *Service) UnavailableTileTargets(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	tiles []report.DashboardTile,
+) []UnavailableTile {
+	var missing []UnavailableTile
+	for i := range tiles {
+		tile := &tiles[i]
+		if !tile.Kind.NeedsReport() {
+			continue
+		}
+
+		if tile.CannedKey != "" {
+			if _, ok := s.canned.Get(tile.CannedKey); !ok {
+				missing = append(missing, UnavailableTile{Index: i, Canned: true})
+			}
+			continue
+		}
+
+		_, err := s.defRepo.GetByID(ctx, &reportports.GetReportDefinitionRequest{
+			TenantInfo:   tenant,
+			DefinitionID: tile.DefinitionID,
+		})
+		if err != nil {
+			missing = append(missing, UnavailableTile{Index: i})
+		}
+	}
+
+	return missing
+}
+
+// validateTileTargets fails a save that points at a report the author cannot
+// open, so a broken tile is caught at edit time instead of at view time.
+func (s *Service) validateTileTargets(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	layout *report.DashboardLayout,
+) error {
+	multiErr := errortypes.NewMultiError()
+
+	for _, missing := range s.UnavailableTileTargets(ctx, tenant, layout.Tiles) {
+		fieldPath := fmt.Sprintf("layout.tiles[%d]", missing.Index)
+		if missing.Canned {
+			multiErr.Add(fieldPath+".cannedKey", errortypes.ErrInvalid,
+				"Unknown canned report \"{0}\"", layout.Tiles[missing.Index].CannedKey)
+			continue
+		}
+		multiErr.Add(fieldPath+".definitionId", errortypes.ErrInvalid,
+			"This report is not available")
+	}
+
+	validateDashboardFilters(multiErr, layout.Filters)
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+	return nil
+}
+
+// validateDashboardFilters resolves each filter against the catalog so a
+// dashboard cannot be saved pointing at a field that does not exist or cannot
+// be filtered — the tiles would silently ignore it otherwise.
+func validateDashboardFilters(
+	multiErr *errortypes.MultiError,
+	filters []report.DashboardFilter,
+) {
+	for i := range filters {
+		filter := &filters[i]
+		fieldPath := fmt.Sprintf("layout.filters[%d]", i)
+
+		entity, ok := reportcatalog.Default.Entity(filter.Entity)
+		if !ok {
+			multiErr.Add(fieldPath+".entity", errortypes.ErrInvalid,
+				"Unknown entity \"{0}\"", filter.Entity)
+			continue
+		}
+
+		_, path, err := reportcatalog.Default.ResolvePath(entity.Key, filter.Ref.Path)
+		if err != nil {
+			multiErr.Add(fieldPath+".ref", errortypes.ErrInvalid, err.Error())
+			continue
+		}
+		if path.CrossesToMany() {
+			multiErr.Add(fieldPath+".ref", errortypes.ErrInvalid,
+				"Dashboard filters cannot cross a to-many relationship")
+			continue
+		}
+
+		field, ok := path.Terminal(entity).Field(filter.Ref.Field)
+		if !ok {
+			multiErr.Add(fieldPath+".ref", errortypes.ErrInvalid,
+				"Unknown field \"{0}\"", filter.Ref.String())
+			continue
+		}
+		if !field.Filterable {
+			multiErr.Add(fieldPath+".ref", errortypes.ErrInvalid,
+				"Field \"{0}\" is not filterable", field.Label)
+		}
+	}
+}
+
+func defaultLayout(layout *report.DashboardLayout) *report.DashboardLayout {
+	if layout == nil {
+		return &report.DashboardLayout{Tiles: []report.DashboardTile{}}
+	}
+	if layout.Tiles == nil {
+		layout.Tiles = []report.DashboardTile{}
+	}
+	return layout
+}

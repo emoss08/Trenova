@@ -1,0 +1,157 @@
+package toolschema
+
+import (
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func coercedSchema() map[string]any {
+	return map[string]any{
+		KeyType: TypeObject,
+		KeyProperties: map[string]any{
+			"limit":  map[string]any{KeyType: TypeInteger},
+			"ids":    map[string]any{KeyType: TypeArray, KeyItems: map[string]any{KeyType: TypeString}},
+			"shared": map[string]any{KeyType: TypeBoolean},
+			"status": map[string]any{KeyType: TypeString, KeyEnum: []string{"Late", "OnTime"}},
+			"note":   map[string]any{KeyType: TypeString},
+			"day":    map[string]any{KeyType: TypeString, KeyFormat: FormatDate},
+			"pickup": map[string]any{KeyType: TypeString, KeyFormat: FormatLocalDateTime},
+		},
+		KeyRequired: []string{"limit"},
+	}
+}
+
+// Every reading that is certain is made, each told back by path, and the
+// result fits the schema it was read against.
+func TestCoerce_ReadsValuesTheWayTheSchemaDeclaresThem(t *testing.T) {
+	t.Parallel()
+
+	sent := map[string]any{
+		"limit":  "30",
+		"ids":    "shp_1",
+		"shared": "yes",
+		"status": "late",
+		"note":   nil,
+		"day":    "2026-10-01T00:00:00Z",
+		"pickup": "2026-10-01 08:00",
+	}
+
+	got, coercions := Coerce(coercedSchema(), sent)
+
+	assert.Equal(t, map[string]any{
+		"limit":  float64(30),
+		"ids":    []any{"shp_1"},
+		"shared": true,
+		"status": "Late",
+		"day":    "2026-10-01",
+		"pickup": "2026-10-01T08:00",
+	}, got)
+	assert.Len(t, coercions, 6)
+	require.NoError(t, Validate(coercedSchema(), got))
+	assert.Equal(t, "30", sent["limit"], "what was sent is never changed")
+}
+
+// What is not certain is left for the schema to refuse: a word for a
+// number, a value outside the enum, a number for a date.
+func TestCoerce_LeavesUncertainValuesAlone(t *testing.T) {
+	t.Parallel()
+
+	sent := map[string]any{"limit": "thirty", "status": "Delayed"}
+
+	got, coercions := Coerce(coercedSchema(), sent)
+
+	assert.Equal(t, sent, got)
+	assert.Empty(t, coercions)
+
+	dated, _ := Coerce(coercedSchema(), map[string]any{"limit": 1, "day": float64(1790812800)})
+	errs := fieldErrors(t, Validate(coercedSchema(), dated))
+	assert.Contains(t, errs["day"], "is a Unix time")
+}
+
+func TestNameShape(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, NameShape("shipmentId"), NameShape("shipment_id"))
+	assert.Equal(t, "ab.c", JoinPath("ab", "c"))
+	assert.Equal(t, "c", JoinPath("", "c"))
+}
+
+/*
+A person asks what delivered today and a model passes the word on. A few
+reads parsed "today" themselves and the rest refused it; the runtime now
+reads today, yesterday and tomorrow once, as days in the organization's
+timezone, for every day parameter. Without a day to read them by, the word
+is left for the format to refuse.
+*/
+func TestCoerce_ReadsRelativeDaysInTheOrganizationsTimezone(t *testing.T) {
+	t.Parallel()
+
+	schema := map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"asOf":  map[string]any{"type": "string", "format": FormatDate},
+			"from":  map[string]any{"type": "string", "format": FormatDate},
+			"until": map[string]any{"type": "string", "format": FormatDate},
+		},
+	}
+	chicago, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+	lateEvening := time.Date(2026, 10, 9, 23, 30, 0, 0, chicago)
+
+	got, notes := Coerce(schema, map[string]any{
+		"asOf": "Today", "from": "yesterday", "until": "tomorrow",
+	}, WithToday(lateEvening))
+
+	assert.Equal(t, map[string]any{
+		"asOf": "2026-10-09", "from": "2026-10-08", "until": "2026-10-10",
+	}, got, "the organization's day, not UTC's, which is already the 10th")
+	assert.Len(t, notes, 3)
+
+	unread, _ := Coerce(schema, map[string]any{"asOf": "today"})
+	assert.Equal(t, "today", unread["asOf"])
+}
+
+func TestCoerce_ReadsJSONTextAsTheListOrObjectItHolds(t *testing.T) {
+	t.Parallel()
+
+	schema := map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"filters": map[string]any{
+				"type": "array",
+				"items": map[string]any{
+					"type": "object",
+					"properties": map[string]any{
+						"field": map[string]any{"type": "string"},
+						"value": map[string]any{"type": "string"},
+					},
+				},
+			},
+			"window": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"days": map[string]any{"type": "integer"},
+				},
+			},
+		},
+	}
+
+	got, coercions := Coerce(schema, map[string]any{
+		"filters": ` [{"field": "status", "value": "Available"}]`,
+		"window":  `{"days": "3"}`,
+	})
+
+	assert.Equal(t, map[string]any{
+		"filters": []any{map[string]any{"field": "status", "value": "Available"}},
+		"window":  map[string]any{"days": float64(3)},
+	}, got)
+	assert.Len(t, coercions, 3)
+	require.NoError(t, Validate(schema, got))
+
+	left, none := Coerce(schema, map[string]any{"filters": "[not json"})
+	assert.Equal(t, []any{"[not json"}, left["filters"])
+	assert.Len(t, none, 1)
+}

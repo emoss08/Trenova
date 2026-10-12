@@ -98,3 +98,26 @@ export function dailyUsageShare(item: AgentExtensionCatalogItem): number {
   }
   return Math.min(1, item.usage.requestsToday / item.dailyRequestLimit);
 }
+
+type ExtensionTools = readonly { name: string }[];
+
+/** Whether an agent holds an extension: every tool the extension adds is among its own. */
+export function holdsExtension(toolNames: readonly string[], tools: ExtensionTools): boolean {
+  return tools.length > 0 && tools.every((tool) => toolNames.includes(tool.name));
+}
+
+/**
+ * An agent's tools with an extension given or taken away: giving adds the tools it lacks
+ * after its own, taking removes only the extension's.
+ */
+export function withExtensionTools(
+  toolNames: readonly string[],
+  tools: ExtensionTools,
+  give: boolean,
+): string[] {
+  const names = new Set(tools.map((tool) => tool.name));
+  if (!give) {
+    return toolNames.filter((name) => !names.has(name));
+  }
+  return [...toolNames, ...tools.map((tool) => tool.name).filter((name) => !toolNames.includes(name))];
+}

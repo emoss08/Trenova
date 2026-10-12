@@ -45,3 +45,11 @@ func TestAbs(t *testing.T) {
 		"the smallest int64 has no positive counterpart and is returned unchanged",
 	)
 }
+
+func TestFirstPositive(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, 0, intutils.FirstPositive[int]())
+	assert.Equal(t, 0, intutils.FirstPositive(0, -3))
+	assert.Equal(t, 8192, intutils.FirstPositive(0, -1, 8192, 4096))
+}

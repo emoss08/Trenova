@@ -9,7 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/apikey"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -241,7 +241,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.APIKeyEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNApiKey2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋapikeyᚐKey),
+				Marshal: gqlexec.Marshal(marshalNApiKey2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋapikeyᚐKey),
 			},
 			{
 				Name:     "cursor",
@@ -280,7 +280,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").APIKey(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOApiKey2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋapikeyᚐKey),
+				Marshal: gqlexec.Marshal(marshalOApiKey2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋapikeyᚐKey),
 			},
 		}},
 	},
@@ -347,7 +347,7 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNApiKey2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋapikeyᚐKey(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *apikey.Key) graphql.Marshaler {
+func marshalNApiKey2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋapikeyᚐKey(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *apikey.Key) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -411,7 +411,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOApiKey2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋapikeyᚐKey(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *apikey.Key) graphql.Marshaler {
+func marshalOApiKey2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋapikeyᚐKey(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *apikey.Key) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

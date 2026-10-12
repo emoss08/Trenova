@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/services/telematicsservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/samsara/webhooks"
 	"github.com/gin-gonic/gin"

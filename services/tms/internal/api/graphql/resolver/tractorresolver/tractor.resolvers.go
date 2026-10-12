@@ -12,10 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/mappers"
-	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -74,7 +74,7 @@ func (r *MutationResolver) PatchTractor(ctx context.Context, id string, input gq
 		return nil, err
 	}
 
-	existing, err := r.TractorService.Get(ctx, repositories.GetTractorByIDRequest{
+	existing, err := r.TractorService.Get(ctx, tractorports.GetTractorByIDRequest{
 		ID:         tractorID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
@@ -107,7 +107,7 @@ func (r *MutationResolver) BulkUpdateTractorStatus(ctx context.Context, input gq
 
 	entities, err := r.TractorService.BulkUpdateStatus(
 		ctx,
-		&repositories.BulkUpdateTractorStatusRequest{
+		&tractorports.BulkUpdateTractorStatusRequest{
 			TenantInfo: base.TenantInfo(authCtx),
 			TractorIDs: tractorIDs,
 			Status:     input.Status,
@@ -137,7 +137,7 @@ func (r *MutationResolver) LocateTractor(ctx context.Context, input gqlmodel.Loc
 
 	result, err := r.TractorService.Locate(
 		ctx,
-		&repositories.LocateTractorRequest{
+		&tractorports.LocateTractorRequest{
 			TenantInfo:    base.TenantInfo(authCtx),
 			TractorID:     tractorID,
 			NewLocationID: newLocationID,
@@ -185,7 +185,7 @@ func (r *QueryResolver) Tractors(ctx context.Context, input gqlmodel.DataTableCo
 		&includeFleet,
 		&includeWorker,
 	)
-	result, err := r.TractorService.List(ctx, &repositories.ListTractorsRequest{
+	result, err := r.TractorService.List(ctx, &tractorports.ListTractorsRequest{
 		Filter:                  connection.Filter,
 		Cursor:                  connection.Cursor,
 		TractorRelationIncludes: includes,
@@ -209,7 +209,7 @@ func (r *QueryResolver) Tractor(ctx context.Context, id string) (*tractor.Tracto
 		return nil, err
 	}
 
-	return r.TractorService.Get(ctx, repositories.GetTractorByIDRequest{
+	return r.TractorService.Get(ctx, tractorports.GetTractorByIDRequest{
 		ID:         tractorID,
 		TenantInfo: base.TenantInfo(authCtx),
 		TractorRelationIncludes: tractorRelationIncludes(

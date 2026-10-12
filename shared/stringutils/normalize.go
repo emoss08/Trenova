@@ -15,6 +15,17 @@ func NormalizeIdentifier(value string) string {
 	return string(buf)
 }
 
+func CountNonSpace(value string) int {
+	count := 0
+	for _, r := range value {
+		if !unicode.IsSpace(r) {
+			count++
+		}
+	}
+
+	return count
+}
+
 func TruncateRunes(value string, maxLength int) string {
 	if maxLength <= 0 {
 		return ""

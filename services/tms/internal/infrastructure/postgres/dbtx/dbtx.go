@@ -3,7 +3,7 @@ package dbtx
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/uptrace/bun"
 )
 
@@ -13,7 +13,7 @@ type scopedTransactor interface {
 
 func Read[T any](
 	ctx context.Context,
-	conn ports.DBConnection,
+	conn kernelports.DBConnection,
 	fn func(context.Context) (T, error),
 ) (T, error) {
 	return run(ctx, conn, true, fn)
@@ -21,23 +21,31 @@ func Read[T any](
 
 func Write[T any](
 	ctx context.Context,
-	conn ports.DBConnection,
+	conn kernelports.DBConnection,
 	fn func(context.Context) (T, error),
 ) (T, error) {
 	return run(ctx, conn, false, fn)
 }
 
-func ReadErr(ctx context.Context, conn ports.DBConnection, fn func(context.Context) error) error {
+func ReadErr(
+	ctx context.Context,
+	conn kernelports.DBConnection,
+	fn func(context.Context) error,
+) error {
 	return runErr(ctx, conn, true, fn)
 }
 
-func WriteErr(ctx context.Context, conn ports.DBConnection, fn func(context.Context) error) error {
+func WriteErr(
+	ctx context.Context,
+	conn kernelports.DBConnection,
+	fn func(context.Context) error,
+) error {
 	return runErr(ctx, conn, false, fn)
 }
 
 func Read2[A, B any](
 	ctx context.Context,
-	conn ports.DBConnection,
+	conn kernelports.DBConnection,
 	fn func(context.Context) (A, B, error),
 ) (first A, second B, err error) {
 	return run2(ctx, conn, true, fn)
@@ -45,20 +53,20 @@ func Read2[A, B any](
 
 func Write2[A, B any](
 	ctx context.Context,
-	conn ports.DBConnection,
+	conn kernelports.DBConnection,
 	fn func(context.Context) (A, B, error),
 ) (first A, second B, err error) {
 	return run2(ctx, conn, false, fn)
 }
 
-func Required(conn ports.DBConnection) bool {
+func Required(conn kernelports.DBConnection) bool {
 	scoped, ok := conn.(scopedTransactor)
 	return ok && scoped.ScopedTransactions()
 }
 
 func run[T any](
 	ctx context.Context,
-	conn ports.DBConnection,
+	conn kernelports.DBConnection,
 	readOnly bool,
 	fn func(context.Context) (T, error),
 ) (T, error) {
@@ -69,7 +77,7 @@ func run[T any](
 	var out T
 	err := conn.WithTx(
 		ctx,
-		ports.TxOptions{ReadOnly: readOnly},
+		kernelports.TxOptions{ReadOnly: readOnly},
 		func(ctx context.Context, _ bun.Tx) error {
 			var err error
 			out, err = fn(ctx)
@@ -82,7 +90,7 @@ func run[T any](
 
 func run2[A, B any](
 	ctx context.Context,
-	conn ports.DBConnection,
+	conn kernelports.DBConnection,
 	readOnly bool,
 	fn func(context.Context) (A, B, error),
 ) (first A, second B, err error) {
@@ -92,7 +100,7 @@ func run2[A, B any](
 
 	err = conn.WithTx(
 		ctx,
-		ports.TxOptions{ReadOnly: readOnly},
+		kernelports.TxOptions{ReadOnly: readOnly},
 		func(ctx context.Context, _ bun.Tx) error {
 			var fnErr error
 			first, second, fnErr = fn(ctx)
@@ -105,7 +113,7 @@ func run2[A, B any](
 
 func runErr(
 	ctx context.Context,
-	conn ports.DBConnection,
+	conn kernelports.DBConnection,
 	readOnly bool,
 	fn func(context.Context) error,
 ) error {
@@ -115,20 +123,24 @@ func runErr(
 
 	return conn.WithTx(
 		ctx,
-		ports.TxOptions{ReadOnly: readOnly},
+		kernelports.TxOptions{ReadOnly: readOnly},
 		func(ctx context.Context, _ bun.Tx) error {
 			return fn(ctx)
 		},
 	)
 }
 
-func Savepoint(ctx context.Context, conn ports.DBConnection, fn func(context.Context) error) error {
+func Savepoint(
+	ctx context.Context,
+	conn kernelports.DBConnection,
+	fn func(context.Context) error,
+) error {
 	tx, ok := conn.DBForContext(ctx).(bun.Tx)
 	if !ok {
 		return fn(ctx)
 	}
 
-	return tx.RunInTx(ctx, nil, func(ctx context.Context, _ bun.Tx) error {
+	return tx.RunInTx(ctx, nil, func(context.Context, bun.Tx) error {
 		return fn(ctx)
 	})
 }

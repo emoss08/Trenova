@@ -6,9 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/agentquality"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,14 +18,14 @@ import (
 
 func qualityWindow(window *int) int {
 	if window == nil {
-		return services.DefaultAgentQualityWindowDays
+		return agentqualityports.DefaultAgentQualityWindowDays
 	}
 
 	return *window
 }
 
 func agentQualityAgentsToModel(
-	page *services.AgentQualityAgentPage,
+	page *agentqualityports.AgentQualityAgentPage,
 ) *gqlmodel.AgentQualityAgentConnection {
 	out := &gqlmodel.AgentQualityAgentConnection{
 		Edges:      make([]*gqlmodel.AgentQualityAgentEdge, 0, len(page.Edges)),
@@ -45,7 +45,7 @@ func agentQualityAgentsToModel(
 }
 
 func agentWorstRatedToModel(
-	page *services.AgentWorstRatedPage,
+	page *agentqualityports.AgentWorstRatedPage,
 ) *gqlmodel.AgentWorstRatedAnswerConnection {
 	out := &gqlmodel.AgentWorstRatedAnswerConnection{
 		Edges:      make([]*gqlmodel.AgentWorstRatedAnswerEdge, 0, len(page.Edges)),
@@ -65,7 +65,7 @@ func agentWorstRatedToModel(
 }
 
 func agentSuiteRunsToModel(
-	page *services.AgentSuiteRunConnection,
+	page *agentqualityports.AgentSuiteRunConnection,
 ) *gqlmodel.AgentSuiteRunConnection {
 	out := &gqlmodel.AgentSuiteRunConnection{
 		Edges:      make([]*gqlmodel.AgentSuiteRunEdge, 0, len(page.Edges)),
@@ -85,7 +85,7 @@ func agentSuiteRunsToModel(
 }
 
 func agentSuiteRunCasesToModel(
-	page *services.AgentSuiteRunCasePage,
+	page *agentqualityports.AgentSuiteRunCasePage,
 ) *gqlmodel.AgentSuiteRunCaseConnection {
 	out := &gqlmodel.AgentSuiteRunCaseConnection{
 		Edges:      make([]*gqlmodel.AgentSuiteRunCaseEdge, 0, len(page.Edges)),
@@ -227,12 +227,11 @@ func qualityControlFromInput(
 }
 
 func suiteRunAgentName(ctx context.Context, agentID pulid.ID) (string, error) {
-	l, ok := loaders.FromContext(ctx)
-	if !ok || agentID.IsNil() {
+	if !loaders.Available(ctx) || agentID.IsNil() {
 		return "", nil
 	}
 
-	definition, err := l.AgentDefinitionByID.Load(ctx, agentID.String())
+	definition, err := loaders.AgentDefinitionByID(ctx, agentID.String())
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return "", nil

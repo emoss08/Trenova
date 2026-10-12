@@ -7,10 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,13 +25,13 @@ const (
 type Params struct {
 	fx.In
 
-	Service              services.ShipmentEventService
+	Service              shipmenteventports.ShipmentEventService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service services.ShipmentEventService
+	service shipmenteventports.ShipmentEventService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -72,7 +71,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 func (h *Handler) list(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := &repositories.ListShipmentEventsRequest{
+	req := &shipmenteventports.ListShipmentEventsRequest{
 		TenantInfo: pagination.FromAuthAsUser(authCtx),
 		Limit:      parseLimit(c.Query("limit")),
 	}

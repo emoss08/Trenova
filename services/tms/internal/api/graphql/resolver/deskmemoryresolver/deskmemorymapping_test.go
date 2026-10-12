@@ -3,8 +3,8 @@ package deskmemoryresolver
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,7 +15,7 @@ func TestDeskMemoryToModel_CarriesWhyAndWhatItReplaced(t *testing.T) {
 
 	old := pulid.MustNew("amem_")
 	newer := pulid.MustNew("amem_")
-	model := deskMemoryToModel(&services.DeskMemory{
+	model := deskMemoryToModel(&agentports.DeskMemory{
 		Memory: &agent.Memory{
 			ID:      pulid.MustNew("amem_"),
 			Kind:    agent.MemoryKindProcedure,
@@ -27,12 +27,12 @@ func TestDeskMemoryToModel_CarriesWhyAndWhatItReplaced(t *testing.T) {
 				Quotes: []string{"Billing needs these too"},
 			},
 		},
-		Replaces: &services.DeskMemoryLink{
+		Replaces: &agentports.DeskMemoryLink{
 			ID:      old,
 			Content: "Copy dispatch on rate confirmations.",
 			Status:  agent.MemoryStatusRetired,
 		},
-		ReplacedBy: &services.DeskMemoryLink{
+		ReplacedBy: &agentports.DeskMemoryLink{
 			ID:      newer,
 			Content: "Copy dispatch, billing and the rep.",
 			Status:  agent.MemoryStatusActive,
@@ -51,7 +51,7 @@ func TestDeskMemoryToModel_CarriesWhyAndWhatItReplaced(t *testing.T) {
 func TestDeskMemoryToModel_AMemoryAPersonWroteHasNoWhy(t *testing.T) {
 	t.Parallel()
 
-	model := deskMemoryToModel(&services.DeskMemory{
+	model := deskMemoryToModel(&agentports.DeskMemory{
 		Memory: &agent.Memory{
 			ID:      pulid.MustNew("amem_"),
 			Source:  agent.MemorySourceUser,

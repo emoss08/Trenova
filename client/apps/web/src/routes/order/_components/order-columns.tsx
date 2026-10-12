@@ -52,8 +52,11 @@ export function getColumns(t: TranslateFn): ColumnDef<OrderRow>[] {
       },
       meta: {
         apiField: "customerId",
-        filterable: false,
+        label: t("Customer"),
+        filterable: true,
         sortable: false,
+        filterType: "record",
+        filterRecord: "CUSTOMER",
       },
     },
     {
@@ -98,6 +101,7 @@ export function getColumns(t: TranslateFn): ColumnDef<OrderRow>[] {
         sortable: true,
         filterType: "text",
         defaultFilterOperator: "eq",
+        aggregate: { format: "money", label: t("Total") },
       },
     },
     {

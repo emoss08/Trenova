@@ -9,6 +9,7 @@ import type {
   DataTableGroupKey,
   DataTableGrouping,
 } from "@trenova/shared/types/data-table";
+import { seedDataTableQueries } from "@/test/data-table-queries";
 
 type TestRow = { id: string; name: string; stage: number };
 
@@ -19,7 +20,7 @@ const testGraphQLConfig = {
   operationName: "TestTable",
   connectionKey: "tests",
 };
-const { useDataTableQueryMock } = vi.hoisted(() => {
+const { defaultQueryResult, useDataTableQueryMock } = vi.hoisted(() => {
   const defaultQueryResult = {
     data: {
       results: [
@@ -54,19 +55,14 @@ vi.mock("@/hooks/use-permission", () => ({
   }),
 }));
 
-vi.mock("@/hooks/data-table/use-data-table-query", () => ({
+vi.mock("@/hooks/data-table/use-data-table-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/hooks/data-table/use-data-table-query")>()),
   useDataTableQuery: useDataTableQueryMock,
 }));
 
-vi.mock("@/lib/queries", () => ({
+vi.mock("@/lib/queries", async () => ({
   queries: {
-    tableConfiguration: {
-      default: () => ({ queryKey: ["tableConfig-default"], queryFn: () => null }),
-      all: () => ({
-        queryKey: ["tableConfig-all"],
-        queryFn: () => ({ results: [], count: 0 }),
-      }),
-    },
+    ...(await import("@/test/data-table-queries")).dataTableQueryMocks,
   },
 }));
 
@@ -100,16 +96,19 @@ beforeAll(async () => {
 }, 60_000);
 
 function createQueryClient() {
-  return new QueryClient({
+  return seedDataTableQueries(new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
-  });
+  }));
 }
 
-function renderDataTable(props?: Partial<React.ComponentProps<typeof DataTable<TestRow>>>) {
+function renderDataTable(
+  props?: Partial<React.ComponentProps<typeof DataTable<TestRow>>>,
+  searchParams?: string,
+) {
   const queryClient = createQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
-      <NuqsTestingAdapter hasMemory>
+      <NuqsTestingAdapter hasMemory searchParams={searchParams}>
         <DataTable<TestRow>
           columns={testColumns}
           name="test-table"
@@ -127,14 +126,20 @@ function lastQueryOptions() {
   return calls[calls.length - 1][3] as {
     sort: { field: string; direction: string }[];
     fieldFilters: { field: string; operator: string; value: unknown }[];
+    filterGroups: { filters: { field: string; operator: string; value: unknown }[] }[];
   };
+}
+
+function lastPagination() {
+  const calls = useDataTableQueryMock.mock.calls as unknown[][];
+  return calls[calls.length - 1][2] as { pageIndex: number; pageSize: number };
 }
 
 function grouping(overrides: Partial<DataTableGrouping<TestRow>> = {}): DataTableGrouping<TestRow> {
   return {
     field: "stage",
     groups: [
-      { key: 1, label: "Late", count: 12, aggregate: "$9,400" },
+      { key: 1, label: "Late", count: 12, aggregate: "$9,400", aggregateLabel: "Revenue" },
       { key: 2, label: "Needs coverage", count: 4 },
       { key: 3, label: "Moving", count: 30 },
     ],
@@ -168,6 +173,50 @@ describe("DataTable grouping", () => {
     expect(document.querySelector('tr[data-group-key="2"]')).toBeNull();
   });
 
+  it("floats a stuck group header over pinned cells and under the column header, with the scrollbar beside the rows", () => {
+    renderDataTable({
+      grouping: grouping(),
+      initialColumnPinning: { left: ["name"], right: [] },
+    });
+
+    const zOf = (element: Element | null | undefined) =>
+      Number(/(?:^|\s)z-(\d+)(?:\s|$)/.exec(element?.className ?? "")?.[1] ?? 0);
+    const groupHeader = document.querySelector('tr[data-group-key="1"] > td');
+    const pinnedCell = screen.getByText("Alice").closest("td");
+    const columnHeader = document.querySelector("thead");
+    const container = document.querySelector('[data-slot="table-container"]');
+
+    expect(groupHeader?.className).toContain("sticky");
+    expect(zOf(groupHeader)).toBeGreaterThan(zOf(pinnedCell));
+    expect(zOf(groupHeader)).toBeLessThan(zOf(columnHeader));
+    expect(container?.className).toContain("[&>[data-slot=scroll-area-scrollbar]]:z-30");
+    expect(container?.className).toContain(
+      "[&>[data-slot=scroll-area-scrollbar][data-orientation=vertical]]:top-(--row-head-h)!",
+    );
+    expect(30).toBeGreaterThan(zOf(columnHeader));
+  });
+
+  it("names a group's total and sets it in the foreground colour", () => {
+    renderDataTable({ grouping: grouping() });
+
+    const late = document.querySelector('tr[data-group-key="1"]')!;
+    const total = Array.from(late.querySelectorAll("span")).find(
+      (span) => span.textContent === "$9,400",
+    )!;
+    expect(total.className).toContain("text-foreground");
+    expect(total.className).toContain("font-sans");
+    expect(total.className).toContain("text-sm");
+    expect(total.className).not.toContain("bg-");
+    expect(total.previousElementSibling?.textContent).toBe("Revenue:");
+  });
+
+  it("shows a group's total without a label when it has none", () => {
+    renderDataTable({ grouping: grouping() });
+
+    const moving = document.querySelector('tr[data-group-key="3"]')!;
+    expect(moving.textContent).not.toContain("Revenue");
+  });
+
   it("asks the server to leave out collapsed groups and still shows their headers", () => {
     renderDataTable({ grouping: grouping({ collapsedKeys: [2] }) });
 
@@ -178,6 +227,138 @@ describe("DataTable grouping", () => {
     });
     const collapsed = document.querySelector('tr[data-group-key="2"]');
     expect(collapsed?.getAttribute("data-collapsed")).toBe("true");
+  });
+
+  it("sends a grouping's own collapse filters and tie-breakers with the person's filters", () => {
+    renderDataTable({
+      grouping: grouping({
+        collapsedKeys: [2],
+        tieBreakers: [{ field: "id", direction: "asc" }],
+        collapsedScope: (keys) => ({
+          fieldFilters: [],
+          filterGroups: [
+            {
+              filters: keys.flatMap((key) => [
+                { field: "stage", operator: "lt" as const, value: key },
+                { field: "stage", operator: "gt" as const, value: key },
+              ]),
+            },
+          ],
+        }),
+      }),
+    });
+
+    const options = lastQueryOptions();
+    expect(options.sort.slice(0, 2)).toEqual([
+      { field: "stage", direction: "asc" },
+      { field: "id", direction: "asc" },
+    ]);
+    expect(options.fieldFilters).not.toContainEqual(expect.objectContaining({ operator: "notin" }));
+    expect(options.filterGroups).toEqual([
+      {
+        filters: [
+          { field: "stage", operator: "lt", value: 2 },
+          { field: "stage", operator: "gt", value: 2 },
+        ],
+      },
+    ]);
+  });
+
+  it("keeps a just-opened group's header in place while its rows load", () => {
+    const { rerender } = renderDataTable({ grouping: grouping({ collapsedKeys: [2] }) });
+    const loading = {
+      data: {
+        results: [
+          { id: "1", name: "Alice", stage: 1 },
+          { id: "3", name: "Cara", stage: 3 },
+        ],
+        count: 2,
+      },
+      isLoading: false,
+      isPlaceholderData: true,
+      isError: false,
+      error: null,
+    };
+    useDataTableQueryMock.mockImplementation(() => loading);
+
+    rerender(
+      <QueryClientProvider client={createQueryClient()}>
+        <NuqsTestingAdapter hasMemory>
+          <DataTable<TestRow>
+            columns={testColumns}
+            name="test-table"
+            queryKey="test"
+            graphql={testGraphQLConfig}
+            grouping={grouping({ collapsedKeys: [] })}
+          />
+        </NuqsTestingAdapter>
+      </QueryClientProvider>,
+    );
+
+    const opened = document.querySelector('tr[data-group-key="2"]');
+    expect(opened).not.toBeNull();
+    expect(opened?.getAttribute("data-collapsed")).toBeNull();
+    expect(screen.getByText("Cara")).toBeTruthy();
+    useDataTableQueryMock.mockImplementation(() => defaultQueryResult);
+  });
+
+  it("does not lay the old page out under a new grouping's headers while it loads", () => {
+    const { rerender } = renderDataTable({ grouping: grouping() });
+    expect(document.querySelectorAll("tr[data-group-key]")).toHaveLength(2);
+
+    const placeholder = { ...defaultQueryResult, isPlaceholderData: true };
+    useDataTableQueryMock.mockImplementation(() => placeholder);
+    const byName = grouping({
+      field: "name",
+      groups: [
+        { key: "Alice", label: "Alice" },
+        { key: "Bob", label: "Bob" },
+        { key: "Cara", label: "Cara" },
+      ],
+      getGroupKey: (row) => (row.stage === 1 ? "A" : "B") + row.id,
+    });
+    rerender(
+      <QueryClientProvider client={createQueryClient()}>
+        <NuqsTestingAdapter hasMemory>
+          <DataTable<TestRow>
+            columns={testColumns}
+            name="test-table"
+            queryKey="test"
+            graphql={testGraphQLConfig}
+            grouping={byName}
+          />
+        </NuqsTestingAdapter>
+      </QueryClientProvider>,
+    );
+
+    expect(document.querySelectorAll("tr[data-group-key]")).toHaveLength(0);
+    expect(screen.queryByText("Alice")).toBeNull();
+
+    useDataTableQueryMock.mockImplementation(() => defaultQueryResult);
+    rerender(
+      <QueryClientProvider client={createQueryClient()}>
+        <NuqsTestingAdapter hasMemory>
+          <DataTable<TestRow>
+            columns={testColumns}
+            name="test-table"
+            queryKey="test"
+            graphql={testGraphQLConfig}
+            grouping={byName}
+          />
+        </NuqsTestingAdapter>
+      </QueryClientProvider>,
+    );
+    expect(screen.getByText("Alice")).toBeTruthy();
+  });
+
+  it("folds a group's rows away the moment it collapses", () => {
+    renderDataTable({ grouping: grouping({ collapsedKeys: [1] }) });
+
+    expect(document.querySelector('tr[data-group-key="1"]')?.getAttribute("data-collapsed")).toBe(
+      "true",
+    );
+    expect(screen.queryByText("Alice")).toBeNull();
+    expect(screen.getByText("Cara")).toBeTruthy();
   });
 
   it("toggles a group from its header", () => {
@@ -268,6 +449,28 @@ describe("DataTable expansion", () => {
     expect(screen.queryByTestId("panel")).toBeNull();
   });
 
+  it("paints the open row and its panel in the field fill, not the selection tint", () => {
+    renderExpanding();
+    fireEvent.click(screen.getByText("Bob"));
+
+    const bobRow = document.getElementById("2")!;
+    const panelRow = bobRow.nextElementSibling!;
+    expect(bobRow.className).toContain("data-expanded:bg-field");
+    expect(bobRow.className).not.toContain("data-expanded:bg-surface-selected");
+    expect(bobRow.className).not.toContain("var(--brand)");
+    expect(panelRow.className.split(" ")).toContain("bg-field");
+    expect(panelRow.className.split(" ")).not.toContain("bg-surface-selected");
+  });
+
+  it("uses the same field fill for a hovered row and the keyboard cursor", () => {
+    renderExpanding();
+
+    const classes = document.getElementById("1")!.className.split(" ");
+    expect(classes).toContain("hover:bg-field");
+    expect(classes).toContain("data-cursor:bg-field");
+    expect(classes).not.toContain("hover:bg-surface-hover");
+  });
+
   it("moves a page-level cursor with J and opens the cursor row with Enter", () => {
     renderExpanding(true);
 
@@ -315,8 +518,7 @@ describe("DataTable slots", () => {
   it("puts toolbar and footer slots where the table's own controls sit", () => {
     renderDataTable({
       toolbar: {
-        search: ({ query }) => <input aria-label="Board search" value={query} readOnly />,
-        filter: () => <button>Facets</button>,
+        chips: { items: [{ key: "late", label: "Late", onRemove: vi.fn() }], onClear: vi.fn() },
         trailing: <button>View switch</button>,
         end: <button>Panel toggle</button>,
       },
@@ -324,8 +526,7 @@ describe("DataTable slots", () => {
       pageSizeOptions: [10, 25, 50],
     });
 
-    expect(screen.getByLabelText("Board search")).toBeTruthy();
-    expect(screen.getByText("Facets")).toBeTruthy();
+    expect(screen.getByText("Late")).toBeTruthy();
     expect(screen.getByText("View switch")).toBeTruthy();
     expect(screen.getByText("Panel toggle")).toBeTruthy();
     expect(screen.getByText("Shortcuts")).toBeTruthy();
@@ -338,6 +539,8 @@ describe("DataTable slots", () => {
 
     const sortLabel = await screen.findByText("Sort");
     expect(sortLabel.className).toContain("label-narrow");
+    const filterLabel = await screen.findByText("Filter");
+    expect(filterLabel.className).toContain("label-narrow");
     const display = await screen.findByRole("button", { name: /Display/ });
     expect(display.closest(".secondary-narrow")).toBeTruthy();
   });
@@ -377,5 +580,73 @@ describe("DataTable slots", () => {
   it("starts at the density it is given", () => {
     renderDataTable({ initialDensity: "compact" });
     expect(document.querySelector('table[data-density="compact"]')).toBeTruthy();
+  });
+});
+
+describe("DataTable column pinning", () => {
+  beforeEach(() => {
+    useDataTableQueryMock.mockClear();
+  });
+
+  it("pins the columns the table asks for from the first paint", () => {
+    renderDataTable({ initialColumnPinning: { left: ["name"], right: [] } });
+
+    const cell = screen.getByText("Alice").closest("td");
+    expect(cell?.className).toContain("sticky");
+  });
+
+  it("gives a pinned cell the row's field fill when the row is hovered, under the cursor or open", () => {
+    renderDataTable({ initialColumnPinning: { left: ["name"], right: [] } });
+
+    const className = screen.getByText("Alice").closest("td")?.className ?? "";
+    expect(className).toContain("group-hover/row:bg-field");
+    expect(className).toContain("group-data-cursor/row:bg-field");
+    expect(className).toContain("group-data-expanded/row:bg-field");
+    expect(className).not.toContain("bg-muted");
+  });
+
+  it("keeps a pinned head above the resize handles of the heads scrolling under it", () => {
+    renderDataTable({ initialColumnPinning: { left: ["name"], right: [] } });
+
+    const head = screen.getByText("Name").closest("th");
+    expect(head?.className).toContain("z-20");
+    expect(head?.className).not.toContain("z-10");
+  });
+});
+
+describe("DataTable page sizes", () => {
+  beforeEach(() => {
+    useDataTableQueryMock.mockClear();
+  });
+
+  it("opens at the first size a table offers", () => {
+    renderDataTable({ pageSizeOptions: [25, 50, 100] });
+
+    expect(lastPagination()).toEqual({ pageIndex: 0, pageSize: 25 });
+    expect(screen.getByRole("combobox").textContent).toContain("25");
+  });
+
+  it("keeps a size from the link when the table offers it", () => {
+    renderDataTable({ pageSizeOptions: [25, 50, 100] }, "?pageSize=100");
+
+    expect(lastPagination().pageSize).toBe(100);
+  });
+
+  it("falls back to the first size for a link asking for one the table does not offer", () => {
+    renderDataTable({ pageSizeOptions: [25, 50, 100] }, "?pageSize=10");
+
+    expect(lastPagination().pageSize).toBe(25);
+  });
+
+  it("keeps ten rows for a table that does not name its sizes", () => {
+    renderDataTable();
+
+    expect(lastPagination().pageSize).toBe(10);
+  });
+
+  it("keeps any size from the link for a table that does not name its sizes", () => {
+    renderDataTable(undefined, "?pageSize=40");
+
+    expect(lastPagination().pageSize).toBe(40);
   });
 });

@@ -67,10 +67,18 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
       designate: boolean;
     }) => decideLeaveCase({ caseId, approve, designate }),
     onSuccess: (saved) => {
-      toast.success(`Leave case ${leaveCaseStatusLabel(saved.status).toLowerCase()}`, {
+      const title =
+        saved.status === "Approved"
+          ? t("Leave case approved")
+          : saved.status === "Denied"
+            ? t("Leave case denied")
+            : saved.status === "Closed"
+              ? t("Leave case closed")
+              : t("Leave case awaiting a decision");
+      toast.success(title, {
         description: saved.fmlaDesignated
-          ? "Designated as FMLA, so days recorded against it draw the entitlement down."
-          : "Not designated as FMLA, so days recorded against it draw nothing down.",
+          ? t("Designated as FMLA, so days recorded against it draw the entitlement down.")
+          : t("Not designated as FMLA, so days recorded against it draw nothing down."),
       });
       void invalidate();
     },
@@ -95,7 +103,7 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
     onSuccess: (saved) => {
       toast.success(t("Certification requested"), {
         description: saved.certificationDueAt
-          ? `Due ${formatUnixDate(saved.certificationDueAt)}.`
+          ? t("Due {0}.", formatUnixDate(saved.certificationDueAt))
           : undefined,
       });
       void invalidate();
@@ -197,18 +205,18 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
         <dl className="mt-3 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
           <Figure
             label={t("Remaining")}
-            value={`${formatLeaveHours(entitlement.remainingHours)} h`}
-            detail={`${formatLeaveHours(entitlement.remainingWeeks)} weeks`}
+            value={t("{0} h", formatLeaveHours(entitlement.remainingHours))}
+            detail={t("{0} weeks", formatLeaveHours(entitlement.remainingWeeks))}
           />
           <Figure
             label={t("Used")}
-            value={`${formatLeaveHours(entitlement.usedHours)} h`}
-            detail={`${formatLeaveHours(entitlement.usedWeeks)} weeks`}
+            value={t("{0} h", formatLeaveHours(entitlement.usedHours))}
+            detail={t("{0} weeks", formatLeaveHours(entitlement.usedWeeks))}
           />
           <Figure
             label={t("Entitlement")}
-            value={`${formatLeaveHours(entitlement.totalHours)} h`}
-            detail={`${formatLeaveHours(entitlement.totalWeeks)} weeks`}
+            value={t("{0} h", formatLeaveHours(entitlement.totalHours))}
+            detail={t("{0} weeks", formatLeaveHours(entitlement.totalWeeks))}
           />
           <Figure label={t("Months employed")} value={String(entitlement.monthsEmployed)} />
         </dl>

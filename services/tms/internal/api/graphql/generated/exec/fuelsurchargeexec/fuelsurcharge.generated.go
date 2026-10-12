@@ -9,7 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -79,7 +79,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EIASeriesOption)
 					return obj.FuelType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐFuelType),
+				Marshal: gqlexec.Marshal(marshalNFuelType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐFuelType),
 			},
 		}},
 		{Object: "FuelIndex", Fields: []*gqlexec.Field{
@@ -151,7 +151,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FuelIndex)
 					return obj.Source, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelIndexSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐIndexSource),
+				Marshal: gqlexec.Marshal(marshalNFuelIndexSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐIndexSource),
 			},
 			{
 				Name:     "fuelType",
@@ -161,7 +161,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FuelIndex)
 					return obj.FuelType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐFuelType),
+				Marshal: gqlexec.Marshal(marshalNFuelType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐFuelType),
 			},
 			{
 				Name:     "region",
@@ -582,7 +582,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FuelSurchargeProgram)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelSurchargeProgramStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐProgramStatus),
+				Marshal: gqlexec.Marshal(marshalNFuelSurchargeProgramStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐProgramStatus),
 			},
 			{
 				Name:     "fuelIndexId",
@@ -612,7 +612,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FuelSurchargeProgram)
 					return obj.Method, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelSurchargeProgramMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐProgramMethod),
+				Marshal: gqlexec.Marshal(marshalNFuelSurchargeProgramMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐProgramMethod),
 			},
 			{
 				Name:     "pegPrice",
@@ -658,7 +658,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FuelSurchargeProgram)
 					return obj.PercentBasis, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelSurchargePercentBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐPercentBasis),
+				Marshal: gqlexec.Marshal(marshalNFuelSurchargePercentBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐPercentBasis),
 			},
 			{
 				Name:     "stepRounding",
@@ -668,7 +668,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FuelSurchargeProgram)
 					return obj.StepRounding, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelSurchargeStepRounding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐStepRounding),
+				Marshal: gqlexec.Marshal(marshalNFuelSurchargeStepRounding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐStepRounding),
 			},
 			{
 				Name:     "rateRounding",
@@ -678,7 +678,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FuelSurchargeProgram)
 					return obj.RateRounding, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelSurchargeRateRounding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐRateRounding),
+				Marshal: gqlexec.Marshal(marshalNFuelSurchargeRateRounding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐRateRounding),
 			},
 			{
 				Name:     "ratePrecision",
@@ -716,7 +716,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FuelSurchargeProgram)
 					return obj.DateBasis, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelSurchargeDateBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐDateBasis),
+				Marshal: gqlexec.Marshal(marshalNFuelSurchargeDateBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐDateBasis),
 			},
 			{
 				Name:     "priceEffectiveDay",
@@ -736,7 +736,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FuelSurchargeProgram)
 					return obj.MissingPriceFallback, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelSurchargeMissingPriceFallback2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐMissingPriceFallback),
+				Marshal: gqlexec.Marshal(marshalNFuelSurchargeMissingPriceFallback2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐMissingPriceFallback),
 			},
 			{
 				Name:     "effectiveStartDate",
@@ -1608,14 +1608,14 @@ func unmarshalInputFuelIndexInput(ctx context.Context, ec *gqlexec.Exec, obj any
 			it.Description = data
 		case "source":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
-			data, err := unmarshalNFuelIndexSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐIndexSource(ctx, ec, v)
+			data, err := unmarshalNFuelIndexSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐIndexSource(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.Source = data
 		case "fuelType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fuelType"))
-			data, err := unmarshalOFuelType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐFuelType(ctx, ec, v)
+			data, err := unmarshalOFuelType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐFuelType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1738,7 +1738,7 @@ func unmarshalInputFuelSurchargeProgramInput(ctx context.Context, ec *gqlexec.Ex
 			it.Description = data
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := unmarshalOFuelSurchargeProgramStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐProgramStatus(ctx, ec, v)
+			data, err := unmarshalOFuelSurchargeProgramStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐProgramStatus(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1759,7 +1759,7 @@ func unmarshalInputFuelSurchargeProgramInput(ctx context.Context, ec *gqlexec.Ex
 			it.AccessorialChargeID = data
 		case "method":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("method"))
-			data, err := unmarshalNFuelSurchargeProgramMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐProgramMethod(ctx, ec, v)
+			data, err := unmarshalNFuelSurchargeProgramMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐProgramMethod(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1794,21 +1794,21 @@ func unmarshalInputFuelSurchargeProgramInput(ctx context.Context, ec *gqlexec.Ex
 			it.MilesPerGallon = data
 		case "percentBasis":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("percentBasis"))
-			data, err := unmarshalOFuelSurchargePercentBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐPercentBasis(ctx, ec, v)
+			data, err := unmarshalOFuelSurchargePercentBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐPercentBasis(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.PercentBasis = data
 		case "stepRounding":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stepRounding"))
-			data, err := unmarshalOFuelSurchargeStepRounding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐStepRounding(ctx, ec, v)
+			data, err := unmarshalOFuelSurchargeStepRounding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐStepRounding(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.StepRounding = data
 		case "rateRounding":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rateRounding"))
-			data, err := unmarshalOFuelSurchargeRateRounding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐRateRounding(ctx, ec, v)
+			data, err := unmarshalOFuelSurchargeRateRounding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐRateRounding(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1836,7 +1836,7 @@ func unmarshalInputFuelSurchargeProgramInput(ctx context.Context, ec *gqlexec.Ex
 			it.MaxAmount = data
 		case "dateBasis":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dateBasis"))
-			data, err := unmarshalOFuelSurchargeDateBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐDateBasis(ctx, ec, v)
+			data, err := unmarshalOFuelSurchargeDateBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐDateBasis(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1850,7 +1850,7 @@ func unmarshalInputFuelSurchargeProgramInput(ctx context.Context, ec *gqlexec.Ex
 			it.PriceEffectiveDay = data
 		case "missingPriceFallback":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("missingPriceFallback"))
-			data, err := unmarshalOFuelSurchargeMissingPriceFallback2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐMissingPriceFallback(ctx, ec, v)
+			data, err := unmarshalOFuelSurchargeMissingPriceFallback2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐMissingPriceFallback(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -2093,7 +2093,7 @@ func unmarshalNFuelIndexPriceInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNFuelIndexSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐIndexSource(ctx context.Context, ec *gqlexec.Exec, v any) (fuelsurcharge.IndexSource, error) {
+func unmarshalNFuelIndexSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐIndexSource(ctx context.Context, ec *gqlexec.Exec, v any) (fuelsurcharge.IndexSource, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := fuelsurcharge.IndexSource(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -2104,7 +2104,7 @@ func unmarshalNFuelSurchargeProgramInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNFuelSurchargeProgramMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐProgramMethod(ctx context.Context, ec *gqlexec.Exec, v any) (fuelsurcharge.ProgramMethod, error) {
+func unmarshalNFuelSurchargeProgramMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐProgramMethod(ctx context.Context, ec *gqlexec.Exec, v any) (fuelsurcharge.ProgramMethod, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := fuelsurcharge.ProgramMethod(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -2151,7 +2151,7 @@ func unmarshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOFuelSurchargeDateBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐDateBasis(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelsurcharge.DateBasis, error) {
+func unmarshalOFuelSurchargeDateBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐDateBasis(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelsurcharge.DateBasis, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -2160,7 +2160,7 @@ func unmarshalOFuelSurchargeDateBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOFuelSurchargeMissingPriceFallback2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐMissingPriceFallback(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelsurcharge.MissingPriceFallback, error) {
+func unmarshalOFuelSurchargeMissingPriceFallback2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐMissingPriceFallback(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelsurcharge.MissingPriceFallback, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -2169,7 +2169,7 @@ func unmarshalOFuelSurchargeMissingPriceFallback2ᚖgithubᚗcomᚋemoss08ᚋtre
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOFuelSurchargePercentBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐPercentBasis(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelsurcharge.PercentBasis, error) {
+func unmarshalOFuelSurchargePercentBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐPercentBasis(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelsurcharge.PercentBasis, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -2178,7 +2178,7 @@ func unmarshalOFuelSurchargePercentBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOFuelSurchargeProgramStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐProgramStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelsurcharge.ProgramStatus, error) {
+func unmarshalOFuelSurchargeProgramStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐProgramStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelsurcharge.ProgramStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -2187,7 +2187,7 @@ func unmarshalOFuelSurchargeProgramStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋ
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOFuelSurchargeRateRounding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐRateRounding(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelsurcharge.RateRounding, error) {
+func unmarshalOFuelSurchargeRateRounding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐRateRounding(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelsurcharge.RateRounding, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -2196,7 +2196,7 @@ func unmarshalOFuelSurchargeRateRounding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOFuelSurchargeStepRounding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐStepRounding(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelsurcharge.StepRounding, error) {
+func unmarshalOFuelSurchargeStepRounding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐStepRounding(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelsurcharge.StepRounding, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -2212,7 +2212,7 @@ func unmarshalOFuelSurchargeTableRowInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenova
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFuelSurchargeTableRowInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelSurchargeTableRowInput)
 }
 
-func unmarshalOFuelType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐFuelType(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelsurcharge.FuelType, error) {
+func unmarshalOFuelType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐFuelType(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelsurcharge.FuelType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -2348,7 +2348,7 @@ func marshalNFuelIndexPrice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi
 	return ec.MarshalType(ctx, sel, "FuelIndexPrice", v)
 }
 
-func marshalNFuelIndexSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐIndexSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelsurcharge.IndexSource) graphql.Marshaler {
+func marshalNFuelIndexSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐIndexSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelsurcharge.IndexSource) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2372,7 +2372,7 @@ func marshalNFuelProgramCurrentRate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return ec.MarshalType(ctx, sel, "FuelProgramCurrentRate", v)
 }
 
-func marshalNFuelSurchargeDateBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐDateBasis(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelsurcharge.DateBasis) graphql.Marshaler {
+func marshalNFuelSurchargeDateBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐDateBasis(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelsurcharge.DateBasis) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2380,7 +2380,7 @@ func marshalNFuelSurchargeDateBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNFuelSurchargeMissingPriceFallback2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐMissingPriceFallback(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelsurcharge.MissingPriceFallback) graphql.Marshaler {
+func marshalNFuelSurchargeMissingPriceFallback2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐMissingPriceFallback(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelsurcharge.MissingPriceFallback) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2388,7 +2388,7 @@ func marshalNFuelSurchargeMissingPriceFallback2githubᚗcomᚋemoss08ᚋtrenova�
 	return res
 }
 
-func marshalNFuelSurchargePercentBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐPercentBasis(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelsurcharge.PercentBasis) graphql.Marshaler {
+func marshalNFuelSurchargePercentBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐPercentBasis(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelsurcharge.PercentBasis) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2428,7 +2428,7 @@ func marshalNFuelSurchargeProgramEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "FuelSurchargeProgramEdge", v)
 }
 
-func marshalNFuelSurchargeProgramMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐProgramMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelsurcharge.ProgramMethod) graphql.Marshaler {
+func marshalNFuelSurchargeProgramMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐProgramMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelsurcharge.ProgramMethod) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2436,7 +2436,7 @@ func marshalNFuelSurchargeProgramMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res
 }
 
-func marshalNFuelSurchargeProgramStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐProgramStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelsurcharge.ProgramStatus) graphql.Marshaler {
+func marshalNFuelSurchargeProgramStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐProgramStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelsurcharge.ProgramStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2444,7 +2444,7 @@ func marshalNFuelSurchargeProgramStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res
 }
 
-func marshalNFuelSurchargeRateRounding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐRateRounding(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelsurcharge.RateRounding) graphql.Marshaler {
+func marshalNFuelSurchargeRateRounding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐRateRounding(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelsurcharge.RateRounding) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2452,7 +2452,7 @@ func marshalNFuelSurchargeRateRounding2githubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return res
 }
 
-func marshalNFuelSurchargeStepRounding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐStepRounding(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelsurcharge.StepRounding) graphql.Marshaler {
+func marshalNFuelSurchargeStepRounding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐStepRounding(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelsurcharge.StepRounding) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2468,7 +2468,7 @@ func marshalNFuelSurchargeTableRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "FuelSurchargeTableRow", v)
 }
 
-func marshalNFuelType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelsurchargeᚐFuelType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelsurcharge.FuelType) graphql.Marshaler {
+func marshalNFuelType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋfuelsurchargeᚐFuelType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelsurcharge.FuelType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

@@ -1,7 +1,8 @@
 package completionrouter
 
 import (
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"go.uber.org/fx"
 )
 
@@ -14,6 +15,6 @@ var Module = fx.Module("completion-router",
 	),
 )
 
-func asCompletionService(s *Service) serviceports.CompletionService { return s }
+func asCompletionService(s *Service) agentports.CompletionService { return s }
 
-func asEmbeddingService(s *Service) serviceports.EmbeddingService { return s }
+func asEmbeddingService(s *Service) aiusageports.EmbeddingService { return s }

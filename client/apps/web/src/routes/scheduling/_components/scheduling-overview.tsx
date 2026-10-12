@@ -1,4 +1,4 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import { KpiCard, KpiHeader } from "@/components/kpi/kpi-card";
 import { KPI_VALUE_CLASS, KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
@@ -109,7 +109,7 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
         }
         sub={
           todayCover
-            ? describeToday(todayCover.timeOff, todayCover.leave, todayCover.conflicts)
+            ? describeToday(t, todayCover.timeOff, todayCover.leave, todayCover.conflicts)
             : t("Today is outside the weeks shown")
         }
       />
@@ -171,10 +171,10 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
   );
 }
 
-function describeToday(timeOff: number, leave: number, conflicts: number): string {
+function describeToday(t: TranslateFn, timeOff: number, leave: number, conflicts: number): string {
   const parts: string[] = [];
-  if (timeOff > 0) parts.push(`${timeOff} on time off`);
-  if (leave > 0) parts.push(`${leave} on leave`);
-  if (conflicts > 0) parts.push(`${conflicts} in conflict`);
-  return parts.length > 0 ? parts.join(" · ") : "Everyone rostered today can work it";
+  if (timeOff > 0) parts.push(t("{0} on time off", timeOff));
+  if (leave > 0) parts.push(t("{0} on leave", leave));
+  if (conflicts > 0) parts.push(t("{0} in conflict", conflicts));
+  return parts.length > 0 ? parts.join(" · ") : t("Everyone rostered today can work it");
 }

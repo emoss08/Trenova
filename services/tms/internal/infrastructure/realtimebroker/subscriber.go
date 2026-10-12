@@ -3,7 +3,7 @@ package realtimebroker
 import (
 	"sync"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 // entry is one bus message as the fan-out read it, decoded once and shared by
@@ -29,17 +29,17 @@ type entry struct {
 // backlog behind the prelude, and from there on anything at or below the
 // replay floor is dropped, since the replay already carried it.
 type subscriber struct {
-	conn    services.RealtimeConnection
+	conn    agentports.RealtimeConnection
 	userID  string
 	tenant  string
 	shard   int
-	frames  chan services.RealtimeFrame
+	frames  chan agentports.RealtimeFrame
 	onClose func(*subscriber)
 
 	mu      sync.Mutex
 	scopes  map[string]struct{}
-	prelude []services.RealtimeFrame
-	backlog []services.RealtimeFrame
+	prelude []agentports.RealtimeFrame
+	backlog []agentports.RealtimeFrame
 	paused  bool
 	floor   streamID
 	closed  bool
@@ -47,7 +47,7 @@ type subscriber struct {
 }
 
 func newSubscriber(
-	conn *services.RealtimeConnection,
+	conn *agentports.RealtimeConnection,
 	tenant string,
 	shard int,
 	buffer int,
@@ -58,7 +58,7 @@ func newSubscriber(
 		userID:  conn.UserID.String(),
 		tenant:  tenant,
 		shard:   shard,
-		frames:  make(chan services.RealtimeFrame, buffer),
+		frames:  make(chan agentports.RealtimeFrame, buffer),
 		onClose: onClose,
 		scopes:  make(map[string]struct{}, 2),
 		paused:  true,
@@ -69,7 +69,7 @@ func (s *subscriber) ConnectionID() string {
 	return s.conn.ConnectionID
 }
 
-func (s *subscriber) Prelude() []services.RealtimeFrame {
+func (s *subscriber) Prelude() []agentports.RealtimeFrame {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	prelude := s.prelude
@@ -77,7 +77,7 @@ func (s *subscriber) Prelude() []services.RealtimeFrame {
 	return prelude
 }
 
-func (s *subscriber) Frames() <-chan services.RealtimeFrame {
+func (s *subscriber) Frames() <-chan agentports.RealtimeFrame {
 	return s.frames
 }
 
@@ -142,11 +142,11 @@ func (s *subscriber) accepts(e *entry) ([]byte, bool) {
 	if e.scope != "" {
 		own := e.connection == s.conn.ConnectionID
 		s.mu.Lock()
-		if own && e.action == services.RealtimePresenceEnter {
+		if own && e.action == agentports.RealtimePresenceEnter {
 			s.scopes[e.scope] = struct{}{}
 		}
 		_, member := s.scopes[e.scope]
-		if own && e.action == services.RealtimePresenceLeave {
+		if own && e.action == agentports.RealtimePresenceLeave {
 			delete(s.scopes, e.scope)
 			member = true
 		}
@@ -175,7 +175,7 @@ func (s *subscriber) deliver(e *entry) bool {
 		return false
 	}
 
-	frame := services.RealtimeFrame{ID: e.cursor, Event: e.event, Data: payload}
+	frame := agentports.RealtimeFrame{ID: e.cursor, Event: e.event, Data: payload}
 
 	s.mu.Lock()
 	if s.closed {
@@ -189,7 +189,7 @@ func (s *subscriber) deliver(e *entry) bool {
 	if s.paused {
 		if len(s.backlog) >= cap(s.frames) {
 			s.mu.Unlock()
-			s.shutdown(services.RealtimeCloseOverflow)
+			s.shutdown(agentports.RealtimeCloseOverflow)
 			return false
 		}
 		s.backlog = append(s.backlog, frame)
@@ -203,7 +203,7 @@ func (s *subscriber) deliver(e *entry) bool {
 		return true
 	default:
 		s.mu.Unlock()
-		s.shutdown(services.RealtimeCloseOverflow)
+		s.shutdown(agentports.RealtimeCloseOverflow)
 		return false
 	}
 }
@@ -211,7 +211,7 @@ func (s *subscriber) deliver(e *entry) bool {
 // send queues a frame that is not from the bus, such as a heartbeat. It is
 // dropped rather than forced when the reader is behind: a reader with a full
 // buffer is plainly still receiving.
-func (s *subscriber) send(frame services.RealtimeFrame) {
+func (s *subscriber) send(frame agentports.RealtimeFrame) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.closed || s.paused {
@@ -225,7 +225,7 @@ func (s *subscriber) send(frame services.RealtimeFrame) {
 
 // release ends setup: the prelude is fixed, the floor is set, and the backlog
 // that arrived meanwhile follows the prelude minus anything the replay covered.
-func (s *subscriber) release(prelude []services.RealtimeFrame, floor streamID) {
+func (s *subscriber) release(prelude []agentports.RealtimeFrame, floor streamID) {
 	s.mu.Lock()
 	if s.closed {
 		s.mu.Unlock()
@@ -248,7 +248,7 @@ func (s *subscriber) release(prelude []services.RealtimeFrame, floor streamID) {
 		case s.frames <- frame:
 		default:
 			s.mu.Unlock()
-			s.shutdown(services.RealtimeCloseOverflow)
+			s.shutdown(agentports.RealtimeCloseOverflow)
 			return
 		}
 	}

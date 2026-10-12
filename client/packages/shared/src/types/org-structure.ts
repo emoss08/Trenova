@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const jobDepartmentSchema = z.enum([
   "Operations",
@@ -21,8 +22,14 @@ export type ApprovalScopeValue = z.infer<typeof approvalScopeSchema>;
  * rather than left to the database to reject after a round trip.
  */
 export const jobPositionFormSchema = z.object({
-  code: z.string().min(1, "A code is required").max(20),
-  title: z.string().min(1, "A title is required").max(100),
+  code: z
+    .string()
+    .min(1, { error: () => translate("A code is required") })
+    .max(20),
+  title: z
+    .string()
+    .min(1, { error: () => translate("A title is required") })
+    .max(100),
   description: z.string().nullable(),
   department: jobDepartmentSchema,
   flsaExempt: z.boolean(),
@@ -39,14 +46,14 @@ export type JobPositionFormValues = z.infer<typeof jobPositionFormSchema>;
  */
 export const delegationFormSchema = z
   .object({
-    delegateId: z.string().min(1, "Choose who is covering"),
+    delegateId: z.string().min(1, { error: () => translate("Choose who is covering") }),
     scope: approvalScopeSchema,
     startsAt: z.number(),
     endsAt: z.number().nullable(),
     reason: z.string().max(255).nullable(),
   })
   .refine((values) => values.endsAt === null || values.endsAt >= values.startsAt, {
-    message: "A delegation cannot end before it begins",
+    error: () => translate("A delegation cannot end before it begins"),
     path: ["endsAt"],
   });
 export type DelegationFormValues = z.infer<typeof delegationFormSchema>;

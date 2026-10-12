@@ -9,26 +9,27 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-var _ services.ReportRenderer = (*PDFRenderer)(nil)
+var _ reportports.ReportRenderer = (*PDFRenderer)(nil)
 
 type PDFParams struct {
 	fx.In
 
 	Config   *config.Config
-	Renderer services.PDFRenderer
+	Renderer documenttemplateports.PDFRenderer
 	Logger   *zap.Logger
 }
 
 type PDFRenderer struct {
-	renderer services.PDFRenderer
+	renderer documenttemplateports.PDFRenderer
 	l        *zap.Logger
 	maxRows  int64
 }
@@ -117,8 +118,8 @@ var pdfTemplate = template.Must(template.New("report").Parse(`<!DOCTYPE html>
 
 func (r *PDFRenderer) Render(
 	ctx context.Context,
-	req *services.ReportRenderRequest,
-) (*services.ReportRenderStats, error) {
+	req *reportports.ReportRenderRequest,
+) (*reportports.ReportRenderStats, error) {
 	schema := req.Dataset.Schema()
 	loc := metaLocation(&req.Meta)
 
@@ -177,7 +178,7 @@ func (r *PDFRenderer) Render(
 		return nil, fmt.Errorf("render PDF template: %w", err)
 	}
 
-	pdf, err := r.renderer.Render(ctx, &services.PDFRenderRequest{
+	pdf, err := r.renderer.Render(ctx, &documenttemplateports.PDFRenderRequest{
 		HTML:        html.String(),
 		Title:       req.Meta.Title,
 		PageSize:    documenttemplate.PageSizeLetter,
@@ -192,7 +193,7 @@ func (r *PDFRenderer) Render(
 		return nil, err
 	}
 
-	return &services.ReportRenderStats{
+	return &reportports.ReportRenderStats{
 		Rows:      req.Dataset.RowCount(),
 		Truncated: data.Truncated,
 	}, nil

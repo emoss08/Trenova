@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { DeskConversationPage } from "../conversation-page";
@@ -19,7 +19,12 @@ describe("Desk conversation page while the Desk loads", () => {
       </MemoryRouter>,
     );
 
-    expect(container.querySelectorAll('[aria-busy] [data-slot="skeleton"]')).toHaveLength(2);
+    // The transcript's own outline: two turns on its grid, in the Desk's palette.
+    const busy = container.querySelector("[aria-busy]");
+    expect(busy).toHaveClass("dk-grid", "dk-flow");
+    expect(busy?.querySelectorAll(".dk-skt")).toHaveLength(2);
+    expect(busy?.querySelector(".dk-sk-q")).not.toBeNull();
+    expect(screen.getByRole("status")).toHaveTextContent("Reading the conversation…");
     expect(container.querySelector('[data-slot="desk-loading-mark"]')).toBeNull();
   });
 });

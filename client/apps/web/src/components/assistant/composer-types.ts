@@ -25,12 +25,23 @@ export type ComposerPayload = {
   mentions: AssistantEntityRef[];
 };
 
+/**
+ * How a named record is written into a message: an at-sign and what it is
+ * called. The record itself rides beside the words, so the agent reads its id
+ * from there and the words read as the person wrote them.
+ */
+export function mentionToken(label: string): string {
+  return "@" + label;
+}
+
 /** The mentions still named in the text; one whose @label was deleted is dropped. */
 export function activeMentions(
   draft: string,
   mentions: readonly AssistantEntityRef[],
 ): AssistantEntityRef[] {
-  return mentions.filter((mention) => mention.label !== "" && draft.includes("@" + mention.label));
+  return mentions.filter(
+    (mention) => mention.label !== "" && draft.includes(mentionToken(mention.label)),
+  );
 }
 
 /** The documents that are on the message, as the server takes them. */

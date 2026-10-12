@@ -23,11 +23,10 @@ func OptionalMatch[T any](value T, err error) (T, error) {
 	return value, nil
 }
 
-func RequestLoaders(ctx context.Context) (*loaders.Loaders, error) {
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l == nil {
-		return nil, errortypes.NewDatabaseError("Request loaders are not configured")
+func RequireLoaders(ctx context.Context) error {
+	if !loaders.Available(ctx) {
+		return errortypes.NewDatabaseError("Request loaders are not configured")
 	}
 
-	return l, nil
+	return nil
 }

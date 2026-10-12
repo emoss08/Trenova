@@ -13,6 +13,7 @@ import type {
   StepRationale,
   ToolEffect,
   ToolVerdict,
+  WatchedRecordChange,
 } from "@/types/assistant";
 
 /**
@@ -52,6 +53,8 @@ export type ToolSegment = {
   delegate?: DelegateProgress;
   /** Why the agent took the step, when it said. */
   why?: StepRationale | null;
+  /** The person's other agents a find_tools answer named as holding what this agent lacks. */
+  handOffAgents?: readonly string[];
 };
 
 export type TurnRetry = {
@@ -119,6 +122,24 @@ function withdrawAttempt(segments: TurnSegment[]): TurnSegment[] {
     end -= 1;
   }
   return end === segments.length ? segments : segments.slice(0, end);
+}
+
+/**
+ * Puts the reply the turn recorded in place of the one that streamed, when the
+ * runtime corrected it afterwards. Only the attempt's open reply goes: the
+ * thinking that led into it happened and stays, as does everything the turn
+ * finished before it.
+ */
+function replaceReply(segments: TurnSegment[], text: string): TurnSegment[] {
+  const attempt = withdrawAttempt(segments).length;
+  const kept =
+    attempt === segments.length
+      ? segments
+      : [
+          ...segments.slice(0, attempt),
+          ...segments.slice(attempt).filter((segment) => segment.kind !== "text"),
+        ];
+  return appendDelta(kept, text);
 }
 
 /** Thinking arrives: it grows the open thought or opens a new one. */
@@ -212,10 +233,51 @@ function finishTool(segments: TurnSegment[], data: ToolFinishedData): TurnSegmen
           effect: data.effect ?? segment.effect,
           summary: data.summary || undefined,
           verdict: data.verdict,
+          handOffAgents:
+            data.handOffAgents && data.handOffAgents.length > 0 ? data.handOffAgents : undefined,
         }
       : segment,
   );
 }
+
+/** No agent is named. One shared value, so a reader keyed on it does not run again. */
+export const NO_HAND_OFF_AGENTS: readonly string[] = Object.freeze([]);
+
+/**
+ * The agents the turn's own newest find_tools answer named as holding what its
+ * agent could not load. It is the step's own list, so the same answer is the
+ * same value from one event to the next. Another agent's steps on a task it
+ * was handed are nested under the call that handed it over, so they are not
+ * read.
+ */
+export function turnHandOffAgents(
+  segments: readonly TurnSegment[],
+  interjections: readonly TurnInterjection[] = [],
+): readonly string[] {
+  let tools = segments.reduce((count, segment) => count + (segment.kind === "tool" ? 1 : 0), 0);
+  for (let index = segments.length - 1; index >= 0; index -= 1) {
+    const segment = segments[index];
+    if (segment.kind !== "tool") {
+      continue;
+    }
+    tools -= 1;
+    if (segment.handOffAgents && segment.handOffAgents.length > 0) {
+      const steeredAfter = interjections.some(
+        (item) => item.kind === "steer" && item.toolsBefore > tools,
+      );
+      return steeredAfter ? NO_HAND_OFF_AGENTS : segment.handOffAgents;
+    }
+  }
+  return NO_HAND_OFF_AGENTS;
+}
+
+/** What a running turn says about handing its conversation to another agent. */
+export type TurnHandoff = {
+  /** The turn answers words of the person's own; false for one following up a decision. */
+  asked: boolean;
+  /** What its own newest find_tools answer named; empty while none has. */
+  agentIds: readonly string[];
+};
 
 /** The tool an agent hands a task to another agent with. */
 export const DELEGATE_TOOL = "delegate_task";
@@ -293,6 +355,29 @@ export type TurnLimit = {
   resetsAt: number;
 };
 
+/**
+ * What reached the turn while it worked: the person's words, read at the next
+ * step, and records that changed elsewhere, which the agent was told about.
+ */
+export type TurnInterjection =
+  | {
+      kind: "steer";
+      id: string;
+      text: string;
+      mentions: AssistantEntityRef[];
+      /**
+       * How many tool steps the turn had run when the person wrote this. Tool
+       * steps are never withdrawn, so it orders the steer against them: a
+       * hand-off suggestion from a step before it is one the person has
+       * already written past.
+       */
+      toolsBefore: number;
+    }
+  | { kind: "world"; key: string; changes: WatchedRecordChange[] };
+
+/** The turn the conversation's queue started once this one was saved. */
+export type NextTurn = { turnId: string; queuedId: string; input: string };
+
 export type TurnState = {
   status: TurnStatus;
   userContent: string;
@@ -327,6 +412,10 @@ export type TurnState = {
   thread: AssistantThread | null;
   /** When this reader began following the turn, in epoch milliseconds. */
   startedAt: number;
+  /** What reached the turn while it worked, in the order it arrived. */
+  interjections: TurnInterjection[];
+  /** The reply the queue started after this one, once it is named. */
+  next: NextTurn | null;
 };
 
 /** What a person hands over with a message besides the words. */
@@ -337,6 +426,8 @@ export type TurnContext = {
   followUp?: boolean;
   /** When the turn began, in epoch milliseconds; now when not given. */
   startedAt?: number;
+  /** The agent the person handed the message to, in place of the conversation's own. */
+  directedAgentId?: string;
 };
 
 export function initialTurnState(
@@ -365,7 +456,22 @@ export function initialTurnState(
     followUp: context.followUp ?? false,
     thread: null,
     startedAt: context.startedAt ?? Date.now(),
+    interjections: [],
+    next: null,
   };
+}
+
+/** The queued messages the turn has read so far, by id. */
+export function steeredIds(
+  interjections: readonly TurnInterjection[] | undefined,
+): ReadonlySet<string> {
+  const ids = new Set<string>();
+  for (const interjection of interjections ?? []) {
+    if (interjection.kind === "steer") {
+      ids.add(interjection.id);
+    }
+  }
+  return ids;
 }
 
 /**
@@ -499,6 +605,16 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
       }));
     }
 
+    case "delegate_reply_replaced": {
+      // The other agent's corrected reply replaces only what it had streamed.
+      const data = event.data;
+      return updateDelegate(state, data.delegateCallId, data.agentId, (delegate) => ({
+        ...delegate,
+        retrying: null,
+        segments: replaceReply(delegate.segments, data.text),
+      }));
+    }
+
     case "delegate_finished": {
       const data = event.data;
       return updateDelegate(state, data.delegateCallId, data.agentId, (delegate) => ({
@@ -528,6 +644,18 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
           maxAttempts: event.data.maxAttempts ?? 0,
         },
         segments: event.data.kind === "busy" ? state.segments : withdrawAttempt(state.segments),
+      };
+
+    case "reply_replaced":
+      // The runtime corrected the reply after it streamed: ids taken out, a
+      // reprinted table pointed to, a code block left out. The model was not
+      // asked again, so this is no retry: the streamed reply is swapped for
+      // the one recorded, the way the reader would have seen it arrive.
+      return {
+        ...state,
+        status: "streaming",
+        retrying: null,
+        segments: replaceReply(state.segments, event.data.text),
       };
 
     case "artifact": {
@@ -562,6 +690,53 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
 
     case "thread":
       return { ...state, thread: event.data };
+
+    case "steered": {
+      // A reader that rejoins is sent the turn from its start, so a steer it
+      // already holds is not added twice.
+      const steer = event.data;
+      if (state.interjections.some((item) => item.kind === "steer" && item.id === steer.id)) {
+        return state;
+      }
+      return {
+        ...state,
+        interjections: [
+          ...state.interjections,
+          {
+            kind: "steer",
+            id: steer.id,
+            text: steer.content,
+            mentions: steer.mentions,
+            toolsBefore: state.segments.filter((segment) => segment.kind === "tool").length,
+          },
+        ],
+      };
+    }
+
+    case "world_changed": {
+      const changes = event.data.changes;
+      if (changes.length === 0) {
+        return state;
+      }
+      const key = changes.map((change) => `${change.recordId}:${change.at}`).join("|");
+      if (state.interjections.some((item) => item.kind === "world" && item.key === key)) {
+        return state;
+      }
+      return {
+        ...state,
+        interjections: [...state.interjections, { kind: "world", key, changes }],
+      };
+    }
+
+    case "next_turn":
+      return {
+        ...state,
+        next: {
+          turnId: event.data.turnId,
+          queuedId: event.data.queuedId,
+          input: event.data.input,
+        },
+      };
 
     case "done":
       // A refusal is complete in itself; done after it only says the turn

@@ -34,6 +34,7 @@ export default function LedgerTable({
   return (
     <DataTable<AccountingSyncLedgerRow>
       name="Sync record"
+      emptyTitle={t("No sync records yet")}
       queryKey={ACCOUNTING_SYNC_LEDGER_KEY}
       graphql={graphql}
       resource={Resource.AccountingSync}

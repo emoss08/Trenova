@@ -3,8 +3,8 @@ package journalentryresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/journalentry"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -14,7 +14,7 @@ import (
 func journalReviewRequest(
 	authCtx *authctx.AuthContext,
 	input gqlmodel.JournalReviewInput,
-) (*services.JournalReviewRequest, error) {
+) (*journalentryports.JournalReviewRequest, error) {
 	entryIDs := make([]pulid.ID, 0, len(input.EntryIds))
 	for _, raw := range input.EntryIds {
 		id, err := pulid.MustParse(raw)
@@ -28,7 +28,7 @@ func journalReviewRequest(
 		entryIDs = append(entryIDs, id)
 	}
 
-	return &services.JournalReviewRequest{
+	return &journalentryports.JournalReviewRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		EntryIDs:   entryIDs,
 	}, nil

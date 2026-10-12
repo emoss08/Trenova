@@ -19,6 +19,8 @@ export function sourcePaths(webRoot) {
     router: join(src, "router.tsx"),
     navigation: join(src, "config", "navigation.config.ts"),
     recordLinks: join(src, "config", "record-links.ts"),
+    recordKinds: join(shared, "types", "generated", "record-kinds.ts"),
+    deskCards: join(src, "routes", "desk", "_components", "artifacts", "cards", "registry.tsx"),
     resources: join(shared, "types", "generated", "permission-resources.ts"),
     capabilities: join(shared, "types", "organization-capability.ts"),
   };
@@ -144,6 +146,18 @@ function resolveModule(src, specifier) {
 }
 
 /**
+ * The route array a `routes` declaration holds, looking through a call that
+ * wraps it whole, such as `withPathScopedRevalidation([...])`.
+ */
+function routeArray(node) {
+  if (node?.type === "CallExpression" && node.arguments.length === 1) {
+    return node.arguments[0];
+  }
+
+  return node;
+}
+
+/**
  * The pages a signed-in person can open: every route under a protected
  * loader that renders a page rather than redirecting, with the permissions
  * and capabilities its loaders (and its parents') demand.
@@ -151,7 +165,7 @@ function resolveModule(src, specifier) {
 export function readRoutes(paths, members) {
   const { program } = parseFile(paths.router);
   const consts = topLevelConsts(program);
-  const routesNode = consts.get("routes");
+  const routesNode = routeArray(consts.get("routes"));
   if (routesNode?.type !== "ArrayExpression") {
     throw new Error(`${paths.router}: routes is not an array literal`);
   }
@@ -274,6 +288,29 @@ export function readNavigation(paths, members) {
 
 export function readRecordLinks(paths) {
   return objectConst(paths.recordLinks, "RECORD_LINKS");
+}
+
+/** The kinds of record the server knows, generated from its permission registry. */
+export function readRecordKinds(paths) {
+  return new Set(Object.keys(objectConst(paths.recordKinds, "RecordKindIDPrefix")));
+}
+
+/**
+ * The kinds of record the Desk draws as a card of its own: the keys of the
+ * card registry. Its values are lazily loaded components, which a static read
+ * cannot evaluate and does not need.
+ */
+export function readDeskCards(paths) {
+  const { program } = parseFile(paths.deskCards);
+  let node = topLevelConsts(program).get("RECORD_CARDS");
+  while (node && node.type !== "ObjectExpression" && node.expression) {
+    node = node.expression;
+  }
+  if (node?.type !== "ObjectExpression") {
+    throw new Error(`${paths.deskCards}: no top-level object RECORD_CARDS`);
+  }
+
+  return new Set(node.properties.map(propertyName).filter((name) => name !== null));
 }
 
 function jsxAttributeObject(element, name) {

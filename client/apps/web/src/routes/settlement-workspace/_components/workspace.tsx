@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingDetailUnselected } from "@/components/billing/billing-empty";
 import { SettlementPeriodEmpty } from "@/components/settlements/settlement-period-empty";
@@ -18,7 +19,7 @@ import { SettlementDetail } from "@/routes/driver-settlement/_components/settlem
 import { DriverContextRail } from "./driver-context-rail";
 import { SettlementQueue, type QueueFilter } from "./settlement-queue";
 import { InstantPayDialog } from "./instant-pay-dialog";
-import { UnsettledDriversDialog } from "./unsettled-drivers-dialog";
+import { batchUpToDateMessage, UnsettledDriversDialog } from "./unsettled-drivers-dialog";
 import { WorkspaceSummaryStrip } from "./workspace-summary";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
@@ -132,14 +133,12 @@ export default function Workspace() {
     onSuccess: (batch) => {
       toast.success(
         batch.settlementCount > 0
-          ? `Batch up to date — ${batch.settlementCount} settlement${
-              batch.settlementCount === 1 ? "" : "s"
-            }${batch.exceptionCount > 0 ? `, ${batch.exceptionCount} need review` : ""}`
-          : "Batch created — no drivers had unsettled pay events",
+          ? batchUpToDateMessage(batch)
+          : t("Batch created — no drivers had unsettled pay events"),
       );
       refresh();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to generate settlements"),
+    onError: (error: Error) => toast.error(error.message || t("Failed to generate settlements")),
   });
 
   if (summaryLoading || !summary) {
@@ -194,8 +193,11 @@ export default function Workspace() {
               onClick={() => generateMutation.mutate()}
               title={
                 summary.unsettledEventCount === 0
-                  ? "No unsettled pay events are waiting — there is nothing to generate"
-                  : `Build one settlement per driver from ${summary.unsettledEventCount} unsettled pay events`
+                  ? t("No unsettled pay events are waiting — there is nothing to generate")
+                  : t(
+                      "Build one settlement per driver from {0, plural, one {# unsettled pay event} other {# unsettled pay events}}",
+                      summary.unsettledEventCount,
+                    )
               }
             >
               <AssistMark className="size-3.5" />
@@ -264,9 +266,13 @@ export default function Workspace() {
 
 function periodEmptyDescription(unsettledEventCount: number, unsettledWorkerCount: number) {
   if (unsettledEventCount === 0) {
-    return "Pay events accrue automatically as drivers complete moves. Once there is unsettled pay, generate the period's settlements from here.";
+    return translate(
+      "Pay events accrue automatically as drivers complete moves. Once there is unsettled pay, generate the period's settlements from here.",
+    );
   }
-  const events = `${unsettledEventCount} pay event${unsettledEventCount === 1 ? "" : "s"}`;
-  const drivers = `${unsettledWorkerCount} driver${unsettledWorkerCount === 1 ? "" : "s"}`;
-  return `${events} across ${drivers} are waiting to be settled. Generating builds one draft settlement per driver, with earnings, deductions, advance recoveries and escrow pulled in on their own.`;
+  return translate(
+    "Waiting to be settled: {0, plural, one {# pay event} other {# pay events}} across {1, plural, one {# driver} other {# drivers}}. Generating builds one draft settlement per driver, with earnings, deductions, advance recoveries and escrow pulled in on their own.",
+    unsettledEventCount,
+    unsettledWorkerCount,
+  );
 }

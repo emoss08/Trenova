@@ -1,6 +1,6 @@
 name: Trenova Capture
 
-# The Windows companion under native/capture. Every push checks the workspace
+# The Windows companion under desktop/capture. Every push checks the workspace
 # on Linux (where everything that is not Windows runs and is tested) and on
 # Windows (where it all compiles, links and runs, for both targets, and the
 # MSI is built). A tag capture-vX.Y.Z publishes a signed release: the MSI, its
@@ -17,7 +17,7 @@ on:
     tags:
       - "capture-v*"
     paths:
-      - "native/capture/**"
+      - "desktop/capture/**"
       - "client/apps/web/public/logo.ico"
       - ".github/workflows/native-capture.yml"
   pull_request:
@@ -26,7 +26,7 @@ on:
       - main
       - develop
     paths:
-      - "native/capture/**"
+      - "desktop/capture/**"
       - "client/apps/web/public/logo.ico"
       - ".github/workflows/native-capture.yml"
   workflow_dispatch:
@@ -48,7 +48,7 @@ env:
 
 defaults:
   run:
-    working-directory: native/capture
+    working-directory: desktop/capture
 
 jobs:
   linux:
@@ -65,7 +65,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: native/capture
+          workspaces: desktop/capture
 
       - name: Format
         run: cargo fmt --all -- --check
@@ -114,7 +114,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: native/capture
+          workspaces: desktop/capture
 
       - name: Version
         id: version
@@ -195,8 +195,8 @@ jobs:
         with:
           name: trenova-capture-msi
           path: |
-            native/capture/installer/out/*.msi
-            native/capture/installer/out/*.json
+            desktop/capture/installer/out/*.msi
+            desktop/capture/installer/out/*.json
           if-no-files-found: error
 
   release:

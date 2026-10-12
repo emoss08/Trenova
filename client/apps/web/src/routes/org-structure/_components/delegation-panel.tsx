@@ -90,12 +90,12 @@ export function DelegationPanel() {
       {
         value: "given",
         label: t("Handed out"),
-        caption: given.data ? `${inForce(given.data, today)} in force` : undefined,
+        caption: given.data ? t("{0} in force", inForce(given.data, today)) : undefined,
       },
       {
         value: "received",
         label: t("Covering for"),
-        caption: received.data ? `${inForce(received.data, today)} in force` : undefined,
+        caption: received.data ? t("{0} in force", inForce(received.data, today)) : undefined,
       },
     ],
     [given.data, received.data, today, t],
@@ -186,7 +186,11 @@ export function DelegationPanel() {
                   isLoading={revokeMutation.isPending && revokeMutation.variables === delegation.id}
                   disabled={revokeMutation.isPending}
                   onClick={() => revokeMutation.mutate(delegation.id)}
-                  aria-label={`Call back the delegation to ${delegation.delegate?.name ?? "them"}`}
+                  aria-label={
+                    delegation.delegate?.name
+                      ? t("Call back the delegation to {0}", delegation.delegate.name)
+                      : t("Call back the delegation to them")
+                  }
                 >
                   {t("Call back")}
                 </Button>

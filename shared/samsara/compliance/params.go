@@ -1,11 +1,15 @@
 package compliance
 
 import (
+	"fmt"
 	"net/url"
 	"time"
 
 	"github.com/emoss08/trenova/shared/samsara/internal/httpx"
+	samsaraspec "github.com/emoss08/trenova/shared/samsara/internal/samsaraspec"
 )
+
+const maxClocksLimit = 512
 
 type HOSClocksParams struct {
 	TagIDs       []string
@@ -17,7 +21,7 @@ type HOSClocksParams struct {
 
 //nolint:gocritic // value receiver is kept for ergonomic immutable call sites.
 func (p HOSClocksParams) Validate() error {
-	if p.Limit != 0 && (p.Limit < 1 || p.Limit > 512) {
+	if p.Limit != 0 && (p.Limit < 1 || p.Limit > maxClocksLimit) {
 		return ErrListLimitInvalid
 	}
 	return nil
@@ -47,15 +51,52 @@ type HOSDailyLogsParams struct {
 
 //nolint:gocritic // value receiver is kept for ergonomic immutable call sites.
 func (p HOSDailyLogsParams) Validate() error {
-	for _, date := range []string{p.StartDate, p.EndDate} {
-		if date == "" {
-			continue
-		}
-		if _, err := time.Parse("2006-01-02", date); err != nil {
-			return ErrDateFormatInvalid
+	start, err := parseDate(p.StartDate)
+	if err != nil {
+		return err
+	}
+	end, err := parseDate(p.EndDate)
+	if err != nil {
+		return err
+	}
+	if !start.IsZero() && !end.IsZero() && end.Before(start) {
+		return ErrDateRangeInvalid
+	}
+	if p.DriverActivationStatus != "" &&
+		!samsaraspec.GetHosDailyLogsParamsDriverActivationStatus(p.DriverActivationStatus).Valid() {
+		return fmt.Errorf("%w: %q", ErrDriverActivationStatusInvalid, p.DriverActivationStatus)
+	}
+	for _, expand := range p.Expand {
+		if !samsaraspec.GetHosDailyLogsParamsExpand(expand).Valid() {
+			return fmt.Errorf("%w: %q", ErrExpandInvalid, expand)
 		}
 	}
 	return nil
+}
+
+func parseDate(value string) (time.Time, error) {
+	if value == "" {
+		return time.Time{}, nil
+	}
+	parsed, err := time.Parse(time.DateOnly, value)
+	if err != nil {
+		return time.Time{}, ErrDateFormatInvalid
+	}
+	return parsed, nil
+}
+
+func validateTimeRange(start, end *time.Time) error {
+	if start != nil && end != nil && end.Before(*start) {
+		return ErrTimeRangeInvalid
+	}
+	return nil
+}
+
+func validateRequiredTimeRange(start, end *time.Time) error {
+	if start == nil || end == nil {
+		return ErrTimeRangeRequired
+	}
+	return validateTimeRange(start, end)
 }
 
 //nolint:gocritic // value receiver is kept for ergonomic immutable call sites.
@@ -83,6 +124,11 @@ type HOSViolationsParams struct {
 }
 
 //nolint:gocritic // value receiver is kept for ergonomic immutable call sites.
+func (p HOSViolationsParams) Validate() error {
+	return validateTimeRange(p.StartTime, p.EndTime)
+}
+
+//nolint:gocritic // value receiver is kept for ergonomic immutable call sites.
 func (p HOSViolationsParams) Query() url.Values {
 	values := url.Values{}
 	httpx.SetStringsCSV(values, "driverIds", p.DriverIDs)
@@ -102,6 +148,11 @@ type HOSLogsParams struct {
 	StartTime    *time.Time
 	EndTime      *time.Time
 	After        string
+}
+
+//nolint:gocritic // value receiver is kept for ergonomic immutable call sites.
+func (p HOSLogsParams) Validate() error {
+	return validateTimeRange(p.StartTime, p.EndTime)
 }
 
 //nolint:gocritic // value receiver is kept for ergonomic immutable call sites.
@@ -126,6 +177,11 @@ type DriverTachographParams struct {
 }
 
 //nolint:gocritic // value receiver is kept for ergonomic immutable call sites.
+func (p DriverTachographParams) Validate() error {
+	return validateRequiredTimeRange(p.StartTime, p.EndTime)
+}
+
+//nolint:gocritic // value receiver is kept for ergonomic immutable call sites.
 func (p DriverTachographParams) Query() url.Values {
 	values := url.Values{}
 	httpx.SetString(values, "after", p.After)
@@ -144,6 +200,11 @@ type VehicleTachographParams struct {
 	VehicleIDs   []string
 	ParentTagIDs []string
 	TagIDs       []string
+}
+
+//nolint:gocritic // value receiver is kept for ergonomic immutable call sites.
+func (p VehicleTachographParams) Validate() error {
+	return validateRequiredTimeRange(p.StartTime, p.EndTime)
 }
 
 //nolint:gocritic // value receiver is kept for ergonomic immutable call sites.

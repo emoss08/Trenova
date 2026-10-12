@@ -1,0 +1,211 @@
+package assistantservice
+
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
+	"go.uber.org/zap"
+)
+
+// DelegateDeclinedError is an agent that may not be handed a task, with why,
+// in words the agent that asked can pass on to the person.
+type DelegateDeclinedError struct {
+	Reason string
+}
+
+func (e *DelegateDeclinedError) Error() string { return e.Reason }
+
+func declined(reason string) error { return &DelegateDeclinedError{Reason: reason} }
+
+// OpenDelegateRequest is a task the agent a person is talking to hands to
+// another agent, from inside that person's turn.
+type OpenDelegateRequest struct {
+	// Parent is the agent that handed the task over, as its turn began.
+	Parent *agentdefinition.Definition
+	// Actor is the person the turn runs as. The delegate runs as them too.
+	Actor     *permissionports.RequestActor
+	ThreadID  pulid.ID
+	StepOwner agentports.RunStepOwner
+	Call      agentruntime.DelegateCall
+	// Records are the records the parent's turn is about. The delegate reads
+	// their memories, since the task is about them too.
+	Records []agent.EntityRef
+}
+
+// DelegateOpening is the delegate's turn, ready to drive.
+type DelegateOpening struct {
+	Request *agentports.RunRequest
+	Turn    agentruntime.TurnState
+}
+
+// OpenDelegate checks that the task may be handed to the agent it names and
+// opens that agent's turn on it.
+//
+// Every check is made again here, against the records as they are now rather
+// than as the turn began: the parent must still list the delegate (unless the
+// person chose it from the conversation, which stands in for the list), the
+// delegate must still exist in the tenant, be enabled and be an agent people
+// talk to, the person must still be allowed to use the assistant and the
+// delegate itself, and the delegate's own budget must not be spent. A refusal is a
+// *DelegateDeclinedError.
+//
+// The turn is opened as the delegate: its tools narrowed to what the person
+// may use, its tiers, its ceiling, its budget, its model. It is marked as
+// working for the parent, so it never holds delegate_task, and it is not
+// unattended, so a write that is the person's own still runs as theirs.
+func (s *Service) OpenDelegate(
+	ctx context.Context,
+	req *OpenDelegateRequest,
+) (*DelegateOpening, error) {
+	if req.Parent == nil || req.Actor == nil {
+		return nil, declined("There is no conversation to hand this task from.")
+	}
+	tenant := req.Actor.TenantInfo()
+	name := req.Call.Delegate.Name
+
+	parent, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
+		ID:         req.Parent.ID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, declined("The agent handing this task over no longer exists.")
+		}
+
+		return nil, fmt.Errorf("read the agent handing over the task: %w", err)
+	}
+
+	delegate, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
+		ID:         req.Call.Delegate.ID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, declined(name + " no longer exists.")
+		}
+
+		return nil, fmt.Errorf("read %s: %w", name, err)
+	}
+
+	if refusal := delegateRefusal(parent, delegate, req.Call.Directed); refusal != "" {
+		return nil, declined(refusal)
+	}
+	usable := agentruntime.UsableAgentsFor(ctx, s.permissions, req.Actor, s.logger)
+	if !usable.Assistant {
+		return nil, declined("The person is not allowed to use other agents, so " +
+			delegate.Name + " cannot be asked.")
+	}
+	if !usable.Allows(delegate) {
+		return nil, declined("The person may not use " + delegate.Name + ", so it cannot " +
+			"be asked. Do the task with your own tools, or tell them an administrator can " +
+			"give one of their roles access to it.")
+	}
+	if err = s.assertWithinBudget(ctx, delegate); err != nil {
+		if errortypes.IsBusinessError(err) {
+			return nil, declined(err.Error())
+		}
+
+		return nil, err
+	}
+
+	runReq := &agentports.RunRequest{
+		Definition: delegate,
+		Actor:      req.Actor,
+		Context:    s.delegateContext(ctx, parent, delegate, req),
+		Input:      agentruntime.DelegateInput(req.Call.Task, req.Call.Context),
+		ThreadID:   req.ThreadID,
+		// Earlier proposals keep the delegate from proposing again a write
+		// that is already waiting on the person.
+		Proposals: s.proposalOutcomes(ctx, &conversation.Thread{ID: req.ThreadID}, tenant),
+		// A document it publishes is kept beside the same conversation.
+		Publishes: s.artifacts != nil,
+		StepOwner: req.StepOwner,
+		Delegation: &agentports.Delegation{
+			ParentAgentID:   parent.ID,
+			ParentAgentName: parent.Name,
+			CallID:          req.Call.Call.ID,
+			StepScope:       req.Call.StepScope,
+		},
+		// The delegate reads what the task says, and the task was written
+		// by a turn that may have read outside content.
+		Taint: req.Call.Taint.Clone(),
+	}
+
+	return &DelegateOpening{
+		Request: runReq,
+		Turn:    s.runtime.OpenTurn(ctx, runReq).State(),
+	}, nil
+}
+
+// delegateContext is the delegate's prompt context: its own, built as for a
+// conversation, and marked as working for the parent. A context that cannot
+// be built leaves the delegate with less to go on, not without its task.
+func (s *Service) delegateContext(
+	ctx context.Context,
+	parent, delegate *agentdefinition.Definition,
+	req *OpenDelegateRequest,
+) agentdefinition.RuntimeContext {
+	bare := agentdefinition.RuntimeContext{
+		Trigger:          agent.RunTriggerChat,
+		DelegatedBy:      parent.Name,
+		DelegatorRecords: req.Records,
+	}
+	if s.contexts == nil {
+		return bare
+	}
+
+	built, err := s.contexts.Build(ctx, &agentports.RuntimeContextRequest{
+		Definition:       delegate,
+		Actor:            req.Actor,
+		Trigger:          agent.RunTriggerChat,
+		DelegatedBy:      parent.Name,
+		DelegatorRecords: req.Records,
+		Query: (&agentports.ContextQuery{
+			Actor:        req.Actor,
+			DefinitionID: definitionID(delegate),
+			ThreadID:     req.ThreadID,
+			Input:        req.Call.Task,
+		}).Request(),
+	})
+	if err != nil {
+		s.logger.Warn("the context of an agent handed a task could not be built",
+			zap.String("agent", delegate.ID.String()),
+			zap.Error(err),
+		)
+
+		return bare
+	}
+
+	return built
+}
+
+// delegateRefusal is why the parent's conversation may not hand delegate the
+// task. A task the person chose the agent for needs no place on the parent's
+// list; every other refusal holds.
+func delegateRefusal(parent, delegate *agentdefinition.Definition, directed bool) string {
+	if directed {
+		return parent.TaskRefusal(delegate)
+	}
+
+	return parent.DelegateRefusal(delegate)
+}
+
+// IsDelegateDeclined reports a task an agent may not be handed.
+func IsDelegateDeclined(err error) (*DelegateDeclinedError, bool) {
+	var refusal *DelegateDeclinedError
+	if errors.As(err, &refusal) {
+		return refusal, true
+	}
+
+	return nil, false
+}

@@ -33,6 +33,7 @@ function OrgLogo({
   initials: string;
   isSwitching: boolean;
 }) {
+  const t = useT();
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
   const hasLogo = Boolean(logoURL) && !imageLoadFailed;
 
@@ -48,7 +49,7 @@ function OrgLogo({
     return (
       <LazyImage
         src={logoURL}
-        alt={`${orgName ?? "Organization"} logo`}
+        alt={orgName ? t("{0} logo", orgName) : t("Organization logo")}
         className="size-7 shrink-0 rounded-md object-cover"
         onError={() => setImageLoadFailed(true)}
       />
@@ -166,7 +167,7 @@ export function OrgSwitcher({ compact = false }: { compact?: boolean }) {
                   <button
                     type="button"
                     disabled={switchMutation.isPending}
-                    aria-label={`Switch organization (current: ${orgName})`}
+                    aria-label={t("Switch organization (current: {0})", orgName)}
                     className="hover:ring-ring/40 inline-flex rounded-md transition-shadow hover:ring-2 disabled:opacity-60"
                   />
                 }

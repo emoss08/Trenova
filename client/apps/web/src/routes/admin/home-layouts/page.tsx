@@ -30,9 +30,11 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { useRoleOptions } from "./_components/use-role-options";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 export function HomeLayoutsPage() {
   const t = useT();
+  const rt = useRichT();
 
   const { data: presets, isLoading } = useHomeLayoutPresets();
   const { data: roles } = useRoleOptions();
@@ -50,7 +52,7 @@ export function HomeLayoutsPage() {
   const remove = async (preset: HomeLayoutPreset) => {
     try {
       await deletePreset.mutateAsync(preset.id);
-      toast.success(`Deleted ${preset.name}`);
+      toast.success(t("Deleted {0}", preset.name));
       setConfirming(null);
     } catch (error) {
       toast.error(graphQLErrorMessage(error, "Could not delete that home screen"));
@@ -106,11 +108,11 @@ export function HomeLayoutsPage() {
             <AlertDialogDescription>
               {confirming && (
                 <>
-                  <strong>{confirming.name}</strong>{" "}
-                  {t(
-                    "reaches {0} {1}. They will fall back to the next home screen that matches them. This cannot be undone.",
+                  {rt(
+                    "<b>{0}</b> reaches {1, plural, one {# person} other {# people}}. They will fall back to the next home screen that matches them. This cannot be undone.",
+                    { b: (c) => <strong>{c}</strong> },
+                    confirming.name,
                     confirming.assignedUserCount,
-                    confirming.assignedUserCount === 1 ? "person" : "people",
                   )}
                 </>
               )}
@@ -199,7 +201,7 @@ function PresetRow({
             variant="ghost"
             size="icon"
             className="text-destructive"
-            aria-label={`Delete ${preset.name}`}
+            aria-label={t("Delete {0}", preset.name)}
             onClick={onDelete}
           >
             <Trash01Icon className="size-4" />

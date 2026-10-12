@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -118,7 +118,7 @@ func emptyMyAgentConnection(ctx context.Context) *gqlmodel.MyAgentConnection {
 }
 
 func audienceSuggestionToModel(
-	suggestion *services.AgentAudienceSuggestion,
+	suggestion *agentdefinitionports.AgentAudienceSuggestion,
 ) *gqlmodel.AgentAudienceSuggestion {
 	return &gqlmodel.AgentAudienceSuggestion{
 		AgentID:        suggestion.Agent.ID.String(),
@@ -129,7 +129,7 @@ func audienceSuggestionToModel(
 }
 
 func accessPreviewToModel(
-	suggestion *services.AgentAudienceSuggestion,
+	suggestion *agentdefinitionports.AgentAudienceSuggestion,
 ) *gqlmodel.AgentAccessPreview {
 	return &gqlmodel.AgentAccessPreview{
 		AccessMode:     suggestion.Agent.EffectiveAccessMode(),
@@ -138,7 +138,9 @@ func accessPreviewToModel(
 	}
 }
 
-func audienceRolesToModel(entries []services.AgentAudienceRole) []*gqlmodel.AgentAudienceRole {
+func audienceRolesToModel(
+	entries []agentdefinitionports.AgentAudienceRole,
+) []*gqlmodel.AgentAudienceRole {
 	roles := make([]*gqlmodel.AgentAudienceRole, 0, len(entries))
 	for i := range entries {
 		entry := &entries[i]
@@ -162,8 +164,8 @@ func audienceRolesToModel(entries []services.AgentAudienceRole) []*gqlmodel.Agen
 func accessPreviewRequest(
 	tenant pagination.TenantInfo,
 	input *gqlmodel.AgentAccessPreviewInput,
-) (*services.PreviewAgentAudienceRequest, error) {
-	req := &services.PreviewAgentAudienceRequest{
+) (*agentdefinitionports.PreviewAgentAudienceRequest, error) {
+	req := &agentdefinitionports.PreviewAgentAudienceRequest{
 		TenantInfo: tenant,
 		ToolNames:  input.ToolNames,
 		Mode:       input.AccessMode,

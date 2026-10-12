@@ -1,0 +1,20 @@
+{
+  "A response has already been recorded for this offer. Contact the broker if anything changed.": "Ya se registró una respuesta para esta oferta. Contacte con el corredor si algo cambió.",
+  "Accept load": "Aceptar carga",
+  "Accepting...": "Aceptando...",
+  "Already answered": "Ya respondido",
+  "Confirm decline": "Confirmar rechazo",
+  "Declining...": "Rechazando...",
+  "Load offer": "Oferta de carga",
+  "Load offer for {0}": "Oferta de carga para {0}",
+  "Offer expires {0}": "La oferta caduca el {0}",
+  "PRO {0} · respond before the offer expires": "PRO {0} · responda antes de que caduque la oferta",
+  "Powered by Trenova. Questions about this load? Reply to the offer email.": "Con tecnología de Trenova. ¿Preguntas sobre esta carga? Responda al correo de la oferta.",
+  "Response recorded": "Respuesta registrada",
+  "Review and respond to a load offer": "Revise y responda a una oferta de carga",
+  "Thank you — the dispatcher has been notified of your response.": "Gracias: se ha notificado su respuesta al despachador.",
+  "The offer could not be loaded because of a temporary problem. Please try again in a moment.": "No se pudo cargar la oferta por un problema temporal. Vuelva a intentarlo en un momento.",
+  "The offer may have expired, been withdrawn, or already been answered. Contact the broker if you believe this is an error.": "La oferta puede haber caducado, haber sido retirada o ya haber sido respondida. Contacte con el corredor si cree que se trata de un error.",
+  "This offer link is no longer valid": "Este enlace de la oferta ya no es válido",
+  "Your response could not be recorded because of a temporary problem. Nothing has been submitted — please try again in a moment.": "No se pudo registrar su respuesta por un problema temporal. No se ha enviado nada; vuelva a intentarlo en un momento."
+}

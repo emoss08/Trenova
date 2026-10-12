@@ -1,4 +1,5 @@
 import { useDeskStore } from "@/stores/desk-store";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { LegalLinks, hasLegalUrls } from "@/components/legal-links";
 import { useLegalUrls } from "@/hooks/use-legal-urls";
@@ -35,9 +36,15 @@ export function DeskTermsNote() {
         <span>
           {t("Make sure you agree to our")} <LegalLinks urls={urls} />.
         </span>
-        <button type="button" className="dk-tnote-x" onClick={close} aria-label={t("Dismiss")}>
+        <Button
+          variant="bare"
+          size="bare"
+          className="dk-tnote-x absolute top-1/2 right-1.5 size-5.5 -translate-y-1/2 justify-center rounded-md text-inherit opacity-65 transition-[opacity,background-color] duration-120 hover:opacity-100"
+          onClick={close}
+          aria-label={t("Dismiss")}
+        >
           <DeskIcon name="x" size={12} stroke={2.2} />
-        </button>
+        </Button>
       </div>
     </div>
   );

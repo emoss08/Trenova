@@ -1,0 +1,157 @@
+package masterdatatools
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+)
+
+type AssignMoveTool struct {
+	assignments shipmentports.AssignmentService
+	console     assignmentChecker
+}
+
+func NewAssignMoveTool(
+	assignments shipmentports.AssignmentService,
+	console agentports.DispatchConsoleService,
+) agentports.AgentTool {
+	return &AssignMoveTool{assignments: assignments, console: console}
+}
+
+func (t *AssignMoveTool) Name() string { return "assign_move" }
+
+func (t *AssignMoveTool) Prerequisites() []string {
+	return []string{
+		"get_shipment", "rank_move_candidates", "search_worker", "list_tractors", "list_trailers",
+	}
+}
+
+func (t *AssignMoveTool) Recipe() []string {
+	return []string{"get_shipment", "rank_move_candidates", "assign_move"}
+}
+
+func (t *AssignMoveTool) Description() string {
+	return "Assign a driver and equipment to a shipment move that has no driver yet. " +
+		"Use it once a driver is chosen, usually from rank_move_candidates or plan_dispatch, " +
+		"which hand back the move, driver, tractor and trailer ids together. The move " +
+		"must be unassigned; use reassignment for a move that already has a driver."
+}
+
+func (t *AssignMoveTool) ParamSchema() map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"shipmentMoveId": agenttoolschema.RecordIDText(
+				permission.ResourceShipmentMove,
+				"The move to cover, from get_dispatch_board (moveId), "+
+					"get_shipment (its moves) or plan_dispatch.",
+			),
+			"primaryWorkerId": agenttoolschema.RecordIDText(
+				permission.ResourceWorker,
+				"The driver to put on the move, from rank_move_candidates, "+
+					"plan_dispatch, search_worker or list_workers.",
+			),
+			"tractorId": agenttoolschema.RecordIDText(
+				permission.ResourceTractor,
+				"The tractor the driver will use, from rank_move_candidates or "+
+					"list_tractors.",
+			),
+			"trailerId": agenttoolschema.RecordIDText(
+				permission.ResourceTrailer,
+				"The trailer, when the move needs one, from rank_move_candidates "+
+					"or list_trailers.",
+			),
+			"secondaryWorkerId": agenttoolschema.RecordIDText(
+				permission.ResourceWorker,
+				"A second driver for a team move, from list_workers or "+
+					"search_worker.",
+			),
+		},
+		"required":             []string{"shipmentMoveId", "primaryWorkerId", "tractorId"},
+		"additionalProperties": false,
+	}
+}
+
+func (t *AssignMoveTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceShipmentMove,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Assigns a driver and tractor to a move; the driver sees the assignment " +
+			"but no text the model wrote.",
+	}
+}
+
+func (t *AssignMoveTool) Execute(
+	ctx context.Context,
+	params agentports.ToolExecuteParams,
+) error {
+	if err := common.GuardExecute(t, params); err != nil {
+		return err
+	}
+
+	req, err := t.request(&params)
+	if err != nil {
+		return err
+	}
+
+	_, err = t.assignments.AssignToMove(ctx, req)
+
+	return err
+}
+
+func (t *AssignMoveTool) request(
+	params *agentports.ToolExecuteParams,
+) (*shipmentports.AssignShipmentMoveRequest, error) {
+	moveID, err := common.RequirePulid(params.Params, "shipmentMoveId")
+	if err != nil {
+		return nil, err
+	}
+	workerID, err := common.RequirePulid(params.Params, "primaryWorkerId")
+	if err != nil {
+		return nil, err
+	}
+	tractorID, err := common.RequirePulid(params.Params, "tractorId")
+	if err != nil {
+		return nil, err
+	}
+
+	req := &shipmentports.AssignShipmentMoveRequest{
+		TenantInfo:      common.TenantFrom(*params),
+		ShipmentMoveID:  moveID,
+		PrimaryWorkerID: workerID,
+		TractorID:       tractorID,
+	}
+
+	if trailerID, ok, pErr := common.OptionalPulid(params.Params, "trailerId"); pErr != nil {
+		return nil, pErr
+	} else if ok {
+		req.TrailerID = &trailerID
+	}
+	if secondID, ok, pErr := common.OptionalPulid(params.Params, "secondaryWorkerId"); pErr != nil {
+		return nil, pErr
+	} else if ok {
+		req.SecondaryWorkerID = &secondID
+	}
+
+	return req, nil
+}
+
+// Target names the record this call would change, so a proposal to change it
+// can be checked against the record's version before it runs.
+func (t *AssignMoveTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+	return common.TargetOf(params, "shipmentMoveId", permission.ResourceShipmentMove)
+}

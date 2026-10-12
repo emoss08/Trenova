@@ -1,41 +1,51 @@
 package aiproviderhandler
 
 import (
-	"github.com/shopspring/decimal"
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 )
 
 type Params struct {
 	fx.In
 
-	Service              serviceports.AIProviderService
+	Service              agentports.AIProviderService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
+	Config               *config.Config `optional:"true"`
 }
 
 type Handler struct {
-	service serviceports.AIProviderService
+	service agentports.AIProviderService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
+	ai      *config.AIConfig
 }
 
 func New(p Params) *Handler {
+	var ai *config.AIConfig
+	if p.Config != nil {
+		ai = p.Config.GetAIConfig()
+	}
+
 	return &Handler{
 		service: p.Service,
 		eh:      p.ErrorHandler,
 		pm:      p.PermissionMiddleware,
+		ai:      ai,
 	}
 }
 
@@ -52,9 +62,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.POST("/:providerID/test/", h.pm.RequirePermission(resource, permission.OpManage), h.test)
 }
 
-func requestActorFromAuthContext(authCtx *authctx.AuthContext) serviceports.RequestActor {
-	return serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalType(authCtx.PrincipalType),
+func requestActorFromAuthContext(authCtx *authctx.AuthContext) permissionports.RequestActor {
+	return permissionports.RequestActor{
+		PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
 		PrincipalID:    authCtx.PrincipalID,
 		UserID:         authCtx.UserID,
 		APIKeyID:       authCtx.APIKeyID,
@@ -81,7 +91,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*aiprovider.Provider], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListAIProviderRequest{Filter: req},
+				&agentports.ListAIProviderRequest{Filter: req},
 			)
 		},
 	)
@@ -96,7 +106,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	provider, err := h.service.GetByID(c.Request.Context(), repositories.GetAIProviderByIDRequest{
+	provider, err := h.service.GetByID(c.Request.Context(), agentports.GetAIProviderByIDRequest{
 		ID:         providerID,
 		TenantInfo: tenantFromAuthContext(authCtx),
 	})
@@ -112,59 +122,77 @@ func (h *Handler) get(c *gin.Context) {
 // omitted field leaves the stored credential untouched, which is what lets the
 // edit form load without ever receiving the secret.
 type saveProviderRequest struct {
-	Name                 string                          `json:"name"`
-	Description          string                          `json:"description"`
-	Kind                 aiprovider.Kind                 `json:"kind"`
-	BaseURL              string                          `json:"baseUrl"`
-	Model                string                          `json:"model"`
-	APIKey               *string                         `json:"apiKey"`
-	AllowPrivateNetwork  bool                            `json:"allowPrivateNetwork"`
-	StructuredOutputMode aiprovider.StructuredOutputMode `json:"structuredOutputMode"`
-	ReasoningEffort      aiprovider.ReasoningEffort      `json:"reasoningEffort"`
-	ThinkingStyle        aiprovider.ThinkingStyle        `json:"thinkingStyle"`
-	ExtraBody            map[string]any                  `json:"extraBody"`
-	InputCostPerMillion  *decimal.Decimal                `json:"inputCostPerMillion"`
-	OutputCostPerMillion *decimal.Decimal                `json:"outputCostPerMillion"`
-	MaxTokens            int                             `json:"maxTokens"`
-	ContextWindow        *int                            `json:"contextWindow"`
-	Tasks                []aiprovider.Task               `json:"tasks"`
-	Priority             int                             `json:"priority"`
-	EmbeddingDimensions  *int                            `json:"embeddingDimensions"`
-	EmbeddingInputStyle  aiprovider.EmbeddingInputStyle  `json:"embeddingInputStyle"`
-	Trusted              bool                            `json:"trusted"`
-	Enabled              bool                            `json:"enabled"`
-	Version              int64                           `json:"version"`
+	Name                     string                          `json:"name"`
+	Description              string                          `json:"description"`
+	Kind                     aiprovider.Kind                 `json:"kind"`
+	BaseURL                  string                          `json:"baseUrl"`
+	Model                    string                          `json:"model"`
+	APIKey                   *string                         `json:"apiKey"`
+	AllowPrivateNetwork      bool                            `json:"allowPrivateNetwork"`
+	StructuredOutputMode     aiprovider.StructuredOutputMode `json:"structuredOutputMode"`
+	ReasoningEffort          aiprovider.ReasoningEffort      `json:"reasoningEffort"`
+	ThinkingStyle            aiprovider.ThinkingStyle        `json:"thinkingStyle"`
+	Platform                 aiprovider.Platform             `json:"platform"`
+	PlatformSettings         *aiprovider.PlatformSettings    `json:"platformSettings"`
+	ExtraBody                map[string]any                  `json:"extraBody"`
+	InputCostPerMillion      *decimal.Decimal                `json:"inputCostPerMillion"`
+	OutputCostPerMillion     *decimal.Decimal                `json:"outputCostPerMillion"`
+	CacheReadCostPerMillion  *decimal.Decimal                `json:"cacheReadCostPerMillion"`
+	CacheWriteCostPerMillion *decimal.Decimal                `json:"cacheWriteCostPerMillion"`
+	MaxTokens                int                             `json:"maxTokens"`
+	ContextWindow            *int                            `json:"contextWindow"`
+	Tasks                    []aiprovider.Task               `json:"tasks"`
+	Priority                 int                             `json:"priority"`
+	EmbeddingDimensions      *int                            `json:"embeddingDimensions"`
+	EmbeddingInputStyle      aiprovider.EmbeddingInputStyle  `json:"embeddingInputStyle"`
+	Trusted                  bool                            `json:"trusted"`
+	Enabled                  bool                            `json:"enabled"`
+	TimeoutSeconds           int                             `json:"timeoutSeconds"`
+	MaxConcurrent            int                             `json:"maxConcurrent"`
+	MonthlyCapUSD            *decimal.Decimal                `json:"monthlyCapUsd"`
+	OnCap                    aiprovider.CapAction            `json:"onCap"`
+	KeepPreviousKey          bool                            `json:"keepPreviousKey"`
+	Version                  int64                           `json:"version"`
 }
 
 func (r *saveProviderRequest) toServiceRequest(
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) *serviceports.SaveAIProviderRequest {
-	return &serviceports.SaveAIProviderRequest{
-		ID:                   id,
-		Name:                 r.Name,
-		Description:          r.Description,
-		Kind:                 r.Kind,
-		BaseURL:              r.BaseURL,
-		Model:                r.Model,
-		APIKey:               r.APIKey,
-		AllowPrivateNetwork:  r.AllowPrivateNetwork,
-		StructuredOutputMode: r.StructuredOutputMode,
-		ReasoningEffort:      r.ReasoningEffort,
-		ThinkingStyle:        r.ThinkingStyle,
-		ExtraBody:            r.ExtraBody,
-		InputCostPerMillion:  r.InputCostPerMillion,
-		OutputCostPerMillion: r.OutputCostPerMillion,
-		MaxTokens:            r.MaxTokens,
-		ContextWindow:        r.ContextWindow,
-		Tasks:                r.Tasks,
-		Priority:             r.Priority,
-		EmbeddingDimensions:  r.EmbeddingDimensions,
-		EmbeddingInputStyle:  r.EmbeddingInputStyle,
-		Trusted:              r.Trusted,
-		Enabled:              r.Enabled,
-		Version:              r.Version,
-		TenantInfo:           tenantInfo,
+) *agentports.SaveAIProviderRequest {
+	return &agentports.SaveAIProviderRequest{
+		ID:                       id,
+		Name:                     r.Name,
+		Description:              r.Description,
+		Kind:                     r.Kind,
+		BaseURL:                  r.BaseURL,
+		Model:                    r.Model,
+		APIKey:                   r.APIKey,
+		AllowPrivateNetwork:      r.AllowPrivateNetwork,
+		StructuredOutputMode:     r.StructuredOutputMode,
+		ReasoningEffort:          r.ReasoningEffort,
+		ThinkingStyle:            r.ThinkingStyle,
+		Platform:                 r.Platform,
+		PlatformSettings:         r.PlatformSettings,
+		ExtraBody:                r.ExtraBody,
+		InputCostPerMillion:      r.InputCostPerMillion,
+		OutputCostPerMillion:     r.OutputCostPerMillion,
+		CacheReadCostPerMillion:  r.CacheReadCostPerMillion,
+		CacheWriteCostPerMillion: r.CacheWriteCostPerMillion,
+		MaxTokens:                r.MaxTokens,
+		ContextWindow:            r.ContextWindow,
+		Tasks:                    r.Tasks,
+		Priority:                 r.Priority,
+		EmbeddingDimensions:      r.EmbeddingDimensions,
+		EmbeddingInputStyle:      r.EmbeddingInputStyle,
+		Trusted:                  r.Trusted,
+		Enabled:                  r.Enabled,
+		TimeoutSeconds:           r.TimeoutSeconds,
+		MaxConcurrent:            r.MaxConcurrent,
+		MonthlyCapUSD:            r.MonthlyCapUSD,
+		OnCap:                    r.OnCap,
+		KeepPreviousKey:          r.KeepPreviousKey,
+		Version:                  r.Version,
+		TenantInfo:               tenantInfo,
 	}
 }
 
@@ -230,7 +258,7 @@ func (h *Handler) remove(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authCtx)
-	if err = h.service.Delete(c.Request.Context(), repositories.DeleteAIProviderRequest{
+	if err = h.service.Delete(c.Request.Context(), agentports.DeleteAIProviderRequest{
 		ID:         providerID,
 		TenantInfo: tenantFromAuthContext(authCtx),
 	}, &actor); err != nil {
@@ -250,7 +278,7 @@ func (h *Handler) test(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.Test(c.Request.Context(), repositories.GetAIProviderByIDRequest{
+	result, err := h.service.Test(c.Request.Context(), agentports.GetAIProviderByIDRequest{
 		ID:         providerID,
 		TenantInfo: tenantFromAuthContext(authCtx),
 	})
@@ -271,5 +299,10 @@ func (h *Handler) catalog(c *gin.Context) {
 		"tasks":                taskDescriptors(),
 		"embeddingDimensions":  aiprovider.AllowedEmbeddingDimensions(),
 		"embeddingInputStyles": embeddingInputStyleDescriptors(),
+		"platforms":            platformDescriptors(),
+		// serverCloudCredentials says whether a platform provider may sign in
+		// with this server's own cloud identity, so the editor offers it only
+		// where saving it would be accepted.
+		"serverCloudCredentials": h.ai.ServerCloudCredentialsAllowed(),
 	})
 }

@@ -14,7 +14,6 @@ import {
 import { formulaTemplateRoutes, importLandingRoute } from "@/lib/formula-template-routes";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { apiService } from "@/services/api";
-import { pluralize } from "@trenova/shared/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,6 +41,7 @@ import { ForkLineageDialog } from "./fork-lineage-dialog";
 import { ForkTemplateDialog } from "./fork-template-dialog";
 import { getColumns } from "./formula-template-columns";
 import { ImportTemplateDialog } from "./studio/import-template-dialog";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function FormulaTemplatesDataTable() {
   const t = useT();
@@ -77,21 +77,25 @@ export default function FormulaTemplatesDataTable() {
       .then((result) => {
         if (result.installed.length === 0) {
           toast.info(t("Standard templates already installed"), {
-            description: `All ${result.skipped.length} standard templates exist in your organization.`,
+            description: t(
+              "All {0} standard templates exist in your organization.",
+              result.skipped.length,
+            ),
           });
         } else {
           toast.success(
-            `Installed ${result.installed.length} standard ${pluralize(
-              "template",
+            t(
+              "{0, plural, one {Installed # standard template} other {Installed # standard templates}}",
               result.installed.length,
-            )}`,
+            ),
             {
               description:
                 result.skipped.length > 0
-                  ? `${result.skipped.length} already existed and ${
-                      result.skipped.length === 1 ? "was" : "were"
-                    } skipped.`
-                  : "The standard rating library is ready to use.",
+                  ? t(
+                      "{0, plural, one {# already existed and was skipped.} other {# already existed and were skipped.}}",
+                      result.skipped.length,
+                    )
+                  : t("The standard rating library is ready to use."),
             },
           );
         }
@@ -116,9 +120,9 @@ export default function FormulaTemplatesDataTable() {
           templateIds: [id],
         }),
         {
-          loading: "Duplicating template...",
-          success: "Template duplicated successfully",
-          error: "Failed to duplicate template",
+          loading: translate("Duplicating template..."),
+          success: translate("Template duplicated successfully"),
+          error: translate("Failed to duplicate template"),
           finally: async () => {
             await invalidateFormulaTemplate(queryClient);
           },
@@ -155,15 +159,17 @@ export default function FormulaTemplatesDataTable() {
       })
       .then(() => {
         toast.success(
-          ids.length === 1 ? "Formula template archived" : "Formula templates archived",
+          ids.length === 1
+            ? translate("Formula template archived")
+            : translate("Formula templates archived"),
         );
         setPendingArchiveRows([]);
       })
       .catch(() => {
         toast.error(
           ids.length === 1
-            ? "Failed to archive formula template"
-            : "Failed to archive formula templates",
+            ? translate("Failed to archive formula template")
+            : translate("Failed to archive formula templates"),
         );
       })
       .finally(async () => {
@@ -227,9 +233,12 @@ export default function FormulaTemplatesDataTable() {
         const exportData = buildBulkExport(templates, testCasesByTemplateId);
         const filename = getBulkExportFilename();
         downloadJson(exportData, filename);
-        toast.success(`Exported ${rows.length} templates`, {
-          description: filename,
-        });
+        toast.success(
+          t("{0, plural, one {Exported # template} other {Exported # templates}}", rows.length),
+          {
+            description: filename,
+          },
+        );
       } catch {
         toast.error(t("Export failed"), {
           description: t("Could not export the selected templates. Please try again."),
@@ -297,6 +306,7 @@ export default function FormulaTemplatesDataTable() {
     <>
       <DataTable<FormulaTemplateRow>
         name="Formula Template"
+        emptyTitle={t("No formula templates yet")}
         queryKey="formula-template-list"
         graphql={formulaTemplateTableGraphQLConfig}
         columns={columns}
@@ -370,7 +380,10 @@ export default function FormulaTemplatesDataTable() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg font-semibold">
-              {t("Archive {0} formula {1}?", archiveCount, pluralize("template", archiveCount))}
+              {t(
+                "{0, plural, one {Archive # formula template?} other {Archive # formula templates?}}",
+                archiveCount,
+              )}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {t(

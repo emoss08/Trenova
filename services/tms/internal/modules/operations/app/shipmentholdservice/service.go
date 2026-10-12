@@ -1,0 +1,361 @@
+package shipmentholdservice
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/holdreasonports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
+	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/pulid"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+type Params struct {
+	fx.In
+
+	Logger         *zap.Logger
+	Repo           shipmentports.ShipmentHoldRepository
+	ShipmentRepo   shipmentports.ShipmentRepository
+	HoldReasonRepo holdreasonports.HoldReasonRepository
+	AuditService   auditports.AuditService
+	EventService   shipmenteventports.ShipmentEventService
+	Realtime       agentports.RealtimeService
+}
+
+type service struct {
+	l              *zap.Logger
+	repo           shipmentports.ShipmentHoldRepository
+	shipmentRepo   shipmentports.ShipmentRepository
+	holdReasonRepo holdreasonports.HoldReasonRepository
+	auditService   auditports.AuditService
+	eventService   shipmenteventports.ShipmentEventService
+	realtime       agentports.RealtimeService
+}
+
+//nolint:gocritic // service constructor
+func New(p Params) shipmentports.ShipmentHoldService {
+	return &service{
+		l:              p.Logger.Named("service.shipment-hold"),
+		repo:           p.Repo,
+		shipmentRepo:   p.ShipmentRepo,
+		holdReasonRepo: p.HoldReasonRepo,
+		auditService:   p.AuditService,
+		eventService:   p.EventService,
+		realtime:       p.Realtime,
+	}
+}
+
+func (s *service) recordHoldEvent(
+	ctx context.Context,
+	params *shipmenteventports.RecordShipmentEventParams,
+) {
+	if params == nil {
+		return
+	}
+	if err := s.eventService.Record(ctx, params); err != nil {
+		s.l.Warn("failed to record shipment hold event", zap.Error(err))
+	}
+}
+
+func tenantRefForHold(hold *shipment.ShipmentHold) shipmenteventservice.TenantRef {
+	return shipmenteventservice.TenantRef{
+		OrganizationID: hold.OrganizationID,
+		BusinessUnitID: hold.BusinessUnitID,
+	}
+}
+
+func (s *service) ListByShipmentID(
+	ctx context.Context,
+	req *shipmentports.ListShipmentHoldsRequest,
+) (*pagination.ListResult[*shipment.ShipmentHold], error) {
+	if req == nil || req.Filter == nil {
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Shipment hold list request is required",
+		)
+	}
+	if req.ShipmentID.IsNil() {
+		return nil, errortypes.NewValidationError(
+			"shipmentId",
+			errortypes.ErrRequired,
+			"Shipment ID is required",
+		)
+	}
+
+	if err := s.ensureShipmentExists(ctx, req.ShipmentID, req.Filter.TenantInfo); err != nil {
+		return nil, err
+	}
+
+	return s.repo.ListByShipmentID(ctx, req)
+}
+
+func (s *service) GetByID(
+	ctx context.Context,
+	req *shipmentports.GetShipmentHoldByIDRequest,
+) (*shipment.ShipmentHold, error) {
+	if req == nil {
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Shipment hold request is required",
+		)
+	}
+	if multiErr := req.Validate(); multiErr != nil {
+		return nil, multiErr
+	}
+
+	return s.repo.GetByID(ctx, req)
+}
+
+func (s *service) Create(
+	ctx context.Context,
+	req *shipmentports.CreateShipmentHoldRequest,
+	actor *permissionports.RequestActor,
+) (*shipment.ShipmentHold, error) {
+	entity, err := s.planCreate(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+
+	created, err := s.repo.Create(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	auditActor := actor.AuditActor()
+	s.logHoldAction(created, auditActor, permission.OpCreate, nil, created, "Shipment hold created")
+	s.publishHoldInvalidation(ctx, created, auditActor, "created", created)
+	s.recordHoldEvent(ctx, shipmenteventservice.BuildHoldPlaced(
+		tenantRefForHold(created), created, auditActor,
+	))
+
+	return created, nil
+}
+
+func (s *service) Update(
+	ctx context.Context,
+	req *shipmentports.UpdateShipmentHoldRequest,
+	actor *permissionports.RequestActor,
+) (*shipment.ShipmentHold, error) {
+	original, updated, err := s.planUpdate(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+
+	saved, err := s.repo.Update(ctx, updated)
+	if err != nil {
+		return nil, err
+	}
+
+	auditActor := actor.AuditActor()
+	s.logHoldAction(
+		saved,
+		auditActor,
+		permission.OpUpdate,
+		original,
+		saved,
+		"Shipment hold updated",
+	)
+	s.publishHoldInvalidation(ctx, saved, auditActor, "updated", saved)
+	s.recordHoldEvent(ctx, shipmenteventservice.BuildHoldUpdated(
+		tenantRefForHold(saved), saved, auditActor,
+	))
+
+	return saved, nil
+}
+
+func (s *service) Release(
+	ctx context.Context,
+	req *shipmentports.ReleaseShipmentHoldRequest,
+	actor *permissionports.RequestActor,
+) (*shipment.ShipmentHold, error) {
+	original, toRelease, err := s.planRelease(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+
+	released, err := s.repo.Release(ctx, toRelease)
+	if err != nil {
+		return nil, err
+	}
+
+	auditActor := actor.AuditActor()
+	s.logHoldAction(
+		released,
+		auditActor,
+		permission.OpUpdate,
+		original,
+		released,
+		"Shipment hold released",
+	)
+	s.publishHoldInvalidation(ctx, released, auditActor, "released", released)
+	s.recordHoldEvent(ctx, shipmenteventservice.BuildHoldReleased(
+		tenantRefForHold(released), released, auditActor,
+	))
+
+	return released, nil
+}
+
+func (s *service) ensureShipmentExists(
+	ctx context.Context,
+	shipmentID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) error {
+	_, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
+		ID:         shipmentID,
+		TenantInfo: tenantInfo,
+	})
+	return err
+}
+
+func (s *service) getActiveHoldReason(
+	ctx context.Context,
+	holdReasonID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) (*holdreason.HoldReason, error) {
+	reason, err := s.holdReasonRepo.GetByID(ctx, holdreasonports.GetHoldReasonByIDRequest{
+		ID:         holdReasonID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !reason.Active {
+		return nil, errortypes.NewValidationError(
+			"holdReasonId",
+			errortypes.ErrInvalid,
+			"Hold reason must be active",
+		)
+	}
+
+	return reason, nil
+}
+
+func (s *service) logHoldAction(
+	entity *shipment.ShipmentHold,
+	actor kernelports.AuditActor,
+	op permission.Operation,
+	previous any,
+	current any,
+	comment string,
+) {
+	params := &auditports.LogActionParams{
+		Resource:       permission.ResourceShipmentHold,
+		ResourceID:     entity.ID.String(),
+		Operation:      op,
+		UserID:         actor.UserID,
+		APIKeyID:       actor.APIKeyID,
+		PrincipalType:  actor.PrincipalType,
+		PrincipalID:    actor.PrincipalID,
+		OrganizationID: entity.OrganizationID,
+		BusinessUnitID: entity.BusinessUnitID,
+	}
+	if current != nil {
+		params.CurrentState = jsonutils.MustToJSON(current)
+	}
+	if previous != nil {
+		params.PreviousState = jsonutils.MustToJSON(previous)
+	}
+
+	opts := []auditports.LogOption{
+		auditservice.WithComment(comment),
+		auditservice.WithMetadata(map[string]any{
+			"shipmentId": entity.ShipmentID.String(),
+			"holdId":     entity.ID.String(),
+		}),
+	}
+	if previous != nil && current != nil {
+		opts = append(opts, auditservice.WithDiff(previous, current))
+	}
+
+	if err := s.auditService.LogAction(params, opts...); err != nil {
+		s.l.Error("failed to log shipment hold action", zap.Error(err))
+	}
+}
+
+func (s *service) publishHoldInvalidation(
+	ctx context.Context,
+	entity *shipment.ShipmentHold,
+	actor kernelports.AuditActor,
+	action string,
+	payload any,
+) {
+	err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
+		OrganizationID: entity.OrganizationID,
+		BusinessUnitID: entity.BusinessUnitID,
+		ActorUserID:    actor.UserID,
+		ActorType:      actor.PrincipalType,
+		ActorID:        actor.PrincipalID,
+		ActorAPIKeyID:  actor.APIKeyID,
+		Resource:       permission.ResourceShipmentHold.String(),
+		Action:         action,
+		RecordID:       entity.ShipmentID,
+		Entity:         payload,
+	})
+	if err != nil {
+		s.l.Warn("failed to publish shipment hold invalidation", zap.Error(err))
+	}
+}
+
+func applyCreateOverrides(
+	entity *shipment.ShipmentHold,
+	req *shipmentports.CreateShipmentHoldRequest,
+) {
+	if req.Severity != nil {
+		entity.Severity = *req.Severity
+	}
+	if req.BlocksDispatch != nil {
+		entity.BlocksDispatch = *req.BlocksDispatch
+	}
+	if req.BlocksDelivery != nil {
+		entity.BlocksDelivery = *req.BlocksDelivery
+	}
+	if req.BlocksBilling != nil {
+		entity.BlocksBilling = *req.BlocksBilling
+	}
+	if req.VisibleToCustomer != nil {
+		entity.VisibleToCustomer = *req.VisibleToCustomer
+	}
+}
+
+func validateHold(entity *shipment.ShipmentHold) *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+	entity.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+func requireHoldUser(actor *permissionports.RequestActor) (pulid.ID, error) {
+	if actor == nil || actor.UserID.IsNil() {
+		return pulid.Nil, errortypes.NewAuthorizationError(
+			"Shipment hold actions require a user actor",
+		)
+	}
+
+	return actor.UserID, nil
+}
+
+func idPtr(id pulid.ID) *pulid.ID {
+	if id.IsNil() {
+		return nil
+	}
+	return &id
+}

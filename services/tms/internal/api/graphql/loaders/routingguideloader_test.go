@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +21,7 @@ func TestRoutingGuideBatchFunc_PreservesOrderAndRequestsEntries(t *testing.T) {
 	secondID := pulid.MustNew("rgd_")
 	missingID := pulid.MustNew("rgd_")
 	getter := &stubRoutingGuidesByIDsGetter{
-		getByIDs: func(_ context.Context, req repositories.GetRoutingGuidesByIDsRequest) ([]*tender.RoutingGuide, error) {
+		getByIDs: func(_ context.Context, req tenderports.GetRoutingGuidesByIDsRequest) ([]*tender.RoutingGuide, error) {
 			assert.Equal(t, []pulid.ID{secondID, firstID, missingID}, req.RoutingGuideIDs)
 			assert.True(t, req.IncludeEntries)
 			return []*tender.RoutingGuide{
@@ -59,7 +59,7 @@ func TestRoutingGuideBatchFunc_RepositoryErrorFillsValidResults(t *testing.T) {
 	guideID := pulid.MustNew("rgd_")
 	repoErr := errors.New("repository failed")
 	getter := &stubRoutingGuidesByIDsGetter{
-		getByIDs: func(context.Context, repositories.GetRoutingGuidesByIDsRequest) ([]*tender.RoutingGuide, error) {
+		getByIDs: func(context.Context, tenderports.GetRoutingGuidesByIDsRequest) ([]*tender.RoutingGuide, error) {
 			return nil, repoErr
 		},
 	}
@@ -76,12 +76,12 @@ func TestRoutingGuideBatchFunc_RepositoryErrorFillsValidResults(t *testing.T) {
 }
 
 type stubRoutingGuidesByIDsGetter struct {
-	getByIDs func(context.Context, repositories.GetRoutingGuidesByIDsRequest) ([]*tender.RoutingGuide, error)
+	getByIDs func(context.Context, tenderports.GetRoutingGuidesByIDsRequest) ([]*tender.RoutingGuide, error)
 }
 
 func (s *stubRoutingGuidesByIDsGetter) GetByIDs(
 	ctx context.Context,
-	req repositories.GetRoutingGuidesByIDsRequest,
+	req tenderports.GetRoutingGuidesByIDsRequest,
 ) ([]*tender.RoutingGuide, error) {
 	return s.getByIDs(ctx, req)
 }

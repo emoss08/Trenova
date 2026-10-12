@@ -4,7 +4,7 @@ package customerresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	customerservice "github.com/emoss08/trenova/internal/core/services/customerservice"
+	customerservice "github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
 )
 
 type Deps struct {

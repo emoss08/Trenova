@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/hashutils"
@@ -35,7 +35,7 @@ type RateLimiterParams struct {
 	fx.In
 
 	Config       *config.Config
-	Store        repositories.RateLimitStore
+	Store        kernelports.RateLimitStore
 	ErrorHandler *helpers.ErrorHandler
 	Logger       *zap.Logger
 	Metrics      *metrics.Registry `optional:"true"`
@@ -43,17 +43,17 @@ type RateLimiterParams struct {
 
 type RateLimiter struct {
 	enabled      bool
-	store        repositories.RateLimitStore
+	store        kernelports.RateLimitStore
 	errorHandler *helpers.ErrorHandler
 	logger       *zap.Logger
 	metrics      *metrics.RateLimit
-	policies     map[config.RateLimitScope]repositories.RateLimitPolicy
+	policies     map[config.RateLimitScope]kernelports.RateLimitPolicy
 	exemptPaths  []string
 }
 
 type scopedRequest struct {
 	scope   config.RateLimitScope
-	request repositories.RateLimitRequest
+	request kernelports.RateLimitRequest
 }
 
 func NewRateLimiter(p RateLimiterParams) *RateLimiter {
@@ -79,13 +79,13 @@ func NewRateLimiter(p RateLimiterParams) *RateLimiter {
 		config.RateLimitScopeTenant,
 		config.RateLimitScopePublicToken,
 	}
-	policies := make(map[config.RateLimitScope]repositories.RateLimitPolicy, len(scopes))
+	policies := make(map[config.RateLimitScope]kernelports.RateLimitPolicy, len(scopes))
 	for _, scope := range scopes {
 		policy := cfg.ScopePolicy(scope)
 		if !policy.Enabled {
 			continue
 		}
-		policies[scope] = repositories.RateLimitPolicy{
+		policies[scope] = kernelports.RateLimitPolicy{
 			Rate:   policy.RequestsPerMinute,
 			Period: rateLimitPeriod,
 			Burst:  policy.BurstSize,
@@ -169,7 +169,7 @@ func (m *RateLimiter) anonymousRequests(c *gin.Context) []scopedRequest {
 	}
 	return []scopedRequest{{
 		scope: config.RateLimitScopeAnonymous,
-		request: repositories.RateLimitRequest{
+		request: kernelports.RateLimitRequest{
 			Key:    "anon:" + c.ClientIP(),
 			Policy: policy,
 			Cost:   1,
@@ -190,7 +190,7 @@ func (m *RateLimiter) principalRequests(c *gin.Context) []scopedRequest {
 		if policy, ok := m.policies[config.RateLimitScopeAPIKey]; ok {
 			requests = append(requests, scopedRequest{
 				scope: config.RateLimitScopeAPIKey,
-				request: repositories.RateLimitRequest{
+				request: kernelports.RateLimitRequest{
 					Key:    orgTag + ":apikey:" + authCtx.APIKeyID.String(),
 					Policy: policy,
 					Cost:   1,
@@ -201,7 +201,7 @@ func (m *RateLimiter) principalRequests(c *gin.Context) []scopedRequest {
 		if policy, ok := m.policies[config.RateLimitScopeUser]; ok {
 			requests = append(requests, scopedRequest{
 				scope: config.RateLimitScopeUser,
-				request: repositories.RateLimitRequest{
+				request: kernelports.RateLimitRequest{
 					Key:    orgTag + ":user:" + authCtx.UserID.String(),
 					Policy: policy,
 					Cost:   1,
@@ -213,7 +213,7 @@ func (m *RateLimiter) principalRequests(c *gin.Context) []scopedRequest {
 	if policy, ok := m.policies[config.RateLimitScopeTenant]; ok {
 		requests = append(requests, scopedRequest{
 			scope: config.RateLimitScopeTenant,
-			request: repositories.RateLimitRequest{
+			request: kernelports.RateLimitRequest{
 				Key:    orgTag + ":tenant",
 				Policy: policy,
 				Cost:   1,
@@ -235,7 +235,7 @@ func (m *RateLimiter) publicTokenRequests(c *gin.Context, param string) []scoped
 	}
 	return []scopedRequest{{
 		scope: config.RateLimitScopePublicToken,
-		request: repositories.RateLimitRequest{
+		request: kernelports.RateLimitRequest{
 			Key:    "token:" + hashutils.SHA256Hex(token),
 			Policy: policy,
 			Cost:   1,
@@ -248,7 +248,7 @@ func (m *RateLimiter) enforce(c *gin.Context, requests []scopedRequest) bool {
 		return true
 	}
 
-	storeRequests := make([]repositories.RateLimitRequest, len(requests))
+	storeRequests := make([]kernelports.RateLimitRequest, len(requests))
 	for i := range requests {
 		storeRequests[i] = requests[i].request
 	}
@@ -311,7 +311,7 @@ func (m *RateLimiter) handleStoreError(c *gin.Context, err error) bool {
 func (m *RateLimiter) reject(
 	c *gin.Context,
 	req scopedRequest,
-	decision repositories.RateLimitDecision,
+	decision kernelports.RateLimitDecision,
 ) {
 	m.writeHeaders(c, req, decision)
 	c.Header(HeaderRateLimitScope, string(req.scope))
@@ -325,7 +325,7 @@ func (m *RateLimiter) reject(
 func (m *RateLimiter) writeHeaders(
 	c *gin.Context,
 	req scopedRequest,
-	decision repositories.RateLimitDecision,
+	decision kernelports.RateLimitDecision,
 ) {
 	c.Header(HeaderRateLimitLimit, strconv.Itoa(decision.Limit))
 	c.Header(HeaderRateLimitRemaining, strconv.Itoa(decision.Remaining))
@@ -340,7 +340,7 @@ func (m *RateLimiter) recordDecision(scope config.RateLimitScope, allowed bool) 
 	m.metrics.RecordDecision(string(scope), allowed)
 }
 
-func formatRateLimitPolicy(policy repositories.RateLimitPolicy) string {
+func formatRateLimitPolicy(policy kernelports.RateLimitPolicy) string {
 	return strconv.Itoa(policy.Rate) +
 		";w=" + strconv.Itoa(int(policy.Period/time.Second)) +
 		";burst=" + strconv.Itoa(policy.Burst)

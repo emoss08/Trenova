@@ -1,0 +1,191 @@
+package workforcetools
+
+import (
+	"context"
+	"testing"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+type fakePermits struct {
+	permitports.PermitService
+
+	guard  *agenttoolstest.WriteGuard
+	permit *permit.Permit
+
+	created *permit.Permit
+	updated *permit.Permit
+}
+
+func newFakePermits() *fakePermits {
+	return &fakePermits{
+		guard: &agenttoolstest.WriteGuard{},
+		permit: &permit.Permit{
+			ID:           pulid.MustNew("pmt_"),
+			ShipmentID:   pulid.MustNew("shp_"),
+			StateID:      pulid.MustNew("us_"),
+			PermitNumber: "IN-44120",
+			Status:       permit.StatusPending,
+			Version:      2,
+		},
+	}
+}
+
+func (f *fakePermits) ListPermits(
+	_ context.Context,
+	shipmentID pulid.ID,
+	_ pagination.TenantInfo,
+) ([]*permit.Permit, error) {
+	if shipmentID != f.permit.ShipmentID {
+		return nil, nil
+	}
+	copied := *f.permit
+	return []*permit.Permit{&copied}, nil
+}
+
+func validPermit(entity *permit.Permit) error {
+	multiErr := errortypes.NewMultiError()
+	entity.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+	return nil
+}
+
+func (f *fakePermits) PlanCreatePermit(
+	_ context.Context,
+	entity *permit.Permit,
+) (*permit.Permit, error) {
+	if err := validPermit(entity); err != nil {
+		return nil, err
+	}
+	return entity, nil
+}
+
+func (f *fakePermits) CreatePermit(
+	_ context.Context,
+	entity *permit.Permit,
+	_ *permissionports.RequestActor,
+) (*permit.Permit, error) {
+	if err := f.guard.Write(); err != nil {
+		return nil, err
+	}
+	f.created = entity
+	created := *entity
+	created.ID = pulid.MustNew("pmt_")
+	return &created, nil
+}
+
+func (f *fakePermits) PlanUpdatePermit(
+	_ context.Context,
+	entity *permit.Permit,
+) (*kernelports.RecordChange[permit.Permit], error) {
+	if err := validPermit(entity); err != nil {
+		return nil, err
+	}
+	return &kernelports.RecordChange[permit.Permit]{Before: f.permit, After: entity}, nil
+}
+
+func (f *fakePermits) UpdatePermit(
+	_ context.Context,
+	entity *permit.Permit,
+	_ *permissionports.RequestActor,
+) (*permit.Permit, error) {
+	if err := f.guard.Write(); err != nil {
+		return nil, err
+	}
+	f.updated = entity
+	return entity, nil
+}
+
+func TestRecordShipmentPermit_ChecksWhatTheStateIssued(t *testing.T) {
+	t.Parallel()
+
+	permits := newFakePermits()
+	tool := newRecordShipmentPermitTool(permits)
+	params := agenttoolstest.ExecuteParams(map[string]any{
+		common.ParamShipmentID: permits.permit.ShipmentID.String(),
+		paramStateID:           permits.permit.StateID.String(),
+		paramPermitNumber:      "OH-99812",
+		common.FieldStatus:     "Active",
+		paramPermitIssued:      "2026-09-29T00:00:00-04:00",
+		paramPermitExpiry:      "2026-10-04T23:59:00-04:00",
+		paramPermitCost:        "85.00",
+		common.FieldNotes:      "Daylight travel only",
+	})
+
+	preview := agenttoolstest.PreviewWithoutWrites(t, permits.guard, func() (*agent.ToolPreview, error) {
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	})
+	assert.Equal(t, "Would record permit OH-99812 as Active.", preview.Summary)
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	require.NoError(t, err)
+	require.NotNil(t, permits.created)
+	assert.Equal(t, params.OrganizationID, permits.created.OrganizationID)
+	assert.True(t, permits.created.Cost.Valid)
+	require.NotNil(t, permits.created.ExpiresAt)
+	assert.Equal(t, permits.permit.ShipmentID.String(), result.IDs[common.ParamShipmentID])
+	assert.Equal(t, common.ShipmentRecordEntity, result.Record.EntityType)
+
+	policy := tool.Policy()
+	assert.Equal(t, permission.ResourcePermit, policy.Resource)
+	assert.Equal(t, permission.OpCreate, policy.Operation)
+
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+		agenttoolstest.ExecuteParams(map[string]any{
+			common.ParamShipmentID: permits.permit.ShipmentID.String(),
+			paramStateID:           permits.permit.StateID.String(),
+			paramPermitNumber:      "OH-99812",
+			common.FieldStatus:     "Active",
+		})), "an active permit records when it expires")
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+		agenttoolstest.ExecuteParams(map[string]any{
+			common.ParamShipmentID: permits.permit.ShipmentID.String(),
+			paramStateID:           permits.permit.StateID.String(),
+			paramPermitNumber:      "OH-99812",
+			paramPermitCost:        "-5",
+		})))
+}
+
+func TestUpdateShipmentPermit_FindsThePermitOnItsShipment(t *testing.T) {
+	t.Parallel()
+
+	permits := newFakePermits()
+	tool := newUpdateShipmentPermitTool(permits)
+	params := agenttoolstest.ExecuteParams(map[string]any{
+		common.ParamShipmentID: permits.permit.ShipmentID.String(),
+		paramPermitID:          permits.permit.ID.String(),
+		common.FieldStatus:     "Void",
+	})
+
+	preview := agenttoolstest.PreviewWithoutWrites(t, permits.guard, func() (*agent.ToolPreview, error) {
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	})
+	assert.Equal(t, "Would change permit IN-44120.", preview.Summary)
+	assert.Equal(t, string(permit.StatusVoid),
+		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), common.FieldStatus).After)
+	require.NoError(t, tool.Execute(t.Context(), params))
+	require.NotNil(t, permits.updated)
+	assert.Equal(t, permit.StatusVoid, permits.updated.Status)
+	assert.Equal(t, "IN-44120", permits.updated.PermitNumber)
+
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+		agenttoolstest.ExecuteParams(map[string]any{
+			common.ParamShipmentID: pulid.MustNew("shp_").String(),
+			paramPermitID:          permits.permit.ID.String(),
+			common.FieldStatus:     "Void",
+		})), "a permit is changed only on the shipment it belongs to")
+}

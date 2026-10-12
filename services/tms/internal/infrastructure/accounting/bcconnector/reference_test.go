@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/businesscentral"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -39,7 +39,7 @@ func listKind(
 	kind accountingsync.ReferenceKind,
 ) []*accountingsync.AccountingReferenceObject {
 	t.Helper()
-	page, err := conn.ListReference(t.Context(), &services.AccountingReferencePageRequest{
+	page, err := conn.ListReference(t.Context(), &accountingsyncports.AccountingReferencePageRequest{
 		RealmID:       testRef().String(),
 		AccessToken:   "access-token",
 		Kind:          kind,
@@ -96,7 +96,7 @@ func TestListReferenceReadsEveryKind(t *testing.T) {
 	assert.Equal(t, 30, *terms[0].DueDays)
 
 	assert.Empty(t, listKind(t, conn, accountingsync.ReferenceKindPaymentMethod))
-	_, err := conn.ListReference(t.Context(), &services.AccountingReferencePageRequest{
+	_, err := conn.ListReference(t.Context(), &accountingsyncports.AccountingReferencePageRequest{
 		RealmID: testRef().String(), AccessToken: "x", Kind: "Nope",
 	})
 	require.Error(t, err)
@@ -150,13 +150,13 @@ func TestCreateReferenceLooksForTheNameFirst(t *testing.T) {
 		return referenceResponder(t)(call)
 	}}
 	conn := testConnector(t, fake)
-	base := services.AccountingCreateReferenceRequest{
+	base := accountingsyncports.AccountingCreateReferenceRequest{
 		RealmID: testRef().String(), AccessToken: "x", RequestID: testRequestID,
 	}
 
 	itemReq := base
 	itemReq.Kind = accountingsync.ReferenceKindItem
-	itemReq.Item = &services.AccountingItemDraft{Name: " Fuel\nsurcharge "}
+	itemReq.Item = &accountingsyncports.AccountingItemDraft{Name: " Fuel\nsurcharge "}
 	item, err := conn.CreateReference(t.Context(), &itemReq)
 	require.NoError(t, err)
 	assert.Equal(t, "44444444-5555-4666-8777-888888888883", item.ExternalID)
@@ -165,14 +165,14 @@ func TestCreateReferenceLooksForTheNameFirst(t *testing.T) {
 	assert.Equal(t, "Fuel surcharge", created.Body["displayName"])
 	assert.Equal(t, "Service", created.Body["type"])
 
-	itemReq.Item = &services.AccountingItemDraft{Name: "linehaul"}
+	itemReq.Item = &accountingsyncports.AccountingItemDraft{Name: "linehaul"}
 	_, err = conn.CreateReference(t.Context(), &itemReq)
 	require.Error(t, err)
 	assert.True(t, conn.IsDuplicateName(err))
 
 	partyReq := base
 	partyReq.Kind = accountingsync.ReferenceKindCustomer
-	partyReq.Party = &services.AccountingPartyDraft{
+	partyReq.Party = &accountingsyncports.AccountingPartyDraft{
 		DisplayName: "Northwind Traders", Email: "billing@northwind.example",
 		City: strings.Repeat("c", 40),
 	}
@@ -184,7 +184,7 @@ func TestCreateReferenceLooksForTheNameFirst(t *testing.T) {
 	require.True(t, ok)
 	assert.Len(t, posted.Body["city"], 30)
 
-	partyReq.Party = &services.AccountingPartyDraft{DisplayName: "O'Brien Logistics"}
+	partyReq.Party = &accountingsyncports.AccountingPartyDraft{DisplayName: "O'Brien Logistics"}
 	_, err = conn.CreateReference(t.Context(), &partyReq)
 	assert.True(t, conn.IsDuplicateName(err))
 	assert.True(t, conn.IsDuplicateName(&businesscentral.APIError{
@@ -225,9 +225,9 @@ func TestUpsertCustomerCreatesWhenUnmapped(t *testing.T) {
 		return 0, ""
 	}}
 	conn := testConnector(t, fake)
-	result, err := conn.UpsertCustomer(t.Context(), &services.AccountingCustomerDocument{
+	result, err := conn.UpsertCustomer(t.Context(), &accountingsyncports.AccountingCustomerDocument{
 		Auth:  testAuth(),
-		Party: services.AccountingPartyDraft{DisplayName: "Northwind Traders"},
+		Party: accountingsyncports.AccountingPartyDraft{DisplayName: "Northwind Traders"},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "55555555-6666-4777-8888-999999999993", result.ExternalID)

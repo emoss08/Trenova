@@ -34,6 +34,7 @@ import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 function useInvalidatePermitViews(shipmentId: string) {
   const queryClient = useQueryClient();
@@ -119,7 +120,7 @@ export function PermitRecordDialog({
         ? apiService.shipmentService.updatePermit(shipmentId, permit.id, values)
         : apiService.shipmentService.createPermit(shipmentId, values),
     onSuccess: () => {
-      toast.success(isEdit ? "Permit updated" : "Permit recorded", {
+      toast.success(isEdit ? translate("Permit updated") : translate("Permit recorded"), {
         // Both paths re-derive server-side, so a correction can release a hold
         // just as recording one can — or re-raise it, if the expiry moved in.
         description: t("Requirements are re-checked against this permit."),

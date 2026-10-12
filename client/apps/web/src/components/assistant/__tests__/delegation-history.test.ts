@@ -5,7 +5,7 @@ import { stepsFromExchanges } from "../activity";
 import { classifyMessage } from "../classify-message";
 import { delegateView, handOffHeadline, handOffStatus, madeLine } from "../delegation";
 import { turnEndByMessage } from "../proposal-state";
-import { delegatedOwners, groupThread, turnPlacements } from "../thread-view";
+import { groupThread, turnPlacements } from "../thread-view";
 
 const t = translate;
 
@@ -173,15 +173,6 @@ describe("groupThread with hand-offs", () => {
     if (turn.kind !== "assistant") throw new Error("expected an assistant entry");
     expect(turn.tools[0]).toMatchObject({ orphan: true, call: { id: CALL } });
     expect(turn.tools[0].delegated).toHaveLength(4);
-  });
-
-  it("names the entry each of another agent's messages and calls is drawn under", () => {
-    const thread = handOffThread();
-    const owners = delegatedOwners(groupThread(thread));
-
-    expect(owners.get(thread[3].id)).toBe(thread[1].id);
-    expect(owners.get("call_inner_1")).toBe(thread[1].id);
-    expect(owners.has(thread[7].id)).toBe(false);
   });
 });
 

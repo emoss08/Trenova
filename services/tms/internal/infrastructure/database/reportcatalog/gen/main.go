@@ -9,7 +9,7 @@ import (
 
 var (
 	manifestPath = flag.String("manifest", "", "Path to the reportcatalog.yml curation manifest")
-	domainDir    = flag.String("domain", "", "Path to the domain directory containing entity packages")
+	domainDir    = flag.String("domain", "", "Glob of domain directories containing entity packages")
 	enumPkgs     = flag.String("enumpkgs", "", "Comma-separated paths to packages outside the domain directory to index for enum resolution")
 	outputPath   = flag.String("output", "", "Output path for the generated catalog file")
 )
@@ -18,7 +18,7 @@ func main() {
 	flag.Parse()
 
 	if *manifestPath == "" || *domainDir == "" || *outputPath == "" {
-		fmt.Fprintln(os.Stderr, "Usage: reportcataloggen -manifest=<file> -domain=<dir> [-enumpkgs=<dir,dir>] -output=<file>")
+		fmt.Fprintln(os.Stderr, "Usage: reportcataloggen -manifest=<file> -domain=<glob> [-enumpkgs=<dir,dir>] -output=<file>")
 		os.Exit(1)
 	}
 

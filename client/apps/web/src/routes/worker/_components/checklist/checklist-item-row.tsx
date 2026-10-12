@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { WorkerChecklistItemRow } from "@/lib/graphql/worker-checklist";
 import { RowActionsMenu, type RowAction } from "@/components/row-actions-menu";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -42,25 +43,46 @@ function settledLine(item: WorkerChecklistItemRow): string | null {
   if (item.status === "Pending") return null;
   if (item.status === "Done" && item.autoCompleted) {
     if (item.evidenceCredential) {
-      const expires = item.evidenceCredential.expiresAt
-        ? ` · expires ${formatUnixDateMedium(item.evidenceCredential.expiresAt)}`
-        : "";
-      return `Satisfied by credential ${item.evidenceCredential.number ?? item.credentialType?.name ?? ""}${expires}`.trim();
+      const credential = item.evidenceCredential.number ?? item.credentialType?.name ?? "";
+      return item.evidenceCredential.expiresAt
+        ? translate(
+            "Satisfied by credential {0} · expires {1}",
+            credential,
+            formatUnixDateMedium(item.evidenceCredential.expiresAt),
+          )
+        : translate("Satisfied by credential {0}", credential).trim();
     }
     if (item.evidenceDocument) {
-      return `Satisfied by document ${item.evidenceDocument.originalName}`;
+      return translate("Satisfied by document {0}", item.evidenceDocument.originalName);
     }
-    return "Satisfied automatically";
+    return translate("Satisfied automatically");
   }
-  const who = item.completedBy?.name ?? "someone";
-  const when = item.completedAt ? ` on ${formatUnixDateMedium(item.completedAt)}` : "";
-  const verb =
-    item.status === "Done"
-      ? "Completed by"
-      : item.status === "Skipped"
-        ? "Skipped by"
-        : "Marked not applicable by";
-  return `${verb} ${who}${when}`;
+  const who = item.completedBy?.name;
+  const when = item.completedAt ? formatUnixDateMedium(item.completedAt) : null;
+  if (item.status === "Done") return completedLine(who, when);
+  if (item.status === "Skipped") return skippedLine(who, when);
+  return notApplicableLine(who, when);
+}
+
+function completedLine(who: string | undefined, when: string | null): string {
+  if (who && when) return translate("Completed by {0} on {1}", who, when);
+  if (who) return translate("Completed by {0}", who);
+  if (when) return translate("Completed by someone on {0}", when);
+  return translate("Completed by someone");
+}
+
+function skippedLine(who: string | undefined, when: string | null): string {
+  if (who && when) return translate("Skipped by {0} on {1}", who, when);
+  if (who) return translate("Skipped by {0}", who);
+  if (when) return translate("Skipped by someone on {0}", when);
+  return translate("Skipped by someone");
+}
+
+function notApplicableLine(who: string | undefined, when: string | null): string {
+  if (who && when) return translate("Marked not applicable by {0} on {1}", who, when);
+  if (who) return translate("Marked not applicable by {0}", who);
+  if (when) return translate("Marked not applicable by someone on {0}", when);
+  return translate("Marked not applicable by someone");
 }
 
 /**
@@ -93,7 +115,7 @@ export function ChecklistItemRow({
       if (!auto) {
         actions.push({
           id: "complete",
-          label: `Complete ${item.label}`,
+          label: t("Complete {0}", item.label),
           icon: CheckIcon,
           disabled: busy,
           onSelect: () => onComplete(item),
@@ -101,14 +123,14 @@ export function ChecklistItemRow({
       }
       actions.push({
         id: "skip",
-        label: `Skip ${item.label}`,
+        label: t("Skip {0}", item.label),
         icon: SkipForwardIcon,
         disabled: busy,
         onSelect: () => onSkip(item),
       });
       actions.push({
         id: "not-applicable",
-        label: `Mark ${item.label} not applicable`,
+        label: t("Mark {0} not applicable", item.label),
         icon: SlashCircle01Icon,
         disabled: busy,
         onSelect: () => onNotApplicable(item),
@@ -116,7 +138,7 @@ export function ChecklistItemRow({
     } else {
       actions.push({
         id: "reopen",
-        label: `Reopen ${item.label}`,
+        label: t("Reopen {0}", item.label),
         icon: RefreshCcw01Icon,
         disabled: busy,
         onSelect: () => onReopen(item),
@@ -194,7 +216,7 @@ export function ChecklistItemRow({
         {item.note ? <p className="text-muted-foreground text-xs">“{item.note}”</p> : null}
       </div>
 
-      <RowActionsMenu label={`Actions for ${item.label}`} actions={actions} />
+      <RowActionsMenu label={t("Actions for {0}", item.label)} actions={actions} />
     </li>
   );
 }

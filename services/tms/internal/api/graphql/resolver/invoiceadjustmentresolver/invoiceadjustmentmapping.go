@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -18,7 +18,7 @@ func invoiceAdjustmentApprovalsRequestFromGraphQL(
 	ctx context.Context,
 	input *gqlmodel.InvoiceAdjustmentApprovalsInput,
 	tenant pagination.TenantInfo,
-) (*repositories.ListApprovalQueueRequest, error) {
+) (*invoiceadjustmentports.ListApprovalQueueRequest, error) {
 	page, err := base.EntityCursorPageFromGraphQL(ctx, base.GqlCursorPageInput{
 		First: input.First,
 		After: input.After,
@@ -64,7 +64,7 @@ func invoiceAdjustmentApprovalsRequestFromGraphQL(
 		query = strings.TrimSpace(*input.Query)
 	}
 
-	return &repositories.ListApprovalQueueRequest{
+	return &invoiceadjustmentports.ListApprovalQueueRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo:   tenant,
 			Pagination:   pagination.Info{Limit: page.Cursor.Limit},
@@ -76,12 +76,12 @@ func invoiceAdjustmentApprovalsRequestFromGraphQL(
 }
 
 func invoiceAdjustmentApprovalConnectionToModel(
-	result *pagination.CursorListResult[*repositories.InvoiceAdjustmentApprovalQueueItem],
+	result *pagination.CursorListResult[*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem],
 ) (*gqlmodel.InvoiceAdjustmentApprovalQueueConnection, error) {
 	page, err := base.EntityCursorConnection(
 		result,
 		func(
-			node *repositories.InvoiceAdjustmentApprovalQueueItem,
+			node *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem,
 			cursor string,
 		) *gqlmodel.InvoiceAdjustmentApprovalQueueEdge {
 			return &gqlmodel.InvoiceAdjustmentApprovalQueueEdge{

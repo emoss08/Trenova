@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -93,8 +93,8 @@ func newCustomerJournals(t *testing.T) *journalServer {
 	return &journalServer{t: t, journals: customerJournals, payments: "/customerPayments"}
 }
 
-func paymentDoc() *services.AccountingPaymentDocument {
-	return &services.AccountingPaymentDocument{
+func paymentDoc() *accountingsyncports.AccountingPaymentDocument {
+	return &accountingsyncports.AccountingPaymentDocument{
 		Auth:                     testAuth(),
 		RequestID:                testRequestID,
 		CustomerExternalID:       testCustomer,
@@ -103,7 +103,7 @@ func paymentDoc() *services.AccountingPaymentDocument {
 		DepositAccountExternalID: testBank,
 		ReferenceNumber:          "CHK 4411",
 		TotalAmount:              decimal.NewFromInt(150),
-		Applications: []services.AccountingPaymentApplication{
+		Applications: []accountingsyncports.AccountingPaymentApplication{
 			{InvoiceExternalID: testInvoice, InvoiceNumber: "INV-1", AppliedAmount: decimal.NewFromInt(100)},
 			{InvoiceExternalID: testNewInvoice, InvoiceNumber: "INV-2", AppliedAmount: decimal.NewFromInt(50)},
 		},
@@ -221,7 +221,7 @@ func TestSavePaymentHoldsTheBatchLockAcrossLinesAndPost(t *testing.T) {
 	second := paymentDoc()
 	second.RequestID = testRequestID + "-2"
 	var wg sync.WaitGroup
-	for _, doc := range []*services.AccountingPaymentDocument{first, second} {
+	for _, doc := range []*accountingsyncports.AccountingPaymentDocument{first, second} {
 		wg.Go(func() {
 			_, err := conn.SavePayment(t.Context(), doc)
 			assert.NoError(t, err)
@@ -270,16 +270,16 @@ func TestSavePaymentRefusalsAndValidation(t *testing.T) {
 	_, err = conn.SavePayment(t.Context(), closed)
 	assert.Equal(t, accountingsync.SyncErrorClosedPeriod, syncErrorOf(t, err).Category)
 
-	ref := &services.AccountingDocumentRef{Auth: testAuth(), ExternalID: "T123"}
+	ref := &accountingsyncports.AccountingDocumentRef{Auth: testAuth(), ExternalID: "T123"}
 	_, err = conn.VoidPayment(t.Context(), ref)
 	assert.Equal(t, "reverse-transaction", syncErrorOf(t, err).Code)
-	_, err = conn.UpdateBillPayment(t.Context(), &services.AccountingBillPaymentDocument{})
+	_, err = conn.UpdateBillPayment(t.Context(), &accountingsyncports.AccountingBillPaymentDocument{})
 	assert.Equal(t, "reverse-transaction", syncErrorOf(t, err).Code)
-	_, err = conn.CreateCreditApplication(t.Context(), &services.AccountingCreditApplicationDocument{})
+	_, err = conn.CreateCreditApplication(t.Context(), &accountingsyncports.AccountingCreditApplicationDocument{})
 	creditErr := syncErrorOf(t, err)
 	assert.Equal(t, accountingsync.SyncErrorConfiguration, creditErr.Category)
 	assert.Contains(t, creditErr.Resolution, "Apply the credit memo in Business Central")
-	_, err = conn.VoidCreditApplication(t.Context(), &services.AccountingDocumentRef{
+	_, err = conn.VoidCreditApplication(t.Context(), &accountingsyncports.AccountingDocumentRef{
 		Auth: testAuth(), Refs: map[string]string{},
 	})
 	assert.Equal(t, "credit-application", syncErrorOf(t, err).Code)
@@ -349,7 +349,7 @@ func TestVoidCreditApplicationCancelsAMemoCreatedApplied(t *testing.T) {
 	fake := &fakeBC{respond: memos.respond}
 	conn := testConnector(t, fake)
 
-	result, err := conn.VoidCreditApplication(t.Context(), &services.AccountingDocumentRef{
+	result, err := conn.VoidCreditApplication(t.Context(), &accountingsyncports.AccountingDocumentRef{
 		Auth:       testAuth(),
 		Kind:       accountingsync.SyncObjectCreditApplication,
 		ExternalID: "app-1",
@@ -371,7 +371,7 @@ func TestCreateBillPaymentPostsAVendorPaymentAppliedToTheBill(t *testing.T) {
 	fake := &fakeBC{respond: server.respond}
 	conn := testConnector(t, fake)
 
-	doc := &services.AccountingBillPaymentDocument{
+	doc := &accountingsyncports.AccountingBillPaymentDocument{
 		Auth:                  testAuth(),
 		RequestID:             testRequestID,
 		Kind:                  accountingsync.SyncObjectCarrierBillPay,

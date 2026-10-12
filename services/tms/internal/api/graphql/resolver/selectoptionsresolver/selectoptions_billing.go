@@ -4,12 +4,16 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/core/domain/accounttype"
-	"github.com/emoss08/trenova/internal/core/domain/detention"
-	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accounttypeports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -22,7 +26,7 @@ func (r *Deps) resolveRateMatrixSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.RateMatrixService.GetByID(
 				ctx,
-				&repositories.GetRateMatrixByIDRequest{
+				&ratematrixports.GetRateMatrixByIDRequest{
 					RateMatrixID: id,
 					TenantInfo:   req.TenantInfo,
 				},
@@ -57,7 +61,7 @@ func (r *Deps) resolveRateAgreementSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.RateAgreementService.GetByID(
 				ctx,
-				&repositories.GetRateAgreementByIDRequest{
+				&rateagreementports.GetRateAgreementByIDRequest{
 					RateAgreementID: id,
 					TenantInfo:      req.TenantInfo,
 				},
@@ -92,7 +96,7 @@ func (r *Deps) resolveAccessorialChargeSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.AccessorialChargeService.Get(
 				ctx,
-				repositories.GetAccessorialChargeByIDRequest{
+				accessorialchargeports.GetAccessorialChargeByIDRequest{
 					ID:         id,
 					TenantInfo: &req.TenantInfo,
 				},
@@ -130,7 +134,7 @@ func (r *Deps) resolveAccountTypeSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.AccountTypeService.Get(
 				ctx,
-				repositories.GetAccountTypeByIDRequest{
+				accounttypeports.GetAccountTypeByIDRequest{
 					ID:         id,
 					TenantInfo: req.TenantInfo,
 				},
@@ -146,7 +150,7 @@ func (r *Deps) resolveAccountTypeSelectOptions(
 
 	result, err := r.AccountTypeService.SelectOptions(
 		ctx,
-		&repositories.AccountTypeSelectOptionsRequest{
+		&accounttypeports.AccountTypeSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)
@@ -170,7 +174,7 @@ func (r *Deps) resolveDetentionPolicySelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.DetentionPolicyService.GetByID(
 				ctx,
-				&repositories.GetDetentionPolicyByIDRequest{
+				&detentionports.GetDetentionPolicyByIDRequest{
 					DetentionPolicyID: id,
 					TenantInfo:        req.TenantInfo,
 				},
@@ -186,7 +190,7 @@ func (r *Deps) resolveDetentionPolicySelectOptions(
 
 	result, err := r.DetentionPolicyService.SelectOptions(
 		ctx,
-		&repositories.DetentionPolicySelectOptionsRequest{
+		&detentionports.DetentionPolicySelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)

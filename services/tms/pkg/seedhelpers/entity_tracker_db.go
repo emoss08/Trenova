@@ -151,7 +151,7 @@ func (t *PersistentEntityTracker) Count(ctx context.Context) (int, error) {
 		return 0, fmt.Errorf("count created entities: %w", err)
 	}
 
-	return count, nil
+	return int(count), nil
 }
 
 func (t *PersistentEntityTracker) CountBySeed(ctx context.Context, seedName string) (int, error) {
@@ -163,7 +163,7 @@ func (t *PersistentEntityTracker) CountBySeed(ctx context.Context, seedName stri
 		return 0, fmt.Errorf("count created entities for seed %s: %w", seedName, err)
 	}
 
-	return count, nil
+	return int(count), nil
 }
 
 func (t *PersistentEntityTracker) Clear(ctx context.Context) error {

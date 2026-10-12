@@ -27,7 +27,6 @@ export function MentionReply({
   const shipmentId = notificationRelatedId(notification, "shipmentId");
   const authorId = notificationDataString(notification, "authorId");
   const authorName = notificationDataString(notification, "authorName");
-  const authorDisplayName = authorName ?? "the author";
   const mentionToken = authorName ? `@${authorName}` : "";
   const link = getNotificationLink(notification);
 
@@ -118,7 +117,7 @@ export function MentionReply({
             value={value}
             minRows={2}
             maxRows={6}
-            placeholder={`Reply to ${authorDisplayName}…`}
+            placeholder={authorName ? t("Reply to {0}…", authorName) : t("Reply to the author…")}
             className="text-2xs"
             onClick={stopPropagation}
             onChange={(event) => setValue(event.target.value)}
@@ -126,7 +125,7 @@ export function MentionReply({
           />
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground/60 text-2xs">
-              {mentionToken ? t("{0} will be notified", authorDisplayName) : t("Enter to send")}
+              {authorName ? t("{0} will be notified", authorName) : t("Enter to send")}
             </span>
             <div className="flex items-center gap-1">
               <Button variant="ghost" size="xs" className="text-2xs" onClick={closeComposer}>

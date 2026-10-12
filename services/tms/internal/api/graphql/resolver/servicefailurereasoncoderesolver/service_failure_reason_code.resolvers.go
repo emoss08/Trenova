@@ -10,9 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,7 +29,7 @@ func (r *QueryResolver) ServiceFailureReasonCodes(ctx context.Context, input gql
 
 	result, err := r.ServiceFailureReasonCodeSvc.ListConnection(
 		ctx,
-		&repositories.ListServiceFailureReasonCodeConnectionRequest{
+		&servicefailureports.ListServiceFailureReasonCodeConnectionRequest{
 			Filter:                          tableInput.Filter,
 			Cursor:                          tableInput.Cursor,
 			ServiceFailureReasonCodeColumns: serviceFailureReasonCodeColumns(ctx, "edges.node"),
@@ -53,7 +53,7 @@ func (r *QueryResolver) ServiceFailureReasonCode(ctx context.Context, id string)
 		return nil, err
 	}
 
-	return r.ServiceFailureReasonCodeSvc.Get(ctx, repositories.GetServiceFailureReasonCodeByIDRequest{
+	return r.ServiceFailureReasonCodeSvc.Get(ctx, servicefailureports.GetServiceFailureReasonCodeByIDRequest{
 		ID:         reasonID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

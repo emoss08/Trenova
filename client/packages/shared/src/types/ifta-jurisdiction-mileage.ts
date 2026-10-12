@@ -24,7 +24,7 @@ export function createIftaMileageEntryFormSchema(today: number) {
     notes: z
       .string()
       .max(IFTA_MILEAGE_NOTES_MAX, {
-        message: `Keep notes under ${IFTA_MILEAGE_NOTES_MAX} characters`,
+        message: translate("Keep notes under {0} characters", IFTA_MILEAGE_NOTES_MAX),
       })
       .nullable(),
   });

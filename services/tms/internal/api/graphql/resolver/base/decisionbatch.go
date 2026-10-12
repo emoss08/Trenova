@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,7 +15,7 @@ func BatchDecisionRequest(
 	ids []string,
 	input *gqlmodel.DecideAgentProposalsInput,
 	tenant pagination.TenantInfo,
-) (*services.DecideAgentProposalsRequest, error) {
+) (*agentports.DecideAgentProposalsRequest, error) {
 	proposalIDs := make([]pulid.ID, 0, len(ids))
 	for _, id := range ids {
 		parsed, err := pulid.MustParse(id)
@@ -35,7 +35,7 @@ func BatchDecisionRequest(
 		reason = *input.ReasonCode
 	}
 
-	return &services.DecideAgentProposalsRequest{
+	return &agentports.DecideAgentProposalsRequest{
 		ProposalIDs:    proposalIDs,
 		Decision:       input.Decision,
 		ReasonCode:     reason,
@@ -46,7 +46,7 @@ func BatchDecisionRequest(
 }
 
 func BatchDecisionResults(
-	results []services.AgentProposalDecisionResult,
+	results []agentports.AgentProposalDecisionResult,
 ) []*gqlmodel.AgentProposalDecisionResult {
 	out := make([]*gqlmodel.AgentProposalDecisionResult, 0, len(results))
 	for i := range results {

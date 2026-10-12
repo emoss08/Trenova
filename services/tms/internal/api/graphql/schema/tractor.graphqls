@@ -1,3 +1,10 @@
+"Who owns a piece of equipment."
+enum EquipmentOwnershipType {
+  CompanyOwned
+  Leased
+  OwnerOperator
+}
+
 type TractorEdge {
   node: Tractor!
   cursor: String!
@@ -41,6 +48,16 @@ type Tractor {
   Whether the tractor's miles and fuel enter the IFTA return.
   """
   iftaQualified: Boolean!
+  "Who owns the tractor: the company, a lessor, or the owner-operator who drives it."
+  ownershipType: EquipmentOwnershipType!
+  "The owner-operator who owns the tractor, when it is theirs."
+  ownerWorkerId: ID
+  "The lessor a leased tractor is leased from."
+  lessorName: String!
+  "The lessor's reference for the lease."
+  leaseReference: String!
+  "When the lease on a leased tractor ends."
+  leaseEndDate: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -53,6 +70,7 @@ type Tractor {
   state: UsState
   primaryWorker: Worker
   secondaryWorker: Worker
+  ownerWorker: Worker
   lastKnownLocation: LocationReference
 }
 

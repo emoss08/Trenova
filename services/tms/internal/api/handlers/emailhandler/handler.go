@@ -9,11 +9,10 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/email"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/emailservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -137,7 +136,7 @@ func (h *Handler) listProfiles(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*email.Profile], error) {
-		return h.service.ListProfiles(c.Request.Context(), &repositories.ListEmailProfilesRequest{
+		return h.service.ListProfiles(c.Request.Context(), &emailports.ListEmailProfilesRequest{
 			Filter: req,
 		})
 	})
@@ -154,7 +153,7 @@ func (h *Handler) selectProfileOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*email.Profile], error) {
 			return h.service.SelectProfileOptions(
 				c.Request.Context(),
-				&repositories.EmailProfileSelectOptionsRequest{
+				&emailports.EmailProfileSelectOptionsRequest{
 					SelectQueryRequest: req,
 				},
 			)
@@ -169,7 +168,7 @@ func (h *Handler) getProfileOption(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	profile, err := h.service.GetProfile(c.Request.Context(), repositories.GetEmailEntityRequest{
+	profile, err := h.service.GetProfile(c.Request.Context(), emailports.GetEmailEntityRequest{
 		ID:         id,
 		TenantInfo: tenantInfo(authCtx),
 	})
@@ -187,7 +186,7 @@ func (h *Handler) getProfile(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	profile, err := h.service.GetProfile(c.Request.Context(), repositories.GetEmailEntityRequest{
+	profile, err := h.service.GetProfile(c.Request.Context(), emailports.GetEmailEntityRequest{
 		ID:         id,
 		TenantInfo: tenantInfo(authCtx),
 	})
@@ -245,7 +244,7 @@ func (h *Handler) deleteProfile(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	err = h.service.DeleteProfile(c.Request.Context(), repositories.GetEmailEntityRequest{
+	err = h.service.DeleteProfile(c.Request.Context(), emailports.GetEmailEntityRequest{
 		ID:         id,
 		TenantInfo: tenantInfo(authCtx),
 	}, authCtx.UserID)
@@ -263,7 +262,7 @@ func (h *Handler) testSend(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	req := new(services.TestEmailProfileRequest)
+	req := new(emailports.TestEmailProfileRequest)
 	if err = c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -310,7 +309,7 @@ func (h *Handler) listLogs(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*email.Message], error) {
-		return h.service.ListMessages(c.Request.Context(), &repositories.ListEmailMessagesRequest{
+		return h.service.ListMessages(c.Request.Context(), &emailports.ListEmailMessagesRequest{
 			Filter: req,
 		})
 	})
@@ -323,7 +322,7 @@ func (h *Handler) getLog(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	msg, err := h.service.GetMessage(c.Request.Context(), repositories.GetEmailEntityRequest{
+	msg, err := h.service.GetMessage(c.Request.Context(), emailports.GetEmailEntityRequest{
 		ID:         id,
 		TenantInfo: tenantInfo(authCtx),
 	})
@@ -340,7 +339,7 @@ func (h *Handler) listSuppressions(c *gin.Context) {
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*email.Suppression], error) {
 		return h.service.ListSuppressions(
 			c.Request.Context(),
-			&repositories.ListEmailSuppressionsRequest{
+			&emailports.ListEmailSuppressionsRequest{
 				Filter: req,
 			},
 		)
@@ -372,7 +371,7 @@ func (h *Handler) deleteSuppression(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	err = h.service.DeleteSuppression(c.Request.Context(), repositories.GetEmailEntityRequest{
+	err = h.service.DeleteSuppression(c.Request.Context(), emailports.GetEmailEntityRequest{
 		ID:         id,
 		TenantInfo: tenantInfo(authCtx),
 	})

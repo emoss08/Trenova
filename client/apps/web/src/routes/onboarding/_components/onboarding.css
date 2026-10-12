@@ -53,10 +53,6 @@
   flex: none;
 }
 
-.nv ::selection {
-  background: color-mix(in oklch, var(--brand) 30%, transparent);
-}
-
 .nv-kbd {
   font-family: var(--font-mono);
   font-size: 10px;

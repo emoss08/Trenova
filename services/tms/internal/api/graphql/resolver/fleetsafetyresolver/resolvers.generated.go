@@ -4,7 +4,7 @@ package fleetsafetyresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	workersafetyservice "github.com/emoss08/trenova/internal/core/services/workersafetyservice"
+	workersafetyservice "github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 )
 
 type Deps struct {

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FormControlProps, WarningProps } from "@trenova/shared/types/fields";
 import { Controller, type FieldValues } from "react-hook-form";
@@ -9,6 +10,7 @@ import { Switch } from "@trenova/shared/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { InfoCircleIcon } from "@trenova/shared/components/icons";
 import { fieldInvalidClass } from "@trenova/shared/lib/variants/field";
+import { useFieldRegistration } from "@trenova/shared/lib/form-field-registry";
 
 type BaseSwitchFieldProps = Omit<SwitchProps, "name"> & {
   label: string;
@@ -20,6 +22,8 @@ type BaseSwitchFieldProps = Omit<SwitchProps, "name"> & {
   readOnly?: boolean;
   warning?: WarningProps;
   tooltip?: React.ReactNode;
+  /** Marks after the label, such as an "Urgent" or "Required" badge. */
+  badges?: React.ReactNode;
 };
 
 export type SwitchFieldProps<T extends FieldValues> = BaseSwitchFieldProps & FormControlProps<T>;
@@ -36,10 +40,13 @@ export function SwitchField<T extends FieldValues>({
   position = "right",
   warning,
   tooltip,
+  badges,
   className,
   "aria-describedby": ariaDescribedBy,
   ...props
 }: SwitchFieldProps<T>) {
+  useFieldRegistration(name, label);
+  const t = useT();
   const inputId = `switch-${name}`;
   const descriptionId = `${inputId}-description`;
   const errorId = `${inputId}-error`;
@@ -85,6 +92,7 @@ export function SwitchField<T extends FieldValues>({
           <div className={cn("grid grow gap-1", position === "left" ? "order-1" : "order-0")}>
             <div className="flex items-center gap-2">
               <Label htmlFor={inputId}>{label}</Label>
+              {badges}
               {recommended && <RecommendedBadge size="sm" variant="warning" tooltip={tooltip} />}
               {!recommended && tooltip && (
                 <Tooltip>
@@ -92,7 +100,7 @@ export function SwitchField<T extends FieldValues>({
                     render={
                       <button
                         type="button"
-                        aria-label={`About ${label}`}
+                        aria-label={t("About {0}", label)}
                         className="ui-focus-ring text-muted-foreground/70 hover:bg-muted hover:text-foreground inline-flex size-4 shrink-0 items-center justify-center rounded-sm transition-colors"
                       >
                         <InfoCircleIcon className="size-3" />

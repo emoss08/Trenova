@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/businesscentral"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -24,8 +24,8 @@ func entity(name, id string) string {
 	return "/" + name + "(" + id + ")"
 }
 
-func salesDoc() *services.AccountingSalesDocument {
-	return &services.AccountingSalesDocument{
+func salesDoc() *accountingsyncports.AccountingSalesDocument {
+	return &accountingsyncports.AccountingSalesDocument{
 		Auth:               testAuth(),
 		RequestID:          testRequestID,
 		Kind:               accountingsync.SyncObjectInvoice,
@@ -35,7 +35,7 @@ func salesDoc() *services.AccountingSalesDocument {
 		DueDate:            "2026-10-31",
 		TermExternalID:     testTerm,
 		CurrencyCode:       "USD",
-		Lines: []services.AccountingDocumentLine{
+		Lines: []accountingsyncports.AccountingDocumentLine{
 			{
 				Description:    "Linehaul",
 				ItemExternalID: testItem,
@@ -117,7 +117,7 @@ func TestDocumentLimits(t *testing.T) {
 	t.Parallel()
 
 	conn := testConnector(t, &fakeBC{})
-	assert.Equal(t, services.AccountingDocumentLimits{
+	assert.Equal(t, accountingsyncports.AccountingDocumentLimits{
 		MaxDocNumberLength:      35,
 		SupportsDebitMemo:       false,
 		CanVoidCreditMemo:       true,
@@ -131,7 +131,7 @@ func TestDocumentURLLinksThePostedPageByNumber(t *testing.T) {
 
 	conn := testConnector(t, &fakeBC{})
 	auth := testAuth()
-	link := conn.DocumentURL(auth, services.AccountingDocumentLink{
+	link := conn.DocumentURL(auth, accountingsyncports.AccountingDocumentLink{
 		Kind:       accountingsync.SyncObjectInvoice,
 		ExternalID: testInvoice,
 		DocNumber:  "PS-INV103001",
@@ -145,24 +145,24 @@ func TestDocumentURLLinksThePostedPageByNumber(t *testing.T) {
 		accountingsync.SyncObjectCarrierBill: "page=138",
 		accountingsync.SyncObjectDriverBill:  "page=138",
 	} {
-		got := conn.DocumentURL(auth, services.AccountingDocumentLink{Kind: kind, DocNumber: "N-1"})
+		got := conn.DocumentURL(auth, accountingsyncports.AccountingDocumentLink{Kind: kind, DocNumber: "N-1"})
 		assert.Contains(t, got, page, kind)
 	}
 
-	assert.Empty(t, conn.DocumentURL(auth, services.AccountingDocumentLink{
+	assert.Empty(t, conn.DocumentURL(auth, accountingsyncports.AccountingDocumentLink{
 		Kind: accountingsync.SyncObjectCustomerPayment, DocNumber: "T1",
 	}))
-	assert.Empty(t, conn.DocumentURL(auth, services.AccountingDocumentLink{
+	assert.Empty(t, conn.DocumentURL(auth, accountingsyncports.AccountingDocumentLink{
 		Kind: accountingsync.SyncObjectInvoice, ExternalID: testInvoice,
 	}))
 	noName := auth
 	noName.CompanyName = ""
-	assert.Empty(t, conn.DocumentURL(noName, services.AccountingDocumentLink{
+	assert.Empty(t, conn.DocumentURL(noName, accountingsyncports.AccountingDocumentLink{
 		Kind: accountingsync.SyncObjectInvoice, DocNumber: "N-1",
 	}))
 	badRealm := auth
 	badRealm.RealmID = "realm"
-	assert.Empty(t, conn.DocumentURL(badRealm, services.AccountingDocumentLink{
+	assert.Empty(t, conn.DocumentURL(badRealm, accountingsyncports.AccountingDocumentLink{
 		Kind: accountingsync.SyncObjectInvoice, DocNumber: "N-1",
 	}))
 }
@@ -462,7 +462,7 @@ func TestVoidSalesDocumentPaths(t *testing.T) {
 			fake := &fakeBC{respond: server.respond}
 			conn := testConnector(t, fake)
 
-			result, err := conn.VoidSalesDocument(t.Context(), &services.AccountingDocumentRef{
+			result, err := conn.VoidSalesDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
 				Auth: testAuth(), RequestID: testRequestID, Kind: tc.kind, ExternalID: testInvoice,
 			})
 			if tc.category != "" {
@@ -490,7 +490,7 @@ func TestVoidSalesDocumentOfAMissingDocumentSucceeds(t *testing.T) {
 
 	fake := &fakeBC{}
 	conn := testConnector(t, fake)
-	_, err := conn.VoidSalesDocument(t.Context(), &services.AccountingDocumentRef{
+	_, err := conn.VoidSalesDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
 		Auth: testAuth(), Kind: accountingsync.SyncObjectInvoice, ExternalID: testInvoice,
 	})
 	require.NoError(t, err)

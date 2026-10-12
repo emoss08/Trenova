@@ -4,7 +4,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useLayoutEffect, useState, type CSSProperties, type RefObject } from "react";
 import { DeskIcon } from "../desk-icons";
 import type { DeskThreadState } from "./desk-thread-state";
-import type { DeskShelfKey } from "./desk-threads";
+import { threadTouchedAt, type DeskShelfKey } from "./desk-threads";
 
 /** Where the raised card behind the current row sits, in the list's own coordinates. */
 export type RailKnob = { y: number; h: number };
@@ -73,7 +73,7 @@ export function RailDot({ state, accent }: { state: DeskThreadState; accent?: st
 
 /** When a conversation was last touched, as its row's tooltip ends: the time today, the day otherwise. */
 export function railTime(thread: AssistantThread, now: number, timezone: string): string {
-  const at = thread.lastMessageAt > 0 ? thread.lastMessageAt : thread.createdAt;
+  const at = threadTouchedAt(thread);
   if (!at) return "";
   const moment = new Date(at * 1000);
   const sameDay =

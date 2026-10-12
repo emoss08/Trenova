@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { fuelCardProviderChoices } from "@/lib/choices";
 import { FUEL_FEED_RUN_LIST_KEY } from "@/lib/graphql/fuel-purchase-import";
@@ -39,7 +40,10 @@ export function SyncFeedButton() {
       toast.success(describeSync(result), {
         description:
           result.queued > 0
-            ? `${result.queued} row(s) are waiting on a card assignment or a missing unit.`
+            ? t(
+                "{0, plural, one {# row is} other {# rows are}} waiting on a card assignment or a missing unit.",
+                result.queued,
+              )
             : undefined,
       });
       await Promise.all([
@@ -82,8 +86,13 @@ export function SyncFeedButton() {
 
 function describeSync(result: FuelCardSyncResult): string {
   if (result.fetched === 0) {
-    return `Nothing new from ${result.provider}`;
+    return translate("Nothing new from {0}", result.provider);
   }
 
-  return `${result.provider}: ${result.committed} posted of ${result.fetched} read`;
+  return translate(
+    "{0}: {1} posted of {2} read",
+    result.provider,
+    result.committed,
+    result.fetched,
+  );
 }

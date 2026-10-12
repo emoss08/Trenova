@@ -1,3 +1,4 @@
+import { Button } from "@trenova/shared/components/ui/button";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
@@ -7,6 +8,7 @@ import type { AssistantArtifact } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, downloadFromUrl } from "@trenova/shared/lib/utils";
+import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import {
   useCallback,
   useEffect,
@@ -19,33 +21,32 @@ import {
 import { toast } from "sonner";
 import type { LiveArtifacts } from "../desk-layout";
 import { useOutsideDismiss } from "@/components/desk-chat/use-outside-dismiss";
-import { tableViewFrom } from "./artifact-payloads";
+import {
+  DeskArtifactBodySkeleton,
+  DeskWorkspaceSkeleton,
+  type DeskArtifactShape,
+} from "@/components/desk-chat/desk-skeletons";
+import { whenIdle } from "@/lib/when-idle";
 import { ArtIcon, DeskArtKindIcon, deskArtKind, deskArtKindName } from "./desk-art-kinds";
+import { recordCardFor } from "./cards/registry";
 import { DeskArtifactBrowser } from "./desk-artifact-browser";
 import { DeskArtifactsEmpty } from "./desk-artifacts-empty";
-import {
-  DeskDecisionBody,
-  DeskDiffBody,
-  DeskEmailBody,
-  DeskPlanBody,
-  DeskRateBody,
-  DeskRecordBody,
-  DeskReportRunBody,
-  DeskViewBody,
-} from "./desk-bodies";
-import { DeskDocBody } from "./desk-doc-body";
-import { DeskExtractBody } from "./desk-extract-body";
+import { DeskDecisionBody } from "./kinds/decision/desk-decision-body";
+import { DeskDiffBody } from "./kinds/diff/desk-diff-body";
+import { DeskEmailBody } from "./kinds/email/desk-email-body";
+import { DeskPlanBody } from "./kinds/plan/desk-plan-body";
+import { DeskRateBody } from "./kinds/rate/desk-rate-body";
+import { DeskRecordBody } from "./kinds/record/desk-record-body";
+import { DeskReportRunBody } from "./kinds/report/desk-report-run-body";
+import { DeskViewBody } from "./kinds/view/desk-view-body";
+import { DeskDocBody } from "./kinds/document/desk-doc-body";
+import { VERSION_OPTION_CLASS, versionTriggerClass } from "./desk-version-classes";
+import { DeskExtractBody } from "./kinds/extraction/desk-extract-body";
 import { groupLineages, lineageContaining, type ArtifactLineage } from "./desk-lineage";
 import { olderNote, pushRecent, stackLineages, stepLineage } from "./desk-workspace-state";
 import { NO_PENDING_LOOKUPS, withoutPendingLookups } from "./pending-lookups";
-import {
-  DeskReportBars,
-  DeskTableBody,
-  barsOf,
-  changedCells,
-  gridOf,
-  versionNote,
-} from "./desk-table-body";
+import { DeskReportBars, barsOf } from "./kinds/report/desk-report-bars";
+import { DeskTableBody, gridOf, versionNote } from "./kinds/table/desk-table-body";
 
 /** How long a just-arrived artifact keeps its "New" mark. */
 const NEW_MS = 6000;
@@ -124,9 +125,10 @@ function ArtStack({
         const offset = fan ? index * gap : Math.min(index, 2) * 6;
         const scale = fan ? 1 : 1 - Math.min(index, 2) * 0.035;
         return (
-          <button
+          <Button
             key={lineage.id}
-            type="button"
+            variant="bare"
+            size="bare"
             className={cn(
               "dk-ax-card",
               index === 0 && "dk-front",
@@ -170,12 +172,13 @@ function ArtStack({
                 <ArtIcon name="down" size={11} stroke={2.2} />
               </span>
             )}
-          </button>
+          </Button>
         );
       })}
-      <button
-        type="button"
-        className="dk-ax-card dk-ax-all"
+      <Button
+        variant="bare"
+        size="bare"
+        className="dk-ax-card border border-dashed border-dsk-b-strong bg-dsk-sunken! ring-1! ring-dsk-b-sub hover:bg-dsk-hover!"
         onClick={() => {
           onAll();
           close();
@@ -200,7 +203,7 @@ function ArtStack({
         <span className="dk-kbd" aria-hidden>
           ⌘J
         </span>
-      </button>
+      </Button>
     </div>
   );
 }
@@ -258,9 +261,10 @@ function VersionPicker({
 
   return (
     <span className="dk-axv" ref={rootRef}>
-      <button
-        type="button"
-        className={cn("dk-axv-b", open && "dk-on", index !== last && "dk-old")}
+      <Button
+        variant="bare"
+        size="bare"
+        className={versionTriggerClass(index !== last)}
         ref={buttonRef}
         title={t("Versions")}
         aria-haspopup="listbox"
@@ -269,7 +273,7 @@ function VersionPicker({
       >
         v{index + 1}
         <ArtIcon name="down" size={9} stroke={2.6} />
-      </button>
+      </Button>
       {open && (
         <div
           className="dk-axv-pop"
@@ -281,13 +285,14 @@ function VersionPicker({
           {[...lineage.versions].reverse().map((version) => {
             const at = lineage.versions.indexOf(version);
             return (
-              <button
+              <Button
                 key={version.id}
-                type="button"
+                variant="bare"
+                size="bare"
                 role="option"
                 aria-selected={at === index}
                 tabIndex={at === index ? 0 : -1}
-                className={cn("dk-axv-r", at === index && "dk-on")}
+                className={VERSION_OPTION_CLASS}
                 onClick={() => {
                   onChange(at);
                   close();
@@ -302,44 +307,12 @@ function VersionPicker({
                   </i>
                 </span>
                 {at === index && <ArtIcon name="check" size={12} stroke={2.4} />}
-              </button>
+              </Button>
             );
           })}
         </div>
       )}
     </span>
-  );
-}
-
-/** Where an artifact came from: the tool, how many rows, how many calls, what changed. */
-function Provenance({
-  artifact,
-  previous,
-}: {
-  artifact: AssistantArtifact;
-  previous: AssistantArtifact | null;
-}) {
-  const t = useT();
-  const tool = typeof artifact.payload.tool === "string" ? artifact.payload.tool : "";
-  const tabular = artifact.kind === "table_view" || artifact.kind === "report_preview";
-  const grid = tabular && !("path" in artifact.payload) ? gridOf(artifact) : null;
-  const calls =
-    artifact.kind === "table_view" && !("path" in artifact.payload)
-      ? tableViewFrom(artifact).calls
-      : 0;
-  const changes = grid && previous ? changedCells(grid, gridOf(previous)).size : 0;
-
-  if (tool === "" && !grid && calls === 0) {
-    return null;
-  }
-
-  return (
-    <div className="dk-ax-prov dk-sm">
-      {tool !== "" && <code>{tool}</code>}
-      {grid && <span>{t("{0, plural, one {# row} other {# rows}}", grid.rowCount)}</span>}
-      {calls > 0 && <span>{t("{0, plural, one {# call} other {# calls}}", calls)}</span>}
-      {changes > 0 && <span className="dk-ax-chg">{t("{0} changed", changes)}</span>}
-    </div>
   );
 }
 
@@ -424,7 +397,7 @@ function useRememberedLineage(
 ): ArtifactLineage | null {
   const inPage = lineageContaining(lineages, remembered);
   const lineageQuery = useQuery({
-    ...queries.assistant.artifactLineage(threadId, remembered ?? ""),
+    ...queries.assistant.artifacts(threadId)._ctx.lineage(remembered ?? ""),
     enabled: loaded && remembered !== undefined && inPage === null,
     retry: false,
   });
@@ -433,6 +406,68 @@ function useRememberedLineage(
   }
   const versions = lineageQuery.data?.results ?? [];
   return versions.length > 0 ? (groupLineages(versions)[0] ?? null) : null;
+}
+
+/**
+ * The open lineage with every version's contents. The list the stack is built
+ * from carries only what names each artifact; what it holds is read here, for
+ * the one that is shown, and refreshed with the list.
+ */
+function useFullLineage(threadId: string, active: ArtifactLineage | null) {
+  const lineageQuery = useQuery({
+    ...queries.assistant.artifacts(threadId)._ctx.lineage(active?.id ?? ""),
+    enabled: active !== null,
+  });
+  const lineage = useMemo(
+    () => groupLineages(lineageQuery.data?.results ?? [])[0] ?? null,
+    [lineageQuery.data],
+  );
+
+  return {
+    lineage: lineage !== null && lineage.id === active?.id ? lineage : null,
+    failed: lineageQuery.isError,
+    retry: lineageQuery.refetch,
+  };
+}
+
+/** How many of the lineages behind the open one are read ahead, so picking one is instant. */
+const READ_AHEAD = 4;
+
+/** The shape an artifact's contents are drawn in while they are read. */
+/**
+ * An artifact's contents while they are read: a record with a card of its own
+ * in that card's outline, anything else in the shape its kind is drawn in.
+ */
+function ArtifactBodySkeleton({ artifact }: { artifact: AssistantArtifact }) {
+  const resource =
+    artifact.kind === "entity_card" && typeof artifact.payload.entity === "string"
+      ? recordCardFor(artifact.payload.entity)
+      : null;
+  return resource ? <resource.Skeleton /> : <DeskArtifactBodySkeleton shape={shapeOf(artifact)} />;
+}
+
+function shapeOf(artifact: AssistantArtifact): DeskArtifactShape {
+  switch (deskArtKind(artifact)) {
+    case "table":
+    case "report":
+    case "diff":
+      return "table";
+    case "doc":
+    case "email":
+    case "plan":
+      return "document";
+    case "record":
+    case "bill":
+    case "formula":
+    case "shipment":
+    case "customer":
+    case "agreement":
+    case "rate":
+    case "extract":
+      return "record";
+    default:
+      return "lines";
+  }
 }
 
 /**
@@ -461,7 +496,7 @@ export function DeskWorkspace({
 }) {
   const t = useT();
   const queryClient = useQueryClient();
-  const artifactsQuery = useQuery(queries.assistant.artifacts(threadId));
+  const artifactsQuery = useQuery(queries.assistant.artifacts(threadId)._ctx.summary);
   const page = useMemo(
     () =>
       withoutPendingLookups(
@@ -484,6 +519,7 @@ export function DeskWorkspace({
     artifactsQuery.isSuccess,
   );
   const active = rememberedLineage ?? lineages[0] ?? null;
+  const full = useFullLineage(threadId, active);
 
   const [versionByLineage, setVersionByLineage] = useState<Record<string, number>>({});
   const [fanning, setFanning] = useState(false);
@@ -543,6 +579,26 @@ export function DeskWorkspace({
     return () => observer.disconnect();
   }, [hasArtifacts]);
 
+  // The lineages in the stack are the ones a person picks next; their
+  // contents are read once the open one has arrived, so a pick draws at once.
+  const stacked = active ? stackLineages(lineages, active, recent) : [];
+  const readAhead = stacked
+    .filter((lineage) => lineage.id !== active?.id)
+    .slice(0, READ_AHEAD)
+    .map((lineage) => lineage.id)
+    .join(",");
+  const activeLoaded = full.lineage !== null;
+  useEffect(() => {
+    if (!activeLoaded || readAhead === "") {
+      return;
+    }
+    return whenIdle(() => {
+      for (const id of readAhead.split(",")) {
+        void queryClient.prefetchQuery(queries.assistant.artifacts(threadId)._ctx.lineage(id));
+      }
+    });
+  }, [activeLoaded, queryClient, readAhead, threadId]);
+
   const pinMutation = useApiMutation({
     mutationFn: ({ id, pinned }: { id: string; pinned: boolean }) =>
       apiService.assistantService.pinArtifact(threadId, id, pinned),
@@ -567,17 +623,7 @@ export function DeskWorkspace({
   );
 
   if (artifactsQuery.isLoading) {
-    return (
-      <div className="dk-apx" ref={paneRef}>
-        <div className="dk-ax-top">
-          <div className="dk-ax-stack">
-            <div className="dk-ax-card dk-front dk-sk-card" />
-          </div>
-        </div>
-        <div className="dk-ax-body" />
-        <div className="dk-ax-foot" />
-      </div>
-    );
+    return <DeskWorkspaceSkeleton />;
   }
 
   if (artifactsQuery.isError) {
@@ -586,14 +632,14 @@ export function DeskWorkspace({
         <div className="dk-axe">
           <div className="dk-axe-in">
             <b className="dk-axe-t">{t("This conversation's artifacts could not be loaded.")}</b>
-            <button
-              type="button"
-              className="dk-ec-btn"
-              style={{ marginTop: 14 }}
+            <Button
+              variant="quiet"
+              size="sm"
+              className="mt-3.5"
               onClick={() => void artifactsQuery.refetch()}
             >
               {t("Try again")}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -608,10 +654,13 @@ export function DeskWorkspace({
     );
   }
 
-  const last = active.versions.length - 1;
+  // The versions are the full lineage's once it is read; until then the
+  // list's, which name the version but do not hold it.
+  const shownLineage = full.lineage ?? active;
+  const last = shownLineage.versions.length - 1;
   const index = Math.min(versionByLineage[active.id] ?? last, last);
-  const artifact = active.versions[index];
-  const previous = index > 0 ? active.versions[index - 1] : null;
+  const artifact = shownLineage.versions[index];
+  const previous = index > 0 ? shownLineage.versions[index - 1] : null;
   const go = (step: number) => {
     const next = stepLineage(
       lineages.some((lineage) => lineage.id === active.id) ? lineages : [active, ...lineages],
@@ -622,9 +671,9 @@ export function DeskWorkspace({
   };
   const isDocument = artifact.kind === "document" || artifact.kind === "briefing";
   const versions =
-    active.versions.length > 1 && !isDocument ? (
+    full.lineage !== null && full.lineage.versions.length > 1 && !isDocument ? (
       <VersionPicker
-        lineage={active}
+        lineage={full.lineage}
         index={index}
         onChange={(at) => setVersionByLineage((current) => ({ ...current, [active.id]: at }))}
       />
@@ -662,7 +711,7 @@ export function DeskWorkspace({
         <>
           <div className="dk-ax-top">
             <ArtStack
-              lineages={stackLineages(lineages, active, recent)}
+              lineages={stacked}
               active={active}
               newest={newest}
               total={total}
@@ -672,33 +721,36 @@ export function DeskWorkspace({
               onAll={() => setBrowsing(true)}
             />
             <div className="dk-ax-nav">
-              <button
-                type="button"
-                className="dk-ax-ib"
+              <Button
+                variant="quiet"
+                size="icon-sm"
+                className="text-dsk-subtle"
                 title={t("Previous")}
                 aria-label={t("Previous")}
                 onClick={() => go(-1)}
               >
                 <ArtIcon name="up" size={13} stroke={2.2} />
-              </button>
-              <button
-                type="button"
-                className="dk-ax-ib"
+              </Button>
+              <Button
+                variant="quiet"
+                size="icon-sm"
+                className="text-dsk-subtle"
                 title={t("Next")}
                 aria-label={t("Next")}
                 onClick={() => go(1)}
               >
                 <ArtIcon name="down" size={13} stroke={2.2} />
-              </button>
-              <button
-                type="button"
-                className="dk-ax-ib"
+              </Button>
+              <Button
+                variant="quiet"
+                size="icon-sm"
+                className="text-dsk-subtle"
                 title={t("Close")}
                 aria-label={t("Hide artifacts")}
                 onClick={onClose}
               >
                 <ArtIcon name="x" size={13} stroke={2.2} />
-              </button>
+              </Button>
             </div>
           </div>
           <div className="dk-ax-body" key={isDocument ? active.id : artifact.id}>
@@ -713,46 +765,74 @@ export function DeskWorkspace({
                     : t("From {0}", older.day)}
               </div>
             )}
-            <Provenance artifact={artifact} previous={previous} />
-            <ArtifactBody
-              artifact={artifact}
-              previous={previous}
-              versions={versions}
-              lineage={active}
-              onOpenArtifact={open}
-            />
+            {full.lineage !== null ? (
+              <>
+                <ArtifactBody
+                  artifact={artifact}
+                  previous={previous}
+                  versions={versions}
+                  lineage={full.lineage}
+                  onOpenArtifact={open}
+                />
+              </>
+            ) : full.failed ? (
+              <div className="dk-ax-pad dk-ax-oldnote">
+                {t("This artifact could not be loaded.")}
+                <Button
+                  variant="quiet"
+                  size="sm"
+                  className="ml-2"
+                  onClick={() => void full.retry()}
+                >
+                  {t("Try again")}
+                </Button>
+              </div>
+            ) : (
+              <ArtifactBodySkeleton artifact={artifact} />
+            )}
           </div>
           <div className="dk-ax-foot">
-            <button type="button" className="dk-ax-link" onClick={copyLink} title={t("Copy link")}>
+            <Button
+              variant="bare"
+              size="bare"
+              className="h-7 min-w-0 gap-1.75 rounded-lg px-2.25 font-plex-mono text-xs text-dsk-subtle transition-colors duration-120 hover:bg-dsk-hover hover:text-dsk-fg [&_b]:font-medium [&_b]:text-dsk-fg2 [&_span]:truncate"
+              onClick={copyLink}
+              title={t("Copy link")}
+            >
               <ArtIcon name="copy" size={12} />
               <span>
                 desk/c/{threadId.slice(-4).toLowerCase()}/a/<b>{artifact.slug || artifact.id}</b>
               </span>
-            </button>
+            </Button>
             <span className="flex-1" />
-            <button
-              type="button"
-              className={cn("dk-ax-ib", pinned && "dk-on")}
+            <Button
+              variant="quiet"
+              size="icon-sm"
+              className={cn("text-dsk-subtle", pinned && "text-dsk-fg [&_svg_path]:fill-current")}
               title={pinned ? t("Unpin") : t("Pin to conversation")}
               aria-label={t("Pin to conversation")}
               aria-pressed={pinned}
               onClick={() => pinMutation.mutate({ id: artifact.id, pinned: !pinned })}
             >
               <ArtIcon name="pin" size={14} />
-            </button>
+            </Button>
             {tabular && (
-              <button
-                type="button"
-                className="dk-ax-ib"
+              <Button
+                variant="quiet"
+                size="icon-sm"
+                className="text-dsk-subtle"
                 title={t("Export CSV")}
                 aria-label={t("Export CSV")}
                 onClick={() => downloadFromUrl(artifactCsvUrl(threadId, artifact.id))}
               >
                 <ArtIcon name="dl" size={14} />
-              </button>
+              </Button>
             )}
             <a
-              className="dk-ax-ib"
+              className={cn(
+                buttonVariants({ variant: "quiet", size: "icon-sm" }),
+                "text-dsk-subtle",
+              )}
               href={artifactPageLink(artifact)}
               target="_blank"
               rel="noreferrer"

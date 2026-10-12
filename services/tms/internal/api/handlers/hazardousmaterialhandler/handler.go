@@ -6,10 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/hazardousmaterialservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/reference/app/hazardousmaterialservice"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/hazardousmaterialports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -104,7 +104,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*hazardousmaterial.HazardousMaterial], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListHazardousMaterialsRequest{
+				&hazardousmaterialports.ListHazardousMaterialsRequest{
 					Filter: req,
 				},
 			)
@@ -135,7 +135,7 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 		return
 	}
 
-	req := new(repositories.BulkUpdateHazardousMaterialStatusRequest)
+	req := new(hazardousmaterialports.BulkUpdateHazardousMaterialStatusRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -177,10 +177,13 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetHazardousMaterialByIDRequest{
-		ID:         hazardousMaterialID,
-		TenantInfo: pagination.FromAuth(authCtx),
-	})
+	entity, err := h.service.Get(
+		c.Request.Context(),
+		hazardousmaterialports.GetHazardousMaterialByIDRequest{
+			ID:         hazardousMaterialID,
+			TenantInfo: pagination.FromAuth(authCtx),
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -212,7 +215,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*hazardousmaterial.HazardousMaterial], error) {
 			return h.service.SelectOptions(
 				c.Request.Context(),
-				&repositories.HazardousMaterialSelectOptionsRequest{
+				&hazardousmaterialports.HazardousMaterialSelectOptionsRequest{
 					SelectQueryRequest: req,
 				},
 			)
@@ -243,7 +246,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetHazardousMaterialByIDRequest{
+		hazardousmaterialports.GetHazardousMaterialByIDRequest{
 			ID:         hazardousMaterialID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -316,7 +319,7 @@ func (h *Handler) patch(c *gin.Context) {
 
 	existing, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetHazardousMaterialByIDRequest{
+		hazardousmaterialports.GetHazardousMaterialByIDRequest{
 			ID:         hazardousMaterialID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},

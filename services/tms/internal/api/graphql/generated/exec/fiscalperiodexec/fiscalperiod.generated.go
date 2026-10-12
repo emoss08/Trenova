@@ -8,7 +8,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
-	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -78,7 +78,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.PeriodType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNPeriodType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfiscalperiodᚐPeriodType),
+				Marshal: gqlexec.Marshal(marshalNPeriodType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐPeriodType),
 			},
 			{
 				Name:     "status",
@@ -88,7 +88,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFiscalPeriodStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfiscalperiodᚐStatus),
+				Marshal: gqlexec.Marshal(marshalNFiscalPeriodStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐStatus),
 			},
 			{
 				Name:     "name",
@@ -219,7 +219,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNFiscalPeriodStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfiscalperiodᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fiscalperiod.Status) graphql.Marshaler {
+func marshalNFiscalPeriodStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fiscalperiod.Status) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -251,7 +251,7 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNPeriodType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfiscalperiodᚐPeriodType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fiscalperiod.PeriodType) graphql.Marshaler {
+func marshalNPeriodType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐPeriodType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fiscalperiod.PeriodType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

@@ -1,5 +1,6 @@
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import type { FieldChange } from "@trenova/shared/types/formula-template";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export type ChangedFieldRow = {
   path: string;
@@ -7,7 +8,7 @@ export type ChangedFieldRow = {
   summary: string;
 };
 
-const FIELD_LABELS: Record<string, string> = {
+const FIELD_LABELS: Record<string, string> = defineLabels({
   name: "Name",
   description: "Description",
   type: "Type",
@@ -19,7 +20,7 @@ const FIELD_LABELS: Record<string, string> = {
   variableDefinitions: "Variables",
   breakdownDefinitions: "Breakdown",
   metadata: "Metadata",
-};
+});
 
 const SEGMENT_LABELS: Record<string, string> = {
   variableDefinitions: "Variable",

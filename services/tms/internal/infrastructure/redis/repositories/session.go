@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/session"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -33,7 +34,7 @@ type sessionRepository struct {
 	l      *zap.Logger
 }
 
-func NewSessionRepository(p SessionRepositoryParams) repositories.SessionRepository {
+func NewSessionRepository(p SessionRepositoryParams) sessionports.SessionRepository {
 	return &sessionRepository{
 		client: p.Client,
 		l:      p.Logger.Named("redis.session-repository"),
@@ -183,6 +184,85 @@ func (r *sessionRepository) DeleteAllForUser(ctx context.Context, userID pulid.I
 
 	if _, err = pipe.Exec(ctx); err != nil {
 		log.Error("failed to delete user sessions", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
+func (r *sessionRepository) ListForUser(
+	ctx context.Context,
+	userID pulid.ID,
+) ([]*session.Session, error) {
+	log := r.l.With(
+		zap.String("operation", "ListForUser"),
+		zap.String("userID", userID.String()),
+	)
+
+	userSessionsKey := r.getUserSessionsKey(userID)
+	members, err := r.client.ZRevRange(ctx, userSessionsKey, 0, -1).Result()
+	if err != nil {
+		log.Error("failed to list user sessions", zap.Error(err))
+		return nil, err
+	}
+	if len(members) == 0 {
+		return []*session.Session{}, nil
+	}
+
+	pipe := r.client.Pipeline()
+	reads := make([]*redis.JSONCmd, 0, len(members))
+	ids := make([]string, 0, len(members))
+	for _, member := range members {
+		sessionID, parseErr := pulid.Parse(member)
+		if parseErr != nil {
+			continue
+		}
+		reads = append(reads, pipe.JSONGet(ctx, r.getSessionKey(sessionID), "."))
+		ids = append(ids, member)
+	}
+	if _, err = pipe.Exec(ctx); err != nil && !redishelpers.IsRedisNil(err) {
+		log.Error("failed to read user sessions", zap.Error(err))
+		return nil, err
+	}
+
+	now := timeutils.NowUnix()
+	sessions := make([]*session.Session, 0, len(reads))
+	stale := make([]any, 0)
+	for index, read := range reads {
+		raw, readErr := read.Result()
+		if readErr != nil || raw == "" {
+			stale = append(stale, ids[index])
+			continue
+		}
+		sess := new(session.Session)
+		if decodeErr := sonic.UnmarshalString(raw, sess); decodeErr != nil {
+			log.Warn("skipping undecodable session", zap.String("member", ids[index]))
+			continue
+		}
+		if sess.UserID != userID || sess.ExpiresAt < now {
+			stale = append(stale, ids[index])
+			continue
+		}
+		sessions = append(sessions, sess)
+	}
+
+	if len(stale) > 0 {
+		if remErr := r.client.ZRem(ctx, userSessionsKey, stale...).Err(); remErr != nil {
+			log.Warn("failed to prune stale session ids", zap.Error(remErr))
+		}
+	}
+
+	return sessions, nil
+}
+
+func (r *sessionRepository) Touch(ctx context.Context, sessionID pulid.ID, at int64) error {
+	err := r.client.JSONSet(ctx, r.getSessionKey(sessionID), ".lastAccessedAt", at).Err()
+	if err != nil && !redishelpers.IsRedisNil(err) {
+		r.l.Warn(
+			"failed to touch session",
+			zap.String("sessionID", sessionID.String()),
+			zap.Error(err),
+		)
 		return err
 	}
 

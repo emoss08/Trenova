@@ -56,12 +56,15 @@ export const STAGE_META: Record<ShipmentStage, StageMeta> = {
   },
 };
 
-function wholeDollars(value: string): string {
+export function wholeDollars(value: string): string {
   return formatCurrency(Math.round(Number(value) || 0)).replace(/\.00$/, "");
 }
 
 /** Group headers for the stages the current filters reach, with their whole-group totals. */
-export function stageGroups(summary: readonly ShipmentStageSummary[], t: TranslateFn): DataTableGroup[] {
+export function stageGroups(
+  summary: readonly ShipmentStageSummary[],
+  t: TranslateFn,
+): DataTableGroup[] {
   return summary
     .filter((entry) => entry.count > 0)
     .sort((a, b) => a.rank - b.rank)
@@ -71,6 +74,7 @@ export function stageGroups(summary: readonly ShipmentStageSummary[], t: Transla
       swatchClassName: STAGE_META[entry.stage].swatchClassName,
       count: entry.count,
       aggregate: wholeDollars(entry.revenue),
+      aggregateLabel: t("Revenue"),
     }));
 }
 

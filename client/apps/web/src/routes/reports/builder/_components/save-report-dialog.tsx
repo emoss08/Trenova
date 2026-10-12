@@ -24,13 +24,16 @@ import {
   REPORT_FORMAT_CHOICES,
   REPORT_VISIBILITY_LABELS,
 } from "@/types/report";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
-const VISIBILITY_CHOICES = Object.entries(REPORT_VISIBILITY_LABELS).map(([value, label]) => ({
-  value,
-  label,
-}));
+const VISIBILITY_CHOICES = Object.entries(sourceLabels(REPORT_VISIBILITY_LABELS)).map(
+  ([value, label]) => ({
+    value,
+    label,
+  }),
+);
 
-const STATUS_CHOICES = Object.entries(REPORT_DEFINITION_STATUS_LABELS)
+const STATUS_CHOICES = Object.entries(sourceLabels(REPORT_DEFINITION_STATUS_LABELS))
   .filter(([value]) => value !== "needs_attention")
   .map(([value, label]) => ({ value, label }));
 

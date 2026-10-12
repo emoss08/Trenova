@@ -3,9 +3,9 @@ package ratelimit
 import (
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -20,7 +20,7 @@ type StoreParams struct {
 	Logger  *zap.Logger
 }
 
-func NewStore(p StoreParams) (repositories.RateLimitStore, error) {
+func NewStore(p StoreParams) (kernelports.RateLimitStore, error) {
 	cfg := p.Config.Security.RateLimit
 	memory := NewMemoryStore(MemoryStoreOptions{CleanupInterval: cfg.GetCleanupInterval()})
 

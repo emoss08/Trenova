@@ -1,19 +1,22 @@
-"use no memo";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { getOperatorLabel, operatorRequiresValue, stringifyUnknown } from "@/lib/data-table";
 import type {
+  DataTableExtraChips,
   FilterGroupItem,
   FilterItem,
   SingleFilterItem,
 } from "@trenova/shared/types/data-table";
 import { SearchLgIcon, XCloseIcon } from "@trenova/shared/components/icons";
+import { translate } from "@trenova/shared/i18n/runtime";
+import { RecordFilterValue } from "./record-filter-input";
 
 type DataTableFilterChipsProps = {
   filters: FilterItem[];
   onFiltersChange: (filters: FilterItem[]) => void;
   query: string;
   onClearQuery: () => void;
+  extraChips?: DataTableExtraChips;
 };
 
 function formatFilterValue(filter: SingleFilterItem): string {
@@ -31,7 +34,7 @@ function formatFilterValue(filter: SingleFilterItem): string {
       ? `${labels.slice(0, 2).join(", ")} +${labels.length - 2}`
       : labels.join(", ");
   }
-  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "boolean") return value ? translate("Yes") : translate("No");
   const stringValue = stringifyUnknown(value);
   const optionLabel = filter.filterOptions?.find(
     (o) => stringifyUnknown(o.value) === stringValue,
@@ -64,11 +67,14 @@ export default function DataTableFilterChips({
   onFiltersChange,
   query,
   onClearQuery,
+  extraChips,
 }: DataTableFilterChipsProps) {
   const t = useT();
 
   const hasQuery = query !== "";
-  if (filters.length === 0 && !hasQuery) return null;
+  const extraItems = extraChips?.items ?? [];
+  const chipCount = filters.length + extraItems.length + (hasQuery ? 1 : 0);
+  if (chipCount === 0) return null;
 
   const removeFilter = (id: string) => {
     onFiltersChange(filters.filter((f) => f.id !== id));
@@ -77,6 +83,7 @@ export default function DataTableFilterChips({
   const clearAll = () => {
     onFiltersChange([]);
     if (hasQuery) onClearQuery();
+    if (extraItems.length > 0) extraChips?.onClear();
   };
 
   return (
@@ -92,6 +99,13 @@ export default function DataTableFilterChips({
           onRemove={onClearQuery}
         />
       )}
+      {extraItems.map((chip) => (
+        <FilterChip
+          key={chip.key}
+          label={<span className="max-w-64 truncate font-medium">{chip.label}</span>}
+          onRemove={chip.onRemove}
+        />
+      ))}
       {filters.map((filter) => {
         if (filter.type === "group") {
           const group = filter as FilterGroupItem;
@@ -110,7 +124,14 @@ export default function DataTableFilterChips({
         }
 
         const single = filter as SingleFilterItem;
-        const value = formatFilterValue(single);
+        const value =
+          single.filterType === "record" && single.filterRecord ? (
+            operatorRequiresValue(single.operator) ? (
+              <RecordFilterValue record={single.filterRecord} value={single.value} />
+            ) : null
+          ) : (
+            formatFilterValue(single)
+          );
         return (
           <FilterChip
             key={single.id}
@@ -125,7 +146,7 @@ export default function DataTableFilterChips({
           />
         );
       })}
-      {(filters.length > 1 || (filters.length > 0 && hasQuery)) && (
+      {chipCount > 1 && (
         <Button
           type="button"
           variant="ghost"

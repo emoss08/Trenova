@@ -1,0 +1,6 @@
+{
+  "Choose a fiscal period above and every account's debits, credits and net change for it are listed here.": "Elija un período fiscal arriba y aquí se listarán los cargos, abonos y variación neta de cada cuenta.",
+  "Net change": "Variación neta",
+  "No journal entry landed in this period, so every account stands where it did. Post one, or pick another period.": "Ningún asiento se contabilizó en este período, así que todas las cuentas siguen igual. Contabilice uno o elija otro período.",
+  "View account balances for a fiscal period.": "Vea los saldos de las cuentas de un período fiscal."
+}

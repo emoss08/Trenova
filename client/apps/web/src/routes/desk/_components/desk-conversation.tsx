@@ -3,17 +3,22 @@ import {
   type DeskThreadArtifacts,
   type DeskThreadSchedules,
 } from "@/components/desk-chat/desk-thread";
+import type { TurnHandoff } from "@/components/assistant/turn-stream";
 import { turnTime } from "@/components/desk-chat/turn-time";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
+import { whenIdle } from "@/lib/when-idle";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantMessage, AssistantThread } from "@/types/assistant";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { DeskWorkspace } from "./artifacts/desk-workspace";
+import { LazyDeskWorkspace, preloadDeskWorkspace } from "./artifacts/desk-workspace-lazy";
+import { DeskCaseCard } from "./case/desk-case-card";
+import { useDeskCase } from "./case/use-desk-case";
+import { useSnoozeClock } from "./case/use-snooze-clock";
 import { withoutPendingLookups } from "./artifacts/pending-lookups";
 import { DeskFactsBar } from "./composer/desk-facts";
 import { DeskScheduleCard } from "./conversation/desk-schedule-card";
@@ -49,6 +54,13 @@ export function DeskConversation({
   const timezone = useAuthStore((state) => state.user?.timezone) || "UTC";
   const chapters = useDeskStore((state) => state.chaptersByThread[thread.id]);
   const toggleChapter = useDeskStore((state) => state.toggleChapter);
+  // What the reply being written says about a hand-off, for the top bar's
+  // menu, which watches the store rather than the reply.
+  const setLiveHandoff = useDeskStore((state) => state.setLiveHandoff);
+  const noteLiveHandoff = useCallback(
+    (live: TurnHandoff | null) => setLiveHandoff(thread.id, live),
+    [setLiveHandoff, thread.id],
+  );
   const activeArtifactId = useDeskStore((state) => state.activeArtifactByThread[thread.id] ?? null);
 
   // A page the agent opens takes the person out of the Desk; the conversation
@@ -61,7 +73,7 @@ export function DeskConversation({
   }, [openWidget, setActiveThreadId, thread.id]);
 
   // The running turn's lookups are not counted until the reply keeps them.
-  const artifactsQuery = useQuery(queries.assistant.artifacts(thread.id));
+  const artifactsQuery = useQuery(queries.assistant.artifacts(thread.id)._ctx.summary);
   const { setArtifactCount, pendingLookups } = desk;
   const artifactTotal = useMemo(() => {
     const visible = withoutPendingLookups(
@@ -72,6 +84,15 @@ export function DeskConversation({
     return visible.counts?.all ?? visible.results.length;
   }, [artifactsQuery.data, pendingLookups]);
   useEffect(() => setArtifactCount(artifactTotal), [artifactTotal, setArtifactCount]);
+  // A conversation with something to show will likely have it shown: the
+  // workspace's code is read while the page is idle, before it is asked for.
+  const hasArtifacts = artifactTotal > 0;
+  useEffect(() => {
+    if (!hasArtifacts) {
+      return;
+    }
+    return whenIdle(() => void preloadDeskWorkspace().catch(() => undefined));
+  }, [hasArtifacts]);
 
   const { openArtifact, setWorkspaceOpen, workspaceOpen, liveArtifacts, noteLiveArtifacts } = desk;
   const open = useCallback(
@@ -87,7 +108,7 @@ export function DeskConversation({
         open: workspaceOpen,
         setOpen: setWorkspaceOpen,
         content: (
-          <DeskWorkspace
+          <LazyDeskWorkspace
             key={thread.id}
             threadId={thread.id}
             liveArtifacts={liveArtifacts}
@@ -110,6 +131,16 @@ export function DeskConversation({
   );
 
   const schedules = useDeskSchedules(thread.id, timezone);
+  const deskCase = useDeskCase(thread);
+  const queryClient = useQueryClient();
+  const refreshCase = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey });
+    void queryClient.invalidateQueries({ queryKey: queries.assistant.case(thread.id).queryKey });
+  }, [queryClient, thread.id]);
+  const now = useSnoozeClock(
+    thread.case?.state === "Snoozed" ? thread.case.snoozedUntil : null,
+    refreshCase,
+  );
   const chapterApi = useMemo(
     () => ({
       of: (messageId: string) => (chapters ? chapters.indexOf(messageId) + 1 : 0),
@@ -140,13 +171,27 @@ export function DeskConversation({
       onSwitchAgent={desk.start}
       onStartNew={onStartNew}
       onWorkingChange={desk.setWorking}
+      onLiveHandoff={noteLiveHandoff}
       onNavigate={carryConversation}
       followNavigation={false}
       artifacts={artifacts}
       schedules={schedules}
       chapters={chapterApi}
       renderHandoff={renderHandoff}
-      dockTop={thread.canContinue ? <DeskFactsBar thread={thread} /> : null}
+      dockTop={(dock) => (
+        <>
+          {thread.case && (
+            <DeskCaseCard
+              thread={thread}
+              deskCase={deskCase}
+              dock={dock}
+              now={now}
+              timezone={timezone}
+            />
+          )}
+          {thread.canContinue && <DeskFactsBar thread={thread} />}
+        </>
+      )}
     />
   );
 }

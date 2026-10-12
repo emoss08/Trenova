@@ -7,9 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/agentquality"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -76,7 +76,7 @@ func evalCaseSources(input gqlmodel.CreateAgentEvalCaseInput) int {
 
 func evalCaseFromMessage(
 	input *gqlmodel.AgentEvalCaseFromMessageInput,
-) (*services.CreateEvalCaseFromMessageRequest, error) {
+) (*agentports.CreateEvalCaseFromMessageRequest, error) {
 	threadID, err := pulid.MustParse(input.ThreadID)
 	if err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func evalCaseFromMessage(
 		return nil, err
 	}
 
-	return &services.CreateEvalCaseFromMessageRequest{
+	return &agentports.CreateEvalCaseFromMessageRequest{
 		ThreadID:  threadID,
 		MessageID: messageID,
 		Title:     base.DerefString(input.Title),
@@ -95,7 +95,7 @@ func evalCaseFromMessage(
 
 func evalCaseCurated(
 	input *gqlmodel.AgentEvalCaseCuratedInput,
-) (*services.CreateCuratedEvalCaseRequest, error) {
+) (*agentports.CreateCuratedEvalCaseRequest, error) {
 	definitionID, err := pulid.MustParse(input.AgentDefinitionID)
 	if err != nil {
 		return nil, err
@@ -106,7 +106,7 @@ func evalCaseCurated(
 		return nil, err
 	}
 
-	request := &services.CreateCuratedEvalCaseRequest{
+	request := &agentports.CreateCuratedEvalCaseRequest{
 		AgentDefinitionID: definitionID,
 		Title:             base.DerefString(input.Title),
 		Input:             input.Input,
@@ -151,8 +151,8 @@ func evalCaseCurated(
 func evalCaseUpdate(
 	caseID pulid.ID,
 	input gqlmodel.UpdateAgentEvalCaseInput,
-) (*services.UpdateEvalCaseRequest, error) {
-	request := &services.UpdateEvalCaseRequest{
+) (*agentports.UpdateEvalCaseRequest, error) {
+	request := &agentports.UpdateEvalCaseRequest{
 		ID:        caseID,
 		Version:   int64(input.Version),
 		Title:     input.Title,

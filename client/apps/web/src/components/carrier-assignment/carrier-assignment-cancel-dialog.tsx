@@ -14,9 +14,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const cancelReasonSchema = z.object({
-  reason: z.string().min(1, { error: "A cancellation reason is required" }),
+  reason: z.string().min(1, { error: () => translate("A cancellation reason is required") }),
 });
 
 type CancelReasonValues = z.infer<typeof cancelReasonSchema>;

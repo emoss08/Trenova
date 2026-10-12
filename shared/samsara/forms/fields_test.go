@@ -22,6 +22,27 @@ func TestFieldTypedValue(t *testing.T) {
 		wantValue string
 	}{
 		{
+			name: "barcode",
+			field: FormField{
+				Type: samsaraspec.FormsFieldInputObjectResponseBodyTypeBarcode,
+				BarcodeValue: &samsaraspec.FormsBarcodeValueObjectResponseBody{
+					Barcodes: []samsaraspec.FormsBarcodeObjectResponseBody{
+						{Value: "PRO-1001"},
+						{Value: ""},
+						{Value: "PRO-1002"},
+					},
+				},
+			},
+			wantKind:  FieldKindBarcode,
+			wantValue: "PRO-1001, PRO-1002",
+		},
+		{
+			name:      "barcode empty",
+			field:     FormField{Type: samsaraspec.FormsFieldInputObjectResponseBodyTypeBarcode},
+			wantKind:  FieldKindBarcode,
+			wantValue: "",
+		},
+		{
 			name: "text",
 			field: FormField{
 				Type:      samsaraspec.FormsFieldInputObjectResponseBodyTypeText,
@@ -175,10 +196,10 @@ func TestFieldTypedValue(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			kind, value := FieldTypedValue(tt.field)
+			kind, value := FieldTypedValue(&tt.field)
 			assert.Equal(t, tt.wantKind, kind)
 			assert.Equal(t, tt.wantValue, value)
-			assert.Equal(t, tt.wantValue, FieldDisplayValue(tt.field))
+			assert.Equal(t, tt.wantValue, FieldDisplayValue(&tt.field))
 		})
 	}
 }
@@ -195,16 +216,16 @@ func TestSubmissionAccessors(t *testing.T) {
 		Location:    &loc,
 	}
 
-	assert.Equal(t, "stop-1", SubmissionRouteStopID(sub))
-	assert.Equal(t, "route-1", SubmissionRouteID(sub))
-	assert.Equal(t, externalIDs, SubmissionExternalIDs(sub))
-	require := SubmissionLocationOf(sub)
+	assert.Equal(t, "stop-1", SubmissionRouteStopID(&sub))
+	assert.Equal(t, "route-1", SubmissionRouteID(&sub))
+	assert.Equal(t, externalIDs, SubmissionExternalIDs(&sub))
+	require := SubmissionLocationOf(&sub)
 	assert.NotNil(t, require)
 	assert.InDelta(t, 1.5, require.Latitude, 1e-9)
 
 	empty := FormSubmission{}
-	assert.Empty(t, SubmissionRouteStopID(empty))
-	assert.Empty(t, SubmissionRouteID(empty))
-	assert.Nil(t, SubmissionExternalIDs(empty))
-	assert.Nil(t, SubmissionLocationOf(empty))
+	assert.Empty(t, SubmissionRouteStopID(&empty))
+	assert.Empty(t, SubmissionRouteID(&empty))
+	assert.Nil(t, SubmissionExternalIDs(&empty))
+	assert.Nil(t, SubmissionLocationOf(&empty))
 }

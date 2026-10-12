@@ -19,6 +19,8 @@ import {
   parseAuditScope,
   verificationTone,
   type AuditTrailScope,
+  isSealed,
+  unsealedRows,
 } from "../audit-model";
 
 const t = (text: string | null | undefined, ...args: unknown[]) =>
@@ -348,5 +350,19 @@ describe("auditActingAsLabel", () => {
   it("labels agent and system principals", () => {
     expect(auditActingAsLabel(t, { ...unattended, principalType: "Agent" })).toBe("An agent");
     expect(auditActingAsLabel(t, { ...unattended, principalType: "System" })).toBe("The system");
+  });
+});
+
+describe("sealing", () => {
+  it("counts the rows recorded since the last seal", () => {
+    expect(unsealedRows({ lastSeq: 1_204, sealedThroughSeq: 1_200 })).toBe(4);
+    expect(unsealedRows({ lastSeq: 1_200, sealedThroughSeq: 1_200 })).toBe(0);
+    expect(unsealedRows({ lastSeq: 0, sealedThroughSeq: 0 })).toBe(0);
+  });
+
+  it("says a row is sealed through the chain's seal, and nothing without a status", () => {
+    expect(isSealed(1_200, { sealedThroughSeq: 1_200 })).toBe(true);
+    expect(isSealed(1_201, { sealedThroughSeq: 1_200 })).toBe(false);
+    expect(isSealed(1_200, null)).toBeNull();
   });
 });

@@ -2,8 +2,8 @@ package invoiceresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,7 +16,7 @@ const secondsPerDay = 86400
 func createMemoRequestFromInput(
 	input *gqlmodel.CreateMemoInput,
 	tenantInfo pagination.TenantInfo,
-) (*serviceports.CreateMemoRequest, error) {
+) (*invoiceports.CreateMemoRequest, error) {
 	customerID, err := pulid.MustParse(input.CustomerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -43,7 +43,7 @@ func createMemoRequestFromInput(
 		return nil, err
 	}
 
-	req := &serviceports.CreateMemoRequest{
+	req := &invoiceports.CreateMemoRequest{
 		TenantInfo:         tenantInfo,
 		CustomerID:         customerID,
 		BillType:           input.BillType,
@@ -67,8 +67,8 @@ func createMemoRequestFromInput(
 
 func memoLinesFromInput(
 	inputs []*gqlmodel.MemoLineInput,
-) ([]*serviceports.CreateMemoLineInput, error) {
-	lines := make([]*serviceports.CreateMemoLineInput, 0, len(inputs))
+) ([]*invoiceports.CreateMemoLineInput, error) {
+	lines := make([]*invoiceports.CreateMemoLineInput, 0, len(inputs))
 	multiErr := errortypes.NewMultiError()
 	for idx, in := range inputs {
 		if in == nil {
@@ -76,7 +76,7 @@ func memoLinesFromInput(
 				Add("description", errortypes.ErrRequired, "Line is required")
 			continue
 		}
-		line := &serviceports.CreateMemoLineInput{Description: in.Description}
+		line := &invoiceports.CreateMemoLineInput{Description: in.Description}
 		amount, err := decimal.NewFromString(in.Amount)
 		if err != nil {
 			multiErr.WithIndex("lines", idx).

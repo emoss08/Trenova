@@ -113,15 +113,15 @@ export function ElementDesigner() {
           <div className="p-3">
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <Badge variant={segment.required ? "success" : "neutral"}>{segment.segmentId}</Badge>
-              <Badge variant="neutral" appearance="outline">{segment.required ? t("Required") : t("Optional")}</Badge>
+              <Badge variant="neutral" appearance="outline">
+                {segment.required ? t("Required") : t("Optional")}
+              </Badge>
               <div>
                 <div className="text-sm font-semibold">{segment.name}</div>
                 <div className="text-muted-foreground text-xs">
-                  {t(
-                    "Sequence {0}{1}",
-                    segment.sequence,
-                    segment.repeatPath ? ` / repeats ${segment.repeatPath}` : "",
-                  )}
+                  {segment.repeatPath
+                    ? t("Sequence {0} / repeats {1}", segment.sequence, segment.repeatPath)
+                    : t("Sequence {0}", segment.sequence)}
                 </div>
               </div>
             </div>

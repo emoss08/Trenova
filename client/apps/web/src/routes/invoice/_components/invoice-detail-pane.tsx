@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
@@ -374,7 +375,7 @@ function InvoiceDeliveryTab({
     mutationFn: () => apiService.invoiceService.generatePdf(invoice.id),
     onSuccess: () => {
       invalidateInvoiceDelivery();
-      toast.success(`${invoice.number} PDF generation started`);
+      toast.success(t("{0} PDF generation started", invoice.number));
     },
     onError: () => toast.error(t("Failed to generate invoice PDF")),
   });
@@ -387,10 +388,10 @@ function InvoiceDeliveryTab({
       void queryClient.invalidateQueries({
         queryKey: queries.invoice.emailAttempts(invoice.id).queryKey,
       });
-      toast.success(`${invoice.number} send attempted`);
+      toast.success(t("{0} send attempted", invoice.number));
     },
     onError: (error) =>
-      toast.error(error instanceof ApiRequestError ? error.message : "Failed to send invoice"),
+      toast.error(error instanceof ApiRequestError ? error.message : t("Failed to send invoice")),
   });
 
   const sendPlan = sendPlanQuery.data;
@@ -560,7 +561,10 @@ function RecipientPreview({ recipients }: { recipients: string[] }) {
             <button
               type="button"
               className="ui-focus-ring shrink-0 rounded-sm text-xs font-medium text-info-foreground underline-offset-2 hover:underline"
-              aria-label={`Show ${recipients.length} To recipients`}
+              aria-label={t(
+                "{0, plural, one {Show # To recipient} other {Show # To recipients}}",
+                recipients.length,
+              )}
             >
               {t("+{0} more", remainingCount)}
             </button>
@@ -685,7 +689,7 @@ function DeliveryPackageList({ parts }: { parts: InvoiceSendPlan["parts"] }) {
                 {part.links.map((link) => (
                   <DeliveryPackageDocument
                     key={link.documentId}
-                    label={link.reason ? `Link - ${link.reason}` : "Link"}
+                    label={link.reason ? t("Link - {0}", link.reason) : t("Link")}
                     fileName={link.fileName}
                     sizeBytes={link.sizeBytes}
                   />
@@ -742,11 +746,20 @@ function formatPackageBreakdown(attachmentCount: number, linkCount: number): str
     packageCounts.push(formatCount(linkCount, "link"));
   }
 
-  return packageCounts.length > 0 ? packageCounts.join(" / ") : "No attachments or links";
+  return packageCounts.length > 0
+    ? packageCounts.join(" / ")
+    : translate("No attachments or links");
 }
 
-function formatCount(count: number, singular: string): string {
-  return `${count} ${count === 1 ? singular : `${singular}s`}`;
+function formatCount(count: number, kind: "part" | "attachment" | "link"): string {
+  switch (kind) {
+    case "part":
+      return translate("{0, plural, one {# part} other {# parts}}", count);
+    case "attachment":
+      return translate("{0, plural, one {# attachment} other {# attachments}}", count);
+    case "link":
+      return translate("{0, plural, one {# link} other {# links}}", count);
+  }
 }
 
 function InvoiceSendHistoryPanel({ invoiceId }: { invoiceId: string }) {

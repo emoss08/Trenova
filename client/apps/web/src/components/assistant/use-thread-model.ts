@@ -1,11 +1,14 @@
 import { answerMessageIds } from "@/components/ai-feedback/feedback-targets";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
+import { useSharedItems } from "@/hooks/use-keyed-sharing";
 import { useAssistantStore } from "@/stores/assistant-store";
+import { useRealtimeStore } from "@/stores/realtime-store";
 import type {
-  AssistantArtifact,
   AssistantArtifactEvent,
+  AssistantEntityRef,
   AssistantPageContext,
+  AssistantSurface,
   AssistantPlan,
   AssistantProposal,
   AssistantStreamEvent,
@@ -32,21 +35,22 @@ import { modelSwitchNotice } from "./model-switch";
 import { groupPlans } from "./plan-state";
 import { decidedSignature, groupProposalsByMessage, pollIntervalFor } from "./proposal-state";
 import { agentSuggestions } from "./suggestions";
+import { threadAsks } from "./ask-requests";
 import { composerBlock, shouldSendOpeningQuestion } from "./thread-guard";
-import { delegatedOwners, groupThread, turnPlacements } from "./thread-view";
+import { groupThread, turnPlacements, type ThreadEntry } from "./thread-view";
 import { useLiveThreadIds } from "./use-active-turns";
+import { steeredIds } from "./turn-stream";
 import { useAssistantTurn } from "./use-assistant-turn";
 import { useCompaction } from "./use-compaction";
 import { useComposerContext } from "./use-composer-context";
+import { useConversationQueue } from "./use-conversation-queue";
+import { useConversationWaits } from "./use-conversation-waits";
 import { usePageContext } from "./use-page-context";
 import { useThreadHistory } from "./use-thread-history";
 import { replyWebSources } from "./web-sources";
 
 /** A stable empty list, so a thread with no live turn does not re-run the follower each render. */
 const NO_ARTIFACTS: readonly AssistantArtifactEvent[] = [];
-
-/** A stable empty list, so a thread given no artifacts keeps its rows between renders. */
-const NO_SAVED_ARTIFACTS: AssistantArtifact[] = [];
 
 /**
  * A conversation that belongs to a page: the import or formula assistant.
@@ -62,11 +66,13 @@ export type PageBinding = {
 /** A question the page asks on the person's behalf, sent once per key. */
 export type PageRequest = { key: string; text: string };
 
+/** An entry is its message: the same message is the same row however the list around it grows. */
+const entryKey = (entry: ThreadEntry) => entry.message.id;
+
 export type ThreadModelOptions = {
   thread: AssistantThread;
   agent: AgentChoice | null;
   agentsUnavailable?: boolean;
-  artifacts?: AssistantArtifact[];
   onLiveArtifacts?: (artifacts: readonly AssistantArtifactEvent[]) => void;
   onWorkingChange?: (working: boolean) => void;
   onNavigate?: () => void;
@@ -87,6 +93,8 @@ export type ThreadModelOptions = {
    * the Desk is a page of its own, so it sends the page they came from.
    */
   pageContextSource?: () => AssistantPageContext | null;
+  /** Where the conversation is being had, so the agent can say where the person is. */
+  surface: AssistantSurface;
   page?: PageBinding;
   pageRequest?: PageRequest | null;
   onPageRequestSent?: (key: string) => void;
@@ -102,7 +110,6 @@ export function useThreadModel({
   thread,
   agent,
   agentsUnavailable = false,
-  artifacts = NO_SAVED_ARTIFACTS,
   onLiveArtifacts,
   onWorkingChange,
   onNavigate,
@@ -112,6 +119,7 @@ export function useThreadModel({
   openingHold = false,
   openingPayload,
   pageContextSource,
+  surface,
   page,
   pageRequest,
   onPageRequestSent,
@@ -158,6 +166,7 @@ export function useThreadModel({
   // While an approval is being carried out the lists are polled, so the
   // card moves from "waiting for it to run" to its outcome without a
   // remount; the moment nothing is running, they are not.
+  const realtimeConnected = useRealtimeStore((state) => state.connectionState === "connected");
   const proposalsQuery = useQuery({
     ...queries.assistant.proposals(thread.id),
     refetchInterval: (query) =>
@@ -166,6 +175,7 @@ export function useThreadModel({
         queryClient.getQueryData<{ results: AssistantPlan[] }>(
           queries.assistant.plans(thread.id).queryKey,
         )?.results ?? [],
+        realtimeConnected,
       ),
   });
   const plansQuery = useQuery({
@@ -176,6 +186,7 @@ export function useThreadModel({
           queries.assistant.proposals(thread.id).queryKey,
         )?.results ?? [],
         query.state.data?.results ?? [],
+        realtimeConnected,
       ),
   });
 
@@ -254,27 +265,19 @@ export function useThreadModel({
     [clearDecisionFocus, focus, thread.id],
   );
 
-  const entries = useMemo(() => groupThread(messages), [messages]);
+  // Built again whenever the history changes, an older page included; each
+  // entry stays the object it was while it is equal, so a row drawn from it
+  // is skipped rather than drawn again for a page that arrived above it.
+  const grouped = useMemo(() => groupThread(messages), [messages]);
+  const entries = useSharedItems(grouped, entryKey);
   // A reply of several steps is headed once and timed from its question.
   const placements = useMemo(() => turnPlacements(entries), [entries]);
   const answerIds = useMemo(() => answerMessageIds(entries), [entries]);
   const sourcesByMessage = useMemo(() => replyWebSources(entries), [entries]);
 
-  // A question the assistant asked is settled by whatever the person said next,
-  // whether they clicked one of its options or typed something else entirely.
-  // Comparing positions rather than tracking which button was pressed is what
-  // makes a reopened thread render the same as a live one.
-  const latestUserSequence = useMemo(
-    () =>
-      messages.reduce(
-        (latest, message) =>
-          message.role === "User" && message.kind === "Message"
-            ? Math.max(latest, message.sequence)
-            : latest,
-        -1,
-      ),
-    [messages],
-  );
+  // A question the assistant asked is settled by whatever the person said
+  // next; the newest one nothing has settled waits above the composer.
+  const asks = useMemo(() => threadAsks(entries), [entries]);
 
   // The server says whether the reader may still ask this conversation's
   // agent anything. When not, the conversation stays readable and nothing
@@ -308,11 +311,32 @@ export function useThreadModel({
     (event: AssistantStreamEvent) => conversationEvents.current?.(event),
     [],
   );
-  const { turn, isActive, send, rejoin, stop, dismiss, retry } = useAssistantTurn(
+  const { turn, isActive, send, rejoin, followStarted, stop, dismiss, retry } = useAssistantTurn(
     thread.id,
     getTurnContext,
     onConversationEvent,
+    surface,
   );
+
+  // What the person types while the agent works: read into the reply under
+  // way, or left to be sent after it. A message the reply has read leaves
+  // the list as soon as the reply says so.
+  const interjections = turn?.interjections;
+  const steered = useMemo(() => steeredIds(interjections), [interjections]);
+  const onQueueStarted = useCallback(
+    (turnId: string, content: string, mentions: AssistantEntityRef[]) =>
+      void followStarted(turnId, content, mentions),
+    [followStarted],
+  );
+  const waits = useConversationWaits(thread.id, true);
+  const waiting = useConversationQueue(thread.id, {
+    enabled: thread.canContinue,
+    steered,
+    context: getTurnContext,
+    surface,
+    providerId,
+    onStarted: onQueueStarted,
+  });
   const compaction = useCompaction(thread, isActive);
   useEffect(() => {
     conversationEvents.current = compaction.onConversationEvent;
@@ -345,41 +369,6 @@ export function useThreadModel({
 
   // A change the assistant hands its page is applied as it arrives, once.
   useApplyDraftEdits(turn?.artifacts ?? NO_ARTIFACTS, page?.surface, page?.onDraftEdit);
-
-  // Each turn's artifacts, by the message that produced them or, before the
-  // message id was tied on, by the tool call that did. What another agent
-  // produced on a task is tied to its own message, which is drawn inside the
-  // hand-off rather than as an entry, so it is shown under the reply that
-  // handed the task over.
-  const artifactsByMessage = useMemo(() => {
-    const owners = delegatedOwners(entries);
-    const byMessage = new Map<string, AssistantArtifact[]>();
-    const byCall = new Map<string, AssistantArtifact>();
-    const add = (messageId: string, artifact: AssistantArtifact) =>
-      byMessage.set(messageId, [...(byMessage.get(messageId) ?? []), artifact]);
-    for (const artifact of artifacts) {
-      if (artifact.messageId) {
-        add(owners.get(artifact.messageId) ?? artifact.messageId, artifact);
-      } else if (artifact.sourceToolCallId !== "") {
-        const owner = owners.get(artifact.sourceToolCallId);
-        if (owner) {
-          add(owner, artifact);
-        } else {
-          byCall.set(artifact.sourceToolCallId, artifact);
-        }
-      }
-    }
-    for (const entry of entries) {
-      if (entry.kind !== "assistant") continue;
-      for (const exchange of entry.tools) {
-        const artifact = byCall.get(exchange.call.id);
-        if (artifact) {
-          add(entry.message.id, artifact);
-        }
-      }
-    }
-    return byMessage;
-  }, [artifacts, entries]);
 
   // A question typed at the Desk's front door arrives here, because the
   // thread it opened did not exist when it was asked. It is sent once, only
@@ -417,9 +406,16 @@ export function useThreadModel({
 
   // An answer to the assistant's question is an ordinary message. Sending it
   // that way is what keeps a clicked answer and a typed one the same thing:
-  // nothing new is stored, and the thread reads identically either way.
+  // nothing new is stored, and the thread reads identically either way. A
+  // record picked in answer rides with it as an @ mention does.
   const sendAnswer = useCallback(
-    (value: string) => void send(value, undefined, providerId),
+    (value: string, mentions: readonly AssistantEntityRef[] = []) =>
+      void send(
+        value,
+        undefined,
+        providerId,
+        mentions.length > 0 ? { mentions: [...mentions] } : undefined,
+      ),
     [send, providerId],
   );
   const answer = readOnly ? undefined : sendAnswer;
@@ -578,7 +574,7 @@ export function useThreadModel({
     placements,
     answerIds,
     sourcesByMessage,
-    latestUserSequence,
+    asks,
     readOnly,
     pageContext,
     contextIncluded,
@@ -590,12 +586,13 @@ export function useThreadModel({
     stop,
     dismiss,
     retry,
-    artifactsByMessage,
     answer,
     showDock,
     threadFull,
     block,
     isEmpty,
+    /** The conversation's messages are being read for the first time. */
+    historyLoading: history.isLoading,
     suggestions,
     composerContext,
     followUpDecision,
@@ -603,6 +600,10 @@ export function useThreadModel({
     canTell,
     /** The conversation's context meter and any compaction under way. */
     compaction,
+    /** What the person left for the conversation while its agent worked. */
+    waiting,
+    /** What the conversation's agent parked until something happens. */
+    waits,
   };
 }
 

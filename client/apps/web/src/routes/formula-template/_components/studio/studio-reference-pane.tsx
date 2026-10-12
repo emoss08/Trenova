@@ -211,7 +211,7 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
             id="formula-reference-search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder={`Search variables and functions (${shortcutHint("search")})`}
+            placeholder={t("Search variables and functions ({0})", shortcutHint("search"))}
             aria-label={t("Search variables and functions")}
             className="h-7 pl-7 text-xs"
           />

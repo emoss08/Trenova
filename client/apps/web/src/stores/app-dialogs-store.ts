@@ -7,16 +7,33 @@ import { create } from "zustand";
  */
 export type AppDialog = "settings" | "shortcuts" | "notifications";
 
+/** The sections Settings scrolls between; opening with one lands on it. */
+export const SETTINGS_SECTIONS = ["profile", "preferences", "notifications", "security"] as const;
+export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
+
+export type OpenDialogOptions = {
+  /** Settings only: the section to scroll to once it opens. */
+  section?: SettingsSection;
+};
+
 interface AppDialogsState {
   active: AppDialog | null;
-  openDialog: (dialog: AppDialog) => void;
+  /** Where Settings should land the next time it shows; cleared once it has scrolled there. */
+  settingsSection: SettingsSection | null;
+  openDialog: (dialog: AppDialog, options?: OpenDialogOptions) => void;
   setDialogOpen: (dialog: AppDialog, open: boolean) => void;
   toggleDialog: (dialog: AppDialog) => void;
+  clearSettingsSection: () => void;
 }
 
 export const useAppDialogsStore = create<AppDialogsState>()((set) => ({
   active: null,
-  openDialog: (dialog) => set({ active: dialog }),
+  settingsSection: null,
+  openDialog: (dialog, options) =>
+    set({
+      active: dialog,
+      settingsSection: dialog === "settings" ? (options?.section ?? null) : null,
+    }),
   setDialogOpen: (dialog, open) =>
     set((state) => {
       if (open) {
@@ -25,6 +42,7 @@ export const useAppDialogsStore = create<AppDialogsState>()((set) => ({
       return state.active === dialog ? { active: null } : state;
     }),
   toggleDialog: (dialog) => set((state) => ({ active: state.active === dialog ? null : dialog })),
+  clearSettingsSection: () => set({ settingsSection: null }),
 }));
 
 export function useAppDialogOpen(dialog: AppDialog): boolean {

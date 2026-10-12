@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -68,7 +68,7 @@ func TestAuditRetention_TheApplicationRoleCannotDeleteOrUpdate(t *testing.T) {
 		"UPDATE audit_entries SET comment = 'rewritten'",
 		"DELETE FROM auth_events",
 	} {
-		err := conn.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		err := conn.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 			_, err := tx.ExecContext(ctx, statement)
 			return err
 		})
@@ -85,14 +85,14 @@ func TestAuditRetention_TheSystemRoleMustOptInToDelete(t *testing.T) {
 	f.seedAuditEntry(t, false, daysAgo(400))
 
 	ctx := dbscope.WithSystem(t.Context(), "integration test retention")
-	err := conn.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+	err := conn.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.ExecContext(ctx, "DELETE FROM audit_entries")
 		return err
 	})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "append-only")
 
-	err = conn.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+	err = conn.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 		if _, err := tx.ExecContext(ctx, enableAuditRetentionSQL); err != nil {
 			return err
 		}

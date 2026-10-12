@@ -87,7 +87,7 @@ func EmitSource(catalog *reportcatalog.Catalog, version string) ([]byte, error) 
 	out.WriteString("// and the reportcatalog.yml curation manifest.\n\n")
 	out.WriteString("package reportcatalog\n\n")
 	out.WriteString("import (\n")
-	out.WriteString("\t\"github.com/emoss08/trenova/internal/core/domain/permission\"\n")
+	out.WriteString("\t\"github.com/emoss08/trenova/internal/modules/identity/domain/permission\"\n")
 	out.WriteString("\t\"github.com/emoss08/trenova/pkg/buncolgen\"\n")
 	out.WriteString(")\n\n")
 

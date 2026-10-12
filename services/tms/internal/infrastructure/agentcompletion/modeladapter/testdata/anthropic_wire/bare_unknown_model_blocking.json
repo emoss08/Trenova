@@ -1,0 +1,28 @@
+{
+  "method": "POST",
+  "path": "/v1/messages",
+  "query": "beta=true",
+  "headers": {
+    "Anthropic-Version": "2023-06-01",
+    "Content-Type": "application/json",
+    "X-Api-Key": "sk-test"
+  },
+  "body": {
+    "max_tokens": 512,
+    "messages": [
+      {
+        "content": [
+          {
+            "cache_control": {
+              "type": "ephemeral"
+            },
+            "text": "hi",
+            "type": "text"
+          }
+        ],
+        "role": "user"
+      }
+    ],
+    "model": "test-model"
+  }
+}

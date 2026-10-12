@@ -150,7 +150,7 @@ export function handleMutationError<T extends FieldValues>({
   }
 
   if (apiProblem.isAuthenticationError(normalized)) {
-    toast.error(normalized.title ?? "Authentication required", {
+    toast.error(normalized.title ?? translate("Authentication required"), {
       description: normalized.detail ?? normalized.message,
     });
     return;
@@ -165,7 +165,7 @@ export function handleMutationError<T extends FieldValues>({
 
   if (apiProblem.isNotFoundError(normalized)) {
     toast.error(translate("Not found"), {
-      description: normalized.detail || "The requested resource was not found.",
+      description: normalized.detail || translate("The requested resource was not found."),
     });
     return;
   }

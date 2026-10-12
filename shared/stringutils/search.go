@@ -1,6 +1,7 @@
 package stringutils
 
 import (
+	"slices"
 	"strings"
 	"unicode"
 )
@@ -11,6 +12,16 @@ func ContainsAny(corpus string, needles ...string) bool {
 			return true
 		}
 	}
+	return false
+}
+
+func ContainsAnyWord(text string, words ...string) bool {
+	for _, word := range SearchWords(text) {
+		if slices.Contains(words, word) {
+			return true
+		}
+	}
+
 	return false
 }
 

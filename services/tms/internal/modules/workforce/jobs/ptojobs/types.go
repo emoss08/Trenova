@@ -1,0 +1,35 @@
+package ptojobs
+
+import (
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/shared/pulid"
+)
+
+const (
+	ScheduleID      = "pto-accrual"
+	accrualPageSize = 100
+)
+
+type AccrualTenantPageInput struct {
+	temporaljobs.TenantWorkItem
+	WorkerID pulid.ID `json:"workerId,omitempty"`
+	AsOf     int64    `json:"asOf"`
+	AfterID  pulid.ID `json:"afterId,omitempty"`
+}
+
+type AccrualTenantPageResult struct {
+	WorkersProcessed int      `json:"workersProcessed"`
+	WorkersSkipped   int      `json:"workersSkipped"`
+	EntriesPosted    int      `json:"entriesPosted"`
+	EntriesCapped    int      `json:"entriesCapped"`
+	EntriesSkipped   int      `json:"entriesSkipped"`
+	NextAfterID      pulid.ID `json:"nextAfterId,omitempty"`
+}
+
+type PTOAccrualResult struct {
+	temporaljobs.TenantRunResult
+	EntriesPosted  int   `json:"entriesPosted"`
+	EntriesCapped  int   `json:"entriesCapped"`
+	EntriesSkipped int   `json:"entriesSkipped"`
+	CompletedAt    int64 `json:"completedAt"`
+}

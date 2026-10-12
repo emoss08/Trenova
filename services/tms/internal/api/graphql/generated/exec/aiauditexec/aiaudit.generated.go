@@ -9,11 +9,11 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -37,7 +37,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.Signed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -46,7 +46,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "activeKeyId",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.ActiveKeyID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -56,7 +56,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.FirstSeq, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -66,7 +66,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.LastSeq, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -76,7 +76,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.LastHash, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -86,7 +86,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.SealedThroughSeq, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -96,7 +96,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.LastVerifiedSeq, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -105,7 +105,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "lastVerifiedAt",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.LastVerifiedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -116,16 +116,16 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return gqlexec.Resolver[resolverAIAuditChainStatus](ec, "AIAuditChainStatus").LastVerificationStatus(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOAIAuditVerificationStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐVerificationStatus),
+				Marshal: gqlexec.Marshal(marshalOAIAuditVerificationStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐVerificationStatus),
 			},
 			{
 				Name:     "failedSeq",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.FailedSeq, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
@@ -134,7 +134,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "detail",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.Detail, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -144,7 +144,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.Verifying, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -156,7 +156,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditExportDownload)
+					obj := o.(*aiauditports.AIAuditExportDownload)
 					return obj.URL, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -166,7 +166,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditExportDownload)
+					obj := o.(*aiauditports.AIAuditExportDownload)
 					return obj.FileName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -176,7 +176,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditExportDownload)
+					obj := o.(*aiauditports.AIAuditExportDownload)
 					return obj.ExpiresAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -186,7 +186,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditExportDownload)
+					obj := o.(*aiauditports.AIAuditExportDownload)
 					return obj.SHA256, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -271,7 +271,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aiaudit.AIAuditEvent)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIAuditEventKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐKind),
+				Marshal: gqlexec.Marshal(marshalNAIAuditEventKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐKind),
 			},
 			{
 				Name:     "outcome",
@@ -281,7 +281,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aiaudit.AIAuditEvent)
 					return obj.Outcome, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIAuditEventOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐOutcome),
+				Marshal: gqlexec.Marshal(marshalNAIAuditEventOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐOutcome),
 			},
 			{
 				Name:     "purpose",
@@ -291,7 +291,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aiaudit.AIAuditEvent)
 					return obj.Purpose, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIAuditPurpose2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐPurpose),
+				Marshal: gqlexec.Marshal(marshalNAIAuditPurpose2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐPurpose),
 			},
 			{
 				Name:     "principalType",
@@ -301,7 +301,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aiaudit.AIAuditEvent)
 					return obj.PrincipalType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIAuditPrincipalType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐPrincipalType),
+				Marshal: gqlexec.Marshal(marshalNAIAuditPrincipalType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐPrincipalType),
 			},
 			{
 				Name:     "principalId",
@@ -340,7 +340,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aiaudit.AIAuditEvent)
 					return gqlexec.Resolver[resolverAIAuditEvent](ec, "AIAuditEvent").OnBehalfOf(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:     "decidedByUserId",
@@ -370,7 +370,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aiaudit.AIAuditEvent)
 					return gqlexec.Resolver[resolverAIAuditEvent](ec, "AIAuditEvent").DecidedBy(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:     "agentDefinitionId",
@@ -409,7 +409,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aiaudit.AIAuditEvent)
 					return gqlexec.Resolver[resolverAIAuditEvent](ec, "AIAuditEvent").Agent(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐDefinition),
+				Marshal: gqlexec.Marshal(marshalOAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition),
 			},
 			{
 				Name:       "ownerKind",
@@ -846,7 +846,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aiaudit.AIAuditEvent)
 					return gqlexec.Resolver[resolverAIAuditEvent](ec, "AIAuditEvent").AuditEntries(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNAuditEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋauditᚐEntryᚄ),
+				Marshal: gqlexec.Marshal(marshalNAuditEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋauditᚐEntryᚄ),
 			},
 			{
 				Name:     "tainted",
@@ -992,7 +992,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AIAuditEventEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIAuditEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐAIAuditEvent),
+				Marshal: gqlexec.Marshal(marshalNAIAuditEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐAIAuditEvent),
 			},
 			{
 				Name:     "cursor",
@@ -1056,7 +1056,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aiaudit.AIAuditExport)
 					return gqlexec.Resolver[resolverAIAuditExport](ec, "AIAuditExport").RequestedBy(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:     "format",
@@ -1066,7 +1066,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aiaudit.AIAuditExport)
 					return obj.Format, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIAuditExportFormat2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐExportFormat),
+				Marshal: gqlexec.Marshal(marshalNAIAuditExportFormat2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐExportFormat),
 			},
 			{
 				Name:       "filters",
@@ -1117,7 +1117,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aiaudit.AIAuditExport)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIAuditExportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐExportStatus),
+				Marshal: gqlexec.Marshal(marshalNAIAuditExportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐExportStatus),
 			},
 			{
 				Name:     "rowCount",
@@ -1297,7 +1297,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AIAuditExportEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIAuditExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐAIAuditExport),
+				Marshal: gqlexec.Marshal(marshalNAIAuditExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐAIAuditExport),
 			},
 			{
 				Name:     "cursor",
@@ -1322,7 +1322,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RequestAIAuditExport(ctx, fc.Args["input"].(gqlmodel.RequestAIAuditExportInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAIAuditExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐAIAuditExport),
+				Marshal: gqlexec.Marshal(marshalNAIAuditExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐAIAuditExport),
 			},
 			{
 				Name:       "aiAuditExportDownload",
@@ -1335,7 +1335,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AiAuditExportDownload(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNAIAuditDownload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIAuditExportDownload),
+				Marshal: gqlexec.Marshal(marshalNAIAuditDownload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiauditportsᚐAIAuditExportDownload),
 			},
 			{
 				Name:       "verifyAIAuditChain",
@@ -1346,7 +1346,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").VerifyAIAuditChain(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNAIAuditChainStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIAuditChainStatus),
+				Marshal: gqlexec.Marshal(marshalNAIAuditChainStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiauditportsᚐAIAuditChainStatus),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -1375,7 +1375,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AiAuditEvent(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOAIAuditEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐAIAuditEvent),
+				Marshal: gqlexec.Marshal(marshalOAIAuditEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐAIAuditEvent),
 			},
 			{
 				Name:       "aiAuditChainStatus",
@@ -1387,7 +1387,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AiAuditChainStatus(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNAIAuditChainStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIAuditChainStatus),
+				Marshal: gqlexec.Marshal(marshalNAIAuditChainStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiauditportsᚐAIAuditChainStatus),
 			},
 			{
 				Name:       "aiAuditExports",
@@ -1414,7 +1414,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AiAuditExport(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOAIAuditExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐAIAuditExport),
+				Marshal: gqlexec.Marshal(marshalOAIAuditExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐAIAuditExport),
 			},
 		}},
 	},
@@ -1431,7 +1431,7 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverAIAuditChainStatus interface {
-	LastVerificationStatus(ctx context.Context, obj *services.AIAuditChainStatus) (*aiaudit.VerificationStatus, error)
+	LastVerificationStatus(ctx context.Context, obj *aiauditports.AIAuditChainStatus) (*aiaudit.VerificationStatus, error)
 }
 
 type resolverAIAuditEvent interface {
@@ -1455,14 +1455,14 @@ type resolverAIAuditExport interface {
 
 type resolverMutation interface {
 	RequestAIAuditExport(ctx context.Context, input gqlmodel.RequestAIAuditExportInput) (*aiaudit.AIAuditExport, error)
-	AiAuditExportDownload(ctx context.Context, id string) (*services.AIAuditExportDownload, error)
-	VerifyAIAuditChain(ctx context.Context) (*services.AIAuditChainStatus, error)
+	AiAuditExportDownload(ctx context.Context, id string) (*aiauditports.AIAuditExportDownload, error)
+	VerifyAIAuditChain(ctx context.Context) (*aiauditports.AIAuditChainStatus, error)
 }
 
 type resolverQuery interface {
 	AiAuditEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIAuditEventConnection, error)
 	AiAuditEvent(ctx context.Context, id string) (*aiaudit.AIAuditEvent, error)
-	AiAuditChainStatus(ctx context.Context) (*services.AIAuditChainStatus, error)
+	AiAuditChainStatus(ctx context.Context) (*aiauditports.AIAuditChainStatus, error)
 	AiAuditExports(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIAuditExportConnection, error)
 	AiAuditExport(ctx context.Context, id string) (*aiaudit.AIAuditExport, error)
 }
@@ -1583,7 +1583,7 @@ func unmarshalInputRequestAIAuditExportInput(ctx context.Context, ec *gqlexec.Ex
 		switch k {
 		case "format":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("format"))
-			data, err := unmarshalNAIAuditExportFormat2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐExportFormat(ctx, ec, v)
+			data, err := unmarshalNAIAuditExportFormat2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐExportFormat(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1651,7 +1651,7 @@ func unmarshalInputSortFieldInput(ctx context.Context, ec *gqlexec.Exec, obj any
 	return gqlexec.UnmarshalInput[gqlmodel.SortFieldInput](ctx, ec, "SortFieldInput", obj)
 }
 
-func unmarshalNAIAuditExportFormat2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐExportFormat(ctx context.Context, ec *gqlexec.Exec, v any) (aiaudit.ExportFormat, error) {
+func unmarshalNAIAuditExportFormat2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐExportFormat(ctx context.Context, ec *gqlexec.Exec, v any) (aiaudit.ExportFormat, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := aiaudit.ExportFormat(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -1721,7 +1721,7 @@ func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAIAuditChainStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIAuditChainStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AIAuditChainStatus) graphql.Marshaler {
+func marshalNAIAuditChainStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiauditportsᚐAIAuditChainStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiauditports.AIAuditChainStatus) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1729,7 +1729,7 @@ func marshalNAIAuditChainStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "AIAuditChainStatus", v)
 }
 
-func marshalNAIAuditDownload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIAuditExportDownload(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AIAuditExportDownload) graphql.Marshaler {
+func marshalNAIAuditDownload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiauditportsᚐAIAuditExportDownload(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiauditports.AIAuditExportDownload) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1737,7 +1737,7 @@ func marshalNAIAuditDownload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋco
 	return ec.MarshalType(ctx, sel, "AIAuditDownload", v)
 }
 
-func marshalNAIAuditEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐAIAuditEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiaudit.AIAuditEvent) graphql.Marshaler {
+func marshalNAIAuditEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐAIAuditEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiaudit.AIAuditEvent) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1769,7 +1769,7 @@ func marshalNAIAuditEventEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋa
 	return ec.MarshalType(ctx, sel, "AIAuditEventEdge", v)
 }
 
-func marshalNAIAuditEventKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiaudit.Kind) graphql.Marshaler {
+func marshalNAIAuditEventKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiaudit.Kind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1777,7 +1777,7 @@ func marshalNAIAuditEventKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore
 	return res
 }
 
-func marshalNAIAuditEventOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐOutcome(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiaudit.Outcome) graphql.Marshaler {
+func marshalNAIAuditEventOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐOutcome(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiaudit.Outcome) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1785,7 +1785,7 @@ func marshalNAIAuditEventOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return res
 }
 
-func marshalNAIAuditExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐAIAuditExport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiaudit.AIAuditExport) graphql.Marshaler {
+func marshalNAIAuditExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐAIAuditExport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiaudit.AIAuditExport) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1817,7 +1817,7 @@ func marshalNAIAuditExportEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "AIAuditExportEdge", v)
 }
 
-func marshalNAIAuditExportFormat2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐExportFormat(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiaudit.ExportFormat) graphql.Marshaler {
+func marshalNAIAuditExportFormat2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐExportFormat(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiaudit.ExportFormat) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1825,7 +1825,7 @@ func marshalNAIAuditExportFormat2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return res
 }
 
-func marshalNAIAuditExportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐExportStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiaudit.ExportStatus) graphql.Marshaler {
+func marshalNAIAuditExportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐExportStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiaudit.ExportStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1833,7 +1833,7 @@ func marshalNAIAuditExportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return res
 }
 
-func marshalNAIAuditPrincipalType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐPrincipalType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiaudit.PrincipalType) graphql.Marshaler {
+func marshalNAIAuditPrincipalType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐPrincipalType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiaudit.PrincipalType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1841,7 +1841,7 @@ func marshalNAIAuditPrincipalType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNAIAuditPurpose2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐPurpose(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiaudit.Purpose) graphql.Marshaler {
+func marshalNAIAuditPurpose2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐPurpose(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiaudit.Purpose) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1849,15 +1849,15 @@ func marshalNAIAuditPurpose2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return res
 }
 
-func marshalNAuditEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋauditᚐEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*audit.Entry) graphql.Marshaler {
+func marshalNAuditEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋauditᚐEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*audit.Entry) graphql.Marshaler {
 	return gqlexec.List[*audit.Entry]{
-		Elem:        marshalNAuditEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋauditᚐEntry,
+		Elem:        marshalNAuditEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋauditᚐEntry,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAuditEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋauditᚐEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *audit.Entry) graphql.Marshaler {
+func marshalNAuditEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋauditᚐEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *audit.Entry) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1938,21 +1938,21 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOAIAuditEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐAIAuditEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiaudit.AIAuditEvent) graphql.Marshaler {
+func marshalOAIAuditEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐAIAuditEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiaudit.AIAuditEvent) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AIAuditEvent", v)
 }
 
-func marshalOAIAuditExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐAIAuditExport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiaudit.AIAuditExport) graphql.Marshaler {
+func marshalOAIAuditExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐAIAuditExport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiaudit.AIAuditExport) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AIAuditExport", v)
 }
 
-func marshalOAIAuditVerificationStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐVerificationStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiaudit.VerificationStatus) graphql.Marshaler {
+func marshalOAIAuditVerificationStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐVerificationStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiaudit.VerificationStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -1960,7 +1960,7 @@ func marshalOAIAuditVerificationStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return res
 }
 
-func marshalOAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐDefinition(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentdefinition.Definition) graphql.Marshaler {
+func marshalOAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentdefinition.Definition) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -2037,7 +2037,7 @@ func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.S
 	return res
 }
 
-func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

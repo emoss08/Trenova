@@ -98,6 +98,7 @@ function TenureCell({
   hireDate?: number | null;
   terminationDate?: number | null;
 }) {
+  const t = useT();
   const label = formatTenure(hireDate, terminationDate, getTodayDate());
   const ended = Boolean(terminationDate && terminationDate > 0);
   return (
@@ -105,7 +106,9 @@ function TenureCell({
       className={cn("tabular-nums", ended && "text-muted-foreground")}
       title={
         hireDate
-          ? `Hired ${formatUnixDate(hireDate)}${ended ? `, left ${formatUnixDate(terminationDate)}` : ""}`
+          ? ended
+            ? t("Hired {0}, left {1}", formatUnixDate(hireDate), formatUnixDate(terminationDate))
+            : t("Hired {0}", formatUnixDate(hireDate))
           : undefined
       }
     >
@@ -241,6 +244,14 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
         sortable: false,
         filterType: "text",
         defaultFilterOperator: "contains",
+        extraFilters: [
+          {
+            apiField: "fleetCodeId",
+            label: t("Fleet"),
+            filterType: "record",
+            filterRecord: "FLEET_CODE",
+          },
+        ],
       },
     },
     {

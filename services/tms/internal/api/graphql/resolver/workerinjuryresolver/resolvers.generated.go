@@ -4,7 +4,7 @@ package workerinjuryresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	workerinjuryservice "github.com/emoss08/trenova/internal/core/services/workerinjuryservice"
+	workerinjuryservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
 )
 
 type Deps struct {

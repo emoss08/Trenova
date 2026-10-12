@@ -8,14 +8,16 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks/onboardingportsmock"
+
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/onboarding"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/onboarding"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/onboardingports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -35,13 +37,13 @@ type grantEngine struct {
 
 func (e grantEngine) Check(
 	_ context.Context,
-	req *services.PermissionCheckRequest,
-) (*services.PermissionCheckResult, error) {
-	return &services.PermissionCheckResult{Allowed: e.allowed[req.Operation]}, nil
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
+	return &permissionports.PermissionCheckResult{Allowed: e.allowed[req.Operation]}, nil
 }
 
 type harness struct {
-	svc    *mocks.MockOnboardingService
+	svc    *onboardingportsmock.MockOnboardingService
 	router *gin.Engine
 	userID pulid.ID
 	orgID  pulid.ID
@@ -61,7 +63,7 @@ func newHarness(t *testing.T, ops ...permission.Operation) *harness {
 	engine := grantEngine{Engine: permtest.AllowAll(), allowed: allowed}
 
 	h := &harness{
-		svc:    mocks.NewMockOnboardingService(t),
+		svc:    onboardingportsmock.NewMockOnboardingService(t),
 		userID: pulid.MustNew("usr_"),
 		orgID:  pulid.MustNew("org_"),
 		buID:   pulid.MustNew("bu_"),
@@ -104,14 +106,14 @@ func TestGetOnboarding(t *testing.T) {
 
 	h := newHarness(t, permission.OpRead)
 	h.svc.EXPECT().Get(mock.Anything, mock.Anything).RunAndReturn(
-		func(_ context.Context, info pagination.TenantInfo) (*services.OnboardingState, error) {
+		func(_ context.Context, info pagination.TenantInfo) (*onboardingports.OnboardingState, error) {
 			assert.Equal(t, h.orgID, info.OrgID)
 			assert.Equal(t, h.buID, info.BuID)
 			assert.Equal(t, h.userID, info.UserID)
-			return &services.OnboardingState{
+			return &onboardingports.OnboardingState{
 				Required: true,
 				Status:   onboarding.StatusPending,
-				Organization: &services.OnboardingOrganization{
+				Organization: &onboardingports.OnboardingOrganization{
 					Name:     "Acme Freight",
 					Timezone: "America/New_York",
 				},
@@ -140,7 +142,7 @@ func TestCompleteOnboarding(t *testing.T) {
 	stateID := pulid.MustNew("us_")
 	completedAt := int64(1_790_000_000)
 	h.svc.EXPECT().Complete(mock.Anything, mock.Anything).RunAndReturn(
-		func(_ context.Context, req *services.CompleteOnboardingRequest) (*services.OnboardingState, error) {
+		func(_ context.Context, req *onboardingports.CompleteOnboardingRequest) (*onboardingports.OnboardingState, error) {
 			assert.Equal(t, h.orgID, req.TenantInfo.OrgID)
 			assert.Equal(t, h.userID, req.TenantInfo.UserID)
 			assert.Equal(t, h.userID, req.Actor.UserID)
@@ -150,7 +152,7 @@ func TestCompleteOnboarding(t *testing.T) {
 			assert.Empty(t, req.Organization.DOTNumber)
 			assert.Equal(t, tenant.OperationTypeBoth, req.OperationType)
 			assert.True(t, req.LoadSampleData)
-			return &services.OnboardingState{
+			return &onboardingports.OnboardingState{
 				Status:           onboarding.StatusCompleted,
 				OperationType:    tenant.OperationTypeBoth,
 				SampleDataLoaded: true,

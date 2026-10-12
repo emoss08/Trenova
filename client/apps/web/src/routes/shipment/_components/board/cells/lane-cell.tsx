@@ -4,26 +4,23 @@ import { getDestinationLocation, getOriginLocation, getRouteProgress } from "@/l
 import { cn } from "@trenova/shared/lib/utils";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { ArrowRightIcon } from "@trenova/shared/components/icons";
+import { useNow } from "@trenova/shared/hooks/use-now";
 import { useShipmentBoardStore } from "../store";
 
 export function LaneCell({ shipment }: { shipment: Shipment }) {
   const t = useT();
-  const highlightId = useShipmentBoardStore.use.highlightId();
+  const highlighted = useShipmentBoardStore((state) => state.highlightId === shipment.id);
   const origin = getOriginLocation(shipment);
   const destination = getDestinationLocation(shipment);
-  const progress = getRouteProgress(shipment, Date.now() / 1000);
+  const now = useNow("minute");
+  const progress = getRouteProgress(shipment, now);
   const stage = shipment.stage ?? "NeedsCoverage";
   const moving = stage === "Moving" || stage === "Late";
 
   return (
     <div className="flex min-w-0 flex-col gap-0.5">
       <div className="flex min-w-0 items-center gap-1.5">
-        <span
-          className={cn(
-            "truncate text-sm font-medium",
-            highlightId === shipment.id && "text-brand",
-          )}
-        >
+        <span className={cn("truncate text-sm font-medium", highlighted && "text-brand")}>
           {origin?.city ?? origin?.code ?? "—"}
         </span>
         <ArrowRightIcon className="text-muted-foreground size-3 shrink-0" aria-hidden />

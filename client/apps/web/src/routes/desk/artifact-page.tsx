@@ -10,6 +10,7 @@ import {
   deskArtKindName,
 } from "./_components/artifacts/desk-art-kinds";
 import { groupLineages } from "./_components/artifacts/desk-lineage";
+import { DeskArtifactBodySkeleton } from "@/components/desk-chat/desk-skeletons";
 import { ArtifactBody, artifactLink } from "./_components/artifacts/desk-workspace";
 import "@/components/desk-chat/desk-chat.css";
 import "./_styles/desk-v2.css";
@@ -24,7 +25,7 @@ export function DeskArtifactPage() {
   const navigate = useNavigate();
   const { threadId = "", slug = "" } = useParams<{ threadId: string; slug: string }>();
   const lineageQuery = useQuery({
-    ...queries.assistant.artifactBySlug(threadId, slug),
+    ...queries.assistant.artifacts(threadId)._ctx.slug(slug),
     enabled: threadId !== "" && slug !== "",
     retry: false,
   });
@@ -34,7 +35,22 @@ export function DeskArtifactPage() {
   );
 
   if (lineageQuery.isPending) {
-    return <div className="dsk dk-apage" aria-busy />;
+    return (
+      <div className="dsk dk-apage" aria-busy>
+        <div className="dk-apage-in">
+          <header className="dk-apage-h" aria-hidden>
+            <i className="dk-sk dk-skw-icon" />
+            <span className="dk-skw-text">
+              <i className="dk-sk dk-skw-title" />
+              <i className="dk-sk dk-skw-meta" />
+            </span>
+          </header>
+          <div className="dk-apage-body">
+            <DeskArtifactBodySkeleton shape="lines" />
+          </div>
+        </div>
+      </div>
+    );
   }
   if (!lineage) {
     return (

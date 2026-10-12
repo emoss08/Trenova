@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
@@ -35,7 +35,7 @@ type Params struct {
 var _ restx.Limiter = (*Limiter)(nil)
 
 type Limiter struct {
-	store repositories.RateLimitStore
+	store kernelports.RateLimitStore
 }
 
 func New(p Params) (restx.Limiter, error) {
@@ -76,7 +76,7 @@ func New(p Params) (restx.Limiter, error) {
 	})), nil
 }
 
-func newLimiter(store repositories.RateLimitStore) *Limiter {
+func newLimiter(store kernelports.RateLimitStore) *Limiter {
 	return &Limiter{store: store}
 }
 
@@ -92,16 +92,16 @@ func (l *Limiter) Acquire(ctx context.Context, bucket restx.Bucket) error {
 	burst := max(bucket.Burst, 1)
 	cost := max(bucket.Cost, 1)
 
-	requests := make([]repositories.RateLimitRequest, 1, maxPolicyRequestsPerRun)
-	requests[0] = repositories.RateLimitRequest{
+	requests := make([]kernelports.RateLimitRequest, 1, maxPolicyRequestsPerRun)
+	requests[0] = kernelports.RateLimitRequest{
 		Key:    bucket.Key,
-		Policy: repositories.RateLimitPolicy{Rate: bucket.Limit, Period: period, Burst: burst},
+		Policy: kernelports.RateLimitPolicy{Rate: bucket.Limit, Period: period, Burst: burst},
 		Cost:   cost,
 	}
 	if !carrierintel.IsInteractiveContext(ctx) {
-		requests = append(requests, repositories.RateLimitRequest{
+		requests = append(requests, kernelports.RateLimitRequest{
 			Key: bucket.Key + backgroundKeySuffix,
-			Policy: repositories.RateLimitPolicy{
+			Policy: kernelports.RateLimitPolicy{
 				Rate:   backgroundShare(bucket.Limit),
 				Period: period,
 				Burst:  backgroundShare(burst),
@@ -135,14 +135,14 @@ func backgroundShare(value int) int {
 }
 
 type replicaScaledStore struct {
-	inner    repositories.RateLimitStore
+	inner    kernelports.RateLimitStore
 	replicas int
 }
 
 func newReplicaScaledStore(
-	inner repositories.RateLimitStore,
+	inner kernelports.RateLimitStore,
 	replicas int,
-) repositories.RateLimitStore {
+) kernelports.RateLimitStore {
 	if replicas <= 1 {
 		return inner
 	}
@@ -151,9 +151,9 @@ func newReplicaScaledStore(
 
 func (s *replicaScaledStore) Check(
 	ctx context.Context,
-	requests []repositories.RateLimitRequest,
-) ([]repositories.RateLimitDecision, error) {
-	scaled := make([]repositories.RateLimitRequest, len(requests))
+	requests []kernelports.RateLimitRequest,
+) ([]kernelports.RateLimitDecision, error) {
+	scaled := make([]kernelports.RateLimitRequest, len(requests))
 	for idx := range requests {
 		scaled[idx] = requests[idx]
 		scaled[idx].Policy.Rate = max(1, requests[idx].Policy.Rate/s.replicas)

@@ -1,3 +1,5 @@
+import { defineLabels, type LabelMap } from "@trenova/shared/i18n/labels";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { formatMinutesSpan } from "@trenova/shared/lib/date";
 import type { BadgeVariant } from "@trenova/shared/types/badge";
 
@@ -187,31 +189,33 @@ export function scoreTone(score: number): string {
 
 export function formatMiles(value: number | null | undefined): string {
   if (value === null || value === undefined) return "—";
-  return `${Math.round(value).toLocaleString()} mi`;
+  return translate("{0} mi", Math.round(value).toLocaleString());
 }
-
 
 /**
  * Renders a countdown the way a dispatcher says it out loud: "40m late", "in 3h 10m".
  */
 export function formatMinutesToPickup(minutes: number): string {
-  if (minutes === 0) return "due now";
+  if (minutes === 0) return translate("due now");
   const span = formatMinutesSpan(minutes);
-  return minutes < 0 ? `${span} late` : `in ${span}`;
+  return minutes < 0 ? translate("{0} late", span) : translate("in {0}", span);
 }
 
 /**
  * The rest plan the projection engine says would make a trip legal, phrased for the
  * dispatcher who has to communicate it to the driver.
  */
-export const HOS_STRATEGY_META: Record<string, { label: string; phrase: string }> = {
-  currentClocks: { label: "Current clocks", phrase: "Legal on current clocks" },
-  splitSleeper: {
+export const HOS_STRATEGY_META: Record<string, LabelMap<{ label: string; phrase: string }>> = {
+  currentClocks: defineLabels({ label: "Current clocks", phrase: "Legal on current clocks" }),
+  splitSleeper: defineLabels({
     label: "Split sleeper",
     phrase: "Legal with a split sleeper berth pairing",
-  },
-  tenHourReset: { label: "10-hour reset", phrase: "Legal after a 10-hour reset" },
-  restart34: { label: "34-hour restart", phrase: "Legal after a 34-hour cycle restart" },
+  }),
+  tenHourReset: defineLabels({ label: "10-hour reset", phrase: "Legal after a 10-hour reset" }),
+  restart34: defineLabels({
+    label: "34-hour restart",
+    phrase: "Legal after a 34-hour cycle restart",
+  }),
 };
 
 export function hosStrategyMeta(value: string | null | undefined) {

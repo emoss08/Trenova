@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -16,30 +16,34 @@ import (
 )
 
 type recordingService struct {
-	services.AccountingConnectionService
-	received *services.ReceiveAccountingWebhookRequest
+	accountingsyncports.AccountingConnectionService
+	received *accountingsyncports.ReceiveAccountingWebhookRequest
 	err      error
 }
 
 func (s *recordingService) ReceiveWebhook(
 	_ context.Context,
-	req *services.ReceiveAccountingWebhookRequest,
+	req *accountingsyncports.ReceiveAccountingWebhookRequest,
 ) error {
 	s.received = req
 	return s.err
 }
 
-type headerProvider struct{ services.AccountingProvider }
+type headerProvider struct {
+	accountingsyncports.AccountingProvider
+}
 
 func (headerProvider) WebhookSignatureHeader() string { return "intuit-signature" }
 
-type subscribingProvider struct{ services.AccountingProvider }
+type subscribingProvider struct {
+	accountingsyncports.AccountingProvider
+}
 
 func (subscribingProvider) WebhookSignatureHeader() string { return "" }
 
 func (subscribingProvider) NotificationBaseURL() string { return "https://api.example.com/api/v1" }
 
-func (subscribingProvider) ParseNotifications([]byte) ([]services.AccountingWebhookNotification, error) {
+func (subscribingProvider) ParseNotifications([]byte) ([]accountingsyncports.AccountingWebhookNotification, error) {
 	return nil, nil
 }
 
@@ -49,7 +53,7 @@ func (subscribingProvider) ValidationToken(raw string) (string, bool) {
 
 type registry struct{}
 
-func (registry) For(typ integration.Type) (services.AccountingProvider, bool) {
+func (registry) For(typ integration.Type) (accountingsyncports.AccountingProvider, bool) {
 	switch typ {
 	case integration.TypeQuickBooksOnline:
 		return headerProvider{}, true

@@ -2,7 +2,7 @@ package base
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	shipmentdomain "github.com/emoss08/trenova/internal/core/domain/shipment"
+	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"

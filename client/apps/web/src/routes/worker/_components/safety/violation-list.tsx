@@ -105,7 +105,7 @@ export function ViolationList({
                     size="xxs"
                     variant="ghost"
                     onClick={() => setDialog({ violation })}
-                    aria-label={`Edit ${violation.description}`}
+                    aria-label={t("Edit {0}", violation.description)}
                   >
                     {t("Edit")}
                   </Button>
@@ -117,7 +117,7 @@ export function ViolationList({
                     className="text-destructive"
                     isLoading={removeMutation.isPending}
                     onClick={() => removeMutation.mutate(violation.id)}
-                    aria-label={`Remove ${violation.description}`}
+                    aria-label={t("Remove {0}", violation.description)}
                   >
                     <Trash01Icon className="size-3" />
                   </Button>

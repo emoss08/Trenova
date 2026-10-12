@@ -4,7 +4,7 @@ package storedmileageresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	storedmileageservice "github.com/emoss08/trenova/internal/core/services/storedmileageservice"
+	storedmileageservice "github.com/emoss08/trenova/internal/modules/places/app/storedmileageservice"
 )
 
 type Deps struct {

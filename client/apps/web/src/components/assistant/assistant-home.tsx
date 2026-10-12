@@ -9,6 +9,7 @@ import {
 } from "@/components/desk-chat/desk-home-ask";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useMemo, useState } from "react";
 import { threadAge } from "./assistant-history";
@@ -101,22 +102,32 @@ export function AssistantHome({
             <>
               <div className="as-rc-h">
                 <span>{t("Recent")}</span>
-                <button type="button" onClick={onShowAll}>
+                <Button
+                  variant="bare"
+                  size="bare"
+                  className="text-dsk-subtle hover:text-dsk-fg"
+                  onClick={onShowAll}
+                >
                   {t("All conversations")}
-                </button>
+                </Button>
               </div>
               {recent.map((thread, index) => (
-                <button
+                <Button
                   key={thread.id}
-                  type="button"
-                  className="as-rc-i"
+                  variant="bare"
+                  size="bare"
+                  className="as-rc-i group/rc -mx-2 flex w-[calc(100%+16px)] gap-2.5 rounded-lg px-2 py-1.75 text-left transition-colors duration-150 hover:bg-dsk-hover"
                   style={{ animationDelay: `${60 + index * 40}ms` }}
                   onClick={() => onOpen(thread)}
                 >
                   <DeskAgentTile agent={agentsById.get(thread.agentDefinitionId)} size="xs" />
-                  <span>{thread.title || t("Untitled conversation")}</span>
-                  <em>{threadAge(thread, now)}</em>
-                </button>
+                  <span className="min-w-0 flex-1 truncate text-base text-dsk-fg2 group-hover/rc:text-dsk-fg">
+                    {thread.title || t("Untitled conversation")}
+                  </span>
+                  <em className="font-mono text-xs text-dsk-faint not-italic">
+                    {threadAge(thread, now)}
+                  </em>
+                </Button>
               ))}
             </>
           )}

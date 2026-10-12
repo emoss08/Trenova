@@ -58,6 +58,7 @@ describe("toolEffect", () => {
     ["compose_table_view", "present"],
     ["ask_user", "ask"],
     ["request_decision", "ask"],
+    ["withdraw_proposal", "ask"],
     ["list_customers", "lookup"],
     ["get_shipment", "lookup"],
     ["search_worker", "lookup"],
@@ -233,6 +234,15 @@ describe("describeActivity", () => {
     expect(shown.detail).toBe("Create shipment");
     expect(line([step({ name: "request_decision", status: "failed" })]).phrase).toBe(
       "Couldn't open the approval box",
+    );
+  });
+
+  it("reads a withdrawn proposal as one the assistant replaced", () => {
+    expect(line([step({ name: "withdraw_proposal" })]).phrase).toBe(
+      "Withdrew a proposal it replaced",
+    );
+    expect(line([step({ name: "withdraw_proposal", status: "failed" })]).phrase).toBe(
+      "Couldn't withdraw a proposal",
     );
   });
 

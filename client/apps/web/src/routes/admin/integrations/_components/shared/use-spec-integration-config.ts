@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
@@ -18,6 +19,7 @@ export function useSpecIntegrationConfig({
   open: boolean;
   onChanged?: () => Promise<unknown>;
 }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const configQuery = useQuery({
     ...queries.integration.config(integrationType),
@@ -51,9 +53,10 @@ export function useSpecIntegrationConfig({
     mutationFn: (payload: UpdateIntegrationConfigRequest) =>
       apiService.integrationService.updateConfig(integrationType, payload),
     form,
+    // i18n-ignore: resource name only appears in console error logs
     resourceName: `${name} configuration`,
     onSuccess: async () => {
-      toast.success(`${name} integration updated`);
+      toast.success(t("{0} integration updated", name));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: queries.integration.config(integrationType).queryKey,
@@ -67,13 +70,13 @@ export function useSpecIntegrationConfig({
   const testConnectionMutation = useMutation({
     mutationFn: () => apiService.integrationService.testConnection(integrationType),
     onSuccess: async () => {
-      toast.success(`${name} connection successful`);
+      toast.success(t("{0} connection successful", name));
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queries.integration.catalog().queryKey }),
         onChanged?.(),
       ]);
     },
-    onError: () => toast.error(`${name} connection test failed`),
+    onError: () => toast.error(t("{0} connection test failed", name)),
   });
 
   const storedByKey = useMemo(

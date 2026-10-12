@@ -9,12 +9,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 )
 
-func (r *QueryResolver) ArAgingSummary(ctx context.Context, asOfDate *int) (*services.ARAgingSummary, error) {
+func (r *QueryResolver) ArAgingSummary(ctx context.Context, asOfDate *int) (*customerledgerports.ARAgingSummary, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceAccountsReceivable,
@@ -31,7 +30,7 @@ func (r *QueryResolver) ArAgingSummary(ctx context.Context, asOfDate *int) (*ser
 	)
 }
 
-func (r *QueryResolver) ArOpenItems(ctx context.Context, customerID *string, asOfDate *int) ([]*repositories.AROpenItem, error) {
+func (r *QueryResolver) ArOpenItems(ctx context.Context, customerID *string, asOfDate *int) ([]*customerledgerports.AROpenItem, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceAccountsReceivable,
@@ -54,7 +53,7 @@ func (r *QueryResolver) ArOpenItems(ctx context.Context, customerID *string, asO
 	)
 }
 
-func (r *QueryResolver) ArCustomerLedger(ctx context.Context, customerID string) ([]*repositories.ARLedgerEntry, error) {
+func (r *QueryResolver) ArCustomerLedger(ctx context.Context, customerID string) ([]*customerledgerports.ARLedgerEntry, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceAccountsReceivable,
@@ -72,7 +71,7 @@ func (r *QueryResolver) ArCustomerLedger(ctx context.Context, customerID string)
 	return r.AccountsReceivableService.ListCustomerLedger(ctx, base.TenantInfo(authCtx), custID)
 }
 
-func (r *QueryResolver) ArCustomerStatement(ctx context.Context, customerID string, startDate *int, asOfDate *int) (*services.ARCustomerStatement, error) {
+func (r *QueryResolver) ArCustomerStatement(ctx context.Context, customerID string, startDate *int, asOfDate *int) (*customerledgerports.ARCustomerStatement, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceAccountsReceivable,
@@ -96,7 +95,7 @@ func (r *QueryResolver) ArCustomerStatement(ctx context.Context, customerID stri
 	)
 }
 
-func (r *QueryResolver) ArDashboardKpis(ctx context.Context) (*services.ARDashboardKPIs, error) {
+func (r *QueryResolver) ArDashboardKpis(ctx context.Context) (*customerledgerports.ARDashboardKPIs, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceAccountsReceivable,
@@ -108,11 +107,11 @@ func (r *QueryResolver) ArDashboardKpis(ctx context.Context) (*services.ARDashbo
 
 	return r.AccountsReceivableService.GetDashboardKPIs(
 		ctx,
-		repositories.GetARAnalyticsRequest{TenantInfo: base.TenantInfo(authCtx)},
+		customerledgerports.GetARAnalyticsRequest{TenantInfo: base.TenantInfo(authCtx)},
 	)
 }
 
-func (r *QueryResolver) ArDsoTrend(ctx context.Context, weeks *int) ([]*services.ARDSOTrendPoint, error) {
+func (r *QueryResolver) ArDsoTrend(ctx context.Context, weeks *int) ([]*customerledgerports.ARDSOTrendPoint, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceAccountsReceivable,
@@ -122,13 +121,13 @@ func (r *QueryResolver) ArDsoTrend(ctx context.Context, weeks *int) ([]*services
 		return nil, err
 	}
 
-	return r.AccountsReceivableService.GetDSOTrend(ctx, repositories.ListARSeriesRequest{
+	return r.AccountsReceivableService.GetDSOTrend(ctx, customerledgerports.ListARSeriesRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		Weeks:      base.DerefInt(weeks),
 	})
 }
 
-func (r *QueryResolver) ArAgingTrend(ctx context.Context, weeks *int) ([]*repositories.ARAgingTrendPoint, error) {
+func (r *QueryResolver) ArAgingTrend(ctx context.Context, weeks *int) ([]*customerledgerports.ARAgingTrendPoint, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceAccountsReceivable,
@@ -138,13 +137,13 @@ func (r *QueryResolver) ArAgingTrend(ctx context.Context, weeks *int) ([]*reposi
 		return nil, err
 	}
 
-	return r.AccountsReceivableService.GetAgingTrend(ctx, repositories.ListARSeriesRequest{
+	return r.AccountsReceivableService.GetAgingTrend(ctx, customerledgerports.ListARSeriesRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		Weeks:      base.DerefInt(weeks),
 	})
 }
 
-func (r *QueryResolver) ArCashFlowForecast(ctx context.Context, pastWeeks *int, futureWeeks *int) ([]*repositories.ARCashFlowPoint, error) {
+func (r *QueryResolver) ArCashFlowForecast(ctx context.Context, pastWeeks *int, futureWeeks *int) ([]*customerledgerports.ARCashFlowPoint, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceAccountsReceivable,
@@ -156,7 +155,7 @@ func (r *QueryResolver) ArCashFlowForecast(ctx context.Context, pastWeeks *int, 
 
 	return r.AccountsReceivableService.GetCashFlowForecast(
 		ctx,
-		repositories.ListARCashFlowRequest{
+		customerledgerports.ListARCashFlowRequest{
 			TenantInfo:  base.TenantInfo(authCtx),
 			PastWeeks:   base.DerefInt(pastWeeks),
 			FutureWeeks: base.DerefInt(futureWeeks),
@@ -164,7 +163,7 @@ func (r *QueryResolver) ArCashFlowForecast(ctx context.Context, pastWeeks *int, 
 	)
 }
 
-func (r *QueryResolver) ArCollectionPerformance(ctx context.Context, periodDays *int) (*services.ARCollectionPerformance, error) {
+func (r *QueryResolver) ArCollectionPerformance(ctx context.Context, periodDays *int) (*customerledgerports.ARCollectionPerformance, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceAccountsReceivable,
@@ -176,14 +175,14 @@ func (r *QueryResolver) ArCollectionPerformance(ctx context.Context, periodDays 
 
 	return r.AccountsReceivableService.GetCollectionPerformance(
 		ctx,
-		repositories.GetARCollectionMetricsRequest{
+		customerledgerports.GetARCollectionMetricsRequest{
 			TenantInfo: base.TenantInfo(authCtx),
 			PeriodDays: base.DerefInt(periodDays),
 		},
 	)
 }
 
-func (r *QueryResolver) ArTopOverdueCustomers(ctx context.Context, limit *int) ([]*repositories.ARTopOverdueCustomer, error) {
+func (r *QueryResolver) ArTopOverdueCustomers(ctx context.Context, limit *int) ([]*customerledgerports.ARTopOverdueCustomer, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceAccountsReceivable,
@@ -195,14 +194,14 @@ func (r *QueryResolver) ArTopOverdueCustomers(ctx context.Context, limit *int) (
 
 	return r.AccountsReceivableService.ListTopOverdueCustomers(
 		ctx,
-		repositories.ListARTopOverdueCustomersRequest{
+		customerledgerports.ListARTopOverdueCustomersRequest{
 			TenantInfo: base.TenantInfo(authCtx),
 			Limit:      base.DerefInt(limit),
 		},
 	)
 }
 
-func (r *QueryResolver) ArCollectionsWorklist(ctx context.Context, limit *int) ([]*repositories.ARCollectionsWorklistItem, error) {
+func (r *QueryResolver) ArCollectionsWorklist(ctx context.Context, limit *int) ([]*customerledgerports.ARCollectionsWorklistItem, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceAccountsReceivable,
@@ -214,14 +213,14 @@ func (r *QueryResolver) ArCollectionsWorklist(ctx context.Context, limit *int) (
 
 	return r.AccountsReceivableService.GetCollectionsWorklist(
 		ctx,
-		repositories.ListARCollectionsWorklistRequest{
+		customerledgerports.ListARCollectionsWorklistRequest{
 			TenantInfo: base.TenantInfo(authCtx),
 			Limit:      base.DerefInt(limit),
 		},
 	)
 }
 
-func (r *QueryResolver) ArCustomerProfile(ctx context.Context, customerID string) (*services.ARCustomerProfile, error) {
+func (r *QueryResolver) ArCustomerProfile(ctx context.Context, customerID string) (*customerledgerports.ARCustomerProfile, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceAccountsReceivable,
@@ -238,14 +237,14 @@ func (r *QueryResolver) ArCustomerProfile(ctx context.Context, customerID string
 
 	return r.AccountsReceivableService.GetCustomerProfile(
 		ctx,
-		repositories.GetARCustomerSnapshotRequest{
+		customerledgerports.GetARCustomerSnapshotRequest{
 			TenantInfo: base.TenantInfo(authCtx),
 			CustomerID: custID,
 		},
 	)
 }
 
-func (r *QueryResolver) ArPaymentStats(ctx context.Context) (*repositories.ARPaymentStats, error) {
+func (r *QueryResolver) ArPaymentStats(ctx context.Context) (*customerledgerports.ARPaymentStats, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceCustomerPayment,
@@ -257,6 +256,6 @@ func (r *QueryResolver) ArPaymentStats(ctx context.Context) (*repositories.ARPay
 
 	return r.AccountsReceivableService.GetPaymentStats(
 		ctx,
-		repositories.GetARAnalyticsRequest{TenantInfo: base.TenantInfo(authCtx)},
+		customerledgerports.GetARAnalyticsRequest{TenantInfo: base.TenantInfo(authCtx)},
 	)
 }

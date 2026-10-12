@@ -7,13 +7,13 @@ import (
 	"io"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/storage"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakeStorage struct {
-	storage.Client
+	kernelports.Client
 
 	key      string
 	body     bytes.Buffer
@@ -22,8 +22,8 @@ type fakeStorage struct {
 
 func (f *fakeStorage) Upload(
 	_ context.Context,
-	params *storage.UploadParams,
-) (*storage.FileInfo, error) {
+	params *kernelports.UploadParams,
+) (*kernelports.FileInfo, error) {
 	f.key = params.Key
 	if f.failWith != nil {
 		_, _ = io.Copy(io.Discard, params.Body)
@@ -35,7 +35,7 @@ func (f *fakeStorage) Upload(
 		return nil, err
 	}
 
-	return &storage.FileInfo{Key: params.Key, Size: n}, nil
+	return &kernelports.FileInfo{Key: params.Key, Size: n}, nil
 }
 
 func TestPipe_StreamsWhatIsWrittenIntoStorage(t *testing.T) {

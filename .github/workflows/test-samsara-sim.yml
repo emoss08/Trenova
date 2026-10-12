@@ -8,9 +8,9 @@ on:
       - develop
       - "claude/**"
     paths:
-      - "services/samsara-sim/**"
+      - "dev/samsara-sim/**"
       - "shared/**"
-      - "docker-compose-local.yml"
+      - "dev/compose.yml"
       - ".github/workflows/test-samsara-sim.yml"
   pull_request:
     branches:
@@ -18,9 +18,9 @@ on:
       - main
       - develop
     paths:
-      - "services/samsara-sim/**"
+      - "dev/samsara-sim/**"
       - "shared/**"
-      - "docker-compose-local.yml"
+      - "dev/compose.yml"
       - ".github/workflows/test-samsara-sim.yml"
 
 jobs:
@@ -36,7 +36,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Start simulator
-        run: docker compose -f docker-compose-local.yml --profile samsara-sim up -d samsara-sim
+        run: docker compose -f dev/compose.yml --profile samsara-sim up -d samsara-sim
 
       - name: Wait for simulator health
         run: |
@@ -50,7 +50,7 @@ jobs:
           exit 1
 
       - name: Run CI smoke checks
-        working-directory: ./services/samsara-sim
+        working-directory: ./dev/samsara-sim
         env:
           SIM_BASE_URL: http://localhost:8091
           SIM_TOKEN: dev-samsara-token
@@ -58,8 +58,8 @@ jobs:
 
       - name: Print simulator logs on failure
         if: failure()
-        run: docker compose -f docker-compose-local.yml logs --no-color samsara-sim
+        run: docker compose -f dev/compose.yml logs --no-color samsara-sim
 
       - name: Stop simulator
         if: always()
-        run: docker compose -f docker-compose-local.yml --profile samsara-sim down --remove-orphans
+        run: docker compose -f dev/compose.yml --profile samsara-sim down --remove-orphans

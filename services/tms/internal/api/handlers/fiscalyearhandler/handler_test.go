@@ -1,6 +1,11 @@
 package fiscalyearhandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalyearportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/glbalanceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalsourceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"net/http"
 	"strings"
 	"testing"
@@ -8,14 +13,16 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalyearhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/fiscalclose"
-	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/core/domain/journalsource"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/fiscalcloseservice"
-	"github.com/emoss08/trenova/internal/core/services/fiscalyearservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalcloseservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalyearservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,8 +37,8 @@ import (
 func TestHandlerCloseBlockers(t *testing.T) {
 	t.Parallel()
 
-	fyRepo := mocks.NewMockFiscalYearRepository(t)
-	fpRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fyRepo := fiscalyearportsmock.NewMockFiscalYearRepository(t)
+	fpRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalYearID := pulid.MustNew("fy_")
 	fiscalYear := &fiscalyear.FiscalYear{
 		ID:             fiscalYearID,
@@ -40,11 +47,11 @@ func TestHandlerCloseBlockers(t *testing.T) {
 		Status:         fiscalyear.StatusOpen,
 	}
 	fyRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetFiscalYearByIDRequest{ID: fiscalYearID, TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID}}).
+		GetByID(mock.Anything, fiscalyearports.GetFiscalYearByIDRequest{ID: fiscalYearID, TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID}}).
 		Return(fiscalYear, nil).
 		Once()
 	fpRepo.EXPECT().
-		CountUnclosedPeriodsByFiscalYear(mock.Anything, repositories.CountUnclosedPeriodsByFiscalYearRequest{FiscalYearID: fiscalYearID, OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID}).
+		CountUnclosedPeriodsByFiscalYear(mock.Anything, fiscalperiodports.CountUnclosedPeriodsByFiscalYearRequest{FiscalYearID: fiscalYearID, OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID}).
 		Return(2, nil).
 		Once()
 	fpRepo.EXPECT().
@@ -56,17 +63,17 @@ func TestHandlerCloseBlockers(t *testing.T) {
 		Return(nil, errortypes.NewNotFoundError("FiscalYear not found")).
 		Once()
 
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("AccountingControl not found")).
 		Once()
-	balanceRepo := mocks.NewMockGLBalanceRepository(t)
+	balanceRepo := glbalanceportsmock.NewMockGLBalanceRepository(t)
 	balanceRepo.EXPECT().
 		ListYearToDateBalances(mock.Anything, mock.Anything).
-		Return([]*repositories.GLPeriodAccountBalance{}, nil).
+		Return([]*glbalanceports.GLPeriodAccountBalance{}, nil).
 		Once()
-	sourceRepo := mocks.NewMockJournalSourceRepository(t)
+	sourceRepo := journalsourceportsmock.NewMockJournalSourceRepository(t)
 	sourceRepo.EXPECT().
 		ListByObject(mock.Anything, mock.Anything).
 		Return([]*journalsource.Source{}, nil).
@@ -110,8 +117,8 @@ func blockerMessages(blockers []*fiscalclose.Blocker) string {
 
 func newFiscalYearHandler(
 	t *testing.T,
-	fyRepo *mocks.MockFiscalYearRepository,
-	fpRepo *mocks.MockFiscalPeriodRepository,
+	fyRepo *fiscalyearportsmock.MockFiscalYearRepository,
+	fpRepo *fiscalperiodportsmock.MockFiscalPeriodRepository,
 	closeService *fiscalcloseservice.Service,
 ) *fiscalyearhandler.Handler {
 	t.Helper()

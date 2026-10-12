@@ -3,13 +3,18 @@ package aiproviderresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
+
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/optional"
+	"github.com/shopspring/decimal"
 )
 
 func aiProviderColumns(ctx context.Context, nodePathPrefix string) []string {
@@ -22,8 +27,24 @@ func aiProviderColumns(ctx context.Context, nodePathPrefix string) []string {
 	)
 
 	columns := selection.Columns
-	if len(columns) > 0 && graphql.FieldRequested(ctx, nodePathPrefix+".hasApiKey") {
-		columns = append(columns, buncolgen.ProviderColumns.APIKey.Name)
+	if len(columns) == 0 {
+		return columns
+	}
+	cols := aiprovidercol.ProviderColumns
+	if graphql.FieldRequested(ctx, nodePathPrefix+".apiKey") {
+		return append(columns,
+			cols.APIKey.Name,
+			cols.APIKeyPrefix.Name,
+			cols.APIKeyLastFour.Name,
+			cols.APIKeyAddedAt.Name,
+			cols.APIKeyAddedByID.Name,
+			cols.APIKeyLastUsedAt.Name,
+			cols.RotationExpiresAt.Name,
+			cols.CreatedAt.Name,
+		)
+	}
+	if graphql.FieldRequested(ctx, nodePathPrefix+".hasApiKey") {
+		columns = append(columns, cols.APIKey.Name)
 	}
 
 	return columns
@@ -48,4 +69,152 @@ func aiProviderConnectionToModel(
 		PageInfo:   page.PageInfo,
 		TotalCount: page.TotalCount,
 	}, nil
+}
+
+func endpointFromInput(
+	input *gqlmodel.AIProviderEndpointInput,
+) (agentports.AIProviderEndpoint, error) {
+	if input == nil {
+		return agentports.AIProviderEndpoint{}, errortypes.NewValidationError(
+			"endpoint", errortypes.ErrRequired, "Endpoint is required",
+		)
+	}
+
+	providerID, err := base.OptionalID(input.ProviderID)
+	if err != nil {
+		return agentports.AIProviderEndpoint{}, err
+	}
+
+	endpoint := agentports.AIProviderEndpoint{
+		ProviderID:          providerID,
+		Kind:                input.Kind,
+		Platform:            aiprovider.PlatformDirect,
+		PlatformSettings:    platformSettingsFromInput(input.PlatformSettings),
+		BaseURL:             input.BaseURL,
+		APIKey:              input.APIKey,
+		AllowPrivateNetwork: input.AllowPrivateNetwork,
+	}
+	if input.Platform != nil {
+		endpoint.Platform = *input.Platform
+	}
+
+	return endpoint, nil
+}
+
+func platformSettingsFromInput(
+	input *gqlmodel.AIProviderPlatformSettingsInput,
+) *aiprovider.PlatformSettings {
+	if input == nil {
+		return nil
+	}
+
+	settings := &aiprovider.PlatformSettings{
+		Region:      base.StringValue(input.Region),
+		ProjectID:   base.StringValue(input.ProjectID),
+		WorkspaceID: base.StringValue(input.WorkspaceID),
+		AccessKeyID: base.StringValue(input.AccessKeyID),
+		Resource:    base.StringValue(input.Resource),
+		TenantID:    base.StringValue(input.TenantID),
+		ClientID:    base.StringValue(input.ClientID),
+	}
+	if input.Auth != nil {
+		settings.Auth = *input.Auth
+	}
+
+	return settings
+}
+
+func patchFromInput(
+	input *gqlmodel.AIProviderPatchInput,
+) (*agentports.PatchAIProviderRequest, error) {
+	inputCost, err := omittableDecimal("inputCostPerMillion", input.InputCostPerMillion)
+	if err != nil {
+		return nil, err
+	}
+	outputCost, err := omittableDecimal("outputCostPerMillion", input.OutputCostPerMillion)
+	if err != nil {
+		return nil, err
+	}
+	cacheReadCost, err := omittableDecimal("cacheReadCostPerMillion", input.CacheReadCostPerMillion)
+	if err != nil {
+		return nil, err
+	}
+	cacheWriteCost, err := omittableDecimal(
+		"cacheWriteCostPerMillion",
+		input.CacheWriteCostPerMillion,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &agentports.PatchAIProviderRequest{
+		Enabled:                  base.NullableOmittable(input.Enabled),
+		Trusted:                  base.NullableOmittable(input.Trusted),
+		AllowPrivateNetwork:      base.NullableOmittable(input.AllowPrivateNetwork),
+		APIKey:                   base.NullableOmittable(input.APIKey),
+		InputCostPerMillion:      inputCost,
+		OutputCostPerMillion:     outputCost,
+		CacheReadCostPerMillion:  cacheReadCost,
+		CacheWriteCostPerMillion: cacheWriteCost,
+	}
+	if input.Tasks.IsSet() {
+		req.Tasks = optional.Some(input.Tasks.Value())
+	}
+
+	return req, nil
+}
+
+func omittableDecimal(
+	field string,
+	value graphql.Omittable[*string],
+) (optional.Value[*decimal.Decimal], error) {
+	if !value.IsSet() {
+		return optional.Value[*decimal.Decimal]{}, nil
+	}
+
+	parsed, err := base.NullDecimalFromStringPtr(value.Value(), field)
+	if err != nil {
+		return optional.Value[*decimal.Decimal]{}, err
+	}
+	if !parsed.Valid {
+		return optional.Some[*decimal.Decimal](nil), nil
+	}
+
+	return optional.Some(&parsed.Decimal), nil
+}
+
+func modelOptionsToModel(
+	models []agentports.AIProviderModelOption,
+) []*gqlmodel.AIProviderModelOption {
+	out := make([]*gqlmodel.AIProviderModelOption, 0, len(models))
+	for idx := range models {
+		model := &models[idx]
+		option := &gqlmodel.AIProviderModelOption{
+			ID:                   model.ID,
+			DisplayName:          model.DisplayName,
+			ContextWindow:        model.ContextWindow,
+			Loaded:               model.Loaded,
+			Embedding:            model.Embedding,
+			InputCostPerMillion:  base.DecimalPtrToStringPtr(model.InputCostPerMillion),
+			OutputCostPerMillion: base.DecimalPtrToStringPtr(model.OutputCostPerMillion),
+			PriceSource:          priceSourceToModel(model.PriceSource),
+			CreatedAt:            base.Int64PtrToIntPtr(model.CreatedAt),
+		}
+		if model.SizeBytes != nil {
+			size := float64(*model.SizeBytes)
+			option.SizeBytes = &size
+		}
+		out = append(out, option)
+	}
+
+	return out
+}
+
+func priceSourceToModel(source agentports.ModelPriceSource) *gqlmodel.AIModelPriceSource {
+	if source == "" {
+		return nil
+	}
+
+	value := gqlmodel.AIModelPriceSource(source)
+	return &value
 }

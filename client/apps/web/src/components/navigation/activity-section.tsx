@@ -9,57 +9,93 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useRecentActivityInfinite, type RecentActivityEntry } from "@/hooks/use-attention";
+import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useSidebarPreferences } from "@/hooks/use-sidebar-preferences";
 import { cn } from "@trenova/shared/lib/utils";
 import {
+  auditEntryTitle,
   operationLabel,
   resourceLabel,
 } from "@/routes/admin/audit-logs/_components/audit-log-formatters";
-import { formatDistanceToNowStrict, fromUnixTime } from "date-fns";
+import { formatRelativeTime } from "@trenova/shared/i18n/format";
+import { translateRich } from "@trenova/shared/i18n/rich";
 import { ChevronRightIcon, SpinnerIcon } from "@trenova/shared/components/icons";
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { formatUnixDateMedium, formatUnixTime } from "@trenova/shared/lib/date";
 
-const PAST_TENSE_OPERATIONS: Record<string, string> = {
-  create: "created",
-  update: "updated",
-  delete: "deleted",
-  approve: "approved",
-  reject: "rejected",
-  assign: "assigned",
-  unassign: "unassigned",
-  archive: "archived",
-  restore: "restored",
-  submit: "submitted",
-  cancel: "canceled",
-  duplicate: "duplicated",
-  close: "closed",
-  lock: "locked",
-  unlock: "unlocked",
-  activate: "activated",
-  reopen: "reopened",
-  export: "exported",
-  import: "imported",
-};
+type ActorTag = (children: ReactNode) => ReactNode;
 
-function operationVerb(operation: string): string {
-  const normalized = operation.toLowerCase();
-  return PAST_TENSE_OPERATIONS[normalized] ?? operationLabel(operation).toLowerCase();
-}
-
-function activityHeadline(entry: RecentActivityEntry): string {
+// One whole sentence per operation, so a language can put the person, the verb and the
+// record in its own order. An operation without its own sentence reads as "{name}: {action}
+// {record}" from the operation's label.
+function activityHeadline(entry: RecentActivityEntry, actor: string, name: ActorTag): ReactNode {
+  const tags = { name };
+  const resource = resourceLabel(entry.resource);
   if (entry.comment) {
-    return entry.comment;
+    return translateRich("<name>{0}</name>: {1}", tags, actor, entry.comment);
   }
-  return `${operationVerb(entry.operation)} ${resourceLabel(entry.resource)}`;
+  switch (entry.operation.toLowerCase()) {
+    case "create":
+      return translateRich("<name>{0}</name> created {1}", tags, actor, resource);
+    case "update":
+      return translateRich("<name>{0}</name> updated {1}", tags, actor, resource);
+    case "delete":
+      return translateRich("<name>{0}</name> deleted {1}", tags, actor, resource);
+    case "approve":
+      return translateRich("<name>{0}</name> approved {1}", tags, actor, resource);
+    case "reject":
+      return translateRich("<name>{0}</name> rejected {1}", tags, actor, resource);
+    case "assign":
+      return translateRich("<name>{0}</name> assigned {1}", tags, actor, resource);
+    case "unassign":
+      return translateRich("<name>{0}</name> unassigned {1}", tags, actor, resource);
+    case "archive":
+      return translateRich("<name>{0}</name> archived {1}", tags, actor, resource);
+    case "restore":
+      return translateRich("<name>{0}</name> restored {1}", tags, actor, resource);
+    case "submit":
+      return translateRich("<name>{0}</name> submitted {1}", tags, actor, resource);
+    case "cancel":
+      return translateRich("<name>{0}</name> canceled {1}", tags, actor, resource);
+    case "duplicate":
+      return translateRich("<name>{0}</name> duplicated {1}", tags, actor, resource);
+    case "close":
+      return translateRich("<name>{0}</name> closed {1}", tags, actor, resource);
+    case "lock":
+      return translateRich("<name>{0}</name> locked {1}", tags, actor, resource);
+    case "unlock":
+      return translateRich("<name>{0}</name> unlocked {1}", tags, actor, resource);
+    case "activate":
+      return translateRich("<name>{0}</name> activated {1}", tags, actor, resource);
+    case "reopen":
+      return translateRich("<name>{0}</name> reopened {1}", tags, actor, resource);
+    case "export":
+      return translateRich("<name>{0}</name> exported {1}", tags, actor, resource);
+    case "import":
+      return translateRich("<name>{0}</name> imported {1}", tags, actor, resource);
+    default:
+      return translateRich(
+        "<name>{0}</name>: {1}",
+        tags,
+        actor,
+        auditEntryTitle(entry.operation, entry.resource),
+      );
+  }
 }
 
 function ActivityRow({ entry }: { entry: RecentActivityEntry }) {
-  const actorName = entry.user?.name ?? entry.user?.username ?? "System";
+  const t = useT();
+  const nowSeconds = useNowSeconds();
+  const actorName = entry.user?.name ?? entry.user?.username ?? t("System");
   const firstName = actorName.split(" ")[0];
   const resource = resourceLabel(entry.resource);
-  const headline = activityHeadline(entry);
+  const headline = activityHeadline(entry, firstName, (children) => (
+    <span className="text-foreground font-medium">{children}</span>
+  ));
+  const fullHeadline = activityHeadline(entry, actorName, (children) => (
+    <span className="font-semibold">{children}</span>
+  ));
 
   return (
     <Tooltip>
@@ -77,9 +113,7 @@ function ActivityRow({ entry }: { entry: RecentActivityEntry }) {
           fallbackClassName="bg-muted text-3xs font-medium text-muted-foreground"
         />
         <span className="grid min-w-0 flex-1 leading-snug">
-          <span className="text-muted-foreground truncate text-xs">
-            <span className="text-foreground font-medium">{firstName}</span> {headline}
-          </span>
+          <span className="text-muted-foreground truncate text-xs">{headline}</span>
           <span className="text-2xs text-muted-foreground/70 truncate">
             {entry.entityRef ? (
               <>
@@ -93,14 +127,12 @@ function ActivityRow({ entry }: { entry: RecentActivityEntry }) {
           </span>
         </span>
         <span className="text-2xs text-muted-foreground/60 shrink-0 pt-0.5 tabular-nums">
-          {formatDistanceToNowStrict(fromUnixTime(entry.timestamp), { addSuffix: false })}
+          {formatRelativeTime(entry.timestamp - nowSeconds, "narrow")}
         </span>
       </TooltipTrigger>
       <TooltipContent side="right" sideOffset={14} className="max-w-64">
         <div className="flex flex-col gap-1 py-0.5">
-          <span className="text-xs leading-snug">
-            <span className="font-semibold">{actorName}</span> {headline}
-          </span>
+          <span className="text-xs leading-snug">{fullHeadline}</span>
           <span className="text-2xs text-background/70">
             {entry.entityRef ? `${entry.entityRef} · ` : ""}
             {resource} · {operationLabel(entry.operation)}

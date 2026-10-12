@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { InfoPopover } from "@/components/info-popover";
 import { KpiCard, KpiHeader } from "@/components/kpi/kpi-card";
 import { KPI_VALUE_CLASS, KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
@@ -146,17 +147,21 @@ export function OrgOverview({
 }
 
 function describePositions(vacant: number, archived: number, loaded: boolean): string {
-  if (!loaded) return "Titles the roster is counted by";
+  if (!loaded) return translate("Titles the roster is counted by");
   const parts: string[] = [];
-  if (vacant > 0) parts.push(`${vacant} ${vacant === 1 ? "title" : "titles"} nobody holds`);
-  if (archived > 0) parts.push(`${archived} archived`);
-  return parts.length > 0 ? parts.join(" · ") : "Every open position is filled";
+  if (vacant > 0) {
+    parts.push(
+      translate("{0, plural, one {# title nobody holds} other {# titles nobody holds}}", vacant),
+    );
+  }
+  if (archived > 0) parts.push(translate("{0} archived", archived));
+  return parts.length > 0 ? parts.join(" · ") : translate("Every open position is filled");
 }
 
 function describeCover(cover: ReturnType<typeof coverSummary>): string {
   const parts: string[] = [];
-  if (cover.endingSoon > 0) parts.push(`${cover.endingSoon} ending this week`);
-  if (cover.openEnded > 0) parts.push(`${cover.openEnded} until called back`);
-  if (cover.scheduled > 0) parts.push(`${cover.scheduled} starting later`);
-  return parts.length > 0 ? parts.join(" · ") : "Nobody is approving in anybody's place";
+  if (cover.endingSoon > 0) parts.push(translate("{0} ending this week", cover.endingSoon));
+  if (cover.openEnded > 0) parts.push(translate("{0} until called back", cover.openEnded));
+  if (cover.scheduled > 0) parts.push(translate("{0} starting later", cover.scheduled));
+  return parts.length > 0 ? parts.join(" · ") : translate("Nobody is approving in anybody's place");
 }

@@ -307,9 +307,87 @@ type AgentAccessPreview {
   sensitiveTools: [String!]!
 }
 
+"""
+An agent as it stood after one save. Each save of an agent becomes a version,
+written with the save, so the history never names a save that did not happen.
+"""
+type AgentDefinitionVersion {
+  id: ID!
+  "The agent's version number after this save."
+  version: Int!
+  "What this save changed, in the builder's words, or Created."
+  summary: String!
+  "Who saved it. Absent for a save made by the system or by a removed user."
+  author: User
+  createdAt: Timestamp!
+}
+
+"""
+How an agent in shadow compares with the people doing the same work. Each
+write it recorded instead of offering is set beside what a person did to the
+same record in the three days after.
+"""
+type AgentShadowReport {
+  "The period read, in days."
+  days: Int!
+  "Every write the agent recorded in the period."
+  recorded: Int!
+  "Writes a person then made too: the same record, and the fields the write named."
+  matched: Int!
+  "Of the writes people answered, the share that matched what they did, 0 to 1. Absent until people answer one."
+  matchRate: Float
+  "Writes whose record a person changed some other way."
+  wouldReject: Int!
+  "Writes that failed when they were simulated."
+  wouldFail: Int!
+  "Writes whose record nobody touched afterwards."
+  unanswered: Int!
+}
+
+"Instructions as the builder holds them, with the tools the draft holds."
+input AgentInstructionLintInput {
+  "At most 20000 characters."
+  instructions: String!
+  toolNames: [String!]!
+  disabledToolNames: [String!]
+}
+
+"""
+A sentence of an agent's instructions asking for something none of its tools
+can do, read from the tool registry: the record it names and the operation it
+asks for.
+"""
+type AgentInstructionFinding {
+  "Byte offset of the sentence in the instructions."
+  start: Int!
+  "Byte offset just past the sentence."
+  end: Int!
+  excerpt: String!
+  "The record the sentence names, as the permission registry knows it."
+  resource: String!
+  "The record's name for a person."
+  resourceLabel: String!
+  "What the sentence asks to do to it: read, create, update, cancel and so on."
+  operation: String!
+  "The tools in the registry that would do it. Empty when none does."
+  tools: [String!]!
+}
+
 extend type Query {
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
+  "What a draft's instructions ask for that none of its tools can do. Saves nothing."
+  agentInstructionLint(input: AgentInstructionLintInput!): [AgentInstructionFinding!]!
+  "An agent's shadow period over the last days (default 30, at most 90)."
+  agentShadowReport(agentId: ID!, days: Int): AgentShadowReport!
   agentDefinition(id: ID!): AgentDefinition
+  "An agent's saves, newest first. At most 50."
+  agentDefinitionVersions(agentId: ID!, limit: Int): [AgentDefinitionVersion!]!
+  """
+  An earlier version of an agent as a draft of the agent as it is now: that
+  version's settings on the current version number, so saving the draft
+  replaces the agent the way any edit does. Saves nothing.
+  """
+  agentDefinitionVersionDraft(agentId: ID!, version: Int!): AgentDefinition!
   "The chat agents the caller may use, enabled and by name."
   myAgents(input: MyAgentsInput!): MyAgentConnection!
   "Each role's coverage of an agent's tools, for choosing who may use it."
@@ -320,6 +398,25 @@ extend type Query {
   and changes nothing.
   """
   agentAccessPreview(input: AgentAccessPreviewInput!): AgentAccessPreview!
+}
+
+"A prompt kept with an agent for trying it again after an edit."
+type AgentTestPrompt {
+  id: ID!
+  prompt: String!
+  createdAt: Timestamp!
+}
+
+extend type Query {
+  "The prompts kept with an agent, oldest first. At most 20."
+  agentTestPrompts(agentId: ID!): [AgentTestPrompt!]!
+}
+
+extend type Mutation {
+  "Keeps a prompt with an agent. At most 2000 characters, and 20 prompts an agent."
+  keepAgentTestPrompt(agentId: ID!, prompt: String!): AgentTestPrompt!
+  "Removes a kept prompt."
+  deleteAgentTestPrompt(agentId: ID!, id: ID!): Boolean!
 }
 
 extend type Mutation {
@@ -452,4 +549,77 @@ extend type Mutation {
     agentId: ID!
     input: UpdateAgentCapabilitiesInput!
   ): AgentCapabilities!
+}
+
+"Something drafting changed or left out of what the model proposed."
+type AgentDraftNote {
+  "The setting, as the builder names it: toolNames, toolTiers.<tool>, eventKinds, cronExpression and so on."
+  field: String!
+  "What the model proposed; empty when it proposed nothing."
+  value: String!
+  "Why it was changed or left out."
+  reason: String!
+}
+
+"""
+An agent a model drafted from a description of its job, in the shape the
+builder saves. Nothing is saved. Its tools come from the registry, each change
+held at that tool's own maximum and the ceiling, and it runs in shadow.
+"""
+type AgentDraft {
+  name: String!
+  description: String!
+  "An icon the app offers, or empty."
+  icon: String!
+  "An accent the app offers, or empty."
+  accent: String!
+  instructions: String!
+  guardrails: [String!]!
+  triggerMode: AgentTriggerMode!
+  cronExpression: String!
+  cronTimezone: String!
+  eventKinds: [String!]!
+  intervalSeconds: Int!
+  toolNames: [String!]!
+  "Autonomy per change tool, keyed by tool name; each held at the tool's maximum and autonomyCeiling."
+  toolTiers: JSON!
+  autonomyCeiling: AgentAutonomyTier!
+  dataAccessCeiling: AgentDataAccessCeiling!
+  outputMode: AgentOutputMode!
+  enabled: Boolean!
+  shadowMode: Boolean!
+  decisionTimeoutSeconds: Int!
+  runTimeoutSeconds: Int!
+  maxToolCalls: Int!
+  maxConcurrentRuns: Int!
+  "What was changed or left out of the model's draft, so the builder can say so."
+  notes: [AgentDraftNote!]!
+}
+
+"Instructions a model tightened: the same meaning, shorter, every {{placeholder}} kept."
+type AgentInstructionsTightened {
+  instructions: String!
+  "False when the model returned the instructions as they were."
+  changed: Boolean!
+}
+
+extend type Query {
+  """
+  Whether drafting an agent and tightening its instructions with AI are
+  offered: an enabled provider takes the AssistantChat task.
+  """
+  agentDraftingAvailable: Boolean!
+}
+
+extend type Mutation {
+  """
+  Drafts an agent from a sentence or two (at most 1000 characters) describing
+  its job. Saves nothing. Needs permission to create agents.
+  """
+  draftAgentFromDescription(description: String!): AgentDraft!
+  """
+  Tightens an agent's instructions (at most 20000 characters) without changing
+  what they ask for. Saves nothing. Needs permission to create or update agents.
+  """
+  tightenAgentInstructions(instructions: String!): AgentInstructionsTightened!
 }

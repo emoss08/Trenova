@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { jurisdictionRuleSchema, verifyJurisdictionRuleSchema } from "@/types/jurisdiction-rule";
 
 // Fixtures are written from JurisdictionRule.Validate in
-// services/tms/internal/core/domain/jurisdictionrule/rule.go, not from what the
+// services/tms/internal/modules/places/domain/jurisdictionrule/rule.go, not from what the
 // form happens to produce. The client checks the same rules so a typo lands on
 // the field that is wrong instead of returning as a whole-form error.
 const base = {

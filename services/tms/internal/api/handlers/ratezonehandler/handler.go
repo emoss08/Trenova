@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/ratezone"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/ratezoneservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/rating/app/ratezoneservice"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -78,7 +78,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*ratezone.RateZone], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListRateZoneRequest{Filter: req},
+				&ratezoneports.ListRateZoneRequest{Filter: req},
 			)
 		},
 	)
@@ -105,7 +105,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.GetByID(c.Request.Context(), &repositories.GetRateZoneByIDRequest{
+	entity, err := h.service.GetByID(c.Request.Context(), &ratezoneports.GetRateZoneByIDRequest{
 		RateZoneID:     zoneID,
 		TenantInfo:     tenantOf(authCtx),
 		IncludeMembers: true,
@@ -213,7 +213,7 @@ func (h *Handler) delete(c *gin.Context) {
 		return
 	}
 
-	if err = h.service.Delete(c.Request.Context(), &repositories.GetRateZoneByIDRequest{
+	if err = h.service.Delete(c.Request.Context(), &ratezoneports.GetRateZoneByIDRequest{
 		RateZoneID: zoneID,
 		TenantInfo: tenantOf(authCtx),
 	}, authCtx.UserID); err != nil {

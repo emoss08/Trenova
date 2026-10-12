@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { BriefingBar } from "./_components/briefing-bar";
 import { HomeCanvas } from "./_components/home-canvas";
 import { useHomeData } from "./_components/use-home-data";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 // Mirrors useHomeLayout's staleTime so a return visit inside that window reuses the
 // layout the way the page itself would rather than fetching it again from the loader.
@@ -37,10 +38,13 @@ export const prefetch: RoutePrefetch = async () => {
     queries.attention.summary(),
   ];
 
-  if (
-    (await ensurePermissionManifest()) &&
-    usePermissionStore.getState().hasPermission(Resource.Shipment, Operation.Read)
-  ) {
+  // A manifest that cannot be loaded costs only the analytics warm-up; the page asks again.
+  const canReadShipments = await ensurePermissionManifest().then(
+    (loaded) =>
+      loaded && usePermissionStore.getState().hasPermission(Resource.Shipment, Operation.Read),
+    () => false,
+  );
+  if (canReadShipments) {
     list.push(analytics.get("shipment-management"));
   }
 
@@ -123,7 +127,9 @@ export function Home() {
       setDraft(null);
       setEditing(false);
       toast.success(
-        layout.presetName ? `Restored ${layout.presetName}` : "Restored the default home screen",
+        layout.presetName
+          ? t("Restored {0}", layout.presetName)
+          : translate("Restored the default home screen"),
       );
     } catch (error) {
       toast.error(graphQLErrorMessage(error, "Could not restore your home screen"));

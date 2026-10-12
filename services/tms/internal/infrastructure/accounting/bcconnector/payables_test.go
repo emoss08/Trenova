@@ -5,16 +5,16 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/businesscentral"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func billDoc() *services.AccountingPurchaseDocument {
-	return &services.AccountingPurchaseDocument{
+func billDoc() *accountingsyncports.AccountingPurchaseDocument {
+	return &accountingsyncports.AccountingPurchaseDocument{
 		Auth:             testAuth(),
 		RequestID:        testRequestID,
 		Kind:             accountingsync.SyncObjectCarrierBill,
@@ -23,7 +23,7 @@ func billDoc() *services.AccountingPurchaseDocument {
 		TxnDate:          "2026-10-02",
 		DueDate:          "2026-11-01",
 		CurrencyCode:     "USD",
-		Lines: []services.AccountingPurchaseLine{
+		Lines: []accountingsyncports.AccountingPurchaseLine{
 			{Description: "Linehaul", AccountExternalID: testExpense, Amount: decimal.NewFromInt(800)},
 			{Description: "Fuel", AccountExternalID: strings.ToUpper(testExpense), Amount: decimal.NewFromInt(200)},
 		},
@@ -135,7 +135,7 @@ func TestVoidBillPostsAFullCreditMemoAppliedToIt(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	result, err := conn.VoidPurchaseDocument(t.Context(), &services.AccountingDocumentRef{
+	result, err := conn.VoidPurchaseDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
 		Auth:       testAuth(),
 		RequestID:  testRequestID,
 		Kind:       accountingsync.SyncObjectCarrierBill,
@@ -167,7 +167,7 @@ func TestVoidBillPostsAFullCreditMemoAppliedToIt(t *testing.T) {
 func TestVoidBillRefusalsAndResume(t *testing.T) {
 	t.Parallel()
 
-	ref := &services.AccountingDocumentRef{
+	ref := &accountingsyncports.AccountingDocumentRef{
 		Auth: testAuth(), RequestID: testRequestID, Kind: accountingsync.SyncObjectDriverBill,
 		ExternalID: testBill, Refs: map[string]string{refAccountPrefix + testExpense: "900"},
 	}
@@ -219,7 +219,7 @@ func TestVoidVendorCreditCancelsIt(t *testing.T) {
 	fake := &fakeBC{respond: server.respond}
 	conn := testConnector(t, fake)
 
-	_, err := conn.VoidPurchaseDocument(t.Context(), &services.AccountingDocumentRef{
+	_, err := conn.VoidPurchaseDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
 		Auth:       testAuth(),
 		Kind:       accountingsync.SyncObjectCarrierBill,
 		ExternalID: testVendorCredit,
@@ -229,7 +229,7 @@ func TestVoidVendorCreditCancelsIt(t *testing.T) {
 	_, cancelled := fake.find(http.MethodPost, entity("purchaseCreditMemos", testVendorCredit)+cancelAction)
 	assert.True(t, cancelled)
 
-	_, err = conn.VoidPurchaseDocument(t.Context(), &services.AccountingDocumentRef{
+	_, err = conn.VoidPurchaseDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
 		Auth: testAuth(), Kind: accountingsync.SyncObjectCarrierBill, ExternalID: testVendorCredit,
 		Refs: map[string]string{accountingsync.ExternalRefDocumentType: "Other"},
 	})
@@ -294,10 +294,10 @@ func TestUpsertVendorUpdatesWithTheETagOrRefusesADuplicateName(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	result, err := conn.UpsertVendor(t.Context(), &services.AccountingVendorDocument{
+	result, err := conn.UpsertVendor(t.Context(), &accountingsyncports.AccountingVendorDocument{
 		Auth:       testAuth(),
 		ExternalID: testVendor,
-		Party:      services.AccountingPartyDraft{DisplayName: "Owner Operator LLC", City: "Dallas"},
+		Party:      accountingsyncports.AccountingPartyDraft{DisplayName: "Owner Operator LLC", City: "Dallas"},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, testVendor, result.ExternalID)
@@ -308,9 +308,9 @@ func TestUpsertVendorUpdatesWithTheETagOrRefusesADuplicateName(t *testing.T) {
 	assert.Equal(t, "CAD", patch.Body["currencyCode"])
 	assert.Equal(t, "Dallas", patch.Body["city"])
 
-	_, err = conn.UpsertVendor(t.Context(), &services.AccountingVendorDocument{
+	_, err = conn.UpsertVendor(t.Context(), &accountingsyncports.AccountingVendorDocument{
 		Auth:  testAuth(),
-		Party: services.AccountingPartyDraft{DisplayName: "Owner Operator Inc"},
+		Party: accountingsyncports.AccountingPartyDraft{DisplayName: "Owner Operator Inc"},
 	})
 	require.ErrorIs(t, err, errDuplicateName)
 	assert.Equal(t, accountingsync.SyncErrorDuplicate, conn.ClassifyDocumentError(err).Category)
@@ -319,7 +319,7 @@ func TestUpsertVendorUpdatesWithTheETagOrRefusesADuplicateName(t *testing.T) {
 func TestVoidBillDeletesADraftAndIgnoresAMissingBill(t *testing.T) {
 	t.Parallel()
 
-	ref := &services.AccountingDocumentRef{
+	ref := &accountingsyncports.AccountingDocumentRef{
 		Auth: testAuth(), RequestID: testRequestID, Kind: accountingsync.SyncObjectCarrierBill,
 		ExternalID: testBill,
 	}

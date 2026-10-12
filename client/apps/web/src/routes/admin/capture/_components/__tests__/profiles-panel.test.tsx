@@ -155,7 +155,7 @@ describe("ProfilesPanel", () => {
     });
     observer.observe(document.body, { subtree: true, childList: true, characterData: true });
 
-    await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    await user.click(within(dialog).getByRole("button", { name: "Close panel" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     observer.disconnect();
 

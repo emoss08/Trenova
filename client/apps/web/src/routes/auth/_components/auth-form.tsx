@@ -1,10 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import logoRainbow from "@/assets/logo.webp";
 import { Metadata } from "@/components/metadata";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { queryClient } from "@/lib/query-client";
 import { apiService } from "@/services/api";
-import { LegalAgreementNote } from "./legal-agreement-note";
 import { authService } from "@trenova/shared/services/auth";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { PermissionManifest } from "@trenova/shared/types/permission";
@@ -14,9 +12,7 @@ import type { LoginResponse } from "@trenova/shared/types/user";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router";
-import { AuthCard, AuthCardBody } from "./auth-card";
 import { AuthHandoff } from "./auth-handoff";
-import type { CredentialReceipt } from "./auth-panel";
 import { AuthShell, type AuthStep } from "./auth-shell";
 import { ForgotPasswordForm } from "./forgot-password-form";
 import { LoginForm } from "./login-form";
@@ -40,27 +36,6 @@ function countPermissions(roles: RoleSummary[]): number | undefined {
     return undefined;
   }
   return roles.reduce((total, role) => total + (role.permissionCount ?? 0), 0);
-}
-
-const SESSION_ID_BODY_LENGTH = 8;
-
-/**
- * A session id is a PULID — a short prefix and a 26-character ULID — which is far wider
- * than the receipt row it sits in, and the AUTHORIZED stamp lands on top of that row's
- * right edge. Keeping the prefix and the leading body characters stays enough to match
- * a session against a log line without running under the stamp.
- */
-export function formatSessionId(sessionId?: string): string | undefined {
-  if (!sessionId) {
-    return undefined;
-  }
-
-  const separator = sessionId.indexOf("_");
-  if (separator === -1) {
-    return sessionId.slice(0, SESSION_ID_BODY_LENGTH);
-  }
-
-  return sessionId.slice(0, separator + 1 + SESSION_ID_BODY_LENGTH);
 }
 
 /**
@@ -87,7 +62,7 @@ export function AuthForm({
 
   const [step, setStep] = useState<AuthStep>("login");
   const [emailAddress, setEmailAddress] = useState("");
-  const [sessionId, setSessionId] = useState<string>();
+  const [userName, setUserName] = useState<string>();
   const [organizations, setOrganizations] = useState<UserOrganization[]>([]);
   const [organizationName, setOrganizationName] = useState<string>();
   const [authorizedRoles, setAuthorizedRoles] = useState<RoleSummary[]>([]);
@@ -107,7 +82,7 @@ export function AuthForm({
       handleMutationError({ error, resourceName: "Session" });
     }
     clearPermissions();
-    setSessionId(undefined);
+    setUserName(undefined);
     setOrganizations([]);
     setOrganizationName(undefined);
     setAuthorizedRoles([]);
@@ -143,7 +118,7 @@ export function AuthForm({
   const handleAuthenticated = useCallback(
     async (response: LoginResponse) => {
       setEmailAddress(response.user.emailAddress);
-      setSessionId(response.sessionId);
+      setUserName(response.user.name);
 
       if (organizationSlug) {
         await enterWorkspace(tenantMetadata?.organizationName, false);
@@ -198,85 +173,52 @@ export function AuthForm({
     void navigate("/", { replace: true });
   }, [navigate]);
 
-  const receipt: CredentialReceipt = {
-    issued: step === "done",
-    rows: [
-      {
-        key: "Identity",
-        // Typing an address into the recovery form is not authentication, so the row
-        // stays pending on both pre-session steps.
-        value: step === "login" || step === "forgot" ? undefined : emailAddress,
-      },
-      {
-        key: "Workspace",
-        value: step === "role" || step === "done" ? organizationName : undefined,
-      },
-      {
-        key: "Roles",
-        value: step === "done" ? activeRoles.map((role) => role.name).join(", ") : undefined,
-      },
-      { key: "Session", value: step === "done" ? formatSessionId(sessionId) : undefined },
-    ],
-  };
-
   return (
     <>
       <Metadata title={t("Sign In")} description={t("Sign in to your Trenova account")} />
-      <AuthShell step={step} receipt={receipt}>
-        <div className="mb-1 flex items-center justify-center gap-2.5 min-[900px]:hidden">
-          <img src={logoRainbow} alt="" className="size-6 object-contain" />
-          <span className="text-lg font-semibold tracking-[-0.02em]">{t("Trenova")}</span>
-        </div>
-
-        <AuthCard stepKey={step}>
-          {tenantQuery?.isLoading ? (
-            <AuthCardBody>
-              <p className="text-muted-foreground m-0 text-sm">
-                {t("Loading organization sign-in…")}
-              </p>
-            </AuthCardBody>
-          ) : tenantQuery?.isError ? (
-            <AuthCardBody>
-              <p className="text-auth-danger m-0 text-sm">
-                {t("We couldn't load this tenant login page.")}
-              </p>
-            </AuthCardBody>
-          ) : step === "forgot" ? (
-            <ForgotPasswordForm defaultEmail={emailAddress} onBack={() => setStep("login")} />
-          ) : step === "login" ? (
-            <LoginForm
-              organizationSlug={organizationSlug}
-              tenantMetadata={tenantMetadata}
-              stepLabel={stepLabel(1, totalSteps)}
-              onAuthenticated={handleAuthenticated}
-              onForgotPassword={handleForgotPassword}
-            />
-          ) : step === "org" ? (
-            <OrganizationSelection
-              organizations={organizations}
-              stepLabel={stepLabel(2, totalSteps)}
-              onBack={() => void resetToLogin()}
-              onSelected={handleOrganizationSelected}
-            />
-          ) : step === "role" ? (
-            <RoleSelection
-              roles={authorizedRoles}
-              organizationName={organizationName}
-              stepLabel={stepLabel(orgStepUsed ? 3 : 2, totalSteps)}
-              onBack={() => (orgStepUsed ? setStep("org") : void resetToLogin())}
-              onActivated={handleRolesActivated}
-            />
-          ) : (
-            <AuthHandoff
-              organizationName={organizationName}
-              roleCount={activeRoles.length}
-              permissionCount={countPermissions(activeRoles)}
-              onComplete={handleHandoff}
-            />
-          )}
-        </AuthCard>
-
-        <LegalAgreementNote />
+      <AuthShell screenKey={step}>
+        {tenantQuery?.isLoading ? (
+          <p className="text-auth-body text-muted-foreground m-0">
+            {t("Loading organization sign-in…")}
+          </p>
+        ) : tenantQuery?.isError ? (
+          <p role="alert" className="text-auth-body text-danger m-0">
+            {t("We couldn't load this tenant login page.")}
+          </p>
+        ) : step === "forgot" ? (
+          <ForgotPasswordForm defaultEmail={emailAddress} onBack={() => setStep("login")} />
+        ) : step === "login" ? (
+          <LoginForm
+            organizationSlug={organizationSlug}
+            tenantMetadata={tenantMetadata}
+            stepLabel={stepLabel(1, totalSteps)}
+            onAuthenticated={handleAuthenticated}
+            onForgotPassword={handleForgotPassword}
+          />
+        ) : step === "org" ? (
+          <OrganizationSelection
+            organizations={organizations}
+            stepLabel={stepLabel(2, totalSteps)}
+            onBack={() => void resetToLogin()}
+            onSelected={handleOrganizationSelected}
+          />
+        ) : step === "role" ? (
+          <RoleSelection
+            roles={authorizedRoles}
+            organizationName={organizationName}
+            stepLabel={stepLabel(orgStepUsed ? 3 : 2, totalSteps)}
+            onBack={() => (orgStepUsed ? setStep("org") : void resetToLogin())}
+            onActivated={handleRolesActivated}
+          />
+        ) : (
+          <AuthHandoff
+            userName={userName}
+            organizationName={organizationName}
+            roleCount={activeRoles.length}
+            permissionCount={countPermissions(activeRoles)}
+            onComplete={handleHandoff}
+          />
+        )}
       </AuthShell>
     </>
   );

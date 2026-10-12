@@ -1,0 +1,303 @@
+name: trenova
+
+services:
+    db:
+        build:
+            context: ..
+            dockerfile: deploy/Dockerfile.postgres
+        container_name: db
+        ports:
+            - "5432:5432"
+        environment:
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+            POSTGRES_USER: ${DB_USER:-postgres}
+            POSTGRES_DB: ${DB_NAME:-trenova_go_db}
+            POSTGRES_INITDB_ARGS: "--data-checksums"
+            POSTGRES_MULTIPLE_EXTENSIONS: "pg_stat_statements,pg_trgm,btree_gin,btree_gist,postgis,pg_cron,vector"
+        volumes:
+            - pg_data:/var/lib/postgresql
+            - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+        command:
+            ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+        restart: always
+        deploy:
+            resources:
+                limits:
+                    memory: 512M
+        shm_size: 256mb
+        healthcheck:
+            test:
+                [
+                    "CMD-SHELL",
+                    "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-trenova_go_db}",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    redis:
+        # Matches shared/testutil/redis.go. The major is pinned rather than
+        # tracking latest because config/redis.conf below is mounted into the
+        # container, and a directive it sets is only valid for the major that
+        # the tests also run against.
+        image: redis:8
+        container_name: redis
+        ports:
+            - "6379:6379"
+        command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+        restart: always
+        volumes:
+            - redis_data:/data
+            - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+        deploy:
+            resources:
+                limits:
+                    memory: 2G
+                    cpus: "1"
+                reservations:
+                    memory: 1G
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        
+    redis-insight:
+        image: redis/redisinsight:3.8
+        container_name: redis-insight
+        ports:
+            - "5540:5540"
+        restart: always
+        volumes:
+            - redisinsight_data:/data
+        deploy:
+            resources:
+                limits:
+                    memory: 256M
+                reservations:
+                    memory: 128M
+        healthcheck:
+            test: ["CMD", "wget", "-q", "--spider", "http://localhost:5540/api/health/"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+        depends_on:
+            redis:
+                condition: service_healthy
+
+    minio:
+        # SILO, the maintained fork of MinIO: upstream images are no longer served
+        # to anonymous pulls. Kept in step with shared/testutil/minio.go, so local
+        # object storage is the release the tests ran against.
+        image: docker.io/pgsty/silo:RELEASE.2026-09-16T00-00-00Z@sha256:635197cb9f36d01bee221d34d1c7d7960f6a95c48b0b6c01d99cd13bdae51a46
+        command: server /data --console-address ":9001"
+        container_name: minio
+        environment:
+            - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+            - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}
+        volumes:
+            - minio_data:/data
+        ports:
+            - 9000:9000 # API
+            - 9001:9001 # Console
+        restart: always
+        deploy:
+            resources:
+                limits:
+                    memory: 512M
+        healthcheck:
+            test:
+                ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+            interval: 30s
+            timeout: 20s
+            retries: 3
+
+    meilisearch:
+        image: getmeili/meilisearch:v1.16
+        container_name: meilisearch
+        ports:
+            - "7700:7700"
+        environment:
+            - MEILI_MASTER_KEY=CErP8m5HUQUTaporAjiCsNNazOoACqS2bw3IGRsi94I
+        volumes:
+            - meilisearch_data:/data
+        restart: always
+        deploy:
+            resources:
+                limits:
+                    memory: 1G
+        healthcheck:
+            test: curl -f http://localhost:7700/health
+            interval: 30s
+            timeout: 10s
+            retries: 5
+
+    # Owns the browser that turns organization-authored HTML into PDFs.
+    #
+    # It renders untrusted markup, so it is locked down rather than trusted:
+    #   - JavaScript is off at the process level, so template script never runs.
+    #   - The allow-list permits only data: URIs and the /tmp files Gotenberg
+    #     stages the upload into. That denies http(s) outright, so a template
+    #     cannot reach the internal network or exfiltrate by URL. Every image is
+    #     inlined as a data: URI before it gets here.
+    #   - Only the Chromium HTML route is enabled; LibreOffice and the PDF
+    #     engines are large parsers we never call.
+    #
+    # Do not add a --chromium-deny-list: the default is `^file:(?!//\/tmp/).*`,
+    # which already denies file:// outside the staging directory. Overriding it
+    # blocks the staged index.html and every conversion returns 403.
+    #
+    # The published port exists only because the API runs on the host under
+    # `air` in local development. In production this service belongs on an
+    # internal-only network with no published port and no reverse-proxy route.
+    gotenberg:
+        image: gotenberg/gotenberg:8
+        container_name: gotenberg
+        command:
+            - gotenberg
+            - --chromium-disable-javascript=true
+            - "--chromium-allow-list=^(data:|file:///tmp/).*"
+            # Deliberately NOT --chromium-auto-start. A pre-warmed long-lived browser
+            # was observed to stop accepting conversions after roughly ten minutes
+            # while /health still reported chromium up, so the healthcheck could not
+            # see it. Starting a browser per conversion costs little at these sizes
+            # (renders land around 200ms either way) and leaves no long-lived state to
+            # rot. If this is ever re-enabled, add a probe that actually converts —
+            # /health is not sufficient to detect the failure.
+            - --chromium-max-queue-size=16
+            - --libreoffice-disable-routes=true
+            - --pdfengines-disable-routes=true
+            - --api-timeout=30s
+            - --api-disable-health-check-logging=true
+        ports:
+            - "3009:3000"
+        read_only: true
+        tmpfs:
+            # Chromium needs writable scratch and a writable home: its crashpad
+            # handler refuses to start without a database directory. tmpfs keeps
+            # the filesystem immutable while still giving it somewhere to write.
+            - /tmp
+            - /home/gotenberg
+        cap_drop:
+            - ALL
+        security_opt:
+            - "no-new-privileges:true"
+        restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    memory: 1G
+                    cpus: "2"
+                    pids: 256
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+            interval: 30s
+            timeout: 5s
+            retries: 5
+
+    temporal:
+        # Every AI feature runs here: each assistant reply, every desk, and the
+        # sweeps that narrate insights and write briefings.
+        #
+        # This is the Temporal CLI's dev server, the supported way to run
+        # Temporal locally now that auto-setup stopped at 1.29. It bundles the
+        # server, the UI and an in-memory store. State lives in memory, which is
+        # the right trade locally: a workflow history is an execution artifact,
+        # and losing it on a restart costs nothing the database does not hold.
+        # It is emphatically not the right trade anywhere else.
+        #
+        # Fairness is off by default in the server and on here, so a busy
+        # organization cannot starve the others on a shared queue. The search
+        # attributes let an operator find an organization's or a thread's work
+        # in the UI. Production needs the same settings; see
+        # docs/engineering/agent-runtime.md.
+        image: temporalio/temporal:1.9.1
+        container_name: temporal
+        command:
+            - server
+            - start-dev
+            - --ip=0.0.0.0
+            - --ui-port=8233
+            - --dynamic-config-value=matching.enableFairness=true
+            # Every poll a turn's reader makes is an Update; the default cap of
+            # 2000 per workflow is a little over three minutes of streaming.
+            - --dynamic-config-value=history.maxTotalUpdates=20000
+            - --search-attribute=TrenovaOrganizationId=Keyword
+            - --search-attribute=TrenovaAIFeature=Keyword
+            - --search-attribute=TrenovaThreadId=Keyword
+            - --search-attribute=TrenovaAgentDefinitionId=Keyword
+        ports:
+            - "7233:7233"
+            # Reading a stuck reply's history is most of how this work gets
+            # debugged, so the UI comes up with the server rather than behind a
+            # profile.
+            - "8233:8233"
+        restart: unless-stopped
+        # Every closed run stays in memory until its namespace's retention lets it
+        # go, and a turn's history carries one Update per stream poll. Under 1G
+        # an evening of desk bench runs filled it until every poller timed out.
+        deploy:
+            resources:
+                limits:
+                    memory: 2G
+        healthcheck:
+            test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "localhost:7233"]
+            interval: 15s
+            timeout: 5s
+            retries: 10
+
+    gtc:
+        # Change data capture (github.com/emoss08/gtc): feeds the Meilisearch
+        # indexes, the Redis caches and the table-change-alert stream. Routing
+        # lives in deploy/gtc/sinks.yaml. Locally the slot and a FOR ALL TABLES
+        # publication are created on first start.
+        image: ghcr.io/emoss08/gtc:0.9.0
+        container_name: gtc
+        environment:
+            DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-trenova_go_db}?replication=database&sslmode=disable
+            CDC_SLOT_NAME: gtc_slot
+            CDC_PUBLICATION_NAME: gtc_publication
+            SINK_CONFIG_FILE: /config/sinks.yaml
+            REDIS_URL: redis://redis:6379/0
+            REDIS_JSON_URL: redis://redis:6379/0
+            MEILISEARCH_URL: http://meilisearch:7700
+            MEILISEARCH_API_KEY: CErP8m5HUQUTaporAjiCsNNazOoACqS2bw3IGRsi94I
+        volumes:
+            - ../deploy/gtc/sinks.yaml:/config/sinks.yaml:ro
+        ports:
+            - "8095:8080"
+        depends_on:
+            db:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+            meilisearch:
+                condition: service_healthy
+        restart: unless-stopped
+
+    samsara-sim:
+        build:
+            context: ..
+            dockerfile: dev/samsara-sim/Dockerfile
+        container_name: samsara-sim
+        profiles:
+            - samsara-sim
+        ports:
+            - "8091:8091"
+        volumes:
+            - samsara_sim_data:/app/data
+        restart: unless-stopped
+        healthcheck:
+            test:
+                ["CMD", "wget", "-q", "--spider", "http://localhost:8091/_sim/health"]
+            interval: 30s
+            timeout: 5s
+            retries: 5
+
+volumes:
+    pg_data: {}
+    redis_data: {}
+    redisinsight_data: {}
+    minio_data: {}
+    meilisearch_data: {}
+    samsara_sim_data: {}

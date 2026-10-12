@@ -1,6 +1,7 @@
 package apikeyhandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
 	"context"
 	"net/http"
 	"testing"
@@ -9,12 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/apikeyhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/apikey"
-	permissiondomain "github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
+	permissiondomain "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,10 +27,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func setupAPIKeyHandler(t *testing.T) (*apikeyhandler.Handler, *mocks.MockAPIKeyRepository) {
+func setupAPIKeyHandler(t *testing.T) (*apikeyhandler.Handler, *apikeyportsmock.MockAPIKeyRepository) {
 	t.Helper()
 
-	repo := mocks.NewMockAPIKeyRepository(t)
+	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	cfg := &config.Config{
 		App: config.AppConfig{Debug: true},
 		Security: config.SecurityConfig{
@@ -82,7 +82,7 @@ func TestAPIKeyHandlerListSuccess(t *testing.T) {
 	h, repo := setupAPIKeyHandler(t)
 	keyID := pulid.MustNew("ak_")
 	repo.EXPECT().
-		List(mock.Anything, mock.MatchedBy(func(req *repositories.ListAPIKeysRequest) bool {
+		List(mock.Anything, mock.MatchedBy(func(req *apikeyports.ListAPIKeysRequest) bool {
 			return req.Filter != nil &&
 				req.Filter.TenantInfo.OrgID == sharedtestutil.TestOrgID &&
 				req.Filter.TenantInfo.BuID == sharedtestutil.TestBuID
@@ -163,7 +163,7 @@ func TestAPIKeyHandlerCreateSuccess(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusCreated, ginCtx.ResponseCode())
-	var resp services.APIKeySecretResponse
+	var resp apikeyports.APIKeySecretResponse
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	assert.Equal(t, "Customer Sync", resp.Name)
 	assert.NotEmpty(t, resp.Token)

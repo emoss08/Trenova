@@ -8,12 +8,13 @@ import { accessorialChargeMethodChoices, rateUnitChoices, statusChoices } from "
 import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
 import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
-const amountDescriptions: Record<AccessorialCharge["method"], string> = {
+const amountDescriptions: Record<AccessorialCharge["method"], string> = defineLabels({
   Flat: "The fixed dollar amount charged",
   PerUnit: "The rate per unit (e.g., per hour, per mile)",
   Percentage: "The percentage applied to the linehaul rate",
-};
+});
 
 function getAmountSideText(method: AccessorialCharge["method"], rateUnit?: string): string {
   switch (method) {

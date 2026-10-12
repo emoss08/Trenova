@@ -5,14 +5,15 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -35,9 +36,9 @@ func (f *fakeUsage) Create(_ context.Context, record *aiusage.AIUsageRecord) err
 
 func (f *fakeUsage) Summary(
 	context.Context,
-	repositories.AIUsageSummaryRequest,
-) (*repositories.AIUsageSummary, error) {
-	return &repositories.AIUsageSummary{}, nil
+	aiusageports.AIUsageSummaryRequest,
+) (*aiusageports.AIUsageSummaryRow, error) {
+	return &aiusageports.AIUsageSummaryRow{}, nil
 }
 
 func (f *fakeUsage) recorded(t *testing.T, n int) []*aiusage.AIUsageRecord {
@@ -80,7 +81,7 @@ func TestCompleteStructured_RecordsEveryAttempt(t *testing.T) {
 	svc.usage = usage
 
 	req := generalRequest()
-	req.Attribution = serviceports.AIUsageAttribution{UserID: pulid.MustNew("usr_")}
+	req.Attribution = aiusageports.AIUsageAttribution{UserID: pulid.MustNew("usr_")}
 	result, err := svc.CompleteStructured(t.Context(), req)
 	require.NoError(t, err)
 
@@ -123,7 +124,7 @@ func TestCompleteStructured_RecordsAnEvaluationApartFromTheLiveAgent(t *testing.
 	svc.usage = usage
 
 	req := generalRequest()
-	req.Attribution = serviceports.AIUsageAttribution{
+	req.Attribution = aiusageports.AIUsageAttribution{
 		AgentDefinitionID: pulid.MustNew("agd_"),
 		RunID:             pulid.MustNew("aeval_"),
 	}
@@ -139,9 +140,9 @@ func TestCompleteStructured_RecordsAnEvaluationApartFromTheLiveAgent(t *testing.
 func TestSurfaceFor(t *testing.T) {
 	t.Parallel()
 
-	live := serviceports.AIUsageAttribution{RunID: pulid.MustNew("ar_")}
-	byRun := serviceports.AIUsageAttribution{RunID: pulid.MustNew("aeval_")}
-	byPurpose := serviceports.AIUsageAttribution{Purpose: serviceports.AIUsagePurposeEvaluation}
+	live := aiusageports.AIUsageAttribution{RunID: pulid.MustNew("ar_")}
+	byRun := aiusageports.AIUsageAttribution{RunID: pulid.MustNew("aeval_")}
+	byPurpose := aiusageports.AIUsageAttribution{Purpose: aiusageports.AIUsagePurposeEvaluation}
 
 	assert.Equal(t, aiusage.SurfaceChat, surfaceFor(aiusage.SurfaceChat, live))
 	assert.Equal(t, aiusage.SurfaceStructured, surfaceFor(aiusage.SurfaceStructured, live))
@@ -195,28 +196,93 @@ func TestClassifyError(t *testing.T) {
 
 func (f *fakeUsage) RecentFailures(
 	context.Context,
-	repositories.AIUsageFailuresRequest,
-) ([]repositories.AIUsageFailure, error) {
+	aiusageports.AIUsageFailuresRequest,
+) ([]aiusageports.AIUsageFailureRow, error) {
 	return nil, nil
 }
 
 func (f *fakeUsage) CostByDefinition(
 	context.Context,
-	repositories.AIUsageCostRequest,
-) (*repositories.AIUsageCost, error) {
-	return &repositories.AIUsageCost{}, nil
+	aiusageports.AIUsageCostRequest,
+) (*aiusageports.AIUsageCost, error) {
+	return &aiusageports.AIUsageCost{}, nil
+}
+
+func (f *fakeUsage) Daily(
+	context.Context,
+	aiusageports.AIUsageDailyQuery,
+) ([]aiusageports.AIUsageDayTotals, error) {
+	return []aiusageports.AIUsageDayTotals{}, nil
+}
+
+func (f *fakeUsage) ProviderTaskTotals(
+	context.Context,
+	aiusageports.AIUsageProviderTaskRequest,
+) ([]aiusageports.AIUsageProviderTaskTotals, error) {
+	return []aiusageports.AIUsageProviderTaskTotals{}, nil
 }
 
 func (f *fakeUsage) SurfaceCost(
 	context.Context,
-	repositories.AIUsageSurfaceCostRequest,
-) (*repositories.AIUsageCost, error) {
-	return &repositories.AIUsageCost{CostUSD: decimal.Zero}, nil
+	aiusageports.AIUsageSurfaceCostRequest,
+) (*aiusageports.AIUsageCost, error) {
+	return &aiusageports.AIUsageCost{CostUSD: decimal.Zero}, nil
 }
 
 func (f *fakeUsage) EvaluationCost(
 	context.Context,
-	repositories.AIUsageEvaluationCostRequest,
-) (*repositories.AIUsageCost, error) {
-	return &repositories.AIUsageCost{CostUSD: decimal.Zero}, nil
+	aiusageports.AIUsageEvaluationCostRequest,
+) (*aiusageports.AIUsageCost, error) {
+	return &aiusageports.AIUsageCost{CostUSD: decimal.Zero}, nil
+}
+
+func (f *fakeUsage) SpendByProvider(
+	context.Context,
+	aiusageports.AIUsageProviderSpendRequest,
+) (map[pulid.ID]decimal.Decimal, error) {
+	return map[pulid.ID]decimal.Decimal{}, nil
+}
+
+// OpenAI counts the prompt it served from its cache inside prompt_tokens, and
+// the row priced all of it as fresh input. The cached part is priced on its
+// own, at a tenth of input when no cache price is entered.
+func TestCompleteStructured_PricesCachedPromptTokensApart(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		encoded, _ := sonic.Marshal(map[string]any{
+			"model": "test-model",
+			"choices": []map[string]any{{"finish_reason": "stop", "message": map[string]any{
+				"role": "assistant", "content": `{"answer":"cached"}`,
+			}}},
+			"usage": map[string]any{
+				"prompt_tokens":         1000,
+				"completion_tokens":     7,
+				"prompt_tokens_details": map[string]any{"cached_tokens": 800},
+			},
+		})
+		_, _ = w.Write(encoded)
+	}))
+	t.Cleanup(server.Close)
+
+	usage := &fakeUsage{}
+	svc := newTestService(t, priced(openAIChatProvider("cached", server.URL, 10), "1", "10"))
+	svc.usage = usage
+
+	result, err := svc.CompleteStructured(t.Context(), generalRequest())
+	require.NoError(t, err)
+
+	rows := usage.recorded(t, 1)
+	require.Len(t, rows, 1)
+	assert.Equal(t, 800, rows[0].CacheReadTokens)
+	require.NotNil(t, rows[0].CostUSD)
+	// 200 fresh at $1/M, 800 cached at $0.10/M, 7 out at $10/M
+	assert.True(
+		t,
+		rows[0].CostUSD.Equal(decimal.RequireFromString("0.00035")),
+		rows[0].CostUSD.String(),
+	)
+	require.NotNil(t, result.CostUSD)
+	assert.True(t, result.CostUSD.Equal(*rows[0].CostUSD))
 }

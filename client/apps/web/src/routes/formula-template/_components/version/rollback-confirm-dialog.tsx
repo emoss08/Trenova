@@ -100,14 +100,14 @@ function ChangeSummary({ changes }: ChangeSummaryProps) {
   };
 
   const summaryParts: string[] = [];
-  if (categorizedChanges.expression.length > 0) summaryParts.push("Expression");
+  if (categorizedChanges.expression.length > 0) summaryParts.push(t("Expression"));
   if (categorizedChanges.variables.length > 0)
     summaryParts.push(
-      `${categorizedChanges.variables.length} Variable${categorizedChanges.variables.length > 1 ? "s" : ""}`,
+      t("{0, plural, one {# Variable} other {# Variables}}", categorizedChanges.variables.length),
     );
-  if (categorizedChanges.status.length > 0) summaryParts.push("Status");
+  if (categorizedChanges.status.length > 0) summaryParts.push(t("Status"));
   if (categorizedChanges.other.length > 0)
-    summaryParts.push(`${categorizedChanges.other.length} other`);
+    summaryParts.push(t("{0} other", categorizedChanges.other.length));
 
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>

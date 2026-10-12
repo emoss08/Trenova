@@ -8,12 +8,11 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +21,7 @@ import (
 )
 
 type fakeRepo struct {
-	repositories.AIProviderRepository
+	agentports.AIProviderRepository
 
 	providers []*aiprovider.Provider
 	byID      *aiprovider.Provider
@@ -31,21 +30,21 @@ type fakeRepo struct {
 
 func (f *fakeRepo) ListForTask(
 	_ context.Context,
-	_ repositories.ListAIProvidersForTaskRequest,
+	_ agentports.ListAIProvidersForTaskRequest,
 ) ([]*aiprovider.Provider, error) {
 	return f.providers, f.err
 }
 
 func (f *fakeRepo) List(
 	_ context.Context,
-	_ *repositories.ListAIProviderRequest,
+	_ *agentports.ListAIProviderRequest,
 ) (*pagination.ListResult[*aiprovider.Provider], error) {
 	return nil, nil
 }
 
 func (f *fakeRepo) GetByID(
 	_ context.Context,
-	_ repositories.GetAIProviderByIDRequest,
+	_ agentports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	return f.byID, f.err
 }
@@ -64,7 +63,7 @@ func (f *fakeRepo) Update(
 	return e, nil
 }
 
-func (f *fakeRepo) Delete(_ context.Context, _ repositories.DeleteAIProviderRequest) error {
+func (f *fakeRepo) Delete(_ context.Context, _ agentports.DeleteAIProviderRequest) error {
 	return nil
 }
 
@@ -130,16 +129,16 @@ func openAIChatProvider(name, baseURL string, priority int) *aiprovider.Provider
 	}
 }
 
-func generalRequest() *serviceports.StructuredCompletionRequest {
-	return &serviceports.StructuredCompletionRequest{
+func generalRequest() *agentports.StructuredCompletionRequest {
+	return &agentports.StructuredCompletionRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
 		Task:   aiprovider.TaskGeneral,
 		System: "You are a test.",
-		Context: serviceports.DelimitedContext{
-			Sections: []serviceports.ContextSection{
+		Context: agentports.DelimitedContext{
+			Sections: []agentports.ContextSection{
 				{Title: "Input", Trusted: true, Content: "hello"},
 			},
 		},
@@ -297,15 +296,15 @@ func TestCompleteStructured_FallsThroughOnUnparseableOutput(t *testing.T) {
 
 	svc := newTestService(t, weak, strong)
 
-	result, err := svc.CompleteStructured(t.Context(), &serviceports.StructuredCompletionRequest{
+	result, err := svc.CompleteStructured(t.Context(), &agentports.StructuredCompletionRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
 		Task:   aiprovider.TaskBillingDiagnosis,
 		System: "Diagnose the blocker.",
-		Context: serviceports.DelimitedContext{
-			Sections: []serviceports.ContextSection{
+		Context: agentports.DelimitedContext{
+			Sections: []agentports.ContextSection{
 				{Title: "Item", Trusted: true, Content: "blocked"},
 			},
 		},
@@ -340,7 +339,7 @@ func TestCompleteStructured_RefusesUntrustedProviderForLedgerTask(t *testing.T) 
 
 	svc := newTestService(t, provider)
 
-	_, err := svc.CompleteStructured(t.Context(), &serviceports.StructuredCompletionRequest{
+	_, err := svc.CompleteStructured(t.Context(), &agentports.StructuredCompletionRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
@@ -410,6 +409,6 @@ func TestCompleteStructured_RequiredProviderMustServeTheTask(t *testing.T) {
 	request.RequireProvider = true
 
 	_, err := svc.CompleteStructured(t.Context(), request)
-	require.ErrorIs(t, err, serviceports.ErrRequiredProviderUnavailable)
+	require.ErrorIs(t, err, agentports.ErrRequiredProviderUnavailable)
 	assert.Equal(t, int32(0), calls.Load())
 }

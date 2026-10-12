@@ -3,8 +3,8 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -51,7 +51,7 @@ func NewCarrierIntelSnapshotByCarrierIDLoaderFactory(
 	return &CarrierIntelSnapshotByCarrierIDLoaderFactory{reader: p.CarrierIntelService}
 }
 
-func (f *CarrierIntelSnapshotByCarrierIDLoaderFactory) NewForTenant(
+func newCarrierIntelSnapshotByCarrierIDLoader(f *CarrierIntelSnapshotByCarrierIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot] {
 	return newLoader(batchGroupFunc(
@@ -79,7 +79,7 @@ func NewCarrierIntelSnapshotByCustomerIDLoaderFactory(
 	return &CarrierIntelSnapshotByCustomerIDLoaderFactory{reader: p.CarrierIntelService}
 }
 
-func (f *CarrierIntelSnapshotByCustomerIDLoaderFactory) NewForTenant(
+func newCarrierIntelSnapshotByCustomerIDLoader(f *CarrierIntelSnapshotByCustomerIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot] {
 	return newLoader(batchGroupFunc(
@@ -117,7 +117,7 @@ func NewCarrierIntelOpenEventCountLoaderFactory(
 	return &CarrierIntelOpenEventCountLoaderFactory{reader: p.CarrierIntelService}
 }
 
-func (f *CarrierIntelOpenEventCountLoaderFactory) NewForTenant(
+func newCarrierIntelOpenEventCountLoader(f *CarrierIntelOpenEventCountLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, int] {
 	return newLoader(
@@ -137,7 +137,8 @@ func NewCarrierMonitoringEnrollmentByCarrierIDLoaderFactory(
 	return &CarrierMonitoringEnrollmentByCarrierIDLoaderFactory{reader: p.CarrierIntelService}
 }
 
-func (f *CarrierMonitoringEnrollmentByCarrierIDLoaderFactory) NewForTenant(
+func newCarrierMonitoringEnrollmentByCarrierIDLoader(
+	f *CarrierMonitoringEnrollmentByCarrierIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*carrierintel.CarrierMonitoringEnrollment] {
 	return newLoader(batchGroupFunc(

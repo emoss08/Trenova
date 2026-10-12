@@ -1,0 +1,790 @@
+fragment InboundSnoozeFields on InboundSnooze {
+  until
+  event
+  watchShipment {
+    ...InboundShipmentRefFields
+  }
+  documentTypeId
+  documentTypeName
+  snoozedAt
+  snoozedBy {
+    ...TriageUserFields
+  }
+}
+
+fragment InboundReplyFields on InboundReply {
+  id
+  messageId
+  status
+  fromAddress
+  toAddress
+  ccAddresses
+  subject
+  body
+  draftedByNova
+  templateId
+  failureText
+  suggestedAddress
+  sentBy {
+    ...TriageUserFields
+  }
+  sentAt
+  attachments {
+    ...InboundReplyAttachmentFields
+  }
+  createdAt
+  updatedAt
+}
+
+fragment InboundReplyAttachmentFields on InboundReplyAttachment {
+  documentId
+  fileName
+  contentType
+  byteSize
+}
+
+fragment InboundReplyAttachableFields on InboundReplyAttachable {
+  id
+  fileName
+  contentType
+  documentType
+  byteSize
+  createdAt
+  source
+}
+
+fragment TriageActionFields on TriageAction {
+  id
+  kind
+  done
+  novaCanDo
+  attachment {
+    id
+    fileName
+    kind
+    documentId
+    filedShipmentId
+    filedAs
+    pageCount
+  }
+  shipment {
+    ...InboundShipmentRefFields
+  }
+  replyPurpose
+  refusedFileName
+  reply {
+    id
+    status
+    sentAt
+    draftedByNova
+  }
+  loadDrafted
+  createdShipment {
+    ...InboundShipmentRefFields
+  }
+  stopsDecision
+  exceptionKind
+  completedAt
+}
+
+fragment TriageFactFields on TriageFact {
+  key
+  label
+  value
+  quote
+  tone
+  flagged
+}
+
+fragment TriageConflictFields on TriageConflict {
+  id
+  kind
+  attachmentId
+  existingDocumentId
+  existingShipment {
+    ...InboundShipmentRefFields
+  }
+  existingFiledAt
+  existingAmount
+  newAmount
+  loadIndex
+  resolution
+  resolvedAt
+  options
+}
+
+fragment InboundActivityFields on InboundActivity {
+  id
+  kind
+  actorKind
+  actor {
+    ...TriageUserFields
+  }
+  subject
+  detail
+  until
+  fromClassification
+  toClassification
+  recordId
+  createdAt
+}
+
+fragment TriageLoadDraftFields on TriageLoadDraft {
+  source
+  draftedAt
+  draftedByNova
+  fields {
+    key
+    value
+  }
+}
+
+fragment InboundAttachmentDetailFields on InboundAttachment {
+  ...InboundAttachmentFields
+  filedShipment {
+    ...InboundShipmentRefFields
+  }
+  pages {
+    number
+    label
+    suggestedType
+  }
+  splitDocuments {
+    fromPage
+    toPage
+    documentId
+    documentType
+  }
+  reading {
+    documentType
+    confidence
+    pageCount
+    fields {
+      label
+      value
+      tone
+    }
+  }
+}
+
+fragment TriageSampleFields on TriageSample {
+  messageId
+  fromName
+  fromAddress
+  subject
+  classification
+  receivedAt
+  reference
+}
+
+fragment TriageRuleFields on TriageRule {
+  id
+  classification
+  senderScope
+  sender
+  mailboxId
+  action
+  assigneeId
+  assignee {
+    ...TriageUserFields
+  }
+  enabled
+  createdBy {
+    ...TriageUserFields
+  }
+  matchesThisMonth
+  matchCount
+  lastMatchedAt
+  lastMatch {
+    ...TriageSampleFields
+  }
+  version
+  createdAt
+}
+
+fragment TriageRulePreviewFields on TriageRulePreview {
+  matched
+  off
+  since
+  matches {
+    messageId
+    fromName
+    fromAddress
+    subject
+    receivedAt
+    reference
+    mismatch
+  }
+}
+
+fragment TriageDeckItemFields on TriageDeckItem {
+  messageId
+  fromName
+  fromAddress
+  subject
+  classification
+  receivedAt
+  dueAt
+  action {
+    ...TriageActionFields
+  }
+  owner {
+    ...TriageUserFields
+  }
+}
+
+fragment TriageRiverPointFields on TriageRiverPoint {
+  messageId
+  fromName
+  fromAddress
+  subject
+  classification
+  receivedAt
+  dueAt
+  done
+}
+
+fragment TriageViewFields on TriageView {
+  id
+  name
+  query
+  position
+  waiting
+}
+
+fragment TriageReplyTemplateFields on TriageReplyTemplate {
+  id
+  name
+  body
+  version
+  createdAt
+  createdBy {
+    ...TriageUserFields
+  }
+}
+
+fragment TriageShipmentPeekFields on TriageShipmentPeek {
+  id
+  proNumber
+  bol
+  poNumber
+  status
+  customerName
+  equipment
+  driverName
+  progress
+  late
+  eta
+  deliveredAt
+  stops {
+    kind
+    city
+    state
+    scheduledAt
+    arrivedAt
+    departedAt
+    done
+  }
+  documentsOnFile
+}
+
+fragment TriageBulkResultFields on TriageBulkResult {
+  affected
+  ruleId
+  messages {
+    ...InboundMessageListFields
+  }
+}
+
+query InboundThread($threadKey: String!) {
+  inboundThread(threadKey: $threadKey) {
+    ...InboundMessageListFields
+    textBody
+    reviewNote
+    reviewer {
+      ...TriageUserFields
+    }
+  }
+}
+
+query TriageBriefing {
+  triageBriefing {
+    generatedAt
+    dayStart
+    phase
+    firstDay
+    novaEnabled
+    activeSources
+    waiting
+    overdue
+    closedByPeopleToday
+    handledByNovaToday
+    handledByNova {
+      action
+      classification
+      count
+      samples {
+        ...TriageSampleFields
+      }
+    }
+    arrivals {
+      hourStart
+      handledByNova
+      leftForPerson
+    }
+    novaPoints {
+      ...TriageRiverPointFields
+    }
+    yours {
+      ...TriageRiverPointFields
+    }
+    deck {
+      group
+      count
+      estimateMinutes
+      messageIds
+      items {
+        ...TriageDeckItemFields
+      }
+    }
+    longestWaiting {
+      ...TriageDeckItemFields
+    }
+    estimateMinutes
+    corrections {
+      thisWeek
+      accuracyChange
+      accuracy
+    }
+    comingBack
+    unhealthySources {
+      ...InboundMailboxFields
+    }
+    suggestion {
+      classification
+      senderScope
+      sender
+      mailboxId
+      action
+      handledByHand
+      total
+    }
+    onCall {
+      ...TriageUserFields
+    }
+    carryOver {
+      ...TriageDeckItemFields
+    }
+  }
+}
+
+query MyTriageViews {
+  myTriageViews {
+    ...TriageViewFields
+  }
+}
+
+query TriageResponseTargets {
+  triageResponseTargets {
+    classification
+    minutes
+    isDefault
+  }
+}
+
+query TriageSettings {
+  triageSettings {
+    onCallUserId
+    onCallUser {
+      ...TriageUserFields
+    }
+    endOfDayMinute
+    timezone
+    version
+  }
+}
+
+query TriageAssignees {
+  triageAssignees {
+    waiting
+    user {
+      ...TriageUserFields
+    }
+  }
+}
+
+query TriageRules {
+  triageRules {
+    ...TriageRuleFields
+  }
+}
+
+query TriageRulePreview($input: TriageRuleInput!) {
+  triageRulePreview(input: $input) {
+    ...TriageRulePreviewFields
+  }
+}
+
+query TriageRuleMatches($id: ID!) {
+  triageRuleMatches(id: $id) {
+    ...TriageRulePreviewFields
+  }
+}
+
+query TriageSenderDomains($query: String) {
+  triageSenderDomains(query: $query)
+}
+
+query InboundSenderProfile($messageId: ID!) {
+  inboundSenderProfile(messageId: $messageId) {
+    address
+    name
+    domain
+    role
+    since
+    messagesLast90Days
+    usualReplyMinutes
+    kinds {
+      classification
+      count
+    }
+    rules {
+      ...TriageRuleFields
+    }
+    recent {
+      ...TriageSampleFields
+    }
+  }
+}
+
+query TriageReplyTemplates {
+  triageReplyTemplates {
+    ...TriageReplyTemplateFields
+  }
+}
+
+query InboundReplyAttachables($messageId: ID!) {
+  inboundReplyAttachables(messageId: $messageId) {
+    ...InboundReplyAttachableFields
+  }
+  inboundReplyAttachmentLimit
+}
+
+query RenderTriageReplyTemplate($templateId: ID!, $messageId: ID!) {
+  renderTriageReplyTemplate(templateId: $templateId, messageId: $messageId)
+}
+
+query TriageStopTimes($messageId: ID!) {
+  triageStopTimes(messageId: $messageId) {
+    shipment {
+      ...InboundShipmentRefFields
+    }
+    stopName
+    appointmentStart
+    appointmentEnd
+    arrivedAt
+    checkedInAt
+    departedAt
+    lateMinutes
+    billedDetentionMinutes
+    billedDetentionAmount
+    detentionPaysWhenLate
+    arrivalSource
+  }
+}
+
+query TriageShipmentPeek($shipmentId: ID!) {
+  triageShipmentPeek(shipmentId: $shipmentId) {
+    ...TriageShipmentPeekFields
+  }
+}
+
+query TriageCustomerPeek($customerId: ID!) {
+  triageCustomerPeek(customerId: $customerId) {
+    id
+    code
+    name
+    since
+    shipmentsThisWeek
+    waitingInTriage
+    shipments {
+      ...TriageShipmentPeekFields
+    }
+    messages {
+      ...TriageSampleFields
+    }
+  }
+}
+
+mutation ReviewInboundMessages(
+  $selection: TriageSelectionInput!
+  $input: BulkReviewInboundMessagesInput!
+) {
+  reviewInboundMessages(selection: $selection, input: $input) {
+    ...TriageBulkResultFields
+  }
+}
+
+mutation ReopenInboundMessages($selection: TriageSelectionInput!) {
+  reopenInboundMessages(selection: $selection) {
+    ...TriageBulkResultFields
+  }
+}
+
+mutation AssignInboundMessages($selection: TriageSelectionInput!, $ownerId: ID) {
+  assignInboundMessages(selection: $selection, ownerId: $ownerId) {
+    ...TriageBulkResultFields
+  }
+}
+
+mutation SnoozeInboundMessages(
+  $selection: TriageSelectionInput!
+  $input: SnoozeInboundMessagesInput!
+) {
+  snoozeInboundMessages(selection: $selection, input: $input) {
+    ...TriageBulkResultFields
+  }
+}
+
+mutation WakeInboundMessage($id: ID!) {
+  wakeInboundMessage(id: $id) {
+    ...InboundMessageDetailFields
+  }
+}
+
+mutation WaitForInboundReply($id: ID!, $until: Timestamp!) {
+  waitForInboundReply(id: $id, until: $until) {
+    ...InboundMessageDetailFields
+  }
+}
+
+mutation StopWaitingForInboundReply($id: ID!) {
+  stopWaitingForInboundReply(id: $id) {
+    ...InboundMessageDetailFields
+  }
+}
+
+mutation UnlinkInboundMessage($id: ID!, $record: InboundLinkedRecord!) {
+  unlinkInboundMessage(id: $id, record: $record) {
+    ...InboundMessageDetailFields
+  }
+}
+
+mutation SendInboundMailboxTest($id: ID!) {
+  sendInboundMailboxTest(id: $id) {
+    ...InboundMailboxFields
+  }
+}
+
+mutation HandOffTriage($toUserId: ID!) {
+  handOffTriage(toUserId: $toUserId) {
+    affected
+    to {
+      ...TriageUserFields
+    }
+  }
+}
+
+mutation ReadUnreadInboundMessages {
+  readUnreadInboundMessages
+}
+
+mutation CreateMyTriageView($name: String!, $query: String!) {
+  createMyTriageView(name: $name, query: $query) {
+    ...TriageViewFields
+  }
+}
+
+mutation RenameMyTriageView($id: ID!, $name: String!) {
+  renameMyTriageView(id: $id, name: $name) {
+    ...TriageViewFields
+  }
+}
+
+mutation DeleteMyTriageView($id: ID!) {
+  deleteMyTriageView(id: $id)
+}
+
+mutation UpdateTriageResponseTargets($input: [TriageResponseTargetInput!]!) {
+  updateTriageResponseTargets(input: $input) {
+    classification
+    minutes
+    isDefault
+  }
+}
+
+mutation UpdateTriageSettings($input: TriageSettingsInput!) {
+  updateTriageSettings(input: $input) {
+    onCallUserId
+    onCallUser {
+      ...TriageUserFields
+    }
+    endOfDayMinute
+    timezone
+    version
+  }
+}
+
+mutation CreateTriageRule($input: TriageRuleInput!) {
+  createTriageRule(input: $input) {
+    ...TriageRuleFields
+  }
+}
+
+mutation UpdateTriageRule($id: ID!, $version: Int!, $input: TriageRuleInput!) {
+  updateTriageRule(id: $id, version: $version, input: $input) {
+    ...TriageRuleFields
+  }
+}
+
+mutation SetTriageRuleEnabled($id: ID!, $enabled: Boolean!) {
+  setTriageRuleEnabled(id: $id, enabled: $enabled) {
+    ...TriageRuleFields
+  }
+}
+
+mutation DeleteTriageRule($id: ID!) {
+  deleteTriageRule(id: $id)
+}
+
+mutation CorrectInboundClassification($id: ID!, $classification: InboundClassification!) {
+  correctInboundClassification(id: $id, classification: $classification) {
+    ...InboundMessageDetailFields
+  }
+}
+
+mutation FlagInboundFact($id: ID!, $key: String!) {
+  flagInboundFact(id: $id, key: $key) {
+    ...InboundMessageDetailFields
+  }
+}
+
+mutation ResolveInboundConflict(
+  $id: ID!
+  $conflictId: String!
+  $resolution: TriageConflictResolution!
+) {
+  resolveInboundConflict(id: $id, conflictId: $conflictId, resolution: $resolution) {
+    ...InboundMessageDetailFields
+  }
+}
+
+mutation ReopenInboundConflict($id: ID!, $conflictId: String!) {
+  reopenInboundConflict(id: $id, conflictId: $conflictId) {
+    ...InboundMessageDetailFields
+  }
+}
+
+mutation DraftInboundReply($messageId: ID!) {
+  draftInboundReply(messageId: $messageId) {
+    ...InboundReplyFields
+  }
+}
+
+mutation SaveInboundReplyDraft(
+  $messageId: ID!
+  $subject: String!
+  $body: String!
+  $documentIds: [ID!]
+) {
+  saveInboundReplyDraft(
+    messageId: $messageId
+    subject: $subject
+    body: $body
+    documentIds: $documentIds
+  ) {
+    ...InboundReplyFields
+  }
+}
+
+mutation DiscardInboundReplyDraft($messageId: ID!) {
+  discardInboundReplyDraft(messageId: $messageId) {
+    ...InboundMessageDetailFields
+  }
+}
+
+mutation SendInboundReply($input: SendInboundReplyInput!) {
+  sendInboundReply(input: $input) {
+    ...InboundReplyFields
+  }
+}
+
+mutation DraftInboundMany($messageIds: [ID!]!) {
+  draftInboundMany(messageIds: $messageIds)
+}
+
+mutation CreateTriageReplyTemplate($input: TriageReplyTemplateInput!) {
+  createTriageReplyTemplate(input: $input) {
+    ...TriageReplyTemplateFields
+  }
+}
+
+mutation UpdateTriageReplyTemplate($id: ID!, $version: Int!, $input: TriageReplyTemplateInput!) {
+  updateTriageReplyTemplate(id: $id, version: $version, input: $input) {
+    ...TriageReplyTemplateFields
+  }
+}
+
+mutation DeleteTriageReplyTemplate($id: ID!) {
+  deleteTriageReplyTemplate(id: $id)
+}
+
+mutation DraftInboundLoad($messageId: ID!) {
+  draftInboundLoad(messageId: $messageId) {
+    ...InboundMessageDetailFields
+  }
+}
+
+mutation DiscardInboundLoad($messageId: ID!) {
+  discardInboundLoad(messageId: $messageId) {
+    ...InboundMessageDetailFields
+  }
+}
+
+mutation CreateInboundLoad($messageId: ID!, $fields: [TriageLoadFieldInput!]!) {
+  createInboundLoad(messageId: $messageId, fields: $fields) {
+    ...InboundMessageDetailFields
+  }
+}
+
+mutation FileInboundAttachment($input: FileInboundAttachmentInput!) {
+  fileInboundAttachment(input: $input) {
+    ...InboundMessageDetailFields
+  }
+}
+
+mutation FileInboundMany($messageIds: [ID!]!) {
+  fileInboundMany(messageIds: $messageIds) {
+    ...TriageBulkResultFields
+  }
+}
+
+mutation UnfileInboundAttachment($attachmentId: ID!) {
+  unfileInboundAttachment(attachmentId: $attachmentId) {
+    ...InboundMessageDetailFields
+  }
+}
+
+mutation LogInboundException($messageId: ID!, $input: LogInboundExceptionInput!) {
+  logInboundException(messageId: $messageId, input: $input) {
+    ...InboundMessageDetailFields
+  }
+}
+
+mutation BlockInboundSender($messageId: ID!) {
+  blockInboundSender(messageId: $messageId) {
+    ...InboundMessageDetailFields
+  }
+}
+
+mutation UnblockInboundSender($mailboxId: ID!, $sender: String!) {
+  unblockInboundSender(mailboxId: $mailboxId, sender: $sender) {
+    ...InboundMailboxFields
+  }
+}
+
+mutation DecideInboundStops($messageId: ID!, $decision: TriageStopsDecision!) {
+  decideInboundStops(messageId: $messageId, decision: $decision) {
+    ...InboundMessageDetailFields
+  }
+}

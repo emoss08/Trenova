@@ -254,7 +254,10 @@ export function TenderFreightReview({ transfer, mappingRows }: TenderReviewProps
               key={commodity.commodityId}
               primary={formatCommodityName(commodity, mapping)}
               secondary={formatMappingDetail(mapping)}
-              values={[formatWeight(commodity.weight), `${formatNumber(commodity.pieces)} pcs`]}
+              values={[
+                formatWeight(commodity.weight),
+                t("{0} pcs", formatNumber(commodity.pieces)),
+              ]}
             />
           );
         })}

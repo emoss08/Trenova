@@ -11,15 +11,15 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/carrier"
-	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
-	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -129,7 +129,7 @@ func (r *MutationResolver) MarkCarrierSettlementPaid(ctx context.Context, input 
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierSettlementService.MarkPaid(ctx, &services.MarkSettlementPaidRequest{
+	return r.CarrierSettlementService.MarkPaid(ctx, &carriersettlementports.MarkSettlementPaidRequest{
 		TenantInfo:       base.TenantInfo(authCtx),
 		SettlementID:     settlementID,
 		PaymentMethod:    input.PaymentMethod,
@@ -312,7 +312,7 @@ func (r *QueryResolver) CarrierSettlements(ctx context.Context, input gqlmodel.D
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.CarrierSettlementRepo.ListConnection(ctx, &repositories.ListCarrierSettlementConnectionRequest{
+	result, err := r.CarrierSettlementRepo.ListConnection(ctx, &carriersettlementports.ListCarrierSettlementConnectionRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	})
@@ -331,7 +331,7 @@ func (r *QueryResolver) CarrierSettlement(ctx context.Context, id string) (*carr
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid settlement")
 	}
-	return r.CarrierSettlementService.Get(ctx, repositories.GetCarrierSettlementByIDRequest{
+	return r.CarrierSettlementService.Get(ctx, carriersettlementports.GetCarrierSettlementByIDRequest{
 		ID:           settlementID,
 		TenantInfo:   base.TenantInfo(authCtx),
 		IncludeLines: true,
@@ -347,7 +347,7 @@ func (r *QueryResolver) CarrierSettlementBatches(ctx context.Context, input gqlm
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.CarrierSettlementBatchRepo.ListConnection(ctx, &repositories.ListCarrierSettlementBatchConnectionRequest{
+	result, err := r.CarrierSettlementBatchRepo.ListConnection(ctx, &carriersettlementports.ListCarrierSettlementBatchConnectionRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	})
@@ -366,7 +366,7 @@ func (r *QueryResolver) CarrierSettlementBatch(ctx context.Context, id string) (
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid batch")
 	}
-	return r.CarrierSettlementService.GetBatch(ctx, repositories.GetCarrierSettlementBatchByIDRequest{
+	return r.CarrierSettlementService.GetBatch(ctx, carriersettlementports.GetCarrierSettlementBatchByIDRequest{
 		ID:                 batchID,
 		TenantInfo:         base.TenantInfo(authCtx),
 		IncludeSettlements: true,
@@ -382,7 +382,7 @@ func (r *QueryResolver) CarrierCostEvents(ctx context.Context, input gqlmodel.Da
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.CarrierCostEventRepo.ListConnection(ctx, &repositories.ListCarrierCostEventConnectionRequest{
+	result, err := r.CarrierCostEventRepo.ListConnection(ctx, &carriersettlementports.ListCarrierCostEventConnectionRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	})
@@ -432,7 +432,7 @@ func (r *QueryResolver) CarrierLedgerEntries(ctx context.Context, carrierID stri
 	if err != nil {
 		return nil, errortypes.NewValidationError("carrierId", errortypes.ErrInvalid, "Invalid carrier")
 	}
-	req := &repositories.ListCarrierLedgerEntriesRequest{
+	req := &carriersettlementports.ListCarrierLedgerEntriesRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		CarrierID:  parsedCarrierID,
 	}
@@ -447,7 +447,7 @@ func (r *QueryResolver) CarrierInvoiceMatches(ctx context.Context, status *carri
 	if err != nil {
 		return nil, err
 	}
-	req := &repositories.ListCarrierInvoiceMatchesRequest{
+	req := &carriersettlementports.ListCarrierInvoiceMatchesRequest{
 		Filter: listFilterOptions(base.TenantInfo(authCtx), limit, offset),
 	}
 	if status != nil {
@@ -475,7 +475,7 @@ func (r *QueryResolver) EDICarrierInvoices(ctx context.Context, reconciliationSt
 	if err != nil {
 		return nil, err
 	}
-	req := &repositories.ListEDICarrierInvoicesRequest{
+	req := &ediports.ListEDICarrierInvoicesRequest{
 		Filter: listFilterOptions(base.TenantInfo(authCtx), limit, offset),
 	}
 	if reconciliationStatus != nil {

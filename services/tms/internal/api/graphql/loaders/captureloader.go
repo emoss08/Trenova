@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,14 +23,14 @@ func CaptureRecordKey(resourceType string, id pulid.ID) string {
 type captureRecordLabeler interface {
 	Labels(
 		ctx context.Context,
-		req *repositories.ListCaptureRecordLabelsRequest,
-	) ([]*repositories.CaptureRecordLabel, error)
+		req *captureports.ListCaptureRecordLabelsRequest,
+	) ([]*captureports.CaptureRecordLabel, error)
 }
 
 type CaptureRecordLabelLoaderFactoryParams struct {
 	fx.In
 
-	Records repositories.CaptureRecordFinder
+	Records captureports.CaptureRecordFinder
 }
 
 type CaptureRecordLabelLoaderFactory struct {
@@ -43,9 +43,9 @@ func NewCaptureRecordLabelLoaderFactory(
 	return &CaptureRecordLabelLoaderFactory{records: p.Records}
 }
 
-func (f *CaptureRecordLabelLoaderFactory) NewForTenant(
+func newCaptureRecordLabelLoader(f *CaptureRecordLabelLoaderFactory,
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, *repositories.CaptureRecordLabel] {
+) *dataloadgen.Loader[string, *captureports.CaptureRecordLabel] {
 	return newLoader(f.batchFunc(tenantInfo))
 }
 
@@ -90,14 +90,14 @@ func groupCaptureRecordKeys(keys []string, errs []error) captureRecordKeys {
 // meant to go, and the row shows that without a name.
 func (f *CaptureRecordLabelLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
-) batchFetchFunc[*repositories.CaptureRecordLabel] {
-	return func(ctx context.Context, keys []string) ([]*repositories.CaptureRecordLabel, []error) {
-		values := make([]*repositories.CaptureRecordLabel, len(keys))
+) batchFetchFunc[*captureports.CaptureRecordLabel] {
+	return func(ctx context.Context, keys []string) ([]*captureports.CaptureRecordLabel, []error) {
+		values := make([]*captureports.CaptureRecordLabel, len(keys))
 		errs := make([]error, len(keys))
 		grouped := groupCaptureRecordKeys(keys, errs)
 
 		for kind, ids := range grouped.idsByKind {
-			labels, err := f.records.Labels(ctx, &repositories.ListCaptureRecordLabelsRequest{
+			labels, err := f.records.Labels(ctx, &captureports.ListCaptureRecordLabelsRequest{
 				TenantInfo:   tenantInfo,
 				ResourceType: kind,
 				IDs:          ids,

@@ -4,13 +4,13 @@ package billingqueueresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	billingqueueports "github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 )
 
 type Deps struct {
 	*base.Core
-	BillingQueueService       services.BillingQueueService
-	BillingQueueReviewService services.BillingQueueReviewService
+	BillingQueueService       billingqueueports.BillingQueueService
+	BillingQueueReviewService billingqueueports.BillingQueueReviewService
 }
 
 type MutationResolver struct{ *Deps }

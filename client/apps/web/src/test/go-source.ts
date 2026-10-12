@@ -56,11 +56,13 @@ type GoEnumOptions = {
 export function goEnumValues({ file, typeName, listFn, constPrefix }: GoEnumOptions): string[] {
   const prefix = constPrefix ?? typeName;
   const source = readFileSync(join(repoRoot(), file), "utf8");
+  // i18n-ignore: Go identifier
   const listName = listFn ?? `All${typeName}s`;
   // The list is read up to its closing brace, so a one-line list
   // (`return []Provider{ProviderPostmark, ProviderResend}`) is read as well as
   // one written a member per line; a list literal holds no braces of its own.
   const listPattern =
+    // i18n-ignore: regular expression matching Go source
     `func ${listName}\\(\\) \\[\\]${typeName} \\{\\s*` + `return \\[\\]${typeName}\\{([^}]*)\\}`;
   const block = new RegExp(listPattern).exec(source);
   if (block === null) {

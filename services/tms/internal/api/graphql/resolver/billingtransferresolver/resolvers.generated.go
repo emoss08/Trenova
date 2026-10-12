@@ -4,7 +4,7 @@ package billingtransferresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	billingtransferservice "github.com/emoss08/trenova/internal/core/services/billingtransferservice"
+	billingtransferservice "github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
 )
 
 type Deps struct {

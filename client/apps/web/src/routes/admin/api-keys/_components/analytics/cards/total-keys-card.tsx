@@ -17,7 +17,7 @@ export function TotalKeysCard({ data }: Props) {
       label={t("Total keys")}
       value={count.toLocaleString()}
       icon={Key01Icon}
-      detail={`+${newThisMonth} this month`}
+      detail={t("+{0} this month", newThisMonth)}
     />
   );
 }

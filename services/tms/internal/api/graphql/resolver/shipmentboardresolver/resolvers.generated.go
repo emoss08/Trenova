@@ -4,24 +4,26 @@ package shipmentboardresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
-	customerupdateservice "github.com/emoss08/trenova/internal/core/services/customerupdateservice"
+	shipmentbriefports "github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
+	customerupdateservice "github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
+	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	shipmentsuggestionports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 )
 
 type Deps struct {
 	*base.Core
 	CustomerUpdateService  *customerupdateservice.Service
-	BoardCapacity          services.ShipmentCapacityReader
-	BoardCoverage          services.ShipmentCoverageSuggester
-	BoardTenderer          services.ShipmentTenderer
-	BoardSuggestions       services.ShipmentSuggestionReader
-	BoardSuggestionDecider services.ShipmentSuggestionDecider
-	BoardBriefing          services.ShipmentBriefingReader
-	BoardWatchlist         services.ShipmentWatchlistReader
-	BoardFacetCounts       services.ShipmentFacetCounter
-	BoardQuickFilterCounts services.ShipmentQuickFilterCounter
-	BoardStageSummaries    services.ShipmentStageSummaryReader
-	BoardCapabilities      services.ShipmentBoardCapabilitiesReader
+	BoardCapacity          shipmentports.ShipmentCapacityReader
+	BoardCoverage          shipmentports.ShipmentCoverageSuggester
+	BoardTenderer          shipmentports.ShipmentTenderer
+	BoardSuggestions       shipmentsuggestionports.ShipmentSuggestionReader
+	BoardSuggestionDecider shipmentsuggestionports.ShipmentSuggestionDecider
+	BoardBriefing          shipmentbriefports.ShipmentBriefingReader
+	BoardWatchlist         shipmentports.ShipmentWatchlistReader
+	BoardQuickFilterCounts shipmentports.ShipmentQuickFilterCounter
+	BoardStageSummaries    shipmentports.ShipmentStageSummaryReader
+	BoardGroups            shipmentports.ShipmentBoardGroupSummarizer
+	BoardCapabilities      shipmentports.ShipmentBoardCapabilitiesReader
 }
 
 type MutationResolver struct{ *Deps }
