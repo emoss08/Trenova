@@ -8,13 +8,16 @@ import (
 )
 
 const (
-	minLineOverlap  = 0.5
-	maxWordGapRatio = 1.5
+	minLineOverlap    = 0.5
+	maxWordGapRatio   = 1.5
+	paragraphGapRatio = 1.4
+	maxLetterGapEm    = 0.35
 )
 
 type textRun struct {
 	text                     string
 	left, top, right, bottom float64
+	em                       float64
 }
 
 func (r textRun) height() float64 { return r.bottom - r.top }
@@ -41,9 +44,60 @@ func (b *lineBand) add(run textRun) {
 	b.runs = append(b.runs, run)
 }
 
-func groupLines(runs []textRun) []kernelports.PDFTextLine {
+func wordsOf(glyphs []textRun) []textRun {
+	words := make([]textRun, 0, len(glyphs)/4+1)
+	var text strings.Builder
+	var current textRun
+	open := false
+	flush := func() {
+		if !open {
+			return
+		}
+		current.text = text.String()
+		words = append(words, current)
+		text.Reset()
+		open = false
+	}
+
+	for _, glyph := range glyphs {
+		if strings.TrimSpace(glyph.text) == "" {
+			flush()
+			continue
+		}
+		if open && !current.continuesWith(glyph) {
+			flush()
+		}
+		if open {
+			current.left = min(current.left, glyph.left)
+			current.top = min(current.top, glyph.top)
+			current.right = max(current.right, glyph.right)
+			current.bottom = max(current.bottom, glyph.bottom)
+			current.em = max(current.em, glyph.em)
+		} else {
+			current = glyph
+			open = true
+		}
+		text.WriteString(glyph.text)
+	}
+	flush()
+
+	return words
+}
+
+func (r textRun) continuesWith(next textRun) bool {
+	em := max(r.em, next.em, r.height(), next.height())
+	if em <= 0 {
+		return false
+	}
+	apartX := max(next.left-r.right, r.left-next.right, 0)
+	apartY := max(next.top-r.bottom, r.top-next.bottom, 0)
+
+	return apartX <= em*maxLetterGapEm && apartY <= em*maxLetterGapEm
+}
+
+func arrange(runs []textRun) (arranged []kernelports.PDFTextLine, readingOrder string) {
 	if len(runs) == 0 {
-		return nil
+		return nil, ""
 	}
 
 	sorted := slices.Clone(runs)
@@ -68,11 +122,26 @@ func groupLines(runs []textRun) []kernelports.PDFTextLine {
 	}
 
 	lines := make([]kernelports.PDFTextLine, 0, len(bands))
-	for _, band := range bands {
-		lines = append(lines, splitBand(band)...)
+	var text strings.Builder
+	for idx, band := range bands {
+		segments := splitBand(band)
+		lines = append(lines, segments...)
+		if idx > 0 {
+			text.WriteByte('\n')
+			previous := bands[idx-1]
+			if band.top-previous.bottom > (previous.bottom-previous.top)*paragraphGapRatio {
+				text.WriteByte('\n')
+			}
+		}
+		for i, segment := range segments {
+			if i > 0 {
+				text.WriteString(kernelports.PDFColumnGap)
+			}
+			text.WriteString(segment.Text)
+		}
 	}
 
-	return lines
+	return lines, text.String()
 }
 
 func splitBand(band *lineBand) []kernelports.PDFTextLine {

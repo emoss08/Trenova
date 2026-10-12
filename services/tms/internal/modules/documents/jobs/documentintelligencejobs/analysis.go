@@ -142,12 +142,22 @@ func analyzeRateConfirmation(analysis *DocumentIntelligenceAnalysis, extracted *
 		Key: "consignee", Label: "Consignee", Regex: consigneeRegex,
 		Pages: extracted.Pages, Confidence: 0.9,
 	})
-	addStopTimingField(&AddStopTimingFieldParams{
+	addStopPartyField(&AddStopFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "shipper", Label: "Shipper",
+		Stop: firstStopByRole(analysis.Stops, stopRolePickup), Confidence: 0.85,
+	})
+	addStopPartyField(&AddStopFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "consignee", Label: "Consignee",
+		Stop: firstStopByRole(analysis.Stops, stopRoleDelivery), Confidence: 0.85,
+	})
+	addStopTimingField(&AddStopFieldParams{
 		Fields: analysis.Fields, Signals: &analysis.Signals,
 		Key: "pickupWindow", Label: "Pickup Window",
 		Stop: firstStopByRole(analysis.Stops, stopRolePickup), Confidence: 0.88,
 	})
-	addStopTimingField(&AddStopTimingFieldParams{
+	addStopTimingField(&AddStopFieldParams{
 		Fields: analysis.Fields, Signals: &analysis.Signals,
 		Key: "deliveryWindow", Label: "Delivery Window",
 		Stop: firstStopByRole(analysis.Stops, stopRoleDelivery), Confidence: 0.88,

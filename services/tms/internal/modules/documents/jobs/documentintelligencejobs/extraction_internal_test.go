@@ -8,11 +8,11 @@ import (
 	"image"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/officedoc"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/officedoc"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -81,6 +81,7 @@ func TestExtractContentReadsNativePDFPages(t *testing.T) {
 			layout: &kernelports.PDFPageLayout{
 				Width: 600, Height: 800,
 				Lines: []kernelports.PDFTextLine{{Text: "Rate: $1,359.56", Left: 60, Top: 80, Width: 75, Height: 12}},
+				Text:  "Rate:   $1,359.56",
 			},
 		},
 		{text: "Page two"},
@@ -99,7 +100,7 @@ func TestExtractContentReadsNativePDFPages(t *testing.T) {
 	assert.True(t, pdfDoc.closed)
 	assert.Equal(t, 3, result.PageCount)
 	require.Len(t, result.Pages, 3)
-	assert.Equal(t, "Rate: $1,359.56", result.Pages[0].Text)
+	assert.Equal(t, "Rate:   $1,359.56", result.Pages[0].Text)
 	lines, ok := result.Pages[0].Metadata[documentcontent.MetadataLines].([]documentcontent.LayoutLine)
 	require.True(t, ok)
 	require.Len(t, lines, 1)
@@ -107,6 +108,30 @@ func TestExtractContentReadsNativePDFPages(t *testing.T) {
 	assert.Equal(t, "Page two", result.Pages[1].Text)
 	assert.NotContains(t, result.Pages[1].Metadata, documentcontent.MetadataLines)
 	assert.Equal(t, "native_skipped", result.Pages[2].Metadata["extractionMode"])
+}
+
+func TestExtractContentKeepsStreamTextWhenTheLayoutMissesSome(t *testing.T) {
+	t.Parallel()
+
+	pdfDoc := &fakePDFDocument{pages: []fakePDFPage{{
+		text: "Shipper: BEX Logistics\nConsignee: Freight, Land, Sky",
+		layout: &kernelports.PDFPageLayout{
+			Width: 600, Height: 800,
+			Text: "Shipper: BEX Logistics",
+		},
+	}}}
+	activities := extractionActivities(&fakePDFReader{doc: pdfDoc})
+
+	result, err := activities.extractContent(
+		t.Context(),
+		&document.Document{FileType: "application/pdf", OriginalName: "rate.pdf"},
+		[]byte("%PDF"),
+		&tenant.DocumentControl{},
+	)
+	require.NoError(t, err)
+
+	require.Len(t, result.Pages, 1)
+	assert.Equal(t, "Shipper: BEX Logistics\nConsignee: Freight, Land, Sky", result.Pages[0].Text)
 }
 
 func TestExtractContentFailsOnUnreadablePDF(t *testing.T) {

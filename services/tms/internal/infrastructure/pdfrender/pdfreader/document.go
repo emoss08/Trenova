@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"image"
 	"math"
-	"strings"
 	"sync/atomic"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -106,32 +105,37 @@ func (d *document) PageLayout(ctx context.Context, page int) (*kernelports.PDFPa
 		}
 
 		structured, err := d.instance.GetPageTextStructured(&requests.GetPageTextStructured{
-			Page: d.pageRef(page),
-			Mode: requests.GetPageTextStructuredModeRects,
+			Page:                   d.pageRef(page),
+			Mode:                   requests.GetPageTextStructuredModeChars,
+			CollectFontInformation: true,
 		})
 		if err != nil {
 			return err
 		}
 
-		runs := make([]textRun, 0, len(structured.Rects))
-		for _, rect := range structured.Rects {
-			text := strings.Join(strings.Fields(rect.Text), " ")
-			if text == "" {
-				continue
-			}
-
-			box, boxErr := d.deviceBox(page, size, rect.PointPosition)
-			if boxErr != nil {
-				return boxErr
-			}
-			box.text = text
-			runs = append(runs, box)
+		transform, err := d.deviceTransform(page, size)
+		if err != nil {
+			return err
 		}
 
+		glyphs := make([]textRun, 0, len(structured.Chars))
+		for _, char := range structured.Chars {
+			if char == nil {
+				continue
+			}
+			glyph := transform.box(char.PointPosition)
+			glyph.text = char.Text
+			glyph.em = transform.length(fontSizeOf(char.FontInformation))
+			glyphs = append(glyphs, glyph)
+		}
+		runs := wordsOf(glyphs)
+
+		lines, text := arrange(runs)
 		layout = &kernelports.PDFPageLayout{
 			Width:  size.Width,
 			Height: size.Height,
-			Lines:  groupLines(runs),
+			Lines:  lines,
+			Text:   text,
 		}
 		return nil
 	})
@@ -214,11 +218,44 @@ func (d *document) pageRef(page int) requests.Page {
 	return requests.Page{ByIndex: &requests.PageByIndex{Document: d.handle, Index: page}}
 }
 
-func (d *document) deviceBox(
-	page int,
-	size *responses.GetPageSize,
-	pos responses.CharPosition,
-) (textRun, error) {
+type affine struct {
+	originX, originY float64
+	xx, xy           float64
+	yx, yy           float64
+}
+
+func (a affine) apply(x, y float64) (deviceX, deviceY float64) {
+	return a.originX + x*a.xx + y*a.yx, a.originY + x*a.xy + y*a.yy
+}
+
+func (a affine) box(pos responses.CharPosition) textRun {
+	x1, y1 := a.apply(pos.Left, pos.Top)
+	x2, y2 := a.apply(pos.Right, pos.Bottom)
+
+	return textRun{
+		left:   min(x1, x2),
+		top:    min(y1, y2),
+		right:  max(x1, x2),
+		bottom: max(y1, y2),
+	}
+}
+
+func (a affine) length(points float64) float64 {
+	return points * math.Hypot(a.xx, a.xy)
+}
+
+func fontSizeOf(font *responses.FontInformation) float64 {
+	if font == nil {
+		return 0
+	}
+	if font.RenderedSize > 0 {
+		return font.RenderedSize
+	}
+
+	return font.Size
+}
+
+func (d *document) deviceTransform(page int, size *responses.GetPageSize) (affine, error) {
 	sizeX := int(math.Round(size.Width * layoutScale))
 	sizeY := int(math.Round(size.Height * layoutScale))
 
@@ -236,20 +273,27 @@ func (d *document) deviceBox(
 		return float64(resp.DeviceX) / layoutScale, float64(resp.DeviceY) / layoutScale, nil
 	}
 
-	x1, y1, err := toDevice(pos.Left, pos.Top)
+	width, height := max(size.Width, 1), max(size.Height, 1)
+	ox, oy, err := toDevice(0, 0)
 	if err != nil {
-		return textRun{}, err
+		return affine{}, err
 	}
-	x2, y2, err := toDevice(pos.Right, pos.Bottom)
+	wx, wy, err := toDevice(width, 0)
 	if err != nil {
-		return textRun{}, err
+		return affine{}, err
+	}
+	hx, hy, err := toDevice(0, height)
+	if err != nil {
+		return affine{}, err
 	}
 
-	return textRun{
-		left:   min(x1, x2),
-		top:    min(y1, y2),
-		right:  max(x1, x2),
-		bottom: max(y1, y2),
+	return affine{
+		originX: ox,
+		originY: oy,
+		xx:      (wx - ox) / width,
+		xy:      (wy - oy) / width,
+		yx:      (hx - ox) / height,
+		yy:      (hy - oy) / height,
 	}, nil
 }
 

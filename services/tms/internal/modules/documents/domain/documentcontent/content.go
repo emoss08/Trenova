@@ -28,6 +28,10 @@ const (
 	SourceKindMixed  SourceKind = "mixed"
 )
 
+func (s Status) Settled() bool {
+	return s == StatusExtracted || s == StatusIndexed || s == StatusFailed
+}
+
 type Content struct {
 	bun.BaseModel `bun:"table:document_contents,alias:dc" json:"-"`
 

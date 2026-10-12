@@ -93,6 +93,55 @@ Denver, CO 80014
 	}
 }
 
+func TestAnalyzeDocument_ReadsARateConfirmationLaidOutInRows(t *testing.T) {
+	t.Parallel()
+
+	extracted := finalizeExtraction([]*PageExtractionResult{{
+		PageNumber: 1,
+		SourceKind: documentcontent.SourceKindNative,
+		Text: "Customer-Specified Equipment Requirements\n" +
+			"Driver Name:   carlos del said   Trailer #:   10\n" +
+			"Equipment:   Van - Min L=53\n\n" +
+			"SHIPPER#1:   BEX Logistics-OH Consolidation   Pick Up Date:   08/02/22\n" +
+			"Address:   3685 Alum Creek Dr   *Open Pick Up*\n" +
+			"STE 2040   Pick Up Time:   08:00-18:00\n" +
+			"Columbus, OH 43207   Pickup#:   405515639\n" +
+			"Phone:   (614) 305-7811   Appointment#:\n\n" +
+			"RECEIVER #1:   Freight, Land, Sky   Delivery Date:   08/03/22\n" +
+			"Address:   1000 Sycamore St.   *Scheduled Delivery*\n" +
+			"HARRISBURG, PA 17104   Delivery Time:   12:00 Appt.\n" +
+			"Delivery#:\n" +
+			"Phone:   (707) 236-6700   Appointment#:\n\n" +
+			"Rate Details\n" +
+			"Line Haul - FLAT RATE   1   $1,800.00   $1,800.00\n" +
+			"Total:   $2,481.00",
+	}}, 200_000)
+
+	analysis := analyzeDocument(
+		&ClassificationResult{Kind: kindRateConfirmation, Confidence: 0.99},
+		extracted,
+	)
+
+	assert.Empty(t, analysis.MissingFields)
+	require.Len(t, analysis.Stops, 2)
+	pickup, delivery := analysis.Stops[0], analysis.Stops[1]
+	assert.Equal(t, stopRolePickup, pickup.Role)
+	assert.Equal(t, "BEX Logistics-OH Consolidation", pickup.Name)
+	assert.Equal(t, "3685 Alum Creek Dr", pickup.AddressLine1)
+	assert.Equal(t, "Columbus", pickup.City)
+	assert.Equal(t, "OH", pickup.State)
+	assert.Equal(t, "08/02/22", pickup.Date)
+	assert.Equal(t, "08:00-18:00", pickup.TimeWindow)
+	assert.Equal(t, stopRoleDelivery, delivery.Role)
+	assert.Equal(t, "Freight, Land, Sky", delivery.Name)
+	assert.Equal(t, "1000 Sycamore St.", delivery.AddressLine1)
+	assert.Equal(t, "HARRISBURG", delivery.City)
+	assert.Equal(t, "08/03/22", delivery.Date)
+	assert.Equal(t, "BEX Logistics-OH Consolidation", analysis.Fields["shipper"].Value)
+	assert.Equal(t, "Freight, Land, Sky", analysis.Fields["consignee"].Value)
+	assert.Equal(t, "$2,481.00", analysis.Fields["rate"].Value)
+}
+
 func TestAnalyzeDocument_ExtractsBillOfLadingFieldsFromSectionBlocks(t *testing.T) {
 	t.Parallel()
 

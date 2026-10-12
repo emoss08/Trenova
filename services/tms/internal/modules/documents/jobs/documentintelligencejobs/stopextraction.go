@@ -12,7 +12,7 @@ func extractRateConfirmationStops(pages []*PageExtractionResult) []*Intelligence
 	stops := make([]*IntelligenceStop, 0, 2)
 
 	for _, page := range pages {
-		lines := splitNormalizedLines(page.Text)
+		lines := splitLayoutCells(page.Text)
 		for idx, line := range lines {
 			role, ok := detectStopRole(line)
 			if !ok {
@@ -128,8 +128,7 @@ func populateRateConfirmationStop(stop *IntelligenceStop, block []string) {
 	}
 
 	header := block[0]
-	if labelValue := extractLabelValue(header); labelValue != "" &&
-		!isStopMetadataLine(strings.ToLower(labelValue)) {
+	if labelValue := headerValue(block); labelValue != "" {
 		switch {
 		case looksLikeAddress(labelValue):
 			stop.AddressLine1 = labelValue
@@ -145,6 +144,9 @@ func populateRateConfirmationStop(stop *IntelligenceStop, block []string) {
 		}
 	}
 
+	if stop.AddressLine1 == "" {
+		stop.AddressLine1 = labeledAddress(block)
+	}
 	if stop.Date == "" {
 		stop.Date = findLastRegexValue(dateValueRegex, block)
 	}
@@ -271,7 +273,7 @@ func previousMeaningfulStopLine(
 	for i := start; i >= 0; i-- {
 		l := strings.TrimSpace(block[i])
 		if l == "" || isStopMetadataLine(strings.ToLower(l)) ||
-			phoneLineRegex.MatchString(l) {
+			phoneLineRegex.MatchString(l) || isAnnotation(l) {
 			continue
 		}
 		return i, l
@@ -321,6 +323,7 @@ func isUsableStopName(line string) bool {
 	}
 	lower := strings.ToLower(trimmed)
 	if isStopMetadataLine(lower) || phoneLineRegex.MatchString(trimmed) ||
+		isAnnotation(trimmed) || isBareLabel(trimmed) ||
 		looksLikeAddress(trimmed) ||
 		cityStateZipRegex.MatchString(trimmed) ||
 		dateValueRegex.MatchString(trimmed) ||
@@ -389,7 +392,7 @@ func isStreetFragment(line string) bool {
 		return false
 	}
 
-	return stringutils.ContainsAny(lower,
+	return stringutils.ContainsAnyWord(lower,
 		"street", "st", "road", "rd", "drive", "dr",
 		"avenue", "ave", "boulevard", "blvd", "lane", "ln",
 		"court", "ct", "circle", "cir", "way",
@@ -428,6 +431,51 @@ func extractLabelValue(line string) string {
 		return ""
 	}
 	return strings.TrimSpace(parts[1])
+}
+
+func headerValue(block []string) string {
+	value := extractLabelValue(block[0])
+	if value == "" && len(block) > 1 && !isBareLabel(block[1]) {
+		value = block[1]
+	}
+	if value == "" || isStopMetadataLine(strings.ToLower(value)) || isAnnotation(value) {
+		return ""
+	}
+
+	return value
+}
+
+func labeledAddress(block []string) string {
+	if address := labeledCell(block, "address"); looksLikeAddress(address) {
+		return address
+	}
+
+	return ""
+}
+
+func isBareLabel(cell string) bool {
+	trimmed := strings.TrimSpace(cell)
+
+	return strings.HasSuffix(trimmed, ":") && extractLabelValue(trimmed) == ""
+}
+
+func isAnnotation(cell string) bool {
+	trimmed := strings.TrimSpace(cell)
+
+	return len(trimmed) > 2 && strings.HasPrefix(trimmed, "*") && strings.HasSuffix(trimmed, "*")
+}
+
+func labeledCell(block []string, label string) string {
+	for idx := 0; idx+1 < len(block); idx++ {
+		if !isBareLabel(block[idx]) || normalizeSectionLabel(block[idx]) != label {
+			continue
+		}
+		if next := strings.TrimSpace(block[idx+1]); !isBareLabel(next) {
+			return next
+		}
+	}
+
+	return ""
 }
 
 func looksLikeAddress(value string) bool {

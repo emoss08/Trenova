@@ -51,6 +51,7 @@ const (
 	stopBlockMaxBlankRun            = 5
 	sectionBlockMaxLines            = 6
 	stopExcerptLines                = 4
+	minArrangedShare                = 0.97
 )
 
 var (
@@ -456,7 +457,7 @@ type AddWeightFieldParams struct {
 	Signal  string
 }
 
-type AddStopTimingFieldParams struct {
+type AddStopFieldParams struct {
 	Fields     map[string]*ReviewField
 	Signals    *[]string
 	Key        string

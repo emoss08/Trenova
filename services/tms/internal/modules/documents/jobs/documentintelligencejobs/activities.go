@@ -754,8 +754,17 @@ func (a *Activities) nativePDFPage(
 	if lines := pdfLayout(layout); len(lines) > 0 {
 		native.Metadata = map[string]any{documentcontent.MetadataLines: lines}
 	}
+	if readsWhole(layout.Text, text) {
+		native.Text = layout.Text
+	}
 
 	return native
+}
+
+func readsWhole(arranged, stream string) bool {
+	kept := stringutils.CountNonSpace(arranged)
+
+	return kept > 0 && float64(kept) >= float64(stringutils.CountNonSpace(stream))*minArrangedShare
 }
 
 func (a *Activities) extractOffice(
@@ -1089,6 +1098,15 @@ func (a *Activities) enrichWithAI(
 	diagnostics := &AIDiagnostics{
 		FallbackAnalysis: payload.Intelligence,
 		AcceptanceStatus: aiAcceptanceStatusNotAttempted,
+	}
+	if !a.cfg.DocumentExtractionEnabled() {
+		diagnostics.RejectionReason = "ai_disabled"
+		return &EnrichmentResult{
+			Classification:       payload.Classification,
+			DocumentIntelligence: payload.Intelligence,
+			AIDiagnostics:        diagnostics,
+			EnqueueAsyncAI:       false,
+		}, nil
 	}
 
 	tenantInfo := pagination.TenantInfo{

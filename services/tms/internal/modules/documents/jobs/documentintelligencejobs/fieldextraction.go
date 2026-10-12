@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -112,17 +113,30 @@ func addWeightFieldFromPages(params *AddWeightFieldParams, pages []*PageExtracti
 	}
 }
 
-func addStopTimingField(params *AddStopTimingFieldParams) {
+func addStopTimingField(params *AddStopFieldParams) {
 	if params.Stop == nil {
 		return
 	}
 
-	value := strings.TrimSpace(
-		strings.Join(
-			stringutils.FilterEmpty([]string{params.Stop.Date, params.Stop.TimeWindow}),
-			" ",
-		),
-	)
+	addStopField(params, strings.Join(
+		stringutils.FilterEmpty([]string{params.Stop.Date, params.Stop.TimeWindow}),
+		" ",
+	))
+}
+
+func addStopPartyField(params *AddStopFieldParams) {
+	if params.Stop == nil {
+		return
+	}
+	if _, found := params.Fields[params.Key]; found {
+		return
+	}
+
+	addStopField(params, params.Stop.Name)
+}
+
+func addStopField(params *AddStopFieldParams, value string) {
+	value = strings.TrimSpace(value)
 	if value == "" {
 		return
 	}
@@ -518,6 +532,24 @@ func splitNormalizedLines(text string) []string {
 		lines = append(lines, trimmed)
 	}
 	return lines
+}
+
+func splitLayoutCells(text string) []string {
+	lines := splitNormalizedLines(text)
+	cells := make([]string, 0, len(lines))
+	for _, line := range lines {
+		if !strings.Contains(line, kernelports.PDFColumnGap) {
+			cells = append(cells, line)
+			continue
+		}
+		for cell := range strings.SplitSeq(line, kernelports.PDFColumnGap) {
+			if trimmed := strings.TrimSpace(cell); trimmed != "" {
+				cells = append(cells, trimmed)
+			}
+		}
+	}
+
+	return cells
 }
 
 func nonZeroPageNumbers(pageNumber int) []int {

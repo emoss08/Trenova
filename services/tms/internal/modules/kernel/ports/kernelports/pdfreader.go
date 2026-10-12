@@ -8,6 +8,8 @@ import (
 
 var ErrPDFUnreadable = errors.New("the PDF could not be read")
 
+const PDFColumnGap = "   "
+
 type PDFTextLine struct {
 	Text   string
 	Left   float64
@@ -20,6 +22,7 @@ type PDFPageLayout struct {
 	Width  float64
 	Height float64
 	Lines  []PDFTextLine
+	Text   string
 }
 
 type PDFDocument interface {
