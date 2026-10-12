@@ -1,27 +1,35 @@
 package ediinboundservice
 
 import (
+	"context"
+	"errors"
+	"strconv"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"context"
-	"errors"
-	"strings"
-	"testing"
+	"github.com/emoss08/trenova/internal/testutil/mocks/trackingeventportsmock"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -41,7 +49,7 @@ type tenderedCarrierFixture struct {
 	eventRepo     *shipmenteventportsmock.MockShipmentEventRepository
 	invoiceRepo   *ediportsmock.MockEDICarrierInvoiceRepository
 	moveRepo      *shipmentportsmock.MockShipmentMoveRepository
-	moveSvc       *shipmentportsmock.MockShipmentMoveService
+	tracking      *trackingeventportsmock.MockTrackingEventService
 	matcher       *carrierportsmock.MockCarrierInvoiceAutoMatcher
 }
 
@@ -105,9 +113,9 @@ func buildTenderedCarrierFixture(t *testing.T, withStopActuals bool) *tenderedCa
 	}
 	if withStopActuals {
 		fixture.moveRepo = shipmentportsmock.NewMockShipmentMoveRepository(t)
-		fixture.moveSvc = shipmentportsmock.NewMockShipmentMoveService(t)
+		fixture.tracking = trackingeventportsmock.NewMockTrackingEventService(t)
 		params.ShipmentMoveRepo = fixture.moveRepo
-		params.ShipmentMoves = fixture.moveSvc
+		params.TrackingEvents = fixture.tracking
 	}
 	ediSvc := ediservice.New(params)
 	fixture.service = &Service{
@@ -357,6 +365,29 @@ func (f *tenderedCarrierFixture) tenderedMoveWithStops(
 	return move, origin, destination
 }
 
+func (f *tenderedCarrierFixture) expectTrackingEvents(
+	move *shipment.ShipmentMove,
+	times int,
+) *[]*trackingeventports.RecordObservedStopEventParams {
+	recorded := make([]*trackingeventports.RecordObservedStopEventParams, 0, times)
+	f.tracking.EXPECT().
+		RecordObserved(mock.Anything, mock.AnythingOfType("*trackingeventports.RecordObservedStopEventParams")).
+		RunAndReturn(
+			func(
+				_ context.Context,
+				params *trackingeventports.RecordObservedStopEventParams,
+			) (*trackingeventports.StopEventResult, error) {
+				recorded = append(recorded, params)
+				return &trackingeventports.StopEventResult{
+					Move:    move,
+					Outcome: trackingevent.OutcomeApplied,
+				}, nil
+			},
+		).
+		Times(times)
+	return &recorded
+}
+
 func TestRouteShipmentStatus_X3RecordsOriginArrivalWithEventTime(t *testing.T) {
 	t.Parallel()
 
@@ -387,16 +418,7 @@ func TestRouteShipmentStatus_X3RecordsOriginArrivalWithEventTime(t *testing.T) {
 		})).
 		Return(move, nil).
 		Once()
-	var recorded *shipmentports.RecordStopActualRequest
-	fixture.moveSvc.EXPECT().
-		RecordStopActual(mock.Anything, mock.AnythingOfType("*shipmentports.RecordStopActualRequest")).
-		RunAndReturn(
-			func(_ context.Context, req *shipmentports.RecordStopActualRequest) (*shipment.ShipmentMove, error) {
-				recorded = req
-				return move, nil
-			},
-		).
-		Once()
+	recordedEvents := fixture.expectTrackingEvents(move, 1)
 
 	transaction := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "X3"))
 	warnings, err := fixture.service.routeShipmentStatus(
@@ -408,12 +430,14 @@ func TestRouteShipmentStatus_X3RecordsOriginArrivalWithEventTime(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Empty(t, warnings)
-	require.NotNil(t, recorded)
-	require.Equal(t, shipmentports.StopActualActionArrive, recorded.Action)
+	require.Len(t, *recordedEvents, 1)
+	recorded := (*recordedEvents)[0]
+	require.Equal(t, shipment.VisitArrival, recorded.Kind)
 	require.Equal(t, origin.ID, recorded.StopID)
 	require.Equal(t, moveID, recorded.MoveID)
-	require.NotNil(t, recorded.OccurredAt)
-	require.EqualValues(t, 1767787200, *recorded.OccurredAt)
+	require.Equal(t, trackingevent.SourceEDI, recorded.Source)
+	require.EqualValues(t, 1767787200, recorded.EventAt)
+	require.Equal(t, "edi_inbound_file:"+fixture.file.ID.String()+":0001:0", recorded.RawReference)
 }
 
 func TestRouteShipmentStatus_D1RecordsArriveAndDepartAtDestination(t *testing.T) {
@@ -444,16 +468,7 @@ func TestRouteShipmentStatus_D1RecordsArriveAndDepartAtDestination(t *testing.T)
 		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetMoveByIDRequest")).
 		Return(move, nil).
 		Once()
-	recorded := make([]*shipmentports.RecordStopActualRequest, 0, 2)
-	fixture.moveSvc.EXPECT().
-		RecordStopActual(mock.Anything, mock.AnythingOfType("*shipmentports.RecordStopActualRequest")).
-		RunAndReturn(
-			func(_ context.Context, req *shipmentports.RecordStopActualRequest) (*shipment.ShipmentMove, error) {
-				recorded = append(recorded, req)
-				return move, nil
-			},
-		).
-		Times(2)
+	recordedEvents := fixture.expectTrackingEvents(move, 2)
 
 	transaction := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "D1"))
 	warnings, err := fixture.service.routeShipmentStatus(
@@ -465,9 +480,10 @@ func TestRouteShipmentStatus_D1RecordsArriveAndDepartAtDestination(t *testing.T)
 
 	require.NoError(t, err)
 	require.Empty(t, warnings)
+	recorded := *recordedEvents
 	require.Len(t, recorded, 2)
-	require.Equal(t, shipmentports.StopActualActionArrive, recorded[0].Action)
-	require.Equal(t, shipmentports.StopActualActionDepart, recorded[1].Action)
+	require.Equal(t, shipment.VisitArrival, recorded[0].Kind)
+	require.Equal(t, shipment.VisitDeparture, recorded[1].Kind)
 	require.Equal(t, destination.ID, recorded[0].StopID)
 	require.Equal(t, destination.ID, recorded[1].StopID)
 }
@@ -502,9 +518,12 @@ func TestRouteShipmentStatus_StopActualBusinessErrorBecomesWarningKeepsComment(t
 		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetMoveByIDRequest")).
 		Return(move, nil).
 		Once()
-	fixture.moveSvc.EXPECT().
-		RecordStopActual(mock.Anything, mock.AnythingOfType("*shipmentports.RecordStopActualRequest")).
-		Return(nil, errortypes.NewBusinessError("Complete the earlier stops on this load first")).
+	fixture.tracking.EXPECT().
+		RecordObserved(mock.Anything, mock.Anything).
+		Return(&trackingeventports.StopEventResult{
+			Outcome: trackingevent.OutcomeRefused,
+			Reason:  "Complete the earlier stops on this load first",
+		}, nil).
 		Once()
 
 	transaction := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "X1"))
@@ -939,4 +958,136 @@ func TestRouteFreightInvoice_RecipientMissAndOfferMissStillRecordsInvoice(t *tes
 		}
 	}
 	require.True(t, foundMissWarning)
+}
+
+func TestRouteShipmentStatus_EveryAT7BecomesATimedTrackingEvent(t *testing.T) {
+	t.Parallel()
+
+	fixture := newTenderedCarrierFixtureWithStopActuals(t)
+	offer := fixture.acceptedOffer()
+	moveID := pulid.MustNew("sm_")
+	offer.Tender.ShipmentMoveID = moveID
+	fixture.tenderRepo.acceptedOffer = offer
+	fixture.expectRecipientMiss()
+	fixture.expectSystemUser()
+
+	comments := make([]*shipment.ShipmentComment, 0, 3)
+	fixture.commentRepo.EXPECT().
+		Create(mock.Anything, mock.Anything).
+		RunAndReturn(
+			func(_ context.Context, comment *shipment.ShipmentComment) (*shipment.ShipmentComment, error) {
+				comments = append(comments, comment)
+				return comment, nil
+			},
+		).
+		Times(3)
+	events := make([]*shipmentevent.Event, 0, 3)
+	fixture.eventRepo.EXPECT().
+		Insert(mock.Anything, mock.AnythingOfType("*shipmentevent.Event")).
+		RunAndReturn(func(_ context.Context, event *shipmentevent.Event) error {
+			events = append(events, event)
+			return nil
+		}).
+		Times(3)
+
+	origin := &shipment.Stop{
+		ID:       pulid.MustNew("stp_"),
+		Type:     shipment.StopTypePickup,
+		Status:   shipment.StopStatusNew,
+		Sequence: 0,
+	}
+	intermediate := &shipment.Stop{
+		ID:       pulid.MustNew("stp_"),
+		Type:     shipment.StopTypeDelivery,
+		Status:   shipment.StopStatusNew,
+		Sequence: 1,
+	}
+	final := &shipment.Stop{
+		ID:       pulid.MustNew("stp_"),
+		Type:     shipment.StopTypeDelivery,
+		Status:   shipment.StopStatusNew,
+		Sequence: 2,
+		Location: &location.Location{
+			City:     "Denver",
+			Timezone: "America/Denver",
+			State:    &usstate.UsState{Abbreviation: "CO"},
+		},
+	}
+	move := &shipment.ShipmentMove{
+		ID:     moveID,
+		Status: shipment.MoveStatusAssigned,
+		Stops:  []*shipment.Stop{origin, intermediate, final},
+	}
+	fixture.moveRepo.EXPECT().
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetMoveByIDRequest")).
+		Return(move, nil).
+		Times(3)
+	recordedEvents := fixture.expectTrackingEvents(move, 3)
+
+	raw := "ISA*00*          *00*          *ZZ*CARRIER        *ZZ*TRENOVA        " +
+		"*260107*1200*^*00401*000000302*0*P*>~" +
+		"GS*QM*CARRIER*TRENOVA*20260107*1200*302*X*004010~" +
+		"ST*214*0007~" +
+		"B10*PRO-77*SHIP-1001*SCAC~" +
+		"L11*" + offer.ID.String() + "*CR~" +
+		"LX*1~" +
+		"AT7*AF*NS***20260107*0945*ET~" +
+		"L11*0*QN~" +
+		"LX*2~" +
+		"AT7*X1*NS***20260107*1415*CS~" +
+		"L11*1*QN~" +
+		"LX*3~" +
+		"AT7*X1*NS***20260108*0700*LT~" +
+		"MS1*DENVER*CO*USA~" +
+		"SE*14*0007~GE*1*302~IEA*1*000000302~"
+
+	warnings, err := fixture.service.routeShipmentStatus(
+		t.Context(),
+		fixture.file,
+		fixture.partner,
+		parse214Transaction(t, raw),
+	)
+
+	require.NoError(t, err)
+	require.Empty(t, warnings)
+
+	newYork, err := time.LoadLocation("America/New_York")
+	require.NoError(t, err)
+	denver, err := time.LoadLocation("America/Denver")
+	require.NoError(t, err)
+
+	recorded := *recordedEvents
+	require.Len(t, recorded, 3)
+
+	require.Equal(t, origin.ID, recorded[0].StopID)
+	require.Equal(t, shipment.VisitDeparture, recorded[0].Kind)
+	require.Equal(t, trackingevent.MatchStopReference, recorded[0].MatchMethod)
+	require.Equal(t, time.Date(2026, 1, 7, 9, 45, 0, 0, newYork).Unix(), recorded[0].EventAt)
+
+	require.Equal(t, intermediate.ID, recorded[1].StopID)
+	require.Equal(t, shipment.VisitArrival, recorded[1].Kind)
+	require.Equal(t, trackingevent.MatchStopReference, recorded[1].MatchMethod)
+	require.Equal(t, time.Date(2026, 1, 7, 20, 15, 0, 0, time.UTC).Unix(), recorded[1].EventAt)
+
+	require.Equal(t, final.ID, recorded[2].StopID)
+	require.Equal(t, shipment.VisitArrival, recorded[2].Kind)
+	require.Equal(t, trackingevent.MatchLocation, recorded[2].MatchMethod)
+	require.Equal(t, time.Date(2026, 1, 8, 7, 0, 0, 0, denver).Unix(), recorded[2].EventAt)
+
+	keys := map[string]struct{}{}
+	for index, params := range recorded {
+		keys[params.SourceKey] = struct{}{}
+		require.Equal(
+			t,
+			"edi_inbound_file:"+fixture.file.ID.String()+":0007:"+strconv.Itoa(index),
+			params.RawReference,
+		)
+	}
+	require.Len(t, keys, 3)
+
+	require.Len(t, comments, 3)
+	require.Contains(t, comments[0].Comment, "AF")
+	require.Contains(t, comments[2].Comment, "X1")
+	require.Len(t, events, 3)
+	require.Equal(t, recorded[2].EventAt, events[2].OccurredAt)
 }

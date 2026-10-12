@@ -160,6 +160,8 @@ func (t *parsedTransaction) documentPayload() edi.DocumentPayload {
 				StatusReasonCode: details.reasonCode,
 				EventDate:        details.eventAt,
 				EventTime:        details.eventAt,
+				EventTimeCode:    firstEventTimeCode(details.events),
+				Events:           details.events,
 				References: map[string]string{
 					"referenceId": details.referenceID,
 					"shipmentId":  details.shipmentRef,
@@ -278,7 +280,7 @@ func parseTenderResponse(t *parsedTransaction) tenderResponseDetails {
 }
 
 func parseShipmentStatus(t *parsedTransaction) shipmentStatusDetails {
-	details := shipmentStatusDetails{}
+	details := shipmentStatusDetails{controlNumber: t.controlNumber}
 	if b10 := findSegment(t.segments, "B10"); b10 != nil {
 		details.referenceID = strings.TrimSpace(elementValue(b10, 1))
 		details.shipmentRef = strings.TrimSpace(elementValue(b10, 2))
@@ -287,12 +289,163 @@ func parseShipmentStatus(t *parsedTransaction) shipmentStatusDetails {
 		details.shipmentRef = referenceFromL11(t.segments)
 	}
 	details.references = referenceValues(t.segments)
-	if at7 := findSegment(t.segments, "AT7"); at7 != nil {
-		details.statusCode = strings.ToUpper(strings.TrimSpace(elementValue(at7, 1)))
-		details.reasonCode = strings.ToUpper(strings.TrimSpace(elementValue(at7, 2)))
-		details.eventAt = parseX12Timestamp(elementValue(at7, 5), elementValue(at7, 6))
+	details.events = parseShipmentStatusEvents(t.segments)
+	if len(details.events) > 0 {
+		first := details.events[0]
+		details.statusCode = first.StatusCode
+		details.reasonCode = first.ReasonCode
+		details.eventAt = first.EventAt
 	}
 	return details
+}
+
+type statusLoop struct {
+	stopSequence *int64
+	city         string
+	stateCode    string
+	countryCode  string
+	events       []int
+}
+
+func parseShipmentStatusEvents(segments []edix12inspect.X12Segment) []edi.ShipmentStatusEvent {
+	events := make([]edi.ShipmentStatusEvent, 0, 1)
+	loops := make([]*statusLoop, 0, 1)
+	var loop *statusLoop
+	var current *edi.ShipmentStatusEvent
+	openLoop := func() *statusLoop {
+		loop = &statusLoop{}
+		loops = append(loops, loop)
+		current = nil
+		return loop
+	}
+
+	for index := range segments {
+		segment := &segments[index]
+		switch segment.SegmentID {
+		case "LX":
+			openLoop()
+		case "AT7":
+			if loop == nil {
+				openLoop()
+			}
+			event, ok := shipmentStatusEventFromAT7(segment, len(events))
+			if !ok {
+				current = nil
+				continue
+			}
+			events = append(events, event)
+			loop.events = append(loop.events, len(events)-1)
+			current = &events[len(events)-1]
+		case "MS1":
+			applyStatusPlace(segment, current, loop)
+		case "MS2":
+			applyStatusEquipment(segment, current)
+		case "L11":
+			applyStatusStopReference(segment, loop)
+		case "N4":
+			applyStatusPartyPlace(segment, loop)
+		}
+	}
+
+	for _, statusLoop := range loops {
+		for _, eventIndex := range statusLoop.events {
+			inheritLoopDetails(&events[eventIndex], statusLoop)
+		}
+	}
+	return events
+}
+
+func shipmentStatusEventFromAT7(
+	segment *edix12inspect.X12Segment,
+	index int,
+) (edi.ShipmentStatusEvent, bool) {
+	event := edi.ShipmentStatusEvent{
+		Index:                 index,
+		StatusCode:            upperElement(segment, 1),
+		ReasonCode:            upperElement(segment, 2),
+		AppointmentCode:       upperElement(segment, 3),
+		AppointmentReasonCode: upperElement(segment, 4),
+		DateTime: edi.X12DateTime{
+			Date:     strings.TrimSpace(elementValue(segment, 5)),
+			Time:     strings.TrimSpace(elementValue(segment, 6)),
+			TimeCode: edi.NormalizeX12TimeCode(elementValue(segment, 7)),
+		},
+	}
+	if event.StatusCode == "" && event.AppointmentCode == "" {
+		return edi.ShipmentStatusEvent{}, false
+	}
+	event.EventAt, _ = event.DateTime.Unix(time.UTC)
+	return event, true
+}
+
+func applyStatusPlace(
+	segment *edix12inspect.X12Segment,
+	current *edi.ShipmentStatusEvent,
+	loop *statusLoop,
+) {
+	city := strings.TrimSpace(elementValue(segment, 1))
+	state := upperElement(segment, 2)
+	country := upperElement(segment, 3)
+	if current == nil {
+		if loop != nil && city != "" && state != "" {
+			loop.city, loop.stateCode, loop.countryCode = city, state, country
+		}
+		return
+	}
+	if city != "" && state != "" {
+		current.City, current.StateCode, current.CountryCode = city, state, country
+	}
+	latitude := edi.ParseX12Latitude(elementValue(segment, 5), elementValue(segment, 7))
+	longitude := edi.ParseX12Longitude(elementValue(segment, 4), elementValue(segment, 6))
+	if latitude != nil && longitude != nil {
+		current.Latitude, current.Longitude = latitude, longitude
+	}
+}
+
+func applyStatusEquipment(segment *edix12inspect.X12Segment, current *edi.ShipmentStatusEvent) {
+	if current == nil {
+		return
+	}
+	current.EquipmentOwner = upperElement(segment, 1)
+	current.EquipmentNumber = strings.TrimSpace(elementValue(segment, 2))
+	current.EquipmentType = upperElement(segment, 3)
+}
+
+func applyStatusStopReference(segment *edix12inspect.X12Segment, loop *statusLoop) {
+	if loop == nil || upperElement(segment, 2) != stopSequenceQualifier {
+		return
+	}
+	sequence, err := strconv.ParseInt(strings.TrimSpace(elementValue(segment, 1)), 10, 64)
+	if err != nil || sequence < 0 {
+		return
+	}
+	loop.stopSequence = &sequence
+}
+
+func applyStatusPartyPlace(segment *edix12inspect.X12Segment, loop *statusLoop) {
+	if loop == nil || loop.city != "" {
+		return
+	}
+	city := strings.TrimSpace(elementValue(segment, 1))
+	state := upperElement(segment, 2)
+	if city == "" || state == "" {
+		return
+	}
+	loop.city, loop.stateCode, loop.countryCode = city, state, upperElement(segment, 4)
+}
+
+func inheritLoopDetails(event *edi.ShipmentStatusEvent, loop *statusLoop) {
+	if event.StopSequence == nil && loop.stopSequence != nil {
+		sequence := *loop.stopSequence
+		event.StopSequence = &sequence
+	}
+	if !event.HasPlace() && loop.city != "" {
+		event.City, event.StateCode, event.CountryCode = loop.city, loop.stateCode, loop.countryCode
+	}
+}
+
+func upperElement(segment *edix12inspect.X12Segment, position int) string {
+	return strings.ToUpper(strings.TrimSpace(elementValue(segment, position)))
 }
 
 func parseFreightInvoice(t *parsedTransaction) edi.FreightInvoicePayload {
@@ -792,6 +945,9 @@ func referenceValues(segments []edix12inspect.X12Segment) []string {
 	references := make([]string, 0, 4)
 	l11Segments := findSegmentsByID(segments, "L11")
 	for index := range l11Segments {
+		if upperElement(&l11Segments[index], 2) == stopSequenceQualifier {
+			continue
+		}
 		if value := strings.TrimSpace(elementValue(&l11Segments[index], 1)); value != "" {
 			references = append(references, value)
 		}
@@ -900,32 +1056,13 @@ func decimalFromX12(value string) (decimal.NullDecimal, error) {
 }
 
 func parseX12Timestamp(dateValue, timeValue string) int64 {
-	dateValue = strings.TrimSpace(dateValue)
-	timeValue = strings.TrimSpace(timeValue)
-	if dateValue == "" {
-		return 0
+	at, _ := edi.X12DateTime{Date: dateValue, Time: timeValue}.Unix(time.UTC)
+	return at
+}
+
+func firstEventTimeCode(events []edi.ShipmentStatusEvent) string {
+	if len(events) == 0 {
+		return ""
 	}
-	layout := "20060102"
-	if len(dateValue) == 6 {
-		layout = "060102"
-	}
-	if timeValue != "" {
-		switch len(timeValue) {
-		case 4:
-			parsed, err := time.ParseInLocation(layout+"1504", dateValue+timeValue, time.UTC)
-			if err == nil {
-				return parsed.Unix()
-			}
-		case 6:
-			parsed, err := time.ParseInLocation(layout+"150405", dateValue+timeValue, time.UTC)
-			if err == nil {
-				return parsed.Unix()
-			}
-		}
-	}
-	parsed, err := time.ParseInLocation(layout, dateValue, time.UTC)
-	if err != nil {
-		return 0
-	}
-	return parsed.Unix()
+	return events[0].DateTime.TimeCode
 }

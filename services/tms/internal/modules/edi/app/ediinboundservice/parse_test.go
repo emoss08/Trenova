@@ -2,10 +2,11 @@ package ediinboundservice
 
 import (
 	"testing"
+	"time"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	editemplates "github.com/emoss08/trenova/internal/modules/edi/domain/edi/templates"
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -483,4 +484,113 @@ func TestParseShipmentStatus214(t *testing.T) {
 	require.Equal(t, "SHIP-1001", details.shipmentRef)
 	require.Equal(t, "AF", details.statusCode)
 	require.NotZero(t, details.eventAt)
+}
+
+func TestParseShipmentStatus214ReadsEveryStatusLoop(t *testing.T) {
+	t.Parallel()
+
+	raw := "ISA*00*          *00*          *ZZ*PARTNER        *ZZ*TRENOVA        " +
+		"*260107*1200*^*00401*000000105*0*P*>~" +
+		"GS*QM*PARTNER*TRENOVA*20260107*1200*105*X*004010~" +
+		"ST*214*0002~" +
+		"B10*PRO123*SHIP-1001*SCAC~" +
+		"L11*SHIP-1001*BM~" +
+		"LX*1~" +
+		"AT7*X3*NS***20260107*0800*CT~" +
+		"MS1*JOLIET*IL*USA*0880500*0413200*W*N~" +
+		"MS2*ABCD*TRL4410*TL~" +
+		"L11*0*QN~" +
+		"AT7*AF*NS***20260107*0945*CT~" +
+		"LX*2~" +
+		"AT7*X1*NS***20260107*1630*ED~" +
+		"MS1*FORT WAYNE*IN*USA~" +
+		"L11*1*QN~" +
+		"LX*3~" +
+		"AT7*D1*NS***20260108*103015*LT~" +
+		"N1*CN*ACME DC~" +
+		"N4*DAYTON*OH*45402*USA~" +
+		"SE*18*0002~" +
+		"GE*1*105~" +
+		"IEA*1*000000105~"
+
+	interchange, err := parseInterchange(raw)
+	require.NoError(t, err)
+	details := parseShipmentStatus(&interchange.transactions[0])
+
+	require.Equal(t, "0002", details.controlNumber)
+	require.Equal(t, []string{"SHIP-1001"}, details.references)
+	require.Len(t, details.events, 4)
+
+	chicago, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+
+	pickup := details.events[0]
+	require.Equal(t, 0, pickup.Index)
+	require.Equal(t, "X3", pickup.StatusCode)
+	require.Equal(t, "CT", pickup.DateTime.TimeCode)
+	require.Equal(t, time.Date(2026, 1, 7, 8, 0, 0, 0, chicago).Unix(), pickup.EventAt)
+	require.Equal(t, "JOLIET", pickup.City)
+	require.Equal(t, "IL", pickup.StateCode)
+	require.NotNil(t, pickup.Latitude)
+	require.InDelta(t, 41.5333, *pickup.Latitude, 0.0001)
+	require.InDelta(t, -88.0833, *pickup.Longitude, 0.0001)
+	require.Equal(t, "TRL4410", pickup.EquipmentNumber)
+	require.Equal(t, "ABCD", pickup.EquipmentOwner)
+	require.NotNil(t, pickup.StopSequence)
+	require.EqualValues(t, 0, *pickup.StopSequence)
+
+	departed := details.events[1]
+	require.Equal(t, "AF", departed.StatusCode)
+	require.Equal(t, time.Date(2026, 1, 7, 9, 45, 0, 0, chicago).Unix(), departed.EventAt)
+	require.EqualValues(t, 0, *departed.StopSequence)
+	require.Empty(t, departed.City)
+
+	arrived := details.events[2]
+	require.Equal(t, "X1", arrived.StatusCode)
+	require.Equal(t, time.Date(2026, 1, 7, 20, 30, 0, 0, time.UTC).Unix(), arrived.EventAt)
+	require.Equal(t, "FORT WAYNE", arrived.City)
+	require.EqualValues(t, 1, *arrived.StopSequence)
+
+	delivered := details.events[3]
+	require.Equal(t, "D1", delivered.StatusCode)
+	require.True(t, delivered.DateTime.IsLocal())
+	require.Equal(t, time.Date(2026, 1, 8, 10, 30, 15, 0, time.UTC).Unix(), delivered.EventAt)
+	require.Equal(t, "DAYTON", delivered.City)
+	require.Equal(t, "OH", delivered.StateCode)
+	require.Nil(t, delivered.StopSequence)
+
+	require.Equal(t, "X3", details.statusCode)
+	require.Equal(t, pickup.EventAt, details.eventAt)
+
+	payload := interchange.transactions[0].documentPayload()
+	require.NotNil(t, payload.ShipmentStatus)
+	require.Len(t, payload.ShipmentStatus.Events, 4)
+	require.Equal(t, "CT", payload.ShipmentStatus.EventTimeCode)
+}
+
+func TestParseShipmentStatus214SkipsEmptyStatusSegments(t *testing.T) {
+	t.Parallel()
+
+	raw := "ISA*00*          *00*          *ZZ*PARTNER        *ZZ*TRENOVA        " +
+		"*260107*1200*^*00401*000000106*0*P*>~" +
+		"GS*QM*PARTNER*TRENOVA*20260107*1200*106*X*004010~" +
+		"ST*214*0003~" +
+		"B10*PRO123*SHIP-1001*SCAC~" +
+		"LX*1~" +
+		"AT7*****20260107*0800~" +
+		"MS2*ABCD*TRL1~" +
+		"AT7***AA**20260107*0900*ET~" +
+		"SE*7*0003~" +
+		"GE*1*106~" +
+		"IEA*1*000000106~"
+
+	interchange, err := parseInterchange(raw)
+	require.NoError(t, err)
+	details := parseShipmentStatus(&interchange.transactions[0])
+
+	require.Len(t, details.events, 1)
+	require.Equal(t, 0, details.events[0].Index)
+	require.Equal(t, "AA", details.events[0].AppointmentCode)
+	require.Empty(t, details.events[0].EquipmentNumber)
+	require.Empty(t, details.statusCode)
 }

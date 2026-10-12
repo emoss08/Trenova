@@ -81,12 +81,16 @@ type tenderResponseDetails struct {
 }
 
 type shipmentStatusDetails struct {
-	referenceID string
-	shipmentRef string
-	statusCode  string
-	reasonCode  string
-	eventAt     int64
-	references  []string
+	controlNumber string
+	referenceID   string
+	shipmentRef   string
+	statusCode    string
+	reasonCode    string
+	eventAt       int64
+	references    []string
+	events        []edi.ShipmentStatusEvent
 }
+
+const stopSequenceQualifier = "QN"
 
 const inboundDefaultMappingKey = "DEFAULT"

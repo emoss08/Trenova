@@ -123,13 +123,21 @@ func (m *ShipmentMove) StopForObservedVisit(locationID pulid.ID, kind VisitKind)
 	return m.visitCandidatesAt(locationID).reported(kind)
 }
 
+func (m *ShipmentMove) StopForReportedVisit(matches func(*Stop) bool, kind VisitKind) *Stop {
+	return m.visitCandidatesWhere(matches).reported(kind)
+}
+
 func (m *ShipmentMove) visitCandidatesAt(locationID pulid.ID) *visitCandidates {
-	candidates := &visitCandidates{}
 	if locationID.IsNil() {
-		return candidates
+		return &visitCandidates{}
 	}
+	return m.visitCandidatesWhere(func(stop *Stop) bool { return stop.LocationID == locationID })
+}
+
+func (m *ShipmentMove) visitCandidatesWhere(matches func(*Stop) bool) *visitCandidates {
+	candidates := &visitCandidates{}
 	for _, stop := range m.ActiveStopsBySequence() {
-		if stop.LocationID == locationID {
+		if matches(stop) {
 			candidates.consider(stop)
 		}
 	}

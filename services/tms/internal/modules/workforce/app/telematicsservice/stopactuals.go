@@ -2,10 +2,8 @@ package telematicsservice
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
@@ -243,7 +241,7 @@ func refusedVisitReason(event *stopEvent, stop *shipment.Stop, reason string) st
 func (s *Service) refusedStopReason(event *stopEvent, stop *shipment.Stop, err error) string {
 	if errortypes.IsBusinessError(err) || errortypes.IsError(err) ||
 		errortypes.IsNotFoundError(err) {
-		return refusedVisitReason(event, stop, refusalMessage(err))
+		return refusedVisitReason(event, stop, errortypes.Summary(err))
 	}
 
 	s.l.Warn("failed to auto-record stop actual",
@@ -253,17 +251,6 @@ func (s *Service) refusedStopReason(event *stopEvent, stop *shipment.Stop, err e
 	return "Telematics reported the " + visitNoun(event.visit) + " at stop " +
 		strconv.FormatInt(stop.Sequence, 10) +
 		", but a system error stopped it being recorded. Record it on the stop by hand."
-}
-
-func refusalMessage(err error) string {
-	if multiErr, ok := errors.AsType[*errortypes.MultiError](err); ok && len(multiErr.Errors) > 0 {
-		messages := make([]string, 0, len(multiErr.Errors))
-		for _, fieldErr := range multiErr.Errors {
-			messages = append(messages, fieldErr.Error())
-		}
-		return strings.Join(messages, "; ")
-	}
-	return err.Error()
 }
 
 func (s *Service) resolveActiveAssignment(

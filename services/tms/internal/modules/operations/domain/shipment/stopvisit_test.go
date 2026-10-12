@@ -144,3 +144,52 @@ func TestStopForObservedVisit(t *testing.T) {
 		assert.Nil(t, move.StopForObservedVisit(pulid.Nil, shipment.VisitArrival))
 	})
 }
+
+func TestStopForReportedVisit(t *testing.T) {
+	t.Parallel()
+
+	pickup := func(stop *shipment.Stop) *shipment.Stop {
+		stop.Type = shipment.StopTypePickup
+		return stop
+	}
+	delivery := func(stop *shipment.Stop) *shipment.Stop {
+		stop.Type = shipment.StopTypeDelivery
+		return stop
+	}
+	isDelivery := func(stop *shipment.Stop) bool { return stop.IsDestinationStop() }
+
+	t.Run("an arrival names the first delivery not yet reached", func(t *testing.T) {
+		t.Parallel()
+		first := delivery(visitStop(2, pulid.MustNew("loc_"), true, true))
+		middle := delivery(visitStop(3, pulid.MustNew("loc_"), false, false))
+		last := delivery(visitStop(4, pulid.MustNew("loc_"), false, false))
+		move := &shipment.ShipmentMove{Stops: []*shipment.Stop{
+			pickup(visitStop(1, pulid.MustNew("loc_"), true, true)), last, middle, first,
+		}}
+
+		assert.Equal(t, middle.ID, move.StopForReportedVisit(isDelivery, shipment.VisitArrival).ID)
+	})
+
+	t.Run("a departure names the delivery the truck is at", func(t *testing.T) {
+		t.Parallel()
+		onSite := delivery(visitStop(2, pulid.MustNew("loc_"), true, false))
+		move := &shipment.ShipmentMove{Stops: []*shipment.Stop{
+			onSite, delivery(visitStop(3, pulid.MustNew("loc_"), false, false)),
+		}}
+
+		assert.Equal(
+			t,
+			onSite.ID,
+			move.StopForReportedVisit(isDelivery, shipment.VisitDeparture).ID,
+		)
+	})
+
+	t.Run("no stop of the role names nothing", func(t *testing.T) {
+		t.Parallel()
+		move := &shipment.ShipmentMove{Stops: []*shipment.Stop{
+			pickup(visitStop(1, pulid.MustNew("loc_"), false, false)),
+		}}
+
+		assert.Nil(t, move.StopForReportedVisit(isDelivery, shipment.VisitArrival))
+	})
+}
