@@ -15,6 +15,13 @@ const statusColors = {
     "text-success-foreground focus:text-success-foreground focus:bg-success-subtle hover:text-success-foreground hover:bg-success-subtle dark:text-success-foreground dark:focus:text-success-foreground dark:focus:bg-success-subtle dark:hover:bg-success-subtle dark:hover:text-success-foreground",
 };
 
+/**
+ * The inverted surface every menu floats on. A panel driven from the keyboard
+ * elsewhere, and so not a menu primitive, takes the same surface.
+ */
+const dropdownMenuSurfaceClassName =
+  "dark rounded-lg bg-popover text-popover-foreground ring-1 ring-foreground/10";
+
 function DropdownMenu<Payload = unknown>({ ...props }: MenuPrimitive.Root.Props<Payload>) {
   return <MenuPrimitive.Root<Payload> data-slot="dropdown-menu" {...props} />;
 }
@@ -63,7 +70,8 @@ function DropdownMenuContent({
         <MenuPrimitive.Popup
           data-slot="dropdown-menu-content"
           className={cn(
-            "dark z-50 flex max-h-(--available-height) w-(--anchor-width) min-w-32 origin-(--transform-origin) flex-col overflow-hidden rounded-lg bg-popover text-popover-foreground ring-1 ring-foreground/10 duration-150 ease-settle outline-none data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+            dropdownMenuSurfaceClassName,
+            "z-50 flex max-h-(--available-height) w-(--anchor-width) min-w-32 origin-(--transform-origin) flex-col overflow-hidden duration-150 ease-settle outline-none data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
             className,
           )}
           {...props}
@@ -289,6 +297,7 @@ function DropdownMenuShortcut({ className, ...props }: React.ComponentProps<"spa
 export type { DropdownMenuHandle };
 
 export {
+  dropdownMenuSurfaceClassName,
   createDropdownMenuHandle,
   DropdownMenu,
   DropdownMenuCheckboxItem,

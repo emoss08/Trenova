@@ -773,6 +773,9 @@ type AssistantToolFinishedEvent struct {
 	// tool message keeps, so a reader can offer the hand-off while the turn
 	// is still running.
 	HandOffAgents []pulid.ID `json:"handOffAgents,omitempty"`
+	// Records are the records the call's result described, for a reader to
+	// show as what the answer was built from.
+	Records []agent.EntityRef `json:"records,omitempty"`
 	// AgentID and DelegateCallID are set on another agent's call, on a task
 	// this turn's agent handed it.
 	AgentID        pulid.ID `json:"agentId,omitempty"`

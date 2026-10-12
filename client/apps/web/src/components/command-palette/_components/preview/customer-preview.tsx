@@ -1,148 +1,219 @@
-import {
-  findChoice,
-  billingCycleChoices,
-  creditStatusChoices,
-  customerPaymentTermChoices,
-  invoiceDeliveryChoices,
-} from "@/lib/choices";
-import { StatusBadge } from "@trenova/shared/components/status-badge";
-import { Badge } from "@trenova/shared/components/ui/badge";
-import {
-  DescriptionEmpty,
-  DescriptionItem,
-  DescriptionList,
-} from "@trenova/shared/components/ui/description-list";
+import { recordPath } from "@/config/record-links";
+import { customerPaymentTermChoices, findChoice } from "@/lib/choices";
+import type { RecordShipment } from "@/lib/graphql/record-shipments";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatUnixDateMedium } from "@trenova/shared/lib/date";
-import { phaseTone, type StatusPhase } from "@trenova/shared/lib/status-phase";
-import { formatCurrency } from "@trenova/shared/lib/utils";
-import { Progress } from "@trenova/shared/components/ui/progress";
+import {
+  cn,
+  formatCompactCurrency,
+  formatCurrency,
+  formatPercent,
+} from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { PALETTE_ENTITIES } from "../../palette-entities";
-import type { PaletteAction, PaletteIntent, PaletteRecord } from "../../palette-model";
-import { PreviewError, PreviewFrame, PreviewSection, PreviewSkeleton } from "./preview-frame";
-import { customerPreviewQuery, type CustomerPreviewData } from "./preview-queries";
+import { PALETTE_ENTITY_ICONS } from "../../palette-entities";
+import type { StatusState } from "../../palette-parts";
+import { shipmentStatus } from "../../palette-status";
+import {
+  PreviewError,
+  PreviewFields,
+  PreviewHead,
+  PreviewSection,
+  PreviewSkeleton,
+  PreviewSource,
+  PreviewStats,
+  RelatedRow,
+  StatePill,
+  type PreviewStat,
+} from "./preview-frame";
+import {
+  customerAgingQuery,
+  customerPreviewQuery,
+  OPEN_LOADS_SHOWN,
+  openShipmentsQuery,
+} from "./preview-queries";
+import type { RecordPreviewProps } from "./record-preview-props";
 
-type CreditStatus = NonNullable<NonNullable<CustomerPreviewData>["billingProfile"]>["creditStatus"];
+const CREDIT_WARN_SHARE = 0.8;
 
-const CREDIT_STATUS_PHASE: Record<CreditStatus, StatusPhase> = {
-  Active: "complete",
-  Warning: "attention",
-  Hold: "failed",
-  Suspended: "closed",
-  Review: "awaiting",
-};
-
-function money(value: string | null | undefined): string | null {
-  if (value == null || value === "") {
-    return null;
-  }
-  const amount = Number(value);
-  return Number.isFinite(amount) ? formatCurrency(amount) : null;
+function money(minor: number): string {
+  return formatCurrency(minor / 100);
 }
 
-export function CustomerPreview({
-  record,
-  actions,
-  onRun,
-}: {
-  record: PaletteRecord;
-  actions: readonly PaletteAction[];
-  onRun: (intent: PaletteIntent) => void;
-}) {
-  const t = useT();
-  const { data: customer, isLoading, isError } = useQuery(customerPreviewQuery(record.id));
-  const entity = PALETTE_ENTITIES.customer;
+function compactMoney(minor: number): string {
+  return formatCompactCurrency(minor / 100);
+}
 
-  if (isLoading) {
+/** "Dallas, TX → Atlanta, GA" from a listed shipment's first and last stops. */
+export function recordShipmentLane(shipment: RecordShipment): string {
+  const stops = [...(shipment.moves ?? [])]
+    .sort((a, b) => a.sequence - b.sequence)
+    .flatMap((move) => [...(move.stops ?? [])].sort((a, b) => a.sequence - b.sequence));
+  const place = (stop: (typeof stops)[number] | undefined) =>
+    [stop?.location?.city, stop?.location?.state?.abbreviation].filter(Boolean).join(", ");
+  const from = place(stops.find((stop) => stop.type.includes("Pickup")) ?? stops[0]);
+  const to = place(
+    [...stops].reverse().find((stop) => stop.type.includes("Delivery")) ?? stops.at(-1),
+  );
+  return from && to ? `${from} → ${to}` : from || to;
+}
+
+interface AgingBucket {
+  label: string;
+  minor: number;
+  tone: string;
+}
+
+function AgingBar({ buckets, total }: { buckets: readonly AgingBucket[]; total: number }) {
+  return (
+    <>
+      <div className="bg-sunken flex h-2 overflow-hidden rounded-full" aria-hidden>
+        {buckets.map((bucket) =>
+          bucket.minor > 0 ? (
+            <span
+              key={bucket.label}
+              className={cn(
+                "cp-grow-x h-full first:rounded-l-full last:rounded-r-full",
+                bucket.tone,
+              )}
+              style={{ flexGrow: bucket.minor / Math.max(total, 1) }}
+            />
+          ) : null,
+        )}
+      </div>
+      <div className="grid grid-cols-5 gap-2">
+        {buckets.map((bucket) => (
+          <span key={bucket.label} className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-foreground-subtle truncate text-sm">{bucket.label}</span>
+            <span className="text-foreground truncate font-mono text-sm">
+              {bucket.minor > 0 ? formatCompactCurrency(bucket.minor / 100) : "—"}
+            </span>
+          </span>
+        ))}
+      </div>
+    </>
+  );
+}
+
+export function CustomerPreview({ record, onNavigate }: RecordPreviewProps) {
+  const t = useT();
+  const customer = useQuery(customerPreviewQuery(record.id));
+  const aging = useQuery(customerAgingQuery(record.id));
+  const loads = useQuery(openShipmentsQuery({ kind: "customer", id: record.id }, OPEN_LOADS_SHOWN));
+
+  if (customer.isLoading) {
     return <PreviewSkeleton />;
   }
-  if (isError || !customer) {
+  if (customer.isError || !customer.data) {
     return <PreviewError />;
   }
 
-  const billing = customer.billingProfile;
-  const place = [customer.city, customer.state?.abbreviation].filter(Boolean).join(", ");
-  const limit = money(billing?.creditLimit);
-  const balance = money(billing?.creditBalance);
-  const creditLimit = billing?.creditLimit ? Number(billing.creditLimit) : 0;
-  const used =
-    billing && creditLimit > 0
-      ? Math.min(100, Math.max(0, (Number(billing.creditBalance) / creditLimit) * 100))
-      : null;
+  const data = customer.data;
+  const billing = data.billingProfile;
+  const place = [data.city, data.state?.abbreviation].filter(Boolean).join(", ");
+  const snapshot = aging.data?.snapshot;
+  const buckets = snapshot?.buckets;
+  const terms = billing
+    ? t(findChoice(customerPaymentTermChoices, billing.paymentTerm)?.label ?? billing.paymentTerm)
+    : null;
+  const openLoads = loads.data?.total ?? null;
+
+  const stats: PreviewStat[] = [];
+  if (snapshot && buckets) {
+    const overdue = snapshot.overdueMinor;
+    const pastState: StatusState =
+      buckets.daysOver90Minor > 0 ? "bad" : overdue > 0 ? "warn" : "neutral";
+    stats.push(
+      { label: t("Open balance"), value: compactMoney(snapshot.totalOpenMinor) },
+      {
+        label: t("Past terms"),
+        value: overdue > 0 ? compactMoney(overdue) : "—",
+        state: pastState,
+      },
+    );
+    if (snapshot.hasCreditLimit && snapshot.creditLimitMinor > 0) {
+      const used = aging.data!.creditUtilization;
+      stats.push({
+        label: t("Credit used"),
+        value: formatPercent(used * 100, 0),
+        state: used > 1 ? "bad" : used > CREDIT_WARN_SHARE ? "warn" : "neutral",
+      });
+    }
+  }
+
+  const agingBuckets: AgingBucket[] = buckets
+    ? [
+        { label: t("Current"), minor: buckets.currentMinor, tone: "bg-border-strong" },
+        { label: t("1–30"), minor: buckets.days1To30Minor, tone: "bg-foreground-faint" },
+        { label: t("31–60"), minor: buckets.days31To60Minor, tone: "bg-foreground-subtle" },
+        { label: t("61–90"), minor: buckets.days61To90Minor, tone: "bg-foreground-muted" },
+        { label: t("90+"), minor: buckets.daysOver90Minor, tone: "bg-danger" },
+      ]
+    : [];
+
+  const contact = data.emailProfile?.toRecipients
+    ?.split(",")
+    .map((address) => address.trim())
+    .find(Boolean);
+  const creditLimit =
+    snapshot?.hasCreditLimit && snapshot.creditLimitMinor > 0
+      ? money(snapshot.creditLimitMinor)
+      : billing?.creditLimit && Number(billing.creditLimit) > 0
+        ? formatCurrency(Number(billing.creditLimit))
+        : null;
+  const active = data.status === "Active";
 
   return (
-    <PreviewFrame
-      icon={entity.icon}
-      tileClass={entity.tileClass}
-      title={customer.name}
-      subtitle={[customer.code, place].filter(Boolean).join(" · ")}
-      badge={<StatusBadge status={customer.status} />}
-      actions={actions}
-      onRun={onRun}
-    >
-      <PreviewSection title={t("Location")}>
-        <DescriptionList columns={2}>
-          <DescriptionItem label={t("Address")} span="full">
-            {customer.addressLine1 ? (
-              [customer.addressLine1, place, customer.postalCode].filter(Boolean).join(", ")
-            ) : (
-              <DescriptionEmpty />
-            )}
-          </DescriptionItem>
-        </DescriptionList>
-      </PreviewSection>
-      {billing && (
-        <PreviewSection title={t("Credit and billing")}>
-          <DescriptionList columns={2}>
-            <DescriptionItem label={t("Credit status")}>
-              <Badge variant={phaseTone(CREDIT_STATUS_PHASE[billing.creditStatus])}>
-                {t(
-                  findChoice(creditStatusChoices, billing.creditStatus)?.label ??
-                    billing.creditStatus,
-                )}
-              </Badge>
-            </DescriptionItem>
-            <DescriptionItem label={t("Payment terms")}>
-              {t(
-                findChoice(customerPaymentTermChoices, billing.paymentTerm)?.label ??
-                  billing.paymentTerm,
-              )}
-            </DescriptionItem>
-            <DescriptionItem label={t("Balance")} numeric>
-              {balance ?? <DescriptionEmpty />}
-            </DescriptionItem>
-            <DescriptionItem label={t("Credit limit")} numeric>
-              {limit ?? t("No limit")}
-            </DescriptionItem>
-            {used !== null && (
-              <DescriptionItem label={t("Credit used")} span="full">
-                <Progress
-                  value={used}
-                  size="sm"
-                  showLabel
-                  variant={used >= 90 ? "error" : used >= 75 ? "warning" : "success"}
-                />
-              </DescriptionItem>
-            )}
-            <DescriptionItem label={t("Invoices")}>
-              {t(
-                findChoice(invoiceDeliveryChoices, billing.invoiceDelivery)?.label ??
-                  billing.invoiceDelivery,
-              )}
-            </DescriptionItem>
-            <DescriptionItem label={t("Billing cycle")}>
-              {t(
-                findChoice(billingCycleChoices, billing.billingCycle)?.label ??
-                  billing.billingCycle,
-              )}
-            </DescriptionItem>
-          </DescriptionList>
+    <>
+      <PreviewSource
+        kind="customer"
+        facts={[
+          terms,
+          openLoads !== null
+            ? t("{0, plural, one {# open load} other {# open loads}}", openLoads)
+            : null,
+        ]}
+      />
+      <PreviewHead
+        title={data.name}
+        subtitle={[data.code, place].filter(Boolean).join(" · ")}
+        status={
+          <StatePill label={active ? t("Active") : t("Inactive")} state={active ? "ok" : "warn"} />
+        }
+      />
+      <PreviewStats items={stats} />
+      {buckets && buckets.totalOpenMinor > 0 && (
+        <PreviewSection
+          label={t("Aging")}
+          aside={t("of {0}", money(buckets.totalOpenMinor))}
+          className="gap-2.5"
+        >
+          <AgingBar buckets={agingBuckets} total={buckets.totalOpenMinor} />
         </PreviewSection>
       )}
-      <p className="text-2xs text-foreground-subtle">
-        {t("Updated {0}", formatUnixDateMedium(customer.updatedAt))}
-      </p>
-    </PreviewFrame>
+      {loads.data && loads.data.rows.length > 0 && (
+        <PreviewSection label={t("Open loads")} aside={loads.data.total ?? undefined}>
+          <div className="flex flex-col">
+            {loads.data.rows.map((load) => (
+              <RelatedRow
+                key={load.id}
+                icon={PALETTE_ENTITY_ICONS.shipment}
+                title={load.proNumber ?? load.id}
+                mono
+                sub={recordShipmentLane(load)}
+                note={shipmentStatus(load.status, t)?.label}
+                onOpen={() => onNavigate(recordPath("shipment", load.id))}
+              />
+            ))}
+          </div>
+        </PreviewSection>
+      )}
+      <PreviewFields
+        rows={[
+          contact ? { label: t("Contact"), value: contact } : null,
+          creditLimit
+            ? { label: t("Credit limit"), value: <span className="font-mono">{creditLimit}</span> }
+            : null,
+        ]}
+      />
+    </>
   );
 }

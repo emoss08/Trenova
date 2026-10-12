@@ -2,6 +2,7 @@ import { createAIState } from "./fixtures/aicontrol.mjs";
 import { buildShipments, CARRIERS, createDriverPool } from "./fixtures/board.mjs";
 import { createTriageState } from "./handlers/triage-model.mjs";
 import { createSettingsState } from "./fixtures/settings.mjs";
+import { createPaletteState } from "./fixtures/palette.mjs";
 
 export const SCENARIO_DEFAULTS = {
   // quiet | busy | high (480 rows)
@@ -27,12 +28,21 @@ export const SCENARIO_DEFAULTS = {
   desk: process.env.MOCK_DESK ?? "full",
   // the card the Desk cards conversation holds
   deskSlug: process.env.MOCK_DESK_SLUG ?? "tractor-t-101",
+  // the command palette's waiting counts in the sidebar and on the palette's home
+  palette: process.env.MOCK_PALETTE === "1",
 };
 
 const TRIAGE_SCENARIOS = new Set(["live", "firstDay", "noMailbox", "deskOff"]);
 const TRIAGE_TIMES = new Set(["afternoon", "endOfDay"]);
 
-const STAGE_RANK = { Late: 1, NeedsCoverage: 2, Moving: 3, Scheduled: 4, Delivered: 5, Canceled: 6 };
+const STAGE_RANK = {
+  Late: 1,
+  NeedsCoverage: 2,
+  Moving: 3,
+  Scheduled: 4,
+  Delivered: 5,
+  Canceled: 6,
+};
 const STAGE_OF_STATUS = {
   Delayed: "Late",
   New: "NeedsCoverage",
@@ -65,7 +75,9 @@ function anchorTime() {
 /** Triage's "now": 13:39 UTC today (the prototype's NOW), or 17:20 for the end of the day. */
 function triageAnchorTime(triageTime) {
   const now = Math.floor(Date.now() / 1000);
-  return now - (now % 86400) + (triageTime === "endOfDay" ? 17 * 3600 + 20 * 60 : 13 * 3600 + 39 * 60);
+  return (
+    now - (now % 86400) + (triageTime === "endOfDay" ? 17 * 3600 + 20 * 60 : 13 * 3600 + 39 * 60)
+  );
 }
 
 export function createState(requested) {
@@ -96,8 +108,14 @@ export function createState(requested) {
     now: () => anchor + Math.floor((Date.now() - startedAt) / 1000),
     ai: createAIState(anchor, scenario),
     settings: createSettingsState(anchor),
+    palette: createPaletteState(anchor),
     shipments,
-    drivers: scenario.board === "quiet" ? pool.slice(0, 4) : scenario.board === "high" ? pool : pool.slice(0, 9),
+    drivers:
+      scenario.board === "quiet"
+        ? pool.slice(0, 4)
+        : scenario.board === "high"
+          ? pool
+          : pool.slice(0, 9),
     carriers: CARRIERS.map((carrier) => ({ ...carrier })),
     usedDrivers: new Set(),
     decisions: new Map(),
@@ -158,7 +176,15 @@ function seedEvents(shipments, anchor) {
   const find = (pro) => shipments.find((s) => s.proNumber === pro);
   const rows = [
     ["S2610-0412", "StatusChanged", "danger", "system", "Trenova", "ETA pushed to 18:40", 2],
-    ["S2610-0398", "MoveArrived", "brand", "user", "Kai Whitehorse", "Arrived at Cargill Protein Plant", 14],
+    [
+      "S2610-0398",
+      "MoveArrived",
+      "brand",
+      "user",
+      "Kai Whitehorse",
+      "Arrived at Cargill Protein Plant",
+      14,
+    ],
     ["S2610-0366", "StopCompleted", "success", "user", "Ana Reyes", "Delivered · POD signed", 60],
     ["S2610-0431", "ShipmentCreated", "info", "user", "Eric Moss", "Created shipment", 180],
     ["S2610-0430", "ShipmentCreated", "info", "user", "Eric Moss", "Created shipment", 182],

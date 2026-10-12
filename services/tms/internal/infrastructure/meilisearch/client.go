@@ -80,11 +80,23 @@ func (c *Client) Search(
 	ctx context.Context,
 	req customerports.SearchRequest,
 ) ([]map[string]any, error) {
+	page, err := c.SearchPage(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.Documents, nil
+}
+
+func (c *Client) SearchPage(
+	ctx context.Context,
+	req customerports.SearchRequest,
+) (*customerports.SearchPage, error) {
 	if !c.Enabled() {
 		return nil, customerports.ErrCacheMiss
 	}
 
-	result, err := c.client.Index(req.Index).Search(req.Query, &meili.SearchRequest{
+	result, err := c.client.Index(req.Index).SearchWithContext(ctx, req.Query, &meili.SearchRequest{
 		Limit:  int64(req.Limit),
 		Filter: req.Filter,
 	})
@@ -101,7 +113,12 @@ func (c *Client) Search(
 		documents = append(documents, document)
 	}
 
-	return documents, nil
+	total := int(result.EstimatedTotalHits)
+	if total < len(documents) {
+		total = len(documents)
+	}
+
+	return &customerports.SearchPage{Documents: documents, EstimatedTotal: total}, nil
 }
 
 // decodeHit turns a hit's raw JSON fields into plain values. The client
