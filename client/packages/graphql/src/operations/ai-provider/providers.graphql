@@ -12,6 +12,17 @@ fragment AIProviderCardFields on AIProvider {
   structuredOutputMode
   reasoningEffort
   thinkingStyle
+  platform
+  platformSettings {
+    auth
+    region
+    projectId
+    workspaceId
+    accessKeyId
+    resource
+    tenantId
+    clientId
+  }
   extraBody
   inputCostPerMillion
   outputCostPerMillion

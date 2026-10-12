@@ -171,6 +171,9 @@ export type AiProviderEndpointInput = {
   apiKey?: string | null | undefined;
   baseUrl: string;
   kind: AiProviderKind;
+  /** Where an Anthropic Messages endpoint reaches Claude. Omitted calls the base URL directly. */
+  platform?: AiProviderPlatform | null | undefined;
+  platformSettings?: AiProviderPlatformSettingsInput | null | undefined;
   providerId?: string | number | null | undefined;
 };
 
@@ -192,6 +195,47 @@ export type AiProviderPatchInput = {
   outputCostPerMillion?: string | null | undefined;
   tasks?: Array<AiTask> | null | undefined;
   trusted?: boolean | null | undefined;
+};
+
+/**
+ * Where an Anthropic Messages provider reaches Claude. Direct calls the base URL
+ * with the API key, which every other kind always does.
+ */
+export type AiProviderPlatform =
+  /** Amazon Bedrock's Messages endpoint. */
+  | 'Bedrock'
+  /** Claude Platform on AWS: the Claude API run by Anthropic, billed through AWS. */
+  | 'ClaudePlatformAWS'
+  /** Claude Platform on Google Cloud. */
+  | 'ClaudePlatformGoogleCloud'
+  | 'Direct'
+  /** Microsoft Foundry. */
+  | 'Foundry'
+  /** Google Vertex AI's Anthropic publisher models. */
+  | 'VertexAI';
+
+/** How a request to a platform proves who sent it. */
+export type AiProviderPlatformAuth =
+  /** Signed with an IAM access key; the secret access key is stored. */
+  | 'AccessKey'
+  /** The stored key: an Anthropic, Bedrock or Foundry API key. */
+  | 'ApiKey'
+  /** Tokens from Microsoft Entra ID for an app registration; its client secret is stored. */
+  | 'EntraID'
+  /** The cloud credentials of the server Trenova runs on, where the server allows it. Nothing is stored. */
+  | 'Server'
+  /** Tokens from a Google service account key, which is stored. */
+  | 'ServiceAccount';
+
+export type AiProviderPlatformSettingsInput = {
+  accessKeyId?: string | null | undefined;
+  auth?: AiProviderPlatformAuth | null | undefined;
+  clientId?: string | null | undefined;
+  projectId?: string | null | undefined;
+  region?: string | null | undefined;
+  resource?: string | null | undefined;
+  tenantId?: string | null | undefined;
+  workspaceId?: string | null | undefined;
 };
 
 /** A provider as its editor holds it, reduced to what decides where tasks go. */
@@ -9395,7 +9439,7 @@ export type AgentFeedbackSummaryQueryVariables = Exact<{
 
 export type AgentFeedbackSummaryQuery = { agentFeedbackSummary: { agentDefinitionId: string, windowDays: number, since: number, positive: number, negative: number, satisfaction: number | null, days: Array<{ day: string, positive: number, negative: number, satisfaction: number | null }>, worstRated: Array<{ targetType: AiFeedbackTargetType, targetId: string, targetPart: string, positive: number, negative: number, lastRatedAt: number, sample: { ' $fragmentRefs'?: { 'AiFeedbackTableRowFieldsFragment': AiFeedbackTableRowFieldsFragment } } | null }> } };
 
-export type AiProviderCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, kind: AiProviderKind, baseUrl: string, model: string, hasApiKey: boolean, allowPrivateNetwork: boolean, structuredOutputMode: AiStructuredOutputMode, reasoningEffort: AiReasoningEffort, thinkingStyle: AiThinkingStyle, extraBody: unknown, inputCostPerMillion: string | null, outputCostPerMillion: string | null, cacheReadCostPerMillion: string | null, cacheWriteCostPerMillion: string | null, maxTokens: number, tasks: Array<AiTask>, priority: number, embeddingDimensions: number | null, embeddingInputStyle: AiEmbeddingInputStyle, trusted: boolean, enabled: boolean, version: number, createdAt: number, updatedAt: number, lastTest: { success: boolean, message: string, modelIdentifier: string, schemaHonoured: boolean, latencyMs: number, detail: string, testedAt: number } | null } & { ' $fragmentName'?: 'AiProviderCardFieldsFragment' };
+export type AiProviderCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, kind: AiProviderKind, baseUrl: string, model: string, hasApiKey: boolean, allowPrivateNetwork: boolean, structuredOutputMode: AiStructuredOutputMode, reasoningEffort: AiReasoningEffort, thinkingStyle: AiThinkingStyle, platform: AiProviderPlatform, extraBody: unknown, inputCostPerMillion: string | null, outputCostPerMillion: string | null, cacheReadCostPerMillion: string | null, cacheWriteCostPerMillion: string | null, maxTokens: number, tasks: Array<AiTask>, priority: number, embeddingDimensions: number | null, embeddingInputStyle: AiEmbeddingInputStyle, trusted: boolean, enabled: boolean, version: number, createdAt: number, updatedAt: number, platformSettings: { auth: AiProviderPlatformAuth, region: string, projectId: string, workspaceId: string, accessKeyId: string, resource: string, tenantId: string, clientId: string } | null, lastTest: { success: boolean, message: string, modelIdentifier: string, schemaHonoured: boolean, latencyMs: number, detail: string, testedAt: number } | null } & { ' $fragmentName'?: 'AiProviderCardFieldsFragment' };
 
 export type AiProviderLimitFieldsFragment = { id: string, timeoutSeconds: number, maxConcurrent: number, monthlyCapUsd: string | null, onCap: AiProviderCapAction, monthSpendUsd: string, apiKey: { prefix: string, lastFour: string, addedAt: number, lastUsedAt: number | null, previousKeyExpiresAt: number | null, addedBy: { id: string, name: string } | null } | null } & { ' $fragmentName'?: 'AiProviderLimitFieldsFragment' };
 
@@ -18346,6 +18390,17 @@ export const AiProviderCardFieldsFragmentDoc = new TypedDocumentString(`
   structuredOutputMode
   reasoningEffort
   thinkingStyle
+  platform
+  platformSettings {
+    auth
+    region
+    projectId
+    workspaceId
+    accessKeyId
+    resource
+    tenantId
+    clientId
+  }
   extraBody
   inputCostPerMillion
   outputCostPerMillion
@@ -25947,15 +26002,15 @@ export const SetMyAiFeedbackDocument = {"__meta__":{"kind":"mutation","name":"Se
 export const ClearMyAiFeedbackDocument = {"__meta__":{"kind":"mutation","name":"ClearMyAIFeedback","hash":"sha256:fe3ab8a659e88516571a342f231d0e575d1a136d9c5a9655bcca2fd93613510a"}} as unknown as TypedDocumentString<ClearMyAiFeedbackMutation, ClearMyAiFeedbackMutationVariables>;
 export const AiFeedbackTableDocument = {"__meta__":{"kind":"query","name":"AIFeedbackTable","hash":"sha256:340427dceb61302fa430510e09fb15618155e62a07eda870abd25d331ae9ee8f"}} as unknown as TypedDocumentString<AiFeedbackTableQuery, AiFeedbackTableQueryVariables>;
 export const AgentFeedbackSummaryDocument = {"__meta__":{"kind":"query","name":"AgentFeedbackSummary","hash":"sha256:0a99eeca389833697ab85daf88747a577c77f96c073a0fdc51df38e67aad7e1b"}} as unknown as TypedDocumentString<AgentFeedbackSummaryQuery, AgentFeedbackSummaryQueryVariables>;
-export const AiProviderCardsDocument = {"__meta__":{"kind":"query","name":"AIProviderCards","hash":"sha256:aa7e5fcf10cffb88fc73ca79e65fc40b8abb83d0445f690879a5e590bc8f5002"}} as unknown as TypedDocumentString<AiProviderCardsQuery, AiProviderCardsQueryVariables>;
-export const AiProviderDetailDocument = {"__meta__":{"kind":"query","name":"AIProviderDetail","hash":"sha256:44f5f4c79d366a5f219e6c04c2c7cadf9494f7f55199b9e684c74173ed45559b"}} as unknown as TypedDocumentString<AiProviderDetailQuery, AiProviderDetailQueryVariables>;
+export const AiProviderCardsDocument = {"__meta__":{"kind":"query","name":"AIProviderCards","hash":"sha256:7f7eed984338fd8eb75579fcf75d46f6c7e117c959c7c1f6a8cdce2a6c19f756"}} as unknown as TypedDocumentString<AiProviderCardsQuery, AiProviderCardsQueryVariables>;
+export const AiProviderDetailDocument = {"__meta__":{"kind":"query","name":"AIProviderDetail","hash":"sha256:9c6071d54bc7d03c5f3312717974b9817ef1db2c94600eb77eb1fce5861d994d"}} as unknown as TypedDocumentString<AiProviderDetailQuery, AiProviderDetailQueryVariables>;
 export const AiProviderLimitsDocument = {"__meta__":{"kind":"query","name":"AIProviderLimits","hash":"sha256:41e9cec44006dcb45c576a25475ad11a1107a228ba463a0683edae4fabf22d6c"}} as unknown as TypedDocumentString<AiProviderLimitsQuery, AiProviderLimitsQueryVariables>;
 export const AiRoutePreviewDocument = {"__meta__":{"kind":"query","name":"AIRoutePreview","hash":"sha256:0502a524401b35341763abf9b0ff03589358c9ea9f199ca7e9017b44eda92b65"}} as unknown as TypedDocumentString<AiRoutePreviewQuery, AiRoutePreviewQueryVariables>;
 export const AiProviderModelsDocument = {"__meta__":{"kind":"query","name":"AIProviderModels","hash":"sha256:b0861434a19296d912bfa020fac1d1021646451ab6f9decd2bc00fd076ebe90f"}} as unknown as TypedDocumentString<AiProviderModelsQuery, AiProviderModelsQueryVariables>;
 export const AiProviderUsageDailyDocument = {"__meta__":{"kind":"query","name":"AIProviderUsageDaily","hash":"sha256:8c15d40d351e26f4e0e74838332e965bdfa69be1aa66452482fc3399dad511c7"}} as unknown as TypedDocumentString<AiProviderUsageDailyQuery, AiProviderUsageDailyQueryVariables>;
 export const TestAiProviderDraftDocument = {"__meta__":{"kind":"mutation","name":"TestAIProviderDraft","hash":"sha256:5cd1d34923e16b5189644e35108d85429a67b9f2554cd7b3aa90add20ba6f689"}} as unknown as TypedDocumentString<TestAiProviderDraftMutation, TestAiProviderDraftMutationVariables>;
-export const ReorderAiProvidersDocument = {"__meta__":{"kind":"mutation","name":"ReorderAIProviders","hash":"sha256:acf530599a10e0b39829dcd3d9106360fb75df652a66196b368524e0710dd056"}} as unknown as TypedDocumentString<ReorderAiProvidersMutation, ReorderAiProvidersMutationVariables>;
-export const PatchAiProviderDocument = {"__meta__":{"kind":"mutation","name":"PatchAIProvider","hash":"sha256:a0cbf889b12b4fe33ea45a1051db07e9d4977c50e18264badc166d92ff496803"}} as unknown as TypedDocumentString<PatchAiProviderMutation, PatchAiProviderMutationVariables>;
+export const ReorderAiProvidersDocument = {"__meta__":{"kind":"mutation","name":"ReorderAIProviders","hash":"sha256:8c5f0b5b6c0a865d76a8af40e3b4bd1c9afdef713e83ce39e0f81eee1a1e21e4"}} as unknown as TypedDocumentString<ReorderAiProvidersMutation, ReorderAiProvidersMutationVariables>;
+export const PatchAiProviderDocument = {"__meta__":{"kind":"mutation","name":"PatchAIProvider","hash":"sha256:f202ef551268112c0d484ec7f02f1b9dfdbe0fd1105b86e91a3359bd861c84bf"}} as unknown as TypedDocumentString<PatchAiProviderMutation, PatchAiProviderMutationVariables>;
 export const AiUsageSummaryDocument = {"__meta__":{"kind":"query","name":"AIUsageSummary","hash":"sha256:22b752f36ea7369cb330c482bae62e65443c496110818dff32d26d4405302d17"}} as unknown as TypedDocumentString<AiUsageSummaryQuery, AiUsageSummaryQueryVariables>;
 export const ApiKeyTableDocument = {"__meta__":{"kind":"query","name":"ApiKeyTable","hash":"sha256:aeacf34d9ae14863db97c29a2ea928d83c46bba47f49ecd6a05ccdf7d4a33951"}} as unknown as TypedDocumentString<ApiKeyTableQuery, ApiKeyTableQueryVariables>;
 export const AttentionSummaryDocument = {"__meta__":{"kind":"query","name":"AttentionSummary","hash":"sha256:f5497f5bda3b38c5a3875db4677a9a034d1bcc1c4866b6c698351fc2198b1322"}} as unknown as TypedDocumentString<AttentionSummaryQuery, AttentionSummaryQueryVariables>;

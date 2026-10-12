@@ -10,6 +10,8 @@ function formValues(overrides: Partial<ProviderFormValues> = {}): ProviderFormVa
     name: "Local qwen",
     description: "",
     kind: "OpenAIChat",
+    platform: "Direct",
+    platformSettings: null,
     baseUrl: "http://10.0.0.5:8000/v1",
     model: "qwen3:32b",
     apiKey: "",

@@ -6,6 +6,8 @@ import type {
 } from "@/lib/graphql/ai-provider";
 import {
   aiProviderKindSchema,
+  aiProviderPlatformAuthSchema,
+  aiProviderPlatformSchema,
   aiTaskSchema,
   capActionSchema,
   embeddingInputStyleSchema,
@@ -16,6 +18,10 @@ import {
   structuredOutputModeSchema,
   thinkingStyleSchema,
   type AIProviderKind,
+  type AIProviderPlatform,
+  type AIProviderPlatformAuth,
+  type AIProviderPlatformDescriptor,
+  type AIProviderPlatformSetting,
   type AIProviderPreset,
   type SaveAIProviderRequest,
 } from "@/types/ai-provider";
@@ -23,7 +29,26 @@ import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import { buildSavePayload, parseEmbeddingDimensions } from "./build-save-payload";
 import { embeddingIssues } from "./provider-form-schema";
+import {
+  credentialRequired,
+  defaultAuth,
+  effectivePlatform,
+  EMPTY_PLATFORM_SETTINGS,
+  PLATFORM_SETTING_MISSING,
+  platformDescriptor,
+  platformFields,
+  platformPayload,
+  platformSettingsDraft,
+  resolvedAuth,
+  settingRequired,
+} from "./platform-model";
 import { baseUrlProblem } from "./provider-model";
+
+/** What the catalog says about platforms, which the payload builders read. */
+export type PlatformCatalog = {
+  platforms: readonly AIProviderPlatformDescriptor[];
+  serverCloudCredentials: boolean;
+};
 
 /** The step the server leaves between priorities, so a new provider joins the end of the chain. */
 export const PRIORITY_STEP = 10;
@@ -56,6 +81,17 @@ export const providerEditorSchema = z
       .min(1, { error: () => translate("Give it a name") }),
     description: z.string(),
     kind: aiProviderKindSchema,
+    platform: aiProviderPlatformSchema,
+    platformSettings: z.object({
+      auth: z.union([aiProviderPlatformAuthSchema, z.literal("")]),
+      region: z.string(),
+      projectId: z.string(),
+      workspaceId: z.string(),
+      accessKeyId: z.string(),
+      resource: z.string(),
+      tenantId: z.string(),
+      clientId: z.string(),
+    }),
     baseUrl: z.string(),
     model: z
       .string()
@@ -153,6 +189,8 @@ export function editorValuesFromProvider(provider: AIProviderWithLimits): Provid
     name: provider.name,
     description: provider.description,
     kind: provider.kind,
+    platform: provider.platform,
+    platformSettings: platformSettingsDraft(provider.platformSettings),
     baseUrl: provider.baseUrl,
     model: provider.model,
     apiKey: "",
@@ -190,17 +228,33 @@ function presetName(preset: AIProviderPreset): string {
   return preset.selfHosted ? translate("Local {0}", vendor) : vendor;
 }
 
-/** A new provider as a preset starts it, at the end of the chain. */
+/**
+ * A new provider as a preset starts it, at the end of the chain. A preset on a
+ * platform starts with the platform's usual way of signing in.
+ */
 export function editorValuesFromPreset(
   preset: AIProviderPreset,
   providers: readonly Pick<AIProviderRow, "priority">[],
+  catalog?: PlatformCatalog,
 ): ProviderEditorValues {
   const last = providers.reduce((most, provider) => Math.max(most, provider.priority), 0);
+  const platform = preset.kind === "AnthropicMessages" ? preset.platform : "Direct";
   return {
     preset: preset.key,
     name: presetName(preset),
     description: "",
     kind: preset.kind,
+    platform,
+    platformSettings: {
+      ...EMPTY_PLATFORM_SETTINGS,
+      auth:
+        platform === "Direct" || !catalog
+          ? ""
+          : defaultAuth(
+              platformDescriptor(catalog.platforms, platform),
+              catalog.serverCloudCredentials,
+            ),
+    },
     baseUrl: preset.baseUrl,
     model: preset.exampleModel,
     apiKey: "",
@@ -232,19 +286,28 @@ export function editorValuesFromPreset(
 
 /** The first thing stopping the editor from saving, in the order a person would fix them. */
 export type EditorProblem = {
-  field: "name" | "baseUrl" | "apiKey" | "model";
+  field:
+    | "name"
+    | "baseUrl"
+    | "apiKey"
+    | "model"
+    | "platformSettings.auth"
+    | `platformSettings.${AIProviderPlatformSetting}`;
   message: string;
+};
+
+export type EditorProblemContext = {
+  create: boolean;
+  keyRequired: boolean;
+  hasStoredKey: boolean;
+  requiresBaseUrl?: boolean;
+  catalog: PlatformCatalog;
 };
 
 /** What keeps a draft from saving, named by the field that has to change. */
 export function editorProblem(
   values: ProviderEditorValues,
-  context: {
-    create: boolean;
-    keyRequired: boolean;
-    hasStoredKey: boolean;
-    requiresBaseUrl?: boolean;
-  },
+  context: EditorProblemContext,
 ): EditorProblem | null {
   if (values.name.trim() === "") return { field: "name", message: translate("Give it a name") };
   if (context.requiresBaseUrl && values.baseUrl.trim() === "") {
@@ -252,6 +315,17 @@ export function editorProblem(
   }
   if (baseUrlProblem(values.baseUrl, values.allowPrivateNetwork) !== null) {
     return { field: "baseUrl", message: translate("Fix the base URL") };
+  }
+  const signIn = editorSignIn(values, context.catalog);
+  if (signIn.auth === "Server" && !context.catalog.serverCloudCredentials) {
+    return {
+      field: "platformSettings.auth",
+      message: translate("Choose another way to sign in"),
+    };
+  }
+  const missing = missingPlatformSetting(values, context.catalog);
+  if (missing) {
+    return { field: `platformSettings.${missing}`, message: PLATFORM_SETTING_MISSING[missing] };
   }
   if (context.keyRequired && !context.hasStoredKey && values.apiKey.trim() === "") {
     return { field: "apiKey", message: translate("Paste an API key") };
@@ -262,9 +336,77 @@ export function editorProblem(
 
 export function editorBlocker(
   values: ProviderEditorValues,
-  context: { create: boolean; keyRequired: boolean; hasStoredKey: boolean },
+  context: EditorProblemContext,
 ): string | null {
   return editorProblem(values, context)?.message ?? null;
+}
+
+/**
+ * How the draft signs in: the platform it is reached through, that platform's
+ * entry in the catalog, and the way of signing in it will use. A provider
+ * called directly has no platform entry and no way chosen.
+ */
+export function editorSignIn(
+  values: Pick<ProviderEditorValues, "kind" | "platform" | "platformSettings">,
+  catalog: PlatformCatalog,
+): {
+  platform: AIProviderPlatform;
+  descriptor: AIProviderPlatformDescriptor | undefined;
+  auth: AIProviderPlatformAuth | "";
+} {
+  const platform = effectivePlatform(values.kind, values.platform);
+  if (platform === "Direct") {
+    return { platform, descriptor: undefined, auth: "" };
+  }
+  const descriptor = platformDescriptor(catalog.platforms, platform);
+  return {
+    platform,
+    descriptor,
+    auth: resolvedAuth(descriptor, values.platformSettings.auth, catalog.serverCloudCredentials),
+  };
+}
+
+/** Whether the draft signs in as the server Trenova runs on, so it stores no credential. */
+export function signsInAsServer(
+  values: Pick<ProviderEditorValues, "kind" | "platform" | "platformSettings">,
+  catalog: PlatformCatalog,
+): boolean {
+  const signIn = editorSignIn(values, catalog);
+  return signIn.platform !== "Direct" && signIn.auth === "Server";
+}
+
+/**
+ * Whether the draft needs a credential stored. Called directly, the kind and
+ * preset say; on a platform, the way it signs in does.
+ */
+export function editorKeyRequired(
+  values: Pick<ProviderEditorValues, "kind" | "platform" | "platformSettings">,
+  context: { catalog: PlatformCatalog; kindRequiresKey: boolean },
+): boolean {
+  const signIn = editorSignIn(values, context.catalog);
+  return credentialRequired({
+    kind: values.kind,
+    platform: signIn.platform,
+    auth: signIn.auth,
+    descriptor: signIn.descriptor,
+    kindRequiresKey: context.kindRequiresKey,
+  });
+}
+
+/** The first setting the draft's platform asks for that is still blank. */
+function missingPlatformSetting(
+  values: ProviderEditorValues,
+  catalog: PlatformCatalog,
+): AIProviderPlatformSetting | null {
+  const signIn = editorSignIn(values, catalog);
+  if (signIn.platform === "Direct") return null;
+  return (
+    platformFields(signIn.descriptor, signIn.auth).find(
+      (setting) =>
+        settingRequired(signIn.platform, setting, values.baseUrl) &&
+        values.platformSettings[setting].trim() === "",
+    ) ?? null
+  );
 }
 
 const toDecimal = (text: string): number | null => (text.trim() === "" ? null : Number(text));
@@ -306,50 +448,67 @@ export function cachePriceDefault(
 
 /**
  * The save request. A blank key on an edit means "keep the stored one"; a new provider is
- * saved off unless a test has just passed, so nothing untried starts taking work.
+ * saved off unless a test has just passed, so nothing untried starts taking work. A
+ * provider that signs in as the server clears whatever key it had, since nothing would
+ * send it and the server refuses to keep one for another way of signing in.
  */
 export function toSaveRequest(
   values: ProviderEditorValues,
-  context: { editing: boolean; enable: boolean },
+  context: { editing: boolean; enable: boolean; catalog: PlatformCatalog },
 ): SaveAIProviderRequest {
+  if (signsInAsServer(values, context.catalog)) {
+    return {
+      ...savePayload({ ...values, apiKey: "" }, context),
+      apiKey: "",
+      keepPreviousKey: false,
+    };
+  }
   const replacing = context.editing && values.apiKey.trim() !== "";
   return {
-    ...buildSavePayload(
-      {
-        preset: "",
-        name: values.name.trim(),
-        description: values.description,
-        kind: values.kind,
-        baseUrl: values.baseUrl.trim(),
-        model: values.model.trim(),
-        apiKey: values.apiKey,
-        allowPrivateNetwork: values.allowPrivateNetwork,
-        structuredOutputMode: values.structuredOutputMode,
-        reasoningEffort: values.reasoningEffort,
-        thinkingStyle: values.thinkingStyle,
-        extraBodyText: values.extraBodyText,
-        inputCostPerMillion: toDecimal(values.inputCostPerMillion),
-        outputCostPerMillion: toDecimal(values.outputCostPerMillion),
-        cacheReadCostPerMillion: toDecimal(values.cacheReadCostPerMillion),
-        cacheWriteCostPerMillion: toDecimal(values.cacheWriteCostPerMillion),
-        maxTokens: Number(values.maxTokens),
-        tasks: values.tasks,
-        priority: values.priority,
-        embeddingDimensionsChoice: values.embeddingDimensionsChoice,
-        embeddingInputStyle: values.embeddingInputStyle,
-        trusted: values.trusted,
-        enabled: context.editing ? values.enabled : context.enable,
-        timeoutSeconds: Number(values.timeoutSeconds),
-        maxConcurrent: Number(values.maxConcurrent),
-        monthlyCapUsd: toDecimal(values.monthlyCapUsd),
-        onCap: values.onCap,
-        keepPreviousKey: false,
-        version: values.version,
-      },
-      context.editing,
-    ),
+    ...savePayload(values, context),
     keepPreviousKey: replacing && values.keepPreviousKey,
   };
+}
+
+function savePayload(
+  values: ProviderEditorValues,
+  context: { editing: boolean; enable: boolean; catalog: PlatformCatalog },
+): SaveAIProviderRequest {
+  return buildSavePayload(
+    {
+      preset: "",
+      name: values.name.trim(),
+      description: values.description,
+      kind: values.kind,
+      ...editorPlatformPayload(values, context.catalog),
+      baseUrl: values.baseUrl.trim(),
+      model: values.model.trim(),
+      apiKey: values.apiKey,
+      allowPrivateNetwork: values.allowPrivateNetwork,
+      structuredOutputMode: values.structuredOutputMode,
+      reasoningEffort: values.reasoningEffort,
+      thinkingStyle: values.thinkingStyle,
+      extraBodyText: values.extraBodyText,
+      inputCostPerMillion: toDecimal(values.inputCostPerMillion),
+      outputCostPerMillion: toDecimal(values.outputCostPerMillion),
+      cacheReadCostPerMillion: toDecimal(values.cacheReadCostPerMillion),
+      cacheWriteCostPerMillion: toDecimal(values.cacheWriteCostPerMillion),
+      maxTokens: Number(values.maxTokens),
+      tasks: values.tasks,
+      priority: values.priority,
+      embeddingDimensionsChoice: values.embeddingDimensionsChoice,
+      embeddingInputStyle: values.embeddingInputStyle,
+      trusted: values.trusted,
+      enabled: context.editing ? values.enabled : context.enable,
+      timeoutSeconds: Number(values.timeoutSeconds),
+      maxConcurrent: Number(values.maxConcurrent),
+      monthlyCapUsd: toDecimal(values.monthlyCapUsd),
+      onCap: values.onCap,
+      keepPreviousKey: false,
+      version: values.version,
+    },
+    context.editing,
+  );
 }
 
 /** The editor as the route preview reads it. */
@@ -371,17 +530,33 @@ export function routingDraft(
   };
 }
 
+/** The platform and settings the editor's draft sends, read against the catalog. */
+export function editorPlatformPayload(
+  values: Pick<ProviderEditorValues, "kind" | "platform" | "platformSettings">,
+  catalog: PlatformCatalog,
+) {
+  return platformPayload({
+    kind: values.kind,
+    platform: values.platform,
+    settings: values.platformSettings,
+    descriptor: platformDescriptor(catalog.platforms, values.platform),
+    serverAllowed: catalog.serverCloudCredentials,
+  });
+}
+
 /** The editor as a draft test sends it. With a saved provider and no new key, the stored key is used. */
 export function draftTestInput(
   values: ProviderEditorValues,
   providerId: string | null,
+  catalog: PlatformCatalog,
 ): AIProviderDraftTest {
-  const key = values.apiKey.trim();
+  const key = signsInAsServer(values, catalog) ? "" : values.apiKey.trim();
   const timeout = Number(values.timeoutSeconds);
   return {
     endpoint: {
       providerId,
       kind: values.kind,
+      ...editorPlatformPayload(values, catalog),
       baseUrl: values.baseUrl.trim(),
       apiKey: key === "" ? null : key,
       allowPrivateNetwork: values.allowPrivateNetwork,

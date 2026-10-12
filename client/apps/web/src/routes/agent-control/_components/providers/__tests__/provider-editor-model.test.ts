@@ -8,6 +8,7 @@ import {
   providerEditorSchema,
   reportsCacheWrites,
   toSaveRequest,
+  type PlatformCatalog,
   type ProviderEditorValues,
 } from "../provider-editor-model";
 
@@ -25,7 +26,10 @@ const ANTHROPIC: AIProviderPreset = {
   domain: "anthropic.com",
   tasks: [],
   embeddingDimensions: 0,
+  platform: "Direct",
 };
+
+const NO_PLATFORMS: PlatformCatalog = { platforms: [], serverCloudCredentials: false };
 
 const OLLAMA: AIProviderPreset = {
   ...ANTHROPIC,
@@ -65,7 +69,7 @@ describe("editorValuesFromPreset", () => {
 });
 
 describe("editorBlocker", () => {
-  const create = { create: true, keyRequired: true, hasStoredKey: false };
+  const create = { create: true, keyRequired: true, hasStoredKey: false, catalog: NO_PLATFORMS };
 
   it("asks for a key on a new hosted provider, and not on an edit with one stored", () => {
     expect(editorBlocker(values(), create)).toBe("Paste an API key");
@@ -114,18 +118,27 @@ describe("providerEditorSchema limits", () => {
  */
 describe("toSaveRequest", () => {
   it("saves a new provider off unless its draft test passed", () => {
-    expect(toSaveRequest(values({ apiKey: "k" }), { editing: false, enable: false }).enabled).toBe(
-      false,
-    );
-    expect(toSaveRequest(values({ apiKey: "k" }), { editing: false, enable: true }).enabled).toBe(
-      true,
-    );
+    expect(
+      toSaveRequest(values({ apiKey: "k" }), {
+        editing: false,
+        enable: false,
+        catalog: NO_PLATFORMS,
+      }).enabled,
+    ).toBe(false);
+    expect(
+      toSaveRequest(values({ apiKey: "k" }), {
+        editing: false,
+        enable: true,
+        catalog: NO_PLATFORMS,
+      }).enabled,
+    ).toBe(true);
   });
 
   it("keeps the stored key on an edit with a blank key field", () => {
     const request = toSaveRequest(values({ apiKey: "", keepPreviousKey: true }), {
       editing: true,
       enable: false,
+      catalog: NO_PLATFORMS,
     });
     expect(request.apiKey).toBeUndefined();
     expect(request.keepPreviousKey).toBe(false);
@@ -136,12 +149,14 @@ describe("toSaveRequest", () => {
       toSaveRequest(values({ apiKey: "new", keepPreviousKey: true }), {
         editing: true,
         enable: false,
+        catalog: NO_PLATFORMS,
       }).keepPreviousKey,
     ).toBe(true);
     expect(
       toSaveRequest(values({ apiKey: "new", keepPreviousKey: false }), {
         editing: true,
         enable: false,
+        catalog: NO_PLATFORMS,
       }).keepPreviousKey,
     ).toBe(false);
   });
@@ -149,7 +164,7 @@ describe("toSaveRequest", () => {
   it("sends the limits as numbers and no cap as null", () => {
     const request = toSaveRequest(
       values({ apiKey: "k", timeoutSeconds: "90", maxConcurrent: "4", monthlyCapUsd: "" }),
-      { editing: false, enable: false },
+      { editing: false, enable: false, catalog: NO_PLATFORMS },
     );
     expect(request.timeoutSeconds).toBe(90);
     expect(request.maxConcurrent).toBe(4);
@@ -158,6 +173,7 @@ describe("toSaveRequest", () => {
       toSaveRequest(values({ apiKey: "k", monthlyCapUsd: "200.5", onCap: "Stop" }), {
         editing: false,
         enable: false,
+        catalog: NO_PLATFORMS,
       }),
     ).toMatchObject({ monthlyCapUsd: 200.5, onCap: "Stop" });
   });
@@ -165,7 +181,7 @@ describe("toSaveRequest", () => {
 
 describe("draftTestInput", () => {
   it("leaves the key out so a saved provider's stored key is used", () => {
-    const input = draftTestInput(values({ apiKey: "  " }), "aiprv_1");
+    const input = draftTestInput(values({ apiKey: "  " }), "aiprv_1", NO_PLATFORMS);
     expect(input.endpoint).toMatchObject({ providerId: "aiprv_1", apiKey: null });
   });
 
@@ -173,12 +189,16 @@ describe("draftTestInput", () => {
     const input = draftTestInput(
       values({ apiKey: "sk", tasks: ["AssistantChat"], embeddingDimensionsChoice: "1024" }),
       null,
+      NO_PLATFORMS,
     );
     expect(input.endpoint.apiKey).toBe("sk");
     expect(input.embeddingDimensions).toBeNull();
     expect(
-      draftTestInput(values({ tasks: ["Embedding"], embeddingDimensionsChoice: "1024" }), null)
-        .embeddingDimensions,
+      draftTestInput(
+        values({ tasks: ["Embedding"], embeddingDimensionsChoice: "1024" }),
+        null,
+        NO_PLATFORMS,
+      ).embeddingDimensions,
     ).toBe(1024);
   });
 });
